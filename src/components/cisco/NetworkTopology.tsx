@@ -1083,6 +1083,15 @@ export function NetworkTopology({
     }
   }, [devices, isDrawingConnection, connectionStart, cableInfo, onCableChange, saveToHistory]);
 
+  // generate an unused IP within 192.168.1.x (skip existing addresses)
+  const generateUniqueIp = useCallback(() => {
+    let suffix = 100;
+    while (devices.some(d => d.ip === `192.168.1.${suffix}`) || suffix === 1 || suffix === 10) {
+      suffix++;
+    }
+    return `192.168.1.${suffix}`;
+  }, [devices]);
+
   // Add device from palette button
   const addDevice = useCallback((type: 'pc' | 'switch' | 'router') => {
     saveToHistory();
@@ -1097,7 +1106,7 @@ export function NetworkTopology({
       id: `${type}-${deviceCounterRef.current[type]}`,
       type,
       name: `${type.toUpperCase()}-${deviceCounterRef.current[type]}`,
-      ip: `192.168.1.${100 + deviceCounterRef.current[type]}`,
+      ip: generateUniqueIp(),
       // Position near top-left with staggered layout
       x: 100 + offsetX + Math.random() * 30,
       y: 80 + offsetY + Math.random() * 30,
@@ -1114,7 +1123,7 @@ export function NetworkTopology({
     };
     setDevices((prev) => [...prev, newDevice]);
     setIsPaletteOpen(false);
-  }, [devices.length, saveToHistory]);
+  }, [devices.length, saveToHistory, generateUniqueIp]);
 
   // Notify parent of topology changes
   useEffect(() => {
@@ -1227,6 +1236,7 @@ export function NetworkTopology({
       ...clipboard,
       id: newId,
       name: `${type.toUpperCase()}-${deviceCounterRef.current[type]}`,
+      ip: generateUniqueIp(),
       x: clipboard.x + 30,
       y: clipboard.y + 30,
       ports: clipboard.ports.map(p => ({ ...p, status: 'disconnected' as const })),
@@ -1234,7 +1244,7 @@ export function NetworkTopology({
     
     setDevices(prev => [...prev, newDevice]);
     setContextMenu(null);
-  }, [clipboard, saveToHistory]);
+  }, [clipboard, saveToHistory, generateUniqueIp]);
 
   // Find path between devices using BFS
   const findPath = useCallback((sourceId: string, targetId: string): string[] | null => {

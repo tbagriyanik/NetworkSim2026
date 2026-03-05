@@ -1269,7 +1269,13 @@ export default function Home() {
               <div className="lg:col-span-3 flex flex-col gap-4">
                 <Terminal
                   deviceId={activeDeviceId}
-                  deviceName={activeDeviceId.split('-').map((w, i) => i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w).join('-')}
+                  // use same display name as the dropdown (hostname or topology name)
+                  deviceName={
+                    (() => {
+                      const activeDevice = topologyDevices?.find(d => d.id === activeDeviceId);
+                      return deviceStates.get(activeDeviceId)?.hostname || activeDevice?.name || 'Device';
+                    })()
+                  }
                   prompt={prompt}
                   state={state}
                   onCommand={handleCommand}
