@@ -810,6 +810,48 @@ export function NetworkTopology({
     setIsTouchDragging(false);
   }, [touchDraggedDevice, isTouchDragging, devices, onDeviceSelect]);
 
+  // Canvas-level touch handlers (pan, pinch, long-press for context)
+  const handleTouchStart = useCallback((e: ReactTouchEvent) => {
+    if (!canvasRef.current) return;
+
+    // Cancel any existing long-press timer
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      setTouchStart({ x: t.clientX, y: t.clientY });
+
+      // Start long-press to open context menu
+      const timer = setTimeout(() => {
+        setContextMenu({ x: t.clientX, y: t.clientY, deviceId: null });
+        setLongPressTimer(null);
+      }, LONG_PRESS_DURATION);
+      setLongPressTimer(timer);
+    } else if (e.touches.length === 2) {
+      // Pinch start - track initial distance
+      const a = e.touches[0];
+      const b = e.touches[1];
+      setLastTouchDistance(getDistance(a.clientX, a.clientY, b.clientX, b.clientY));
+    }
+  }, [longPressTimer, getDistance]);
+
+  const handleTouchEnd = useCallback((e: globalThis.TouchEvent | ReactTouchEvent) => {
+    // Clear long-press timer
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+
+    // If no more touches, reset pinch/touch tracking
+    if ((e as ReactTouchEvent).touches ? (e as ReactTouchEvent).touches.length === 0 : true) {
+      setLastTouchDistance(null);
+      setTouchStart(null);
+    }
+  }, [longPressTimer]);
+
   // Handle port click for connection
   const handlePortClick = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
     e.stopPropagation();
