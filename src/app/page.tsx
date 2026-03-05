@@ -247,7 +247,10 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const deviceState = getOrCreateDeviceState(deviceId, 'switch');
+      // Determine device type from deviceId
+      const deviceType = deviceId.includes('router') ? 'router' : deviceId.includes('pc') ? 'pc' : 'switch';
+      
+      const deviceState = getOrCreateDeviceState(deviceId, deviceType as 'pc' | 'switch' | 'router');
       const deviceOutput = getOrCreateDeviceOutputs(deviceId);
       const devicePrompt = getPrompt(deviceState);
 
@@ -259,7 +262,7 @@ export default function Home() {
         setIsLoading(false);
         setConfirmDialog({
           show: true,
-          message: result.confirmationMessage || 'Are you sure?',
+          message: result.message || result.confirmationMessage || 'Are you sure?',
           action: result.confirmationAction || command,
           onConfirm: () => {
             setConfirmDialog(null);

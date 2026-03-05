@@ -24,6 +24,8 @@ export interface Port {
   shutdown: boolean;
   type: 'fastethernet' | 'gigabitethernet';
   previousStatus?: PortStatus;  // shutdown öncesi durum (no shutdown için)
+  ipAddress?: string;           // For L3 ports or SVI
+  subnetMask?: string;
   portSecurity?: {
     enabled: boolean;
     maxMac: number;

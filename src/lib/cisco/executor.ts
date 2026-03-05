@@ -2036,6 +2036,9 @@ function generateRunningConfig(state: SwitchState): string {
     if (port.shutdown) {
       config += ' shutdown\n';
     }
+    if (port.ipAddress && port.subnetMask) {
+      config += ` ip address ${port.ipAddress} ${port.subnetMask}\n`;
+    }
     if (port.mode === 'trunk') {
       config += ' switchport mode trunk\n';
     } else if (port.vlan !== 1) {
@@ -2476,7 +2479,52 @@ function cmdPowerInline(state: SwitchState, input: string): CommandResult {
 // IP Address
 function cmdIpAddress(state: SwitchState, input: string): CommandResult {
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
-  return { success: true };
+  
+  const match = input.match(/^ip\s+address\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/i);
+  if (!match) return { success: false, error: '% Invalid IP address/mask' };
+  
+  const ip = match[1];
+  const mask = match[2];
+  
+  const newPorts = { ...state.ports };
+  if (!newPorts[state.currentInterface]) {
+    // Port doesn't exist, create it (happens for Vlan1)
+    newPorts[state.currentInterface] = {
+      id: state.currentInterface,
+      name: '',
+      status: 'notconnect',
+      vlan: 1,
+      mode: 'access',
+      duplex: 'auto',
+      speed: 'auto',
+      shutdown: true,
+      type: 'fastethernet' // default
+    };
+  }
+  
+  newPorts[state.currentInterface] = {
+    ...newPorts[state.currentInterface],
+    ipAddress: ip,
+    subnetMask: mask
+  };
+  
+  return { success: true, newState: { ports: newPorts } };
+}
+
+// No IP Address
+function cmdNoIpAddress(state: SwitchState): CommandResult {
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  
+  const newPorts = { ...state.ports };
+  if (newPorts[state.currentInterface]) {
+    newPorts[state.currentInterface] = {
+      ...newPorts[state.currentInterface],
+      ipAddress: undefined,
+      subnetMask: undefined
+    };
+  }
+  
+  return { success: true, newState: { ports: newPorts } };
 }
 
 // IP DHCP Snooping Trust
@@ -2652,19 +2700,34 @@ function cmdShowCdpNeighbors(state: SwitchState, input: string): CommandResult {
 // Show IP Interface Brief
 function cmdShowIpInterfaceBrief(state: SwitchState): CommandResult {
   let output = '\nInterface              IP-Address      OK? Method Status                Protocol\n';
-  output += 'Vlan1                  unassigned      YES unset  administratively down down\n';
-  output += 'FastEthernet0/1        unassigned      YES unset  up                    up\n';
-  output += 'FastEthernet0/2        unassigned      YES unset  up                    up\n';
-  output += 'FastEthernet0/3        unassigned      YES unset  up                    up\n';
-  output += 'GigabitEthernet0/1     unassigned      YES unset  up                    up\n';
-  
+
+  // Vlan1 management interface
+  const vlan1 = state.ports['vlan1'];
+  const vlan1Ip = vlan1?.ipAddress || 'unassigned';
+  const vlan1Status = vlan1 ? (vlan1.shutdown ? 'administratively down' : 'up') : 'administratively down';
+  const vlan1Proto = vlan1 ? (vlan1.shutdown ? 'down' : 'up') : 'down';
+  output += `Vlan1                  ${vlan1Ip.padEnd(15)} YES unset  ${vlan1Status.padEnd(21)} ${vlan1Proto}\n`;
+
+  // All other physical ports
+  Object.values(state.ports).filter(p => p.id !== 'vlan1').sort((a,b) => a.id.localeCompare(b.id)).forEach(port => {
+    const portUpper = port.id.toUpperCase().replace('FA', 'FastEthernet').replace('GI', 'GigabitEthernet');
+    const ip = port.ipAddress || 'unassigned';
+    const status = port.shutdown ? 'administratively down' : 
+                   port.status === 'connected' ? 'up' : 'down';
+    const protocol = port.status === 'connected' && !port.shutdown ? 'up' : 'down';
+
+    output += `${portUpper.padEnd(22)} ${ip.padEnd(15)} YES unset  ${status.padEnd(21)} ${protocol}\n`;
+  });
+
   return { success: true, output };
 }
-
 // Show Spanning-Tree
 function cmdShowSpanningTree(state: SwitchState): CommandResult {
-  let output = '\nVLAN0001\n';
-  output += '  Spanning tree enabled protocol ieee\n';
+  const mode = state.spanningTreeMode || 'pvst';
+  const modeName = mode === 'rapid-pvst' ? 'rapid-pvst' : mode === 'mst' ? 'mst' : 'ieee';
+  
+  let output = `\nVLAN0001\n`;
+  output += `  Spanning tree enabled protocol ${modeName}\n`;
   output += '  Root ID    Priority    32769\n';
   output += '             Address     0011.2233.4400\n';
   output += '             This bridge is the root\n';
@@ -2675,9 +2738,17 @@ function cmdShowSpanningTree(state: SwitchState): CommandResult {
   output += '             Aging Time  15 sec\n\n';
   output += 'Interface           Role Sts Cost      Prio.Nbr Type\n';
   output += '------------------- ---- --- --------- -------- --------------------------------\n';
-  output += 'Fa0/1               Desg FWD 19        128.1    P2p\n';
-  output += 'Fa0/2               Desg FWD 19        128.2    P2p\n';
-  output += 'Gi0/1               Desg FWD 4         128.25   P2p\n';
+  
+  Object.values(state.ports).forEach(port => {
+    if (port.shutdown) return;
+    
+    const role = 'Desg';
+    const sts = port.status === 'connected' ? 'FWD' : 'BLK';
+    const cost = port.type === 'gigabitethernet' ? '4' : '19';
+    const prio = port.id.startsWith('gi') ? '128.25' : `128.${port.id.replace('fa0/', '')}`;
+    
+    output += `${port.id.toUpperCase().padEnd(19)} ${role.padEnd(4)} ${sts.padEnd(3)} ${cost.padEnd(9)} ${prio.padEnd(8)} P2p\n`;
+  });
   
   return { success: true, output };
 }
