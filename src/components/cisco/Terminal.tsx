@@ -1095,15 +1095,33 @@ export function Terminal({ deviceId, deviceName, prompt, state, onCommand, onCle
               {t.mode}: {state.currentMode.toUpperCase()}
             </span>
             {onClear && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClear();
-                }}
-                className="text-xs text-white hover:text-yellow-300 px-3 py-1.5 rounded bg-gray-700 hover:bg-gray-600 min-h-[36px] min-w-[44px]"
-              >
-                {t.clearTerminalBtn}
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const text = output.map(o => o.content).join('\n');
+                    navigator.clipboard.writeText(text);
+                  }}
+                  title={language === 'tr' ? 'Çıktıyı Kopyala' : 'Copy Output'}
+                  className="text-xs text-white hover:text-cyan-300 p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors flex items-center justify-center min-h-[36px] min-w-[36px]"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-1 4h.01M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClear();
+                  }}
+                  className="text-xs text-white hover:text-yellow-300 px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors min-h-[36px] flex items-center gap-1.5"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  {t.clearTerminalBtn}
+                </button>
+              </div>
             )}
           </div>
         </div>

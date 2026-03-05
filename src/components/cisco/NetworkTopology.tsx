@@ -75,18 +75,16 @@ const CABLE_COLORS = {
 const DRAG_THRESHOLD = 5;
 const LONG_PRESS_DURATION = 500; // ms
 
-// Virtual canvas dimensions (responsive - will be calculated dynamically)
-// Mobile: larger to provide more working space
-const VIRTUAL_CANVAS_WIDTH_MOBILE = 1600;
-const VIRTUAL_CANVAS_HEIGHT_MOBILE = 1200;
-// Desktop: extra large to prevent cropping
-const VIRTUAL_CANVAS_WIDTH_DESKTOP = 3200;
-const VIRTUAL_CANVAS_HEIGHT_DESKTOP = 2000;
+// Virtual canvas dimensions (strictly enforced)
+const VIRTUAL_CANVAS_WIDTH_MOBILE = 800;
+const VIRTUAL_CANVAS_HEIGHT_MOBILE = 600;
+const VIRTUAL_CANVAS_WIDTH_DESKTOP = 1600;
+const VIRTUAL_CANVAS_HEIGHT_DESKTOP = 900;
 
 // Zoom limits
-const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 3.0;
-const DEFAULT_ZOOM = 1.0;
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 4.0;
+const DEFAULT_ZOOM = 0.8; // Slightly zoomed out by default to see the frame
 
 export function NetworkTopology({
   cableInfo,
@@ -127,7 +125,7 @@ export function NetworkTopology({
     ];
   };
 
-  // Default devices for initial state - positioned for both mobile and desktop
+  // Default devices for initial state
   const defaultDevices: CanvasDevice[] = [
     {
       id: 'pc-1',
@@ -147,7 +145,7 @@ export function NetworkTopology({
       type: 'switch',
       name: 'Switch-1',
       ip: '192.168.1.1',
-      x: 250,
+      x: 300,
       y: 150,
       status: 'online',
       ports: generateSwitchPorts(),
@@ -560,6 +558,16 @@ export function NetworkTopology({
         // Cancel select all mode
         if (selectAllMode) {
           setSelectAllMode(false);
+        }
+        // Close Ping Source
+        if (pingSource) {
+          setPingSource(null);
+        }
+        // Close Port Selector
+        if (showPortSelector) {
+          setShowPortSelector(false);
+          setPortSelectorStep('source');
+          setSelectedSourcePort(null);
         }
         return;
       }
