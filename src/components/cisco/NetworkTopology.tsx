@@ -15,6 +15,7 @@ interface NetworkTopologyProps {
   onDeviceDelete?: (deviceId: string) => void;
   initialDevices?: CanvasDevice[];
   initialConnections?: CanvasConnection[];
+  isActive?: boolean;
 }
 
 // Device types for the canvas
@@ -96,6 +97,7 @@ export function NetworkTopology({
   onDeviceDelete,
   initialDevices,
   initialConnections,
+  isActive = true,
 }: NetworkTopologyProps) {
   const { language } = useLanguage();
   const { theme } = useTheme();
@@ -198,304 +200,20 @@ export function NetworkTopology({
   // Clipboard state for copy/cut/paste
   const [clipboard, setClipboard] = useState<CanvasDevice | null>(null);
   
-  // Rename state
-  const [renamingDevice, setRenamingDevice] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
-  const renameInputRef = useRef<HTMLInputElement>(null);
-  
-  // IP Config state
-  const [configuringIP, setConfiguringIP] = useState<string | null>(null);
+  // Configuration state (Name, IP, etc.)
+  const [configuringDevice, setConfiguringDevice] = useState<string | null>(null);
+  const [tempNameValue, setTempNameValue] = useState('');
   const [ipValue, setIpValue] = useState('');
   const [subnetValue, setSubnetValue] = useState('');
   const [gatewayValue, setGatewayValue] = useState('');
-  const ipInputRef = useRef<HTMLInputElement>(null);
-  
-  // Undo/Redo history
-  const [history, setHistory] = useState<{ devices: CanvasDevice[]; connections: CanvasConnection[] }[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const historyRef = useRef({ history, historyIndex });
+  const configInputRef = useRef<HTMLInputElement>(null);
 
-  // Mobile-specific state
-  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Port selector modal state
-  const [showPortSelector, setShowPortSelector] = useState(false);
-  const [portSelectorStep, setPortSelectorStep] = useState<'source' | 'target'>('source');
-  const [selectedSourcePort, setSelectedSourcePort] = useState<{ deviceId: string; portId: string } | null>(null);
-
-  // Ping animation state - supports multi-hop paths
-  const [pingAnimation, setPingAnimation] = useState<{
-    sourceId: string;
-    targetId: string;
-    path: string[]; // Full path of device IDs
-    currentHopIndex: number;
-    progress: number;
-    success: boolean | null;
-    failedHop?: { from: string; to: string }; // If ping fails, which hop failed
-  } | null>(null);
-
-  // Connection error message state
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-
-  // Ping source selection state
-  const [pingSource, setPingSource] = useState<string | null>(null);
-
-  // Ping animation ref for cleanup
-  const pingAnimationRef = useRef<number | null>(null);
-
-  // Touch gesture state
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number; time: number } | null>(null);
-  const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [longPressDevice, setLongPressDevice] = useState<string | null>(null);
-  
-  // Touch drag state for devices
-  const [touchDraggedDevice, setTouchDraggedDevice] = useState<string | null>(null);
-  const [touchDragOffset, setTouchDragOffset] = useState({ x: 0, y: 0 });
-  const [touchDragStartPos, setTouchDragStartPos] = useState<{ x: number; y: number } | null>(null);
-  const [isTouchDragging, setIsTouchDragging] = useState(false);
-  const [lastTapTime, setLastTapTime] = useState<number>(0);
-  const [lastTappedDevice, setLastTappedDevice] = useState<string | null>(null);
-
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const deviceCounterRef = useRef({ pc: 1, switch: 1, router: 1 });
-
-  // Track if we've loaded initial data to prevent overwriting on re-renders
-  const hasLoadedInitialDataRef = useRef(false);
-
-  // Update devices and connections when initial props change (e.g., when loading a project)
-  useEffect(() => {
-    // Only set initial data once, or when key prop changes in parent
-    if (!hasLoadedInitialDataRef.current && initialDevices !== undefined) {
-      hasLoadedInitialDataRef.current = true;
-      setDevices(initialDevices);
-      if (initialConnections !== undefined) {
-        setConnections(initialConnections);
-      }
-    }
-  }, [initialDevices, initialConnections]);
-
-  // Reset loaded flag when topologyKey changes (new project load)
-  useEffect(() => {
-    hasLoadedInitialDataRef.current = false;
-  }, []);
-
-  // Detect mobile
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Restore zoom and pan from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedZoom = localStorage.getItem('cisco-topology-zoom');
-      const savedPan = localStorage.getItem('cisco-topology-pan');
-      
-      if (savedZoom) {
-        const parsedZoom = parseFloat(savedZoom);
-        if (!isNaN(parsedZoom) && parsedZoom >= MIN_ZOOM && parsedZoom <= MAX_ZOOM) {
-          setZoom(parsedZoom);
-        }
-      }
-      
-      if (savedPan) {
-        const parsedPan = JSON.parse(savedPan);
-        if (parsedPan && typeof parsedPan.x === 'number' && typeof parsedPan.y === 'number') {
-          setPan(parsedPan);
-        }
-      }
-    } catch (e) {
-      // Ignore errors
-    }
-  }, []);
-
-  // Save zoom and pan to localStorage when they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('cisco-topology-zoom', zoom.toString());
-      localStorage.setItem('cisco-topology-pan', JSON.stringify(pan));
-    } catch (e) {
-      // Ignore errors
-    }
-  }, [zoom, pan]);
-
-  // Get canvas coordinates from mouse/touch event
-  const getCanvasCoords = useCallback((clientX: number, clientY: number) => {
-    if (!canvasRef.current) return { x: 0, y: 0 };
-    const rect = canvasRef.current.getBoundingClientRect();
-    return {
-      x: (clientX - rect.left - pan.x) / zoom,
-      y: (clientY - rect.top - pan.y) / zoom,
-    };
-  }, [pan, zoom]);
-
-  // Calculate distance between two points
-  const getDistance = useCallback((x1: number, y1: number, x2: number, y2: number) => {
-    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-  }, []);
-
-  // Handle wheel zoom - zoom toward cursor position (only zoom, no page scroll)
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    e.stopPropagation(); // Prevent page scroll
-    
-    if (!canvasRef.current) return;
-    
-    const rect = canvasRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newZoom = Math.min(Math.max(zoom * delta, MIN_ZOOM), MAX_ZOOM);
-    
-    // Calculate new pan to zoom toward cursor
-    const zoomRatio = newZoom / zoom;
-    const newPanX = mouseX - (mouseX - pan.x) * zoomRatio;
-    const newPanY = mouseY - (mouseY - pan.y) * zoomRatio;
-    
-    setZoom(newZoom);
-    setPan({ x: newPanX, y: newPanY });
-  }, [zoom, pan]);
-
-  // Pinch zoom for touch
-  const handleTouchStart = useCallback((e: ReactTouchEvent) => {
-    if (e.touches.length === 2) {
-      // Pinch start
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const distance = getDistance(touch1.clientX, touch1.clientY, touch2.clientX, touch2.clientY);
-      setLastTouchDistance(distance);
-    } else if (e.touches.length === 1) {
-      const touch = e.touches[0];
-      setTouchStart({ x: touch.clientX, y: touch.clientY, time: Date.now() });
-      
-      // Start long press timer
-      const target = e.target as HTMLElement;
-      const deviceElement = target.closest('[data-device-id]');
-      if (deviceElement) {
-        const deviceId = deviceElement.getAttribute('data-device-id');
-        if (deviceId) {
-          const timer = setTimeout(() => {
-            setLongPressDevice(deviceId);
-            setContextMenu({ 
-              x: touch.clientX, 
-              y: touch.clientY, 
-              deviceId 
-            });
-          }, LONG_PRESS_DURATION);
-          setLongPressTimer(timer);
-        }
-      }
-    }
-  }, [getDistance]);
-
-  const handleTouchMove = useCallback((e: ReactTouchEvent) => {
-    // Cancel long press on movement
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-
-    // Don't pan if a device is being dragged
-    if (touchDraggedDevice) return;
-
-    if (e.touches.length === 2 && lastTouchDistance !== null) {
-      // Pinch zoom
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const distance = getDistance(touch1.clientX, touch1.clientY, touch2.clientX, touch2.clientY);
-      
-      if (lastTouchDistance > 0) {
-        const delta = distance / lastTouchDistance;
-        const newZoom = Math.min(Math.max(zoom * delta, MIN_ZOOM), MAX_ZOOM);
-        setZoom(newZoom);
-      }
-      
-      setLastTouchDistance(distance);
-    } else if (e.touches.length === 1 && touchStart) {
-      const touch = e.touches[0];
-      const deltaX = touch.clientX - touchStart.x;
-      const deltaY = touch.clientY - touchStart.y;
-      
-      // Check if it's a pan gesture
-      if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-        setPan(prev => ({
-          x: prev.x + deltaX,
-          y: prev.y + deltaY,
-        }));
-        setTouchStart({ x: touch.clientX, y: touch.clientY, time: Date.now() });
-      }
-    }
-  }, [lastTouchDistance, zoom, touchStart, longPressTimer, touchDraggedDevice, getDistance]);
-
-  const handleTouchEnd = useCallback(() => {
-    setLastTouchDistance(null);
-    setTouchStart(null);
-    
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-  }, [longPressTimer]);
-
-  // Save state to history for undo (defined early for keyboard handler)
-  const saveToHistory = useCallback(() => {
-    const newState = { devices: [...devices], connections: [...connections] };
-    setHistory(prev => {
-      const newHistory = prev.slice(0, historyIndex + 1);
-      newHistory.push(newState);
-      return newHistory.slice(-50); // Keep last 50 states
-    });
-    setHistoryIndex(prev => Math.min(prev + 1, 49));
-  }, [devices, connections, historyIndex]);
-
-  // Select all devices (defined early for keyboard handler)
-  const selectAllDevices = useCallback(() => {
-    if (devices.length > 0) {
-      setSelectAllMode(true);
-      setSelectedCanvasDevice(null); // Clear single selection
-    }
-    setContextMenu(null);
-  }, [devices]);
-
-  // Delete device function (defined early for keyboard handler)
-  const deleteDevice = useCallback((deviceId: string) => {
-    setDevices((prev) => prev.filter((d) => d.id !== deviceId));
-    setConnections((prev) => prev.filter((c) => c.sourceDeviceId !== deviceId && c.targetDeviceId !== deviceId));
-    setContextMenu(null);
-    // Notify parent about device deletion
-    if (onDeviceDelete) {
-      onDeviceDelete(deviceId);
-    }
-  }, [onDeviceDelete]);
-
-  // Start rename (defined early for keyboard handler)
-  const startRename = useCallback((deviceId: string) => {
+  // Start device config (Name and IP)
+  const startDeviceConfig = useCallback((deviceId: string) => {
     const device = devices.find(d => d.id === deviceId);
     if (device) {
-      setRenamingDevice(deviceId);
-      setRenameValue(device.name);
-      setContextMenu(null);
-      // Focus input after render
-      setTimeout(() => renameInputRef.current?.focus(), 0);
-    }
-  }, [devices]);
-
-  // Cancel rename (defined early for keyboard handler)
-  const cancelRename = useCallback(() => {
-    setRenamingDevice(null);
-    setRenameValue('');
-  }, []);
-
-  // Start IP config (defined early for keyboard handler)
-  const startIPConfig = useCallback((deviceId: string) => {
-    const device = devices.find(d => d.id === deviceId);
-    if (device) {
-      setConfiguringIP(deviceId);
+      setConfiguringDevice(deviceId);
+      setTempNameValue(device.name);
       setIpValue(device.ip || '');
       // Default subnet mask
       setSubnetValue('255.255.255.0');
@@ -505,55 +223,55 @@ export function NetworkTopology({
       setGatewayValue(ipParts.join('.'));
       setContextMenu(null);
       // Focus input after render
-      setTimeout(() => ipInputRef.current?.focus(), 0);
+      setTimeout(() => configInputRef.current?.focus(), 0);
     }
   }, [devices]);
 
-  // Cancel IP config
-  const cancelIPConfig = useCallback(() => {
-    setConfiguringIP(null);
+  // Cancel device config
+  const cancelDeviceConfig = useCallback(() => {
+    setConfiguringDevice(null);
+    setTempNameValue('');
     setIpValue('');
     setSubnetValue('');
     setGatewayValue('');
   }, []);
 
-  // Confirm IP config
-  const confirmIPConfig = useCallback(() => {
-    if (!configuringIP || !ipValue.trim()) return;
+  // Confirm device config
+  const confirmDeviceConfig = useCallback(() => {
+    if (!configuringDevice) return;
     
-    // Basic IP validation
-    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-    if (!ipRegex.test(ipValue)) {
-      return; // Invalid IP format
+    // Basic IP validation if IP is provided
+    if (ipValue.trim()) {
+      const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+      if (!ipRegex.test(ipValue)) {
+        return; // Invalid IP format
+      }
     }
     
     saveToHistory();
     setDevices((prev) =>
       prev.map((d) =>
-        d.id === configuringIP
-          ? { ...d, ip: ipValue.trim() }
+        d.id === configuringDevice
+          ? { ...d, name: tempNameValue.trim() || d.name, ip: ipValue.trim() }
           : d
       )
     );
-    setConfiguringIP(null);
+    setConfiguringDevice(null);
+    setTempNameValue('');
     setIpValue('');
     setSubnetValue('');
     setGatewayValue('');
-  }, [configuringIP, ipValue, saveToHistory]);
+  }, [configuringDevice, tempNameValue, ipValue, saveToHistory]);
 
-  // Handle keyboard events (Delete key, F2 for rename, and ESC for context menu)
+  // Handle keyboard events (Delete key and ESC for context menu)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Close context menu on ESC
       if (e.key === 'Escape') {
         setContextMenu(null);
-        // Also cancel rename if active
-        if (renamingDevice) {
-          cancelRename();
-        }
-        // Also cancel IP config if active
-        if (configuringIP) {
-          cancelIPConfig();
+        // Also cancel config if active
+        if (configuringDevice) {
+          cancelDeviceConfig();
         }
         // Cancel select all mode
         if (selectAllMode) {
@@ -573,7 +291,7 @@ export function NetworkTopology({
       }
       
       // Don't handle other keys if a modal is open
-      if (renamingDevice || configuringIP) {
+      if (configuringDevice) {
         return;
       }
       
@@ -594,12 +312,6 @@ export function NetworkTopology({
         }
       }
       
-      // F2 to rename selected device
-      if (e.key === 'F2' && selectedCanvasDevice && !selectAllMode) {
-        e.preventDefault();
-        startRename(selectedCanvasDevice);
-      }
-      
       // Ctrl+A to select all
       if (e.key === 'a' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
@@ -609,7 +321,7 @@ export function NetworkTopology({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedCanvasDevice, deleteDevice, renamingDevice, cancelRename, configuringIP, cancelIPConfig, startRename, selectAllMode, selectAllDevices, saveToHistory, devices, onDeviceDelete]);
+  }, [selectedCanvasDevice, deleteDevice, configuringDevice, cancelDeviceConfig, selectAllMode, selectAllDevices, saveToHistory, devices, onDeviceDelete]);
 
   // Close context menu when clicking outside
   useEffect(() => {
@@ -2098,7 +1810,6 @@ export function NetworkTopology({
             className="h-[500px] sm:h-[450px] md:h-[550px] lg:h-[650px] xl:h-[750px] 2xl:h-[850px] overflow-hidden cursor-grab active:cursor-grabbing relative touch-none select-none"
             onMouseDown={handleCanvasMouseDown}
             onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onClick={() => {
               if (isDrawingConnection) {
@@ -2341,6 +2052,9 @@ export function NetworkTopology({
                   isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
                 }`}
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
                 {language === 'tr' ? 'Aç' : 'Open'}
               </button>
               
@@ -2372,30 +2086,18 @@ export function NetworkTopology({
                 {language === 'tr' ? 'Kes' : 'Cut'}
               </button>
               
-              {/* Rename */}
+              {/* Configure */}
               <button
-                onClick={() => { startRename(contextMenu.deviceId!); }}
+                onClick={() => { startDeviceConfig(contextMenu.deviceId!); }}
                 className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${
                   isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                {language === 'tr' ? 'Yeniden Adlandır' : 'Rename'}
-              </button>
-              
-              {/* IP Config */}
-              <button
-                onClick={() => { startIPConfig(contextMenu.deviceId!); }}
-                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${
-                  isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                </svg>
-                {language === 'tr' ? 'IP Yapılandır' : 'IP Config'}
+                {language === 'tr' ? 'Yapılandır' : 'Configure'}
               </button>
               
               <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
@@ -2504,145 +2206,95 @@ export function NetworkTopology({
         </div>
       )}
 
-      {/* Rename Modal */}
-      {renamingDevice && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={cancelRename}>
+      {/* Device Configuration Modal (Name & IP) */}
+      {configuringDevice && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center backdrop-blur-sm" onClick={cancelDeviceConfig}>
           <div 
-            className={`${isDark ? 'bg-slate-800' : 'bg-white'} rounded-xl p-4 m-4 w-80 shadow-2xl`}
+            className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} border rounded-2xl p-6 m-4 w-96 shadow-2xl`}
             onClick={e => e.stopPropagation()}
           >
-            <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              {language === 'tr' ? 'Cihazı Yeniden Adlandır' : 'Rename Device'}
-            </h3>
-            <input
-              ref={renameInputRef}
-              type="text"
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  confirmRename();
-                } else if (e.key === 'Escape') {
-                  cancelRename();
-                }
-              }}
-              className={`w-full px-3 py-2 rounded-lg border text-sm ${
-                isDark 
-                  ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' 
-                  : 'bg-white border-slate-300 text-slate-800 placeholder-slate-400'
-              } focus:outline-none focus:ring-2 focus:ring-cyan-500`}
-              placeholder={language === 'tr' ? 'Yeni ad' : 'New name'}
-            />
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={cancelRename}
-                className={`flex-1 py-2 rounded-lg text-sm ${
-                  isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {language === 'tr' ? 'İptal' : 'Cancel'}
-              </button>
-              <button
-                onClick={confirmRename}
-                className="flex-1 py-2 rounded-lg text-sm bg-cyan-600 text-white hover:bg-cyan-700"
-              >
-                {language === 'tr' ? 'Kaydet' : 'Save'}
-              </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`p-2 rounded-lg ${isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                {language === 'tr' ? 'Cihaz Yapılandırması' : 'Device Configuration'}
+              </h3>
             </div>
-          </div>
-        </div>
-      )}
+            
+            <div className="space-y-4">
+              {/* Hostname */}
+              <div>
+                <label className={`text-xs font-semibold uppercase tracking-wider mb-1.5 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {language === 'tr' ? 'Cihaz Adı (Hostname)' : 'Device Name (Hostname)'}
+                </label>
+                <input
+                  ref={configInputRef}
+                  type="text"
+                  value={tempNameValue}
+                  onChange={(e) => setTempNameValue(e.target.value)}
+                  className={`w-full px-4 py-2.5 rounded-xl border transition-all ${
+                    isDark 
+                      ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-600 focus:border-cyan-500' 
+                      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-cyan-500'
+                  } outline-none`}
+                  placeholder={language === 'tr' ? 'Cihaz adı girin' : 'Enter device name'}
+                />
+              </div>
 
-      {/* IP Config Modal */}
-      {configuringIP && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={cancelIPConfig}>
-          <div 
-            className={`${isDark ? 'bg-slate-800' : 'bg-white'} rounded-xl p-4 m-4 w-96 shadow-2xl`}
-            onClick={e => e.stopPropagation()}
-          >
-            <h3 className={`text-base font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              {language === 'tr' ? 'IP Yapılandırması' : 'IP Configuration'}
-            </h3>
-            <p className={`text-xs mb-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              {devices.find(d => d.id === configuringIP)?.name}
-            </p>
-            
-            {/* IP Address */}
-            <div className="mb-3">
-              <label className={`text-xs font-medium mb-1 block ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                {language === 'tr' ? 'IP Adresi' : 'IP Address'}
-              </label>
-              <input
-                ref={ipInputRef}
-                type="text"
-                value={ipValue}
-                onChange={(e) => setIpValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    confirmIPConfig();
-                  } else if (e.key === 'Escape') {
-                    cancelIPConfig();
-                  }
-                }}
-                className={`w-full px-3 py-2 rounded-lg border text-sm font-mono ${
-                  isDark 
-                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' 
-                    : 'bg-white border-slate-300 text-slate-800 placeholder-slate-400'
-                } focus:outline-none focus:ring-2 focus:ring-cyan-500`}
-                placeholder="192.168.1.10"
-              />
+              <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'} my-2`} />
+
+              {/* IP Address */}
+              <div>
+                <label className={`text-xs font-semibold uppercase tracking-wider mb-1.5 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {language === 'tr' ? 'IP Adresi' : 'IP Address'}
+                </label>
+                <input
+                  type="text"
+                  value={ipValue}
+                  onChange={(e) => setIpValue(e.target.value)}
+                  className={`w-full px-4 py-2.5 rounded-xl border font-mono transition-all ${
+                    isDark 
+                      ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-600 focus:border-cyan-500' 
+                      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-cyan-500'
+                  } outline-none`}
+                  placeholder="192.168.1.x"
+                />
+              </div>
+              
+              {/* Subnet Mask */}
+              <div>
+                <label className={`text-xs font-semibold uppercase tracking-wider mb-1.5 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {language === 'tr' ? 'Alt Ağ Maskesi' : 'Subnet Mask'}
+                </label>
+                <input
+                  type="text"
+                  value={subnetValue}
+                  onChange={(e) => setSubnetValue(e.target.value)}
+                  className={`w-full px-4 py-2.5 rounded-xl border font-mono transition-all ${
+                    isDark 
+                      ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-600 focus:border-cyan-500' 
+                      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-cyan-500'
+                  } outline-none`}
+                />
+              </div>
             </div>
             
-            {/* Subnet Mask */}
-            <div className="mb-3">
-              <label className={`text-xs font-medium mb-1 block ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                {language === 'tr' ? 'Alt Ağ Maskesi' : 'Subnet Mask'}
-              </label>
-              <input
-                type="text"
-                value={subnetValue}
-                onChange={(e) => setSubnetValue(e.target.value)}
-                className={`w-full px-3 py-2 rounded-lg border text-sm font-mono ${
-                  isDark 
-                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' 
-                    : 'bg-white border-slate-300 text-slate-800 placeholder-slate-400'
-                } focus:outline-none focus:ring-2 focus:ring-cyan-500`}
-                placeholder="255.255.255.0"
-              />
-            </div>
-            
-            {/* Default Gateway */}
-            <div className="mb-4">
-              <label className={`text-xs font-medium mb-1 block ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                {language === 'tr' ? 'Varsayılan Ağ Geçidi' : 'Default Gateway'}
-              </label>
-              <input
-                type="text"
-                value={gatewayValue}
-                onChange={(e) => setGatewayValue(e.target.value)}
-                className={`w-full px-3 py-2 rounded-lg border text-sm font-mono ${
-                  isDark 
-                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' 
-                    : 'bg-white border-slate-300 text-slate-800 placeholder-slate-400'
-                } focus:outline-none focus:ring-2 focus:ring-cyan-500`}
-                placeholder="192.168.1.1"
-              />
-            </div>
-            
-            <div className="flex gap-2">
+            <div className="flex gap-3 mt-8">
               <button
-                onClick={cancelIPConfig}
-                className={`flex-1 py-2 rounded-lg text-sm ${
+                onClick={cancelDeviceConfig}
+                className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${
                   isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 {language === 'tr' ? 'İptal' : 'Cancel'}
               </button>
               <button
-                onClick={confirmIPConfig}
-                className="flex-1 py-2 rounded-lg text-sm bg-cyan-600 text-white hover:bg-cyan-700"
+                onClick={confirmDeviceConfig}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold bg-cyan-600 text-white hover:bg-cyan-700 shadow-lg shadow-cyan-900/20 transition-all"
               >
                 {language === 'tr' ? 'Kaydet' : 'Save'}
               </button>

@@ -1245,6 +1245,7 @@ export default function Home() {
                 onDeviceDelete={handleDeviceDelete}
                 initialDevices={topologyDevices || undefined}
                 initialConnections={topologyConnections || undefined}
+                isActive={activeTab === 'topology'}
               />
             </div>
             
