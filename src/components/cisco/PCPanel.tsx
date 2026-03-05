@@ -811,7 +811,11 @@ export function PCPanel({ deviceId, cableInfo, isVisible, onClose, topologyDevic
         setCurrentCommand('');
       }
     } else if (e.key === 'Escape') {
-      onClose();
+      if (showCompletionBar && !interactiveState.active) {
+        setShowCompletionBar(false);
+      } else {
+        onClose();
+      }
     }
   };
   

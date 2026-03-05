@@ -19,6 +19,7 @@ interface VlanPanelProps {
   onExecuteCommand: (command: string) => Promise<void>;
   t: Translations;
   theme: string;
+  activeDeviceType?: 'pc' | 'switch' | 'router';
 }
 
 interface VlanTask {
@@ -30,12 +31,43 @@ interface VlanTask {
   hint: string;
 }
 
-export function VlanPanel({ vlans, ports, deviceName, onExecuteCommand, t, theme }: VlanPanelProps) {
+export function VlanPanel({ vlans, ports, deviceName, onExecuteCommand, t, theme, activeDeviceType }: VlanPanelProps) {
   const [newVlanId, setNewVlanId] = useState('');
   const [newVlanName, setNewVlanName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   
   const isDark = theme === 'dark';
+
+  const cardBg = isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
+  const innerBg = isDark ? 'bg-slate-900' : 'bg-slate-100';
+  const itemBg = isDark ? 'bg-slate-900' : 'bg-slate-50';
+  const textPrimary = isDark ? 'text-white' : 'text-slate-900';
+  const textSecondary = isDark ? 'text-slate-400' : 'text-slate-600';
+  const textMuted = isDark ? 'text-slate-500' : 'text-slate-400';
+
+  if (activeDeviceType === 'pc') {
+    return (
+      <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-purple-400 text-base sm:text-lg flex items-center gap-2">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            {deviceName || t.vlanStatus}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center h-48 sm:h-64 text-center text-slate-500">
+            <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <p className="text-lg font-medium">{t.language === 'tr' ? 'PC Cihazlarında VLAN Yapılandırması Yok' : 'VLAN Configuration Not Applicable for PC Devices'}</p>
+            <p className="text-sm">{t.language === 'tr' ? 'VLAN bilgileri sadece switch veya router cihazlarında görüntülenebilir ve yapılandırılabilir.' : 'VLAN information can only be viewed and configured on switch or router devices.'}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const getPortsForVlan = (vlanId: number): string[] => {
     return Object.values(ports)

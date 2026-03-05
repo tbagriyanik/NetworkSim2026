@@ -758,7 +758,7 @@ export default function Home() {
         setHasUnsavedChanges(false);
 
       } catch (error) {
-        console.error('Failed to load project:', error);
+
         alert(language === 'tr' ? 'Proje dosyası yüklenemedi!' : 'Failed to load project file!');
       }
     };
@@ -1114,13 +1114,7 @@ export default function Home() {
                 )}
               </div>
             )})()}
-            {tabs.filter(tab => {
-              // Hide Terminal, Ports, VLAN, Security tabs when PC is selected
-              if (activeDeviceType === 'pc') {
-                return tab.id === 'topology';
-              }
-              return true;
-            }).map((tab) => {
+            {tabs.map((tab) => {
               const score = calculateTaskScore(tab.tasks, state, taskContext);
               const tabMaxScore = tab.tasks.reduce((acc, task) => acc + task.weight, 0);
               const isActive = activeTab === tab.id;
@@ -1362,6 +1356,7 @@ export default function Home() {
                 onExecuteCommand={handleCommand}
                 t={t}
                 theme={theme}
+                activeDeviceType={activeDeviceType}
               />
             </div>
             <div>
