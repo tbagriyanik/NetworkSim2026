@@ -1,4 +1,4 @@
-# 📋 Cisco Switch Simulator Pro - Planning & Roadmap
+# 📋 Cisco Simulator Pro - Planning & Roadmap
 
 This document tracks the implementation status of features and planned enhancements for the simulator.
 

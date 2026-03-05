@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cisco Switch Simulator - Catalyst 2960",
+  title: "Cisco Simulator - Catalyst 2960",
   description: "Interactive Cisco IOS switch simulator for learning network configuration. Practice CLI commands, VLAN management, and security settings.",
   keywords: ["Cisco", "Switch", "Simulator", "IOS", "Network", "CLI", "Catalyst 2960", "VLAN", "Learning"],
   authors: [{ name: "Cisco Simulator Team" }],
@@ -23,15 +23,15 @@ export const metadata: Metadata = {
     icon: "/favicon.png",
   },
   openGraph: {
-    title: "Cisco Switch Simulator",
+    title: "Cisco Simulator",
     description: "Practice Cisco IOS commands in an interactive web-based simulator",
     url: "https://cisco-simulator.example.com",
-    siteName: "Cisco Switch Simulator",
+    siteName: "Cisco Simulator",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cisco Switch Simulator",
+    title: "Cisco Simulator",
     description: "Practice Cisco IOS commands in an interactive web-based simulator",
   },
 };

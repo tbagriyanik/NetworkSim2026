@@ -1,4 +1,4 @@
-// Cisco Switch Simulator Types
+// Cisco Simulator Types
 
 export type CommandMode = 
   | 'user'           // Switch>

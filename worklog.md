@@ -1,9 +1,9 @@
-# Cisco Switch Simulator Projesi - Çalışma Günlüğü
+# Cisco Simulator Projesi - Çalışma Günlüğü
 
 ---
 ## Task ID: 1 - Main Agent
 ### Work Task
-Cisco Switch Simulator web uygulaması geliştirme - Tüm bileşenlerin oluşturulması ve entegrasyonu.
+Cisco Simulator web uygulaması geliştirme - Tüm bileşenlerin oluşturulması ve entegrasyonu.
 
 ### Work Summary
 Proje başlatıldı. Kullanıcı gereksinimleri doğrultusunda aşağıdaki bileşenler geliştirilecek:
@@ -119,7 +119,7 @@ Completed three major improvements to the network topology and CLI system:
 ---
 ## Task ID: 4 - UX/UI Enhancement Agent
 ### Work Task
-Comprehensive UX and UI improvements for the entire Cisco Switch Simulator application.
+Comprehensive UX and UI improvements for the entire Cisco Simulator application.
 
 ### Work Summary
 Completed extensive UX/UI improvements across all components:

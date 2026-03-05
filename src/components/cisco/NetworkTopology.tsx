@@ -200,6 +200,42 @@ export function NetworkTopology({
   // Clipboard state for copy/cut/paste
   const [clipboard, setClipboard] = useState<CanvasDevice | null>(null);
   
+  // Undo/Redo history
+  const [history, setHistory] = useState<{ devices: CanvasDevice[]; connections: CanvasConnection[] }[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const historyRef = useRef({ history, historyIndex });
+
+  // Save state to history for undo
+  const saveToHistory = useCallback(() => {
+    const newState = { devices: [...devices], connections: [...connections] };
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(newState);
+      return newHistory.slice(-50); // Keep last 50 states
+    });
+    setHistoryIndex(prev => Math.min(prev + 1, 49));
+  }, [devices, connections, historyIndex]);
+
+  // Undo
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0) {
+      const prevState = history[historyIndex - 1];
+      setDevices(prevState.devices);
+      setConnections(prevState.connections);
+      setHistoryIndex(prev => prev - 1);
+    }
+  }, [history, historyIndex]);
+
+  // Redo
+  const handleRedo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const nextState = history[historyIndex + 1];
+      setDevices(nextState.devices);
+      setConnections(nextState.connections);
+      setHistoryIndex(prev => prev + 1);
+    }
+  }, [history, historyIndex]);
+
   // Configuration state (Name, IP, etc.)
   const [configuringDevice, setConfiguringDevice] = useState<string | null>(null);
   const [tempNameValue, setTempNameValue] = useState('');

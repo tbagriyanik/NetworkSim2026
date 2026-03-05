@@ -1,4 +1,4 @@
-# 🚀 Cisco Switch Simulator Pro
+# 🚀 Cisco Simulator Pro
 
 A modern, production-ready, and highly interactive web-based Cisco IOS simulator designed for students and network enthusiasts to practice Cisco configuration in a safe environment.
 
