@@ -31,7 +31,7 @@ interface VlanTask {
   hint: string;
 }
 
-export function VlanPanel({ vlans, ports, deviceName, onExecuteCommand, t, theme, activeDeviceType }: VlanPanelProps) {
+export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteCommand, t, theme, activeDeviceType }: VlanPanelProps) {
   const [newVlanId, setNewVlanId] = useState('');
   const [newVlanName, setNewVlanName] = useState('');
   const [isCreating, setIsCreating] = useState(false);

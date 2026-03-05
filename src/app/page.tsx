@@ -1353,6 +1353,7 @@ export default function Home() {
                 vlans={state.vlans}
                 ports={state.ports}
                 deviceName={state.hostname}
+                deviceModel={activeDeviceType === 'router' ? 'CISCO-1941' : 'WS-C2960-24TT-L'}
                 onExecuteCommand={handleCommand}
                 t={t}
                 theme={theme}
