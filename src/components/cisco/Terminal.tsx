@@ -1165,7 +1165,7 @@ export function Terminal({ deviceId, deviceName, prompt, state, onCommand, onCle
               {/* Ghost text layer - shows completion suggestion */}
               {!isPasswordMode && currentSuggestions.length > 0 && input.length > 0 && (
                 <div 
-                  className="absolute inset-0 flex items-center pointer-events-none font-mono text-sm overflow-hidden"
+                  className="absolute inset-0 flex items-center pointer-events-none font-mono text-sm overflow-hidden py-1.5"
                   aria-hidden="true"
                 >
                   <span className="text-transparent">{input}</span>

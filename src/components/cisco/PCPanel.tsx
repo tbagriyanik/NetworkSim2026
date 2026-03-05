@@ -914,7 +914,7 @@ export function PCPanel({ deviceId, cableInfo, isVisible, onClose, topologyDevic
           {/* Ghost text layer - shows completion suggestion */}
           {currentSuggestions.length > 0 && currentCommand && !interactiveState.active && (
             <div 
-              className="absolute inset-0 flex items-center pointer-events-none font-mono text-xs overflow-hidden"
+              className="absolute inset-0 flex items-center pointer-events-none font-mono text-xs overflow-hidden py-1"
               aria-hidden="true"
             >
               <span className="text-transparent">{currentCommand}</span>
