@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent
 import { CableType, CableInfo, getCableTypeName, isCableCompatible } from '@/lib/cisco/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface NetworkTopologyProps {
   cableInfo: CableInfo;
@@ -163,10 +164,10 @@ export function NetworkTopology({
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [selectedCanvasDevice, setSelectedCanvasDevice] = useState<string | null>(null);
-  
+
   // Select all state
   const [selectAllMode, setSelectAllMode] = useState(false);
-  
+
   // Drag state with position tracking
   const [draggedDevice, setDraggedDevice] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -177,7 +178,7 @@ export function NetworkTopology({
   const dragAnimationFrameRef = useRef<number | null>(null);
   const lastDragPositionRef = useRef<{ x: number; y: number } | null>(null);
   const devicePositionRef = useRef<{ [key: string]: { x: number; y: number } }>({});
-  
+
   // Ref to track if we were dragging (for click handler to check without stale closure)
   const wasDraggingRef = useRef(false);
 
@@ -199,7 +200,7 @@ export function NetworkTopology({
 
   // Clipboard state for copy/cut/paste
   const [clipboard, setClipboard] = useState<CanvasDevice | null>(null);
-  
+
   // Undo/Redo history
   const [history, setHistory] = useState<{ devices: CanvasDevice[]; connections: CanvasConnection[] }[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -244,6 +245,47 @@ export function NetworkTopology({
   const [gatewayValue, setGatewayValue] = useState('');
   const configInputRef = useRef<HTMLInputElement>(null);
 
+  // Rename state
+  const [renamingDevice, setRenamingDevice] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+
+  // UI state
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+
+  // Touch/Mobile state
+  const isMobile = useIsMobile();
+  const [isTouchDragging, setIsTouchDragging] = useState(false);
+  const [touchDraggedDevice, setTouchDraggedDevice] = useState<string | null>(null);
+  const [touchDragStartPos, setTouchDragStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [touchDragOffset, setTouchDragOffset] = useState({ x: 0, y: 0 });
+  const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [lastTapTime, setLastTapTime] = useState(0);
+  const [lastTappedDevice, setLastTappedDevice] = useState<string | null>(null);
+
+  // Ping and port selector state
+  const [pingSource, setPingSource] = useState<string | null>(null);
+  const [showPortSelector, setShowPortSelector] = useState(false);
+  const [portSelectorStep, setPortSelectorStep] = useState<'source' | 'target'>('source');
+  const [selectedSourcePort, setSelectedSourcePort] = useState<{ deviceId: string; portId: string } | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+
+  // Ping animation state
+  const [pingAnimation, setPingAnimation] = useState<{
+    sourceId: string;
+    targetId: string;
+    path: string[];
+    currentHopIndex: number;
+    progress: number;
+    success: boolean | null;
+  } | null>(null);
+
+  // Refs
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const deviceCounterRef = useRef<{ pc: number; switch: number; router: number }>({ pc: 0, switch: 0, router: 0 });
+  const pingAnimationRef = useRef<number | null>(null);
+
   // Start device config (Name and IP)
   const startDeviceConfig = useCallback((deviceId: string) => {
     const device = devices.find(d => d.id === deviceId);
@@ -275,7 +317,7 @@ export function NetworkTopology({
   // Confirm device config
   const confirmDeviceConfig = useCallback(() => {
     if (!configuringDevice) return;
-    
+
     // Basic IP validation if IP is provided
     if (ipValue.trim()) {
       const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
@@ -283,7 +325,7 @@ export function NetworkTopology({
         return; // Invalid IP format
       }
     }
-    
+
     saveToHistory();
     setDevices((prev) =>
       prev.map((d) =>
@@ -298,6 +340,40 @@ export function NetworkTopology({
     setSubnetValue('');
     setGatewayValue('');
   }, [configuringDevice, tempNameValue, ipValue, saveToHistory]);
+
+  // Delete device and its connections
+  const deleteDevice = useCallback((deviceId: string) => {
+    saveToHistory();
+    setDevices((prev) => prev.filter((d) => d.id !== deviceId));
+    setConnections((prev) =>
+      prev.filter((c) => c.sourceDeviceId !== deviceId && c.targetDeviceId !== deviceId)
+    );
+    if (onDeviceDelete) {
+      onDeviceDelete(deviceId);
+    }
+  }, [saveToHistory, onDeviceDelete]);
+
+  // Select all devices
+  const selectAllDevices = useCallback(() => {
+    setSelectAllMode(true);
+  }, []);
+
+  // Calculate distance between two points
+  const getDistance = useCallback((x1: number, y1: number, x2: number, y2: number): number => {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
+  }, []);
+
+  // Get canvas coordinates from screen coordinates
+  const getCanvasCoords = useCallback((clientX: number, clientY: number) => {
+    if (!canvasRef.current) return { x: 0, y: 0 };
+    const rect = canvasRef.current.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left - pan.x) / zoom,
+      y: (clientY - rect.top - pan.y) / zoom,
+    };
+  }, [pan, zoom]);
 
   // Handle keyboard events (Delete key and ESC for context menu)
   useEffect(() => {
@@ -325,12 +401,12 @@ export function NetworkTopology({
         }
         return;
       }
-      
+
       // Don't handle other keys if a modal is open
       if (configuringDevice) {
         return;
       }
-      
+
       // Delete selected device(s)
       if (e.key === 'Delete') {
         if (selectAllMode) {
@@ -347,7 +423,7 @@ export function NetworkTopology({
           setSelectedCanvasDevice(null);
         }
       }
-      
+
       // Ctrl+A to select all
       if (e.key === 'a' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
@@ -404,7 +480,7 @@ export function NetworkTopology({
             wasDraggingRef.current = true; // Mark as dragging for click handler
           }
         }
-        
+
         if (isActuallyDragging) {
           // Throttling with requestAnimationFrame
           if (dragAnimationFrameRef.current !== null) return;
@@ -413,27 +489,27 @@ export function NetworkTopology({
             const rect = canvasRef.current!.getBoundingClientRect();
             const newX = (e.clientX - rect.left - pan.x - dragOffset.x) / zoom;
             const newY = (e.clientY - rect.top - pan.y - dragOffset.y) / zoom;
-            
+
             // Clamp to canvas bounds
             const canvasDims = getCanvasDimensions();
             const clampedX = Math.max(20, Math.min(newX, canvasDims.width - 100));
             const clampedY = Math.max(20, Math.min(newY, canvasDims.height - 100));
-            
+
             setDevices((prev) => {
               const deviceIndex = prev.findIndex(d => d.id === draggedDevice);
               if (deviceIndex === -1) return prev;
-              
+
               const oldDevice = prev[deviceIndex];
               // Only update if change is significant (> 0.1px) to avoid micro-renders
               if (Math.abs(oldDevice.x - clampedX) < 0.1 && Math.abs(oldDevice.y - clampedY) < 0.1) {
                 return prev;
               }
-              
+
               const newDevices = [...prev];
               newDevices[deviceIndex] = { ...oldDevice, x: clampedX, y: clampedY };
               return newDevices;
             });
-            
+
             dragAnimationFrameRef.current = null;
           });
         }
@@ -449,15 +525,15 @@ export function NetworkTopology({
         cancelAnimationFrame(dragAnimationFrameRef.current);
         dragAnimationFrameRef.current = null;
       }
-      
+
       // Save to history if we were actually dragging a device
       if (isActuallyDragging && draggedDevice) {
         saveToHistory();
       }
-      
+
       // Note: We don't reset wasDraggingRef here - let it persist for the click handler
       // The click handler will check wasDraggingRef and the next mousedown will reset it
-      
+
       setIsPanning(false);
       setDraggedDevice(null);
       setDragStartPos(null);
@@ -482,9 +558,9 @@ export function NetworkTopology({
 
     const handleGlobalTouchMove = (e: globalThis.TouchEvent) => {
       if (e.touches.length !== 1 || !touchDraggedDevice || !canvasRef.current) return;
-      
+
       const touch = e.touches[0];
-      
+
       // Check if we've moved enough to consider it a drag
       if (touchDragStartPos) {
         const distance = getDistance(touchDragStartPos.x, touchDragStartPos.y, touch.clientX, touch.clientY);
@@ -498,15 +574,15 @@ export function NetworkTopology({
         const rect = canvasRef.current.getBoundingClientRect();
         const newX = (touch.clientX - rect.left - pan.x - touchDragOffset.x) / zoom;
         const newY = (touch.clientY - rect.top - pan.y - touchDragOffset.y) / zoom;
-        
+
         // Clamp to canvas bounds
         const canvasDims = getCanvasDimensions();
         const clampedX = Math.max(50, Math.min(newX, canvasDims.width - 120));
         const clampedY = Math.max(50, Math.min(newY, canvasDims.height - 150));
-        
+
         // Store position in ref for animation frame
         lastDragPositionRef.current = { x: clampedX, y: clampedY };
-        
+
         // Use requestAnimationFrame for smooth updates
         if (!dragAnimationFrameRef.current) {
           dragAnimationFrameRef.current = requestAnimationFrame(() => {
@@ -531,7 +607,7 @@ export function NetworkTopology({
         cancelAnimationFrame(dragAnimationFrameRef.current);
         dragAnimationFrameRef.current = null;
       }
-      
+
       // If we weren't dragging, treat it as a tap (select)
       if (touchDraggedDevice && !isTouchDragging) {
         const device = devices.find(d => d.id === touchDraggedDevice);
@@ -540,14 +616,14 @@ export function NetworkTopology({
           onDeviceSelect(device.type === 'router' ? 'switch' : device.type, device.id);
         }
       }
-      
+
       setTouchDraggedDevice(null);
       setTouchDragStartPos(null);
       setIsTouchDragging(false);
       setLastTouchDistance(null);
       setTouchStart(null);
       lastDragPositionRef.current = null;
-      
+
       if (longPressTimer) {
         clearTimeout(longPressTimer);
         setLongPressTimer(null);
@@ -557,7 +633,7 @@ export function NetworkTopology({
     window.addEventListener('touchmove', handleGlobalTouchMove, { passive: false });
     window.addEventListener('touchend', handleGlobalTouchEnd);
     window.addEventListener('touchcancel', handleGlobalTouchEnd);
-    
+
     return () => {
       window.removeEventListener('touchmove', handleGlobalTouchMove);
       window.removeEventListener('touchend', handleGlobalTouchEnd);
@@ -579,7 +655,7 @@ export function NetworkTopology({
 
     // Reset drag tracking
     wasDraggingRef.current = false;
-    
+
     // Store the starting position for distance calculation
     setDragStartPos({ x: e.clientX, y: e.clientY });
     setIsActuallyDragging(false);
@@ -596,7 +672,7 @@ export function NetworkTopology({
     e.stopPropagation();
     // Don't handle click if we were dragging (check ref to avoid stale closure)
     if (wasDraggingRef.current) return;
-    
+
     setSelectedCanvasDevice(device.id);
     // Notify parent component - select device, don't open terminal
     onDeviceSelect(device.type === 'router' ? 'switch' : device.type, device.id);
@@ -621,27 +697,27 @@ export function NetworkTopology({
   const handleContextMenu = useCallback((e: ReactMouseEvent, deviceId?: string) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Estimate menu dimensions (approximate)
     const menuWidth = 180;
     const menuHeight = deviceId ? 400 : 200; // Device menu is taller
-    
+
     // Clamp coordinates to stay within viewport
     let x = e.clientX;
     let y = e.clientY;
-    
+
     if (x + menuWidth > window.innerWidth) {
       x = window.innerWidth - menuWidth - 10;
     }
-    
+
     if (y + menuHeight > window.innerHeight) {
       y = window.innerHeight - menuHeight - 10;
     }
-    
+
     // Ensure it doesn't go off the top/left either
     x = Math.max(10, x);
     y = Math.max(10, y);
-    
+
     setContextMenu({ x, y, deviceId: deviceId || null });
   }, []);
 
@@ -649,9 +725,9 @@ export function NetworkTopology({
   const handleDeviceTouchStart = useCallback((e: ReactTouchEvent, deviceId: string) => {
     if (e.touches.length !== 1) return; // Only handle single touch for dragging
     e.stopPropagation();
-    
+
     if (!canvasRef.current) return;
-    
+
     const touch = e.touches[0];
     const rect = canvasRef.current.getBoundingClientRect();
     const device = devices.find((d) => d.id === deviceId);
@@ -693,7 +769,7 @@ export function NetworkTopology({
     e.preventDefault(); // Prevent scrolling
 
     const touch = e.touches[0];
-    
+
     // Check if we've moved enough to consider it a drag
     if (touchDragStartPos) {
       const distance = getDistance(touchDragStartPos.x, touchDragStartPos.y, touch.clientX, touch.clientY);
@@ -706,7 +782,7 @@ export function NetworkTopology({
       const rect = canvasRef.current.getBoundingClientRect();
       const newX = (touch.clientX - rect.left - pan.x - touchDragOffset.x) / zoom;
       const newY = (touch.clientY - rect.top - pan.y - touchDragOffset.y) / zoom;
-      
+
       const canvasDims = getCanvasDimensions();
       setDevices((prev) =>
         prev.map((d) =>
@@ -728,7 +804,7 @@ export function NetworkTopology({
         onDeviceSelect(device.type === 'router' ? 'switch' : device.type, device.id);
       }
     }
-    
+
     setTouchDraggedDevice(null);
     setTouchDragStartPos(null);
     setIsTouchDragging(false);
@@ -753,8 +829,8 @@ export function NetworkTopology({
       // Check if trying to connect to itself (same device, different port)
       if (connectionStart.deviceId === deviceId) {
         // Show error message - cannot connect device to itself
-        const errorMsg = language === 'tr' 
-          ? 'Bir cihaz kendisine bağlanamaz!' 
+        const errorMsg = language === 'tr'
+          ? 'Bir cihaz kendisine bağlanamaz!'
           : 'A device cannot connect to itself!';
         setConnectionError(errorMsg);
         setTimeout(() => setConnectionError(null), 3000);
@@ -821,12 +897,12 @@ export function NetworkTopology({
       const col = portIndex % portsPerRow;
       const row = Math.floor(portIndex / portsPerRow);
       const portSpacing = device.type === 'pc' ? 18 : 14;
-      const startX = device.type === 'pc' 
+      const startX = device.type === 'pc'
         ? 42.5 - (device.ports.length > 1 ? portSpacing / 2 : 0)
         : 14;
       const portX = device.x + startX + col * portSpacing;
       const portY = device.y + 80 + row * 14;
-      
+
       setIsDrawingConnection(true);
       setConnectionStart({
         deviceId,
@@ -849,12 +925,12 @@ export function NetworkTopology({
   const addDevice = useCallback((type: 'pc' | 'switch' | 'router') => {
     saveToHistory();
     deviceCounterRef.current[type]++;
-    
+
     // Calculate position near top-left with some random offset
     const deviceCount = devices.length;
     const offsetX = (deviceCount % 4) * 100;
     const offsetY = Math.floor(deviceCount / 4) * 100;
-    
+
     const newDevice: CanvasDevice = {
       id: `${type}-${deviceCounterRef.current[type]}`,
       type,
@@ -867,9 +943,9 @@ export function NetworkTopology({
       ports:
         type === 'pc'
           ? [
-              { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
-              { id: 'com1', label: 'COM1', status: 'disconnected' as const },
-            ]
+            { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
+            { id: 'com1', label: 'COM1', status: 'disconnected' as const },
+          ]
           : type === 'switch'
             ? generateSwitchPorts()
             : generateRouterPorts(),
@@ -923,26 +999,6 @@ export function NetworkTopology({
     deviceCounterRef.current = { pc: 0, switch: 0, router: 0 };
   }, []);
 
-  // Undo
-  const handleUndo = useCallback(() => {
-    if (historyIndex > 0) {
-      const prevState = history[historyIndex - 1];
-      setDevices(prevState.devices);
-      setConnections(prevState.connections);
-      setHistoryIndex(prev => prev - 1);
-    }
-  }, [history, historyIndex]);
-
-  // Redo
-  const handleRedo = useCallback(() => {
-    if (historyIndex < history.length - 1) {
-      const nextState = history[historyIndex + 1];
-      setDevices(nextState.devices);
-      setConnections(nextState.connections);
-      setHistoryIndex(prev => prev + 1);
-    }
-  }, [history, historyIndex]);
-
   // Copy device
   const copyDevice = useCallback((deviceId: string) => {
     const device = devices.find(d => d.id === deviceId);
@@ -966,7 +1022,7 @@ export function NetworkTopology({
   const confirmRename = useCallback(() => {
     if (renamingDevice && renameValue.trim()) {
       saveToHistory();
-      setDevices(prev => prev.map(d => 
+      setDevices(prev => prev.map(d =>
         d.id === renamingDevice ? { ...d, name: renameValue.trim() } : d
       ));
     }
@@ -977,14 +1033,14 @@ export function NetworkTopology({
   // Paste device
   const pasteDevice = useCallback(() => {
     if (!clipboard) return;
-    
+
     saveToHistory();
-    
+
     // Create new device with new ID
     const type = clipboard.type;
     deviceCounterRef.current[type]++;
     const newId = `${type}-${deviceCounterRef.current[type]}`;
-    
+
     const newDevice: CanvasDevice = {
       ...clipboard,
       id: newId,
@@ -994,7 +1050,7 @@ export function NetworkTopology({
       y: clipboard.y + 30,
       ports: clipboard.ports.map(p => ({ ...p, status: 'disconnected' as const })),
     };
-    
+
     setDevices(prev => [...prev, newDevice]);
     setContextMenu(null);
   }, [clipboard, saveToHistory, generateUniqueIp]);
@@ -1009,30 +1065,30 @@ export function NetworkTopology({
 
     while (queue.length > 0) {
       const current = queue.shift()!;
-      
+
       // Find all connected devices
       for (const conn of connections) {
         let nextDeviceId: string | null = null;
-        
+
         if (conn.sourceDeviceId === current.deviceId && !visited.has(conn.targetDeviceId)) {
           nextDeviceId = conn.targetDeviceId;
         } else if (conn.targetDeviceId === current.deviceId && !visited.has(conn.sourceDeviceId)) {
           nextDeviceId = conn.sourceDeviceId;
         }
-        
+
         if (nextDeviceId) {
           const newPath = [...current.path, nextDeviceId!];
-          
+
           if (nextDeviceId === targetId) {
             return newPath;
           }
-          
+
           visited.add(nextDeviceId!);
           queue.push({ deviceId: nextDeviceId!, path: newPath });
         }
       }
     }
-    
+
     return null; // No path found
   }, [connections]);
 
@@ -1048,42 +1104,42 @@ export function NetworkTopology({
 
     if (!path || path.length < 2) {
       // No path found - show error
-      setPingAnimation({ 
-        sourceId, 
-        targetId, 
-        path: [sourceId, targetId], 
-        currentHopIndex: 0, 
-        progress: 1, 
-        success: false 
+      setPingAnimation({
+        sourceId,
+        targetId,
+        path: [sourceId, targetId],
+        currentHopIndex: 0,
+        progress: 1,
+        success: false
       });
       setTimeout(() => setPingAnimation(null), 2500);
       return;
     }
 
     // Start ping animation
-    setPingAnimation({ 
-      sourceId, 
-      targetId, 
-      path, 
-      currentHopIndex: 0, 
-      progress: 0, 
-      success: null 
+    setPingAnimation({
+      sourceId,
+      targetId,
+      path,
+      currentHopIndex: 0,
+      progress: 0,
+      success: null
     });
 
     // Animate ping - each hop takes 800ms
     const hopDuration = 800;
     let startTime = Date.now();
     let currentHop = 0;
-    
+
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / hopDuration, 1);
-      
+
       setPingAnimation(prev => {
         if (!prev) return null;
         return { ...prev, currentHopIndex: currentHop, progress };
       });
-      
+
       if (progress < 1) {
         pingAnimationRef.current = requestAnimationFrame(animate);
       } else {
@@ -1099,14 +1155,14 @@ export function NetworkTopology({
         }
       }
     };
-    
+
     pingAnimationRef.current = requestAnimationFrame(animate);
   }, [connections, findPath]);
 
   // Get dynamic canvas dimensions based on screen size
   const getCanvasDimensions = useCallback(() => {
     if (typeof window === 'undefined') return { width: VIRTUAL_CANVAS_WIDTH_DESKTOP, height: VIRTUAL_CANVAS_HEIGHT_DESKTOP };
-    return isMobile 
+    return isMobile
       ? { width: VIRTUAL_CANVAS_WIDTH_MOBILE, height: VIRTUAL_CANVAS_HEIGHT_MOBILE }
       : { width: VIRTUAL_CANVAS_WIDTH_DESKTOP, height: VIRTUAL_CANVAS_HEIGHT_DESKTOP };
   }, [isMobile]);
@@ -1159,7 +1215,7 @@ export function NetworkTopology({
     // Get port positions for more accurate connection lines
     const source = getPortPosition(sourceDevice, conn.sourcePort);
     const target = getPortPosition(targetDevice, conn.targetPort);
-    
+
     // Check cable compatibility - use pink color for incompatible cables
     const cableInfoForConnection: CableInfo = {
       connected: true,
@@ -1175,35 +1231,35 @@ export function NetworkTopology({
     // Calculate parallel offset for multiple connections between same devices
     const sameDeviceConnections = connections.filter(
       c => (c.sourceDeviceId === conn.sourceDeviceId && c.targetDeviceId === conn.targetDeviceId) ||
-           (c.sourceDeviceId === conn.targetDeviceId && c.targetDeviceId === conn.sourceDeviceId)
+        (c.sourceDeviceId === conn.targetDeviceId && c.targetDeviceId === conn.sourceDeviceId)
     );
     const sameConnIndex = sameDeviceConnections.findIndex(c => c.id === conn.id);
     const totalSameConns = sameDeviceConnections.length;
-    
+
     // Calculate offset for parallel lines (spread out from center)
     const maxOffset = 20;
-    const offset = totalSameConns > 1 
+    const offset = totalSameConns > 1
       ? (sameConnIndex - (totalSameConns - 1) / 2) * (maxOffset / Math.max(totalSameConns - 1, 1))
       : 0;
 
     // Calculate control points for smooth curve with offset
     const midX = (source.x + target.x) / 2;
     const midY = (source.y + target.y) / 2;
-    
+
     // Apply perpendicular offset for parallel lines
     const dx = target.x - source.x;
     const dy = target.y - source.y;
     const len = Math.sqrt(dx * dx + dy * dy) || 1;
     const perpX = -dy / len * offset;
     const perpY = dx / len * offset;
-    
-    const controlPoint1 = { 
-      x: midX + perpX, 
-      y: source.y + perpY + Math.abs(offset) * 0.5 
+
+    const controlPoint1 = {
+      x: midX + perpX,
+      y: source.y + perpY + Math.abs(offset) * 0.5
     };
-    const controlPoint2 = { 
-      x: midX + perpX, 
-      y: target.y + perpY - Math.abs(offset) * 0.5 
+    const controlPoint2 = {
+      x: midX + perpX,
+      y: target.y + perpY - Math.abs(offset) * 0.5
     };
 
     return (
@@ -1218,7 +1274,7 @@ export function NetworkTopology({
           className="cursor-pointer hover:stroke-[5px]"
           onClick={() => deleteConnection(conn.id)}
         />
-        
+
         {/* X icon for incompatible cables */}
         {!isCompatible && (
           <g transform={`translate(${midX}, ${midY})`}>
@@ -1227,7 +1283,7 @@ export function NetworkTopology({
             <line x1="4" y1="-4" x2="-4" y2="4" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
           </g>
         )}
-        
+
         {/* Animated data flow - only for compatible cables */}
         {conn.active && isCompatible && (
           <>
@@ -1290,7 +1346,7 @@ export function NetworkTopology({
     const portsPerRow = device.type === 'pc' ? 2 : 8;
     const numRows = Math.ceil(device.ports.length / portsPerRow);
     const deviceHeight = device.type === 'pc' ? 85 : 80 + numRows * 14 + 5;
-    
+
     // Calculate device width to fit all ports with proper spacing
     // For switch/router: startX=12, portSpacing=13, portRadius=6
     // Width needed = startX + (portsPerRow - 1) * portSpacing + portRadius + margin
@@ -1386,13 +1442,13 @@ export function NetworkTopology({
             const portX = startX + idx * portSpacing;
             const portY = 80;
             const isConnected = port.status === 'connected';
-            
+
             // Determine port label: E for Ethernet, C for COM/Console
             const portLabel = port.id.toLowerCase().startsWith('com') ? 'C' : 'E';
-            
+
             // Port colors:
             // PC Ethernet: Blue, PC COM (Console): Turquoise
-            const portColor = port.id.toLowerCase().startsWith('com') 
+            const portColor = port.id.toLowerCase().startsWith('com')
               ? (isConnected ? '#06b6d4' : '#0891b2')  // Turquoise for console
               : (isConnected ? '#3b82f6' : '#1d4ed8'); // Blue for ethernet
 
@@ -1429,22 +1485,22 @@ export function NetworkTopology({
             const portX = startX + col * portSpacing;
             const portY = startY + row * rowSpacing;
             const isConnected = port.status === 'connected';
-            
+
             // Determine port type
             const portId = port.id.toLowerCase();
             const isConsole = portId === 'console';
             const isGigabit = portId.startsWith('gi'); // GigabitEthernet
             const isFastEthernet = portId.startsWith('fa'); // FastEthernet
-            
+
             // Extract port number - remove leading zeros
             const portNum = port.label.replace(/\D/g, '');
             const displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
-            
+
             // Port colors:
             // Console: Turquoise, Fa: Blue, Gi: Orange
             let portFill: string;
             let portStroke: string;
-            
+
             if (isConsole) {
               portFill = isConnected ? '#06b6d4' : '#0891b2'; // Turquoise
               portStroke = '#0891b2';
@@ -1507,29 +1563,26 @@ export function NetworkTopology({
   // Render Mobile Bottom Sheet
   const renderMobilePalette = () => (
     <div
-      className={`fixed inset-0 z-50 transition-all duration-300 md:hidden ${
-        isPaletteOpen ? 'pointer-events-auto' : 'pointer-events-none'
-      }`}
+      className={`fixed inset-0 z-50 transition-all duration-300 md:hidden ${isPaletteOpen ? 'pointer-events-auto' : 'pointer-events-none'
+        }`}
     >
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
-          isPaletteOpen ? 'opacity-100' : 'opacity-0'
-        }`}
+        className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${isPaletteOpen ? 'opacity-100' : 'opacity-0'
+          }`}
         onClick={() => setIsPaletteOpen(false)}
       />
-      
+
       {/* Bottom Sheet */}
       <div
-        className={`absolute bottom-0 left-0 right-0 bg-slate-900 rounded-t-2xl transition-transform duration-300 ${
-          isPaletteOpen ? 'translate-y-0' : 'translate-y-full'
-        }`}
+        className={`absolute bottom-0 left-0 right-0 bg-slate-900 rounded-t-2xl transition-transform duration-300 ${isPaletteOpen ? 'translate-y-0' : 'translate-y-full'
+          }`}
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-2">
           <div className="w-12 h-1.5 rounded-full bg-slate-600" />
         </div>
-        
+
         {/* Device Buttons */}
         <div className="px-4 pb-3">
           <div className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-2`}>
@@ -1540,11 +1593,10 @@ export function NetworkTopology({
               <button
                 key={type}
                 onClick={() => addDevice(type)}
-                className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border transition-all min-h-[80px] ${
-                  isDark
-                    ? 'border-slate-700 bg-slate-800 hover:bg-slate-700'
-                    : 'border-slate-300 bg-white hover:bg-slate-100'
-                }`}
+                className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border transition-all min-h-[80px] ${isDark
+                  ? 'border-slate-700 bg-slate-800 hover:bg-slate-700'
+                  : 'border-slate-300 bg-white hover:bg-slate-100'
+                  }`}
               >
                 <div className={
                   type === 'pc' ? 'text-blue-500' : type === 'switch' ? 'text-emerald-500' : 'text-purple-500'
@@ -1558,7 +1610,7 @@ export function NetworkTopology({
             ))}
           </div>
         </div>
-        
+
         {/* Cable Type Selector */}
         <div className="px-4 pb-4">
           <div className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-2`}>
@@ -1572,13 +1624,12 @@ export function NetworkTopology({
                   onCableChange({ ...cableInfo, cableType: type });
                   setIsPaletteOpen(false);
                 }}
-                className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-medium transition-all min-h-[48px] ${
-                  cableInfo.cableType === type
-                    ? `${CABLE_COLORS[type].bg} text-white border-transparent`
-                    : isDark
-                      ? 'border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300'
-                      : 'border-slate-300 bg-white hover:bg-slate-100 text-slate-600'
-                }`}
+                className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-medium transition-all min-h-[48px] ${cableInfo.cableType === type
+                  ? `${CABLE_COLORS[type].bg} text-white border-transparent`
+                  : isDark
+                    ? 'border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300'
+                    : 'border-slate-300 bg-white hover:bg-slate-100 text-slate-600'
+                  }`}
               >
                 <div className={`w-3 h-3 rounded ${CABLE_COLORS[type].bg}`} />
                 {type === 'straight'
@@ -1590,7 +1641,7 @@ export function NetworkTopology({
             ))}
           </div>
         </div>
-        
+
         {/* Safe Area Padding */}
         <div className="h-6" />
       </div>
@@ -1611,7 +1662,7 @@ export function NetworkTopology({
           </svg>
           <span className="text-xs text-slate-300">{language === 'tr' ? 'Ekle' : 'Add'}</span>
         </button>
-        
+
         {/* Cable Type */}
         <button
           onClick={() => setIsPaletteOpen(true)}
@@ -1619,14 +1670,14 @@ export function NetworkTopology({
         >
           <div className={`w-4 h-4 rounded ${CABLE_COLORS[cableInfo.cableType].bg}`} />
           <span className="text-xs text-slate-300">
-            {cableInfo.cableType === 'straight' 
+            {cableInfo.cableType === 'straight'
               ? language === 'tr' ? 'Düz' : 'Straight'
               : cableInfo.cableType === 'crossover'
                 ? language === 'tr' ? 'Çapraz' : 'X-over'
                 : language === 'tr' ? 'Konsol' : 'Console'}
           </span>
         </button>
-        
+
         {/* Zoom Controls */}
         <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
           <button
@@ -1651,11 +1702,10 @@ export function NetworkTopology({
 
   return (
     <div
-      className={`rounded-xl border-2 overflow-hidden transition-all duration-300 ${
-        isDark
-          ? 'bg-gradient-to-br from-slate-800/90 via-slate-700/80 to-slate-800/90 border-slate-600/50'
-          : 'bg-gradient-to-br from-blue-50/50 via-white to-slate-50/80 border-slate-300/50'
-      }`}
+      className={`rounded-xl border-2 overflow-hidden transition-all duration-300 ${isDark
+        ? 'bg-gradient-to-br from-slate-800/90 via-slate-700/80 to-slate-800/90 border-slate-600/50'
+        : 'bg-gradient-to-br from-blue-50/50 via-white to-slate-50/80 border-slate-300/50'
+        }`}
     >
       {/* Header */}
       <div
@@ -1685,11 +1735,10 @@ export function NetworkTopology({
                 setPortSelectorStep('source');
                 setSelectedSourcePort(null);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                isDark
-                  ? 'bg-cyan-600 hover:bg-cyan-700 text-white'
-                  : 'bg-cyan-500 hover:bg-cyan-600 text-white'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${isDark
+                ? 'bg-cyan-600 hover:bg-cyan-700 text-white'
+                : 'bg-cyan-500 hover:bg-cyan-600 text-white'
+                }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -1712,11 +1761,10 @@ export function NetworkTopology({
           {/* PC Button */}
           <button
             onClick={() => addDevice('pc')}
-            className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all min-h-[52px] ${
-              isDark
-                ? 'border-slate-600 bg-slate-700/50 hover:bg-slate-700 hover:border-blue-500'
-                : 'border-slate-300 bg-white hover:bg-slate-100 hover:border-blue-500'
-            }`}
+            className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all min-h-[52px] ${isDark
+              ? 'border-slate-600 bg-slate-700/50 hover:bg-slate-700 hover:border-blue-500'
+              : 'border-slate-300 bg-white hover:bg-slate-100 hover:border-blue-500'
+              }`}
           >
             <div className="text-blue-500">{DEVICE_ICONS.pc}</div>
             <span className={`text-[10px] font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>PC</span>
@@ -1725,11 +1773,10 @@ export function NetworkTopology({
           {/* Switch Button */}
           <button
             onClick={() => addDevice('switch')}
-            className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all min-h-[52px] ${
-              isDark
-                ? 'border-slate-600 bg-slate-700/50 hover:bg-slate-700 hover:border-emerald-500'
-                : 'border-slate-300 bg-white hover:bg-slate-100 hover:border-emerald-500'
-            }`}
+            className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all min-h-[52px] ${isDark
+              ? 'border-slate-600 bg-slate-700/50 hover:bg-slate-700 hover:border-emerald-500'
+              : 'border-slate-300 bg-white hover:bg-slate-100 hover:border-emerald-500'
+              }`}
           >
             <div className="text-emerald-500">{DEVICE_ICONS.switch}</div>
             <span className={`text-[10px] font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
@@ -1740,11 +1787,10 @@ export function NetworkTopology({
           {/* Router Button */}
           <button
             onClick={() => addDevice('router')}
-            className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all min-h-[52px] ${
-              isDark
-                ? 'border-slate-600 bg-slate-700/50 hover:bg-slate-700 hover:border-purple-500'
-                : 'border-slate-300 bg-white hover:bg-slate-100 hover:border-purple-500'
-            }`}
+            className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all min-h-[52px] ${isDark
+              ? 'border-slate-600 bg-slate-700/50 hover:bg-slate-700 hover:border-purple-500'
+              : 'border-slate-300 bg-white hover:bg-slate-100 hover:border-purple-500'
+              }`}
           >
             <div className="text-purple-500">{DEVICE_ICONS.router}</div>
             <span className={`text-[10px] font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
@@ -1763,13 +1809,12 @@ export function NetworkTopology({
             <button
               key={type}
               onClick={() => onCableChange({ ...cableInfo, cableType: type })}
-              className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all min-h-[44px] ${
-                cableInfo.cableType === type
-                  ? `${CABLE_COLORS[type].bg} text-white border-transparent`
-                  : isDark
-                    ? 'border-slate-600 bg-slate-700/50 hover:bg-slate-700'
-                    : 'border-slate-300 bg-white hover:bg-slate-100'
-              }`}
+              className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all min-h-[44px] ${cableInfo.cableType === type
+                ? `${CABLE_COLORS[type].bg} text-white border-transparent`
+                : isDark
+                  ? 'border-slate-600 bg-slate-700/50 hover:bg-slate-700'
+                  : 'border-slate-300 bg-white hover:bg-slate-100'
+                }`}
             >
               <div className={`w-3 h-3 rounded ${CABLE_COLORS[type].bg}`} />
               <span className={`text-[9px] font-medium ${cableInfo.cableType === type ? 'text-white' : isDark ? 'text-slate-300' : 'text-slate-600'}`}>
@@ -1793,9 +1838,8 @@ export function NetworkTopology({
         <div className={`flex-1 relative ${isMobile ? 'pb-20' : ''}`}>
           {/* Select All Mode Indicator */}
           {selectAllMode && (
-            <div className={`absolute top-2 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-lg shadow-lg flex items-center gap-3 ${
-              isDark ? 'bg-cyan-600/90 text-white' : 'bg-cyan-500 text-white'
-            }`}>
+            <div className={`absolute top-2 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-lg shadow-lg flex items-center gap-3 ${isDark ? 'bg-cyan-600/90 text-white' : 'bg-cyan-500 text-white'
+              }`}>
               <span className="text-sm font-medium">
                 {language === 'tr' ? `${devices.length} cihaz seçili` : `${devices.length} devices selected`}
               </span>
@@ -1821,7 +1865,7 @@ export function NetworkTopology({
               </button>
             </div>
           )}
-          
+
           {/* Canvas */}
           <div
             ref={canvasRef}
@@ -1881,7 +1925,7 @@ export function NetworkTopology({
                   height={getCanvasDimensions().height}
                   fill="url(#gridPattern)"
                 />
-                
+
                 {/* Connections */}
                 {connections.map((conn, index) => renderConnection(conn, index))}
 
@@ -1890,8 +1934,8 @@ export function NetworkTopology({
 
                 {/* Devices */}
                 {devices.map((device) => {
-                  const isCurrentlyDragging = (draggedDevice === device.id && isActuallyDragging) || 
-                                              (touchDraggedDevice === device.id && isTouchDragging);
+                  const isCurrentlyDragging = (draggedDevice === device.id && isActuallyDragging) ||
+                    (touchDraggedDevice === device.id && isTouchDragging);
                   return (
                     <g
                       key={device.id}
@@ -1922,13 +1966,13 @@ export function NetworkTopology({
                 strokeDasharray={`${6 / zoom},${4 / zoom}`}
                 opacity={0.7}
               />
-              
+
               {/* Canvas size label - bottom right only */}
-              <text 
-                x={getCanvasDimensions().width - 80} 
-                y={getCanvasDimensions().height - 10} 
-                fill={isDark ? '#64748b' : '#64748b'} 
-                fontSize={12 / zoom} 
+              <text
+                x={getCanvasDimensions().width - 80}
+                y={getCanvasDimensions().height - 10}
+                fill={isDark ? '#64748b' : '#64748b'}
+                fontSize={12 / zoom}
                 fontFamily="monospace"
               >
                 {getCanvasDimensions().width} × {getCanvasDimensions().height}
@@ -1938,15 +1982,13 @@ export function NetworkTopology({
 
           {/* Zoom Controls - Desktop Only - Top Right */}
           <div
-            className={`hidden md:flex absolute top-2 right-2 items-center gap-1 px-2 py-1 rounded-lg ${
-              isDark ? 'bg-slate-800/90' : 'bg-white/90'
-            } shadow-lg`}
+            className={`hidden md:flex absolute top-2 right-2 items-center gap-1 px-2 py-1 rounded-lg ${isDark ? 'bg-slate-800/90' : 'bg-white/90'
+              } shadow-lg`}
           >
             <button
               onClick={() => setZoom((z) => Math.max(MIN_ZOOM, z - 0.25))}
-              className={`w-7 h-7 flex items-center justify-center rounded ${
-                isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-              }`}
+              className={`w-7 h-7 flex items-center justify-center rounded ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                }`}
             >
               −
             </button>
@@ -1955,20 +1997,18 @@ export function NetworkTopology({
             </span>
             <button
               onClick={() => setZoom((z) => Math.min(MAX_ZOOM, z + 0.25))}
-              className={`w-7 h-7 flex items-center justify-center rounded ${
-                isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-              }`}
+              className={`w-7 h-7 flex items-center justify-center rounded ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                }`}
             >
               +
             </button>
             <div className={`w-px h-5 ${isDark ? 'bg-slate-600' : 'bg-slate-300'} mx-1`} />
             <button
               onClick={resetView}
-              className={`px-2 py-1 text-xs rounded ${
-                isDark
-                  ? 'hover:bg-slate-700 text-slate-300'
-                  : 'hover:bg-slate-100 text-slate-600'
-              }`}
+              className={`px-2 py-1 text-xs rounded ${isDark
+                ? 'hover:bg-slate-700 text-slate-300'
+                : 'hover:bg-slate-100 text-slate-600'
+                }`}
             >
               {language === 'tr' ? 'Sıfırla' : 'Reset'}
             </button>
@@ -1976,14 +2016,13 @@ export function NetworkTopology({
 
           {/* Minimap - Desktop Only - Below Zoom Controls */}
           <div
-            className={`hidden md:block absolute top-12 right-2 w-32 h-20 rounded border cursor-pointer ${
-              isDark ? 'border-slate-700 bg-slate-800/90' : 'border-slate-200 bg-white/90'
-            } shadow-lg overflow-hidden`}
+            className={`hidden md:block absolute top-12 right-2 w-32 h-20 rounded border cursor-pointer ${isDark ? 'border-slate-700 bg-slate-800/90' : 'border-slate-200 bg-white/90'
+              } shadow-lg overflow-hidden`}
             title={language === 'tr' ? 'Harita üzerinden gezinmek için tıklayın' : 'Click on map to navigate'}
           >
-            <svg 
-              width="100%" 
-              height="100%" 
+            <svg
+              width="100%"
+              height="100%"
               viewBox={`0 0 ${getCanvasDimensions().width} ${getCanvasDimensions().height}`}
               onClick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
@@ -2035,7 +2074,7 @@ export function NetworkTopology({
               ? 'Tek tık: seç, Çift tık: terminal, Sürükle: taşı'
               : 'Click: select, Double-click: terminal, Drag: move'}
           </div>
-          
+
           {/* Mobile Instructions */}
           <div
             className={`absolute bottom-2 right-2 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'} max-w-48 text-right sm:hidden`}
@@ -2050,9 +2089,8 @@ export function NetworkTopology({
       {/* Context Menu */}
       {contextMenu && (
         <div
-          className={`context-menu fixed z-50 py-1 rounded-lg shadow-xl min-w-[140px] ${
-            isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-slate-200'
-          }`}
+          className={`context-menu fixed z-50 py-1 rounded-lg shadow-xl min-w-[140px] ${isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-slate-200'
+            }`}
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -2066,50 +2104,46 @@ export function NetworkTopology({
                   if (device) handleDeviceDoubleClick(device);
                   setContextMenu(null);
                 }}
-                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${
-                  isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                }`}
+                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                  }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
                 {language === 'tr' ? 'Aç' : 'Open'}
               </button>
-              
+
               <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
-              
+
               {/* Copy */}
               <button
                 onClick={() => { copyDevice(contextMenu.deviceId!); setContextMenu(null); }}
-                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${
-                  isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                }`}
+                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                  }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
                 {language === 'tr' ? 'Kopyala' : 'Copy'}
               </button>
-              
+
               {/* Cut */}
               <button
                 onClick={() => { cutDevice(contextMenu.deviceId!); setContextMenu(null); }}
-                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${
-                  isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                }`}
+                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                  }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
                 </svg>
                 {language === 'tr' ? 'Kes' : 'Cut'}
               </button>
-              
+
               {/* Configure */}
               <button
                 onClick={() => { startDeviceConfig(contextMenu.deviceId!); }}
-                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${
-                  isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                }`}
+                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                  }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -2117,104 +2151,98 @@ export function NetworkTopology({
                 </svg>
                 {language === 'tr' ? 'Yapılandır' : 'Configure'}
               </button>
-              
+
               <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
-              
+
               {/* Delete */}
               <button
                 onClick={() => { deleteDevice(contextMenu.deviceId!); setContextMenu(null); }}
-                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${
-                  isDark ? 'hover:bg-slate-700 text-red-400' : 'hover:bg-slate-100 text-red-500'
-                }`}
+                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-red-400' : 'hover:bg-slate-100 text-red-500'
+                  }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
                 {language === 'tr' ? 'Sil' : 'Delete'}
               </button>
-              
+
               <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
-              
+
               {/* Ping */}
               <button
                 onClick={() => {
                   setPingSource(contextMenu.deviceId);
                   setContextMenu(null);
                 }}
-                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${
-                  isDark ? 'hover:bg-slate-700 text-cyan-400' : 'hover:bg-slate-100 text-cyan-600'
-                }`}
+                className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-cyan-400' : 'hover:bg-slate-100 text-cyan-600'
+                  }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 {language === 'tr' ? 'Ping At' : 'Send Ping'}
               </button>
-              
+
               <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
             </>
           )}
-          
+
           {/* Common actions (available on both device and empty area) */}
-          
+
           {/* Paste */}
           <button
             onClick={() => pasteDevice()}
             disabled={!clipboard}
-            className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${
-              clipboard 
-                ? isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
-            }`}
+            className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${clipboard
+              ? isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+              : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
+              }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             {language === 'tr' ? 'Yapıştır' : 'Paste'}
           </button>
-          
+
           <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
-          
+
           {/* Undo */}
           <button
             onClick={() => { handleUndo(); setContextMenu(null); }}
             disabled={historyIndex <= 0}
-            className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${
-              historyIndex > 0 
-                ? isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
-            }`}
+            className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${historyIndex > 0
+              ? isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+              : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
+              }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
             </svg>
             {language === 'tr' ? 'Geri Al' : 'Undo'}
           </button>
-          
+
           {/* Redo */}
           <button
             onClick={() => { handleRedo(); setContextMenu(null); }}
             disabled={historyIndex >= history.length - 1}
-            className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${
-              historyIndex < history.length - 1 
-                ? isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
-            }`}
+            className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${historyIndex < history.length - 1
+              ? isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+              : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
+              }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
             </svg>
             {language === 'tr' ? 'Yinele' : 'Redo'}
           </button>
-          
+
           <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
-          
+
           {/* Select All */}
           <button
             onClick={() => selectAllDevices()}
-            className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${
-              isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-            }`}
+            className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+              }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -2227,7 +2255,7 @@ export function NetworkTopology({
       {/* Device Configuration Modal (Name & IP) */}
       {configuringDevice && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center backdrop-blur-sm" onClick={cancelDeviceConfig}>
-          <div 
+          <div
             className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} border rounded-2xl p-6 m-4 w-96 shadow-2xl`}
             onClick={e => e.stopPropagation()}
           >
@@ -2242,7 +2270,7 @@ export function NetworkTopology({
                 {language === 'tr' ? 'Cihaz Yapılandırması' : 'Device Configuration'}
               </h3>
             </div>
-            
+
             <div className="space-y-4">
               {/* Hostname */}
               <div>
@@ -2254,11 +2282,10 @@ export function NetworkTopology({
                   type="text"
                   value={tempNameValue}
                   onChange={(e) => setTempNameValue(e.target.value)}
-                  className={`w-full px-4 py-2.5 rounded-xl border transition-all ${
-                    isDark 
-                      ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-600 focus:border-cyan-500' 
-                      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-cyan-500'
-                  } outline-none`}
+                  className={`w-full px-4 py-2.5 rounded-xl border transition-all ${isDark
+                    ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-600 focus:border-cyan-500'
+                    : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-cyan-500'
+                    } outline-none`}
                   placeholder={language === 'tr' ? 'Cihaz adı girin' : 'Enter device name'}
                 />
               </div>
@@ -2274,15 +2301,14 @@ export function NetworkTopology({
                   type="text"
                   value={ipValue}
                   onChange={(e) => setIpValue(e.target.value)}
-                  className={`w-full px-4 py-2.5 rounded-xl border font-mono transition-all ${
-                    isDark 
-                      ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-600 focus:border-cyan-500' 
-                      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-cyan-500'
-                  } outline-none`}
+                  className={`w-full px-4 py-2.5 rounded-xl border font-mono transition-all ${isDark
+                    ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-600 focus:border-cyan-500'
+                    : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-cyan-500'
+                    } outline-none`}
                   placeholder="192.168.1.x"
                 />
               </div>
-              
+
               {/* Subnet Mask */}
               <div>
                 <label className={`text-xs font-semibold uppercase tracking-wider mb-1.5 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -2292,21 +2318,19 @@ export function NetworkTopology({
                   type="text"
                   value={subnetValue}
                   onChange={(e) => setSubnetValue(e.target.value)}
-                  className={`w-full px-4 py-2.5 rounded-xl border font-mono transition-all ${
-                    isDark 
-                      ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-600 focus:border-cyan-500' 
-                      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-cyan-500'
-                  } outline-none`}
+                  className={`w-full px-4 py-2.5 rounded-xl border font-mono transition-all ${isDark
+                    ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-600 focus:border-cyan-500'
+                    : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-cyan-500'
+                    } outline-none`}
                 />
               </div>
             </div>
-            
+
             <div className="flex gap-3 mt-8">
               <button
                 onClick={cancelDeviceConfig}
-                className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${
-                  isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
               >
                 {language === 'tr' ? 'İptal' : 'Cancel'}
               </button>
@@ -2336,9 +2360,8 @@ export function NetworkTopology({
                     startPingAnimation(pingSource, device.id);
                     setPingSource(null);
                   }}
-                  className={`w-full px-3 py-2 rounded-lg text-sm text-left flex items-center gap-2 ${
-                    isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                  }`}
+                  className={`w-full px-3 py-2 rounded-lg text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                    }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${device.type === 'pc' ? 'bg-blue-500' : device.type === 'router' ? 'bg-purple-500' : 'bg-emerald-500'}`} />
                   {device.name}
@@ -2376,7 +2399,7 @@ export function NetworkTopology({
             // Find connection between these devices to get the bezier curve
             const conn = connections.find(
               c => (c.sourceDeviceId === fromDevice.id && c.targetDeviceId === toDevice.id) ||
-                   (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)
+                (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)
             );
 
             // Get port positions for this connection
@@ -2399,7 +2422,7 @@ export function NetworkTopology({
             // Calculate parallel offset if multiple connections (same as renderConnection)
             const sameDeviceConnections = connections.filter(
               c => (c.sourceDeviceId === fromDevice.id && c.targetDeviceId === toDevice.id) ||
-                   (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)
+                (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)
             );
             const sameConnIndex = conn ? sameDeviceConnections.findIndex(c => c.id === conn.id) : 0;
             const totalSameConns = sameDeviceConnections.length;
@@ -2472,23 +2495,22 @@ export function NetworkTopology({
               </svg>
             );
           })()}
-          
+
           {/* Success/Error Toast */}
           {pingAnimation.success !== null && (
             <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
-              <div className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 ${
-                pingAnimation.success 
-                  ? 'bg-green-600 text-white' 
-                  : 'bg-red-600 text-white'
-              }`}>
+              <div className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 ${pingAnimation.success
+                ? 'bg-green-600 text-white'
+                : 'bg-red-600 text-white'
+                }`}>
                 {pingAnimation.success ? (
                   <>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <span className="text-sm font-medium">
-                      {language === 'tr' 
-                        ? `${devices.find(d => d.id === pingAnimation.sourceId)?.name} → ${devices.find(d => d.id === pingAnimation.targetId)?.name} Ping Başarılı! (${pingAnimation.path.length - 1} hop)` 
+                      {language === 'tr'
+                        ? `${devices.find(d => d.id === pingAnimation.sourceId)?.name} → ${devices.find(d => d.id === pingAnimation.targetId)?.name} Ping Başarılı! (${pingAnimation.path.length - 1} hop)`
                         : `${devices.find(d => d.id === pingAnimation.sourceId)?.name} → ${devices.find(d => d.id === pingAnimation.targetId)?.name} Ping Successful! (${pingAnimation.path.length - 1} hop${pingAnimation.path.length > 2 ? 's' : ''})`}
                     </span>
                   </>
@@ -2507,7 +2529,7 @@ export function NetworkTopology({
           )}
         </div>
       )}
-      
+
       {/* Connection Error Toast */}
       {connectionError && (
         <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
@@ -2519,7 +2541,7 @@ export function NetworkTopology({
           </div>
         </div>
       )}
-      
+
       {/* Mobile Bottom Sheet */}
       {renderMobilePalette()}
 
@@ -2578,13 +2600,12 @@ export function NetworkTopology({
                     <button
                       key={type}
                       onClick={() => onCableChange({ ...cableInfo, cableType: type })}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        cableInfo.cableType === type
-                          ? `${CABLE_COLORS[type].bg} text-white`
-                          : isDark
-                            ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${cableInfo.cableType === type
+                        ? `${CABLE_COLORS[type].bg} text-white`
+                        : isDark
+                          ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
                     >
                       <div className={`w-2.5 h-2.5 rounded ${CABLE_COLORS[type].bg}`} />
                       {getCableTypeName(type, language)}
@@ -2686,11 +2707,10 @@ export function NetworkTopology({
                               setSelectedSourcePort(null);
                             }
                           }}
-                          className={`px-3 py-2 rounded-lg text-sm font-mono transition-all ${
-                            isDark
-                              ? 'bg-slate-600 hover:bg-cyan-600 text-slate-200 hover:text-white'
-                              : 'bg-white hover:bg-cyan-500 text-slate-700 hover:text-white border border-slate-200'
-                          }`}
+                          className={`px-3 py-2 rounded-lg text-sm font-mono transition-all ${isDark
+                            ? 'bg-slate-600 hover:bg-cyan-600 text-slate-200 hover:text-white'
+                            : 'bg-white hover:bg-cyan-500 text-slate-700 hover:text-white border border-slate-200'
+                            }`}
                         >
                           {port.label}
                         </button>
