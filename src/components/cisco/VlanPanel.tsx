@@ -203,13 +203,6 @@ export function VlanPanel({ vlans, ports, deviceName, onExecuteCommand, t, theme
 
   const sortedVlans = Object.values(vlans).sort((a, b) => a.id - b.id);
   
-  const cardBg = isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
-  const innerBg = isDark ? 'bg-slate-900' : 'bg-slate-100';
-  const itemBg = isDark ? 'bg-slate-900' : 'bg-slate-50';
-  const textPrimary = isDark ? 'text-white' : 'text-slate-900';
-  const textSecondary = isDark ? 'text-slate-400' : 'text-slate-600';
-  const textMuted = isDark ? 'text-slate-500' : 'text-slate-400';
-
   return (
     <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
       <CardHeader className="pb-2">
