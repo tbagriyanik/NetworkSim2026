@@ -460,7 +460,7 @@ export function NetworkTopology({
       // Right click on canvas - show context menu
       e.preventDefault();
       setContextMenu({ x: e.clientX, y: e.clientY, deviceId: null });
-    } else if (e.button === 0 && (e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('canvas-grid'))) {
+    } else if (e.button === 0 && !(e.target as HTMLElement).closest('[data-device-id]')) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
       setSelectedCanvasDevice(null);
