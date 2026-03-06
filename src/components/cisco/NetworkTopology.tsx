@@ -25,6 +25,9 @@ export interface CanvasDevice {
   type: 'pc' | 'switch' | 'router';
   name: string;
   ip: string;
+  subnet?: string;
+  gateway?: string;
+  dns?: string;
   x: number;
   y: number;
   status: 'online' | 'offline' | 'error';
@@ -251,7 +254,7 @@ export function NetworkTopology({
   const [renameValue, setRenameValue] = useState('');
 
   // UI state
-  
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
 
   // Touch/Mobile state
   const isMobile = useIsMobile();
@@ -286,7 +289,7 @@ export function NetworkTopology({
   } | null>(null);
 
   // Refs
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const deviceCounterRef = useRef<{ pc: number; switch: number; router: number }>({ pc: 0, switch: 0, router: 0 });
   const pingAnimationRef = useRef<number | null>(null);
 
@@ -1965,55 +1968,9 @@ export function NetworkTopology({
               <span className="hidden lg:inline">{language === 'tr' ? 'Ağ Topolojisi' : 'Network Topology'}</span>
             </h3>
 
-            <div className={`h-6 w-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'} hidden md:block`} />
-
-            {/* Device Tools */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-500/5">
-              {(['pc', 'switch', 'router'] as const).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => addDevice(type)}
-                  title={type.toUpperCase()}
-                  className={`p-1.5 rounded-lg border transition-all ${isDark
-                    ? 'border-slate-700 bg-slate-800/50 hover:bg-slate-700 hover:border-cyan-500'
-                    : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-cyan-500'
-                    }`}
-                >
-                  <div className={`${type === 'pc' ? 'text-blue-500' : type === 'switch' ? 'text-emerald-500' : 'text-purple-500'}`}>
-                    <div className="scale-75">
-                      {DEVICE_ICONS[type]}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <div className={`h-6 w-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'} hidden sm:block`} />
-
-            {/* Cable Tools */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-500/5">
-              {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => onCableChange({ ...cableInfo, cableType: type })}
-                  title={getCableTypeName(type, language)}
-                  className={`relative p-1.5 rounded-lg border transition-all ${cableInfo.cableType === type
-                    ? 'border-cyan-500 bg-cyan-500/10'
-                    : isDark
-                      ? 'border-slate-700 bg-slate-800/50 hover:bg-slate-700'
-                      : 'border-slate-200 bg-white hover:bg-slate-50'
-                    }`}
-                >
-                  <div className={`w-4 h-1 rounded-full ${CABLE_COLORS[type].bg}`} />
-                  {cableInfo.cableType === type && (
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-500 rounded-full animate-pulse" />
-                  )}
-                </button>
-              ))}
-            </div>
           </div>
 
-          <div className="flex items-center gap-2 justify-end">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 setShowPortSelector(true);
@@ -2034,7 +1991,93 @@ export function NetworkTopology({
         </div>
       </div>
 
-      <div className="flex-1 relative">
+      <div className="flex">
+        {/* Device Palette - Desktop Only */}
+        <div
+          className={`hidden md:flex w-24 border-r ${isDark ? 'border-slate-700/50 bg-gradient-to-b from-slate-800/60 to-slate-900/60' : 'border-slate-200/50 bg-gradient-to-b from-blue-50/40 to-slate-50/60'} p-2 flex-col gap-2`}
+        >
+          <div className={`text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>
+            {language === 'tr' ? 'Cihazlar' : 'Devices'}
+          </div>
+
+          {/* PC Button */}
+          <button
+            onClick={() => addDevice('pc')}
+            className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all min-h-[52px] ${isDark
+              ? 'border-slate-600 bg-slate-700/50 hover:bg-slate-700 hover:border-blue-500'
+              : 'border-slate-300 bg-white hover:bg-slate-100 hover:border-blue-500'
+              }`}
+          >
+            <div className="text-blue-500">{DEVICE_ICONS.pc}</div>
+            <span className={`text-[10px] font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>PC</span>
+          </button>
+
+          {/* Switch Button */}
+          <button
+            onClick={() => addDevice('switch')}
+            className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all min-h-[52px] ${isDark
+              ? 'border-slate-600 bg-slate-700/50 hover:bg-slate-700 hover:border-emerald-500'
+              : 'border-slate-300 bg-white hover:bg-slate-100 hover:border-emerald-500'
+              }`}
+          >
+            <div className="text-emerald-500">{DEVICE_ICONS.switch}</div>
+            <span className={`text-[10px] font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              Switch
+            </span>
+          </button>
+
+          {/* Router Button */}
+          <button
+            onClick={() => addDevice('router')}
+            className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all min-h-[52px] ${isDark
+              ? 'border-slate-600 bg-slate-700/50 hover:bg-slate-700 hover:border-purple-500'
+              : 'border-slate-300 bg-white hover:bg-slate-100 hover:border-purple-500'
+              }`}
+          >
+            <div className="text-purple-500">{DEVICE_ICONS.router}</div>
+            <span className={`text-[10px] font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              Router
+            </span>
+          </button>
+
+          <div className={`my-2 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`} />
+
+          <div className={`text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>
+            {language === 'tr' ? 'Kablo' : 'Cable'}
+          </div>
+
+          {/* Cable Type Selector */}
+          {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
+            <button
+              key={type}
+              onClick={() => onCableChange({ ...cableInfo, cableType: type })}
+              className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all min-h-[44px] ${cableInfo.cableType === type
+                ? `${CABLE_COLORS[type].bg} text-white border-transparent`
+                : isDark
+                  ? 'border-slate-600 bg-slate-700/50 hover:bg-slate-700'
+                  : 'border-slate-300 bg-white hover:bg-slate-100'
+                }`}
+            >
+              <div className={`w-3 h-3 rounded ${CABLE_COLORS[type].bg}`} />
+              <span className={`text-[9px] font-medium ${cableInfo.cableType === type ? 'text-white' : isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                {type === 'straight'
+                  ? language === 'tr'
+                    ? 'Düz'
+                    : 'Straight'
+                  : type === 'crossover'
+                    ? language === 'tr'
+                      ? 'Çapraz'
+                      : 'X-over'
+                    : language === 'tr'
+                      ? 'Konsol'
+                      : 'Console'}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Canvas Area */}
+        <div className={`flex-1 relative ${isMobile ? 'pb-20' : ''}`}>
           {/* Select All Mode Indicator */}
           {selectAllMode && (
             <div className={`absolute top-2 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-lg shadow-lg flex items-center gap-3 ${isDark ? 'bg-cyan-600/90 text-white' : 'bg-cyan-500 text-white'
@@ -2310,6 +2353,7 @@ export function NetworkTopology({
           </div>
         </div>
       </div>
+      
 
       {/* Context Menu */}
       {contextMenu && (
@@ -2768,7 +2812,7 @@ export function NetworkTopology({
       )}
 
       {/* Mobile Bottom Sheet */}
-      
+      {renderMobilePalette()}
 
       {/* Mobile Bottom Action Bar */}
       {isMobile && renderMobileBottomBar()}
