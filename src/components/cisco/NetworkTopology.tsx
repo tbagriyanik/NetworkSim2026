@@ -2071,13 +2071,15 @@ export function NetworkTopology({
             <svg
               width="100%"
               height="100%"
-              style={{
-                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                transformOrigin: '0 0',
-                transition: isPanning ? 'none' : 'transform 0.05s linear',
-              }}
               className="select-none"
             >
+              <g
+                style={{
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                  transformOrigin: '0 0',
+                  transition: isPanning ? 'none' : 'transform 0.05s linear',
+                }}
+              >
               {/* Clip path for canvas boundaries */}
               <defs>
                 <clipPath id="canvasClip">
@@ -2159,6 +2161,7 @@ export function NetworkTopology({
               >
                 {getCanvasDimensions().width} × {getCanvasDimensions().height}
               </text>
+              </g>
             </svg>
           </div>
 
