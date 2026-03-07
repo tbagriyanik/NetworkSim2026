@@ -383,9 +383,15 @@ export function PCPanel({ deviceId, cableInfo, isVisible, onClose, topologyDevic
   const handlePing = (target: string) => {
     // Check if connected to a device
     if (!connectedDevice) {
-      addOutput('error', language === 'tr' 
-        ? "\nPing isteği zaman aşımına uğradı.\nHATA: Herhangi bir switch veya router'a bağlı değilsiniz.\n\n" 
-        : "\nPing request timed out.\nERROR: You are not connected to any switch or router.\n\n");
+      if (consoleDevice) {
+        addOutput('error', language === 'tr'
+          ? "\nPing isteği zaman aşımına uğradı.\nHATA: Konsol kablosu üzerinden ping atılamaz. Ping IP üzerinden (Ethernet) çalışır.\n\n"
+          : "\nPing request timed out.\nERROR: Cannot ping over console. Ping requires an Ethernet link.\n\n");
+      } else {
+        addOutput('error', language === 'tr' 
+          ? "\nPing isteği zaman aşımına uğradı.\nHATA: Herhangi bir switch veya router'a bağlı değilsiniz.\n\n" 
+          : "\nPing request timed out.\nERROR: You are not connected to any switch or router.\n\n");
+      }
       return;
     }
     
@@ -678,9 +684,15 @@ export function PCPanel({ deviceId, cableInfo, isVisible, onClose, topologyDevic
   
   const handleTracert = (target: string) => {
     if (!connectedDevice) {
-      addOutput('error', language === 'tr'
-        ? "\nTRACERT: Hedefe ulaşılamıyor.\nHATA: Herhangi bir switch veya router'a bağlı değilsiniz.\n\n"
-        : "\nTRACERT: Unable to reach target.\nERROR: You are not connected to any switch or router.\n\n");
+      if (consoleDevice) {
+        addOutput('error', language === 'tr'
+          ? "\nTRACERT: Hedefe ulaşılamıyor.\nHATA: Konsol kablosu üzerinden izleme yapılamaz. Tracert IP üzerinden (Ethernet) çalışır.\n\n"
+          : "\nTRACERT: Destination host unreachable.\nERROR: Cannot trace route over console. Tracert requires an IP link.\n\n");
+      } else {
+        addOutput('error', language === 'tr'
+          ? "\nTRACERT: Hedefe ulaşılamıyor.\nHATA: Herhangi bir switch veya router'a bağlı değilsiniz.\n\n"
+          : "\nTRACERT: Unable to reach target.\nERROR: You are not connected to any switch or router.\n\n");
+      }
       return;
     }
     
@@ -718,9 +730,15 @@ export function PCPanel({ deviceId, cableInfo, isVisible, onClose, topologyDevic
   
   const handleNslookup = (domain: string) => {
     if (!connectedDevice) {
-      addOutput('error', language === 'tr'
-        ? '\nDNS sunucusuyla iletişim kurulamadı.\n\n'
-        : '\nCannot communicate with DNS server.\n\n');
+      if (consoleDevice) {
+        addOutput('error', language === 'tr'
+          ? '\nNSLOOKUP: DNS sunucusuyla iletişim kurulamadı.\nHATA: Konsol kablosu üzerinden ağ trafiği (DNS) iletilemez.\n\n'
+          : '\nNSLOOKUP: Cannot communicate with DNS server.\nERROR: Network traffic (DNS) cannot be sent over console.\n\n');
+      } else {
+        addOutput('error', language === 'tr'
+          ? '\nNSLOOKUP: DNS sunucusuyla iletişim kurulamadı.\n\n'
+          : '\nNSLOOKUP: Cannot communicate with DNS server.\n\n');
+      }
       return;
     }
     
