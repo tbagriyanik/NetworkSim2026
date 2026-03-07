@@ -1310,13 +1310,13 @@ const commandPatterns: Record<string, CommandPattern> = {
   
   // Kaydetme komutları
   'write memory': {
-    pattern: /^(write\s+memory|write|wr)$/i,
+    pattern: /^(?:wr[ite]*(\s+me[mory]*)?)$/i,
     modes: ['privileged'],
     minArgs: 0,
     maxArgs: 0
   },
   'copy running-config startup-config': {
-    pattern: /^copy\s+running-config\s+startup-config$/i,
+    pattern: /^cop[y]*\s+run[ning\-config]*\s+sta[rtup\-config]*$/i,
     modes: ['privileged'],
     minArgs: 0,
     maxArgs: 0
@@ -1374,7 +1374,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'do write': {
-    pattern: /^do\s+(write\s*(memory)?|wr)$/i,
+    pattern: /^do\s+(?:wr[ite]*(\s+me[mory]*)?)$/i,
     modes: ['config', 'interface', 'line', 'vlan'],
     minArgs: 0,
     maxArgs: 1
