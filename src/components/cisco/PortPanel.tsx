@@ -51,10 +51,18 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
   // Check if a port is connected in topology
   const isPortConnectedInTopology = (portId: string): boolean => {
     if (!topologyConnections || !activeDeviceId) return false;
-    return topologyConnections.some(conn => 
-      (conn.sourceDeviceId === activeDeviceId && conn.sourcePort === portId) ||
-      (conn.targetDeviceId === activeDeviceId && conn.targetPort === portId)
-    );
+    const lowerPortId = portId.toLowerCase();
+    const lowerDeviceId = activeDeviceId.toLowerCase();
+    
+    return topologyConnections.some(conn => {
+      const connSourceId = conn.sourceDeviceId.toLowerCase();
+      const connTargetId = conn.targetDeviceId.toLowerCase();
+      const connSourcePort = conn.sourcePort.toLowerCase();
+      const connTargetPort = conn.targetPort.toLowerCase();
+      
+      return (connSourceId === lowerDeviceId && connSourcePort === lowerPortId) ||
+             (connTargetId === lowerDeviceId && connTargetPort === lowerPortId);
+    });
   };
   
   const faPorts = Object.values(ports)
@@ -81,15 +89,15 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
     let ledColor: PortLEDColor;
     let statusLabel: string;
     
-    if (port.shutdown) {
+    if (isConnectedInTopology || port.status === 'connected') {
+      ledColor = 'green';
+      statusLabel = t.connected;
+    } else if (port.shutdown) {
       ledColor = 'gray';
       statusLabel = t.closed;
     } else if (port.status === 'blocked') {
       ledColor = 'orange';
       statusLabel = t.blocked;
-    } else if (isConnectedInTopology || port.status === 'connected') {
-      ledColor = 'green';
-      statusLabel = t.connected;
     } else {
       ledColor = 'white';
       statusLabel = t.idle;
