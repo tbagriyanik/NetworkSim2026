@@ -5,6 +5,8 @@ import { CableType, CableInfo, getCableTypeName, isCableCompatible } from '@/lib
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ConnectionLine } from './ConnectionLine';
+import { DeviceNode } from './DeviceNode';
 
 interface NetworkTopologyProps {
   cableInfo: CableInfo;
@@ -25,6 +27,7 @@ export interface CanvasDevice {
   id: string;
   type: 'pc' | 'switch' | 'router';
   name: string;
+  macAddress?: string;
   ip: string;
   subnet?: string;
   gateway?: string;
@@ -2651,7 +2654,32 @@ export function NetworkTopology({
                 />
 
                 {/* Visual Connection Lines (Behind devices) */}
-                {connections.map((conn, index) => renderConnectionLine(conn, index))}
+                {connections.map((conn, index) => {
+                  const sourceDevice = devices.find((d) => d.id === conn.sourceDeviceId);
+                  const targetDevice = devices.find((d) => d.id === conn.targetDeviceId);
+                  if (!sourceDevice || !targetDevice) return null;
+
+                  const sameDeviceConnections = connections.filter(
+                    c => (c.sourceDeviceId === conn.sourceDeviceId && c.targetDeviceId === conn.targetDeviceId) ||
+                      (c.sourceDeviceId === conn.targetDeviceId && c.targetDeviceId === conn.sourceDeviceId)
+                  );
+                  const sameConnIndex = sameDeviceConnections.findIndex(c => c.id === conn.id);
+                  const totalSameConns = sameDeviceConnections.length;
+
+                  return (
+                    <ConnectionLine
+                      key={`line-${conn.id}`}
+                      connection={conn}
+                      sourceDevice={sourceDevice}
+                      targetDevice={targetDevice}
+                      isDark={isDark}
+                      totalSameConns={totalSameConns}
+                      sameConnIndex={sameConnIndex}
+                      getPortPosition={getPortPosition}
+                      CABLE_COLORS={CABLE_COLORS as any}
+                    />
+                  );
+                })}
 
                 {/* Temporary connection line */}
                 {renderTempConnection()}
@@ -2661,19 +2689,22 @@ export function NetworkTopology({
                   const isCurrentlyDragging = (draggedDevice === device.id && isActuallyDragging) ||
                     (touchDraggedDevice === device.id && isTouchDragging);
                   return (
-                    <g
+                    <DeviceNode
                       key={device.id}
-                      onMouseDown={(e) => handleDeviceMouseDown(e as unknown as ReactMouseEvent, device.id)}
-                      onClick={(e) => handleDeviceClick(e as unknown as ReactMouseEvent, device)}
+                      device={device}
+                      isSelected={selectedDeviceIds.includes(device.id)}
+                      isDragging={isCurrentlyDragging}
+                      isActive={activeDeviceId === device.id}
+                      isDark={isDark}
+                      onMouseDown={(e, id) => handleDeviceMouseDown(e as unknown as ReactMouseEvent, id)}
+                      onClick={(e, dev) => handleDeviceClick(e as unknown as ReactMouseEvent, dev)}
                       onDoubleClick={() => handleDeviceDoubleClick(device)}
-                      onContextMenu={(e) => handleContextMenu(e as unknown as ReactMouseEvent, device.id)}
-                      onTouchStart={(e) => handleDeviceTouchStart(e, device.id)}
+                      onContextMenu={(e, id) => handleContextMenu(e as unknown as ReactMouseEvent, id)}
+                      onTouchStart={(e, id) => handleDeviceTouchStart(e as unknown as ReactTouchEvent, id)}
                       onTouchMove={handleDeviceTouchMove}
                       onTouchEnd={handleDeviceTouchEnd}
-                      style={{ cursor: 'move', touchAction: 'none' }}
-                    >
-                      {renderDevice(device, isCurrentlyDragging)}
-                    </g>
+                      renderDeviceContent={renderDevice}
+                    />
                   );
                 })}
 
@@ -3086,6 +3117,19 @@ export function NetworkTopology({
                     } outline-none`}
                     placeholder={language === 'tr' ? 'Örn: Router-X' : 'e.g. Router-X'}
                   />
+                </div>
+              </div>
+
+              {/* Device Info (MAC Address) */}
+              <div className={`p-3 rounded-2xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200/50'}`}>
+                <div className={`text-[10px] font-black tracking-widest mb-2 opacity-70 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
+                  {language === 'tr' ? 'CİHAZ BİLGİSİ' : 'DEVICE INFO'}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>MAC Address</span>
+                  <span className={`text-xs font-mono font-bold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+                    {devices.find(d => d.id === configuringDevice)?.macAddress || 'N/A'}
+                  </span>
                 </div>
               </div>
 
