@@ -73,8 +73,8 @@ export function TaskCard({ tasks, state, context, color, isDark }: TaskCardProps
               className="bg-white dark:bg-slate-900 px-4 py-2 rounded-full shadow-2xl border border-green-500/50 flex items-center gap-2"
             >
               <span className="text-xl">🎉</span>
-              <span className="text-sm font-bold text-green-500 uppercase tracking-wider">
-                {context.language === 'tr' ? 'TEBRİKLER!' : 'COMPLETED!'}
+              <span className="text-sm font-bold text-green-500 tracking-wider">
+                {context.language === 'tr' ? 'Tebrikler!' : 'Completed!'}
               </span>
             </motion.div>
             

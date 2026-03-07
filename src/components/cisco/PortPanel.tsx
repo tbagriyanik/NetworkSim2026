@@ -117,14 +117,14 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
                 <div className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-50" />
               )}
             </div>
-            <span className={`text-[10px] sm:text-xs font-mono ${isDark ? 'text-slate-300' : 'text-slate-700'} uppercase transition-colors`}>
+            <span className={`text-[10px] sm:text-xs font-mono ${isDark ? 'text-slate-300' : 'text-slate-700'} transition-colors`}>
               {port.id}
             </span>
             <Badge 
               variant={port.mode === 'trunk' ? 'default' : 'secondary'}
               className={`text-[8px] sm:text-[10px] px-1 py-0 h-3 sm:h-4 mt-0.5 transition-all duration-200 ${port.mode === 'trunk' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : ''}`}
             >
-              {port.mode === 'trunk' ? 'TRUNK' : `V${port.vlan}`}
+              {port.mode === 'trunk' ? 'Trunk' : `V${port.vlan}`}
             </Badge>
           </div>
         </TooltipTrigger>
@@ -133,12 +133,12 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
           className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-3 max-w-xs`}
         >
           <div className="space-y-1 text-xs">
-            <div className="font-bold text-cyan-400 uppercase">{port.id}</div>
+            <div className="font-bold text-cyan-400">{port.id.toUpperCase()}</div>
             <div className={isDark ? 'text-slate-300' : 'text-slate-600'}>
               <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t.status}:</span> {statusLabel}
             </div>
             <div className={isDark ? 'text-slate-300' : 'text-slate-600'}>
-              <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t.mode}:</span> {port.mode.toUpperCase()}
+              <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t.mode}:</span> <span className="capitalize">{port.mode}</span>
             </div>
             <div className={isDark ? 'text-slate-300' : 'text-slate-600'}>
               <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>VLAN:</span> {port.mode === 'trunk' ? 'Trunk' : port.vlan}
@@ -147,7 +147,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
               <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t.speed}:</span> {port.speed === 'auto' ? 'Auto' : port.speed + ' Mbps'}
             </div>
             <div className={isDark ? 'text-slate-300' : 'text-slate-600'}>
-              <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t.duplex}:</span> {port.duplex === 'auto' ? 'Auto' : port.duplex.toUpperCase()}
+              <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t.duplex}:</span> {port.duplex === 'auto' ? 'Auto' : <span className="capitalize">{port.duplex}</span>}
             </div>
             {port.name && (
               <div className={isDark ? 'text-slate-300' : 'text-slate-600'}>

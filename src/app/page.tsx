@@ -1046,7 +1046,7 @@ export default function Home() {
                 <h1 className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-500 bg-clip-text text-transparent drop-shadow-sm">
                   {t.title}
                 </h1>
-                <p className={`text-[10px] uppercase tracking-widest font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.subtitle}</p>
+                <p className={`text-[10px] tracking-widest font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.subtitle}</p>
               </div>
             </a>
 
@@ -1054,8 +1054,8 @@ export default function Home() {
             <div className="hidden lg:flex items-center gap-4">
               <div className={`px-5 py-2.5 rounded-2xl ${isDark ? 'bg-slate-800/80' : 'bg-white/80'} backdrop-blur-md border ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} shadow-lg shadow-black/5 relative group transition-all`}>
                 <div className="flex items-center justify-between mb-1.5 px-0.5">
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                    {language === 'tr' ? 'LAB İLERLEMESİ' : 'LAB PROGRESS'}
+                  <span className={`text-[10px] font-bold tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {language === 'tr' ? 'Lab İlerlemesi' : 'Lab Progress'}
                   </span>
                   <span className={`text-xs font-bold ${totalScore >= maxScore * 0.7 ? 'text-emerald-400' : totalScore >= maxScore * 0.4 ? 'text-amber-400' : 'text-rose-400'}`}>
                     {Math.round((totalScore / maxScore) * 100)}%

@@ -27,8 +27,8 @@ export interface TerminalOutput {
 }
 
 const MAX_OUTPUT_LINES = 100;
-const MAX_SUGGESTIONS = 5;
-const MAX_HISTORY_BUTTONS = 8;
+const MAX_SUGGESTIONS = 15;
+const MAX_HISTORY_BUTTONS = 30;
 
 // Cisco tarzı komut ağacı - her mod için
 const commandHelp: Record<string, Record<string, string[]>> = {
@@ -1083,24 +1083,23 @@ export function Terminal({ deviceId, deviceName, prompt, state, onCommand, onCle
               <span className="leading-tight">{t.cliTerminal}</span>
               <div className="flex items-center gap-2 mt-0.5">
                 {deviceName && (
-                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${isDark ? 'bg-slate-700 text-cyan-400' : 'bg-blue-100 text-blue-600'}`}>
+                  <span className={`text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full ${isDark ? 'bg-slate-700 text-cyan-400' : 'bg-blue-100 text-blue-600'}`}>
                     {deviceName}
                   </span>
-                )}
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-slate-700/50 text-amber-400' : 'bg-amber-100 text-amber-600'}`}>
+                  )}
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-slate-700/50 text-amber-400' : 'bg-amber-100 text-amber-600'}`}>
                   {state.version.modelName}
-                </span>
-              </div>
-            </div>
-          </CardTitle>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700/50 text-slate-300' : 'bg-white/80 border-slate-200 text-slate-600 shadow-sm'}`}>
-              <div className={`w-2 h-2 rounded-full animate-pulse ${isDark ? 'bg-emerald-500' : 'bg-emerald-600'}`} />
-              <span className="text-[10px] font-black uppercase tracking-widest">
-                {t.mode}: {state.currentMode.toUpperCase()}
-              </span>
-            </div>
-            {onClear && (
+                  </span>
+                  </div>
+                  </div>
+                  </CardTitle>
+                  <div className="flex items-center gap-3 flex-wrap">
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${isDark ? 'bg-slate-800/60 border-slate-700/50 text-slate-300' : 'bg-white/80 border-slate-200 text-slate-600 shadow-sm'}`}>
+                  <div className={`w-2 h-2 rounded-full animate-pulse ${isDark ? 'bg-emerald-500' : 'bg-emerald-600'}`} />
+                  <span className="text-[10px] font-black tracking-widest capitalize">
+                  {t.mode}: {state.currentMode}
+                  </span>
+                  </div>            {onClear && (
               <div className="flex items-center gap-2">
                 <button
                   onClick={(e) => {
@@ -1160,7 +1159,7 @@ export function Terminal({ deviceId, deviceName, prompt, state, onCommand, onCle
           }`}>
             <div className="flex items-center gap-3 mb-2">
               <div className={`w-2 h-2 rounded-full ${isDark ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]' : 'bg-cyan-600'}`} />
-              <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{t.simulatorTitle}</span>
+              <span className="text-[10px] font-black tracking-widest opacity-60">{t.simulatorTitle}</span>
             </div>
             <div className="text-sm font-bold opacity-90 leading-relaxed">
               Cisco Catalyst Operating System Software<br />
@@ -1197,7 +1196,7 @@ export function Terminal({ deviceId, deviceName, prompt, state, onCommand, onCle
             {isLoading && (
               <div className="flex items-center gap-2 text-cyan-500 animate-pulse mt-4">
                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
-                <span className="text-xs font-black uppercase tracking-widest">{t.processing}</span>
+                <span className="text-xs font-black tracking-widest">{t.processing}</span>
               </div>
             )}
             
@@ -1240,10 +1239,24 @@ export function Terminal({ deviceId, deviceName, prompt, state, onCommand, onCle
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-4 bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)] cursor-blink pointer-events-none opacity-0 group-focus-within:opacity-100 transition-opacity" />
                 )}
               </div>
-              {/* Keyboard shortcuts hint */}
-              <div className="hidden sm:flex items-center gap-1.5 ml-4 opacity-40 group-focus-within:opacity-100 transition-opacity duration-500">
-                <kbd className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-500 shadow-sm'}`}>TAB</kbd>
-                <span className="text-[9px] font-black uppercase tracking-widest">{language === 'tr' ? 'tamamla' : 'complete'}</span>
+              
+              {/* Terminal Controls */}
+              <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+                {/* Enter Button */}
+                <button
+                  onClick={() => handleSubmit()}
+                  disabled={isLoading || (!input.trim() && !isPasswordMode)}
+                  className={`px-4 py-1.5 rounded-xl font-bold text-xs transition-all duration-300 flex items-center gap-2 border shadow-sm ${
+                    isDark 
+                      ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/50 disabled:opacity-30 disabled:border-slate-800 disabled:text-slate-600' 
+                      : 'bg-cyan-50 border-cyan-200 text-cyan-600 hover:bg-cyan-100 hover:border-cyan-300 disabled:opacity-50 disabled:bg-slate-50 disabled:border-slate-200 disabled:text-slate-400'
+                  }`}
+                >
+                  <span className="hidden sm:inline">Enter</span>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -1257,7 +1270,7 @@ export function Terminal({ deviceId, deviceName, prompt, state, onCommand, onCle
             {/* Suggestions Row */}
             {currentSuggestions.length > 0 && input.length > 0 && (
               <div className="mb-3">
-                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                <div className={`text-[10px] font-black tracking-widest mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                   {language === 'tr' ? 'Hızlı Komutlar' : 'Quick Commands'}
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1284,7 +1297,7 @@ export function Terminal({ deviceId, deviceName, prompt, state, onCommand, onCle
             {/* History Row */}
             {recentHistory.length > 0 && (
               <div>
-                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                <div className={`text-[10px] font-black tracking-widest mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                   {t.commandHistory}
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1314,7 +1327,7 @@ export function Terminal({ deviceId, deviceName, prompt, state, onCommand, onCle
                 e.stopPropagation();
                 setShowCompletionBar(false);
               }}
-              className={`mt-4 w-full py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors ${
+              className={`mt-4 w-full py-1.5 rounded-lg text-[10px] font-bold tracking-widest transition-colors ${
                 isDark ? 'bg-slate-800/50 text-slate-600 hover:text-slate-400' : 'bg-slate-200/50 text-slate-400 hover:text-slate-600'
               }`}
             >
@@ -1330,7 +1343,7 @@ export function Terminal({ deviceId, deviceName, prompt, state, onCommand, onCle
               e.stopPropagation();
               setShowCompletionBar(true);
             }}
-            className={`w-full border-t px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
+            className={`w-full border-t px-4 py-2 text-[10px] font-bold tracking-widest flex items-center justify-center gap-2 transition-all ${
               isDark 
                 ? 'bg-slate-900 border-slate-800 text-slate-600 hover:text-cyan-500 hover:bg-slate-800/50' 
                 : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-cyan-600 hover:bg-white'

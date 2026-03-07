@@ -57,8 +57,8 @@ export function AppFooter({ state, selectedDevice, activeDeviceId, activeDeviceN
               )}
             </div>
             <div>
-              <div className={`text-[10px] font-bold uppercase tracking-wider ${dark ? 'text-slate-500' : 'text-slate-400'}`}>
-                {language === 'tr' ? 'AKTİF SİSTEM' : 'ACTIVE SYSTEM'}
+              <div className={`text-[10px] font-bold tracking-wider ${dark ? 'text-slate-500' : 'text-slate-400'}`}>
+                {language === 'tr' ? 'Aktif Sistem' : 'Active System'}
               </div>
               <div className={`text-base font-black tracking-tight ${dark ? 'text-white' : 'text-slate-900'}`}>
                 {deviceName}
@@ -70,17 +70,17 @@ export function AppFooter({ state, selectedDevice, activeDeviceId, activeDeviceN
           
           <div className="flex items-center gap-8">
             <div className="flex flex-col">
-              <div className={`text-[10px] font-bold uppercase tracking-wider ${dark ? 'text-slate-500' : 'text-slate-400'}`}>{t.iosVersion}</div>
+              <div className={`text-[10px] font-bold tracking-wider ${dark ? 'text-slate-500' : 'text-slate-400'}`}>{t.iosVersion}</div>
               <div className="text-sm font-bold font-mono text-cyan-500 bg-cyan-500/5 px-1.5 py-0.5 rounded border border-cyan-500/10">{state.version.iosVersion}</div>
             </div>
             
             <div className="flex flex-col">
-              <div className={`text-[10px] font-bold uppercase tracking-wider ${dark ? 'text-slate-500' : 'text-slate-400'}`}>{t.model}</div>
+              <div className={`text-[10px] font-bold tracking-wider ${dark ? 'text-slate-500' : 'text-slate-400'}`}>{t.model}</div>
               <div className={`text-sm font-bold ${dark ? 'text-slate-200' : 'text-slate-700'}`}>{state.version.modelName}</div>
             </div>
             
             <div className="flex flex-col">
-              <div className={`text-[10px] font-bold uppercase tracking-wider ${dark ? 'text-slate-500' : 'text-slate-400'}`}>{t.activePorts}</div>
+              <div className={`text-[10px] font-bold tracking-wider ${dark ? 'text-slate-500' : 'text-slate-400'}`}>{t.activePorts}</div>
               <div className={`text-sm font-bold font-mono ${dark ? 'text-amber-400' : 'text-amber-600'}`}>
                 <span className="text-lg">{Object.values(state.ports).filter(p => p.status === 'connected' && !p.shutdown).length}</span>
                 <span className="opacity-30 mx-1">/</span>

@@ -2161,7 +2161,7 @@ export function NetworkTopology({
         </div>
         {/* Device Buttons */}
         <div className="px-4 py-3 flex items-center justify-between border-b border-slate-800/50">
-          <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} whitespace-nowrap`}>
+          <div className={`text-[10px] font-bold tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} whitespace-nowrap`}>
             {language === 'tr' ? 'Cihazlar' : 'Devices'}
           </div>
           <div className="flex gap-2">
@@ -2180,7 +2180,7 @@ export function NetworkTopology({
                   <div className="scale-75">{DEVICE_ICONS[type]}</div>
                 </div>
                 <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                  {type.toUpperCase()}
+                  {type === 'pc' ? 'PC' : type.charAt(0).toUpperCase() + type.slice(1)}
                 </span>
               </button>
             ))}
@@ -2189,7 +2189,7 @@ export function NetworkTopology({
 
         {/* Cable Type Selector */}
         <div className="px-4 py-3 flex items-center justify-between">
-          <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} whitespace-nowrap`}>
+          <div className={`text-[10px] font-bold tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} whitespace-nowrap`}>
             {language === 'tr' ? 'Kablonuz' : 'Cable'}
           </div>
           <div className="flex gap-1.5">
@@ -2369,7 +2369,7 @@ export function NetworkTopology({
                         : isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}
                     >
                       <div className={`w-2.5 h-2.5 rounded-full ${CABLE_COLORS[type].bg}`} />
-                      <span className="text-[10px] font-bold uppercase">
+                      <span className="text-[10px] font-bold">
                         {type === 'straight' ? (language === 'tr' ? 'Düz' : 'Str') : 
                          type === 'crossover' ? (language === 'tr' ? 'Çap' : 'Cro') : 
                          (language === 'tr' ? 'Kon' : 'Con')}
@@ -2535,7 +2535,7 @@ export function NetworkTopology({
             <div className={`absolute top-2 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-xl shadow-2xl flex items-center gap-4 ${isDark ? 'bg-slate-800/95 text-white border border-slate-700' : 'bg-white text-slate-900 border border-slate-200'
               } backdrop-blur-md`}>
               <div className="flex items-center gap-2 border-r pr-4 border-slate-700/30">
-                <span className="text-xs font-bold uppercase tracking-wider opacity-60">
+                <span className="text-xs font-bold tracking-wider opacity-60">
                   {language === 'tr' ? 'Hizala' : 'Align'}
                 </span>
                 <div className="flex items-center gap-1">
@@ -3060,7 +3060,7 @@ export function NetworkTopology({
                   <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {language === 'tr' ? 'Yapılandır' : 'Configure'}
                   </h3>
-                  <div className={`text-[10px] font-bold uppercase tracking-widest opacity-60 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <div className={`text-[10px] font-bold tracking-widest opacity-60 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     {devices.find(d => d.id === configuringDevice)?.name}
                   </div>
                 </div>
@@ -3070,7 +3070,7 @@ export function NetworkTopology({
             <div className={`${isMobile ? 'p-4 space-y-4' : 'p-6 space-y-6'}`}>
               {/* Hostname */}
               <div className="space-y-2">
-                <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                <label className={`text-[10px] font-black tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                   {language === 'tr' ? 'Cihaz Adı' : 'Device Name'}
                 </label>
                 <div className="relative group">
@@ -3092,13 +3092,13 @@ export function NetworkTopology({
               {/* IP Configuration Section - Only for PCs */}
               {devices.find(d => d.id === configuringDevice)?.type === 'pc' && (
                 <div className={`${isMobile ? 'p-3' : 'p-4'} rounded-2xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200/50'}`}>
-                  <div className={`text-[10px] font-black uppercase tracking-widest ${isMobile ? 'mb-3' : 'mb-4'} opacity-70 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
-                    {language === 'tr' ? 'IP YAPILANDIRMASI' : 'IP CONFIGURATION'}
+                  <div className={`text-[10px] font-black tracking-widest ${isMobile ? 'mb-3' : 'mb-4'} opacity-70 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
+                    {language === 'tr' ? 'IP Yapılandırması' : 'IP Configuration'}
                   </div>
                   
                   <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
                     <div className="space-y-1">
-                      <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <label className={`text-[10px] font-bold tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                         {language === 'tr' ? 'IP Adresi' : 'IP Address'}
                       </label>
                       <input
@@ -3115,7 +3115,7 @@ export function NetworkTopology({
                     </div>
 
                     <div className="space-y-1">
-                      <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <label className={`text-[10px] font-bold tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                         {language === 'tr' ? 'Alt Ağ Maskesi' : 'Subnet Mask'}
                       </label>
                       <input
@@ -3131,7 +3131,7 @@ export function NetworkTopology({
                     </div>
 
                     <div className="space-y-1">
-                      <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <label className={`text-[10px] font-bold tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                         {language === 'tr' ? 'Ağ Geçidi' : 'Gateway'}
                       </label>
                       <input
@@ -3148,7 +3148,7 @@ export function NetworkTopology({
                     </div>
 
                     <div className="space-y-1">
-                      <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <label className={`text-[10px] font-bold tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                         {language === 'tr' ? 'DNS Sunucusu' : 'DNS Server'}
                       </label>
                       <input
@@ -3171,7 +3171,7 @@ export function NetworkTopology({
               <div className="flex gap-4 pt-2">
                 <button
                   onClick={cancelDeviceConfig}
-                  className={`flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300 border ${
+                  className={`flex-1 py-3.5 rounded-2xl text-xs font-black tracking-widest transition-all duration-300 border ${
                     isDark 
                       ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200' 
                       : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
@@ -3181,11 +3181,12 @@ export function NetworkTopology({
                 </button>
                 <button
                   onClick={confirmDeviceConfig}
-                  className="flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest bg-cyan-500 text-white hover:bg-cyan-400 shadow-xl shadow-cyan-500/20 active:scale-95 transition-all duration-300"
+                  className="flex-1 py-3.5 rounded-2xl text-xs font-black tracking-widest bg-cyan-500 text-white hover:bg-cyan-400 shadow-xl shadow-cyan-500/20 active:scale-95 transition-all duration-300"
                 >
                   {language === 'tr' ? 'Kaydet' : 'Save'}
                 </button>
               </div>
+
             </div>
           </div>
         </div>
@@ -3441,7 +3442,7 @@ export function NetworkTopology({
               {/* Cable Type Selector */}
               <div className="mt-6 flex flex-wrap items-center gap-6">
                 <div className="flex items-center gap-3">
-                  <span className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                  <span className={`text-[10px] font-black tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                     {language === 'tr' ? 'KABLO TİPİ:' : 'CABLE TYPE:'}
                   </span>
                   <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -3449,7 +3450,7 @@ export function NetworkTopology({
                       <button
                         key={type}
                         onClick={() => onCableChange({ ...cableInfo, cableType: type })}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${cableInfo.cableType === type
+                        className={`px-4 py-2 rounded-lg text-[10px] font-black tracking-widest transition-all duration-300 ${cableInfo.cableType === type
                           ? `${CABLE_COLORS[type].bg} text-white shadow-lg shadow-black/10`
                           : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
                           }`}
@@ -3463,8 +3464,8 @@ export function NetworkTopology({
                 {portSelectorStep === 'target' && selectedSourcePort && (
                   <div className="flex items-center gap-3 ml-auto px-4 py-2 rounded-xl bg-cyan-500/5 border border-cyan-500/20 text-cyan-500">
                     <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
-                    <span className="text-[10px] font-black tracking-widest uppercase">
-                      LINK FROM: {devices.find(d => d.id === selectedSourcePort.deviceId)?.name} ({selectedSourcePort.portId})
+                    <span className="text-[10px] font-black tracking-widest">
+                      Link from: {devices.find(d => d.id === selectedSourcePort.deviceId)?.name} ({selectedSourcePort.portId})
                     </span>
                   </div>
                 )}
@@ -3495,8 +3496,8 @@ export function NetworkTopology({
                           {device.name}
                         </span>
                       </div>
-                      <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                        {availablePorts.length} PORTS FREE
+                      <div className={`text-[10px] font-bold tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        {availablePorts.length} ports free
                       </div>
                     </div>
 
@@ -3657,8 +3658,8 @@ export function NetworkTopology({
 
             {/* Modal Navigation */}
             <div className={`px-8 py-6 border-t ${isDark ? 'border-slate-800/50 bg-slate-800/30' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center`}>
-              <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-                {portSelectorStep === 'source' ? 'STEP 1: ROOT' : 'STEP 2: DESTINATION'}
+              <div className={`text-[10px] font-bold tracking-widest ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                {portSelectorStep === 'source' ? 'Step 1: Root' : 'Step 2: Destination'}
               </div>
               <button
                 onClick={() => {
@@ -3666,7 +3667,7 @@ export function NetworkTopology({
                   setPortSelectorStep('source');
                   setSelectedSourcePort(null);
                 }}
-                className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
+                className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black tracking-widest transition-all ${
                   isDark ? 'bg-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-100 text-slate-500 hover:text-slate-700'
                 }`}
               >
