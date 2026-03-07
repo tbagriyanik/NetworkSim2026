@@ -492,13 +492,38 @@ export function NetworkTopology({
     return () => window.removeEventListener('popstate', handlePopState);
   }, [isPaletteOpen, isMobile]);
 
+  // Handle right-click context menu with viewport clamping
+  const openContextMenu = useCallback((clientX: number, clientY: number, deviceId: string | null = null) => {
+    // Estimate menu dimensions (approximate)
+    const menuWidth = 180;
+    const menuHeight = deviceId ? 400 : 200; // Device menu is taller
+
+    // Clamp coordinates to stay within viewport
+    let x = clientX;
+    let y = clientY;
+
+    if (x + menuWidth > window.innerWidth) {
+      x = window.innerWidth - menuWidth - 10;
+    }
+
+    if (y + menuHeight > window.innerHeight) {
+      y = window.innerHeight - menuHeight - 10;
+    }
+
+    // Ensure it doesn't go off the top/left either
+    x = Math.max(10, x);
+    y = Math.max(10, y);
+
+    window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'topology' } }));
+    setContextMenu({ x, y, deviceId });
+  }, []);
+
   // Handle canvas pan start
   const handleCanvasMouseDown = useCallback((e: ReactMouseEvent) => {
     if (e.button === 2) {
       // Right click on canvas - show context menu
       e.preventDefault();
-      window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'topology' } }));
-      setContextMenu({ x: e.clientX, y: e.clientY, deviceId: null });
+      openContextMenu(e.clientX, e.clientY, null);
     } else if (e.button === 0 && !(e.target as HTMLElement).closest('[data-device-id]')) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -811,8 +836,8 @@ export function NetworkTopology({
     y = Math.max(10, y);
 
     window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'topology' } }));
-    setContextMenu({ x, y, deviceId: deviceId || null });
-  }, []);
+    openContextMenu(e.clientX, e.clientY, deviceId || null);
+  }, [openContextMenu]);
 
   // Handle device touch start - for mobile dragging
   const handleDeviceTouchStart = useCallback((e: ReactTouchEvent, deviceId: string) => {
@@ -925,7 +950,7 @@ export function NetworkTopology({
 
       // Start long-press to open context menu
       const timer = setTimeout(() => {
-        setContextMenu({ x: t.clientX, y: t.clientY, deviceId: null });
+        openContextMenu(t.clientX, t.clientY, null);
         setLongPressTimer(null);
         setIsPanning(false);
       }, LONG_PRESS_DURATION);
@@ -2271,6 +2296,7 @@ export function NetworkTopology({
 
   return (
     <div
+      onContextMenu={(e) => e.preventDefault()}
       className={`${isFullscreen ? 'fixed inset-[20px] z-[9999] rounded-xl shadow-2xl' : 'relative rounded-xl border-2 overflow-hidden'} flex flex-col transition-all duration-300 ${isDark
         ? 'bg-gradient-to-br from-slate-800/90 via-slate-700/80 to-slate-800/90 border-slate-600/50'
         : 'bg-gradient-to-br from-blue-50/50 via-white to-slate-50/80 border-slate-300/50'
@@ -2863,7 +2889,7 @@ export function NetworkTopology({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2m-6 12h8a2 2 0 0 0 2-2v-8a2 2 0 0 0 -2-2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2z" />
                 </svg>
                 {language === 'tr' ? 'Kopyala' : 'Copy'}
-                <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+C</span>
+                {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+C</span>}
               </button>
 
               {/* Cut */}
@@ -2881,7 +2907,7 @@ export function NetworkTopology({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 1 0 -4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 1 0 -4.243-4.243 3 3 0 004.243 4.243z" />
                 </svg>
                 {language === 'tr' ? 'Kes' : 'Cut'}
-                <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+X</span>
+                {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+X</span>}
               </button>
 
               {/* Configure */}
@@ -2914,7 +2940,7 @@ export function NetworkTopology({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1 -1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0 -1-1h-4a1 1 0 0 0 -1 1v3M4 7h16" />
                 </svg>
                 {language === 'tr' ? 'Sil' : 'Delete'}
-                <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Del</span>
+                {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Del</span>}
               </button>
 
               <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
@@ -2953,7 +2979,7 @@ export function NetworkTopology({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0 -2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" />
             </svg>
             {language === 'tr' ? 'Yapıştır' : 'Paste'}
-            <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+V</span>
+            {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+V</span>}
           </button>
 
           <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
@@ -2971,7 +2997,7 @@ export function NetworkTopology({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 0 1 8 8v2M3 10l6 6m-6-6l6-6" />
             </svg>
             {language === 'tr' ? 'Geri Al' : 'Undo'}
-            <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+Z</span>
+            {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+Z</span>}
           </button>
 
           {/* Redo */}
@@ -2987,7 +3013,7 @@ export function NetworkTopology({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 0 0 -8 8v2M21 10l-6 6m6-6l-6-6" />
             </svg>
             {language === 'tr' ? 'Yinele' : 'Redo'}
-            <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+Y</span>
+            {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+Y</span>}
           </button>
 
           <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
@@ -3002,7 +3028,7 @@ export function NetworkTopology({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
             {language === 'tr' ? 'Tümünü Seç' : 'Select All'}
-            <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+A</span>
+            {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+A</span>}
           </button>
         </div>
       )}
@@ -3018,16 +3044,16 @@ export function NetworkTopology({
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className={`px-6 pt-6 pb-4 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/30' : 'border-slate-100 bg-slate-50/50'}`}>
+            <div className={`${isMobile ? 'px-4 pt-4 pb-3' : 'px-6 pt-6 pb-4'} border-b ${isDark ? 'border-slate-800/50 bg-slate-800/30' : 'border-slate-100 bg-slate-50/50'}`}>
               <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-2xl shadow-inner ${isDark ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-cyan-50 text-cyan-600 border border-cyan-100'}`}>
-                  <svg className="w-6 h-6 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className={`${isMobile ? 'p-2' : 'p-3'} rounded-2xl shadow-inner ${isDark ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-cyan-50 text-cyan-600 border border-cyan-100'}`}>
+                  <svg className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} drop-shadow-sm`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0 -2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0 -1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 1 1 -6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {language === 'tr' ? 'Yapılandır' : 'Configure'}
                   </h3>
                   <div className={`text-[10px] font-bold uppercase tracking-widest opacity-60 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -3037,7 +3063,7 @@ export function NetworkTopology({
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className={`${isMobile ? 'p-4 space-y-4' : 'p-6 space-y-6'}`}>
               {/* Hostname */}
               <div className="space-y-2">
                 <label className={`text-[10px] font-black uppercase tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -3049,7 +3075,7 @@ export function NetworkTopology({
                     type="text"
                     value={tempNameValue}
                     onChange={(e) => setTempNameValue(e.target.value)}
-                    className={`w-full px-4 py-3 rounded-2xl border transition-all duration-300 font-bold ${
+                    className={`w-full ${isMobile ? 'px-4 py-2.5' : 'px-4 py-3'} rounded-2xl border transition-all duration-300 font-bold ${
                       isDark 
                         ? 'bg-slate-950/50 border-slate-800 text-white placeholder-slate-700 focus:border-cyan-500/50 focus:bg-slate-950 focus:ring-4 focus:ring-cyan-500/10' 
                         : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-cyan-500/50 focus:bg-white focus:ring-4 focus:ring-cyan-500/10'
@@ -3061,13 +3087,13 @@ export function NetworkTopology({
 
               {/* IP Configuration Section - Only for PCs */}
               {devices.find(d => d.id === configuringDevice)?.type === 'pc' && (
-                <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200/50'}`}>
-                  <div className={`text-[10px] font-black uppercase tracking-widest mb-4 opacity-70 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
+                <div className={`${isMobile ? 'p-3' : 'p-4'} rounded-2xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200/50'}`}>
+                  <div className={`text-[10px] font-black uppercase tracking-widest ${isMobile ? 'mb-3' : 'mb-4'} opacity-70 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
                     {language === 'tr' ? 'IP YAPILANDIRMASI' : 'IP CONFIGURATION'}
                   </div>
                   
-                  <div className="space-y-4">
-                    <div className="space-y-2">
+                  <div className={`${isMobile ? 'space-y-3' : 'space-y-4'}`}>
+                    <div className="space-y-1">
                       <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                         {language === 'tr' ? 'IP Adresi' : 'IP Address'}
                       </label>
@@ -3075,16 +3101,16 @@ export function NetworkTopology({
                         type="text"
                         value={ipValue}
                         onChange={(e) => setIpValue(e.target.value)}
-                        className={`w-full px-4 py-2.5 rounded-xl border font-mono font-bold transition-all duration-300 ${
+                        className={`w-full px-4 ${isMobile ? 'py-2' : 'py-2.5'} rounded-xl border font-mono font-bold transition-all duration-300 ${
                           isDark 
                             ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-700 focus:border-cyan-500/50' 
                             : 'bg-white border-slate-200 text-slate-900 placeholder-slate-300 focus:border-cyan-500/50'
-                        } outline-none capitalize`}
+                        } outline-none`}
                         placeholder="192.168.1.1"
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                         {language === 'tr' ? 'Alt Ağ Maskesi' : 'Subnet Mask'}
                       </label>
@@ -3092,7 +3118,7 @@ export function NetworkTopology({
                         type="text"
                         value={subnetValue}
                         onChange={(e) => setSubnetValue(e.target.value)}
-                        className={`w-full px-4 py-2.5 rounded-xl border font-mono font-bold transition-all duration-300 ${
+                        className={`w-full px-4 ${isMobile ? 'py-2' : 'py-2.5'} rounded-xl border font-mono font-bold transition-all duration-300 ${
                           isDark 
                             ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-700 focus:border-cyan-500/50' 
                             : 'bg-white border-slate-200 text-slate-900 placeholder-slate-300 focus:border-cyan-500/50'
@@ -3100,24 +3126,7 @@ export function NetworkTopology({
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                        {language === 'tr' ? 'Varsayılan Ağ Geçidi' : 'Default Gateway'}
-                      </label>
-                      <input
-                        type="text"
-                        value={gatewayValue}
-                        onChange={(e) => setGatewayValue(e.target.value)}
-                        className={`w-full px-4 py-2.5 rounded-xl border font-mono font-bold transition-all duration-300 ${
-                          isDark 
-                            ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-700 focus:border-cyan-500/50' 
-                            : 'bg-white border-slate-200 text-slate-900 placeholder-slate-300 focus:border-cyan-500/50'
-                        } outline-none`}
-                        placeholder="192.168.1.1"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                         {language === 'tr' ? 'DNS Sunucusu' : 'DNS Server'}
                       </label>
@@ -3125,7 +3134,7 @@ export function NetworkTopology({
                         type="text"
                         value={dnsValue}
                         onChange={(e) => setDnsValue(e.target.value)}
-                        className={`w-full px-4 py-2.5 rounded-xl border font-mono font-bold transition-all duration-300 ${
+                        className={`w-full px-4 ${isMobile ? 'py-2' : 'py-2.5'} rounded-xl border font-mono font-bold transition-all duration-300 ${
                           isDark 
                             ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-700 focus:border-cyan-500/50' 
                             : 'bg-white border-slate-200 text-slate-900 placeholder-slate-300 focus:border-cyan-500/50'
@@ -3136,26 +3145,26 @@ export function NetworkTopology({
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Modal Actions */}
-            <div className="p-6 flex gap-4">
-              <button
-                onClick={cancelDeviceConfig}
-                className={`flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300 border ${
-                  isDark 
-                    ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200' 
-                    : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
-                }`}
-              >
-                {language === 'tr' ? 'İPTAL' : 'CANCEL'}
-              </button>
-              <button
-                onClick={confirmDeviceConfig}
-                className="flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest bg-cyan-500 text-white hover:bg-cyan-400 shadow-xl shadow-cyan-500/20 active:scale-95 transition-all duration-300"
-              >
-                {language === 'tr' ? 'KAYDET' : 'SAVE'}
-              </button>
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-2">
+                <button
+                  onClick={cancelDeviceConfig}
+                  className={`flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300 border ${
+                    isDark 
+                      ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200' 
+                      : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
+                  }`}
+                >
+                  {language === 'tr' ? 'İptal' : 'Cancel'}
+                </button>
+                <button
+                  onClick={confirmDeviceConfig}
+                  className="flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest bg-cyan-500 text-white hover:bg-cyan-400 shadow-xl shadow-cyan-500/20 active:scale-95 transition-all duration-300"
+                >
+                  {language === 'tr' ? 'Kaydet' : 'Save'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -3640,7 +3649,7 @@ export function NetworkTopology({
                   isDark ? 'bg-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-100 text-slate-500 hover:text-slate-700'
                 }`}
               >
-                {language === 'tr' ? 'İPTAL' : 'CANCEL'}
+                {language === 'tr' ? 'İptal' : 'Cancel'}
               </button>
             </div>
           </div>

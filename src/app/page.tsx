@@ -1382,8 +1382,7 @@ export default function Home() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
-                  <span className="text-xs font-bold">{language === 'tr' ? 'YENİ' : 'NEW'}</span>
-                  <span className="text-[10px] opacity-40 ml-auto">Ctrl+N</span>
+                  <span className="text-xs font-bold">{language === 'tr' ? 'Yeni' : 'New'}</span>
                 </button>
                 <button
                   onClick={() => { handleSaveProject(); setShowMobileMenu(false); }}
@@ -1392,8 +1391,7 @@ export default function Home() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                   </svg>
-                  <span className="text-xs font-bold">{language === 'tr' ? 'KAYDET' : 'SAVE'}</span>
-                  <span className="text-[10px] opacity-40 ml-auto">Ctrl+S</span>
+                  <span className="text-xs font-bold">{language === 'tr' ? 'Kaydet' : 'Save'}</span>
                 </button>
                 <button
                   onClick={() => { fileInputRef.current?.click(); setShowMobileMenu(false); }}
