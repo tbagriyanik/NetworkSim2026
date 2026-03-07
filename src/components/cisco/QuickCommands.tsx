@@ -44,13 +44,13 @@ export function QuickCommands({ currentMode, onExecuteCommand, t, theme, languag
     cmd.modes.includes(currentMode)
   );
 
-  const modeLabels: Record<CommandMode, { tr: string; en: string }> = {
-    user: { tr: 'Kullanıcı EXEC', en: 'User EXEC' },
-    privileged: { tr: 'Ayrıcalıklı EXEC', en: 'Privileged EXEC' },
-    config: { tr: 'Global Yapılandırma', en: 'Global Config' },
-    interface: { tr: 'Arayüz Yapılandırma', en: 'Interface Config' },
-    line: { tr: 'Hat Yapılandırma', en: 'Line Config' },
-    vlan: { tr: 'VLAN Yapılandırma', en: 'VLAN Config' }
+  const modeLabels: Record<CommandMode, string> = {
+    user: t.modeUser,
+    privileged: t.modePrivileged,
+    config: t.modeConfig,
+    interface: t.modeInterface,
+    line: t.modeLine,
+    vlan: t.modeVlanLabel
   };
 
   const cardBg = isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
@@ -69,7 +69,7 @@ export function QuickCommands({ currentMode, onExecuteCommand, t, theme, languag
             {t.quickCommands}
           </CardTitle>
           <Badge variant="outline" className="text-[10px] sm:text-xs">
-            {modeLabels[currentMode][language]}
+            {modeLabels[currentMode]}
           </Badge>
         </div>
       </CardHeader>

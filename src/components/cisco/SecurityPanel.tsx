@@ -26,33 +26,25 @@ export function SecurityPanel({ security, t, theme }: SecurityPanelProps) {
     {
       name: t.enableSecret,
       enabled: !!security.enableSecret,
-      description: security.enableSecret 
-        ? (t.language === 'tr' ? 'Şifreli enable şifresi yapılandırılmış' : 'Encrypted enable password configured')
-        : (t.language === 'tr' ? 'Enable şifresi yapılandırılmamış' : 'Enable password not configured'),
+      description: security.enableSecret ? t.secEnableSecretOn : t.secEnableSecretOff,
       weight: 25
     },
     {
       name: t.consoleSecurity,
       enabled: security.consoleLine.login && !!security.consoleLine.password,
-      description: security.consoleLine.login 
-        ? (t.language === 'tr' ? 'Console hattı için giriş aktif' : 'Console line login enabled')
-        : (t.language === 'tr' ? 'Console hattı için giriş yapılandırılmamış' : 'Console line login not configured'),
+      description: security.consoleLine.login ? t.secConsoleOn : t.secConsoleOff,
       weight: 20
     },
     {
       name: t.vtySecurity,
       enabled: security.vtyLines.login && !!security.vtyLines.password,
-      description: security.vtyLines.login 
-        ? (t.language === 'tr' ? 'VTY hatları için giriş aktif' : 'VTY lines login enabled')
-        : (t.language === 'tr' ? 'VTY hatları için giriş yapılandırılmamış' : 'VTY lines login not configured'),
+      description: security.vtyLines.login ? t.secVtyOn : t.secVtyOff,
       weight: 20
     },
     {
       name: t.passwordEncryption,
       enabled: security.servicePasswordEncryption,
-      description: security.servicePasswordEncryption 
-        ? (t.language === 'tr' ? 'Şifreler şifrelenmiş durumda' : 'Passwords encrypted')
-        : (t.language === 'tr' ? 'Şifreler düz metin olarak saklanıyor' : 'Passwords stored in plain text'),
+      description: security.servicePasswordEncryption ? t.secPassEncOn : t.secPassEncOff,
       weight: 15
     },
     {
@@ -63,10 +55,10 @@ export function SecurityPanel({ security, t, theme }: SecurityPanelProps) {
                security.vtyLines.transportInput[0] !== 'none',
       description: security.vtyLines.transportInput.includes('ssh') && 
                    !security.vtyLines.transportInput.includes('telnet')
-        ? (t.language === 'tr' ? 'Sadece SSH erişimi aktif' : 'SSH-only access enabled')
+        ? t.secSshOnly
         : security.vtyLines.transportInput.includes('telnet')
-        ? (t.language === 'tr' ? 'Telnet erişimi aktif (güvenli değil)' : 'Telnet access enabled (insecure)')
-        : (t.language === 'tr' ? 'Erişim protokolü yapılandırılmamış' : 'Access protocol not configured'),
+        ? t.secTelnetWarn
+        : t.secNoProtocol,
       weight: 20
     }
   ];

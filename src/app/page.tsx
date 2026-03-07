@@ -1068,7 +1068,6 @@ export default function Home() {
 
             {/* Controls - Desktop */}
             <div className="hidden md:flex items-center gap-2">
-              {/* Project buttons */}
               <div className={`flex items-center gap-1 rounded-lg p-1 ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
                 <Button
                   variant="ghost"
@@ -1078,7 +1077,7 @@ export default function Home() {
                   title={language === 'tr' ? 'Yeni Proje' : 'New Project'}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                 </Button>
                 <Button
@@ -1329,9 +1328,9 @@ export default function Home() {
                   className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg ${isDark ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-100 hover:bg-slate-200'}`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
-                  <span className="text-sm">{language === 'tr' ? 'Yeni' : 'New'}</span>
+                  <span className="text-sm">{t.newBtn}</span>
                 </button>
                 <button
                   onClick={() => { handleSaveProject(); setShowMobileMenu(false); }}
@@ -1340,7 +1339,7 @@ export default function Home() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                   </svg>
-                  <span className="text-sm">{language === 'tr' ? 'Kaydet' : 'Save'}</span>
+                  <span className="text-sm">{t.saveLabel}</span>
                 </button>
                 <button
                   onClick={() => { fileInputRef.current?.click(); setShowMobileMenu(false); }}
@@ -1349,13 +1348,13 @@ export default function Home() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
-                  <span className="text-sm">{language === 'tr' ? 'Yükle' : 'Load'}</span>
+                  <span className="text-sm">{t.load}</span>
                 </button>
               </div>
               
               {/* Language Toggle */}
               <div className="flex items-center justify-between">
-                <span className="text-sm">{language === 'tr' ? 'Dil' : 'Language'}</span>
+                <span className="text-sm">{t.languageLabel}</span>
                 <div className={`flex items-center gap-1 rounded-lg p-1 ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
                   <button
                     onClick={() => { setLanguage('tr'); }}
@@ -1378,9 +1377,9 @@ export default function Home() {
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg"
                 style={{ background: isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.5)' }}
               >
-                <span className="text-sm">{language === 'tr' ? 'Tema' : 'Theme'}</span>
+                <span className="text-sm">{t.themeLabel}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{isDark ? (language === 'tr' ? 'Koyu' : 'Dark') : (language === 'tr' ? 'Açık' : 'Light')}</span>
+                  <span className="text-sm">{isDark ? t.dark : t.light}</span>
                   {isDark ? (
                     <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />

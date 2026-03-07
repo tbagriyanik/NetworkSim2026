@@ -52,10 +52,8 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
   const isPortConnectedInTopology = (portId: string): boolean => {
     if (!topologyConnections || !activeDeviceId) return false;
     return topologyConnections.some(conn => 
-      conn.active && (
-        (conn.sourceDeviceId === activeDeviceId && conn.sourcePort === portId) ||
-        (conn.targetDeviceId === activeDeviceId && conn.targetPort === portId)
-      )
+      (conn.sourceDeviceId === activeDeviceId && conn.sourcePort === portId) ||
+      (conn.targetDeviceId === activeDeviceId && conn.targetPort === portId)
     );
   };
   
@@ -174,7 +172,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
             </CardTitle>
             <div className="flex items-center gap-2">
               <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                {openPortsCount}/{totalPortsCount} {t.language === 'tr' ? 'açık' : 'open'}
+                {openPortsCount}/{totalPortsCount} {t.on.toLowerCase()}
               </span>
             </div>
           </div>

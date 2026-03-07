@@ -95,6 +95,71 @@ interface Translations {
   clearTerminalBtn: string;
   switchMode: string;
   newVlanLabel: string;
+  pcTerminal: string;
+  pcConnected: string;
+  pcNotConnected: string;
+  pcCableError: string;
+  pcIncompatibleCable: string;
+  pcAccessDenied: string;
+  pcConsoleTip: string;
+  pcPingError: string;
+  pcTelnetError: string;
+  pcTracertError: string;
+  pcNslookupError: string;
+  pcIpconfigError: string;
+  pcTerminalClosing: string;
+  pcLoginSuccess: string;
+  pcConnectionClosed: string;
+  load: string;
+  saveLabel: string;
+  languageLabel: string;
+  themeLabel: string;
+  errorPrefix: string;
+  newBtn: string;
+  modeUser: string;
+  modePrivileged: string;
+  modeConfig: string;
+  modeInterface: string;
+  modeLine: string;
+  modeVlanLabel: string;
+  
+  // Security descriptions
+  secEnableSecretOn: string;
+  secEnableSecretOff: string;
+  secConsoleOn: string;
+  secConsoleOff: string;
+  secVtyOn: string;
+  secVtyOff: string;
+  secPassEncOn: string;
+  secPassEncOff: string;
+  secSshOnly: string;
+  secTelnetWarn: string;
+  secNoProtocol: string;
+  
+  // VLAN Panel
+  vlanNotApplicable: string;
+  vlanOnlyOnNetworkDevices: string;
+  vlanScore: string;
+  vlanTasks: string;
+  vlanExcellent: string;
+  vlanGood: string;
+  vlanInProgress: string;
+  vlanNeeded: string;
+  
+  // VLAN Tasks
+  vTaskCreateName: string;
+  vTaskCreateDesc: string;
+  vTaskNameName: string;
+  vTaskNameDesc: string;
+  vTaskAssignName: string;
+  vTaskAssignDesc: string;
+  vTaskTrunkName: string;
+  vTaskTrunkDesc: string;
+  vTaskMultipleName: string;
+  vTaskMultipleDesc: string;
+  vTaskFullNamingName: string;
+  vTaskFullNamingDesc: string;
+  vTaskFullNamingHint: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -166,6 +231,65 @@ const translations: Record<Language, Translations> = {
     clearTerminalBtn: 'Temizle',
     switchMode: 'Switch Modu',
     newVlanLabel: 'Yeni VLAN',
+    pcTerminal: 'PC Terminali',
+    pcConnected: 'Bağlandı.',
+    pcNotConnected: 'Herhangi bir switch veya router\'a bağlı değilsiniz.',
+    pcCableError: 'Ağ kablosu bağlı değil.',
+    pcIncompatibleCable: 'Kablo tipi uyumsuz. PC-Switch için Düz Kablo gerekli.',
+    pcAccessDenied: 'adresine doğrudan erişim yok.',
+    pcConsoleTip: 'Konsol kablosuyla bağlısınız. Lütfen "terminal" komutunu kullanın.',
+    pcPingError: 'Ping isteği zaman aşımına uğradı.',
+    pcTelnetError: 'TELNET: Bağlantı kurulamadı.',
+    pcTracertError: 'TRACERT: Hedefe ulaşılamıyor.',
+    pcNslookupError: 'NSLOOKUP: DNS sunucusuyla iletişim kurulamadı.',
+    pcIpconfigError: 'IP yapılandırması alınamadı.',
+    pcTerminalClosing: 'PC terminali kapatılıyor...',
+    pcLoginSuccess: 'Giriş başarılı',
+    pcConnectionClosed: 'Bağlantı uzak bilgisayar tarafından kapatıldı.',
+    load: 'Yükle',
+    saveLabel: 'Kaydet',
+    languageLabel: 'Dil',
+    themeLabel: 'Tema',
+    errorPrefix: 'HATA',
+    newBtn: 'Yeni',
+    modeUser: 'Kullanıcı EXEC',
+    modePrivileged: 'Ayrıcalıklı EXEC',
+    modeConfig: 'Global Yapılandırma',
+    modeInterface: 'Arayüz Yapılandırma',
+    modeLine: 'Hat Yapılandırma',
+    modeVlanLabel: 'VLAN Yapılandırma',
+    secEnableSecretOn: 'Şifreli enable şifresi yapılandırılmış',
+    secEnableSecretOff: 'Enable şifresi yapılandırılmamış',
+    secConsoleOn: 'Console hattı için giriş aktif',
+    secConsoleOff: 'Console hattı için giriş yapılandırılmamış',
+    secVtyOn: 'VTY hatları için giriş aktif',
+    secVtyOff: 'VTY hatları için giriş yapılandırılmamış',
+    secPassEncOn: 'Şifreler şifrelenmiş durumda',
+    secPassEncOff: 'Şifreler düz metin olarak saklanıyor',
+    secSshOnly: 'Sadece SSH erişimi aktif',
+    secTelnetWarn: 'Telnet erişimi aktif (güvenli değil)',
+    secNoProtocol: 'Erişim protokolü yapılandırılmamış',
+    vlanNotApplicable: 'PC Cihazlarında VLAN Yapılandırması Yok',
+    vlanOnlyOnNetworkDevices: 'VLAN bilgileri sadece switch veya router cihazlarında görüntülenebilir ve yapılandırılabilir.',
+    vlanScore: 'VLAN Puanı',
+    vlanTasks: 'VLAN Görevleri',
+    vlanExcellent: 'Mükemmel VLAN yapılandırması!',
+    vlanGood: 'İyi VLAN yapısı',
+    vlanInProgress: 'VLAN yapılandırma devam ediyor',
+    vlanNeeded: 'VLAN yapılandırması gerekli',
+    vTaskCreateName: 'VLAN Oluştur',
+    vTaskCreateDesc: 'Varsayılan olmayan en az 1 VLAN oluştur',
+    vTaskNameName: 'VLAN İsimlendir',
+    vTaskNameDesc: 'Bir VLAN\'a özel isim ver',
+    vTaskAssignName: 'Port Ata',
+    vTaskAssignDesc: 'Bir portu VLAN\'a ata',
+    vTaskTrunkName: 'Trunk Port',
+    vTaskTrunkDesc: 'Bir portu trunk moduna al',
+    vTaskMultipleName: 'Çoklu VLAN',
+    vTaskMultipleDesc: 'En az 3 kullanıcı VLAN\'ı oluştur',
+    vTaskFullNamingName: 'Tam İsimlendirme',
+    vTaskFullNamingDesc: 'Tüm VLAN\'ları isimlendir',
+    vTaskFullNamingHint: 'Her VLAN için: name <isim>',
   },
   en: {
     title: 'Cisco Simulator',
@@ -235,6 +359,65 @@ const translations: Record<Language, Translations> = {
     clearTerminalBtn: 'Clear',
     switchMode: 'Switch Mode',
     newVlanLabel: 'New VLAN',
+    pcTerminal: 'PC Terminal',
+    pcConnected: 'Connected.',
+    pcNotConnected: 'You are not connected to any switch or router.',
+    pcCableError: 'Network cable not connected.',
+    pcIncompatibleCable: 'Incompatible cable type. Straight-through required for PC-Switch.',
+    pcAccessDenied: 'no direct access to address.',
+    pcConsoleTip: 'Connected via console. Please use the "terminal" command.',
+    pcPingError: 'Ping request timed out.',
+    pcTelnetError: 'TELNET: Connection failed.',
+    pcTracertError: 'TRACERT: Target unreachable.',
+    pcNslookupError: 'NSLOOKUP: Cannot communicate with DNS server.',
+    pcIpconfigError: 'Could not retrieve IP configuration.',
+    pcTerminalClosing: 'Closing PC terminal...',
+    pcLoginSuccess: 'Login successful',
+    pcConnectionClosed: 'Connection closed by foreign host.',
+    load: 'Load',
+    saveLabel: 'Save',
+    languageLabel: 'Language',
+    themeLabel: 'Theme',
+    errorPrefix: 'ERROR',
+    newBtn: 'New',
+    modeUser: 'User EXEC',
+    modePrivileged: 'Privileged EXEC',
+    modeConfig: 'Global Config',
+    modeInterface: 'Interface Config',
+    modeLine: 'Line Config',
+    modeVlanLabel: 'VLAN Config',
+    secEnableSecretOn: 'Encrypted enable password configured',
+    secEnableSecretOff: 'Enable password not configured',
+    secConsoleOn: 'Console line login enabled',
+    secConsoleOff: 'Console line login not configured',
+    secVtyOn: 'VTY lines login enabled',
+    secVtyOff: 'VTY lines login not configured',
+    secPassEncOn: 'Passwords encrypted',
+    secPassEncOff: 'Passwords stored in plain text',
+    secSshOnly: 'SSH-only access enabled',
+    secTelnetWarn: 'Telnet access enabled (insecure)',
+    secNoProtocol: 'Access protocol not configured',
+    vlanNotApplicable: 'VLAN Configuration Not Applicable for PC Devices',
+    vlanOnlyOnNetworkDevices: 'VLAN information can only be viewed and configured on switch or router devices.',
+    vlanScore: 'VLAN Score',
+    vlanTasks: 'VLAN Tasks',
+    vlanExcellent: 'Excellent VLAN configuration!',
+    vlanGood: 'Good VLAN structure',
+    vlanInProgress: 'VLAN configuration in progress',
+    vlanNeeded: 'VLAN configuration needed',
+    vTaskCreateName: 'Create VLAN',
+    vTaskCreateDesc: 'Create at least 1 non-default VLAN',
+    vTaskNameName: 'Name VLAN',
+    vTaskNameDesc: 'Give a custom name to a VLAN',
+    vTaskAssignName: 'Assign Port',
+    vTaskAssignDesc: 'Assign a port to a VLAN',
+    vTaskTrunkName: 'Trunk Port',
+    vTaskTrunkDesc: 'Configure a port as trunk',
+    vTaskMultipleName: 'Multiple VLANs',
+    vTaskMultipleDesc: 'Create at least 3 user VLANs',
+    vTaskFullNamingName: 'Full Naming',
+    vTaskFullNamingDesc: 'Name all VLANs properly',
+    vTaskFullNamingHint: 'For each VLAN: name <name>',
   }
 };
 

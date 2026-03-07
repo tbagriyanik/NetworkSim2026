@@ -61,8 +61,8 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
             <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            <p className="text-lg font-medium">{t.language === 'tr' ? 'PC Cihazlarında VLAN Yapılandırması Yok' : 'VLAN Configuration Not Applicable for PC Devices'}</p>
-            <p className="text-sm">{t.language === 'tr' ? 'VLAN bilgileri sadece switch veya router cihazlarında görüntülenebilir ve yapılandırılabilir.' : 'VLAN information can only be viewed and configured on switch or router devices.'}</p>
+            <p className="text-lg font-medium">{t.vlanNotApplicable}</p>
+            <p className="text-sm">{t.vlanOnlyOnNetworkDevices}</p>
           </div>
         </CardContent>
       </Card>
@@ -75,7 +75,6 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
       .map(p => p.id.toUpperCase());
   };
 
-  // VLAN Görevleri
   const getVlanTasks = (): VlanTask[] => {
     const userVlans = Object.values(vlans).filter(v => v.id > 1 && v.id < 1002);
     const namedVlans = userVlans.filter(v => v.name !== `VLAN${v.id}`);
@@ -85,70 +84,58 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
     return [
       {
         id: 'create-vlan',
-        name: t.language === 'tr' ? 'VLAN Oluştur' : 'Create VLAN',
-        description: t.language === 'tr' 
-          ? 'Varsayılan olmayan en az 1 VLAN oluştur' 
-          : 'Create at least 1 non-default VLAN',
+        name: t.vTaskCreateName,
+        description: t.vTaskCreateDesc,
         weight: 20,
         completed: userVlans.length >= 1,
         hint: 'vlan 10'
       },
       {
         id: 'name-vlan',
-        name: t.language === 'tr' ? 'VLAN İsimlendir' : 'Name VLAN',
-        description: t.language === 'tr' 
-          ? 'Bir VLAN\'a özel isim ver' 
-          : 'Give a custom name to a VLAN',
+        name: t.vTaskNameName,
+        description: t.vTaskNameDesc,
         weight: 15,
         completed: namedVlans.length >= 1,
         hint: 'name MUHASEBE'
       },
       {
         id: 'assign-port',
-        name: t.language === 'tr' ? 'Port Ata' : 'Assign Port',
-        description: t.language === 'tr' 
-          ? 'Bir portu VLAN\'a ata' 
-          : 'Assign a port to a VLAN',
+        name: t.vTaskAssignName,
+        description: t.vTaskAssignDesc,
         weight: 20,
         completed: portsWithNonDefaultVlan.length >= 1,
         hint: 'switchport access vlan 10'
       },
       {
         id: 'create-trunk',
-        name: t.language === 'tr' ? 'Trunk Port' : 'Trunk Port',
-        description: t.language === 'tr' 
-          ? 'Bir portu trunk moduna al' 
-          : 'Configure a port as trunk',
+        name: t.vTaskTrunkName,
+        description: t.vTaskTrunkDesc,
         weight: 20,
         completed: trunkPorts.length >= 1,
         hint: 'switchport mode trunk'
       },
       {
         id: 'multiple-vlans',
-        name: t.language === 'tr' ? 'Çoklu VLAN' : 'Multiple VLANs',
-        description: t.language === 'tr' 
-          ? 'En az 3 kullanıcı VLAN\'ı oluştur' 
-          : 'Create at least 3 user VLANs',
+        name: t.vTaskMultipleName,
+        description: t.vTaskMultipleDesc,
         weight: 15,
         completed: userVlans.length >= 3,
         hint: 'vlan 20, vlan 30'
       },
       {
         id: 'all-named',
-        name: t.language === 'tr' ? 'Tam İsimlendirme' : 'Full Naming',
-        description: t.language === 'tr' 
-          ? 'Tüm VLAN\'ları isimlendir' 
-          : 'Name all VLANs properly',
+        name: t.vTaskFullNamingName,
+        description: t.vTaskFullNamingDesc,
         weight: 10,
         completed: userVlans.length > 0 && namedVlans.length === userVlans.length,
-        hint: 'Her VLAN için: name <isim>'
+        hint: t.vTaskFullNamingHint
       }
     ];
   };
 
   const vlanTasks = getVlanTasks();
   const totalScore = vlanTasks.reduce((acc, task) => acc + (task.completed ? task.weight : 0), 0);
-  const completedTasks = vlanTasks.filter(t => t.completed).length;
+  const completedTasks = vlanTasks.filter(task => task.completed).length;
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return isDark ? 'text-green-400' : 'text-green-600';
@@ -158,10 +145,10 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
   };
 
   const getScoreText = (score: number) => {
-    if (score >= 80) return t.language === 'tr' ? 'Mükemmel VLAN yapılandırması!' : 'Excellent VLAN configuration!';
-    if (score >= 60) return t.language === 'tr' ? 'İyi VLAN yapısı' : 'Good VLAN structure';
-    if (score >= 40) return t.language === 'tr' ? 'VLAN yapılandırma devam ediyor' : 'VLAN configuration in progress';
-    return t.language === 'tr' ? 'VLAN yapılandırması gerekli' : 'VLAN configuration needed';
+    if (score >= 80) return t.vlanExcellent;
+    if (score >= 60) return t.vlanGood;
+    if (score >= 40) return t.vlanInProgress;
+    return t.vlanNeeded;
   };
 
   const handleCreateVlan = async () => {
@@ -217,12 +204,11 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Puan ve Görev Durumu */}
         <div className={`mb-4 p-2 sm:p-3 ${innerBg} rounded-lg transition-all duration-300 hover:bg-opacity-80`}>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className={`text-xs sm:text-sm ${textSecondary}`}>
-                {t.language === 'tr' ? 'VLAN Puanı' : 'VLAN Score'}
+                {t.vlanScore}
               </span>
               <Badge variant="outline" className="text-[10px] transition-transform hover:scale-105">
                 {completedTasks}/{vlanTasks.length}
@@ -241,13 +227,12 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
           </div>
         </div>
 
-        {/* VLAN Görevleri */}
         <div className={`mb-4 p-2 sm:p-3 ${innerBg} rounded-lg`}>
           <div className={`text-xs font-medium ${textSecondary} mb-2 flex items-center gap-1`}>
             <svg className="w-3 h-3 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            {t.language === 'tr' ? 'VLAN Görevleri' : 'VLAN Tasks'}
+            {t.vlanTasks}
           </div>
           <div className="space-y-1.5">
             {vlanTasks.map((task, index) => (
@@ -296,7 +281,6 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
           </div>
         </div>
 
-        {/* VLAN Oluşturma Formu */}
         <div className={`mb-4 p-2 sm:p-3 ${innerBg} rounded-lg`}>
           <div className={`text-xs ${textSecondary} mb-2`}>{t.newVlan}</div>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -337,7 +321,6 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
           </div>
         </div>
 
-        {/* VLAN Listesi */}
         <ScrollArea className="h-36 sm:h-48">
           <div className="space-y-1">
             <div className={`grid grid-cols-12 gap-1 sm:gap-2 px-2 py-1 text-[10px] sm:text-xs ${textSecondary} border-b ${isDark ? 'border-slate-700' : 'border-slate-300'}`}>

@@ -95,7 +95,7 @@ function addToCommandHistory(deviceId: string, command: string) {
 }
 
 export function PCPanel({ deviceId, cableInfo, isVisible, onClose, topologyDevices = [], topologyConnections = [] }: PCPanelProps) {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
@@ -384,26 +384,22 @@ export function PCPanel({ deviceId, cableInfo, isVisible, onClose, topologyDevic
     // Check if connected to a device
     if (!connectedDevice) {
       if (consoleDevice) {
-        addOutput('error', language === 'tr'
-          ? "\nPing isteği zaman aşımına uğradı.\nHATA: Konsol kablosu üzerinden ping atılamaz. Ping IP üzerinden (Ethernet) çalışır.\n\n"
-          : "\nPing request timed out.\nERROR: Cannot ping over console. Ping requires an Ethernet link.\n\n");
+        addOutput('error', `\n${t.pcPingError}\n` + `${t.errorPrefix}: ${t.pcConsoleTip}\n\n`);
       } else {
-        addOutput('error', language === 'tr' 
-          ? "\nPing isteği zaman aşımına uğradı.\nHATA: Herhangi bir switch veya router'a bağlı değilsiniz.\n\n" 
-          : "\nPing request timed out.\nERROR: You are not connected to any switch or router.\n\n");
+        addOutput('error', `\n${t.pcPingError}\n` + `${t.errorPrefix}: ${t.pcNotConnected}\n\n`);
       }
       return;
     }
     
     if (!cableInfo.connected) {
-      addOutput('error', language === 'tr' ? '\nPing isteği zaman aşımına uğradı.\n' : '\nPing request timed out.\n');
-      addOutput('error', language === 'tr' ? 'HATA: Ağ kablosu bağlı değil.\n\n' : 'ERROR: Network cable not connected.\n\n');
+      addOutput('error', `\n${t.pcPingError}\n`);
+      addOutput('error', `${t.errorPrefix}: ${t.pcCableError}\n\n`);
       return;
     }
     
     if (!isCompatible) {
       addOutput('error', language === 'tr' ? '\nHedef ana bilgisayara ulaşılamıyor.\n' : '\nDestination host unreachable.\n');
-      addOutput('error', language === 'tr' ? 'HATA: Kablo tipi uyumsuz. PC-Switch için Düz Kablo gerekli.\n\n' : 'ERROR: Incompatible cable type. Straight-through cable required for PC-Switch.\n\n');
+      addOutput('error', `${t.errorPrefix}: ${t.pcIncompatibleCable}\n\n`);
       return;
     }
     
@@ -432,8 +428,8 @@ export function PCPanel({ deviceId, cableInfo, isVisible, onClose, topologyDevic
           ? 'Hedef ana bilgisayara ulaşılamıyor.\n\n'
           : 'Destination host unreachable.\n\n');
         addOutput('error', language === 'tr'
-          ? `HATA: ${targetIP} adresine doğrudan erişim yok. Sadece bağlı olduğunuz ${connectedDevice.name} (${connectedDevice.ip}) adresine ping atabilirsiniz.\n\n`
-          : `ERROR: Cannot reach ${targetIP}. You can only ping the connected device ${connectedDevice.name} (${connectedDevice.ip}).\n\n`);
+          ? `${t.errorPrefix}: ${targetIP} adresine doğrudan erişim yok. Sadece bağlı olduğunuz ${connectedDevice.name} (${connectedDevice.ip}) adresine ping atabilirsiniz.\n\n`
+          : `${t.errorPrefix}: Cannot reach ${targetIP}. You can only ping the connected device ${connectedDevice.name} (${connectedDevice.ip}).\n\n`);
       }, 400);
       return;
     }
@@ -470,28 +466,20 @@ export function PCPanel({ deviceId, cableInfo, isVisible, onClose, topologyDevic
     // Check if connected to a device
     if (!connectedDevice) {
       if (consoleDevice) {
-        addOutput('error', language === 'tr'
-          ? '\nTELNET: Bağlantı kurulamadı.\nHATA: Konsol kablosuyla bağlısınız. Telnet IP üzerinden çalışır.\nLÜTFEN: "terminal" komutunu kullanarak konsol erişimi sağlayın.\n\n'
-          : '\nTELNET: Could not open connection.\nERROR: Connected via console. Telnet requires an Ethernet/IP link.\nTIP: Use the "terminal" command for console access.\n\n');
+        addOutput('error', `\n${t.pcTelnetError}\n` + `${t.errorPrefix}: ${t.pcConsoleTip}\n\n`);
       } else {
-        addOutput('error', language === 'tr' 
-          ? '\nTELNET: Bağlantı kurulamadı.\nHATA: Herhangi bir switch veya router\'a bağlı değilsiniz.\n\n' 
-          : '\nTELNET: Could not open connection.\nERROR: You are not connected to any switch or router.\n\n');
+        addOutput('error', `\n${t.pcTelnetError}\n` + `${t.errorPrefix}: ${t.pcNotConnected}\n\n`);
       }
       return;
     }
     
     if (!cableInfo.connected) {
-      addOutput('error', language === 'tr' 
-        ? '\nTELNET: Bağlantı kurulamadı. Ağ kablosu bağlı değil.\n\n' 
-        : '\nTELNET: Could not open connection. Network cable not connected.\n\n');
+      addOutput('error', `\n${t.pcTelnetError} ${t.pcCableError}\n\n`);
       return;
     }
     
     if (!isCompatible) {
-      addOutput('error', language === 'tr' 
-        ? '\nTELNET: Bağlantı kurulamadı. Kablo tipi uyumsuz.\n\n' 
-        : '\nTELNET: Could not open connection. Incompatible cable type.\n\n');
+      addOutput('error', `\n${t.pcTelnetError} ${t.pcIncompatibleCable}\n\n`);
       return;
     }
     
@@ -505,12 +493,10 @@ export function PCPanel({ deviceId, cableInfo, isVisible, onClose, topologyDevic
     // Check if target is the connected device
     const targetIP = target;
     if (targetIP !== connectedDevice.ip && targetIP !== connectedDevice.name) {
+      addOutput('error', `\nTELNET: ${targetIP} ${t.pcAccessDenied}\n`);
       addOutput('error', language === 'tr'
-        ? `\nTELNET: ${targetIP} adresine bağlanılamadı.\n`
-        : `\nTELNET: Could not connect to ${targetIP}.\n`);
-      addOutput('error', language === 'tr'
-        ? `HATA: Sadece bağlı olduğunuz ${connectedDevice.name} (${connectedDevice.ip}) cihazına telnet yapabilirsiniz.\n\n`
-        : `ERROR: You can only telnet to the connected device ${connectedDevice.name} (${connectedDevice.ip}).\n\n`);
+        ? `${t.errorPrefix}: Sadece bağlı olduğunuz ${connectedDevice.name} (${connectedDevice.ip}) cihazına telnet yapabilirsiniz.\n\n`
+        : `${t.errorPrefix}: You can only telnet to the connected device ${connectedDevice.name} (${connectedDevice.ip}).\n\n`);
       return;
     }
     
@@ -536,16 +522,14 @@ export function PCPanel({ deviceId, cableInfo, isVisible, onClose, topologyDevic
 
   const handleTerminal = () => {
     if (!consoleDevice) {
-      addOutput('error', language === 'tr'
-        ? '\nTERMINAL: Bağlantı kurulamadı.\nHATA: Konsol kablosu takılı değil.\n\n'
-        : '\nTERMINAL: Could not open connection.\nERROR: Console cable not connected.\n\n');
+      addOutput('error', `\nTERMINAL: ${t.pcTelnetError}\n${t.errorPrefix}: ${t.pcCableError}\n\n`);
       return;
     }
 
     addOutput('output', language === 'tr' ? 'Konsol bağlantısı açılıyor...\n' : 'Opening console connection...\n');
     
     setTimeout(() => {
-      addOutput('success', language === 'tr' ? 'Switch konsoluna bağlanıldı.\n' : 'Connected to switch console.\n');
+      addOutput('success', t.pcConnected + '\n');
       setInteractiveState({
         active: true,
         type: 'telnet', // Reuse telnet type as it uses the same executor logic
@@ -800,6 +784,7 @@ export function PCPanel({ deviceId, cableInfo, isVisible, onClose, topologyDevic
       addOutput('output', '─'.repeat(40) + '\n');
       addOutput('output', '  ping [ip]        - ICMP echo isteği gönder\n');
       addOutput('output', '  telnet [ip]      - Uzak cihaza bağlan\n');
+      addOutput('output', '  terminal         - Konsol kablosuyla bağlı cihaza eriş\n');
       addOutput('output', '  ipconfig         - IP yapılandırmasını göster\n');
       addOutput('output', '  ipconfig /all    - Detaylı IP yapılandırması\n');
       addOutput('output', '  arp -a           - ARP tablosunu göster\n');
