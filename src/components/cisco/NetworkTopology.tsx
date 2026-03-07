@@ -472,25 +472,29 @@ export function NetworkTopology({
     return () => window.removeEventListener('click', handleClickOutside);
   }, [contextMenu]);
 
-  // Handle mobile back button to close palette
+  // Handle mobile back button to close modals/popups
   useEffect(() => {
-    if (!isMobile) return;
-
-    // When palette opens, push a state so the back button can close it
-    if (isPaletteOpen) {
-      window.history.pushState({ paletteOpen: true }, '');
+    const isAnyModalOpen = isPaletteOpen || !!configuringDevice || !!pingSource || showPortSelector || !!contextMenu;
+    
+    if (isAnyModalOpen) {
+      window.history.pushState({ modalOpen: true }, '');
     }
 
-    // Listen for popstate (back button)
-    const handlePopState = (e: PopStateEvent) => {
-      if (isPaletteOpen) {
-        setIsPaletteOpen(false);
+    const handlePopState = () => {
+      if (isPaletteOpen) setIsPaletteOpen(false);
+      if (configuringDevice) cancelDeviceConfig();
+      if (pingSource) setPingSource(null);
+      if (showPortSelector) {
+        setShowPortSelector(false);
+        setPortSelectorStep('source');
+        setSelectedSourcePort(null);
       }
+      if (contextMenu) setContextMenu(null);
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [isPaletteOpen, isMobile]);
+  }, [isPaletteOpen, configuringDevice, pingSource, showPortSelector, contextMenu, cancelDeviceConfig]);
 
   // Handle right-click context menu with viewport clamping
   const openContextMenu = useCallback((clientX: number, clientY: number, deviceId: string | null = null) => {
@@ -3038,7 +3042,7 @@ export function NetworkTopology({
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={cancelDeviceConfig}>
           <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" />
           <div
-            className={`relative w-full max-w-sm overflow-hidden rounded-[2rem] border transition-all duration-500 hover:shadow-cyan-500/10 ${
+            className={`relative w-full max-w-md overflow-hidden rounded-[2rem] border transition-all duration-500 hover:shadow-cyan-500/10 ${
               isDark ? 'bg-slate-900/80 border-slate-800/50 shadow-2xl' : 'bg-white/90 border-slate-200/50 shadow-2xl'
             }`}
             onClick={e => e.stopPropagation()}
@@ -3092,7 +3096,7 @@ export function NetworkTopology({
                     {language === 'tr' ? 'IP YAPILANDIRMASI' : 'IP CONFIGURATION'}
                   </div>
                   
-                  <div className={`${isMobile ? 'space-y-3' : 'space-y-4'}`}>
+                  <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
                     <div className="space-y-1">
                       <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                         {language === 'tr' ? 'IP Adresi' : 'IP Address'}
@@ -3123,6 +3127,23 @@ export function NetworkTopology({
                             ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-700 focus:border-cyan-500/50' 
                             : 'bg-white border-slate-200 text-slate-900 placeholder-slate-300 focus:border-cyan-500/50'
                         } outline-none`}
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        {language === 'tr' ? 'Ağ Geçidi' : 'Gateway'}
+                      </label>
+                      <input
+                        type="text"
+                        value={gatewayValue}
+                        onChange={(e) => setGatewayValue(e.target.value)}
+                        className={`w-full px-4 ${isMobile ? 'py-2' : 'py-2.5'} rounded-xl border font-mono font-bold transition-all duration-300 ${
+                          isDark 
+                            ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-700 focus:border-cyan-500/50' 
+                            : 'bg-white border-slate-200 text-slate-900 placeholder-slate-300 focus:border-cyan-500/50'
+                        } outline-none`}
+                        placeholder="192.168.1.1"
                       />
                     </div>
 
