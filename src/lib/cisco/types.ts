@@ -63,6 +63,7 @@ export interface SecurityConfig {
 
 export interface SwitchState {
   hostname: string;
+  macAddress: string; // Unique base MAC address for the device
   currentMode: CommandMode;
   currentInterface?: string;
   selectedInterfaces?: string[];  // interface range için çoklu port seçimi

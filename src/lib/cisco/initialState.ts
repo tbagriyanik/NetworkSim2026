@@ -85,10 +85,22 @@ function createInitialMacTable(): { mac: string; vlan: number; port: string; typ
   ];
 }
 
+// Helper to generate a random unique Cisco-formatted MAC address (xxxx.xxxx.xxxx)
+function generateMacAddress(): string {
+  const chars = '0123456789ABCDEF';
+  let mac = '';
+  for (let i = 0; i < 12; i++) {
+    mac += chars[Math.floor(Math.random() * 16)];
+    if (i === 3 || i === 7) mac += '.';
+  }
+  return mac;
+}
+
 // Ana başlangıç durumu
 export function createInitialState(): SwitchState {
   const ports = createInitialPorts();
   const vlans = createInitialVlans();
+  const macAddress = generateMacAddress();
   
   // VLAN'lara portları ata
   Object.values(ports).forEach(port => {
@@ -99,6 +111,7 @@ export function createInitialState(): SwitchState {
   
   return {
     hostname: 'Switch',
+    macAddress,
     currentMode: 'user',
     ports,
     vlans,
@@ -162,9 +175,11 @@ function createInitialRouterPorts(): Record<string, Port> {
 export function createInitialRouterState(): SwitchState {
   const ports = createInitialRouterPorts();
   const vlans = createInitialVlans();
+  const macAddress = generateMacAddress();
   
   return {
     hostname: 'Router',
+    macAddress,
     currentMode: 'user',
     ports,
     vlans,

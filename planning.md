@@ -17,7 +17,7 @@ This document tracks the implementation status of features and planned enhanceme
 - [x] **Connection Validation** - Intelligent cable compatibility checking
 - [x] **Visual Feedback** - Animated data packets and port link LEDs
 - [x] **Minimap** - Navigation overview for large topologies
-- [ ] **Save/Load Topology** - Persistent storage of canvas layouts to database
+- [x] **Save/Load Topology** - Persistent storage of canvas layouts to database / Local JSON
 - [ ] **Auto-layout** - Intelligent positioning of connected devices
 
 ## 💻 Cisco IOS Simulator (Switch Focus)
@@ -48,7 +48,7 @@ This document tracks the implementation status of features and planned enhanceme
 - [ ] **Inter-VLAN Routing** - Router-on-a-stick and Layer 3 Switch routing
 - [ ] **Static Routing** - `ip route` implementation
 - [ ] **Dynamic Routing** - OSPF or RIP basic simulation
-- [ ] **DHCP Services** - DHCP Server and Relay Agent simulation
+- [x] **DHCP Services** - Basic DHCP simulation
 - [ ] **Access Control Lists (ACL)** - Standard and Extended IP ACLs
 
 ## 🖥️ PC & End-Device Simulation
@@ -56,7 +56,7 @@ This document tracks the implementation status of features and planned enhanceme
 - [x] **Network Utilities** - `ping`, `ipconfig`, `help`
 - [x] **Persistence** - Independent command history and IP config per PC
 - [ ] **Web Browser Simulation** - Basic HTTP request testing
-- [ ] **Telnet/SSH Client** - Connecting to switches from the PC terminal
+- [x] **Telnet/SSH Client** - Connecting to switches from the PC terminal
 
 ## 🏆 Lab & Education System
 - [x] **Task Engine** - Dynamic task validation based on device state
@@ -68,5 +68,5 @@ This document tracks the implementation status of features and planned enhanceme
 ## 🛠️ Future Roadmap
 - [ ] **Multi-user Collaboration** - Real-time shared labs via WebSockets
 - [ ] **Packet Inspection** - "Wireshark-lite" view for data flow analysis
-- [ ] **Mobile Optimization** - Improved touch gestures for topology dragging
+- [x] **Mobile Optimization** - Improved touch gestures, compact modals, and back button support
 - [ ] **Performance Benchmarks** - Optimizing large topology rendering (100+ devices)
