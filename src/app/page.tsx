@@ -167,16 +167,23 @@ export default function Home() {
   }, []);
 
   const openMobileMenu = useCallback(() => {
-    closeLocalMenus('mobile');
-    broadcastCloseMenus('mobile');
-    setShowMobileMenu(true);
-  }, [closeLocalMenus, broadcastCloseMenus]);
+    const nextState = !showMobileMenu;
+    if (nextState) {
+      closeLocalMenus('mobile');
+      broadcastCloseMenus('mobile');
+    }
+    setShowMobileMenu(nextState);
+  }, [showMobileMenu, closeLocalMenus, broadcastCloseMenus]);
 
   const openDeviceDropdown = useCallback(() => {
-    closeLocalMenus('device');
-    broadcastCloseMenus('device');
-    setShowActiveDeviceDropdown(true);
-  }, [closeLocalMenus, broadcastCloseMenus]);
+    if (!topologyDevices || topologyDevices.length === 0) return;
+    const nextState = !showActiveDeviceDropdown;
+    if (nextState) {
+      closeLocalMenus('device');
+      broadcastCloseMenus('device');
+    }
+    setShowActiveDeviceDropdown(nextState);
+  }, [showActiveDeviceDropdown, closeLocalMenus, broadcastCloseMenus, topologyDevices]);
 
   // Listen for broadcasts from others
   useEffect(() => {
@@ -776,6 +783,15 @@ export default function Home() {
           e.preventDefault();
           fileInputRef.current?.click();
         }
+        if (key === 'n' && !e.shiftKey) {
+          e.preventDefault();
+          handleNewProject();
+        }
+      }
+
+      // Shift Shortcuts
+      if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        const key = e.key.toLowerCase();
         if (key === 'n') {
           e.preventDefault();
           handleNewProject();
@@ -1002,7 +1018,16 @@ export default function Home() {
     },
   ];
 
-  const tabs = allTabs.filter(tab => tab.showFor.includes(activeDeviceType));
+  const tabs = allTabs.filter(tab => {
+    // Topoloji sekmesi her zaman görünür
+    if (tab.id === 'topology') return true;
+    
+    // Ekranda nesne yoksa diğer sekmeleri gizle
+    if (!topologyDevices || topologyDevices.length === 0) return false;
+    
+    // Nesne varsa tipe göre filtrele
+    return tab.showFor.includes(activeDeviceType);
+  });
   
   return (
     <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100'}`}>
@@ -1091,7 +1116,7 @@ export default function Home() {
                   size="sm"
                   onClick={handleNewProject}
                   className={`text-xs px-2 h-7 ${isDark ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
-                  title={language === 'tr' ? 'Yeni Proje (Ctrl+N)' : 'New Project (Ctrl+N)'}
+                  title={language === 'tr' ? 'Yeni Proje (Shift+N)' : 'New Project (Shift+N)'}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -1167,9 +1192,9 @@ export default function Home() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="mt-4 flex gap-1 overflow-x-auto pb-1 items-center">
+          <div className="mt-4 flex gap-1 lg:overflow-visible overflow-x-auto pb-1 items-center">
             {/* Active Device Selector Dropdown */}
-            {activeDeviceId && (() => {
+            {activeDeviceId && topologyDevices && topologyDevices.length > 0 && (() => {
               // Get display name for active device (from topology or state)
               const activeDevice = topologyDevices?.find(d => d.id === activeDeviceId);
               const hostname = deviceStates.get(activeDeviceId)?.hostname || activeDevice?.name || 'Device';
@@ -1179,10 +1204,14 @@ export default function Home() {
               <div className="relative device-dropdown-container">
                 <button
                   onClick={openDeviceDropdown}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold cursor-pointer transition-all rounded-xl border ${
-                    isDark 
-                      ? 'text-cyan-400 bg-slate-800/50 border-slate-700 hover:bg-slate-700/50 hover:border-cyan-500/50' 
-                      : 'text-cyan-700 bg-white border-slate-200 hover:bg-slate-50 hover:border-cyan-500/50'
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold transition-all rounded-xl border ${
+                    !topologyDevices || topologyDevices.length === 0
+                      ? isDark 
+                        ? 'text-slate-500 bg-slate-800/30 border-slate-700/50 cursor-not-allowed opacity-50'
+                        : 'text-slate-400 bg-slate-50 border-slate-200 cursor-not-allowed opacity-50'
+                      : isDark 
+                        ? 'text-cyan-400 bg-slate-800/50 border-slate-700 hover:bg-slate-700/50 hover:border-cyan-500/50 cursor-pointer' 
+                        : 'text-cyan-700 bg-white border-slate-200 hover:bg-slate-50 hover:border-cyan-500/50 cursor-pointer'
                   } shadow-sm`}
                 >
                   {activeDeviceType === 'pc' ? (
@@ -1204,16 +1233,19 @@ export default function Home() {
                   </svg>
                 </button>
 
-                {/* Device Dropdown List - Fixed Position for overlay */}
                 {showActiveDeviceDropdown && (
                   <>
                     {/* Invisible backdrop to close dropdown on click outside */}
-                    <div className="fixed inset-0 z-[100]" onClick={() => setShowActiveDeviceDropdown(false)} />
-                    {/* Dropdown panel positioned relative to button */}
+                    <div className="fixed inset-0 z-[10000]" onClick={() => setShowActiveDeviceDropdown(false)} />
+                    {/* Dropdown panel positioned centered at the top */}
                     <div
-                      className={`fixed z-[101] min-w-[220px] rounded-xl shadow-2xl border overflow-hidden max-h-[300px] overflow-y-auto ${
+                      className={`fixed z-[10001] min-w-[220px] max-w-[95vw] rounded-xl shadow-2xl border overflow-hidden max-h-[300px] overflow-y-auto ${
                         isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'
                       }`}
+                      style={{ 
+                        top: '5rem',
+                        left: '20px'
+                      }}
                       id="device-dropdown-menu"
                     >
                     {/* Sort devices by type: routers first, then switches, then PCs */}
@@ -1323,7 +1355,7 @@ export default function Home() {
                     {isActive && (
                       <motion.div 
                         layoutId="activeTabIndicator"
-                        className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-10 h-1 bg-white rounded-full opacity-50"
+                        className="absolute -bottom-1 left-0 right-0 h-1 bg-white opacity-50"
                         transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                       />
                     )}
@@ -1336,20 +1368,11 @@ export default function Home() {
 
         {/* Mobile Menu Dropdown */}
         {showMobileMenu && (
-          <div className={`md:hidden absolute top-full left-0 right-0 ${isDark ? 'bg-slate-900' : 'bg-white'} border-b ${isDark ? 'border-slate-700' : 'border-slate-200'} shadow-lg z-50 animate-in slide-in-from-top duration-300`}>
+          <>
+            {/* Invisible backdrop to close menu on click outside */}
+            <div className="fixed inset-0 z-40 md:hidden" onClick={() => setShowMobileMenu(false)} />
+            <div className={`md:hidden absolute top-full left-0 right-0 ${isDark ? 'bg-slate-900' : 'bg-white'} border-b ${isDark ? 'border-slate-700' : 'border-slate-200'} shadow-lg z-50 animate-in slide-in-from-top duration-300`}>
             <div className="p-4 space-y-4">
-              {/* Menu Header with Close Button */}
-              <div className="flex items-center justify-between mb-2">
-                <span className={`text-sm font-bold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{language === 'tr' ? 'ANA MENÜ' : 'MAIN MENU'}</span>
-                <button 
-                  onClick={() => setShowMobileMenu(false)}
-                  className={`p-1 rounded-lg ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
               {/* Project Buttons */}
               <div className="flex gap-2">
                 <button
@@ -1424,6 +1447,7 @@ export default function Home() {
               </button>
             </div>
           </div>
+          </>
         )}
       </header>
 

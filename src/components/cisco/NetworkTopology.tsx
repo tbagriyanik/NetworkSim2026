@@ -169,12 +169,12 @@ export function NetworkTopology({
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  const [selectedCanvasDevice, setSelectedCanvasDevice] = useState<string | null>(activeDeviceId || null);
+  const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>(activeDeviceId ? [activeDeviceId] : []);
  
   // Sync internal selection with prop from parent
   useEffect(() => {
     if (activeDeviceId !== undefined) {
-      setSelectedCanvasDevice(activeDeviceId);
+      setSelectedDeviceIds(activeDeviceId ? [activeDeviceId] : []);
     }
   }, [activeDeviceId]);
 
@@ -184,7 +184,8 @@ export function NetworkTopology({
   // Drag state with position tracking
   const [draggedDevice, setDraggedDevice] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragStartPos, setDragStartPos] = useState<{ x: number, y: number } | null>(null);
+  const [dragStartDevicePositions, setDragStartDevicePositions] = useState<{[key: string]: {x: number, y: number}}>({});
   const [isActuallyDragging, setIsActuallyDragging] = useState(false);
 
   // Drag performance - use ref for animation frame throttling
@@ -212,7 +213,7 @@ export function NetworkTopology({
   } | null>(null);
 
   // Clipboard state for copy/cut/paste
-  const [clipboard, setClipboard] = useState<CanvasDevice | null>(null);
+  const [clipboard, setClipboard] = useState<CanvasDevice[]>([]);
 
   // Undo/Redo history
   const [history, setHistory] = useState<{ devices: CanvasDevice[]; connections: CanvasConnection[] }[]>([]);
@@ -387,8 +388,55 @@ export function NetworkTopology({
 
   // Select all devices
   const selectAllDevices = useCallback(() => {
+    const allIds = devices.map(d => d.id);
+    setSelectedDeviceIds(allIds);
     setSelectAllMode(true);
-  }, []);
+    setContextMenu(null);
+  }, [devices]);
+
+  // Handle alignment for multiple selected devices
+  const handleAlign = useCallback((type: 'top' | 'bottom' | 'left' | 'right' | 'h-center' | 'v-center') => {
+    if (selectedDeviceIds.length < 2) return;
+    saveToHistory();
+
+    setDevices(prev => {
+      const selectedDevices = prev.filter(d => selectedDeviceIds.includes(d.id));
+      if (selectedDevices.length < 2) return prev;
+
+      let targetValue = 0;
+      switch (type) {
+        case 'top':
+          targetValue = Math.min(...selectedDevices.map(sd => sd.y));
+          break;
+        case 'bottom':
+          targetValue = Math.max(...selectedDevices.map(sd => sd.y));
+          break;
+        case 'left':
+          targetValue = Math.min(...selectedDevices.map(sd => sd.x));
+          break;
+        case 'right':
+          targetValue = Math.max(...selectedDevices.map(sd => sd.x));
+          break;
+        case 'h-center':
+          targetValue = selectedDevices.reduce((sum, sd) => sum + sd.y, 0) / selectedDevices.length;
+          break;
+        case 'v-center':
+          targetValue = selectedDevices.reduce((sum, sd) => sum + sd.x, 0) / selectedDevices.length;
+          break;
+      }
+
+      return prev.map(d => {
+        if (!selectedDeviceIds.includes(d.id)) return d;
+        if (type === 'top' || type === 'bottom' || type === 'h-center') {
+          return { ...d, y: targetValue };
+        }
+        if (type === 'left' || type === 'right' || type === 'v-center') {
+          return { ...d, x: targetValue };
+        }
+        return d;
+      });
+    });
+  }, [selectedDeviceIds, saveToHistory]);
 
   // Calculate distance between two points
   const getDistance = useCallback((x1: number, y1: number, x2: number, y2: number): number => {
@@ -454,7 +502,7 @@ export function NetworkTopology({
     } else if (e.button === 0 && !(e.target as HTMLElement).closest('[data-device-id]')) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-      setSelectedCanvasDevice(null);
+      setSelectedDeviceIds([]);
       setContextMenu(null);
       setSelectAllMode(false);
     }
@@ -481,27 +529,47 @@ export function NetworkTopology({
 
           dragAnimationFrameRef.current = requestAnimationFrame(() => {
             const rect = canvasRef.current!.getBoundingClientRect();
-            const newX = (e.clientX - rect.left - pan.x - dragOffset.x) / zoom;
-            const newY = (e.clientY - rect.top - pan.y - dragOffset.y) / zoom;
+            const mouseX = (e.clientX - rect.left - pan.x) / zoom;
+            const mouseY = (e.clientY - rect.top - pan.y) / zoom;
+            
+            // Calculate delta from start pos
+            if (!dragStartPos) return;
+            const startMouseX = (dragStartPos.x - rect.left - pan.x) / zoom;
+            const startMouseY = (dragStartPos.y - rect.top - pan.y) / zoom;
+            const dx = mouseX - startMouseX;
+            const dy = mouseY - startMouseY;
 
-            // Clamp to canvas bounds
             const canvasDims = getCanvasDimensions();
-            const clampedX = Math.max(20, Math.min(newX, canvasDims.width - 100));
-            const clampedY = Math.max(20, Math.min(newY, canvasDims.height - 100));
 
             setDevices((prev) => {
-              const deviceIndex = prev.findIndex(d => d.id === draggedDevice);
-              if (deviceIndex === -1) return prev;
-
-              const oldDevice = prev[deviceIndex];
-              // Only update if change is significant (> 0.1px) to avoid micro-renders
-              if (Math.abs(oldDevice.x - clampedX) < 0.1 && Math.abs(oldDevice.y - clampedY) < 0.1) {
-                return prev;
-              }
-
               const newDevices = [...prev];
-              newDevices[deviceIndex] = { ...oldDevice, x: clampedX, y: clampedY };
-              return newDevices;
+              let changed = false;
+
+              // If draggedDevice is in selection, move all selected devices
+              const devicesToMove = selectedDeviceIds.includes(draggedDevice) 
+                ? selectedDeviceIds 
+                : [draggedDevice];
+
+              devicesToMove.forEach(id => {
+                const deviceIndex = newDevices.findIndex(d => d.id === id);
+                if (deviceIndex === -1) return;
+
+                const initialPos = dragStartDevicePositions[id];
+                if (!initialPos) return;
+
+                const newX = initialPos.x + dx;
+                const newY = initialPos.y + dy;
+
+                const clampedX = Math.max(20, Math.min(newX, canvasDims.width - 100));
+                const clampedY = Math.max(20, Math.min(newY, canvasDims.height - 100));
+
+                if (Math.abs(newDevices[deviceIndex].x - clampedX) > 0.1 || Math.abs(newDevices[deviceIndex].y - clampedY) > 0.1) {
+                  newDevices[deviceIndex] = { ...newDevices[deviceIndex], x: clampedX, y: clampedY };
+                  changed = true;
+                }
+              });
+
+              return changed ? newDevices : prev;
             });
 
             dragAnimationFrameRef.current = null;
@@ -532,6 +600,7 @@ export function NetworkTopology({
       setDraggedDevice(null);
       setDragStartPos(null);
       setIsActuallyDragging(false);
+      setDragStartDevicePositions({}); // Clear initial positions after drag
       lastDragPositionRef.current = null;
     };
 
@@ -544,7 +613,7 @@ export function NetworkTopology({
         cancelAnimationFrame(dragAnimationFrameRef.current);
       }
     };
-  }, [isPanning, panStart, draggedDevice, dragOffset, zoom, pan, isDrawingConnection, getCanvasCoords, dragStartPos, isActuallyDragging, getDistance, onDeviceSelect, saveToHistory]);
+  }, [isPanning, panStart, draggedDevice, dragOffset, zoom, pan, isDrawingConnection, getCanvasCoords, dragStartPos, isActuallyDragging, getDistance, onDeviceSelect, saveToHistory, selectedDeviceIds, dragStartDevicePositions]);
 
   // Global touch event handlers for device dragging on mobile
   useEffect(() => {
@@ -606,7 +675,7 @@ export function NetworkTopology({
       if (touchDraggedDevice && !isTouchDragging) {
         const device = devices.find(d => d.id === touchDraggedDevice);
         if (device) {
-          setSelectedCanvasDevice(device.id);
+          setSelectedDeviceIds([device.id]);
           onDeviceSelect(device.type === 'router' ? 'switch' : device.type, device.id);
         }
       }
@@ -650,6 +719,34 @@ export function NetworkTopology({
     // Reset drag tracking
     wasDraggingRef.current = false;
 
+    // Shift key for multi-selection
+    if (e.shiftKey) {
+      setSelectedDeviceIds(prev => 
+        prev.includes(deviceId) ? prev.filter(id => id !== deviceId) : [...prev, deviceId]
+      );
+    } else {
+      // If clicking a device that's not selected, make it the only selection
+      // If it IS already selected, keep selection for group dragging
+      if (!selectedDeviceIds.includes(deviceId)) {
+        setSelectedDeviceIds([deviceId]);
+        onDeviceSelect(device.type === 'router' ? 'switch' : device.type, deviceId);
+      }
+    }
+
+    // Store starting positions of all selected devices for group dragging
+    // Use the latest selected set
+    const currentSelectedIds = e.shiftKey 
+      ? (selectedDeviceIds.includes(deviceId) ? selectedDeviceIds.filter(id => id !== deviceId) : [...selectedDeviceIds, deviceId])
+      : (selectedDeviceIds.includes(deviceId) ? selectedDeviceIds : [deviceId]);
+
+    const initialPositions: {[key: string]: {x: number, y: number}} = {};
+    devices.forEach(d => {
+      if (currentSelectedIds.includes(d.id)) {
+        initialPositions[d.id] = { x: d.x, y: d.y };
+      }
+    });
+    setDragStartDevicePositions(initialPositions);
+
     // Store the starting position for distance calculation
     setDragStartPos({ x: e.clientX, y: e.clientY });
     setIsActuallyDragging(false);
@@ -658,8 +755,7 @@ export function NetworkTopology({
       x: (e.clientX - rect.left - pan.x) - device.x * zoom,
       y: (e.clientY - rect.top - pan.y) - device.y * zoom,
     });
-    setSelectedCanvasDevice(deviceId);
-  }, [devices, pan, zoom]);
+  }, [devices, pan, zoom, selectedDeviceIds, onDeviceSelect]);
 
   // Handle device click (single click - select only)
   const handleDeviceClick = useCallback((e: ReactMouseEvent, device: CanvasDevice) => {
@@ -667,9 +763,11 @@ export function NetworkTopology({
     // Don't handle click if we were dragging (check ref to avoid stale closure)
     if (wasDraggingRef.current) return;
 
-    setSelectedCanvasDevice(device.id);
-    // Notify parent component - select device, don't open terminal
-    onDeviceSelect(device.type === 'router' ? 'switch' : device.type, device.id);
+    if (!e.shiftKey) {
+      setSelectedDeviceIds([device.id]);
+      // Notify parent component - select device, don't open terminal
+      onDeviceSelect(device.type === 'router' ? 'switch' : device.type, device.id);
+    }
   }, [onDeviceSelect]);
 
   // Handle device double click - open terminal
@@ -742,7 +840,7 @@ export function NetworkTopology({
       x: (touch.clientX - rect.left - pan.x) - device.x * zoom,
       y: (touch.clientY - rect.top - pan.y) - device.y * zoom,
     });
-    setSelectedCanvasDevice(deviceId);
+    setSelectedDeviceIds([deviceId]);
 
     // Check for double tap
     const now = Date.now();
@@ -795,7 +893,7 @@ export function NetworkTopology({
     if (touchDraggedDevice && !isTouchDragging) {
       const device = devices.find(d => d.id === touchDraggedDevice);
       if (device) {
-        setSelectedCanvasDevice(device.id);
+        setSelectedDeviceIds([device.id]);
         onDeviceSelect(device.type === 'router' ? 'switch' : device.type, device.id);
       }
     }
@@ -989,7 +1087,6 @@ export function NetworkTopology({
         setConnectionStart(null);
         return;
       }
-
       // Complete connection
       saveToHistory();
       const newConnection: CanvasConnection = {
@@ -1169,25 +1266,26 @@ export function NetworkTopology({
   const clearCanvas = useCallback(() => {
     setDevices([]);
     setConnections([]);
-    setSelectedCanvasDevice(null);
+    setSelectedDeviceIds([]);
     deviceCounterRef.current = { pc: 0, switch: 0, router: 0 };
   }, []);
 
-  // Copy device
-  const copyDevice = useCallback((deviceId: string) => {
-    const device = devices.find(d => d.id === deviceId);
-    if (device) {
-      setClipboard({ ...device });
+  // Copy devices
+  const copyDevice = useCallback((ids: string[]) => {
+    const selectedDevices = devices.filter(d => ids.includes(d.id));
+    if (selectedDevices.length > 0) {
+      setClipboard(selectedDevices.map(d => ({ ...d })));
     }
     setContextMenu(null);
   }, [devices]);
 
-  // Cut device
-  const cutDevice = useCallback((deviceId: string) => {
-    const device = devices.find(d => d.id === deviceId);
-    if (device) {
-      setClipboard({ ...device });
-      deleteDevice(deviceId);
+  // Cut devices
+  const cutDevice = useCallback((ids: string[]) => {
+    const selectedDevices = devices.filter(d => ids.includes(d.id));
+    if (selectedDevices.length > 0) {
+      setClipboard(selectedDevices.map(d => ({ ...d })));
+      ids.forEach(id => deleteDevice(id));
+      setSelectedDeviceIds([]);
     }
     setContextMenu(null);
   }, [devices, deleteDevice]);
@@ -1203,29 +1301,31 @@ export function NetworkTopology({
     setRenamingDevice(null);
     setRenameValue('');
   }, [renamingDevice, renameValue, saveToHistory]);
-
-  // Paste device
+  // Paste devices
   const pasteDevice = useCallback(() => {
-    if (!clipboard) return;
+    if (clipboard.length === 0) return;
 
     saveToHistory();
 
-    // Create new device with new ID
-    const type = clipboard.type;
-    deviceCounterRef.current[type]++;
-    const newId = `${type}-${deviceCounterRef.current[type]}`;
+    const newDevices: CanvasDevice[] = [];
+    
+    clipboard.forEach(device => {
+      const type = device.type;
+      deviceCounterRef.current[type]++;
+      const newId = `${type}-${deviceCounterRef.current[type]}`;
 
-    const newDevice: CanvasDevice = {
-      ...clipboard,
-      id: newId,
-      name: `${type.toUpperCase()}-${deviceCounterRef.current[type]}`,
-      ip: type === 'pc' ? generateUniqueIp() : '',
-      x: clipboard.x + 30,
-      y: clipboard.y + 30,
-      ports: clipboard.ports.map(p => ({ ...p, status: 'disconnected' as const })),
-    };
+      newDevices.push({
+        ...device,
+        id: newId,
+        name: `${type.toUpperCase()}-${deviceCounterRef.current[type]}`,
+        ip: type === 'pc' ? generateUniqueIp() : '',
+        x: device.x + 30,
+        y: device.y + 30,
+        ports: device.ports.map(p => ({ ...p, status: 'disconnected' as const })),
+      });
+    });
 
-    setDevices(prev => [...prev, newDevice]);
+    setDevices(prev => [...prev, ...newDevices]);
     setContextMenu(null);
   }, [clipboard, saveToHistory, generateUniqueIp]);
 
@@ -1243,7 +1343,7 @@ export function NetworkTopology({
             setPortSelectorStep('source');
             setSelectedSourcePort(null);
           }
-          if (selectAllMode) setSelectAllMode(false);
+          if (selectedDeviceIds.length > 0) setSelectedDeviceIds([]);
         }
       }
     };
@@ -1273,8 +1373,8 @@ export function NetworkTopology({
           cancelDeviceConfig();
         }
         // Cancel select all mode
-        if (selectAllMode) {
-          setSelectAllMode(false);
+        if (selectedDeviceIds.length > 0) {
+          setSelectedDeviceIds([]);
         }
         // Close Ping Source
         if (pingSource) {
@@ -1295,19 +1395,11 @@ export function NetworkTopology({
       }
 
       // Delete selected device(s)
-      if (e.key === 'Delete') {
-        if (selectAllMode) {
-          // Delete all devices
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedDeviceIds.length > 0) {
           saveToHistory();
-          setDevices([]);
-          setConnections([]);
-          setSelectAllMode(false);
-          if (onDeviceDelete) {
-            devices.forEach(d => onDeviceDelete(d.id));
-          }
-        } else if (selectedCanvasDevice) {
-          deleteDevice(selectedCanvasDevice);
-          setSelectedCanvasDevice(null);
+          selectedDeviceIds.forEach(id => deleteDevice(id));
+          setSelectedDeviceIds([]);
         }
       }
 
@@ -1330,23 +1422,18 @@ export function NetworkTopology({
           e.preventDefault();
           handleRedo();
         }
-
         // Ctrl+C to copy
-        if (key === 'c' && copyDevice) {
-          if (selectedCanvasDevice) {
-            e.preventDefault();
-            copyDevice(selectedCanvasDevice);
+        if (key === 'c' && (e.ctrlKey || e.metaKey)) {
+          if (selectedDeviceIds.length > 0) {
+            copyDevice(selectedDeviceIds);
           }
         }
-
         // Ctrl+X to cut
-        if (key === 'x' && cutDevice) {
-          if (selectedCanvasDevice) {
-            e.preventDefault();
-            cutDevice(selectedCanvasDevice);
+        if (key === 'x' && (e.ctrlKey || e.metaKey)) {
+          if (selectedDeviceIds.length > 0) {
+            cutDevice(selectedDeviceIds);
           }
         }
-
         // Ctrl+V to paste
         if (key === 'v' && pasteDevice) {
           e.preventDefault();
@@ -1366,7 +1453,7 @@ export function NetworkTopology({
        window.removeEventListener('keydown', handleKeyDown);
        window.removeEventListener('close-menus-broadcast', handleCloseBroadcast);
      };
-   }, [selectedCanvasDevice, deleteDevice, configuringDevice, cancelDeviceConfig, selectAllMode, selectAllDevices, saveToHistory, devices, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, showPortSelector, toggleFullscreen]);
+   }, [selectedDeviceIds, deleteDevice, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, showPortSelector, toggleFullscreen]);
 
   // Find path between devices using BFS
   const findPath = useCallback((sourceId: string, targetId: string): string[] | null => {
@@ -1728,7 +1815,14 @@ export function NetworkTopology({
 
         {/* Warning Icon if incompatible */}
         {!isCompatible && (
-          <g transform={`translate(${midX + perpX}, ${(source.y + target.y) / 2 + perpY})`}>
+          <g 
+            transform={`translate(${midX + perpX}, ${(source.y + target.y) / 2 + perpY})`}
+            className="cursor-pointer group"
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteConnection(conn.id);
+            }}
+          >
             <path d="M 0 -9 L -10 7 L 10 7 Z" fill="#ef4444" stroke="#fff" strokeWidth="1" />
             <text y="4" fontSize="10" fontStyle="normal" fontWeight="bold" fill="white" textAnchor="middle">!</text>
           </g>
@@ -1739,7 +1833,7 @@ export function NetworkTopology({
 
   // Render device
   const renderDevice = (device: CanvasDevice, isDragging: boolean = false) => {
-    const isSelected = selectedCanvasDevice === device.id || selectAllMode;
+    const isSelected = selectedDeviceIds.includes(device.id);
     // Check if device has any connections
     const deviceConnections = connections.filter(c => c.sourceDeviceId === device.id || c.targetDeviceId === device.id);
     const hasConnection = deviceConnections.length > 0;
@@ -2368,33 +2462,60 @@ export function NetworkTopology({
 
         {/* Canvas Area */}
         <div className={`flex-1 relative flex flex-col ${isMobile ? 'pb-20' : ''}`}>
-          {/* Select All Mode Indicator */}
-          {selectAllMode && (
-            <div className={`absolute top-2 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-lg shadow-lg flex items-center gap-3 ${isDark ? 'bg-cyan-600/90 text-white' : 'bg-cyan-500 text-white'
-              }`}>
-              <span className="text-sm font-medium">
-                {language === 'tr' ? `${devices.length} cihaz seçili` : `${devices.length} devices selected`}
-              </span>
-              <button
-                onClick={() => setSelectAllMode(false)}
-                className="px-2 py-1 rounded bg-white/20 hover:bg-white/30 text-xs"
-              >
-                {language === 'tr' ? 'İptal' : 'Cancel'}
-              </button>
-              <button
-                onClick={() => {
-                  saveToHistory();
-                  setDevices([]);
-                  setConnections([]);
-                  setSelectAllMode(false);
-                  if (onDeviceDelete) {
-                    devices.forEach(d => onDeviceDelete(d.id));
-                  }
-                }}
-                className="px-2 py-1 rounded bg-red-500 hover:bg-red-600 text-xs"
-              >
-                {language === 'tr' ? 'Tümünü Sil' : 'Delete All'}
-              </button>
+          {/* Multiple Selection Indicator & Tools */}
+          {selectedDeviceIds.length > 1 && (
+            <div className={`absolute top-2 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-xl shadow-2xl flex items-center gap-4 ${isDark ? 'bg-slate-800/95 text-white border border-slate-700' : 'bg-white text-slate-900 border border-slate-200'
+              } backdrop-blur-md`}>
+              <div className="flex items-center gap-2 border-r pr-4 border-slate-700/30">
+                <span className="text-xs font-bold uppercase tracking-wider opacity-60">
+                  {language === 'tr' ? 'Hizala' : 'Align'}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleAlign('left')}
+                    className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
+                    title={language === 'tr' ? 'Sola Hizala' : 'Align Left'}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 2v20M8 5h10M8 11h7M8 17h12" />
+                    </svg>
+                  </button>
+                  <div className="w-px h-4 bg-slate-700/30 mx-1" />
+                  <button
+                    onClick={() => handleAlign('top')}
+                    className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
+                    title={language === 'tr' ? 'Üste Hizala' : 'Align Top'}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 4h20M5 8v10M11 8v7M17 8v12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold whitespace-nowrap">
+                  {language === 'tr' ? `${selectedDeviceIds.length} Cihaz` : `${selectedDeviceIds.length} Devices`}
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setSelectedDeviceIds([])}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
+                  >
+                    {language === 'tr' ? 'İptal' : 'Cancel'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      saveToHistory();
+                      selectedDeviceIds.forEach(id => deleteDevice(id));
+                      setSelectedDeviceIds([]);
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-xs font-bold transition-all border border-red-500/20"
+                  >
+                    {language === 'tr' ? 'Sil' : 'Delete'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -2690,9 +2811,13 @@ export function NetworkTopology({
 
               <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
 
-              {/* Copy */}
+               {/* Copy */}
               <button
-                onClick={() => { copyDevice(contextMenu.deviceId!); setContextMenu(null); }}
+                onClick={() => { 
+                  const targets = selectedDeviceIds.includes(contextMenu.deviceId!) ? selectedDeviceIds : [contextMenu.deviceId!];
+                  copyDevice(targets); 
+                  setContextMenu(null); 
+                }}
                 className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
                   }`}
               >
@@ -2705,7 +2830,12 @@ export function NetworkTopology({
 
               {/* Cut */}
               <button
-                onClick={() => { cutDevice(contextMenu.deviceId!); setContextMenu(null); }}
+                onClick={() => { 
+                  const targets = selectedDeviceIds.includes(contextMenu.deviceId!) ? selectedDeviceIds : [contextMenu.deviceId!];
+                  saveToHistory();
+                  cutDevice(targets);
+                  setContextMenu(null); 
+                }}
                 className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
                   }`}
               >
@@ -2731,9 +2861,14 @@ export function NetworkTopology({
 
               <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
 
-              {/* Delete */}
-              <button
-                onClick={() => { deleteDevice(contextMenu.deviceId!); setContextMenu(null); }}
+               <button
+                onClick={() => { 
+                  const targets = selectedDeviceIds.includes(contextMenu.deviceId!) ? selectedDeviceIds : [contextMenu.deviceId!];
+                  saveToHistory();
+                  targets.forEach(id => deleteDevice(id));
+                  setSelectedDeviceIds([]);
+                  setContextMenu(null); 
+                }}
                 className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-red-400' : 'hover:bg-slate-100 text-red-500'
                   }`}
               >
@@ -2770,8 +2905,8 @@ export function NetworkTopology({
           {/* Paste */}
           <button
             onClick={() => pasteDevice()}
-            disabled={!clipboard}
-            className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${clipboard
+            disabled={clipboard.length === 0}
+            className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${clipboard.length > 0
               ? isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
               : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
               }`}
@@ -3297,10 +3432,61 @@ export function NetworkTopology({
                       </div>
                     </div>
 
-                    {/* Pro-Style Port Grid */}
+                    {/* Pro-Style Port Grid - topology-matched colors */}
                     <div className={`grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 p-4 rounded-3xl border ${isDark ? 'bg-slate-950/40 border-slate-800/50' : 'bg-slate-50 border-slate-200'}`}>
+                      {/* Port type legend */}
+                      <div className="col-span-full flex flex-wrap gap-3 mb-2 pb-2 border-b border-dashed border-slate-700/30 text-[8px] font-bold">
+                        {device.type === 'pc' ? (
+                          <>
+                            <span className="flex items-center gap-1 text-slate-400"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /> ETH</span>
+                            <span className="flex items-center gap-1 text-slate-400"><span className="w-2 h-2 rounded-full bg-cyan-500 inline-block" /> COM</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="flex items-center gap-1 text-slate-400"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /> Fa</span>
+                            <span className="flex items-center gap-1 text-slate-400"><span className="w-2 h-2 rounded-full bg-orange-500 inline-block" /> Gi</span>
+                            <span className="flex items-center gap-1 text-slate-400"><span className="w-2 h-2 rounded-full bg-cyan-500 inline-block" /> Con</span>
+                          </>
+                        )}
+                        <span className="flex items-center gap-1 text-slate-500 ml-auto"><span className="w-2 h-2 rounded-full bg-slate-600 inline-block" /> {language === 'tr' ? 'Bağlı' : 'Used'}</span>
+                      </div>
                       {device.ports.map((port) => {
                         const isConnected = port.status === 'connected';
+                        const pid = port.id.toLowerCase();
+                        const isConsolePrt = pid === 'console' || pid.startsWith('com');
+                        const isGigabit = pid.startsWith('gi');
+                        const isFastEth = pid.startsWith('fa') || pid.startsWith('eth');
+                        // Match topology canvas colors: Console/COM→Cyan, Gi→Orange, Fa/Eth→Blue
+                        let dotCls = 'bg-slate-600';
+                        let dotGlow = '';
+                        let cardCls = isDark
+                          ? 'bg-slate-800 border-slate-700 hover:border-cyan-500/50 hover:bg-slate-700'
+                          : 'bg-white border-slate-200 hover:border-cyan-500 shadow-sm';
+                        let textCls = isDark ? 'text-slate-500 group-hover:text-white' : 'text-slate-500 group-hover:text-cyan-600';
+                        if (!isConnected) {
+                          if (isConsolePrt) {
+                            dotCls = 'bg-cyan-500';
+                            dotGlow = 'shadow-[0_0_7px_rgba(6,182,212,0.8)]';
+                            cardCls = isDark
+                              ? 'bg-cyan-950/20 border-cyan-800/50 hover:border-cyan-400 hover:bg-cyan-900/30'
+                              : 'bg-cyan-50 border-cyan-200 hover:border-cyan-400 shadow-sm';
+                            textCls = 'text-cyan-400 group-hover:text-cyan-300';
+                          } else if (isGigabit) {
+                            dotCls = 'bg-orange-500';
+                            dotGlow = 'shadow-[0_0_7px_rgba(249,115,22,0.8)]';
+                            cardCls = isDark
+                              ? 'bg-orange-950/20 border-orange-800/50 hover:border-orange-400 hover:bg-orange-900/30'
+                              : 'bg-orange-50 border-orange-200 hover:border-orange-400 shadow-sm';
+                            textCls = 'text-orange-400 group-hover:text-orange-300';
+                          } else if (isFastEth) {
+                            dotCls = 'bg-blue-500';
+                            dotGlow = 'shadow-[0_0_7px_rgba(59,130,246,0.8)]';
+                            cardCls = isDark
+                              ? 'bg-blue-950/20 border-blue-800/50 hover:border-blue-400 hover:bg-blue-900/30'
+                              : 'bg-blue-50 border-blue-200 hover:border-blue-400 shadow-sm';
+                            textCls = 'text-blue-400 group-hover:text-blue-300';
+                          }
+                        }
                         return (
                           <button
                             key={port.id}
@@ -3363,23 +3549,18 @@ export function NetworkTopology({
                                 setSelectedSourcePort(null);
                               }
                             }}
-                            className={`group relative flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-300 ${
-                              isConnected 
-                                ? (isDark ? 'bg-slate-900/40 border border-slate-800 cursor-not-allowed grayscale' : 'bg-slate-200 cursor-not-allowed grayscale')
-                                : (isDark 
-                                    ? 'bg-slate-800 border border-slate-700 hover:border-cyan-500/50 hover:bg-slate-700 hover:scale-110' 
-                                    : 'bg-white border border-slate-200 hover:border-cyan-500 hover:bg-white hover:scale-110 shadow-sm')
+                            className={`group relative flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-300 border ${
+                              isConnected
+                                ? (isDark ? 'bg-slate-900/40 border-slate-800 cursor-not-allowed opacity-40' : 'bg-slate-200 border-slate-300 cursor-not-allowed opacity-40')
+                                : `${cardCls} hover:scale-110`
                             }`}
                           >
-                            <div className={`w-3.5 h-3.5 rounded-[2px] border-2 transition-colors ${
-                              isConnected 
-                                ? 'bg-slate-700 border-slate-600' 
-                                : isDark ? 'bg-slate-950 border-slate-700 group-hover:border-cyan-500' : 'bg-slate-100 border-slate-300 group-hover:border-cyan-400'
+                            {/* Port dot - topology canvas color */}
+                            <div className={`w-3.5 h-3.5 rounded-full transition-all duration-300 ${
+                              isConnected ? 'bg-slate-600' : `${dotCls} ${dotGlow}`
                             }`} />
                             <span className={`text-[9px] font-bold font-mono transition-colors ${
-                              isConnected 
-                                ? 'text-slate-600' 
-                                : isDark ? 'text-slate-500 group-hover:text-white' : 'text-slate-500 group-hover:text-cyan-600'
+                              isConnected ? 'text-slate-600' : textCls
                             }`}>
                               {port.label.replace('FastEthernet', 'Fa').replace('GigabitEthernet', 'Gi')}
                             </span>
