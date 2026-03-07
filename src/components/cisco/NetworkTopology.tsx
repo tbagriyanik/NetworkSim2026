@@ -137,12 +137,24 @@ export function NetworkTopology({
     ];
   };
 
+  // Helper to generate a random unique Cisco-formatted MAC address (xxxx.xxxx.xxxx)
+  const generateMacAddress = (): string => {
+    const chars = '0123456789abcdef';
+    let mac = '';
+    for (let i = 0; i < 12; i++) {
+      mac += chars[Math.floor(Math.random() * 16)];
+      if (i === 3 || i === 7) mac += '.';
+    }
+    return mac;
+  };
+
   // Default devices for initial state
   const defaultDevices: CanvasDevice[] = [
     {
       id: 'pc-1',
       type: 'pc',
       name: 'PC-1',
+      macAddress: generateMacAddress(),
       ip: '192.168.1.10',
       x: 100,
       y: 150,
@@ -156,6 +168,7 @@ export function NetworkTopology({
       id: 'switch-1',
       type: 'switch',
       name: 'Switch-1',
+      macAddress: generateMacAddress(),
       ip: '',
       x: 300,
       y: 150,
@@ -1221,6 +1234,7 @@ export function NetworkTopology({
       id: `${type}-${deviceCounterRef.current[type]}`,
       type,
       name: `${type.toUpperCase()}-${deviceCounterRef.current[type]}`,
+      macAddress: generateMacAddress(),
       ip: type === 'pc' ? generateUniqueIp() : '',
       // Position near top-left with staggered layout
       x: 100 + offsetX + Math.random() * 30,

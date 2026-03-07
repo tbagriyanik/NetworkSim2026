@@ -36,6 +36,7 @@ export function ConfigPanel({ state, onExecuteCommand, t, theme }: ConfigPanelPr
     
     config += `!\\n`;
     config += `hostname ${state.hostname}\\n`;
+    config += `! base mac-address ${state.macAddress}\\n`;
     config += `!\\n`;
     
     if (state.bannerMOTD) {
