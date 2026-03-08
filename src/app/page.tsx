@@ -88,6 +88,106 @@ interface PCOutputLine {
   content: string;
 }
 
+interface TabDefinition {
+  id: TabType;
+  labelKey: keyof Translations;
+  icon: React.ReactNode;
+  tasks: any[];
+  color: string;
+  showFor: string[];
+}
+
+const ALL_TABS: TabDefinition[] = [
+  {
+    id: 'topology',
+    labelKey: 'networkTopology',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="16" y="16" width="6" height="6" rx="1" />
+        <rect x="2" y="16" width="6" height="6" rx="1" />
+        <rect x="9" y="2" width="6" height="6" rx="1" />
+        <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" />
+        <path d="M12 12V8" />
+      </svg>
+    ),
+    tasks: topologyTasks,
+    color: 'from-cyan-500 to-blue-500',
+    showFor: ['pc', 'switch', 'router']
+  },
+  {
+    id: 'cmd',
+    labelKey: 'pcTerminal',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="4 17 10 11 4 5" />
+        <line x1="12" y1="19" x2="20" y2="19" />
+      </svg>
+    ),
+    tasks: [],
+    color: 'from-blue-500 to-indigo-500',
+    showFor: ['pc']
+  },
+  {
+    id: 'terminal',
+    labelKey: 'cliTerminal',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+        <line x1="12" y1="17" x2="12" y2="21" />
+      </svg>
+    ),
+    tasks: [],
+    color: 'from-green-500 to-emerald-500',
+    showFor: ['switch', 'router']
+  },
+  {
+    id: 'ports',
+    labelKey: 'ports',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="6" width="20" height="12" rx="2" />
+        <circle cx="6" cy="12" r="1" />
+        <circle cx="10" cy="12" r="1" />
+        <circle cx="14" cy="12" r="1" />
+        <circle cx="18" cy="12" r="1" />
+      </svg>
+    ),
+    tasks: portTasks,
+    color: 'from-yellow-500 to-orange-500',
+    showFor: ['switch', 'router']
+  },
+  {
+    id: 'vlan',
+    labelKey: 'vlanStatus',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m15 12-8.5 8.5" />
+        <path d="m9 12-8.5 8.5" />
+        <circle cx="18" cy="11" r="3" />
+        <circle cx="14" cy="5" r="3" />
+        <circle cx="10" cy="11" r="3" />
+      </svg>
+    ),
+    tasks: vlanTasks,
+    color: 'from-purple-500 to-pink-500',
+    showFor: ['switch', 'router']
+  },
+  {
+    id: 'security',
+    labelKey: 'securityControls',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
+    ),
+    tasks: securityTasks,
+    color: 'from-red-500 to-rose-500',
+    showFor: ['switch', 'router']
+  },
+];
+
 export default function Home() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
@@ -188,6 +288,21 @@ export default function Home() {
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showActiveDeviceDropdown, setShowActiveDeviceDropdown] = useState(false);
+  // Sync active tab when device type changes
+  useEffect(() => {
+    const currentTabDef = ALL_TABS.find(t => t.id === activeTab);
+    if (currentTabDef && !currentTabDef.showFor.includes(activeDeviceType)) {
+      // Current tab is not supported by new device type
+      if (activeDeviceType === 'pc') {
+        setActiveTab('cmd');
+      } else if (activeDeviceType === 'switch' || activeDeviceType === 'router') {
+        setActiveTab('terminal');
+      } else {
+        setActiveTab('topology');
+      }
+    }
+  }, [activeDeviceType, activeTab]);
+
   const dropdownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Broadcast to other components (like NetworkTopology)
@@ -244,9 +359,6 @@ export default function Home() {
       // Set the active device
       setActiveDeviceId(deviceId);
       setActiveDeviceType(actualDeviceType);
-
-      // Switch to topology tab
-      setActiveTab('topology');
 
       // Initialize device state if needed (for switches/routers)
       if (actualDeviceType !== 'pc') {
@@ -448,14 +560,23 @@ export default function Home() {
   // New project - reset everything
   const handleNewProjectInternal = useCallback(() => {
     const doNewProject = () => {
-      setDeviceStates(new Map([['switch-1', createInitialState()]]));
-      setDeviceOutputs(new Map([['switch-1', []]]));
+      // Clear all states
+      setDeviceStates(new Map());
+      setDeviceOutputs(new Map());
+      setPcOutputs(new Map());
       setTopologyDevices(null);
       setTopologyConnections(null);
-      setActiveDeviceId('switch-1');
+      
+      // Reset active selections
+      setActiveDeviceId('');
       setActiveDeviceType('switch');
+      setSelectedDevice(null);
+      setShowPCPanel(false);
+      
+      // Force return to topology
       setActiveTab('topology');
       setHasUnsavedChanges(false);
+      
       // Increment key to force NetworkTopology remount
       setTopologyKey(prev => prev + 1);
     };
@@ -708,109 +829,18 @@ export default function Home() {
 
   const isDark = theme === 'dark';
 
-  // Tab definitions
-  const allTabs: { id: TabType; label: string; icon: React.ReactNode; tasks: typeof topologyTasks; color: string; showFor: string[] }[] = [
-    {
-      id: 'topology',
-      label: language === 'tr' ? 'Ağ Topolojisi' : 'Network Topology',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="16" y="16" width="6" height="6" rx="1" />
-          <rect x="2" y="16" width="6" height="6" rx="1" />
-          <rect x="9" y="2" width="6" height="6" rx="1" />
-          <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" />
-          <path d="M12 12V8" />
-        </svg>
-      ),
-      tasks: topologyTasks,
-      color: 'from-cyan-500 to-blue-500',
-      showFor: ['pc', 'switch', 'router']
-    },
-    {
-      id: 'cmd',
-      label: language === 'tr' ? 'CMD Terminali' : 'CMD Terminal',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="4 17 10 11 4 5" />
-          <line x1="12" y1="19" x2="20" y2="19" />
-        </svg>
-      ),
-      tasks: [],
-      color: 'from-blue-500 to-indigo-500',
-      showFor: ['pc']
-    },
-    {
-      id: 'terminal',
-      label: language === 'tr' ? 'Terminal' : 'Terminal',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-          <line x1="8" y1="21" x2="16" y2="21" />
-          <line x1="12" y1="17" x2="12" y2="21" />
-        </svg>
-      ),
-      tasks: [],
-      color: 'from-green-500 to-emerald-500',
-      showFor: ['switch', 'router']
-    },
-    {
-      id: 'ports',
-      label: language === 'tr' ? 'Portlar' : 'Ports',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="6" width="20" height="12" rx="2" />
-          <circle cx="6" cy="12" r="1" />
-          <circle cx="10" cy="12" r="1" />
-          <circle cx="14" cy="12" r="1" />
-          <circle cx="18" cy="12" r="1" />
-        </svg>
-      ),
-      tasks: portTasks,
-      color: 'from-yellow-500 to-orange-500',
-      showFor: ['switch', 'router']
-    },
-    {
-      id: 'vlan',
-      label: language === 'tr' ? 'VLAN' : 'VLAN',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m15 12-8.5 8.5" />
-          <path d="m9 12-8.5 8.5" />
-          <circle cx="18" cy="11" r="3" />
-          <circle cx="14" cy="5" r="3" />
-          <circle cx="10" cy="11" r="3" />
-        </svg>
-      ),
-      tasks: vlanTasks,
-      color: 'from-purple-500 to-pink-500',
-      showFor: ['switch', 'router']
-    },
-    {
-      id: 'security',
-      label: language === 'tr' ? 'Güvenlik' : 'Security',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        </svg>
-      ),
-      tasks: securityTasks,
-      color: 'from-red-500 to-rose-500',
-      showFor: ['switch', 'router']
-    },
-  ];
-
-  const tabs = allTabs.filter(tab => {
-    // Topoloji sekmesi her zaman görünür
+  // Derive visible tabs based on current state
+  const tabs = ALL_TABS.filter(tab => {
+    // Topology tab always visible
     if (tab.id === 'topology') return true;
     
-    // Ekranda nesne yoksa diğer sekmeleri gizle
-    if (!topologyDevices || topologyDevices.length === 0) return false;
-    
-    // Nesne varsa tipe göre filtrele
-    return tab.showFor.includes(activeDeviceType);
-  });
-  
+    // Show other tabs only if a device is active and compatible
+    return activeDeviceId && tab.showFor.includes(activeDeviceType);
+  }).map(tab => ({
+    ...tab,
+    label: t[tab.labelKey] as string
+  }));
+
   return (
     <div className={`min-h-screen flex flex-col ${isAppLoading ? 'bg-slate-950 overflow-hidden' : (isDark ? 'bg-slate-950' : 'bg-slate-50')} transition-colors duration-700`}>
       {/* App Loading Screen */}
@@ -963,11 +993,12 @@ export default function Home() {
                       <div className="space-y-1">
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 px-2 mb-1">{t.navigation}</p>
                         <div className="grid gap-0.5">
-                          {allTabs.map((tab) => {
-                            const isTabVisible = tab.id === 'topology' || (topologyDevices && topologyDevices.length > 0 && tab.showFor.includes(activeDeviceType));
+                          {ALL_TABS.map((tab) => {
+                            const isTabVisible = tab.id === 'topology' || (activeDeviceId && tab.showFor.includes(activeDeviceType));
                             if (!isTabVisible) return null;
                             
                             const isActive = activeTab === tab.id;
+                            const label = t[tab.labelKey] as string;
                             return (
                               <Button
                                 key={tab.id}
@@ -984,7 +1015,7 @@ export default function Home() {
                                  tab.id === 'ports' ? <Database className="w-3.5 h-3.5" /> :
                                  tab.id === 'vlan' ? <ShieldCheck className="w-3.5 h-3.5" /> :
                                  <ShieldCheck className="w-3.5 h-3.5" />}
-                                {tab.label}
+                                {label}
                               </Button>
                             );
                           })}
@@ -1033,7 +1064,7 @@ export default function Home() {
           </div>
 
           {/* Desktop Tabs & Device Selector */}
-          <div className="flex items-end gap-1 mt-4 overflow-x-auto no-scrollbar">
+          <div className="flex items-end gap-1 mt-4 pt-1 overflow-x-auto no-scrollbar">
             {/* Active Device Dropdown */}
             {activeDeviceId && topologyDevices && topologyDevices.length > 0 && (
               <DropdownMenu>

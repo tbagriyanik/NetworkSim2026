@@ -168,6 +168,7 @@ interface Translations {
   waitingForConnection: string;
   typeCommand: string;
   labProgress: string;
+  networkTopology: string;
   navigation: string;
   project: string;
   settings: string;
@@ -324,6 +325,7 @@ const translations: Record<Language, Translations> = {
     waitingForConnection: 'Bağlantı bekleniyor...',
     typeCommand: 'Komut yazın...',
     labProgress: 'Lab İlerlemesi',
+    networkTopology: 'Ağ Topolojisi',
     navigation: 'Navigasyon',
     project: 'Proje',
     settings: 'Ayarlar',
@@ -478,6 +480,7 @@ const translations: Record<Language, Translations> = {
     waitingForConnection: 'Waiting for connection...',
     typeCommand: 'Type command...',
     labProgress: 'Lab Progress',
+    networkTopology: 'Network Topology',
     navigation: 'Navigation',
     project: 'Project',
     settings: 'Settings',
