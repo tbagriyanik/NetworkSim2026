@@ -1710,8 +1710,8 @@ export function NetworkTopology({
       success: null
     });
 
-    // Animate ping - each hop takes 2000ms
-    const hopDuration = 2000;
+    // Animate ping - each hop takes 1000ms
+    const hopDuration = 1000;
     let startTime = Date.now();
     let currentHop = 0;
 
@@ -2911,8 +2911,17 @@ export function NetworkTopology({
                     y: target.y + perpY - Math.abs(offset) * 0.5
                   };
 
-                  // Cubic bezier path string for animateMotion
-                  const pathString = `M ${source.x} ${source.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${target.x} ${target.y}`;
+                  // Calculate position on bezier curve using cubic bezier formula
+                  const t = progress;
+                  const t2 = t * t;
+                  const t3 = t2 * t;
+                  const mt = 1 - t;
+                  const mt2 = mt * mt;
+                  const mt3 = mt2 * mt;
+
+                  // Cubic bezier position (on the cable path)
+                  const bezierX = mt3 * source.x + 3 * mt2 * t * controlPoint1.x + 3 * mt * t2 * controlPoint2.x + t3 * target.x;
+                  const bezierY = mt3 * source.y + 3 * mt2 * t * controlPoint1.y + 3 * mt * t2 * controlPoint2.y + t3 * target.y;
 
                   // Simplified perpendicular offset based on source/target direction
                   const angle = Math.atan2(target.y - source.y, target.x - source.x);
@@ -2921,17 +2930,10 @@ export function NetworkTopology({
 
                   return (
                     <g key={`ping-${currentHopIndex}`}>
-                      <g transform={`translate(${envelopeOffsetX}, ${envelopeOffsetY})`}>
+                      <g transform={`translate(${bezierX + envelopeOffsetX}, ${bezierY + envelopeOffsetY})`}>
                         <circle r="10" fill="#06b6d4" opacity={0.2} className="animate-ping" />
                         <rect x="-12" y="-8" width="24" height="16" rx="2" fill="#06b6d4" stroke="#0891b2" strokeWidth="1.5" />
                         <path d="M-9 -5 L0 3 L9 -5" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                        
-                        <animateMotion
-                          dur="2s"
-                          repeatCount="1"
-                          path={pathString}
-                          fill="freeze"
-                        />
                       </g>
                     </g>
                   );
