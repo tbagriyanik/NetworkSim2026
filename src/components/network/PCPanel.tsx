@@ -407,7 +407,7 @@ export function PCPanel({
             variant="ghost" 
             size="icon" 
             onClick={onClose}
-            className="h-8 w-8 rounded-lg hover:bg-rose-500/10 hover:text-rose-500"
+            className="h-8 w-8 rounded-lg hover:bg-rose-500/10 hover:text-rose-500 transition-all"
           >
             <X className="w-4 h-4" />
           </Button>

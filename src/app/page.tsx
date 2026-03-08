@@ -44,7 +44,7 @@ import {
 import { TaskCard } from '@/components/network/TaskCard';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Laptop, Monitor, Network, ShieldCheck, Database, Info, FilePlus2, Terminal as TerminalIcon } from "lucide-react";
+import { ChevronDown, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Laptop, Monitor, Network, ShieldCheck, Database, Info, File, Terminal as TerminalIcon } from "lucide-react";
 
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -830,7 +830,7 @@ export default function Home() {
             </div>
             
             <h2 
-              className="text-3xl font-black tracking-tighter text-white glitch-text mb-2"
+              className="text-3xl font-black tracking-tighter text-white glitch-text mb-2 text-center"
               data-text="NETWORK SIMULATOR 2026"
             >
               NETWORK SIMULATOR 2026
@@ -900,24 +900,29 @@ export default function Home() {
             </div>
 
             {/* Right Controls */}
-            <div className="flex items-center gap-2">
-              {/* Desktop Controls */}
-              <div className="hidden md:flex items-center gap-1 mr-2">
-                <Button variant="ghost" size="icon" onClick={handleNewProject} title={language === 'tr' ? 'Yeni Proje' : 'New Project'}>
-                  <FilePlus2 className="w-4 h-4" />
+            <div className="flex items-center gap-1">
+              {/* Project Group */}
+              <div className={`hidden md:flex items-center px-1.5 py-1 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleNewProject} title={language === 'tr' ? 'Yeni Proje' : 'New Project'}>
+                  <File className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={handleSaveProject} title={language === 'tr' ? 'Projeyi Kaydet' : 'Save Project'}>
+                <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSaveProject} title={language === 'tr' ? 'Projeyi Kaydet' : 'Save Project'}>
                   <Save className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title={language === 'tr' ? 'Proje Yükle' : 'Load Project'}>
+                <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => fileInputRef.current?.click()} title={language === 'tr' ? 'Proje Yükle' : 'Load Project'}>
                   <FolderOpen className="w-4 h-4" />
                 </Button>
                 <input ref={fileInputRef} type="file" accept=".json" onChange={handleLoadProject} className="hidden" />
               </div>
 
-                <Button variant="ghost" size="icon" onClick={() => setShowAboutModal(true)} title={language === 'tr' ? 'Hakkında' : 'About'}>
+              {/* Info & Settings Group */}
+              <div className={`flex items-center px-1.5 py-1 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-100 border-slate-200'} ml-1`}>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowAboutModal(true)} title={language === 'tr' ? 'Hakkında' : 'About'}>
                   <Info className="w-4 h-4" />
                 </Button>
+                <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -927,7 +932,8 @@ export default function Home() {
                   <Languages className="w-3.5 h-3.5 mr-1" />
                   {language.toUpperCase()}
                 </Button>
-                <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8">
+                <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleTheme}>
                   {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </Button>
               </div>
@@ -939,21 +945,21 @@ export default function Home() {
                     <Menu className="w-5 h-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} p-0 w-80`}>
-                  <SheetHeader className="p-6 text-left border-b border-slate-800/50">
-                    <SheetTitle className="text-xl font-bold flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-500">
-                        <Monitor className="w-5 h-5" />
+                <SheetContent side="right" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} p-0 w-72`}>
+                  <SheetHeader className="p-4 text-left border-b border-slate-800/50">
+                    <SheetTitle className="text-lg font-black flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-500">
+                        <Monitor className="w-4 h-4" />
                       </div>
                       {t.title}
                     </SheetTitle>
                   </SheetHeader>
-                  <ScrollArea className="h-[calc(100vh-5rem)]">
-                    <div className="p-4 space-y-6">
+                  <ScrollArea className="h-[calc(100vh-4rem)]">
+                    <div className="p-3 space-y-4">
                       {/* Navigation Sections */}
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2">{t.navigation}</p>
-                        <div className="grid gap-1">
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 px-2 mb-1">{t.navigation}</p>
+                        <div className="grid gap-0.5">
                           {allTabs.map((tab) => {
                             const isTabVisible = tab.id === 'topology' || (topologyDevices && topologyDevices.length > 0 && tab.showFor.includes(activeDeviceType));
                             if (!isTabVisible) return null;
@@ -963,18 +969,18 @@ export default function Home() {
                               <Button
                                 key={tab.id}
                                 variant={isActive ? "secondary" : "ghost"}
-                                className={`w-full justify-start gap-3 h-11 px-3 ${isActive ? 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20' : ''}`}
+                                className={`w-full justify-start gap-3 h-9 px-3 text-xs font-bold ${isActive ? 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20' : 'text-slate-400'}`}
                                 onClick={() => {
                                   setActiveTab(tab.id);
                                   setShowMobileMenu(false);
                                 }}
                               >
-                                {tab.id === 'topology' ? <Network className="w-4 h-4" /> : 
-                                 tab.id === 'cmd' ? <TerminalIcon className="w-4 h-4" /> :
-                                 tab.id === 'terminal' ? <Monitor className="w-4 h-4" /> :
-                                 tab.id === 'ports' ? <Database className="w-4 h-4" /> :
-                                 tab.id === 'vlan' ? <ShieldCheck className="w-4 h-4" /> :
-                                 <ShieldCheck className="w-4 h-4" />}
+                                {tab.id === 'topology' ? <Network className="w-3.5 h-3.5" /> : 
+                                 tab.id === 'cmd' ? <TerminalIcon className="w-3.5 h-3.5" /> :
+                                 tab.id === 'terminal' ? <Monitor className="w-3.5 h-3.5" /> :
+                                 tab.id === 'ports' ? <Database className="w-3.5 h-3.5" /> :
+                                 tab.id === 'vlan' ? <ShieldCheck className="w-3.5 h-3.5" /> :
+                                 <ShieldCheck className="w-3.5 h-3.5" />}
                                 {tab.label}
                               </Button>
                             );
@@ -982,53 +988,39 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <Separator className="bg-slate-800/50" />
+                      <Separator className="bg-slate-800/30" />
 
                       {/* Project Controls */}
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2">{t.project}</p>
-                        <div className="grid gap-1">
-                          <Button variant="ghost" className="w-full justify-start gap-3 h-11" onClick={() => { handleNewProject(); setShowMobileMenu(false); }}>
-                            <FilePlus2 className="w-4 h-4" /> {language === 'tr' ? 'Yeni Proje' : 'New Project'}
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 px-2 mb-1">{t.project}</p>
+                        <div className="grid gap-0.5">
+                          <Button variant="ghost" className="w-full justify-start gap-3 h-9 px-3 text-xs font-bold text-slate-400" onClick={() => { handleNewProject(); setShowMobileMenu(false); }}>
+                            <File className="w-3.5 h-3.5" /> {language === 'tr' ? 'Yeni Proje' : 'New Project'}
                           </Button>
-                          <Button variant="ghost" className="w-full justify-start gap-3 h-11" onClick={() => { handleSaveProject(); setShowMobileMenu(false); }}>
-                            <Save className="w-4 h-4" /> {language === 'tr' ? 'Projeyi Kaydet' : 'Save Project'}
+                          <Button variant="ghost" className="w-full justify-start gap-3 h-9 px-3 text-xs font-bold text-slate-400" onClick={() => { handleSaveProject(); setShowMobileMenu(false); }}>
+                            <Save className="w-3.5 h-3.5" /> {language === 'tr' ? 'Projeyi Kaydet' : 'Save Project'}
                           </Button>
-                          <Button variant="ghost" className="w-full justify-start gap-3 h-11" onClick={() => { fileInputRef.current?.click(); setShowMobileMenu(false); }}>
-                            <FolderOpen className="w-4 h-4" /> {language === 'tr' ? 'Proje Yükle' : 'Load Project'}
+                          <Button variant="ghost" className="w-full justify-start gap-3 h-9 px-3 text-xs font-bold text-slate-400" onClick={() => { fileInputRef.current?.click(); setShowMobileMenu(false); }}>
+                            <FolderOpen className="w-3.5 h-3.5" /> {language === 'tr' ? 'Proje Yükle' : 'Load Project'}
                           </Button>
                         </div>
                       </div>
 
-                      <Separator className="bg-slate-800/50" />
-
-                      {/* Settings */}
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2">{t.settings}</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button variant="outline" className="gap-2" onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}>
-                            <Languages className="w-4 h-4" /> {language.toUpperCase()}
-                          </Button>
-                          <Button variant="outline" className="gap-2" onClick={toggleTheme}>
-                            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                            {isDark ? t.light : t.dark}
-                          </Button>
-                        </div>
-                      </div>
+                      <Separator className="bg-slate-800/30" />
 
                       {/* Lab Progress Mobile */}
-                      <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{t.labProgress}</span>
-                          <span className="text-xs font-bold text-cyan-400">{Math.round((totalScore / maxScore) * 100)}%</span>
+                      <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-800/30' : 'bg-slate-50'} border ${isDark ? 'border-slate-800/50' : 'border-slate-200'}`}>
+                         <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-500">{t.labProgress}</span>
+                          <span className="text-xs font-black text-cyan-400">{Math.round((totalScore / maxScore) * 100)}%</span>
                         </div>
-                        <div className="h-1.5 w-full rounded-full bg-slate-700 overflow-hidden mb-2">
+                        <div className={`h-1.5 w-full rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-200'} overflow-hidden mb-1.5`}>
                           <div 
-                            className="h-full bg-cyan-500 transition-all duration-500" 
+                            className="h-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)] transition-all duration-500" 
                             style={{ width: `${(totalScore / maxScore) * 100}%` }}
                           />
                         </div>
-                        <p className="text-center text-sm font-bold text-white">{totalScore} / {maxScore} {t.pts}</p>
+                        <p className={`text-center text-[11px] font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{totalScore} / {maxScore} {t.pts}</p>
                       </div>
                     </div>
                   </ScrollArea>
@@ -1120,8 +1112,9 @@ export default function Home() {
                 );
               })}
             </div>
-            </div>
-            </header>
+          </div>
+        </div>
+      </header>
       {/* Global Dialogs (AlertDialog for better z-index and standard behavior) */}
       <AlertDialog open={!!confirmDialog} onOpenChange={(open) => !open && setConfirmDialog(null)}>
         <AlertDialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
