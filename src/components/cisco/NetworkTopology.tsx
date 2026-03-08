@@ -2598,140 +2598,61 @@ export function NetworkTopology({
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Device Palette - Desktop Only */}
-        <div
-          className={`hidden lg:flex w-24 border-r ${isDark ? 'border-slate-700/50 bg-slate-900/50' : 'border-slate-200/50 bg-white'} p-2 flex-col gap-2`}
-        >
-          <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} mb-1 px-1`}>
-            {language === 'tr' ? 'Cihazlar' : 'Devices'}
-          </div>
-
-          {/* PC Button */}
-          <button
-            onClick={() => addDevice('pc')}
-            className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${isDark
-              ? 'border-slate-800 bg-slate-800/50 hover:bg-slate-800 hover:border-blue-500/50'
-              : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-blue-500/50'
-              }`}
-          >
-            <div className="text-blue-500"><Laptop className="w-5 h-5" /></div>
-            <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>PC</span>
-          </button>
-
-          {/* Switch Button */}
-          <button
-            onClick={() => addDevice('switch')}
-            className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${isDark
-              ? 'border-slate-800 bg-slate-800/50 hover:bg-slate-800 hover:border-emerald-500/50'
-              : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-emerald-500/50'
-              }`}
-          >
-            <div className="text-emerald-500"><Monitor className="w-5 h-5" /></div>
-            <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Switch</span>
-          </button>
-
-          {/* Router Button */}
-          <button
-            onClick={() => addDevice('router')}
-            className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${isDark
-              ? 'border-slate-800 bg-slate-800/50 hover:bg-slate-800 hover:border-purple-500/50'
-              : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-purple-500/50'
-              }`}
-          >
-            <div className="text-purple-500"><Network className="w-5 h-5" /></div>
-            <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Router</span>
-          </button>
-
-          <Separator className="my-2 bg-slate-800/50" />
-
-          <div className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} mb-1 px-1`}>
-            {language === 'tr' ? 'Kablo' : 'Cable'}
-          </div>
-
-          {/* Cable Type Selector */}
-          {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
-            <button
-              key={type}
-              onClick={() => onCableChange({ ...cableInfo, cableType: type })}
-              className={`flex items-center gap-2 p-2 rounded-xl border transition-all ${cableInfo.cableType === type
-                ? `bg-cyan-500/10 border-cyan-500/50 text-cyan-400`
-                : isDark
-                  ? 'border-slate-800 bg-slate-800/50 hover:bg-slate-800'
-                  : 'border-slate-200 bg-white hover:bg-slate-50'
-                }`}
-            >
-              <div className={`w-2.5 h-2.5 rounded-full ${CABLE_COLORS[type].bg}`} />
-              <span className={`text-[9px] font-bold ${cableInfo.cableType === type ? 'text-cyan-400' : isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                {type === 'straight' ? 'Str' : type === 'crossover' ? 'X-over' : 'Cons'}
-              </span>
-            </button>
-          ))}
-        </div>
-
         {/* Canvas Area */}
         <div className={`flex-1 relative flex flex-col`}>
-          {/* Floating Action Button for Palette - Mobile/Tablet Only */}
-          <div className="lg:hidden absolute bottom-6 right-6 z-30 flex flex-col gap-3">
-            <Sheet open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
-              <SheetTrigger asChild>
-                <Button size="icon" className="w-14 h-14 rounded-full shadow-2xl bg-cyan-600 hover:bg-cyan-500 text-white">
-                  <Plus className="w-6 h-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} rounded-t-[2rem] p-0`}>
-                <SheetHeader className="p-6 border-b border-slate-800/50">
-                  <SheetTitle className="text-lg font-bold flex items-center gap-2">
-                    <Plus className="w-5 h-5 text-cyan-500" />
-                    {language === 'tr' ? 'Cihaz veya Kablo Ekle' : 'Add Device or Cable'}
-                  </SheetTitle>
-                </SheetHeader>
-                <div className="p-6 space-y-8">
-                  {/* Devices Section */}
-                  <div className="space-y-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Devices</p>
-                    <div className="grid grid-cols-3 gap-3">
-                      {(['pc', 'switch', 'router'] as const).map((type) => (
-                        <button
-                          key={type}
-                          onClick={() => { addDevice(type); setIsPaletteOpen(false); }}
-                          className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${
-                            isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700' : 'bg-slate-50 border-slate-200 active:bg-slate-100'
+          {/* Palette Sheet (Triggered from Top Toolbar) */}
+          <Sheet open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
+            <SheetContent side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} rounded-t-[2rem] p-0`}>
+              <SheetHeader className="p-6 border-b border-slate-800/50">
+                <SheetTitle className="text-lg font-bold flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-cyan-500" />
+                  {language === 'tr' ? 'Cihaz veya Kablo Ekle' : 'Add Device or Cable'}
+                </SheetTitle>
+              </SheetHeader>
+              <div className="p-6 space-y-8">
+                {/* Devices Section */}
+                <div className="space-y-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Devices</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {(['pc', 'switch', 'router'] as const).map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => { addDevice(type); setIsPaletteOpen(false); }}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700' : 'bg-slate-50 border-slate-200 active:bg-slate-100'
                           }`}
-                        >
-                          <div className={type === 'pc' ? 'text-blue-500' : type === 'switch' ? 'text-emerald-500' : 'text-purple-500'}>
-                            {type === 'pc' ? <Laptop className="w-6 h-6" /> : type === 'switch' ? <Monitor className="w-6 h-6" /> : <Network className="w-6 h-6" />}
-                          </div>
-                          <span className="text-xs font-bold capitalize">{type}</span>
-                        </button>
-                      ))}
-                    </div>
+                      >
+                        <div className={type === 'pc' ? 'text-blue-500' : type === 'switch' ? 'text-emerald-500' : 'text-purple-500'}>
+                          {type === 'pc' ? <Laptop className="w-6 h-6" /> : type === 'switch' ? <Monitor className="w-6 h-6" /> : <Network className="w-6 h-6" />}
+                        </div>
+                        <span className="text-xs font-bold capitalize">{type}</span>
+                      </button>
+                    ))}
                   </div>
-
-                  {/* Cables Section */}
-                  <div className="space-y-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Cable Types</p>
-                    <div className="grid grid-cols-3 gap-3">
-                      {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
-                        <button
-                          key={type}
-                          onClick={() => { onCableChange({ ...cableInfo, cableType: type }); setIsPaletteOpen(false); }}
-                          className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${
-                            cableInfo.cableType === type 
-                              ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-400' 
-                              : isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
-                          }`}
-                        >
-                          <div className={`w-4 h-4 rounded-full ${CABLE_COLORS[type].bg}`} />
-                          <span className="text-xs font-bold capitalize">{type}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="h-4" />
                 </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+
+                {/* Cables Section */}
+                <div className="space-y-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Cable Types</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => { onCableChange({ ...cableInfo, cableType: type }); setIsPaletteOpen(false); }}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${cableInfo.cableType === type
+                          ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-400'
+                          : isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
+                          }`}
+                      >
+                        <div className={`w-4 h-4 rounded-full ${CABLE_COLORS[type].bg}`} />
+                        <span className="text-xs font-bold capitalize">{type}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="h-4" />
+              </div>
+            </SheetContent>
+          </Sheet>
           {/* Multiple Selection Indicator & Tools */}
           {selectedDeviceIds.length > 1 && (
             <div className={`absolute top-2 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-xl shadow-2xl flex items-center gap-4 ${isDark ? 'bg-slate-800/95 text-white border border-slate-700' : 'bg-white text-slate-900 border border-slate-200'

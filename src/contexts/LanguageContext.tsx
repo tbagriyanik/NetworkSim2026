@@ -160,6 +160,13 @@ interface Translations {
   vTaskFullNamingName: string;
   vTaskFullNamingDesc: string;
   vTaskFullNamingHint: string;
+  connect: string;
+  disconnect: string;
+  physicalConnectionDetected: string;
+  noConsoleCableDetected: string;
+  consoleConfiguration: string;
+  waitingForConnection: string;
+  typeCommand: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -290,6 +297,13 @@ const translations: Record<Language, Translations> = {
     vTaskFullNamingName: 'Tam İsimlendirme',
     vTaskFullNamingDesc: 'Tüm VLAN\'ları isimlendir',
     vTaskFullNamingHint: 'Her VLAN için: name <isim>',
+    connect: 'Cihaza Bağlan',
+    disconnect: 'Bağlantıyı Kes',
+    physicalConnectionDetected: 'Fiziksel bağlantı algılandı:',
+    noConsoleCableDetected: 'Konsol kablosu algılanmadı. PC\'den bir ağ cihazına konsol kablosu bağlayın.',
+    consoleConfiguration: 'Yapılandırma: 9600 bits/s, 8 data bits, no parity',
+    waitingForConnection: 'Bağlantı bekleniyor...',
+    typeCommand: 'Komut yazın...',
   },
   en: {
     title: 'Cisco Simulator',
@@ -418,6 +432,13 @@ const translations: Record<Language, Translations> = {
     vTaskFullNamingName: 'Full Naming',
     vTaskFullNamingDesc: 'Name all VLANs properly',
     vTaskFullNamingHint: 'For each VLAN: name <name>',
+    connect: 'Connect to Device',
+    disconnect: 'Disconnect',
+    physicalConnectionDetected: 'Physical connection detected to',
+    noConsoleCableDetected: 'No console cable detected. Connect a console cable from the PC to a network device.',
+    consoleConfiguration: 'Configuration: 9600 bits/s, 8 data bits, no parity',
+    waitingForConnection: 'Waiting for connection...',
+    typeCommand: 'Type command...',
   }
 };
 

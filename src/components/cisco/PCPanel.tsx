@@ -280,7 +280,7 @@ export function PCPanel({
   if (!isVisible) return null;
 
   return (
-    <div className={`w-full h-full flex flex-col flex-1 overflow-hidden`}>
+    <div className={`w-full h-full flex flex-col flex-1 overflow-hidden min-h-[500px]`}>
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -299,6 +299,12 @@ export function PCPanel({
               <p className="text-[10px] font-medium text-slate-500 mt-1 uppercase tracking-wider">{pcIP} • {pcMAC}</p>
             </div>
           </div>
+          <button 
+            onClick={onClose}
+            className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+          >
+            <XIcon className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Tabs */}
@@ -328,31 +334,34 @@ export function PCPanel({
         {/* Content */}
         <div className="flex-1 flex flex-col overflow-hidden bg-black p-4 font-mono relative">
           {activeTab === 'terminal' && !isConsoleConnected && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-6 p-8 text-center">
-              <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl max-w-md">
-                <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto mb-4 border border-slate-700">
-                  <Monitor className="w-8 h-8 text-slate-400" />
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm gap-6 p-8 text-center">
+              <div className="p-8 rounded-[2.5rem] bg-slate-900 border border-slate-800 shadow-2xl max-w-md w-full animate-in fade-in zoom-in duration-300">
+                <div className="w-20 h-20 rounded-3xl bg-slate-800 flex items-center justify-center mx-auto mb-6 border border-slate-700 shadow-inner">
+                  <Monitor className="w-10 h-10 text-blue-500" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Console Terminal</h3>
-                <p className="text-sm text-slate-400 mb-6">
+                <h3 className="text-xl font-bold text-white mb-3">Console Terminal</h3>
+                <p className="text-sm text-slate-400 mb-8 leading-relaxed">
                   {consoleDevice 
-                    ? `Physical connection detected to ${consoleDevice.name}. Port: 9600-8-N-1`
-                    : 'No console cable detected. Connect a console cable from the PC to a network device.'}
+                    ? `${t.physicalConnectionDetected} ${consoleDevice.name}. Port: 9600-8-N-1`
+                    : t.noConsoleCableDetected}
                 </p>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-4">
                   <button 
                     disabled={!consoleDevice}
                     onClick={handleConnect}
-                    className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
+                    className={`group relative overflow-hidden px-8 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-3 ${
                       consoleDevice 
-                        ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 active:scale-95' 
+                        ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-500/20 active:scale-95' 
                         : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'
                     }`}
                   >
-                    <TerminalIcon className="w-4 h-4" />
-                    Connect to Device
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    <TerminalIcon className="w-5 h-5 transition-transform group-hover:scale-110" />
+                    <span className="relative">{t.connect}</span>
                   </button>
-                  <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold mt-2">Configuration: 9600 bits/s, 8 data bits, no parity</p>
+                  <p className="text-[10px] text-slate-600 uppercase tracking-widest font-black mt-2">
+                    {t.consoleConfiguration}
+                  </p>
                 </div>
               </div>
             </div>
@@ -363,7 +372,7 @@ export function PCPanel({
             className="flex-1 overflow-y-auto custom-scrollbar mb-4 space-y-1 pr-2"
           >
             {(activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line) => (
-              <div key={line.id} className="break-all whitespace-pre-wrap leading-relaxed">
+              <div key={line.id} className="break-all whitespace-pre-wrap leading-relaxed text-sm">
                 {line.type === 'command' && (
                   <div className="flex items-start gap-2">
                     <span className="text-emerald-500 shrink-0 font-bold">{activeTab === 'desktop' ? 'C:\\>' : (line.prompt || '>')}</span>
@@ -393,8 +402,8 @@ export function PCPanel({
               type="text"
               autoFocus
               disabled={activeTab === 'terminal' && !isConsoleConnected}
-              className="flex-1 bg-transparent border-none outline-none text-white placeholder-slate-800"
-              placeholder={activeTab === 'terminal' && !isConsoleConnected ? "Waiting for connection..." : "Type command..."}
+              className="flex-1 bg-transparent border-none outline-none text-white placeholder-slate-800 text-sm"
+              placeholder={activeTab === 'terminal' && !isConsoleConnected ? t.waitingForConnection : t.typeCommand}
               onKeyDown={handleKeyDown}
             />
           </div>
@@ -429,7 +438,7 @@ function TerminalIcon({ className }: { className?: string }) {
   );
 }
 
-function X({ className }: { className?: string }) {
+function XIcon({ className }: { className?: string }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M18 6 6 18" /><path d="m6 6 12 12" />

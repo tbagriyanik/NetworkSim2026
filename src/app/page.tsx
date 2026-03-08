@@ -1049,9 +1049,9 @@ export default function Home() {
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      {activeDeviceType === 'pc' ? <Laptop className="w-4 h-4" /> : 
-                       activeDeviceType === 'router' ? <Network className="w-4 h-4" /> : 
-                       <Monitor className="w-4 h-4" />}
+                      {activeDeviceType === 'pc' ? DEVICE_ICONS.pc : 
+                       activeDeviceType === 'router' ? DEVICE_ICONS.router : 
+                       DEVICE_ICONS.switch}
                       <span className="text-sm font-bold">
                         {deviceStates.get(activeDeviceId)?.hostname || topologyDevices.find(d => d.id === activeDeviceId)?.name || activeDeviceId}
                       </span>
@@ -1071,9 +1071,9 @@ export default function Home() {
                         className={`flex items-center gap-3 py-2 cursor-pointer ${activeDeviceId === device.id ? 'bg-cyan-500/10 text-cyan-400' : ''}`}
                         onClick={() => handleDeviceSelect(device.type, device.id)}
                       >
-                        {device.type === 'pc' ? <Laptop className="w-4 h-4" /> : 
-                         device.type === 'router' ? <Network className="w-4 h-4" /> : 
-                         <Monitor className="w-4 h-4" />}
+                        {device.type === 'pc' ? DEVICE_ICONS.pc : 
+                         device.type === 'router' ? DEVICE_ICONS.router : 
+                         DEVICE_ICONS.switch}
                         <div className="flex flex-col">
                           <span className="text-sm font-bold leading-none">{deviceStates.get(device.id)?.hostname || device.name}</span>
                           <span className="text-[10px] opacity-50 capitalize">{device.type}</span>
@@ -1095,7 +1095,7 @@ export default function Home() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center gap-2.5 px-5 py-3 rounded-t-xl text-sm font-semibold transition-all border-x border-t min-w-[120px] justify-center ${
                       isActive
-                        ? isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-100 border-slate-300 text-slate-900 shadow-[0_-4px_0_0_#06b6d4]'
+                        ? isDark ? 'bg-slate-950 border-slate-800 text-cyan-400 shadow-[0_-4px_0_0_#22d3ee]' : 'bg-slate-100 border-slate-300 text-slate-900 shadow-[0_-4px_0_0_#06b6d4]'
                         : isDark ? 'bg-slate-900/50 border-transparent text-slate-500 hover:text-white hover:bg-slate-800' : 'bg-slate-200/50 border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-200'
                     }`}
                   >
