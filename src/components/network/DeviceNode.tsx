@@ -7,13 +7,13 @@ interface DeviceNodeProps {
   isDragging: boolean;
   isDark: boolean;
   isActive?: boolean;
-  onMouseDown: (e: any, deviceId: string) => void;
-  onClick: (e: any, device: CanvasDevice) => void;
+  onMouseDown: (e: React.MouseEvent<SVGGElement>, deviceId: string) => void;
+  onClick: (e: React.MouseEvent<SVGGElement>, device: CanvasDevice) => void;
   onDoubleClick: (device: CanvasDevice) => void;
-  onContextMenu: (e: any, deviceId: string) => void;
-  onTouchStart: (e: any, deviceId: string) => void;
-  onTouchMove: (e: any) => void;
-  onTouchEnd: (e: any) => void;
+  onContextMenu: (e: React.MouseEvent<SVGGElement>, deviceId: string) => void;
+  onTouchStart: (e: React.TouchEvent<SVGGElement>, deviceId: string) => void;
+  onTouchMove: (e: React.TouchEvent<SVGGElement>) => void;
+  onTouchEnd: (e: React.TouchEvent<SVGGElement>) => void;
   renderDeviceContent: (device: CanvasDevice, isDragging: boolean) => React.ReactNode;
 }
 

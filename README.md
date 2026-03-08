@@ -1,6 +1,6 @@
-# 🚀 Cisco Simulator Pro
+# 🚀 Network Simulator 2026 Pro
 
-A modern, production-ready, and highly interactive web-based Cisco IOS simulator designed for students and network enthusiasts to practice Cisco configuration in a safe environment.
+A modern, production-ready, and highly interactive web-based Network NOS simulator designed for students and network enthusiasts to practice Network configuration in a safe environment.
 
 ![Version](https://img.shields.io/badge/version-0.2.0-blue)
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016%20|%20TS%20|%20Tailwind%204-green)
@@ -15,13 +15,13 @@ A modern, production-ready, and highly interactive web-based Cisco IOS simulator
 - **Minimap**: Quick navigation for complex network layouts.
 
 ### 💻 Realistic CLI & PC Terminal
-- **Cisco IOS Simulation**: Authentic CLI experience with support for `user`, `privileged`, `config`, `interface`, and `line` modes.
+- **Network NOS Simulation**: Authentic CLI experience with support for `user`, `privileged`, `config`, `interface`, and `line` modes.
 - **Smart Suggestions**: Ghost text (inline suggestions) for command completion and tab-completion support.
 - **Multi-Device Support**: Independent CLI states and command history for every device in the topology.
 - **PC Command Prompt**: Dedicated terminal for PCs with network commands like `ping`, `ipconfig`, and `help`.
 
 ### 🔌 Physical Device Visualization
-- **Port Panel**: Realistic Cisco 2960-style port density view.
+- **Port Panel**: Realistic Network 2960-style port density view.
 - **Live LEDs**: Status LEDs (Green/Orange/Gray) reflecting real-time port states (Connected/Blocked/Shutdown).
 - **Trunk Indicators**: Visual badges for ports configured in trunk mode.
 
@@ -53,16 +53,16 @@ A modern, production-ready, and highly interactive web-based Cisco IOS simulator
 src/
 ├── app/                  # Next.js App Router (Pages & API)
 ├── components/           # UI Components
-│   ├── cisco/            # Specialized Simulator Components
+│   ├── network/            # Specialized Simulator Components
 │   │   ├── NetworkTopology.tsx  # SVG-based network canvas
-│   │   ├── Terminal.tsx         # Cisco CLI implementation
+│   │   ├── Terminal.tsx         # Network CLI implementation
 │   │   ├── PortPanel.tsx       # Physical device visualization
 │   │   └── ...
 │   └── ui/               # shadcn/ui base components
 ├── lib/                  # Core Logic
-│   └── cisco/            # Simulator Engine
-│       ├── parser.ts     # IOS Command Parser
-│       ├── executor.ts   # IOS Command Executor
+│   └── network/            # Simulator Engine
+│       ├── parser.ts     # NOS Command Parser
+│       ├── executor.ts   # NOS Command Executor
 │       ├── types.ts      # State and Type definitions
 │       └── taskDefinitions.ts # Lab task engine
 ├── contexts/             # Theme and Language (TR/EN) contexts

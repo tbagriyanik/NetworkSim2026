@@ -15,24 +15,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cisco Simulator - Catalyst 2960",
-  description: "Interactive Cisco IOS switch simulator for learning network configuration. Practice CLI commands, VLAN management, and security settings.",
-  keywords: ["Cisco", "Switch", "Simulator", "IOS", "Network", "CLI", "Catalyst 2960", "VLAN", "Learning"],
-  authors: [{ name: "Cisco Simulator Team" }],
+  title: "Network Simulator 2026 - Catalyst 2960",
+  description: "Interactive Network NOS switch simulator for learning network configuration. Practice CLI commands, VLAN management, and security settings.",
+  keywords: ["Network", "Switch", "Simulator", "NOS", "Network", "CLI", "Catalyst 2960", "VLAN", "Learning"],
+  authors: [{ name: "Network Simulator Team" }],
   icons: {
     icon: "/favicon.png",
   },
   openGraph: {
-    title: "Cisco Simulator",
-    description: "Practice Cisco IOS commands in an interactive web-based simulator",
-    url: "https://cisco-simulator.example.com",
-    siteName: "Cisco Simulator",
+    title: "Network Simulator 2026",
+    description: "Practice Network NOS commands in an interactive web-based simulator",
+    url: "https://network-simulator.example.com",
+    siteName: "Network Simulator 2026",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cisco Simulator",
-    description: "Practice Cisco IOS commands in an interactive web-based simulator",
+    title: "Network Simulator 2026",
+    description: "Practice Network NOS commands in an interactive web-based simulator",
   },
 };
 

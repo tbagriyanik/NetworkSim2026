@@ -1,9 +1,9 @@
-// Cisco Command Executor
+// Network Command Executor
 import { SwitchState, CommandMode, CommandResult, Port, Vlan, PortStatus } from './types';
 import { parseCommand, validateCommand, getHelpContent, commandPatterns } from './parser';
 import { normalizePortId, getModePrompt, createInitialState } from './initialState';
 
-// Cisco tarzı komut ağacı - ? için
+// Network tarzı komut ağacı - ? için
 const commandHelp: Record<string, Record<string, string[]>> = {
   user: {
     '': ['enable', 'exit', 'show', '?'],
@@ -685,7 +685,7 @@ const commandHelp: Record<string, Record<string, string[]>> = {
   },
 };
 
-// Cisco tarzı ? yardım çıktısı oluştur
+// Network tarzı ? yardım çıktısı oluştur
 function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string): string {
   const modeCommands = commandHelp[mode] || commandHelp.user;
   const lower = partialInput.toLowerCase().trim();
@@ -710,7 +710,7 @@ function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string):
     }
   }
   
-  // Çıktıyı formatla (Cisco tarzı)
+  // Çıktıyı formatla (Network tarzı)
   const lines: string[] = [];
   lines.push(prompt + partialInput + '?');
   lines.push('');
@@ -1995,8 +1995,8 @@ function cmdShowVlanBrief(state: SwitchState): CommandResult {
 function cmdShowVersion(state: SwitchState): CommandResult {
   let output = `\n${state.hostname} uptime is ${state.version.uptime}\n`;
   output += `System returned to ROM by power-on\n`;
-  output += `System image file is "flash:c2960-lanbase-mz.150-2.SE4.bin"\n\n`;
-  output += `cisco ${state.version.modelName} (PowerPC) processor (revision B0) with 65536K bytes of memory.\n`;
+  output += `System image file is "flash:n2960-lanbase-mz.150-2.SE4.bin"\n\n`;
+  output += `network ${state.version.modelName} (PowerPC) processor (revision B0) with 65536K bytes of memory.\n`;
   output += `Processor board ID ${state.version.serialNumber}\n`;
   output += `24 FastEthernet interfaces\n`;
   output += `2 Gigabit Ethernet interfaces\n`;
@@ -2760,7 +2760,7 @@ function cmdShowCdpNeighbors(state: SwitchState, input: string): CommandResult {
   if (isDetail) {
     return {
       success: true,
-      output: `\n-------------------------\nDevice ID: Core-Switch-01\nEntry address(es): \n  IP address: 192.168.1.1\nPlatform: cisco WS-C2960-24TT-L,  Capabilities: Switch \nInterface: Gi0/1,  Port ID (outgoing port): Gi0/24\nHoldtime : 163 sec\n\nVersion :\nCisco IOS Software, C2960 Software (C2960-LANBASE-M), Version 15.0(2)SE4\n\nadvertisement version: 2\nProtocol Hello:  OUI=0x00000C, Protocol ID=0x0112; payload len=27, value=00000000FFFFFFFF010221FF000000000000000000000000\nVTP Management Domain: 'LOCAL'\nDuplex: full\nManagement address(es):\n  IP address: 192.168.1.1\n`
+      output: `\n-------------------------\nDevice ID: Core-Switch-01\nEntry address(es): \n  IP address: 192.168.1.1\nPlatform: network WS-C2960-24TT-L,  Capabilities: Switch \nInterface: Gi0/1,  Port ID (outgoing port): Gi0/24\nHoldtime : 163 sec\n\nVersion :\nNetwork NOS Software, C2960 Software (C2960-LANBASE-M), Version 15.0(2)SE4\n\nadvertisement version: 2\nProtocol Hello:  OUI=0x00000C, Protocol ID=0x0112; payload len=27, value=00000000FFFFFFFF010221FF000000000000000000000000\nVTP Management Domain: 'LOCAL'\nDuplex: full\nManagement address(es):\n  IP address: 192.168.1.1\n`
     };
   }
   

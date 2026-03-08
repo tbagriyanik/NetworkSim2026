@@ -1,4 +1,4 @@
-// Cisco Switch Initial State
+// Network Switch Initial State
 import { SwitchState, Port, Vlan, SecurityConfig, CommandMode } from './types';
 
 // 24 FastEthernet + 2 GigabitEthernet portu oluştur
@@ -98,7 +98,7 @@ function createInitialMacTable(): { mac: string; vlan: number; port: string; typ
   ];
 }
 
-// Helper to generate a random unique Cisco-formatted MAC address (xxxx.xxxx.xxxx)
+// Helper to generate a random unique Network-formatted MAC address (xxxx.xxxx.xxxx)
 function generateMacAddress(): string {
   const chars = '0123456789ABCDEF';
   let mac = '';
@@ -151,7 +151,7 @@ export function createInitialState(): SwitchState {
     commandHistory: [],
     historyIndex: -1,
     version: {
-      iosVersion: '15.0(2)SE4',
+      nosVersion: '15.0(2)SE4',
       modelName: 'WS-C2960-24TT-L',
       serialNumber: 'FOC1234X5YZ',
       uptime: '2 weeks, 3 days, 5 hours'
@@ -214,8 +214,8 @@ export function createInitialRouterState(): SwitchState {
     commandHistory: [],
     historyIndex: -1,
     version: {
-      iosVersion: '15.4(3)M4',
-      modelName: 'CISCO1941/K9',
+      nosVersion: '15.4(3)M4',
+      modelName: 'NETWORK1941/K9',
       serialNumber: 'FTX1234ABCD',
       uptime: '1 week, 2 days, 4 hours'
     },
@@ -263,7 +263,7 @@ export function normalizePortId(input: string): string | null {
   return null;
 }
 
-// Komut kısaltmaları için eşleşme - TÜM CISC0 2960 KOMUTLARI
+// Komut kısaltmaları için eşleşme - TÜM NETWORK 2960 KOMUTLARI
 export const commandAliases: Record<string, string> = {
   // Enable/Disable
   'en': 'enable',

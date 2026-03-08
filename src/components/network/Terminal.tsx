@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, KeyboardEvent, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SwitchState } from '@/lib/cisco/types';
+import { SwitchState } from '@/lib/network/types';
 import { Translations } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { CornerDownLeft, Terminal as TerminalIcon, Trash2, Command, Info, History, ChevronRight } from 'lucide-react';
@@ -38,7 +38,6 @@ export function Terminal({
   language
 }: TerminalProps) {
   const [input, setInput] = useState('');
-  const [showHelper, setShowHelper] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   
@@ -92,7 +91,11 @@ export function Terminal({
   };
 
   const cardBg = isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200';
-  const terminalBg = isDark ? 'bg-black shadow-inner' : 'bg-slate-950 shadow-lg';
+  const terminalBg = isDark ? 'bg-black shadow-inner' : 'bg-slate-50 shadow-inner border border-slate-200';
+  const textColor = isDark ? 'text-slate-300' : 'text-slate-700';
+  const cmdColor = isDark ? 'text-slate-100' : 'text-slate-900';
+  const inputBg = isDark ? 'bg-black/40' : 'bg-white';
+  const inputBorder = isDark ? 'border-slate-700/50' : 'border-slate-300';
 
   // Last 10 unique commands for mobile
   const recentCommands = history.slice(0, 10);
@@ -115,15 +118,6 @@ export function Terminal({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setShowHelper(!showHelper)}
-                className={`h-8 px-2.5 text-[11px] font-bold transition-colors gap-1.5 ${showHelper ? 'text-cyan-400' : 'text-slate-500'}`}
-              >
-                <Info className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{showHelper ? (language === 'tr' ? 'Yardımı Gizle' : 'Hide Help') : (language === 'tr' ? 'Yardım' : 'Help')}</span>
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
                 onClick={onClear}
                 className="h-8 px-2.5 text-[11px] font-bold text-slate-500 hover:text-rose-400 transition-colors gap-1.5"
               >
@@ -142,15 +136,15 @@ export function Terminal({
               {output.map((line, index) => (
                 <div key={line.id || index} className="animate-in fade-in slide-in-from-left-1 duration-200">
                   {line.type === 'command' ? (
-                    <div className="flex gap-2.5 text-cyan-400 font-bold group">
+                    <div className="flex gap-2.5 text-cyan-500 font-bold group">
                       <span className="shrink-0 opacity-50 select-none">{line.prompt || prompt}</span>
-                      <span className="text-slate-100">{line.content}</span>
+                      <span className={cmdColor}>{line.content}</span>
                     </div>
                   ) : (
                     <div className={`whitespace-pre-wrap ${
-                      line.type === 'error' ? 'text-rose-400 font-medium' : 
-                      line.type === 'success' ? 'text-emerald-400' : 
-                      'text-slate-300'
+                      line.type === 'error' ? 'text-rose-500 font-medium' : 
+                      line.type === 'success' ? 'text-emerald-600' : 
+                      textColor
                     }`}>
                       {line.content}
                     </div>
@@ -167,9 +161,9 @@ export function Terminal({
           </div>
 
           {/* Input Area */}
-          <div className={`p-3 border-t ${isDark ? 'border-slate-800 bg-slate-900/50' : 'bg-slate-100/50 border-slate-200'}`}>
+          <div className={`p-3 border-t ${isDark ? 'border-slate-800 bg-slate-900/50' : 'bg-slate-50 border-slate-200'}`}>
             <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="flex items-center gap-2 max-w-full">
-              <div className="flex items-center gap-2 px-3 py-2 bg-black/40 rounded-lg border border-slate-700/50 flex-1 group focus-within:border-cyan-500/50 transition-all">
+              <div className={`flex items-center gap-2 px-3 py-2 ${inputBg} rounded-lg border ${inputBorder} flex-1 group focus-within:border-cyan-500/50 transition-all`}>
                 <span className="text-cyan-500 font-bold text-xs select-none shrink-0 group-focus-within:opacity-100 transition-opacity">
                   {prompt}
                 </span>
@@ -180,7 +174,7 @@ export function Terminal({
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   disabled={isLoading}
-                  className="flex-1 bg-transparent border-none outline-none text-slate-100 font-mono text-[13px] placeholder:text-slate-700 w-full"
+                  className={`flex-1 bg-transparent border-none outline-none ${cmdColor} font-mono text-[13px] placeholder:text-slate-500 w-full`}
                   placeholder={t.typeCommand}
                   autoFocus
                   spellCheck={false}
@@ -209,7 +203,7 @@ export function Terminal({
         </CardContent>
       </Card>
 
-      {/* Mobile History & Helper Area */}
+      {/* Mobile History Area */}
       <div className="flex flex-col gap-2">
         {/* Mobile History List (Visible only on small screens) */}
         {recentCommands.length > 0 && (
@@ -236,23 +230,6 @@ export function Terminal({
               ))}
             </div>
           </div>
-        )}
-
-        {showHelper && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="animate-in fade-in slide-in-from-bottom-2 duration-300"
-          >
-            <QuickCommands
-              currentMode={state.currentMode}
-              onExecuteCommand={onCommand}
-              t={t}
-              theme={theme}
-              language={language}
-            />
-          </motion.div>
         )}
       </div>
     </div>

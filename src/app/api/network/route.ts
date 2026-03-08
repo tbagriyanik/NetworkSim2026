@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeCommand, getPrompt } from '@/lib/cisco/executor';
-import { SwitchState, CommandMode } from '@/lib/cisco/types';
-import { createInitialState } from '@/lib/cisco/initialState';
+import { executeCommand, getPrompt } from '@/lib/network/executor';
+import { SwitchState, CommandMode } from '@/lib/network/types';
+import { createInitialState } from '@/lib/network/initialState';
 
 // Global state storage (in-memory, per session would be better but this is a demo)
 let switchState: SwitchState = createInitialState();
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Cisco API Error:', error);
+    console.error('Network API Error:', error);
     return NextResponse.json({ 
       error: 'Sunucu hatası oluştu' 
     }, { status: 500 });

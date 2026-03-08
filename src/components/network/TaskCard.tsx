@@ -1,8 +1,8 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
-import { TaskDefinition, TaskContext, getTaskStatus } from '@/lib/cisco/taskDefinitions';
-import { SwitchState } from '@/lib/cisco/types';
+import { TaskDefinition, TaskContext, getTaskStatus } from '@/lib/network/taskDefinitions';
+import { SwitchState } from '@/lib/network/types';
 import { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 

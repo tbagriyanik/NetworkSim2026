@@ -1,20 +1,21 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { SwitchState, CableInfo } from '@/lib/cisco/types';
-import { createInitialState } from '@/lib/cisco/initialState';
+import { motion, AnimatePresence } from 'framer-motion';
+
+import { SwitchState, CableInfo } from '@/lib/network/types';
+import { createInitialState } from '@/lib/network/initialState';
 import { useDeviceManager } from '@/hooks/useDeviceManager';
 // Duplicate removed
-import { NetworkTopology, CanvasDevice, CanvasConnection } from '@/components/cisco/NetworkTopology';
-import { PCPanel } from '@/components/cisco/PCPanel';
-import { getPrompt } from '@/lib/cisco/executor';
-import { Terminal, TerminalOutput } from '@/components/cisco/Terminal';
-import { PortPanel } from '@/components/cisco/PortPanel';
-import { VlanPanel } from '@/components/cisco/VlanPanel';
-import { SecurityPanel } from '@/components/cisco/SecurityPanel';
-import { ConfigPanel } from '@/components/cisco/ConfigPanel';
-import { QuickCommands } from '@/components/cisco/QuickCommands';
+import { NetworkTopology, CanvasDevice, CanvasConnection } from '@/components/network/NetworkTopology';
+import { PCPanel } from '@/components/network/PCPanel';
+import { getPrompt } from '@/lib/network/executor';
+import { Terminal, TerminalOutput } from '@/components/network/Terminal';
+import { PortPanel } from '@/components/network/PortPanel';
+import { VlanPanel } from '@/components/network/VlanPanel';
+import { SecurityPanel } from '@/components/network/SecurityPanel';
+import { ConfigPanel } from '@/components/network/ConfigPanel';
+import { QuickCommands } from '@/components/network/QuickCommands';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,14 +41,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { TaskCard } from '@/components/cisco/TaskCard';
+import { TaskCard } from '@/components/network/TaskCard';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Laptop, Monitor, Network, ShieldCheck, Database, Terminal as TerminalIcon } from "lucide-react";
+import { ChevronDown, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Laptop, Monitor, Network, ShieldCheck, Database, Info, FilePlus2, Terminal as TerminalIcon } from "lucide-react";
 
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { AboutModal } from '@/components/network/AboutModal';
 import {
   topologyTasks,
   portTasks,
@@ -55,7 +57,7 @@ import {
   securityTasks,
   calculateTaskScore,
   TaskContext
-} from '@/lib/cisco/taskDefinitions';
+} from '@/lib/network/taskDefinitions';
 
 type TabType = 'topology' | 'cmd' | 'terminal' | 'ports' | 'vlan' | 'security';
 
@@ -182,6 +184,7 @@ export default function Home() {
   const [topologyKey, setTopologyKey] = useState(0);
 
   // UI state for dropdowns
+  const [showAboutModal, setShowAboutModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showActiveDeviceDropdown, setShowActiveDeviceDropdown] = useState(false);
   const dropdownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -428,7 +431,7 @@ export default function Home() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `cisco-project-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `network-project-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -828,9 +831,9 @@ export default function Home() {
             
             <h2 
               className="text-3xl font-black tracking-tighter text-white glitch-text mb-2"
-              data-text="CISCO SIMULATOR"
+              data-text="NETWORK SIMULATOR 2026"
             >
-              CISCO SIMULATOR
+              NETWORK SIMULATOR 2026
             </h2>
             
             <div className="flex items-center gap-2 mt-4">
@@ -901,7 +904,7 @@ export default function Home() {
               {/* Desktop Controls */}
               <div className="hidden md:flex items-center gap-1 mr-2">
                 <Button variant="ghost" size="icon" onClick={handleNewProject} title={language === 'tr' ? 'Yeni Proje' : 'New Project'}>
-                  <Plus className="w-4 h-4" />
+                  <FilePlus2 className="w-4 h-4" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={handleSaveProject} title={language === 'tr' ? 'Projeyi Kaydet' : 'Save Project'}>
                   <Save className="w-4 h-4" />
@@ -912,7 +915,9 @@ export default function Home() {
                 <input ref={fileInputRef} type="file" accept=".json" onChange={handleLoadProject} className="hidden" />
               </div>
 
-              <div className="hidden md:flex items-center gap-1 border-l pl-2 border-slate-700/50">
+                <Button variant="ghost" size="icon" onClick={() => setShowAboutModal(true)} title={language === 'tr' ? 'Hakkında' : 'About'}>
+                  <Info className="w-4 h-4" />
+                </Button>
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -984,7 +989,7 @@ export default function Home() {
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2">{t.project}</p>
                         <div className="grid gap-1">
                           <Button variant="ghost" className="w-full justify-start gap-3 h-11" onClick={() => { handleNewProject(); setShowMobileMenu(false); }}>
-                            <Plus className="w-4 h-4" /> {language === 'tr' ? 'Yeni Proje' : 'New Project'}
+                            <FilePlus2 className="w-4 h-4" /> {language === 'tr' ? 'Yeni Proje' : 'New Project'}
                           </Button>
                           <Button variant="ghost" className="w-full justify-start gap-3 h-11" onClick={() => { handleSaveProject(); setShowMobileMenu(false); }}>
                             <Save className="w-4 h-4" /> {language === 'tr' ? 'Projeyi Kaydet' : 'Save Project'}
@@ -1115,10 +1120,8 @@ export default function Home() {
                 );
               })}
             </div>
-          </div>
-        </div>
-      </header>
-
+            </div>
+            </header>
       {/* Global Dialogs (AlertDialog for better z-index and standard behavior) */}
       <AlertDialog open={!!confirmDialog} onOpenChange={(open) => !open && setConfirmDialog(null)}>
         <AlertDialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
@@ -1282,7 +1285,7 @@ export default function Home() {
                 t={t} 
                 theme={theme}
                 deviceName={state.hostname}
-                deviceModel={activeDeviceType === 'router' ? 'CISCO-1941' : 'WS-C2960-24TT-L'}
+                deviceModel={activeDeviceType === 'router' ? 'NETWORK-1941' : 'WS-C2960-24TT-L'}
                 activeDeviceId={activeDeviceId}
                 topologyConnections={topologyConnections || undefined}
               />
@@ -1307,7 +1310,7 @@ export default function Home() {
                 vlans={state.vlans}
                 ports={state.ports}
                 deviceName={state.hostname}
-                deviceModel={activeDeviceType === 'router' ? 'CISCO-1941' : 'WS-C2960-24TT-L'}
+                deviceModel={activeDeviceType === 'router' ? 'NETWORK-1941' : 'WS-C2960-24TT-L'}
                 onExecuteCommand={handleCommand}
                 t={t}
                 theme={theme}
@@ -1345,6 +1348,7 @@ export default function Home() {
         )}
         </div>
       </main>
+      <AboutModal isOpen={showAboutModal} onClose={() => setShowAboutModal(false)} />
       </motion.div>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { SwitchState } from '@/lib/cisco/types';
+import { SwitchState } from '@/lib/network/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';

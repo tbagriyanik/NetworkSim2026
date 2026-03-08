@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
-import { SwitchState, CableType, CableInfo, getCableTypeName, isCableCompatible } from '@/lib/cisco/types';
+import { SwitchState, CableType, CableInfo, getCableTypeName, isCableCompatible } from '@/lib/network/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -85,7 +85,7 @@ const DEVICE_ICONS = {
   ),
 };
 
-const CABLE_COLORS = {
+const CABLE_COLORS: Record<CableType | 'error', { primary: string; bg: string; text: string; border: string }> = {
   straight: { primary: '#3b82f6', bg: 'bg-blue-500', text: 'text-blue-400', border: 'border-blue-500/30' },
   crossover: { primary: '#f97316', bg: 'bg-orange-500', text: 'text-orange-400', border: 'border-orange-500/30' },
   console: { primary: '#06b6d4', bg: 'bg-cyan-500', text: 'text-cyan-400', border: 'border-cyan-500/30' },
@@ -149,7 +149,7 @@ export function NetworkTopology({
     ];
   };
 
-  // Helper to generate a random unique Cisco-formatted MAC address (xxxx.xxxx.xxxx)
+  // Helper to generate a random unique Network-formatted MAC address (xxxx.xxxx.xxxx)
   const generateMacAddress = (): string => {
     const chars = '0123456789abcdef';
     let mac = '';
@@ -1467,7 +1467,7 @@ export function NetworkTopology({
 
   // Handle key events: ESC to close context menu, DELETE to remove devices, Ctrl+A to select all
   useEffect(() => {
-    const handleCloseBroadcast = (e: any) => {
+    const handleCloseBroadcast = (e: CustomEvent<{ source?: string }>) => {
       const source = e.detail?.source;
       if (source && source !== 'topology') {
         setContextMenu(null);
@@ -1483,7 +1483,7 @@ export function NetworkTopology({
         }
       }
     };
-    window.addEventListener('close-menus-broadcast', handleCloseBroadcast);
+    window.addEventListener('close-menus-broadcast', handleCloseBroadcast as EventListener);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
@@ -1591,7 +1591,7 @@ export function NetworkTopology({
      window.addEventListener('keydown', handleKeyDown);
      return () => {
        window.removeEventListener('keydown', handleKeyDown);
-       window.removeEventListener('close-menus-broadcast', handleCloseBroadcast);
+
      };
    }, [selectedDeviceIds, deleteDevice, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, showPortSelector, toggleFullscreen, isFullscreen]);
 

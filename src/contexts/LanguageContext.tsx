@@ -72,7 +72,7 @@ interface Translations {
   help: string;
   
   // Footer
-  iosVersion: string;
+  nosVersion: string;
   model: string;
   uptime: string;
   activePorts: string;
@@ -178,17 +178,25 @@ interface Translations {
   dontSave: string;
   pts: string;
   initializingSystem: string;
+
+  // About Section
+  aboutTitle: string;
+  aboutIntro: string;
+  termsAndConditions: string;
+  termsText: string;
+  licenseInfo: string;
+  close: string;
 }
 
 const translations: Record<Language, Translations> = {
   tr: {
-    title: 'Cisco Simulator',
-    subtitle: 'Catalyst 2960 Series',
+    title: 'Network Simulator 2026',
+    subtitle: 'Networking Becerilerini Geliştir',
     mode: 'Mod',
     hostname: 'Hostname',
     clearTerminal: 'Terminali Temizle',
     reset: 'Sıfırla',
-    switchTitle: 'Cisco 2960 Switch',
+    switchTitle: 'Network 2960 Switch',
     fastEthernetPorts: 'FastEthernet Portları (Fa0/1 - Fa0/24)',
     gigabitPorts: 'GigabitEthernet Uplink (Gi0/1 - Gi0/2)',
     connected: 'Bağlı',
@@ -234,13 +242,13 @@ const translations: Record<Language, Translations> = {
     tabComplete: 'komut tamamlama',
     commandHistory: 'komut geçmişi',
     help: 'yardım',
-    iosVersion: 'IOS Versiyon',
+    nosVersion: 'NOS Versiyon',
     model: 'Model',
     uptime: 'Uptime',
     activePorts: 'Aktif Portlar',
     tips: 'İpuçları',
     portClickTip: 'Port LED\'lerine tıklayarak hızlıca interface moduna geçebilirsiniz',
-    simulatorTitle: 'Cisco Simulator v1.0',
+    simulatorTitle: 'Network Simulator 2026 v1.0',
     simulatorCopyright: 'Telif hakkı (c) 2024 Simulator. Tüm hakları saklıdır.',
     theme: 'Tema',
     light: 'Açık',
@@ -304,7 +312,7 @@ const translations: Record<Language, Translations> = {
     vTaskTrunkName: 'Trunk Port',
     vTaskTrunkDesc: 'Bir portu trunk moduna al',
     vTaskMultipleName: 'Çoklu VLAN',
-    vTaskMultipleDesc: 'En az 3 kullanıcı VLAN\'ı oluştur',
+    vTaskMultipleDesc: 'En az 3 kullanıcılı VLAN\'ı oluştur',
     vTaskFullNamingName: 'Tam İsimlendirme',
     vTaskFullNamingDesc: 'Tüm VLAN\'ları isimlendir',
     vTaskFullNamingHint: 'Her VLAN için: name <isim>',
@@ -326,15 +334,23 @@ const translations: Record<Language, Translations> = {
     dontSave: 'Kaydetme',
     pts: 'puan',
     initializingSystem: 'Sistem Başlatılıyor...',
+
+    // About Section
+    aboutTitle: 'Network Simulator 2026 Hakkında',
+    aboutIntro: 'Bu uygulama, ağ teknolojilerini ve terminal komutlarını öğrenmek isteyenler için tasarlanmış interaktif bir simülasyon aracıdır.',
+    termsAndConditions: 'Şartlar ve Koşullar',
+    termsText: 'Bu yazılım eğitim amaçlıdır. Ticari olmayan amaçlarla özgürce kullanılabilir ve dağıtılabilir.',
+    licenseInfo: 'Lisans: Copyleft GPL',
+    close: 'Kapat',
   },
   en: {
-    title: 'Cisco Simulator',
-    subtitle: 'Catalyst 2960 Series',
+    title: 'Network Simulator 2026',
+    subtitle: 'Networking Becerilerini Geliştir',
     mode: 'Mode',
     hostname: 'Hostname',
     clearTerminal: 'Clear Terminal',
     reset: 'Reset',
-    switchTitle: 'Cisco 2960 Switch',
+    switchTitle: 'Network 2960 Switch',
     fastEthernetPorts: 'FastEthernet Ports (Fa0/1 - Fa0/24)',
     gigabitPorts: 'GigabitEthernet Uplinks (Gi0/1 - Gi0/2)',
     connected: 'Connected',
@@ -380,13 +396,13 @@ const translations: Record<Language, Translations> = {
     tabComplete: 'command completion',
     commandHistory: 'command history',
     help: 'help',
-    iosVersion: 'IOS Version',
+    nosVersion: 'NOS Version',
     model: 'Model',
     uptime: 'Uptime',
     activePorts: 'Active Ports',
     tips: 'Tips',
     portClickTip: 'Click on port LEDs to quickly switch to interface mode',
-    simulatorTitle: 'Cisco Simulator v1.0',
+    simulatorTitle: 'Network Simulator 2026 v1.0',
     simulatorCopyright: 'Copyright (c) 2024 Simulator. All rights reserved.',
     theme: 'Theme',
     light: 'Light',
@@ -472,6 +488,14 @@ const translations: Record<Language, Translations> = {
     dontSave: 'Don\'t Save',
     pts: 'pts',
     initializingSystem: 'Initializing System...',
+
+    // About Section
+    aboutTitle: 'About Network Simulator 2026',
+    aboutIntro: 'This application is an interactive simulation tool designed for those who want to learn network technologies and terminal commands.',
+    termsAndConditions: 'Terms and Conditions',
+    termsText: 'This software is for educational purposes. It can be freely used and distributed for non-commercial purposes.',
+    licenseInfo: 'License: Copyleft GPL',
+    close: 'Close',
   }
 };
 
@@ -492,7 +516,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (initialized) return;
     
     try {
-      const saved = localStorage.getItem('cisco-sim-language');
+      const saved = localStorage.getItem('network-sim-language');
       if (saved === 'tr' || saved === 'en') {
         setLanguage(saved);
       }
@@ -507,7 +531,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (!initialized) return;
     
     try {
-      localStorage.setItem('cisco-sim-language', language);
+      localStorage.setItem('network-sim-language', language);
     } catch {
       // localStorage erişim hatası
     }

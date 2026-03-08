@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { CanvasConnection, CanvasDevice } from './NetworkTopology';
-import { CableType, isCableCompatible } from '@/lib/cisco/types';
+import { CableType, isCableCompatible } from '@/lib/network/types';
 
 interface ConnectionLineProps {
   connection: CanvasConnection;
@@ -38,7 +38,7 @@ export const ConnectionLine = memo(function ConnectionLine({
   };
   
   // Cast to specific types to satisfy TS if needed, but the logic is sound
-  const isCompatible = isCableCompatible(cableInfoForConnection as any);
+  const isCompatible = isCableCompatible(cableInfoForConnection as CableInfo);
   
   // Check if either port is shutdown
   const sourcePort = sourceDevice.ports.find(p => p.id === connection.sourcePort);

@@ -1,6 +1,6 @@
 'use client';
 
-import { SecurityConfig } from '@/lib/cisco/types';
+import { SecurityConfig } from '@/lib/network/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';

@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { SwitchState, CommandResult } from '@/lib/cisco/types';
-import { createInitialState, createInitialRouterState } from '@/lib/cisco/initialState';
-import { executeCommand, getPrompt } from '@/lib/cisco/executor';
-import { TerminalOutput } from '@/components/cisco/Terminal';
-import { CanvasDevice } from '@/components/cisco/NetworkTopology';
+import { SwitchState, CommandResult } from '@/lib/network/types';
+import { createInitialState, createInitialRouterState } from '@/lib/network/initialState';
+import { executeCommand, getPrompt } from '@/lib/network/executor';
+import { TerminalOutput } from '@/components/network/Terminal';
+import { CanvasDevice } from '@/components/network/NetworkTopology';
 
 interface PCOutputLine {
   id: string;
@@ -38,7 +38,7 @@ export function useDeviceManager(language: 'tr' | 'en') {
       {
         id: '0',
         type: 'output',
-        content: 'Microsoft Windows [Version 10.0.19045.3803]\n(c) Microsoft Corporation. Tüm hakları saklıdır.\n'
+        content: 'OS Windows [Version 10.0.19045.3803]\n(c) OS Corporation. Tüm hakları saklıdır.\n'
       },
       {
         id: '1',
@@ -116,7 +116,7 @@ export function useDeviceManager(language: 'tr' | 'en') {
         {
           id: '0',
           type: 'output',
-          content: 'Microsoft Windows [Version 10.0.19045.3803]\n(c) Microsoft Corporation. Tüm hakları saklıdır.\n'
+          content: 'OS Windows [Version 10.0.19045.3803]\n(c) OS Corporation. Tüm hakları saklıdır.\n'
         },
         {
           id: '1',
@@ -229,7 +229,7 @@ export function useDeviceManager(language: 'tr' | 'en') {
         // Handle Telnet
         if (result.telnetTarget && topologyDevices) {
           const targetIp = result.telnetTarget;
-          const targetDevice = topologyDevices.find((d: any) => d.ip === targetIp);
+          const targetDevice = topologyDevices.find((d: CanvasDevice) => d.ip === targetIp);
           if (targetDevice && targetDevice.type !== 'pc') {
             const connMsg: TerminalOutput = {
               id: (Date.now() + 2).toString(),
@@ -274,9 +274,9 @@ export function useDeviceManager(language: 'tr' | 'en') {
             commandHistory: oldState?.commandHistory || []
           };
           const bootMessages: TerminalOutput[] = [
-            { id: (Date.now() + 2).toString(), type: 'output', content: '\n\nSystem Bootstrap, Version 12.1(11r)EA1\nCopyright (c) 2004 by cisco Systems, Inc.\n' },
-            { id: (Date.now() + 3).toString(), type: 'output', content: 'C2960 Boot Loader (C2960-HBOOT-M) Version 12.2(25r)FX\nLoading "flash:c2960-lanbase-mz.150-2.SE4.bin"...\n################################################################################\n' },
-            { id: (Date.now() + 4).toString(), type: 'output', content: '[OK]\n\nCisco IOS Software, Version 15.0(2)SE4\nPress RETURN to get started!\n\n' },
+            { id: (Date.now() + 2).toString(), type: 'output', content: '\n\nSystem Bootstrap, Version 12.1(11r)EA1\nCopyright (c) 2004 by Network Systems, Inc.\n' },
+            { id: (Date.now() + 3).toString(), type: 'output', content: 'N2960 Boot Loader (N2960-HBOOT-M) Version 12.2(25r)FX\nLoading "flash:n2960-lanbase-mz.150-2.SE4.bin"...\n################################################################################\n' },
+            { id: (Date.now() + 4).toString(), type: 'output', content: '[OK]\n\nNetwork NOS Software, Version 15.0(2)SE4\nPress RETURN to get started!\n\n' },
           ];
           
           setDeviceStates(prev => new Map(prev).set(deviceId, finalState));
@@ -367,7 +367,7 @@ export function useDeviceManager(language: 'tr' | 'en') {
     setDeviceStates(new Map([['switch-1', createInitialState()]]));
     setDeviceOutputs(new Map([['switch-1', []]]));
     setPcOutputs(new Map([['pc-1', [
-      { id: '0', type: 'output', content: 'Microsoft Windows [Version 10.0.19045.3803]\n(c) Microsoft Corporation. Tüm hakları saklıdır.\n' },
+      { id: '0', type: 'output', content: 'OS Windows [Version 10.0.19045.3803]\n(c) OS Corporation. Tüm hakları saklıdır.\n' },
       { id: '1', type: 'output', content: '\nEthernet adapter Ethernet bağlantısı:\n' }
     ]]]));
   };

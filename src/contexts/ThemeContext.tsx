@@ -21,7 +21,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (initialized) return;
     
     try {
-      const saved = localStorage.getItem('cisco-sim-theme');
+      const saved = localStorage.getItem('network-sim-theme');
       if (saved === 'dark' || saved === 'light') {
         setTheme(saved);
       }
@@ -36,7 +36,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (!initialized) return;
     
     try {
-      localStorage.setItem('cisco-sim-theme', theme);
+      localStorage.setItem('network-sim-theme', theme);
     } catch {
       // localStorage erişim hatası
     }

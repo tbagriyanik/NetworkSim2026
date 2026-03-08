@@ -1,14 +1,14 @@
-# Cisco Simulator Projesi - Çalışma Günlüğü
+# Network Simulator 2026 Projesi - Çalışma Günlüğü
 
 ---
 ## Task ID: 1 - Main Agent
 ### Work Task
-Cisco Simulator web uygulaması geliştirme - Tüm bileşenlerin oluşturulması ve entegrasyonu.
+Network Simulator 2026 web uygulaması geliştirme - Tüm bileşenlerin oluşturulması ve entegrasyonu.
 
 ### Work Summary
 Proje başlatıldı. Kullanıcı gereksinimleri doğrultusunda aşağıdaki bileşenler geliştirilecek:
-1. Fiziksel Port Paneli (Cisco 2960 görünümü)
-2. CLI Komut Terminali (Cisco IOS benzeri)
+L10: 1. Fiziksel Port Paneli (Network 2960 görünümü)
+L11: 2. CLI Komut Terminali (Network NOS benzeri)
 3. VLAN Durum Paneli
 4. Güvenlik Kontrolleri Paneli
 5. Running-Config Paneli
@@ -84,7 +84,7 @@ Completed three major improvements to the network topology and CLI system:
 
 **Files Modified:**
 
-1. `/src/components/cisco/NetworkTopology.tsx`:
+1. `/src/components/network/NetworkTopology.tsx`:
    - Added drag distance calculation with `getDistance()` function
    - Added `dragStartPos` and `isActuallyDragging` state
    - Improved zoom with cursor-position-aware calculations
@@ -100,11 +100,11 @@ Completed three major improvements to the network topology and CLI system:
    - Added `handleDeviceDoubleClick()` for terminal opening
    - Updated PCPanel and Terminal to receive deviceId
 
-3. `/src/components/cisco/Terminal.tsx`:
+3. `/src/components/network/Terminal.tsx`:
    - Added optional `deviceId` and `deviceName` props
    - Display device name in terminal header with cyan badge
 
-4. `/src/components/cisco/PCPanel.tsx`:
+4. `/src/components/network/PCPanel.tsx`:
    - Added required `deviceId` prop
    - Implemented global store pattern for per-device outputs and command history
    - Each PC now has its own IP configuration based on device ID
@@ -119,7 +119,7 @@ Completed three major improvements to the network topology and CLI system:
 ---
 ## Task ID: 4 - UX/UI Enhancement Agent
 ### Work Task
-Comprehensive UX and UI improvements for the entire Cisco Simulator application.
+Comprehensive UX and UI improvements for the entire Network Simulator 2026 application.
 
 ### Work Summary
 Completed extensive UX/UI improvements across all components:
@@ -176,12 +176,12 @@ Completed extensive UX/UI improvements across all components:
 
 **Files Modified:**
 - `/src/app/globals.css` - Added 15+ custom animations and effects
-- `/src/components/cisco/Terminal.tsx` - Improved input and suggestions
-- `/src/components/cisco/TaskCard.tsx` - Complete rewrite with animations
-- `/src/components/cisco/PortPanel.tsx` - Enhanced LEDs and hover effects
-- `/src/components/cisco/VlanPanel.tsx` - Added transitions and animations
-- `/src/components/cisco/SecurityPanel.tsx` - Consistent styling improvements
-- `/src/components/cisco/NetworkTopology.tsx` - Smooth zoom transitions
+- `/src/components/network/Terminal.tsx` - Improved input and suggestions
+- `/src/components/network/TaskCard.tsx` - Complete rewrite with animations
+- `/src/components/network/PortPanel.tsx` - Enhanced LEDs and hover effects
+- `/src/components/network/VlanPanel.tsx` - Added transitions and animations
+- `/src/components/network/SecurityPanel.tsx` - Consistent styling improvements
+- `/src/components/network/NetworkTopology.tsx` - Smooth zoom transitions
 - `/src/app/page.tsx` - Tab animations and JSX fixes
 
 **Key Design Decisions:**

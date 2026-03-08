@@ -1,6 +1,6 @@
 'use client';
 
-import { SwitchState } from '@/lib/cisco/types';
+import { SwitchState } from '@/lib/network/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { motion } from 'framer-motion';
@@ -70,8 +70,8 @@ export function AppFooter({ state, selectedDevice, activeDeviceId, activeDeviceN
           
           <div className="flex items-center gap-8">
             <div className="flex flex-col">
-              <div className={`text-[10px] font-bold tracking-wider ${dark ? 'text-slate-500' : 'text-slate-400'}`}>{t.iosVersion}</div>
-              <div className="text-sm font-bold font-mono text-cyan-500 bg-cyan-500/5 px-1.5 py-0.5 rounded border border-cyan-500/10">{state.version.iosVersion}</div>
+              <div className={`text-[10px] font-bold tracking-wider ${dark ? 'text-slate-500' : 'text-slate-400'}`}>{t.nosVersion}</div>
+              <div className="text-sm font-bold font-mono text-cyan-500 bg-cyan-500/5 px-1.5 py-0.5 rounded border border-cyan-500/10">{state.version.nosVersion}</div>
             </div>
             
             <div className="flex flex-col">

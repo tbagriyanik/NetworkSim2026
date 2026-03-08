@@ -1,4 +1,4 @@
-// Cisco Simulator Types
+// Network Simulator 2026 Types
 
 export type CommandMode = 
   | 'user'           // Switch>
@@ -77,7 +77,7 @@ export interface SwitchState {
   historyIndex: number;
   bannerMOTD?: string;
   version: {
-    iosVersion: string;
+    nosVersion: string;
     modelName: string;
     serialNumber: string;
     uptime: string;

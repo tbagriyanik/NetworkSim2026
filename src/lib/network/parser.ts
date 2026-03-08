@@ -1,4 +1,4 @@
-// Cisco Command Parser
+// Network Command Parser
 import { CommandMode, ParsedCommand } from './types';
 import { commandAliases } from './initialState';
 

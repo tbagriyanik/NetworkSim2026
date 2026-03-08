@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, KeyboardEvent, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CableInfo, isCableCompatible, SwitchState } from '@/lib/cisco/types';
+import { CableInfo, isCableCompatible, SwitchState } from '@/lib/network/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { TerminalOutput } from './Terminal';
@@ -37,8 +37,8 @@ interface PCPanelProps {
 
 type PCActiveTab = 'desktop' | 'terminal';
 
-// Advanced Command Help Tree for Cisco
-const ciscoHelp: Record<string, Record<string, string[]>> = {
+// Advanced Command Help Tree for Network
+const networkHelp: Record<string, Record<string, string[]>> = {
   user: {
     '': ['enable', 'exit', 'show', 'ping', 'telnet', 'ssh'],
     'sh': ['version', 'ip', 'interfaces', 'vlan'],
@@ -78,6 +78,12 @@ export function PCPanel({
   const { language, t } = useLanguage();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+
+  const terminalBg = isDark ? 'bg-black shadow-inner' : 'bg-slate-50 shadow-inner border border-slate-200';
+  const textColor = isDark ? 'text-slate-400' : 'text-slate-600';
+  const cmdColor = isDark ? 'text-slate-100' : 'text-slate-900';
+  const inputBg = isDark ? 'bg-black/50' : 'bg-white';
+  const inputBorder = isDark ? 'border-slate-800' : 'border-slate-300';
   
   const [activeTab, setActiveTab] = useState<PCActiveTab>('desktop');
   const [input, setInput] = useState('');
@@ -99,7 +105,7 @@ export function PCPanel({
     {
       id: '1',
       type: 'output',
-      content: 'Microsoft Windows [Version 10.0.19045.4412]\n(c) Microsoft Corporation. All rights reserved.\n'
+      content: 'OS Windows [Version 10.0.19045.4412]\n(c) OS Corporation. All rights reserved.\n'
     }
   ]);
   
@@ -177,12 +183,12 @@ export function PCPanel({
 
       if (cmd === 'ipconfig') {
         if (args.includes('/all')) {
-          addLocalOutput('output', `Windows IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${pcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) 82574L Gigabit Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\n   Default Gateway . . . . . . . . . : 192.168.1.1\n   DNS Servers . . . . . . . . . . . : 8.8.8.8`);
+          addLocalOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${pcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) 82574L Gigabit Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\n   Default Gateway . . . . . . . . . : 192.168.1.1\n   DNS Servers . . . . . . . . . . . : 8.8.8.8`);
         } else {
-          addLocalOutput('output', `Windows IP Configuration\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\n   Default Gateway . . . . . . . . . : 192.168.1.1`);
+          addLocalOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\n   Default Gateway . . . . . . . . . : 192.168.1.1`);
         }
       } else if (cmd === 'ipv6config') {
-        addLocalOutput('output', `Windows IPv6 Configuration\n\nEthernet adapter Ethernet0:\n   IPv6 Address. . . . . . . . . . . : 2001:db8:acad:1::10\n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   Default Gateway . . . . . . . . . : fe80::1`);
+        addLocalOutput('output', `OS IPv6 Configuration\n\nEthernet adapter Ethernet0:\n   IPv6 Address. . . . . . . . . . . : 2001:db8:acad:1::10\n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   Default Gateway . . . . . . . . . : fe80::1`);
       } else if (cmd === 'ping') {
         const target = args[0];
         if (!target) {
@@ -211,7 +217,7 @@ export function PCPanel({
       } else if (cmd === 'netsh') {
         addLocalOutput('output', 'netsh> usage: interface, wlan, firewalls, routing, etc.\nFor simulation purposes, netsh is in interactive mode.');
       } else if (cmd === 'dir') {
-        addLocalOutput('output', ` Volume in drive C has no label.\n Volume Serial Number is 4C32-8B1F\n\n Directory of C:\\\n\n26/02/2026  22:00    <DIR>          Users\n26/02/2026  22:00    <DIR>          Program Files\n26/02/2026  22:00    <DIR>          Windows\n26/02/2026  22:05               124 notes.txt\n               1 File(s)            124 bytes\n               3 Dir(s)  45,234,122,752 bytes free`);
+        addLocalOutput('output', ` Volume in drive C has no label.\n Volume Serial Number is 4C32-8B1F\n\n Directory of C:\\\n\n26/02/2026  22:00    <DIR>          Users\n26/02/2026  22:00    <DIR>          Program Files\n26/02/2026  22:00    <DIR>          System\n26/02/2026  22:05               124 notes.txt\n               1 File(s)            124 bytes\n               3 Dir(s)  45,234,122,752 bytes free`);
       } else if (cmd === 'cd') {
         addLocalOutput('output', `C:\\${args[0] || ''}`);
       } else if (cmd === 'mkdir') {
@@ -221,7 +227,7 @@ export function PCPanel({
       } else if (cmd === 'delete') {
         addLocalOutput('success', `File '${args[0] || 'file'}' deleted.`);
       } else if (cmd === 'ftp') {
-        addLocalOutput('output', `Connected to ${args[0] || 'server'}.\n220 Microsoft FTP Service\nUser (anonymous):`);
+        addLocalOutput('output', `Connected to ${args[0] || 'server'}.\n220 OS FTP Service\nUser (anonymous):`);
       } else if (cmd === 'ssh') {
         addLocalOutput('output', `OpenSSH_9.2p1, OpenSSL 3.0.8\nusage: ssh [-46AaCfGgKkMNnqsTtVvXxYy] [-B bind_interface] [-b bind_address]...`);
       } else if (cmd === 'telnet') {
@@ -231,9 +237,9 @@ export function PCPanel({
       } else if (cmd === 'js') {
         addLocalOutput('output', 'Node.js v18.16.0 Interactive Interpreter\n> ');
       } else if (cmd === 'ide') {
-        addLocalOutput('output', 'Starting Cisco IOx Development Environment...');
+        addLocalOutput('output', 'Starting Network IOx Development Environment...');
       } else if (cmd === 'ioxclient') {
-        addLocalOutput('output', 'Cisco IOx Client v1.15.0.0\nUsage: ioxclient [options] command [command options] [arguments...]');
+        addLocalOutput('output', 'Network IOx Client v1.15.0.0\nUsage: ioxclient [options] command [command options] [arguments...]');
       } else if (cmd === 'snmpget' || cmd === 'snmpset' || cmd === 'snmpgetbulk') {
         addLocalOutput('output', `${cmd.toUpperCase()}: usage: ${cmd} [common options] [-protocol specific options] agent [OID [OID]...]`);
       } else if (cmd === 'hostname') {
@@ -244,7 +250,7 @@ export function PCPanel({
           addLocalOutput('output', pcHostname);
         }
       } else if (cmd === 'ver') {
-        addLocalOutput('output', 'Microsoft Windows [Version 10.0.19045.4412]');
+        addLocalOutput('output', 'OS Windows [Version 10.0.19045.4412]');
       } else if (cmd === 'help' || cmd === '?') {
         addLocalOutput('output', `?            Display the list of available commands
   arp          Display the arp table
@@ -255,7 +261,7 @@ export function PCPanel({
   ftp          Transfers files to and from a computer running an FTP server.
   help         Display the list of available commands
   ide          Starts IoX development environment
-  ioxclient    Command line tool to assist in app development for Cisco IOx
+  ioxclient    Command line tool to assist in app development for Network IOx
                platforms
   ipconfig     Display network configuration for each network adapter
   ipv6config   Display network configuration for each network adapter
@@ -333,7 +339,7 @@ export function PCPanel({
       if (!state) return;
 
       const mode = state.currentMode;
-      const helpTree = ciscoHelp[mode] || ciscoHelp.user;
+      const helpTree = networkHelp[mode] || networkHelp.user;
       
       const parts = value.split(' ');
       const currentWord = parts[parts.length - 1].toLowerCase();
@@ -434,34 +440,34 @@ export function PCPanel({
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-black relative min-h-0">
+        <div className={`flex-1 flex flex-col overflow-hidden ${terminalBg} relative min-h-0`}>
           {activeTab === 'terminal' && !isConsoleConnected && (
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md gap-6 p-8 text-center animate-in fade-in duration-500">
-              <div className="p-8 rounded-[2.5rem] bg-slate-900 border border-slate-800 shadow-2xl max-w-sm w-full border-t-4 border-t-blue-500">
-                <div className="w-20 h-20 rounded-3xl bg-slate-800 flex items-center justify-center mx-auto mb-6 border border-slate-700 shadow-inner group">
-                  <Monitor className="w-10 h-10 text-blue-500 transition-transform group-hover:scale-110" />
+            <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center ${isDark ? 'bg-black/90' : 'bg-white/90'} backdrop-blur-md gap-4 p-4 text-center animate-in fade-in duration-500 overflow-y-auto`}>
+              <div className={`p-6 md:p-8 rounded-3xl ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xl'} border max-w-sm w-full border-t-4 border-t-blue-500 my-auto`}>
+                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'} flex items-center justify-center mx-auto mb-4 md:mb-6 border shadow-inner group`}>
+                  <Monitor className="w-8 h-8 md:w-10 md:h-10 text-blue-500 transition-transform group-hover:scale-110" />
                 </div>
-                <h3 className="text-lg font-black text-white mb-2 uppercase tracking-tight">Console Terminal</h3>
-                <p className="text-xs font-bold text-slate-500 mb-8 leading-relaxed px-4">
+                <h3 className={`text-base md:text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'} mb-1 md:mb-2 uppercase tracking-tight`}>Console Terminal</h3>
+                <p className={`text-[10px] md:text-xs font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'} mb-4 md:mb-8 leading-relaxed px-2 md:px-4`}>
                   {consoleDevice 
                     ? `${t.physicalConnectionDetected} ${consoleDevice.name}. Port: 9600-8-N-1`
                     : t.noConsoleCableDetected}
                 </p>
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3 md:gap-4">
                   <Button 
                     disabled={!consoleDevice}
                     onClick={handleConnect}
                     size="lg"
-                    className={`rounded-2xl font-black uppercase tracking-widest gap-3 h-14 ${
+                    className={`rounded-xl md:rounded-2xl font-black uppercase tracking-widest gap-3 h-12 md:h-14 ${
                       consoleDevice 
                         ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-500/20 active:scale-95' 
-                        : 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                    }`}
+                        : isDark ? 'bg-slate-800 text-slate-600' : 'bg-slate-200 text-slate-400'
+                    } cursor-not-allowed`}
                   >
                     <TerminalIcon className="w-5 h-5" />
                     {t.connect}
                   </Button>
-                  <p className="text-[9px] text-slate-700 uppercase tracking-[0.2em] font-black mt-2">
+                  <p className={`text-[8px] md:text-[9px] ${isDark ? 'text-slate-700' : 'text-slate-400'} uppercase tracking-[0.2em] font-black mt-1`}>
                     {t.consoleConfiguration}
                   </p>
                 </div>
@@ -480,7 +486,7 @@ export function PCPanel({
                     <span className="text-emerald-500 shrink-0 font-black opacity-50 select-none">
                       {activeTab === 'desktop' ? 'C:\\>' : (line.prompt || '>')}
                     </span>
-                    <span className="text-slate-100">{line.content}</span>
+                    <span className={cmdColor}>{line.content}</span>
                   </div>
                 )}
                 {line.type === 'prompt' && (
@@ -488,16 +494,16 @@ export function PCPanel({
                     <span className="text-emerald-500 shrink-0 font-black">{line.prompt}</span>
                   </div>
                 )}
-                {line.type === 'output' && <span className="text-slate-400 whitespace-pre-wrap">{line.content}</span>}
-                {line.type === 'error' && <span className="text-rose-400 font-bold italic">{line.content}</span>}
-                {line.type === 'success' && <span className="text-cyan-400 font-bold uppercase text-[11px] tracking-widest opacity-80">{line.content}</span>}
+                {line.type === 'output' && <span className={`${textColor} whitespace-pre-wrap`}>{line.content}</span>}
+                {line.type === 'error' && <span className="text-rose-500 font-bold italic">{line.content}</span>}
+                {line.type === 'success' && <span className="text-cyan-500 font-bold uppercase text-[11px] tracking-widest opacity-80">{line.content}</span>}
               </div>
             ))}
           </div>
 
           {/* History / Mobile Helpers */}
           {recentCommands.length > 0 && (
-            <div className="md:hidden flex flex-col gap-1 px-4 py-2 border-t border-slate-800 bg-slate-900/50">
+            <div className={`md:hidden flex flex-col gap-1 px-4 py-2 border-t ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'}`}>
               <div className="flex items-center gap-2 mb-1">
                 <History className="w-3 h-3 text-slate-500" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
@@ -522,9 +528,9 @@ export function PCPanel({
             </div>
           )}
 
-          <div className="p-4 border-t border-slate-800 bg-slate-900/30">
+          <div className={`p-4 border-t ${isDark ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-50'}`}>
             <div className="flex items-center gap-3 max-w-full">
-              <div className="flex items-center gap-3 px-4 py-2.5 bg-black/50 rounded-xl border border-slate-800 flex-1 focus-within:border-blue-500/50 transition-all group">
+              <div className={`flex items-center gap-3 px-4 py-2.5 ${inputBg} rounded-xl border ${inputBorder} flex-1 focus-within:border-blue-500/50 transition-all group`}>
                 <span className="text-emerald-500 font-black text-xs select-none shrink-0 opacity-50 group-focus-within:opacity-100 transition-opacity">
                   {activeTab === 'desktop' 
                     ? 'C:\\>' 
@@ -536,13 +542,13 @@ export function PCPanel({
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   disabled={activeTab === 'terminal' && !isConsoleConnected}
-                  className="flex-1 bg-transparent border-none outline-none text-slate-100 font-mono text-[13px] placeholder:text-slate-800 w-full"
+                  className={`flex-1 bg-transparent border-none outline-none ${cmdColor} font-mono text-[13px] placeholder:text-slate-500 w-full`}
                   placeholder={activeTab === 'terminal' && !isConsoleConnected ? t.waitingForConnection : t.typeCommand}
                   onKeyDown={handleKeyDown}
                   autoComplete="off"
                   spellCheck={false}
                 />
-                <div className="hidden md:flex items-center gap-1.5 px-1.5 py-0.5 rounded border border-slate-800 bg-slate-800/50 text-[9px] text-slate-600 font-black uppercase tracking-widest">
+                <div className={`hidden md:flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${isDark ? 'border-slate-800 bg-slate-800/50' : 'border-slate-200 bg-slate-100'} text-[9px] text-slate-500 font-black uppercase tracking-widest`}>
                   <Command className="w-2.5 h-3.5" />
                   Enter
                 </div>
@@ -555,8 +561,8 @@ export function PCPanel({
                 className={`shrink-0 h-11 w-11 rounded-xl transition-all shadow-lg ${
                   input.trim() 
                     ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20 active:scale-95' 
-                    : 'bg-slate-800 text-slate-700 cursor-not-allowed opacity-50'
-                }`}
+                    : isDark ? 'bg-slate-800 text-slate-700' : 'bg-slate-200 text-slate-400'
+                } cursor-not-allowed opacity-50`}
               >
                 <CornerDownLeft className="w-5 h-5" />
               </Button>

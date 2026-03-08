@@ -1,4 +1,4 @@
-# 📋 Cisco Simulator Pro - Planning & Roadmap
+# 📋 Network Simulator 2026 Pro - Planning & Roadmap
 
 This document tracks the implementation status of features and planned enhancements for the simulator.
 
@@ -20,8 +20,8 @@ This document tracks the implementation status of features and planned enhanceme
 - [x] **Save/Load Topology** - Persistent storage of canvas layouts to database / Local JSON
 - [ ] **Auto-layout** - Intelligent positioning of connected devices
 
-## 💻 Cisco IOS Simulator (Switch Focus)
-- [x] **Command Modes** - User, Privileged, Config, Interface, Line, VLAN
+## 💻 Network NOS Simulator (Switch Focus)
+- [x] **CLI Engine** - Support for multiple modes (User, Priv, Config, Interface)
 - [x] **Command Parser** - Case-insensitive parsing with shorthand support (e.g., `conf t`)
 - [x] **Interactive Help** - Inline `?` help and Tab-completion
 - [x] **Ghost Text** - Intelligent inline command suggestions
@@ -36,7 +36,7 @@ This document tracks the implementation status of features and planned enhanceme
     - [x] **Hostname** - Custom device names
     - [x] **Banner** - MOTD configuration
     - [x] **Passwords** - `enable secret`, line passwords, and encryption
-    - [x] **CDP** - Cisco Discovery Protocol neighbor discovery
+    - [x] **NDP** - Network Discovery Protocol neighbor discovery
 - [ ] **Advanced Layer 2**:
     - [ ] **VTP (VLAN Trunking Protocol)** - Domain and mode simulation
     - [ ] **LACP/PAGP** - Detailed EtherChannel negotiation logic

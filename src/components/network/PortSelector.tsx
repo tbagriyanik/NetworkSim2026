@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CableType, CableInfo, getCableTypeName } from '@/lib/cisco/types';
+import { CableType, CableInfo, getCableTypeName } from '@/lib/network/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 

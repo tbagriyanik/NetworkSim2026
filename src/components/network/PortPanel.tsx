@@ -1,6 +1,6 @@
 'use client';
 
-import { Port, getPortLEDColor, PortLEDColor } from '@/lib/cisco/types';
+import { Port, getPortLEDColor, PortLEDColor } from '@/lib/network/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
