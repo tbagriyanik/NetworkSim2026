@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Translations } from '@/contexts/LanguageContext';
+import { ShieldCheck } from 'lucide-react';
 
 interface SecurityPanelProps {
   security: SecurityConfig;
@@ -92,9 +93,7 @@ export function SecurityPanel({ security, t, theme }: SecurityPanelProps) {
     <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
       <CardHeader className="pb-2">
         <CardTitle className="text-orange-400 text-base sm:text-lg flex items-center gap-2">
-          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
+          <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
           {t.securityControls}
         </CardTitle>
       </CardHeader>

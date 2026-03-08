@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Translations } from '@/contexts/LanguageContext';
+import { Database } from 'lucide-react';
 
 // Connection type for topology
 interface TopologyConnection {
@@ -174,9 +175,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-cyan-400 text-base sm:text-lg flex items-center gap-2">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-              </svg>
+              <Database className="w-4 h-4 sm:w-5 sm:h-5" />
               {deviceName || t.switchTitle}
               <span className={`text-[10px] sm:text-xs font-mono px-2 py-0.5 rounded ${isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'} ml-2`}>
                 {deviceModel}

@@ -102,12 +102,8 @@ const ALL_TABS: TabDefinition[] = [
     id: 'topology',
     labelKey: 'networkTopology',
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="16" y="16" width="6" height="6" rx="1" />
-        <rect x="2" y="16" width="6" height="6" rx="1" />
-        <rect x="9" y="2" width="6" height="6" rx="1" />
-        <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" />
-        <path d="M12 12V8" />
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0 -2-2H7a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2zM9 9h6v6H9V9z" />
       </svg>
     ),
     tasks: topologyTasks,
@@ -144,15 +140,7 @@ const ALL_TABS: TabDefinition[] = [
   {
     id: 'ports',
     labelKey: 'ports',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="6" width="20" height="12" rx="2" />
-        <circle cx="6" cy="12" r="1" />
-        <circle cx="10" cy="12" r="1" />
-        <circle cx="14" cy="12" r="1" />
-        <circle cx="18" cy="12" r="1" />
-      </svg>
-    ),
+    icon: <Database className="w-4 h-4" />,
     tasks: portTasks,
     color: 'from-yellow-500 to-orange-500',
     showFor: ['switch', 'router']
@@ -168,12 +156,7 @@ const ALL_TABS: TabDefinition[] = [
   {
     id: 'security',
     labelKey: 'securityControls',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-      </svg>
-    ),
+    icon: <ShieldCheck className="w-4 h-4" />,
     tasks: securityTasks,
     color: 'from-red-500 to-rose-500',
     showFor: ['switch', 'router']
@@ -1061,12 +1044,9 @@ export default function Home() {
                                   setShowMobileMenu(false);
                                 }}
                               >
-                                {tab.id === 'topology' ? <Network className="w-3.5 h-3.5" /> : 
-                                 tab.id === 'cmd' ? <TerminalIcon className="w-3.5 h-3.5" /> :
-                                 tab.id === 'terminal' ? <Monitor className="w-3.5 h-3.5" /> :
-                                 tab.id === 'ports' ? <Database className="w-3.5 h-3.5" /> :
-                                 tab.id === 'vlan' ? <ShieldCheck className="w-3.5 h-3.5" /> :
-                                 <ShieldCheck className="w-3.5 h-3.5" />}
+                                <span className={`w-4 h-4 flex items-center justify-center ${isActive ? 'text-cyan-400' : 'text-slate-500'}`}>
+                                  {tab.icon}
+                                </span>
                                 {label}
                               </Button>
                             );
@@ -1205,7 +1185,7 @@ export default function Home() {
                        tab.id === 'cmd' ? <TerminalIcon className="w-4 h-4" /> :
                        tab.id === 'terminal' ? <Monitor className="w-4 h-4" /> :
                        tab.id === 'ports' ? <Database className="w-4 h-4" /> :
-                       tab.id === 'vlan' ? <ShieldCheck className="w-4 h-4" /> :
+                       tab.id === 'vlan' ? <Layers className="w-4 h-4" /> :
                        <ShieldCheck className="w-4 h-4" />}
                     </span>
                     <span>{tab.label}</span>
