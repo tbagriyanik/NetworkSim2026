@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useRef, useEffect, KeyboardEvent, useCallback, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CableInfo, isCableCompatible, SwitchState } from '@/lib/cisco/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { TerminalOutput } from './Terminal';
 import { Button } from '@/components/ui/button';
-import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck } from 'lucide-react';
+import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History } from 'lucide-react';
 
 interface OutputLine {
   id: string;
@@ -82,6 +82,10 @@ export function PCPanel({
   const [activeTab, setActiveTab] = useState<PCActiveTab>('desktop');
   const [input, setInput] = useState('');
   
+  // History State
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
   // Get device from topology
   const deviceFromTopology = topologyDevices.find(d => d.id === deviceId);
   const defaultConfig = getPCConfigDefaults(deviceId);
@@ -157,6 +161,11 @@ export function PCPanel({
     const command = (cmdToExecute || input).trim();
     if (!command) return;
 
+    // Add to history
+    if (history[0] !== command) {
+      setHistory(prev => [command, ...prev].slice(0, 50));
+    }
+    setHistoryIndex(-1);
     setInput('');
 
     if (activeTab === 'desktop') {
@@ -286,8 +295,23 @@ export function PCPanel({
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       executeCommand();
-      setTabCycleIndex(-1);
-      setLastTabInput('');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (history.length > 0 && historyIndex < history.length - 1) {
+        const nextIndex = historyIndex + 1;
+        setHistoryIndex(nextIndex);
+        setInput(history[nextIndex]);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        const nextIndex = historyIndex - 1;
+        setHistoryIndex(nextIndex);
+        setInput(history[nextIndex]);
+      } else if (historyIndex === 0) {
+        setHistoryIndex(-1);
+        setInput('');
+      }
     } else if (e.key === 'Tab') {
       e.preventDefault();
       handleTabComplete(e.currentTarget);
@@ -350,14 +374,17 @@ export function PCPanel({
 
   if (!isVisible) return null;
 
+  // Last 10 unique commands for mobile
+  const recentCommands = history.slice(0, 10);
+
   return (
-    <div className={`w-full h-full flex flex-col flex-1 overflow-hidden min-h-[600px]`}>
+    <div className={`w-full h-full flex flex-col flex-1 overflow-hidden h-full min-h-0`}>
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className={`w-full h-full flex flex-col flex-1 rounded-2xl overflow-hidden border ${
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-        } shadow-2xl`}
+        } shadow-2xl min-h-0`}
       >
         {/* Header */}
         <div className={`px-6 py-4 flex items-center justify-between border-b ${isDark ? 'border-slate-800 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
@@ -467,6 +494,33 @@ export function PCPanel({
               </div>
             ))}
           </div>
+
+          {/* History / Mobile Helpers */}
+          {recentCommands.length > 0 && (
+            <div className="md:hidden flex flex-col gap-1 px-4 py-2 border-t border-slate-800 bg-slate-900/50">
+              <div className="flex items-center gap-2 mb-1">
+                <History className="w-3 h-3 text-slate-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  {language === 'tr' ? 'Son Komutlar' : 'Recent Commands'}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {recentCommands.map((cmd, i) => (
+                  <button
+                    key={i}
+                    onClick={() => executeCommand(cmd)}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all border ${
+                      isDark 
+                        ? 'bg-slate-800 border-slate-700 text-slate-300 active:bg-cyan-500/20 active:text-cyan-400' 
+                        : 'bg-white border-slate-200 text-slate-600 active:bg-cyan-50'
+                    }`}
+                  >
+                    {cmd}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="p-4 border-t border-slate-800 bg-slate-900/30">
             <div className="flex items-center gap-3 max-w-full">
