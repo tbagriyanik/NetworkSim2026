@@ -183,7 +183,7 @@ export function PCPanel({
 
       if (cmd === 'ipconfig') {
         if (args.includes('/all')) {
-          addLocalOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${pcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) 82574L Gigabit Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\n   Default Gateway . . . . . . . . . : 192.168.1.1\n   DNS Servers . . . . . . . . . . . : 8.8.8.8`);
+          addLocalOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${pcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Generic Gigabit Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\n   Default Gateway . . . . . . . . . : 192.168.1.1\n   DNS Servers . . . . . . . . . . . : 8.8.8.8`);
         } else {
           addLocalOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\n   Default Gateway . . . . . . . . . : 192.168.1.1`);
         }
@@ -204,8 +204,8 @@ export function PCPanel({
           addLocalOutput('output', `Tracing route to ${target} over a maximum of 30 hops:\n\n  1    <1 ms    <1 ms    <1 ms  192.168.1.1\n  2    1 ms     <1 ms     1 ms  ${target}\n\nTrace complete.`);
         }
       } else if (cmd === 'nslookup') {
-        const target = args[0] || 'google.com';
-        addLocalOutput('output', `Server:  google-public-dns-a.google.com\nAddress:  8.8.8.8\n\nNon-authoritative answer:\nName:    ${target}\nAddresses:  142.250.185.78`);
+        const target = args[0] || 'example.com';
+        addLocalOutput('output', `Server:  public-dns.example.com\nAddress:  8.8.8.8\n\nNon-authoritative answer:\nName:    ${target}\nAddresses:  93.184.216.34`);
       } else if (cmd === 'arp') {
         if (args[0] === '-a' || !args[0]) {
           addLocalOutput('output', `Interface: ${pcIP} --- 0x2\n  Internet Address      Physical Address      Type\n  192.168.1.1           00-15-2b-e4-9b-60     dynamic\n  192.168.1.255         ff-ff-ff-ff-ff-ff     static`);
