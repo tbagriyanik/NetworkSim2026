@@ -503,21 +503,19 @@ export default function Home() {
       const deviceState = deviceStates.get(device.id);
       if (!deviceState) return device;
 
-      const isDefaultCLIHostname = deviceState.hostname === 'Switch' || deviceState.hostname === 'Router';
-      
+      // If simulator has a different hostname than topology, simulator wins (manual change via CLI/Panel)
       if (deviceState.hostname !== device.name) {
-        if (isDefaultCLIHostname) {
-          // Simulator has generic default name, Topology has specific name (like Switch-1)
-          // -> Sync Topology name to Simulator
-          simulatorChanged = true;
-          newDeviceStates.set(device.id, { ...deviceState, hostname: device.name });
-          return device;
-        } else {
-          // Simulator has custom name (manually changed via CLI) 
-          // -> Sync Simulator name to Topology
-          topologyChanged = true;
-          return { ...device, name: deviceState.hostname };
+        // Special case: if simulator has default generic name and topology has specific name (initial load/create)
+        const isDefaultCLIHostname = deviceState.hostname === 'Switch' || deviceState.hostname === 'Router';
+        
+        if (isDefaultCLIHostname && !device.name.includes('Router') && !device.name.includes('Switch')) {
+           // This shouldn't really happen with current logic but keeping for safety
+           // Usually topology has names like Switch-1, Router-1 which are also defaults
         }
+
+        // If the simulator name changed, update topology
+        topologyChanged = true;
+        return { ...device, name: deviceState.hostname };
       }
       return device;
     });
@@ -838,7 +836,7 @@ export default function Home() {
             <div className="flex items-center gap-2 mt-4">
               <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
               <span className="text-[10px] font-bold tracking-[0.3em] text-cyan-500 uppercase">
-                Initializing System...
+                {t.initializingSystem}
               </span>
             </div>
           </motion.div>
@@ -877,7 +875,7 @@ export default function Home() {
               <div className="flex flex-col items-end gap-1">
                 <div className="flex items-center gap-2">
                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                    {language === 'tr' ? 'Lab İlerlemesi' : 'Lab Progress'}
+                    {t.labProgress}
                   </span>
                   <span className={`text-xs font-bold ${totalScore >= maxScore * 0.7 ? 'text-emerald-400' : totalScore >= maxScore * 0.4 ? 'text-amber-400' : 'text-rose-400'}`}>
                     {Math.round((totalScore / maxScore) * 100)}%
@@ -949,7 +947,7 @@ export default function Home() {
                     <div className="p-4 space-y-6">
                       {/* Navigation Sections */}
                       <div className="space-y-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2">Navigation</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2">{t.navigation}</p>
                         <div className="grid gap-1">
                           {allTabs.map((tab) => {
                             const isTabVisible = tab.id === 'topology' || (topologyDevices && topologyDevices.length > 0 && tab.showFor.includes(activeDeviceType));
@@ -983,7 +981,7 @@ export default function Home() {
 
                       {/* Project Controls */}
                       <div className="space-y-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2">Project</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2">{t.project}</p>
                         <div className="grid gap-1">
                           <Button variant="ghost" className="w-full justify-start gap-3 h-11" onClick={() => { handleNewProject(); setShowMobileMenu(false); }}>
                             <Plus className="w-4 h-4" /> {language === 'tr' ? 'Yeni Proje' : 'New Project'}
@@ -1001,14 +999,14 @@ export default function Home() {
 
                       {/* Settings */}
                       <div className="space-y-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2">Settings</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-2">{t.settings}</p>
                         <div className="grid grid-cols-2 gap-2">
                           <Button variant="outline" className="gap-2" onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}>
                             <Languages className="w-4 h-4" /> {language.toUpperCase()}
                           </Button>
                           <Button variant="outline" className="gap-2" onClick={toggleTheme}>
                             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                            {isDark ? 'Light' : 'Dark'}
+                            {isDark ? t.light : t.dark}
                           </Button>
                         </div>
                       </div>
@@ -1016,7 +1014,7 @@ export default function Home() {
                       {/* Lab Progress Mobile */}
                       <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
                          <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Progress</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{t.labProgress}</span>
                           <span className="text-xs font-bold text-cyan-400">{Math.round((totalScore / maxScore) * 100)}%</span>
                         </div>
                         <div className="h-1.5 w-full rounded-full bg-slate-700 overflow-hidden mb-2">
@@ -1025,7 +1023,7 @@ export default function Home() {
                             style={{ width: `${(totalScore / maxScore) * 100}%` }}
                           />
                         </div>
-                        <p className="text-center text-sm font-bold text-white">{totalScore} / {maxScore} pts</p>
+                        <p className="text-center text-sm font-bold text-white">{totalScore} / {maxScore} {t.pts}</p>
                       </div>
                     </div>
                   </ScrollArea>
@@ -1053,7 +1051,7 @@ export default function Home() {
                        activeDeviceType === 'router' ? DEVICE_ICONS.router : 
                        DEVICE_ICONS.switch}
                       <span className="text-sm font-bold">
-                        {deviceStates.get(activeDeviceId)?.hostname || topologyDevices.find(d => d.id === activeDeviceId)?.name || activeDeviceId}
+                        {deviceStates.get(activeDeviceId)?.hostname || activeDeviceId}
                       </span>
                     </div>
                     <ChevronDown className="w-3.5 h-3.5 opacity-50" />
@@ -1061,25 +1059,30 @@ export default function Home() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} w-56`}>
                   <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                    {language === 'tr' ? 'Cihaz Seçimi' : 'Select Device'}
+                    {t.selectDevice}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <ScrollArea className="h-64">
-                    {topologyDevices.map((device) => (
-                      <DropdownMenuItem 
-                        key={device.id}
-                        className={`flex items-center gap-3 py-2 cursor-pointer ${activeDeviceId === device.id ? 'bg-cyan-500/10 text-cyan-400' : ''}`}
-                        onClick={() => handleDeviceSelect(device.type, device.id)}
-                      >
-                        {device.type === 'pc' ? DEVICE_ICONS.pc : 
-                         device.type === 'router' ? DEVICE_ICONS.router : 
-                         DEVICE_ICONS.switch}
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold leading-none">{deviceStates.get(device.id)?.hostname || device.name}</span>
-                          <span className="text-[10px] opacity-50 capitalize">{device.type}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
+                    {topologyDevices.map((device) => {
+                      const currentDeviceState = deviceStates.get(device.id);
+                      const displayName = currentDeviceState?.hostname || device.name;
+                      
+                      return (
+                        <DropdownMenuItem 
+                          key={device.id}
+                          className={`flex items-center gap-3 py-2 cursor-pointer ${activeDeviceId === device.id ? 'bg-cyan-500/10 text-cyan-400' : ''}`}
+                          onClick={() => handleDeviceSelect(device.type, device.id)}
+                        >
+                          {device.type === 'pc' ? DEVICE_ICONS.pc : 
+                           device.type === 'router' ? DEVICE_ICONS.router : 
+                           DEVICE_ICONS.switch}
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold leading-none">{displayName}</span>
+                            <span className="text-[10px] opacity-50 capitalize">{device.type}</span>
+                          </div>
+                        </DropdownMenuItem>
+                      );
+                    })}
                   </ScrollArea>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1121,7 +1124,7 @@ export default function Home() {
         <AlertDialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
           <AlertDialogHeader>
             <AlertDialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
-              {language === 'tr' ? 'Onay Gerekiyor' : 'Confirmation Required'}
+              {t.confirmationRequired}
             </AlertDialogTitle>
             <AlertDialogDescription className={isDark ? 'text-slate-400' : 'text-slate-500'}>
               {confirmDialog?.message}
@@ -1129,13 +1132,13 @@ export default function Home() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className={isDark ? 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700' : ''}>
-              {language === 'tr' ? 'İptal' : 'Cancel'}
+              {t.cancel}
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => confirmDialog?.onConfirm()}
               className="bg-cyan-600 hover:bg-cyan-700 text-white"
             >
-              {language === 'tr' ? 'Devam Et' : 'Continue'}
+              {t.continue}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1157,13 +1160,13 @@ export default function Home() {
               onClick={() => saveDialog?.onConfirm(false)}
               className={isDark ? 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700' : ''}
             >
-              {language === 'tr' ? 'Kaydetme' : 'Don\'t Save'}
+              {t.dontSave}
             </Button>
             <AlertDialogAction 
               onClick={() => saveDialog?.onConfirm(true)}
               className="bg-cyan-600 hover:bg-cyan-700 text-white"
             >
-              {language === 'tr' ? 'Kaydet' : 'Save'}
+              {t.saveLabel}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1236,9 +1239,8 @@ export default function Home() {
                   // use same display name as the dropdown (hostname or topology name)
                   deviceName={
                     (() => {
-                      const activeDevice = topologyDevices?.find(d => d.id === activeDeviceId);
                       const deviceState = deviceStates.get(activeDeviceId);
-                      return deviceState?.hostname || activeDevice?.name || 'Device';
+                      return deviceState?.hostname || activeDeviceId;
                     })()
                   }
                   prompt={prompt}

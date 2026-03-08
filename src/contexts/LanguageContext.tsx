@@ -167,6 +167,17 @@ interface Translations {
   consoleConfiguration: string;
   waitingForConnection: string;
   typeCommand: string;
+  labProgress: string;
+  navigation: string;
+  project: string;
+  settings: string;
+  selectDevice: string;
+  confirmationRequired: string;
+  cancel: string;
+  continue: string;
+  dontSave: string;
+  pts: string;
+  initializingSystem: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -304,6 +315,17 @@ const translations: Record<Language, Translations> = {
     consoleConfiguration: 'Yapılandırma: 9600 bits/s, 8 data bits, no parity',
     waitingForConnection: 'Bağlantı bekleniyor...',
     typeCommand: 'Komut yazın...',
+    labProgress: 'Lab İlerlemesi',
+    navigation: 'Navigasyon',
+    project: 'Proje',
+    settings: 'Ayarlar',
+    selectDevice: 'Cihaz Seçimi',
+    confirmationRequired: 'Onay Gerekiyor',
+    cancel: 'İptal',
+    continue: 'Devam Et',
+    dontSave: 'Kaydetme',
+    pts: 'puan',
+    initializingSystem: 'Sistem Başlatılıyor...',
   },
   en: {
     title: 'Cisco Simulator',
@@ -439,6 +461,17 @@ const translations: Record<Language, Translations> = {
     consoleConfiguration: 'Configuration: 9600 bits/s, 8 data bits, no parity',
     waitingForConnection: 'Waiting for connection...',
     typeCommand: 'Type command...',
+    labProgress: 'Lab Progress',
+    navigation: 'Navigation',
+    project: 'Project',
+    settings: 'Settings',
+    selectDevice: 'Select Device',
+    confirmationRequired: 'Confirmation Required',
+    cancel: 'Cancel',
+    continue: 'Continue',
+    dontSave: 'Don\'t Save',
+    pts: 'pts',
+    initializingSystem: 'Initializing System...',
   }
 };
 

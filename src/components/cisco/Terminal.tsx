@@ -1149,7 +1149,7 @@ export function Terminal({ deviceId, deviceName, prompt, state, onCommand, onCle
           className={`flex-1 overflow-y-auto p-6 font-mono text-sm scroll-smooth custom-scrollbar ${
             isDark ? 'bg-slate-950/80' : 'bg-slate-50/50'
           }`}
-          style={{ minHeight: '300px' }}
+          style={{ minHeight: '450px' }}
         >
           {/* Welcome message */}
           <div className={`mb-6 p-4 rounded-2xl border transition-all duration-500 ${

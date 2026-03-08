@@ -92,7 +92,8 @@ export function PCPanel({
   const deviceFromTopology = topologyDevices.find(d => d.id === deviceId);
   const defaultConfig = getPCConfigDefaults(deviceId);
   
-  const pcIP = deviceFromTopology?.ip || defaultConfig.ip;
+  const [pcIP, setPcIP] = useState(deviceFromTopology?.ip || defaultConfig.ip);
+  const [pcHostname, setPcHostname] = useState(deviceFromTopology?.name || deviceId);
   const pcMAC = deviceFromTopology?.macAddress || defaultConfig.mac;
 
   // Local output for Desktop (Local)
@@ -153,8 +154,6 @@ export function PCPanel({
     setIsConsoleConnected(true);
     setConnectedDeviceId(consoleDevice.id);
     
-    // Initial sync - global terminal already has content, so we just show it.
-    
     // Send initial empty command to get prompt if needed
     if (onExecuteDeviceCommand) {
       onExecuteDeviceCommand(consoleDevice.id, '').then(res => {
@@ -175,14 +174,52 @@ export function PCPanel({
     if (activeTab === 'desktop') {
       addLocalOutput('command', trimmedCommand);
       
-      const cmd = trimmedCommand.toLowerCase();
+      const parts = trimmedCommand.split(' ');
+      const cmd = parts[0].toLowerCase();
+      const args = parts.slice(1);
+
       if (cmd === 'ipconfig') {
-        addLocalOutput('output', `Windows IP Configuration\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\n   Default Gateway . . . . . . . . . : 192.168.1.1`);
-      } else if (cmd.startsWith('ping ')) {
-        const target = trimmedCommand.split(' ')[1];
-        addLocalOutput('output', `Pinging ${target} with 32 bytes of data:\nReply from ${target}: bytes=32 time<1ms TTL=128\nReply from ${target}: bytes=32 time<1ms TTL=128\nReply from ${target}: bytes=32 time<1ms TTL=128\nReply from ${target}: bytes=32 time<1ms TTL=128\n\nPing statistics for ${target}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),\nApproximate round trip times in milli-seconds:\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms`);
+        if (args.includes('/all')) {
+          addLocalOutput('output', `Windows IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${pcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) 82574L Gigabit Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\n   Default Gateway . . . . . . . . . : 192.168.1.1\n   DNS Servers . . . . . . . . . . . : 8.8.8.8`);
+        } else {
+          addLocalOutput('output', `Windows IP Configuration\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\n   Default Gateway . . . . . . . . . : 192.168.1.1`);
+        }
+      } else if (cmd === 'ping') {
+        const target = args[0];
+        if (!target) {
+          addLocalOutput('output', 'Usage: ping <target_name_or_address>');
+        } else {
+          addLocalOutput('output', `Pinging ${target} with 32 bytes of data:\nReply from ${target}: bytes=32 time<1ms TTL=128\nReply from ${target}: bytes=32 time<1ms TTL=128\nReply from ${target}: bytes=32 time<1ms TTL=128\nReply from ${target}: bytes=32 time<1ms TTL=128\n\nPing statistics for ${target}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),\nApproximate round trip times in milli-seconds:\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms`);
+        }
+      } else if (cmd === 'tracert') {
+        const target = args[0];
+        if (!target) {
+          addLocalOutput('output', 'Usage: tracert <target_name_or_address>');
+        } else {
+          addLocalOutput('output', `Tracing route to ${target} over a maximum of 30 hops:\n\n  1    <1 ms    <1 ms    <1 ms  192.168.1.1\n  2    1 ms     <1 ms     1 ms  ${target}\n\nTrace complete.`);
+        }
+      } else if (cmd === 'nslookup') {
+        const target = args[0] || 'google.com';
+        addLocalOutput('output', `Server:  google-public-dns-a.google.com\nAddress:  8.8.8.8\n\nNon-authoritative answer:\nName:    ${target}\nAddresses:  142.250.185.78`);
+      } else if (cmd === 'arp') {
+        if (args[0] === '-a') {
+          addLocalOutput('output', `Interface: ${pcIP} --- 0x2\n  Internet Address      Physical Address      Type\n  192.168.1.1           00-15-2b-e4-9b-60     dynamic\n  192.168.1.255         ff-ff-ff-ff-ff-ff     static`);
+        } else {
+          addLocalOutput('output', 'Usage: arp -a');
+        }
+      } else if (cmd === 'hostname') {
+        if (args[0]) {
+          setPcHostname(args[0]);
+          addLocalOutput('success', `Hostname changed to ${args[0]}`);
+        } else {
+          addLocalOutput('output', pcHostname);
+        }
+      } else if (cmd === 'dir') {
+        addLocalOutput('output', ` Volume in drive C has no label.\n Volume Serial Number is 4C32-8B1F\n\n Directory of C:\\\n\n26/02/2026  22:00    <DIR>          Users\n26/02/2026  22:00    <DIR>          Program Files\n26/02/2026  22:00    <DIR>          Windows\n               0 File(s)              0 bytes\n               3 Dir(s)  45,234,122,752 bytes free`);
+      } else if (cmd === 'ver') {
+        addLocalOutput('output', 'Microsoft Windows [Version 10.0.19045.4412]');
       } else if (cmd === 'help') {
-        addLocalOutput('output', 'Available commands:\n  ipconfig - Display IP configuration\n  ping <ip> - Ping a network host\n  cls - Clear screen\n  help - Display this help message\n  exit - Close terminal');
+        addLocalOutput('output', 'Available commands:\n  ipconfig - Display IP configuration\n  ping     - Ping a network host\n  tracert  - Trace route to host\n  nslookup - Query DNS for host\n  arp      - Display ARP table (-a)\n  hostname - Display or set host name\n  dir      - List directory content\n  ver      - Display Windows version\n  cls      - Clear screen\n  help     - Display this help message\n  exit     - Close terminal');
       } else if (cmd === 'cls') {
         setPcOutput([]);
       } else if (cmd === 'exit') {
@@ -226,7 +263,7 @@ export function PCPanel({
     if (!value && tabCycleIndex === -1) return;
 
     if (activeTab === 'desktop') {
-      const pcCmds = ['ipconfig', 'ping', 'help', 'cls', 'exit'];
+      const pcCmds = ['ipconfig', 'ping', 'tracert', 'nslookup', 'arp', 'hostname', 'dir', 'ver', 'help', 'cls', 'exit'];
       const matches = pcCmds.filter(c => c.startsWith(value.toLowerCase()));
       if (matches.length > 0) {
         input.value = matches[0];
@@ -280,11 +317,11 @@ export function PCPanel({
   if (!isVisible) return null;
 
   return (
-    <div className={`w-full h-full flex flex-col flex-1 overflow-hidden min-h-[500px]`}>
+    <div className={`w-full h-full flex flex-col flex-1 overflow-hidden min-h-[600px]`}>
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`w-full h-full flex flex-col rounded-2xl overflow-hidden border ${
+        className={`w-full h-full flex flex-col flex-1 rounded-2xl overflow-hidden border ${
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}
       >
@@ -295,7 +332,7 @@ export function PCPanel({
               <Laptop className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold leading-none">PC - {deviceFromTopology?.name || deviceId}</h2>
+              <h2 className="text-lg font-bold leading-none">PC - {pcHostname}</h2>
               <p className="text-[10px] font-medium text-slate-500 mt-1 uppercase tracking-wider">{pcIP} • {pcMAC}</p>
             </div>
           </div>
@@ -332,7 +369,7 @@ export function PCPanel({
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-black p-4 font-mono relative">
+        <div className="flex-1 flex flex-col overflow-hidden bg-black p-4 font-mono relative min-h-[450px]">
           {activeTab === 'terminal' && !isConsoleConnected && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm gap-6 p-8 text-center">
               <div className="p-8 rounded-[2.5rem] bg-slate-900 border border-slate-800 shadow-2xl max-w-md w-full animate-in fade-in zoom-in duration-300">
