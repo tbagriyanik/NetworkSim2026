@@ -45,7 +45,7 @@ import {
 import { TaskCard } from '@/components/network/TaskCard';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Laptop, Monitor, Network, ShieldCheck, Database, Info, File, Terminal as TerminalIcon } from "lucide-react";
+import { ChevronDown, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Laptop, Monitor, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon } from "lucide-react";
 
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -160,15 +160,7 @@ const ALL_TABS: TabDefinition[] = [
   {
     id: 'vlan',
     labelKey: 'vlanStatus',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m15 12-8.5 8.5" />
-        <path d="m9 12-8.5 8.5" />
-        <circle cx="18" cy="11" r="3" />
-        <circle cx="14" cy="5" r="3" />
-        <circle cx="10" cy="11" r="3" />
-      </svg>
-    ),
+    icon: <Layers className="w-4 h-4" />,
     tasks: vlanTasks,
     color: 'from-purple-500 to-pink-500',
     showFor: ['switch', 'router']
@@ -214,8 +206,38 @@ export default function Home() {
   const [activeDeviceType, setActiveDeviceType] = useState<'pc' | 'switch' | 'router'>('switch');
 
   // Topology state - managed in page.tsx for save/load functionality
-  const [topologyDevices, setTopologyDevices] = useState<CanvasDevice[] | null>(null);
-  const [topologyConnections, setTopologyConnections] = useState<CanvasConnection[] | null>(null);
+  const [topologyDevices, setTopologyDevices] = useState<CanvasDevice[]>([
+    {
+      id: 'pc-1',
+      type: 'pc',
+      name: 'PC-1',
+      x: 50,
+      y: 50,
+      ip: '192.168.1.10',
+      macAddress: '00e0.f701.a1b1',
+      status: 'offline',
+      ports: [
+        { id: 'eth0', label: 'Eth0', status: 'disconnected' },
+        { id: 'com1', label: 'COM1', status: 'disconnected' }
+      ]
+    },
+    {
+      id: 'switch-1',
+      type: 'switch',
+      name: 'SWITCH-1',
+      x: 200,
+      y: 50,
+      macAddress: '0011.2233.4401',
+      status: 'offline',
+      ports: [
+        { id: 'console', label: 'Console', status: 'disconnected' },
+        ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' })),
+        { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' },
+        { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' }
+      ]
+    }
+  ]);
+  const [topologyConnections, setTopologyConnections] = useState<CanvasConnection[]>([]);
 
   // Initial App Loading State
   const [isAppLoading, setIsAppLoading] = useState(true);
@@ -560,15 +582,45 @@ export default function Home() {
   // New project - reset everything
   const handleNewProjectInternal = useCallback(() => {
     const doNewProject = () => {
-      // Clear all states
+      // Clear all states and set defaults
       setDeviceStates(new Map());
       setDeviceOutputs(new Map());
       setPcOutputs(new Map());
-      setTopologyDevices(null);
-      setTopologyConnections(null);
+      setTopologyDevices([
+        {
+          id: 'pc-1',
+          type: 'pc',
+          name: 'PC-1',
+          x: 50,
+          y: 50,
+          ip: '192.168.1.10',
+          macAddress: '00e0.f701.a1b1',
+          status: 'offline',
+          ports: [
+            { id: 'eth0', label: 'Eth0', status: 'disconnected' },
+            { id: 'com1', label: 'COM1', status: 'disconnected' }
+          ]
+        },
+        {
+          id: 'switch-1',
+          type: 'switch',
+          name: 'SWITCH-1',
+          x: 200,
+          y: 50,
+          macAddress: '0011.2233.4401',
+          status: 'offline',
+          ports: [
+            { id: 'console', label: 'Console', status: 'disconnected' },
+            ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' })),
+            { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' },
+            { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' }
+          ]
+        }
+      ]);
+      setTopologyConnections([]);
       
       // Reset active selections
-      setActiveDeviceId('');
+      setActiveDeviceId('switch-1');
       setActiveDeviceType('switch');
       setSelectedDevice(null);
       setShowPCPanel(false);
@@ -1065,36 +1117,47 @@ export default function Home() {
 
           {/* Desktop Tabs & Device Selector */}
           <div className="flex items-end gap-1 mt-4 pt-1 overflow-x-auto no-scrollbar">
-            {/* Active Device Dropdown */}
-            {activeDeviceId && topologyDevices && topologyDevices.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className={`flex items-center gap-2 px-4 py-6 rounded-t-xl rounded-b-none border-x border-t transition-all ${
-                      isDark 
-                        ? 'bg-slate-900 border-slate-800 text-cyan-400 hover:text-cyan-300' 
-                        : 'bg-white border-slate-200 text-cyan-700 hover:text-cyan-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {activeDeviceType === 'pc' ? DEVICE_ICONS.pc : 
-                       activeDeviceType === 'router' ? DEVICE_ICONS.router : 
-                       DEVICE_ICONS.switch}
-                      <span className="text-sm font-bold">
-                        {deviceStates.get(activeDeviceId)?.hostname || activeDeviceId}
-                      </span>
-                    </div>
-                    <ChevronDown className="w-3.5 h-3.5 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} w-56`}>
-                  <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                    {t.selectDevice}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <ScrollArea className="h-64">
-                    {topologyDevices.map((device) => {
+            {/* Active Device Dropdown - Always show if component is rendered */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className={`flex items-center gap-2 px-4 py-6 rounded-t-xl rounded-b-none border-x border-t transition-all ${
+                    isDark 
+                      ? 'bg-slate-900 border-slate-800 text-cyan-400 hover:text-cyan-300' 
+                      : 'bg-white border-slate-200 text-cyan-700 hover:text-cyan-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {activeDeviceId && (topologyDevices.some(d => d.id === activeDeviceId)) ? (
+                      <>
+                        {activeDeviceType === 'pc' ? DEVICE_ICONS.pc : 
+                         activeDeviceType === 'router' ? DEVICE_ICONS.router : 
+                         DEVICE_ICONS.switch}
+                        <span className="text-sm font-bold">
+                          {deviceStates.get(activeDeviceId)?.hostname || activeDeviceId}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 text-slate-500" />
+                        <span className="text-sm font-bold text-slate-500">
+                          {language === 'tr' ? 'Cihaz Seç' : 'Select Device'}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} w-56`}>
+                <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                  {topologyDevices.length > 0 ? t.selectDevice : (language === 'tr' ? 'Önce Cihaz Ekleyin' : 'Add Devices First')}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <ScrollArea className={topologyDevices.length > 0 ? "h-64" : "h-auto"}>
+                  {topologyDevices.length > 0 ? (
+                    topologyDevices.map((device) => {
                       const currentDeviceState = deviceStates.get(device.id);
                       const displayName = currentDeviceState?.hostname || device.name;
                       
@@ -1113,11 +1176,15 @@ export default function Home() {
                           </div>
                         </DropdownMenuItem>
                       );
-                    })}
-                  </ScrollArea>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                    })
+                  ) : (
+                    <div className="p-4 text-center text-xs text-slate-500 italic">
+                      {language === 'tr' ? 'Topolojide henüz cihaz yok.' : 'No devices in topology yet.'}
+                    </div>
+                  )}
+                </ScrollArea>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Main Tabs (Hidden on mobile, shown on desktop) */}
             <div className="hidden md:flex items-end gap-1">

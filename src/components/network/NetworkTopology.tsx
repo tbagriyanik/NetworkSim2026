@@ -2171,13 +2171,14 @@ export function NetworkTopology({
             const isShutdown = port.shutdown;
 
             // Determine port label: E for Ethernet, C for COM/Console
-            const portLabel = port.id.toLowerCase().startsWith('com') ? 'C' : 'E';
+            const isConsolePort = port.id.toLowerCase().startsWith('com') || port.id.toLowerCase() === 'console';
+            const portLabel = isConsolePort ? 'C' : 'E';
 
             // Port colors:
             // PC Ethernet: Blue, PC COM (Console): Turquoise
             // Shutdown: Red
             const portColor = isShutdown ? '#ef4444' : 
-              port.id.toLowerCase().startsWith('com')
+              isConsolePort
               ? (isConnected ? '#06b6d4' : '#0891b2')  // Turquoise for console
               : (isConnected ? '#3b82f6' : '#1d4ed8'); // Blue for ethernet
 

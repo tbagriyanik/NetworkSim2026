@@ -124,10 +124,21 @@ export function PCPanel({
   const getConsoleDevice = useCallback(() => {
     if (!topologyConnections || !deviceId) return null;
     const connection = topologyConnections.find(conn => {
+      // Must be an active console cable
+      if (conn.cableType !== 'console' || conn.active === false) return false;
+      
       const isSource = conn.sourceDeviceId === deviceId;
       const isTarget = conn.targetDeviceId === deviceId;
-      if (isSource) return conn.sourcePort.toLowerCase().startsWith('com') || conn.sourcePort.toLowerCase() === 'console';
-      if (isTarget) return conn.targetPort.toLowerCase().startsWith('com') || conn.targetPort.toLowerCase() === 'console';
+      
+      // Port name checks (case insensitive)
+      if (isSource) {
+        const port = conn.sourcePort.toLowerCase();
+        return port.startsWith('com') || port === 'console' || port === 'rs232';
+      }
+      if (isTarget) {
+        const port = conn.targetPort.toLowerCase();
+        return port.startsWith('com') || port === 'console' || port === 'rs232';
+      }
       return false;
     });
     if (!connection) return null;
