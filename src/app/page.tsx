@@ -1217,7 +1217,7 @@ export default function Home() {
 
         {/* CMD Terminal Sekmesi */}
         {activeTab === 'cmd' && (
-          <div className="w-full h-full overflow-hidden flex flex-col">
+          <div className="w-full h-full overflow-hidden flex flex-col min-h-[450px]">
             <PCPanel
               deviceId={activeDeviceId}
               cableInfo={cableInfo}
@@ -1234,7 +1234,7 @@ export default function Home() {
 
         {/* Terminal Sekmesi - Fixed Layout with Footer at Bottom */}
         {activeTab === 'terminal' && (
-          <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+          <div className="flex-1 flex flex-col gap-4 overflow-hidden min-h-[450px]">
             <div className="grid lg:grid-cols-4 gap-4 flex-1 overflow-hidden">
               <div className="lg:col-span-3 flex flex-col gap-4 overflow-hidden">
                 <Terminal
