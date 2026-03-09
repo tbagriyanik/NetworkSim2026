@@ -511,8 +511,9 @@ export function PCPanel({
 
           <div 
             ref={outputRef}
-            className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-2 font-mono text-[13px] leading-relaxed"
+            className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-2 font-mono text-[13px] leading-relaxed flex flex-col"
           >
+            <div className="flex-1" /> {/* Spacer to push content down if small */}
             {(activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line) => (
               <div key={line.id} className="break-all animate-in fade-in slide-in-from-left-1 duration-200">
                 {line.type === 'command' && (

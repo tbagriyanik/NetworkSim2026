@@ -561,7 +561,42 @@ export default function Home() {
     setTopologyDevices(devices);
     setTopologyConnections(connections);
     setHasUnsavedChanges(true);
-  }, [setTopologyDevices, setTopologyConnections, setHasUnsavedChanges]);
+
+    // Sync port status from topology to deviceStates
+    setDeviceStates(prev => {
+      const newMap = new Map(prev);
+      let changed = false;
+
+      devices.forEach(topoDevice => {
+        const state = newMap.get(topoDevice.id);
+        if (state && state.ports) {
+          const updatedPorts = { ...state.ports };
+          let portChanged = false;
+
+          topoDevice.ports.forEach(topoPort => {
+            const statePort = updatedPorts[topoPort.id];
+            if (statePort && statePort.status !== topoPort.status) {
+              updatedPorts[topoPort.id] = {
+                ...statePort,
+                status: topoPort.status as 'connected' | 'notconnect' | 'disabled' | 'blocked'
+              };
+              portChanged = true;
+            }
+          });
+
+          if (portChanged) {
+            newMap.set(topoDevice.id, {
+              ...state,
+              ports: updatedPorts
+            });
+            changed = true;
+          }
+        }
+      });
+
+      return changed ? newMap : prev;
+    });
+  }, [setTopologyDevices, setTopologyConnections, setHasUnsavedChanges, setDeviceStates]);
 
   // Handle device deletion - update active device if needed
   const handleDeviceDelete = useCallback((deviceId: string) => {
@@ -579,13 +614,48 @@ export default function Home() {
       setSelectedDevice(null);
     }
     
-    // Clear device state from maps
+    // 1. Identify connections and ports to disconnect FIRST
+    const connectionsToRemove = topologyConnections.filter(conn => 
+      conn.sourceDeviceId === deviceId || conn.targetDeviceId === deviceId
+    );
+
+    const portsToDisconnect = connectionsToRemove.map(conn => {
+      if (conn.sourceDeviceId === deviceId) {
+        return { deviceId: conn.targetDeviceId, portId: conn.targetPort };
+      } else {
+        return { deviceId: conn.sourceDeviceId, portId: conn.sourcePort };
+      }
+    });
+
+    // 2. Release ports on OTHER devices in simulation state (deviceStates)
     setDeviceStates(prev => {
       const newMap = new Map(prev);
+      
+      // Reset ports on other devices that were connected to the one being deleted
+      portsToDisconnect.forEach(p => {
+        const targetState = newMap.get(p.deviceId);
+        if (targetState && targetState.ports) {
+          const updatedPorts = { ...targetState.ports };
+          const portToReset = updatedPorts[p.portId];
+          if (portToReset) {
+            updatedPorts[p.portId] = {
+              ...portToReset,
+              status: 'disconnected'
+            };
+            newMap.set(p.deviceId, {
+              ...targetState,
+              ports: updatedPorts
+            });
+          }
+        }
+      });
+      
+      // Delete the device itself
       newMap.delete(deviceId);
       return newMap;
     });
 
+    // 3. Clear other state maps
     setDeviceOutputs(prev => {
       const newMap = new Map(prev);
       newMap.delete(deviceId);
@@ -598,27 +668,13 @@ export default function Home() {
       return newMap;
     });
 
-    // Remove device from topology and handle connections
+    // 4. Update topology: Remove connections
     setTopologyConnections(prev => prev.filter(conn => 
       conn.sourceDeviceId !== deviceId && conn.targetDeviceId !== deviceId
     ));
 
+    // 5. Update topology: Release ports on other devices AND remove the device
     setTopologyDevices(prev => {
-      // 1. Find connections that will be removed
-      const connectionsToRemove = topologyConnections.filter(conn => 
-        conn.sourceDeviceId === deviceId || conn.targetDeviceId === deviceId
-      );
-
-      // 2. Identify ports on OTHER devices that need to be disconnected
-      const portsToDisconnect = connectionsToRemove.map(conn => {
-        if (conn.sourceDeviceId === deviceId) {
-          return { deviceId: conn.targetDeviceId, portId: conn.targetPort };
-        } else {
-          return { deviceId: conn.sourceDeviceId, portId: conn.sourcePort };
-        }
-      });
-
-      // 3. Return updated devices list (without the deleted device and with updated ports)
       return prev.filter(d => d.id !== deviceId).map(device => {
         const portsToUpdate = portsToDisconnect.filter(p => p.deviceId === device.id);
         if (portsToUpdate.length === 0) return device;
@@ -654,7 +710,7 @@ export default function Home() {
       }
     }
     setHasUnsavedChanges(true);
-  }, [activeDeviceId, topologyDevices, showPCDeviceId, selectedDevice, setDeviceStates, setDeviceOutputs, setPcOutputs, setShowPCPanel, setShowPCDeviceId, setShowActiveDeviceDropdown, setSelectedDevice, setActiveDeviceId, setActiveDeviceType, setActiveTab, setHasUnsavedChanges]);
+  }, [activeDeviceId, topologyDevices, topologyConnections, showPCDeviceId, selectedDevice, setDeviceStates, setDeviceOutputs, setPcOutputs, setShowPCPanel, setShowPCDeviceId, setShowActiveDeviceDropdown, setSelectedDevice, setActiveDeviceId, setActiveDeviceType, setActiveTab, setHasUnsavedChanges]);
 
   // Save project to JSON file
   const handleSaveProjectInternal = useCallback(() => {
@@ -1031,7 +1087,7 @@ export default function Home() {
             </div>
 
             {/* Total Score - Desktop */}
-            <div className="hidden lg:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-6">
               <div className="flex flex-col items-end gap-1">
                 <div className="flex items-center gap-2">
                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -1193,7 +1249,7 @@ export default function Home() {
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className={`flex items-center gap-2 px-4 py-6 rounded-t-xl rounded-b-none border-x border-t transition-all ${
+                  className={`flex items-center gap-2 px-4 py-6 rounded-xl border transition-all ${
                     isDark 
                       ? 'bg-slate-900 border-slate-800 text-cyan-400 hover:text-cyan-300' 
                       : 'bg-white border-slate-200 text-cyan-700 hover:text-cyan-800'
@@ -1377,37 +1433,24 @@ export default function Home() {
         <div className="max-w-7xl w-full mx-auto p-4 pb-20 sm:pb-6 h-full flex flex-col">
         {/* Tab Content */}
         {activeTab === 'topology' && (
-          <div className="space-y-4">
-            <div className="grid lg:grid-cols-3 gap-4">
-              {/* Network Topology */}
-              <div className="lg:col-span-2 w-full flex flex-col min-h-[450px]">
-                <NetworkTopology
-                  key={topologyKey}
-                  cableInfo={cableInfo}
-                  onCableChange={setCableInfo}
-                  selectedDevice={selectedDevice}
-                  onDeviceSelect={handleDeviceSelect}
-                  onDeviceDoubleClick={handleDeviceDoubleClick}
-                  onTopologyChange={handleTopologyChange}
-                  onDeviceDelete={handleDeviceDelete}
-                  initialDevices={topologyDevices || undefined}
-                  initialConnections={topologyConnections || undefined}
-                  isActive={activeTab === 'topology'}
-                  activeDeviceId={activeDeviceId}
-                  deviceStates={deviceStates}
-                />
-              </div>
-              
-              {/* Task Card */}
-              <div className="w-full">
-                <TaskCard
-                  tasks={topologyTasks}
-                  state={state}
-                  context={taskContext}
-                  color="from-cyan-500 to-blue-500"
-                  isDark={isDark}
-                />
-              </div>
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* Network Topology fills remaining space */}
+            <div className="flex-1 w-full flex flex-col min-h-[500px]">
+              <NetworkTopology
+                key={topologyKey}
+                cableInfo={cableInfo}
+                onCableChange={setCableInfo}
+                selectedDevice={selectedDevice}
+                onDeviceSelect={handleDeviceSelect}
+                onDeviceDoubleClick={handleDeviceDoubleClick}
+                onTopologyChange={handleTopologyChange}
+                onDeviceDelete={handleDeviceDelete}
+                initialDevices={topologyDevices || undefined}
+                initialConnections={topologyConnections || undefined}
+                isActive={activeTab === 'topology'}
+                activeDeviceId={activeDeviceId}
+                deviceStates={deviceStates}
+              />
             </div>
           </div>
         )}

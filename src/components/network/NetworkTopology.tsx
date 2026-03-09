@@ -1380,25 +1380,31 @@ export function NetworkTopology({
   const deleteConnection = useCallback((connectionId: string) => {
     saveToHistory();
     const conn = connections.find((c) => c.id === connectionId);
+    let updatedDevices = devices;
+    let updatedConnections = connections.filter((c) => c.id !== connectionId);
+
     if (conn) {
-      setDevices((prev) =>
-        prev.map((d) => {
-          if (d.id === conn.sourceDeviceId || d.id === conn.targetDeviceId) {
-            return {
-              ...d,
-              ports: d.ports.map((p) =>
-                p.id === conn.sourcePort || p.id === conn.targetPort
-                  ? { ...p, status: 'disconnected' as const }
-                  : p
-              ),
-            };
-          }
-          return d;
-        })
-      );
+      updatedDevices = devices.map((d) => {
+        if (d.id === conn.sourceDeviceId || d.id === conn.targetDeviceId) {
+          return {
+            ...d,
+            ports: d.ports.map((p) =>
+              p.id === conn.sourcePort || p.id === conn.targetPort
+                ? { ...p, status: 'disconnected' as const }
+                : p
+            ),
+          };
+        }
+        return d;
+      });
+      setDevices(updatedDevices);
     }
-    setConnections((prev) => prev.filter((c) => c.id !== connectionId));
-  }, [connections, saveToHistory]);
+    setConnections(updatedConnections);
+
+    if (onTopologyChange) {
+      onTopologyChange(updatedDevices, updatedConnections);
+    }
+  }, [connections, devices, saveToHistory, onTopologyChange]);
 
   // Reset view
   const resetView = useCallback(() => {
