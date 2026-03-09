@@ -299,7 +299,7 @@ export default function Home() {
       activeTab
     };
 
-    localStorage.setItem('ciscosim_autosave', JSON.stringify(projectData));
+    localStorage.setItem('netsim_autosave', JSON.stringify(projectData));
   }, [deviceStates, deviceOutputs, pcOutputs, topologyDevices, topologyConnections, cableInfo, activeDeviceId, activeDeviceType, activeTab, isAppLoading]);
 
   // Load project from JSON data
@@ -318,7 +318,22 @@ export default function Home() {
       if (projectData.deviceOutputs && Array.isArray(projectData.deviceOutputs)) {
         const newDeviceOutputs = new Map<string, TerminalOutput[]>();
         projectData.deviceOutputs.forEach((item: { id: string; outputs: TerminalOutput[] }) => {
-          newDeviceOutputs.set(item.id, item.outputs || []);
+          let outputs = item.outputs || [];
+          
+          // If banner is in state but not in outputs, prepend it (only for switches/routers)
+          const stateItem = projectData.devices?.find((d: any) => d.id === item.id);
+          if (stateItem?.state?.bannerMOTD && !outputs.some(o => o.content?.includes(stateItem.state.bannerMOTD))) {
+            outputs = [
+              {
+                id: 'banner-load-' + Date.now(),
+                type: 'output',
+                content: stateItem.state.bannerMOTD + '\n'
+              },
+              ...outputs
+            ];
+          }
+          
+          newDeviceOutputs.set(item.id, outputs);
         });
         setDeviceOutputs(newDeviceOutputs);
       }
@@ -368,7 +383,7 @@ export default function Home() {
 
   // Persistence: Load from localStorage on mount
   useEffect(() => {
-    const savedData = localStorage.getItem('ciscosim_autosave');
+    const savedData = localStorage.getItem('netsim_autosave');
     if (savedData) {
       try {
         const projectData = JSON.parse(savedData);
@@ -570,19 +585,55 @@ export default function Home() {
       newMap.delete(deviceId);
       return newMap;
     });
-    
+
     setDeviceOutputs(prev => {
       const newMap = new Map(prev);
       newMap.delete(deviceId);
       return newMap;
     });
-    
+
     setPcOutputs(prev => {
       const newMap = new Map(prev);
       newMap.delete(deviceId);
       return newMap;
     });
-    
+
+    // Remove device from topology and handle connections
+    setTopologyConnections(prev => prev.filter(conn => 
+      conn.sourceDeviceId !== deviceId && conn.targetDeviceId !== deviceId
+    ));
+
+    setTopologyDevices(prev => {
+      // 1. Find connections that will be removed
+      const connectionsToRemove = topologyConnections.filter(conn => 
+        conn.sourceDeviceId === deviceId || conn.targetDeviceId === deviceId
+      );
+
+      // 2. Identify ports on OTHER devices that need to be disconnected
+      const portsToDisconnect = connectionsToRemove.map(conn => {
+        if (conn.sourceDeviceId === deviceId) {
+          return { deviceId: conn.targetDeviceId, portId: conn.targetPort };
+        } else {
+          return { deviceId: conn.sourceDeviceId, portId: conn.sourcePort };
+        }
+      });
+
+      // 3. Return updated devices list (without the deleted device and with updated ports)
+      return prev.filter(d => d.id !== deviceId).map(device => {
+        const portsToUpdate = portsToDisconnect.filter(p => p.deviceId === device.id);
+        if (portsToUpdate.length === 0) return device;
+
+        const updatedPorts = device.ports.map(port => {
+          if (portsToUpdate.some(p => p.portId === port.id)) {
+            return { ...port, status: 'disconnected' as const };
+          }
+          return port;
+        });
+
+        return { ...device, ports: updatedPorts };
+      });
+    });
+
     // If the deleted device was the active one, switch to another device
     if (activeDeviceId === deviceId) {
       // Find another device to switch to (from current topologyDevices)

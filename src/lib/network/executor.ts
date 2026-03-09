@@ -1218,6 +1218,7 @@ function cmdEnable(state: SwitchState, language: 'tr' | 'en' = 'tr'): CommandRes
 function cmdDisable(state: SwitchState): CommandResult {
   return {
     success: true,
+    output: state.bannerMOTD ? `\n${state.bannerMOTD}\n` : undefined,
     newState: { currentMode: 'user' }
   };
 }
@@ -1237,7 +1238,11 @@ function cmdConfigureTerminal(state: SwitchState): CommandResult {
 function cmdExit(state: SwitchState): CommandResult {
   switch (state.currentMode) {
     case 'privileged':
-      return { success: true, newState: { currentMode: 'user' } };
+      return { 
+        success: true, 
+        output: state.bannerMOTD ? `\n${state.bannerMOTD}\n` : undefined,
+        newState: { currentMode: 'user' } 
+      };
     case 'config':
       return { success: true, newState: { currentMode: 'privileged' } };
     case 'interface':
@@ -1253,8 +1258,18 @@ function cmdExit(state: SwitchState): CommandResult {
           selectedInterfaces: undefined  // Range seçimini temizle
         } 
       };
+    case 'user':
+      // From user mode, exit restarts the session (shows banner)
+      return {
+        success: true,
+        output: state.bannerMOTD ? `\n${state.bannerMOTD}\n` : undefined,
+        newState: { currentMode: 'user' }
+      };
     default:
-      return { success: true };
+      return { 
+        success: true,
+        newState: { currentMode: 'user' }
+      };
   }
 }
 

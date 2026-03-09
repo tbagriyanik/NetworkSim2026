@@ -150,6 +150,7 @@ export function createInitialState(): SwitchState {
     ],
     commandHistory: [],
     historyIndex: -1,
+    bannerMOTD: 'Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.',
     version: {
       nosVersion: '15.0(2)SE4',
       modelName: 'WS-C2960-24TT-L',
@@ -213,6 +214,7 @@ export function createInitialRouterState(): SwitchState {
     ],
     commandHistory: [],
     historyIndex: -1,
+    bannerMOTD: 'Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.',
     version: {
       nosVersion: '15.4(3)M4',
       modelName: 'NETWORK1941/K9',

@@ -33,6 +33,17 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
           <p className="text-sm">
             {t.termsText}
           </p>
+          <div className="mt-4 p-3 bg-cyan-500/5 rounded-lg border border-cyan-500/20">
+            <p className="text-sm font-bold text-cyan-600 dark:text-cyan-400 mb-1">Project Website:</p>
+            <a 
+              href="http://yunus.sf.net" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-sm text-blue-500 hover:underline break-all"
+            >
+              http://yunus.sf.net
+            </a>
+          </div>
           <p className="mt-4 text-sm font-semibold">
             {t.licenseInfo}
           </p>
