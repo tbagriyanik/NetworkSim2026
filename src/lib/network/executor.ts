@@ -1276,7 +1276,13 @@ function cmdHostname(state: SwitchState, input: string): CommandResult {
   const match = input.match(/^hostname\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid hostname' };
   
-  const newHostname = match[1].trim();
+  let newHostname = match[1].trim();
+  // Strip surrounding quotes if present
+  if ((newHostname.startsWith('"') && newHostname.endsWith('"')) || 
+      (newHostname.startsWith("'") && newHostname.endsWith("'"))) {
+    newHostname = newHostname.substring(1, newHostname.length - 1);
+  }
+  
   return {
     success: true,
     newState: { hostname: newHostname }

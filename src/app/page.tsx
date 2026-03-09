@@ -1222,8 +1222,7 @@ export default function Home() {
                   >
                     <span className={`transition-transform duration-300 ${isActive ? 'scale-110 text-cyan-500' : ''}`}>
                       {tab.id === 'topology' ? <Network className="w-4 h-4" /> : 
-                       tab.id === 'cmd' ? <TerminalIcon className="w-4 h-4" /> :
-                       tab.id === 'terminal' ? <Monitor className="w-4 h-4" /> :
+                       (tab.id === 'cmd' || tab.id === 'terminal') ? <TerminalIcon className="w-4 h-4" /> :
                        tab.id === 'ports' ? <Database className="w-4 h-4" /> :
                        tab.id === 'vlan' ? <Layers className="w-4 h-4" /> :
                        <ShieldCheck className="w-4 h-4" />}
@@ -1260,8 +1259,7 @@ export default function Home() {
               )}
               <div className={`relative z-10 transition-transform ${isActive ? 'scale-110' : ''}`}>
                 {tab.id === 'topology' ? <Network className="w-5 h-5" /> : 
-                 tab.id === 'cmd' ? <TerminalIcon className="w-5 h-5" /> :
-                 tab.id === 'terminal' ? <Monitor className="w-5 h-5" /> :
+                 (tab.id === 'cmd' || tab.id === 'terminal') ? <TerminalIcon className="w-5 h-5" /> :
                  tab.id === 'ports' ? <Database className="w-5 h-5" /> :
                  tab.id === 'vlan' ? <Layers className="w-5 h-5" /> :
                  <ShieldCheck className="w-5 h-5" />}

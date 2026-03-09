@@ -179,9 +179,10 @@ export function PCPanel({
     if (!command) return;
 
     // Add to history
-    if (history[0] !== command) {
-      setHistory(prev => [command, ...prev].slice(0, 50));
-    }
+    setHistory(prev => {
+      if (prev[0] === command) return prev;
+      return [command, ...prev].slice(0, 50);
+    });
     setHistoryIndex(-1);
     setInput('');
 
@@ -255,8 +256,13 @@ export function PCPanel({
         addLocalOutput('output', `${cmd.toUpperCase()}: usage: ${cmd} [common options] [-protocol specific options] agent [OID [OID]...]`);
       } else if (cmd === 'hostname') {
         if (args[0]) {
-          setPcHostname(args[0]);
-          addLocalOutput('success', `Hostname changed to ${args[0]}`);
+          let name = args[0];
+          if ((name.startsWith('"') && name.endsWith('"')) || 
+              (name.startsWith("'") && name.endsWith("'"))) {
+            name = name.substring(1, name.length - 1);
+          }
+          setPcHostname(name);
+          addLocalOutput('success', `Hostname changed to ${name}`);
         } else {
           addLocalOutput('output', pcHostname);
         }
@@ -318,6 +324,7 @@ export function PCPanel({
         const nextIndex = historyIndex + 1;
         setHistoryIndex(nextIndex);
         setInput(history[nextIndex]);
+        setTabCycleIndex(-1);
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -325,13 +332,17 @@ export function PCPanel({
         const nextIndex = historyIndex - 1;
         setHistoryIndex(nextIndex);
         setInput(history[nextIndex]);
+        setTabCycleIndex(-1);
       } else if (historyIndex === 0) {
         setHistoryIndex(-1);
         setInput('');
+        setTabCycleIndex(-1);
       }
     } else if (e.key === 'Tab') {
       e.preventDefault();
       handleTabComplete(e.currentTarget);
+    } else {
+      setTabCycleIndex(-1);
     }
   };
 
@@ -343,7 +354,15 @@ export function PCPanel({
       const pcCmds = ['ipconfig', 'ipv6config', 'ping', 'tracert', 'nslookup', 'arp', 'netstat', 'hostname', 'dir', 'ver', 'help', 'cls', 'exit', 'quit', 'mkdir', 'rmdir', 'delete', 'ftp', 'ssh', 'telnet', 'python', 'js', 'ide', 'ioxclient'];
       const matches = pcCmds.filter(c => c.startsWith(value.toLowerCase()));
       if (matches.length > 0) {
-        setInput(matches[0]);
+        if (tabCycleIndex === -1) {
+          setLastTabInput(value);
+          setTabCycleIndex(0);
+          setInput(matches[0]);
+        } else {
+          const nextIndex = (tabCycleIndex + 1) % matches.length;
+          setTabCycleIndex(nextIndex);
+          setInput(matches[nextIndex]);
+        }
       }
     } else if (isConsoleConnected && connectedDeviceId && deviceStates) {
       const state = deviceStates.get(connectedDeviceId);
@@ -352,16 +371,18 @@ export function PCPanel({
       const mode = state.currentMode;
       const helpTree = networkHelp[mode] || networkHelp.user;
       
-      const parts = value.split(' ');
-      const currentWord = parts[parts.length - 1].toLowerCase();
-      const previousContext = parts.slice(0, -1).join(' ');
+      const parts = value.split(/\s+/);
+      const hasTrailingSpace = value.endsWith(' ');
+      
+      const currentWord = hasTrailingSpace ? '' : parts[parts.length - 1].toLowerCase();
+      const previousContext = hasTrailingSpace ? value.trim() : parts.slice(0, -1).join(' ');
+      const contextKey = previousContext.toLowerCase();
       
       let options: string[] = [];
-      if (parts.length === 1) {
+      if (!previousContext) {
         options = helpTree[''];
       } else {
-        const contextCmd = parts.slice(0, -1).join(' ').toLowerCase();
-        options = helpTree[contextCmd] || [];
+        options = helpTree[contextKey] || [];
       }
 
       const matches = options.filter(opt => opt.toLowerCase().startsWith(currentWord));
@@ -371,13 +392,15 @@ export function PCPanel({
           setLastTabInput(value);
           const nextIndex = 0;
           setTabCycleIndex(nextIndex);
-          setInput(previousContext ? `${previousContext} ${matches[nextIndex]}` : matches[nextIndex]);
+          const completion = matches[nextIndex];
+          setInput(previousContext ? `${previousContext} ${completion}` : completion);
         } else {
           const nextIndex = (tabCycleIndex + 1) % matches.length;
           setTabCycleIndex(nextIndex);
-          const originalParts = lastTabInput.split(' ');
-          const originalContext = originalParts.slice(0, -1).join(' ');
-          setInput(originalContext ? `${originalContext} ${matches[nextIndex]}` : matches[nextIndex]);
+          const originalParts = lastTabInput.split(/\s+/);
+          const originalContext = lastTabInput.endsWith(' ') ? lastTabInput.trim() : originalParts.slice(0, -1).join(' ');
+          const completion = matches[nextIndex];
+          setInput(originalContext ? `${originalContext} ${completion}` : completion);
         }
       }
     }

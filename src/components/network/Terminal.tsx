@@ -40,10 +40,49 @@ export function Terminal({
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [tabCycleIndex, setTabCycleIndex] = useState(-1);
+  const [lastTabInput, setLastTabInput] = useState('');
   
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const isDark = theme === 'dark';
+
+  // Advanced Command Help Tree for Network
+  const networkHelp: Record<string, Record<string, string[]>> = {
+    user: {
+      '': ['enable', 'exit', 'show', 'ping', 'telnet', 'ssh'],
+      'sh': ['version', 'ip', 'interfaces', 'vlan'],
+      'show ip': ['interface', 'route', 'arp'],
+      'show ip interface': ['brief'],
+    },
+    privileged: {
+      '': ['configure', 'disable', 'show', 'write', 'ping', 'telnet', 'reload', 'exit', 'copy', 'erase'],
+      'sh': ['running-config', 'startup-config', 'interfaces', 'vlan', 'version', 'mac', 'ip'],
+      'show ip': ['interface', 'route', 'arp', 'dhcp'],
+      'show ip interface': ['brief'],
+      'conf': ['terminal'],
+      'copy': ['running-config', 'startup-config'],
+      'write': ['memory'],
+    },
+    config: {
+      '': ['hostname', 'interface', 'vlan', 'enable', 'line', 'banner', 'ip', 'no', 'exit', 'end', 'do'],
+      'int': ['FastEthernet0/', 'GigabitEthernet0/', 'Vlan'],
+      'line': ['console 0', 'vty 0 4'],
+      'banner': ['motd'],
+      'ip': ['address', 'default-gateway', 'domain-name', 'route'],
+      'no': ['shutdown', 'ip', 'vlan'],
+    },
+    interface: {
+      '': ['ip', 'no', 'shutdown', 'description', 'exit', 'end'],
+      'ip': ['address', 'ipv6'],
+      'no': ['shutdown', 'ip', 'description'],
+    },
+    line: {
+      '': ['password', 'login', 'exit', 'end'],
+    },
+    vlan: {
+      '': ['name', 'exit', 'end'],
+    }
+  };
 
   // Auto-scroll and focus
   useEffect(() => {
@@ -58,14 +97,61 @@ export function Terminal({
     if (!command || isLoading) return;
 
     // Add to history if not duplicate of last
-    if (history[0] !== command) {
-      setHistory(prev => [command, ...prev].slice(0, 50));
-    }
+    setHistory(prev => {
+      if (prev[0] === command) return prev;
+      return [command, ...prev].slice(0, 50);
+    });
     setHistoryIndex(-1);
+    setTabCycleIndex(-1);
     
     setInput('');
     await onCommand(command);
   };
+
+  const handleTabComplete = useCallback(() => {
+    const value = input;
+    if (!value && tabCycleIndex === -1) return;
+
+    const mode = state.currentMode;
+    const helpTree = networkHelp[mode] || networkHelp.user;
+    
+    // Split input but handle multiple spaces carefully
+    const parts = value.split(/\s+/);
+    const hasTrailingSpace = value.endsWith(' ');
+    
+    // If it ends with space, we're looking for sub-commands of the current input
+    const currentWord = hasTrailingSpace ? '' : parts[parts.length - 1].toLowerCase();
+    const previousContext = hasTrailingSpace ? value.trim() : parts.slice(0, -1).join(' ');
+    const contextKey = previousContext.toLowerCase();
+    
+    let options: string[] = [];
+    if (!previousContext) {
+      options = helpTree[''];
+    } else {
+      options = helpTree[contextKey] || [];
+    }
+
+    const matches = options.filter(opt => opt.toLowerCase().startsWith(currentWord));
+    
+    if (matches.length > 0) {
+      if (tabCycleIndex === -1) {
+        setLastTabInput(value);
+        const nextIndex = 0;
+        setTabCycleIndex(nextIndex);
+        const completion = matches[nextIndex];
+        setInput(previousContext ? `${previousContext} ${completion}` : completion);
+      } else {
+        const nextIndex = (tabCycleIndex + 1) % matches.length;
+        setTabCycleIndex(nextIndex);
+        
+        // Use the original input's parts to preserve casing if possible
+        const originalParts = lastTabInput.split(/\s+/);
+        const originalContext = lastTabInput.endsWith(' ') ? lastTabInput.trim() : originalParts.slice(0, -1).join(' ');
+        const completion = matches[nextIndex];
+        setInput(originalContext ? `${originalContext} ${completion}` : completion);
+      }
+    }
+  }, [input, tabCycleIndex, lastTabInput, state.currentMode]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -76,6 +162,7 @@ export function Terminal({
         const nextIndex = historyIndex + 1;
         setHistoryIndex(nextIndex);
         setInput(history[nextIndex]);
+        setTabCycleIndex(-1);
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -83,13 +170,22 @@ export function Terminal({
         const nextIndex = historyIndex - 1;
         setHistoryIndex(nextIndex);
         setInput(history[nextIndex]);
+        setTabCycleIndex(-1);
       } else if (historyIndex === 0) {
         setHistoryIndex(-1);
         setInput('');
+        setTabCycleIndex(-1);
       }
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      handleTabComplete();
+    } else {
+      // Reset tab cycle on any other key
+      setTabCycleIndex(-1);
     }
   };
 
+  const isDark = theme === 'dark';
   const cardBg = isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200';
   const terminalBg = isDark ? 'bg-black shadow-inner' : 'bg-slate-50 shadow-inner border border-slate-200';
   const textColor = isDark ? 'text-slate-300' : 'text-slate-700';
