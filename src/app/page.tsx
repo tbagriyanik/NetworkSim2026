@@ -1088,26 +1088,45 @@ export default function Home() {
 
             {/* Total Score - Desktop */}
             <div className="hidden md:flex items-center gap-6">
-              <div className="flex flex-col items-end gap-1">
-                <div className="flex items-center gap-2">
-                   <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              <div className="flex flex-col items-end gap-1.5">
+                <div className="flex items-center gap-3">
+                   <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                     {t.labProgress}
                   </span>
-                  <span className={`text-xs font-bold ${totalScore >= maxScore * 0.7 ? 'text-emerald-400' : totalScore >= maxScore * 0.4 ? 'text-amber-400' : 'text-rose-400'}`}>
+                  <motion.span 
+                    key={totalScore}
+                    initial={{ opacity: 0.5, y: -2 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`text-xs font-black tabular-nums px-2 py-0.5 rounded-full ${
+                      totalScore >= maxScore * 0.7 ? 'bg-emerald-500/10 text-emerald-400' : 
+                      totalScore >= maxScore * 0.4 ? 'bg-amber-500/10 text-amber-400' : 
+                      'bg-rose-500/10 text-rose-400'
+                    }`}
+                  >
                     {Math.round((totalScore / maxScore) * 100)}%
-                  </span>
+                  </motion.span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className={`h-1.5 w-32 rounded-full overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
+                  <div className={`h-2 w-40 rounded-full overflow-hidden p-[1px] ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${(totalScore / maxScore) * 100}%` }}
-                      className={`h-full bg-gradient-to-r ${totalScore >= maxScore * 0.7 ? 'from-emerald-500 to-teal-400' : totalScore >= maxScore * 0.4 ? 'from-amber-500 to-orange-400' : 'from-rose-500 to-pink-500'}`} 
+                      transition={{ type: "spring", stiffness: 50, damping: 15 }}
+                      className={`h-full rounded-full bg-gradient-to-r shadow-[0_0_12px_rgba(0,0,0,0.2)] ${
+                        totalScore >= maxScore * 0.7 ? 'from-emerald-500 via-teal-400 to-emerald-400' : 
+                        totalScore >= maxScore * 0.4 ? 'from-amber-500 via-orange-400 to-amber-400' : 
+                        'from-rose-500 via-pink-500 to-rose-400'
+                      }`} 
                     />
                   </div>
-                  <span className={`text-sm font-bold tabular-nums ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                    {totalScore}<span className="text-[10px] opacity-40 ml-0.5">/{maxScore}</span>
-                  </span>
+                  <div className="flex items-baseline gap-0.5">
+                    <span className={`text-sm font-black tabular-nums ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                      {totalScore}
+                    </span>
+                    <span className={`text-[10px] font-bold opacity-30 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      /{maxScore}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

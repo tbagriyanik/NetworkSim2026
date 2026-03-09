@@ -13,18 +13,18 @@ export interface TaskDefinition {
 export interface TaskContext {
   cableInfo: CableInfo;
   showPCPanel: boolean;
-  selectedDevice: 'pc' | 'switch' | null;
+  selectedDevice: 'pc' | 'switch' | 'router' | null;
   language: 'tr' | 'en';
 }
 
-// Topoloji görevleri - KABLO PUANLAMASI YOK
+// Topoloji görevleri - TOPLAM: 75
 export const topologyTasks: TaskDefinition[] = [
   {
     id: 'pc-access',
     name: { tr: 'PC Erişimi', en: 'PC Access' },
     description: { tr: 'PC CMD terminaline erişin', en: 'Access the PC CMD terminal' },
     tip: { tr: 'PC\'ye çift tıklayarak CMD açın', en: 'Double-click PC to open CMD' },
-    weight: 50,
+    weight: 35,
     checkFn: (_, ctx) => ctx.showPCPanel,
   },
   {
@@ -32,19 +32,19 @@ export const topologyTasks: TaskDefinition[] = [
     name: { tr: 'Switch Erişimi', en: 'Switch Access' },
     description: { tr: 'Switch CLI terminaline bağlanın', en: 'Connect to Switch CLI terminal' },
     tip: { tr: 'Switch\'e çift tıklayarak CLI açın', en: 'Double-click Switch to open CLI' },
-    weight: 50,
-    checkFn: (_, ctx) => ctx.selectedDevice === 'switch',
+    weight: 40,
+    checkFn: (_, ctx) => ctx.selectedDevice === 'switch' || ctx.selectedDevice === 'router',
   },
 ];
 
-// Port görevleri
+// Port görevleri - TOPLAM: 75
 export const portTasks: TaskDefinition[] = [
   {
     id: 'activate-port',
     name: { tr: 'Port Aktifleştir', en: 'Activate Port' },
     description: { tr: 'En az 6 portu aktif hale getirin', en: 'Activate at least 6 ports' },
     tip: { tr: 'no shutdown komutu ile port açın', en: 'Use no shutdown command to open port' },
-    weight: 20,
+    weight: 15,
     checkFn: (state) => Object.values(state.ports).filter(p => !p.shutdown).length > 5,
   },
   {
@@ -52,7 +52,7 @@ export const portTasks: TaskDefinition[] = [
     name: { tr: 'Trunk Port', en: 'Trunk Port' },
     description: { tr: 'Bir portu trunk moduna alın', en: 'Set a port to trunk mode' },
     tip: { tr: 'switchport mode trunk komutunu kullanın', en: 'Use switchport mode trunk command' },
-    weight: 25,
+    weight: 20,
     checkFn: (state) => Object.values(state.ports).some(p => p.mode === 'trunk'),
   },
   {
@@ -60,7 +60,7 @@ export const portTasks: TaskDefinition[] = [
     name: { tr: 'Port Açıklaması', en: 'Port Description' },
     description: { tr: 'Portlara açıklayıcı isim verin', en: 'Add descriptive names to ports' },
     tip: { tr: 'description "isim" komutu ile ekleyin', en: 'Add with description "name" command' },
-    weight: 20,
+    weight: 15,
     checkFn: (state) => Object.values(state.ports).some(p => p.name),
   },
   {
@@ -68,7 +68,7 @@ export const portTasks: TaskDefinition[] = [
     name: { tr: 'Hız Ayarı', en: 'Speed Config' },
     description: { tr: 'Port hızını manuel ayarlayın', en: 'Manually configure port speed' },
     tip: { tr: 'speed 100 veya speed 1000 kullanın', en: 'Use speed 100 or speed 1000' },
-    weight: 15,
+    weight: 10,
     checkFn: (state) => Object.values(state.ports).some(p => p.speed !== 'auto'),
   },
   {
@@ -76,7 +76,7 @@ export const portTasks: TaskDefinition[] = [
     name: { tr: 'Duplex Ayarı', en: 'Duplex Config' },
     description: { tr: 'Port duplex ayarını yapın', en: 'Configure port duplex setting' },
     tip: { tr: 'duplex full veya duplex half kullanın', en: 'Use duplex full or duplex half' },
-    weight: 10,
+    weight: 5,
     checkFn: (state) => Object.values(state.ports).some(p => p.duplex !== 'auto'),
   },
   {
@@ -89,14 +89,14 @@ export const portTasks: TaskDefinition[] = [
   },
 ];
 
-// VLAN görevleri
+// VLAN görevleri - TOPLAM: 75
 export const vlanTasks: TaskDefinition[] = [
   {
     id: 'create-vlan',
     name: { tr: 'VLAN Oluştur', en: 'Create VLAN' },
     description: { tr: 'En az 1 kullanıcı VLAN\'ı oluşturun', en: 'Create at least 1 user VLAN' },
     tip: { tr: 'vlan 10 komutu ile yeni VLAN açın', en: 'Open new VLAN with vlan 10 command' },
-    weight: 20,
+    weight: 15,
     checkFn: (state) => Object.values(state.vlans).filter(v => v.id > 1 && v.id < 1002).length >= 1,
   },
   {
@@ -104,7 +104,7 @@ export const vlanTasks: TaskDefinition[] = [
     name: { tr: 'VLAN İsimlendir', en: 'Name VLAN' },
     description: { tr: 'VLAN\'lara anlamlı isim verin', en: 'Give meaningful names to VLANs' },
     tip: { tr: 'name Muhasebe komutu ile isimlendirin', en: 'Name with name Accounting command' },
-    weight: 15,
+    weight: 10,
     checkFn: (state) => {
       const userVlans = Object.values(state.vlans).filter(v => v.id > 1 && v.id < 1002);
       return userVlans.some(v => v.name !== `VLAN${v.id}`);
@@ -115,7 +115,7 @@ export const vlanTasks: TaskDefinition[] = [
     name: { tr: 'Port Ata', en: 'Assign Port' },
     description: { tr: 'Portları VLAN\'lara atayın', en: 'Assign ports to VLANs' },
     tip: { tr: 'switchport access vlan 10 komutu ile', en: 'Use switchport access vlan 10 command' },
-    weight: 20,
+    weight: 15,
     checkFn: (state) => Object.values(state.ports).filter(p => p.vlan !== 1 && !p.shutdown).length >= 1,
   },
   {
@@ -131,7 +131,7 @@ export const vlanTasks: TaskDefinition[] = [
     name: { tr: 'Trunk Yapılandır', en: 'Configure Trunk' },
     description: { tr: 'Trunk portları yapılandırın', en: 'Configure trunk ports' },
     tip: { tr: 'Trunk portlar birden fazla VLAN taşır', en: 'Trunk ports carry multiple VLANs' },
-    weight: 20,
+    weight: 15,
     checkFn: (state) => Object.values(state.ports).some(p => p.mode === 'trunk'),
   },
   {
@@ -139,7 +139,7 @@ export const vlanTasks: TaskDefinition[] = [
     name: { tr: 'Tam İsimlendirme', en: 'Full Naming' },
     description: { tr: 'Tüm VLAN\'ları isimlendirin', en: 'Name all VLANs' },
     tip: { tr: 'Standart isimlendirme kuralı uygulayın', en: 'Apply standard naming convention' },
-    weight: 10,
+    weight: 5,
     checkFn: (state) => {
       const userVlans = Object.values(state.vlans).filter(v => v.id > 1 && v.id < 1002);
       const namedVlans = userVlans.filter(v => v.name !== `VLAN${v.id}`);
@@ -148,14 +148,14 @@ export const vlanTasks: TaskDefinition[] = [
   },
 ];
 
-// Güvenlik görevleri
+// Güvenlik görevleri - TOPLAM: 75
 export const securityTasks: TaskDefinition[] = [
   {
     id: 'enable-secret',
     name: { tr: 'Enable Secret', en: 'Enable Secret' },
     description: { tr: 'Privileged mode için şifre belirleyin', en: 'Set password for privileged mode' },
     tip: { tr: 'enable secret network komutu ile', en: 'Use enable secret network command' },
-    weight: 25,
+    weight: 20,
     checkFn: (state) => !!state.security.enableSecret,
   },
   {
@@ -163,7 +163,7 @@ export const securityTasks: TaskDefinition[] = [
     name: { tr: 'Console Güvenliği', en: 'Console Security' },
     description: { tr: 'Console erişimine şifre koyun', en: 'Secure console access with password' },
     tip: { tr: 'line console 0 altında password kullanın', en: 'Use password under line console 0' },
-    weight: 20,
+    weight: 15,
     checkFn: (state) => state.security.consoleLine.login && !!state.security.consoleLine.password,
   },
   {
@@ -171,7 +171,7 @@ export const securityTasks: TaskDefinition[] = [
     name: { tr: 'VTY Güvenliği', en: 'VTY Security' },
     description: { tr: 'Uzaktan erişimi güvenli hale getirin', en: 'Secure remote access' },
     tip: { tr: 'line vty 0 4 altında login local kullanın', en: 'Use login local under line vty 0 4' },
-    weight: 20,
+    weight: 15,
     checkFn: (state) => state.security.vtyLines.login && !!state.security.vtyLines.password,
   },
   {
@@ -179,7 +179,7 @@ export const securityTasks: TaskDefinition[] = [
     name: { tr: 'Şifre Şifreleme', en: 'Password Encryption' },
     description: { tr: 'Şifreleri şifreli olarak saklayın', en: 'Store passwords in encrypted form' },
     tip: { tr: 'service password-encryption komutu ile', en: 'Use service password-encryption command' },
-    weight: 15,
+    weight: 10,
     checkFn: (state) => state.security.servicePasswordEncryption,
   },
   {
@@ -195,7 +195,7 @@ export const securityTasks: TaskDefinition[] = [
     name: { tr: 'Kullanıcı Oluştur', en: 'Create User' },
     description: { tr: 'Yerel kullanıcı hesabı oluşturun', en: 'Create local user account' },
     tip: { tr: 'username admin secret network ile', en: 'Use username admin secret network' },
-    weight: 10,
+    weight: 5,
     checkFn: (state) => state.security.users.length > 0,
   },
 ];
