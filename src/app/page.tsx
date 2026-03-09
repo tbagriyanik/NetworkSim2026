@@ -472,6 +472,9 @@ export default function Home() {
         getOrCreateDeviceState(deviceId, actualDeviceType, deviceObj?.name);
         getOrCreateDeviceOutputs(deviceId);
       }
+      
+      // Auto-switch to topology tab when a device is selected from dropdown
+      setActiveTab('topology');
     }
   }, [getOrCreateDeviceState, getOrCreateDeviceOutputs, topologyDevices, setSelectedDevice, setActiveDeviceId, setActiveDeviceType, setActiveTab]);
 
@@ -669,25 +672,67 @@ export default function Home() {
     });
 
     // 4. Update topology: Remove connections
-    setTopologyConnections(prev => prev.filter(conn => 
+    const remainingConnections = topologyConnections.filter(conn => 
       conn.sourceDeviceId !== deviceId && conn.targetDeviceId !== deviceId
-    ));
+    );
+    setTopologyConnections(remainingConnections);
 
-    // 5. Update topology: Release ports on other devices AND remove the device
+    // 5. Update EVERYTHING: Full sync of all ports on all remaining devices
     setTopologyDevices(prev => {
-      return prev.filter(d => d.id !== deviceId).map(device => {
-        const portsToUpdate = portsToDisconnect.filter(p => p.deviceId === device.id);
-        if (portsToUpdate.length === 0) return device;
-
+      const remainingDevices = prev.filter(d => d.id !== deviceId);
+      
+      return remainingDevices.map(device => {
         const updatedPorts = device.ports.map(port => {
-          if (portsToUpdate.some(p => p.portId === port.id)) {
-            return { ...port, status: 'disconnected' as const };
-          }
-          return port;
+          // Check if this port is used in ANY remaining connection
+          const isActuallyConnected = remainingConnections.some(conn => 
+            (conn.sourceDeviceId === device.id && conn.sourcePort === port.id) ||
+            (conn.targetDeviceId === device.id && conn.targetPort === port.id)
+          );
+          
+          return {
+            ...port,
+            status: isActuallyConnected ? 'connected' as const : 'disconnected' as const
+          };
         });
-
+        
         return { ...device, ports: updatedPorts };
       });
+    });
+
+    // Also sync the internal simulation state (deviceStates) for ALL devices
+    setDeviceStates(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(deviceId); // Remove deleted device
+      
+      // Update all remaining devices
+      newMap.forEach((state, id) => {
+        if (state.ports) {
+          const updatedPorts = { ...state.ports };
+          let changed = false;
+          
+          Object.keys(updatedPorts).forEach(portId => {
+            const isActuallyConnected = remainingConnections.some(conn => 
+              (conn.sourceDeviceId === id && conn.sourcePort === portId) ||
+              (conn.targetDeviceId === id && conn.targetPort === portId)
+            );
+            
+            const expectedStatus = isActuallyConnected ? 'connected' : 'disconnected';
+            if (updatedPorts[portId].status !== expectedStatus) {
+              updatedPorts[portId] = {
+                ...updatedPorts[portId],
+                status: expectedStatus as any
+              };
+              changed = true;
+            }
+          });
+          
+          if (changed) {
+            newMap.set(id, { ...state, ports: updatedPorts });
+          }
+        }
+      });
+      
+      return newMap;
     });
 
     // If the deleted device was the active one, switch to another device
