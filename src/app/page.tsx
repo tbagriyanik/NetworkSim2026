@@ -201,6 +201,10 @@ export default function Home() {
     targetDevice: 'switch',
   });
 
+  // Initial App Loading State
+  const [isAppLoading, setIsAppLoading] = useState(true);
+  const [showContent, setShowContent] = useState(false);
+
   const {
     deviceStates,
     setDeviceStates,
