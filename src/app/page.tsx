@@ -202,8 +202,7 @@ export default function Home() {
   });
 
   // Initial App Loading State
-  const [isAppLoading, setIsAppLoading] = useState(true);
-  const [showContent, setShowContent] = useState(false);
+  // No longer needed here as it's declared earlier
 
   const {
     deviceStates,
@@ -293,8 +292,7 @@ export default function Home() {
   }, [topologyDevices, topologyConnections, deviceStates, activeDeviceId, isAppLoading, pushState, getCurrentState]);
 
   // Initial App Loading State
-  const [isAppLoading, setIsAppLoading] = useState(true);
-  const [showContent, setShowContent] = useState(false);
+  // No longer needed here as it's declared earlier
 
   useEffect(() => {
     // Initial loading sequence: Start Dark -> Glitch -> Show Content (respecting actual theme)
