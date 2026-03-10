@@ -1134,6 +1134,8 @@ export default function Home() {
     }
   }, [showActiveDeviceDropdown, showMobileMenu, confirmDialog, saveDialog, showPCPanel]);
 
+  const [isTopologyFullscreen, setIsTopologyFullscreen] = useState(false);
+
   // Handle key events: ESC to close, ENTER to confirm
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1176,7 +1178,9 @@ export default function Home() {
         const key = e.key.toLowerCase();
         if (key === 'n') {
           e.preventDefault();
-          handleNewProject();
+          if (!isTopologyFullscreen) {
+            handleNewProject();
+          }
         }
       }
 
@@ -1192,7 +1196,7 @@ export default function Home() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showActiveDeviceDropdown, showMobileMenu, confirmDialog, saveDialog, showPCPanel, handleSaveProject, handleNewProject, setShowActiveDeviceDropdown, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel]);
+  }, [showActiveDeviceDropdown, showMobileMenu, confirmDialog, saveDialog, showPCPanel, handleSaveProject, handleNewProject, setShowActiveDeviceDropdown, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, isTopologyFullscreen]);
 
   // Load project from JSON file
   const handleLoadProject = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1216,8 +1220,6 @@ export default function Home() {
     // Reset input
     event.target.value = '';
   }, [language, loadProjectData, setHasUnsavedChanges]);
-
-  const [isTopologyFullscreen, setIsTopologyFullscreen] = useState(false);
 
   // Derive visible tabs based on current state
   const tabs = ALL_TABS.filter(tab => {

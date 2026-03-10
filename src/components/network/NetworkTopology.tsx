@@ -1228,30 +1228,34 @@ export function NetworkTopology({
         active: true,
       };
 
-      setConnections((prev) => [...prev, newConnection]);
+      const updatedConnections = [...connections, newConnection];
+      setConnections(updatedConnections);
 
       // Update port status
-      setDevices((prev) =>
-        prev.map((d) => {
-          if (d.id === connectionStart.deviceId) {
-            return {
-              ...d,
-              ports: d.ports.map((p) =>
-                p.id === connectionStart.portId ? { ...p, status: 'connected' as const } : p
-              ),
-            };
-          }
-          if (d.id === deviceId) {
-            return {
-              ...d,
-              ports: d.ports.map((p) =>
-                p.id === portId ? { ...p, status: 'connected' as const } : p
-              ),
-            };
-          }
-          return d;
-        })
-      );
+      const updatedDevices = devices.map((d) => {
+        if (d.id === connectionStart.deviceId) {
+          return {
+            ...d,
+            ports: d.ports.map((p) =>
+              p.id === connectionStart.portId ? { ...p, status: 'connected' as const } : p
+            ),
+          };
+        }
+        if (d.id === deviceId) {
+          return {
+            ...d,
+            ports: d.ports.map((p) =>
+              p.id === portId ? { ...p, status: 'connected' as const } : p
+            ),
+          };
+        }
+        return d;
+      });
+      setDevices(updatedDevices);
+
+      if (onTopologyChange) {
+        onTopologyChange(updatedDevices, updatedConnections);
+      }
 
       // Update cable info
       const sourceDevice = devices.find((d) => d.id === connectionStart.deviceId);
@@ -1287,7 +1291,7 @@ export function NetworkTopology({
         point: { x: portX, y: portY },
       });
     }
-  }, [devices, isDrawingConnection, connectionStart, cableInfo, onCableChange, saveToHistory]);
+  }, [devices, connections, isDrawingConnection, connectionStart, cableInfo, onCableChange, saveToHistory, onTopologyChange]);
 
   // generate an unused IP within 192.168.1.x (skip existing addresses)
   const generateUniqueIp = useCallback(() => {
@@ -1473,11 +1477,15 @@ export function NetworkTopology({
 
   // Clear canvas
   const clearCanvas = useCallback(() => {
+    saveToHistory();
     setDevices([]);
     setConnections([]);
     setSelectedDeviceIds([]);
     deviceCounterRef.current = { pc: 0, switch: 0, router: 0 };
-  }, []);
+    if (onTopologyChange) {
+      onTopologyChange([], []);
+    }
+  }, [saveToHistory, onTopologyChange]);
 
   // Copy devices
   const copyDevice = useCallback((ids: string[]) => {
@@ -3792,30 +3800,34 @@ export function NetworkTopology({
                                   active: true,
                                 };
 
-                                setConnections((prev) => [...prev, newConnection]);
+                                const updatedConnections = [...connections, newConnection];
+                                setConnections(updatedConnections);
 
                                 // Update port status
-                                setDevices((prev) =>
-                                  prev.map((d) => {
-                                    if (d.id === selectedSourcePort!.deviceId) {
-                                      return {
-                                        ...d,
-                                        ports: d.ports.map((p) =>
-                                          p.id === selectedSourcePort!.portId ? { ...p, status: 'connected' as const } : p
-                                        ),
-                                      };
-                                    }
-                                    if (d.id === device.id) {
-                                      return {
-                                        ...d,
-                                        ports: d.ports.map((p) =>
-                                          p.id === port.id ? { ...p, status: 'connected' as const } : p
-                                        ),
-                                      };
-                                    }
-                                    return d;
-                                  })
-                                );
+                                const updatedDevices = devices.map((d) => {
+                                  if (d.id === selectedSourcePort!.deviceId) {
+                                    return {
+                                      ...d,
+                                      ports: d.ports.map((p) =>
+                                        p.id === selectedSourcePort!.portId ? { ...p, status: 'connected' as const } : p
+                                      ),
+                                    };
+                                  }
+                                  if (d.id === device.id) {
+                                    return {
+                                      ...d,
+                                      ports: d.ports.map((p) =>
+                                        p.id === port.id ? { ...p, status: 'connected' as const } : p
+                                      ),
+                                    };
+                                  }
+                                  return d;
+                                });
+                                setDevices(updatedDevices);
+
+                                if (onTopologyChange) {
+                                  onTopologyChange(updatedDevices, updatedConnections);
+                                }
 
                                 // Update cable info
                                 const sourceDevice = devices.find((d) => d.id === selectedSourcePort!.deviceId);
