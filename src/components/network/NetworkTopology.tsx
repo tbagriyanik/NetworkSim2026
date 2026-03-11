@@ -1535,7 +1535,7 @@ export function NetworkTopology({
     if (port.status === 'connected') {
       // Port is already in use - cannot connect
       if (isDrawingConnection) {
-        setConnectionError(language === 'tr' ? 'Bu port zaten kullanÄ±mda!' : 'This port is already in use!');
+        setConnectionError(language === 'tr' ? 'Bu port zaten kullanımda!' : 'This port is already in use!');
         setTimeout(() => setConnectionError(null), 3000);
         setIsDrawingConnection(false);
         setConnectionStart(null);
@@ -1548,7 +1548,7 @@ export function NetworkTopology({
       if (connectionStart.deviceId === deviceId) {
         // Show error message - cannot connect device to itself
         const errorMsg = language === 'tr'
-          ? 'Bir cihaz kendisine baÄŸlanamaz!'
+          ? 'Bir cihaz kendisine bağlanamaz!'
           : 'A device cannot connect to itself!';
         setConnectionError(errorMsg);
         setTimeout(() => setConnectionError(null), 3000);
@@ -2833,10 +2833,10 @@ export function NetworkTopology({
               >
                 <div className={`w-2.5 h-2.5 rounded-full ${CABLE_COLORS[type].bg}`} />
                 {type === 'straight'
-                  ? language === 'tr' ? 'Dï¿½z' : 'Str'
+                  ? language === 'tr' ? 'Düz' : 'Str'
                   : type === 'crossover'
-                    ? language === 'tr' ? 'ï¿½ap' : 'Cro'
-                    : language === 'tr' ? 'Kon' : 'Con'}
+                    ? language === 'tr' ? 'Çapraz' : 'Cro'
+                    : language === 'tr' ? 'Konsol' : 'Con'}
               </button>
             ))}
           </div>
@@ -2871,9 +2871,9 @@ export function NetworkTopology({
           <div className={`w-4 h-4 rounded ${CABLE_COLORS[cableInfo.cableType].bg}`} />
           <span className="text-xs text-slate-300">
             {cableInfo.cableType === 'straight'
-              ? language === 'tr' ? 'Dï¿½z' : 'Straight'
+              ? language === 'tr' ? 'Düz' : 'Straight'
               : cableInfo.cableType === 'crossover'
-                ? language === 'tr' ? 'ï¿½apraz' : 'X-over'
+                ? language === 'tr' ? 'Çapraz' : 'X-over'
                 : language === 'tr' ? 'Konsol' : 'Console'}
           </span>
         </button>
@@ -2895,7 +2895,7 @@ export function NetworkTopology({
             })}
             className="flex items-center justify-center w-10 h-10 rounded hover:bg-slate-700 text-slate-300"
           >
-            âˆ’
+            -
           </button>
           <span className="text-xs font-mono w-10 text-center text-slate-300">
             {Math.round(zoom * 100)}%
@@ -2992,9 +2992,9 @@ export function NetworkTopology({
                     >
                       <div className={`w-2.5 h-2.5 rounded-full ${CABLE_COLORS[type].bg}`} />
                       <span className="text-[10px] font-bold">
-                        {type === 'straight' ? (language === 'tr' ? 'Dï¿½z' : 'Str') :
-                          type === 'crossover' ? (language === 'tr' ? 'ï¿½ap' : 'Cro') :
-                            (language === 'tr' ? 'Kon' : 'Con')}
+                        {type === 'straight' ? (language === 'tr' ? 'Düz' : 'Str') :
+                          type === 'crossover' ? (language === 'tr' ? 'Çapraz' : 'Cro') :
+                            (language === 'tr' ? 'Konsol' : 'Con')}
                       </span>
                     </button>
                   ))}
@@ -3056,7 +3056,7 @@ export function NetworkTopology({
                   onClick={() => setZoom(z => Math.max(MIN_ZOOM, z - 0.25))}
                   className={`w-7 h-7 flex items-center justify-center rounded-lg ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}
                 >
-                  <span className="text-lg font-bold">âˆ’</span>
+                  <span className="text-lg font-bold">-</span>
                 </button>
                 <button
                   onClick={() => setZoom(z => Math.min(MAX_ZOOM, z + 0.25))}
@@ -3386,7 +3386,7 @@ export function NetworkTopology({
                             className="px-1.5 py-0.5 rounded hover:bg-black/10"
                             title={language === 'tr' ? 'Sil' : 'Delete'}
                           >
-                            Ã—
+                            X
                           </button>
                         </div>
                         <textarea
@@ -3528,7 +3528,7 @@ export function NetworkTopology({
                   fontSize={12 / zoom}
                   fontFamily="monospace"
                 >
-                  {getCanvasDimensions().width} Ã— {getCanvasDimensions().height}
+                  {getCanvasDimensions().width} X {getCanvasDimensions().height}
                 </text>
               </g>
             </svg>
@@ -3555,7 +3555,7 @@ export function NetworkTopology({
               className={`w-7 h-7 flex items-center justify-center rounded ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
                 }`}
             >
-              âˆ’
+              -
             </button>
             <span className={`text-xs font-mono w-12 text-center ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
               {Math.round(zoom * 100)}%
@@ -3599,7 +3599,7 @@ export function NetworkTopology({
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
               </svg>
-              {isFullscreen ? (language === 'tr' ? 'KÃ¼Ã§Ã¼lt' : 'Exit') : (language === 'tr' ? 'Tam Ekran' : 'Full Screen')}
+              {isFullscreen ? (language === 'tr' ? 'Çıkış' : 'Exit') : (language === 'tr' ? 'Tam Ekran' : 'Full Screen')}
             </button>
           </div>
 
@@ -4149,8 +4149,8 @@ export function NetworkTopology({
                   <div>
                     <h3 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                       {portSelectorStep === 'source'
-                        ? (language === 'tr' ? 'Kaynak Portu Seï¿½' : 'Source Port Selection')
-                        : (language === 'tr' ? 'Hedef Portu Seï¿½' : 'Target Port Selection')
+                        ? (language === 'tr' ? 'Kaynak Portu Seç' : 'Source Port Selection')
+                        : (language === 'tr' ? 'Hedef Portu Seç' : 'Target Port Selection')
                       }
                     </h3>
                   </div>
@@ -4476,3 +4476,6 @@ export function NetworkTopology({
     </div>
   );
 }
+
+
+
