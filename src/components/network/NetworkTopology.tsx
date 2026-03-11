@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { SwitchState, CableType, CableInfo, getCableTypeName, isCableCompatible } from '@/lib/network/types';
@@ -428,7 +428,121 @@ export function NetworkTopology({
   // Touch/Mobile state
   const isMobile = useIsMobile();
   const noteFonts = isMobile ? NOTE_FONTS_MOBILE : NOTE_FONTS_DESKTOP;
+  const renderMenuItem = useCallback((opts: {
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+    icon: 'open' | 'cut' | 'copy' | 'paste' | 'delete' | 'select' | 'undo' | 'redo' | 'config' | 'ping';
+    shortcut?: string;
+  }) => {
+    const { label, onClick, disabled, icon, shortcut } = opts;
+    const iconNode = (() => {
+      const cls = "w-3.5 h-3.5";
+      switch (icon) {
+        case 'open':
+          return (
+            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 4h16v10H4z" />
+              <path d="M8 20h8" />
+              <path d="M10 16h4" />
+            </svg>
+          );
+        case 'cut':
+          return (
+            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="6" cy="6" r="3" />
+              <circle cx="6" cy="18" r="3" />
+              <path d="M20 4L8.5 12" />
+              <path d="M20 20L8.5 12" />
+            </svg>
+          );
+        case 'copy':
+          return (
+            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="9" y="9" width="10" height="10" rx="2" />
+              <rect x="5" y="5" width="10" height="10" rx="2" />
+            </svg>
+          );
+        case 'paste':
+          return (
+            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 4h6l1 2h3v14H5V6h3z" />
+              <path d="M9 4v2h6V4" />
+            </svg>
+          );
+        case 'delete':
+          return (
+            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 7h16" />
+              <path d="M9 7V5h6v2" />
+              <path d="M6 7l1 12h10l1-12" />
+            </svg>
+          );
+        case 'select':
+          return (
+            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 4h6v6H4z" />
+              <path d="M14 14h6v6h-6z" />
+              <path d="M14 4h6v6h-6z" />
+              <path d="M4 14h6v6H4z" />
+            </svg>
+          );
+        case 'undo':
+          return (
+            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 14l-4-4 4-4" />
+              <path d="M20 20a8 8 0 0 0-11-7.7" />
+            </svg>
+          );
+        case 'redo':
+          return (
+            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 6l4 4-4 4" />
+              <path d="M4 20a8 8 0 0 1 11-7.7" />
+            </svg>
+          );
+        case 'config':
+          return (
+            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a7.96 7.96 0 0 0 .1-6l2.1-1.2-2-3.4-2.3 1a8 8 0 0 0-5.2-3l-.4-2.5h-4l-.4 2.5a8 8 0 0 0-5.2 3l-2.3-1-2 3.4 2.1 1.2a8 8 0 0 0 0 6l-2.1 1.2 2 3.4 2.3-1a8 8 0 0 0 5.2 3l.4 2.5h4l.4-2.5a8 8 0 0 0 5.2-3l2.3 1 2-3.4z" />
+            </svg>
+          );
+        case 'ping':
+          return (
+            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 20v-6" />
+              <path d="M8 10a4 4 0 0 1 8 0" />
+              <path d="M5 7a7 7 0 0 1 14 0" />
+              <circle cx="12" cy="20" r="1.5" />
+            </svg>
+          );
+      }
+    })();
+
+    return (
+      <button
+        onClick={() => !disabled && onClick()}
+        disabled={disabled}
+        aria-disabled={disabled}
+        className={`w-full px-2 py-1.5 text-xs text-left flex items-center gap-2 justify-between ${disabled
+          ? `${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-not-allowed`
+          : `${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}`}
+      >
+        <span className="flex items-center gap-2">
+          <span className="shrink-0">{iconNode}</span>
+          <span>{label}</span>
+        </span>
+        {!isMobile && shortcut && (
+          <span className={`${isDark ? 'text-slate-400' : 'text-slate-400'} text-[10px] tracking-wide`}>
+            {shortcut}
+          </span>
+        )}
+      </button>
+    );
+  }, [isDark, isMobile]);
   const [isTouchDragging, setIsTouchDragging] = useState(false);
+  const [isTouchDraggingNote, setIsTouchDraggingNote] = useState(false);
   const [touchDraggedDevice, setTouchDraggedDevice] = useState<string | null>(null);
   const [touchDragStartPos, setTouchDragStartPos] = useState<{ x: number; y: number } | null>(null);
   const [touchDragOffset, setTouchDragOffset] = useState({ x: 0, y: 0 });
@@ -720,9 +834,7 @@ export function NetworkTopology({
   // Handle canvas pan start
   const handleCanvasMouseDown = useCallback((e: ReactMouseEvent) => {
     if (e.button === 2) {
-      // Right click on canvas - show context menu
-      e.preventDefault();
-      openContextMenu(e.clientX, e.clientY, null, null, 'canvas');
+      return;
     } else if (e.button === 0 && !(e.target as HTMLElement).closest('[data-device-id], [data-note-id], [data-note-drag-handle]')) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -892,51 +1004,82 @@ export function NetworkTopology({
     };
   }, [isPanning, panStart, draggedDevice, draggedNoteId, resizingNoteId, noteDragStartPos, noteResizeStartPos, noteResizeStartSizes, zoom, pan, isDrawingConnection, getCanvasCoords, getCanvasDimensions, dragStartPos, isActuallyDragging, getDistance, onDeviceSelect, saveToHistory, selectedDeviceIds, selectedNoteIds, dragStartDevicePositions, noteDragStartPositions, notes, connections, devices, onTopologyChange]);
 
-  // Global touch event handlers for device dragging on mobile
+  // Global touch event handlers for device/note dragging on mobile
   useEffect(() => {
     if (!isMobile) return;
 
     const handleGlobalTouchMove = (e: globalThis.TouchEvent) => {
-      if (e.touches.length !== 1 || !touchDraggedDevice || !canvasRef.current) return;
+      if (e.touches.length !== 1 || !canvasRef.current) return;
 
       const touch = e.touches[0];
 
-      // Check if we've moved enough to consider it a drag
-      if (touchDragStartPos) {
-        const distance = getDistance(touchDragStartPos.x, touchDragStartPos.y, touch.clientX, touch.clientY);
-        if (distance > DRAG_THRESHOLD) {
-          setIsTouchDragging(true);
+      if (touchDraggedDevice) {
+        // Check if we've moved enough to consider it a drag
+        if (touchDragStartPos) {
+          const distance = getDistance(touchDragStartPos.x, touchDragStartPos.y, touch.clientX, touch.clientY);
+          if (distance > DRAG_THRESHOLD) {
+            setIsTouchDragging(true);
+          }
         }
+
+        if (isTouchDragging) {
+          e.preventDefault(); // Prevent page scroll
+          const rect = canvasRef.current.getBoundingClientRect();
+          const newX = (touch.clientX - rect.left - pan.x - touchDragOffset.x) / zoom;
+          const newY = (touch.clientY - rect.top - pan.y - touchDragOffset.y) / zoom;
+
+          // Clamp to canvas bounds
+          const canvasDims = getCanvasDimensions();
+          const clampedX = Math.max(50, Math.min(newX, canvasDims.width - 120));
+          const clampedY = Math.max(50, Math.min(newY, canvasDims.height - 150));
+
+          // Store position in ref for animation frame
+          lastDragPositionRef.current = { x: clampedX, y: clampedY };
+
+          // Use requestAnimationFrame for smooth updates
+          if (!dragAnimationFrameRef.current) {
+            dragAnimationFrameRef.current = requestAnimationFrame(() => {
+              if (lastDragPositionRef.current && touchDraggedDevice) {
+                setDevices((prev) =>
+                  prev.map((d) =>
+                    d.id === touchDraggedDevice
+                      ? { ...d, x: lastDragPositionRef.current!.x, y: lastDragPositionRef.current!.y }
+                      : d
+                  )
+                );
+              }
+              dragAnimationFrameRef.current = null;
+            });
+          }
+        }
+        return;
       }
 
-      if (isTouchDragging) {
-        e.preventDefault(); // Prevent page scroll
-        const rect = canvasRef.current.getBoundingClientRect();
-        const newX = (touch.clientX - rect.left - pan.x - touchDragOffset.x) / zoom;
-        const newY = (touch.clientY - rect.top - pan.y - touchDragOffset.y) / zoom;
+      if (draggedNoteId && noteDragStartPos) {
+        const coords = getCanvasCoords(touch.clientX, touch.clientY);
+        const distance = getDistance(noteDragStartPos.x, noteDragStartPos.y, coords.x, coords.y);
+        if (distance > DRAG_THRESHOLD) {
+          setIsTouchDraggingNote(true);
+        }
 
-        // Clamp to canvas bounds
-        const canvasDims = getCanvasDimensions();
-        const clampedX = Math.max(50, Math.min(newX, canvasDims.width - 120));
-        const clampedY = Math.max(50, Math.min(newY, canvasDims.height - 150));
+        if (isTouchDraggingNote) {
+          e.preventDefault(); // Prevent page scroll
+          const canvasDims = getCanvasDimensions();
+          const dx = coords.x - noteDragStartPos.x;
+          const dy = coords.y - noteDragStartPos.y;
+          const targets = selectedNoteIds.includes(draggedNoteId) ? selectedNoteIds : [draggedNoteId];
 
-        // Store position in ref for animation frame
-        lastDragPositionRef.current = { x: clampedX, y: clampedY };
-
-        // Use requestAnimationFrame for smooth updates
-        if (!dragAnimationFrameRef.current) {
-          dragAnimationFrameRef.current = requestAnimationFrame(() => {
-            if (lastDragPositionRef.current && touchDraggedDevice) {
-              setDevices((prev) =>
-                prev.map((d) =>
-                  d.id === touchDraggedDevice
-                    ? { ...d, x: lastDragPositionRef.current!.x, y: lastDragPositionRef.current!.y }
-                    : d
-                )
-              );
-            }
-            dragAnimationFrameRef.current = null;
-          });
+          setNotes(prev =>
+            prev.map(n => {
+              if (!targets.includes(n.id)) return n;
+              const start = noteDragStartPositions[n.id] || { x: n.x, y: n.y };
+              const newX = start.x + dx;
+              const newY = start.y + dy;
+              const clampedX = Math.max(20, Math.min(newX, canvasDims.width - NOTE_DEFAULT_WIDTH - 20));
+              const clampedY = Math.max(20, Math.min(newY, canvasDims.height - NOTE_DEFAULT_HEIGHT - 20));
+              return { ...n, x: clampedX, y: clampedY };
+            })
+          );
         }
       }
     };
@@ -957,12 +1100,23 @@ export function NetworkTopology({
         }
       }
 
+      if (draggedNoteId && isTouchDraggingNote) {
+        saveToHistory();
+        if (onTopologyChange) {
+          onTopologyChange(devices, connections, notes);
+        }
+      }
+
       setTouchDraggedDevice(null);
       setTouchDragStartPos(null);
       setIsTouchDragging(false);
+      setIsTouchDraggingNote(false);
       setLastTouchDistance(null);
       setTouchStart(null);
       lastDragPositionRef.current = null;
+      setDraggedNoteId(null);
+      setNoteDragStartPos(null);
+      setNoteDragStartPositions({});
 
       if (longPressTimer) {
         clearTimeout(longPressTimer);
@@ -982,7 +1136,7 @@ export function NetworkTopology({
         cancelAnimationFrame(dragAnimationFrameRef.current);
       }
     };
-  }, [isMobile, touchDraggedDevice, touchDragOffset, touchDragStartPos, isTouchDragging, pan, zoom, getDistance, devices, onDeviceSelect, longPressTimer]);
+  }, [isMobile, touchDraggedDevice, touchDragOffset, touchDragStartPos, isTouchDragging, draggedNoteId, noteDragStartPos, noteDragStartPositions, isTouchDraggingNote, pan, zoom, getDistance, getCanvasCoords, getCanvasDimensions, devices, connections, notes, selectedNoteIds, onDeviceSelect, onTopologyChange, saveToHistory, longPressTimer]);
 
   // Handle device drag start
   const handleDeviceMouseDown = useCallback((e: ReactMouseEvent, deviceId: string) => {
@@ -1088,6 +1242,32 @@ export function NetworkTopology({
     setSelectAllMode(false);
   }, [notes, getCanvasCoords, selectedNoteIds]);
 
+  const handleNoteTouchStart = useCallback((e: ReactTouchEvent, noteId: string) => {
+    if (e.touches.length !== 1) return;
+    if ((e.target as HTMLElement).closest('[data-note-textarea]')) return;
+    e.stopPropagation();
+    const touch = e.touches[0];
+    const coords = getCanvasCoords(touch.clientX, touch.clientY);
+    const note = notes.find(n => n.id === noteId);
+    if (!note) return;
+
+    setDraggedNoteId(noteId);
+    setNoteDragStartPos(coords);
+    setIsTouchDraggingNote(false);
+    const nextSelected = selectedNoteIds.includes(noteId) ? selectedNoteIds : [noteId];
+    setSelectedDeviceIds([]);
+    setSelectedNoteIds(nextSelected);
+    const targets = nextSelected.includes(noteId) ? nextSelected : [noteId];
+    const startPositions: { [key: string]: { x: number; y: number } } = {};
+    targets.forEach(id => {
+      const n = notes.find(nn => nn.id === id);
+      if (n) startPositions[id] = { x: n.x, y: n.y };
+    });
+    setNoteDragStartPositions(startPositions);
+    setContextMenu(null);
+    setSelectAllMode(false);
+  }, [notes, getCanvasCoords, selectedNoteIds]);
+
   const handleNoteContextMenu = useCallback((
     e: ReactMouseEvent,
     noteId: string,
@@ -1099,6 +1279,7 @@ export function NetworkTopology({
   }, [openContextMenu]);
 
   const handleNoteResizeStart = useCallback((e: ReactMouseEvent, noteId: string) => {
+    if (isMobile) return;
     e.stopPropagation();
     const coords = getCanvasCoords(e.clientX, e.clientY);
     setResizingNoteId(noteId);
@@ -1107,7 +1288,7 @@ export function NetworkTopology({
     if (start) {
       setNoteResizeStartSizes({ [noteId]: { width: start.width, height: start.height } });
     }
-  }, [getCanvasCoords, notes]);
+  }, [getCanvasCoords, notes, isMobile]);
 
   const updateNoteText = useCallback((noteId: string, text: string) => {
     setNotes(prev => prev.map(n => (n.id === noteId ? { ...n, text } : n)));
@@ -1274,7 +1455,7 @@ export function NetworkTopology({
     y = Math.max(10, y);
 
     window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'topology' } }));
-    openContextMenu(e.clientX, e.clientY, deviceId || null, null, 'device');
+    openContextMenu(x, y, deviceId || null, null, deviceId ? 'device' : 'canvas');
   }, [openContextMenu]);
 
   // Handle device touch start - for mobile dragging
@@ -2344,7 +2525,7 @@ export function NetworkTopology({
               textAnchor="middle"
               className="pointer-events-none select-none"
             >
-              {conn.sourcePort} â†” {conn.targetPort}
+              {conn.sourcePort} \u2194 {conn.targetPort}
             </text>
             <text
               x={midX + perpX}
@@ -2354,7 +2535,7 @@ export function NetworkTopology({
               textAnchor="middle"
               className="pointer-events-none select-none"
             >
-              {conn.sourcePort} â†” {conn.targetPort}
+              {conn.sourcePort} \u2194 {conn.targetPort}
             </text>
           </>
         ) : (
@@ -2370,7 +2551,7 @@ export function NetworkTopology({
               textAnchor="middle"
               className="pointer-events-none select-none"
             >
-              {conn.sourcePort} â†” {conn.targetPort}
+              {conn.sourcePort} \u2194 {conn.targetPort}
             </text>
             <text
               x={midX}
@@ -2380,7 +2561,7 @@ export function NetworkTopology({
               textAnchor="middle"
               className="pointer-events-none select-none"
             >
-              {conn.sourcePort} â†” {conn.targetPort}
+              {conn.sourcePort} \u2194 {conn.targetPort}
             </text>
           </>
         )}
@@ -3369,6 +3550,7 @@ export function NetworkTopology({
                             setSelectedDeviceIds([]);
                           }
                         }}
+                        onTouchStart={(e) => handleNoteTouchStart(e as unknown as ReactTouchEvent, note.id)}
                         onContextMenu={(e) => handleNoteContextMenu(e as unknown as ReactMouseEvent, note.id, 'note-edit')}
                       >
                         <div
@@ -3405,17 +3587,19 @@ export function NetworkTopology({
                           className="flex-1 px-2 py-1 bg-transparent outline-none resize-none"
                           style={{ fontSize: note.fontSize, height: note.height - NOTE_HEADER_HEIGHT - 6 }}
                         />
-                        <div
-                          className="absolute right-1 bottom-1 w-4 h-4 cursor-se-resize"
-                          onMouseDown={(e) => handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id)}
-                          title={language === 'tr' ? 'Boyutu Değiştir' : 'Resize'}
-                        >
-                          <svg viewBox="0 0 12 12" className="w-full h-full text-black/50">
-                            <path d="M4 12 L12 4" stroke="currentColor" strokeWidth="1" />
-                            <path d="M7 12 L12 7" stroke="currentColor" strokeWidth="1" />
-                            <path d="M10 12 L12 10" stroke="currentColor" strokeWidth="1" />
-                          </svg>
-                        </div>
+                        {!isMobile && (
+                          <div
+                            className="absolute right-1 bottom-1 w-4 h-4 cursor-se-resize"
+                            onMouseDown={(e) => handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id)}
+                            title={language === 'tr' ? 'Boyutu Değiştir' : 'Resize'}
+                          >
+                            <svg viewBox="0 0 12 12" className="w-full h-full text-black/50">
+                              <path d="M4 12 L12 4" stroke="currentColor" strokeWidth="1" />
+                              <path d="M7 12 L12 7" stroke="currentColor" strokeWidth="1" />
+                              <path d="M10 12 L12 10" stroke="currentColor" strokeWidth="1" />
+                            </svg>
+                          </div>
+                        )}
                       </div>
                     </foreignObject>
                   ))}
@@ -3781,173 +3965,200 @@ export function NetworkTopology({
 
           {contextMenu.noteId && contextMenu.mode === 'note-edit' && (
             <div className="px-2 py-2 space-y-1">
-              <button
-                onClick={() => {
-                  handleNoteTextCut(contextMenu.noteId!);
-                  setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'Kes' : 'Cut'}
-              </button>
-              <button
-                onClick={() => {
-                  handleNoteTextCopy(contextMenu.noteId!);
-                  setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'Kopyala' : 'Copy'}
-              </button>
-              <button
-                onClick={() => {
-                  handleNoteTextPaste(contextMenu.noteId!);
-                  setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'Yap\u0131\u015ft\u0131r' : 'Paste'}
-              </button>
-              <button
-                onClick={() => {
-                  handleNoteTextDelete(contextMenu.noteId!);
-                  setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-red-400' : 'hover:bg-slate-100 text-red-500'}`}
-              >
-                {language === 'tr' ? 'Sil' : 'Delete'}
-              </button>
-              <button
-                onClick={() => {
-                  handleNoteTextSelectAll(contextMenu.noteId!);
-                  setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'T\u00fcm\u00fcn\u00fc Se\u00e7' : 'Select All'}
-              </button>
+              {(() => {
+                const note = notes.find(n => n.id === contextMenu.noteId);
+                const noteText = note?.text || '';
+                const hasText = noteText.trim().length > 0;
+                return (
+                  <>
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'Kes' : 'Cut',
+                      icon: 'cut',
+                      shortcut: 'Ctrl+X',
+                      disabled: !hasText,
+                      onClick: () => {
+                        handleNoteTextCut(contextMenu.noteId!);
+                        setContextMenu(null);
+                      }
+                    })}
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'Kopyala' : 'Copy',
+                      icon: 'copy',
+                      shortcut: 'Ctrl+C',
+                      disabled: !hasText,
+                      onClick: () => {
+                        handleNoteTextCopy(contextMenu.noteId!);
+                        setContextMenu(null);
+                      }
+                    })}
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'Yap\u0131\u015ft\u0131r' : 'Paste',
+                      icon: 'paste',
+                      shortcut: 'Ctrl+V',
+                      onClick: () => {
+                        handleNoteTextPaste(contextMenu.noteId!);
+                        setContextMenu(null);
+                      }
+                    })}
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'Sil' : 'Delete',
+                      icon: 'delete',
+                      shortcut: 'Del',
+                      disabled: !hasText,
+                      onClick: () => {
+                        handleNoteTextDelete(contextMenu.noteId!);
+                        setContextMenu(null);
+                      }
+                    })}
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'T\u00fcm\u00fcn\u00fc Se\u00e7' : 'Select All',
+                      icon: 'select',
+                      shortcut: 'Ctrl+A',
+                      onClick: () => {
+                        handleNoteTextSelectAll(contextMenu.noteId!);
+                        setContextMenu(null);
+                      }
+                    })}
+                  </>
+                );
+              })()}
             </div>
           )}
 
           {contextMenu.mode === 'canvas' && (
             <div className="px-2 py-2 space-y-1">
-              <button
-                onClick={() => {
+              {renderMenuItem({
+                label: language === 'tr' ? 'Yap\u0131\u015ft\u0131r' : 'Paste',
+                icon: 'paste',
+                shortcut: 'Ctrl+V',
+                disabled: noteClipboard.length === 0,
+                onClick: () => {
                   pasteNotes(contextMenu.x, contextMenu.y);
                   setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'Yap\u0131\u015ft\u0131r' : 'Paste'}
-              </button>
-              <button
-                onClick={() => {
+                }
+              })}
+              {renderMenuItem({
+                label: language === 'tr' ? 'Geri Al' : 'Undo',
+                icon: 'undo',
+                shortcut: 'Ctrl+Z',
+                disabled: historyIndex <= 0,
+                onClick: () => {
                   handleUndo();
                   setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'Geri Al' : 'Undo'}
-              </button>
-              <button
-                onClick={() => {
+                }
+              })}
+              {renderMenuItem({
+                label: language === 'tr' ? 'Yinele' : 'Redo',
+                icon: 'redo',
+                shortcut: 'Ctrl+Y',
+                disabled: historyIndex >= history.length - 1,
+                onClick: () => {
                   handleRedo();
                   setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'Yinele' : 'Redo'}
-              </button>
-              <button
-                onClick={() => {
+                }
+              })}
+              {renderMenuItem({
+                label: language === 'tr' ? 'T\u00fcm\u00fcn\u00fc Se\u00e7' : 'Select All',
+                icon: 'select',
+                shortcut: 'Ctrl+A',
+                disabled: devices.length === 0 && notes.length === 0,
+                onClick: () => {
                   selectAllDevices();
                   setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'T\u00fcm\u00fcn\u00fc Se\u00e7' : 'Select All'}
-              </button>
+                }
+              })}
             </div>
           )}
 
           {contextMenu.deviceId && contextMenu.mode === 'device' && (
             <div className="px-2 py-2 space-y-1">
-              <button
-                onClick={() => {
-                  const device = devices.find((d) => d.id === contextMenu.deviceId);
-                  if (device) handleDeviceDoubleClick(device);
-                  setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'A\u00e7' : 'Open'}
-              </button>
-              <button
-                onClick={() => {
-                  const targets = selectedDeviceIds.includes(contextMenu.deviceId!) ? selectedDeviceIds : [contextMenu.deviceId!];
-                  saveToHistory();
-                  cutDevice(targets);
-                  setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'Kes' : 'Cut'}
-              </button>
-              <button
-                onClick={() => {
-                  const targets = selectedDeviceIds.includes(contextMenu.deviceId!) ? selectedDeviceIds : [contextMenu.deviceId!];
-                  copyDevice(targets);
-                  setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'Kopyala' : 'Copy'}
-              </button>
-              <button
-                onClick={() => {
-                  if (pasteDevice) pasteDevice();
-                  setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'Yap\u0131\u015ft\u0131r' : 'Paste'}
-              </button>
-              <button
-                onClick={() => {
-                  saveToHistory();
-                  const targets = selectedDeviceIds.includes(contextMenu.deviceId!) ? selectedDeviceIds : [contextMenu.deviceId!];
-                  targets.forEach(id => deleteDevice(id));
-                  setSelectedDeviceIds([]);
-                  setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-red-400' : 'hover:bg-slate-100 text-red-500'}`}
-              >
-                {language === 'tr' ? 'Sil' : 'Delete'}
-              </button>
-              <button
-                onClick={() => {
-                  selectAllDevices();
-                  setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'T\u00fcm\u00fcn\u00fc Se\u00e7' : 'Select All'}
-              </button>
-              <button
-                onClick={() => { startDeviceConfig(contextMenu.deviceId!); setContextMenu(null); }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'Yap\u0131land\u0131r' : 'Configure'}
-              </button>
-              <button
-                onClick={() => {
-                  setPingSource(contextMenu.deviceId);
-                  setContextMenu(null);
-                }}
-                className={`w-full px-2 py-1.5 text-xs text-left ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
-              >
-                {language === 'tr' ? 'Ping' : 'Ping'}
-              </button>
+              {(() => {
+                const device = devices.find((d) => d.id === contextMenu.deviceId);
+                const canPaste = !!pasteDevice && clipboard.length > 0;
+                const hasSelection = selectedDeviceIds.includes(contextMenu.deviceId!);
+                const targets = hasSelection ? selectedDeviceIds : [contextMenu.deviceId!];
+                return (
+                  <>
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'A\u00e7' : 'Open',
+                      icon: 'open',
+                      onClick: () => {
+                        if (device) handleDeviceDoubleClick(device);
+                        setContextMenu(null);
+                      },
+                      disabled: !device
+                    })}
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'Kes' : 'Cut',
+                      icon: 'cut',
+                      shortcut: 'Ctrl+X',
+                      disabled: !device,
+                      onClick: () => {
+                        saveToHistory();
+                        cutDevice(targets);
+                        setContextMenu(null);
+                      }
+                    })}
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'Kopyala' : 'Copy',
+                      icon: 'copy',
+                      shortcut: 'Ctrl+C',
+                      disabled: !device,
+                      onClick: () => {
+                        copyDevice(targets);
+                        setContextMenu(null);
+                      }
+                    })}
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'Yap\u0131\u015ft\u0131r' : 'Paste',
+                      icon: 'paste',
+                      shortcut: 'Ctrl+V',
+                      disabled: !canPaste,
+                      onClick: () => {
+                        if (pasteDevice) pasteDevice();
+                        setContextMenu(null);
+                      }
+                    })}
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'Sil' : 'Delete',
+                      icon: 'delete',
+                      shortcut: 'Del',
+                      disabled: !device,
+                      onClick: () => {
+                        saveToHistory();
+                        targets.forEach(id => deleteDevice(id));
+                        setSelectedDeviceIds([]);
+                        setContextMenu(null);
+                      }
+                    })}
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'T\u00fcm\u00fcn\u00fc Se\u00e7' : 'Select All',
+                      icon: 'select',
+                      shortcut: 'Ctrl+A',
+                      disabled: devices.length === 0,
+                      onClick: () => {
+                        selectAllDevices();
+                        setContextMenu(null);
+                      }
+                    })}
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'Yap\u0131land\u0131r' : 'Configure',
+                      icon: 'config',
+                      onClick: () => { startDeviceConfig(contextMenu.deviceId!); setContextMenu(null); },
+                      disabled: !device
+                    })}
+                    {renderMenuItem({
+                      label: language === 'tr' ? 'Ping' : 'Ping',
+                      icon: 'ping',
+                      onClick: () => {
+                        setPingSource(contextMenu.deviceId);
+                        setContextMenu(null);
+                      },
+                      disabled: !device
+                    })}
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>
@@ -4330,7 +4541,7 @@ export function NetworkTopology({
                         const isConsolePrt = pid === 'console' || pid.startsWith('com');
                         const isGigabit = pid.startsWith('gi');
                         const isFastEth = pid.startsWith('fa') || pid.startsWith('eth');
-                        // Match topology canvas colors: Console/COMâ†’Cyan, Giâ†’Orange, Fa/Ethâ†’Blue
+                        // Match topology canvas colors: Console/COM -> Cyan, Gi -> Orange, Fa/Eth -> Blue
                         let dotCls = 'bg-slate-600';
                         let dotGlow = '';
                         let cardCls = isDark
@@ -4546,6 +4757,7 @@ export function NetworkTopology({
     </div>
   );
 }
+
 
 
 
