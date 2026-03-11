@@ -316,7 +316,11 @@ export function NetworkTopology({
   const [dragStartDevicePositions, setDragStartDevicePositions] = useState<{ [key: string]: { x: number, y: number } }>({});
   const [isActuallyDragging, setIsActuallyDragging] = useState(false);
   const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
-  const [noteDragOffset, setNoteDragOffset] = useState<{ x: number; y: number } | null>(null);
+  const [noteDragStartPos, setNoteDragStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [noteDragStartPositions, setNoteDragStartPositions] = useState<{ [key: string]: { x: number; y: number } }>({});
+  const [resizingNoteId, setResizingNoteId] = useState<string | null>(null);
+  const [noteResizeStartPos, setNoteResizeStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [noteResizeStartSizes, setNoteResizeStartSizes] = useState<{ [key: string]: { width: number; height: number } }>({});
 
   // Drag performance - use ref for animation frame throttling
   const dragAnimationFrameRef = useRef<number | null>(null);
@@ -540,9 +544,10 @@ export function NetworkTopology({
   const selectAllDevices = useCallback(() => {
     const allIds = devices.map(d => d.id);
     setSelectedDeviceIds(allIds);
+    setSelectedNoteIds(notes.map(n => n.id));
     setSelectAllMode(true);
     setContextMenu(null);
-  }, [devices]);
+  }, [devices, notes]);
 
   // Handle alignment for multiple selected devices
   const handleAlign = useCallback((type: 'top' | 'bottom' | 'left' | 'right' | 'h-center' | 'v-center') => {
@@ -783,16 +788,33 @@ export function NetworkTopology({
             dragAnimationFrameRef.current = null;
           });
         }
-      } else if (draggedNoteId && noteDragOffset) {
+      } else if (resizingNoteId && noteResizeStartPos) {
+        const coords = getCanvasCoords(e.clientX, e.clientY);
+        const dx = coords.x - noteResizeStartPos.x;
+        const dy = coords.y - noteResizeStartPos.y;
+        const start = noteResizeStartSizes[resizingNoteId];
+        if (start) {
+          const nextWidth = Math.max(120, Math.min(start.width + dx, getCanvasDimensions().width - 40));
+          const nextHeight = Math.max(80, Math.min(start.height + dy, getCanvasDimensions().height - 40));
+          setNotes(prev => prev.map(n => n.id === resizingNoteId ? { ...n, width: nextWidth, height: nextHeight } : n));
+        }
+      } else if (draggedNoteId && noteDragStartPos) {
         const coords = getCanvasCoords(e.clientX, e.clientY);
         const canvasDims = getCanvasDimensions();
-        const newX = coords.x - noteDragOffset.x;
-        const newY = coords.y - noteDragOffset.y;
-        const clampedX = Math.max(20, Math.min(newX, canvasDims.width - NOTE_DEFAULT_WIDTH - 20));
-        const clampedY = Math.max(20, Math.min(newY, canvasDims.height - NOTE_DEFAULT_HEIGHT - 20));
+        const dx = coords.x - noteDragStartPos.x;
+        const dy = coords.y - noteDragStartPos.y;
+        const targets = selectedNoteIds.includes(draggedNoteId) ? selectedNoteIds : [draggedNoteId];
 
         setNotes(prev =>
-          prev.map(n => (n.id === draggedNoteId ? { ...n, x: clampedX, y: clampedY } : n))
+          prev.map(n => {
+            if (!targets.includes(n.id)) return n;
+            const start = noteDragStartPositions[n.id] || { x: n.x, y: n.y };
+            const newX = start.x + dx;
+            const newY = start.y + dy;
+            const clampedX = Math.max(20, Math.min(newX, canvasDims.width - NOTE_DEFAULT_WIDTH - 20));
+            const clampedY = Math.max(20, Math.min(newY, canvasDims.height - NOTE_DEFAULT_HEIGHT - 20));
+            return { ...n, x: clampedX, y: clampedY };
+          })
         );
       } else if (isDrawingConnection) {
         const coords = getCanvasCoords(e.clientX, e.clientY);
@@ -815,6 +837,13 @@ export function NetworkTopology({
         }
       }
 
+      if (resizingNoteId) {
+        saveToHistory();
+        if (onTopologyChange) {
+          onTopologyChange(devices, connections, notes);
+        }
+      }
+
       if (draggedNoteId) {
         saveToHistory();
         if (onTopologyChange) {
@@ -828,7 +857,11 @@ export function NetworkTopology({
       setIsPanning(false);
       setDraggedDevice(null);
       setDraggedNoteId(null);
-      setNoteDragOffset(null);
+      setNoteDragStartPos(null);
+      setNoteDragStartPositions({});
+      setResizingNoteId(null);
+      setNoteResizeStartPos(null);
+      setNoteResizeStartSizes({});
       setDragStartPos(null);
       setIsActuallyDragging(false);
       setDragStartDevicePositions({}); // Clear initial positions after drag
@@ -844,7 +877,7 @@ export function NetworkTopology({
         cancelAnimationFrame(dragAnimationFrameRef.current);
       }
     };
-  }, [isPanning, panStart, draggedDevice, draggedNoteId, noteDragOffset, zoom, pan, isDrawingConnection, getCanvasCoords, getCanvasDimensions, dragStartPos, isActuallyDragging, getDistance, onDeviceSelect, saveToHistory, selectedDeviceIds, dragStartDevicePositions, notes, connections, devices, onTopologyChange]);
+  }, [isPanning, panStart, draggedDevice, draggedNoteId, resizingNoteId, noteDragStartPos, noteResizeStartPos, noteResizeStartSizes, zoom, pan, isDrawingConnection, getCanvasCoords, getCanvasDimensions, dragStartPos, isActuallyDragging, getDistance, onDeviceSelect, saveToHistory, selectedDeviceIds, selectedNoteIds, dragStartDevicePositions, noteDragStartPositions, notes, connections, devices, onTopologyChange]);
 
   // Global touch event handlers for device dragging on mobile
   useEffect(() => {
@@ -994,11 +1027,15 @@ export function NetworkTopology({
     // Don't handle click if we were dragging (check ref to avoid stale closure)
     if (wasDraggingRef.current) return;
 
-    if (!e.shiftKey) {
-      setSelectedDeviceIds([device.id]);
-      // Notify parent component - select device, don't open terminal
-      onDeviceSelect(device.type, device.id);
+    if (e.shiftKey) {
+      setSelectedDeviceIds(prev => prev.includes(device.id) ? prev.filter(id => id !== device.id) : [...prev, device.id]);
+      return;
     }
+
+    setSelectedDeviceIds([device.id]);
+    setSelectedNoteIds([]);
+    // Notify parent component - select device, don't open terminal
+    onDeviceSelect(device.type, device.id);
   }, [onDeviceSelect]);
 
   // Handle device double click - open terminal
@@ -1022,12 +1059,22 @@ export function NetworkTopology({
     const note = notes.find(n => n.id === noteId);
     if (!note) return;
     setDraggedNoteId(noteId);
-    setNoteDragOffset({ x: coords.x - note.x, y: coords.y - note.y });
+    setNoteDragStartPos(coords);
+    const nextSelected = e.shiftKey
+      ? (selectedNoteIds.includes(noteId) ? selectedNoteIds.filter(id => id !== noteId) : [...selectedNoteIds, noteId])
+      : [noteId];
     setSelectedDeviceIds([]);
-    setSelectedNoteIds([noteId]);
+    setSelectedNoteIds(nextSelected);
+    const targets = nextSelected.includes(noteId) ? nextSelected : [noteId];
+    const startPositions: { [key: string]: { x: number; y: number } } = {};
+    targets.forEach(id => {
+      const n = notes.find(nn => nn.id === id);
+      if (n) startPositions[id] = { x: n.x, y: n.y };
+    });
+    setNoteDragStartPositions(startPositions);
     setContextMenu(null);
     setSelectAllMode(false);
-  }, [notes, getCanvasCoords]);
+  }, [notes, getCanvasCoords, selectedNoteIds]);
 
   const handleNoteContextMenu = useCallback((
     e: ReactMouseEvent,
@@ -1038,6 +1085,17 @@ export function NetworkTopology({
     e.stopPropagation();
     openContextMenu(e.clientX, e.clientY, null, noteId, mode);
   }, [openContextMenu]);
+
+  const handleNoteResizeStart = useCallback((e: ReactMouseEvent, noteId: string) => {
+    e.stopPropagation();
+    const coords = getCanvasCoords(e.clientX, e.clientY);
+    setResizingNoteId(noteId);
+    setNoteResizeStartPos(coords);
+    const start = notes.find(n => n.id === noteId);
+    if (start) {
+      setNoteResizeStartSizes({ [noteId]: { width: start.width, height: start.height } });
+    }
+  }, [getCanvasCoords, notes]);
 
   const updateNoteText = useCallback((noteId: string, text: string) => {
     setNotes(prev => prev.map(n => (n.id === noteId ? { ...n, text } : n)));
@@ -1853,6 +1911,8 @@ export function NetworkTopology({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
+      const activeEl = document.activeElement as HTMLElement | null;
+      const isNoteTextarea = !!activeEl && activeEl.hasAttribute('data-note-textarea');
       // ESC to close context menu
       if (key === 'escape') {
         setContextMenu(null);
@@ -1882,6 +1942,9 @@ export function NetworkTopology({
         if (selectedDeviceIds.length > 0) {
           setSelectedDeviceIds([]);
         }
+        if (selectedNoteIds.length > 0) {
+          setSelectedNoteIds([]);
+        }
         // Close Ping Source
         if (pingSource) {
           setPingSource(null);
@@ -1900,12 +1963,21 @@ export function NetworkTopology({
         return;
       }
 
+      // Allow native text editing when a note textarea is focused
+      if (isNoteTextarea) {
+        return;
+      }
+
       // Delete selected device(s)
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selectedDeviceIds.length > 0) {
           saveToHistory();
           selectedDeviceIds.forEach(id => deleteDevice(id));
           setSelectedDeviceIds([]);
+        }
+        if (selectedNoteIds.length > 0) {
+          commitNotesChange(notes.filter(n => !selectedNoteIds.includes(n.id)));
+          setSelectedNoteIds([]);
         }
       }
 
@@ -1959,7 +2031,7 @@ export function NetworkTopology({
       window.removeEventListener('keydown', handleKeyDown);
 
     };
-  }, [selectedDeviceIds, deleteDevice, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, showPortSelector, toggleFullscreen, isFullscreen]);
+  }, [selectedDeviceIds, selectedNoteIds, deleteDevice, commitNotesChange, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, notes, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, showPortSelector, toggleFullscreen, isFullscreen]);
 
   // Find path between devices using BFS
   const findPath = useCallback((sourceId: string, targetId: string): string[] | null => {
@@ -3247,7 +3319,7 @@ export function NetworkTopology({
                       className="pointer-events-none"
                     >
                     <div
-                      className={`pointer-events-auto flex flex-col w-full h-full rounded-lg shadow-lg border ${isDark
+                      className={`pointer-events-auto relative flex flex-col w-full h-full rounded-lg shadow-lg border ${isDark
                         ? 'border-amber-300/60 text-slate-900'
                         : 'border-yellow-200 text-slate-800'
                         } ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-emerald-400/70' : ''}`}
@@ -3255,7 +3327,12 @@ export function NetworkTopology({
                       style={{ backgroundColor: note.color, fontFamily: note.font }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedNoteIds([note.id]);
+                        if (e.shiftKey) {
+                          setSelectedNoteIds(prev => prev.includes(note.id) ? prev.filter(id => id !== note.id) : [...prev, note.id]);
+                        } else {
+                          setSelectedNoteIds([note.id]);
+                          setSelectedDeviceIds([]);
+                        }
                       }}
                       onContextMenu={(e) => handleNoteContextMenu(e as unknown as ReactMouseEvent, note.id, 'note-edit')}
                     >
@@ -3281,6 +3358,7 @@ export function NetworkTopology({
                         </div>
                       <textarea
                         ref={(el) => { noteTextareaRefs.current[note.id] = el; }}
+                        data-note-textarea
                         value={note.text}
                         onChange={(e) => updateNoteText(note.id, e.target.value)}
                         onBlur={() => {
@@ -3292,6 +3370,17 @@ export function NetworkTopology({
                         className="flex-1 px-2 py-1 bg-transparent outline-none resize-none"
                         style={{ fontSize: note.fontSize, height: note.height - NOTE_HEADER_HEIGHT - 6 }}
                       />
+                      <div
+                        className="absolute right-1 bottom-1 w-4 h-4 cursor-se-resize"
+                        onMouseDown={(e) => handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id)}
+                        title={language === 'tr' ? 'Boyutu Değiştir' : 'Resize'}
+                      >
+                        <svg viewBox="0 0 12 12" className="w-full h-full text-black/50">
+                          <path d="M4 12 L12 4" stroke="currentColor" strokeWidth="1" />
+                          <path d="M7 12 L12 7" stroke="currentColor" strokeWidth="1" />
+                          <path d="M10 12 L12 10" stroke="currentColor" strokeWidth="1" />
+                        </svg>
+                      </div>
                     </div>
                     </foreignObject>
                   ))}
@@ -3518,6 +3607,18 @@ export function NetworkTopology({
                         : '#a855f7'
                   }
                   opacity={0.6}
+                />
+              ))}
+              {/* Mini notes */}
+              {notes.map((note) => (
+                <rect
+                  key={note.id}
+                  x={note.x}
+                  y={note.y}
+                  width={note.width}
+                  height={note.height}
+                  fill={note.color}
+                  opacity={0.7}
                 />
               ))}
               {/* Viewport indicator */}
