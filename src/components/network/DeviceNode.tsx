@@ -53,7 +53,12 @@ export const DeviceNode = memo(function DeviceNode({
     prevProps.device.name === nextProps.device.name &&
     prevProps.device.status === nextProps.device.status &&
     prevProps.device.ip === nextProps.device.ip &&
-    JSON.stringify(prevProps.device.ports) === JSON.stringify(nextProps.device.ports) &&
+    prevProps.device.ports.length === nextProps.device.ports.length &&
+    // Check if any port status or shutdown state changed
+    prevProps.device.ports.every((p, i) => 
+      p.status === nextProps.device.ports[i].status && 
+      p.shutdown === nextProps.device.ports[i].shutdown
+    ) &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.isActive === nextProps.isActive &&
     prevProps.isDragging === nextProps.isDragging &&

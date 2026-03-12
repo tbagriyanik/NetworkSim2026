@@ -663,11 +663,28 @@ export function NetworkTopology({
     }
   }, [pan]);
 
+  // Refs for animation frames to throttle updates
+  const dragAnimationFrameRef = useRef<number | null>(null);
+  const panAnimationFrameRef = useRef<number | null>(null);
+
+  // Cleanup animation frames on unmount
+  useEffect(() => {
+    return () => {
+      if (dragAnimationFrameRef.current !== null) cancelAnimationFrame(dragAnimationFrameRef.current);
+      if (panAnimationFrameRef.current !== null) cancelAnimationFrame(panAnimationFrameRef.current);
+    };
+  }, []);
+
   // Handle mouse move for panning and dragging
   useEffect(() => {
     const handleMouseMove = (e: globalThis.MouseEvent) => {
       if (isPanning) {
-        setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+        if (panAnimationFrameRef.current !== null) return;
+        
+        panAnimationFrameRef.current = requestAnimationFrame(() => {
+          setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+          panAnimationFrameRef.current = null;
+        });
       } else if (draggedDevice && canvasRef.current) {
         // Check if we've moved enough to consider it a drag
         if (dragStartPos) {
@@ -771,6 +788,10 @@ export function NetworkTopology({
         cancelAnimationFrame(dragAnimationFrameRef.current);
         dragAnimationFrameRef.current = null;
       }
+      if (panAnimationFrameRef.current) {
+        cancelAnimationFrame(panAnimationFrameRef.current);
+        panAnimationFrameRef.current = null;
+      }
 
       // Save to history and notify parent if we were actually dragging
       if (isActuallyDragging && draggedDevice) {
@@ -778,6 +799,10 @@ export function NetworkTopology({
         if (onTopologyChange) {
           onTopologyChange(devices, connections, notes);
         }
+      }
+
+      if (isPanning) {
+        if (onPanChange) onPanChange(pan);
       }
 
       if (resizingNoteId) {
