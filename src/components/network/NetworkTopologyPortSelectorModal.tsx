@@ -1,14 +1,16 @@
+'use client';
+
 import { CableType } from '@/lib/network/types';
 import { X } from 'lucide-react';
 import { CABLE_COLORS, DEVICE_ICONS } from './networkTopology.constants';
 import { CanvasDevice, SelectedPortRef } from './networkTopology.types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type PortSelectorStep = 'source' | 'target';
 
 interface NetworkTopologyPortSelectorModalProps {
   isOpen: boolean;
   isDark: boolean;
-  language: string;
   devices: CanvasDevice[];
   cableType: CableType;
   portSelectorStep: PortSelectorStep;
@@ -21,7 +23,6 @@ interface NetworkTopologyPortSelectorModalProps {
 export function NetworkTopologyPortSelectorModal({
   isOpen,
   isDark,
-  language,
   devices,
   cableType,
   portSelectorStep,
@@ -30,6 +31,8 @@ export function NetworkTopologyPortSelectorModal({
   onCableTypeChange,
   onSelectPort,
 }: NetworkTopologyPortSelectorModalProps) {
+  const { t, language } = useLanguage();
+
   if (!isOpen) return null;
 
   return (
@@ -46,9 +49,7 @@ export function NetworkTopologyPortSelectorModal({
               </div>
               <div>
                 <h3 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  {portSelectorStep === 'source'
-                    ? (language === 'tr' ? 'Kaynak Portu Seç' : 'Source Port Selection')
-                    : (language === 'tr' ? 'Hedef Portu Seç' : 'Target Port Selection')}
+                  {portSelectorStep === 'source' ? t.selectSourcePort : t.selectTargetPort}
                 </h3>
               </div>
             </div>
@@ -68,7 +69,7 @@ export function NetworkTopologyPortSelectorModal({
           <div className="mt-6 flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-3">
               <span className={`text-[10px] font-black tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                {language === 'tr' ? 'KABLO TİPİ:' : 'CABLE TYPE:'}
+                {t.cableType.toUpperCase()}:
               </span>
               <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
                 {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
@@ -79,11 +80,7 @@ export function NetworkTopologyPortSelectorModal({
                       ? `${CABLE_COLORS[type].bg} text-white shadow-lg shadow-black/10`
                       : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}
                   >
-                    {type === 'straight'
-                      ? (language === 'tr' ? 'Düz' : 'Straight')
-                      : type === 'crossover'
-                        ? (language === 'tr' ? 'Çapraz' : 'X-Over')
-                        : (language === 'tr' ? 'Konsol' : 'Console')}
+                    {t[type]}
                   </button>
                 ))}
               </div>
@@ -93,7 +90,7 @@ export function NetworkTopologyPortSelectorModal({
               <div className="flex items-center gap-3 ml-auto px-4 py-2 rounded-xl bg-cyan-500/5 border border-cyan-500/20 text-cyan-500">
                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
                 <span className="text-[10px] font-black tracking-widest">
-                  Link from: {devices.find(d => d.id === selectedSourcePort.deviceId)?.name} ({selectedSourcePort.portId})
+                  {t.linkFrom}: {devices.find(d => d.id === selectedSourcePort.deviceId)?.name} ({selectedSourcePort.portId})
                 </span>
               </div>
             )}
@@ -157,7 +154,7 @@ export function NetworkTopologyPortSelectorModal({
                         <span className="flex items-center gap-1 text-slate-400"><span className="w-2 h-2 rounded-full bg-cyan-500 inline-block" /> Con</span>
                       </>
                     )}
-                    <span className="flex items-center gap-1 text-slate-500 ml-auto"><span className="w-2 h-2 rounded-full bg-slate-600 inline-block" /> {language === 'tr' ? 'Bağlı' : 'Used'}</span>
+                    <span className="flex items-center gap-1 text-slate-500 ml-auto"><span className="w-2 h-2 rounded-full bg-slate-600 inline-block" /> {t.connected}</span>
                   </div>
                   {filteredPorts.map((port) => {
                     const isConnected = port.status === 'connected';
@@ -224,8 +221,8 @@ export function NetworkTopologyPortSelectorModal({
                 </svg>
               </div>
               <div className={`text-center max-w-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                <h4 className="font-bold text-slate-400">{language === 'tr' ? 'Müsait Port Yok' : 'No Free Ports'}</h4>
-                <p className="text-xs mt-1">{language === 'tr' ? 'Lütfen önce cihazların bağlantılarını kesin.' : 'Please disconnect some cables first.'}</p>
+                <h4 className="font-bold text-slate-400">{t.noFreePorts}</h4>
+                <p className="text-xs mt-1">{t.noFreePortsMessage}</p>
               </div>
             </div>
           )}
@@ -233,13 +230,13 @@ export function NetworkTopologyPortSelectorModal({
 
         <div className={`px-8 py-6 border-t ${isDark ? 'border-slate-800/50 bg-slate-800/30' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center`}>
           <div className={`text-[10px] font-bold tracking-widest ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-            {portSelectorStep === 'source' ? 'Step 1: Root' : 'Step 2: Destination'}
+            {portSelectorStep === 'source' ? t.step1 : t.step2}
           </div>
           <button
             onClick={onClose}
             className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black tracking-widest transition-all ${isDark ? 'bg-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-100 text-slate-500 hover:text-slate-700'}`}
           >
-            {language === 'tr' ? 'İptal' : 'Cancel'}
+            {t.cancel}
           </button>
         </div>
       </div>

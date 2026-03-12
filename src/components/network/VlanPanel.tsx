@@ -351,7 +351,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
                     </Badge>
                   </div>
                   <div className={`col-span-5 ${isDark ? 'text-slate-400' : 'text-slate-500'} truncate text-[12px]`} title={vlanPorts.join(', ')}>
-                    {vlanPorts.length > 0 ? vlanPorts.slice(0, 3).join(', ') + (vlanPorts.length > 3 ? '...' : '') : '-'}
+                    {vlanPorts.length > 0 ? vlanPorts.slice(0, 3).join(', ') + (vlanPorts.length > 3 ? '...' : '') : t.unassigned}
                   </div>
                   <div className="col-span-1">
                     {!isDefault && (

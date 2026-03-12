@@ -9,6 +9,7 @@ This document tracks the implementation status of features and planned enhanceme
 - [x] **Internationalization (i18n)** - Support for Turkish (TR) and English (EN)
 - [x] **State Management** - Per-device CLI state and topology persistence
 - [x] **Database Integration** - Prisma ORM configured
+- [ ] **App Hosting Deployment** - Cloud deployment for server-side Next.js app
 
 ## 🌐 Network Topology Canvas
 - [x] **Device Palette** - PC, Switch, and Router drag & drop support

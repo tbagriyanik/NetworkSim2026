@@ -129,7 +129,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
               variant={port.mode === 'trunk' ? 'default' : 'secondary'}
               className={`text-[10px] px-1 py-0 h-3 sm:h-4 mt-0.5 transition-all duration-200 ${port.mode === 'trunk' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : ''}`}
             >
-              {port.mode === 'trunk' ? 'Trunk' : `V${port.vlan}`}
+              {port.mode === 'trunk' ? 'Trunk' : (port.vlan ? `V${port.vlan}` : t.unassigned)}
             </Badge>
           </div>
         </TooltipTrigger>
@@ -146,7 +146,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
               <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t.mode}:</span> <span className="capitalize">{port.mode}</span>
             </div>
             <div className={isDark ? 'text-slate-300' : 'text-slate-600'}>
-              <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>VLAN:</span> {port.mode === 'trunk' ? 'Trunk' : port.vlan}
+              <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>VLAN:</span> {port.mode === 'trunk' ? 'Trunk' : port.vlan || t.unassigned}
             </div>
             <div className={isDark ? 'text-slate-300' : 'text-slate-600'}>
               <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t.speed}:</span> {port.speed === 'auto' ? 'Auto' : port.speed + ' Mbps'}

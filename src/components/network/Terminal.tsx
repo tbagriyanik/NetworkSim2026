@@ -338,3 +338,5 @@ export function Terminal({
     </div>
   );
 }
+
+export type { TerminalOutput };

@@ -11,7 +11,8 @@ import { NetworkTopology } from '@/components/network/NetworkTopology';
 import { CanvasDevice, CanvasConnection, CanvasNote } from '@/components/network/networkTopology.types';
 import { PCPanel } from '@/components/network/PCPanel';
 import { getPrompt } from '@/lib/network/executor';
-import { Terminal, TerminalOutput } from '@/components/network/Terminal';
+import { Terminal } from '@/components/network/Terminal';
+import type { TerminalOutput } from '@/components/network/Terminal';
 import { PortPanel } from '@/components/network/PortPanel';
 import { VlanPanel } from '@/components/network/VlanPanel';
 import { SecurityPanel } from '@/components/network/SecurityPanel';
@@ -155,7 +156,7 @@ export default function Home() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
 
-  const [isAppLoading, setIsAppLoading] = useState(true);
+  const [isAppLoading, setIsLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
 
   // Currently active device in terminal
@@ -305,7 +306,7 @@ export default function Home() {
   useEffect(() => {
     // Initial loading sequence: Start Dark -> Glitch -> Show Content (respecting actual theme)
     const timer = setTimeout(() => {
-      setIsAppLoading(false);
+      setIsLoading(false);
       // Small delay before showing content for smooth transition
       setTimeout(() => setShowContent(true), 100);
     }, 2000);

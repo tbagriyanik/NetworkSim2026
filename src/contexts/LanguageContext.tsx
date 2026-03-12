@@ -2,9 +2,9 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-type Language = 'tr' | 'en';
+export type Language = 'tr' | 'en';
 
-interface Translations {
+export interface Translations {
   // Header
   title: string;
   subtitle: string;
@@ -26,6 +26,7 @@ interface Translations {
   speed: string;
   duplex: string;
   description: string;
+  unassigned: string;
 
   // VLAN Panel
   vlanStatus: string;
@@ -187,6 +188,25 @@ interface Translations {
   termsText: string;
   licenseInfo: string;
   close: string;
+
+  // Network Topology
+  connectDevices: string;
+  addDevice: string;
+  addPc: string;
+  addSwitch: string;
+  addRouter: string;
+  addNote: string;
+  cableType: string;
+  straight: string;
+  crossover: string;
+  console: string;
+  linkFrom: string;
+  selectSourcePort: string;
+  selectTargetPort: string;
+  step1: string;
+  step2: string;
+  noFreePorts: string;
+  noFreePortsMessage: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -209,6 +229,7 @@ const translations: Record<Language, Translations> = {
     speed: 'Hız',
     duplex: 'Duplex',
     description: 'Açıklama',
+    unassigned: 'Atanmamış',
     vlanStatus: 'VLAN Durumu',
     newVlan: 'Yeni VLAN Oluştur',
     vlanId: 'ID (1-4094)',
@@ -317,7 +338,7 @@ const translations: Record<Language, Translations> = {
     vTaskFullNamingName: 'Tam İsimlendirme',
     vTaskFullNamingDesc: 'Tüm VLAN\'ları isimlendir',
     vTaskFullNamingHint: 'Her VLAN için: name <isim>',
-    connect: 'Cihaza Bağlan',
+    connect: 'Bağla',
     disconnect: 'Bağlantıyı Kes',
     physicalConnectionDetected: 'Fiziksel bağlantı algılandı:',
     noConsoleCableDetected: 'Konsol kablosu algılanmadı. PC\'den bir ağ cihazına konsol kablosu bağlayın.',
@@ -336,14 +357,29 @@ const translations: Record<Language, Translations> = {
     dontSave: 'Kaydetme',
     pts: 'puan',
     initializingSystem: 'Sistem Başlatılıyor...',
-
-    // About Section
     aboutTitle: 'Network Simulator 2026 Hakkında',
     aboutIntro: 'Bu uygulama, ağ teknolojilerini ve terminal komutlarını öğrenmek isteyenler için tasarlanmış interaktif bir simülasyon aracıdır.',
     termsAndConditions: 'Şartlar ve Koşullar',
     termsText: 'Bu yazılım eğitim amaçlıdır. Ticari olmayan amaçlarla özgürce kullanılabilir ve dağıtılabilir.',
     licenseInfo: 'Tuzla Mesleki ve Teknik Anadolu Lisesi',
     close: 'Kapat',
+    connectDevices: 'Cihazları Bağla',
+    addDevice: 'Cihaz Ekle',
+    addPc: 'PC Ekle',
+    addSwitch: 'Switch Ekle',
+    addRouter: 'Router Ekle',
+    addNote: 'Not Ekle',
+    cableType: 'Kablo Tipi',
+    straight: 'Düz',
+    crossover: 'Çapraz',
+    console: 'Konsol',
+    linkFrom: 'Bağlantı',
+    selectSourcePort: 'Kaynak Portu Seç',
+    selectTargetPort: 'Hedef Portu Seç',
+    step1: 'Adım 1: Kaynak',
+    step2: 'Adım 2: Hedef',
+    noFreePorts: 'Boş Port Yok',
+    noFreePortsMessage: 'Lütfen önce bazı kabloları çıkarın.',
   },
   en: {
     title: 'Network Simulator 2026',
@@ -364,6 +400,7 @@ const translations: Record<Language, Translations> = {
     speed: 'Speed',
     duplex: 'Duplex',
     description: 'Description',
+    unassigned: 'Unassigned',
     vlanStatus: 'VLAN Status',
     newVlan: 'Create New VLAN',
     vlanId: 'ID (1-4094)',
@@ -472,7 +509,7 @@ const translations: Record<Language, Translations> = {
     vTaskFullNamingName: 'Full Naming',
     vTaskFullNamingDesc: 'Name all VLANs properly',
     vTaskFullNamingHint: 'For each VLAN: name <name>',
-    connect: 'Connect to Device',
+    connect: 'Connect',
     disconnect: 'Disconnect',
     physicalConnectionDetected: 'Physical connection detected to',
     noConsoleCableDetected: 'No console cable detected. Connect a console cable from the PC to a network device.',
@@ -491,14 +528,29 @@ const translations: Record<Language, Translations> = {
     dontSave: 'Don\'t Save',
     pts: 'pts',
     initializingSystem: 'Initializing System...',
-
-    // About Section
     aboutTitle: 'About Network Simulator 2026',
     aboutIntro: 'This application is an interactive simulation tool designed for those who want to learn network technologies and terminal commands.',
     termsAndConditions: 'Terms and Conditions',
     termsText: 'This software is for educational purposes. It can be freely used and distributed for non-commercial purposes.',
     licenseInfo: 'Tuzla Vocational and Technical Anatolian High School',
     close: 'Close',
+    connectDevices: 'Connect Devices',
+    addDevice: 'Add Device',
+    addPc: 'Add PC',
+    addSwitch: 'Add Switch',
+    addRouter: 'Add Router',
+    addNote: 'Add Note',
+    cableType: 'Cable Type',
+    straight: 'Straight',
+    crossover: 'Cross-over',
+    console: 'Console',
+    linkFrom: 'Link from',
+    selectSourcePort: 'Select Source Port',
+    selectTargetPort: 'Select Target Port',
+    step1: 'Step 1: Source',
+    step2: 'Step 2: Destination',
+    noFreePorts: 'No Free Ports',
+    noFreePortsMessage: 'Please disconnect some cables first.',
   }
 };
 
@@ -554,5 +606,3 @@ export function useLanguage() {
   }
   return context;
 }
-
-export type { Language, Translations };

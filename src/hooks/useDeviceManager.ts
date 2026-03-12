@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { SwitchState, CommandResult } from '@/lib/network/types';
 import { createInitialState, createInitialRouterState } from '@/lib/network/initialState';
 import { executeCommand, getPrompt } from '@/lib/network/executor';
-import { TerminalOutput } from '@/components/network/Terminal';
+import type { TerminalOutput } from '@/components/network/Terminal';
 import { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 
 interface PCOutputLine {
