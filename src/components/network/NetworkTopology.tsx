@@ -3797,21 +3797,40 @@ export function NetworkTopology({
           >
             {/* Modal Header */}
             <div className={`${isMobile ? 'px-4 pt-4 pb-3' : 'px-6 pt-6 pb-4'} border-b ${isDark ? 'border-slate-800/50 bg-slate-800/30' : 'border-slate-100 bg-slate-50/50'}`}>
-              <div className="flex items-center gap-4">
-                <div className={`${isMobile ? 'p-2' : 'p-3'} rounded-2xl shadow-inner ${isDark ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-cyan-50 text-cyan-600 border border-cyan-100'}`}>
-                  <svg className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} drop-shadow-sm`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0 -2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0 -1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 1 1 -6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                    {language === 'tr' ? 'Yapılandır' : 'Configure'}
-                  </h3>
-                  <div className={`text-[10px] font-bold tracking-widest opacity-60 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {devices.find(d => d.id === configuringDevice)?.name}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className={`${isMobile ? 'p-2' : 'p-3'} rounded-2xl shadow-inner ${isDark ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-cyan-50 text-cyan-600 border border-cyan-100'}`}>
+                    <svg className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} drop-shadow-sm`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0 -2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0 -1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 1 1 -6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                      {language === 'tr' ? 'Yapılandır' : 'Configure'}
+                    </h3>
+                    <div className={`text-[10px] font-bold tracking-widest opacity-60 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {devices.find(d => d.id === configuringDevice)?.name}
+                    </div>
                   </div>
                 </div>
+                <button
+                  onClick={toggleDevicePower}
+                  className={`px-3 py-2 rounded-2xl text-[10px] font-black tracking-widest transition-all duration-300 border ${devices.find(d => d.id === configuringDevice)?.status === 'offline'
+                    ? (isDark ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 hover:text-slate-700')
+                    : (isDark ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20' : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100')
+                    }`}
+                  title={language === 'tr' ? 'Güç Aç/Kapa' : 'Power Toggle'}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${devices.find(d => d.id === configuringDevice)?.status === 'offline'
+                      ? 'bg-black'
+                      : 'bg-emerald-500'}`} />
+                    {devices.find(d => d.id === configuringDevice)?.status === 'offline'
+                      ? (language === 'tr' ? 'KAPALI' : 'OFF')
+                      : (language === 'tr' ? 'AÇIK' : 'ON')}
+                  </span>
+                </button>
               </div>
             </div>
 
@@ -3847,33 +3866,6 @@ export function NetworkTopology({
                     {devices.find(d => d.id === configuringDevice)?.macAddress || 'N/A'}
                   </span>
                 </div>
-              </div>
-
-              {/* Power Control */}
-              <div className={`p-3 rounded-2xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200/50'}`}>
-                <div className={`text-[10px] font-black tracking-widest mb-2 opacity-70 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
-                  {language === 'tr' ? 'GÜÇ' : 'POWER'}
-                </div>
-                {(() => {
-                  const device = devices.find(d => d.id === configuringDevice);
-                  const isOff = device?.status === 'offline';
-                  return (
-                    <div className="flex items-center justify-between">
-                      <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {isOff ? (language === 'tr' ? 'Kapalı' : 'Off') : (language === 'tr' ? 'Açık' : 'On')}
-                      </span>
-                      <button
-                        onClick={toggleDevicePower}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-black tracking-widest transition-all ${isOff
-                          ? (isDark ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100')
-                          : (isDark ? 'bg-slate-800 text-slate-400 hover:bg-slate-700/50' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')
-                          }`}
-                      >
-                        {isOff ? (language === 'tr' ? 'AÇ' : 'POWER ON') : (language === 'tr' ? 'KAPAT' : 'POWER OFF')}
-                      </button>
-                    </div>
-                  );
-                })()}
               </div>
 
               {/* IP Configuration Section - Only for PCs */}
