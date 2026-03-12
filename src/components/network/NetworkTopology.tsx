@@ -2137,12 +2137,13 @@ export function NetworkTopology({
               targetPort: conn.targetPort,
             });
 
-            // Check if both ports are NOT shutdown
+            // Check if both ports are NOT shutdown and devices are powered on
             const sPort = sourceDevice.ports.find(p => p.id === sourcePortId);
             const tPort = targetDevice.ports.find(p => p.id === targetPortId);
             const isUp = sPort && !sPort.shutdown && tPort && !tPort.shutdown;
+            const isPoweredOn = sourceDevice.status !== 'offline' && targetDevice.status !== 'offline';
 
-            if (isCompatible && isUp) {
+            if (isCompatible && isUp && isPoweredOn) {
               const newPath = [...current.path, nextDeviceId!];
 
               if (nextDeviceId === targetId) {
