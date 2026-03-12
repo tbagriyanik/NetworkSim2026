@@ -1752,6 +1752,14 @@ export function NetworkTopology({
   } | null>(null);
   const portTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [deviceTooltip, setDeviceTooltip] = useState<{
+    deviceId: string;
+    x: number;
+    y: number;
+    visible: boolean;
+  } | null>(null);
+  const deviceTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const showPortTooltip = useCallback((e: ReactMouseEvent | MouseEvent, deviceId: string, portId: string) => {
     // Don't show tooltip while dragging
     if (isActuallyDragging || isTouchDragging) return;
@@ -1785,6 +1793,26 @@ export function NetworkTopology({
     // We don't immediately hide on leave if we want it to stay for 3s
     // but we could if needed. The requirement says 3s after open.
   }, []);
+
+  const showDeviceTooltip = useCallback((e: ReactMouseEvent | MouseEvent, deviceId: string) => {
+    if (isActuallyDragging || isTouchDragging) return;
+    if (deviceTooltipTimerRef.current) {
+      clearTimeout(deviceTooltipTimerRef.current);
+    }
+    setDeviceTooltip({
+      deviceId,
+      x: e.clientX,
+      y: e.clientY,
+      visible: true,
+    });
+    deviceTooltipTimerRef.current = setTimeout(() => {
+      setDeviceTooltip(prev => prev ? { ...prev, visible: false } : null);
+    }, 1500);
+  }, [isActuallyDragging, isTouchDragging]);
+
+  const handleDeviceHover = useCallback((e: ReactMouseEvent, deviceId: string) => {
+    showDeviceTooltip(e, deviceId);
+  }, [showDeviceTooltip]);
 
   // Sync device counters with current devices to prevent ID collisions
   useEffect(() => {
@@ -2593,6 +2621,7 @@ export function NetworkTopology({
         transform={`translate(${device.x}, ${device.y})`}
         className={`cursor-move ${isDragging ? 'opacity-80' : ''}`}
         data-device-id={device.id}
+        onMouseEnter={(e) => handleDeviceHover(e as unknown as ReactMouseEvent, device.id)}
       >
         {/* Device body */}
         <rect
@@ -4122,6 +4151,56 @@ export function NetworkTopology({
             {/* Arrow */}
             <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] ${isDark ? 'border-t-slate-800' : 'border-t-white'
               }`} />
+          </div>
+        </div>
+      )}
+
+      {/* Device Tooltip */}
+      {deviceTooltip && deviceTooltip.visible && (
+        <div
+          className={`fixed z-[100] pointer-events-none transition-opacity duration-300 ${deviceTooltip.visible ? 'opacity-100' : 'opacity-0'
+            }`}
+          style={{
+            left: deviceTooltip.x,
+            top: deviceTooltip.y - 12,
+            transform: 'translate(-50%, -100%)',
+          }}
+        >
+          <div
+            className={`px-3 py-2 rounded-xl shadow-2xl border backdrop-blur-md ${isDark
+              ? 'bg-slate-900/90 border-slate-700 text-white shadow-cyan-500/10'
+              : 'bg-white/90 border-slate-200 text-slate-900 shadow-slate-200/50'
+              }`}
+          >
+            {(() => {
+              const device = devices.find(d => d.id === deviceTooltip.deviceId);
+              if (!device) return null;
+              const model = device.type === 'switch' ? 'WS-C2960-24TT-L' : device.type === 'router' ? 'ISR-4321' : 'PC';
+              const openPorts = device.ports.filter(p => !p.shutdown).length;
+              const closedPorts = device.ports.length - openPorts;
+              return (
+                <div className="space-y-0.5 text-[10px]">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${device.status === 'offline' ? 'bg-black' : 'bg-emerald-500'}`} />
+                    <span className="font-black tracking-widest uppercase opacity-70">
+                      {device.type === 'pc' ? 'PC' : device.type === 'switch' ? 'SWITCH' : 'ROUTER'}
+                    </span>
+                  </div>
+                  <div className="text-xs font-bold">{device.name}</div>
+                  <div className="opacity-70">{model}</div>
+                  <div>
+                    {language === 'tr'
+                      ? `Güç: ${device.status === 'offline' ? 'Kapalı' : 'Açık'}`
+                      : `Power: ${device.status === 'offline' ? 'Off' : 'On'}`}
+                  </div>
+                  <div>
+                    {language === 'tr'
+                      ? `Portlar: ${openPorts} açık / ${closedPorts} kapalı`
+                      : `Ports: ${openPorts} open / ${closedPorts} closed`}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
