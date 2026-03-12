@@ -664,7 +664,6 @@ export function NetworkTopology({
   }, [pan]);
 
   // Refs for animation frames to throttle updates
-  const dragAnimationFrameRef = useRef<number | null>(null);
   const panAnimationFrameRef = useRef<number | null>(null);
 
   // Cleanup animation frames on unmount
