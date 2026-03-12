@@ -79,7 +79,11 @@ export function NetworkTopologyPortSelectorModal({
                       ? `${CABLE_COLORS[type].bg} text-white shadow-lg shadow-black/10`
                       : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}
                   >
-                    {type === 'straight' ? 'Direct' : type === 'crossover' ? 'X-Over' : 'Cons'}
+                    {type === 'straight'
+                      ? (language === 'tr' ? 'Düz' : 'Straight')
+                      : type === 'crossover'
+                        ? (language === 'tr' ? 'Çapraz' : 'X-Over')
+                        : (language === 'tr' ? 'Konsol' : 'Console')}
                   </button>
                 ))}
               </div>
@@ -99,7 +103,25 @@ export function NetworkTopologyPortSelectorModal({
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8 max-h-[50vh]">
           {devices.map((device) => {
             const availablePorts = device.ports.filter(p => p.status === 'disconnected');
-            if (availablePorts.length === 0) return null;
+            const filteredPorts = availablePorts.filter((p) => {
+              const pid = p.id.toLowerCase();
+              const isConsolePrt = pid === 'console' || pid.startsWith('com');
+              const isGigabit = pid.startsWith('gi');
+              const isFastEth = pid.startsWith('fa') || pid.startsWith('eth');
+              if (cableType === 'console') {
+                if (portSelectorStep === 'source') {
+                  return device.type === 'pc' && isConsolePrt;
+                }
+                if (selectedSourcePort) {
+                  const sourceDevice = devices.find(d => d.id === selectedSourcePort.deviceId);
+                  if (!sourceDevice || sourceDevice.type !== 'pc') return false;
+                  return device.type !== 'pc' && isConsolePrt;
+                }
+                return false;
+              }
+              return isGigabit || isFastEth;
+            });
+            if (filteredPorts.length === 0) return null;
             if (portSelectorStep === 'target' && selectedSourcePort?.deviceId === device.id) return null;
 
             return (
@@ -117,7 +139,7 @@ export function NetworkTopologyPortSelectorModal({
                     </span>
                   </div>
                   <div className={`text-[10px] font-bold tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                    {availablePorts.length} ports free
+                    {language === 'tr' ? `${filteredPorts.length} boş port` : `${filteredPorts.length} ports free`}
                   </div>
                 </div>
 
@@ -137,7 +159,7 @@ export function NetworkTopologyPortSelectorModal({
                     )}
                     <span className="flex items-center gap-1 text-slate-500 ml-auto"><span className="w-2 h-2 rounded-full bg-slate-600 inline-block" /> {language === 'tr' ? 'Bağlı' : 'Used'}</span>
                   </div>
-                  {device.ports.map((port) => {
+                  {filteredPorts.map((port) => {
                     const isConnected = port.status === 'connected';
                     const pid = port.id.toLowerCase();
                     const isConsolePrt = pid === 'console' || pid.startsWith('com');

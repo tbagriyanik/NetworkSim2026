@@ -47,7 +47,8 @@ export const ConnectionLine = memo(function ConnectionLine({
   const targetPort = targetDevice.ports.find(p => p.id === connection.targetPort);
   const isShutdown = sourcePort?.shutdown || targetPort?.shutdown;
   
-  const isEffectivelyActive = connection.active && isCompatible && !isShutdown;
+  const isPoweredOff = sourceDevice.status === 'offline' || targetDevice.status === 'offline';
+  const isEffectivelyActive = connection.active && isCompatible && !isShutdown && !isPoweredOff;
   const color = !isCompatible ? CABLE_COLORS.error.primary : 
                 isShutdown ? (isDark ? '#475569' : '#94a3b8') : // Gray if shutdown
                 CABLE_COLORS[connection.cableType].primary;
@@ -182,6 +183,8 @@ export const ConnectionLine = memo(function ConnectionLine({
     nextProps.sourceDevice.ports.find(p => p.id === nextProps.connection.sourcePort)?.shutdown &&
     prevProps.targetDevice.ports.find(p => p.id === prevProps.connection.targetPort)?.shutdown === 
     nextProps.targetDevice.ports.find(p => p.id === nextProps.connection.targetPort)?.shutdown &&
+    prevProps.sourceDevice.status === nextProps.sourceDevice.status &&
+    prevProps.targetDevice.status === nextProps.targetDevice.status &&
     prevProps.totalSameConns === nextProps.totalSameConns &&
     prevProps.sameConnIndex === nextProps.sameConnIndex &&
     prevProps.isDark === nextProps.isDark &&

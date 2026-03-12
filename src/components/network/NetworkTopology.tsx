@@ -86,7 +86,7 @@ export function NetworkTopology({
       ip: '192.168.1.10',
       x: 100,
       y: 150,
-      status: 'offline',
+      status: 'online',
       ports: [
         { id: 'eth0', label: 'Eth0', status: 'disconnected' },
         { id: 'com1', label: 'COM1', status: 'disconnected' },
@@ -453,6 +453,18 @@ export function NetworkTopology({
     setSubnetValue('');
     setGatewayValue('');
   }, [configuringDevice, tempNameValue, ipValue, saveToHistory]);
+
+  const toggleDevicePower = useCallback(() => {
+    if (!configuringDevice) return;
+    saveToHistory();
+    setDevices(prev =>
+      prev.map(d =>
+        d.id === configuringDevice
+          ? { ...d, status: d.status === 'offline' ? 'online' : 'offline' }
+          : d
+      )
+    );
+  }, [configuringDevice, saveToHistory]);
 
   // Delete device and its connections
   const deleteDevice = useCallback((deviceId: string) => {
@@ -1551,6 +1563,25 @@ export function NetworkTopology({
         setConnectionStart(null);
         return;
       }
+
+      if (cableInfo.cableType === 'console') {
+        const sourceDevice = devices.find((d) => d.id === connectionStart.deviceId);
+        const targetDevice = devices.find((d) => d.id === deviceId);
+        const isConsoleAllowed =
+          !!sourceDevice &&
+          !!targetDevice &&
+          ((sourceDevice.type === 'pc' && (targetDevice.type === 'switch' || targetDevice.type === 'router')) ||
+            (targetDevice.type === 'pc' && (sourceDevice.type === 'switch' || sourceDevice.type === 'router')));
+        if (!isConsoleAllowed) {
+          setConnectionError(language === 'tr'
+            ? 'Console kablo sadece PC ile Switch/Router arasında bağlanabilir!'
+            : 'Console cable can only connect PC to Switch/Router!');
+          setTimeout(() => setConnectionError(null), 3000);
+          setIsDrawingConnection(false);
+          setConnectionStart(null);
+          return;
+        }
+      }
       // Complete connection
       saveToHistory();
       const newConnection: CanvasConnection = {
@@ -1691,7 +1722,7 @@ export function NetworkTopology({
       // Position near top-left with staggered layout
       x: 100 + offsetX + Math.random() * 30,
       y: 80 + offsetY + Math.random() * 30,
-      status: 'offline',
+      status: 'online',
       ports:
         type === 'pc'
           ? [
@@ -2136,6 +2167,21 @@ export function NetworkTopology({
       cancelAnimationFrame(pingAnimationRef.current);
     }
 
+    const sourceDevice = devices.find(d => d.id === sourceId);
+    const targetDevice = devices.find(d => d.id === targetId);
+    if (sourceDevice?.status === 'offline' || targetDevice?.status === 'offline') {
+      setPingAnimation({
+        sourceId,
+        targetId,
+        path: [sourceId, targetId],
+        currentHopIndex: 0,
+        progress: 1,
+        success: false
+      });
+      setTimeout(() => setPingAnimation(null), 2500);
+      return;
+    }
+
     // Find path between source and target
     const path = findPath(sourceId, targetId);
 
@@ -2210,7 +2256,7 @@ export function NetworkTopology({
     const deviceWidth = device.type === 'pc' ? 85 : 130;
     const portsPerRow = 8;
     const numRows = Math.ceil(device.ports.length / portsPerRow);
-    const deviceHeight = device.type === 'pc' ? 85 : 80 + numRows * 14 + 5;
+    const deviceHeight = device.type === 'pc' ? 100 : 100 + numRows * 14 + 5;
     return { x: device.x + deviceWidth / 2, y: device.y + deviceHeight / 2 };
   }, []);
 
@@ -2521,14 +2567,18 @@ export function NetworkTopology({
       });
     });
 
-    const statusColor = hasError
-      ? (isDark ? 'fill-red-500' : 'fill-red-600')
-      : (hasConnection ? (isDark ? 'fill-green-500' : 'fill-green-600') : (isDark ? 'fill-slate-800' : 'fill-slate-300'));
+    const isPoweredOff = device.status === 'offline';
+    const statusFill = isPoweredOff
+      ? '#000000'
+      : hasError
+        ? (isDark ? '#ef4444' : '#dc2626')
+        : (hasConnection ? (isDark ? '#22c55e' : '#16a34a') : (isDark ? '#1f2937' : '#cbd5e1'));
+    const statusStroke = isPoweredOff ? (isDark ? '#64748b' : '#94a3b8') : 'none';
 
     // Calculate device height based on number of ports (8 per row for switch/router)
     const portsPerRow = device.type === 'pc' ? 2 : 8;
     const numRows = Math.ceil(device.ports.length / portsPerRow);
-    const deviceHeight = device.type === 'pc' ? 85 : 80 + numRows * 14 + 5;
+    const deviceHeight = device.type === 'pc' ? 89 : 80 + numRows * 14 + 5;
 
     // Calculate device width to fit all ports with proper spacing
     // For switch/router: startX=12, portSpacing=13, portRadius=6
@@ -2574,7 +2624,7 @@ export function NetworkTopology({
                 stroke="currentColor"
                 fill="none"
                 d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z"
-                transform="scale(1.2)"
+                transform="scale(1.2) translate(0, 3.3)"
               />
             )}
             {device.type === 'switch' && (
@@ -2598,7 +2648,15 @@ export function NetworkTopology({
         </g>
 
         {/* Status LED */}
-        <circle cx={deviceWidth - 10} cy={10} r={5} className={`${statusColor} transition-colors duration-300`} />
+        <circle
+          cx={deviceWidth - 10}
+          cy={10}
+          r={5}
+          fill={statusFill}
+          stroke={statusStroke}
+          strokeWidth={statusStroke === 'none' ? 0 : 1}
+          className="transition-colors duration-300"
+        />
 
         {/* Device name */}
         <text x={deviceWidth / 2} y={58} fill={isDark ? '#f1f5f9' : '#1e293b'} fontSize="10" textAnchor="middle" fontWeight="bold" className="select-none pointer-events-none">
@@ -3789,6 +3847,33 @@ export function NetworkTopology({
                     {devices.find(d => d.id === configuringDevice)?.macAddress || 'N/A'}
                   </span>
                 </div>
+              </div>
+
+              {/* Power Control */}
+              <div className={`p-3 rounded-2xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200/50'}`}>
+                <div className={`text-[10px] font-black tracking-widest mb-2 opacity-70 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
+                  {language === 'tr' ? 'GÜÇ' : 'POWER'}
+                </div>
+                {(() => {
+                  const device = devices.find(d => d.id === configuringDevice);
+                  const isOff = device?.status === 'offline';
+                  return (
+                    <div className="flex items-center justify-between">
+                      <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {isOff ? (language === 'tr' ? 'Kapalı' : 'Off') : (language === 'tr' ? 'Açık' : 'On')}
+                      </span>
+                      <button
+                        onClick={toggleDevicePower}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-black tracking-widest transition-all ${isOff
+                          ? (isDark ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100')
+                          : (isDark ? 'bg-slate-800 text-slate-400 hover:bg-slate-700/50' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')
+                          }`}
+                      >
+                        {isOff ? (language === 'tr' ? 'AÇ' : 'POWER ON') : (language === 'tr' ? 'KAPAT' : 'POWER OFF')}
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* IP Configuration Section - Only for PCs */}

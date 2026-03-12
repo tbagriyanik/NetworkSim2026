@@ -67,7 +67,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
   };
   
   const faPorts = Object.values(ports)
-    .filter(p => p.type === 'fastethernet')
+    .filter(p => p.type === 'fastethernet' && p.id !== 'vlan1')
     .sort((a, b) => {
       const aNum = parseInt(a.id.split('/')[1]);
       const bNum = parseInt(b.id.split('/')[1]);
@@ -75,7 +75,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
     });
 
   const giPorts = Object.values(ports)
-    .filter(p => p.type === 'gigabitethernet')
+    .filter(p => p.type === 'gigabitethernet' && p.id !== 'vlan1')
     .sort((a, b) => {
       const aNum = parseInt(a.id.split('/')[1]);
       const bNum = parseInt(b.id.split('/')[1]);
