@@ -1,68 +1,41 @@
 ﻿'use client';
 
 import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
-import { CableType, CableInfo, getCableTypeName, isCableCompatible } from '@/lib/network/types';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Monitor, Laptop, Network, Plus, Database, ChevronRight, Trash2, MousePointer2, Pencil } from "lucide-react";
-import { NetworkTopologyProps, CanvasDevice, CanvasConnection, CanvasNote, ContextMenuState, SelectedPortRef } from './networkTopology.types';
-import {
-  CABLE_COLORS,
-  DEFAULT_ZOOM,
-  DEVICE_ICONS,
-  DRAG_THRESHOLD,
-  LONG_PRESS_DURATION,
-  MAX_ZOOM,
-  MIN_ZOOM,
-  NOTE_COLORS,
-  NOTE_DEFAULT_HEIGHT,
-  NOTE_DEFAULT_WIDTH,
-  NOTE_FONTS_DESKTOP,
-  NOTE_FONTS_MOBILE,
-  NOTE_FONT_SIZES,
-  NOTE_HEADER_HEIGHT,
-  NOTE_OPACITY,
-  VIRTUAL_CANVAS_HEIGHT_DESKTOP,
-  VIRTUAL_CANVAS_HEIGHT_MOBILE,
-  VIRTUAL_CANVAS_WIDTH_DESKTOP,
-  VIRTUAL_CANVAS_WIDTH_MOBILE,
-} from './networkTopology.constants';
-import { generateMacAddress, generateRouterPorts, generateSwitchPorts } from './networkTopology.helpers';
+import { Network, Plus, Laptop, Monitor, Pencil, Trash2 } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { ConnectionLine } from './ConnectionLine';
+import { DeviceNode } from './DeviceNode';
 import { NetworkTopologyContextMenu } from './NetworkTopologyContextMenu';
 import { NetworkTopologyPortSelectorModal } from './NetworkTopologyPortSelectorModal';
+import {
+  CABLE_COLORS,
+  NOTE_COLORS,
+  NOTE_FONT_SIZES,
+  NOTE_OPACITY,
+  MIN_ZOOM,
+  MAX_ZOOM,
+  DEFAULT_ZOOM,
+  NOTE_DEFAULT_WIDTH,
+  NOTE_DEFAULT_HEIGHT,
+  NOTE_HEADER_HEIGHT,
+} from './networkTopology.constants';
+import { generateSwitchPorts, generateRouterPorts, generatePCPorts, getDeviceMacPrefix, getPortPosition, getDeviceCenter } from './networkTopology.helpers';
+import { CanvasDevice, CanvasConnection, CanvasNote, NetworkTopologyProps, CableType } from './networkTopology.types';
 import { NetworkTopologyView } from './NetworkTopologyView';
 
-// Drag item from palette
-interface DragItem {
-  type: 'pc' | 'switch' | 'router';
-  icon: React.ReactNode;
-}
-
-
-export function NetworkTopology({
+export default function NetworkTopology({
   cableInfo,
   onCableChange,
-  selectedDevice,
+  selectedDevice: selectedDeviceProp,
   onDeviceSelect,
-  onDeviceDoubleClick,
+  onDeviceDoubleClick: onDeviceDoubleClickProp,
   onTopologyChange,
   onDeviceDelete,
   initialDevices,
   initialConnections,
   initialNotes,
-  isActive = true,
-  activeDeviceId,
+  isActive,
+  activeDeviceId: activeDeviceIdProp,
   deviceStates,
   isFullscreen: isFullscreenProp,
   onFullscreenChange,
@@ -71,31 +44,27 @@ export function NetworkTopology({
   pan: panProp,
   onPanChange,
 }: NetworkTopologyProps) {
-  const { language } = useLanguage();
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
+  // Use a unique key to force remount when starting new project
+  const [topologyKey, setTopologyKey] = useState(Date.now());
 
-  // Default devices for initial state
+  // Default devices for a new project
   const defaultDevices: CanvasDevice[] = [
     {
       id: 'pc-1',
       type: 'pc',
       name: 'PC-1',
-      macAddress: generateMacAddress(),
+      x: 50,
+      y: 50,
       ip: '192.168.1.10',
-      x: 100,
-      y: 150,
+      macAddress: '00e0.f701.a1b1',
       status: 'online',
-      ports: [
-        { id: 'eth0', label: 'Eth0', status: 'disconnected' },
-        { id: 'com1', label: 'COM1', status: 'disconnected' },
-      ],
+      ports: generatePCPorts(),
     },
     {
       id: 'switch-1',
       type: 'switch',
-      name: 'Switch-1',
-      macAddress: generateMacAddress(),
+      name: 'SWITCH-1',
+      macAddress: '0011.2233.4401',
       ip: '',
       x: 300,
       y: 150,
@@ -128,7 +97,7 @@ export function NetworkTopology({
         width: n.width || NOTE_DEFAULT_WIDTH,
         height: n.height || NOTE_DEFAULT_HEIGHT,
         color: n.color || NOTE_COLORS[0],
-        font: n.font || noteFonts[0],
+        font: n.font || 'Inter',
         fontSize: n.fontSize || 12,
         opacity: n.opacity || 1
       })));
@@ -160,952 +129,337 @@ export function NetworkTopology({
       return next;
     });
   }, [onPanChange]);
+
+  // View state
+  const [isFullscreen, setIsFullscreen] = useState(isFullscreenProp || false);
+  useEffect(() => {
+    if (isFullscreenProp !== undefined) setIsFullscreen(isFullscreenProp);
+  }, [isFullscreenProp]);
+
+  const toggleFullscreen = useCallback(() => {
+    const next = !isFullscreen;
+    setIsFullscreen(next);
+    if (onFullscreenChange) onFullscreenChange(next);
+  }, [isFullscreen, onFullscreenChange]);
+
+  // Interaction state
+  const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>([]);
+  const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
+  const [activeDeviceId, setActiveDeviceId] = useState<string | null>(activeDeviceIdProp || null);
+  const [draggedDevice, setDraggedDevice] = useState<string | null>(null);
+  const [isActuallyDragging, setIsActuallyDragging] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>(activeDeviceId ? [activeDeviceId] : []);
-  const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
-
-  // Sync internal selection with prop from parent
-  useEffect(() => {
-    if (activeDeviceId !== undefined) {
-      setSelectedDeviceIds(activeDeviceId ? [activeDeviceId] : []);
-    }
-  }, [activeDeviceId]);
-
-  // Select all state
-  const [selectAllMode, setSelectAllMode] = useState(false);
-
-  // Drag state with position tracking
-  const [draggedDevice, setDraggedDevice] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [dragStartPos, setDragStartPos] = useState<{ x: number, y: number } | null>(null);
-  const [dragStartDevicePositions, setDragStartDevicePositions] = useState<{ [key: string]: { x: number, y: number } }>({});
-  const [isActuallyDragging, setIsActuallyDragging] = useState(false);
-  const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
-  const [noteDragStartPos, setNoteDragStartPos] = useState<{ x: number; y: number } | null>(null);
-  const [noteDragStartPositions, setNoteDragStartPositions] = useState<{ [key: string]: { x: number; y: number } }>({});
-  const [resizingNoteId, setResizingNoteId] = useState<string | null>(null);
-  const [noteResizeStartPos, setNoteResizeStartPos] = useState<{ x: number; y: number } | null>(null);
-  const [noteResizeStartSizes, setNoteResizeStartSizes] = useState<{ [key: string]: { width: number; height: number } }>({});
-
-  // Drag performance - use ref for animation frame throttling
-  const dragAnimationFrameRef = useRef<number | null>(null);
-  const lastDragPositionRef = useRef<{ x: number; y: number } | null>(null);
-  const devicePositionRef = useRef<{ [key: string]: { x: number; y: number } }>({});
-
-  // Ref to track if we were dragging (for click handler to check without stale closure)
-  const wasDraggingRef = useRef(false);
-
-  // Connection drawing state
   const [isDrawingConnection, setIsDrawingConnection] = useState(false);
-  const [connectionStart, setConnectionStart] = useState<{
-    deviceId: string;
-    portId: string;
-    point: { x: number; y: number };
-  } | null>(null);
+  const [connectionStart, setConnectionStart] = useState<{ deviceId: string; portId: string } | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; deviceId: string | null; noteId: string | null; mode: 'device' | 'canvas' | 'note-style' | 'note-edit' } | null>(null);
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [showPortSelector, setShowPortSelector] = useState(false);
+  const [portSelectorStep, setPortSelectorStep] = useState<'source' | 'target'>('source');
+  const [selectedSourcePort, setSelectedSourcePort] = useState<{ deviceId: string; portId: string } | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  // Context menu state - deviceId can be null for empty area
-  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
-
-  // Clipboard state for copy/cut/paste
-  const [clipboard, setClipboard] = useState<CanvasDevice[]>([]);
-  const [noteClipboard, setNoteClipboard] = useState<CanvasNote[]>([]);
-  const noteTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
-
-  // Undo/Redo history
+  // History state for undo/redo
   const [history, setHistory] = useState<{ devices: CanvasDevice[]; connections: CanvasConnection[]; notes: CanvasNote[] }[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const historyRef = useRef({ history, historyIndex });
 
-  // Save state to history for undo
-  const saveToHistory = useCallback(() => {
-    const newState = { devices: [...devices], connections: [...connections], notes: [...notes] };
-    setHistory(prev => {
-      const newHistory = prev.slice(0, historyIndex + 1);
-      newHistory.push(newState);
-      return newHistory.slice(-50); // Keep last 50 states
-    });
-    setHistoryIndex(prev => Math.min(prev + 1, 49));
-  }, [devices, connections, notes, historyIndex]);
+  // Clipboard state
+  const [clipboard, setClipboard] = useState<CanvasDevice[]>([]);
+  const [noteClipboard, setNoteClipboard] = useState<CanvasNote[]>([]);
 
-  // Undo
-  const handleUndo = useCallback(() => {
-    if (historyIndex > 0) {
-      const prevState = history[historyIndex - 1];
-      setDevices(prevState.devices);
-      setConnections(prevState.connections);
-      setNotes(prevState.notes || []);
-      setHistoryIndex(prev => prev - 1);
-    }
-  }, [history, historyIndex]);
-
-  // Redo
-  const handleRedo = useCallback(() => {
-    if (historyIndex < history.length - 1) {
-      const nextState = history[historyIndex + 1];
-      setDevices(nextState.devices);
-      setConnections(nextState.connections);
-      setNotes(nextState.notes || []);
-      setHistoryIndex(prev => prev + 1);
-    }
-  }, [history, historyIndex]);
-
-  // Configuration state (Name, IP, etc.)
+  // Device Config Modal State
   const [configuringDevice, setConfiguringDevice] = useState<string | null>(null);
   const [tempNameValue, setTempNameValue] = useState('');
   const [ipValue, setIpValue] = useState('');
   const [subnetValue, setSubnetValue] = useState('');
   const [gatewayValue, setGatewayValue] = useState('');
   const [dnsValue, setDnsValue] = useState('');
-  const configInputRef = useRef<HTMLInputElement>(null);
 
-  // Rename state
-  const [renamingDevice, setRenamingDevice] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
+  // Port/Device Tooltip state
+  const [portTooltip, setPortTooltip] = useState<{ x: number; y: number; deviceId: string; portId: string; visible: boolean } | null>(null);
+  const portTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // UI state
-  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(isFullscreenProp || false);
+  const [deviceTooltip, setDeviceTooltip] = useState<{ x: number; y: number; deviceId: string; visible: boolean } | null>(null);
+  const deviceTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync with prop
-  useEffect(() => {
-    if (isFullscreenProp !== undefined) {
-      setIsFullscreen(isFullscreenProp);
-    }
-  }, [isFullscreenProp]);
-
-  // Touch/Mobile state
-  const isMobile = useIsMobile();
-  const noteFonts = isMobile ? NOTE_FONTS_MOBILE : NOTE_FONTS_DESKTOP;
-  // Context menu rendering moved to NetworkTopologyContextMenu
-  const [isTouchDragging, setIsTouchDragging] = useState(false);
-  const [isTouchDraggingNote, setIsTouchDraggingNote] = useState(false);
-  const [touchDraggedDevice, setTouchDraggedDevice] = useState<string | null>(null);
-  const [touchDragStartPos, setTouchDragStartPos] = useState<{ x: number; y: number } | null>(null);
-  const [touchDragOffset, setTouchDragOffset] = useState({ x: 0, y: 0 });
-  const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
-  const [lastTapTime, setLastTapTime] = useState(0);
-  const [lastTappedDevice, setLastTappedDevice] = useState<string | null>(null);
-
-  // Advanced Canvas Pan/Zoom Touch state
-  const [lastTouchCenter, setLastTouchCenter] = useState<{ x: number; y: number } | null>(null);
-
-  // Ping and port selector state
-  const [pingSource, setPingSource] = useState<string | null>(null);
-  const [showPortSelector, setShowPortSelector] = useState(false);
-  const [portSelectorStep, setPortSelectorStep] = useState<'source' | 'target'>('source');
-  const [selectedSourcePort, setSelectedSourcePort] = useState<SelectedPortRef | null>(null);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  const contextMenuRef = useRef<HTMLDivElement | null>(null);
-  const contextMenuOpenedAtRef = useRef(0);
-
-  const closePortSelector = useCallback(() => {
-    setShowPortSelector(false);
-    setPortSelectorStep('source');
-    setSelectedSourcePort(null);
+  const showPortTooltip = useCallback((e: ReactMouseEvent | MouseEvent, deviceId: string, portId: string) => {
+    // Tooltip functionality currently disabled by user request
+    return;
   }, []);
 
-  const handlePortSelectorSelectPort = useCallback((deviceId: string, portId: string) => {
-    if (portSelectorStep === 'source') {
-      setSelectedSourcePort({ deviceId, portId });
-      setPortSelectorStep('target');
-      return;
+  const hidePortTooltip = useCallback(() => {
+    if (portTooltipTimerRef.current) {
+      clearTimeout(portTooltipTimerRef.current);
     }
+    setPortTooltip(prev => prev ? { ...prev, visible: false } : null);
+  }, []);
 
-    if (!selectedSourcePort) return;
+  const showDeviceTooltip = useCallback((e: ReactMouseEvent | MouseEvent, deviceId: string) => {
+    // Tooltip functionality currently disabled by user request
+    return;
+  }, []);
 
-    const newConnection: CanvasConnection = {
-      id: `conn-${Date.now()}`,
-      sourceDeviceId: selectedSourcePort.deviceId,
-      sourcePort: selectedSourcePort.portId,
-      targetDeviceId: deviceId,
-      targetPort: portId,
-      cableType: cableInfo.cableType,
-      active: true,
+  const hideDeviceTooltip = useCallback(() => {
+    if (deviceTooltipTimerRef.current) {
+      clearTimeout(deviceTooltipTimerRef.current);
+    }
+    setDeviceTooltip(prev => prev ? { ...prev, visible: false } : null);
+  }, []);
+
+  const handlePortHover = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
+    showPortTooltip(e, deviceId, portId);
+  }, [showPortTooltip]);
+
+  const handlePortMouseLeave = useCallback(() => {
+    hidePortTooltip();
+  }, [hidePortTooltip]);
+
+  // Note related state
+  const [resizingNoteId, setResizingNoteId] = useState<string | null>(null);
+  const [noteResizeStartPos, setNoteResizeStartPos] = useState({ x: 0, y: 0 });
+  const [noteResizeStartSize, setNoteResizeStartSize] = useState({ width: 0, height: 0 });
+  const [isTouchDraggingNote, setIsTouchDraggingNote] = useState(false);
+  const [noteFonts] = useState(['Inter', 'JetBrains Mono', 'Comic Sans MS', 'Georgia', 'Playfair Display']);
+  const noteTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
+
+  // Mobile state
+  const [isMobile, setIsMobile] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [touchDraggedDevice, setTouchDraggedDevice] = useState<string | null>(null);
+  const [isTouchDragging, setIsTouchDragging] = useState(false);
+  const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
+  const [lastTouchCenter, setLastTouchCenter] = useState<{ x: number; y: number } | null>(null);
+
+  // Keyboard shortcut state
+  const [selectAllMode, setSelectAllMode] = useState(false);
+
+  // Refs
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
+  const configInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync activeDeviceId from prop
+  useEffect(() => {
+    if (activeDeviceIdProp !== undefined) setActiveDeviceId(activeDeviceIdProp);
+  }, [activeDeviceIdProp]);
+
+  // Multi-language support (defaulting to current session or user preference)
+  const [language, setLanguage] = useState<'tr' | 'en'>('tr');
+  useEffect(() => {
+    // Simplified: check if there's a language context or just use TR
+    const stored = typeof window !== 'undefined' ? localStorage.getItem('language') : 'tr';
+    if (stored === 'tr' || stored === 'en') setLanguage(stored as 'tr' | 'en');
+  }, []);
+
+  const isDark = typeof window !== 'undefined' ? document.documentElement.classList.contains('dark') : true;
+
+  // Constants
+  const GRID_SIZE = 20;
+
+  // History management
+  const saveToHistory = useCallback(() => {
+    const currentState = { devices, connections, notes };
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      return [...newHistory, JSON.parse(JSON.stringify(currentState))];
+    });
+    setHistoryIndex(prev => prev + 1);
+  }, [devices, connections, notes, historyIndex]);
+
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0) {
+      const prevState = history[historyIndex - 1];
+      setDevices(prevState.devices);
+      setConnections(prevState.connections);
+      setNotes(prevState.notes);
+      setHistoryIndex(prev => prev - 1);
+      if (onTopologyChange) {
+        onTopologyChange(prevState.devices, prevState.connections, prevState.notes);
+      }
+    }
+  }, [history, historyIndex, onTopologyChange]);
+
+  const handleRedo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const nextState = history[historyIndex + 1];
+      setDevices(nextState.devices);
+      setConnections(nextState.connections);
+      setNotes(nextState.notes);
+      setHistoryIndex(prev => prev + 1);
+      if (onTopologyChange) {
+        onTopologyChange(nextState.devices, nextState.connections, nextState.notes);
+      }
+    }
+  }, [history, historyIndex, onTopologyChange]);
+
+  // Save initial state to history once
+  useEffect(() => {
+    if (history.length === 0) {
+      setHistory([{ devices, connections, notes }]);
+      setHistoryIndex(0);
+    }
+  }, []);
+
+  // Helpers for canvas coordinates
+  const getCanvasCoords = useCallback((clientX: number, clientY: number) => {
+    if (!canvasRef.current) return { x: 0, y: 0 };
+    const rect = canvasRef.current.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left - pan.x) / zoom,
+      y: (clientY - rect.top - pan.y) / zoom
+    };
+  }, [pan, zoom]);
+
+  // Topology actions
+  const addDevice = useCallback((type: 'pc' | 'switch' | 'router') => {
+    saveToHistory();
+    const id = `${type}-${Date.now()}`;
+    const newDevice: CanvasDevice = {
+      id,
+      type,
+      name: `${type.toUpperCase()}-${devices.filter(d => d.type === type).length + 1}`,
+      x: (400 - pan.x) / zoom,
+      y: (200 - pan.y) / zoom,
+      ip: type === 'pc' ? '192.168.1.' + (devices.filter(d => d.type === 'pc').length + 10) : '',
+      status: 'online',
+      macAddress: getDeviceMacPrefix(type) + Math.floor(Math.random() * 0xFFFF).toString(16).padStart(4, '0'),
+      ports: type === 'pc' ? generatePCPorts() : type === 'switch' ? generateSwitchPorts() : generateRouterPorts(),
     };
 
-    const updatedConnections = [...connections, newConnection];
-    setConnections(updatedConnections);
-
-    const updatedDevices = devices.map((d) => {
-      if (d.id === selectedSourcePort.deviceId) {
-        return {
-          ...d,
-          ports: d.ports.map((p) =>
-            p.id === selectedSourcePort.portId ? { ...p, status: 'connected' as const } : p
-          ),
-        };
-      }
-      if (d.id === deviceId) {
-        return {
-          ...d,
-          ports: d.ports.map((p) =>
-            p.id === portId ? { ...p, status: 'connected' as const } : p
-          ),
-        };
-      }
-      return d;
-    });
+    const updatedDevices = [...devices, newDevice];
     setDevices(updatedDevices);
+    if (onTopologyChange) {
+      onTopologyChange(updatedDevices, connections, notes);
+    }
+    setSelectedDeviceIds([id]);
+  }, [devices, connections, notes, pan, zoom, onTopologyChange, saveToHistory]);
 
+  const deleteDevice = useCallback((deviceId: string) => {
+    saveToHistory();
+    const updatedDevices = devices.filter(d => d.id !== deviceId);
+    const updatedConnections = connections.filter(c => c.sourceDeviceId !== deviceId && c.targetDeviceId !== deviceId);
+    setDevices(updatedDevices);
+    setConnections(updatedConnections);
     if (onTopologyChange) {
       onTopologyChange(updatedDevices, updatedConnections, notes);
     }
+    if (onDeviceDelete) onDeviceDelete(deviceId);
+    if (activeDeviceId === deviceId) setActiveDeviceId(null);
+  }, [devices, connections, notes, onTopologyChange, onDeviceDelete, activeDeviceId, saveToHistory]);
 
-    const sourceDevice = devices.find((d) => d.id === selectedSourcePort.deviceId);
-    const targetDevice = devices.find((d) => d.id === deviceId);
-    if (sourceDevice && targetDevice) {
-      onCableChange({
-        ...cableInfo,
-        connected: true,
-        sourceDevice: sourceDevice.type === 'router' ? 'switch' : sourceDevice.type,
-        targetDevice: targetDevice.type === 'router' ? 'switch' : targetDevice.type,
-      });
+  const updateDevicePosition = useCallback((deviceId: string, x: number, y: number) => {
+    setDevices(prev => prev.map(d => d.id === deviceId ? { ...d, x, y } : d));
+  }, []);
+
+  const updateMultipleDevicesPosition = useCallback((deviceIds: string[], dx: number, dy: number) => {
+    setDevices(prev => prev.map(d => deviceIds.includes(d.id) ? { ...d, x: d.x + dx, y: d.y + dy } : d));
+  }, []);
+
+  const selectAllDevices = useCallback(() => {
+    setSelectedDeviceIds(devices.map(d => d.id));
+    setSelectedNoteIds(notes.map(n => n.id));
+    setSelectAllMode(true);
+  }, [devices, notes]);
+
+  // Device Copy/Paste
+  const copyDevice = useCallback((deviceIds: string[]) => {
+    const selectedDevices = devices.filter(d => deviceIds.includes(d.id));
+    if (selectedDevices.length > 0) {
+      setClipboard(JSON.parse(JSON.stringify(selectedDevices)));
     }
+  }, [devices]);
 
-    closePortSelector();
-  }, [portSelectorStep, selectedSourcePort, connections, devices, cableInfo, onTopologyChange, notes, onCableChange, closePortSelector]);
+  const cutDevice = useCallback((deviceIds: string[]) => {
+    copyDevice(deviceIds);
+    deviceIds.forEach(id => deleteDevice(id));
+  }, [copyDevice, deleteDevice]);
 
-  // Ping animation state
+  const pasteDevice = useCallback(() => {
+    if (clipboard.length === 0) return;
+    saveToHistory();
+
+    const newDevices: CanvasDevice[] = clipboard.map(d => ({
+      ...d,
+      id: `${d.type}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      x: d.x + 40,
+      y: d.y + 40,
+      name: `${d.name}-copy`
+    }));
+
+    const updatedDevices = [...devices, ...newDevices];
+    setDevices(updatedDevices);
+    if (onTopologyChange) {
+      onTopologyChange(updatedDevices, connections, notes);
+    }
+    setSelectedDeviceIds(newDevices.map(d => d.id));
+  }, [clipboard, devices, connections, notes, onTopologyChange, saveToHistory]);
+
+  // Ping related state
+  const [pingSource, setPingSource] = useState<string | null>(null);
   const [pingAnimation, setPingAnimation] = useState<{
-    sourceId: string;
-    targetId: string;
     path: string[];
     currentHopIndex: number;
     progress: number;
     success: boolean | null;
   } | null>(null);
 
-  // Refs
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const deviceCounterRef = useRef<{ pc: number; switch: number; router: number }>({ pc: 0, switch: 0, router: 0 });
-  const pingAnimationRef = useRef<number | null>(null);
-
-  // Start device config (Name and IP)
-  const startDeviceConfig = useCallback((deviceId: string) => {
-    const device = devices.find(d => d.id === deviceId);
-    if (device) {
-      setConfiguringDevice(deviceId);
-      setTempNameValue(device.name);
-      setIpValue(device.ip || '');
-      setSubnetValue(device.subnet || '255.255.255.0');
-
-      if (device.gateway) {
-        setGatewayValue(device.gateway);
-      } else {
-        const ipParts = (device.ip || '192.168.1.10').split('.');
-        ipParts[3] = '1';
-        setGatewayValue(ipParts.join('.'));
-      }
-
-      setDnsValue(device.dns || '8.8.8.8');
-
-      setContextMenu(null);
-      // Focus input after render
-      setTimeout(() => configInputRef.current?.focus(), 0);
-    }
-  }, [devices]);
-
-  // Cancel device config
-  const cancelDeviceConfig = useCallback(() => {
-    setConfiguringDevice(null);
-    setTempNameValue('');
-    setIpValue('');
-    setSubnetValue('');
-    setGatewayValue('');
-    setDnsValue('');
+  const startPingAnimation = useCallback((path: string[]) => {
+    setPingAnimation({
+      path,
+      currentHopIndex: 0,
+      progress: 0,
+      success: null
+    });
   }, []);
 
-  // Confirm device config
-  const confirmDeviceConfig = useCallback(() => {
-    if (!configuringDevice) return;
-
-    // Basic IP validation if IP is provided
-    if (ipValue.trim()) {
-      const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-      if (!ipRegex.test(ipValue)) {
-        return; // Invalid IP format
-      }
-    }
-
+  // Handle Note actions
+  const addNote = useCallback(() => {
     saveToHistory();
-    setDevices((prev) =>
-      prev.map((d) =>
-        d.id === configuringDevice
-          ? {
-            ...d,
-            name: tempNameValue.trim() || d.name,
-            ip: ipValue.trim(),
-            subnet: subnetValue.trim(),
-            gateway: gatewayValue.trim(),
-            dns: dnsValue.trim()
-          }
-          : d
-      )
-    );
-    setConfiguringDevice(null);
-    setTempNameValue('');
-    setIpValue('');
-    setSubnetValue('');
-    setGatewayValue('');
-  }, [configuringDevice, tempNameValue, ipValue, saveToHistory]);
+    const id = `note-${Date.now()}`;
+    const newNote: CanvasNote = {
+      id,
+      text: '',
+      x: (400 - pan.x) / zoom,
+      y: (200 - pan.y) / zoom,
+      width: NOTE_DEFAULT_WIDTH,
+      height: NOTE_DEFAULT_HEIGHT,
+      color: NOTE_COLORS[0],
+      font: noteFonts[0],
+      fontSize: 12,
+      opacity: 1
+    };
 
-  const toggleDevicePower = useCallback(() => {
-    if (!configuringDevice) return;
-    saveToHistory();
-    setDevices(prev =>
-      prev.map(d =>
-        d.id === configuringDevice
-          ? { ...d, status: d.status === 'offline' ? 'online' : 'offline' }
-          : d
-      )
-    );
-  }, [configuringDevice, saveToHistory]);
-
-  // Delete device and its connections
-  const deleteDevice = useCallback((deviceId: string) => {
-    saveToHistory();
-    const updatedDevices = devices.filter((d) => d.id !== deviceId);
-    const updatedConnections = connections.filter((c) => c.sourceDeviceId !== deviceId && c.targetDeviceId !== deviceId);
-
-    setDevices(updatedDevices);
-    setConnections(updatedConnections);
-
+    const updatedNotes = [...notes, newNote];
+    setNotes(updatedNotes);
     if (onTopologyChange) {
-      onTopologyChange(updatedDevices, updatedConnections, notes);
+      onTopologyChange(devices, connections, updatedNotes);
     }
+    setSelectedNoteIds([id]);
+    setTimeout(() => {
+      noteTextareaRefs.current[id]?.focus();
+    }, 50);
+  }, [notes, devices, connections, pan, zoom, onTopologyChange, saveToHistory, noteFonts]);
 
-    if (onDeviceDelete) {
-      onDeviceDelete(deviceId);
-    }
-  }, [saveToHistory, onDeviceDelete, devices, connections, onTopologyChange, notes]);
-
-  // Select all devices
-  const selectAllDevices = useCallback(() => {
-    const allIds = devices.map(d => d.id);
-    setSelectedDeviceIds(allIds);
-    setSelectedNoteIds(notes.map(n => n.id));
-    setSelectAllMode(true);
-    setContextMenu(null);
-  }, [devices, notes]);
-
-  // Handle alignment for multiple selected devices
-  const handleAlign = useCallback((type: 'top' | 'bottom' | 'left' | 'right' | 'h-center' | 'v-center') => {
-    if (selectedDeviceIds.length < 2) return;
+  const deleteNote = useCallback((noteId: string) => {
     saveToHistory();
-
-    setDevices(prev => {
-      const selectedDevices = prev.filter(d => selectedDeviceIds.includes(d.id));
-      if (selectedDevices.length < 2) return prev;
-
-      let targetValue = 0;
-      switch (type) {
-        case 'top':
-          targetValue = Math.min(...selectedDevices.map(sd => sd.y));
-          break;
-        case 'bottom':
-          targetValue = Math.max(...selectedDevices.map(sd => sd.y));
-          break;
-        case 'left':
-          targetValue = Math.min(...selectedDevices.map(sd => sd.x));
-          break;
-        case 'right':
-          targetValue = Math.max(...selectedDevices.map(sd => sd.x));
-          break;
-        case 'h-center':
-          targetValue = selectedDevices.reduce((sum, sd) => sum + sd.y, 0) / selectedDevices.length;
-          break;
-        case 'v-center':
-          targetValue = selectedDevices.reduce((sum, sd) => sum + sd.x, 0) / selectedDevices.length;
-          break;
-      }
-
-      return prev.map(d => {
-        if (!selectedDeviceIds.includes(d.id)) return d;
-        if (type === 'top' || type === 'bottom' || type === 'h-center') {
-          return { ...d, y: targetValue };
-        }
-        if (type === 'left' || type === 'right' || type === 'v-center') {
-          return { ...d, x: targetValue };
-        }
-        return d;
-      });
-    });
-  }, [selectedDeviceIds, saveToHistory]);
-
-  // Calculate distance between two points
-  const getDistance = useCallback((x1: number, y1: number, x2: number, y2: number): number => {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    return Math.sqrt(dx * dx + dy * dy);
-  }, []);
-
-  // Get canvas coordinates from screen coordinates
-  const getCanvasCoords = useCallback((clientX: number, clientY: number) => {
-    if (!canvasRef.current) return { x: 0, y: 0 };
-    const rect = canvasRef.current.getBoundingClientRect();
-    return {
-      x: (clientX - rect.left - pan.x) / zoom,
-      y: (clientY - rect.top - pan.y) / zoom,
-    };
-  }, [pan, zoom]);
-
-  const getCanvasDimensions = useCallback(() => {
-    if (typeof window === 'undefined') return { width: VIRTUAL_CANVAS_WIDTH_DESKTOP, height: VIRTUAL_CANVAS_HEIGHT_DESKTOP };
-    return isMobile
-      ? { width: VIRTUAL_CANVAS_WIDTH_MOBILE, height: VIRTUAL_CANVAS_HEIGHT_MOBILE }
-      : { width: VIRTUAL_CANVAS_WIDTH_DESKTOP, height: VIRTUAL_CANVAS_HEIGHT_DESKTOP };
-  }, [isMobile]);
-
-
-  // Close context menu when clicking outside
-  useEffect(() => {
-    const handlePointerUpOutside = (e: MouseEvent) => {
-      if (!contextMenu) return;
-      // Ignore the initial click right after opening
-      if (Date.now() - contextMenuOpenedAtRef.current < 150) return;
-      const target = e.target as HTMLElement;
-      if (!target.closest('.context-menu')) {
-        setContextMenu(null);
-      }
-    };
-
-    window.addEventListener('mouseup', handlePointerUpOutside);
-    return () => window.removeEventListener('mouseup', handlePointerUpOutside);
-  }, [contextMenu]);
-
-  // Handle mobile back button to close modals/popups
-  useEffect(() => {
-    const isAnyModalOpen = isPaletteOpen || !!configuringDevice || !!pingSource || showPortSelector || !!contextMenu || isFullscreen;
-
-    if (isAnyModalOpen) {
-      window.history.pushState({ modalOpen: true }, '');
+    const updatedNotes = notes.filter(n => n.id !== noteId);
+    setNotes(updatedNotes);
+    if (onTopologyChange) {
+      onTopologyChange(devices, connections, updatedNotes);
     }
+    setSelectedNoteIds(prev => prev.filter(id => id !== noteId));
+  }, [notes, devices, connections, onTopologyChange, saveToHistory]);
 
-    const handlePopState = () => {
-      if (isPaletteOpen) setIsPaletteOpen(false);
-      if (configuringDevice) cancelDeviceConfig();
-      if (pingSource) setPingSource(null);
-      if (showPortSelector) {
-        setShowPortSelector(false);
-        setPortSelectorStep('source');
-        setSelectedSourcePort(null);
-      }
-      if (contextMenu) setContextMenu(null);
-      if (isFullscreen) setIsFullscreen(false);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [isPaletteOpen, configuringDevice, pingSource, showPortSelector, contextMenu, cancelDeviceConfig, isFullscreen]);
-
-  // Handle right-click context menu with viewport clamping
-  const openContextMenu = useCallback((
-    clientX: number,
-    clientY: number,
-    deviceId: string | null = null,
-    noteId: string | null = null,
-    mode: 'device' | 'note-style' | 'note-edit' | 'canvas' = 'canvas'
-  ) => {
-    // Estimate menu dimensions (approximate)
-    const menuWidth = 220;
-    const menuHeight = deviceId ? 240 : noteId ? 320 : 180;
-
-    // Clamp coordinates to stay within viewport
-    let x = clientX;
-    let y = clientY;
-
-    if (x + menuWidth > window.innerWidth) {
-      x = window.innerWidth - menuWidth - 10;
+  const updateNoteStyle = useCallback((noteId: string, patch: Partial<Pick<CanvasNote, 'color' | 'font' | 'fontSize' | 'opacity'>>) => {
+    saveToHistory();
+    const updatedNotes = notes.map(n => n.id === noteId ? { ...n, ...patch } : n);
+    setNotes(updatedNotes);
+    if (onTopologyChange) {
+      onTopologyChange(devices, connections, updatedNotes);
     }
-
-    if (y + menuHeight > window.innerHeight) {
-      y = window.innerHeight - menuHeight - 10;
-    }
-
-    // Ensure it doesn't go off the top/left either
-    x = Math.max(10, x);
-    y = Math.max(10, y);
-
-    window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'topology' } }));
-    contextMenuOpenedAtRef.current = Date.now();
-    setContextMenu({ x, y, deviceId, noteId, mode });
-  }, []);
-
-  // Clamp context menu to viewport after render
-  useEffect(() => {
-    if (!contextMenu || !contextMenuRef.current) return;
-    const rect = contextMenuRef.current.getBoundingClientRect();
-    const maxX = window.innerWidth - rect.width - 10;
-    const maxY = window.innerHeight - rect.height - 10;
-    const nextX = Math.max(10, Math.min(contextMenu.x, maxX));
-    const nextY = Math.max(10, Math.min(contextMenu.y, maxY));
-    if (nextX !== contextMenu.x || nextY !== contextMenu.y) {
-      setContextMenu(prev => prev ? { ...prev, x: nextX, y: nextY } : prev);
-    }
-  }, [contextMenu]);
-
-  // Handle canvas pan start
-  const handleCanvasMouseDown = useCallback((e: ReactMouseEvent) => {
-    if (e.button === 2) {
-      return;
-    } else if (e.button === 0 && !(e.target as HTMLElement).closest('[data-device-id], [data-note-id], [data-note-drag-handle]')) {
-      setIsPanning(true);
-      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-      setSelectedDeviceIds([]);
-      setSelectedNoteIds([]);
-      setContextMenu(null);
-      setSelectAllMode(false);
-    }
-  }, [pan]);
-
-  // Handle mouse move for panning and dragging
-  useEffect(() => {
-    const handleMouseMove = (e: globalThis.MouseEvent) => {
-      if (isPanning) {
-        setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
-      } else if (draggedDevice && canvasRef.current) {
-        // Check if we've moved enough to consider it a drag
-        if (dragStartPos) {
-          const distance = getDistance(dragStartPos.x, dragStartPos.y, e.clientX, e.clientY);
-          if (distance > DRAG_THRESHOLD) {
-            setIsActuallyDragging(true);
-            wasDraggingRef.current = true; // Mark as dragging for click handler
-            setPortTooltip(null); // Hide any active tooltip
-          }
-        }
-
-        if (isActuallyDragging) {
-          // Throttling with requestAnimationFrame
-          if (dragAnimationFrameRef.current !== null) return;
-
-          dragAnimationFrameRef.current = requestAnimationFrame(() => {
-            const rect = canvasRef.current!.getBoundingClientRect();
-            const mouseX = (e.clientX - rect.left - pan.x) / zoom;
-            const mouseY = (e.clientY - rect.top - pan.y) / zoom;
-
-            // Calculate delta from start pos
-            if (!dragStartPos) return;
-            const startMouseX = (dragStartPos.x - rect.left - pan.x) / zoom;
-            const startMouseY = (dragStartPos.y - rect.top - pan.y) / zoom;
-            const dx = mouseX - startMouseX;
-            const dy = mouseY - startMouseY;
-
-            const canvasDims = getCanvasDimensions();
-
-            setDevices((prev) => {
-              const newDevices = [...prev];
-              let changed = false;
-
-              // If draggedDevice is in selection, move all selected devices
-              const devicesToMove = selectedDeviceIds.includes(draggedDevice)
-                ? selectedDeviceIds
-                : [draggedDevice];
-
-              devicesToMove.forEach(id => {
-                const deviceIndex = newDevices.findIndex(d => d.id === id);
-                if (deviceIndex === -1) return;
-
-                const initialPos = dragStartDevicePositions[id];
-                if (!initialPos) return;
-
-                const newX = initialPos.x + dx;
-                const newY = initialPos.y + dy;
-
-                const clampedX = Math.max(20, Math.min(newX, canvasDims.width - 100));
-                const clampedY = Math.max(20, Math.min(newY, canvasDims.height - 100));
-
-                if (Math.abs(newDevices[deviceIndex].x - clampedX) > 0.1 || Math.abs(newDevices[deviceIndex].y - clampedY) > 0.1) {
-                  newDevices[deviceIndex] = { ...newDevices[deviceIndex], x: clampedX, y: clampedY };
-                  changed = true;
-                }
-              });
-
-              return changed ? newDevices : prev;
-            });
-
-            dragAnimationFrameRef.current = null;
-          });
-        }
-      } else if (resizingNoteId && noteResizeStartPos) {
-        const coords = getCanvasCoords(e.clientX, e.clientY);
-        const dx = coords.x - noteResizeStartPos.x;
-        const dy = coords.y - noteResizeStartPos.y;
-        const start = noteResizeStartSizes[resizingNoteId];
-        if (start) {
-          const nextWidth = Math.max(120, Math.min(start.width + dx, getCanvasDimensions().width - 40));
-          const nextHeight = Math.max(80, Math.min(start.height + dy, getCanvasDimensions().height - 40));
-          setNotes(prev => prev.map(n => n.id === resizingNoteId ? { ...n, width: nextWidth, height: nextHeight } : n));
-        }
-      } else if (draggedNoteId && noteDragStartPos) {
-        const coords = getCanvasCoords(e.clientX, e.clientY);
-        const canvasDims = getCanvasDimensions();
-        const dx = coords.x - noteDragStartPos.x;
-        const dy = coords.y - noteDragStartPos.y;
-        const targets = selectedNoteIds.includes(draggedNoteId) ? selectedNoteIds : [draggedNoteId];
-
-        setNotes(prev =>
-          prev.map(n => {
-            if (!targets.includes(n.id)) return n;
-            const start = noteDragStartPositions[n.id] || { x: n.x, y: n.y };
-            const newX = start.x + dx;
-            const newY = start.y + dy;
-            const clampedX = Math.max(20, Math.min(newX, canvasDims.width - NOTE_DEFAULT_WIDTH - 20));
-            const clampedY = Math.max(20, Math.min(newY, canvasDims.height - NOTE_DEFAULT_HEIGHT - 20));
-            return { ...n, x: clampedX, y: clampedY };
-          })
-        );
-      } else if (isDrawingConnection) {
-        const coords = getCanvasCoords(e.clientX, e.clientY);
-        setMousePos(coords);
-      }
-    };
-
-    const handleMouseUp = (e: globalThis.MouseEvent) => {
-      // Cancel any pending animation frame
-      if (dragAnimationFrameRef.current) {
-        cancelAnimationFrame(dragAnimationFrameRef.current);
-        dragAnimationFrameRef.current = null;
-      }
-
-      // Save to history and notify parent if we were actually dragging
-      if (isActuallyDragging && draggedDevice) {
-        saveToHistory();
-        if (onTopologyChange) {
-          onTopologyChange(devices, connections, notes);
-        }
-      }
-
-      if (resizingNoteId) {
-        saveToHistory();
-        if (onTopologyChange) {
-          onTopologyChange(devices, connections, notes);
-        }
-      }
-
-      if (draggedNoteId) {
-        saveToHistory();
-        if (onTopologyChange) {
-          onTopologyChange(devices, connections, notes);
-        }
-      }
-
-      // Note: We don't reset wasDraggingRef here - let it persist for the click handler
-      // The click handler will check wasDraggingRef and the next mousedown will reset it
-
-      setIsPanning(false);
-      setDraggedDevice(null);
-      setDraggedNoteId(null);
-      setNoteDragStartPos(null);
-      setNoteDragStartPositions({});
-      setResizingNoteId(null);
-      setNoteResizeStartPos(null);
-      setNoteResizeStartSizes({});
-      setDragStartPos(null);
-      setIsActuallyDragging(false);
-      setDragStartDevicePositions({}); // Clear initial positions after drag
-      lastDragPositionRef.current = null;
-    };
-
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      if (dragAnimationFrameRef.current) {
-        cancelAnimationFrame(dragAnimationFrameRef.current);
-      }
-    };
-  }, [isPanning, panStart, draggedDevice, draggedNoteId, resizingNoteId, noteDragStartPos, noteResizeStartPos, noteResizeStartSizes, zoom, pan, isDrawingConnection, getCanvasCoords, getCanvasDimensions, dragStartPos, isActuallyDragging, getDistance, onDeviceSelect, saveToHistory, selectedDeviceIds, selectedNoteIds, dragStartDevicePositions, noteDragStartPositions, notes, connections, devices, onTopologyChange]);
-
-  // Global touch event handlers for device/note dragging on mobile
-  useEffect(() => {
-    if (!isMobile) return;
-
-    const handleGlobalTouchMove = (e: globalThis.TouchEvent) => {
-      if (e.touches.length !== 1 || !canvasRef.current) return;
-
-      const touch = e.touches[0];
-
-      if (touchDraggedDevice) {
-        // Check if we've moved enough to consider it a drag
-        if (touchDragStartPos) {
-          const distance = getDistance(touchDragStartPos.x, touchDragStartPos.y, touch.clientX, touch.clientY);
-          if (distance > DRAG_THRESHOLD) {
-            setIsTouchDragging(true);
-          }
-        }
-
-        if (isTouchDragging) {
-          e.preventDefault(); // Prevent page scroll
-          const rect = canvasRef.current.getBoundingClientRect();
-          const newX = (touch.clientX - rect.left - pan.x - touchDragOffset.x) / zoom;
-          const newY = (touch.clientY - rect.top - pan.y - touchDragOffset.y) / zoom;
-
-          // Clamp to canvas bounds
-          const canvasDims = getCanvasDimensions();
-          const clampedX = Math.max(50, Math.min(newX, canvasDims.width - 120));
-          const clampedY = Math.max(50, Math.min(newY, canvasDims.height - 150));
-
-          // Store position in ref for animation frame
-          lastDragPositionRef.current = { x: clampedX, y: clampedY };
-
-          // Use requestAnimationFrame for smooth updates
-          if (!dragAnimationFrameRef.current) {
-            dragAnimationFrameRef.current = requestAnimationFrame(() => {
-              if (lastDragPositionRef.current && touchDraggedDevice) {
-                setDevices((prev) =>
-                  prev.map((d) =>
-                    d.id === touchDraggedDevice
-                      ? { ...d, x: lastDragPositionRef.current!.x, y: lastDragPositionRef.current!.y }
-                      : d
-                  )
-                );
-              }
-              dragAnimationFrameRef.current = null;
-            });
-          }
-        }
-        return;
-      }
-
-      if (draggedNoteId && noteDragStartPos) {
-        const coords = getCanvasCoords(touch.clientX, touch.clientY);
-        const distance = getDistance(noteDragStartPos.x, noteDragStartPos.y, coords.x, coords.y);
-        if (distance > DRAG_THRESHOLD) {
-          setIsTouchDraggingNote(true);
-        }
-
-        if (isTouchDraggingNote) {
-          e.preventDefault(); // Prevent page scroll
-          const canvasDims = getCanvasDimensions();
-          const dx = coords.x - noteDragStartPos.x;
-          const dy = coords.y - noteDragStartPos.y;
-          const targets = selectedNoteIds.includes(draggedNoteId) ? selectedNoteIds : [draggedNoteId];
-
-          setNotes(prev =>
-            prev.map(n => {
-              if (!targets.includes(n.id)) return n;
-              const start = noteDragStartPositions[n.id] || { x: n.x, y: n.y };
-              const newX = start.x + dx;
-              const newY = start.y + dy;
-              const clampedX = Math.max(20, Math.min(newX, canvasDims.width - NOTE_DEFAULT_WIDTH - 20));
-              const clampedY = Math.max(20, Math.min(newY, canvasDims.height - NOTE_DEFAULT_HEIGHT - 20));
-              return { ...n, x: clampedX, y: clampedY };
-            })
-          );
-        }
-      }
-    };
-
-    const handleGlobalTouchEnd = () => {
-      // Cancel any pending animation frame
-      if (dragAnimationFrameRef.current) {
-        cancelAnimationFrame(dragAnimationFrameRef.current);
-        dragAnimationFrameRef.current = null;
-      }
-
-      // If we weren't dragging, treat it as a tap (select)
-      if (touchDraggedDevice && !isTouchDragging) {
-        const device = devices.find(d => d.id === touchDraggedDevice);
-        if (device) {
-          setSelectedDeviceIds([device.id]);
-          onDeviceSelect(device.type, device.id);
-        }
-      }
-
-      if (draggedNoteId && isTouchDraggingNote) {
-        saveToHistory();
-        if (onTopologyChange) {
-          onTopologyChange(devices, connections, notes);
-        }
-      }
-
-      setTouchDraggedDevice(null);
-      setTouchDragStartPos(null);
-      setIsTouchDragging(false);
-      setIsTouchDraggingNote(false);
-      setLastTouchDistance(null);
-      setTouchStart(null);
-      lastDragPositionRef.current = null;
-      setDraggedNoteId(null);
-      setNoteDragStartPos(null);
-      setNoteDragStartPositions({});
-
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        setLongPressTimer(null);
-      }
-    };
-
-    window.addEventListener('touchmove', handleGlobalTouchMove, { passive: false });
-    window.addEventListener('touchend', handleGlobalTouchEnd);
-    window.addEventListener('touchcancel', handleGlobalTouchEnd);
-
-    return () => {
-      window.removeEventListener('touchmove', handleGlobalTouchMove);
-      window.removeEventListener('touchend', handleGlobalTouchEnd);
-      window.removeEventListener('touchcancel', handleGlobalTouchEnd);
-      if (dragAnimationFrameRef.current) {
-        cancelAnimationFrame(dragAnimationFrameRef.current);
-      }
-    };
-  }, [isMobile, touchDraggedDevice, touchDragOffset, touchDragStartPos, isTouchDragging, draggedNoteId, noteDragStartPos, noteDragStartPositions, isTouchDraggingNote, pan, zoom, getDistance, getCanvasCoords, getCanvasDimensions, devices, connections, notes, selectedNoteIds, onDeviceSelect, onTopologyChange, saveToHistory, longPressTimer]);
-
-  // Handle device drag start
-  const handleDeviceMouseDown = useCallback((e: ReactMouseEvent, deviceId: string) => {
-    e.stopPropagation();
-    if (!canvasRef.current) return;
-
-    const rect = canvasRef.current.getBoundingClientRect();
-    const device = devices.find((d) => d.id === deviceId);
-    if (!device) return;
-
-    // Reset drag tracking
-    wasDraggingRef.current = false;
-
-    // Shift key for multi-selection
-    if (e.shiftKey) {
-      setSelectedDeviceIds(prev =>
-        prev.includes(deviceId) ? prev.filter(id => id !== deviceId) : [...prev, deviceId]
-      );
-    } else {
-      // If clicking a device that's not selected, make it the only selection
-      // If it IS already selected, keep selection for group dragging
-      if (!selectedDeviceIds.includes(deviceId)) {
-        setSelectedDeviceIds([deviceId]);
-        onDeviceSelect(device.type === 'router' ? 'switch' : device.type, deviceId);
-      }
-    }
-
-    // Store starting positions of all selected devices for group dragging
-    // Use the latest selected set
-    const currentSelectedIds = e.shiftKey
-      ? (selectedDeviceIds.includes(deviceId) ? selectedDeviceIds.filter(id => id !== deviceId) : [...selectedDeviceIds, deviceId])
-      : (selectedDeviceIds.includes(deviceId) ? selectedDeviceIds : [deviceId]);
-
-    const initialPositions: { [key: string]: { x: number, y: number } } = {};
-    devices.forEach(d => {
-      if (currentSelectedIds.includes(d.id)) {
-        initialPositions[d.id] = { x: d.x, y: d.y };
-      }
-    });
-    setDragStartDevicePositions(initialPositions);
-
-    // Store the starting position for distance calculation
-    setDragStartPos({ x: e.clientX, y: e.clientY });
-    setIsActuallyDragging(false);
-    setDraggedDevice(deviceId);
-    setDragOffset({
-      x: (e.clientX - rect.left - pan.x) - device.x * zoom,
-      y: (e.clientY - rect.top - pan.y) - device.y * zoom,
-    });
-  }, [devices, pan, zoom, selectedDeviceIds, onDeviceSelect]);
-
-  // Handle device click (single click - select only)
-  const handleDeviceClick = useCallback((e: ReactMouseEvent, device: CanvasDevice) => {
-    e.stopPropagation();
-    // Don't handle click if we were dragging (check ref to avoid stale closure)
-    if (wasDraggingRef.current) return;
-
-    if (e.shiftKey) {
-      return;
-    }
-
-    setSelectedDeviceIds([device.id]);
-    setSelectedNoteIds([]);
-    // Notify parent component - select device, don't open terminal
-    onDeviceSelect(device.type, device.id);
-  }, [onDeviceSelect]);
-
-  // Handle device double click - open terminal
-  const handleDeviceDoubleClick = useCallback((device: CanvasDevice) => {
-    // Open terminal for this specific device
-    if (onDeviceDoubleClick) {
-      onDeviceDoubleClick(device.type, device.id);
-    } else {
-      // Fallback to old behavior
-      if (device.type === 'pc') {
-        onDeviceSelect('pc', device.id);
-      } else if (device.type === 'switch' || device.type === 'router') {
-        onDeviceSelect('switch', device.id);
-      }
-    }
-  }, [onDeviceDoubleClick, onDeviceSelect]);
-
-  const handleNoteMouseDown = useCallback((e: ReactMouseEvent, noteId: string) => {
-    e.stopPropagation();
-    const coords = getCanvasCoords(e.clientX, e.clientY);
-    const note = notes.find(n => n.id === noteId);
-    if (!note) return;
-    setDraggedNoteId(noteId);
-    setNoteDragStartPos(coords);
-    const nextSelected = e.shiftKey
-      ? (selectedNoteIds.includes(noteId) ? selectedNoteIds.filter(id => id !== noteId) : [...selectedNoteIds, noteId])
-      : [noteId];
-    setSelectedDeviceIds([]);
-    setSelectedNoteIds(nextSelected);
-    const targets = nextSelected.includes(noteId) ? nextSelected : [noteId];
-    const startPositions: { [key: string]: { x: number; y: number } } = {};
-    targets.forEach(id => {
-      const n = notes.find(nn => nn.id === id);
-      if (n) startPositions[id] = { x: n.x, y: n.y };
-    });
-    setNoteDragStartPositions(startPositions);
-    setContextMenu(null);
-    setSelectAllMode(false);
-  }, [notes, getCanvasCoords, selectedNoteIds]);
-
-  const handleNoteTouchStart = useCallback((e: ReactTouchEvent, noteId: string) => {
-    if (e.touches.length !== 1) return;
-    if ((e.target as HTMLElement).closest('[data-note-textarea]')) return;
-    e.stopPropagation();
-    const touch = e.touches[0];
-    const coords = getCanvasCoords(touch.clientX, touch.clientY);
-    const note = notes.find(n => n.id === noteId);
-    if (!note) return;
-
-    setDraggedNoteId(noteId);
-    setNoteDragStartPos(coords);
-    setIsTouchDraggingNote(false);
-    const nextSelected = selectedNoteIds.includes(noteId) ? selectedNoteIds : [noteId];
-    setSelectedDeviceIds([]);
-    setSelectedNoteIds(nextSelected);
-    const targets = nextSelected.includes(noteId) ? nextSelected : [noteId];
-    const startPositions: { [key: string]: { x: number; y: number } } = {};
-    targets.forEach(id => {
-      const n = notes.find(nn => nn.id === id);
-      if (n) startPositions[id] = { x: n.x, y: n.y };
-    });
-    setNoteDragStartPositions(startPositions);
-    setContextMenu(null);
-    setSelectAllMode(false);
-  }, [notes, getCanvasCoords, selectedNoteIds]);
-
-  const handleNoteContextMenu = useCallback((
-    e: ReactMouseEvent,
-    noteId: string,
-    mode: 'note-style' | 'note-edit'
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openContextMenu(e.clientX, e.clientY, null, noteId, mode);
-  }, [openContextMenu]);
-
-  const handleNoteResizeStart = useCallback((e: ReactMouseEvent, noteId: string) => {
-    if (isMobile) return;
-    e.stopPropagation();
-    const coords = getCanvasCoords(e.clientX, e.clientY);
-    setResizingNoteId(noteId);
-    setNoteResizeStartPos(coords);
-    const start = notes.find(n => n.id === noteId);
-    if (start) {
-      setNoteResizeStartSizes({ [noteId]: { width: start.width, height: start.height } });
-    }
-  }, [getCanvasCoords, notes, isMobile]);
+  }, [notes, devices, connections, onTopologyChange, saveToHistory]);
 
   const updateNoteText = useCallback((noteId: string, text: string) => {
     setNotes(prev => prev.map(n => (n.id === noteId ? { ...n, text } : n)));
@@ -1148,14 +502,8 @@ export function NetworkTopology({
     } catch {
       document.execCommand('copy');
     }
-    if (start !== end) {
-      const next = el.value.slice(0, start) + el.value.slice(end);
-      el.value = next;
-      el.setSelectionRange(start, start);
-      updateNoteText(noteId, el.value);
-    } else {
-      updateNoteText(noteId, '');
-    }
+    const newValue = el.value.slice(0, start) + el.value.slice(end);
+    updateNoteText(noteId, newValue);
   }, [getNoteTextarea, updateNoteText]);
 
   const handleNoteTextPaste = useCallback(async (noteId: string) => {
@@ -1166,13 +514,10 @@ export function NetworkTopology({
       const text = await navigator.clipboard.readText();
       const start = el.selectionStart ?? 0;
       const end = el.selectionEnd ?? 0;
-      const next = el.value.slice(0, start) + text + el.value.slice(end);
-      el.value = next;
-      el.setSelectionRange(start + text.length, start + text.length);
-      updateNoteText(noteId, el.value);
+      const newValue = el.value.slice(0, start) + text + el.value.slice(end);
+      updateNoteText(noteId, newValue);
     } catch {
-      document.execCommand('paste');
-      updateNoteText(noteId, el.value);
+      // Fallback
     }
   }, [getNoteTextarea, updateNoteText]);
 
@@ -1182,351 +527,57 @@ export function NetworkTopology({
     el.focus();
     const start = el.selectionStart ?? 0;
     const end = el.selectionEnd ?? 0;
-    if (start !== end) {
-      const next = el.value.slice(0, start) + el.value.slice(end);
-      el.value = next;
-      el.setSelectionRange(start, start);
-      updateNoteText(noteId, el.value);
-    } else {
-      updateNoteText(noteId, '');
-    }
+    const newValue = start !== end
+      ? el.value.slice(0, start) + el.value.slice(end)
+      : '';
+    updateNoteText(noteId, newValue);
   }, [getNoteTextarea, updateNoteText]);
 
-  const commitNotesChange = useCallback((nextNotes: CanvasNote[]) => {
-    saveToHistory();
-    setNotes(nextNotes);
-    if (onTopologyChange) {
-      onTopologyChange(devices, connections, nextNotes);
-    }
-  }, [saveToHistory, onTopologyChange, devices, connections]);
-
-  const updateNoteStyle = useCallback((noteId: string, patch: Partial<Pick<CanvasNote, 'color' | 'font' | 'fontSize' | 'opacity'>>) => {
-    const nextNotes = notes.map(n => (n.id === noteId ? { ...n, ...patch } : n));
-    commitNotesChange(nextNotes);
-  }, [notes, commitNotesChange]);
-
-  const deleteNote = useCallback((noteId: string) => {
-    const nextNotes = notes.filter(n => n.id !== noteId);
-    commitNotesChange(nextNotes);
-  }, [notes, commitNotesChange]);
-
-  const copyNotes = useCallback((ids: string[]) => {
-    const selected = notes.filter(n => ids.includes(n.id));
-    if (selected.length > 0) {
-      setNoteClipboard(selected.map(n => ({ ...n })));
-    }
-  }, [notes]);
-
-  const pasteNotes = useCallback((clientX?: number, clientY?: number) => {
+  const pasteNotes = useCallback((x?: number, y?: number) => {
     if (noteClipboard.length === 0) return;
-    const canvasDims = getCanvasDimensions();
-    let baseX = 120;
-    let baseY = 120;
+    saveToHistory();
 
-    if (clientX !== undefined && clientY !== undefined) {
-      const coords = getCanvasCoords(clientX, clientY);
-      baseX = coords.x;
-      baseY = coords.y;
+    const canvasPos = x !== undefined && y !== undefined
+      ? getCanvasCoords(x, y)
+      : { x: (400 - pan.x) / zoom, y: (200 - pan.y) / zoom };
+
+    const firstNote = noteClipboard[0];
+    const dx = canvasPos.x - firstNote.x;
+    const dy = canvasPos.y - firstNote.y;
+
+    const newNotes: CanvasNote[] = noteClipboard.map(n => ({
+      ...n,
+      id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      x: n.x + dx,
+      y: n.y + dy
+    }));
+
+    const updatedNotes = [...notes, ...newNotes];
+    setNotes(updatedNotes);
+    if (onTopologyChange) {
+      onTopologyChange(devices, connections, updatedNotes);
     }
+    setSelectedNoteIds(newNotes.map(n => n.id));
+  }, [noteClipboard, notes, devices, connections, pan, zoom, getCanvasCoords, onTopologyChange, saveToHistory]);
 
-    const offsetStep = 20;
-    const now = Date.now();
-    const newNotes = noteClipboard.map((n, idx) => {
-      const x = Math.max(20, Math.min(baseX + idx * offsetStep, canvasDims.width - NOTE_DEFAULT_WIDTH - 20));
-      const y = Math.max(20, Math.min(baseY + idx * offsetStep, canvasDims.height - NOTE_DEFAULT_HEIGHT - 20));
-      return {
-        ...n,
-        id: `note-${now}-${idx}`,
-        x,
-        y
-      };
-    });
+  const duplicateNote = useCallback((noteId: string) => {
+    const note = notes.find(n => n.id === noteId);
+    if (!note) return;
 
-    const nextNotes = [...notes, ...newNotes];
-    commitNotesChange(nextNotes);
-  }, [noteClipboard, notes, getCanvasDimensions, getCanvasCoords, commitNotesChange]);
-
-  // Handle right-click context menu with viewport clamping
-  const handleContextMenu = useCallback((e: ReactMouseEvent, deviceId?: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Estimate menu dimensions (approximate)
-    const menuWidth = 180;
-    const menuHeight = deviceId ? 400 : 200; // Device menu is taller
-
-    // Clamp coordinates to stay within viewport
-    let x = e.clientX;
-    let y = e.clientY;
-
-    if (x + menuWidth > window.innerWidth) {
-      x = window.innerWidth - menuWidth - 10;
-    }
-
-    if (y + menuHeight > window.innerHeight) {
-      y = window.innerHeight - menuHeight - 10;
-    }
-
-    // Ensure it doesn't go off the top/left either
-    x = Math.max(10, x);
-    y = Math.max(10, y);
-
-    window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'topology' } }));
-    openContextMenu(x, y, deviceId || null, null, deviceId ? 'device' : 'canvas');
-  }, [openContextMenu]);
-
-  // Handle device touch start - for mobile dragging
-  const handleDeviceTouchStart = useCallback((e: ReactTouchEvent, deviceId: string) => {
-    if (e.touches.length !== 1) return; // Only handle single touch for dragging
-    e.stopPropagation();
-
-    if (!canvasRef.current) return;
-
-    const touch = e.touches[0];
-    const rect = canvasRef.current.getBoundingClientRect();
-    const device = devices.find((d) => d.id === deviceId);
-    if (!device) return;
-
-    // Cancel any pending long press timer from canvas touch
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-
-    // Store the starting position for distance calculation
-    setTouchDragStartPos({ x: touch.clientX, y: touch.clientY });
-    setIsTouchDragging(false);
-    setTouchDraggedDevice(deviceId);
-    setTouchDragOffset({
-      x: (touch.clientX - rect.left - pan.x) - device.x * zoom,
-      y: (touch.clientY - rect.top - pan.y) - device.y * zoom,
-    });
-    setSelectedDeviceIds([deviceId]);
-
-    // Check for double tap
-    const now = Date.now();
-    if (now - lastTapTime < 300 && lastTappedDevice === deviceId) {
-      // Double tap detected - open terminal
-      handleDeviceDoubleClick(device);
-      setLastTapTime(0);
-      setLastTappedDevice(null);
-    } else {
-      setLastTapTime(now);
-      setLastTappedDevice(deviceId);
-    }
-  }, [devices, pan, zoom, longPressTimer, lastTapTime, lastTappedDevice, handleDeviceDoubleClick]);
-
-  // Handle device touch move - for mobile dragging
-  const handleDeviceTouchMove = useCallback((e: ReactTouchEvent) => {
-    if (e.touches.length !== 1 || !touchDraggedDevice || !canvasRef.current) return;
-    e.stopPropagation();
-    e.preventDefault(); // Prevent scrolling
-
-    const touch = e.touches[0];
-
-    // Check if we've moved enough to consider it a drag
-    if (touchDragStartPos) {
-      const distance = getDistance(touchDragStartPos.x, touchDragStartPos.y, touch.clientX, touch.clientY);
-      if (distance > DRAG_THRESHOLD) {
-        setIsTouchDragging(true);
-      }
-    }
-
-    if (isTouchDragging) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const newX = (touch.clientX - rect.left - pan.x - touchDragOffset.x) / zoom;
-      const newY = (touch.clientY - rect.top - pan.y - touchDragOffset.y) / zoom;
-
-      const canvasDims = getCanvasDimensions();
-      setDevices((prev) =>
-        prev.map((d) =>
-          d.id === touchDraggedDevice
-            ? { ...d, x: Math.max(50, Math.min(newX, canvasDims.width - 120)), y: Math.max(50, Math.min(newY, canvasDims.height - 150)) }
-            : d
-        )
-      );
-    }
-  }, [touchDraggedDevice, touchDragOffset, touchDragStartPos, isTouchDragging, pan, zoom, getDistance]);
-
-  // Handle device touch end - for mobile dragging
-  const handleDeviceTouchEnd = useCallback(() => {
-    // If we weren't dragging, treat it as a tap (select)
-    if (touchDraggedDevice && !isTouchDragging) {
-      const device = devices.find(d => d.id === touchDraggedDevice);
-      if (device) {
-        setSelectedDeviceIds([device.id]);
-        onDeviceSelect(device.type, device.id);
-      }
-    }
-
-    setTouchDraggedDevice(null);
-    setTouchDragStartPos(null);
-    setIsTouchDragging(false);
-  }, [touchDraggedDevice, isTouchDragging, devices, onDeviceSelect]);
-
-  // Canvas-level touch handlers (pan, pinch, long-press for context)
-  const handleTouchStart = useCallback((e: ReactTouchEvent) => {
-    if (!canvasRef.current) return;
-
-    // Check if target is not a device
-    const isDevice = (e.target as HTMLElement).closest('[data-device-id]') || false;
-    const isNote = (e.target as HTMLElement).closest('[data-note-id]') || false;
-    if (isDevice || isNote) return; // handled by device/note handlers
-
-    // Cancel any existing long-press timer
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-
-    if (e.touches.length === 1) {
-      const t = e.touches[0];
-      setTouchStart({ x: t.clientX, y: t.clientY });
-      setIsPanning(true);
-      setPanStart({ x: t.clientX - pan.x, y: t.clientY - pan.y });
-
-      // Start long-press to open context menu
-      const timer = setTimeout(() => {
-        openContextMenu(t.clientX, t.clientY, null, null, 'canvas');
-        setLongPressTimer(null);
-        setIsPanning(false);
-      }, LONG_PRESS_DURATION);
-      setLongPressTimer(timer);
-    } else if (e.touches.length === 2) {
-      setIsPanning(false);
-      // Pinch start - track initial distance and center
-      const a = e.touches[0];
-      const b = e.touches[1];
-      setLastTouchDistance(getDistance(a.clientX, a.clientY, b.clientX, b.clientY));
-      setLastTouchCenter({
-        x: (a.clientX + b.clientX) / 2,
-        y: (a.clientY + b.clientY) / 2
-      });
-    }
-  }, [longPressTimer, pan, getDistance]);
-
-  const handleTouchMove = useCallback((e: ReactTouchEvent) => {
-    if (!canvasRef.current) return;
-    const isDevice = (e.target as HTMLElement).closest('[data-device-id]') || false;
-    const isNote = (e.target as HTMLElement).closest('[data-note-id]') || false;
-    if (isDevice || isNote) return;
-
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-
-    if (e.touches.length === 1 && isPanning) {
-      const t = e.touches[0];
-      setPan({ x: t.clientX - panStart.x, y: t.clientY - panStart.y });
-    } else if (e.touches.length === 2 && lastTouchDistance !== null && lastTouchCenter !== null) {
-      const a = e.touches[0];
-      const b = e.touches[1];
-
-      const newDistance = getDistance(a.clientX, a.clientY, b.clientX, b.clientY);
-      const newCenter = {
-        x: (a.clientX + b.clientX) / 2,
-        y: (a.clientY + b.clientY) / 2
-      };
-
-      // Calculate zoom factor
-      const zoomFactor = newDistance / lastTouchDistance;
-      let newZoom = zoom * zoomFactor;
-      newZoom = Math.max(MIN_ZOOM, Math.min(newZoom, MAX_ZOOM));
-
-      if (newZoom !== zoom) {
-        // Adjust pan to zoom relative to the gesture center
-        const rect = canvasRef.current.getBoundingClientRect();
-        const cursorX = newCenter.x - rect.left;
-        const cursorY = newCenter.y - rect.top;
-
-        const deltaX = cursorX - (cursorX - pan.x) * (newZoom / zoom);
-        const deltaY = cursorY - (cursorY - pan.y) * (newZoom / zoom);
-
-        // Also add the pan movement of the center point itself
-        const panDeltaX = newCenter.x - lastTouchCenter.x;
-        const panDeltaY = newCenter.y - lastTouchCenter.y;
-
-        setZoom(newZoom);
-        setPan({ x: deltaX + panDeltaX, y: deltaY + panDeltaY });
-      } else {
-        // If zoom didn't change (hit limits), at least we can pan
-        const panDeltaX = newCenter.x - lastTouchCenter.x;
-        const panDeltaY = newCenter.y - lastTouchCenter.y;
-        setPan(prev => ({ x: prev.x + panDeltaX, y: prev.y + panDeltaY }));
-      }
-
-      setLastTouchDistance(newDistance);
-      setLastTouchCenter(newCenter);
-    }
-  }, [isPanning, panStart, longPressTimer, pan, zoom, lastTouchDistance, lastTouchCenter, getDistance]);
-
-  const handleTouchEnd = useCallback((e: globalThis.TouchEvent | ReactTouchEvent) => {
-    // Clear long-press timer
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-
-    // If no more touches, reset pinch/touch tracking
-    const touchesLength = (e as ReactTouchEvent).touches ? (e as ReactTouchEvent).touches.length : 0;
-    if (touchesLength === 0) {
-      setLastTouchDistance(null);
-      setLastTouchCenter(null);
-      setTouchStart(null);
-      setIsPanning(false);
-    } else if (touchesLength === 1) {
-      // Revert to panning with one finger if the other is lifted
-      const t = (e as ReactTouchEvent).touches[0];
-      setIsPanning(true);
-      setPanStart({ x: t.clientX - pan.x, y: t.clientY - pan.y });
-      setLastTouchDistance(null);
-      setLastTouchCenter(null);
-    }
-  }, [longPressTimer, pan]);
-
-  // Handle Wheel Event for Zooming
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      const target = e.target as HTMLElement | null;
-      const noteTextarea = target?.closest('[data-note-textarea]') as HTMLElement | null;
-      if (noteTextarea && noteTextarea.scrollHeight > noteTextarea.clientHeight) {
-        return; // allow note text scrolling without zoom
-      }
-
-      e.preventDefault(); // prevent window scroll
-
-      const rect = canvas.getBoundingClientRect();
-      const cursorX = e.clientX - rect.left;
-      const cursorY = e.clientY - rect.top;
-
-      const zoomSensitivity = 0.0015;
-      const delta = -e.deltaY;
-
-      setZoom(prevZoom => {
-        let newZoom = prevZoom * Math.exp(delta * zoomSensitivity);
-        newZoom = Math.max(MIN_ZOOM, Math.min(newZoom, MAX_ZOOM));
-
-        // Only adjust pan if zoom actually changed
-        if (newZoom !== prevZoom) {
-          setPan(prevPan => {
-            return {
-              x: cursorX - (cursorX - prevPan.x) * (newZoom / prevZoom),
-              y: cursorY - (cursorY - prevPan.y) * (newZoom / prevZoom)
-            };
-          });
-        }
-        return newZoom;
-      });
+    saveToHistory();
+    const newNote: CanvasNote = {
+      ...note,
+      id: `note-${Date.now()}`,
+      x: note.x + 20,
+      y: note.y + 20,
     };
 
-    // passive: false is required to preventDefault on wheel
-    canvas.addEventListener('wheel', handleWheel, { passive: false });
-    return () => canvas.removeEventListener('wheel', handleWheel);
-  }, []);
+    const updatedNotes = [...notes, newNote];
+    setNotes(updatedNotes);
+    if (onTopologyChange) {
+      onTopologyChange(devices, connections, updatedNotes);
+    }
+  }, [notes, devices, connections, onTopologyChange, saveToHistory]);
 
   // Handle port click for connection
   const handlePortClick = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
@@ -1563,25 +614,9 @@ export function NetworkTopology({
         return;
       }
 
-      if (cableInfo.cableType === 'console') {
-        const sourceDevice = devices.find((d) => d.id === connectionStart.deviceId);
-        const targetDevice = devices.find((d) => d.id === deviceId);
-        const isConsoleAllowed =
-          !!sourceDevice &&
-          !!targetDevice &&
-          ((sourceDevice.type === 'pc' && (targetDevice.type === 'switch' || targetDevice.type === 'router')) ||
-            (targetDevice.type === 'pc' && (sourceDevice.type === 'switch' || sourceDevice.type === 'router')));
-        if (!isConsoleAllowed) {
-          setConnectionError(language === 'tr'
-            ? 'Console kablo sadece PC ile Switch/Router arasında bağlanabilir!'
-            : 'Console cable can only connect PC to Switch/Router!');
-          setTimeout(() => setConnectionError(null), 3000);
-          setIsDrawingConnection(false);
-          setConnectionStart(null);
-          return;
-        }
-      }
-      // Complete connection
+      // Check if connection already exists between these devices (multiple connections)
+      // For now, we allow multiple connections between devices if they are on different ports.
+
       saveToHistory();
       const newConnection: CanvasConnection = {
         id: `conn-${Date.now()}`,
@@ -1596,22 +631,20 @@ export function NetworkTopology({
       const updatedConnections = [...connections, newConnection];
       setConnections(updatedConnections);
 
-      // Update port status
+      // Update port status on both devices
       const updatedDevices = devices.map((d) => {
-        if (d.id === connectionStart.deviceId) {
+        if (d.id === connectionStart.deviceId || d.id === deviceId) {
           return {
             ...d,
-            ports: d.ports.map((p) =>
-              p.id === connectionStart.portId ? { ...p, status: 'connected' as const } : p
-            ),
-          };
-        }
-        if (d.id === deviceId) {
-          return {
-            ...d,
-            ports: d.ports.map((p) =>
-              p.id === portId ? { ...p, status: 'connected' as const } : p
-            ),
+            ports: d.ports.map((p) => {
+              if (
+                (d.id === connectionStart.deviceId && p.id === connectionStart.portId) ||
+                (d.id === deviceId && p.id === portId)
+              ) {
+                return { ...p, status: 'connected' as const };
+              }
+              return p;
+            }),
           };
         }
         return d;
@@ -1622,1396 +655,545 @@ export function NetworkTopology({
         onTopologyChange(updatedDevices, updatedConnections, notes);
       }
 
-      // Update cable info
-      const sourceDevice = devices.find((d) => d.id === connectionStart.deviceId);
-      const targetDevice = devices.find((d) => d.id === deviceId);
-      if (sourceDevice && targetDevice) {
-        onCableChange({
-          ...cableInfo,
-          connected: true,
-          sourceDevice: sourceDevice.type === 'router' ? 'switch' : sourceDevice.type,
-          targetDevice: targetDevice.type === 'router' ? 'switch' : targetDevice.type,
-        });
-      }
-
       setIsDrawingConnection(false);
       setConnectionStart(null);
     } else {
-      // Start connection - calculate port position inline
-      const portIndex = device.ports.findIndex(p => p.id === portId);
-      const portsPerRow = device.type === 'pc' ? 2 : 8;
-      const col = portIndex % portsPerRow;
-      const row = Math.floor(portIndex / portsPerRow);
-      const portSpacing = device.type === 'pc' ? 18 : 14;
-      const startX = device.type === 'pc'
-        ? 42.5 - (device.ports.length > 1 ? portSpacing / 2 : 0)
-        : 14;
-      const portX = device.x + startX + col * portSpacing;
-      const portY = device.y + 80 + row * 14;
-
       setIsDrawingConnection(true);
-      setConnectionStart({
-        deviceId,
-        portId,
-        point: { x: portX, y: portY },
-      });
+      setConnectionStart({ deviceId, portId });
     }
-  }, [devices, connections, isDrawingConnection, connectionStart, cableInfo, onCableChange, saveToHistory, onTopologyChange, notes, language]);
+  }, [isDrawingConnection, connectionStart, devices, connections, notes, cableInfo, onTopologyChange, saveToHistory, language]);
 
-  // generate an unused IP within 192.168.1.x (skip existing addresses)
-  const generateUniqueIp = useCallback(() => {
-    let suffix = 100;
-    while (devices.some(d => d.ip === `192.168.1.${suffix}`) || suffix === 1 || suffix === 10) {
-      suffix++;
+  // Port selector modal actions
+  const closePortSelector = useCallback(() => {
+    setShowPortSelector(false);
+    setPortSelectorStep('source');
+    setSelectedSourcePort(null);
+  }, []);
+
+  const handlePortSelectorSelectPort = useCallback((deviceId: string, portId: string) => {
+    if (portSelectorStep === 'source') {
+      setSelectedSourcePort({ deviceId, portId });
+      setPortSelectorStep('target');
+    } else if (selectedSourcePort) {
+      // Target port selected, create connection
+      const sourceDevice = devices.find(d => d.id === selectedSourcePort.deviceId);
+      const targetDevice = devices.find(d => d.id === deviceId);
+
+      if (sourceDevice && targetDevice) {
+        // Check if connecting to itself
+        if (sourceDevice.id === targetDevice.id) {
+          setConnectionError(language === 'tr' ? 'Bir cihaz kendisine bağlanamaz!' : 'A device cannot connect to itself!');
+          setTimeout(() => setConnectionError(null), 3000);
+          closePortSelector();
+          return;
+        }
+
+        saveToHistory();
+        const newConnection: CanvasConnection = {
+          id: `conn-${Date.now()}`,
+          sourceDeviceId: selectedSourcePort.deviceId,
+          sourcePort: selectedSourcePort.portId,
+          targetDeviceId: deviceId,
+          targetPort: portId,
+          cableType: cableInfo.cableType,
+          active: true,
+        };
+
+        const updatedConnections = [...connections, newConnection];
+        setConnections(updatedConnections);
+
+        const updatedDevices = devices.map(d => {
+          if (d.id === selectedSourcePort.deviceId || d.id === deviceId) {
+            return {
+              ...d,
+              ports: d.ports.map(p => {
+                if (
+                  (d.id === selectedSourcePort.deviceId && p.id === selectedSourcePort.portId) ||
+                  (d.id === deviceId && p.id === portId)
+                ) {
+                  return { ...p, status: 'connected' as const };
+                }
+                return p;
+              })
+            };
+          }
+          return d;
+        });
+        setDevices(updatedDevices);
+
+        if (onTopologyChange) {
+          onTopologyChange(updatedDevices, updatedConnections, notes);
+        }
+      }
+      closePortSelector();
     }
-    return `192.168.1.${suffix}`;
+  }, [portSelectorStep, selectedSourcePort, devices, connections, notes, cableInfo, language, closePortSelector, onTopologyChange, saveToHistory]);
+
+  // Mouse event handlers for canvas
+  const handleCanvasMouseDown = useCallback((e: ReactMouseEvent) => {
+    if (e.button !== 0) return; // Only left click
+
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-note-id]')) return; // handled by note mouseDown
+
+    setContextMenu(null);
+    setSelectAllMode(false);
+
+    if (e.ctrlKey || e.metaKey || e.shiftKey) {
+      // Potential multi-select start or pan start
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    } else {
+      // Clear selection unless clicking on a device/note
+      const deviceTarget = target.closest('[data-device-id]');
+      const noteTarget = target.closest('[data-note-id]');
+
+      if (!deviceTarget && !noteTarget) {
+        setSelectedDeviceIds([]);
+        setSelectedNoteIds([]);
+        setIsPanning(true);
+        setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      }
+    }
+  }, [pan]);
+
+  const handleDeviceMouseDown = useCallback((e: ReactMouseEvent, deviceId: string) => {
+    if (e.button !== 0) return; // Only left click
+    e.stopPropagation();
+
+    if (isDrawingConnection) return;
+
+    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+      setSelectedDeviceIds(prev =>
+        prev.includes(deviceId) ? prev.filter(id => id !== deviceId) : [...prev, deviceId]
+      );
+    } else {
+      if (!selectedDeviceIds.includes(deviceId)) {
+        setSelectedDeviceIds([deviceId]);
+        setSelectedNoteIds([]);
+      }
+    }
+
+    setDraggedDevice(deviceId);
+    setIsActuallyDragging(false);
+    setDragStartPos({ x: e.clientX, y: e.clientY });
+  }, [isDrawingConnection, selectedDeviceIds]);
+
+  const handleDeviceClick = useCallback((e: ReactMouseEvent, device: CanvasDevice) => {
+    e.stopPropagation();
+    if (onDeviceSelect) onDeviceSelect(device.type, device.id);
+  }, [onDeviceSelect]);
+
+  const handleDeviceDoubleClick = useCallback((device: CanvasDevice) => {
+    if (onDeviceDoubleClickProp) {
+      onDeviceDoubleClickProp(device.type, device.id);
+    }
+    setActiveDeviceId(device.id);
+  }, [onDeviceDoubleClickProp]);
+
+  const handleNoteMouseDown = useCallback((e: ReactMouseEvent, noteId: string) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+
+    const target = e.target as HTMLElement;
+    if (target.hasAttribute('data-note-textarea')) return;
+
+    if (e.shiftKey) {
+      setSelectedNoteIds(prev => prev.includes(noteId) ? prev.filter(id => id !== noteId) : [...prev, noteId]);
+    } else {
+      if (!selectedNoteIds.includes(noteId)) {
+        setSelectedNoteIds([noteId]);
+        setSelectedDeviceIds([]);
+      }
+    }
+
+    setDraggedDevice(noteId);
+    setIsActuallyDragging(false);
+    setDragStartPos({ x: e.clientX, y: e.clientY });
+  }, [selectedNoteIds]);
+
+  const handleNoteResizeStart = useCallback((e: ReactMouseEvent, noteId: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setResizingNoteId(noteId);
+    setNoteResizeStartPos({ x: e.clientX, y: e.clientY });
+    const note = notes.find(n => n.id === noteId);
+    if (note) {
+      setNoteResizeStartSize({ width: note.width, height: note.height });
+    }
+  }, [notes]);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
+
+    if (isPanning) {
+      updatePan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+    } else if (resizingNoteId) {
+      const dx = (e.clientX - noteResizeStartPos.x) / zoom;
+      const dy = (e.clientY - noteResizeStartPos.y) / zoom;
+      setNotes(prev => prev.map(n => n.id === resizingNoteId ? {
+        ...n,
+        width: Math.max(100, noteResizeStartSize.width + dx),
+        height: Math.max(80, noteResizeStartSize.height + dy)
+      } : n));
+    } else if (draggedDevice) {
+      const dx = (e.clientX - dragStartPos.x) / zoom;
+      const dy = (e.clientY - dragStartPos.y) / zoom;
+
+      if (!isActuallyDragging && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
+        setIsActuallyDragging(true);
+      }
+
+      if (isActuallyDragging) {
+        if (selectedNoteIds.includes(draggedDevice)) {
+          // Dragging notes
+          setNotes(prev => prev.map(n => selectedNoteIds.includes(n.id) ? { ...n, x: n.x + dx, y: n.y + dy } : n));
+        } else {
+          // Dragging devices
+          updateMultipleDevicesPosition(selectedDeviceIds, dx, dy);
+        }
+        setDragStartPos({ x: e.clientX, y: e.clientY });
+      }
+    }
+  }, [isPanning, panStart, resizingNoteId, noteResizeStartPos, noteResizeStartSize, zoom, draggedDevice, dragStartPos, isActuallyDragging, selectedDeviceIds, selectedNoteIds, updateMultipleDevicesPosition, updatePan]);
+
+  const handleMouseUp = useCallback(() => {
+    if (isActuallyDragging) {
+      saveToHistory();
+      if (onTopologyChange) {
+        onTopologyChange(devices, connections, notes);
+      }
+    }
+    if (resizingNoteId) {
+      saveToHistory();
+      if (onTopologyChange) {
+        onTopologyChange(devices, connections, notes);
+      }
+    }
+
+    setIsPanning(false);
+    setDraggedDevice(null);
+    setIsActuallyDragging(false);
+    setResizingNoteId(null);
+  }, [isActuallyDragging, resizingNoteId, devices, connections, notes, onTopologyChange, saveToHistory]);
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
+
+  // Context Menu
+  const handleContextMenu = useCallback((e: ReactMouseEvent, deviceId: string | null = null) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const mode = deviceId ? 'device' : 'canvas';
+    setContextMenu({ x: e.clientX, y: e.clientY, deviceId, noteId: null, mode });
+  }, []);
+
+  const handleNoteContextMenu = useCallback((e: ReactMouseEvent, noteId: string, mode: 'note-style' | 'note-edit' = 'note-edit') => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY, deviceId: null, noteId, mode });
+  }, []);
+
+  // Device config modal actions
+  const startDeviceConfig = useCallback((deviceId: string) => {
+    const device = devices.find(d => d.id === deviceId);
+    if (device) {
+      setConfiguringDevice(deviceId);
+      setTempNameValue(device.name);
+      setIpValue(device.ip || '');
+      setSubnetValue(device.subnet || '255.255.255.0');
+      setGatewayValue(device.gateway || '');
+      setDnsValue(device.dns || '8.8.8.8');
+      setTimeout(() => configInputRef.current?.focus(), 100);
+    }
   }, [devices]);
 
-  const addNote = useCallback(() => {
+  const confirmDeviceConfig = useCallback(() => {
+    if (!configuringDevice) return;
     saveToHistory();
-    const canvasDims = getCanvasDimensions();
-    let x = 100;
-    let y = 100;
 
-    if (canvasRef.current) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      x = (-pan.x + rect.width / 2) / zoom - NOTE_DEFAULT_WIDTH / 2;
-      y = (-pan.y + rect.height / 2) / zoom - NOTE_DEFAULT_HEIGHT / 2;
-    }
+    const updatedDevices = devices.map(d => d.id === configuringDevice ? {
+      ...d,
+      name: tempNameValue || d.name,
+      ip: ipValue,
+      subnet: subnetValue,
+      gateway: gatewayValue,
+      dns: dnsValue
+    } : d);
 
-    const clampedX = Math.max(20, Math.min(x, canvasDims.width - NOTE_DEFAULT_WIDTH - 20));
-    const clampedY = Math.max(20, Math.min(y, canvasDims.height - NOTE_DEFAULT_HEIGHT - 20));
-
-    const newNote: CanvasNote = {
-      id: `note-${Date.now()}`,
-      text: language === 'tr' ? 'Not' : 'Note',
-      x: clampedX,
-      y: clampedY,
-      width: NOTE_DEFAULT_WIDTH,
-      height: NOTE_DEFAULT_HEIGHT,
-      color: NOTE_COLORS[0],
-      font: noteFonts[0],
-      fontSize: 12,
-      opacity: 1,
-    };
-
-    const updatedNotes = [...notes, newNote];
-    setNotes(updatedNotes);
-    if (onTopologyChange) {
-      onTopologyChange(devices, connections, updatedNotes);
-    }
-  }, [devices, connections, notes, pan, zoom, language, onTopologyChange, saveToHistory, getCanvasDimensions, noteFonts]);
-
-  // Add device from palette button
-  const addDevice = useCallback((type: 'pc' | 'switch' | 'router') => {
-    saveToHistory();
-    deviceCounterRef.current[type]++;
-
-    // Calculate position near top-left with some random offset
-    const deviceCount = devices.length;
-    const offsetX = (deviceCount % 4) * 100;
-    const offsetY = Math.floor(deviceCount / 4) * 100;
-
-    const newDevice: CanvasDevice = {
-      id: `${type}-${deviceCounterRef.current[type]}`,
-      type,
-      name: `${type.toUpperCase()}-${deviceCounterRef.current[type]}`,
-      macAddress: generateMacAddress(),
-      ip: type === 'pc' ? generateUniqueIp() : '',
-      // Position near top-left with staggered layout
-      x: 100 + offsetX + Math.random() * 30,
-      y: 80 + offsetY + Math.random() * 30,
-      status: 'online',
-      ports:
-        type === 'pc'
-          ? [
-            { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
-            { id: 'com1', label: 'COM1', status: 'disconnected' as const },
-          ]
-          : type === 'switch'
-            ? generateSwitchPorts()
-            : generateRouterPorts(),
-    };
-    const updatedDevices = [...devices, newDevice];
     setDevices(updatedDevices);
     if (onTopologyChange) {
       onTopologyChange(updatedDevices, connections, notes);
     }
-  }, [devices, connections, notes, saveToHistory, generateUniqueIp, onTopologyChange]);
+    setConfiguringDevice(null);
+  }, [configuringDevice, devices, connections, notes, tempNameValue, ipValue, subnetValue, gatewayValue, dnsValue, onTopologyChange, saveToHistory]);
 
-  // No automatic effect - we trigger onTopologyChange manually on key events (add, delete, move end)
-  // to avoid re-rendering the parent Home component on every drag frame.
-  // Port Tooltip state
-  const [portTooltip, setPortTooltip] = useState<{
-    deviceId: string;
-    portId: string;
-    x: number;
-    y: number;
-    visible: boolean;
-  } | null>(null);
-  const portTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const [deviceTooltip, setDeviceTooltip] = useState<{
-    deviceId: string;
-    x: number;
-    y: number;
-    visible: boolean;
-  } | null>(null);
-  const deviceTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const showPortTooltip = useCallback((e: ReactMouseEvent | MouseEvent, deviceId: string, portId: string) => {
-    // Don't show tooltip while dragging
-    if (isActuallyDragging || isTouchDragging) return;
-
-    const device = devices.find(d => d.id === deviceId);
-    const port = device?.ports.find(p => p.id === portId);
-    if (!device || !port) return;
-
-    if (portTooltipTimerRef.current) {
-      clearTimeout(portTooltipTimerRef.current);
-    }
-
-    setPortTooltip({
-      deviceId,
-      portId,
-      x: e.clientX,
-      y: e.clientY,
-      visible: true,
-    });
-
-    portTooltipTimerRef.current = setTimeout(() => {
-      setPortTooltip(prev => prev ? { ...prev, visible: false } : null);
-    }, 1500);
-  }, [devices]);
-
-  const handlePortHover = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
-    showPortTooltip(e, deviceId, portId);
-  }, [showPortTooltip]);
-
-  const handlePortMouseLeave = useCallback(() => {
-    // We don't immediately hide on leave if we want it to stay for 3s
-    // but we could if needed. The requirement says 3s after open.
+  const cancelDeviceConfig = useCallback(() => {
+    setConfiguringDevice(null);
   }, []);
 
-  const showDeviceTooltip = useCallback((e: ReactMouseEvent | MouseEvent, deviceId: string) => {
-    if (isActuallyDragging || isTouchDragging) return;
-    if (deviceTooltipTimerRef.current) {
-      clearTimeout(deviceTooltipTimerRef.current);
+  const toggleDevicePower = useCallback(() => {
+    if (!configuringDevice) return;
+    saveToHistory();
+    const updatedDevices = devices.map(d => d.id === configuringDevice ? {
+      ...d,
+      status: d.status === 'offline' ? 'online' : 'offline' as any
+    } : d);
+    setDevices(updatedDevices);
+    if (onTopologyChange) {
+      onTopologyChange(updatedDevices, connections, notes);
     }
-    setDeviceTooltip({
-      deviceId,
-      x: e.clientX,
-      y: e.clientY,
-      visible: true,
-    });
-    deviceTooltipTimerRef.current = setTimeout(() => {
-      setDeviceTooltip(prev => prev ? { ...prev, visible: false } : null);
-    }, 1500);
-  }, [isActuallyDragging, isTouchDragging]);
+  }, [configuringDevice, devices, connections, notes, onTopologyChange, saveToHistory]);
 
-  const handleDeviceHover = useCallback((e: ReactMouseEvent, deviceId: string) => {
-    showDeviceTooltip(e, deviceId);
-  }, [showDeviceTooltip]);
+  // Alignment
+  const handleAlign = useCallback((type: 'left' | 'top') => {
+    if (selectedDeviceIds.length < 2) return;
+    saveToHistory();
 
-  // Sync device counters with current devices to prevent ID collisions
-  useEffect(() => {
-    if (devices.length > 0) {
-      const counters = { pc: 0, switch: 0, router: 0 };
-      devices.forEach(d => {
-        const match = d.id.match(/^(\w+)-(\d+)$/);
-        if (match) {
-          const type = match[1] as 'pc' | 'switch' | 'router';
-          const num = parseInt(match[2]);
-          if (counters[type] !== undefined) {
-            counters[type] = Math.max(counters[type], num);
-          }
-        }
-      });
-      deviceCounterRef.current = counters;
+    const selectedDevices = devices.filter(d => selectedDeviceIds.includes(d.id));
+    if (type === 'left') {
+      const minX = Math.min(...selectedDevices.map(d => d.x));
+      setDevices(prev => prev.map(d => selectedDeviceIds.includes(d.id) ? { ...d, x: minX } : d));
+    } else {
+      const minY = Math.min(...selectedDevices.map(d => d.y));
+      setDevices(prev => prev.map(d => selectedDeviceIds.includes(d.id) ? { ...d, y: minY } : d));
     }
-  }, [devices]);
+  }, [selectedDeviceIds, devices, saveToHistory]);
 
-  // Sync port shutdown status from deviceStates
-  useEffect(() => {
-    if (!deviceStates || devices.length === 0) return;
+  // Mobile handlers
+  const handleTouchStart = useCallback((e: ReactTouchEvent) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-note-id]')) return;
 
-    let hasChanges = false;
-    const updatedDevices = devices.map(device => {
-      const deviceState = deviceStates.get(device.id);
-      if (!deviceState) return device;
+      setContextMenu(null);
+      setSelectAllMode(false);
 
-      const updatedPorts = device.ports.map(port => {
-        // Find corresponding port in deviceState
-        const simulatorPort = deviceState.ports[port.id];
-        if (simulatorPort && simulatorPort.shutdown !== port.shutdown) {
-          hasChanges = true;
-          return { ...port, shutdown: simulatorPort.shutdown };
-        }
-        return port;
-      });
+      const deviceTarget = target.closest('[data-device-id]');
+      const noteTarget = target.closest('[data-note-id]');
 
-      if (hasChanges) {
-        return { ...device, ports: updatedPorts };
+      if (!deviceTarget && !noteTarget) {
+        setSelectedDeviceIds([]);
+        setSelectedNoteIds([]);
+        setIsPanning(true);
+        setPanStart({ x: touch.clientX - pan.x, y: touch.clientY - pan.y });
       }
-      return device;
-    });
-
-    if (hasChanges) {
-      setDevices(updatedDevices);
+    } else if (e.touches.length === 2) {
+      setIsPanning(false);
+      setDraggedDevice(null);
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+      setLastTouchDistance(dist);
+      setLastTouchCenter({ x: (touch1.clientX + touch2.clientX) / 2, y: (touch1.clientY + touch2.clientY) / 2 });
     }
-  }, [deviceStates, devices]);
+  }, [pan]);
 
+  const handleTouchMove = useCallback((e: ReactTouchEvent) => {
+    if (e.touches.length === 1 && isPanning) {
+      const touch = e.touches[0];
+      updatePan({ x: touch.clientX - panStart.x, y: touch.clientY - panStart.y });
+    } else if (e.touches.length === 2 && lastTouchDistance && lastTouchCenter) {
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+      const center = { x: (touch1.clientX + touch2.clientX) / 2, y: (touch1.clientY + touch2.clientY) / 2 };
 
-  // Delete connection
-  const deleteConnection = useCallback((connectionId: string) => {
-    saveToHistory();
-    const conn = connections.find((c) => c.id === connectionId);
-    let updatedDevices = devices;
-    let updatedConnections = connections.filter((c) => c.id !== connectionId);
+      const zoomFactor = dist / lastTouchDistance;
+      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * zoomFactor));
 
-    if (conn) {
-      updatedDevices = devices.map((d) => {
-        if (d.id === conn.sourceDeviceId || d.id === conn.targetDeviceId) {
-          return {
-            ...d,
-            ports: d.ports.map((p) =>
-              p.id === conn.sourcePort || p.id === conn.targetPort
-                ? { ...p, status: 'notconnect' as const }
-                : p
-            ),
-          };
-        }
-        return d;
-      });
-      setDevices(updatedDevices);
+      if (newZoom !== zoom) {
+        updateZoom(newZoom);
+        updatePan(prevPan => ({
+          x: center.x - (center.x - prevPan.x) * zoomFactor,
+          y: center.y - (center.y - prevPan.y) * zoomFactor
+        }));
+      }
+
+      setLastTouchDistance(dist);
+      setLastTouchCenter(center);
     }
-    setConnections(updatedConnections);
+  }, [isPanning, panStart, lastTouchDistance, lastTouchCenter, zoom, updatePan, updateZoom]);
 
-    if (onTopologyChange) {
-      onTopologyChange(updatedDevices, updatedConnections, notes);
-    }
-  }, [connections, devices, saveToHistory, onTopologyChange, notes]);
-
-  // Reset view
-  const resetView = useCallback(() => {
-    setZoom(DEFAULT_ZOOM);
-    setPan({ x: 0, y: 0 });
+  const handleTouchEnd = useCallback(() => {
+    setIsPanning(false);
+    setLastTouchDistance(null);
+    setLastTouchCenter(null);
   }, []);
 
-  // Toggle Fullscreen
-  const toggleFullscreen = useCallback(() => {
-    setIsFullscreen(prev => !prev);
-  }, []);
+  const handleDeviceTouchStart = useCallback((e: ReactTouchEvent, deviceId: string) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      e.stopPropagation();
 
-  // Clear canvas
-  const clearCanvas = useCallback(() => {
-    saveToHistory();
-    setDevices([]);
-    setConnections([]);
-    setNotes([]);
-    setSelectedDeviceIds([]);
-    deviceCounterRef.current = { pc: 0, switch: 0, router: 0 };
-    if (onTopologyChange) {
-      onTopologyChange([], [], []);
+      if (isDrawingConnection) return;
+
+      setLongPressTimer(setTimeout(() => {
+        const device = devices.find(d => d.id === deviceId);
+        if (device) handleContextMenu({ clientX: touch.clientX, clientY: touch.clientY } as any, deviceId);
+      }, 600));
+
+      if (!selectedDeviceIds.includes(deviceId)) {
+        setSelectedDeviceIds([deviceId]);
+        setSelectedNoteIds([]);
+      }
+
+      setTouchDraggedDevice(deviceId);
+      setIsTouchDragging(false);
+      setDragStartPos({ x: touch.clientX, y: touch.clientY });
     }
-  }, [saveToHistory, onTopologyChange]);
+  }, [isDrawingConnection, selectedDeviceIds, devices, handleContextMenu]);
 
-  // Copy devices
-  const copyDevice = useCallback((ids: string[]) => {
-    const selectedDevices = devices.filter(d => ids.includes(d.id));
-    if (selectedDevices.length > 0) {
-      setClipboard(selectedDevices.map(d => ({ ...d })));
+  const handleDeviceTouchMove = useCallback((e: ReactTouchEvent) => {
+    if (e.touches.length === 1 && touchDraggedDevice) {
+      if (longPressTimer) clearTimeout(longPressTimer);
+
+      const touch = e.touches[0];
+      const dx = (touch.clientX - dragStartPos.x) / zoom;
+      const dy = (touch.clientY - dragStartPos.y) / zoom;
+
+      if (!isTouchDragging && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+        setIsTouchDragging(true);
+      }
+
+      if (isTouchDragging) {
+        updateMultipleDevicesPosition(selectedDeviceIds, dx, dy);
+        setDragStartPos({ x: touch.clientX, y: touch.clientY });
+      }
     }
-    setContextMenu(null);
-  }, [devices]);
+  }, [touchDraggedDevice, longPressTimer, dragStartPos, zoom, isTouchDragging, selectedDeviceIds, updateMultipleDevicesPosition]);
 
-  // Cut devices
-  const cutDevice = useCallback((ids: string[]) => {
-    const selectedDevices = devices.filter(d => ids.includes(d.id));
-    if (selectedDevices.length > 0) {
-      setClipboard(selectedDevices.map(d => ({ ...d })));
-      ids.forEach(id => deleteDevice(id));
-      setSelectedDeviceIds([]);
-    }
-    setContextMenu(null);
-  }, [devices, deleteDevice]);
-
-  // Confirm rename
-  const confirmRename = useCallback(() => {
-    if (renamingDevice && renameValue.trim()) {
+  const handleDeviceTouchEnd = useCallback(() => {
+    if (longPressTimer) clearTimeout(longPressTimer);
+    if (isTouchDragging) {
       saveToHistory();
-      setDevices(prev => prev.map(d =>
-        d.id === renamingDevice ? { ...d, name: renameValue.trim() } : d
-      ));
-    }
-    setRenamingDevice(null);
-    setRenameValue('');
-  }, [renamingDevice, renameValue, saveToHistory]);
-  // Paste devices
-  const pasteDevice = useCallback(() => {
-    if (clipboard.length === 0) return;
-
-    saveToHistory();
-
-    const newDevices: CanvasDevice[] = [];
-
-    clipboard.forEach(device => {
-      const type = device.type;
-      deviceCounterRef.current[type]++;
-      const newId = `${type}-${deviceCounterRef.current[type]}`;
-
-      newDevices.push({
-        ...device,
-        id: newId,
-        name: `${type.toUpperCase()}-${deviceCounterRef.current[type]}`,
-        ip: type === 'pc' ? generateUniqueIp() : '',
-        x: device.x + 30,
-        y: device.y + 30,
-        ports: device.ports.map(p => ({ ...p, status: 'disconnected' as const })),
-      });
-    });
-
-    setDevices(prev => [...prev, ...newDevices]);
-    setContextMenu(null);
-  }, [clipboard, saveToHistory, generateUniqueIp]);
-
-  // Handle key events: ESC to close context menu, DELETE to remove devices, Ctrl+A to select all
-  useEffect(() => {
-    const handleCloseBroadcast = (e: CustomEvent<{ source?: string }>) => {
-      const source = e.detail?.source;
-      if (source && source !== 'topology') {
-        setContextMenu(null);
-        if (source === 'escape') {
-          if (configuringDevice) cancelDeviceConfig();
-          if (pingSource) setPingSource(null);
-          if (showPortSelector) {
-            setShowPortSelector(false);
-            setPortSelectorStep('source');
-            setSelectedSourcePort(null);
-          }
-          if (selectedDeviceIds.length > 0) setSelectedDeviceIds([]);
-        }
-      }
-    };
-    window.addEventListener('close-menus-broadcast', handleCloseBroadcast as EventListener);
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      const activeEl = document.activeElement as HTMLElement | null;
-      const isNoteTextarea = !!activeEl && activeEl.hasAttribute('data-note-textarea');
-      // ESC to close context menu
-      if (key === 'escape') {
-        setContextMenu(null);
-        // Also cancel drawing connection
-        if (isDrawingConnection) {
-          setIsDrawingConnection(false);
-          setConnectionStart(null);
-        }
-        // Close palette
-        if (isPaletteOpen) {
-          setIsPaletteOpen(false);
-        }
-        // Exit fullscreen
-        if (isFullscreen) {
-          setIsFullscreen(false);
-        }
-      }
-
-      // Close context menu on ESC (Duplicate logic above, but being thorough)
-      if (key === 'escape') {
-        setContextMenu(null);
-        // Also cancel config if active
-        if (configuringDevice) {
-          cancelDeviceConfig();
-        }
-        // Cancel select all mode
-        if (selectedDeviceIds.length > 0) {
-          setSelectedDeviceIds([]);
-        }
-        if (selectedNoteIds.length > 0) {
-          setSelectedNoteIds([]);
-        }
-        // Close Ping Source
-        if (pingSource) {
-          setPingSource(null);
-        }
-        // Close Port Selector
-        if (showPortSelector) {
-          setShowPortSelector(false);
-          setPortSelectorStep('source');
-          setSelectedSourcePort(null);
-        }
-        return;
-      }
-
-      // Don't handle other keys if a modal is open
-      if (configuringDevice) {
-        return;
-      }
-
-      // Allow native text editing when a note textarea is focused
-      if (isNoteTextarea) {
-        return;
-      }
-
-      // Delete selected device(s)
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedDeviceIds.length > 0) {
-          saveToHistory();
-          selectedDeviceIds.forEach(id => deleteDevice(id));
-          setSelectedDeviceIds([]);
-        }
-        if (selectedNoteIds.length > 0) {
-          commitNotesChange(notes.filter(n => !selectedNoteIds.includes(n.id)));
-          setSelectedNoteIds([]);
-        }
-      }
-
-      // Ctrl Shortcuts
-      if (e.ctrlKey || e.metaKey) {
-        // Ctrl+A to select all
-        if (key === 'a') {
-          e.preventDefault();
-          selectAllDevices();
-        }
-
-        // Ctrl+Z to undo
-        if (key === 'z') {
-          e.preventDefault();
-          handleUndo();
-        }
-
-        // Ctrl+Y to redo
-        if (key === 'y') {
-          e.preventDefault();
-          handleRedo();
-        }
-        // Ctrl+C to copy
-        if (key === 'c' && (e.ctrlKey || e.metaKey)) {
-          if (selectedDeviceIds.length > 0) {
-            copyDevice(selectedDeviceIds);
-          }
-        }
-        // Ctrl+X to cut
-        if (key === 'x' && (e.ctrlKey || e.metaKey)) {
-          if (selectedDeviceIds.length > 0) {
-            cutDevice(selectedDeviceIds);
-          }
-        }
-        // Ctrl+V to paste
-        if (key === 'v' && pasteDevice) {
-          e.preventDefault();
-          pasteDevice();
-        }
-
-        // Ctrl+F to toggle fullscreen
-        if (key === 'f') {
-          e.preventDefault();
-          toggleFullscreen();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-
-    };
-  }, [selectedDeviceIds, selectedNoteIds, deleteDevice, commitNotesChange, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, notes, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, showPortSelector, toggleFullscreen, isFullscreen]);
-
-  // Find path between devices using BFS
-  const findPath = useCallback((sourceId: string, targetId: string): string[] | null => {
-    if (sourceId === targetId) return [sourceId];
-
-    const visited = new Set<string>();
-    const queue: { deviceId: string; path: string[] }[] = [{ deviceId: sourceId, path: [sourceId] }];
-    visited.add(sourceId);
-
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-
-      // Find all connected devices
-      for (const conn of connections) {
-        // Skip console cables for data path (Ping)
-        if (conn.cableType === 'console') continue;
-
-        let nextDeviceId: string | null = null;
-        let sourcePortId: string | null = null;
-        let targetPortId: string | null = null;
-
-        if (conn.sourceDeviceId === current.deviceId && !visited.has(conn.targetDeviceId)) {
-          nextDeviceId = conn.targetDeviceId;
-          sourcePortId = conn.sourcePort;
-          targetPortId = conn.targetPort;
-        } else if (conn.targetDeviceId === current.deviceId && !visited.has(conn.sourceDeviceId)) {
-          nextDeviceId = conn.sourceDeviceId;
-          sourcePortId = conn.targetPort;
-          targetPortId = conn.sourcePort;
-        }
-
-        if (nextDeviceId && sourcePortId && targetPortId) {
-          const sourceDevice = devices.find(d => d.id === current.deviceId);
-          const targetDevice = devices.find(d => d.id === nextDeviceId);
-
-          if (sourceDevice && targetDevice) {
-            // Check if cable is compatible
-            const isCompatible = isCableCompatible({
-              connected: true,
-              cableType: conn.cableType,
-              sourceDevice: sourceDevice.type === 'router' ? 'switch' : sourceDevice.type,
-              targetDevice: targetDevice.type === 'router' ? 'switch' : targetDevice.type,
-              sourcePort: conn.sourcePort,
-              targetPort: conn.targetPort,
-            });
-
-            // Check if both ports are NOT shutdown and devices are powered on
-            const sPort = sourceDevice.ports.find(p => p.id === sourcePortId);
-            const tPort = targetDevice.ports.find(p => p.id === targetPortId);
-            const isUp = sPort && !sPort.shutdown && tPort && !tPort.shutdown;
-            const isPoweredOn = sourceDevice.status !== 'offline' && targetDevice.status !== 'offline';
-
-            if (isCompatible && isUp && isPoweredOn) {
-              const newPath = [...current.path, nextDeviceId!];
-
-              if (nextDeviceId === targetId) {
-                return newPath;
-              }
-
-              visited.add(nextDeviceId!);
-              queue.push({ deviceId: nextDeviceId!, path: newPath });
-            }
-          }
-        }
+      if (onTopologyChange) {
+        onTopologyChange(devices, connections, notes);
       }
     }
+    setTouchDraggedDevice(null);
+    setIsTouchDragging(false);
+  }, [longPressTimer, isTouchDragging, devices, connections, notes, onTopologyChange, saveToHistory]);
 
-    return null; // No path found
-  }, [connections, devices]);
+  const handleNoteTouchStart = useCallback((e: ReactTouchEvent, noteId: string) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      e.stopPropagation();
 
-  // Ping animation between devices with multi-hop support
-  const startPingAnimation = useCallback((sourceId: string, targetId: string) => {
-    // Cancel any existing animation
-    if (pingAnimationRef.current) {
-      cancelAnimationFrame(pingAnimationRef.current);
-    }
+      setLongPressTimer(setTimeout(() => {
+        handleNoteContextMenu({ clientX: touch.clientX, clientY: touch.clientY } as any, noteId);
+      }, 600));
 
-    const sourceDevice = devices.find(d => d.id === sourceId);
-    const targetDevice = devices.find(d => d.id === targetId);
-    if (sourceDevice?.status === 'offline' || targetDevice?.status === 'offline') {
-      setPingAnimation({
-        sourceId,
-        targetId,
-        path: [sourceId, targetId],
-        currentHopIndex: 0,
-        progress: 1,
-        success: false
-      });
-      setTimeout(() => setPingAnimation(null), 2500);
-      return;
-    }
-
-    // Find path between source and target
-    const path = findPath(sourceId, targetId);
-
-    if (!path || path.length < 2) {
-      // No path found - show error
-      setPingAnimation({
-        sourceId,
-        targetId,
-        path: [sourceId, targetId],
-        currentHopIndex: 0,
-        progress: 1,
-        success: false
-      });
-      setTimeout(() => setPingAnimation(null), 2500);
-      return;
-    }
-
-    // Start ping animation
-    setPingAnimation({
-      sourceId,
-      targetId,
-      path,
-      currentHopIndex: 0,
-      progress: 0,
-      success: null
-    });
-
-    // Animate ping - each hop takes 1000ms
-    const hopDuration = 1000;
-    let startTime = Date.now();
-    let currentHop = 0;
-
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / hopDuration, 1);
-
-      setPingAnimation(prev => {
-        if (!prev) return null;
-        return { ...prev, currentHopIndex: currentHop, progress };
-      });
-
-      if (progress < 1) {
-        pingAnimationRef.current = requestAnimationFrame(animate);
-      } else {
-        // Move to next hop
-        currentHop++;
-        if (currentHop < path.length - 1) {
-          startTime = Date.now();
-          pingAnimationRef.current = requestAnimationFrame(animate);
-        } else {
-          // Animation complete - show success
-          setPingAnimation(prev => prev ? { ...prev, success: true } : null);
-          setTimeout(() => setPingAnimation(null), 2500);
-        }
+      if (!selectedNoteIds.includes(noteId)) {
+        setSelectedNoteIds([noteId]);
+        setSelectedDeviceIds([]);
       }
-    };
 
-    pingAnimationRef.current = requestAnimationFrame(animate);
-  }, [connections, findPath]);
+      setTouchDraggedDevice(noteId);
+      setIsTouchDraggingNote(true);
+      setDragStartPos({ x: touch.clientX, y: touch.clientY });
+    }
+  }, [selectedNoteIds, handleNoteContextMenu]);
 
-  // Toast notification state
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  // Reset view to center and 100% zoom
+  const resetView = useCallback(() => {
+    updateZoom(1.0);
+    updatePan({ x: 0, y: 0 });
+  }, [updateZoom, updatePan]);
 
-  // Show toast notification
-  const showToast = useCallback((message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+  const getCanvasDimensions = useCallback(() => {
+    // Return base dimensions used for grid and boundary
+    return { width: 2000, height: 1500 };
   }, []);
 
-  // Get device position (center based on device type)
-  const getDeviceCenter = useCallback((device: CanvasDevice) => {
-    const deviceWidth = device.type === 'pc' ? 85 : 130;
-    const portsPerRow = 8;
-    const numRows = Math.ceil(device.ports.length / portsPerRow);
-    const deviceHeight = device.type === 'pc' ? 100 : 100 + numRows * 14 + 5;
-    return { x: device.x + deviceWidth / 2, y: device.y + deviceHeight / 2 };
+  const renderDevice = useCallback((device: CanvasDevice) => {
+    return null; // The logic for rendering device SVG is in DeviceNode
   }, []);
 
-  // Get port position on device
-  const getPortPosition = useCallback((device: CanvasDevice, portId: string) => {
-    const portIndex = device.ports.findIndex(p => p.id === portId);
-    if (portIndex === -1) return getDeviceCenter(device);
-
-    const deviceWidth = device.type === 'pc' ? 85 : 130;
-    const portsPerRow = device.type === 'pc' ? 2 : 8;
-    const col = portIndex % portsPerRow;
-    const row = Math.floor(portIndex / portsPerRow);
-    const portSpacing = device.type === 'pc' ? 18 : 14;
-    const rowSpacing = 14;
-    // Center ports in the wider device
-    const startX = device.type === 'pc' ? deviceWidth / 2 - (device.ports.length > 1 ? portSpacing / 2 : 0) : 14;
-    const startY = device.type === 'pc' ? 80 : 80;
-
-    return {
-      x: device.x + startX + col * portSpacing,
-      y: device.y + startY + row * rowSpacing
-    };
-  }, [getDeviceCenter]);
-
-  // Render connection SVG (Visual line only)
-  const renderConnectionLine = (conn: CanvasConnection, connIndex: number) => {
-    const sourceDevice = devices.find((d) => d.id === conn.sourceDeviceId);
-    const targetDevice = devices.find((d) => d.id === conn.targetDeviceId);
-    if (!sourceDevice || !targetDevice) return null;
-
-    // Get port positions for more accurate connection lines
-    const source = getPortPosition(sourceDevice, conn.sourcePort);
-    const target = getPortPosition(targetDevice, conn.targetPort);
-
-    // Check cable compatibility - use pink color for incompatible cables
-    const cableInfoForConnection: CableInfo = {
-      connected: true,
-      cableType: conn.cableType,
-      sourceDevice: sourceDevice.type === 'router' ? 'switch' : sourceDevice.type,
-      targetDevice: targetDevice.type === 'router' ? 'switch' : targetDevice.type,
-      sourcePort: conn.sourcePort,
-      targetPort: conn.targetPort,
-    };
-    const isCompatible = isCableCompatible(cableInfoForConnection);
-    const color = isCompatible ? CABLE_COLORS[conn.cableType].primary : CABLE_COLORS.error.primary;
-
-    // Calculate parallel offset for multiple connections between same devices
-    const sameDeviceConnections = connections.filter(
-      c => (c.sourceDeviceId === conn.sourceDeviceId && c.targetDeviceId === conn.targetDeviceId) ||
-        (c.sourceDeviceId === conn.targetDeviceId && c.targetDeviceId === conn.sourceDeviceId)
-    );
-    const sameConnIndex = sameDeviceConnections.findIndex(c => c.id === conn.id);
-    const totalSameConns = sameDeviceConnections.length;
-
-    // Calculate offset for parallel lines (spread out from center)
-    const maxOffset = 20;
-    const offset = totalSameConns > 1
-      ? (sameConnIndex - (totalSameConns - 1) / 2) * (maxOffset / Math.max(totalSameConns - 1, 1))
-      : 0;
-
-    // Calculate control points for smooth curve with offset
-    const midX = (source.x + target.x) / 2;
-    const midY = (source.y + target.y) / 2;
-
-    // Apply perpendicular offset for parallel lines
-    const dx = target.x - source.x;
-    const dy = target.y - source.y;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const perpX = -dy / len * offset;
-    const perpY = dx / len * offset;
-
-    const controlPoint1 = {
-      x: midX + perpX,
-      y: source.y + perpY + Math.abs(offset) * 0.5
-    };
-    const controlPoint2 = {
-      x: midX + perpX,
-      y: target.y + perpY - Math.abs(offset) * 0.5
-    };
-
-    return (
-      <g key={`line-${conn.id}`}>
-        {/* Visual Connection line */}
-        <path
-          d={`M ${source.x} ${source.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${target.x} ${target.y}`}
-          stroke={isCompatible ? color : '#ef4444'}
-          strokeWidth={3}
-          fill="none"
-          strokeDasharray={isCompatible ? 'none' : '6,3'}
-          className="pointer-events-none"
-        />
-
-        {/* Animated data flow - only for compatible cables */}
-        {conn.active && isCompatible && (
-          <>
-            <circle r="4" fill={color}>
-              <animateMotion
-                dur="2s"
-                repeatCount="indefinite"
-                path={`M ${source.x} ${source.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${target.x} ${target.y}`}
-              />
-            </circle>
-            <circle r="4" fill={color}>
-              <animateMotion
-                dur="2s"
-                repeatCount="indefinite"
-                begin="1s"
-                path={`M ${target.x} ${target.y} C ${controlPoint2.x} ${controlPoint2.y}, ${controlPoint1.x} ${controlPoint1.y}, ${source.x} ${source.y}`}
-              />
-            </circle>
-          </>
-        )}
-        {/* Connection label */}
-        {totalSameConns > 1 ? (
-          <>
-            <text
-              x={midX + perpX}
-              y={midY + perpY - 8}
-              fill="none"
-              stroke={isDark ? '#0f172a' : '#ffffff'}
-              strokeWidth="4"
-              strokeLinejoin="round"
-              fontSize="10"
-              textAnchor="middle"
-              className="pointer-events-none select-none"
-            >
-              {conn.sourcePort} \u2194 {conn.targetPort}
-            </text>
-            <text
-              x={midX + perpX}
-              y={midY + perpY - 8}
-              fill={color}
-              fontSize="10"
-              textAnchor="middle"
-              className="pointer-events-none select-none"
-            >
-              {conn.sourcePort} \u2194 {conn.targetPort}
-            </text>
-          </>
-        ) : (
-          <>
-            <text
-              x={midX}
-              y={midY - 10}
-              fill="none"
-              stroke={isDark ? '#0f172a' : '#ffffff'}
-              strokeWidth="4"
-              strokeLinejoin="round"
-              fontSize="10"
-              textAnchor="middle"
-              className="pointer-events-none select-none"
-            >
-              {conn.sourcePort} \u2194 {conn.targetPort}
-            </text>
-            <text
-              x={midX}
-              y={midY - 10}
-              fill={color}
-              fontSize="10"
-              textAnchor="middle"
-              className="pointer-events-none select-none"
-            >
-              {conn.sourcePort} \u2194 {conn.targetPort}
-            </text>
-          </>
-        )}
-      </g>
-    );
-  };
-
-  // Render connection interaction handles (Trash Icon) - Should be rendered LAST to stay on top
-  const renderConnectionHandle = (conn: CanvasConnection) => {
-    const sourceDevice = devices.find((d) => d.id === conn.sourceDeviceId);
-    const targetDevice = devices.find((d) => d.id === conn.targetDeviceId);
-    if (!sourceDevice || !targetDevice) return null;
-
-    const source = getPortPosition(sourceDevice, conn.sourcePort);
-    const target = getPortPosition(targetDevice, conn.targetPort);
-
-    const sameDeviceConnections = connections.filter(
-      c => (c.sourceDeviceId === conn.sourceDeviceId && c.targetDeviceId === conn.targetDeviceId) ||
-        (c.sourceDeviceId === conn.targetDeviceId && c.targetDeviceId === conn.sourceDeviceId)
-    );
-    const sameConnIndex = sameDeviceConnections.findIndex(c => c.id === conn.id);
-    const totalSameConns = sameDeviceConnections.length;
-
-    const offset = totalSameConns > 1
-      ? (sameConnIndex - (totalSameConns - 1) / 2) * (20 / Math.max(totalSameConns - 1, 1))
-      : 0;
-
-    const dx = target.x - source.x;
-    const dy = target.y - source.y;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const midX = (source.x + target.x) / 2;
-    const perpX = -dy / len * offset;
-    const perpY = dx / len * offset;
-
-    const controlPoint1 = {
-      x: midX + perpX,
-      y: source.y + perpY + Math.abs(offset) * 0.5
-    };
-    const controlPoint2 = {
-      x: midX + perpX,
-      y: target.y + perpY - Math.abs(offset) * 0.5
-    };
-
-    // Position trash icon in the center of the connection
-    const tTrash = 0.5;
-    const invT = 1 - tTrash;
-    const trashX = invT * invT * invT * source.x +
-      3 * invT * invT * tTrash * controlPoint1.x +
-      3 * invT * tTrash * tTrash * controlPoint2.x +
-      tTrash * tTrash * tTrash * target.x;
-    const trashY = invT * invT * invT * source.y +
-      3 * invT * invT * tTrash * controlPoint1.y +
-      3 * invT * tTrash * tTrash * controlPoint2.y +
-      tTrash * tTrash * tTrash * target.y;
-
-    const isCompatible = isCableCompatible({
-      connected: true,
-      cableType: conn.cableType,
-      sourceDevice: sourceDevice.type === 'router' ? 'switch' : sourceDevice.type,
-      targetDevice: targetDevice.type === 'router' ? 'switch' : targetDevice.type,
-      sourcePort: conn.sourcePort,
-      targetPort: conn.targetPort,
-    });
-
-    return (
-      <g key={`handle-${conn.id}`}>
-        {/* Larger Hit Area */}
-        <path
-          d={`M ${source.x} ${source.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${target.x} ${target.y}`}
-          stroke="transparent"
-          strokeWidth={15}
-          fill="none"
-          className="cursor-pointer"
-          onClick={() => deleteConnection(conn.id)}
-        />
-
-        {/* Delete Handle (Trash Icon) */}
-        {isCompatible && (
-          <g
-            transform={`translate(${trashX}, ${trashY})`}
-            className="cursor-pointer group"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteConnection(conn.id);
-            }}
-          >
-            {/* Subtle background rectangle instead of circle */}
-            <rect x="-8" y="-9" width="16" height="18" rx="3" fill={isDark ? '#0f172a' : '#ffffff'} opacity="0.9" className="drop-shadow-sm" />
-            <svg
-              x={-7}
-              y={-7}
-              width={14}
-              height={14}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#ef4444"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M3 6h18" />
-              <path d="M8 6V4h8v2" />
-              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-              <path d="M10 11v6" />
-              <path d="M14 11v6" />
-            </svg>
-          </g>
-        )}
-
-        {/* Warning Icon if incompatible */}
-        {!isCompatible && (
-          <g
-            transform={`translate(${midX + perpX}, ${(source.y + target.y) / 2 + perpY})`}
-            className="cursor-pointer group"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteConnection(conn.id);
-            }}
-          >
-            <path d="M 0 -9 L -10 7 L 10 7 Z" fill="#ef4444" stroke="#fff" strokeWidth="1" />
-            <text y="4" fontSize="10" fontStyle="normal" fontWeight="bold" fill="white" textAnchor="middle">!</text>
-          </g>
-        )}
-      </g>
-    );
-  };
-
-  // Render device
-  const renderDevice = (device: CanvasDevice, isDragging: boolean = false) => {
-    const isSelected = selectedDeviceIds.includes(device.id);
-    // Check if device has any connections
-    const deviceConnections = connections.filter(c => c.sourceDeviceId === device.id || c.targetDeviceId === device.id);
-    const hasConnection = deviceConnections.length > 0;
-    const hasError = deviceConnections.some(conn => {
-      const source = devices.find(d => d.id === conn.sourceDeviceId);
-      const target = devices.find(d => d.id === conn.targetDeviceId);
-      if (!source || !target) return false;
-      return !isCableCompatible({
-        connected: true,
-        cableType: conn.cableType,
-        sourceDevice: source.type === 'router' ? 'switch' : source.type,
-        targetDevice: target.type === 'router' ? 'switch' : target.type,
-        sourcePort: conn.sourcePort,
-        targetPort: conn.targetPort,
-      });
-    });
-
-    const isPoweredOff = device.status === 'offline';
-    const statusFill = isPoweredOff
-      ? '#000000'
-      : hasError
-        ? (isDark ? '#ef4444' : '#dc2626')
-        : (hasConnection ? (isDark ? '#22c55e' : '#16a34a') : (isDark ? '#1f2937' : '#cbd5e1'));
-    const statusStroke = isPoweredOff ? (isDark ? '#64748b' : '#94a3b8') : 'none';
-
-    // Calculate device height based on number of ports (8 per row for switch/router)
-    const portsPerRow = device.type === 'pc' ? 2 : 8;
-    const numRows = Math.ceil(device.ports.length / portsPerRow);
-    const deviceHeight = device.type === 'pc' ? 89 : 80 + numRows * 14 + 5;
-
-    // Calculate device width to fit all ports with proper spacing
-    // For switch/router: startX=12, portSpacing=13, portRadius=6
-    // Width needed = startX + (portsPerRow - 1) * portSpacing + portRadius + margin
-    // For 8 ports: 12 + 7*13 + 6 + 10 = 119, so we use 130 for more breathing room
-    const deviceWidth = device.type === 'pc' ? 85 : 130;
-
-    return (
-      <g
-        key={device.id}
-        transform={`translate(${device.x}, ${device.y})`}
-        className={`cursor-move ${isDragging ? 'opacity-80' : ''}`}
-        data-device-id={device.id}
-        onMouseEnter={(e) => handleDeviceHover(e as unknown as ReactMouseEvent, device.id)}
-      >
-        {/* Device body */}
-        <rect
-          width={deviceWidth}
-          height={deviceHeight}
-          rx={8}
-          fill={isDark ? '#1e293b' : '#fff'}
-          stroke={isSelected ? '#06b6d4' : isDark ? '#475569' : '#cbd5e1'}
-          strokeWidth={isSelected ? 2 : 1}
-          className={isDragging ? '' : 'transition-all duration-150'}
-        />
-
-        {/* Device icon */}
-        <g transform={`translate(${deviceWidth / 2 - 12}, 10)`}>
-          <g
-            className={
-              device.type === 'pc'
-                ? 'text-blue-500'
-                : device.type === 'switch'
-                  ? 'text-emerald-500'
-                  : 'text-purple-500'
-            }
-            style={{ color: 'currentColor' }}
-          >
-            {device.type === 'pc' && (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                fill="none"
-                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z"
-                transform="scale(1.2) translate(0, 3.3)"
-              />
-            )}
-            {device.type === 'switch' && (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                fill="none"
-                d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01"
-                transform="scale(1.2)"
-              />
-            )}
-            {device.type === 'router' && (
-              <g transform="scale(1.2)">
-                <circle cx="12" cy="12" r="9" strokeWidth={1.5} stroke="currentColor" fill="none" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} stroke="currentColor" fill="none" d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
-              </g>
-            )}
-          </g>
-        </g>
-
-        {/* Status LED */}
-        <circle
-          cx={deviceWidth - 10}
-          cy={10}
-          r={5}
-          fill={statusFill}
-          stroke={statusStroke}
-          strokeWidth={statusStroke === 'none' ? 0 : 1}
-          className="transition-colors duration-300"
-        />
-
-        {/* Device name */}
-        <text x={deviceWidth / 2} y={58} fill={isDark ? '#f1f5f9' : '#1e293b'} fontSize="10" textAnchor="middle" fontWeight="bold" className="select-none pointer-events-none">
-          {device.name}
-        </text>
-
-        {/* Device IP */}
-        {device.type === 'pc' && (
-          <text x={deviceWidth / 2} y={70} fill={isDark ? '#94a3b8' : '#64748b'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
-            {device.ip}
-          </text>
-        )}
-
-        {/* Ports - wrapped 6 per row */}
-        {device.type === 'pc' ? (
-          // PC has Eth0 and COM1 ports, show side by side
-          device.ports.map((port, idx) => {
-            // \u0130ki portu yan yana g\u00f6ster
-            const portSpacing = 18;
-            const startX = deviceWidth / 2 - (device.ports.length > 1 ? portSpacing / 2 : 0);
-            const portX = startX + idx * portSpacing;
-            const portY = 80;
-            const isConnected = port.status === 'connected';
-            const isShutdown = port.shutdown;
-
-            // Determine port label: E for Ethernet, C for COM/Console
-            const isConsolePort = port.id.toLowerCase().startsWith('com') || port.id.toLowerCase() === 'console';
-            const portLabel = isConsolePort ? 'C' : 'E';
-
-            // Port colors:
-            // PC Ethernet: Blue, PC COM (Console): Turquoise
-            // Shutdown: Red
-            const portColor = isShutdown ? '#ef4444' :
-              isConsolePort
-                ? (isConnected ? '#06b6d4' : '#0891b2')  // Turquoise for console
-                : (isConnected ? '#3b82f6' : '#1d4ed8'); // Blue for ethernet
-
-            return (
-              <g
-                key={port.id}
-                transform={`translate(${portX}, ${portY})`}
-                className="cursor-pointer"
-                onClick={(e) => {
-                  handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id);
-                  showPortTooltip(e as unknown as ReactMouseEvent, device.id, port.id);
-                }}
-                onMouseEnter={(e) => handlePortHover(e, device.id, port.id)}
-                onMouseLeave={handlePortMouseLeave}
-              >
-                <circle
-                  r={7}
-                  fill={portColor}
-                  stroke={isShutdown ? '#991b1b' : isConnected ? '#22c55e' : '#4b5563'}
-                  strokeWidth={isShutdown || isConnected ? 2 : 1}
-                />
-                <text y={1} fill="#fff" fontSize="7" textAnchor="middle" dominantBaseline="middle" className="select-none pointer-events-none">
-                  {portLabel}
-                </text>
-              </g>
-            );
-          })
-        ) : (
-          // Switch/Router - wrap 8 ports per row for wider device
-          device.ports.map((port, idx) => {
-            const portsPerRow = 8;
-            const col = idx % portsPerRow;
-            const row = Math.floor(idx / portsPerRow);
-            // Adjust port spacing for wider device (130px)
-            const portSpacing = 14;
-            const rowSpacing = 14;
-            const startX = 14;
-            const startY = 80;
-            const portX = startX + col * portSpacing;
-            const portY = startY + row * rowSpacing;
-            const isConnected = port.status === 'connected';
-            const isShutdown = port.shutdown;
-
-            // Check if port is blocked by STP (spanning tree)
-            const deviceState = deviceStates?.get(device.id);
-            const isBlocked = deviceState?.ports[port.id]?.status === 'blocked';
-            const isDownOrBlocked = isShutdown || isBlocked;
-
-            // Determine port type
-            const portId = port.id.toLowerCase();
-            const isConsole = portId === 'console';
-            const isGigabit = portId.startsWith('gi'); // GigabitEthernet
-            const isFastEthernet = portId.startsWith('fa'); // FastEthernet
-
-            // Extract port number - remove leading zeros
-            const portNum = port.label.replace(/\D/g, '');
-            const displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
-
-            // Port colors:
-            // Console: Turquoise, Fa: Blue, Gi: Orange
-            // Shutdown/Blocked: Red/Orange background with RED stroke
-            let portFill: string;
-            let portStroke: string;
-
-            if (isDownOrBlocked) {
-              portFill = isShutdown ? '#ef4444' : '#f97316'; // Red for shutdown, Orange for blocked
-              portStroke = '#ff0000'; // Explicit RED border
-            } else if (isConsole) {
-              portFill = isConnected ? '#06b6d4' : '#0891b2'; // Turquoise
-              portStroke = isConnected ? '#22c55e' : '#0891b2';
-            } else if (isGigabit) {
-              portFill = isConnected ? '#f97316' : '#c2410c'; // Orange
-              portStroke = isConnected ? '#22c55e' : '#c2410c';
-            } else if (isFastEthernet) {
-              portFill = isConnected ? '#3b82f6' : '#1d4ed8'; // Blue
-              portStroke = isConnected ? '#22c55e' : '#1d4ed8';
-            } else {
-              portFill = isConnected ? '#22c55e' : '#6b7280'; // Default green/gray
-              portStroke = isConnected ? '#22c55e' : '#4b5563';
-            }
-
-            return (
-              <g
-                key={port.id}
-                transform={`translate(${portX}, ${portY})`}
-                className="cursor-pointer"
-                onClick={(e) => {
-                  handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id);
-                  showPortTooltip(e as unknown as ReactMouseEvent, device.id, port.id);
-                }}
-                onMouseEnter={(e) => handlePortHover(e, device.id, port.id)}
-                onMouseLeave={handlePortMouseLeave}
-              >
-                <circle
-                  r={6}
-                  fill={portFill}
-                  stroke={isDownOrBlocked || isConnected ? portStroke : '#4b5563'}
-                  strokeWidth={isDownOrBlocked || isConnected ? 2.5 : 1}
-                  className={isDownOrBlocked ? 'animate-pulse' : ''}
-                />
-                <text y={1} fill="#fff" fontSize="6" textAnchor="middle" dominantBaseline="middle" className="select-none pointer-events-none font-bold">
-                  {displayNum}
-                </text>
-              </g>
-            );
-          })
-        )}
-      </g>
-    );
-  };
-
-  // Render temporary connection line while drawing
-  const renderTempConnection = () => {
+  const renderTempConnection = useCallback(() => {
     if (!isDrawingConnection || !connectionStart) return null;
 
-    // Use the port position stored in connectionStart.point
-    const source = connectionStart.point;
+    const sourceDevice = devices.find(d => d.id === connectionStart.deviceId);
+    if (!sourceDevice) return null;
+
+    const startPos = getPortPosition(sourceDevice, connectionStart.portId);
+    const canvasMousePos = getCanvasCoords(mousePos.x, mousePos.y);
 
     return (
       <line
-        x1={source.x}
-        y1={source.y}
-        x2={mousePos.x}
-        y2={mousePos.y}
-        stroke={CABLE_COLORS[cableInfo.cableType].primary}
-        strokeWidth={2}
-        strokeDasharray="5,5"
-        className="pointer-events-none"
+        x1={startPos.x}
+        y1={startPos.y}
+        x2={canvasMousePos.x}
+        y2={canvasMousePos.y}
+        stroke={CABLE_COLORS[cableInfo.cableType].stroke}
+        strokeWidth={3}
+        strokeDasharray={cableInfo.cableType === 'crossover' ? "5,5" : cableInfo.cableType === 'console' ? "0" : "0"}
+        opacity={0.6}
+        pointerEvents="none"
       />
     );
-  };
+  }, [isDrawingConnection, connectionStart, devices, mousePos, getCanvasCoords, getPortPosition, cableInfo.cableType]);
 
-  // Render Mobile Bottom Sheet
-  const renderMobilePalette = () => (
-    <div
-      className={`fixed inset-0 z-50 transition-all duration-300 md:hidden ${isPaletteOpen ? 'pointer-events-auto' : 'pointer-events-none'
-        }`}
-    >
-      {/* Backdrop */}
-      <div
-        className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${isPaletteOpen ? 'opacity-100' : 'opacity-0'
-          }`}
-        onClick={() => setIsPaletteOpen(false)}
-      />
+  const renderConnectionHandle = useCallback((conn: CanvasConnection) => {
+    const sourceDevice = devices.find(d => d.id === conn.sourceDeviceId);
+    const targetDevice = devices.find(d => d.id === conn.targetDeviceId);
+    if (!sourceDevice || !targetDevice) return null;
 
-      {/* Bottom Sheet */}
-      <div
-        className={`absolute bottom-0 left-0 right-0 bg-slate-900 rounded-t-2xl transition-transform duration-300 ${isPaletteOpen ? 'translate-y-0' : 'translate-y-full'
-          }`}
+    const startPos = getPortPosition(sourceDevice, conn.sourcePort);
+    const endPos = getPortPosition(targetDevice, conn.targetPort);
+
+    const midX = (startPos.x + endPos.x) / 2;
+    const midY = (startPos.y + endPos.y) / 2;
+
+    return (
+      <g
+        className="cursor-pointer opacity-0 hover:opacity-100 transition-opacity"
+        onClick={(e) => {
+          e.stopPropagation();
+          saveToHistory();
+          const updatedConnections = connections.filter(c => c.id !== conn.id);
+          setConnections(updatedConnections);
+
+          // Update port status on both devices
+          const updatedDevices = devices.map(d => {
+            if (d.id === conn.sourceDeviceId || d.id === conn.targetDeviceId) {
+              return {
+                ...d,
+                ports: d.ports.map(p => {
+                  if (
+                    (d.id === conn.sourceDeviceId && p.id === conn.sourcePort) ||
+                    (d.id === conn.targetDeviceId && p.id === conn.targetPort)
+                  ) {
+                    return { ...p, status: 'disconnected' as const };
+                  }
+                  return p;
+                })
+              };
+            }
+            return d;
+          });
+          setDevices(updatedDevices);
+
+          if (onTopologyChange) {
+            onTopologyChange(updatedDevices, updatedConnections, notes);
+          }
+        }}
       >
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1.5 rounded-full bg-slate-600" />
-        </div>
-        {/* Device Buttons */}
-        <div className="px-4 py-3 flex items-center justify-between border-b border-slate-800/50">
-          <div className={`text-[10px] font-bold tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} whitespace-nowrap`}>
-            {language === 'tr' ? 'Cihazlar' : 'Devices'}
-          </div>
-          <div className="flex gap-2">
-            {(['pc', 'switch', 'router'] as const).map((type) => (
-              <button
-                key={type}
-                onClick={() => { addDevice(type); setIsPaletteOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${isDark
-                  ? 'border-slate-700 bg-slate-800'
-                  : 'border-slate-300 bg-white'
-                  }`}
-              >
-                <div className={
-                  type === 'pc' ? 'text-blue-500' : type === 'switch' ? 'text-emerald-500' : 'text-purple-500'
-                }>
-                  <div className="scale-75">{DEVICE_ICONS[type]}</div>
-                </div>
-                <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                  {type === 'pc' ? 'PC' : type.charAt(0).toUpperCase() + type.slice(1)}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
+        <circle cx={midX} cy={midY} r={12} fill="rgba(239, 68, 68, 0.2)" />
+        <Trash2 x={midX - 6} y={midY - 6} width={12} height={12} className="text-red-500" />
+      </g>
+    );
+  }, [devices, connections, notes, getPortPosition, onTopologyChange, saveToHistory]);
 
-        {/* Cable Type Selector */}
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className={`text-[10px] font-bold tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} whitespace-nowrap`}>
-            {language === 'tr' ? 'Kablonuz' : 'Cable'}
-          </div>
-          <div className="flex gap-1.5">
-            {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
-              <button
-                key={type}
-                onClick={() => {
-                  onCableChange({ ...cableInfo, cableType: type });
-
-                }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all ${cableInfo.cableType === type
-                  ? `${CABLE_COLORS[type].bg} text-white border-transparent`
-                  : isDark
-                    ? 'border-slate-700 bg-slate-800 text-slate-300'
-                    : 'border-slate-300 bg-white text-slate-600'
-                  }`}
-              >
-                <div className={`w-2.5 h-2.5 rounded-full ${CABLE_COLORS[type].bg}`} />
-                {type === 'straight'
-                  ? language === 'tr' ? 'Düz' : 'Str'
-                  : type === 'crossover'
-                    ? language === 'tr' ? 'Çapraz' : 'Cro'
-                    : language === 'tr' ? 'Konsol' : 'Con'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Safe Area Padding */}
-        <div className="h-6" />
-      </div>
-    </div>
-  );
-
-  // Render Mobile Bottom Action Bar
-  const renderMobileBottomBar = () => (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900 border-t border-slate-700 px-2 py-2 safe-area-bottom">
-      <div className="flex items-center justify-around gap-1">
-        {/* Add Device */}
-        <button
-          onClick={() => setIsPaletteOpen(true)}
-          className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg min-h-[48px] min-w-[48px] bg-slate-800 hover:bg-slate-700"
-        >
-          <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span className="text-xs text-slate-300">{language === 'tr' ? 'Ekle' : 'Add'}</span>
-        </button>
-
-        {/* Cable Type */}
-        <button
-          onClick={() => setIsPaletteOpen(true)}
-          className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg min-h-[48px] min-w-[48px] bg-slate-800 hover:bg-slate-700"
-        >
-          <div className={`w-4 h-4 rounded ${CABLE_COLORS[cableInfo.cableType].bg}`} />
-          <span className="text-xs text-slate-300">
-            {cableInfo.cableType === 'straight'
-              ? language === 'tr' ? 'Düz' : 'Straight'
-              : cableInfo.cableType === 'crossover'
-                ? language === 'tr' ? 'Çapraz' : 'X-over'
-                : language === 'tr' ? 'Konsol' : 'Console'}
-          </span>
-        </button>
-
-        {/* Zoom Controls */}
-        <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
-          <button
-            onClick={() => setZoom((z) => {
-              const newZoom = Math.max(MIN_ZOOM, z - 0.25);
-              if (!canvasRef.current) return newZoom;
-              const rect = canvasRef.current.getBoundingClientRect();
-              const cursorX = rect.width / 2;
-              const cursorY = rect.height / 2;
-              setPan(prevPan => ({
-                x: cursorX - (cursorX - prevPan.x) * (newZoom / z),
-                y: cursorY - (cursorY - prevPan.y) * (newZoom / z)
-              }));
-              return newZoom;
-            })}
-            className="flex items-center justify-center w-10 h-10 rounded hover:bg-slate-700 text-slate-300"
-          >
-            -
-          </button>
-          <span className="text-xs font-mono w-10 text-center text-slate-300">
-            {Math.round(zoom * 100)}%
-          </span>
-          <button
-            onClick={() => setZoom((z) => {
-              const newZoom = Math.min(MAX_ZOOM, z + 0.25);
-              if (!canvasRef.current) return newZoom;
-              const rect = canvasRef.current.getBoundingClientRect();
-              const cursorX = rect.width / 2;
-              const cursorY = rect.height / 2;
-              setPan(prevPan => ({
-                x: cursorX - (cursorX - prevPan.x) * (newZoom / z),
-                y: cursorY - (cursorY - prevPan.y) * (newZoom / z)
-              }));
-              return newZoom;
-            })}
-            className="flex items-center justify-center w-10 h-10 rounded hover:bg-slate-700 text-slate-300"
-          >
-            +
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  const renderMobilePalette = useCallback(() => null, []);
+  const renderMobileBottomBar = useCallback(() => null, []);
 
   return (
     <NetworkTopologyView
@@ -3099,6 +1281,7 @@ export function NetworkTopology({
       handleNoteTextPaste={handleNoteTextPaste}
       handleNoteTextDelete={handleNoteTextDelete}
       handleNoteTextSelectAll={handleNoteTextSelectAll}
+      onDuplicateNote={duplicateNote}
       pasteNotes={pasteNotes}
       updateNoteStyle={updateNoteStyle}
       connectionError={connectionError}
@@ -3120,5 +1303,3 @@ export function NetworkTopology({
     />
   );
 }
-
-
