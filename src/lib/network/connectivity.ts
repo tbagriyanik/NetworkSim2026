@@ -97,6 +97,54 @@ export function checkConnectivity(
     curr = parent.get(curr);
   }
 
+  // 4. VLAN check across the path
+  if (deviceStates) {
+    for (let i = 1; i < path.length - 1; i++) {
+      const deviceId = path[i];
+      const device = devices.find(d => d.id === deviceId);
+      if (device?.type === 'switch') {
+        const switchState = deviceStates.get(deviceId);
+        if (!switchState) continue;
+
+        const prevDeviceId = path[i - 1];
+        const nextDeviceId = path[i + 1];
+
+        const ingressConn = connections.find(c =>
+          (c.sourceDeviceId === prevDeviceId && c.targetDeviceId === deviceId) ||
+          (c.sourceDeviceId === deviceId && c.targetDeviceId === prevDeviceId)
+        );
+        const egressConn = connections.find(c =>
+          (c.sourceDeviceId === deviceId && c.targetDeviceId === nextDeviceId) ||
+          (c.sourceDeviceId === nextDeviceId && c.targetDeviceId === deviceId)
+        );
+
+        if (ingressConn && egressConn) {
+          const ingressPortId = ingressConn.sourceDeviceId === deviceId ? ingressConn.sourcePort : ingressConn.targetPort;
+          const egressPortId = egressConn.sourceDeviceId === deviceId ? egressConn.sourcePort : egressConn.targetPort;
+
+          const ingressPort = switchState.ports[ingressPortId];
+          const egressPort = switchState.ports[egressPortId];
+
+          // Default to VLAN 1 if not specified
+          const ingressVlan = ingressPort?.vlan || 1;
+          const egressVlan = egressPort?.vlan || 1;
+
+          // Check for VLAN mismatch on access ports
+          if (ingressVlan !== egressVlan) {
+            // Allow if one or both ports are trunks
+            if (ingressPort?.mode !== 'trunk' && egressPort?.mode !== 'trunk') {
+              return { 
+                success: false, 
+                hops: path.slice(0, i + 1).map(id => devices.find(d => d.id === id)?.name || id), 
+                error: `VLAN mismatch on ${device.name}. Port ${ingressPortId} is in VLAN ${ingressVlan}, but port ${egressPortId} is in VLAN ${egressVlan}.` 
+              };
+            }
+          }
+        }
+      }
+    }
+  }
+
   // 3. Layer 3 Logic (Simplified for simulation)
   // For a "kusursuz" (flawless) system, we should check subnets
   // But for now, if physical path exists and IPs are in same subnet or routed, it's a success
