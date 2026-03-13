@@ -1828,18 +1828,27 @@ export function NetworkTopology({
       clearTimeout(portTooltipTimerRef.current);
     }
 
+    // Estimate tooltip dimensions to prevent overflow
+    const tooltipWidth = 140;
+    const tooltipHeight = 60;
+    let x = e.clientX + 15;
+    let y = e.clientY + 15;
+
+    if (x + tooltipWidth > window.innerWidth) x = e.clientX - tooltipWidth - 10;
+    if (y + tooltipHeight > window.innerHeight) y = e.clientY - tooltipHeight - 10;
+
     setPortTooltip({
       deviceId,
       portId,
-      x: e.clientX,
-      y: e.clientY,
+      x,
+      y,
       visible: true,
     });
 
     portTooltipTimerRef.current = setTimeout(() => {
       setPortTooltip(prev => prev ? { ...prev, visible: false } : null);
     }, 1500);
-  }, [devices]);
+  }, [devices, isActuallyDragging, isTouchDragging]);
 
   const handlePortHover = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
     showPortTooltip(e, deviceId, portId);
@@ -1859,10 +1868,20 @@ export function NetworkTopology({
     if (deviceTooltipTimerRef.current) {
       clearTimeout(deviceTooltipTimerRef.current);
     }
+
+    // Estimate tooltip dimensions to prevent overflow
+    const tooltipWidth = 180;
+    const tooltipHeight = 160;
+    let x = e.clientX + 15;
+    let y = e.clientY + 15;
+
+    if (x + tooltipWidth > window.innerWidth) x = e.clientX - tooltipWidth - 10;
+    if (y + tooltipHeight > window.innerHeight) y = e.clientY - tooltipHeight - 10;
+
     setDeviceTooltip({
       deviceId,
-      x: e.clientX,
-      y: e.clientY,
+      x,
+      y,
       visible: true,
     });
     deviceTooltipTimerRef.current = setTimeout(() => {
@@ -1892,35 +1911,56 @@ export function NetworkTopology({
     }
   }, [devices]);
 
-  // Sync port shutdown status from deviceStates
+  // Sync port shutdown status and VLANs from deviceStates
   useEffect(() => {
     if (!deviceStates || devices.length === 0) return;
 
-    let hasChanges = false;
+    let anyDeviceChanged = false;
     const updatedDevices = devices.map(device => {
+      let deviceChanged = false;
       const deviceState = deviceStates.get(device.id);
-      if (!deviceState) return device;
-
+      
+      // Part 1: Sync shutdown status from simulator state to canvas ports
       const updatedPorts = device.ports.map(port => {
-        // Find corresponding port in deviceState
+        if (!deviceState) return port;
         const simulatorPort = deviceState.ports[port.id];
         if (simulatorPort && simulatorPort.shutdown !== port.shutdown) {
-          hasChanges = true;
+          deviceChanged = true;
           return { ...port, shutdown: simulatorPort.shutdown };
         }
         return port;
       });
 
-      if (hasChanges) {
-        return { ...device, ports: updatedPorts };
+      // Part 2: If PC is connected to a switch, sync its VLAN from the switch's port VLAN
+      let newVlan = device.vlan;
+      if (device.type === 'pc') {
+        const conn = connections.find(c => c.sourceDeviceId === device.id || c.targetDeviceId === device.id);
+        if (conn) {
+          const otherDeviceId = conn.sourceDeviceId === device.id ? conn.targetDeviceId : conn.sourceDeviceId;
+          const otherPortId = conn.sourceDeviceId === device.id ? conn.targetPort : conn.sourcePort;
+          const otherDeviceState = deviceStates.get(otherDeviceId);
+          
+          if (otherDeviceState && otherDeviceState.ports[otherPortId]) {
+            const portVlan = otherDeviceState.ports[otherPortId].vlan;
+            if (portVlan !== undefined && portVlan !== device.vlan) {
+              newVlan = portVlan;
+              deviceChanged = true;
+            }
+          }
+        }
+      }
+
+      if (deviceChanged) {
+        anyDeviceChanged = true;
+        return { ...device, ports: updatedPorts, vlan: newVlan };
       }
       return device;
     });
 
-    if (hasChanges) {
+    if (anyDeviceChanged) {
       setDevices(updatedDevices);
     }
-  }, [deviceStates, devices]);
+  }, [deviceStates, devices, connections]);
 
 
   // Delete connection
