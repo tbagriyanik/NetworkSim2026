@@ -157,7 +157,8 @@ export function createInitialState(): SwitchState {
       serialNumber: 'FOC1234X5YZ',
       uptime: '2 weeks, 3 days, 5 hours'
     },
-    macAddressTable: createInitialMacTable()
+    macAddressTable: createInitialMacTable(),
+    ipRouting: false
   };
 }
 
@@ -221,7 +222,8 @@ export function createInitialRouterState(): SwitchState {
       serialNumber: 'FTX1234ABCD',
       uptime: '1 week, 2 days, 4 hours'
     },
-    macAddressTable: []
+    macAddressTable: [],
+    ipRouting: false
   };
 }
 

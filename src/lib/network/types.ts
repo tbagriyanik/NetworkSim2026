@@ -99,6 +99,7 @@ export interface SwitchState {
   dhcpSnoopingEnabled?: boolean;
   ntpServers?: string[];
   ipv6Enabled?: boolean;
+  ipRouting: boolean;
 }
 
 export interface CommandResult {
