@@ -378,16 +378,16 @@ const commandPatterns: Record<string, CommandPattern> = {
   
   // Interface komutları - interface range ÖNCE gelmeli (daha spesifik)
   'interface range': {
-    pattern: /^interface\s+r(?:ange)?\s+(.+)$/i,
+    pattern: /^interface\s+r(?:ange)?\s+(?:(?:fa|fastethernet|gi|gigabitethernet|e|ethernet|po|port-channel|vlan)\s*)?(.+)$/i,
     modes: ['config'],
     minArgs: 1,
     maxArgs: 1
   },
   'interface': {
-    pattern: /^interface\s+(?!r(?:ange)?\s)(.+)$/i,
+    pattern: /^interface\s+(?!r(?:ange)?\s)(fa|fastethernet|gi|gigabitethernet|e|ethernet|po|port-channel|vlan)?\s*(.+)$/i,
     modes: ['config'],
     minArgs: 1,
-    maxArgs: 1
+    maxArgs: 2
   },
   'default interface': {
     pattern: /^default\s+interface\s+(.+)$/i,
@@ -1801,6 +1801,11 @@ Hızlı yazım:
 Mevcut komutlar:
   hostname <isim>           - Switch adını değiştir
   interface <port>          - Interface konfigürasyonuna geç
+    Ethernet                - Ethernet IEEE 802.3
+    FastEthernet            - FastEthernet IEEE 802.3
+    GigabitEthernet        - GigabitEthernet IEEE 802.3z
+    Port-channel            - Ethernet Channel of interfaces
+    Vlan                    - Catalyst Vlans
   interface range <ports>   - Birden fazla interface seç
   vlan <id>                 - VLAN konfigürasyonuna geç
   no vlan <id>              - VLAN sil
@@ -1950,39 +1955,44 @@ Shortcuts:
   cop run sta = copy running-config startup-config
 `,
     config: `
-Available commands:
-  hostname <name>           - Change switch name
-  interface <port>          - Enter interface configuration
-  interface range <ports>   - Select multiple interfaces
-  vlan <id>                 - Enter VLAN configuration
-  no vlan <id>              - Delete VLAN
-  enable secret <password>  - Enable password (encrypted)
-  enable password <password> - Enable password (plain text)
-  service password-encryption - Encrypt passwords
-  username <name> password <password> - Create user
-  line console 0            - Console line configuration
-  line vty <start> <end>    - VTY line configuration
-  banner motd #<message>#   - Set MOTD banner
-  ip default-gateway <ip>   - Default gateway
-  ip domain-name <name>     - Domain name
-  spanning-tree mode <mode> - Set STP mode
-  vtp mode <mode>           - Set VTP mode
-  vtp domain <name>         - Set VTP domain
-  cdp run                   - Enable CDP
-  no cdp run                - Disable CDP
-  exit                      - Return to privileged mode
-  end                       - Return to privileged mode
-  do <command>              - Run privileged commands
+    Available commands:
+    hostname <name>           - Change switch name
+    interface <port>          - Enter interface configuration
+    Ethernet                - Ethernet IEEE 802.3
+    FastEthernet            - FastEthernet IEEE 802.3
+    GigabitEthernet        - GigabitEthernet IEEE 802.3z
+    Port-channel            - Ethernet Channel of interfaces
+    Vlan                    - Catalyst Vlans
+    interface range <ports>   - Select multiple interfaces
+    vlan <id>                 - Enter VLAN configuration
+    no vlan <id>              - Delete VLAN
+    enable secret <password>  - Enable password (encrypted)
+    enable password <password> - Enable password (plain text)
+    service password-encryption - Encrypt passwords
+    username <name> password <password> - Create user
+    line console 0            - Console line configuration
+    line vty <start> <end>    - VTY line configuration
+    banner motd #<message>#   - Set MOTD banner
+    ip default-gateway <ip>   - Default gateway
+    ip domain-name <name>     - Domain name
+    spanning-tree mode <mode> - Set STP mode
+    vtp mode <mode>           - Set VTP mode
+    vtp domain <name>         - Set VTP domain
+    cdp run                   - Enable CDP
+    no cdp run                - Disable CDP
+    exit                      - Return to privileged mode
+    end                       - Return to privileged mode
+    do <command>              - Run privileged commands
 
-Shortcuts:
-  int fa0/1   = interface FastEthernet0/1
-  int gi0/1   = interface GigabitEthernet0/1
-  int r fa0/1-24 = interface range FastEthernet0/1-24
-  en sec      = enable secret
-  ser pass    = service password-encryption
-  ban mot     = banner motd
-  ip def      = ip default-gateway
-`,
+    Shortcuts:
+    int fa0/1   = interface FastEthernet0/1
+    int gi0/1   = interface GigabitEthernet0/1
+    int r fa0/1-24 = interface range FastEthernet0/1-24
+    en sec      = enable secret
+    ser pass    = service password-encryption
+    ban mot     = banner motd
+    ip def      = ip default-gateway
+    `,
     interface: `
 Available commands:
   shutdown                  - Disable port

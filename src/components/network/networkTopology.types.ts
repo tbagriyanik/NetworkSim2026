@@ -31,6 +31,7 @@ export interface CanvasDevice {
   subnet?: string;
   gateway?: string;
   dns?: string;
+  vlan?: number;
   x: number;
   y: number;
   status: 'online' | 'offline' | 'error';

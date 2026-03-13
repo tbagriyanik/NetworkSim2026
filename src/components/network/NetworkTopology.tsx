@@ -22,6 +22,7 @@ import { NetworkTopologyProps, CanvasDevice, CanvasConnection, CanvasNote, Conte
 import {
   CABLE_COLORS,
   DEFAULT_ZOOM,
+  DEVICE_ICON_PATHS,
   DEVICE_ICONS,
   DRAG_THRESHOLD,
   LONG_PRESS_DURATION,
@@ -84,6 +85,7 @@ export function NetworkTopology({
       name: 'PC-1',
       macAddress: generateMacAddress(),
       ip: '192.168.1.10',
+      vlan: 1,
       x: 100,
       y: 150,
       status: 'online',
@@ -98,6 +100,7 @@ export function NetworkTopology({
       name: 'Switch-1',
       macAddress: generateMacAddress(),
       ip: '',
+      vlan: 1,
       x: 300,
       y: 150,
       status: 'online',
@@ -1762,6 +1765,7 @@ export function NetworkTopology({
       name: `${type.toUpperCase()}-${deviceCounterRef.current[type]}`,
       macAddress: generateMacAddress(),
       ip: type === 'pc' ? generateUniqueIp() : '',
+      vlan: 1,
       // Position near top-left with staggered layout
       x: 100 + offsetX + Math.random() * 30,
       y: 80 + offsetY + Math.random() * 30,
@@ -1839,6 +1843,10 @@ export function NetworkTopology({
 
   const showDeviceTooltip = useCallback((e: ReactMouseEvent | MouseEvent, deviceId: string) => {
     if (isActuallyDragging || isTouchDragging) return;
+    
+    const device = devices.find(d => d.id === deviceId);
+    if (!device) return;
+
     if (deviceTooltipTimerRef.current) {
       clearTimeout(deviceTooltipTimerRef.current);
     }
@@ -1850,8 +1858,8 @@ export function NetworkTopology({
     });
     deviceTooltipTimerRef.current = setTimeout(() => {
       setDeviceTooltip(prev => prev ? { ...prev, visible: false } : null);
-    }, 1500);
-  }, [isActuallyDragging, isTouchDragging]);
+    }, 3000); // 3 seconds per requirement
+  }, [isActuallyDragging, isTouchDragging, devices]);
 
   const handleDeviceHover = useCallback((e: ReactMouseEvent, deviceId: string) => {
     showDeviceTooltip(e, deviceId);
@@ -2242,6 +2250,23 @@ export function NetworkTopology({
     const sourceDevice = devices.find(d => d.id === sourceId);
     const targetDevice = devices.find(d => d.id === targetId);
     if (sourceDevice?.status === 'offline' || targetDevice?.status === 'offline') {
+      setPingAnimation({
+        sourceId,
+        targetId,
+        path: [sourceId, targetId],
+        currentHopIndex: 0,
+        progress: 1,
+        success: false
+      });
+      setTimeout(() => setPingAnimation(null), 2500);
+      return;
+    }
+
+    // VLAN check - success if same VLAN, else fail
+    const sourceVlan = sourceDevice?.vlan || 1;
+    const targetVlan = targetDevice?.vlan || 1;
+    
+    if (sourceVlan !== targetVlan) {
       setPingAnimation({
         sourceId,
         targetId,
@@ -2653,9 +2678,6 @@ export function NetworkTopology({
     const deviceHeight = device.type === 'pc' ? 89 : 80 + numRows * 14 + 5;
 
     // Calculate device width to fit all ports with proper spacing
-    // For switch/router: startX=12, portSpacing=13, portRadius=6
-    // Width needed = startX + (portsPerRow - 1) * portSpacing + portRadius + margin
-    // For 8 ports: 12 + 7*13 + 6 + 10 = 119, so we use 130 for more breathing room
     const deviceWidth = device.type === 'pc' ? 85 : 130;
 
     return (
@@ -2666,28 +2688,48 @@ export function NetworkTopology({
         data-device-id={device.id}
         onMouseEnter={(e) => handleDeviceHover(e as unknown as ReactMouseEvent, device.id)}
       >
+        {/* Selection Glow */}
+        {isSelected && (
+          <rect
+            width={deviceWidth + 8}
+            height={deviceHeight + 8}
+            x={-4}
+            y={-4}
+            rx={12}
+            fill={isDark ? 'rgba(6, 182, 212, 0.25)' : 'rgba(6, 182, 212, 0.2)'}
+            className="animate-pulse"
+            style={{ filter: 'blur(4px)' }}
+          />
+        )}
+
         {/* Device body */}
         <rect
           width={deviceWidth}
           height={deviceHeight}
           rx={8}
-          fill={isDark ? '#1e293b' : '#fff'}
+          fill={
+            device.type === 'pc' ? 'url(#pcGradient)' :
+            device.type === 'switch' ? 'url(#switchGradient)' :
+            'url(#routerGradient)'
+          }
           stroke={isSelected ? '#06b6d4' : isDark ? '#475569' : '#cbd5e1'}
           strokeWidth={isSelected ? 2 : 1}
-          className={isDragging ? '' : 'transition-all duration-150'}
+          className={isDragging ? '' : 'transition-all duration-150 shadow-xl'}
+        />
+        {/* Glossy overlay for 3D depth */}
+        <rect
+          width={deviceWidth}
+          height={deviceHeight}
+          rx={8}
+          fill="url(#glossOverlay)"
+          pointerEvents="none"
         />
 
         {/* Device icon */}
         <g transform={`translate(${deviceWidth / 2 - 12}, 10)`}>
           <g
-            className={
-              device.type === 'pc'
-                ? 'text-blue-500'
-                : device.type === 'switch'
-                  ? 'text-emerald-500'
-                  : 'text-purple-500'
-            }
-            style={{ color: 'currentColor' }}
+            className="text-white"
+            style={{ color: 'white' }}
           >
             {device.type === 'pc' && (
               <path
@@ -2696,7 +2738,7 @@ export function NetworkTopology({
                 strokeWidth={1.5}
                 stroke="currentColor"
                 fill="none"
-                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z"
+                d={DEVICE_ICON_PATHS.pc}
                 transform="scale(1.2) translate(0, 3.3)"
               />
             )}
@@ -2707,14 +2749,14 @@ export function NetworkTopology({
                 strokeWidth={1.5}
                 stroke="currentColor"
                 fill="none"
-                d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01"
+                d={DEVICE_ICON_PATHS.switch}
                 transform="scale(1.2)"
               />
             )}
             {device.type === 'router' && (
               <g transform="scale(1.2)">
-                <circle cx="12" cy="12" r="9" strokeWidth={1.5} stroke="currentColor" fill="none" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} stroke="currentColor" fill="none" d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
+                <circle cx={DEVICE_ICON_PATHS.router.circle.cx} cy={DEVICE_ICON_PATHS.router.circle.cy} r={DEVICE_ICON_PATHS.router.circle.r} strokeWidth={1.5} stroke="currentColor" fill="none" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} stroke="currentColor" fill="none" d={DEVICE_ICON_PATHS.router.paths} />
               </g>
             )}
           </g>
@@ -2732,13 +2774,13 @@ export function NetworkTopology({
         />
 
         {/* Device name */}
-        <text x={deviceWidth / 2} y={58} fill={isDark ? '#f1f5f9' : '#1e293b'} fontSize="10" textAnchor="middle" fontWeight="bold" className="select-none pointer-events-none">
+        <text x={deviceWidth / 2} y={58} fill="white" fontSize="10" textAnchor="middle" fontWeight="bold" className="select-none pointer-events-none drop-shadow-sm">
           {device.name}
         </text>
 
         {/* Device IP */}
         {device.type === 'pc' && (
-          <text x={deviceWidth / 2} y={70} fill={isDark ? '#94a3b8' : '#64748b'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
+          <text x={deviceWidth / 2} y={70} fill="rgba(255,255,255,0.8)" fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
             {device.ip}
           </text>
         )}
@@ -3398,6 +3440,29 @@ export function NetworkTopology({
                   <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
                     <circle cx="10" cy="10" r="1" fill={isDark ? '#334155' : '#94a3b8'} />
                   </pattern>
+
+                  {/* Device Gradients - 3D Effect */}
+                  <linearGradient id="pcGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor={isDark ? '#3b82f6' : '#60a5fa'} />
+                    <stop offset="100%" stopColor={isDark ? '#1d4ed8' : '#2563eb'} />
+                  </linearGradient>
+                  
+                  <linearGradient id="switchGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor={isDark ? '#10b981' : '#34d399'} />
+                    <stop offset="100%" stopColor={isDark ? '#047857' : '#059669'} />
+                  </linearGradient>
+
+                  <linearGradient id="routerGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor={isDark ? '#8b5cf6' : '#a78bfa'} />
+                    <stop offset="100%" stopColor={isDark ? '#6d28d9' : '#7c3aed'} />
+                  </linearGradient>
+                  
+                  {/* Glossy overlay effect for 3D look */}
+                  <linearGradient id="glossOverlay" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="white" stopOpacity="0.15" />
+                    <stop offset="50%" stopColor="white" stopOpacity="0" />
+                    <stop offset="100%" stopColor="black" stopOpacity="0.1" />
+                  </linearGradient>
                 </defs>
 
                 {/* Canvas Background with Grid - clipped to boundaries */}
@@ -3489,12 +3554,15 @@ export function NetworkTopology({
                       className="pointer-events-none"
                     >
                       <div
-                        className={`pointer-events-auto relative flex flex-col w-full h-full rounded-lg shadow-lg border ${isDark
-                          ? 'border-amber-300/60 text-slate-900'
-                          : 'border-yellow-200 text-slate-800'
-                          } ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-emerald-400/70' : ''}`}
+                        className={`pointer-events-auto relative flex flex-col w-full h-full rounded-lg shadow-xl border border-white/40 text-white ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-emerald-400/70' : ''}`}
                         data-note-id={note.id}
-                        style={{ backgroundColor: note.color, fontFamily: note.font, opacity: note.opacity }}
+                        style={{ 
+                          backgroundColor: note.color, 
+                          fontFamily: note.font, 
+                          opacity: note.opacity,
+                          backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.05) 100%)',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+                        }}
                         onClick={(e) => {
                           e.stopPropagation();
                           if (e.shiftKey) {
@@ -3521,7 +3589,7 @@ export function NetworkTopology({
                               e.stopPropagation();
                               deleteNote(note.id);
                             }}
-                            className="px-1.5 py-0.5 rounded hover:bg-black/10"
+                            className="px-1.5 py-0.5 rounded hover:bg-black/10 text-white/70 hover:text-white"
                             title={language === 'tr' ? 'Sil' : 'Delete'}
                           >
                             <Trash2 className="w-3 h-3" />
@@ -3538,7 +3606,7 @@ export function NetworkTopology({
                               onTopologyChange(devices, connections, notes);
                             }
                           }}
-                          className="flex-1 px-2 py-1 bg-transparent outline-none resize-none"
+                          className="flex-1 px-2 py-1 bg-transparent outline-none resize-none text-white placeholder:text-white/50"
                           style={{ fontSize: note.fontSize, height: note.height - NOTE_HEADER_HEIGHT - 6 }}
                         />
                         {!isMobile && (

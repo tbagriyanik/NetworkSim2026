@@ -62,26 +62,9 @@ import {
   TaskContext
 } from '@/lib/network/taskDefinitions';
 
-type TabType = 'topology' | 'cmd' | 'terminal' | 'ports' | 'vlan' | 'security';
+import { DEVICE_ICONS } from '@/components/network/networkTopology.constants';
 
-const DEVICE_ICONS = {
-  pc: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
-    </svg>
-  ),
-  switch: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
-    </svg>
-  ),
-  router: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
-    </svg>
-  ),
-};
+type TabType = 'topology' | 'cmd' | 'terminal' | 'ports' | 'vlan' | 'security';
 
 // PC Output type for PCPanel
 interface PCOutputLine {
