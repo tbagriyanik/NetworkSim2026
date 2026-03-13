@@ -125,6 +125,7 @@ export function NetworkTopology({
     visible: boolean;
   } | null>(null);
   const portTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const portTooltipShowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [deviceTooltip, setDeviceTooltip] = useState<{
     deviceId: string;
@@ -133,6 +134,7 @@ export function NetworkTopology({
     visible: boolean;
   } | null>(null);
   const deviceTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const deviceTooltipShowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync internal state with props (e.g. from undo/redo or tab switching)
   useEffect(() => {
@@ -801,11 +803,11 @@ export function NetworkTopology({
         setMousePos(coords);
       }
 
-      // Update tooltip position if visible
-      if (deviceTooltip && deviceTooltip.visible) {
+      // Update tooltip position if visible or pending
+      if (deviceTooltip) {
         setDeviceTooltip(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
       }
-      if (portTooltip && portTooltip.visible) {
+      if (portTooltip) {
         setPortTooltip(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
       }
     };
@@ -1824,9 +1826,9 @@ export function NetworkTopology({
     const port = device?.ports.find(p => p.id === portId);
     if (!device || !port) return;
 
-    if (portTooltipTimerRef.current) {
-      clearTimeout(portTooltipTimerRef.current);
-    }
+    // Clear any existing timers
+    if (portTooltipShowTimerRef.current) clearTimeout(portTooltipShowTimerRef.current);
+    if (portTooltipTimerRef.current) clearTimeout(portTooltipTimerRef.current);
 
     // Estimate tooltip dimensions to prevent overflow
     const tooltipWidth = 140;
@@ -1837,17 +1839,26 @@ export function NetworkTopology({
     if (x + tooltipWidth > window.innerWidth) x = e.clientX - tooltipWidth - 10;
     if (y + tooltipHeight > window.innerHeight) y = e.clientY - tooltipHeight - 10;
 
-    setPortTooltip({
-      deviceId,
-      portId,
-      x,
-      y,
-      visible: true,
-    });
+    // Start show delay timer (600ms)
+    portTooltipShowTimerRef.current = setTimeout(() => {
+      setPortTooltip({
+        deviceId,
+        portId,
+        x: e.clientX,
+        y: e.clientY,
+        visible: true,
+      });
 
-    portTooltipTimerRef.current = setTimeout(() => {
-      setPortTooltip(prev => prev ? { ...prev, visible: false } : null);
-    }, 1500);
+      // Clear device tooltip state and timers when port tooltip shows
+      setDeviceTooltip(null);
+      if (deviceTooltipShowTimerRef.current) clearTimeout(deviceTooltipShowTimerRef.current);
+      if (deviceTooltipTimerRef.current) clearTimeout(deviceTooltipTimerRef.current);
+
+      // Auto-hide after 1.5s
+      portTooltipTimerRef.current = setTimeout(() => {
+        setPortTooltip(prev => prev ? { ...prev, visible: false } : null);
+      }, 1500);
+    }, 600);
   }, [devices, isActuallyDragging, isTouchDragging]);
 
   const handlePortHover = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
@@ -1855,8 +1866,17 @@ export function NetworkTopology({
   }, [showPortTooltip]);
 
   const handlePortMouseLeave = useCallback(() => {
-    // We don't immediately hide on leave if we want it to stay for 3s
-    // but we could if needed. The requirement says 3s after open.
+    // Clear both show and hide timers
+    if (portTooltipShowTimerRef.current) {
+      clearTimeout(portTooltipShowTimerRef.current);
+      portTooltipShowTimerRef.current = null;
+    }
+    if (portTooltipTimerRef.current) {
+      clearTimeout(portTooltipTimerRef.current);
+      portTooltipTimerRef.current = null;
+    }
+    // Hide immediately
+    setPortTooltip(null);
   }, []);
 
   const showDeviceTooltip = useCallback((e: ReactMouseEvent | MouseEvent, deviceId: string) => {
@@ -1865,9 +1885,9 @@ export function NetworkTopology({
     const device = devices.find(d => d.id === deviceId);
     if (!device) return;
 
-    if (deviceTooltipTimerRef.current) {
-      clearTimeout(deviceTooltipTimerRef.current);
-    }
+    // Clear any existing timers
+    if (deviceTooltipShowTimerRef.current) clearTimeout(deviceTooltipShowTimerRef.current);
+    if (deviceTooltipTimerRef.current) clearTimeout(deviceTooltipTimerRef.current);
 
     // Estimate tooltip dimensions to prevent overflow
     const tooltipWidth = 180;
@@ -1878,20 +1898,44 @@ export function NetworkTopology({
     if (x + tooltipWidth > window.innerWidth) x = e.clientX - tooltipWidth - 10;
     if (y + tooltipHeight > window.innerHeight) y = e.clientY - tooltipHeight - 10;
 
-    setDeviceTooltip({
-      deviceId,
-      x,
-      y,
-      visible: true,
-    });
-    deviceTooltipTimerRef.current = setTimeout(() => {
-      setDeviceTooltip(prev => prev ? { ...prev, visible: false } : null);
-    }, 3000); // 3 seconds per requirement
+    // Start show delay timer (600ms)
+    deviceTooltipShowTimerRef.current = setTimeout(() => {
+      setDeviceTooltip({
+        deviceId,
+        x,
+        y,
+        visible: true,
+      });
+
+      // Clear port tooltip state and timers when device tooltip shows
+      setPortTooltip(null);
+      if (portTooltipShowTimerRef.current) clearTimeout(portTooltipShowTimerRef.current);
+      if (portTooltipTimerRef.current) clearTimeout(portTooltipTimerRef.current);
+
+      // Auto-hide after 3s (stays visible for a while)
+      deviceTooltipTimerRef.current = setTimeout(() => {
+        setDeviceTooltip(prev => prev ? { ...prev, visible: false } : null);
+      }, 3000);
+    }, 600);
   }, [isActuallyDragging, isTouchDragging, devices]);
 
   const handleDeviceHover = useCallback((e: ReactMouseEvent, deviceId: string) => {
     showDeviceTooltip(e, deviceId);
   }, [showDeviceTooltip]);
+
+  const handleDeviceMouseLeave = useCallback(() => {
+    // Clear both show and hide timers
+    if (deviceTooltipShowTimerRef.current) {
+      clearTimeout(deviceTooltipShowTimerRef.current);
+      deviceTooltipShowTimerRef.current = null;
+    }
+    if (deviceTooltipTimerRef.current) {
+      clearTimeout(deviceTooltipTimerRef.current);
+      deviceTooltipTimerRef.current = null;
+    }
+    // Hide immediately
+    setDeviceTooltip(null);
+  }, []);
 
   // Sync device counters with current devices to prevent ID collisions
   useEffect(() => {
@@ -3512,6 +3556,12 @@ export function NetworkTopology({
                     <stop offset="50%" stopColor="white" stopOpacity="0" />
                     <stop offset="100%" stopColor="black" stopOpacity="0.1" />
                   </linearGradient>
+
+                  {/* Subtle Background Gradient */}
+                  <radialGradient id="bgGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                    <stop offset="0%" stopColor={isDark ? '#1e293b' : '#ffffff'} />
+                    <stop offset="100%" stopColor={isDark ? '#0f172a' : '#f1f5f9'} />
+                  </radialGradient>
                 </defs>
 
                 {/* Canvas Background with Grid - clipped to boundaries */}
@@ -3522,7 +3572,7 @@ export function NetworkTopology({
                     y="0"
                     width={getCanvasDimensions().width}
                     height={getCanvasDimensions().height}
-                    fill={isDark ? '#1e293b' : '#f8fafc'}
+                    fill="url(#bgGradient)"
                   />
                   {/* Grid */}
                   <rect
@@ -3584,7 +3634,7 @@ export function NetworkTopology({
                         onDoubleClick={() => handleDeviceDoubleClick(device)}
                         onContextMenu={(e, id) => handleContextMenu(e as unknown as ReactMouseEvent, id)}
                         onMouseEnter={(e, id) => handleDeviceHover(e as unknown as ReactMouseEvent, id)}
-                        onMouseLeave={() => setDeviceTooltip(null)}
+                        onMouseLeave={handleDeviceMouseLeave}
                         onTouchStart={(e, id) => handleDeviceTouchStart(e as unknown as ReactTouchEvent, id)}
                         onTouchMove={handleDeviceTouchMove}
                         onTouchEnd={handleDeviceTouchEnd}
@@ -4293,6 +4343,13 @@ export function NetworkTopology({
         const device = devices.find(d => d.id === portTooltip.deviceId);
         const port = device?.ports.find(p => p.id === portTooltip.portId);
         if (!device || !port) return null;
+
+        // Get additional info from simulator state if available
+        const deviceState = deviceStates?.get(device.id);
+        const simulatorPort = deviceState?.ports[port.id];
+        const portIp = simulatorPort?.ipAddress;
+        const portVlan = simulatorPort?.vlan;
+
         return (
           <div
             className="fixed z-[9999] pointer-events-none px-3 py-2 rounded-lg shadow-xl border text-[11px] backdrop-blur-md"
@@ -4315,8 +4372,22 @@ export function NetworkTopology({
                   {port.status}
                 </span>
               </div>
-              <div className="text-[10px] opacity-60">
-                {port.id}
+              <div className="flex flex-col gap-0.5">
+                <div className="text-[10px] opacity-60">
+                  {port.id}
+                </div>
+                {portIp && (
+                  <div className="flex justify-between gap-2 border-t border-slate-700/10 pt-0.5 mt-0.5">
+                    <span className="opacity-60">IP:</span>
+                    <span className="font-mono font-bold text-blue-400">{portIp}</span>
+                  </div>
+                )}
+                {portVlan !== undefined && (
+                  <div className={`flex justify-between gap-2 ${!portIp ? 'border-t border-slate-700/10 pt-0.5 mt-0.5' : ''}`}>
+                    <span className="opacity-60">VLAN:</span>
+                    <span className="font-bold text-amber-500">{portVlan}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
