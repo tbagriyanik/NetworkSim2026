@@ -12,6 +12,9 @@ interface ConnectionLineProps {
   sameConnIndex: number;
   getPortPosition: (device: CanvasDevice, portId: string) => { x: number; y: number };
   CABLE_COLORS: Record<string, { primary: string; bg: string; text: string; border: string }>;
+  isHovered?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 export const ConnectionLine = memo(function ConnectionLine({
@@ -23,7 +26,10 @@ export const ConnectionLine = memo(function ConnectionLine({
   totalSameConns,
   sameConnIndex,
   getPortPosition,
-  CABLE_COLORS
+  CABLE_COLORS,
+  isHovered = false,
+  onMouseEnter,
+  onMouseLeave
 }: ConnectionLineProps) {
   // Get port positions for more accurate connection lines
   const source = getPortPosition(sourceDevice, connection.sourcePort);
@@ -85,14 +91,31 @@ export const ConnectionLine = memo(function ConnectionLine({
 
   return (
     <g>
+      {/* Invisible wider path for hover detection */}
+      <path
+        d={pathD}
+        stroke="transparent"
+        strokeWidth={12}
+        fill="none"
+        style={{ cursor: 'pointer' }}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      />
+      
       {/* Visual Connection line */}
       <path
         d={pathD}
         stroke={isCompatible ? color : '#ef4444'}
-        strokeWidth={3}
+        strokeWidth={isHovered ? 6 : 3}
         fill="none"
         strokeDasharray={isCompatible ? 'none' : '6,3'}
         className="pointer-events-none"
+        style={{
+          filter: isHovered ? 
+            'drop-shadow(0 0 4px ' + color + ') drop-shadow(0 0 8px ' + color + ') drop-shadow(0 0 16px ' + color + ') drop-shadow(0 0 24px ' + color + ')' : 
+            'none',
+          transition: 'all 0.2s ease'
+        }}
       />
 
       {/* Animated data flow - only for compatible cables and NOT during dragging */}
@@ -188,6 +211,7 @@ export const ConnectionLine = memo(function ConnectionLine({
     prevProps.totalSameConns === nextProps.totalSameConns &&
     prevProps.sameConnIndex === nextProps.sameConnIndex &&
     prevProps.isDark === nextProps.isDark &&
-    prevProps.isDragging === nextProps.isDragging
+    prevProps.isDragging === nextProps.isDragging &&
+    prevProps.isHovered === nextProps.isHovered
   );
 });

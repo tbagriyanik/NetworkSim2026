@@ -242,38 +242,45 @@ export function NetworkTopology({
   const [historyIndex, setHistoryIndex] = useState(-1);
   const historyRef = useRef({ history, historyIndex });
 
+  // Keep historyRef in sync with state
+  useEffect(() => {
+    historyRef.current = { history, historyIndex };
+  }, [history, historyIndex]);
+
   // Save state to history for undo
   const saveToHistory = useCallback(() => {
     const newState = { devices: [...devices], connections: [...connections], notes: [...notes] };
     setHistory(prev => {
-      const newHistory = prev.slice(0, historyIndex + 1);
+      const newHistory = prev.slice(0, historyRef.current.historyIndex + 1);
       newHistory.push(newState);
       return newHistory.slice(-50); // Keep last 50 states
     });
     setHistoryIndex(prev => Math.min(prev + 1, 49));
-  }, [devices, connections, notes, historyIndex]);
+  }, [devices, connections, notes]);
 
   // Undo
   const handleUndo = useCallback(() => {
-    if (historyIndex > 0) {
-      const prevState = history[historyIndex - 1];
+    const { history: currentHistory, historyIndex: currentIndex } = historyRef.current;
+    if (currentIndex > 0) {
+      const prevState = currentHistory[currentIndex - 1];
       setDevices(prevState.devices);
       setConnections(prevState.connections);
       setNotes(prevState.notes || []);
-      setHistoryIndex(prev => prev - 1);
+      setHistoryIndex(currentIndex - 1);
     }
-  }, [history, historyIndex]);
+  }, []);
 
   // Redo
   const handleRedo = useCallback(() => {
-    if (historyIndex < history.length - 1) {
-      const nextState = history[historyIndex + 1];
+    const { history: currentHistory, historyIndex: currentIndex } = historyRef.current;
+    if (currentIndex < currentHistory.length - 1) {
+      const nextState = currentHistory[currentIndex + 1];
       setDevices(nextState.devices);
       setConnections(nextState.connections);
       setNotes(nextState.notes || []);
-      setHistoryIndex(prev => prev + 1);
+      setHistoryIndex(currentIndex + 1);
     }
-  }, [history, historyIndex]);
+  }, []);
 
   // Configuration state (Name, IP, etc.)
   const [configuringDevice, setConfiguringDevice] = useState<string | null>(null);
@@ -291,6 +298,7 @@ export function NetworkTopology({
   // UI state
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(isFullscreenProp || false);
+  const [hoveredConnectionId, setHoveredConnectionId] = useState<string | null>(null);
 
   // Sync with prop
   useEffect(() => {
@@ -2819,6 +2827,20 @@ export function NetworkTopology({
           strokeWidth={isSelected ? 2 : 1}
           className={isDragging ? '' : 'transition-all duration-150 shadow-xl'}
         />
+        {/* Selection stroke */}
+        {isSelected && (
+          <rect
+            width={deviceWidth - 2}
+            height={deviceHeight - 2}
+            x={1}
+            y={1}
+            rx={7}
+            fill="none"
+            stroke="#06b6d4"
+            strokeWidth={2}
+            pointerEvents="none"
+          />
+        )}
         {/* Glossy overlay for 3D depth */}
         <rect
           width={deviceWidth}
@@ -3239,13 +3261,13 @@ export function NetworkTopology({
             <div className="flex items-center gap-4 shrink-0">
               {/* SM/MD/LG Screen Quick Tools (640px and above) */}
               <div className="flex items-center">
-                <div className={`flex items-center gap-2 p-1 rounded-xl border ${isDark ? 'bg-slate-900/40 border-slate-700/30' : 'bg-blue-50/50 border-blue-100/50'}`}>
+                <div className={`flex items-center gap-2 p-1.5 rounded-lg border ${isDark ? 'bg-slate-900/40 border-slate-700/30' : 'bg-blue-50/50 border-blue-100/50'}`}>
                   {/* Devices Group */}
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => addDevice('pc')}
                       title={t.addPcShort}
-                      className={`group relative p-2 rounded-xl transition-all duration-200 ${isDark 
+                      className={`group relative p-2 rounded-lg transition-all duration-200 ${isDark 
                         ? 'hover:bg-slate-700/80 hover:shadow-lg hover:shadow-blue-500/20 text-blue-400 hover:text-blue-300' 
                         : 'hover:bg-slate-100 hover:shadow-lg hover:shadow-blue-500/10 text-blue-600 hover:text-blue-500'}`}
                     >
@@ -3291,7 +3313,7 @@ export function NetworkTopology({
                         key={type}
                         onClick={() => onCableChange({ ...cableInfo, cableType: type })}
                         title={type.charAt(0).toUpperCase() + type.slice(1)}
-                        className={`group relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 ${cableInfo.cableType === type
+                        className={`group relative flex flex-col items-center gap-1 p-2 rounded-lg transition-all duration-200 ${cableInfo.cableType === type
                           ? `${CABLE_COLORS[type].bg} text-white hover:scale-105`
                           : isDark ? 'hover:bg-slate-700 text-slate-400 hover:scale-105' : 'hover:bg-slate-100 text-slate-600 hover:scale-105'}`}
                       >
@@ -3597,6 +3619,9 @@ export function NetworkTopology({
                           sameConnIndex={sameConnIndex}
                           getPortPosition={getPortPosition}
                           CABLE_COLORS={CABLE_COLORS as any}
+                          isHovered={hoveredConnectionId === conn.id}
+                          onMouseEnter={() => setHoveredConnectionId(conn.id)}
+                          onMouseLeave={() => setHoveredConnectionId(null)}
                         />
                         {renderConnectionHandle(conn)}
                       </g>
@@ -3644,14 +3669,18 @@ export function NetworkTopology({
                       className="pointer-events-none"
                     >
                       <div
-                        className={`pointer-events-auto relative flex flex-col w-full h-full rounded-br-3xl shadow-xl border border-black text-white ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-emerald-400/70' : ''}`}
+                        className={`pointer-events-auto relative flex flex-col w-full h-full rounded-br-3xl shadow-xl text-white ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-emerald-400/70' : ''}`}
                         data-note-id={note.id}
                         style={{ 
                           backgroundColor: note.color, 
                           fontFamily: note.font, 
                           opacity: note.opacity,
                           backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.05) 100%)',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                          borderTop: '2px solid rgba(255, 255, 255, 0.4)',
+                          borderLeft: '2px solid rgba(255, 255, 255, 0.4)',
+                          borderRight: '2px solid rgba(0, 0, 0, 0.3)',
+                          borderBottom: '2px solid rgba(0, 0, 0, 0.3)'
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
