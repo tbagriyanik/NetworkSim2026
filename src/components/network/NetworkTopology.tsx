@@ -162,44 +162,49 @@ export function NetworkTopology({
     }
   }, [devices, connections, notes, onTopologyChange]);
 
+  // Sync internal state with props (e.g. from undo/redo)
   useEffect(() => {
-    if (initialDevices) {
-      const stateStr = JSON.stringify(initialDevices);
-      if (stateStr !== JSON.stringify(devices)) {
-        setDevices(initialDevices);
-        lastStateReportedRef.current = JSON.stringify({ devices: initialDevices, connections, notes });
-      }
-    }
-  }, [initialDevices]);
+    let changed = false;
+    let nextDevices = devices;
+    let nextConnections = connections;
+    let nextNotes = notes;
 
-  useEffect(() => {
-    if (initialConnections) {
-      const stateStr = JSON.stringify(initialConnections);
-      if (stateStr !== JSON.stringify(connections)) {
-        setConnections(initialConnections);
-        lastStateReportedRef.current = JSON.stringify({ devices, connections: initialConnections, notes });
-      }
+    if (initialDevices && JSON.stringify(initialDevices) !== JSON.stringify(devices)) {
+      nextDevices = initialDevices;
+      changed = true;
     }
-  }, [initialConnections]);
+    
+    if (initialConnections && JSON.stringify(initialConnections) !== JSON.stringify(connections)) {
+      nextConnections = initialConnections;
+      changed = true;
+    }
 
-  useEffect(() => {
-    if (initialNotes) {
-      const stateStr = JSON.stringify(initialNotes);
-      if (stateStr !== JSON.stringify(notes)) {
-        const nextNotes = initialNotes.map(n => ({
-          ...n,
-          width: n.width || NOTE_DEFAULT_WIDTH,
-          height: n.height || NOTE_DEFAULT_HEIGHT,
-          color: n.color || NOTE_COLORS[0],
-          font: n.font || noteFonts[0],
-          fontSize: n.fontSize || 12,
-          opacity: n.opacity || 1
-        }));
-        setNotes(nextNotes);
-        lastStateReportedRef.current = JSON.stringify({ devices, connections, notes: nextNotes });
-      }
+    if (initialNotes && JSON.stringify(initialNotes) !== JSON.stringify(notes)) {
+      nextNotes = initialNotes.map(n => ({
+        ...n,
+        width: n.width || NOTE_DEFAULT_WIDTH,
+        height: n.height || NOTE_DEFAULT_HEIGHT,
+        color: n.color || NOTE_COLORS[0],
+        font: n.font || noteFonts[0],
+        fontSize: n.fontSize || 12,
+        opacity: n.opacity || 1
+      }));
+      changed = true;
     }
-  }, [initialNotes, noteFonts]);
+
+    if (changed) {
+      if (nextDevices !== devices) setDevices(nextDevices);
+      if (nextConnections !== connections) setConnections(nextConnections);
+      if (nextNotes !== notes) setNotes(nextNotes);
+      
+      // Update the reported ref to match EXACTLY what we just set to prevent outgoing sync loop
+      lastStateReportedRef.current = JSON.stringify({ 
+        devices: nextDevices, 
+        connections: nextConnections, 
+        notes: nextNotes 
+      });
+    }
+  }, [initialDevices, initialConnections, initialNotes, noteFonts]);
 
   useEffect(() => {
     if (zoomProp !== undefined) setZoom(zoomProp);

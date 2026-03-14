@@ -248,12 +248,16 @@ export default function Home() {
     // setTopologyKey(prev => prev + 1); // Only for resets
   }, [setTopologyDevices, setTopologyConnections, setDeviceStates, setDeviceOutputs, setPcOutputs, setCableInfo, setActiveDeviceId, setActiveDeviceType, setZoom, setPan]);
 
+  const isApplyingHistoryRef = useRef(false);
+
   const handleUndo = useCallback(() => {
+    isApplyingHistoryRef.current = true;
     const prevState = undo();
     if (prevState) applyProjectState(prevState);
   }, [undo, applyProjectState]);
 
   const handleRedo = useCallback(() => {
+    isApplyingHistoryRef.current = true;
     const nextState = redo();
     if (nextState) applyProjectState(nextState);
   }, [redo, applyProjectState]);
@@ -262,6 +266,18 @@ export default function Home() {
   // We need to debouncing this or use a ref to track if we're in the middle of an undo/redo
   const lastPushedStateRef = useRef<string>('');
   
+  // Initialize lastPushedStateRef with initial state to avoid redundant first push
+  useEffect(() => {
+    const initialState = getCurrentState();
+    lastPushedStateRef.current = JSON.stringify({
+      t: initialState.topologyDevices,
+      c: initialState.topologyConnections,
+      n: initialState.topologyNotes,
+      s: Array.from(initialState.deviceStates.keys()),
+      id: initialState.activeDeviceId
+    });
+  }, []); // Run once on mount
+
   useEffect(() => {
     if (isAppLoading) return;
     
@@ -275,14 +291,26 @@ export default function Home() {
     });
 
     if (stateString !== lastPushedStateRef.current) {
+      if (isApplyingHistoryRef.current) {
+        lastPushedStateRef.current = stateString;
+        isApplyingHistoryRef.current = false;
+        return;
+      }
+
       // Debounce history pushes
       const timer = setTimeout(() => {
         pushState(currentState);
         lastPushedStateRef.current = stateString;
       }, 500);
       return () => clearTimeout(timer);
+    } else {
+      // If state didn't change but we were applying history, 
+      // we still need to clear the flag
+      if (isApplyingHistoryRef.current) {
+        isApplyingHistoryRef.current = false;
+      }
     }
-  }, [topologyDevices, topologyConnections, topologyNotes, deviceStates, activeDeviceId, isAppLoading, pushState, getCurrentState]);
+  }, [topologyDevices, topologyConnections, topologyNotes, deviceStates, activeDeviceId, isAppLoading, pushState]); // Removed getCurrentState from deps as it's not stable
 
   // Initial App Loading State
   // No longer needed here as it's declared earlier

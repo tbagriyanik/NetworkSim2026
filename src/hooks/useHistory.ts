@@ -17,18 +17,23 @@ export interface ProjectState {
   pan: { x: number; y: number };
 }
 
+interface HistoryState {
+  items: ProjectState[];
+  index: number;
+}
+
 export function useHistory(initialState: ProjectState) {
-  const [history, setHistory] = useState<ProjectState[]>([initialState]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const isTransitioning = useRef(false);
+  const [state, setState] = useState<HistoryState>({
+    items: [initialState],
+    index: 0
+  });
 
   const pushState = useCallback((newState: ProjectState) => {
-    if (isTransitioning.current) return;
-
-    setHistory(prev => {
-      const newHistory = prev.slice(0, currentIndex + 1);
-      // Deep copy maps to avoid reference issues
-      const stateToPush = {
+    setState(prev => {
+      const newItems = prev.items.slice(0, prev.index + 1);
+      
+      // Deep copy maps and objects
+      const stateToPush: ProjectState = {
         ...newState,
         deviceStates: new Map(newState.deviceStates),
         deviceOutputs: new Map(newState.deviceOutputs),
@@ -38,64 +43,77 @@ export function useHistory(initialState: ProjectState) {
         topologyNotes: JSON.parse(JSON.stringify(newState.topologyNotes)),
         cableInfo: { ...newState.cableInfo }
       };
-      
-      // Only push if different from current state (simple check)
-      const currentState = newHistory[newHistory.length - 1];
-      if (JSON.stringify(stateToPush.topologyDevices) === JSON.stringify(currentState?.topologyDevices) &&
-          JSON.stringify(stateToPush.topologyConnections) === JSON.stringify(currentState?.topologyConnections) &&
-          JSON.stringify(stateToPush.topologyNotes) === JSON.stringify(currentState?.topologyNotes) &&
-          stateToPush.deviceStates.size === currentState?.deviceStates.size &&
-          stateToPush.activeDeviceId === currentState?.activeDeviceId) {
-          // This is a very shallow check, but it helps prevent some redundant pushes
-          // For a truly "solid" undo/redo, we might want a better diffing or just trust the caller
+
+      // Optimization: don't push if it's the same as current present
+      const currentPresent = prev.items[prev.index];
+      if (currentPresent && 
+          JSON.stringify(stateToPush.topologyDevices) === JSON.stringify(currentPresent.topologyDevices) &&
+          JSON.stringify(stateToPush.topologyConnections) === JSON.stringify(currentPresent.topologyConnections) &&
+          JSON.stringify(stateToPush.topologyNotes) === JSON.stringify(currentPresent.topologyNotes)) {
+        return prev;
       }
 
-      newHistory.push(stateToPush);
+      newItems.push(stateToPush);
+      
+      let nextIndex = newItems.length - 1;
+      
       // Limit history size
-      if (newHistory.length > 50) {
-        newHistory.shift();
-        return newHistory;
+      if (newItems.length > 50) {
+        newItems.shift();
+        nextIndex = Math.max(0, nextIndex - 1);
       }
-      return newHistory;
+
+      return {
+        items: newItems,
+        index: nextIndex
+      };
     });
-    setCurrentIndex(prev => Math.min(prev + 1, 49));
-  }, [currentIndex]);
+  }, []);
 
   const undo = useCallback(() => {
-    if (currentIndex > 0) {
-      isTransitioning.current = true;
-      const prevIndex = currentIndex - 1;
-      setCurrentIndex(prevIndex);
-      const state = history[prevIndex];
-      isTransitioning.current = false;
-      return state;
+    let result: ProjectState | null = null;
+    setState(prev => {
+      if (prev.index > 0) {
+        const nextIndex = prev.index - 1;
+        result = prev.items[nextIndex];
+        return { ...prev, index: nextIndex };
+      }
+      return prev;
+    });
+    // Since setState is async, we can't easily return the state here 
+    // without a ref or some other trick. 
+    // But in our current architecture, the caller calls undo() and 
+    // expects the state back to apply it.
+    // Let's use a workaround: return the state from the items array 
+    // using the index BEFORE the update, but the caller already has 'state' in scope.
+    if (state.index > 0) {
+      return state.items[state.index - 1];
     }
     return null;
-  }, [currentIndex, history]);
+  }, [state]);
 
   const redo = useCallback(() => {
-    if (currentIndex < history.length - 1) {
-      isTransitioning.current = true;
-      const nextIndex = currentIndex + 1;
-      setCurrentIndex(nextIndex);
-      const state = history[nextIndex];
-      isTransitioning.current = false;
-      return state;
+    if (state.index < state.items.length - 1) {
+      const nextIndex = state.index + 1;
+      setState(prev => ({ ...prev, index: nextIndex }));
+      return state.items[nextIndex];
     }
     return null;
-  }, [currentIndex, history]);
+  }, [state]);
 
-  const resetHistory = useCallback((state: ProjectState) => {
-    setHistory([state]);
-    setCurrentIndex(0);
+  const resetHistory = useCallback((newState: ProjectState) => {
+    setState({
+      items: [newState],
+      index: 0
+    });
   }, []);
 
   return {
     pushState,
     undo,
     redo,
-    canUndo: currentIndex > 0,
-    canRedo: currentIndex < history.length - 1,
+    canUndo: state.index > 0,
+    canRedo: state.index < state.items.length - 1,
     resetHistory
   };
 }
