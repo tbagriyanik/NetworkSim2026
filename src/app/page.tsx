@@ -1273,7 +1273,7 @@ export default function Home() {
         className="flex flex-col flex-1"
       >
         {/* Header */}
-      <header className={`${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/90 border-slate-200'} backdrop-blur-xl border-b px-4 py-3 sticky top-0 z-50`}>
+      <header className={`${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/90 border-slate-200'} backdrop-blur-xl border-b px-4 py-3 sticky top-0 z-50 pb-0`}>
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             {/* Logo & Title */}
@@ -1506,34 +1506,6 @@ export default function Home() {
                   >
                     <Link2 className="w-5 h-5" />
                   </Button>
-                  
-                  <div className={`w-px h-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} mx-0.5`} />
-                  
-                  {/* Zoom Controls */}
-                  <div className="flex items-center">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-9 w-9 text-slate-500"
-                      onClick={() => {
-                        const event = new CustomEvent('trigger-topology-zoom-out');
-                        window.dispatchEvent(event);
-                      }}
-                    >
-                      <span className="text-xl font-bold">-</span>
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-9 w-9 text-slate-500"
-                      onClick={() => {
-                        const event = new CustomEvent('trigger-topology-zoom-in');
-                        window.dispatchEvent(event);
-                      }}
-                    >
-                      <span className="text-xl font-bold">+</span>
-                    </Button>
-                  </div>
                 </div>
               )}
             </div>
