@@ -8,7 +8,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import type { TerminalOutput } from './Terminal';
 import { checkConnectivity } from '@/lib/network/connectivity';
 import { Button } from '@/components/ui/button';
-import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History } from 'lucide-react';
+import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // PC Icon component matching the main screen
 const PCIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -295,14 +295,13 @@ export function PCPanel({
     if (!command) return;
 
     // Add to history
-    setHistory(prev => {
-      if (prev[0] === command) return prev;
-      const newHistory = [command, ...prev].slice(0, 50);
+    if (history[0] !== command) {
+      const newHistory = [command, ...history].slice(0, 50);
+      setHistory(newHistory);
       if (onUpdatePCHistory) {
         onUpdatePCHistory(deviceId, newHistory);
       }
-      return newHistory;
-    });
+    }
     setHistoryIndex(-1);
     setInput('');
 
@@ -859,13 +858,73 @@ export function PCPanel({
                 )}
               </div>
               
-              <div className="flex flex-col gap-2 text-sm text-slate-500">
+              {/* Mobile Controls */}
+              <div className="flex flex-col items-center gap-4 mt-4 sm:hidden">
+                <div className="grid grid-cols-3 gap-2">
+                  <div />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-14 h-14 rounded-full border-cyan-500/30 bg-cyan-500/5"
+                    onClick={() => direction.y === 0 && setDirection({x: 0, y: -1})}
+                  >
+                    <ChevronUp className="w-8 h-8 text-cyan-500" />
+                  </Button>
+                  <div />
+                  
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-14 h-14 rounded-full border-cyan-500/30 bg-cyan-500/5"
+                    onClick={() => direction.x === 0 && setDirection({x: -1, y: 0})}
+                  >
+                    <ChevronLeft className="w-8 h-8 text-cyan-500" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-14 h-14 rounded-full border-cyan-500/30 bg-cyan-500/5"
+                    onClick={() => {
+                       if (gameOver) {
+                         setSnake([{x: 10, y: 10}]);
+                         setFood({x: 15, y: 15});
+                         setDirection({x: 1, y: 0});
+                         setGameScore(0);
+                         setGameOver(false);
+                       }
+                    }}
+                  >
+                    <div className="w-4 h-4 rounded-full bg-cyan-500 animate-pulse" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-14 h-14 rounded-full border-cyan-500/30 bg-cyan-500/5"
+                    onClick={() => direction.x === 0 && setDirection({x: 1, y: 0})}
+                  >
+                    <ChevronRight className="w-8 h-8 text-cyan-500" />
+                  </Button>
+                  
+                  <div />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-14 h-14 rounded-full border-cyan-500/30 bg-cyan-500/5"
+                    onClick={() => direction.y === 0 && setDirection({x: 0, y: 1})}
+                  >
+                    <ChevronDown className="w-8 h-8 text-cyan-500" />
+                  </Button>
+                  <div />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 text-sm text-slate-500 mt-4">
                 <p className="font-semibold">{gameLanguage === 'tr' ? 'Kontroller:' : 'Controls:'}</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>↑↓←→ {gameLanguage === 'tr' ? 'Yön Tuşları - Yılanı hareket ettir' : 'Arrow Keys - Move snake'}</div>
                   <div>{gameLanguage === 'tr' ? 'Boşluk - Oyunu yeniden başlat' : 'Space - Restart game'}</div>
                   <div>{gameLanguage === 'tr' ? 'Escape - Oyundan çık' : 'Escape - Exit game'}</div>
-                  <div>{gameLanguage === 'tr' ? 'Kırmızı yemeyi ye ve büyü!' : 'Eat red food to grow!'}</div>
+                  <div className="hidden sm:block">{gameLanguage === 'tr' ? 'Kırmızı yemeyi ye ve büyü!' : 'Eat red food to grow!'}</div>
                 </div>
               </div>
             </motion.div>

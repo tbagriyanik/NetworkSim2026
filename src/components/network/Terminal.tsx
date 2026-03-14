@@ -120,14 +120,13 @@ export function Terminal({
     if (!command || isLoading) return;
 
     // Add to history if not duplicate of last
-    setHistory(prev => {
-      if (prev[0] === command) return prev;
-      const newHistory = [command, ...prev].slice(0, 50);
+    if (history[0] !== command) {
+      const newHistory = [command, ...history].slice(0, 50);
+      setHistory(newHistory);
       if (onUpdateHistory) {
         onUpdateHistory(deviceId, newHistory);
       }
-      return newHistory;
-    });
+    }
     setHistoryIndex(-1);
     setTabCycleIndex(-1);
     
