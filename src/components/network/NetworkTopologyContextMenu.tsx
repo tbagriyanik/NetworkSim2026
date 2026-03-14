@@ -5,7 +5,7 @@ import { CanvasDevice, CanvasNote, ContextMenuState } from './networkTopology.ty
 
 interface NetworkTopologyContextMenuProps {
   contextMenu: ContextMenuState | null;
-  contextMenuRef: RefObject<HTMLDivElement>;
+  contextMenuRef: RefObject<HTMLDivElement | null>;
   isDark: boolean;
   language: string;
   noteFonts: string[];
@@ -14,8 +14,8 @@ interface NetworkTopologyContextMenuProps {
   selectedDeviceIds: string[];
   clipboardLength: number;
   noteClipboardLength: number;
-  historyIndex: number;
-  historyLength: number;
+  canUndo?: boolean;
+  canRedo?: boolean;
   onClose: () => void;
   onUpdateNoteStyle: (noteId: string, patch: Partial<Pick<CanvasNote, 'color' | 'font' | 'fontSize' | 'opacity'>>) => void;
   onNoteCut: (noteId: string) => void;
@@ -50,8 +50,8 @@ export function NetworkTopologyContextMenu({
   selectedDeviceIds,
   clipboardLength,
   noteClipboardLength,
-  historyIndex,
-  historyLength,
+  canUndo,
+  canRedo,
   onClose,
   onUpdateNoteStyle,
   onNoteCut,
@@ -343,14 +343,14 @@ export function NetworkTopologyContextMenu({
             label: language === 'tr' ? 'Geri Al' : 'Undo',
             icon: 'undo',
             shortcut: 'Ctrl+Z',
-            disabled: historyIndex <= 0,
+            disabled: !canUndo,
             onClick: () => { onUndo(); onClose(); }
           })}
           {renderMenuItem({
             label: language === 'tr' ? 'Yinele' : 'Redo',
             icon: 'redo',
             shortcut: 'Ctrl+Y',
-            disabled: historyIndex >= historyLength - 1,
+            disabled: !canRedo,
             onClick: () => { onRedo(); onClose(); }
           })}
           {renderMenuItem({

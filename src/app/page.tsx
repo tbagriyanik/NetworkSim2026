@@ -269,7 +269,8 @@ export default function Home() {
     const stateString = JSON.stringify({
       t: currentState.topologyDevices,
       c: currentState.topologyConnections,
-      s: Array.from(currentState.deviceStates.keys()), // Just check keys and size for simplicity or deep check
+      n: currentState.topologyNotes,
+      s: Array.from(currentState.deviceStates.keys()),
       id: currentState.activeDeviceId
     });
 
@@ -281,7 +282,7 @@ export default function Home() {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [topologyDevices, topologyConnections, deviceStates, activeDeviceId, isAppLoading, pushState, getCurrentState]);
+  }, [topologyDevices, topologyConnections, topologyNotes, deviceStates, activeDeviceId, isAppLoading, pushState, getCurrentState]);
 
   // Initial App Loading State
   // No longer needed here as it's declared earlier
@@ -1140,15 +1141,11 @@ export default function Home() {
         const key = e.key.toLowerCase();
         if (key === 'z') {
           e.preventDefault();
-          if (activeTab === 'topology') {
-            handleUndo();
-          }
+          handleUndo();
         }
         if (key === 'y') {
           e.preventDefault();
-          if (activeTab === 'topology') {
-            handleRedo();
-          }
+          handleRedo();
         }
         if (key === 's') {
           e.preventDefault();
@@ -1342,11 +1339,11 @@ export default function Home() {
             <div className="flex items-center gap-1">
               {/* Project Group */}
               <div className={`hidden md:flex items-center px-2 py-1.5 rounded-lg border ${isDark ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
-                <Button variant="ghost" size="icon" className="h-8 w-8 mx-1.5" onClick={handleUndo} disabled={activeTab !== 'topology' || !canUndo} title={t.undo}>
-                  <Undo2 className={`w-4 h-4 ${activeTab !== 'topology' || !canUndo ? 'opacity-30' : ''}`} />
+                <Button variant="ghost" size="icon" className="h-8 w-8 mx-1.5" onClick={handleUndo} disabled={!canUndo} title={t.undo}>
+                  <Undo2 className={`w-4 h-4 ${!canUndo ? 'opacity-30' : ''}`} />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 mx-1.5" onClick={handleRedo} disabled={activeTab !== 'topology' || !canRedo} title={t.redo}>
-                  <Redo2 className={`w-4 h-4 ${activeTab !== 'topology' || !canRedo ? 'opacity-30' : ''}`} />
+                <Button variant="ghost" size="icon" className="h-8 w-8 mx-1.5" onClick={handleRedo} disabled={!canRedo} title={t.redo}>
+                  <Redo2 className={`w-4 h-4 ${!canRedo ? 'opacity-30' : ''}`} />
                 </Button>
                 <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleNewProject} title={`${t.newProject} (Shift+N)`}>
@@ -1729,6 +1726,10 @@ export default function Home() {
                 onZoomChange={setZoom}
                 pan={pan}
                 onPanChange={setPan}
+                canUndo={canUndo}
+                canRedo={canRedo}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
               />
             </div>
           </div>

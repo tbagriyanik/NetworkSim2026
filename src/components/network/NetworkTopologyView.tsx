@@ -52,7 +52,6 @@ export function NetworkTopologyView(props: NetworkTopologyViewProps) {
     handleNoteResizeStart,
     noteTextareaRefs,
     updateNoteText,
-    saveToHistory,
     onTopologyChange,
     addNote,
     setIsPaletteOpen,
@@ -77,8 +76,8 @@ export function NetworkTopologyView(props: NetworkTopologyViewProps) {
     noteFonts,
     noteClipboard,
     clipboard,
-    historyIndex,
-    history,
+    canUndo,
+    canRedo,
     handleUndo,
     handleRedo,
     selectAllDevices,
@@ -89,7 +88,6 @@ export function NetworkTopologyView(props: NetworkTopologyViewProps) {
     deleteDevice,
     startDeviceConfig,
     setPingSource,
-    saveToHistory: saveHistory,
     deleteNote,
     handleNoteTextCut,
     handleNoteTextCopy,
@@ -276,7 +274,6 @@ export function NetworkTopologyView(props: NetworkTopologyViewProps) {
                       value={note.text}
                       onChange={(e) => updateNoteText(note.id, e.target.value)}
                       onBlur={() => {
-                        saveToHistory();
                         if (onTopologyChange) {
                           onTopologyChange(devices, connections, notes);
                         }
@@ -342,7 +339,7 @@ export function NetworkTopologyView(props: NetworkTopologyViewProps) {
           } shadow-lg`}
       >
         <button
-          onClick={() => setZoom((z: number) => {
+          onClick={() => props.setZoom((z: number) => {
             const newZoom = Math.max(MIN_ZOOM, z - 0.25);
             if (!canvasRef.current) return newZoom;
             const rect = canvasRef.current.getBoundingClientRect();
@@ -363,7 +360,7 @@ export function NetworkTopologyView(props: NetworkTopologyViewProps) {
           {Math.round(zoom * 100)}%
         </span>
         <button
-          onClick={() => setZoom((z: number) => {
+          onClick={() => props.setZoom((z: number) => {
             const newZoom = Math.min(MAX_ZOOM, z + 0.25);
             if (!canvasRef.current) return newZoom;
             const rect = canvasRef.current.getBoundingClientRect();
@@ -419,7 +416,6 @@ export function NetworkTopologyView(props: NetworkTopologyViewProps) {
       <NetworkTopologyPortSelectorModal
         isOpen={showPortSelector}
         isDark={isDark}
-        language={language}
         devices={devices}
         cableType={cableInfo.cableType}
         portSelectorStep={portSelectorStep}
@@ -440,8 +436,8 @@ export function NetworkTopologyView(props: NetworkTopologyViewProps) {
         selectedDeviceIds={selectedDeviceIds}
         clipboardLength={clipboard.length}
         noteClipboardLength={noteClipboard.length}
-        historyIndex={historyIndex}
-        historyLength={history.length}
+        canUndo={props.canUndo}
+        canRedo={props.canRedo}
         onClose={() => props.setContextMenu(null)}
         onUpdateNoteStyle={updateNoteStyle}
         onNoteCut={handleNoteTextCut}
@@ -461,7 +457,7 @@ export function NetworkTopologyView(props: NetworkTopologyViewProps) {
         onDeleteDevices={(ids: string[]) => ids.forEach((id) => deleteDevice(id))}
         onStartConfig={startDeviceConfig}
         onStartPing={(id: string) => setPingSource(id)}
-        onSaveToHistory={saveHistory}
+        onSaveToHistory={() => {}}
         onClearDeviceSelection={() => props.setSelectedDeviceIds([])}
       />
     </div>

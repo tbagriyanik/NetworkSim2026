@@ -20,6 +20,10 @@ export interface NetworkTopologyProps {
   onZoomChange?: (zoom: number) => void;
   pan?: { x: number; y: number };
   onPanChange?: (pan: { x: number; y: number }) => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 export interface CanvasDevice {
@@ -57,8 +61,8 @@ export interface CanvasNote {
   height: number;
   color: string;
   font: string;
-  fontSize: 10 | 12 | 16;
-  opacity: 0.5 | 0.75 | 1;
+  fontSize: 10 | 12 | 16 | 20;
+  opacity: 0.25 | 0.5 | 0.75 | 1;
 }
 
 export interface SelectedPortRef {

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { CableType, CableInfo, getCableTypeName, isCableCompatible } from '@/lib/network/types';
@@ -72,10 +72,16 @@ export function NetworkTopology({
   onZoomChange,
   pan: panProp,
   onPanChange,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
 }: NetworkTopologyProps) {
   const { language, t } = useLanguage();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const isMobile = useIsMobile();
+  const noteFonts = isMobile ? NOTE_FONTS_MOBILE : NOTE_FONTS_DESKTOP;
 
   // Default devices for initial state
   const defaultDevices: CanvasDevice[] = [
@@ -137,27 +143,63 @@ export function NetworkTopology({
   const deviceTooltipShowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync internal state with props (e.g. from undo/redo or tab switching)
+  // We use a ref to track what was already reported back to avoid loops
+  const lastStateReportedRef = useRef<string>('');
+
   useEffect(() => {
-    if (initialDevices) setDevices(initialDevices);
+    // Only trigger if onTopologyChange is provided and there are actual changes
+    if (onTopologyChange) {
+      const currentState = JSON.stringify({ devices, connections, notes });
+      if (currentState !== lastStateReportedRef.current) {
+        lastStateReportedRef.current = currentState;
+        // Debounce to avoid excessive calls during rapid changes (e.g., dragging)
+        const handler = setTimeout(() => {
+          onTopologyChange(devices, connections, notes);
+        }, 100);
+
+        return () => clearTimeout(handler);
+      }
+    }
+  }, [devices, connections, notes, onTopologyChange]);
+
+  useEffect(() => {
+    if (initialDevices) {
+      const stateStr = JSON.stringify(initialDevices);
+      if (stateStr !== JSON.stringify(devices)) {
+        setDevices(initialDevices);
+        lastStateReportedRef.current = JSON.stringify({ devices: initialDevices, connections, notes });
+      }
+    }
   }, [initialDevices]);
 
   useEffect(() => {
-    if (initialConnections) setConnections(initialConnections);
+    if (initialConnections) {
+      const stateStr = JSON.stringify(initialConnections);
+      if (stateStr !== JSON.stringify(connections)) {
+        setConnections(initialConnections);
+        lastStateReportedRef.current = JSON.stringify({ devices, connections: initialConnections, notes });
+      }
+    }
   }, [initialConnections]);
 
   useEffect(() => {
     if (initialNotes) {
-      setNotes(initialNotes.map(n => ({
-        ...n,
-        width: n.width || NOTE_DEFAULT_WIDTH,
-        height: n.height || NOTE_DEFAULT_HEIGHT,
-        color: n.color || NOTE_COLORS[0],
-        font: n.font || noteFonts[0],
-        fontSize: n.fontSize || 12,
-        opacity: n.opacity || 1
-      })));
+      const stateStr = JSON.stringify(initialNotes);
+      if (stateStr !== JSON.stringify(notes)) {
+        const nextNotes = initialNotes.map(n => ({
+          ...n,
+          width: n.width || NOTE_DEFAULT_WIDTH,
+          height: n.height || NOTE_DEFAULT_HEIGHT,
+          color: n.color || NOTE_COLORS[0],
+          font: n.font || noteFonts[0],
+          fontSize: n.fontSize || 12,
+          opacity: n.opacity || 1
+        }));
+        setNotes(nextNotes);
+        lastStateReportedRef.current = JSON.stringify({ devices, connections, notes: nextNotes });
+      }
     }
-  }, [initialNotes]);
+  }, [initialNotes, noteFonts]);
 
   useEffect(() => {
     if (zoomProp !== undefined) setZoom(zoomProp);
@@ -237,50 +279,7 @@ export function NetworkTopology({
   const [noteClipboard, setNoteClipboard] = useState<CanvasNote[]>([]);
   const noteTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
 
-  // Undo/Redo history
-  const [history, setHistory] = useState<{ devices: CanvasDevice[]; connections: CanvasConnection[]; notes: CanvasNote[] }[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const historyRef = useRef({ history, historyIndex });
 
-  // Keep historyRef in sync with state
-  useEffect(() => {
-    historyRef.current = { history, historyIndex };
-  }, [history, historyIndex]);
-
-  // Save state to history for undo
-  const saveToHistory = useCallback(() => {
-    const newState = { devices: [...devices], connections: [...connections], notes: [...notes] };
-    setHistory(prev => {
-      const newHistory = prev.slice(0, historyRef.current.historyIndex + 1);
-      newHistory.push(newState);
-      return newHistory.slice(-50); // Keep last 50 states
-    });
-    setHistoryIndex(prev => Math.min(prev + 1, 49));
-  }, [devices, connections, notes]);
-
-  // Undo
-  const handleUndo = useCallback(() => {
-    const { history: currentHistory, historyIndex: currentIndex } = historyRef.current;
-    if (currentIndex > 0) {
-      const prevState = currentHistory[currentIndex - 1];
-      setDevices(prevState.devices);
-      setConnections(prevState.connections);
-      setNotes(prevState.notes || []);
-      setHistoryIndex(currentIndex - 1);
-    }
-  }, []);
-
-  // Redo
-  const handleRedo = useCallback(() => {
-    const { history: currentHistory, historyIndex: currentIndex } = historyRef.current;
-    if (currentIndex < currentHistory.length - 1) {
-      const nextState = currentHistory[currentIndex + 1];
-      setDevices(nextState.devices);
-      setConnections(nextState.connections);
-      setNotes(nextState.notes || []);
-      setHistoryIndex(currentIndex + 1);
-    }
-  }, []);
 
   // Configuration state (Name, IP, etc.)
   const [configuringDevice, setConfiguringDevice] = useState<string | null>(null);
@@ -308,8 +307,7 @@ export function NetworkTopology({
   }, [isFullscreenProp]);
 
   // Touch/Mobile state
-  const isMobile = useIsMobile();
-  const noteFonts = isMobile ? NOTE_FONTS_MOBILE : NOTE_FONTS_DESKTOP;
+
   // Context menu rendering moved to NetworkTopologyContextMenu
   const [isTouchDragging, setIsTouchDragging] = useState(false);
   const [isTouchDraggingNote, setIsTouchDraggingNote] = useState(false);
@@ -463,7 +461,6 @@ export function NetworkTopology({
       }
     }
 
-    saveToHistory();
     setDevices((prev) =>
       prev.map((d) =>
         d.id === configuringDevice
@@ -483,11 +480,10 @@ export function NetworkTopology({
     setIpValue('');
     setSubnetValue('');
     setGatewayValue('');
-  }, [configuringDevice, tempNameValue, ipValue, saveToHistory]);
+  }, [configuringDevice, tempNameValue, ipValue, subnetValue, gatewayValue, dnsValue]);
 
   const toggleDevicePower = useCallback(() => {
     if (!configuringDevice) return;
-    saveToHistory();
     setDevices(prev =>
       prev.map(d =>
         d.id === configuringDevice
@@ -495,27 +491,21 @@ export function NetworkTopology({
           : d
       )
     );
-  }, [configuringDevice, saveToHistory]);
+  }, [configuringDevice]);
 
   // Delete device and its connections
   const deleteDevice = useCallback((deviceId: string) => {
-    saveToHistory();
     const updatedDevices = devices.filter((d) => d.id !== deviceId);
     const updatedConnections = connections.filter((c) => c.sourceDeviceId !== deviceId && c.targetDeviceId !== deviceId);
 
     setDevices(updatedDevices);
     setConnections(updatedConnections);
 
-    if (onTopologyChange) {
-      onTopologyChange(updatedDevices, updatedConnections, notes);
-    }
-
     if (onDeviceDelete) {
       onDeviceDelete(deviceId);
     }
-  }, [saveToHistory, onDeviceDelete, devices, connections, onTopologyChange, notes]);
+  }, [onDeviceDelete, devices, connections]);
 
-  // Select all devices
   const selectAllDevices = useCallback(() => {
     const allIds = devices.map(d => d.id);
     setSelectedDeviceIds(allIds);
@@ -524,10 +514,8 @@ export function NetworkTopology({
     setContextMenu(null);
   }, [devices, notes]);
 
-  // Handle alignment for multiple selected devices
   const handleAlign = useCallback((type: 'top' | 'bottom' | 'left' | 'right' | 'h-center' | 'v-center') => {
     if (selectedDeviceIds.length < 2) return;
-    saveToHistory();
 
     setDevices(prev => {
       const selectedDevices = prev.filter(d => selectedDeviceIds.includes(d.id));
@@ -566,7 +554,7 @@ export function NetworkTopology({
         return d;
       });
     });
-  }, [selectedDeviceIds, saveToHistory]);
+  }, [selectedDeviceIds]);
 
   // Calculate distance between two points
   const getDistance = useCallback((x1: number, y1: number, x2: number, y2: number): number => {
@@ -822,8 +810,7 @@ export function NetworkTopology({
 
       // Save to history and notify parent if we were actually dragging
       if (isActuallyDragging && draggedDevice) {
-        saveToHistory();
-        if (onTopologyChange) {
+            if (onTopologyChange) {
           onTopologyChange(devices, connections, notes);
         }
       }
@@ -833,15 +820,13 @@ export function NetworkTopology({
       }
 
       if (resizingNoteId) {
-        saveToHistory();
-        if (onTopologyChange) {
+            if (onTopologyChange) {
           onTopologyChange(devices, connections, notes);
         }
       }
 
       if (draggedNoteId) {
-        saveToHistory();
-        if (onTopologyChange) {
+            if (onTopologyChange) {
           onTopologyChange(devices, connections, notes);
         }
       }
@@ -872,7 +857,7 @@ export function NetworkTopology({
         cancelAnimationFrame(dragAnimationFrameRef.current);
       }
     };
-  }, [isPanning, panStart, draggedDevice, draggedNoteId, resizingNoteId, noteDragStartPos, noteResizeStartPos, noteResizeStartSizes, zoom, pan, isDrawingConnection, getCanvasCoords, getCanvasDimensions, dragStartPos, isActuallyDragging, getDistance, onDeviceSelect, saveToHistory, selectedDeviceIds, selectedNoteIds, dragStartDevicePositions, noteDragStartPositions, notes, connections, devices, onTopologyChange, deviceTooltip, portTooltip]);
+  }, [isPanning, panStart, draggedDevice, draggedNoteId, resizingNoteId, noteDragStartPos, noteResizeStartPos, noteResizeStartSizes, zoom, pan, isDrawingConnection, getCanvasCoords, getCanvasDimensions, dragStartPos, isActuallyDragging, getDistance, onDeviceSelect, selectedDeviceIds, selectedNoteIds, dragStartDevicePositions, noteDragStartPositions, notes, connections, devices, deviceTooltip, portTooltip]);
 
   // Global touch event handlers for device/note dragging on mobile
   useEffect(() => {
@@ -979,10 +964,7 @@ export function NetworkTopology({
       }
 
       if (draggedNoteId && isTouchDraggingNote) {
-        saveToHistory();
-        if (onTopologyChange) {
-          onTopologyChange(devices, connections, notes);
-        }
+        // Handled by effect
       }
 
       setTouchDraggedDevice(null);
@@ -1014,7 +996,7 @@ export function NetworkTopology({
         cancelAnimationFrame(dragAnimationFrameRef.current);
       }
     };
-  }, [isMobile, touchDraggedDevice, touchDragOffset, touchDragStartPos, isTouchDragging, draggedNoteId, noteDragStartPos, noteDragStartPositions, isTouchDraggingNote, pan, zoom, getDistance, getCanvasCoords, getCanvasDimensions, devices, connections, notes, selectedNoteIds, onDeviceSelect, onTopologyChange, saveToHistory, longPressTimer]);
+  }, [isMobile, touchDraggedDevice, touchDragOffset, touchDragStartPos, isTouchDragging, draggedNoteId, noteDragStartPos, noteDragStartPositions, isTouchDraggingNote, pan, zoom, getDistance, getCanvasCoords, getCanvasDimensions, devices, connections, notes, selectedNoteIds, onDeviceSelect, onTopologyChange, longPressTimer]);
 
   // Handle device drag start
   const handleDeviceMouseDown = useCallback((e: ReactMouseEvent, deviceId: string) => {
@@ -1254,12 +1236,8 @@ export function NetworkTopology({
   }, [getNoteTextarea, updateNoteText]);
 
   const commitNotesChange = useCallback((nextNotes: CanvasNote[]) => {
-    saveToHistory();
     setNotes(nextNotes);
-    if (onTopologyChange) {
-      onTopologyChange(devices, connections, nextNotes);
-    }
-  }, [saveToHistory, onTopologyChange, devices, connections]);
+  }, []);
 
   const updateNoteStyle = useCallback((noteId: string, patch: Partial<Pick<CanvasNote, 'color' | 'font' | 'fontSize' | 'opacity'>>) => {
     const nextNotes = notes.map(n => (n.id === noteId ? { ...n, ...patch } : n));
@@ -1591,7 +1569,6 @@ export function NetworkTopology({
     const note = notes.find(n => n.id === noteId);
     if (!note) return;
 
-    saveToHistory();
     const newNote: CanvasNote = {
       ...note,
       id: `note-${Date.now()}`,
@@ -1601,10 +1578,7 @@ export function NetworkTopology({
 
     const updatedNotes = [...notes, newNote];
     setNotes(updatedNotes);
-    if (onTopologyChange) {
-      onTopologyChange(devices, connections, updatedNotes);
-    }
-  }, [notes, devices, connections, onTopologyChange, saveToHistory]);
+  }, [notes]);
 
   // Handle port click for connection
   const handlePortClick = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
@@ -1660,7 +1634,6 @@ export function NetworkTopology({
         }
       }
       // Complete connection
-      saveToHistory();
       const newConnection: CanvasConnection = {
         id: `conn-${Date.now()}`,
         sourceDeviceId: connectionStart.deviceId,
@@ -1696,10 +1669,6 @@ export function NetworkTopology({
       });
       setDevices(updatedDevices);
 
-      if (onTopologyChange) {
-        onTopologyChange(updatedDevices, updatedConnections, notes);
-      }
-
       // Update cable info
       const sourceDevice = devices.find((d) => d.id === connectionStart.deviceId);
       const targetDevice = devices.find((d) => d.id === deviceId);
@@ -1734,7 +1703,7 @@ export function NetworkTopology({
         point: { x: portX, y: portY },
       });
     }
-  }, [devices, connections, isDrawingConnection, connectionStart, cableInfo, onCableChange, saveToHistory, onTopologyChange, notes, language]);
+  }, [devices, connections, isDrawingConnection, connectionStart, cableInfo, onCableChange, notes, language]);
 
   // generate an unused IP within 192.168.1.x (skip existing addresses)
   const generateUniqueIp = useCallback(() => {
@@ -1746,7 +1715,6 @@ export function NetworkTopology({
   }, [devices]);
 
   const addNote = useCallback(() => {
-    saveToHistory();
     const canvasDims = getCanvasDimensions();
     let x = 100;
     let y = 100;
@@ -1775,14 +1743,10 @@ export function NetworkTopology({
 
     const updatedNotes = [...notes, newNote];
     setNotes(updatedNotes);
-    if (onTopologyChange) {
-      onTopologyChange(devices, connections, updatedNotes);
-    }
-  }, [devices, connections, notes, pan, zoom, language, onTopologyChange, saveToHistory, getCanvasDimensions, noteFonts]);
+  }, [notes, pan, zoom, language, getCanvasDimensions, noteFonts]);
 
   // Add device from palette button
   const addDevice = useCallback((type: 'pc' | 'switch' | 'router') => {
-    saveToHistory();
     deviceCounterRef.current[type]++;
 
     // Calculate position near top-left with some random offset
@@ -1813,14 +1777,10 @@ export function NetworkTopology({
     };
     const updatedDevices = [...devices, newDevice];
     setDevices(updatedDevices);
-    if (onTopologyChange) {
-      onTopologyChange(updatedDevices, connections, notes);
-    }
-  }, [devices, connections, notes, saveToHistory, generateUniqueIp, onTopologyChange]);
+  }, [devices, generateUniqueIp]);
 
-  // No automatic effect - we trigger onTopologyChange manually on key events (add, delete, move end)
-  // to avoid re-rendering the parent Home component on every drag frame.
-  
+
+
   const showPortTooltip = useCallback((e: ReactMouseEvent | MouseEvent, deviceId: string, portId: string) => {
     // Don't show tooltip while dragging
     if (isActuallyDragging || isTouchDragging) return;
@@ -2012,7 +1972,6 @@ export function NetworkTopology({
 
   // Delete connection
   const deleteConnection = useCallback((connectionId: string) => {
-    saveToHistory();
     const conn = connections.find((c) => c.id === connectionId);
     let updatedDevices = devices;
     let updatedConnections = connections.filter((c) => c.id !== connectionId);
@@ -2034,11 +1993,7 @@ export function NetworkTopology({
       setDevices(updatedDevices);
     }
     setConnections(updatedConnections);
-
-    if (onTopologyChange) {
-      onTopologyChange(updatedDevices, updatedConnections, notes);
-    }
-  }, [connections, devices, saveToHistory, onTopologyChange, notes]);
+  }, [connections, devices, notes]);
 
   // Reset view
   const resetView = useCallback(() => {
@@ -2053,16 +2008,12 @@ export function NetworkTopology({
 
   // Clear canvas
   const clearCanvas = useCallback(() => {
-    saveToHistory();
     setDevices([]);
     setConnections([]);
     setNotes([]);
     setSelectedDeviceIds([]);
     deviceCounterRef.current = { pc: 0, switch: 0, router: 0 };
-    if (onTopologyChange) {
-      onTopologyChange([], [], []);
-    }
-  }, [saveToHistory, onTopologyChange]);
+  }, []);
 
   // Copy devices
   const copyDevice = useCallback((ids: string[]) => {
@@ -2087,19 +2038,17 @@ export function NetworkTopology({
   // Confirm rename
   const confirmRename = useCallback(() => {
     if (renamingDevice && renameValue.trim()) {
-      saveToHistory();
-      setDevices(prev => prev.map(d =>
+        setDevices(prev => prev.map(d =>
         d.id === renamingDevice ? { ...d, name: renameValue.trim() } : d
       ));
     }
     setRenamingDevice(null);
     setRenameValue('');
-  }, [renamingDevice, renameValue, saveToHistory]);
+  }, [renamingDevice, renameValue]);
   // Paste devices
   const pasteDevice = useCallback(() => {
     if (clipboard.length === 0) return;
 
-    saveToHistory();
 
     const newDevices: CanvasDevice[] = [];
 
@@ -2121,7 +2070,7 @@ export function NetworkTopology({
 
     setDevices(prev => [...prev, ...newDevices]);
     setContextMenu(null);
-  }, [clipboard, saveToHistory, generateUniqueIp]);
+  }, [clipboard, generateUniqueIp]);
 
   // Handle key events: ESC to close context menu, DELETE to remove devices, Ctrl+A to select all
   useEffect(() => {
@@ -2205,8 +2154,7 @@ export function NetworkTopology({
       // Delete selected device(s)
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selectedDeviceIds.length > 0) {
-          saveToHistory();
-          selectedDeviceIds.forEach(id => deleteDevice(id));
+                selectedDeviceIds.forEach(id => deleteDevice(id));
           setSelectedDeviceIds([]);
         }
         if (selectedNoteIds.length > 0) {
@@ -2226,13 +2174,13 @@ export function NetworkTopology({
         // Ctrl+Z to undo
         if (key === 'z') {
           e.preventDefault();
-          handleUndo();
+          if (onUndo) onUndo();
         }
 
         // Ctrl+Y to redo
         if (key === 'y') {
           e.preventDefault();
-          handleRedo();
+          if (onRedo) onRedo();
         }
         // Ctrl+C to copy
         if (key === 'c' && (e.ctrlKey || e.metaKey)) {
@@ -2265,7 +2213,7 @@ export function NetworkTopology({
       window.removeEventListener('keydown', handleKeyDown);
 
     };
-  }, [selectedDeviceIds, selectedNoteIds, deleteDevice, commitNotesChange, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, notes, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, showPortSelector, toggleFullscreen, isFullscreen]);
+  }, [selectedDeviceIds, selectedNoteIds, deleteDevice, commitNotesChange, configuringDevice, cancelDeviceConfig, selectAllDevices, devices, notes, onDeviceDelete, isDrawingConnection, isPaletteOpen, onUndo, onRedo, copyDevice, cutDevice, pasteDevice, pingSource, showPortSelector, toggleFullscreen, isFullscreen]);
 
   // Find path between devices using BFS
   const findPath = useCallback((sourceId: string, targetId: string): string[] | null => {
@@ -3474,7 +3422,6 @@ export function NetworkTopology({
                   </button>
                   <button
                     onClick={() => {
-                      saveToHistory();
                       selectedDeviceIds.forEach(id => deleteDevice(id));
                       setSelectedDeviceIds([]);
                     }}
@@ -3705,7 +3652,6 @@ export function NetworkTopology({
                           value={note.text}
                           onChange={(e) => updateNoteText(note.id, e.target.value)}
                           onBlur={() => {
-                            saveToHistory();
                             if (onTopologyChange) {
                               onTopologyChange(devices, connections, notes);
                             }
@@ -4013,8 +3959,8 @@ export function NetworkTopology({
         selectedDeviceIds={selectedDeviceIds}
         clipboardLength={clipboard.length}
         noteClipboardLength={noteClipboard.length}
-        historyIndex={historyIndex}
-        historyLength={history.length}
+        canUndo={canUndo}
+        canRedo={canRedo}
         onClose={() => setContextMenu(null)}
         onUpdateNoteStyle={updateNoteStyle}
         onNoteCut={handleNoteTextCut}
@@ -4024,8 +3970,8 @@ export function NetworkTopology({
         onNoteSelectAllText={handleNoteTextSelectAll}
         onDuplicateNote={duplicateNote}
         onPasteNotes={pasteNotes}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
+        onUndo={onUndo || (() => {})}
+        onRedo={onRedo || (() => {})}
         onSelectAll={selectAllDevices}
         onOpenDevice={(device) => handleDeviceDoubleClick(device)}
         onCutDevices={cutDevice}
@@ -4034,7 +3980,7 @@ export function NetworkTopology({
         onDeleteDevices={(ids) => ids.forEach((id) => deleteDevice(id))}
         onStartConfig={startDeviceConfig}
         onStartPing={(id) => setPingSource(id)}
-        onSaveToHistory={saveToHistory}
+        onSaveToHistory={onUndo ? (() => {}) : (() => {})} // Dummy if we have onUndo from parent which implies automated history
         onClearDeviceSelection={() => setSelectedDeviceIds([])}
       />
       {/* Device Configuration Modal (Name & IP) */}

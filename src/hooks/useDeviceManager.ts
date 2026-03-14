@@ -131,7 +131,7 @@ export function useDeviceManager(language: 'tr' | 'en') {
       if (!deviceState.awaitingPassword) {
         newOutputs.push({ id: Date.now().toString(), type: 'command', content: command, prompt: devicePrompt });
         if (newState?.commandHistory) {
-          setDeviceStates(prev => new Map(prev).set(deviceId, { ...deviceState, commandHistory: newState.commandHistory }));
+          setDeviceStates(prev => new Map(prev).set(deviceId, { ...deviceState, commandHistory: newState.commandHistory! }));
         }
       }
 
