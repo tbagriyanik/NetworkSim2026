@@ -10,6 +10,13 @@ import { checkConnectivity } from '@/lib/network/connectivity';
 import { Button } from '@/components/ui/button';
 import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History } from 'lucide-react';
 
+// PC Icon component matching the main screen
+const PCIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
+  </svg>
+);
+
 interface OutputLine {
   id: string;
   type: 'command' | 'output' | 'error' | 'success' | 'prompt';
@@ -121,6 +128,7 @@ export function PCPanel({
   const [direction, setDirection] = useState({x: 1, y: 0});
   const [gameScore, setGameScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [gameLanguage, setGameLanguage] = useState<'en' | 'tr'>('en');
 
   // Console connection state
   const [isConsoleConnected, setIsConsoleConnected] = useState(false);
@@ -294,6 +302,7 @@ export function PCPanel({
         setDirection({x: 1, y: 0});
         setGameScore(0);
         setGameOver(false);
+        setGameLanguage(cmd === 'yilan' ? 'tr' : 'en');
         return;
       }
 
@@ -564,7 +573,7 @@ export function PCPanel({
         <div className={`px-6 py-4 flex items-center justify-between border-b ${isDark ? 'border-slate-800 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
-              <Laptop className="w-5 h-5" />
+              <PCIcon />
             </div>
             <div>
               <h2 className="text-sm font-black tracking-tight leading-none uppercase">{pcHostname}</h2>
@@ -610,32 +619,32 @@ export function PCPanel({
         {/* Content Area */}
         <div className={`flex-1 flex flex-col overflow-hidden ${terminalBg} relative min-h-0`}>
           {activeTab === 'terminal' && !isConsoleConnected && (
-            <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center ${isDark ? 'bg-black/90' : 'bg-white/90'} backdrop-blur-md gap-4 p-4 text-center animate-in fade-in duration-500 overflow-y-auto`}>
-              <div className={`p-6 md:p-8 rounded-3xl ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xl'} border max-w-sm w-full border-t-4 border-t-blue-500 my-auto`}>
-                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'} flex items-center justify-center mx-auto mb-4 md:mb-6 border shadow-inner group`}>
-                  <Monitor className="w-8 h-8 md:w-10 md:h-10 text-blue-500 transition-transform group-hover:scale-110" />
+            <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center ${isDark ? 'bg-black/90' : 'bg-white/90'} backdrop-blur-md gap-2 p-2 text-center animate-in fade-in duration-500 overflow-y-auto`}>
+              <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xl'} border max-w-xs w-full border-t-2 border-t-blue-500 my-auto`}>
+                <div className={`w-10 h-10 rounded-lg ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'} flex items-center justify-center mx-auto mb-2 border shadow-inner group`}>
+                  <PCIcon className="w-5 h-5 text-blue-500 transition-transform group-hover:scale-110" />
                 </div>
-                <h3 className={`text-base md:text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'} mb-1 md:mb-2 uppercase tracking-tight`}>{t.consoleTerminal}</h3>
-                <p className={`text-sm md:text-sm font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'} mb-4 md:mb-8 leading-relaxed px-2 md:px-4`}>
+                <h3 className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'} mb-1 uppercase tracking-tight`}>{t.consoleTerminal}</h3>
+                <p className={`text-xs font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'} mb-3 leading-relaxed px-1`}>
                   {consoleDevice 
                     ? `${t.physicalConnectionDetected} ${consoleDevice.name}. Port: 9600-8-N-1`
                     : t.noConsoleCableDetected}
                 </p>
-                <div className="flex flex-col gap-3 md:gap-4">
+                <div className="flex flex-col gap-2">
                   <Button 
                     disabled={!consoleDevice}
                     onClick={handleConnect}
-                    size="lg"
-                    className={`rounded-xl md:rounded-2xl font-black uppercase tracking-widest gap-3 h-12 md:h-14 ${
+                    size="sm"
+                    className={`rounded-lg font-black uppercase tracking-widest gap-2 h-8 ${
                       consoleDevice 
-                        ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-500/20 active:scale-95' 
+                        ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 active:scale-95' 
                         : isDark ? 'bg-slate-800 text-slate-600' : 'bg-slate-200 text-slate-400'
                     } cursor-not-allowed`}
                   >
-                    <TerminalIcon className="w-5 h-5" />
+                    <TerminalIcon className="w-4 h-4" />
                     {t.connect}
                   </Button>
-                  <p className={`text-sm ${isDark ? 'text-slate-700' : 'text-slate-400'} uppercase tracking-[0.2em] font-black mt-1`}>
+                  <p className={`text-xs ${isDark ? 'text-slate-700' : 'text-slate-400'} uppercase tracking-[0.1em] font-black`}>
                     {t.consoleConfiguration}
                   </p>
                 </div>
@@ -759,11 +768,11 @@ export function PCPanel({
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  🐍 Snake Game
+                  🐍 {gameLanguage === 'tr' ? 'Yılan Oyunu' : 'Snake Game'}
                 </h2>
                 <div className="flex items-center gap-4">
                   <span className={`text-sm font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                    Score: <span className="text-cyan-500">{gameScore}</span>
+                    {gameLanguage === 'tr' ? 'Skor' : 'Score'}: <span className="text-cyan-500">{gameScore}</span>
                   </span>
                   <Button
                     variant="ghost"
@@ -802,8 +811,12 @@ export function PCPanel({
                 {gameOver && (
                   <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
                     <div className="text-center">
-                      <h3 className="text-2xl font-bold text-red-500 mb-2">Game Over!</h3>
-                      <p className="text-slate-300 mb-4">Final Score: {gameScore}</p>
+                      <h3 className="text-2xl font-bold text-red-500 mb-2">
+                        {gameLanguage === 'tr' ? 'Oyun Bitti!' : 'Game Over!'}
+                      </h3>
+                      <p className="text-slate-300 mb-4">
+                        {gameLanguage === 'tr' ? 'Final Skor' : 'Final Score'}: {gameScore}
+                      </p>
                       <button
                         onClick={() => {
                           setSnake([{x: 10, y: 10}]);
@@ -814,7 +827,7 @@ export function PCPanel({
                         }}
                         className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 transition-colors"
                       >
-                        Play Again (Space)
+                        {gameLanguage === 'tr' ? 'Tekrar Oyna (Boşluk)' : 'Play Again (Space)'}
                       </button>
                     </div>
                   </div>
@@ -822,12 +835,12 @@ export function PCPanel({
               </div>
               
               <div className="flex flex-col gap-2 text-sm text-slate-500">
-                <p className="font-semibold">Controls:</p>
+                <p className="font-semibold">{gameLanguage === 'tr' ? 'Kontroller:' : 'Controls:'}</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>↑↓←→ Arrow Keys - Move snake</div>
-                  <div>Space - Restart game</div>
-                  <div>Escape - Exit game</div>
-                  <div>Eat red food to grow!</div>
+                  <div>↑↓←→ {gameLanguage === 'tr' ? 'Yön Tuşları - Yılanı hareket ettir' : 'Arrow Keys - Move snake'}</div>
+                  <div>{gameLanguage === 'tr' ? 'Boşluk - Oyunu yeniden başlat' : 'Space - Restart game'}</div>
+                  <div>{gameLanguage === 'tr' ? 'Escape - Oyundan çık' : 'Escape - Exit game'}</div>
+                  <div>{gameLanguage === 'tr' ? 'Kırmızı yemeyi ye ve büyü!' : 'Eat red food to grow!'}</div>
                 </div>
               </div>
             </motion.div>
