@@ -47,7 +47,7 @@ import {
 import { TaskCard } from '@/components/network/TaskCard';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Laptop, Monitor, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2 } from "lucide-react";
+import { ChevronDown, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Laptop, Monitor, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2 } from "lucide-react";
 
 import { Button } from '@/components/ui/button';
 import { useLanguage, Translations } from '@/contexts/LanguageContext';
@@ -1473,6 +1473,71 @@ export default function Home() {
 
           {/* Desktop Tabs & Device Selector */}
           <div className="flex items-end gap-1 mt-4 pt-1 overflow-x-auto no-scrollbar">
+            {/* Mobile-only Quick Action Tools (Add, Zoom & Connect) */}
+            <div className="flex sm:hidden items-center gap-1.5 mr-auto">
+              {activeTab === 'topology' && (
+                <div className={`flex items-center gap-1 p-1 rounded-xl border ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                  {/* Add Button (Device, Cable, Note) */}
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 text-emerald-500 hover:bg-emerald-500/10"
+                    onClick={() => {
+                      const event = new CustomEvent('trigger-topology-palette');
+                      window.dispatchEvent(event);
+                    }}
+                    title={t.add}
+                  >
+                    <Plus className="w-5 h-5" />
+                  </Button>
+
+                  <div className={`w-px h-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} mx-0.5`} />
+
+                  {/* Connect Button */}
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 text-cyan-500 hover:bg-cyan-500/10"
+                    onClick={() => {
+                      const event = new CustomEvent('trigger-topology-connect');
+                      window.dispatchEvent(event);
+                    }}
+                    title={t.connect}
+                  >
+                    <Link2 className="w-5 h-5" />
+                  </Button>
+                  
+                  <div className={`w-px h-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} mx-0.5`} />
+                  
+                  {/* Zoom Controls */}
+                  <div className="flex items-center">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-9 w-9 text-slate-500"
+                      onClick={() => {
+                        const event = new CustomEvent('trigger-topology-zoom-out');
+                        window.dispatchEvent(event);
+                      }}
+                    >
+                      <span className="text-xl font-bold">-</span>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-9 w-9 text-slate-500"
+                      onClick={() => {
+                        const event = new CustomEvent('trigger-topology-zoom-in');
+                        window.dispatchEvent(event);
+                      }}
+                    >
+                      <span className="text-xl font-bold">+</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Active Device Dropdown - Always show if component is rendered */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

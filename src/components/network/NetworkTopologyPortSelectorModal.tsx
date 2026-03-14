@@ -99,27 +99,14 @@ export function NetworkTopologyPortSelectorModal({
 
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8 max-h-[50vh]">
           {devices.map((device) => {
-            const availablePorts = device.ports.filter(p => p.status === 'disconnected');
-            const filteredPorts = availablePorts.filter((p) => {
-              const pid = p.id.toLowerCase();
-              const isConsolePrt = pid === 'console' || pid.startsWith('com');
-              const isGigabit = pid.startsWith('gi');
-              const isFastEth = pid.startsWith('fa') || pid.startsWith('eth');
-              if (cableType === 'console') {
-                if (portSelectorStep === 'source') {
-                  return device.type === 'pc' && isConsolePrt;
-                }
-                if (selectedSourcePort) {
-                  const sourceDevice = devices.find(d => d.id === selectedSourcePort.deviceId);
-                  if (!sourceDevice || sourceDevice.type !== 'pc') return false;
-                  return device.type !== 'pc' && isConsolePrt;
-                }
-                return false;
-              }
-              return isGigabit || isFastEth;
+            // In the "connect cable" panel, we want to show all ports regardless of cable type
+            // But we still separate them by availability for better UX
+            const filteredPorts = device.ports.filter((p) => {
+              // Only filter out the source device when selecting the target
+              if (portSelectorStep === 'target' && selectedSourcePort?.deviceId === device.id) return false;
+              return true;
             });
             if (filteredPorts.length === 0) return null;
-            if (portSelectorStep === 'target' && selectedSourcePort?.deviceId === device.id) return null;
 
             return (
               <div key={device.id} className="space-y-4">
@@ -136,7 +123,7 @@ export function NetworkTopologyPortSelectorModal({
                     </span>
                   </div>
                   <div className={`text-xs font-bold tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                    {language === 'tr' ? `${filteredPorts.length} boş port` : `${filteredPorts.length} ports free`}
+                    {language === 'tr' ? `${device.ports.filter(p => p.status === 'disconnected').length} boş port` : `${device.ports.filter(p => p.status === 'disconnected').length} ports free`}
                   </div>
                 </div>
 

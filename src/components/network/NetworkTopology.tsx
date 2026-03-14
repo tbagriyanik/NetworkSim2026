@@ -3190,6 +3190,29 @@ export function NetworkTopology({
     </div>
   );
 
+  useEffect(() => {
+    const handleZoomIn = () => setZoom(z => Math.min(MAX_ZOOM, z + 0.25));
+    const handleZoomOut = () => setZoom(z => Math.max(MIN_ZOOM, z - 0.25));
+    const handleConnect = () => {
+      setShowPortSelector(true);
+      setPortSelectorStep('source');
+      setSelectedSourcePort(null);
+    };
+    const handleOpenPalette = () => setIsPaletteOpen(true);
+
+    window.addEventListener('trigger-topology-zoom-in', handleZoomIn);
+    window.addEventListener('trigger-topology-zoom-out', handleZoomOut);
+    window.addEventListener('trigger-topology-connect', handleConnect);
+    window.addEventListener('trigger-topology-palette', handleOpenPalette);
+
+    return () => {
+      window.removeEventListener('trigger-topology-zoom-in', handleZoomIn);
+      window.removeEventListener('trigger-topology-zoom-out', handleZoomOut);
+      window.removeEventListener('trigger-topology-connect', handleConnect);
+      window.removeEventListener('trigger-topology-palette', handleOpenPalette);
+    };
+  }, [setZoom, setShowPortSelector, setPortSelectorStep, setSelectedSourcePort]);
+
   return (
     <div
       onContextMenu={(e) => e.preventDefault()}
@@ -3204,13 +3227,8 @@ export function NetworkTopology({
       >
         <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <h3 className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              <Network className="w-5 h-5 text-cyan-500 shrink-0" />
-              <span className="hidden xl:inline">{t.networkTopology}</span>
-            </h3>
-
-            {/* MD/LG Screen Quick Tools */}
-            <div className="hidden md:flex items-center pl-4 border-l border-slate-700/30">
+            {/* SM/MD/LG Screen Quick Tools (640px and above) */}
+            <div className="hidden sm:flex items-center">
               <div className={`flex items-center gap-2 p-1 rounded-xl border ${isDark ? 'bg-slate-900/40 border-slate-700/30' : 'bg-blue-50/50 border-blue-100/50'}`}>
                 {/* Devices Group */}
                 <div className="flex items-center gap-1">
@@ -3287,7 +3305,7 @@ export function NetworkTopology({
 
           <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Mobile Toolset */}
-            <div className={`flex md:hidden items-center gap-1 p-1 rounded-xl border ${isDark ? 'bg-slate-900/30 border-slate-700/20' : 'bg-blue-50/50 border-blue-100/50'}`}>
+            <div className={`hidden items-center gap-1 p-1 rounded-xl border ${isDark ? 'bg-slate-900/30 border-slate-700/20' : 'bg-blue-50/50 border-blue-100/50'}`}>
               {/* Add Device Toggle */}
               <button
                 onClick={() => setIsPaletteOpen(true)}
@@ -3319,7 +3337,7 @@ export function NetworkTopology({
               </button>
 
               {/* Zoom Controls */}
-              <div className="flex items-center gap-0.5 ml-1">
+              <div className="hidden items-center gap-0.5 ml-1">
                 <button
                   onClick={() => setZoom(z => Math.max(MIN_ZOOM, z - 0.25))}
                   className={`w-7 h-7 flex items-center justify-center rounded-lg ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}
@@ -3341,7 +3359,7 @@ export function NetworkTopology({
                 setPortSelectorStep('source');
                 setSelectedSourcePort(null);
               }}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition-all ${isDark
+              className={`hidden items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition-all ${isDark
                 ? 'bg-cyan-600 hover:bg-cyan-700 text-white'
                 : 'bg-cyan-500 hover:bg-cyan-600 text-white'
                 }`}
@@ -3652,7 +3670,7 @@ export function NetworkTopology({
                       className="pointer-events-none"
                     >
                       <div
-                        className={`pointer-events-auto relative flex flex-col w-full h-full rounded-lg shadow-xl border border-black text-white ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-emerald-400/70' : ''}`}
+                        className={`pointer-events-auto relative flex flex-col w-full h-full rounded-br-3xl shadow-xl border border-black text-white ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-emerald-400/70' : ''}`}
                         data-note-id={note.id}
                         style={{ 
                           backgroundColor: note.color, 
@@ -3843,9 +3861,9 @@ export function NetworkTopology({
             </svg>
           </div>
 
-          {/* Zoom Controls - Desktop Only - Top Right */}
+          {/* Zoom Controls - sm and up - Top Right */}
           <div
-            className={`hidden md:flex absolute top-2 right-2 items-center gap-1 px-2 py-1 rounded-lg ${isDark ? 'bg-slate-800/90' : 'bg-white/90'
+            className={`hidden sm:flex absolute top-2 right-2 items-center gap-1 px-2 py-1 rounded-lg ${isDark ? 'bg-slate-800/90' : 'bg-white/90'
               } shadow-lg`}
           >
             <button
