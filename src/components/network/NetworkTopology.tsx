@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
-import { CableType, CableInfo, getCableTypeName, isCableCompatible } from '@/lib/network/types';
+import { CableType, CableInfo, getCableTypeLabel, isCableCompatible } from '@/lib/network/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -15,9 +15,10 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Monitor, Laptop, Network, Plus, Database, ChevronRight, Trash2, MousePointer2, Pencil, RotateCcw } from "lucide-react";
+import { Plus, Database, ChevronRight, Trash2, MousePointer2, Pencil, RotateCcw } from "lucide-react";
 import { ConnectionLine } from './ConnectionLine';
 import { DeviceNode } from './DeviceNode';
+import { DeviceIcon } from './DeviceIcon';
 import { NetworkTopologyProps, CanvasDevice, CanvasConnection, CanvasNote, ContextMenuState, SelectedPortRef } from './networkTopology.types';
 import {
   CABLE_COLORS,
@@ -82,6 +83,7 @@ export function NetworkTopology({
   const isDark = theme === 'dark';
   const isMobile = useIsMobile();
   const noteFonts = isMobile ? NOTE_FONTS_MOBILE : NOTE_FONTS_DESKTOP;
+  const getDualCableLabel = (type: CableType) => getCableTypeLabel(type, language);
 
   // Default devices for initial state
   const defaultDevices: CanvasDevice[] = [
@@ -3437,7 +3439,7 @@ export function NetworkTopology({
                           } ${type === 'pc' ? 'hover:shadow-blue-500/10' : type === 'switch' ? 'hover:shadow-emerald-500/10' : 'hover:shadow-purple-500/10'}`}
                       >
                         <div className={`transform transition-transform duration-200 group-hover:scale-110 ${type === 'pc' ? 'text-blue-500 group-hover:text-blue-400' : type === 'switch' ? 'text-emerald-500 group-hover:text-emerald-400' : 'text-purple-500 group-hover:text-purple-400'}`}>
-                          {type === 'pc' ? <Laptop className="w-7 h-7" /> : type === 'switch' ? <Monitor className="w-7 h-7" /> : <Network className="w-7 h-7" />}
+                          <DeviceIcon type={type} className="w-7 h-7" />
                         </div>
                         <span className={`text-xs font-bold capitalize ${type === 'pc' ? 'text-blue-500' : type === 'switch' ? 'text-emerald-500' : 'text-purple-500'}`}>{type}</span>
                       </button>
@@ -3459,7 +3461,9 @@ export function NetworkTopology({
                           }`}
                       >
                         <div className={`w-4 h-4 rounded-full ${CABLE_COLORS[type].bg}`} />
-                        <span className="text-xs font-bold capitalize">{type}</span>
+                        <span className="text-[10px] font-bold text-center leading-tight">
+                          {getDualCableLabel(type)}
+                        </span>
                       </button>
                     ))}
                   </div>

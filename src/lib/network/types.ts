@@ -1,6 +1,6 @@
 // Network Simulator 2026 Types
 
-export type CommandMode = 
+export type CommandMode =
   | 'user'           // Switch>
   | 'privileged'     // Switch#
   | 'config'         // Switch(config)#
@@ -163,12 +163,12 @@ function isEthernetPort(portId: string | undefined): boolean {
 
 export function isCableCompatible(cable: CableInfo): boolean {
   if (!cable.connected) return false;
-  
+
   // Console portu bağlantıları için özel kontrol
   // Console kablosu: PC COM1 <-> Switch Console portu
   const sourceIsConsole = isConsolePort(cable.sourcePort);
   const targetIsConsole = isConsolePort(cable.targetPort);
-  
+
   if (sourceIsConsole || targetIsConsole) {
     // Console portları için sadece console kablosu geçerli
     if (cable.cableType !== 'console') return false;
@@ -176,7 +176,7 @@ export function isCableCompatible(cable: CableInfo): boolean {
     // PC COM1 <-> Switch Console veya Switch Console <-> PC COM1
     return sourceIsConsole && targetIsConsole;
   }
-  
+
   // Normal Ethernet bağlantıları için standart kurallar
   const connection = `${cable.sourceDevice}-${cable.targetDevice}`;
   const allowedTypes = CABLE_COMPATIBILITY[connection];
@@ -190,6 +190,14 @@ export function getCableTypeName(type: CableType, lang: 'tr' | 'en'): string {
     console: { tr: 'Konsol Kablosu', en: 'Console Cable' },
   };
   return names[type][lang];
+}
+
+export function getCableTypeLabel(type: CableType, primaryLang: 'tr' | 'en'): string {
+  const trLabel = getCableTypeName(type, 'tr');
+  const enLabel = getCableTypeName(type, 'en');
+  return primaryLang === 'tr'
+    ? `${trLabel}`
+    : `${enLabel}`;
 }
 
 // Port LED renkleri

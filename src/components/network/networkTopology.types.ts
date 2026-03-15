@@ -1,5 +1,7 @@
 import { CableInfo, CableType, SwitchState } from '@/lib/network/types';
 
+export type DeviceType = 'pc' | 'switch' | 'router';
+
 export interface NetworkTopologyProps {
   cableInfo: CableInfo;
   onCableChange: (cableInfo: CableInfo) => void;
@@ -28,7 +30,7 @@ export interface NetworkTopologyProps {
 
 export interface CanvasDevice {
   id: string;
-  type: 'pc' | 'switch' | 'router';
+  type: DeviceType;
   name: string;
   macAddress?: string;
   ip: string;

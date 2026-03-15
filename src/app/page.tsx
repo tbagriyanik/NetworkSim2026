@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { SwitchState, CableInfo } from '@/lib/network/types';
@@ -329,6 +329,8 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const topologyContainerRef = useRef<HTMLDivElement | null>(null);
+  const pendingFocusDeviceRef = useRef<string | null>(null);
 
   // Legacy state for compatibility with other panels (uses active device's state)
   // MOVED AFTER topologyDevices initialization
@@ -582,6 +584,18 @@ export default function Home() {
     setShowActiveDeviceDropdown(nextState);
   }, [showActiveDeviceDropdown, closeLocalMenus, broadcastCloseMenus, topologyDevices]);
 
+  const focusDeviceInTopology = useCallback((deviceId?: string) => {
+    if (!deviceId) return;
+    const rect = topologyContainerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const targetDevice = topologyDevices.find((device) => device.id === deviceId);
+    if (!targetDevice) return;
+    setPan({
+      x: rect.width / 2 - targetDevice.x * zoom,
+      y: rect.height / 2 - targetDevice.y * zoom,
+    });
+  }, [topologyDevices, zoom]);
+
   // Handle device selection (single click) - switch to topology tab when device is selected
   const handleDeviceSelect = useCallback((device: 'pc' | 'switch' | 'router', deviceId?: string) => {
     setSelectedDevice(device);
@@ -602,8 +616,22 @@ export default function Home() {
       
       // Auto-switch to topology tab when a device is selected from dropdown
       setActiveTab('topology');
+      if (topologyContainerRef.current) {
+        focusDeviceInTopology(deviceId);
+        pendingFocusDeviceRef.current = null;
+      } else {
+        pendingFocusDeviceRef.current = deviceId;
+      }
     }
-  }, [getOrCreateDeviceState, getOrCreateDeviceOutputs, topologyDevices, setSelectedDevice, setActiveDeviceId, setActiveDeviceType, setActiveTab]);
+  }, [getOrCreateDeviceState, getOrCreateDeviceOutputs, topologyDevices, setSelectedDevice, setActiveDeviceId, setActiveDeviceType, setActiveTab, focusDeviceInTopology]);
+
+  useLayoutEffect(() => {
+    if (activeTab !== 'topology') return;
+    if (!pendingFocusDeviceRef.current) return;
+    if (!topologyContainerRef.current) return;
+    focusDeviceInTopology(pendingFocusDeviceRef.current);
+    pendingFocusDeviceRef.current = null;
+  }, [activeTab, focusDeviceInTopology]);
 
   // Handle command using active device
   const handleCommand = useCallback(async (command: string) => {
@@ -1765,7 +1793,7 @@ export default function Home() {
         {activeTab === 'topology' && (
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {/* Network Topology fills remaining space */}
-            <div className="flex-1 w-full flex flex-col min-h-[500px]">
+            <div ref={topologyContainerRef} className="flex-1 w-full flex flex-col min-h-[500px]">
                 <NetworkTopology
                   key={topologyKey}
                   cableInfo={cableInfo}
