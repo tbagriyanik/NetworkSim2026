@@ -1940,6 +1940,7 @@ export default function Home() {
                   connectionErrorMessage={language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
                   isPoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
                   onTogglePower={toggleDevicePower}
+                  onClose={() => setActiveTab('topology')}
                   t={t}
                   theme={theme}
                   language={language}
@@ -1958,6 +1959,7 @@ export default function Home() {
                 <ConfigPanel
                   state={state}
                   onExecuteCommand={handleCommand}
+                  isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
                   t={t}
                   theme={theme}
                 />

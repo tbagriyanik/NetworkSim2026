@@ -10,13 +10,14 @@ import { Translations } from '@/contexts/LanguageContext';
 interface ConfigPanelProps {
   state: SwitchState;
   onExecuteCommand: (command: string) => Promise<void>;
+  isDevicePoweredOff?: boolean;
   t: Translations;
   theme: string;
 }
 
 const TIMESTAMP = '2026-02-26 22:00:00';
 
-export function ConfigPanel({ state, onExecuteCommand, t, theme }: ConfigPanelProps) {
+export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = false, t, theme }: ConfigPanelProps) {
   const [isSaving, setIsSaving] = useState(false);
   
   const isDark = theme === 'dark';
@@ -132,6 +133,7 @@ export function ConfigPanel({ state, onExecuteCommand, t, theme }: ConfigPanelPr
   };
 
   const handleSave = async () => {
+    if (isDevicePoweredOff) return;
     setIsSaving(true);
     try {
       await onExecuteCommand('write memory');
@@ -159,7 +161,7 @@ export function ConfigPanel({ state, onExecuteCommand, t, theme }: ConfigPanelPr
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || isDevicePoweredOff}
             className="bg-blue-600 hover:bg-blue-700 text-xs px-2 sm:px-3"
           >
             {isSaving ? t.saving : t.save}

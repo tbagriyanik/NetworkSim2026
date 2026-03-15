@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SwitchState } from '@/lib/network/types';
 import { Translations } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { CornerDownLeft, Terminal as TerminalIcon, Trash2, Command, Info, History, ChevronRight } from 'lucide-react';
+import { CornerDownLeft, Terminal as TerminalIcon, Trash2, Command, Info, History, ChevronRight, X } from 'lucide-react';
 import { QuickCommands } from './QuickCommands';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -31,6 +31,7 @@ interface TerminalProps {
   connectionErrorMessage?: string;
   isPoweredOff?: boolean;
   onTogglePower?: (deviceId: string) => void;
+  onClose?: () => void;
   t: Translations;
   theme: string;
   language: string;
@@ -50,6 +51,7 @@ export function Terminal({
   connectionErrorMessage,
   isPoweredOff = false,
   onTogglePower,
+  onClose,
   t,
   theme,
   language,
@@ -270,6 +272,18 @@ export function Terminal({
                     : `Power: ${isPoweredOff ? 'OFF' : 'ON'}`}
                 </TooltipContent>
               </Tooltip>
+              {onClose && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className="h-8 w-8 rounded-lg text-slate-500 hover:text-cyan-400 transition-colors"
+                  aria-label={t.close}
+                  title={t.close}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
               <Button 
                 variant="ghost" 
                 size="sm" 
