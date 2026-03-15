@@ -257,6 +257,9 @@ export default function Home() {
 
   const { pushState, undo, redo, canUndo, canRedo, resetHistory } = useHistory(getCurrentState());
 
+  // Undo/redo must only work while topology tab is active.
+  const activeTabRef = useRef<TabType>('topology');
+
   // Handle undo/redo execution
   const applyProjectState = useCallback((state: ProjectState) => {
     // We use functional updates to ensure we're using latest state and prevent loops if possible
@@ -279,12 +282,14 @@ export default function Home() {
   const isApplyingHistoryRef = useRef(false);
 
   const handleUndo = useCallback(() => {
+    if (activeTabRef.current !== 'topology') return;
     isApplyingHistoryRef.current = true;
     const prevState = undo();
     if (prevState) applyProjectState(prevState);
   }, [undo, applyProjectState]);
 
   const handleRedo = useCallback(() => {
+    if (activeTabRef.current !== 'topology') return;
     isApplyingHistoryRef.current = true;
     const nextState = redo();
     if (nextState) applyProjectState(nextState);
@@ -365,6 +370,9 @@ export default function Home() {
   const output = getOrCreateDeviceOutputs(activeDeviceId);
 
   const [activeTab, setActiveTab] = useState<TabType>('topology');
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
 
   // Task context for task calculations
   const taskContext: TaskContext = {
@@ -1273,12 +1281,16 @@ export default function Home() {
       if (e.ctrlKey || e.metaKey) {
         const key = e.key.toLowerCase();
         if (key === 'z') {
-          e.preventDefault();
-          handleUndo();
+          if (activeTabRef.current === 'topology') {
+            e.preventDefault();
+            handleUndo();
+          }
         }
         if (key === 'y') {
-          e.preventDefault();
-          handleRedo();
+          if (activeTabRef.current === 'topology') {
+            e.preventDefault();
+            handleRedo();
+          }
         }
         if (key === 's') {
           e.preventDefault();
