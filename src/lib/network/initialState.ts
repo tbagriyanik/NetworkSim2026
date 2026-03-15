@@ -251,6 +251,12 @@ export function getModePrompt(mode: CommandMode, hostname: string, context?: str
 export function normalizePortId(input: string): string | null {
   // Boşlukları kaldır ve küçük harfe çevir (örn: "gig 0/1" -> "gig0/1")
   const lower = input.toLowerCase().trim().replace(/\s+/g, '');
+
+  const subMatch = lower.match(/^(?:fa|fastethernet|fast|gi|gig|gigabit|gigabitethernet)(\d+)\/(\d+)\.(\d+)$/);
+  if (subMatch) {
+    const prefix = lower.startsWith('fa') || lower.startsWith('fast') ? 'fa' : 'gi';
+    return `${prefix}${subMatch[1]}/${subMatch[2]}.${subMatch[3]}`;
+  }
   
   // Fa0/1, fa0/1, FastEthernet0/1, fastethernet0/1, fast 0/1 formatlarını kabul et
   const faMatch = lower.match(/^(?:fa|fastethernet|fast)(\d+)\/(\d+)$/);

@@ -43,6 +43,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { TaskCard } from '@/components/network/TaskCard';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -60,6 +67,7 @@ import {
   calculateTaskScore,
   TaskContext
 } from '@/lib/network/taskDefinitions';
+import { exampleProjects } from '@/lib/network/exampleProjects';
 
 import { DeviceIcon } from '@/components/network/DeviceIcon';
 
@@ -403,6 +411,7 @@ export default function Home() {
   // UI state for dropdowns
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showProjectPicker, setShowProjectPicker] = useState(false);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const modalHistoryPushedRef = useRef(false);
 
@@ -1021,8 +1030,7 @@ export default function Home() {
   }
 
   // New project - reset everything
-  const handleNewProjectInternal = useCallback(() => {
-    const doNewProject = () => {
+  const resetToEmptyProject = useCallback(() => {
       // Clear all states and set defaults
       setDeviceStates(new Map());
       setDeviceOutputs(new Map());
@@ -1121,8 +1129,9 @@ export default function Home() {
         zoom: 1.0,
         pan: { x: 0, y: 0 }
       });
-    };
+  }, [resetHistory, setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setActiveDeviceId, setActiveDeviceType, setSelectedDevice, setShowPCPanel, setActiveTab, setHasUnsavedChanges, setTopologyKey]);
 
+  const runWithSaveGuard = useCallback((action: () => void) => {
     if (hasUnsavedChanges) {
       setSaveDialog({
         show: true,
@@ -1132,25 +1141,25 @@ export default function Home() {
           if (save) {
             handleSaveProject();
           }
-          doNewProject();
+          action();
         }
       });
-    } else {
-      setConfirmDialog({
-        show: true,
-        message: t.newProjectConfirm,
-        action: 'new-project',
-        onConfirm: () => {
-          setConfirmDialog(null);
-          doNewProject();
-        }
-      });
+      return;
     }
-  }, [hasUnsavedChanges, handleSaveProject, resetHistory, setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setActiveDeviceId, setActiveDeviceType, setSelectedDevice, setShowPCPanel, setActiveTab, setHasUnsavedChanges, setTopologyKey, setSaveDialog, setConfirmDialog, t.unsavedChangesConfirm, t.newProjectConfirm]);
+    setConfirmDialog({
+      show: true,
+      message: t.newProjectConfirm,
+      action: 'new-project',
+      onConfirm: () => {
+        setConfirmDialog(null);
+        action();
+      }
+    });
+  }, [hasUnsavedChanges, handleSaveProject, setSaveDialog, setConfirmDialog, t.unsavedChangesConfirm, t.newProjectConfirm]);
 
   function handleNewProject() {
     if (isTopologyFullscreen) return; // Prevent new project in fullscreen
-    handleNewProjectInternal();
+    setShowProjectPicker(true);
   }
   
   // Sync hostname changes between Topology and Simulator
@@ -1214,15 +1223,16 @@ export default function Home() {
       setConfirmDialog(null);
       setSaveDialog(null);
       setShowPCPanel(false);
+      setShowProjectPicker(false);
       window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'back' } }));
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel]);
+  }, [setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowProjectPicker]);
 
   // History pushState for back button tracking
   useEffect(() => {
-    const anyModalOpen = showMobileMenu || !!confirmDialog || !!saveDialog || showPCPanel;
+    const anyModalOpen = showMobileMenu || !!confirmDialog || !!saveDialog || showPCPanel || showProjectPicker;
     if (anyModalOpen && !modalHistoryPushedRef.current) {
       window.history.pushState({ modal: true }, '');
       modalHistoryPushedRef.current = true;
@@ -1230,7 +1240,7 @@ export default function Home() {
     if (!anyModalOpen) {
       modalHistoryPushedRef.current = false;
     }
-  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel]);
+  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showProjectPicker]);
 
   const [isTopologyFullscreen, setIsTopologyFullscreen] = useState(false);
 
@@ -1254,6 +1264,7 @@ export default function Home() {
         setConfirmDialog(null);
         setSaveDialog(null);
         setShowPCPanel(false);
+        setShowProjectPicker(false);
         window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'escape' } }));
       }
       
@@ -1318,7 +1329,7 @@ export default function Home() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, handleSaveProject, handleNewProject, handleUndo, handleRedo, tabs, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, isTopologyFullscreen]);
+  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showProjectPicker, handleSaveProject, handleNewProject, handleUndo, handleRedo, tabs, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowProjectPicker, isTopologyFullscreen]);
 
   // Load project from JSON file
   const handleLoadProject = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1342,6 +1353,11 @@ export default function Home() {
     // Reset input
     event.target.value = '';
   }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject]);
+
+  const applyExampleProject = useCallback((projectData: any) => {
+    loadProjectData(projectData);
+    setShowProjectPicker(false);
+  }, [loadProjectData, setShowProjectPicker]);
 
   const isDark = theme === 'dark';
 
@@ -1472,9 +1488,9 @@ export default function Home() {
                     <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
                   </>
                 )}
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleNewProject} title={`${t.newProject} (Shift+N)`}>
-                  <File className="w-4 h-4" />
-                </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleNewProject} title={`${t.newProject} (Shift+N)`}>
+                <File className="w-4 h-4" />
+              </Button>
                 <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSaveProject} title={`${t.saveProject} (Ctrl+S)`}>
                   <Save className="w-4 h-4" />
@@ -1773,6 +1789,44 @@ export default function Home() {
           );
         })}
       </div>
+      <Dialog open={showProjectPicker} onOpenChange={setShowProjectPicker}>
+        <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-2xl`}>
+          <DialogHeader>
+            <DialogTitle>{language === 'tr' ? 'Yeni Proje' : 'New Project'}</DialogTitle>
+            <DialogDescription className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+              {language === 'tr' ? 'Boş bir proje başlat veya hazır örneklerden birini seç.' : 'Start with an empty project or choose a ready-made example.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3">
+            <Button
+              variant="outline"
+              className={`justify-between ${isDark ? 'border-slate-800 hover:bg-slate-800/60' : ''}`}
+              onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => { resetToEmptyProject(); }); }}
+            >
+              <span className="font-semibold">{language === 'tr' ? 'Boş Proje' : 'Empty Project'}</span>
+              <span className="text-xs opacity-70">{language === 'tr' ? 'Sıfırdan başla' : 'Start from scratch'}</span>
+            </Button>
+            {exampleProjects(language).map((example) => (
+              <Button
+                key={example.id}
+                variant="ghost"
+                className={`h-auto flex-col items-start gap-1 px-4 py-3 text-left border ${isDark ? 'border-slate-800 hover:bg-slate-800/60' : 'border-slate-200 hover:bg-slate-100'}`}
+                onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => applyExampleProject(example.data)); }}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-semibold">{example.title}</span>
+                  <span className={`text-[10px] uppercase tracking-wider ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{example.tag}</span>
+                </div>
+                <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{example.description}</span>
+                {example.detail && (
+                  <span className={`text-[11px] ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>{example.detail}</span>
+                )}
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Global Dialogs (AlertDialog for better z-index and standard behavior) */}
       <AlertDialog open={!!confirmDialog} onOpenChange={(open) => !open && setConfirmDialog(null)}>
         <AlertDialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>

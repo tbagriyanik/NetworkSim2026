@@ -959,6 +959,8 @@ function executeSpecificCommand(
       return cmdSwitchportTrunkAllowedVlan(state, input);
     case 'switchport trunk native vlan':
       return cmdSwitchportTrunkNativeVlan(state, input);
+    case 'encapsulation dot1q':
+      return cmdEncapsulationDot1q(state, input);
     case 'switchport port-security':
       return cmdSwitchportPortSecurity(state);
     case 'switchport port-security maximum':
@@ -2457,6 +2459,30 @@ function cmdSwitchportTrunkNativeVlan(state: SwitchState, input: string): Comman
   if (!match) return { success: false, error: '% Invalid VLAN ID' };
   
   return { success: true };
+}
+
+function cmdEncapsulationDot1q(state: SwitchState, input: string): CommandResult {
+  if (!state.currentInterface) {
+    return { success: false, error: '% No interface selected' };
+  }
+
+  const match = input.match(/^encapsulation\s+dot1q\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid VLAN ID' };
+
+  const vlanId = parseInt(match[1]);
+  if (vlanId < 1 || vlanId > 4094) return { success: false, error: '% Invalid VLAN ID' };
+
+  const newPorts = { ...state.ports };
+  const port = newPorts[state.currentInterface];
+  if (!port) return { success: false, error: '% Invalid interface' };
+
+  newPorts[state.currentInterface] = {
+    ...port,
+    vlan: vlanId,
+    mode: 'trunk'
+  };
+
+  return { success: true, newState: { ports: newPorts } };
 }
 
 // Switchport Port-Security

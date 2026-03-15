@@ -485,6 +485,12 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
+  'encapsulation dot1q': {
+    pattern: /^encapsulation\s+dot1q\s+(\d+)$/i,
+    modes: ['interface'],
+    minArgs: 1,
+    maxArgs: 1
+  },
   'switchport nonegotiate': {
     pattern: /^switchport\s+nonegotiate$/i,
     modes: ['interface'],
