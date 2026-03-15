@@ -140,6 +140,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
           </TooltipTrigger>
           <TooltipContent
             side="bottom"
+            hideArrow
             className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-3 max-w-xs`}
           >
             <div className="space-y-1 text-xs">
@@ -203,7 +204,8 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
           </div>
         </TooltipTrigger>
         <TooltipContent 
-          side="bottom" 
+          side="bottom"
+          hideArrow
           className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-3 max-w-xs`}
         >
           <div className="space-y-1 text-xs">
@@ -270,7 +272,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
                     </svg>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-2 text-xs`}>
+                <TooltipContent hideArrow side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-2 text-xs`}>
                   {t.language === 'tr'
                     ? `Güç: ${isDevicePoweredOff ? 'KAPALI' : 'AÇIK'}`
                     : `Power: ${isDevicePoweredOff ? 'OFF' : 'ON'}`}

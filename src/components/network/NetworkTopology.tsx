@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Database, ChevronRight, Trash2, MousePointer2, Pencil, RotateCcw } from "lucide-react";
 import { ConnectionLine } from './ConnectionLine';
 import { DeviceNode } from './DeviceNode';
@@ -4169,23 +4170,36 @@ export function NetworkTopology({
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={toggleDevicePower}
-                  className={`px-3 py-2 rounded-2xl text-[10px] font-black tracking-widest transition-all duration-300 border ${devices.find(d => d.id === configuringDevice)?.status === 'offline'
-                    ? (isDark ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 hover:text-slate-700')
-                    : (isDark ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20' : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100')
-                    }`}
-                  title={language === 'tr' ? 'Güç Aç/Kapa' : 'Power Toggle'}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${devices.find(d => d.id === configuringDevice)?.status === 'offline'
-                      ? 'bg-black'
-                      : 'bg-emerald-500'}`} />
-                    {devices.find(d => d.id === configuringDevice)?.status === 'offline'
-                      ? (language === 'tr' ? 'KAPALI' : 'OFF')
-                      : (language === 'tr' ? 'AÇIK' : 'ON')}
-                  </span>
-                </button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-black tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                          {language === 'tr' ? 'Güç:' : 'Power:'}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={toggleDevicePower}
+                          className={`h-10 w-10 rounded-2xl transition-all ${devices.find(d => d.id === configuringDevice)?.status === 'offline'
+                            ? 'text-rose-500 hover:bg-rose-500/10'
+                            : 'text-emerald-500 hover:bg-emerald-500/10'}`}
+                          aria-label={language === 'tr' ? 'Güç' : 'Power'}
+                        >
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+                          </svg>
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-2 text-xs`}>
+                      {devices.find(d => d.id === configuringDevice)?.status === 'offline'
+                        ? (language === 'tr' ? 'KAPALI' : 'OFF')
+                        : (language === 'tr' ? 'AÇIK' : 'ON')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
 

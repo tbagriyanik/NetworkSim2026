@@ -264,7 +264,7 @@ export function Terminal({
                     </svg>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-2 text-xs`}>
+                <TooltipContent hideArrow side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-2 text-xs`}>
                   {language === 'tr'
                     ? `Güç: ${isPoweredOff ? 'KAPALI' : 'AÇIK'}`
                     : `Power: ${isPoweredOff ? 'OFF' : 'ON'}`}
