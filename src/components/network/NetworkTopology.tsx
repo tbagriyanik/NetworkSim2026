@@ -581,6 +581,26 @@ export function NetworkTopology({
     if (onDeviceDelete) ids.forEach((id) => onDeviceDelete(id));
   }, [devices, connections, notes, onTopologyChange, onDeviceDelete, recomputePortStatuses]);
 
+  const deleteSelection = useCallback((deviceIds: string[], noteIds: string[]) => {
+    if (deviceIds.length === 0 && noteIds.length === 0) return;
+
+    const deviceIdSet = new Set(deviceIds);
+    const noteIdSet = new Set(noteIds);
+
+    const remainingDevices = devices.filter((d) => !deviceIdSet.has(d.id));
+    const remainingConnections = connections.filter((c) => !deviceIdSet.has(c.sourceDeviceId) && !deviceIdSet.has(c.targetDeviceId));
+    const remainingNotes = notes.filter((n) => !noteIdSet.has(n.id));
+
+    const updatedDevices = recomputePortStatuses(remainingDevices, remainingConnections);
+
+    setDevices(updatedDevices);
+    setConnections(remainingConnections);
+    setNotes(remainingNotes);
+    if (onTopologyChange) onTopologyChange(updatedDevices, remainingConnections, remainingNotes);
+
+    if (onDeviceDelete) deviceIds.forEach((id) => onDeviceDelete(id));
+  }, [devices, connections, notes, onTopologyChange, onDeviceDelete, recomputePortStatuses]);
+
   // Delete device and its connections
   const deleteDevice = useCallback((deviceId: string) => {
     deleteDevices([deviceId]);
@@ -2343,14 +2363,9 @@ export function NetworkTopology({
 
       // Delete selected device(s)
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedDeviceIds.length > 0) {
-                selectedDeviceIds.forEach(id => deleteDevice(id));
-          setSelectedDeviceIds([]);
-        }
-        if (selectedNoteIds.length > 0) {
-          commitNotesChange(notes.filter(n => !selectedNoteIds.includes(n.id)));
-          setSelectedNoteIds([]);
-        }
+        deleteSelection(selectedDeviceIds, selectedNoteIds);
+        if (selectedDeviceIds.length > 0) setSelectedDeviceIds([]);
+        if (selectedNoteIds.length > 0) setSelectedNoteIds([]);
       }
 
       // Alt+Enter: configure selected device
@@ -3718,10 +3733,7 @@ export function NetworkTopology({
                   </button>
                   <button
                     onClick={() => {
-                      deleteDevices(selectedDeviceIds);
-                      if (selectedNoteIds.length > 0) {
-                        commitNotesChange(notes.filter(n => !selectedNoteIds.includes(n.id)));
-                      }
+                      deleteSelection(selectedDeviceIds, selectedNoteIds);
                       setSelectedDeviceIds([]);
                       setSelectedNoteIds([]);
                     }}
