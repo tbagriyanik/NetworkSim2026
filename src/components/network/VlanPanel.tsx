@@ -21,6 +21,7 @@ interface VlanPanelProps {
   t: Translations;
   theme: string;
   activeDeviceType?: 'pc' | 'switch' | 'router';
+  isDevicePoweredOff?: boolean;
 }
 
 interface VlanTask {
@@ -32,7 +33,7 @@ interface VlanTask {
   hint: string;
 }
 
-export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteCommand, t, theme, activeDeviceType }: VlanPanelProps) {
+export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteCommand, t, theme, activeDeviceType, isDevicePoweredOff = false }: VlanPanelProps) {
   const [newVlanId, setNewVlanId] = useState('');
   const [newVlanName, setNewVlanName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -150,6 +151,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
   };
 
   const handleCreateVlan = async () => {
+    if (isDevicePoweredOff) return;
     const id = parseInt(newVlanId);
     if (isNaN(id) || id < 1 || id > 4094) {
       return;
@@ -176,6 +178,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
   };
 
   const handleDeleteVlan = async (vlanId: number) => {
+    if (isDevicePoweredOff) return;
     if ([1, 1002, 1003, 1004, 1005].includes(vlanId)) {
       return;
     }
@@ -200,6 +203,11 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {isDevicePoweredOff && (
+          <div className="mb-4 px-3 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 text-xs font-bold tracking-wider text-center">
+            {t.language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
+          </div>
+        )}
         <div className={`mb-4 p-2 sm:p-3 ${innerBg} rounded-lg transition-all duration-300 hover:bg-opacity-80`}>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -289,6 +297,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
                 max={4094}
                 value={newVlanId}
                 onChange={(e) => setNewVlanId(e.target.value)}
+                disabled={isDevicePoweredOff || isCreating}
                 placeholder="10"
                 className={`h-8 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'} ${textPrimary} text-sm`}
               />
@@ -300,6 +309,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
                 type="text"
                 value={newVlanName}
                 onChange={(e) => setNewVlanName(e.target.value)}
+                disabled={isDevicePoweredOff || isCreating}
                 placeholder={t.vlanNameExample}
                 className={`h-8 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'} ${textPrimary} text-sm`}
               />
@@ -308,7 +318,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
               <Button
                 size="sm"
                 onClick={handleCreateVlan}
-                disabled={!newVlanId || isCreating}
+                disabled={isDevicePoweredOff || !newVlanId || isCreating}
                 className="h-8 bg-purple-600 hover:bg-purple-700 w-full sm:w-auto"
               >
                 {t.create}
@@ -359,6 +369,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
                         size="sm"
                         variant="ghost"
                         onClick={() => handleDeleteVlan(vlan.id)}
+                        disabled={isDevicePoweredOff}
                         className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-red-400 hover:text-red-300 hover:bg-slate-700"
                         title={`${t.delete} VLAN ${vlan.id}`}
                       >

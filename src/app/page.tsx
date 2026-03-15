@@ -1917,6 +1917,7 @@ export default function Home() {
                 <QuickCommands
                   currentMode={state.currentMode}
                   onExecuteCommand={handleCommand}
+                  isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
                   t={t}
                   theme={theme}
                   language={language}
@@ -1976,6 +1977,7 @@ export default function Home() {
                 t={t}
                 theme={theme}
                 activeDeviceType={activeDeviceType}
+                isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
               />
             </div>
             <div>

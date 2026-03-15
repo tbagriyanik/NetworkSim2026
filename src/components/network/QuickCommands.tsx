@@ -12,6 +12,7 @@ interface QuickCommandsProps {
   t: Translations;
   theme: string;
   language: 'tr' | 'en';
+  isDevicePoweredOff?: boolean;
 }
 
 interface QuickCommand {
@@ -37,7 +38,7 @@ const quickCommands: QuickCommand[] = [
   { command: 'shutdown', label: 'shut', modes: ['interface'], color: 'bg-red-600 hover:bg-red-700' },
 ];
 
-export function QuickCommands({ currentMode, onExecuteCommand, t, theme, language }: QuickCommandsProps) {
+export function QuickCommands({ currentMode, onExecuteCommand, t, theme, language, isDevicePoweredOff = false }: QuickCommandsProps) {
   const isDark = theme === 'dark';
   
   const availableCommands = quickCommands.filter(cmd => 
@@ -74,7 +75,11 @@ export function QuickCommands({ currentMode, onExecuteCommand, t, theme, languag
         </div>
       </CardHeader>
       <CardContent>
-        {availableCommands.length > 0 ? (
+        {isDevicePoweredOff ? (
+          <div className="px-3 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 text-xs font-bold tracking-wider text-center">
+            {language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
+          </div>
+        ) : availableCommands.length > 0 ? (
           <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 sm:gap-2">
             {availableCommands.map((cmd) => (
               <Button
