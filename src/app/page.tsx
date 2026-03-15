@@ -185,13 +185,28 @@ export default function Home() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
 
   const toggleDevicePower = useCallback((deviceId: string) => {
-    setTopologyDevices((prev) =>
-      prev.map((d) => (d.id === deviceId ? { ...d, status: d.status === 'offline' ? 'online' : 'offline' } : d))
-    );
+    setTopologyDevices((prev) => {
+      const current = prev.find(d => d.id === deviceId);
+      const nextStatus = current?.status === 'offline' ? 'online' : 'offline';
+      // Keep the topology canvas in sync without forcing a full remount.
+      window.dispatchEvent(new CustomEvent('trigger-topology-toggle-power', { detail: { deviceId, nextStatus } }));
 
-    // Keep the topology canvas in sync without forcing a full remount.
-    window.dispatchEvent(new CustomEvent('trigger-topology-toggle-power', { detail: { deviceId } }));
-  }, [setTopologyDevices]);
+      // Keep sidebar/panels in sync too: links touching an offline device are inactive.
+      // Otherwise panels may keep showing stale "connected" LEDs after power toggles.
+      setTopologyConnections((prevConnections) => {
+        const nextDevices = prev.map((d) => (d.id === deviceId ? { ...d, status: nextStatus } : d));
+        const byId = new Map(nextDevices.map(d => [d.id, d] as const));
+        return prevConnections.map((c) => {
+          if (c.sourceDeviceId !== deviceId && c.targetDeviceId !== deviceId) return c;
+          if (nextStatus === 'offline') return { ...c, active: false };
+          const peerId = c.sourceDeviceId === deviceId ? c.targetDeviceId : c.sourceDeviceId;
+          const peer = byId.get(peerId);
+          return { ...c, active: peer?.status !== 'offline' };
+        });
+      });
+      return prev.map((d) => (d.id === deviceId ? { ...d, status: nextStatus } : d));
+    });
+  }, []);
 
   const [cableInfo, setCableInfo] = useState<CableInfo>({
     connected: true,
@@ -1466,13 +1481,17 @@ export default function Home() {
             <div className="flex items-center gap-1">
               {/* Project Group */}
               <div className={`hidden md:flex items-center px-2 py-1.5 rounded-lg border ${isDark ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
-                <Button variant="ghost" size="icon" className="h-8 w-8 mx-1.5" onClick={handleUndo} disabled={!canUndo} title={t.undo}>
-                  <Undo2 className={`w-4 h-4 ${!canUndo ? 'opacity-30' : ''}`} />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 mx-1.5" onClick={handleRedo} disabled={!canRedo} title={t.redo}>
-                  <Redo2 className={`w-4 h-4 ${!canRedo ? 'opacity-30' : ''}`} />
-                </Button>
-                <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
+                {activeTab === 'topology' && (
+                  <>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 mx-1.5" onClick={handleUndo} disabled={!canUndo} title={t.undo}>
+                      <Undo2 className={`w-4 h-4 ${!canUndo ? 'opacity-30' : ''}`} />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 mx-1.5" onClick={handleRedo} disabled={!canRedo} title={t.redo}>
+                      <Redo2 className={`w-4 h-4 ${!canRedo ? 'opacity-30' : ''}`} />
+                    </Button>
+                    <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
+                  </>
+                )}
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleNewProject} title={`${t.newProject} (Shift+N)`}>
                   <File className="w-4 h-4" />
                 </Button>

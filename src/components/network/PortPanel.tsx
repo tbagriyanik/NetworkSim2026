@@ -60,6 +60,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
     const lowerDeviceId = activeDeviceId.toLowerCase();
     
     return topologyConnections.some(conn => {
+      if (!conn.active) return false;
       const connSourceId = conn.sourceDeviceId.toLowerCase();
       const connTargetId = conn.targetDeviceId.toLowerCase();
       const connSourcePort = conn.sourcePort.toLowerCase();
@@ -76,6 +77,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
     const lowerDeviceId = activeDeviceId.toLowerCase();
 
     const conn = topologyConnections.find((c) => {
+      if (!c.active) return false;
       const connSourceId = c.sourceDeviceId.toLowerCase();
       const connTargetId = c.targetDeviceId.toLowerCase();
       const connSourcePort = c.sourcePort.toLowerCase();

@@ -121,6 +121,52 @@ export function NetworkTopology({
   const [devices, setDevices] = useState<CanvasDevice[]>(initialDevices || defaultDevices);
   const [connections, setConnections] = useState<CanvasConnection[]>(initialConnections || []);
   const [notes, setNotes] = useState<CanvasNote[]>(initialNotes || []);
+  const devicesRef = useRef<CanvasDevice[]>(devices);
+  const connectionsRef = useRef<CanvasConnection[]>(connections);
+
+  useEffect(() => {
+    devicesRef.current = devices;
+  }, [devices]);
+
+  useEffect(() => {
+    connectionsRef.current = connections;
+  }, [connections]);
+
+  // Port frame should be gray when the device is powered off OR the link's peer is powered off.
+  const offlinePortFramesByDevice = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+
+    const ensure = (deviceId: string) => {
+      const existing = map.get(deviceId);
+      if (existing) return existing;
+      const next = new Set<string>();
+      map.set(deviceId, next);
+      return next;
+    };
+
+    const byId = new Map(devices.map(d => [d.id, d] as const));
+
+    // If device itself is offline, gray all its ports.
+    for (const d of devices) {
+      if (d.status === 'offline') {
+        const set = ensure(d.id);
+        for (const p of d.ports) set.add(p.id);
+      }
+    }
+
+    for (const c of connections) {
+      const a = byId.get(c.sourceDeviceId);
+      const b = byId.get(c.targetDeviceId);
+      if (!a || !b) continue;
+
+      if (a.status === 'offline' || b.status === 'offline') {
+        ensure(c.sourceDeviceId).add(c.sourcePort);
+        ensure(c.targetDeviceId).add(c.targetPort);
+      }
+    }
+
+    return map;
+  }, [devices, connections]);
 
   const [zoom, setZoom] = useState(zoomProp || DEFAULT_ZOOM);
   const [pan, setPan] = useState(panProp || { x: 0, y: 0 });
@@ -501,18 +547,44 @@ export function NetworkTopology({
     );
   }, [configuringDevice]);
 
-  // Delete device and its connections
-  const deleteDevice = useCallback((deviceId: string) => {
-    const updatedDevices = devices.filter((d) => d.id !== deviceId);
-    const updatedConnections = connections.filter((c) => c.sourceDeviceId !== deviceId && c.targetDeviceId !== deviceId);
+  const recomputePortStatuses = useCallback((nextDevices: CanvasDevice[], nextConnections: CanvasConnection[]) => {
+    return nextDevices.map((d) => ({
+      ...d,
+      ports: d.ports.map((p) => {
+        // Preserve powered-off behavior.
+        if (d.status === 'offline') return { ...p, status: 'disabled' as const };
+
+        const isConnected = nextConnections.some((c) =>
+          c.active &&
+          ((c.sourceDeviceId === d.id && c.sourcePort === p.id) ||
+            (c.targetDeviceId === d.id && c.targetPort === p.id))
+        );
+
+        return { ...p, status: isConnected ? 'connected' as const : 'disconnected' as const };
+      }),
+    }));
+  }, []);
+
+  const deleteDevices = useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    const idSet = new Set(ids);
+
+    const remainingDevices = devices.filter((d) => !idSet.has(d.id));
+    const remainingConnections = connections.filter((c) => !idSet.has(c.sourceDeviceId) && !idSet.has(c.targetDeviceId));
+    const updatedDevices = recomputePortStatuses(remainingDevices, remainingConnections);
 
     setDevices(updatedDevices);
-    setConnections(updatedConnections);
+    setConnections(remainingConnections);
+    if (onTopologyChange) onTopologyChange(updatedDevices, remainingConnections, notes);
 
-    if (onDeviceDelete) {
-      onDeviceDelete(deviceId);
-    }
-  }, [onDeviceDelete, devices, connections]);
+    // Keep existing external delete side-effects per device (page.tsx sim state cleanup, etc.).
+    if (onDeviceDelete) ids.forEach((id) => onDeviceDelete(id));
+  }, [devices, connections, notes, onTopologyChange, onDeviceDelete, recomputePortStatuses]);
+
+  // Delete device and its connections
+  const deleteDevice = useCallback((deviceId: string) => {
+    deleteDevices([deviceId]);
+  }, [deleteDevices]);
 
   const selectAllDevices = useCallback(() => {
     const allIds = devices.map(d => d.id);
@@ -1787,7 +1859,9 @@ export function NetworkTopology({
       const portSpacing = device.type === 'pc' ? 18 : 14;
       const startX = device.type === 'pc'
         ? 42.5 - (device.ports.length > 1 ? portSpacing / 2 : 0)
-        : 14;
+        : (device.type === 'router'
+          ? (getDeviceWidth(device) - (portsPerRow - 1) * portSpacing) / 2
+          : 14);
       const portX = device.x + startX + col * portSpacing;
       const portY = device.y + 80 + row * 14;
 
@@ -2069,29 +2143,31 @@ export function NetworkTopology({
   const deleteConnection = useCallback((connectionId: string) => {
     const conn = connections.find((c) => c.id === connectionId);
     let updatedDevices = devices;
-    let updatedConnections = connections.filter((c) => c.id !== connectionId);
+    const updatedConnections = connections.filter((c) => c.id !== connectionId);
 
     if (conn) {
       updatedDevices = devices.map((d) => {
-        if (d.id === conn.sourceDeviceId || d.id === conn.targetDeviceId) {
-          return {
-            ...d,
-            ports: d.ports.map((p) =>
-              p.id === conn.sourcePort || p.id === conn.targetPort
-                ? { ...p, status: 'notconnect' as const }
-                : p
-            ),
-          };
+        if (d.id === conn.sourceDeviceId) {
+          return { ...d, ports: d.ports.map((p) => (p.id === conn.sourcePort ? { ...p, status: 'notconnect' as const } : p)) };
+        }
+        if (d.id === conn.targetDeviceId) {
+          return { ...d, ports: d.ports.map((p) => (p.id === conn.targetPort ? { ...p, status: 'notconnect' as const } : p)) };
         }
         return d;
       });
       setDevices(updatedDevices);
     }
     setConnections(updatedConnections);
-  }, [connections, devices, notes]);
+
+    // Keep parent state (side panels, etc.) in sync so peer port LEDs refresh immediately.
+    if (onTopologyChange) onTopologyChange(updatedDevices, updatedConnections, notes);
+  }, [connections, devices, notes, onTopologyChange]);
 
   // Reset view
   const resetView = useCallback(() => {
+    // Force a port-status refresh too. This fixes cases where panels/canvas can get stale after bulk actions.
+    setDevices((prev) => recomputePortStatuses(prev, connectionsRef.current));
+
     const nextZoom = DEFAULT_ZOOM;
 
     // If there are no objects, keep the origin.
@@ -2112,7 +2188,7 @@ export function NetworkTopology({
 
     setZoom(nextZoom);
     setPan({ x: PADDING - minX * nextZoom, y: PADDING - minY * nextZoom });
-  }, [devices, notes]);
+  }, [devices, notes, recomputePortStatuses]);
 
   // Toggle Fullscreen
   const toggleFullscreen = useCallback(() => {
@@ -2126,7 +2202,8 @@ export function NetworkTopology({
     setNotes([]);
     setSelectedDeviceIds([]);
     deviceCounterRef.current = { pc: 0, switch: 0, router: 0 };
-  }, []);
+    if (onTopologyChange) onTopologyChange([], [], []);
+  }, [onTopologyChange]);
 
   // Copy devices
   const copyDevice = useCallback((ids: string[]) => {
@@ -2142,11 +2219,11 @@ export function NetworkTopology({
     const selectedDevices = devices.filter(d => ids.includes(d.id));
     if (selectedDevices.length > 0) {
       setClipboard(selectedDevices.map(d => ({ ...d })));
-      ids.forEach(id => deleteDevice(id));
+      deleteDevices(ids);
       setSelectedDeviceIds([]);
     }
     setContextMenu(null);
-  }, [devices, deleteDevice]);
+  }, [devices, deleteDevices]);
 
   // Confirm rename
   const confirmRename = useCallback(() => {
@@ -2521,35 +2598,45 @@ export function NetworkTopology({
     setTimeout(() => setToast(null), 3000);
   }, []);
 
+  const getDeviceWidth = useCallback((device: CanvasDevice) => {
+    if (device.type === 'pc') return 85;
+    if (device.type === 'switch') return 125; // switch width -5px per request
+    return 130; // router
+  }, []);
+
   // Get device position (center based on device type)
   const getDeviceCenter = useCallback((device: CanvasDevice) => {
-    const deviceWidth = device.type === 'pc' ? 85 : 130;
+    const deviceWidth = getDeviceWidth(device);
     const portsPerRow = 8;
     const numRows = Math.ceil(device.ports.length / portsPerRow);
     const deviceHeight = device.type === 'pc' ? 100 : 100 + numRows * 14 + 5;
     return { x: device.x + deviceWidth / 2, y: device.y + deviceHeight / 2 };
-  }, []);
+  }, [getDeviceWidth]);
 
   // Get port position on device
   const getPortPosition = useCallback((device: CanvasDevice, portId: string) => {
     const portIndex = device.ports.findIndex(p => p.id === portId);
     if (portIndex === -1) return getDeviceCenter(device);
 
-    const deviceWidth = device.type === 'pc' ? 85 : 130;
+    const deviceWidth = getDeviceWidth(device);
     const portsPerRow = device.type === 'pc' ? 2 : 8;
     const col = portIndex % portsPerRow;
     const row = Math.floor(portIndex / portsPerRow);
     const portSpacing = device.type === 'pc' ? 18 : 14;
     const rowSpacing = 14;
-    // Center ports in the wider device
-    const startX = device.type === 'pc' ? deviceWidth / 2 - (device.ports.length > 1 ? portSpacing / 2 : 0) : 14;
+    // Keep existing switch layout; center router ports.
+    const startX = device.type === 'pc'
+      ? deviceWidth / 2 - (device.ports.length > 1 ? portSpacing / 2 : 0)
+      : (device.type === 'router'
+        ? (deviceWidth - (portsPerRow - 1) * portSpacing) / 2
+        : 14);
     const startY = device.type === 'pc' ? 80 : 80;
 
     return {
       x: device.x + startX + col * portSpacing,
       y: device.y + startY + row * rowSpacing
     };
-  }, [getDeviceCenter]);
+  }, [getDeviceCenter, getDeviceWidth]);
 
   // Render connection SVG (Visual line only)
   const renderConnectionLine = (conn: CanvasConnection, connIndex: number) => {
@@ -2857,7 +2944,7 @@ export function NetworkTopology({
     const deviceHeight = device.type === 'pc' ? 89 : 80 + numRows * 14 + 5;
 
     // Calculate device width to fit all ports with proper spacing
-    const deviceWidth = device.type === 'pc' ? 85 : 130;
+    const deviceWidth = getDeviceWidth(device);
 
     return (
       <g
@@ -2989,6 +3076,7 @@ export function NetworkTopology({
             const portY = 80;
             const isConnected = port.status === 'connected';
             const isShutdown = port.shutdown;
+            const forceGrayFrame = !!offlinePortFramesByDevice.get(device.id)?.has(port.id);
 
             // Determine port label: E for Ethernet, C for COM/Console
             const isConsolePort = port.id.toLowerCase().startsWith('com') || port.id.toLowerCase() === 'console';
@@ -2997,10 +3085,14 @@ export function NetworkTopology({
             // Port colors:
             // PC Ethernet: Blue, PC COM (Console): Turquoise
             // Shutdown: Red
-            const portColor = isShutdown ? '#ef4444' :
-              isConsolePort
-                ? (isConnected ? '#06b6d4' : '#0891b2')  // Turquoise for console
-                : (isConnected ? '#3b82f6' : '#1d4ed8'); // Blue for ethernet
+            // If the device/peer is powered off, force the port to appear offline (gray),
+            // otherwise keep the type/status coloring.
+            const portColor = forceGrayFrame
+              ? '#6b7280'
+              : (isShutdown ? '#ef4444' :
+                isConsolePort
+                  ? (isConnected ? '#06b6d4' : '#0891b2')  // Turquoise for console
+                  : (isConnected ? '#3b82f6' : '#1d4ed8')); // Blue for ethernet
 
             return (
               <g
@@ -3017,7 +3109,7 @@ export function NetworkTopology({
                 <circle
                   r={7}
                   fill={portColor}
-                  stroke={isShutdown ? '#991b1b' : isConnected ? '#22c55e' : '#4b5563'}
+                  stroke={forceGrayFrame ? '#6b7280' : (isShutdown ? '#991b1b' : isConnected ? '#22c55e' : '#4b5563')}
                   strokeWidth={isShutdown || isConnected ? 2 : 1}
                 />
                 <text y={1} fill="#fff" fontSize="7" textAnchor="middle" dominantBaseline="middle" className="select-none pointer-events-none">
@@ -3035,12 +3127,15 @@ export function NetworkTopology({
             // Adjust port spacing for wider device (130px)
             const portSpacing = 14;
             const rowSpacing = 14;
-            const startX = 14;
+            const startX = device.type === 'router'
+              ? (deviceWidth - (portsPerRow - 1) * portSpacing) / 2
+              : 14;
             const startY = 80;
             const portX = startX + col * portSpacing;
             const portY = startY + row * rowSpacing;
             const isConnected = port.status === 'connected';
             const isShutdown = port.shutdown;
+            const forceGrayFrame = !!offlinePortFramesByDevice.get(device.id)?.has(port.id);
 
             // Check if port is blocked by STP (spanning tree)
             const deviceState = deviceStates?.get(device.id);
@@ -3063,7 +3158,11 @@ export function NetworkTopology({
             let portFill: string;
             let portStroke: string;
 
-            if (isDownOrBlocked) {
+            // If the device/peer is powered off, force the port to appear offline (gray).
+            if (forceGrayFrame) {
+              portFill = '#6b7280';
+              portStroke = '#6b7280';
+            } else if (isDownOrBlocked) {
               portFill = isShutdown ? '#ef4444' : '#f97316'; // Red for shutdown, Orange for blocked
               portStroke = '#ff0000'; // Explicit RED border
             } else if (isConsole) {
@@ -3095,9 +3194,9 @@ export function NetworkTopology({
                 <circle
                   r={6}
                   fill={portFill}
-                  stroke={isDownOrBlocked || isConnected ? portStroke : '#4b5563'}
+                  stroke={forceGrayFrame ? '#6b7280' : (isDownOrBlocked || isConnected ? portStroke : '#4b5563')}
                   strokeWidth={isDownOrBlocked || isConnected ? 2.5 : 1}
-                  className={isDownOrBlocked ? 'animate-pulse' : ''}
+                  className={!forceGrayFrame && isDownOrBlocked ? 'animate-pulse' : ''}
                 />
                 <text y={1} fill="#fff" fontSize="6" textAnchor="middle" dominantBaseline="middle" className="select-none pointer-events-none font-bold">
                   {displayNum}
@@ -3300,10 +3399,56 @@ export function NetworkTopology({
     };
     const handleOpenPalette = () => setIsPaletteOpen(true);
     const handleTogglePower = (e: Event) => {
-      const ce = e as CustomEvent<{ deviceId?: string }>;
+      const ce = e as CustomEvent<{ deviceId?: string; nextStatus?: 'online' | 'offline' }>;
       const id = ce.detail?.deviceId;
       if (!id) return;
-      setDevices(prev => prev.map(d => (d.id === id ? { ...d, status: d.status === 'offline' ? 'online' : 'offline' } : d)));
+
+      // Apply a "fast refresh" when power is toggled:
+      // - Powered-off device ports become disabled
+      // - Links touching that device become inactive
+      // - Peer ports on the other side become notconnect
+      // When powering on, restore links/ports to "connected" (unless peer is offline).
+      setDevices((prevDevices) => {
+        const nextStatus = ce.detail?.nextStatus || (prevDevices.find(d => d.id === id)?.status === 'offline' ? 'online' : 'offline');
+        const byId = new Map(prevDevices.map(d => [d.id, d] as const));
+        const nextDevices = prevDevices.map((d) => {
+          if (d.id === id) {
+            return {
+              ...d,
+              status: nextStatus,
+              ports: d.ports.map((p) => ({ ...p, status: nextStatus === 'offline' ? 'disabled' as const : 'disconnected' as const })),
+            };
+          }
+          return d;
+        });
+
+        // Update peer ports based on current connections (we flip connection/port state together below).
+        const nextById = new Map(nextDevices.map(d => [d.id, d] as const));
+        for (const c of connectionsRef.current) {
+          if (c.sourceDeviceId !== id && c.targetDeviceId !== id) continue;
+          const peerId = c.sourceDeviceId === id ? c.targetDeviceId : c.sourceDeviceId;
+          const peer = nextById.get(peerId);
+          if (!peer) continue;
+          const peerPortId = c.sourceDeviceId === id ? c.targetPort : c.sourcePort;
+          const shouldDisablePeer = nextStatus === 'offline' || peer.status === 'offline';
+          const nextPeerPorts = peer.ports.map((p) => (p.id === peerPortId ? { ...p, status: shouldDisablePeer ? 'notconnect' as const : 'connected' as const } : p));
+          nextById.set(peerId, { ...peer, ports: nextPeerPorts });
+        }
+
+        return nextDevices.map(d => nextById.get(d.id) || d);
+      });
+
+      setConnections((prevConnections) => {
+        const nextStatus = ce.detail?.nextStatus || (devicesRef.current.find(d => d.id === id)?.status === 'offline' ? 'online' : 'offline');
+        const byId = new Map(devicesRef.current.map(d => [d.id, d] as const));
+        return prevConnections.map((c) => {
+          if (c.sourceDeviceId !== id && c.targetDeviceId !== id) return c;
+          if (nextStatus === 'offline') return { ...c, active: false };
+          const peerId = c.sourceDeviceId === id ? c.targetDeviceId : c.sourceDeviceId;
+          const peer = byId.get(peerId);
+          return { ...c, active: peer?.status !== 'offline' };
+        });
+      });
     };
 
     window.addEventListener('trigger-topology-zoom-in', handleZoomIn);
@@ -3573,7 +3718,7 @@ export function NetworkTopology({
                   </button>
                   <button
                     onClick={() => {
-                      selectedDeviceIds.forEach(id => deleteDevice(id));
+                      deleteDevices(selectedDeviceIds);
                       if (selectedNoteIds.length > 0) {
                         commitNotesChange(notes.filter(n => !selectedNoteIds.includes(n.id)));
                       }
