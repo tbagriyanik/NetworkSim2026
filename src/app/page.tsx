@@ -184,6 +184,15 @@ export default function Home() {
   const [zoom, setZoom] = useState(1.0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
 
+  const toggleDevicePower = useCallback((deviceId: string) => {
+    setTopologyDevices((prev) =>
+      prev.map((d) => (d.id === deviceId ? { ...d, status: d.status === 'offline' ? 'online' : 'offline' } : d))
+    );
+
+    // Keep the topology canvas in sync without forcing a full remount.
+    window.dispatchEvent(new CustomEvent('trigger-topology-toggle-power', { detail: { deviceId } }));
+  }, [setTopologyDevices]);
+
   const [cableInfo, setCableInfo] = useState<CableInfo>({
     connected: true,
     cableType: 'straight',
@@ -1864,6 +1873,7 @@ export default function Home() {
               cableInfo={cableInfo}
               isVisible={true}
               onClose={() => setActiveTab('topology')}
+              onTogglePower={toggleDevicePower}
               topologyDevices={topologyDevices || undefined}
               topologyConnections={topologyConnections || undefined}
               deviceStates={deviceStates}
@@ -1897,6 +1907,8 @@ export default function Home() {
                   isLoading={isExecutingCommand}
                   isConnectionError={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
                   connectionErrorMessage={language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
+                  isPoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                  onTogglePower={toggleDevicePower}
                   t={t}
                   theme={theme}
                   language={language}
@@ -1933,6 +1945,9 @@ export default function Home() {
                 deviceName={state.hostname}
                 deviceModel={activeDeviceType === 'router' ? 'NETWORK-1941' : 'WS-C2960-24TT-L'}
                 activeDeviceId={activeDeviceId}
+                isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                topologyDevices={topologyDevices}
+                onTogglePower={toggleDevicePower}
                 topologyConnections={topologyConnections || undefined}
               />
             </div>

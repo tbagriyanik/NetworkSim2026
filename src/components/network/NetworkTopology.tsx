@@ -3290,17 +3290,25 @@ export function NetworkTopology({
       setSelectedSourcePort(null);
     };
     const handleOpenPalette = () => setIsPaletteOpen(true);
+    const handleTogglePower = (e: Event) => {
+      const ce = e as CustomEvent<{ deviceId?: string }>;
+      const id = ce.detail?.deviceId;
+      if (!id) return;
+      setDevices(prev => prev.map(d => (d.id === id ? { ...d, status: d.status === 'offline' ? 'online' : 'offline' } : d)));
+    };
 
     window.addEventListener('trigger-topology-zoom-in', handleZoomIn);
     window.addEventListener('trigger-topology-zoom-out', handleZoomOut);
     window.addEventListener('trigger-topology-connect', handleConnect);
     window.addEventListener('trigger-topology-palette', handleOpenPalette);
+    window.addEventListener('trigger-topology-toggle-power', handleTogglePower);
 
     return () => {
       window.removeEventListener('trigger-topology-zoom-in', handleZoomIn);
       window.removeEventListener('trigger-topology-zoom-out', handleZoomOut);
       window.removeEventListener('trigger-topology-connect', handleConnect);
       window.removeEventListener('trigger-topology-palette', handleOpenPalette);
+      window.removeEventListener('trigger-topology-toggle-power', handleTogglePower);
     };
   }, [setZoom, setShowPortSelector, setPortSelectorStep, setSelectedSourcePort]);
 

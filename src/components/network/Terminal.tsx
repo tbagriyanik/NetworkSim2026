@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { CornerDownLeft, Terminal as TerminalIcon, Trash2, Command, Info, History, ChevronRight } from 'lucide-react';
 import { QuickCommands } from './QuickCommands';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export interface TerminalOutput {
   id: string;
@@ -28,6 +29,8 @@ interface TerminalProps {
   isLoading: boolean;
   isConnectionError?: boolean;
   connectionErrorMessage?: string;
+  isPoweredOff?: boolean;
+  onTogglePower?: (deviceId: string) => void;
   t: Translations;
   theme: string;
   language: string;
@@ -45,6 +48,8 @@ export function Terminal({
   isLoading,
   isConnectionError = false,
   connectionErrorMessage,
+  isPoweredOff = false,
+  onTogglePower,
   t,
   theme,
   language,
@@ -228,6 +233,7 @@ export function Terminal({
   const recentCommands = history.slice(0, 10);
 
   return (
+    <TooltipProvider>
     <div className="flex flex-col flex-1 gap-4 overflow-hidden h-full">
       <Card className={`${cardBg} shadow-xl border-t-4 border-t-cyan-500 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0`}>
         <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
@@ -242,6 +248,28 @@ export function Terminal({
               </CardTitle>
             </div>
             <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onTogglePower?.(deviceId)}
+                    className={`h-8 w-8 rounded-lg transition-all ${isPoweredOff ? 'text-rose-500 hover:bg-rose-500/10' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
+                    aria-label={language === 'tr' ? 'Güç' : 'Power'}
+                    disabled={!onTogglePower}
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+                    </svg>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-2 text-xs`}>
+                  {language === 'tr'
+                    ? `Güç: ${isPoweredOff ? 'KAPALI' : 'AÇIK'}`
+                    : `Power: ${isPoweredOff ? 'OFF' : 'ON'}`}
+                </TooltipContent>
+              </Tooltip>
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -365,5 +393,6 @@ export function Terminal({
         )}
       </div>
     </div>
+    </TooltipProvider>
   );
 }

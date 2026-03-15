@@ -29,6 +29,7 @@ interface PCPanelProps {
   cableInfo: CableInfo;
   isVisible: boolean;
   onClose: () => void;
+  onTogglePower?: (deviceId: string) => void;
   topologyDevices?: { id: string; type: string; name: string; ip: string; subnet?: string; gateway?: string; dns?: string; macAddress?: string; status?: string; vlan?: number; ports: { id: string; status: string }[] }[];
   topologyConnections?: { 
     sourceDeviceId: string; 
@@ -79,9 +80,10 @@ export function PCPanel({
   cableInfo, 
   isVisible, 
   onClose, 
+  onTogglePower,
   topologyDevices = [], 
-  topologyConnections = [],
-  deviceStates,
+  topologyConnections = [], 
+  deviceStates, 
   deviceOutputs,
   pcHistories,
   onUpdatePCHistory,
@@ -625,14 +627,30 @@ export function PCPanel({
               <p className="text-xs font-bold text-slate-500 mt-1.5 uppercase tracking-widest">{pcIP} • {pcMAC}</p>
             </div>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onClose}
-            className="h-8 w-8 rounded-lg hover:bg-rose-500/10 hover:text-rose-500 transition-all"
-          >
-            <X className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onTogglePower?.(deviceId)}
+              className={`h-8 w-8 rounded-lg transition-all ${isPcPoweredOff ? 'text-rose-500 hover:bg-rose-500/10' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
+              title={language === 'tr' ? 'Güç' : 'Power'}
+              aria-label={language === 'tr' ? 'Güç' : 'Power'}
+              disabled={!onTogglePower}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+              </svg>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8 rounded-lg hover:bg-rose-500/10 hover:text-rose-500 transition-all"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Navigation Tabs */}
