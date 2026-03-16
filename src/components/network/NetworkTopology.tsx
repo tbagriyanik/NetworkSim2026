@@ -1250,7 +1250,18 @@ export function NetworkTopology({
     setSelectedNoteIds([]);
     // Notify parent component - select device, don't open terminal
     onDeviceSelect(device.type, device.id);
-  }, [onDeviceSelect]);
+    
+    // Center canvas on selected device
+    const canvasRect = canvasRef.current?.getBoundingClientRect();
+    if (canvasRect) {
+      const centerX = canvasRect.width / 2;
+      const centerY = canvasRect.height / 2;
+      updatePan({
+        x: centerX - device.x * zoom,
+        y: centerY - device.y * zoom
+      });
+    }
+  }, [onDeviceSelect, zoom, updatePan]);
 
   // Handle device double click - open terminal
   const handleDeviceDoubleClick = useCallback((device: CanvasDevice) => {
