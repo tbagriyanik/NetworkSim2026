@@ -1563,9 +1563,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             {/* Logo & Title */}
-            <button
+            <Button
+              variant="ghost"
               onClick={() => window.location.reload()}
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+              className="flex items-center gap-3 p-2"
               title={t.reloadPage}
             >
               <div className="p-1 flex items-center justify-center">
@@ -1577,7 +1578,7 @@ export default function Home() {
                 </h1>
                 <p className={`text-xs font-medium mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.subtitle}</p>
               </div>
-            </button>
+            </Button>
 
             {/* Total Score - Desktop */}
             <div className="hidden md:flex items-center gap-4">
