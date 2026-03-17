@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Copy, Save } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from "@/hooks/use-toast";
+import { isValidMAC, normalizeMAC } from "@/lib/utils";
 
 // PC Icon component matching the main screen
 const PCIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -990,30 +991,55 @@ export function PCPanel({
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-500 uppercase">MAC Address</label>
-                <Input value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} className={errors.mac ? 'border-rose-500' : ''} />
+                <Input 
+                  value={pcMAC} 
+                  onChange={(e) => setPcMAC(e.target.value)} 
+                  className={errors.mac ? 'border-rose-500' : ''} 
+                  placeholder="00-40-96-99-88-77 or 950B.ACBE.D015"
+                />
                 {errors.mac && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz MAC adresi.' : 'Invalid MAC address.'}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">IP Address</label>
-                  <Input value={pcIP} onChange={(e) => setPcIP(e.target.value)} className={errors.ip ? 'border-rose-500' : ''} />
+                  <Input 
+                    value={pcIP} 
+                    onChange={(e) => setPcIP(e.target.value)} 
+                    className={errors.ip ? 'border-rose-500' : ''} 
+                    placeholder="192.168.1.10"
+                  />
                   {errors.ip && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz IP adresi.' : 'Invalid IP address.'}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">Subnet Mask</label>
-                  <Input value={pcSubnet} onChange={(e) => setPcSubnet(e.target.value)} className={errors.subnet ? 'border-rose-500' : ''} />
+                  <Input 
+                    value={pcSubnet} 
+                    onChange={(e) => setPcSubnet(e.target.value)} 
+                    className={errors.subnet ? 'border-rose-500' : ''} 
+                    placeholder="255.255.255.0"
+                  />
                   {errors.subnet && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz Alt Ağ Maskesi.' : 'Invalid Subnet Mask.'}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">Gateway</label>
-                  <Input value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} className={errors.gateway ? 'border-rose-500' : ''} />
+                  <Input 
+                    value={pcGateway} 
+                    onChange={(e) => setPcGateway(e.target.value)} 
+                    className={errors.gateway ? 'border-rose-500' : ''} 
+                    placeholder="192.168.1.1"
+                  />
                   {errors.gateway && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz Ağ Geçidi.' : 'Invalid Gateway.'}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">DNS</label>
-                  <Input value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} className={errors.dns ? 'border-rose-500' : ''} />
+                  <Input 
+                    value={pcDNS} 
+                    onChange={(e) => setPcDNS(e.target.value)} 
+                    className={errors.dns ? 'border-rose-500' : ''} 
+                    placeholder="8.8.8.8"
+                  />
                   {errors.dns && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz DNS adresi.' : 'Invalid DNS address.'}</p>}
                 </div>
               </div>            </div>) : (
