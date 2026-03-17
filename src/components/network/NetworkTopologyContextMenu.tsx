@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect, type RefObject } from 'react';
-import { Trash2, Undo2, Redo2 } from 'lucide-react';
+import { 
+  Trash2, Undo2, Redo2, Scissors, Copy, ClipboardPaste, 
+  MousePointer2, ExternalLink, Zap, Shield, Layers, 
+  Database, Terminal as TerminalIcon
+} from 'lucide-react';
 import { NOTE_COLORS, NOTE_FONT_SIZES, NOTE_OPACITY } from './networkTopology.constants';
 import { CanvasDevice, CanvasNote, ContextMenuState } from './networkTopology.types';
 
@@ -42,7 +46,7 @@ interface NetworkTopologyContextMenuProps {
   onClearDeviceSelection: () => void;
 }
 
-const NetworkTopologyContextMenu = ({
+export default function NetworkTopologyContextMenu({
   contextMenu,
   contextMenuRef,
   isDark,
@@ -75,9 +79,50 @@ const NetworkTopologyContextMenu = ({
   onStartConfig,
   onStartPing,
   onSaveToHistory,
-  onClearDeviceSelection
-}: NetworkTopologyContextMenuProps) => {
+  onClearDeviceSelection,
+  note
+}: NetworkTopologyContextMenuProps) {
   const [position, setPosition] = useState({ x: contextMenu?.x || 0, y: contextMenu?.y || 0 });
+
+  const renderIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'undo': return <Undo2 className="w-4 h-4" />;
+      case 'redo': return <Redo2 className="w-4 h-4" />;
+      case 'trash':
+      case 'delete': return <Trash2 className="w-4 h-4" />;
+      case 'cut': return <Scissors className="w-4 h-4" />;
+      case 'copy': return <Copy className="w-4 h-4" />;
+      case 'paste': return <ClipboardPaste className="w-4 h-4" />;
+      case 'select': return <MousePointer2 className="w-4 h-4" />;
+      case 'open': return <ExternalLink className="w-4 h-4" />;
+      case 'ping': return <Zap className="w-4 h-4" />;
+      default: return null;
+    }
+  };
+
+  const renderMenuItem = ({ label, icon, shortcut, onClick, disabled }: {
+    label: string;
+    icon?: string;
+    shortcut?: string;
+    onClick: () => void;
+    disabled?: boolean;
+  }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors ${
+        disabled
+          ? 'opacity-30 cursor-not-allowed'
+          : isDark ? 'text-slate-200 hover:bg-slate-700/80 hover:text-cyan-400' : 'text-slate-700 hover:bg-slate-50 hover:text-cyan-600'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        {icon && <span className="opacity-80 group-hover:opacity-100">{renderIcon(icon)}</span>}
+        <span>{label}</span>
+      </div>
+      {shortcut && <span className="text-[10px] opacity-40 font-mono tracking-tighter ml-4">{shortcut}</span>}
+    </button>
+  );
 
   useEffect(() => {
     if (contextMenu && contextMenuRef.current) {
@@ -356,4 +401,3 @@ const NetworkTopologyContextMenu = ({
   );
 }
 
-export default NetworkTopologyContextMenu;
