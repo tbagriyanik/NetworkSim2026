@@ -1692,12 +1692,22 @@ export default function Home() {
                   {/* Undo/Redo Group */}
                   {activeTab === 'topology' && (
                     <>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-blue-500 transition-colors" onClick={handleUndo} disabled={!canUndo} title={t.undo}>
-                        <Undo2 className={`w-4 h-4 ${!canUndo ? 'opacity-30' : ''}`} />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-blue-500 transition-colors" onClick={handleRedo} disabled={!canRedo} title={t.redo}>
-                        <Redo2 className={`w-4 h-4 ${!canRedo ? 'opacity-30' : ''}`} />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-blue-500 transition-colors" onClick={handleUndo} disabled={!canUndo}>
+                            <Undo2 className={`w-4 h-4 ${!canUndo ? 'opacity-30' : ''}`} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t.undo}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-blue-500 transition-colors" onClick={handleRedo} disabled={!canRedo}>
+                            <Redo2 className={`w-4 h-4 ${!canRedo ? 'opacity-30' : ''}`} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t.redo}</TooltipContent>
+                      </Tooltip>
                       <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'} hidden md:block`} />
                     </>
                   )}

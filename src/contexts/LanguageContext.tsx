@@ -435,7 +435,7 @@ const translations: Record<Language, Translations> = {
     invalidProjectFile: 'Proje dosyası geçersiz!',
     failedLoadProject: 'Proje dosyası yüklenemedi!',
     undo: 'Geri Al (Ctrl+Z)',
-    redo: 'İleri Al (Ctrl+Y)',
+    redo: 'Yinele (Ctrl+Y)',
     newProject: 'Yeni Proje',
     saveProject: 'Projeyi Kaydet',
     loadProject: 'Proje Yükle',

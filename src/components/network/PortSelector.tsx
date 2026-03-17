@@ -82,7 +82,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
                 </button>
               )}
               <h3 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                {step === 'source' 
+                {step === 'source'
                   ? (language === 'tr' ? 'Başlangıç Portu Seçin' : 'Select Source Port')
                   : (language === 'tr' ? 'Hedef Portu Seçin' : 'Select Target Port')
                 }
@@ -108,13 +108,12 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
                   <button
                     key={type}
                     onClick={() => setSelectedCableType(type)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      selectedCableType === type
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedCableType === type
                         ? `${CABLE_COLORS[type].bg} text-white`
                         : isDark
                           ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
+                      }`}
                   >
                     <div className={`w-2.5 h-2.5 rounded ${CABLE_COLORS[type].bg}`} />
                     <span className="text-xs font-semibold tracking-tight leading-snug">
@@ -137,12 +136,12 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
             if (step === 'target' && selectedSource?.deviceId === device.id) return null;
 
             return (
-            <div
-              key={device.id}
-              className={`rounded-xl border ${isDark ? 'border-slate-700 bg-slate-700/30' : 'border-slate-200 bg-slate-50'}`}
-            >
-              {/* Device Header */}
-              <div className={`px-3 py-2 flex items-center gap-2 border-b ${isDark ? 'border-slate-600' : 'border-slate-200'}`}>
+              <div
+                key={device.id}
+                className={`rounded-xl border ${isDark ? 'border-slate-700 bg-slate-700/30' : 'border-slate-200 bg-slate-50'}`}
+              >
+                {/* Device Header */}
+                <div className={`px-3 py-2 flex items-center gap-2 border-b ${isDark ? 'border-slate-600' : 'border-slate-200'}`}>
                   <DeviceIcon
                     type={device.type}
                     className={`${device.type === 'pc' ? 'text-blue-400' : device.type === 'router' ? 'text-purple-400' : 'text-emerald-400'} w-5 h-5`}
@@ -151,7 +150,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
                     {device.name}
                   </span>
                   <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    ({availablePorts.length} {language === 'tr' ? 'müsait port' : 'available'})
+                    ({availablePorts.length} {language === 'tr' ? 'boşta port' : 'available'})
                   </span>
                 </div>
 
@@ -167,11 +166,10 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
                           handleTargetSelect(device.id, port.id);
                         }
                       }}
-                      className={`px-3 py-2 rounded-lg text-sm font-mono transition-all ${
-                        isDark
+                      className={`px-3 py-2 rounded-lg text-sm font-mono transition-all ${isDark
                           ? 'bg-slate-600 hover:bg-cyan-600 text-slate-200 hover:text-white'
                           : 'bg-white hover:bg-cyan-500 text-slate-700 hover:text-white border border-slate-200'
-                      }`}
+                        }`}
                     >
                       {port.label}
                     </button>
