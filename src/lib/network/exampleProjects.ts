@@ -61,7 +61,7 @@ const createPcDevice = (id: string, name: string, x: number, y: number, ip: stri
   y,
   ip,
   vlan,
-  macAddress: '00e0.f701.a1b1',
+  macAddress: '00E0.F701.A1B1',
   status: 'online',
   ports: [
     { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
@@ -76,7 +76,7 @@ const createRouterDevice = (id: string, name: string, x: number, y: number): Can
   x,
   y,
   ip: '',
-  macAddress: '00aa.bbcc.dd01',
+  macAddress: '00AA.BBCC.DD01',
   status: 'online',
   ports: [
     { id: 'console', label: 'Console', status: 'disconnected' as const },
@@ -422,7 +422,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   staticSw1.ports['vlan1'] = { ...staticSw1.ports['vlan1'], ipAddress: '192.168.1.2', subnetMask: '255.255.255.0' };
   staticSw1.ports['gi0/1'] = { ...staticSw1.ports['gi0/1'], mode: 'routed', ipAddress: '192.168.1.2', subnetMask: '255.255.255.0', status: 'connected' };
   staticSw1.ports['fa0/1'] = { ...staticSw1.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
-  
+
   const staticR1 = createInitialRouterState();
   staticR1.hostname = 'R1';
   staticR1.ports['gi0/0'] = { ...staticR1.ports['gi0/0'], ipAddress: '192.168.1.1', subnetMask: '255.255.255.0', status: 'connected' };
@@ -430,7 +430,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   staticR1.staticRoutes = [
     { destination: '192.168.20.0', subnetMask: '255.255.255.0', nextHop: '192.168.2.2', metric: 1, type: 'static' }
   ];
-  
+
   const staticR2 = createInitialRouterState();
   staticR2.hostname = 'R2';
   staticR2.ports['gi0/0'] = { ...staticR2.ports['gi0/0'], ipAddress: '192.168.2.2', subnetMask: '255.255.255.0', status: 'connected' };
@@ -438,7 +438,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   staticR2.staticRoutes = [
     { destination: '192.168.10.0', subnetMask: '255.255.255.0', nextHop: '192.168.2.1', metric: 1, type: 'static' }
   ];
-  
+
   const staticSw2 = createInitialState();
   staticSw2.hostname = 'SW2';
   staticSw2.ports['vlan1'] = { ...staticSw2.ports['vlan1'], ipAddress: '192.168.3.2', subnetMask: '255.255.255.0' };
@@ -479,7 +479,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   etherSw1.ports['fa0/1'] = { ...etherSw1.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
   etherSw1.ports['gi0/1'] = { ...etherSw1.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected', channelGroup: 1, channelMode: 'active', channelProtocol: 'lacp' };
   etherSw1.ports['gi0/2'] = { ...etherSw1.ports['gi0/2'], mode: 'trunk', allowedVlans: 'all', status: 'connected', channelGroup: 1, channelMode: 'active', channelProtocol: 'lacp' };
-  
+
   const etherSw2 = createInitialState();
   etherSw2.hostname = 'SW2';
   etherSw2.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: [] };
@@ -522,7 +522,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpSw1.ports['fa0/1'] = { ...stpSw1.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
   stpSw1.ports['gi0/1'] = { ...stpSw1.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
   stpSw1.ports['gi0/2'] = { ...stpSw1.ports['gi0/2'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
-  
+
   const stpSw2 = createInitialState();
   stpSw2.hostname = 'SW2';
   stpSw2.spanningTreeMode = 'rapid-pvst';
@@ -565,7 +565,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   campusAcc1.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: [] };
   campusAcc1.ports['fa0/1'] = { ...campusAcc1.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
   campusAcc1.ports['gi0/1'] = { ...campusAcc1.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
-  
+
   const campusCore = createInitialRouterState();
   campusCore.hostname = 'CORE-R1';
   campusCore.ipRouting = true;
@@ -575,7 +575,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     { destination: '192.168.10.0', subnetMask: '255.255.255.0', nextHop: '192.168.1.2', metric: 1, type: 'static' },
     { destination: '192.168.20.0', subnetMask: '255.255.255.0', nextHop: '192.168.2.2', metric: 1, type: 'static' }
   ];
-  
+
   const campusAcc2 = createInitialState();
   campusAcc2.hostname = 'ACC-SW2';
   campusAcc2.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: [] };

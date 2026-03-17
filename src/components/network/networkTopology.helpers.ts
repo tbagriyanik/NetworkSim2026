@@ -19,7 +19,7 @@ export const generateRouterPorts = () => {
 };
 
 export const generateMacAddress = (): string => {
-  const chars = '0123456789abcdef';
+  const chars = '0123456789ABCDEF';
   let mac = '';
   for (let i = 0; i < 12; i++) {
     mac += chars[Math.floor(Math.random() * 16)];

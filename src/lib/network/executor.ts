@@ -4,6 +4,7 @@ import { checkConnectivity } from './connectivity';
 import { addStaticRoute, removeStaticRoute, getRoutingTable } from './routing';
 import { parseCommand, validateCommand, getHelpContent, commandPatterns } from './parser';
 import { normalizePortId, getModePrompt, buildStartupConfig, applyStartupConfig } from './initialState';
+import { isValidMAC, normalizeMAC } from '../utils';
 
 // Network tarzı komut ağacı - ? için
 const commandHelp: Record<string, Record<string, string[]>> = {
@@ -750,7 +751,7 @@ export function executeCommand(
   connections?: any[],
   deviceStates?: Map<string, SwitchState>
 ): CommandResult {
-  // Internal session events (not real IOS commands)
+  // Internal session events (not real NOS commands)
   if (input === '__CONSOLE_CONNECT__') {
     return handleConsoleConnect(state, language);
   }
@@ -2648,7 +2649,30 @@ function cmdSwitchportPortSecurityViolation(state: SwitchState, input: string): 
 // Switchport Port-Security MAC-Address
 function cmdSwitchportPortSecurityMac(state: SwitchState, input: string): CommandResult {
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
-  return { success: true };
+
+  const match = input.match(/^switchport\s+port-security\s+mac-address\s+(.+)$/i);
+  if (!match) return { success: false, error: '% Invalid command' };
+
+  const mac = match[1].trim();
+  if (!isValidMAC(mac)) {
+    return { success: false, error: '% Invalid MAC address format' };
+  }
+
+  const normalizedMac = normalizeMAC(mac);
+  const newPorts = { ...state.ports };
+  const port = newPorts[state.currentInterface];
+  if (port.portSecurity) {
+    port.portSecurity.macAddress = normalizedMac;
+  } else {
+    port.portSecurity = {
+      enabled: true,
+      maximum: 1,
+      violation: 'shutdown',
+      macAddress: normalizedMac
+    };
+  }
+
+  return { success: true, newState: { ports: newPorts } };
 }
 
 // Switchport Port-Security Sticky

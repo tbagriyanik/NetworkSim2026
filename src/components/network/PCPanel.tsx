@@ -154,13 +154,12 @@ export function PCPanel({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateIP = (ip: string) => /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ip);
-  const validateMAC = (mac: string) => /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(mac);
 
   // Validate and sync global state
   const syncToGlobal = useCallback(() => {
     const newErrors: Record<string, string> = {};
     if (!validateIP(pcIP)) newErrors.ip = 'Geçersiz IP';
-    if (!validateMAC(pcMAC)) newErrors.mac = 'Geçersiz MAC';
+    if (!isValidMAC(pcMAC)) newErrors.mac = 'Geçersiz MAC';
     if (pcSubnet && !validateIP(pcSubnet)) newErrors.subnet = 'Geçersiz Subnet';
     if (pcGateway && !validateIP(pcGateway)) newErrors.gateway = 'Geçersiz Gateway';
     if (pcDNS && !validateIP(pcDNS)) newErrors.dns = 'Geçersiz DNS';
@@ -176,7 +175,7 @@ export function PCPanel({
           config: {
             name: internalPcHostname,
             ip: pcIP,
-            macAddress: pcMAC,
+            macAddress: isValidMAC(pcMAC) ? normalizeMAC(pcMAC) : pcMAC,
             subnet: pcSubnet,
             gateway: pcGateway,
             dns: pcDNS
@@ -1323,6 +1322,6 @@ function getPCConfigDefaults(id: string) {
   const num = id.split('-')[1] || '1';
   return {
     ip: `192.168.1.${10 + parseInt(num)}`,
-    mac: `00E0.F7${num.padStart(2, '0')}.A${num}B${num}`
+    mac: `00-40-96-99-88-7${num}`
   };
 }
