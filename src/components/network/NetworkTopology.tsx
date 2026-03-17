@@ -3594,7 +3594,7 @@ export function NetworkTopology({
   return (
     <div
       onContextMenu={(e) => e.preventDefault()}
-      className={`${isFullscreen ? 'fixed inset-[20px] z-[9999] rounded-xl shadow-2xl' : 'relative rounded-xl border-2 overflow-hidden'} flex flex-col transition-all duration-300 ${isDark
+      className={`${isFullscreen ? 'fixed inset-[20px] z-[9999] rounded-xl shadow-2xl' : 'relative w-full flex-1 rounded-xl border-2 overflow-hidden'} flex flex-col transition-all duration-300 ${isDark
         ? 'bg-gradient-to-br from-slate-800/90 via-slate-700/80 to-slate-800/90 border-slate-600/50'
         : 'bg-gradient-to-br from-blue-50/50 via-white to-slate-50/80 border-slate-300/50'
         }`}

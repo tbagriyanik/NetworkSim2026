@@ -2098,12 +2098,11 @@ export default function Home() {
           </div>
         </header>
         {/* Mobile Bottom Tab Bar (Icons Only) */}
-        <div className={`sm:hidden fixed bottom-0 left-0 right-0 z-[100] border-t backdrop-blur-xl flex items-center justify-around px-2 mobile-bottom-nav ${isDark ? 'bg-slate-900/95 border-slate-800 text-slate-400' : 'bg-white/95 border-slate-200 text-slate-500'
+        <div className={`sm:hidden relative border-b backdrop-blur-xl flex items-center justify-around px-2 py-1 mobile-top-nav ${isDark ? 'bg-slate-900/95 border-slate-800 text-slate-400' : 'bg-white/95 border-slate-200 text-slate-500'
           } ${showProjectPicker || showOnboarding ? 'hidden' : ''}`}>
           {tabs.map((tab, index) => {
             const isActive = activeTab === tab.id;
 
-            // Shared Color Mapping
             const tabColors: Record<string, string> = {
               topology: 'text-blue-500 hover:text-blue-500',
               cmd: 'text-blue-500 hover:text-blue-500',
@@ -2119,7 +2118,7 @@ export default function Home() {
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex flex-col items-center justify-center min-h-[44px] flex-1 px-3 py-2 rounded-xl transition-all relative ${isActive ? 'text-blue-500' : `${colorClass} active:scale-95`
+                    className={`flex flex-col items-center justify-center min-h-[40px] flex-1 px-3 py-1.5 rounded-xl transition-all relative ${isActive ? 'text-blue-500' : `${colorClass} active:scale-95`
                       }`}
                   >
                     {isActive && (
@@ -2130,13 +2129,13 @@ export default function Home() {
                       />
                     )}
                     <div className={`relative z-10 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`}>
-                      {tab.id === 'topology' ? <Network className="w-5 h-5" /> :
-                        (tab.id === 'cmd' || tab.id === 'terminal') ? <TerminalIcon className="w-5 h-5" /> :
-                          tab.id === 'ports' ? <Database className="w-5 h-5" /> :
-                            tab.id === 'vlan' ? <Layers className="w-5 h-5" /> :
-                              <ShieldCheck className="w-5 h-5" />}
+                      {tab.id === 'topology' ? <Network className="w-4 h-4" /> :
+                        (tab.id === 'cmd' || tab.id === 'terminal') ? <TerminalIcon className="w-4 h-4" /> :
+                          tab.id === 'ports' ? <Database className="w-4 h-4" /> :
+                            tab.id === 'vlan' ? <Layers className="w-4 h-4" /> :
+                              <ShieldCheck className="w-4 h-4" />}
                     </div>
-                    <span className="mt-0.5 text-[10px] font-semibold leading-tight relative z-10">
+                    <span className="mt-0.5 text-[9px] font-semibold leading-tight relative z-10">
                       {tab.label}
                     </span>
                   </button>
@@ -2146,6 +2145,7 @@ export default function Home() {
             );
           })}
         </div>
+        {/* Mobile bottom nav div moved to bottom */}
         <Dialog open={showProjectPicker} onOpenChange={setShowProjectPicker}>
           <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} w-screen h-screen max-w-none m-0 rounded-none`}>
             <DialogHeader>
@@ -2281,11 +2281,11 @@ export default function Home() {
         </AlertDialog>
 
         {/* Main Content with matching top background */}
-        <main className={`flex-1 overflow-hidden ${isDark ? 'bg-slate-950' : 'bg-slate-100'}`}>
-          <div className="w-full p-5 pb-20 sm:pb-5 h-full flex flex-col">
+        <main className={`flex-1 overflow-hidden flex flex-col ${isDark ? 'bg-slate-950' : 'bg-slate-100'}`}>
+          <div className="w-full p-5 pb-0 sm:pb-5 flex-1 flex flex-col">
             {/* Tab Content */}
             {activeTab === 'topology' && (
-              <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
                 {/* Network Topology fills remaining space */}
                 <div ref={topologyContainerRef} className="flex-1 w-full flex flex-col min-h-[500px]">
                   <NetworkTopology
@@ -2477,13 +2477,13 @@ export default function Home() {
         </main>
 
         {/* Footer - Save Status & Hints */}
-        <footer className={`fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-xl transition-all ${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'
+        <footer className={`hidden sm:block relative border-t backdrop-blur-xl transition-all ${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'
           } ${showProjectPicker || showOnboarding ? 'hidden' : ''}`}>
           <div className="w-full px-5 py-2">
             <div className="flex items-center justify-between gap-4">
               {/* Save Status */}
               <div className="flex items-center gap-3">
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'
+                <div className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'
                   }`}>
                   <span className={`flex items-center gap-1.5 text-xs font-semibold ${hasUnsavedChanges ? 'text-amber-400' : 'text-emerald-400'
                     }`}>
