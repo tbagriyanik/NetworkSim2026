@@ -2008,6 +2008,11 @@ export function NetworkTopology({
     if (portTooltipShowTimerRef.current) clearTimeout(portTooltipShowTimerRef.current);
     if (portTooltipTimerRef.current) clearTimeout(portTooltipTimerRef.current);
 
+    // Clear device tooltip state and timers immediately when hovering over a port
+    setDeviceTooltip(null);
+    if (deviceTooltipShowTimerRef.current) clearTimeout(deviceTooltipShowTimerRef.current);
+    if (deviceTooltipTimerRef.current) clearTimeout(deviceTooltipTimerRef.current);
+
     // Estimate tooltip dimensions to prevent overflow
     const tooltipWidth = 140;
     const tooltipHeight = 60;
@@ -2026,11 +2031,6 @@ export function NetworkTopology({
         y: e.clientY,
         visible: true,
       });
-
-      // Clear device tooltip state and timers when port tooltip shows
-      setDeviceTooltip(null);
-      if (deviceTooltipShowTimerRef.current) clearTimeout(deviceTooltipShowTimerRef.current);
-      if (deviceTooltipTimerRef.current) clearTimeout(deviceTooltipTimerRef.current);
 
       // Auto-hide after 1.5s
       portTooltipTimerRef.current = setTimeout(() => {
@@ -2059,6 +2059,9 @@ export function NetworkTopology({
 
   const showDeviceTooltip = useCallback((e: ReactMouseEvent | MouseEvent, deviceId: string) => {
     if (isActuallyDragging || isTouchDragging) return;
+
+    // Do not show device tooltip if a port tooltip is active or pending
+    if (portTooltip || portTooltipShowTimerRef.current) return;
 
     const device = devices.find(d => d.id === deviceId);
     if (!device) return;
@@ -2095,7 +2098,7 @@ export function NetworkTopology({
         setDeviceTooltip(prev => prev ? { ...prev, visible: false } : null);
       }, 3000);
     }, 600);
-  }, [isActuallyDragging, isTouchDragging, devices]);
+  }, [isActuallyDragging, isTouchDragging, devices, portTooltip]);
 
   const handleDeviceHover = useCallback((e: ReactMouseEvent, deviceId: string) => {
     showDeviceTooltip(e, deviceId);

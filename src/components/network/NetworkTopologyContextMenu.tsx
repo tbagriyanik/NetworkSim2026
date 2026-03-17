@@ -77,126 +77,19 @@ const NetworkTopologyContextMenu = ({
   onSaveToHistory,
   onClearDeviceSelection
 }: NetworkTopologyContextMenuProps) => {
-  const note = notes.find((n) => n.id === contextMenu?.noteId);
-  if (!contextMenu) return null;
-
-
-
-  const renderMenuItem = (opts: {
-    label: string;
-    onClick: () => void;
-    disabled?: boolean;
-    icon: 'open' | 'cut' | 'copy' | 'paste' | 'delete' | 'select' | 'undo' | 'redo' | 'config' | 'ping';
-    shortcut?: string;
-  }) => {
-    const { label, onClick, disabled, icon, shortcut } = opts;
-    const iconNode = (() => {
-      const cls = 'w-4.5 h-4.5';
-      switch (icon) {
-        case 'open':
-          return (
-            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 4h16v10H4z" />
-              <path d="M8 20h8" />
-              <path d="M10 16h4" />
-            </svg>
-          );
-        case 'cut':
-          return (
-            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="6" cy="6" r="3" />
-              <circle cx="6" cy="18" r="3" />
-              <path d="M20 4L8.5 12" />
-              <path d="M20 20L8.5 12" />
-            </svg>
-          );
-        case 'copy':
-          return (
-            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="9" y="9" width="10" height="10" rx="2" />
-              <rect x="5" y="5" width="10" height="10" rx="2" />
-            </svg>
-          );
-        case 'paste':
-          return (
-            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 4h6l1 2h3v14H5V6h3z" />
-              <path d="M9 4v2h6V4" />
-            </svg>
-          );
-        case 'delete':
-          return <Trash2 className={cls} />;
-        case 'select':
-          return (
-            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 4h6v6H4z" />
-              <path d="M14 14h6v6h-6z" />
-              <path d="M14 4h6v6h-6z" />
-              <path d="M4 14h6v6H4z" />
-            </svg>
-          );
-        case 'undo':
-          return <Undo2 className={cls} />;
-        case 'redo':
-          return <Redo2 className={cls} />;
-        case 'config':
-          return (
-            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <g>
-                <circle cx="12" cy="12" r="4" />
-                <circle cx="12" cy="12" r="6.5" />
-                <path d="M12 3.5v2" />
-                <path d="M12 18.5v2" />
-                <path d="M3.5 12h2" />
-                <path d="M18.5 12h2" />
-                <path d="M5.9 5.9l1.4 1.4" />
-                <path d="M16.7 16.7l1.4 1.4" />
-                <path d="M18.1 5.9l-1.4 1.4" />
-                <path d="M7.3 16.7l-1.4 1.4" />
-              </g>
-            </svg>
-          );
-        case 'ping':
-          return (
-            <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 6h16" />
-              <path d="M4 6l8 7 8-7" />
-              <path d="M4 6v12h16V6" />
-            </svg>
-          );
-      }
-    })();
-
-    return (
-      <button
-        onClick={() => !disabled && onClick()}
-        disabled={disabled}
-        aria-disabled={disabled}
-        className={`w-full px-2.5 py-2 text-sm text-left flex items-center gap-2 justify-between ${disabled
-          ? `${isDark ? 'text-slate-500' : 'text-slate-400'} cursor-not-allowed`
-          : `${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}`}
-      >
-        <span className="flex items-center gap-2">
-          <span className="shrink-0 p-0.5">
-            {iconNode}
-          </span>
-          {label}
-        </span>
-        {shortcut && <span className="text-[11px] opacity-50">{shortcut}</span>}
-      </button>
-    );
-  };
-
-  const [position, setPosition] = useState({ x: contextMenu.x, y: contextMenu.y });
+  const [position, setPosition] = useState({ x: contextMenu?.x || 0, y: contextMenu?.y || 0 });
 
   useEffect(() => {
-    if (contextMenuRef.current) {
+    if (contextMenu && contextMenuRef.current) {
       const { offsetWidth, offsetHeight } = contextMenuRef.current;
       const x = Math.min(contextMenu.x, window.innerWidth - offsetWidth - 10);
       const y = Math.min(contextMenu.y, window.innerHeight - offsetHeight - 10);
       setPosition({ x: Math.max(10, x), y: Math.max(10, y) });
     }
-  }, [contextMenu.x, contextMenu.y]);
+  }, [contextMenu?.x, contextMenu?.y, contextMenuRef]);
+
+  // Render logic follows hook calls
+  if (!contextMenu) return null;
 
   return (
     <div

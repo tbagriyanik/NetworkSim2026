@@ -172,7 +172,7 @@ export default function Home() {
   useEffect(() => {
     const handleDeviceUpdate = (event: any) => {
       const { deviceId, config } = event.detail;
-      
+
       // Update topology devices
       setTopologyDevices((prev) =>
         prev.map((d) =>
@@ -304,13 +304,13 @@ export default function Home() {
 
   // Get current state helper
   const getCurrentState = useCallback((): ProjectState => ({
-    topologyDevices: JSON.parse(JSON.stringify(topologyDevices)),
-    topologyConnections: JSON.parse(JSON.stringify(topologyConnections)),
-    topologyNotes: JSON.parse(JSON.stringify(topologyNotes)),
-    deviceStates: new Map(deviceStates),
-    deviceOutputs: new Map(deviceOutputs),
-    pcOutputs: new Map(pcOutputs),
-    pcHistories: new Map(pcHistories),
+    topologyDevices: JSON.parse(JSON.stringify(topologyDevices || [])),
+    topologyConnections: JSON.parse(JSON.stringify(topologyConnections || [])),
+    topologyNotes: JSON.parse(JSON.stringify(topologyNotes || [])),
+    deviceStates: new Map(deviceStates || []),
+    deviceOutputs: new Map(deviceOutputs || []),
+    pcOutputs: new Map(pcOutputs || []),
+    pcHistories: new Map(pcHistories || []),
     cableInfo: { ...cableInfo },
     activeDeviceId: activeDeviceId || '',
     activeDeviceType: activeDeviceType || 'switch',
@@ -431,8 +431,13 @@ export default function Home() {
   const topologyContainerRef = useRef<HTMLDivElement | null>(null);
   const pendingFocusDeviceRef = useRef<string | null>(null);
 
+  // Initialize with empty Map if undefined to prevent SSR errors
+  const safeDeviceStates = deviceStates || new Map();
+  const safeDeviceOutputs = deviceOutputs || new Map();
+  const safePcOutputs = pcOutputs || new Map();
+  const safePcHistories = pcHistories || new Map();
+
   // Legacy state for compatibility with other panels (uses active device's state)
-  // MOVED AFTER topologyDevices initialization
   const state = (() => {
     const activeDevice = topologyDevices?.find(d => d.id === activeDeviceId);
     return getOrCreateDeviceState(activeDeviceId, activeDeviceType, activeDevice?.name, activeDevice?.macAddress);
