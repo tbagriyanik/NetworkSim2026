@@ -172,6 +172,8 @@ export default function Home() {
   useEffect(() => {
     const handleDeviceUpdate = (event: any) => {
       const { deviceId, config } = event.detail;
+      
+      // Update topology devices
       setTopologyDevices((prev) =>
         prev.map((d) =>
           d.id === deviceId
@@ -179,6 +181,17 @@ export default function Home() {
             : d
         )
       );
+
+      // Update deviceStates (CLI hostname)
+      if (config.name) {
+        setDeviceStates((prev) => {
+          const state = prev.get(deviceId);
+          if (state) {
+            return new Map(prev).set(deviceId, { ...state, hostname: config.name });
+          }
+          return prev;
+        });
+      }
     };
 
     window.addEventListener('update-topology-device-config', handleDeviceUpdate);

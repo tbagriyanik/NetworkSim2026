@@ -159,29 +159,29 @@ export function PCPanel({
     const newErrors: Record<string, string> = {};
     if (!validateIP(pcIP)) newErrors.ip = 'Geçersiz IP';
     if (!validateMAC(pcMAC)) newErrors.mac = 'Geçersiz MAC';
-    // Subnet/Gateway/DNS validation (basic format check)
     if (pcSubnet && !validateIP(pcSubnet)) newErrors.subnet = 'Geçersiz Subnet';
     if (pcGateway && !validateIP(pcGateway)) newErrors.gateway = 'Geçersiz Gateway';
     if (pcDNS && !validateIP(pcDNS)) newErrors.dns = 'Geçersiz DNS';
-    
+
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0 && deviceFromTopology) {
-        // Broadcast change to global topology state
-        window.dispatchEvent(new CustomEvent('update-topology-device-config', { 
-            detail: { 
-                deviceId: deviceId, 
-                config: { 
-                    ip: pcIP, 
-                    macAddress: pcMAC, 
-                    subnet: pcSubnet, 
-                    gateway: pcGateway, 
-                    dns: pcDNS 
-                } 
-            } 
-        }));
+      // Broadcast change to global topology state
+      window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+        detail: {
+          deviceId: deviceId,
+          config: {
+            name: pcHostname, // Hostname update
+            ip: pcIP,
+            macAddress: pcMAC,
+            subnet: pcSubnet,
+            gateway: pcGateway,
+            dns: pcDNS
+          }
+        }
+      }));
     }
-  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, deviceId, deviceFromTopology]);
+  }, [pcHostname, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, deviceId, deviceFromTopology]);
 
   // Trigger sync on change (debounced)
   useEffect(() => {
@@ -189,7 +189,7 @@ export function PCPanel({
       syncToGlobal();
     }, 500);
     return () => clearTimeout(handler);
-  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, syncToGlobal]);
+  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcHostname, syncToGlobal]);
 
   // Local output for Desktop (Local) - initialize from prop if available
   const getInitialPcOutput = (): OutputLine[] => {
@@ -453,7 +453,7 @@ export function PCPanel({
         description: language === 'tr' ? 'Hatalı parola girdiniz.' : 'Incorrect password.',
         variant: 'destructive',
       });
-      
+
       // Reset flow
       setIsConsoleConnected(false);
       setConnectedDeviceId(null);
@@ -1090,8 +1090,8 @@ export function PCPanel({
                     onClick={() => executeCommand(cmd)}
                     disabled={activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled}
                     className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all border ${isDark
-                        ? 'bg-slate-800 border-slate-700 text-slate-300 active:bg-cyan-500/20 active:text-cyan-400'
-                        : 'bg-white border-slate-200 text-slate-600 active:bg-cyan-50'
+                      ? 'bg-slate-800 border-slate-700 text-slate-300 active:bg-cyan-500/20 active:text-cyan-400'
+                      : 'bg-white border-slate-200 text-slate-600 active:bg-cyan-50'
                       }`}
                   >
                     {cmd}
@@ -1138,8 +1138,8 @@ export function PCPanel({
                   disabled={(activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled) || !input.trim()}
                   size="icon"
                   className={`shrink-0 h-11 w-full sm:w-11 rounded-xl transition-all shadow-lg ${input.trim()
-                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20 active:scale-95'
-                      : isDark ? 'bg-slate-800 text-slate-700' : 'bg-slate-200 text-slate-400'
+                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20 active:scale-95'
+                    : isDark ? 'bg-slate-800 text-slate-700' : 'bg-slate-200 text-slate-400'
                     } cursor-not-allowed opacity-50`}
                 >
                   <CornerDownLeft className="w-5 h-5" />
