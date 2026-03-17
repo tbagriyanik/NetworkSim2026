@@ -707,7 +707,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>('tr');
   const [initialized, setInitialized] = useState(false);
 
-  // İlk mount'ta localStorage'dan dil yükle (sadece bir kez)
+  // İlk mount'ta localStorage'dan veya sistem dilinden yükle
   useEffect(() => {
     if (initialized) return;
 
@@ -715,9 +715,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       const saved = localStorage.getItem('network-sim-language');
       if (saved === 'tr' || saved === 'en') {
         setLanguage(saved);
+      } else {
+        const browserLang = navigator.language || (navigator as any).userLanguage;
+        const lang = browserLang.startsWith('tr') ? 'tr' : 'en';
+        setLanguage(lang);
       }
     } catch {
-      // localStorage erişim hatası - varsayılan tr kullan
+      // localStorage erişim hatası
     }
     setInitialized(true);
   }, [initialized]);

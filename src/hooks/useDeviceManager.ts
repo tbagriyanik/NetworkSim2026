@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { SwitchState } from '@/lib/network/types';
 import { createInitialState, createInitialRouterState, applyStartupConfig } from '@/lib/network/initialState';
 import { executeCommand, getPrompt } from '@/lib/network/executor';
@@ -12,6 +13,8 @@ interface PCOutputLine {
 }
 
 export function useDeviceManager(language: 'tr' | 'en') {
+  const { toast } = useToast();
+
   const [deviceStates, setDeviceStates] = useState<Map<string, SwitchState>>(new Map());
 
   const [deviceOutputs, setDeviceOutputs] = useState<Map<string, TerminalOutput[]>>(() => new Map());
@@ -291,11 +294,19 @@ export function useDeviceManager(language: 'tr' | 'en') {
       }
 
     } catch (e) {
-      setDeviceOutputs(prev => new Map(prev).set(deviceId, [...(prev.get(deviceId) || []), { id: `${Date.now()}-sys-err`, type: 'error', content: `System error: ${(e as Error).message}` }]));
+      const errorMsg = (e as Error).message;
+      if (errorMsg.toLowerCase().includes('password') || errorMsg.toLowerCase().includes('auth')) {
+        toast({
+          title: language === 'tr' ? 'Hata' : 'Error',
+          description: language === 'tr' ? 'Konsol şifresi hatalı!' : 'Invalid console password!',
+          variant: 'destructive',
+        });
+      }
+      setDeviceOutputs(prev => new Map(prev).set(deviceId, [...(prev.get(deviceId) || []), { id: `${Date.now()}-sys-err`, type: 'error', content: `System error: ${errorMsg}` }]));
     } finally {
       setIsLoading(false);
     }
-  }, [language, deviceStates, getOrCreateDeviceState, getOrCreateDeviceOutputs]);
+  }, [language, deviceStates, getOrCreateDeviceState, getOrCreateDeviceOutputs, toast]);
 
   const resetAll = () => {
     setDeviceStates(new Map([['switch-1', createInitialState()]]));
