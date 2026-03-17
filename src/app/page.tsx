@@ -1559,6 +1559,14 @@ export default function Home() {
 
   const isDark = theme === 'dark';
 
+  // Helper function to truncate long names with an ellipsis
+  const truncateWithEllipsis = useCallback((text: string, maxLength: number) => {
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return text.substring(0, maxLength) + '...';
+  }, []);
+
   return (
     <div className={`min-h-screen flex flex-col ${isAppLoading ? 'bg-slate-950 overflow-hidden' : (isDark ? 'bg-slate-950' : 'bg-slate-50')} transition-colors duration-700`}>
       {/* App Loading Screen */}
@@ -1961,7 +1969,7 @@ export default function Home() {
                           className={`${activeDeviceType === 'pc' ? 'text-blue-500' : activeDeviceType === 'router' ? 'text-purple-500' : 'text-emerald-500'} w-5 h-5`}
                         />
                         <span className="text-xs font-bold">
-                          {deviceStates.get(activeDeviceId)?.hostname || activeDeviceId}
+                          {truncateWithEllipsis(deviceStates.get(activeDeviceId)?.hostname || activeDeviceId, 15)}
                         </span>
                       </>
                     ) : (
@@ -2007,7 +2015,7 @@ export default function Home() {
                               className={`${device.type === 'pc' ? 'text-blue-500' : device.type === 'router' ? 'text-purple-500' : 'text-emerald-500'} w-5 h-5`}
                             />
                             <div className="flex flex-col">
-                              <span className="text-xs font-bold leading-none">{displayName}</span>
+                              <span className="text-xs font-bold leading-none">{truncateWithEllipsis(displayName, 12)}</span>
                               <span className="text-[10px] opacity-50 capitalize">{device.type}</span>
                             </div>
                           </div>

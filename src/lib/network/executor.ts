@@ -1404,6 +1404,11 @@ function cmdHostname(state: SwitchState, input: string): CommandResult {
     newHostname = newHostname.substring(1, newHostname.length - 1);
   }
 
+  // Enforce max length of 20 characters
+  if (newHostname.length > 20) {
+    newHostname = newHostname.substring(0, 20);
+  }
+
   return {
     success: true,
     newState: { hostname: newHostname }

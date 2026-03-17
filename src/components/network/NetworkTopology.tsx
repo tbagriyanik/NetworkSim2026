@@ -86,6 +86,14 @@ export function NetworkTopology({
   const noteFonts = isMobile ? NOTE_FONTS_MOBILE : NOTE_FONTS_DESKTOP;
   const getDualCableLabel = (type: CableType) => getCableTypeLabel(type, language);
 
+  // Helper function to truncate long names with an ellipsis
+  const truncateWithEllipsis = useCallback((text: string, maxLength: number) => {
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return text.substring(0, maxLength) + '...';
+  }, []);
+
   // Default devices for initial state
   const defaultDevices: CanvasDevice[] = [
     {
@@ -2994,7 +3002,7 @@ export function NetworkTopology({
   };
 
   // Render device
-  const renderDevice = (device: CanvasDevice, isDragging: boolean = false) => {
+  const renderDevice = (device: CanvasDevice, isDragging: boolean): React.ReactNode => {
     const isSelected = selectedDeviceIds.includes(device.id);
     // Check if device has any connections
     const deviceConnections = connections.filter(c => c.sourceDeviceId === device.id || c.targetDeviceId === device.id);
@@ -3138,7 +3146,7 @@ export function NetworkTopology({
 
         {/* Device name */}
         <text x={deviceWidth / 2} y={58} fill="white" fontSize="10" textAnchor="middle" fontWeight="bold" className="select-none pointer-events-none drop-shadow-sm">
-          {device.name}
+          {truncateWithEllipsis(device.name, 8)}
         </text>
 
         {/* Device IP */}

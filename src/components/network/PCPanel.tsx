@@ -130,21 +130,23 @@ export function PCPanel({
   const defaultConfig = getPCConfigDefaults(deviceId);
   const isPcPoweredOff = deviceFromTopology?.status === 'offline';
 
-  // Sync state with topology if it changes
-  useEffect(() => {
-    if (deviceFromTopology) {
-      setPcHostname(deviceFromTopology.name);
-      setPcIP(deviceFromTopology.ip);
-      setPcMAC(deviceFromTopology.macAddress || defaultConfig.mac);
-      setPcSubnet(deviceFromTopology.subnet || '255.255.255.0');
-      setPcGateway(deviceFromTopology.gateway || '192.168.1.1');
-      setPcDNS(deviceFromTopology.dns || '8.8.8.8');
-    }
-  }, [deviceFromTopology, defaultConfig.mac]);
+
 
   // Local settings state
   const [pcIP, setPcIP] = useState(deviceFromTopology?.ip || defaultConfig.ip);
-  const [pcHostname, setPcHostname] = useState(deviceFromTopology?.name || deviceId);
+  const [internalPcHostname, setInternalPcHostname] = useState(deviceFromTopology?.name || deviceId);
+  const setPcHostname = useCallback((hostname: string) => {
+    let processedHostname = hostname.trim();
+    if (processedHostname.length > 20) {
+      processedHostname = processedHostname.substring(0, 20);
+    }
+    setInternalPcHostname(processedHostname);
+  }, []);
+  // Use internalPcHostname for rendering and effects
+  useEffect(() => {
+    setPcHostname(deviceFromTopology?.name || deviceId);
+  }, [deviceFromTopology?.name, deviceId, setPcHostname]); // Only update if deviceFromTopology.name changes
+
   const [pcMAC, setPcMAC] = useState(deviceFromTopology?.macAddress || defaultConfig.mac);
   const [pcGateway, setPcGateway] = useState(deviceFromTopology?.gateway || '192.168.1.1');
   const [pcDNS, setPcDNS] = useState(deviceFromTopology?.dns || '8.8.8.8');
@@ -165,13 +167,14 @@ export function PCPanel({
 
     setErrors(newErrors);
 
-    if (Object.keys(newErrors).length === 0 && deviceFromTopology) {
-      // Broadcast change to global topology state
+    // Broadcast change to global topology state (even if validation fails for UI feedback, send the data)
+    // Only skip if deviceId is missing
+    if (deviceId) {
       window.dispatchEvent(new CustomEvent('update-topology-device-config', {
         detail: {
           deviceId: deviceId,
           config: {
-            name: pcHostname, // Hostname update
+            name: internalPcHostname,
             ip: pcIP,
             macAddress: pcMAC,
             subnet: pcSubnet,
@@ -181,7 +184,7 @@ export function PCPanel({
         }
       }));
     }
-  }, [pcHostname, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, deviceId, deviceFromTopology]);
+  }, [internalPcHostname, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, deviceId, deviceFromTopology]);
 
   // Trigger sync on change (debounced)
   useEffect(() => {
@@ -189,7 +192,7 @@ export function PCPanel({
       syncToGlobal();
     }, 500);
     return () => clearTimeout(handler);
-  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcHostname, syncToGlobal]);
+  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, internalPcHostname, syncToGlobal]);
 
   // Local output for Desktop (Local) - initialize from prop if available
   const getInitialPcOutput = (): OutputLine[] => {
@@ -541,7 +544,7 @@ export function PCPanel({
           setPcIP(restoredIP);
           addLocalOutput('success', `IP address renewed successfully. New IP: ${restoredIP}`);
         } else if (args.includes('/all')) {
-          addLocalOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${pcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Generic Gigabit Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}`);
+          addLocalOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${internalPcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Generic Gigabit Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}`);
         } else {
           addLocalOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}`);
         }
@@ -629,7 +632,7 @@ export function PCPanel({
           setPcHostname(name);
           addLocalOutput('success', `Hostname changed to ${name}`);
         } else {
-          addLocalOutput('output', pcHostname);
+          addLocalOutput('output', internalPcHostname);
         }
       } else if (cmd === 'ver') {
         addLocalOutput('output', 'OS Windows [Version 10.0.19045.4412]');
@@ -802,7 +805,7 @@ export function PCPanel({
   // Focus on mount (when tab is clicked in main app)
   useEffect(() => {
     inputRef.current?.focus();
-  }, [isVisible]);
+  }, [isVisible, searchOpen, showConsolePasswordPrompt]);
 
   if (!isVisible) return null;
 
@@ -877,7 +880,7 @@ export function PCPanel({
               <PCIcon />
             </div>
             <div>
-              <h2 className="text-sm font-black tracking-tight leading-none uppercase">{pcHostname}</h2>
+              <h2 className="text-sm font-black tracking-tight leading-none uppercase">{internalPcHostname}</h2>
               <p className="text-xs font-bold text-slate-500 mt-1.5 uppercase tracking-widest">{pcIP} • {pcMAC}</p>
             </div>
           </div>
@@ -984,30 +987,35 @@ export function PCPanel({
             <div className="p-6 space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-500 uppercase">{language === 'tr' ? 'Cihaz Adı' : 'Hostname'}</label>
-                <Input value={pcHostname} onChange={(e) => setPcHostname(e.target.value)} />
+                <Input value={internalPcHostname} onChange={(e) => setPcHostname(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-500 uppercase">MAC Address</label>
-                <Input value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} />
+                <Input value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} className={errors.mac ? 'border-rose-500' : ''} />
+                {errors.mac && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz MAC adresi.' : 'Invalid MAC address.'}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">IP Address</label>
-                  <Input value={pcIP} onChange={(e) => setPcIP(e.target.value)} />
+                  <Input value={pcIP} onChange={(e) => setPcIP(e.target.value)} className={errors.ip ? 'border-rose-500' : ''} />
+                  {errors.ip && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz IP adresi.' : 'Invalid IP address.'}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">Subnet Mask</label>
-                  <Input value={pcSubnet} onChange={(e) => setPcSubnet(e.target.value)} />
+                  <Input value={pcSubnet} onChange={(e) => setPcSubnet(e.target.value)} className={errors.subnet ? 'border-rose-500' : ''} />
+                  {errors.subnet && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz Alt Ağ Maskesi.' : 'Invalid Subnet Mask.'}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">Gateway</label>
-                  <Input value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} />
+                  <Input value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} className={errors.gateway ? 'border-rose-500' : ''} />
+                  {errors.gateway && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz Ağ Geçidi.' : 'Invalid Gateway.'}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">DNS</label>
-                  <Input value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} />
+                  <Input value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} className={errors.dns ? 'border-rose-500' : ''} />
+                  {errors.dns && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz DNS adresi.' : 'Invalid DNS address.'}</p>}
                 </div>
               </div>            </div>) : (
             <>
