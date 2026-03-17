@@ -10,7 +10,7 @@ import { checkConnectivity } from '@/lib/network/connectivity';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Copy } from 'lucide-react';
+import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Copy, Save } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from "@/hooks/use-toast";
 
@@ -51,7 +51,7 @@ interface PCPanelProps {
   onExecuteDeviceCommand?: (deviceId: string, command: string) => Promise<any>;
 }
 
-type PCActiveTab = 'desktop' | 'terminal';
+type PCActiveTab = 'desktop' | 'terminal' | 'settings';
 
 // Advanced Command Help Tree for Network
 const networkHelp: Record<string, Record<string, string[]>> = {
@@ -138,15 +138,34 @@ export function PCPanel({
       setPcMAC(deviceFromTopology.macAddress || defaultConfig.mac);
     }
   }, [deviceFromTopology, defaultConfig.mac]);
-
+  // Local settings state
   const [pcIP, setPcIP] = useState(deviceFromTopology?.ip || defaultConfig.ip);
   const [pcHostname, setPcHostname] = useState(deviceFromTopology?.name || deviceId);
   const [pcMAC, setPcMAC] = useState(deviceFromTopology?.macAddress || defaultConfig.mac);
+  const [pcGateway, setPcGateway] = useState('192.168.1.1');
+  const [pcDNS, setPcDNS] = useState('8.8.8.8');
+  const [pcSubnet, setPcSubnet] = useState('255.255.255.0');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateIP = (ip: string) => /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ip);
+  const validateMAC = (mac: string) => /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(mac);
+
+  useEffect(() => {
+    const newErrors: Record<string, string> = {};
+    if (!validateIP(pcIP)) newErrors.ip = 'Geçersiz IP';
+    if (!validateMAC(pcMAC)) newErrors.mac = 'Geçersiz MAC';
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0 && deviceFromTopology) {
+        // Burada gerçek zamanlı topoloji güncelleme tetiklenebilir
+        // örn: updateTopologyDevice(deviceId, { ip: pcIP, macAddress: pcMAC, ... });
+    }
+  }, [pcIP, pcMAC, pcHostname, pcGateway, pcDNS, pcSubnet]);
 
   // Local output for Desktop (Local) - initialize from prop if available
   const getInitialPcOutput = (): OutputLine[] => {
-    if (pcOutputs?.has('pc-desktop')) {
-      return pcOutputs.get('pc-desktop')!;
+    if (pcOutputs?.has(deviceId)) {
+      return pcOutputs.get(deviceId)!;
     }
     return [{
       id: '1',
@@ -156,13 +175,28 @@ export function PCPanel({
   };
   const [pcOutput, setPcOutput] = useState<OutputLine[]>(() => getInitialPcOutput());
 
-  // Sync pcOutput changes back to parent when it changes
+  // Sync pcOutput when deviceId changes or pcOutputs prop updates
+  useEffect(() => {
+    if (pcOutputs?.has(deviceId)) {
+      setPcOutput(pcOutputs.get(deviceId)!);
+    } else {
+      setPcOutput([{
+        id: '1',
+        type: 'output',
+        content: 'OS Windows [Version 10.0.19045.4412]\n(c) OS Corporation. All rights reserved.\n'
+      }]);
+    }
+  }, [deviceId, pcOutputs]);
+
+  // Sync pcOutput changes back to parent when it changes locally
   const prevPcOutputRef = useRef(pcOutput);
   useEffect(() => {
-    if (pcOutput !== prevPcOutputRef.current && pcOutput.length > 0) {
+    if (pcOutput !== prevPcOutputRef.current) {
       prevPcOutputRef.current = pcOutput;
-      // Parent can subscribe to this via a callback if needed
-      // For now, we keep local state in sync
+      // Burada üst bileşene (parent) değişiklikleri bildirebilirsiniz,
+      // ancak useDeviceManager genellikle referans üzerinden çalıştığı için
+      // bu yerel state ile senkronize kalması yeterli olabilir.
+      // Eğer parent state'i güncellemek gerekiyorsa onUpdatePCOutput prop'u eklenebilir.
     }
   }, [pcOutput]);
 
@@ -814,34 +848,38 @@ export function PCPanel({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSearchOpen(true)}
-                  className="h-8 w-8 rounded-lg text-slate-500 hover:text-emerald-400 transition-colors"
-                  aria-label={t.search}
-                >
-                  <Search className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t.search}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleCopyAll}
-                  className="h-8 w-8 rounded-lg text-slate-500 hover:text-emerald-400 transition-colors"
-                  aria-label={t.copy}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t.copy}</TooltipContent>
-            </Tooltip>
+            {activeTab === 'desktop' && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setSearchOpen(true)}
+                      className="h-8 w-8 rounded-lg text-slate-500 hover:text-emerald-400 transition-colors"
+                      aria-label={t.search}
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t.search}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleCopyAll}
+                      className="h-8 w-8 rounded-lg text-slate-500 hover:text-emerald-400 transition-colors"
+                      aria-label={t.copy}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t.copy}</TooltipContent>
+                </Tooltip>
+              </>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -882,88 +920,128 @@ export function PCPanel({
             variant={activeTab === 'desktop' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setActiveTab('desktop')}
-            className={`h-9 px-4 text-xs font-black tracking-wider uppercase transition-all gap-2 ${activeTab === 'desktop' ? 'bg-blue-500/10 text-blue-400' : 'text-slate-500'
-              }`}
+            className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'desktop' ? 'bg-blue-500/10 text-blue-400' : 'text-slate-500'}`}
           >
-            <Globe className="w-3.5 h-3.5" />
-            Desktop
+            <Command className="w-4 h-4" />
+            <span className="hidden sm:inline">{language === 'tr' ? 'Komut İstemi' : 'Command Prompt'}</span>
           </Button>
           <Button
             variant={activeTab === 'terminal' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setActiveTab('terminal')}
-            className={`h-9 px-4 text-xs font-black tracking-wider uppercase transition-all gap-2 ${activeTab === 'terminal' ? 'bg-emerald-500/10 text-emerald-500' : 'text-slate-500 hover:text-emerald-500'
-              }`}
+            className={`h-9 px-4 text-xs font-black tracking-wider  transition-all gap-2 ${activeTab === 'terminal' ? 'bg-emerald-500/10 text-emerald-500' : 'text-slate-500 hover:text-emerald-500'}`}
           >
-            <TerminalIcon className="w-3.5 h-3.5" />
-            Console
+            <TerminalIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">{language === 'tr' ? 'Konsol' : 'Console'}</span>
           </Button>
-        </div>
+          <Button
+            variant={activeTab === 'settings' ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('settings')}
+            className={`h-9 px-4 text-xs font-black tracking-wider  transition-all gap-2 ${activeTab === 'settings' ? 'bg-purple-500/10 text-purple-500' : 'text-slate-500 hover:text-purple-500'}`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span className="hidden sm:inline">{language === 'tr' ? 'Ayarlar' : 'Settings'}</span>
+          </Button>        </div>
 
         {/* Content Area */}
         <div className={`flex-1 flex flex-col overflow-hidden ${terminalBg} relative min-h-0`}>
-          {activeTab === 'terminal' && !isConsoleConnected && (
-            <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center ${isDark ? 'bg-black/90' : 'bg-white/90'} backdrop-blur-md gap-2 p-2 text-center animate-in fade-in duration-500 overflow-y-auto`}>
-              <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xl'} border max-w-xs w-full border-t-2 border-t-emerald-500 my-auto`}>
-                <div className={`w-10 h-10 rounded-lg ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'} flex items-center justify-center mx-auto mb-2 border shadow-inner group`}>
-                  <PCIcon className="w-5 h-5 text-emerald-500 transition-transform group-hover:scale-110" />
+          {activeTab === 'settings' ? (
+            <div className="p-6 space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase">{language === 'tr' ? 'Cihaz Adı' : 'Hostname'}</label>
+                <Input value={pcHostname} onChange={(e) => setPcHostname(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase">MAC Address</label>
+                <Input value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">IP Address</label>
+                  <Input value={pcIP} onChange={(e) => setPcIP(e.target.value)} />
                 </div>
-                <h3 className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'} mb-1 uppercase tracking-tight`}>{t.consoleTerminal}</h3>
-                <p className={`text-xs font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'} mb-3 leading-relaxed px-1`}>
-                  {consoleDevice
-                    ? `${t.physicalConnectionDetected} ${consoleDevice.name}. Port: 9600-8-N-1`
-                    : t.noConsoleCableDetected}
-                </p>
-                <div className="flex flex-col gap-2">
-                  <Button
-                    disabled={!consoleDevice}
-                    onClick={handleConnect}
-                    size="sm"
-                    className={`rounded-lg font-black uppercase tracking-widest gap-2 h-8 ${consoleDevice
-                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 active:scale-95'
-                        : isDark ? 'bg-slate-800 text-slate-600' : 'bg-slate-200 text-slate-400'
-                      } cursor-not-allowed`}
-                  >
-                    <TerminalIcon className="w-4 h-4" />
-                    {t.connect}
-                  </Button>
-                  <p className={`text-xs ${isDark ? 'text-slate-700' : 'text-slate-400'} uppercase tracking-[0.1em] font-black`}>
-                    {t.consoleConfiguration}
-                  </p>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Subnet Mask</label>
+                  <Input value={pcSubnet} onChange={(e) => setPcSubnet(e.target.value)} />
                 </div>
               </div>
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Gateway</label>
+                  <Input value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">DNS</label>
+                  <Input value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} />
+                </div>
+              </div>            </div>) : (
+            <>
+              {activeTab === 'terminal' && !isConsoleConnected && (
+                <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center ${isDark ? 'bg-black/90' : 'bg-white/90'} backdrop-blur-md gap-2 p-2 text-center animate-in fade-in duration-500 overflow-y-auto`}>
+                  {/* Console Connection UI */}
+                  <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xl'} border max-w-xs w-full border-t-2 border-t-emerald-500 my-auto`}>
+                    <div className={`w-10 h-10 rounded-lg ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'} flex items-center justify-center mx-auto mb-2 border shadow-inner group`}>
+                      <PCIcon className="w-5 h-5 text-emerald-500 transition-transform group-hover:scale-110" />
+                    </div>
+                    <h3 className={`text-sm font-black ${isDark ? 'text-white' : 'text-slate-900'} mb-1 uppercase tracking-tight`}>{t.consoleTerminal}</h3>
+                    <p className={`text-xs font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'} mb-3 leading-relaxed px-1`}>
+                      {consoleDevice
+                        ? `${t.physicalConnectionDetected} ${consoleDevice.name}. Port: 9600-8-N-1`
+                        : t.noConsoleCableDetected}
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        disabled={!consoleDevice}
+                        onClick={handleConnect}
+                        size="sm"
+                        className={`rounded-lg font-black uppercase tracking-widest gap-2 h-8 ${consoleDevice
+                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 active:scale-95'
+                          : isDark ? 'bg-slate-800 text-slate-600' : 'bg-slate-200 text-slate-400'
+                          } cursor-not-allowed`}
+                      >
+                        <TerminalIcon className="w-4 h-4" />
+                        {t.connect}
+                      </Button>
+                      <p className={`text-xs ${isDark ? 'text-slate-700' : 'text-slate-400'} uppercase tracking-[0.1em] font-black`}>
+                        {t.consoleConfiguration}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div
+                ref={outputRef}
+                className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar p-6 space-y-2 font-mono text-sm leading-relaxed flex flex-col"
+              >
+                <div className="flex-1" />
+                {(activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line) => (
+                  <div key={line.id} className="break-all animate-in fade-in slide-in-from-left-1 duration-200">
+                    {line.type === 'command' && (
+                      <div className="flex items-start gap-3">
+                        <span className="text-emerald-500 shrink-0 font-black opacity-50 select-none">
+                          {activeTab === 'desktop' ? 'C:\\>' : (line.prompt || '>')}
+                        </span>
+                        <span className={cmdColor}>{highlightText(line.content)}</span>
+                      </div>
+                    )}
+                    {line.type === 'prompt' && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-emerald-500 shrink-0 font-black">{line.prompt}</span>
+                      </div>
+                    )}
+                    {line.type === 'output' && <span className={`${textColor} whitespace-pre-wrap`}>{highlightText(line.content)}</span>}
+                    {line.type === 'error' && <span className="text-rose-500 font-bold italic">{highlightText(line.content)}</span>}
+                    {line.type === 'success' && <span className="text-cyan-500 font-bold uppercase text-xs tracking-widest opacity-80">{highlightText(line.content)}</span>}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
-          <div
-            ref={outputRef}
-            className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar p-6 space-y-2 font-mono text-sm leading-relaxed flex flex-col"
-          >
-            <div className="flex-1" /> {/* Spacer to push content down if small */}
-            {(activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line) => (
-              <div key={line.id} className="break-all animate-in fade-in slide-in-from-left-1 duration-200">
-                {line.type === 'command' && (
-                  <div className="flex items-start gap-3">
-                    <span className="text-emerald-500 shrink-0 font-black opacity-50 select-none">
-                      {activeTab === 'desktop' ? 'C:\\>' : (line.prompt || '>')}
-                    </span>
-                    <span className={cmdColor}>{highlightText(line.content)}</span>
-                  </div>
-                )}
-                {line.type === 'prompt' && (
-                  <div className="flex items-start gap-2">
-                    <span className="text-emerald-500 shrink-0 font-black">{line.prompt}</span>
-                  </div>
-                )}
-                {line.type === 'output' && <span className={`${textColor} whitespace-pre-wrap`}>{highlightText(line.content)}</span>}
-                {line.type === 'error' && <span className="text-rose-500 font-bold italic">{highlightText(line.content)}</span>}
-                {line.type === 'success' && <span className="text-cyan-500 font-bold uppercase text-xs tracking-widest opacity-80">{highlightText(line.content)}</span>}
-              </div>
-            ))}
-          </div>
-
           {/* History / Mobile Helpers */}
-          {recentCommands.length > 0 && (
+          {activeTab !== 'settings' && recentCommands.length > 0 && (
             <div className={`md:hidden flex flex-col gap-1 px-4 py-2 border-t ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'}`}>
               <div className="flex items-center gap-2 mb-1">
                 <History className="w-3 h-3 text-slate-500" />
@@ -989,50 +1067,52 @@ export function PCPanel({
             </div>
           )}
 
-          <div className={`p-4 border-t ${isDark ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-50'}`}>
-            {((activeTab === 'desktop' && isCmdInputDisabled) || (activeTab === 'terminal' && (isPcPoweredOff || isConsoleTargetPoweredOff))) && (
-              <div className="mb-2 px-3 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 text-xs font-bold tracking-wider">
-                {connectionErrorText || (language === 'tr' ? 'Bağlantı hatası' : 'Connection error')}
-              </div>
-            )}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-full">
-              <div className={`flex items-center gap-3 px-4 py-2.5 ${inputBg} rounded-xl border ${inputBorder} flex-1 focus-within:border-blue-500/50 transition-all group`}>
-                <span className="text-emerald-500 font-black text-xs select-none shrink-0 opacity-50 group-focus-within:opacity-100 transition-opacity">
-                  {activeTab === 'desktop'
-                    ? 'C:\\>'
-                    : (isConsoleConnected ? (activeConsoleOutput.findLast(l => l.prompt !== undefined)?.prompt || '>') : 'OFFLINE>')}
-                </span>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  disabled={activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled}
-                  className={`flex-1 bg-transparent border-none outline-none ${cmdColor} font-mono text-[13px] placeholder:text-slate-500 w-full`}
-                  placeholder={activeTab === 'terminal' && !isConsoleConnected ? t.waitingForConnection : (activeTab === 'desktop' ? (isCmdInputDisabled ? connectionErrorText : t.typeCommand) : (isConsoleInputDisabled && isConsoleConnected ? connectionErrorText : t.typeCommand))}
-                  onKeyDown={handleKeyDown}
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <div className={`hidden md:flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${isDark ? 'border-slate-800 bg-slate-800/50' : 'border-slate-200 bg-slate-100'} text-[10px] text-slate-500 font-black uppercase tracking-widest`}>
-                  <Command className="w-2.5 h-3.5" />
-                  Enter
+          {activeTab !== 'settings' && (
+            <div className={`p-4 border-t ${isDark ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-50'}`}>
+              {((activeTab === 'desktop' && isCmdInputDisabled) || (activeTab === 'terminal' && (isPcPoweredOff || isConsoleTargetPoweredOff))) && (
+                <div className="mb-2 px-3 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 text-xs font-bold tracking-wider">
+                  {connectionErrorText || (language === 'tr' ? 'Bağlantı hatası' : 'Connection error')}
                 </div>
-              </div>
+              )}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-full">
+                <div className={`flex items-center gap-3 px-4 py-2.5 ${inputBg} rounded-xl border ${inputBorder} flex-1 focus-within:border-blue-500/50 transition-all group`}>
+                  <span className="text-emerald-500 font-black text-xs select-none shrink-0 opacity-50 group-focus-within:opacity-100 transition-opacity">
+                    {activeTab === 'desktop'
+                      ? 'C:\\>'
+                      : (isConsoleConnected ? (activeConsoleOutput.findLast(l => l.prompt !== undefined)?.prompt || '>') : 'OFFLINE>')}
+                  </span>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    disabled={activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled}
+                    className={`flex-1 bg-transparent border-none outline-none ${cmdColor} font-mono text-[13px] placeholder:text-slate-500 w-full`}
+                    placeholder={activeTab === 'terminal' && !isConsoleConnected ? t.waitingForConnection : (activeTab === 'desktop' ? (isCmdInputDisabled ? connectionErrorText : t.typeCommand) : (isConsoleInputDisabled && isConsoleConnected ? connectionErrorText : t.typeCommand))}
+                    onKeyDown={handleKeyDown}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  <div className={`hidden md:flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${isDark ? 'border-slate-800 bg-slate-800/50' : 'border-slate-200 bg-slate-100'} text-[10px] text-slate-500 font-black uppercase tracking-widest`}>
+                    <Command className="w-2.5 h-3.5" />
+                    Enter
+                  </div>
+                </div>
 
-              <Button
-                onClick={() => executeCommand()}
-                disabled={(activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled) || !input.trim()}
-                size="icon"
-                className={`shrink-0 h-11 w-full sm:w-11 rounded-xl transition-all shadow-lg ${input.trim()
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20 active:scale-95'
-                    : isDark ? 'bg-slate-800 text-slate-700' : 'bg-slate-200 text-slate-400'
-                  } cursor-not-allowed opacity-50`}
-              >
-                <CornerDownLeft className="w-5 h-5" />
-              </Button>
+                <Button
+                  onClick={() => executeCommand()}
+                  disabled={(activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled) || !input.trim()}
+                  size="icon"
+                  className={`shrink-0 h-11 w-full sm:w-11 rounded-xl transition-all shadow-lg ${input.trim()
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20 active:scale-95'
+                      : isDark ? 'bg-slate-800 text-slate-700' : 'bg-slate-200 text-slate-400'
+                    } cursor-not-allowed opacity-50`}
+                >
+                  <CornerDownLeft className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </motion.div>
 
@@ -1085,9 +1165,9 @@ export function PCPanel({
                       <div
                         key={index}
                         className={`aspect-square ${isHead ? 'bg-cyan-400' :
-                            isSnake ? 'bg-cyan-600' :
-                              isFood ? 'bg-red-500' :
-                                'border border-slate-800/30'
+                          isSnake ? 'bg-cyan-600' :
+                            isFood ? 'bg-red-500' :
+                              'border border-slate-800/30'
                           }`}
                       />
                     );

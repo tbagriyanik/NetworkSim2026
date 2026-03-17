@@ -105,9 +105,12 @@ export function PingAnimationOverlay({
 
   return (
     <g key={`ping-${progressKey}`}>
-      <g transform={`translate(${bezierX + envelopeOffsetX}, ${bezierY + envelopeOffsetY})`}>
+      <g 
+        transform={`translate(${bezierX + envelopeOffsetX}, ${bezierY + envelopeOffsetY})`}
+        style={{ transition: 'transform 0.05s linear' }}
+      >
         {/* Glow effect */}
-        <circle r="10" fill="#06b6d4" opacity={0.2} className="animate-ping" />
+        <circle r="10" fill="#06b6d4" opacity={0.3} />
         
         {/* Envelope body */}
         <rect 

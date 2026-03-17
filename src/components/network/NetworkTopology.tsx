@@ -2395,7 +2395,7 @@ export function NetworkTopology({
       }
 
       // Alt+Enter: configure selected device
-      if (e.altKey && e.key === 'Enter') {
+      if (e.altKey && e.key.toLowerCase() === 'enter') {
         if (!configuringDevice && selectedDeviceIds.length === 1) {
           e.preventDefault();
           startDeviceConfig(selectedDeviceIds[0]);

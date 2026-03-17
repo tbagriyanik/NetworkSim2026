@@ -449,13 +449,6 @@ const NetworkTopologyContextMenu = ({
                   onClick: () => { onSelectAll(); onClose(); }
                 })}
                 {renderMenuItem({
-                  label: language === 'tr' ? 'Yapılandır' : 'Configure',
-                  icon: 'config',
-                  shortcut: 'Alt+Enter',
-                  onClick: () => { onStartConfig(contextMenu.deviceId!); onClose(); },
-                  disabled: !device
-                })}
-                {renderMenuItem({
                   label: language === 'tr' ? 'Ping' : 'Ping',
                   icon: 'ping',
                   onClick: () => { onStartPing(contextMenu.deviceId!); onClose(); },

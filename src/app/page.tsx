@@ -596,9 +596,14 @@ export default function Home() {
       return true;
     } catch (error) {
       console.error("Error loading project data", error);
+      toast({
+        title: language === 'tr' ? 'Hata' : 'Error',
+        description: language === 'tr' ? 'Proje dosyası bozuk veya uyumsuz!' : 'Project file is corrupted or incompatible!',
+        variant: 'destructive',
+      });
       return false;
     }
-  }, [setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setCableInfo, setActiveDeviceId, setActiveDeviceType, setActiveTab, setTopologyKey, setHasUnsavedChanges, resetHistory]);
+  }, [setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setCableInfo, setActiveDeviceId, setActiveDeviceType, setActiveTab, setTopologyKey, setHasUnsavedChanges, resetHistory, language, toast]);
 
   // Persistence: Load from localStorage on mount
   useEffect(() => {
