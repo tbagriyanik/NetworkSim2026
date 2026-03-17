@@ -136,31 +136,60 @@ export function PCPanel({
       setPcHostname(deviceFromTopology.name);
       setPcIP(deviceFromTopology.ip);
       setPcMAC(deviceFromTopology.macAddress || defaultConfig.mac);
+      setPcSubnet(deviceFromTopology.subnet || '255.255.255.0');
+      setPcGateway(deviceFromTopology.gateway || '192.168.1.1');
+      setPcDNS(deviceFromTopology.dns || '8.8.8.8');
     }
   }, [deviceFromTopology, defaultConfig.mac]);
+
   // Local settings state
   const [pcIP, setPcIP] = useState(deviceFromTopology?.ip || defaultConfig.ip);
   const [pcHostname, setPcHostname] = useState(deviceFromTopology?.name || deviceId);
   const [pcMAC, setPcMAC] = useState(deviceFromTopology?.macAddress || defaultConfig.mac);
-  const [pcGateway, setPcGateway] = useState('192.168.1.1');
-  const [pcDNS, setPcDNS] = useState('8.8.8.8');
-  const [pcSubnet, setPcSubnet] = useState('255.255.255.0');
+  const [pcGateway, setPcGateway] = useState(deviceFromTopology?.gateway || '192.168.1.1');
+  const [pcDNS, setPcDNS] = useState(deviceFromTopology?.dns || '8.8.8.8');
+  const [pcSubnet, setPcSubnet] = useState(deviceFromTopology?.subnet || '255.255.255.0');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateIP = (ip: string) => /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ip);
   const validateMAC = (mac: string) => /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(mac);
 
-  useEffect(() => {
+  // Validate and sync global state
+  const syncToGlobal = useCallback(() => {
     const newErrors: Record<string, string> = {};
     if (!validateIP(pcIP)) newErrors.ip = 'Geçersiz IP';
     if (!validateMAC(pcMAC)) newErrors.mac = 'Geçersiz MAC';
+    // Subnet/Gateway/DNS validation (basic format check)
+    if (pcSubnet && !validateIP(pcSubnet)) newErrors.subnet = 'Geçersiz Subnet';
+    if (pcGateway && !validateIP(pcGateway)) newErrors.gateway = 'Geçersiz Gateway';
+    if (pcDNS && !validateIP(pcDNS)) newErrors.dns = 'Geçersiz DNS';
+    
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0 && deviceFromTopology) {
-        // Burada gerçek zamanlı topoloji güncelleme tetiklenebilir
-        // örn: updateTopologyDevice(deviceId, { ip: pcIP, macAddress: pcMAC, ... });
+        // Broadcast change to global topology state
+        window.dispatchEvent(new CustomEvent('update-topology-device-config', { 
+            detail: { 
+                deviceId: deviceId, 
+                config: { 
+                    ip: pcIP, 
+                    macAddress: pcMAC, 
+                    subnet: pcSubnet, 
+                    gateway: pcGateway, 
+                    dns: pcDNS 
+                } 
+            } 
+        }));
     }
-  }, [pcIP, pcMAC, pcHostname, pcGateway, pcDNS, pcSubnet]);
+  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, deviceId, deviceFromTopology]);
+
+  // Trigger sync on change (debounced)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      syncToGlobal();
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, syncToGlobal]);
 
   // Local output for Desktop (Local) - initialize from prop if available
   const getInitialPcOutput = (): OutputLine[] => {
@@ -507,9 +536,9 @@ export function PCPanel({
           setPcIP(restoredIP);
           addLocalOutput('success', `IP address renewed successfully. New IP: ${restoredIP}`);
         } else if (args.includes('/all')) {
-          addLocalOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${pcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Generic Gigabit Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\n   Default Gateway . . . . . . . . . : 192.168.1.1\n   DNS Servers . . . . . . . . . . . : 8.8.8.8`);
+          addLocalOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${pcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Generic Gigabit Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}`);
         } else {
-          addLocalOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\n   Default Gateway . . . . . . . . . : 192.168.1.1`);
+          addLocalOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}`);
         }
       } else if (cmd === 'ipv6config') {
         addLocalOutput('output', `OS IPv6 Configuration\n\nEthernet adapter Ethernet0:\n   IPv6 Address. . . . . . . . . . . : 2001:db8:acad:1::10\n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   Default Gateway . . . . . . . . . : fe80::1`);

@@ -168,6 +168,23 @@ export default function Home() {
   const [topologyConnections, setTopologyConnections] = useState<CanvasConnection[]>([]);
   const [topologyNotes, setTopologyNotes] = useState<CanvasNote[]>([]);
 
+  // Listen for device config updates from PCPanel
+  useEffect(() => {
+    const handleDeviceUpdate = (event: any) => {
+      const { deviceId, config } = event.detail;
+      setTopologyDevices((prev) =>
+        prev.map((d) =>
+          d.id === deviceId
+            ? { ...d, ...config }
+            : d
+        )
+      );
+    };
+
+    window.addEventListener('update-topology-device-config', handleDeviceUpdate);
+    return () => window.removeEventListener('update-topology-device-config', handleDeviceUpdate);
+  }, []);
+
   // Initialize defaults on mount to avoid hydration mismatch
   useEffect(() => {
     const savedData = localStorage.getItem('netsim_autosave');

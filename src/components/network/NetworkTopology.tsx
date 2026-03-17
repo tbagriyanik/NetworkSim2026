@@ -531,6 +531,7 @@ export function NetworkTopology({
     setIpValue('');
     setSubnetValue('');
     setGatewayValue('');
+    setDnsValue('');
   }, [configuringDevice, tempNameValue, ipValue, subnetValue, gatewayValue, dnsValue]);
 
   const toggleDevicePower = useCallback(() => {
