@@ -130,11 +130,14 @@ export function PCPanel({
   const defaultConfig = getPCConfigDefaults(deviceId);
   const isPcPoweredOff = deviceFromTopology?.status === 'offline';
 
-  // Sync MAC address with topology if it changes
+  // Sync state with topology if it changes
   useEffect(() => {
-    const deviceMAC = deviceFromTopology?.macAddress || defaultConfig.mac;
-    setPcMAC(deviceMAC);
-  }, [deviceFromTopology?.macAddress, defaultConfig.mac]);
+    if (deviceFromTopology) {
+      setPcHostname(deviceFromTopology.name);
+      setPcIP(deviceFromTopology.ip);
+      setPcMAC(deviceFromTopology.macAddress || defaultConfig.mac);
+    }
+  }, [deviceFromTopology, defaultConfig.mac]);
 
   const [pcIP, setPcIP] = useState(deviceFromTopology?.ip || defaultConfig.ip);
   const [pcHostname, setPcHostname] = useState(deviceFromTopology?.name || deviceId);
