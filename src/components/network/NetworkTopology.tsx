@@ -1251,10 +1251,15 @@ export function NetworkTopology({
 
   }, [devices.length, saveToHistory, generateUniqueIp]);
 
-  // Notify parent of topology changes
+  // Notify parent of topology changes - ONLY if data actually changed
+  const lastStateRef = useRef<string>('');
   useEffect(() => {
     if (onTopologyChange) {
-      onTopologyChange(devices, connections, notes);
+      const currentState = JSON.stringify({ devices, connections, notes });
+      if (currentState !== lastStateRef.current) {
+        lastStateRef.current = currentState;
+        onTopologyChange(devices, connections, notes);
+      }
     }
   }, [devices, connections, notes, onTopologyChange]);
   // Port Tooltip state
