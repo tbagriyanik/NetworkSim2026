@@ -2267,7 +2267,7 @@ export default function Home() {
                     selectedDevice={selectedDevice}
                     onDeviceSelect={handleDeviceSelectFromCanvas}
                     onDeviceDoubleClick={handleDeviceDoubleClick}
-                    onTopologyChange={handleTopologyChange}
+                    onTopologyChange={(devices, connections, notes) => handleTopologyChange(devices, connections, notes)}
                     onDeviceDelete={handleDeviceDelete}
                     initialDevices={topologyDevices || undefined}
                     initialConnections={topologyConnections || undefined}

@@ -1,22 +1,16 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
-import { SwitchState, CableType, CableInfo, getCableTypeName, isCableCompatible } from '@/lib/network/types';
+import { SwitchState, CableType, CableInfo, isCableCompatible } from '@/lib/network/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Monitor, Laptop, Network, Plus, Database, ChevronRight, Settings2, Trash2, MousePointer2 } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { CanvasDevice, CanvasConnection, CanvasNote } from './networkTopology.types';
+import { DeviceIcon } from './DeviceIcon';
 import { ConnectionLine } from './ConnectionLine';
 import { DeviceNode } from './DeviceNode';
+import { Laptop, Monitor, Network, Plus } from "lucide-react";
 
 interface NetworkTopologyProps {
   cableInfo: CableInfo;
@@ -24,40 +18,24 @@ interface NetworkTopologyProps {
   selectedDevice: 'pc' | 'switch' | 'router' | null;
   onDeviceSelect: (device: 'pc' | 'switch' | 'router', deviceId?: string) => void;
   onDeviceDoubleClick?: (device: 'pc' | 'switch' | 'router', deviceId: string) => void;
-  onTopologyChange?: (devices: CanvasDevice[], connections: CanvasConnection[]) => void;
+  onTopologyChange?: (devices: CanvasDevice[], connections: CanvasConnection[], notes: CanvasNote[]) => void;
   onDeviceDelete?: (deviceId: string) => void;
   initialDevices?: CanvasDevice[];
   initialConnections?: CanvasConnection[];
+  initialNotes?: CanvasNote[];
   isActive?: boolean;
   activeDeviceId?: string | null;
   deviceStates?: Map<string, SwitchState>;
-}
-
-// Device types for the canvas
-export interface CanvasDevice {
-  id: string;
-  type: 'pc' | 'switch' | 'router';
-  name: string;
-  macAddress?: string;
-  ip: string;
-  subnet?: string;
-  gateway?: string;
-  dns?: string;
-  x: number;
-  y: number;
-  status: 'online' | 'offline' | 'error';
-  ports: { id: string; label: string; status: 'connected' | 'disconnected'; shutdown?: boolean }[];
-}
-
-// Connection types
-export interface CanvasConnection {
-  id: string;
-  sourceDeviceId: string;
-  sourcePort: string;
-  targetDeviceId: string;
-  targetPort: string;
-  cableType: CableType;
-  active: boolean;
+  isFullscreen?: boolean;
+  onFullscreenChange?: (isFullscreen: boolean) => void;
+  zoom?: number;
+  onZoomChange?: (zoom: number) => void;
+  pan?: { x: number; y: number };
+  onPanChange?: (pan: { x: number; y: number }) => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 // Drag item from palette
@@ -117,6 +95,7 @@ export function NetworkTopology({
   onDeviceDelete,
   initialDevices,
   initialConnections,
+  initialNotes,
   isActive = true,
   activeDeviceId,
   deviceStates,
@@ -192,6 +171,7 @@ export function NetworkTopology({
   // Canvas state
   const [devices, setDevices] = useState<CanvasDevice[]>(initialDevices || defaultDevices);
   const [connections, setConnections] = useState<CanvasConnection[]>(initialConnections || []);
+  const [notes, setNotes] = useState<CanvasNote[]>(initialNotes || []);
 
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -1274,9 +1254,9 @@ export function NetworkTopology({
   // Notify parent of topology changes
   useEffect(() => {
     if (onTopologyChange) {
-      onTopologyChange(devices, connections);
+      onTopologyChange(devices, connections, notes);
     }
-  }, [devices, connections, onTopologyChange]);
+  }, [devices, connections, notes, onTopologyChange]);
   // Port Tooltip state
   const [portTooltip, setPortTooltip] = useState<{
     deviceId: string;
