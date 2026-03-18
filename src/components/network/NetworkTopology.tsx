@@ -907,8 +907,8 @@ export function NetworkTopology({
                 if (device && initialPos) {
                   const rawX = initialPos.x + dx;
                   const rawY = initialPos.y + dy;
-                  const snappedX = rawX;
-                  const snappedY = rawY;
+                  const snappedX = snapToGrid(rawX);
+                  const snappedY = snapToGrid(rawY);
                   const newX = Math.max(20, Math.min(snappedX, canvasDims.width - 100));
                   const newY = Math.max(20, Math.min(snappedY, canvasDims.height - 100));
 
@@ -935,8 +935,8 @@ export function NetworkTopology({
                   if (!start) return n;
                   const rawX = start.x + dx;
                   const rawY = start.y + dy;
-                  const snappedX = rawX;
-                  const snappedY = rawY;
+                  const snappedX = snapToGrid(rawX);
+                  const snappedY = snapToGrid(rawY);
                   const newX = Math.max(20, Math.min(snappedX, canvasDims.width - NOTE_DEFAULT_WIDTH - 20));
                   const newY = Math.max(20, Math.min(snappedY, canvasDims.height - NOTE_DEFAULT_HEIGHT - 20));
                   return { ...n, x: newX, y: newY };
@@ -975,8 +975,8 @@ export function NetworkTopology({
               const start = noteDragStartPositions[n.id] || { x: n.x, y: n.y };
               const rawX = start.x + dx;
               const rawY = start.y + dy;
-              const snappedX = rawX;
-              const snappedY = rawY;
+              const snappedX = snapToGrid(rawX);
+              const snappedY = snapToGrid(rawY);
               const clampedX = Math.max(20, Math.min(snappedX, canvasDims.width - NOTE_DEFAULT_WIDTH - 20));
               const clampedY = Math.max(20, Math.min(snappedY, canvasDims.height - NOTE_DEFAULT_HEIGHT - 20));
               return { ...n, x: clampedX, y: clampedY };
@@ -992,8 +992,8 @@ export function NetworkTopology({
                 if (!start) return d;
                 const rawX = start.x + dx;
                 const rawY = start.y + dy;
-                const snappedX = rawX;
-                const snappedY = rawY;
+                const snappedX = snapToGrid(rawX);
+                const snappedY = snapToGrid(rawY);
                 const newX = Math.max(20, Math.min(snappedX, canvasDims.width - 100));
                 const newY = Math.max(20, Math.min(snappedY, canvasDims.height - 100));
                 return { ...d, x: newX, y: newY };
@@ -1109,8 +1109,8 @@ export function NetworkTopology({
           const rect = canvasRef.current.getBoundingClientRect();
           const rawX = (touch.clientX - rect.left - pan.x - touchDragOffset.x) / zoom;
           const rawY = (touch.clientY - rect.top - pan.y - touchDragOffset.y) / zoom;
-          const snappedX = rawX;
-          const snappedY = rawY;
+          const snappedX = snapToGrid(rawX);
+          const snappedY = snapToGrid(rawY);
 
           // Clamp to canvas bounds
           const canvasDims = getCanvasDimensions();
@@ -1163,8 +1163,8 @@ export function NetworkTopology({
               const start = noteDragStartPositions[n.id] || { x: n.x, y: n.y };
               const rawX = start.x + dx;
               const rawY = start.y + dy;
-              const snappedX = rawX;
-              const snappedY = rawY;
+              const snappedX = snapToGrid(rawX);
+              const snappedY = snapToGrid(rawY);
               const clampedX = Math.max(20, Math.min(snappedX, canvasDims.width - NOTE_DEFAULT_WIDTH - 20));
               const clampedY = Math.max(20, Math.min(snappedY, canvasDims.height - NOTE_DEFAULT_HEIGHT - 20));
               return { ...n, x: clampedX, y: clampedY };
