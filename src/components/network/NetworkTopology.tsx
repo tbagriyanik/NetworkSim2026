@@ -1201,7 +1201,6 @@ export function NetworkTopology({
       setSelectedDeviceIds(prev =>
         prev.includes(deviceId) ? prev.filter(id => id !== deviceId) : [...prev, deviceId]
       );
-      // Don't clear note selection when shift-clicking
     } else {
       // If clicking a device that's not selected, make it the only selection
       // If it IS already selected, keep selection for group dragging
@@ -2728,11 +2727,13 @@ export function NetworkTopology({
   }, []);
 
   const GRID_SPACING = 20;
-  const GRID_OFFSET = 10; // dots are drawn at (10,10) inside a 20x20 pattern
-  const SNAP_THRESHOLD = 6; // only snap when close to a grid dot
+  const GRID_OFFSET = 10;
+  const SNAP_THRESHOLD = 10; // Increased to 10px to match requirements
 
   const snapToGrid = useCallback((value: number) => {
+    // Round to the nearest 20 (grid spacing) relative to offset
     const nearest = Math.round((value - GRID_OFFSET) / GRID_SPACING) * GRID_SPACING + GRID_OFFSET;
+    // Always snap if within threshold
     return Math.abs(value - nearest) <= SNAP_THRESHOLD ? nearest : value;
   }, []);
 
