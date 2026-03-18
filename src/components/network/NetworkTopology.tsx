@@ -178,6 +178,9 @@ export function NetworkTopology({
 
   const [zoom, setZoom] = useState(zoomProp || DEFAULT_ZOOM);
   const [pan, setPan] = useState(panProp || { x: 0, y: 0 });
+  
+  // Separate visual pan for smooth panning - only updated when NOT actively panning
+  const [visualPan, setVisualPan] = useState(panProp || { x: 0, y: 0 });
 
   // Tooltip states
   const [portTooltip, setPortTooltip] = useState<{
@@ -808,16 +811,35 @@ export function NetworkTopology({
       return;
     } else if (e.button === 0 && !(e.target as HTMLElement).closest('[data-device-id], [data-note-id], [data-note-drag-handle]')) {
       setIsPanning(true);
-      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      isBusyRef.current = true; // Pause animations
+      // Cancel ping animation when starting pan
+      if (pingAnimationRef.current) {
+        cancelAnimationFrame(pingAnimationRef.current);
+        pingAnimationRef.current = null;
+      }
+      // Use visualPan for the starting position during panning
+      setPanStart({ x: e.clientX - visualPan.x, y: e.clientY - visualPan.y });
       setSelectedDeviceIds([]);
       setSelectedNoteIds([]);
       setContextMenu(null);
       setSelectAllMode(false);
     }
-  }, [pan]);
+  }, [visualPan]);
 
   // Refs for animation frames to throttle updates
   const panAnimationFrameRef = useRef<number | null>(null);
+  const svgGroupRef = useRef<SVGGElement | null>(null);
+  const currentPanRef = useRef({ x: pan.x, y: pan.y });
+  
+  // Refs for tracking busy state (pan/drag) to pause animations
+  const isBusyRef = useRef(false);
+  
+  // Sync currentPanRef with pan state when not panning
+  useEffect(() => {
+    if (!isBusyRef.current || !isPanning) {
+      currentPanRef.current = { x: pan.x, y: pan.y };
+    }
+  }, [pan, isPanning]);
 
   // Cleanup animation frames on unmount
   useEffect(() => {
@@ -831,14 +853,28 @@ export function NetworkTopology({
   useEffect(() => {
     const handleMouseMove = (e: globalThis.MouseEvent) => {
       if (isPanning) {
-        // Direct update for immediate response
-        setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+        // Update visual pan - this is the only state update during panning
+        const newPanX = e.clientX - panStart.x;
+        const newPanY = e.clientY - panStart.y;
+        currentPanRef.current = { x: newPanX, y: newPanY };
+        // Update visualPan state for rendering
+        setVisualPan({ x: newPanX, y: newPanY });
+        // Also update DOM directly for maximum smoothness
+        if (svgGroupRef.current) {
+          svgGroupRef.current.style.transform = `translate3d(${newPanX}px, ${newPanY}px, 0) scale(${zoom})`;
+        }
       } else if (draggedDevice && canvasRef.current) {
         // Check if we've moved enough to consider it a drag
         if (dragStartPos) {
           const distance = Math.sqrt(Math.pow(dragStartPos.x - e.clientX, 2) + Math.pow(dragStartPos.y - e.clientY, 2));
           if (distance > DRAG_THRESHOLD) {
             setIsActuallyDragging(true);
+            isBusyRef.current = true; // Pause animations
+            // Cancel ping animation when starting drag
+            if (pingAnimationRef.current) {
+              cancelAnimationFrame(pingAnimationRef.current);
+              pingAnimationRef.current = null;
+            }
             wasDraggingRef.current = true; // Mark as dragging for click handler
             setPortTooltip(null); // Hide any active tooltip
           }
@@ -998,7 +1034,11 @@ export function NetworkTopology({
       }
 
       if (isPanning) {
-        if (onPanChange) onPanChange(pan);
+        // Commit pan from ref to state when panning ends
+        const finalPan = currentPanRef.current;
+        setPan(finalPan);
+        setVisualPan(finalPan); // Sync visualPan with the committed pan
+        if (onPanChange) onPanChange(finalPan);
       }
 
       if (resizingNoteId) {
@@ -1017,6 +1057,7 @@ export function NetworkTopology({
       // The click handler will check wasDraggingRef and the next mousedown will reset it
 
       setIsPanning(false);
+      isBusyRef.current = false; // Resume animations
       setDraggedDevice(null);
       setDraggedNoteId(null);
       setNoteDragStartPos(null);
@@ -2689,6 +2730,12 @@ export function NetworkTopology({
     let currentHopDuration = getHopDuration(0);
 
     const animate = () => {
+      // Skip animation during pan/drag
+      if (isBusyRef.current) {
+        pingAnimationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / currentHopDuration, 1);
 
@@ -2724,17 +2771,6 @@ export function NetworkTopology({
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
-  }, []);
-
-  const GRID_SPACING = 20;
-  const GRID_OFFSET = 10;
-  const SNAP_THRESHOLD = 10; // Increased to 10px to match requirements
-
-  const snapToGrid = useCallback((value: number) => {
-    // Round to the nearest 20 (grid spacing) relative to offset
-    const nearest = Math.round((value - GRID_OFFSET) / GRID_SPACING) * GRID_SPACING + GRID_OFFSET;
-    // Always snap if within threshold
-    return Math.abs(value - nearest) <= SNAP_THRESHOLD ? nearest : value;
   }, []);
 
   // Render connection SVG (Visual line only)
@@ -3915,8 +3951,9 @@ export function NetworkTopology({
               className="select-none"
             >
               <g
+                ref={svgGroupRef as React.RefObject<SVGGElement>}
                 style={{
-                  transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
+                  transform: `translate3d(${visualPan.x}px, ${visualPan.y}px, 0) scale(${zoom})`,
                   transformOrigin: '0 0',
                   willChange: 'transform'
                 }}
@@ -4222,8 +4259,8 @@ export function NetworkTopology({
 
                   {/* Connection interaction handles are now rendered with their cables */}
 
-                  {/* Ping Animation Envelope - rendered inside transformed group */}
-                  {pingAnimation && (() => {
+                  {/* Ping Animation Envelope - Skip during pan/drag */}
+                  {!isBusyRef.current && pingAnimation && (() => {
                     const { path, currentHopIndex, progress, success } = pingAnimation;
                     if (!path || path.length < 2 || success !== null) return null;
 
@@ -4768,7 +4805,7 @@ export function NetworkTopology({
       )}
 
       {/* Ping Status Toasts */}
-      {pingAnimation && pingAnimation.success !== null && (
+      {!isBusyRef.current && pingAnimation && pingAnimation.success !== null && (
         <div className="fixed inset-0 z-40 pointer-events-none flex items-end justify-center pb-24 px-4">
           <div className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-bottom-4 duration-300 ${pingAnimation.success
             ? 'bg-green-600 text-white'
