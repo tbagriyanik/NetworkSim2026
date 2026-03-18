@@ -118,7 +118,7 @@ const ALL_TABS: TabDefinition[] = [
     labelKey: 'cliTerminal',
     icon: <TerminalIcon className="w-4 h-4" />,
     tasks: [],
-    color: 'from-green-500 to-emerald-500',
+    color: 'from-emerald-500 to-teal-500',
     showFor: ['switch', 'router']
   },
   {

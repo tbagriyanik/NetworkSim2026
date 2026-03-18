@@ -106,7 +106,7 @@ export function PCPanel({
   const inputBg = isDark ? 'bg-black/50' : 'bg-white';
   const inputBorder = isDark ? 'border-slate-800' : 'border-slate-300';
 
-  const [activeTab, setActiveTab] = useState<PCActiveTab>('desktop');
+  const [activeTab, setActiveTab] = useState<PCActiveTab>('terminal');
   const [input, setInput] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
