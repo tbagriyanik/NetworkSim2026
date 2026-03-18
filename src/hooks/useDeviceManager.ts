@@ -5,6 +5,7 @@ import { createInitialState, createInitialRouterState, applyStartupConfig } from
 import { executeCommand, getPrompt } from '@/lib/network/executor';
 import type { TerminalOutput } from '@/components/network/Terminal';
 import { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PCOutputLine {
   id: string;
@@ -12,8 +13,9 @@ interface PCOutputLine {
   content: string;
 }
 
-export function useDeviceManager(language: 'tr' | 'en') {
+export function useDeviceManager() {
   const { toast } = useToast();
+  const { language } = useLanguage();
 
   const [deviceStates, setDeviceStates] = useState<Map<string, SwitchState>>(new Map());
 

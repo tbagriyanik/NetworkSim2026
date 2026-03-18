@@ -18,6 +18,7 @@ interface AboutModalProps {
 
 export function AboutModal({ isOpen, onClose }: AboutModalProps) {
   const { t } = useLanguage();
+  const version = process.env.NEXT_PUBLIC_GIT_COMMIT_COUNT;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -53,6 +54,9 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
             >
               {t.licenseInfo}
             </a>
+          </div>
+		  <div className="mt-4 text-xs text-slate-500">
+            Version: {version}
           </div>
         </ScrollArea>
         <div className="flex justify-end">

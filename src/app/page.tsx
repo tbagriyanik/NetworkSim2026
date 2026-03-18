@@ -170,7 +170,7 @@ export default function Home() {
     getOrCreatePCOutputs,
     handleCommandForDevice,
     resetAll
-  } = useDeviceManager(language);
+  } = useDeviceManager();
 
   const [isAppLoading, setIsLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
@@ -510,7 +510,9 @@ export default function Home() {
         topology: {
           devices: topologyDevices,
           connections: topologyConnections,
-          notes: topologyNotes
+          notes: topologyNotes,
+		  zoom,
+          pan,
         },
         cableInfo,
         activeDeviceId,
@@ -528,7 +530,7 @@ export default function Home() {
         clearTimeout(autosaveTimerRef.current);
       }
     };
-  }, [deviceStates, deviceOutputs, pcOutputs, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, activeTab, isAppLoading]);
+  }, [deviceStates, deviceOutputs, pcOutputs, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, activeTab, isAppLoading, zoom, pan]);
 
   // Load project from JSON data
   const loadProjectData = useCallback((projectData: any) => {
@@ -589,6 +591,8 @@ export default function Home() {
         setTopologyDevices(projectData.topology.devices || []);
         setTopologyConnections(projectData.topology.connections || []);
         setTopologyNotes(projectData.topology.notes || []);
+        if (projectData.topology.zoom) setZoom(projectData.topology.zoom);
+        if (projectData.topology.pan) setPan(projectData.topology.pan);
       }
 
       // Load cable info
@@ -1691,7 +1695,7 @@ export default function Home() {
                 <div className={`flex items-center gap-1 px-2 py-1.5 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
                   {/* Undo/Redo Group */}
                   {activeTab === 'topology' && (
-                    <>
+                    <div className="hidden items-center gap-1 sm:flex">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-blue-500 transition-colors" onClick={handleUndo} disabled={!canUndo}>
@@ -1709,7 +1713,7 @@ export default function Home() {
                         <TooltipContent>{t.redo}</TooltipContent>
                       </Tooltip>
                       <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'} hidden md:block`} />
-                    </>
+                    </div>
                   )}
 
                   {/* Project Controls - Desktop only */}
@@ -2110,7 +2114,7 @@ export default function Home() {
           </div>
         </header>
         {/* Mobile Bottom Tab Bar (Icons Only) */}
-        <div className={`sm:hidden relative border-b backdrop-blur-xl flex items-center justify-around px-2 py-1 mobile-top-nav ${isDark ? 'bg-slate-900/95 border-slate-800 text-slate-400' : 'bg-white/95 border-slate-200 text-slate-500'
+        <div className={`sm:hidden fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-xl flex items-center justify-around px-2 py-1 mobile-top-nav ${isDark ? 'bg-slate-900/95 border-slate-800 text-slate-400' : 'bg-white/95 border-slate-200 text-slate-500'
           } ${showProjectPicker || showOnboarding ? 'hidden' : ''}`}>
           {tabs.map((tab, index) => {
             const isActive = activeTab === tab.id;
@@ -2147,7 +2151,7 @@ export default function Home() {
                             tab.id === 'vlan' ? <Layers className="w-4 h-4" /> :
                               <ShieldCheck className="w-4 h-4" />}
                     </div>
-                    <span className="mt-0.5 text-[9px] font-semibold leading-tight relative z-10">
+                    <span className="mt-0.5 text-[9px] font-semibold leading-tight relative z-10 sm:inline">
                       {tab.label}
                     </span>
                   </button>
@@ -2356,7 +2360,7 @@ export default function Home() {
               <div className="grid lg:grid-cols-4 gap-4 flex-1 overflow-hidden">
                 <div className="lg:col-span-3 flex flex-col gap-4 overflow-hidden">
                   <Terminal
-                    key="terminal"
+                    key={"terminal"}
                     deviceId={activeDeviceId}
                     // use same display name as the dropdown (hostname or topology name)
                     deviceName={
