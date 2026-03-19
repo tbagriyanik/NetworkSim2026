@@ -337,6 +337,19 @@
   -webkit-touch-callout: none;
 }
 
+/* Shared hover treatment for toolbar/tab buttons */
+.ui-hover-surface {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.ui-hover-surface:hover {
+  background-color: rgba(148, 163, 184, 0.12);
+}
+
+.dark .ui-hover-surface:hover {
+  background-color: rgba(51, 65, 85, 0.42);
+}
+
 /* Larger touch targets for mobile */
 @media (max-width: 640px) {
   .touch-target {

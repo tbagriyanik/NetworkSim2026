@@ -991,10 +991,10 @@ export function PCPanel({
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-500 uppercase">MAC Address</label>
-                <Input 
-                  value={pcMAC} 
-                  onChange={(e) => setPcMAC(e.target.value)} 
-                  className={errors.mac ? 'border-rose-500' : ''} 
+                <Input
+                  value={pcMAC}
+                  onChange={(e) => setPcMAC(e.target.value)}
+                  className={errors.mac ? 'border-rose-500' : ''}
                   placeholder="00-40-96-99-88-77 or 950B.ACBE.D015"
                 />
                 {errors.mac && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz MAC adresi.' : 'Invalid MAC address.'}</p>}
@@ -1002,20 +1002,20 @@ export function PCPanel({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">IP Address</label>
-                  <Input 
-                    value={pcIP} 
-                    onChange={(e) => setPcIP(e.target.value)} 
-                    className={errors.ip ? 'border-rose-500' : ''} 
+                  <Input
+                    value={pcIP}
+                    onChange={(e) => setPcIP(e.target.value)}
+                    className={errors.ip ? 'border-rose-500' : ''}
                     placeholder="192.168.1.10"
                   />
                   {errors.ip && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz IP adresi.' : 'Invalid IP address.'}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">Subnet Mask</label>
-                  <Input 
-                    value={pcSubnet} 
-                    onChange={(e) => setPcSubnet(e.target.value)} 
-                    className={errors.subnet ? 'border-rose-500' : ''} 
+                  <Input
+                    value={pcSubnet}
+                    onChange={(e) => setPcSubnet(e.target.value)}
+                    className={errors.subnet ? 'border-rose-500' : ''}
                     placeholder="255.255.255.0"
                   />
                   {errors.subnet && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz Alt Ağ Maskesi.' : 'Invalid Subnet Mask.'}</p>}
@@ -1024,20 +1024,20 @@ export function PCPanel({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">Gateway</label>
-                  <Input 
-                    value={pcGateway} 
-                    onChange={(e) => setPcGateway(e.target.value)} 
-                    className={errors.gateway ? 'border-rose-500' : ''} 
+                  <Input
+                    value={pcGateway}
+                    onChange={(e) => setPcGateway(e.target.value)}
+                    className={errors.gateway ? 'border-rose-500' : ''}
                     placeholder="192.168.1.1"
                   />
                   {errors.gateway && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz Ağ Geçidi.' : 'Invalid Gateway.'}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">DNS</label>
-                  <Input 
-                    value={pcDNS} 
-                    onChange={(e) => setPcDNS(e.target.value)} 
-                    className={errors.dns ? 'border-rose-500' : ''} 
+                  <Input
+                    value={pcDNS}
+                    onChange={(e) => setPcDNS(e.target.value)}
+                    className={errors.dns ? 'border-rose-500' : ''}
                     placeholder="8.8.8.8"
                   />
                   {errors.dns && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz DNS adresi.' : 'Invalid DNS address.'}</p>}
@@ -1160,10 +1160,6 @@ export function PCPanel({
                     autoComplete="off"
                     spellCheck={false}
                   />
-                  <div className={`hidden md:flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${isDark ? 'border-slate-800 bg-slate-800/50' : 'border-slate-200 bg-slate-100'} text-[10px] text-slate-500 font-black uppercase tracking-widest`}>
-                    <Command className="w-2.5 h-3.5" />
-                    Enter
-                  </div>
                 </div>
 
                 <Button
@@ -1171,9 +1167,9 @@ export function PCPanel({
                   disabled={(activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled) || !input.trim()}
                   size="icon"
                   className={`shrink-0 h-11 w-full sm:w-11 rounded-xl transition-all shadow-lg ${input.trim()
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20 active:scale-95'
-                    : isDark ? 'bg-slate-800 text-slate-700' : 'bg-slate-200 text-slate-400'
-                    } cursor-not-allowed opacity-50`}
+                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20 active:scale-95 cursor-pointer'
+                    : isDark ? 'bg-slate-800 text-slate-700 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    } opacity-50`}
                 >
                   <CornerDownLeft className="w-5 h-5" />
                 </Button>
@@ -1274,7 +1270,7 @@ export function PCPanel({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="w-14 h-14 rounded-full border-cyan-500/30 bg-cyan-500/5"
+                    className="w-14 h-14 rounded-full cursor-pointer  border-cyan-500/30 bg-cyan-500/5"
                     onClick={() => direction.y === 0 && setDirection({ x: 0, y: -1 })}
                   >
                     <ChevronUp className="w-8 h-8 text-cyan-500" />
@@ -1284,7 +1280,7 @@ export function PCPanel({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="w-14 h-14 rounded-full border-cyan-500/30 bg-cyan-500/5"
+                    className="w-14 h-14 rounded-full cursor-pointer border-cyan-500/30 bg-cyan-500/5"
                     onClick={() => direction.x === 0 && setDirection({ x: -1, y: 0 })}
                   >
                     <ChevronLeft className="w-8 h-8 text-cyan-500" />

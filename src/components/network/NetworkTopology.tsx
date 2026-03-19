@@ -2545,7 +2545,7 @@ export function NetworkTopology({
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => addDevice('pc')}
-                        className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-slate-700 text-blue-500' : 'hover:bg-slate-100 text-blue-600'}`}
+                        className={`p-1.5 rounded-lg ui-hover-surface ${isDark ? 'text-blue-500 hover:text-blue-400' : 'text-blue-600 hover:text-blue-700'}`}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
@@ -2558,7 +2558,7 @@ export function NetworkTopology({
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => addDevice('switch')}
-                        className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-slate-700 text-emerald-500' : 'hover:bg-slate-100 text-emerald-600'}`}
+                        className={`p-1.5 rounded-lg ui-hover-surface ${isDark ? 'text-emerald-500 hover:text-emerald-400' : 'text-emerald-600 hover:text-emerald-700'}`}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
@@ -2571,7 +2571,7 @@ export function NetworkTopology({
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => addDevice('router')}
-                        className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-slate-700 text-purple-500' : 'hover:bg-slate-100 text-purple-600'}`}
+                        className={`p-1.5 rounded-lg ui-hover-surface ${isDark ? 'text-purple-500 hover:text-purple-400' : 'text-purple-600 hover:text-purple-700'}`}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
@@ -2590,9 +2590,9 @@ export function NetworkTopology({
                       <TooltipTrigger asChild>
                         <button
                           onClick={() => onCableChange({ ...cableInfo, cableType: type })}
-                          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-all ${cableInfo.cableType === type
+                          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-all ui-hover-surface ${cableInfo.cableType === type
                             ? `${CABLE_COLORS[type].bg} text-white`
-                            : isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}
+                            : isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-800'}`}
                         >
                           <div className={`w-2.5 h-2.5 rounded-full ${CABLE_COLORS[type].bg}`} />
                           <span className="text-[10px] font-bold">
@@ -2643,20 +2643,20 @@ export function NetworkTopology({
               <div className="flex items-center gap-0.5">
                 <button
                   onClick={() => setZoom((z) => Math.max(MIN_ZOOM, z - 0.25))}
-                  className={`w-7 h-7 flex items-center justify-center rounded-lg ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-700'}`}
+              className={`w-7 h-7 flex items-center justify-center rounded-lg ui-hover-surface ${isDark ? 'text-slate-300 hover:text-slate-100' : 'text-slate-700 hover:text-slate-900'}`}
                 >
                   <span className="text-lg font-bold">−</span>
                 </button>
                 <button
                   onClick={resetView}
-                  className={`px-2 h-7 rounded-lg text-[11px] font-mono ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-700'}`}
+                  className={`px-2 h-7 rounded-lg text-[11px] font-mono ui-hover-surface ${isDark ? 'text-slate-200 hover:text-slate-100' : 'text-slate-700 hover:text-slate-900'}`}
                   title={`${language === 'tr' ? 'Sıfırla' : 'Reset'} (Alt+R)`}
                 >
                   {Math.round(zoom * 100)}%
                 </button>
                 <button
                   onClick={() => setZoom((z) => Math.min(MAX_ZOOM, z + 0.25))}
-                  className={`w-7 h-7 flex items-center justify-center rounded-lg ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-700'}`}
+              className={`w-7 h-7 flex items-center justify-center rounded-lg ui-hover-surface ${isDark ? 'text-slate-300 hover:text-slate-100' : 'text-slate-700 hover:text-slate-900'}`}
                 >
                   <span className="text-lg font-bold">+</span>
                 </button>
@@ -3010,9 +3010,9 @@ export function NetworkTopology({
               <TooltipTrigger asChild>
                 <button
                   onClick={resetView}
-                  className={`px-2 py-1 text-xs rounded ${isDark
-                    ? 'hover:bg-slate-700 text-slate-300'
-                    : 'hover:bg-slate-100 text-slate-600'
+                className={`px-2 py-1 text-xs rounded ui-hover-surface ${isDark
+                    ? 'text-slate-300 hover:text-slate-100'
+                    : 'text-slate-600 hover:text-slate-900'
                     }`}
                 >
                   {language === 'tr' ? 'Sıfırla' : 'Reset'}
@@ -3040,7 +3040,7 @@ export function NetworkTopology({
                 }));
                 return newZoom;
               })}
-              className={`w-7 h-7 flex items-center justify-center rounded ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+              className={`w-7 h-7 flex items-center justify-center rounded ui-hover-surface ${isDark ? 'text-slate-300 hover:text-slate-100' : 'text-slate-600 hover:text-slate-900'
                 }`}
             >
               −
@@ -3061,7 +3061,7 @@ export function NetworkTopology({
                 }));
                 return newZoom;
               })}
-              className={`w-7 h-7 flex items-center justify-center rounded ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+              className={`w-7 h-7 flex items-center justify-center rounded ui-hover-surface ${isDark ? 'text-slate-300 hover:text-slate-100' : 'text-slate-600 hover:text-slate-900'
                 }`}
             >
               +
@@ -3071,9 +3071,9 @@ export function NetworkTopology({
               <TooltipTrigger asChild>
                 <button
                   onClick={resetView}
-                  className={`px-2 py-1 text-xs rounded ${isDark
-                    ? 'hover:bg-slate-700 text-slate-300'
-                    : 'hover:bg-slate-100 text-slate-600'
+                  className={`px-2 py-1 text-xs rounded ui-hover-surface ${isDark
+                    ? 'text-slate-300 hover:text-slate-100'
+                    : 'text-slate-600 hover:text-slate-900'
                     }`}
                 >
                   {language === 'tr' ? 'Sıfırla' : 'Reset'}
@@ -3085,9 +3085,9 @@ export function NetworkTopology({
               <TooltipTrigger asChild>
                 <button
                   onClick={toggleFullscreen}
-                  className={`px-2 py-1 text-xs rounded flex items-center gap-1 ${isDark
-                    ? 'hover:bg-slate-700 text-slate-300'
-                    : 'hover:bg-slate-100 text-slate-600'
+                className={`px-2 py-1 text-xs rounded flex items-center gap-1 ui-hover-surface ${isDark
+                    ? 'text-slate-300 hover:text-slate-100'
+                    : 'text-slate-600 hover:text-slate-900'
                     }`}
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

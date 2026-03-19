@@ -523,10 +523,6 @@ export function Terminal({
                     spellCheck={false}
                     autoComplete="off"
                   />
-                  <div className="hidden sm:flex items-center gap-1.5 px-1.5 py-0.5 rounded border border-slate-800 bg-slate-800/50 text-xs text-slate-500 font-bold uppercase tracking-wider">
-                    <Command className="w-2.5 h-3.5" />
-                    Enter
-                  </div>
                 </div>
 
                 <Button
@@ -534,7 +530,7 @@ export function Terminal({
                   disabled={isInputDisabled || !input.trim()}
                   size="icon"
                   className={`shrink-0 h-10 w-10 rounded-lg transition-all shadow-lg ${input.trim()
-                      ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-500/20 active:scale-95'
+                      ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-500/20 active:scale-95 cursor-pointer'
                       : 'bg-slate-800 text-slate-600 cursor-not-allowed opacity-50'
                     }`}
                 >

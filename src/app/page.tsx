@@ -1697,7 +1697,7 @@ export default function Home() {
                     <div className="hidden items-center gap-1 sm:hidden">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-blue-500 transition-colors" onClick={handleUndo} disabled={hasHydrated && !canUndo}>
+                          <Button variant="ghost" size="icon" className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-blue-400' : 'text-slate-600 hover:text-blue-600'}`} onClick={handleUndo} disabled={hasHydrated && !canUndo}>
                             <Undo2 className={`w-4 h-4 ${!canUndo ? 'opacity-30' : ''}`} />
                           </Button>
                         </TooltipTrigger>
@@ -1705,7 +1705,7 @@ export default function Home() {
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-blue-500 transition-colors" onClick={handleRedo} disabled={hasHydrated && !canRedo}>
+                          <Button variant="ghost" size="icon" className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-blue-400' : 'text-slate-600 hover:text-blue-600'}`} onClick={handleRedo} disabled={hasHydrated && !canRedo}>
                             <Redo2 className={`w-4 h-4 ${!canRedo ? 'opacity-30' : ''}`} />
                           </Button>
                         </TooltipTrigger>
@@ -1722,7 +1722,7 @@ export default function Home() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 hover:text-green-500 transition-colors"
+                          className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-green-400' : 'text-slate-600 hover:text-green-600'}`}
                           onClick={handleNewProject}
                         >
                           <File className="w-4 h-4" />
@@ -1735,7 +1735,7 @@ export default function Home() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 hover:text-amber-500 transition-colors"
+                          className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-amber-400' : 'text-slate-600 hover:text-amber-600'}`}
                           onClick={() => fileInputRef.current?.click()}
                         >
                           <FolderOpen className="w-4 h-4" />
@@ -1748,7 +1748,7 @@ export default function Home() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 hover:text-blue-500 transition-colors"
+                          className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-blue-400' : 'text-slate-600 hover:text-blue-600'}`}
                           onClick={handleSaveProject}
                         >
                           <Save className="w-4 h-4" />
@@ -1765,7 +1765,7 @@ export default function Home() {
                   {/* Info & Settings */}
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-sky-500 transition-colors" onClick={() => setShowAboutModal(true)}>
+                      <Button variant="ghost" size="icon" className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-sky-400' : 'text-slate-600 hover:text-sky-600'}`} onClick={() => setShowAboutModal(true)}>
                         <Info className="w-4 h-4" />
                       </Button>
                     </TooltipTrigger>
@@ -1775,14 +1775,14 @@ export default function Home() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
-                    className="text-xs font-bold h-8 px-2 hover:text-purple-500 transition-colors"
+                    className={`text-xs font-bold h-8 px-2 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-purple-400' : 'text-slate-600 hover:text-purple-600'}`}
                   >
                     <Languages className="w-4 h-4 mr-1" />
                     {language.toUpperCase()}
                   </Button>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-yellow-500 transition-colors" onClick={toggleTheme}>
+                      <Button variant="ghost" size="icon" className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-yellow-400' : 'text-slate-600 hover:text-yellow-600'}`} onClick={toggleTheme}>
                         {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                       </Button>
                     </TooltipTrigger>
@@ -1863,7 +1863,7 @@ export default function Home() {
                               <Button
                                 key={tab.id}
                                 variant={isActive ? "secondary" : "ghost"}
-                                className={`w-full justify-start gap-3 h-9 px-3 text-xs font-bold ${isActive ? 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20' : 'text-slate-400'}`}
+                            className={`w-full justify-start gap-3 h-9 px-3 text-xs font-bold ui-hover-surface ${isActive ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-400'}`}
                                 onClick={() => {
                                   setActiveTab(tab.id);
                                   setShowMobileMenu(false);
@@ -2076,10 +2076,10 @@ export default function Home() {
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-3 lg:px-5 py-3 rounded-t-xl text-sm font-semibold transition-all border-x border-t min-w-[50px] lg:min-w-[120px] justify-center ${isActive
-                          ? `${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-300'} ${colorClass.split(' ')[0]} shadow-[0_-4px_0_0_currentColor]`
-                          : `${isDark ? 'bg-slate-900/50 border-transparent' : 'bg-slate-200/50 border-transparent'} ${colorClass} hover:bg-slate-200/30`
-                          }`}
+                          className={`flex items-center gap-2 px-3 lg:px-5 py-3 rounded-t-xl text-sm font-semibold transition-all border-x border-t min-w-[50px] lg:min-w-[120px] justify-center ui-hover-surface ${isActive
+                            ? `${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-300'} ${colorClass.split(' ')[0]} shadow-[0_-4px_0_0_currentColor]`
+                            : `${isDark ? 'bg-slate-900/50 border-transparent' : 'bg-slate-200/50 border-transparent'} ${colorClass}`
+                            }`}
                       >
                         <span className={`transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
                           {tab.id === 'topology' ? <Network className="w-4 h-4" /> :
@@ -2125,8 +2125,8 @@ export default function Home() {
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex flex-col items-center justify-center min-h-[40px] flex-1 px-3 py-1.5 rounded-xl transition-all relative ${isActive ? 'text-blue-500' : `${colorClass} active:scale-95`
-                      }`}
+                      className={`flex flex-col items-center justify-center min-h-[40px] flex-1 px-3 py-1.5 rounded-xl transition-all relative ui-hover-surface ${isActive ? 'text-blue-500' : `${colorClass} active:scale-95`
+                        }`}
                   >
                     {isActive && (
                       <motion.div
