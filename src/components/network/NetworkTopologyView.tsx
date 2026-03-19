@@ -139,7 +139,7 @@ export function NetworkTopologyView(props: NetworkTopologyViewProps) {
       {/* Canvas */}
       <div
         ref={canvasRef}
-        className="w-full h-full overflow-hidden cursor-grab active:cursor-grabbing relative touch-none select-none"
+        className="w-full h-full overflow-hidden cursor-grab active:cursor-grabbing relative touch-none select-none pb-[56px] sm:pb-0"
         onMouseDown={handleCanvasMouseDown}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
