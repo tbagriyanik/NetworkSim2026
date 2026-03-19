@@ -850,7 +850,7 @@ export default function Home() {
     const actualDeviceType = deviceId.includes('router') ? 'router' : deviceId.includes('pc') ? 'pc' : 'switch';
 
     if (actualDeviceType === 'pc') {
-      // PC - open CMD tab
+      // PC - open CMD tab directly
       setActiveTab('cmd');
       setShowPCDeviceId(deviceId);
       setShowPCPanel(true);

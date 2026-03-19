@@ -150,7 +150,7 @@ export function NetworkTopology({
       ip: '192.168.1.10',
       x: 100,
       y: 150,
-      status: 'offline',
+       status: 'online',
       ports: [
         { id: 'eth0', label: 'Eth0', status: 'disconnected' },
         { id: 'com1', label: 'COM1', status: 'disconnected' },
@@ -1210,12 +1210,20 @@ export function NetworkTopology({
       const portsPerRow = device.type === 'pc' ? 2 : 8;
       const col = portIndex % portsPerRow;
       const row = Math.floor(portIndex / portsPerRow);
-      const portSpacing = device.type === 'pc' ? 18 : 14;
-      const startX = device.type === 'pc'
-        ? 42.5 - (device.ports.length > 1 ? portSpacing / 2 : 0)
-        : 14;
-      const portX = device.x + startX + col * portSpacing;
-      const portY = device.y + 80 + row * 14;
+      const deviceWidth = device.type === 'pc' ? 90 : device.type === 'router' ? 90 : 130;
+      const deviceHeight = device.type === 'pc' ? 99 : 80 + Math.ceil(device.ports.length / 8) * 14 + 5;
+      let portX = 0;
+      let portY = 0;
+
+      if (device.type === 'pc') {
+        const pcPortSpacing = 18;
+        const pcStartY = deviceHeight / 2 - ((device.ports.length - 1) * pcPortSpacing) / 2;
+        portX = device.x + deviceWidth - 8;
+        portY = device.y + pcStartY + portIndex * pcPortSpacing;
+      } else {
+        portX = device.x + 14 + col * 14;
+        portY = device.y + 80 + row * 14;
+      }
 
       setIsDrawingConnection(true);
       setConnectionStart({
@@ -1762,11 +1770,11 @@ export function NetworkTopology({
 
   // Get device position (center based on device type)
   const getDeviceCenter = useCallback((device: CanvasDevice) => {
-    const deviceWidth = device.type === 'pc' ? 85 : 130;
+    const deviceWidth = device.type === 'pc' ? 90 : device.type === 'router' ? 90 : 130;
     const iconColor = device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#10b981' : '#a855f7';
     const portsPerRow = 8;
     const numRows = Math.ceil(device.ports.length / portsPerRow);
-    const deviceHeight = device.type === 'pc' ? 85 : 80 + numRows * 14 + 5;
+    const deviceHeight = device.type === 'pc' ? 99 : 80 + numRows * 14 + 5;
     return { x: device.x + deviceWidth / 2, y: device.y + deviceHeight / 2 };
   }, []);
 
@@ -1775,15 +1783,24 @@ export function NetworkTopology({
     const portIndex = device.ports.findIndex(p => p.id === portId);
     if (portIndex === -1) return getDeviceCenter(device);
 
-    const deviceWidth = device.type === 'pc' ? 85 : 130;
+    const deviceWidth = device.type === 'pc' ? 90 : device.type === 'router' ? 90 : 130;
     const portsPerRow = device.type === 'pc' ? 2 : 8;
     const col = portIndex % portsPerRow;
     const row = Math.floor(portIndex / portsPerRow);
-    const portSpacing = device.type === 'pc' ? 18 : 14;
+
+    if (device.type === 'pc') {
+      const pcPortSpacing = 18;
+      const pcStartY = 99 / 2 - ((device.ports.length - 1) * pcPortSpacing) / 2;
+      return {
+        x: device.x + deviceWidth - 8,
+        y: device.y + pcStartY + portIndex * pcPortSpacing
+      };
+    }
+
+    const portSpacing = 14;
     const rowSpacing = 14;
-    // Center ports in the wider device
-    const startX = device.type === 'pc' ? deviceWidth / 2 - (device.ports.length > 1 ? portSpacing / 2 : 0) : 14;
-    const startY = device.type === 'pc' ? 80 : 80;
+    const startX = 14;
+    const startY = 80;
 
     return {
       x: device.x + startX + col * portSpacing,
@@ -2093,7 +2110,7 @@ export function NetworkTopology({
     // For switch/router: startX=12, portSpacing=13, portRadius=6
     // Width needed = startX + (portsPerRow - 1) * portSpacing + portRadius + margin
     // For 8 ports: 12 + 7*13 + 6 + 10 = 119, so we use 130 for more breathing room
-    const deviceWidth = device.type === 'pc' ? 85 : 130;
+    const deviceWidth = device.type === 'pc' ? 90 : device.type === 'router' ? 90 : 130;
     const iconColor = device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#10b981' : '#a855f7';
 
     return (
@@ -2113,6 +2130,28 @@ export function NetworkTopology({
           strokeWidth={isSelected ? 2 : 1}
           className={isDragging ? '' : 'transition-all duration-150'}
         />
+
+        {/* PC monitor stand */}
+        {device.type === 'pc' && (
+          <>
+            <rect
+              x={deviceWidth / 2 - 3}
+              y={deviceHeight + 1}
+              width={6}
+              height={5}
+              rx={2}
+              fill={isDark ? '#334155' : '#94a3b8'}
+            />
+            <rect
+              x={deviceWidth / 2 - 15}
+              y={deviceHeight + 6}
+              width={30}
+              height={4}
+              rx={2}
+              fill={isDark ? '#475569' : '#cbd5e1'}
+            />
+          </>
+        )}
 
         {/* Device icon */}
         <g transform={`translate(${deviceWidth / 2 - 12}, 10)`}>
@@ -2171,9 +2210,9 @@ export function NetworkTopology({
           device.ports.map((port, idx) => {
             // İki portu yan yana göster
             const portSpacing = 18;
-            const startX = deviceWidth / 2 - (device.ports.length > 1 ? portSpacing / 2 : 0);
-            const portX = startX + idx * portSpacing;
-            const portY = 80;
+            const portX = deviceWidth - 8;
+            const startY = deviceHeight / 2 - ((device.ports.length - 1) * portSpacing) / 2;
+            const portY = startY + idx * portSpacing;
             const isConnected = port.status === 'connected';
             const isShutdown = port.shutdown;
 

@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Network Simulator 2026 - Catalyst 2960",
+  title: "Network Simulator 2026",
   description: "Interactive Network NOS switch simulator for learning network configuration. Practice CLI commands, VLAN management, and security settings.",
-  keywords: ["Network", "Switch", "Simulator", "NOS", "Network", "CLI", "Catalyst 2960", "VLAN", "Learning"],
+  keywords: ["Network", "Switch", "Simulator", "NOS", "Network", "CLI", "VLAN", "Learning"],
   authors: [{ name: "Network Simulator Team" }],
   icons: {
     icon: "/favicon.png",
