@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { SwitchState, CableType, CableInfo, isCableCompatible } from '@/lib/network/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -179,6 +179,15 @@ export function NetworkTopology({
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>(activeDeviceId ? [activeDeviceId] : []);
+  const devicesSortedForRender = useMemo(() => {
+    return [...devices].sort((a, b) => {
+      if (a.id === activeDeviceId) return 1;
+      if (b.id === activeDeviceId) return -1;
+      if (selectedDeviceIds.includes(a.id) && !selectedDeviceIds.includes(b.id)) return 1;
+      if (!selectedDeviceIds.includes(a.id) && selectedDeviceIds.includes(b.id)) return -1;
+      return 0;
+    });
+  }, [devices, activeDeviceId, selectedDeviceIds]);
 
   // Sync internal selection with prop from parent
   useEffect(() => {
@@ -562,7 +571,6 @@ export function NetworkTopology({
     } else if (e.button === 0 && !(e.target as HTMLElement).closest('[data-device-id]')) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-      setSelectedDeviceIds([]);
       setContextMenu(null);
       setSelectAllMode(false);
     }
@@ -2810,10 +2818,6 @@ export function NetworkTopology({
                 setIsDrawingConnection(false);
                 setConnectionStart(null);
               }
-              // Cancel select all mode on click
-              if (selectAllMode) {
-                setSelectAllMode(false);
-              }
             }}
             onContextMenu={(e) => handleContextMenu(e as unknown as ReactMouseEvent)}
           >
@@ -2909,7 +2913,7 @@ export function NetworkTopology({
                   {connections.map((conn) => renderConnectionHandle(conn))}
 
                   {/* Devices */}
-                  {devices.map((device) => {
+                  {devicesSortedForRender.map((device) => {
                     const isCurrentlyDragging = (draggedDevice === device.id && isActuallyDragging) ||
                       (touchDraggedDevice === device.id && isTouchDragging);
                     return (
@@ -3122,7 +3126,7 @@ export function NetworkTopology({
               }}
             >
               {/* Mini devices */}
-              {devices.map((device) => (
+      {devicesSortedForRender.map((device) => (
                 <rect
                   key={device.id}
                   x={device.x}
