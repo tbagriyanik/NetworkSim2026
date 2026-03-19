@@ -1413,8 +1413,22 @@ export function NetworkTopology({
   // Reset view
   const resetView = useCallback(() => {
     setZoom(DEFAULT_ZOOM);
-    setPan({ x: 0, y: 0 });
-  }, []);
+    if (devices.length === 0 && notes.length === 0) {
+      setPan({ x: 0, y: 0 });
+      return;
+    }
+
+    const padding = 10;
+    const minDeviceX = devices.length ? Math.min(...devices.map(d => d.x)) : Infinity;
+    const minDeviceY = devices.length ? Math.min(...devices.map(d => d.y)) : Infinity;
+    const minNoteX = notes.length ? Math.min(...notes.map(n => n.x)) : Infinity;
+    const minNoteY = notes.length ? Math.min(...notes.map(n => n.y)) : Infinity;
+
+    const minX = Math.min(minDeviceX, minNoteX);
+    const minY = Math.min(minDeviceY, minNoteY);
+
+    setPan({ x: padding - minX * DEFAULT_ZOOM, y: padding - minY * DEFAULT_ZOOM });
+  }, [devices, notes]);
 
   // Toggle Fullscreen
   const toggleFullscreen = useCallback(() => {
