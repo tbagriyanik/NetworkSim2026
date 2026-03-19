@@ -132,14 +132,14 @@ export function NetworkTopologyView(props: NetworkTopologyViewProps) {
   }, [connections]);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full min-h-0 flex flex-col">
       {/* Header with Tools */}
       {renderMobileBottomBar()}
 
       {/* Canvas */}
       <div
         ref={canvasRef}
-        className="w-full flex-1 min-h-[450px] overflow-hidden cursor-grab active:cursor-grabbing relative touch-none select-none"
+        className="w-full flex-1 min-h-0 h-full overflow-hidden cursor-grab active:cursor-grabbing relative touch-none select-none"
         onMouseDown={handleCanvasMouseDown}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -155,7 +155,7 @@ export function NetworkTopologyView(props: NetworkTopologyViewProps) {
         }}
         onContextMenu={(e) => handleContextMenu(e)}
       >
-        <svg width="100%" height="100%" className="select-none canvas-no-select">
+        <svg width="100%" height="100%" className="block select-none canvas-no-select">
           <g
             style={{
               transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,

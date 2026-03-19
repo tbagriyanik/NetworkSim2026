@@ -1489,13 +1489,13 @@ export default function Home() {
         }
 
         // Tab shortcuts Ctrl+1 to Ctrl+5
-          if (['1', '2', '3', '4', '5'].includes(key)) {
-            const index = parseInt(key) - 1;
-            if (tabs[index]) {
-              e.preventDefault();
-              switchTabOrTopology(tabs[index].id);
-            }
+        if (['1', '2', '3', '4', '5'].includes(key)) {
+          const index = parseInt(key) - 1;
+          if (tabs[index]) {
+            e.preventDefault();
+            switchTabOrTopology(tabs[index].id);
           }
+        }
       }
 
       // Shift Shortcuts
@@ -1865,9 +1865,9 @@ export default function Home() {
                               <Button
                                 key={tab.id}
                                 variant={isActive ? "secondary" : "ghost"}
-                            className={`w-full justify-start gap-3 h-9 px-3 text-xs font-bold ui-hover-surface ${isActive ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-400'}`}
+                                className={`w-full justify-start gap-3 h-9 px-3 text-xs font-bold ui-hover-surface ${isActive ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-400'}`}
                                 onClick={() => {
-                                switchTabOrTopology(tab.id);
+                                  switchTabOrTopology(tab.id);
                                   setShowMobileMenu(false);
                                 }}
                               >
@@ -2078,10 +2078,10 @@ export default function Home() {
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => switchTabOrTopology(tab.id)}
-                          className={`flex items-center gap-2 px-3 lg:px-5 py-3 rounded-t-xl text-sm font-semibold transition-all border-x border-t min-w-[50px] lg:min-w-[120px] justify-center ui-hover-surface ${isActive
-                            ? `${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-300'} ${colorClass.split(' ')[0]} shadow-[0_-4px_0_0_currentColor]`
-                            : `${isDark ? 'bg-slate-900/50 border-transparent' : 'bg-slate-200/50 border-transparent'} ${colorClass}`
-                            }`}
+                        className={`flex items-center gap-2 px-3 lg:px-5 py-3 rounded-t-xl text-sm font-semibold transition-all border-x border-t min-w-[50px] lg:min-w-[120px] justify-center ui-hover-surface ${isActive
+                          ? `${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-300'} ${colorClass.split(' ')[0]} shadow-[0_-4px_0_0_currentColor]`
+                          : `${isDark ? 'bg-slate-900/50 border-transparent' : 'bg-slate-200/50 border-transparent'} ${colorClass}`
+                          }`}
                       >
                         <span className={`transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
                           {tab.id === 'topology' ? <Network className="w-4 h-4" /> :
@@ -2127,8 +2127,8 @@ export default function Home() {
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => switchTabOrTopology(tab.id)}
-                      className={`flex flex-col items-center justify-center min-h-[40px] flex-1 px-3 py-1.5 rounded-xl transition-all relative ui-hover-surface ${isActive ? 'text-blue-500' : `${colorClass} active:scale-95`
-                        }`}
+                    className={`flex flex-col items-center justify-center min-h-[40px] flex-1 px-3 py-1.5 rounded-xl transition-all relative ui-hover-surface ${isActive ? 'text-blue-500' : `${colorClass} active:scale-95`
+                      }`}
                   >
                     {isActive && (
                       <motion.div
@@ -2288,13 +2288,13 @@ export default function Home() {
         </AlertDialog>
 
         {/* Main Content with matching top background */}
-        <main className={`flex-1 overflow-hidden flex flex-col ${isDark ? 'bg-slate-950' : 'bg-slate-100'}`}>
-          <div className="w-full p-5 pb-16 sm:pb-5 flex-1 flex flex-col">
+        <main className={`flex-1 overflow-hidden flex flex-col min-h-0 ${isDark ? 'bg-slate-950' : 'bg-slate-100'}`}>
+          <div className="w-full p-5 pb-16 sm:pb-5 flex-1 flex flex-col min-h-0">
             {/* Tab Content */}
             {activeTab === 'topology' && (
-              <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
+              <div className="flex-1 flex flex-col min-h-0 h-full">
                 {/* Network Topology fills remaining space */}
-                <div ref={topologyContainerRef} className="flex-1 w-full h-full flex flex-col min-h-300 topology-print-area">
+                <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0 topology-print-area">
                   <NetworkTopology
                     key={topologyKey}
                     cableInfo={cableInfo}

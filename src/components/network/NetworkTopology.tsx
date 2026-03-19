@@ -2592,7 +2592,7 @@ export function NetworkTopology({
   return (
     <div
       onContextMenu={(e) => e.preventDefault()}
-      className={`${isFullscreen ? 'fixed inset-[20px] z-[9999] rounded-xl shadow-2xl' : 'relative rounded-xl border-2 overflow-hidden'} flex flex-col transition-all duration-300 ${isDark
+      className={`${isFullscreen ? 'fixed inset-[20px] z-[9999] rounded-xl shadow-2xl' : 'relative rounded-xl border-2 overflow-hidden h-full'} flex flex-col transition-all duration-300 ${isDark
         ? 'bg-gradient-to-br from-slate-800/90 via-slate-700/80 to-slate-800/90 border-slate-600/50'
         : 'bg-gradient-to-br from-blue-50/50 via-white to-slate-50/80 border-slate-300/50'
         }`}
@@ -2901,7 +2901,7 @@ export function NetworkTopology({
           {/* Canvas */}
           <div
             ref={canvasRef}
-            className="w-full flex-1 min-h-[450px] overflow-hidden cursor-grab active:cursor-grabbing relative touch-none select-none"
+            className="w-full h-full flex-1 min-h-[400px] min-h-0 overflow-hidden cursor-grab active:cursor-grabbing relative touch-none select-none"
             onMouseDown={handleCanvasMouseDown}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -2918,7 +2918,7 @@ export function NetworkTopology({
             <svg
               width="100%"
               height="100%"
-              className="select-none"
+              className="block select-none"
             >
               <g
                 style={{
@@ -3202,7 +3202,7 @@ export function NetworkTopology({
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                   </svg>
-                  {isFullscreen ? (language === 'tr' ? 'Kucult' : 'Exit') : (language === 'tr' ? 'Tam Ekran' : 'Full Screen')}
+                  {isFullscreen ? (language === 'tr' ? 'Küçült' : 'Exit') : (language === 'tr' ? 'Tam Ekran' : 'Full Screen')}
                 </button>
               </TooltipTrigger>
               <TooltipContent>Ctrl+F</TooltipContent>
