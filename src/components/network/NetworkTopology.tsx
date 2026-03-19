@@ -1771,7 +1771,9 @@ export function NetworkTopology({
   // Get device position (center based on device type)
   const getDeviceCenter = useCallback((device: CanvasDevice) => {
     const deviceWidth = device.type === 'pc' ? 90 : device.type === 'router' ? 90 : 130;
-    const iconColor = device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#10b981' : '#a855f7';
+    const iconColor = device.status === 'online'
+      ? '#22c55e'
+      : '#ef4444';
     const portsPerRow = 8;
     const numRows = Math.ceil(device.ports.length / portsPerRow);
     const deviceHeight = device.type === 'pc' ? 99 : 80 + numRows * 14 + 5;
@@ -2085,9 +2087,12 @@ export function NetworkTopology({
       });
     });
 
-    const statusColor = hasError
+    const isPoweredOff = device.status === 'offline';
+    const statusColor = isPoweredOff
       ? (isDark ? 'fill-red-500' : 'fill-red-600')
-      : (hasConnection ? (isDark ? 'fill-green-500' : 'fill-green-600') : (isDark ? 'fill-slate-800' : 'fill-slate-300'));
+      : hasError
+        ? (isDark ? 'fill-red-500' : 'fill-red-600')
+        : (hasConnection ? (isDark ? 'fill-green-500' : 'fill-green-600') : (isDark ? 'fill-slate-800' : 'fill-slate-300'));
 
     const deviceFill = isDark
       ? (device.type === 'pc'
@@ -2111,7 +2116,11 @@ export function NetworkTopology({
     // Width needed = startX + (portsPerRow - 1) * portSpacing + portRadius + margin
     // For 8 ports: 12 + 7*13 + 6 + 10 = 119, so we use 130 for more breathing room
     const deviceWidth = device.type === 'pc' ? 90 : device.type === 'router' ? 90 : 130;
-    const iconColor = device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#10b981' : '#a855f7';
+    const iconColor = isPoweredOff
+      ? '#ef4444'
+      : (hasConnection
+        ? '#22c55e'
+        : (device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#10b981' : '#a855f7'));
 
     return (
       <g
@@ -2155,9 +2164,7 @@ export function NetworkTopology({
 
         {/* Device icon */}
         <g transform={`translate(${deviceWidth / 2 - 12}, 10)`}>
-          <g
-            style={{ color: iconColor }}
-          >
+          <g style={{ color: iconColor }}>
             {device.type === 'pc' && (
               <path
                 strokeLinecap="round"
