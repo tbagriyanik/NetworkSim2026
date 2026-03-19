@@ -55,7 +55,7 @@ function TooltipContent({
       >
         {children}
         {!hideArrow && (
-          <TooltipPrimitive.Arrow className="fill-popover border-t border-l border-border/50 dark:border-slate-700 z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" />
+          <TooltipPrimitive.Arrow className="z-50 size-3 fill-popover stroke-border/70 stroke-[1.25] drop-shadow-[0_1px_2px_rgba(0,0,0,0.2)] dark:stroke-slate-600" />
         )}
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>

@@ -1763,6 +1763,7 @@ export function NetworkTopology({
   // Get device position (center based on device type)
   const getDeviceCenter = useCallback((device: CanvasDevice) => {
     const deviceWidth = device.type === 'pc' ? 85 : 130;
+    const iconColor = device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#10b981' : '#a855f7';
     const portsPerRow = 8;
     const numRows = Math.ceil(device.ports.length / portsPerRow);
     const deviceHeight = device.type === 'pc' ? 85 : 80 + numRows * 14 + 5;
@@ -2071,6 +2072,18 @@ export function NetworkTopology({
       ? (isDark ? 'fill-red-500' : 'fill-red-600')
       : (hasConnection ? (isDark ? 'fill-green-500' : 'fill-green-600') : (isDark ? 'fill-slate-800' : 'fill-slate-300'));
 
+    const deviceFill = isDark
+      ? (device.type === 'pc'
+        ? '#012a56'
+        : device.type === 'switch'
+          ? '#1a3a2f'
+          : '#2d2347')
+      : (device.type === 'pc'
+        ? '#bfd9fb'
+        : device.type === 'switch'
+          ? '#bcf7dc'
+          : '#d2caf7');
+
     // Calculate device height based on number of ports (8 per row for switch/router)
     const portsPerRow = device.type === 'pc' ? 2 : 8;
     const numRows = Math.ceil(device.ports.length / portsPerRow);
@@ -2081,6 +2094,7 @@ export function NetworkTopology({
     // Width needed = startX + (portsPerRow - 1) * portSpacing + portRadius + margin
     // For 8 ports: 12 + 7*13 + 6 + 10 = 119, so we use 130 for more breathing room
     const deviceWidth = device.type === 'pc' ? 85 : 130;
+    const iconColor = device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#10b981' : '#a855f7';
 
     return (
       <g
@@ -2094,7 +2108,7 @@ export function NetworkTopology({
           width={deviceWidth}
           height={deviceHeight}
           rx={8}
-          fill={isDark ? '#1e293b' : '#fff'}
+          fill={deviceFill}
           stroke={isSelected ? '#06b6d4' : isDark ? '#475569' : '#cbd5e1'}
           strokeWidth={isSelected ? 2 : 1}
           className={isDragging ? '' : 'transition-all duration-150'}
@@ -2103,14 +2117,7 @@ export function NetworkTopology({
         {/* Device icon */}
         <g transform={`translate(${deviceWidth / 2 - 12}, 10)`}>
           <g
-            className={
-              device.type === 'pc'
-                ? 'text-blue-500'
-                : device.type === 'switch'
-                  ? 'text-emerald-500'
-                  : 'text-purple-500'
-            }
-            style={{ color: 'currentColor' }}
+            style={{ color: iconColor }}
           >
             {device.type === 'pc' && (
               <path
@@ -2535,19 +2542,19 @@ export function NetworkTopology({
                   {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
                     <Tooltip key={type}>
                       <TooltipTrigger asChild>
-                    <button
-                      onClick={() => onCableChange({ ...cableInfo, cableType: type })}
-                      className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-all ${cableInfo.cableType === type
-                        ? `${CABLE_COLORS[type].bg} text-white`
-                        : isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}
-                    >
-                      <div className={`w-2.5 h-2.5 rounded-full ${CABLE_COLORS[type].bg}`} />
-                      <span className="text-[10px] font-bold">
-                        {type === 'straight' ? (language === 'tr' ? 'Düz' : 'Str') :
-                          type === 'crossover' ? (language === 'tr' ? 'Çap' : 'Cro') :
-                            (language === 'tr' ? 'Kon' : 'Con')}
-                      </span>
-                    </button>
+                        <button
+                          onClick={() => onCableChange({ ...cableInfo, cableType: type })}
+                          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-all ${cableInfo.cableType === type
+                            ? `${CABLE_COLORS[type].bg} text-white`
+                            : isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}
+                        >
+                          <div className={`w-2.5 h-2.5 rounded-full ${CABLE_COLORS[type].bg}`} />
+                          <span className="text-[10px] font-bold">
+                            {type === 'straight' ? (language === 'tr' ? 'Düz' : 'Str') :
+                              type === 'crossover' ? (language === 'tr' ? 'Çap' : 'Cro') :
+                                (language === 'tr' ? 'Kon' : 'Con')}
+                          </span>
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent>
                         {type === 'straight'
@@ -2782,6 +2789,20 @@ export function NetworkTopology({
                   <clipPath id="canvasClip">
                     <rect x="0" y="0" width={getCanvasDimensions().width} height={getCanvasDimensions().height} />
                   </clipPath>
+                  {/* Canvas background gradient */}
+                  <linearGradient id="canvasBgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    {isDark ? (
+                      <>
+                        <stop offset="0%" stopColor="#1e293b" />
+                        <stop offset="100%" stopColor="#0f172a" />
+                      </>
+                    ) : (
+                      <>
+                        <stop offset="0%" stopColor="#f8fafc" />
+                        <stop offset="100%" stopColor="#e2e8f0" />
+                      </>
+                    )}
+                  </linearGradient>
                   {/* Grid pattern */}
                   <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
                     <circle cx="10" cy="10" r="1" fill={isDark ? '#334155' : '#94a3b8'} />
@@ -2796,7 +2817,7 @@ export function NetworkTopology({
                     y="0"
                     width={getCanvasDimensions().width}
                     height={getCanvasDimensions().height}
-                    fill={isDark ? '#1e293b' : '#f8fafc'}
+                    fill="url(#canvasBgGradient)"
                   />
                   {/* Grid */}
                   <rect
@@ -2838,6 +2859,9 @@ export function NetworkTopology({
                   {/* Temporary connection line */}
                   {renderTempConnection()}
 
+                  {/* Connection interaction handles (Trash icons) */}
+                  {connections.map((conn) => renderConnectionHandle(conn))}
+
                   {/* Devices */}
                   {devices.map((device) => {
                     const isCurrentlyDragging = (draggedDevice === device.id && isActuallyDragging) ||
@@ -2862,8 +2886,6 @@ export function NetworkTopology({
                     );
                   })}
 
-                  {/* Connection interaction handles (Trash icons) - Rendered LAST to stay on top */}
-                  {connections.map((conn) => renderConnectionHandle(conn))}
                 </g>
 
                 {/* Canvas Boundary Border */}
