@@ -150,7 +150,7 @@ export function NetworkTopology({
       ip: '192.168.1.10',
       x: 100,
       y: 150,
-       status: 'online',
+      status: 'online',
       ports: [
         { id: 'eth0', label: 'Eth0', status: 'disconnected' },
         { id: 'com1', label: 'COM1', status: 'disconnected' },
@@ -179,6 +179,7 @@ export function NetworkTopology({
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>(activeDeviceId ? [activeDeviceId] : []);
+  const [snapToGrid, setSnapToGrid] = useState(true); // Snap-to-grid toggle
   const devicesSortedForRender = useMemo(() => {
     return [...devices].sort((a, b) => {
       if (a.id === activeDeviceId) return 1;
@@ -625,8 +626,14 @@ export function NetworkTopology({
                 const initialPos = dragStartDevicePositions[id];
                 if (!initialPos) return;
 
-                const newX = initialPos.x + dx;
-                const newY = initialPos.y + dy;
+                let newX = initialPos.x + dx;
+                let newY = initialPos.y + dy;
+
+                // Snap to grid (20px grid)
+                if (snapToGrid) {
+                  newX = Math.round(newX / 20) * 20;
+                  newY = Math.round(newY / 20) * 20;
+                }
 
                 const clampedX = Math.max(20, Math.min(newX, canvasDims.width - 100));
                 const clampedY = Math.max(20, Math.min(newY, canvasDims.height - 100));
@@ -1034,12 +1041,12 @@ export function NetworkTopology({
         y: (a.clientY + b.clientY) / 2
       };
 
-      // Calculate zoom factor
+      // Calculate zoom factor with smoothing
       const zoomFactor = newDistance / lastTouchDistance;
       let newZoom = zoom * zoomFactor;
       newZoom = Math.max(MIN_ZOOM, Math.min(newZoom, MAX_ZOOM));
 
-      if (newZoom !== zoom) {
+      if (Math.abs(newZoom - zoom) > 0.01) {
         // Adjust pan to zoom relative to the gesture center
         const rect = canvasRef.current.getBoundingClientRect();
         const cursorX = newCenter.x - rect.left;
@@ -2151,6 +2158,22 @@ export function NetworkTopology({
         className={`cursor-move ${isDragging ? 'opacity-80' : ''}`}
         data-device-id={device.id}
       >
+        {/* Selection glow effect */}
+        {isSelected && (
+          <rect
+            x="-4"
+            y="-4"
+            width={deviceWidth + 8}
+            height={deviceHeight + 8}
+            rx={10}
+            fill="none"
+            stroke="#06b6d4"
+            strokeWidth="3"
+            opacity="0.4"
+            className="animate-pulse"
+          />
+        )}
+
         {/* Device body */}
         <rect
           width={deviceWidth}
@@ -2158,7 +2181,7 @@ export function NetworkTopology({
           rx={8}
           fill={deviceFill}
           stroke={isSelected ? '#06b6d4' : isDark ? '#475569' : '#cbd5e1'}
-          strokeWidth={isSelected ? 2 : 1}
+          strokeWidth={isSelected ? 2.5 : 1.5}
           className={isDragging ? '' : 'transition-all duration-150'}
         />
 
@@ -2366,16 +2389,45 @@ export function NetworkTopology({
     const source = connectionStart.point;
 
     return (
-      <line
-        x1={source.x}
-        y1={source.y}
-        x2={mousePos.x}
-        y2={mousePos.y}
-        stroke={CABLE_COLORS[cableInfo.cableType].primary}
-        strokeWidth={2}
-        strokeDasharray="5,5"
-        className="pointer-events-none"
-      />
+      <>
+        {/* Connection line with gradient */}
+        <line
+          x1={source.x}
+          y1={source.y}
+          x2={mousePos.x}
+          y2={mousePos.y}
+          stroke={CABLE_COLORS[cableInfo.cableType].primary}
+          strokeWidth={4}
+          strokeDasharray="8,4"
+          strokeLinecap="round"
+          opacity="0.6"
+          className="pointer-events-none"
+        >
+          <animate attributeName="stroke-dashoffset" from="12" to="0" dur="1s" repeatCount="indefinite" />
+        </line>
+        {/* Inner solid line */}
+        <line
+          x1={source.x}
+          y1={source.y}
+          x2={mousePos.x}
+          y2={mousePos.y}
+          stroke={CABLE_COLORS[cableInfo.cableType].primary}
+          strokeWidth={2}
+          opacity="0.9"
+          className="pointer-events-none"
+        />
+        {/* End point circle */}
+        <circle
+          cx={mousePos.x}
+          cy={mousePos.y}
+          r={6}
+          fill={CABLE_COLORS[cableInfo.cableType].primary}
+          opacity="0.3"
+          className="pointer-events-none"
+        >
+          <animate attributeName="r" values="6;8;6" dur="1.5s" repeatCount="indefinite" />
+        </circle>
+      </>
     );
   };
 
@@ -2665,23 +2717,51 @@ export function NetworkTopology({
               <div className="flex items-center gap-0.5">
                 <button
                   onClick={() => setZoom((z) => Math.max(MIN_ZOOM, z - 0.25))}
-              className={`w-7 h-7 flex items-center justify-center rounded-lg ui-hover-surface ${isDark ? 'text-slate-300 hover:text-slate-100' : 'text-slate-700 hover:text-slate-900'}`}
+                  className={`w-7 h-7 flex items-center justify-center rounded-lg ui-hover-surface ${isDark ? 'text-slate-300 hover:text-slate-100' : 'text-slate-700 hover:text-slate-900'}`}
                 >
                   <span className="text-lg font-bold">−</span>
                 </button>
                 <button
                   onClick={resetView}
-                  className={`px-2 h-7 rounded-lg text-[11px] font-mono ui-hover-surface ${isDark ? 'text-slate-200 hover:text-slate-100' : 'text-slate-700 hover:text-slate-900'}`}
+                  className={`px-2 h-7 rounded-lg text-[11px] font-mono ui-hover-surface transition-all duration-200 ${isDark ? 'text-slate-200 hover:text-slate-100 bg-slate-700/50' : 'text-slate-700 hover:text-slate-900 bg-blue-50'}`}
                   title={`${language === 'tr' ? 'Sıfırla' : 'Reset'} (Alt+R)`}
                 >
                   {Math.round(zoom * 100)}%
                 </button>
                 <button
                   onClick={() => setZoom((z) => Math.min(MAX_ZOOM, z + 0.25))}
-              className={`w-7 h-7 flex items-center justify-center rounded-lg ui-hover-surface ${isDark ? 'text-slate-300 hover:text-slate-100' : 'text-slate-700 hover:text-slate-900'}`}
+                  className={`w-7 h-7 flex items-center justify-center rounded-lg ui-hover-surface ${isDark ? 'text-slate-300 hover:text-slate-100' : 'text-slate-700 hover:text-slate-900'}`}
                 >
                   <span className="text-lg font-bold">+</span>
                 </button>
+              </div>
+
+              {/* Snap to Grid Toggle */}
+              <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border ${isDark ? 'bg-slate-900/40 border-slate-700/30' : 'bg-blue-50/50 border-blue-100/50'}`}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setSnapToGrid(!snapToGrid)}
+                      className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-all ${snapToGrid
+                        ? isDark
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-emerald-100 text-emerald-700'
+                        : isDark
+                          ? 'text-slate-400 hover:text-slate-300'
+                          : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                      </svg>
+                      <span className="text-xs font-bold hidden lg:inline">{language === 'tr' ? 'Izgara' : 'Grid'}</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{snapToGrid ? (language === 'tr' ? 'Izgaraya Hizala Açık' : 'Snap to Grid On') : (language === 'tr' ? 'Izgaraya Hizala Kapalı' : 'Snap to Grid Off')}</TooltipContent>
+                </Tooltip>
+                {snapToGrid && (
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                )}
               </div>
             </div>
 
@@ -2867,9 +2947,13 @@ export function NetworkTopology({
                       </>
                     )}
                   </linearGradient>
-                  {/* Grid pattern */}
+                  {/* Grid pattern with improved visibility */}
                   <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <circle cx="10" cy="10" r="1" fill={isDark ? '#334155' : '#94a3b8'} />
+                    <circle cx="10" cy="10" r="1.5" fill={isDark ? '#475569' : '#64748b'} opacity="0.6" />
+                  </pattern>
+                  {/* Major grid lines pattern */}
+                  <pattern id="majorGridPattern" width="100" height="100" patternUnits="userSpaceOnUse">
+                    <rect width="100" height="100" fill="none" stroke={isDark ? '#334155' : '#cbd5e1'} strokeWidth="0.5" opacity="0.3" />
                   </pattern>
                 </defs>
 
@@ -2883,7 +2967,15 @@ export function NetworkTopology({
                     height={getCanvasDimensions().height}
                     fill="url(#canvasBgGradient)"
                   />
-                  {/* Grid */}
+                  {/* Major Grid Lines (subtle) */}
+                  <rect
+                    x="0"
+                    y="0"
+                    width={getCanvasDimensions().width}
+                    height={getCanvasDimensions().height}
+                    fill="url(#majorGridPattern)"
+                  />
+                  {/* Grid Dots */}
                   <rect
                     x="0"
                     y="0"
@@ -3028,7 +3120,7 @@ export function NetworkTopology({
               <TooltipTrigger asChild>
                 <button
                   onClick={resetView}
-                className={`px-2 py-1 text-xs rounded ui-hover-surface ${isDark
+                  className={`px-2 py-1 text-xs rounded ui-hover-surface ${isDark
                     ? 'text-slate-300 hover:text-slate-100'
                     : 'text-slate-600 hover:text-slate-900'
                     }`}
@@ -3103,7 +3195,7 @@ export function NetworkTopology({
               <TooltipTrigger asChild>
                 <button
                   onClick={toggleFullscreen}
-                className={`px-2 py-1 text-xs rounded flex items-center gap-1 ui-hover-surface ${isDark
+                  className={`px-2 py-1 text-xs rounded flex items-center gap-1 ui-hover-surface ${isDark
                     ? 'text-slate-300 hover:text-slate-100'
                     : 'text-slate-600 hover:text-slate-900'
                     }`}
@@ -3140,7 +3232,7 @@ export function NetworkTopology({
               }}
             >
               {/* Mini devices */}
-      {devicesSortedForRender.map((device) => (
+              {devicesSortedForRender.map((device) => (
                 <rect
                   key={device.id}
                   x={device.x}
