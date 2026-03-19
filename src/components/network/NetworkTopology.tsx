@@ -321,6 +321,7 @@ export function NetworkTopology({
     currentHopIndex: number;
     progress: number;
     success: boolean | null;
+    frame: number; // Frame counter for smooth animations
   } | null>(null);
 
   // Refs
@@ -1731,7 +1732,8 @@ export function NetworkTopology({
         path: [sourceId, targetId],
         currentHopIndex: 0,
         progress: 1,
-        success: false
+        success: false,
+        frame: 0
       });
       setTimeout(() => setPingAnimation(null), 2500);
       return;
@@ -1744,21 +1746,24 @@ export function NetworkTopology({
       path,
       currentHopIndex: 0,
       progress: 0,
-      success: null
+      success: null,
+      frame: 0
     });
 
     // Animate ping - each hop takes 800ms
     const hopDuration = 800;
     let startTime = Date.now();
     let currentHop = 0;
+    let frameCount = 0;
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / hopDuration, 1);
+      frameCount++;
 
       setPingAnimation(prev => {
         if (!prev) return null;
-        return { ...prev, currentHopIndex: currentHop, progress };
+        return { ...prev, currentHopIndex: currentHop, progress, frame: frameCount };
       });
 
       if (progress < 1) {
@@ -3670,7 +3675,7 @@ export function NetworkTopology({
         <div className="fixed inset-0 z-40 pointer-events-none">
           {/* Envelope animation along bezier curve - rendered inside canvas SVG for correct positioning */}
           {(() => {
-            const { path, currentHopIndex, progress, success } = pingAnimation;
+            const { path, currentHopIndex, progress, success, frame } = pingAnimation;
             if (!path || path.length < 2 || success !== null) return null;
 
             // Get current hop devices
@@ -3767,13 +3772,25 @@ export function NetworkTopology({
                 style={{ overflow: 'visible' }}
               >
                 <g transform={`translate(${screenX}, ${screenY})`}>
-                  {/* Trail effect */}
-                  <circle r="10" fill="#06b6d4" opacity={0.4} className="svg-ping" />
-                  <circle r="6" fill="#06b6d4" opacity={0.6} className="svg-ping" style={{ animationDelay: '0.2s' }} />
-                  {/* Envelope icon with glow */}
-                  <g className="envelope-glow">
-                    <rect x="-14" y="-10" width="28" height="20" rx="3" fill="#06b6d4" stroke="#0891b2" strokeWidth="2" />
-                    <path d="M-10 -5 L0 5 L10 -5" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                  {/* Enhanced trail effect with multiple layers for better visibility */}
+                  <circle r="14" fill="#06b6d4" opacity={0.2} />
+                  <circle r="10" fill="#06b6d4" opacity={0.4} />
+                  <circle r="6" fill="#0891b2" opacity={0.7} />
+
+                  {/* Envelope icon with enhanced visibility */}
+                  <g>
+                    {/* Outer glow ring */}
+                    <circle r="18" fill="none" stroke="#06b6d4" strokeWidth="2" opacity={0.3 + Math.sin(frame * 0.5) * 0.2} />
+
+                    {/* Envelope body with gradient-like effect */}
+                    <rect x="-14" y="-10" width="28" height="20" rx="3" fill="#06b6d4" stroke="#0891b2" strokeWidth="2.5" />
+                    <rect x="-12" y="-8" width="24" height="16" rx="2" fill="#0891b2" opacity="0.3" />
+
+                    {/* Envelope flap - more visible design */}
+                    <path d="M-10 -5 L0 5 L10 -5" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+                    {/* Center dot for extra visibility */}
+                    <circle cx="0" cy="0" r="3" fill="#ffffff" opacity="0.9" />
                   </g>
                 </g>
               </svg>
@@ -4082,8 +4099,8 @@ export function NetworkTopology({
                     </svg>
                   </div>
                   <div className={`text-center max-w-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                    <h4 className="font-bold text-slate-400">{language === 'tr' ? 'Müsait Port Yok' : 'No Free Ports'}</h4>
-                    <p className="text-xs mt-1">{language === 'tr' ? 'Lütfen önce cihazların bağlantılarını kesin.' : 'Please disconnect some cables first.'}</p>
+                    <h4 className="font-bold text-slate-400">{language === 'tr' ? 'Uygun Port Yok' : 'No Free Ports'}</h4>
+                    <p className="text-xs mt-1">{language === 'tr' ? 'Lütfen, önce cihazların bağlantılarını kesin.' : 'Please, disconnect some cables first.'}</p>
                   </div>
                 </div>
               )}

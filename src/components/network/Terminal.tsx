@@ -354,7 +354,7 @@ export function Terminal({
           <DialogHeader>
             <DialogTitle>{language === 'tr' ? 'Parola Gerekli' : 'Password Required'}</DialogTitle>
             <DialogDescription className={isDark ? 'text-slate-400' : 'text-slate-500'}>
-              {language === 'tr' ? 'Lütfen devam etmek için parolayı girin.' : 'Enter the password to continue.'}
+              {language === 'tr' ? 'Lütfen, devam etmek için parolayı girin.' : 'Enter the password to continue.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-3">

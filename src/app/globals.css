@@ -92,27 +92,42 @@
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: transparent;
   }
+
   html {
     overscroll-behavior: none;
   }
+
   body {
     @apply bg-background text-foreground font-sans;
     letter-spacing: -0.011em;
     overscroll-behavior: none;
   }
-  button, a, [role="button"] {
+
+  button,
+  a,
+  [role="button"] {
     touch-action: manipulation;
   }
+
   :focus-visible {
     @apply outline-none ring-2 ring-cyan-500/60 ring-offset-2 ring-offset-background;
   }
-  
+
   /* Sharp text for specific elements */
-  h1, h2, h3, h4, h5, h6, .font-black, .font-bold {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-black,
+  .font-bold {
     letter-spacing: -0.02em;
   }
 
-  code, pre, .font-mono {
+  code,
+  pre,
+  .font-mono {
     @apply font-mono;
     font-feature-settings: "liga" 0;
   }
@@ -140,27 +155,33 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* Ping animation for SVG - Chrome compatible */
-@keyframes svg-ping {
-  0% { transform: scale(1); opacity: 0.6; }
-  75% { transform: scale(3); opacity: 0; }
-  100% { transform: scale(3); opacity: 0; }
-}
-
+/* Ping animation for SVG - Chrome/Edge/Firefox compatible */
+/* Note: Animation is now handled via requestAnimationFrame in React for better cross-browser compatibility */
 .svg-ping {
-  animation: svg-ping 1.2s cubic-bezier(0, 0, 0.2, 1) infinite;
   will-change: transform, opacity;
 }
 
-/* Envelope pulse animation - makes ping visible */
+/* Envelope pulse animation - backup for non-Chrome browsers */
 @keyframes envelope-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 4px #06b6d4); }
-  50% { opacity: 0.9; transform: scale(1.2); filter: drop-shadow(0 0 8px #06b6d4); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 4px #06b6d4);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 8px #06b6d4);
+  }
 }
 
 .envelope-pulse {
@@ -168,10 +189,17 @@
   will-change: transform, filter;
 }
 
-/* Envelope glow */
+/* Envelope glow - simplified for better Chrome compatibility */
 @keyframes envelope-glow {
-  0%, 100% { filter: drop-shadow(0 0 6px #06b6d4); }
-  50% { filter: drop-shadow(0 0 12px #06b6d4); }
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px #06b6d4);
+  }
+
+  50% {
+    filter: drop-shadow(0 0 12px #06b6d4);
+  }
 }
 
 .envelope-glow {
@@ -180,8 +208,19 @@
 
 /* LED Blink Animation */
 @keyframes led-blink {
-  0%, 100% { opacity: 1; transform: scale(1); filter: brightness(1.2); }
-  50% { opacity: 0.6; transform: scale(0.92); filter: brightness(0.8); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1.2);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(0.92);
+    filter: brightness(0.8);
+  }
 }
 
 .led-blink {
@@ -190,8 +229,13 @@
 
 /* Progress bar animation */
 @keyframes progress-shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .animate-progress-shimmer {
@@ -200,23 +244,63 @@
 
 /* Glitch Animation */
 @keyframes glitch {
-  0% { transform: translate(0); }
-  20% { transform: translate(-2px, 2px); }
-  40% { transform: translate(-2px, -2px); }
-  60% { transform: translate(2px, 2px); }
-  80% { transform: translate(2px, -2px); }
-  100% { transform: translate(0); }
+  0% {
+    transform: translate(0);
+  }
+
+  20% {
+    transform: translate(-2px, 2px);
+  }
+
+  40% {
+    transform: translate(-2px, -2px);
+  }
+
+  60% {
+    transform: translate(2px, 2px);
+  }
+
+  80% {
+    transform: translate(2px, -2px);
+  }
+
+  100% {
+    transform: translate(0);
+  }
 }
 
 @keyframes glitch-skew {
-  0% { transform: skew(0deg); }
-  10% { transform: skew(3deg); }
-  20% { transform: skew(-1deg); }
-  30% { transform: skew(1deg); }
-  40% { transform: skew(-3deg); }
-  50% { transform: skew(2deg); }
-  60% { transform: skew(0deg); }
-  100% { transform: skew(0deg); }
+  0% {
+    transform: skew(0deg);
+  }
+
+  10% {
+    transform: skew(3deg);
+  }
+
+  20% {
+    transform: skew(-1deg);
+  }
+
+  30% {
+    transform: skew(1deg);
+  }
+
+  40% {
+    transform: skew(-3deg);
+  }
+
+  50% {
+    transform: skew(2deg);
+  }
+
+  60% {
+    transform: skew(0deg);
+  }
+
+  100% {
+    transform: skew(0deg);
+  }
 }
 
 .animate-glitch {
@@ -230,8 +314,8 @@
 .glitch-text {
   position: relative;
   text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
-               -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
-               0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+    -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+    0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
   animation: glitch 500ms infinite;
 }
 
@@ -261,14 +345,14 @@
 
 /* Background patterns */
 .bg-grid-pattern {
-  background-image: 
+  background-image:
     linear-gradient(to right, rgba(6, 182, 212, 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
 .dark .bg-grid-pattern {
-  background-image: 
+  background-image:
     linear-gradient(to right, rgba(6, 182, 212, 0.03) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
 }
@@ -286,8 +370,13 @@
 }
 
 @keyframes scanline {
-  0% { bottom: 100%; }
-  100% { bottom: 0%; }
+  0% {
+    bottom: 100%;
+  }
+
+  100% {
+    bottom: 0%;
+  }
 }
 
 /* Glassmorphism card */
@@ -302,6 +391,7 @@
 
 /* Performance optimization for accessibility */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -315,6 +405,7 @@
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
 .safe-area-pt {
   padding-top: env(safe-area-inset-top, 0px);
 }
@@ -391,8 +482,9 @@ svg text {
     margin: 0;
     size: landscape;
   }
-  
-  body, html {
+
+  body,
+  html {
     background: white !important;
     height: 100% !important;
     width: 100% !important;
@@ -401,14 +493,14 @@ svg text {
   }
 
   /* Hide everything */
-  body > *:not(main),
-  main > *:not(.topology-print-area),
-  button, 
-  header, 
-  footer, 
-  .mobile-top-nav, 
+  body>*:not(main),
+  main>*:not(.topology-print-area),
+  button,
+  header,
+  footer,
+  .mobile-top-nav,
   .mobile-bottom-nav,
-  .zoom-controls, 
+  .zoom-controls,
   .minimap,
   .instructions-panel,
   .context-menu,
