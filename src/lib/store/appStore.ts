@@ -111,7 +111,7 @@ const createActions = (set: any, get: any) => ({
     },
 
     updateDevice: (deviceId: string, updates: Partial<CanvasDevice>) => {
-        const devices = get().topology.devices.map(d =>
+        const devices = get().topology.devices.map((d: CanvasDevice) =>
             d.id === deviceId ? { ...d, ...updates } : d
         );
         set({ topology: { ...get().topology, devices } });
@@ -126,7 +126,7 @@ const createActions = (set: any, get: any) => ({
         }),
 
     removeConnection: (connectionId: string) => {
-        const connections = get().topology.connections.filter(c => c.id !== connectionId);
+        const connections = get().topology.connections.filter((c: CanvasConnection) => c.id !== connectionId);
         set({ topology: { ...get().topology, connections } });
     },
 
@@ -139,12 +139,12 @@ const createActions = (set: any, get: any) => ({
         }),
 
     removeNote: (noteId: string) => {
-        const notes = get().topology.notes.filter(n => n.id !== noteId);
+        const notes = get().topology.notes.filter((n: CanvasNote) => n.id !== noteId);
         set({ topology: { ...get().topology, notes } });
     },
 
     updateNote: (noteId: string, updates: Partial<CanvasNote>) => {
-        const notes = get().topology.notes.map(n =>
+        const notes = get().topology.notes.map((n: CanvasNote) =>
             n.id === noteId ? { ...n, ...updates } : n
         );
         set({ topology: { ...get().topology, notes } });
@@ -203,7 +203,7 @@ const createActions = (set: any, get: any) => ({
 // Create the store with persistence
 export const useAppStore = create<AppState>()(
     persist(
-        (set, get) => ({
+        (set: any, get: any) => ({
             ...initialState,
             ...createActions(set, get),
         }),
