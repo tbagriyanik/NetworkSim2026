@@ -231,6 +231,12 @@ export function NetworkTopology({
   const panAnimationFrameRef = useRef<number | null>(null);
   const historyRef2 = useRef<{ history: { devices: CanvasDevice[]; connections: CanvasConnection[] }[]; index: number }>({ history: [], index: -1 });
 
+  // ─── Touch performance refs ───
+  const isTouchDraggingRef = useRef(false);
+  const touchDraggedDeviceRef = useRef<string | null>(null);
+  const touchDragStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const touchDragOffsetRef = useRef({ x: 0, y: 0 });
+
   // Connection drawing state
   const [isDrawingConnection, setIsDrawingConnection] = useState(false);
   const [connectionStart, setConnectionStart] = useState<{
@@ -258,8 +264,6 @@ export function NetworkTopology({
   // Always-fresh refs: updated on every render so event handlers never get stale values
   const latestDevicesRef = useRef<CanvasDevice[]>([]);
   const latestConnectionsRef = useRef<CanvasConnection[]>([]);
-  latestDevicesRef.current = devices;
-  latestConnectionsRef.current = connections;
 
   // Save state to history for undo — uses always-fresh refs, zero stale-closure risk
   // Does NOT need devices/connections/historyIndex in its dep array
@@ -333,6 +337,26 @@ export function NetworkTopology({
   const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [lastTapTime, setLastTapTime] = useState(0);
   const [lastTappedDevice, setLastTappedDevice] = useState<string | null>(null);
+
+  // Sync all refs on every render BEFORE they are used in handlers
+  latestDevicesRef.current = devices;
+  latestConnectionsRef.current = connections;
+  isPanningRef.current = isPanning;
+  panStartRef.current = panStart;
+  zoomRef.current = zoom;
+  panRef.current = pan;
+  draggedDeviceRef.current = draggedDevice;
+  dragStartPosRef.current = dragStartPos;
+  dragStartDevicePositionsRef.current = dragStartDevicePositions;
+  isActuallyDraggingRef.current = isActuallyDragging;
+  selectedDeviceIdsRef.current = selectedDeviceIds;
+  snapToGridRef.current = snapToGrid;
+  isDrawingConnectionRef.current = isDrawingConnection;
+
+  isTouchDraggingRef.current = isTouchDragging;
+  touchDraggedDeviceRef.current = touchDraggedDevice;
+  touchDragStartPosRef.current = touchDragStartPos;
+  touchDragOffsetRef.current = touchDragOffset;
 
   // Advanced Canvas Pan/Zoom Touch state
   const [lastTouchCenter, setLastTouchCenter] = useState<{ x: number; y: number } | null>(null);
@@ -492,6 +516,14 @@ export function NetworkTopology({
       });
     });
   }, [selectedDeviceIds, saveToHistory]);
+
+  // Get dynamic canvas dimensions based on screen size
+  const getCanvasDimensions = useCallback(() => {
+    if (typeof window === 'undefined') return { width: VIRTUAL_CANVAS_WIDTH_DESKTOP, height: VIRTUAL_CANVAS_HEIGHT_DESKTOP };
+    return isMobile
+      ? { width: VIRTUAL_CANVAS_WIDTH_MOBILE, height: VIRTUAL_CANVAS_HEIGHT_MOBILE }
+      : { width: VIRTUAL_CANVAS_WIDTH_DESKTOP, height: VIRTUAL_CANVAS_HEIGHT_DESKTOP };
+  }, [isMobile]);
 
   // Calculate distance between two points
   const getDistance = useCallback((x1: number, y1: number, x2: number, y2: number): number => {
@@ -778,31 +810,39 @@ export function NetworkTopology({
       if (dragAnimationFrameRef.current) cancelAnimationFrame(dragAnimationFrameRef.current);
       if (panAnimationFrameRef.current) cancelAnimationFrame(panAnimationFrameRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Global touch event handlers for device dragging on mobile
+  // FIXED: uses refs to avoid re-registering the listener on ogni state change
   useEffect(() => {
     if (!isMobile) return;
 
     const handleGlobalTouchMove = (e: globalThis.TouchEvent) => {
-      if (e.touches.length !== 1 || !touchDraggedDevice || !canvasRef.current) return;
+      const currentTouchDraggedDevice = touchDraggedDeviceRef.current;
+      if (e.touches.length !== 1 || !currentTouchDraggedDevice || !canvasRef.current) return;
 
       const touch = e.touches[0];
+      const currentTouchDragStartPos = touchDragStartPosRef.current;
 
       // Check if we've moved enough to consider it a drag
-      if (touchDragStartPos) {
-        const distance = getDistance(touchDragStartPos.x, touchDragStartPos.y, touch.clientX, touch.clientY);
+      if (currentTouchDragStartPos && !isTouchDraggingRef.current) {
+        const distance = getDistance(currentTouchDragStartPos.x, currentTouchDragStartPos.y, touch.clientX, touch.clientY);
         if (distance > DRAG_THRESHOLD) {
           setIsTouchDragging(true);
+          isTouchDraggingRef.current = true;
         }
       }
 
-      if (isTouchDragging) {
-        e.preventDefault(); // Prevent page scroll
+      if (isTouchDraggingRef.current) {
+        if (e.cancelable) e.preventDefault(); // Prevent page scroll
         const rect = canvasRef.current.getBoundingClientRect();
-        const newX = (touch.clientX - rect.left - pan.x - touchDragOffset.x) / zoom;
-        const newY = (touch.clientY - rect.top - pan.y - touchDragOffset.y) / zoom;
+        const currentPan = panRef.current;
+        const currentZoom = zoomRef.current;
+        const currentTouchDragOffset = touchDragOffsetRef.current;
+
+        const newX = (touch.clientX - rect.left - currentPan.x - currentTouchDragOffset.x) / currentZoom;
+        const newY = (touch.clientY - rect.top - currentPan.y - currentTouchDragOffset.y) / currentZoom;
 
         // Clamp to canvas bounds
         const canvasDims = getCanvasDimensions();
@@ -815,10 +855,10 @@ export function NetworkTopology({
         // Use requestAnimationFrame for smooth updates
         if (!dragAnimationFrameRef.current) {
           dragAnimationFrameRef.current = requestAnimationFrame(() => {
-            if (lastDragPositionRef.current && touchDraggedDevice) {
+            if (lastDragPositionRef.current && touchDraggedDeviceRef.current) {
               setDevices((prev) =>
                 prev.map((d) =>
-                  d.id === touchDraggedDevice
+                  d.id === touchDraggedDeviceRef.current
                     ? { ...d, x: lastDragPositionRef.current!.x, y: lastDragPositionRef.current!.y }
                     : d
                 )
@@ -837,18 +877,30 @@ export function NetworkTopology({
         dragAnimationFrameRef.current = null;
       }
 
+      const currentTouchDraggedDevice = touchDraggedDeviceRef.current;
+      const currentIsTouchDragging = isTouchDraggingRef.current;
+
       // If we weren't dragging, treat it as a tap (select)
-      if (touchDraggedDevice && !isTouchDragging) {
-        const device = devices.find(d => d.id === touchDraggedDevice);
+      if (currentTouchDraggedDevice && !currentIsTouchDragging) {
+        // We use latestDevicesRef to avoid stale devices closure
+        const device = latestDevicesRef.current.find(d => d.id === currentTouchDraggedDevice);
         if (device) {
           setSelectedDeviceIds([device.id]);
           onDeviceSelect(device.type, device.id);
         }
       }
 
+      // Save to history if we were dragging
+      if (currentIsTouchDragging && currentTouchDraggedDevice) {
+        saveToHistory();
+      }
+
       setTouchDraggedDevice(null);
+      touchDraggedDeviceRef.current = null;
       setTouchDragStartPos(null);
+      touchDragStartPosRef.current = null;
       setIsTouchDragging(false);
+      isTouchDraggingRef.current = false;
       setLastTouchDistance(null);
       setTouchStart(null);
       lastDragPositionRef.current = null;
@@ -871,7 +923,7 @@ export function NetworkTopology({
         cancelAnimationFrame(dragAnimationFrameRef.current);
       }
     };
-  }, [isMobile, touchDraggedDevice, touchDragOffset, touchDragStartPos, isTouchDragging, pan, zoom, getDistance, devices, onDeviceSelect, longPressTimer]);
+  }, [isMobile, onDeviceSelect, saveToHistory, getCanvasDimensions]);
 
   // Handle device drag start
   const handleDeviceMouseDown = useCallback((e: ReactMouseEvent, deviceId: string) => {
@@ -1881,14 +1933,6 @@ export function NetworkTopology({
     pingAnimationRef.current = requestAnimationFrame(animate);
   }, [connections, findPath]);
 
-  // Get dynamic canvas dimensions based on screen size
-  const getCanvasDimensions = useCallback(() => {
-    if (typeof window === 'undefined') return { width: VIRTUAL_CANVAS_WIDTH_DESKTOP, height: VIRTUAL_CANVAS_HEIGHT_DESKTOP };
-    return isMobile
-      ? { width: VIRTUAL_CANVAS_WIDTH_MOBILE, height: VIRTUAL_CANVAS_HEIGHT_MOBILE }
-      : { width: VIRTUAL_CANVAS_WIDTH_DESKTOP, height: VIRTUAL_CANVAS_HEIGHT_DESKTOP };
-  }, [isMobile]);
-
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -2688,9 +2732,9 @@ export function NetworkTopology({
   return (
     <div
       onContextMenu={(e) => e.preventDefault()}
-      className={`${isFullscreen ? 'fixed inset-[20px] z-[9999] rounded-xl shadow-2xl' : 'relative rounded-xl border-2 overflow-hidden h-full'} flex flex-col transition-all duration-300 ${isDark
-        ? 'bg-gradient-to-br from-slate-800/90 via-slate-700/80 to-slate-800/90 border-slate-600/50'
-        : 'bg-gradient-to-br from-blue-50/50 via-white to-slate-50/80 border-slate-300/50'
+      className={`${isFullscreen ? 'fixed inset-[20px] z-[9999] rounded-2xl shadow-2xl overflow-hidden' : 'relative m-2.5 rounded-2xl border overflow-hidden h-full'} flex flex-col transition-all duration-300 ${isDark
+        ? 'bg-gradient-to-br from-slate-800/90 via-slate-700/80 to-slate-800/90 border-slate-700/50'
+        : 'bg-gradient-to-br from-blue-50/50 via-white to-slate-50/80 border-slate-200'
         }`}
     >
       {/* Header with Tools */}
@@ -2997,7 +3041,7 @@ export function NetworkTopology({
           {/* Canvas */}
           <div
             ref={canvasRef}
-            className="w-full h-full flex-1 min-h-[400px] min-h-0 overflow-hidden cursor-grab active:cursor-grabbing relative touch-none select-none"
+            className="w-full h-full flex-1 min-h-[500px] overflow-hidden cursor-grab active:cursor-grabbing relative touch-none select-none"
             onMouseDown={handleCanvasMouseDown}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -3099,6 +3143,7 @@ export function NetworkTopology({
                         sourceDevice={sourceDevice}
                         targetDevice={targetDevice}
                         isDark={isDark}
+                        isDragging={isActuallyDragging || isTouchDragging}
                         totalSameConns={totalSameConns}
                         sameConnIndex={sameConnIndex}
                         getPortPosition={getPortPosition}
@@ -3305,10 +3350,10 @@ export function NetworkTopology({
             </Tooltip>
           </div>
 
-          {/* Minimap - Desktop Only - Below Zoom Controls */}
+          {/* Minimap (Preview) - Desktop Only - Bottom Right */}
           <div
-            className={`hidden md:block absolute top-12 right-2 w-32 h-20 rounded border cursor-pointer ${isDark ? 'border-slate-700 bg-slate-800/90' : 'border-slate-200 bg-white/90'
-              } shadow-lg overflow-hidden`}
+            className={`hidden md:block absolute bottom-2 right-2 w-32 h-20 rounded border cursor-pointer ${isDark ? 'border-slate-700 bg-slate-800/90' : 'border-slate-200 bg-white/90'
+              } shadow-lg overflow-hidden z-30`}
             title={language === 'tr' ? 'Harita üzerinden gezinmek için tıklayın' : 'Click on map to navigate'}
           >
             <svg
@@ -3357,18 +3402,18 @@ export function NetworkTopology({
             </svg>
           </div>
 
-          {/* Instructions - Bottom Right */}
+          {/* Instructions - Above Minimap */}
           <div
-            className={`absolute bottom-2 right-2 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'} max-w-48 text-right hidden sm:block`}
+            className={`absolute bottom-[92px] right-2 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'} max-w-48 text-right hidden md:block`}
           >
             {language === 'tr'
               ? 'Tek tık: seç, Çift tık: terminal, Sürükle: taşı'
               : 'Click: select, Double-click: terminal, Drag: move'}
           </div>
 
-          {/* Mobile Instructions */}
+          {/* Mobile Instructions - Bottom Right (No Minimap) */}
           <div
-            className={`absolute bottom-2 right-2 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'} max-w-48 text-right sm:hidden`}
+            className={`absolute bottom-2 right-2 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'} max-w-48 text-right md:hidden`}
           >
             {language === 'tr'
               ? 'Dokun: seç, Çift dokun: terminal, Sürükle: taşı, Basılı tut: sil'
@@ -3862,15 +3907,9 @@ export function NetworkTopology({
                 style={{ overflow: 'visible' }}
               >
                 <g transform={`translate(${screenX}, ${screenY})`}>
-                  {/* Enhanced trail effect with multiple layers for better visibility */}
-                  <circle r="14" fill="#06b6d4" opacity={0.2} />
-                  <circle r="10" fill="#06b6d4" opacity={0.4} />
-                  <circle r="6" fill="#0891b2" opacity={0.7} />
 
                   {/* Envelope icon with enhanced visibility */}
                   <g>
-                    {/* Outer glow ring */}
-                    <circle r="18" fill="none" stroke="#06b6d4" strokeWidth="2" opacity={0.3 + Math.sin(frame * 0.5) * 0.2} />
 
                     {/* Envelope body with gradient-like effect */}
                     <rect x="-14" y="-10" width="28" height="20" rx="3" fill="#06b6d4" stroke="#0891b2" strokeWidth="2.5" />
@@ -3879,8 +3918,6 @@ export function NetworkTopology({
                     {/* Envelope flap - more visible design */}
                     <path d="M-10 -5 L0 5 L10 -5" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 
-                    {/* Center dot for extra visibility */}
-                    <circle cx="0" cy="0" r="3" fill="#ffffff" opacity="0.9" />
                   </g>
                 </g>
               </svg>

@@ -2289,12 +2289,12 @@ export default function Home() {
 
         {/* Main Content with matching top background */}
         <main className={`flex-1 overflow-hidden flex flex-col min-h-0 ${isDark ? 'bg-slate-950' : 'bg-slate-100'}`}>
-          <div className="w-full p-5 pb-16 sm:pb-5 flex-1 flex flex-col min-h-0">
+          <div className={`${activeTab === 'topology' ? 'p-0 pb-0 sm:pb-0' : 'p-5 pb-16 sm:pb-5'} w-full flex-1 flex flex-col min-h-0`}>
             {/* Tab Content */}
             {activeTab === 'topology' && (
               <div className="flex-1 flex flex-col min-h-0 h-full">
                 {/* Network Topology fills remaining space */}
-                <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0 topology-print-area">
+                <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0">
                   <NetworkTopology
                     key={topologyKey}
                     cableInfo={cableInfo}

@@ -464,18 +464,6 @@ svg text {
   vector-effect: non-scaling-stroke;
 }
 
-/* Keep topology canvas wrapper stretched to available height */
-.topology-print-area {
-  height: 100%;
-  min-height: 100%;
-}
-
-@media (max-width: 640px) {
-  .topology-print-area {
-    min-height: calc(100dvh - 7.5rem);
-  }
-}
-
 /* Print Styles - Only Topology */
 @media print {
   @page {
@@ -490,6 +478,13 @@ svg text {
     width: 100% !important;
     overflow: visible !important;
     color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
   }
 
   /* Hide everything */
@@ -531,5 +526,9 @@ svg text {
     width: 100vw !important;
     height: 100vh !important;
     background: white !important;
+    flex: 1;
+    /* tüm boş alanı kaplar */
+    overflow: auto;
+    /* taşarsa scroll */
   }
 }
