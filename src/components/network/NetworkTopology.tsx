@@ -215,6 +215,22 @@ export function NetworkTopology({
   // Ref to track if we were dragging (for click handler to check without stale closure)
   const wasDraggingRef = useRef(false);
 
+  // ─── Performance refs: always hold latest values to avoid stale closures ───
+  // These allow event handlers registered once (on mount) to always use fresh state
+  const isPanningRef = useRef(false);
+  const panStartRef = useRef({ x: 0, y: 0 });
+  const zoomRef = useRef(DEFAULT_ZOOM);
+  const panRef = useRef({ x: 0, y: 0 });
+  const draggedDeviceRef = useRef<string | null>(null);
+  const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const dragStartDevicePositionsRef = useRef<{ [key: string]: { x: number; y: number } }>({});
+  const isActuallyDraggingRef = useRef(false);
+  const selectedDeviceIdsRef = useRef<string[]>([]);
+  const snapToGridRef = useRef(true);
+  const isDrawingConnectionRef = useRef(false);
+  const panAnimationFrameRef = useRef<number | null>(null);
+  const historyRef2 = useRef<{ history: { devices: CanvasDevice[]; connections: CanvasConnection[] }[]; index: number }>({ history: [], index: -1 });
+
   // Connection drawing state
   const [isDrawingConnection, setIsDrawingConnection] = useState(false);
   const [connectionStart, setConnectionStart] = useState<{
@@ -239,16 +255,31 @@ export function NetworkTopology({
   const [historyIndex, setHistoryIndex] = useState(-1);
   const historyRef = useRef({ history, historyIndex });
 
-  // Save state to history for undo
+  // Always-fresh refs: updated on every render so event handlers never get stale values
+  const latestDevicesRef = useRef<CanvasDevice[]>([]);
+  const latestConnectionsRef = useRef<CanvasConnection[]>([]);
+  latestDevicesRef.current = devices;
+  latestConnectionsRef.current = connections;
+
+  // Save state to history for undo — uses always-fresh refs, zero stale-closure risk
+  // Does NOT need devices/connections/historyIndex in its dep array
   const saveToHistory = useCallback(() => {
-    const newState = { devices: [...devices], connections: [...connections] };
-    setHistory(prev => {
-      const newHistory = prev.slice(0, historyIndex + 1);
-      newHistory.push(newState);
-      return newHistory.slice(-50); // Keep last 50 states
+    setHistory(prevHistory => {
+      const newState = {
+        devices: [...latestDevicesRef.current],
+        connections: [...latestConnectionsRef.current],
+      };
+      const idx = historyRef2.current.index;
+      const truncated = prevHistory.slice(0, idx + 1);
+      truncated.push(newState);
+      const next = truncated.slice(-50);
+      historyRef2.current.history = next;
+      const newIndex = next.length - 1;
+      historyRef2.current.index = newIndex;
+      setHistoryIndex(newIndex);
+      return next;
     });
-    setHistoryIndex(prev => Math.min(prev + 1, 49));
-  }, [devices, connections, historyIndex]);
+  }, []);
 
   // Undo
   const handleUndo = useCallback(() => {
@@ -565,79 +596,128 @@ export function NetworkTopology({
   }, []);
 
   // Handle canvas pan start
+  // Reads pan via ref to avoid re-creating callback on every pan state change
   const handleCanvasMouseDown = useCallback((e: ReactMouseEvent) => {
     if (e.button === 2) {
       // Right click on canvas - show context menu
       e.preventDefault();
       openContextMenu(e.clientX, e.clientY, null);
     } else if (e.button === 0 && !(e.target as HTMLElement).closest('[data-device-id]')) {
+      const currentPan = panRef.current;
+      const ps = { x: e.clientX - currentPan.x, y: e.clientY - currentPan.y };
+      setPanStart(ps);
+      panStartRef.current = ps;
       setIsPanning(true);
-      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      isPanningRef.current = true;
       setContextMenu(null);
       setSelectAllMode(false);
     }
-  }, [pan]);
+  }, [openContextMenu]);
+
+  // Keep refs in sync with state on every render (no cost — just ref assignment)
+  isPanningRef.current = isPanning;
+  panStartRef.current = panStart;
+  zoomRef.current = zoom;
+  panRef.current = pan;
+  draggedDeviceRef.current = draggedDevice;
+  dragStartPosRef.current = dragStartPos;
+  dragStartDevicePositionsRef.current = dragStartDevicePositions;
+  isActuallyDraggingRef.current = isActuallyDragging;
+  selectedDeviceIdsRef.current = selectedDeviceIds;
+  snapToGridRef.current = snapToGrid;
+  isDrawingConnectionRef.current = isDrawingConnection;
 
   // Handle mouse move for panning and dragging
+  // Registered ONCE (empty deps) — reads all mutable values through refs to avoid stale closures
   useEffect(() => {
+    const CANVAS_W_D = VIRTUAL_CANVAS_WIDTH_DESKTOP;
+    const CANVAS_H_D = VIRTUAL_CANVAS_HEIGHT_DESKTOP;
+    const CANVAS_W_M = VIRTUAL_CANVAS_WIDTH_MOBILE;
+    const CANVAS_H_M = VIRTUAL_CANVAS_HEIGHT_MOBILE;
+
     const handleMouseMove = (e: globalThis.MouseEvent) => {
-      if (isPanning) {
-        setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
-      } else if (draggedDevice && canvasRef.current) {
+      if (isPanningRef.current) {
+        // Throttle pan with RAF for smooth rendering
+        if (panAnimationFrameRef.current !== null) return;
+        const ps = panStartRef.current;
+        panAnimationFrameRef.current = requestAnimationFrame(() => {
+          setPan({ x: e.clientX - ps.x, y: e.clientY - ps.y });
+          panAnimationFrameRef.current = null;
+        });
+      } else if (draggedDeviceRef.current && canvasRef.current) {
         // Check if we've moved enough to consider it a drag
-        if (dragStartPos) {
-          const distance = getDistance(dragStartPos.x, dragStartPos.y, e.clientX, e.clientY);
-          if (distance > DRAG_THRESHOLD) {
-            setIsActuallyDragging(true);
-            wasDraggingRef.current = true; // Mark as dragging for click handler
+        const dsp = dragStartPosRef.current;
+        if (dsp) {
+          const dx2 = e.clientX - dsp.x;
+          const dy2 = e.clientY - dsp.y;
+          const dist = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+          if (dist > DRAG_THRESHOLD) {
+            if (!isActuallyDraggingRef.current) {
+              setIsActuallyDragging(true);
+              isActuallyDraggingRef.current = true;
+            }
+            wasDraggingRef.current = true;
           }
         }
 
-        if (isActuallyDragging) {
-          // Throttling with requestAnimationFrame
+        if (isActuallyDraggingRef.current) {
+          // Throttle drag with RAF
           if (dragAnimationFrameRef.current !== null) return;
 
-          dragAnimationFrameRef.current = requestAnimationFrame(() => {
-            const rect = canvasRef.current!.getBoundingClientRect();
-            const mouseX = (e.clientX - rect.left - pan.x) / zoom;
-            const mouseY = (e.clientY - rect.top - pan.y) / zoom;
+          const clientX = e.clientX;
+          const clientY = e.clientY;
 
-            // Calculate delta from start pos
-            if (!dragStartPos) return;
-            const startMouseX = (dragStartPos.x - rect.left - pan.x) / zoom;
-            const startMouseY = (dragStartPos.y - rect.top - pan.y) / zoom;
+          dragAnimationFrameRef.current = requestAnimationFrame(() => {
+            if (!canvasRef.current) { dragAnimationFrameRef.current = null; return; }
+            const rect = canvasRef.current.getBoundingClientRect();
+            const currentPan = panRef.current;
+            const currentZoom = zoomRef.current;
+            const currentDragStartPos = dragStartPosRef.current;
+            const currentDraggedDevice = draggedDeviceRef.current;
+            const currentSnapToGrid = snapToGridRef.current;
+            const currentSelectedIds = selectedDeviceIdsRef.current;
+            const currentStartPositions = dragStartDevicePositionsRef.current;
+
+            if (!currentDragStartPos || !currentDraggedDevice) {
+              dragAnimationFrameRef.current = null;
+              return;
+            }
+
+            const mouseX = (clientX - rect.left - currentPan.x) / currentZoom;
+            const mouseY = (clientY - rect.top - currentPan.y) / currentZoom;
+            const startMouseX = (currentDragStartPos.x - rect.left - currentPan.x) / currentZoom;
+            const startMouseY = (currentDragStartPos.y - rect.top - currentPan.y) / currentZoom;
             const dx = mouseX - startMouseX;
             const dy = mouseY - startMouseY;
 
-            const canvasDims = getCanvasDimensions();
+            const canvasW = CANVAS_W_D;
+            const canvasH = CANVAS_H_D;
 
-            setDevices((prev) => {
+            setDevices(prev => {
               const newDevices = [...prev];
               let changed = false;
 
-              // If draggedDevice is in selection, move all selected devices
-              const devicesToMove = selectedDeviceIds.includes(draggedDevice)
-                ? selectedDeviceIds
-                : [draggedDevice];
+              const devicesToMove = currentSelectedIds.includes(currentDraggedDevice)
+                ? currentSelectedIds
+                : [currentDraggedDevice];
 
               devicesToMove.forEach(id => {
                 const deviceIndex = newDevices.findIndex(d => d.id === id);
                 if (deviceIndex === -1) return;
 
-                const initialPos = dragStartDevicePositions[id];
+                const initialPos = currentStartPositions[id];
                 if (!initialPos) return;
 
                 let newX = initialPos.x + dx;
                 let newY = initialPos.y + dy;
 
-                // Snap to grid (20px grid)
-                if (snapToGrid) {
+                if (currentSnapToGrid) {
                   newX = Math.round(newX / 20) * 20;
                   newY = Math.round(newY / 20) * 20;
                 }
 
-                const clampedX = Math.max(20, Math.min(newX, canvasDims.width - 100));
-                const clampedY = Math.max(20, Math.min(newY, canvasDims.height - 100));
+                const clampedX = Math.max(20, Math.min(newX, canvasW - 100));
+                const clampedY = Math.max(20, Math.min(newY, canvasH - 100));
 
                 if (Math.abs(newDevices[deviceIndex].x - clampedX) > 0.1 || Math.abs(newDevices[deviceIndex].y - clampedY) > 0.1) {
                   newDevices[deviceIndex] = { ...newDevices[deviceIndex], x: clampedX, y: clampedY };
@@ -651,32 +731,42 @@ export function NetworkTopology({
             dragAnimationFrameRef.current = null;
           });
         }
-      } else if (isDrawingConnection) {
-        const coords = getCanvasCoords(e.clientX, e.clientY);
-        setMousePos(coords);
+      } else if (isDrawingConnectionRef.current && canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        const currentPan = panRef.current;
+        const currentZoom = zoomRef.current;
+        setMousePos({
+          x: (e.clientX - rect.left - currentPan.x) / currentZoom,
+          y: (e.clientY - rect.top - currentPan.y) / currentZoom,
+        });
       }
     };
 
-    const handleMouseUp = (e: globalThis.MouseEvent) => {
-      // Cancel any pending animation frame
+    const handleMouseUp = () => {
+      // Cancel any pending animation frames
       if (dragAnimationFrameRef.current) {
         cancelAnimationFrame(dragAnimationFrameRef.current);
         dragAnimationFrameRef.current = null;
       }
+      if (panAnimationFrameRef.current) {
+        cancelAnimationFrame(panAnimationFrameRef.current);
+        panAnimationFrameRef.current = null;
+      }
 
       // Save to history if we were actually dragging a device
-      if (isActuallyDragging && draggedDevice) {
+      if (isActuallyDraggingRef.current && draggedDeviceRef.current) {
         saveToHistory();
       }
 
-      // Note: We don't reset wasDraggingRef here - let it persist for the click handler
-      // The click handler will check wasDraggingRef and the next mousedown will reset it
-
       setIsPanning(false);
+      isPanningRef.current = false;
       setDraggedDevice(null);
+      draggedDeviceRef.current = null;
       setDragStartPos(null);
+      dragStartPosRef.current = null;
       setIsActuallyDragging(false);
-      setDragStartDevicePositions({}); // Clear initial positions after drag
+      isActuallyDraggingRef.current = false;
+      setDragStartDevicePositions({});
       lastDragPositionRef.current = null;
     };
 
@@ -685,11 +775,11 @@ export function NetworkTopology({
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
-      if (dragAnimationFrameRef.current) {
-        cancelAnimationFrame(dragAnimationFrameRef.current);
-      }
+      if (dragAnimationFrameRef.current) cancelAnimationFrame(dragAnimationFrameRef.current);
+      if (panAnimationFrameRef.current) cancelAnimationFrame(panAnimationFrameRef.current);
     };
-  }, [isPanning, panStart, draggedDevice, dragOffset, zoom, pan, isDrawingConnection, getCanvasCoords, dragStartPos, isActuallyDragging, getDistance, onDeviceSelect, saveToHistory, selectedDeviceIds, dragStartDevicePositions]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Global touch event handlers for device dragging on mobile
   useEffect(() => {
@@ -1293,16 +1383,23 @@ export function NetworkTopology({
 
   }, [devices.length, saveToHistory, generateUniqueIp]);
 
-  // Notify parent of topology changes - ONLY if data actually changed
+  // Notify parent of topology changes — debounced to avoid calling at 60fps during drag
   const lastStateRef = useRef<string>('');
+  const topologyChangeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (onTopologyChange) {
+    if (!onTopologyChange) return;
+    if (topologyChangeTimerRef.current) clearTimeout(topologyChangeTimerRef.current);
+    topologyChangeTimerRef.current = setTimeout(() => {
       const currentState = JSON.stringify({ devices, connections, notes });
       if (currentState !== lastStateRef.current) {
         lastStateRef.current = currentState;
         onTopologyChange(devices, connections, notes);
       }
-    }
+      topologyChangeTimerRef.current = null;
+    }, 150);
+    return () => {
+      if (topologyChangeTimerRef.current) clearTimeout(topologyChangeTimerRef.current);
+    };
   }, [devices, connections, notes, onTopologyChange]);
   // Port Tooltip state
   const [portTooltip, setPortTooltip] = useState<{
@@ -1364,34 +1461,33 @@ export function NetworkTopology({
   }, [devices]);
 
   // Sync port shutdown status from deviceStates
+  // FIXED: removed `devices` from deps — using functional setState (prev =>) to read latest devices
+  // Previously having `devices` in deps + calling setDevices caused an infinite re-render loop
   useEffect(() => {
-    if (!deviceStates || devices.length === 0) return;
+    if (!deviceStates) return;
+    setDevices(prev => {
+      if (prev.length === 0) return prev;
+      let hasChanges = false;
+      const updatedDevices = prev.map(device => {
+        const deviceState = deviceStates.get(device.id);
+        if (!deviceState) return device;
 
-    let hasChanges = false;
-    const updatedDevices = devices.map(device => {
-      const deviceState = deviceStates.get(device.id);
-      if (!deviceState) return device;
+        let portChanged = false;
+        const updatedPorts = device.ports.map(port => {
+          const simulatorPort = deviceState.ports[port.id];
+          if (simulatorPort && simulatorPort.shutdown !== port.shutdown) {
+            portChanged = true;
+            hasChanges = true;
+            return { ...port, shutdown: simulatorPort.shutdown };
+          }
+          return port;
+        });
 
-      const updatedPorts = device.ports.map(port => {
-        // Find corresponding port in deviceState
-        const simulatorPort = deviceState.ports[port.id];
-        if (simulatorPort && simulatorPort.shutdown !== port.shutdown) {
-          hasChanges = true;
-          return { ...port, shutdown: simulatorPort.shutdown };
-        }
-        return port;
+        return portChanged ? { ...device, ports: updatedPorts } : device;
       });
-
-      if (hasChanges) {
-        return { ...device, ports: updatedPorts };
-      }
-      return device;
+      return hasChanges ? updatedDevices : prev;
     });
-
-    if (hasChanges) {
-      setDevices(updatedDevices);
-    }
-  }, [deviceStates, devices]);
+  }, [deviceStates]); // ← only deviceStates, NOT devices (prevents infinite loop)
 
 
   // Delete connection

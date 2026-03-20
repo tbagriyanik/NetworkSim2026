@@ -109,9 +109,7 @@ export function PingAnimationOverlay({
         transform={`translate(${bezierX + envelopeOffsetX}, ${bezierY + envelopeOffsetY})`}
         style={{ transition: 'transform 0.05s linear' }}
       >
-        {/* Glow effect */}
-        <circle r="10" fill="#06b6d4" opacity={0.3} />
-        
+
         {/* Envelope body */}
         <rect 
           x="-12" y="-8" width="24" height="16" rx="2" 
