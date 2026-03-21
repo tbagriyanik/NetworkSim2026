@@ -12,7 +12,7 @@ import { CanvasDevice, CanvasConnection, CanvasNote } from './networkTopology.ty
 import { DeviceIcon } from './DeviceIcon';
 import { ConnectionLine } from './ConnectionLine';
 import { DeviceNode } from './DeviceNode';
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Power, Trash2 } from "lucide-react";
 
 interface NetworkTopologyProps {
   cableInfo: CableInfo;
@@ -1285,6 +1285,15 @@ export function NetworkTopology({
     if (!canvas) return;
 
     const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const isEditable = target.tagName === 'TEXTAREA' || target.tagName === 'INPUT' || target.isContentEditable;
+        const noteScrollHost = target.closest('[data-note-scroll]');
+        if (isEditable || noteScrollHost) {
+          return;
+        }
+      }
+
       e.preventDefault(); // prevent window scroll
 
       const rect = canvas.getBoundingClientRect();
@@ -3381,6 +3390,20 @@ export function NetworkTopology({
                 <div className="flex gap-1">
                   <button
                     onClick={() => {
+                      saveToHistory();
+                      togglePowerDevices(selectedDeviceIds);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border flex items-center gap-2 ${isDark
+                      ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/20'
+                      : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200'
+                      }`}
+                    title={language === 'tr' ? 'Gücü Aç/Kapat' : 'Toggle Power'}
+                  >
+                    <Power className="w-4 h-4" />
+                    {language === 'tr' ? 'Güç' : 'Power'}
+                  </button>
+                  <button
+                    onClick={() => {
                       const firstId = selectedDeviceIds[0];
                       const firstDevice = devices.find(d => d.id === firstId);
                       setSelectedDeviceIds(firstId ? [firstId] : []);
@@ -3606,6 +3629,7 @@ export function NetworkTopology({
 
                         {/* Note Content - Scrollable */}
                         <div
+                          data-note-scroll
                           className="flex-1 overflow-y-auto"
                           style={{
                             height: `calc(100% - 24px)`,
@@ -3615,17 +3639,24 @@ export function NetworkTopology({
                             // Allow scroll within note without affecting canvas zoom
                             e.stopPropagation();
                           }}
+                          onMouseDown={(e) => {
+                            // Prevent note content interactions from starting a drag on the note shell
+                            e.stopPropagation();
+                          }}
                         >
                           <textarea
                             value={note.text}
                             onChange={(e) => updateNoteText(note.id, e.target.value)}
+                            onKeyDown={(e) => {
+                              e.stopPropagation();
+                            }}
                             onBlur={() => {
                               if (onTopologyChange) {
                                 onTopologyChange(devices, connections, notes);
                               }
                             }}
-                            className="w-full h-full px-2 py-1 bg-transparent outline-none resize-none"
-                            style={{ fontSize: note.fontSize }}
+                            className="w-full h-full min-h-full px-2 py-1 bg-transparent outline-none resize-none overflow-y-auto whitespace-pre-wrap break-words"
+                            style={{ fontSize: note.fontSize, lineHeight: 1.35 }}
                           />
                         </div>
 
