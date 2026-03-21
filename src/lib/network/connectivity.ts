@@ -20,7 +20,7 @@ export function checkConnectivity(
   // 1. Find target device by IP
   // First check topology devices (PCs usually)
   let targetDevice = devices.find(d => d.ip === targetIp);
-  
+
   // Then check Switch/Router management/interface IPs if not found
   if (!targetDevice && deviceStates) {
     for (const [id, state] of deviceStates.entries()) {
@@ -44,6 +44,45 @@ export function checkConnectivity(
     return { success: false, hops: [], error: 'Request timed out.' };
   }
 
+  const getPortVlan = (port: any): number => {
+    return Number(port?.accessVlan || port?.vlan || 1);
+  };
+
+  const getDeviceVlan = (device: CanvasDevice, state?: SwitchState): number | null => {
+    if (device.type === 'pc') {
+      const connectedConn = connections.find(conn =>
+        conn.sourceDeviceId === device.id || conn.targetDeviceId === device.id
+      );
+      if (connectedConn && deviceStates) {
+        const peerDeviceId = connectedConn.sourceDeviceId === device.id ? connectedConn.targetDeviceId : connectedConn.sourceDeviceId;
+        const peerPortId = connectedConn.sourceDeviceId === device.id ? connectedConn.targetPort : connectedConn.sourcePort;
+        const peerState = deviceStates.get(peerDeviceId);
+        const peerPort = peerState?.ports?.[peerPortId];
+        if (peerPort) {
+          if (peerPort.mode === 'trunk') return 1;
+          return getPortVlan(peerPort);
+        }
+      }
+      return getDeviceVlan(device, state);
+    }
+    if (!state) return 1;
+
+    // Prefer any SVI / management VLAN tied to the device's IP
+    const ip = device.ip || state.ports['vlan1']?.ipAddress || '';
+    for (const [portId, port] of Object.entries(state.ports)) {
+      if (portId.startsWith('vlan') && port.ipAddress === ip) {
+        const vlanMatch = portId.match(/vlan(\d+)/);
+        return vlanMatch ? parseInt(vlanMatch[1], 10) : 1;
+      }
+    }
+
+    // For access ports, the VLAN assigned to the active port is the device VLAN
+    const accessPort = Object.values(state.ports).find((port: any) => !port.shutdown && port.mode === 'access' && getPortVlan(port) !== 1);
+    if (accessPort) return getPortVlan(accessPort);
+
+    return 1;
+  };
+
   // 2. Simple Pathfinding (BFS) to check physical connectivity
   const queue: string[] = [sourceId];
   const visited = new Set<string>([sourceId]);
@@ -60,16 +99,16 @@ export function checkConnectivity(
     for (const neighborId of neighbors) {
       if (!visited.has(neighborId)) {
         // Check if port is shutdown or device is powered off on either side
-        const conn = connections.find(c => 
+        const conn = connections.find(c =>
           (c.sourceDeviceId === currentId && c.targetDeviceId === neighborId) ||
           (c.sourceDeviceId === neighborId && c.targetDeviceId === currentId)
         );
-        
+
         if (conn) {
           // Check source side port
           const srcPortId = conn.sourceDeviceId === currentId ? conn.sourcePort : conn.targetPort;
           const dstPortId = conn.sourceDeviceId === neighborId ? conn.sourcePort : conn.targetPort;
-          
+
           const srcDevice = devices.find(d => d.id === currentId);
           const dstDevice = devices.find(d => d.id === neighborId);
 
@@ -123,8 +162,8 @@ export function checkConnectivity(
         const swPortId = conn.sourceDeviceId === sw.id ? conn.sourcePort : conn.targetPort;
         const swState = deviceStates.get(sw.id);
         const swPort = swState?.ports?.[swPortId];
-        const swVlan = swPort?.vlan || 1;
-        const pcVlan = pc.vlan || 1;
+        const swVlan = getPortVlan(swPort);
+        const pcVlan = Number(pc.vlan || 1);
 
         // Allow ping if switch port is trunk OR if VLANs match
         if (swPort?.mode !== 'trunk' && swVlan !== pcVlan) {
@@ -167,17 +206,17 @@ export function checkConnectivity(
           const egressPort = switchState.ports[egressPortId];
 
           // Default to VLAN 1 if not specified
-          const ingressVlan = ingressPort?.vlan || 1;
-          const egressVlan = egressPort?.vlan || 1;
+          const ingressVlan = getPortVlan(ingressPort);
+          const egressVlan = getPortVlan(egressPort);
 
           // Check for VLAN mismatch on access ports
           if (ingressVlan !== egressVlan) {
             // Allow if one or both ports are trunks
             if (ingressPort?.mode !== 'trunk' && egressPort?.mode !== 'trunk') {
-              return { 
-                success: false, 
-                hops: path.slice(0, i + 1).map(id => devices.find(d => d.id === id)?.name || id), 
-                error: `VLAN mismatch on ${device.name}. Port ${ingressPortId} is in VLAN ${ingressVlan}, but port ${egressPortId} is in VLAN ${egressVlan}.` 
+              return {
+                success: false,
+                hops: path.slice(0, i + 1).map(id => devices.find(d => d.id === id)?.name || id),
+                error: `VLAN mismatch on ${device.name}. Port ${ingressPortId} is in VLAN ${ingressVlan}, but port ${egressPortId} is in VLAN ${egressVlan}.`
               };
             }
           }
@@ -191,51 +230,47 @@ export function checkConnectivity(
     const getDeviceVlanForIp = (deviceId: string, ip: string): number | null => {
       const device = devices.find(d => d.id === deviceId);
       if (!device) return null;
-      if (device.type === 'pc') return device.vlan || 1;
-
       const state = deviceStates.get(deviceId);
-      if (!state) return null;
-      
+      if (!state) return device.type === 'pc' ? Number(device.vlan || 1) : 1;
+
+      if (device.type === 'pc') return getDeviceVlan(device, state);
+
       // Check all VLAN SVIs first (vlan1, vlan10, vlan20, etc.)
       for (const [portId, port] of Object.entries(state.ports)) {
         if (portId.startsWith('vlan') && port.ipAddress === ip) {
-          // Extract VLAN number from port ID (e.g., vlan10 -> 10, vlan1 -> 1)
           const vlanMatch = portId.match(/vlan(\d+)/);
           if (vlanMatch) {
-            return parseInt(vlanMatch[1]);
+            return parseInt(vlanMatch[1], 10);
           }
-          return 1; // Default to VLAN 1 if can't parse
+          return 1;
         }
       }
 
       // Check routed physical interfaces (L3)
-      const onPhysical = Object.values(state.ports).some(p => p.ipAddress === ip && p.mode === 'routed');
-      if (onPhysical) return null; // L3 device, skip VLAN enforcement
+      const onPhysical = Object.values(state.ports).some((p: any) => p.ipAddress === ip && p.mode === 'routed');
+      if (onPhysical) return null;
 
-      // Default to VLAN 1 for management IP
-      if (state.ports['vlan1']?.ipAddress === ip) return 1;
-      
-      return 1;
+      return getDeviceVlan(device, state);
     };
 
     const sourceDevice = devices.find(d => d.id === sourceId);
     const sourceIp = sourceDevice?.ip || deviceStates.get(sourceId)?.ports['vlan1']?.ipAddress || '';
     const sourceVlan = sourceIp ? getDeviceVlanForIp(sourceId, sourceIp) : null;
     const targetVlan = getDeviceVlanForIp(targetDevice.id, targetIp);
-    
+
     // Skip VLAN enforcement for L3 routing scenarios
     const isSourceL3 = sourceVlan === null;
     const isTargetL3 = targetVlan === null;
-    
+
     // Allow same-VLAN communication
     // Only block if both are L2 devices AND in different VLANs
     if (!isSourceL3 && !isTargetL3 && sourceVlan !== null && targetVlan !== null) {
       // Same VLAN: allow communication
       if (sourceVlan === targetVlan) {
         // PCs in same VLAN can ping each other
-        return { 
-          success: true, 
-          hops: path.map(id => devices.find(d => d.id === id)?.name || id) 
+        return {
+          success: true,
+          hops: path.map(id => devices.find(d => d.id === id)?.name || id)
         };
       }
       // Different VLANs: block (unless L3 routing handles it)
@@ -251,27 +286,27 @@ export function checkConnectivity(
   if (deviceStates) {
     const sourceState = deviceStates.get(sourceId);
     const targetState = deviceStates.get(targetDevice.id);
-    
+
     // Check if source has routing capability and a route to target
     if (sourceState?.ipRouting) {
       const sourceRoutes = getRoutingTable(sourceId, deviceStates);
       const route = findRoute(targetIp, sourceRoutes);
-      
+
       if (route) {
         // Route found - allow communication through L3 routing
-        return { 
-          success: true, 
+        return {
+          success: true,
           hops: path.map(id => devices.find(d => d.id === id)?.name || id),
           error: undefined
         };
       }
     }
-    
+
     // Check if there's a router in the path that can route between VLANs
     for (const deviceId of path) {
       const state = deviceStates.get(deviceId);
       const device = devices.find(d => d.id === deviceId);
-      
+
       if (state?.ipRouting && device?.type === 'router') {
         // Router in path - check if it has routes to both source and target networks
         const routes = getRoutingTable(deviceId, deviceStates);
@@ -280,10 +315,10 @@ export function checkConnectivity(
         const srcIp = srcDevice?.ip || deviceStates.get(sourceId)?.ports['vlan1']?.ipAddress || '';
         const sourceRoute = findRoute(srcIp, routes);
         const targetRoute = findRoute(targetIp, routes);
-        
+
         if (sourceRoute && targetRoute) {
-          return { 
-            success: true, 
+          return {
+            success: true,
             hops: path.map(id => devices.find(d => d.id === id)?.name || id),
             error: undefined
           };
@@ -296,16 +331,38 @@ export function checkConnectivity(
   // For a "kusursuz" (flawless) system, we should check subnets
   // But for now, if physical path exists and IPs are in same subnet or routed, it's a success
   // Currently, we'll assume if they have IPs and physical path, they can talk (Layer 2 focus)
-  
+
   const sourceDevice = devices.find(d => d.id === sourceId);
   if (!sourceDevice?.ip && !isManagementIpSet(sourceId, deviceStates)) {
-     return { success: false, hops: [], error: 'Source has no IP address.' };
+    return { success: false, hops: [], error: 'Source has no IP address.' };
   }
 
-  return { 
-    success: true, 
-    hops: path.map(id => devices.find(d => d.id === id)?.name || id) 
+  return {
+    success: true,
+    hops: path.map(id => devices.find(d => d.id === id)?.name || id)
   };
+}
+
+export function checkDeviceConnectivity(
+  sourceId: string,
+  targetId: string,
+  devices: CanvasDevice[],
+  connections: CanvasConnection[],
+  deviceStates?: Map<string, SwitchState>
+): { success: boolean; hops: string[]; error?: string } {
+  const sourceDevice = devices.find(d => d.id === sourceId);
+  const targetDevice = devices.find(d => d.id === targetId);
+
+  if (!sourceDevice || !targetDevice) {
+    return { success: false, hops: [], error: 'Destination host unreachable.' };
+  }
+
+  const targetIp = targetDevice.ip || deviceStates?.get(targetId)?.ports['vlan1']?.ipAddress || '';
+  if (!targetIp) {
+    return { success: false, hops: [], error: 'Request timed out.' };
+  }
+
+  return checkConnectivity(sourceId, targetIp, devices, connections, deviceStates);
 }
 
 function isPortShutdown(deviceId: string, portId: string, devices: CanvasDevice[], deviceStates?: Map<string, SwitchState>): boolean {
@@ -316,14 +373,14 @@ function isPortShutdown(deviceId: string, portId: string, devices: CanvasDevice[
       return state.ports[portId].shutdown;
     }
   }
-  
+
   // Check topology (PCs)
   const device = devices.find(d => d.id === deviceId);
   if (device) {
     const port = device.ports.find(p => p.id === portId);
     return port?.status === 'disabled';
   }
-  
+
   return false;
 }
 

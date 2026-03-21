@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { SwitchState, CableType, CableInfo, isCableCompatible } from '@/lib/network/types';
+import { checkDeviceConnectivity } from '@/lib/network/connectivity';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -1934,6 +1935,21 @@ export function NetworkTopology({
       cancelAnimationFrame(pingAnimationRef.current);
     }
 
+    const connectivity = checkDeviceConnectivity(sourceId, targetId, devices, connections, deviceStates);
+    if (!connectivity.success) {
+      setPingAnimation({
+        sourceId,
+        targetId,
+        path: [sourceId, targetId],
+        currentHopIndex: 0,
+        progress: 1,
+        success: false,
+        frame: 0
+      });
+      setTimeout(() => setPingAnimation(null), 2500);
+      return;
+    }
+
     // Find path between source and target
     const path = findPath(sourceId, targetId);
 
@@ -1996,7 +2012,7 @@ export function NetworkTopology({
     };
 
     pingAnimationRef.current = requestAnimationFrame(animate);
-  }, [connections, findPath]);
+  }, [connections, deviceStates, devices, findPath]);
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -2258,7 +2274,7 @@ export function NetworkTopology({
         <path
           d={`M ${source.x} ${source.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${target.x} ${target.y}`}
           stroke="transparent"
-          strokeWidth={15}
+          strokeWidth={22}
           fill="none"
           className="cursor-pointer"
           onClick={() => deleteConnection(conn.id)}
@@ -2274,8 +2290,8 @@ export function NetworkTopology({
               deleteConnection(conn.id);
             }}
           >
-            {/* Subtle background rectangle instead of circle */}
-            <Trash2 className="w-4 h-4 text-red-500" width={15} />
+            <rect x="-8" y="-8" width="15" height="15" rx="5" fill={isDark ? '#0f172a' : '#ffffff'} opacity="0.92" className="drop-shadow-sm" />
+            <Trash2 className="w-4 h-4 text-red-500" width={15} height={15} style={{ transform: 'translate(-8px, -8px)' }} />
           </g>
         )}
 
