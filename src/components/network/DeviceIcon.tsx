@@ -1,6 +1,6 @@
 'use client';
 
-import { DEVICE_ICON_PATHS } from './networkTopology.constants';
+import { DEVICE_ICON_PATHS, DEVICE_ICON_COLORS } from './networkTopology.constants';
 import type { DeviceType } from './networkTopology.types';
 
 export interface DeviceIconProps {
@@ -19,7 +19,7 @@ export function DeviceIcon({ type, className }: DeviceIconProps) {
 
   if (type === 'router') {
     return (
-      <svg className={svgClassName} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className={svgClassName} fill="none" stroke={DEVICE_ICON_COLORS.router} viewBox="0 0 24 24">
         <circle
           cx={DEVICE_ICON_PATHS.router.circle.cx}
           cy={DEVICE_ICON_PATHS.router.circle.cy}
@@ -34,7 +34,7 @@ export function DeviceIcon({ type, className }: DeviceIconProps) {
   const path = type === 'pc' ? DEVICE_ICON_PATHS.pc : DEVICE_ICON_PATHS.switch;
 
   return (
-    <svg className={svgClassName} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className={svgClassName} fill="none" stroke={type === 'pc' ? DEVICE_ICON_COLORS.pc : DEVICE_ICON_COLORS.switch} viewBox="0 0 24 24">
       <path {...strokeProps} d={path} />
     </svg>
   );

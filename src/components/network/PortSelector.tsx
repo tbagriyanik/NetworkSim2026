@@ -96,29 +96,26 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
             </button>
           </div>
 
-          {/* Cable Type Selector */}
+          {/* Cable Type Selector - Toolbar Button Group */}
           <div className="mt-3">
             <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} mb-2`}>
               {language === 'tr' ? 'Kablo Tipi' : 'Cable Type'}
             </div>
-            <div className="flex gap-2">
-              {(['straight', 'crossover', 'console'] as CableType[]).map((type) => {
+            <div className="flex gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 w-fit">
+              {(['straight', 'crossover', 'console'] as CableType[]).map((type, index) => {
                 const typeLabel = getCableTypeLabel(type, language);
                 return (
                   <button
                     key={type}
                     onClick={() => setSelectedCableType(type)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedCableType === type
-                      ? `${CABLE_COLORS[type].bg} text-white`
+                    className={`relative px-3 py-1.5 text-[10px] font-bold tracking-wide transition-all duration-200 ${selectedCableType === type
+                      ? `${CABLE_COLORS[type].bg} text-white shadow-md -translate-y-0.5`
                       : isDark
-                        ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
+                        ? 'text-slate-400 hover:text-white hover:bg-slate-700 rounded-md'
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-md'
+                      } ${index === 0 ? 'rounded-l-md' : index === 2 ? 'rounded-r-md' : 'rounded-none'}`}
                   >
-                    <div className={`w-2.5 h-2.5 rounded ${CABLE_COLORS[type].bg}`} />
-                    <span className="text-xs font-semibold tracking-tight leading-snug">
-                      {typeLabel}
-                    </span>
+                    {typeLabel}
                   </button>
                 );
               })}
