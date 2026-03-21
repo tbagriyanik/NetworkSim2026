@@ -257,7 +257,7 @@ export function NetworkTopology({
   const [clipboard, setClipboard] = useState<CanvasDevice[]>([]);
 
   // Undo/Redo history - ref-based, no stale closure
-  const historyRef = useRef<{ devices: CanvasDevice[]; connections: CanvasConnection[] }[]>([]);
+  const historyRef = useRef<{ devices: CanvasDevice[]; connections: CanvasConnection[]; notes: CanvasNote[] }[]>([]);
   const historyIndexRef = useRef<number>(-1);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [historyLength, setHistoryLength] = useState(0);
@@ -271,6 +271,7 @@ export function NetworkTopology({
     const snapshot = {
       devices: JSON.parse(JSON.stringify(latestDevicesRef.current)),
       connections: JSON.parse(JSON.stringify(latestConnectionsRef.current)),
+      notes: JSON.parse(JSON.stringify(latestNotesRef.current)),
     };
     // Truncate redo stack
     const truncated = historyRef.current.slice(0, historyIndexRef.current + 1);
@@ -278,7 +279,8 @@ export function NetworkTopology({
     const last = truncated[truncated.length - 1];
     if (last &&
       JSON.stringify(last.devices) === JSON.stringify(snapshot.devices) &&
-      JSON.stringify(last.connections) === JSON.stringify(snapshot.connections)) {
+      JSON.stringify(last.connections) === JSON.stringify(snapshot.connections) &&
+      JSON.stringify(last.notes) === JSON.stringify(snapshot.notes)) {
       return;
     }
     truncated.push(snapshot);
@@ -297,6 +299,7 @@ export function NetworkTopology({
       if (state) {
         setDevices(JSON.parse(JSON.stringify(state.devices)));
         setConnections(JSON.parse(JSON.stringify(state.connections)));
+        setNotes(JSON.parse(JSON.stringify(state.notes)));
         setHistoryIndex(historyIndexRef.current);
       }
     }
@@ -310,6 +313,7 @@ export function NetworkTopology({
       if (state) {
         setDevices(JSON.parse(JSON.stringify(state.devices)));
         setConnections(JSON.parse(JSON.stringify(state.connections)));
+        setNotes(JSON.parse(JSON.stringify(state.notes)));
         setHistoryIndex(historyIndexRef.current);
       }
     }
@@ -1513,6 +1517,155 @@ export function NetworkTopology({
     setDevices((prev) => [...prev, newDevice]);
 
   }, [devices.length, saveToHistory, generateUniqueIp]);
+
+  // Note management functions
+  const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
+  const noteCounterRef = useRef<number>(0);
+
+  // Note dragging and resizing state
+  const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
+  const [resizingNoteId, setResizingNoteId] = useState<string | null>(null);
+  const [noteDragStart, setNoteDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [noteResizeStart, setNoteResizeStart] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+
+  // Refs for note dragging/resizing to avoid stale closures
+  const draggedNoteIdRef = useRef<string | null>(null);
+  const resizingNoteIdRef = useRef<string | null>(null);
+  const noteDragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const noteResizeStartRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
+  const latestNotesRef = useRef<CanvasNote[]>([]);
+
+  const addNote = useCallback(() => {
+    saveToHistory();
+    noteCounterRef.current++;
+    const newNote: CanvasNote = {
+      id: `note-${noteCounterRef.current}`,
+      x: 200 + Math.random() * 100,
+      y: 200 + Math.random() * 100,
+      width: 200,
+      height: 150,
+      text: language === 'tr' ? 'Yeni not...' : 'New note...',
+      color: '#fef3c7',
+      font: 'Arial',
+      fontSize: 12,
+      opacity: 1,
+    };
+    setNotes((prev) => [...prev, newNote]);
+    setSelectedNoteIds([newNote.id]);
+  }, [saveToHistory, language]);
+
+  const deleteNote = useCallback((noteId: string) => {
+    saveToHistory();
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    setSelectedNoteIds((prev) => prev.filter((id) => id !== noteId));
+  }, [saveToHistory]);
+
+  const updateNoteText = useCallback((noteId: string, text: string) => {
+    setNotes((prev) =>
+      prev.map((n) => (n.id === noteId ? { ...n, text } : n))
+    );
+  }, []);
+
+  const updateNoteStyle = useCallback((noteId: string, updates: Partial<CanvasNote>) => {
+    saveToHistory();
+    setNotes((prev) =>
+      prev.map((n) => (n.id === noteId ? { ...n, ...updates } : n))
+    );
+  }, [saveToHistory]);
+
+  // Sync notes ref on every render
+  latestNotesRef.current = notes;
+  draggedNoteIdRef.current = draggedNoteId;
+  resizingNoteIdRef.current = resizingNoteId;
+  noteDragStartRef.current = noteDragStart;
+  noteResizeStartRef.current = noteResizeStart;
+
+  // Handle note header drag start
+  const handleNoteHeaderMouseDown = useCallback((e: ReactMouseEvent, noteId: string) => {
+    e.stopPropagation();
+    if (!canvasRef.current) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const note = notes.find((n) => n.id === noteId);
+    if (!note) return;
+
+    saveToHistory();
+    setDraggedNoteId(noteId);
+    setNoteDragStart({ x: e.clientX, y: e.clientY });
+    setSelectedNoteIds([noteId]);
+  }, [notes, saveToHistory]);
+
+  // Handle note resize start
+  const handleNoteResizeStart = useCallback((e: ReactMouseEvent, noteId: string) => {
+    e.stopPropagation();
+    if (!canvasRef.current) return;
+
+    const note = notes.find((n) => n.id === noteId);
+    if (!note) return;
+
+    saveToHistory();
+    setResizingNoteId(noteId);
+    setNoteResizeStart({ x: e.clientX, y: e.clientY, width: note.width, height: note.height });
+    setSelectedNoteIds([noteId]);
+  }, [notes, saveToHistory]);
+
+  // Handle note dragging and resizing with mouse move
+  useEffect(() => {
+    const handleMouseMove = (e: globalThis.MouseEvent) => {
+      if (!canvasRef.current) return;
+
+      if (draggedNoteIdRef.current && noteDragStartRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        const currentPan = panRef.current;
+        const currentZoom = zoomRef.current;
+
+        const deltaX = (e.clientX - noteDragStartRef.current.x) / currentZoom;
+        const deltaY = (e.clientY - noteDragStartRef.current.y) / currentZoom;
+
+        setNotes((prev) =>
+          prev.map((n) =>
+            n.id === draggedNoteIdRef.current
+              ? { ...n, x: n.x + deltaX, y: n.y + deltaY }
+              : n
+          )
+        );
+
+        setNoteDragStart({ x: e.clientX, y: e.clientY });
+      } else if (resizingNoteIdRef.current && noteResizeStartRef.current) {
+        const currentZoom = zoomRef.current;
+
+        const deltaX = (e.clientX - noteResizeStartRef.current.x) / currentZoom;
+        const deltaY = (e.clientY - noteResizeStartRef.current.y) / currentZoom;
+
+        const newWidth = Math.max(150, noteResizeStartRef.current.width + deltaX);
+        const newHeight = Math.max(100, noteResizeStartRef.current.height + deltaY);
+
+        setNotes((prev) =>
+          prev.map((n) =>
+            n.id === resizingNoteIdRef.current
+              ? { ...n, width: newWidth, height: newHeight }
+              : n
+          )
+        );
+      }
+    };
+
+    const handleMouseUp = () => {
+      setDraggedNoteId(null);
+      setNoteDragStart(null);
+      setResizingNoteId(null);
+      setNoteResizeStart(null);
+    };
+
+    if (draggedNoteIdRef.current || resizingNoteIdRef.current) {
+      window.addEventListener('mousemove', handleMouseMove, { passive: true });
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, []);
 
   // Notify parent of topology changes — debounced to avoid calling at 60fps during drag
   const lastStateRef = useRef<string>('');
@@ -3092,6 +3245,25 @@ export function NetworkTopology({
               <span className="hidden sm:inline">{language === 'tr' ? 'Cihazları Bağla' : 'Connect Devices'}</span>
               <span className="sm:hidden">{language === 'tr' ? 'Bağla' : 'Connect'}</span>
             </button>
+
+            {/* Add Note Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={addNote}
+                  className={`cursor-pointer hidden md:flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition-all ${isDark
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                    : 'bg-amber-500 hover:bg-amber-600 text-white'
+                    }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 0 0 -2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span className="hidden sm:inline">{language === 'tr' ? 'Not Ekle' : 'Add Note'}</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{language === 'tr' ? 'Not Ekle' : 'Add Note'}</TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </div>
@@ -3366,6 +3538,97 @@ export function NetworkTopology({
                       />
                     );
                   })}
+
+                  {/* Notes */}
+                  {notes.map((note) => (
+                    <foreignObject
+                      key={note.id}
+                      x={note.x}
+                      y={note.y}
+                      width={note.width}
+                      height={note.height}
+                      data-note-id={note.id}
+                      className="pointer-events-none"
+                    >
+                      <div
+                        className={`pointer-events-auto relative flex flex-col w-full h-full rounded-lg shadow-lg border ${isDark
+                          ? 'border-amber-300/60'
+                          : 'border-yellow-200'
+                          } ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-emerald-400/70' : ''}`}
+                        data-note-id={note.id}
+                        style={{ backgroundColor: note.color, fontFamily: note.font, opacity: note.opacity }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if ((e as any).shiftKey) {
+                            setSelectedNoteIds((prev) => prev.includes(note.id) ? prev.filter(id => id !== note.id) : [...prev, note.id]);
+                          } else {
+                            setSelectedNoteIds([note.id]);
+                            setSelectedDeviceIds([]);
+                          }
+                        }}
+                      >
+                        {/* Note Header - Draggable */}
+                        <div
+                          onMouseDown={(e) => handleNoteHeaderMouseDown(e as unknown as ReactMouseEvent, note.id)}
+                          className={`flex items-center justify-between px-2 text-[10px] font-semibold uppercase tracking-widest cursor-move select-none ${isDark ? 'bg-black/10' : 'bg-black/5'
+                            }`}
+                          style={{ height: '24px' }}
+                        >
+                          <span />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNote(note.id);
+                            }}
+                            className="px-1.5 py-0.5 rounded hover:bg-black/10"
+                            title={language === 'tr' ? 'Sil' : 'Delete'}
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1 -1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0 -1-1h-4a1 1 0 0 0 -1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        {/* Note Content - Scrollable */}
+                        <div
+                          className="flex-1 overflow-y-auto"
+                          style={{
+                            height: `calc(100% - 24px)`,
+                            scrollBehavior: 'smooth',
+                          }}
+                          onWheel={(e) => {
+                            // Allow scroll within note without affecting canvas zoom
+                            e.stopPropagation();
+                          }}
+                        >
+                          <textarea
+                            value={note.text}
+                            onChange={(e) => updateNoteText(note.id, e.target.value)}
+                            onBlur={() => {
+                              if (onTopologyChange) {
+                                onTopologyChange(devices, connections, notes);
+                              }
+                            }}
+                            className="w-full h-full px-2 py-1 bg-transparent outline-none resize-none"
+                            style={{ fontSize: note.fontSize }}
+                          />
+                        </div>
+
+                        {/* Resize Handle - Bottom Right */}
+                        <div
+                          onMouseDown={(e) => handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id)}
+                          className="absolute right-1 bottom-1 w-4 h-4 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity"
+                          title={language === 'tr' ? 'Yeniden Boyutlandır' : 'Resize'}
+                        >
+                          <svg viewBox="0 0 12 12" className="w-full h-full text-black">
+                            <path d="M4 12 L12 4" stroke="currentColor" strokeWidth="1" />
+                            <path d="M7 12 L12 7" stroke="currentColor" strokeWidth="1" />
+                            <path d="M10 12 L12 10" stroke="currentColor" strokeWidth="1" />
+                          </svg>
+                        </div>
+                      </div>
+                    </foreignObject>
+                  ))}
 
                   {/* Ping Animation - rendered LAST for top z-order */}
                   {pingAnimation && (() => {
