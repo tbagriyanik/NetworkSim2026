@@ -47,6 +47,7 @@ export interface CommandContext {
   devices?: any[];
   connections?: any[];
   deviceStates: Map<string, SwitchState>;
+  sourceDeviceId?: string;
 }
 
 export type CommandHandler = (
@@ -794,7 +795,8 @@ export function executeCommand(
   language: 'tr' | 'en' = 'tr',
   devices?: any[],
   connections?: any[],
-  deviceStates?: Map<string, SwitchState>
+  deviceStates?: Map<string, SwitchState>,
+  sourceDeviceId?: string
 ): CommandResult {
   if (input === '__CONSOLE_CONNECT__') {
     return handleConsoleConnect(state, language);
@@ -859,6 +861,7 @@ export function executeCommand(
     devices,
     connections,
     deviceStates: deviceStates || new Map(),
+    sourceDeviceId,
   };
 
   const handler = commandHandlers[commandName];

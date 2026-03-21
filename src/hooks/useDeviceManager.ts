@@ -107,7 +107,15 @@ export function useDeviceManager() {
     try {
       const deviceState = deviceStates.get(deviceId) || (deviceId.includes('router') ? createInitialRouterState() : createInitialState());
       const devicePrompt = getPrompt(deviceState);
-      const { requiresConfirmation, confirmationMessage, confirmationAction, success, newState, error, ...result } = executeCommand(deviceState, command, language, topologyDevices ?? undefined, topologyConnections ?? undefined, deviceStates);
+      const { requiresConfirmation, confirmationMessage, confirmationAction, success, newState, error, ...result } = executeCommand(
+        deviceState,
+        command,
+        language,
+        topologyDevices ?? undefined,
+        topologyConnections ?? undefined,
+        deviceStates,
+        deviceId
+      );
 
       const trimmedCommand = command.trim().toLowerCase();
       const isInternalCommand = command === '__CONSOLE_CONNECT__';

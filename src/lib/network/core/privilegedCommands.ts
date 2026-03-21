@@ -1,4 +1,5 @@
 import type { CommandHandler } from './commandTypes';
+import { checkConnectivity } from '../connectivity';
 
 // Privileged EXEC komutları (ping, telnet, write, copy, erase, reload, debug, vs.)
 
@@ -32,13 +33,28 @@ function cmdPing(state: any, input: string, ctx: any): any {
     const host = match[1];
     const size = match[2] || '56';
     const count = match[3] || '5';
+    if (ctx?.sourceDeviceId && Array.isArray(ctx.devices)) {
+      const connectivity = checkConnectivity(
+        ctx.sourceDeviceId,
+        host,
+        ctx.devices,
+        ctx.connections || [],
+        ctx.deviceStates
+      );
+
+      if (!connectivity.success) {
+        return {
+          success: false,
+          output: `\nType escape sequence to abort.\nSending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n.....\n`,
+          error: connectivity.error || `Destination host unreachable.`,
+        };
+      }
+    }
 
     let output = `\nType escape sequence to abort.\n`;
     output += `Sending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n`;
-
-    // Simulate ping results (80% success rate for demo)
-    const successCount = Math.random() > 0.2 ? parseInt(count) : 0;
-    const failCount = parseInt(count) - successCount;
+    const successCount = parseInt(count);
+    const failCount = 0;
 
     for (let i = 0; i < successCount; i++) {
         output += '!';
@@ -48,10 +64,7 @@ function cmdPing(state: any, input: string, ctx: any): any {
     }
     output += '\n';
 
-    output += `\nSuccess rate is ${Math.round((successCount / parseInt(count)) * 100)} percent (${successCount}/${count})`;
-    if (successCount > 0) {
-        output += `, round-trip min/avg/max = 1/2/8 ms`;
-    }
+    output += `\nSuccess rate is 100 percent (${successCount}/${count}), round-trip min/avg/max = 1/2/8 ms`;
     output += '\n';
 
     return { success: true, output };
