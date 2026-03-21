@@ -86,6 +86,10 @@ const VIRTUAL_CANVAS_HEIGHT_DESKTOP = 2000;
 const MIN_ZOOM = 0.15;
 const MAX_ZOOM = 4.0;
 const DEFAULT_ZOOM = 1.0; // 100% default zoom
+const NOTE_COLORS = ['#fef3c7', '#dbeafe', '#dcfce7', '#fee2e2', '#f5d0fe', '#e2e8f0'] as const;
+const NOTE_FONTS = ['Arial', 'Verdana', 'Trebuchet MS', 'Courier New', 'Roboto'] as const;
+const NOTE_FONT_SIZES: Array<CanvasNote['fontSize']> = [10, 12, 16, 20];
+const NOTE_OPACITY_OPTIONS: Array<CanvasNote['opacity']> = [0.25, 0.5, 0.75, 1];
 
 export function NetworkTopology({
   cableInfo,
@@ -700,7 +704,7 @@ export function NetworkTopology({
     }
   }, [openContextMenu]);
 
-  // Keep refs in sync with state on every render (no cost — just ref assignment)
+  // Keep refs in sync with state on every render (no cost - just ref assignment)
   isPanningRef.current = isPanning;
   panStartRef.current = panStart;
   zoomRef.current = zoom;
@@ -714,7 +718,7 @@ export function NetworkTopology({
   isDrawingConnectionRef.current = isDrawingConnection;
 
   // Handle mouse move for panning and dragging
-  // Registered ONCE (empty deps) — reads all mutable values through refs to avoid stale closures
+  // Registered ONCE (empty deps) - reads all mutable values through refs to avoid stale closures
   useEffect(() => {
     const CANVAS_W_D = VIRTUAL_CANVAS_WIDTH_DESKTOP;
     const CANVAS_H_D = VIRTUAL_CANVAS_HEIGHT_DESKTOP;
@@ -1583,12 +1587,20 @@ export function NetworkTopology({
   const noteDragStartRef = useRef<{ x: number; y: number } | null>(null);
   const noteResizeStartRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
   const latestNotesRef = useRef<CanvasNote[]>([]);
+  const getNextNoteId = useCallback(() => {
+    const existingIds = new Set(latestNotesRef.current.map((n) => n.id));
+    let next = noteCounterRef.current + 1;
+    while (existingIds.has(`note-${next}`)) {
+      next++;
+    }
+    noteCounterRef.current = next;
+    return `note-${next}`;
+  }, []);
 
   const addNote = useCallback(() => {
     saveToHistory();
-    noteCounterRef.current++;
     const newNote: CanvasNote = {
-      id: `note-${noteCounterRef.current}`,
+      id: getNextNoteId(),
       x: 200 + Math.random() * 100,
       y: 200 + Math.random() * 100,
       width: 200,
@@ -1601,7 +1613,7 @@ export function NetworkTopology({
     };
     setNotes((prev) => [...prev, newNote]);
     setSelectedNoteIds([newNote.id]);
-  }, [saveToHistory, language]);
+  }, [saveToHistory, language, getNextNoteId]);
 
   const deleteNote = useCallback((noteId: string) => {
     saveToHistory();
@@ -1621,6 +1633,53 @@ export function NetworkTopology({
       prev.map((n) => (n.id === noteId ? { ...n, ...updates } : n))
     );
   }, [saveToHistory]);
+
+  const cycleNoteColor = useCallback((noteId: string) => {
+    const note = latestNotesRef.current.find((n) => n.id === noteId);
+    if (!note) return;
+    const idx = NOTE_COLORS.indexOf(note.color as typeof NOTE_COLORS[number]);
+    const next = NOTE_COLORS[(idx >= 0 ? idx + 1 : 0) % NOTE_COLORS.length];
+    updateNoteStyle(noteId, { color: next });
+  }, [updateNoteStyle]);
+
+  const cycleNoteFont = useCallback((noteId: string) => {
+    const note = latestNotesRef.current.find((n) => n.id === noteId);
+    if (!note) return;
+    const idx = NOTE_FONTS.indexOf(note.font as typeof NOTE_FONTS[number]);
+    const next = NOTE_FONTS[(idx >= 0 ? idx + 1 : 0) % NOTE_FONTS.length];
+    updateNoteStyle(noteId, { font: next });
+  }, [updateNoteStyle]);
+
+  const cycleNoteFontSize = useCallback((noteId: string) => {
+    const note = latestNotesRef.current.find((n) => n.id === noteId);
+    if (!note) return;
+    const idx = NOTE_FONT_SIZES.indexOf(note.fontSize);
+    const next = NOTE_FONT_SIZES[(idx >= 0 ? idx + 1 : 0) % NOTE_FONT_SIZES.length];
+    updateNoteStyle(noteId, { fontSize: next });
+  }, [updateNoteStyle]);
+
+  const cycleNoteOpacity = useCallback((noteId: string) => {
+    const note = latestNotesRef.current.find((n) => n.id === noteId);
+    if (!note) return;
+    const idx = NOTE_OPACITY_OPTIONS.indexOf(note.opacity);
+    const next = NOTE_OPACITY_OPTIONS[(idx >= 0 ? idx + 1 : 0) % NOTE_OPACITY_OPTIONS.length];
+    updateNoteStyle(noteId, { opacity: next });
+  }, [updateNoteStyle]);
+
+  const duplicateNote = useCallback((noteId: string) => {
+    const note = latestNotesRef.current.find((n) => n.id === noteId);
+    if (!note) return;
+    saveToHistory();
+    const duplicatedNote: CanvasNote = {
+      ...note,
+      id: getNextNoteId(),
+      x: note.x + 20,
+      y: note.y + 20,
+    };
+    setNotes((prev) => [...prev, duplicatedNote]);
+    setSelectedNoteIds([duplicatedNote.id]);
+    setSelectedDeviceIds([]);
+  }, [saveToHistory, getNextNoteId]);
 
   const getNoteSelection = useCallback((noteId: string) => {
     const note = latestNotesRef.current.find((n) => n.id === noteId);
@@ -3757,23 +3816,103 @@ export function NetworkTopology({
                             e.preventDefault();
                             handleNoteHeaderMouseDown(e as unknown as ReactMouseEvent, note.id);
                           }}
-                          className={`flex items-center justify-between px-2 text-[10px] font-semibold uppercase tracking-widest cursor-move select-none ${isDark ? 'bg-black/10' : 'bg-black/5'
+                          className={`flex items-center gap-2 px-2 text-[10px] font-semibold uppercase tracking-widest cursor-move select-none ${isDark ? 'bg-black/10' : 'bg-black/5'
                             }`}
                           style={{ height: '24px' }}
                         >
-                          <span />
-                          <button
-                            onClick={(e) => {
+                          <div
+                            className="flex items-center gap-1"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
                               e.stopPropagation();
-                              deleteNote(note.id);
                             }}
-                            className="px-1.5 py-0.5 rounded hover:bg-black/10"
-                            title={language === 'tr' ? 'Sil' : 'Delete'}
                           >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1 -1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0 -1-1h-4a1 1 0 0 0 -1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    cycleNoteColor(note.id);
+                                  }}
+                                  className="w-4 h-4 rounded border border-black/20"
+                                  style={{ backgroundColor: note.color }}
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent>{language === 'tr' ? 'Renk' : 'Color'}</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    cycleNoteFont(note.id);
+                                  }}
+                                  className="px-1 rounded text-[9px] leading-4 bg-black/10 hover:bg-black/20"
+                                >
+                                  F
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>{language === 'tr' ? 'Yazý Tipi' : 'Font'}</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    cycleNoteFontSize(note.id);
+                                  }}
+                                  className="px-1 rounded text-[9px] leading-4 bg-black/10 hover:bg-black/20"
+                                >
+                                  {note.fontSize}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>{language === 'tr' ? 'Boyut' : 'Size'}</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    cycleNoteOpacity(note.id);
+                                  }}
+                                  className="px-1 rounded text-[9px] leading-4 bg-black/10 hover:bg-black/20"
+                                >
+                                  {Math.round(note.opacity * 100)}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>{language === 'tr' ? 'Saydamlýk' : 'Opacity'}</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    duplicateNote(note.id);
+                                  }}
+                                  className="px-1 rounded text-[9px] leading-4 bg-black/10 hover:bg-black/20"
+                                >
+                                  D
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>{language === 'tr' ? 'Çoðalt' : 'Duplicate'}</TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteNote(note.id);
+                                }}
+                                className="ml-auto px-1.5 py-0.5 rounded hover:bg-black/10"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1 -1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0 -1-1h-4a1 1 0 0 0 -1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>{language === 'tr' ? 'Sil' : 'Delete'}</TooltipContent>
+                          </Tooltip>
                         </div>
 
                         {/* Note Content - Scrollable */}
