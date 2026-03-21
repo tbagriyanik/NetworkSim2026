@@ -246,12 +246,17 @@ export function NetworkTopology({
   } | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-  // Context menu state - deviceId can be null for empty area
-  const [contextMenu, setContextMenu] = useState<{
+  type ContextMenuMode = 'device' | 'note-edit' | 'canvas';
+  type ContextMenuState = {
     x: number;
     y: number;
     deviceId: string | null;
-  } | null>(null);
+    noteId: string | null;
+    mode: ContextMenuMode;
+  };
+  // Context menu state - device, note, or empty canvas
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Clipboard state for copy/cut/paste
   const [clipboard, setClipboard] = useState<CanvasDevice[]>([]);
@@ -570,7 +575,7 @@ export function NetworkTopology({
 
   // Close context menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent | PointerEvent | TouchEvent) => {
       if (contextMenu) {
         const target = e.target as HTMLElement;
         // Don't close if clicking on context menu itself
@@ -580,9 +585,26 @@ export function NetworkTopology({
       }
     };
 
-    window.addEventListener('click', handleClickOutside);
-    return () => window.removeEventListener('click', handleClickOutside);
+    window.addEventListener('pointerdown', handleClickOutside as EventListener);
+    window.addEventListener('click', handleClickOutside as EventListener);
+    return () => {
+      window.removeEventListener('pointerdown', handleClickOutside as EventListener);
+      window.removeEventListener('click', handleClickOutside as EventListener);
+    };
   }, [contextMenu]);
+
+  useEffect(() => {
+    if (!contextMenu || !contextMenuRef.current) return;
+
+    const rect = contextMenuRef.current.getBoundingClientRect();
+    const padding = 10;
+    const nextX = Math.max(padding, Math.min(contextMenu.x, window.innerWidth - rect.width - padding));
+    const nextY = Math.max(padding, Math.min(contextMenu.y, window.innerHeight - rect.height - padding));
+
+    if (nextX !== contextMenu.x || nextY !== contextMenu.y) {
+      setContextMenu(prev => prev ? { ...prev, x: nextX, y: nextY } : prev);
+    }
+  }, [contextMenu?.x, contextMenu?.y, contextMenu?.mode, contextMenu?.noteId, contextMenu?.deviceId]);
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -634,7 +656,7 @@ export function NetworkTopology({
   }, []);
 
   // Handle right-click context menu with viewport clamping
-  const openContextMenu = useCallback((clientX: number, clientY: number, deviceId: string | null = null) => {
+  const openContextMenu = useCallback((clientX: number, clientY: number, deviceId: string | null = null, mode: ContextMenuMode = deviceId ? 'device' : 'canvas', noteId: string | null = null) => {
     // Estimate menu dimensions (approximate)
     const menuWidth = 180;
     const menuHeight = deviceId ? 400 : 200; // Device menu is taller
@@ -656,7 +678,7 @@ export function NetworkTopology({
     y = Math.max(10, y);
 
     window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'topology' } }));
-    setContextMenu({ x, y, deviceId });
+    setContextMenu({ x, y, deviceId, noteId, mode });
   }, []);
 
   // Handle canvas pan start
@@ -665,7 +687,7 @@ export function NetworkTopology({
     if (e.button === 2) {
       // Right click on canvas - show context menu
       e.preventDefault();
-      openContextMenu(e.clientX, e.clientY, null);
+      openContextMenu(e.clientX, e.clientY, null, 'canvas');
     } else if (e.button === 0 && !(e.target as HTMLElement).closest('[data-device-id]')) {
       const currentPan = panRef.current;
       const ps = { x: e.clientX - currentPan.x, y: e.clientY - currentPan.y };
@@ -1065,7 +1087,7 @@ export function NetworkTopology({
     y = Math.max(10, y);
 
     window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'topology' } }));
-    openContextMenu(x, y, deviceId || null);
+    openContextMenu(x, y, deviceId || null, deviceId ? 'device' : 'canvas');
   }, [openContextMenu]);
 
   // Handle device touch start - for mobile dragging
@@ -1545,6 +1567,9 @@ export function NetworkTopology({
   // Note management functions
   const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
   const noteCounterRef = useRef<number>(0);
+  const noteTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
+  const [noteClipboard, setNoteClipboard] = useState('');
+  const [noteTextSelection, setNoteTextSelection] = useState<{ noteId: string; start: number; end: number } | null>(null);
 
   // Note dragging and resizing state
   const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
@@ -1597,6 +1622,131 @@ export function NetworkTopology({
     );
   }, [saveToHistory]);
 
+  const getNoteSelection = useCallback((noteId: string) => {
+    const note = latestNotesRef.current.find((n) => n.id === noteId);
+    if (!note) return null;
+
+    const cachedSelection = noteTextSelection?.noteId === noteId ? noteTextSelection : null;
+    const textarea = noteTextareaRefs.current[noteId];
+    const start = cachedSelection?.start ?? textarea?.selectionStart ?? 0;
+    const end = cachedSelection?.end ?? textarea?.selectionEnd ?? 0;
+    const from = Math.max(0, Math.min(start, end));
+    const to = Math.max(0, Math.max(start, end));
+
+    return {
+      note,
+      start: from,
+      end: to,
+      selectedText: note.text.slice(from, to),
+      hasSelection: to > from,
+    };
+  }, [noteTextSelection]);
+
+  const updateNoteTextRange = useCallback((noteId: string, start: number, end: number, insertText: string) => {
+    saveToHistory();
+    setNotes((prev) =>
+      prev.map((n) => {
+        if (n.id !== noteId) return n;
+        const safeStart = Math.max(0, Math.min(start, n.text.length));
+        const safeEnd = Math.max(0, Math.min(end, n.text.length));
+        return {
+          ...n,
+          text: `${n.text.slice(0, safeStart)}${insertText}${n.text.slice(safeEnd)}`
+        };
+      })
+    );
+  }, [saveToHistory]);
+
+  const handleNoteTextContextMenu = useCallback((e: ReactMouseEvent, noteId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const textarea = noteTextareaRefs.current[noteId];
+    if (textarea) {
+      setNoteTextSelection({
+        noteId,
+        start: textarea.selectionStart ?? 0,
+        end: textarea.selectionEnd ?? 0,
+      });
+    }
+
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      deviceId: null,
+      noteId,
+      mode: 'note-edit',
+    });
+  }, []);
+
+  const handleNoteTextCopy = useCallback(async (noteId: string) => {
+    const selection = getNoteSelection(noteId);
+    if (!selection?.hasSelection) return;
+
+    setNoteClipboard(selection.selectedText);
+    try {
+      await navigator.clipboard.writeText(selection.selectedText);
+    } catch {
+      // Clipboard may be blocked; keep local fallback.
+    }
+  }, [getNoteSelection]);
+
+  const handleNoteTextCut = useCallback(async (noteId: string) => {
+    const selection = getNoteSelection(noteId);
+    if (!selection?.hasSelection) return;
+
+    setNoteClipboard(selection.selectedText);
+    try {
+      await navigator.clipboard.writeText(selection.selectedText);
+    } catch {
+      // Clipboard may be blocked; keep local fallback.
+    }
+    updateNoteTextRange(noteId, selection.start, selection.end, '');
+    setNoteTextSelection(null);
+  }, [getNoteSelection, updateNoteTextRange]);
+
+  const handleNoteTextDelete = useCallback((noteId: string) => {
+    const selection = getNoteSelection(noteId);
+    if (!selection?.hasSelection) return;
+
+    updateNoteTextRange(noteId, selection.start, selection.end, '');
+    setNoteTextSelection(null);
+  }, [getNoteSelection, updateNoteTextRange]);
+
+  const handleNoteTextPaste = useCallback(async (noteId: string) => {
+    const selection = getNoteSelection(noteId);
+    if (!selection) return;
+
+    let pastedText = '';
+    try {
+      pastedText = await navigator.clipboard.readText();
+    } catch {
+      pastedText = noteClipboard;
+    }
+
+    if (!pastedText) return;
+    updateNoteTextRange(noteId, selection.start, selection.end, pastedText);
+    setNoteTextSelection({
+      noteId,
+      start: selection.start + pastedText.length,
+      end: selection.start + pastedText.length,
+    });
+  }, [getNoteSelection, noteClipboard, updateNoteTextRange]);
+
+  const handleNoteTextSelectAll = useCallback((noteId: string) => {
+    const textarea = noteTextareaRefs.current[noteId];
+    const note = latestNotesRef.current.find((n) => n.id === noteId);
+    if (!textarea || !note) return;
+
+    textarea.focus();
+    textarea.setSelectionRange(0, note.text.length);
+    setNoteTextSelection({
+      noteId,
+      start: 0,
+      end: note.text.length,
+    });
+  }, []);
+
   // Sync notes ref on every render
   latestNotesRef.current = notes;
   draggedNoteIdRef.current = draggedNoteId;
@@ -1639,8 +1789,6 @@ export function NetworkTopology({
       if (!canvasRef.current) return;
 
       if (draggedNoteIdRef.current && noteDragStartRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect();
-        const currentPan = panRef.current;
         const currentZoom = zoomRef.current;
 
         const deltaX = (e.clientX - noteDragStartRef.current.x) / currentZoom;
@@ -1681,14 +1829,12 @@ export function NetworkTopology({
       setNoteResizeStart(null);
     };
 
-    if (draggedNoteIdRef.current || resizingNoteIdRef.current) {
-      window.addEventListener('mousemove', handleMouseMove, { passive: true });
-      window.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
   }, []);
 
   // Notify parent of topology changes — debounced to avoid calling at 60fps during drag
@@ -3589,7 +3735,7 @@ export function NetworkTopology({
                       className="pointer-events-none"
                     >
                       <div
-                        className={`pointer-events-auto relative flex flex-col w-full h-full rounded-lg shadow-lg border ${isDark
+                        className={`pointer-events-auto relative flex flex-col w-full h-full overflow-hidden rounded-lg shadow-lg border ${isDark
                           ? 'border-amber-300/60'
                           : 'border-yellow-200'
                           } ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-emerald-400/70' : ''}`}
@@ -3607,7 +3753,10 @@ export function NetworkTopology({
                       >
                         {/* Note Header - Draggable */}
                         <div
-                          onMouseDown={(e) => handleNoteHeaderMouseDown(e as unknown as ReactMouseEvent, note.id)}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleNoteHeaderMouseDown(e as unknown as ReactMouseEvent, note.id);
+                          }}
                           className={`flex items-center justify-between px-2 text-[10px] font-semibold uppercase tracking-widest cursor-move select-none ${isDark ? 'bg-black/10' : 'bg-black/5'
                             }`}
                           style={{ height: '24px' }}
@@ -3630,7 +3779,7 @@ export function NetworkTopology({
                         {/* Note Content - Scrollable */}
                         <div
                           data-note-scroll
-                          className="flex-1 overflow-y-auto"
+                          className="flex-1 min-h-0 overflow-hidden"
                           style={{
                             height: `calc(100% - 24px)`,
                             scrollBehavior: 'smooth',
@@ -3645,25 +3794,44 @@ export function NetworkTopology({
                           }}
                         >
                           <textarea
+                            ref={(el) => { noteTextareaRefs.current[note.id] = el; }}
                             value={note.text}
                             onChange={(e) => updateNoteText(note.id, e.target.value)}
+                            onSelect={(e) => {
+                              setNoteTextSelection({
+                                noteId: note.id,
+                                start: e.currentTarget.selectionStart ?? 0,
+                                end: e.currentTarget.selectionEnd ?? 0,
+                              });
+                            }}
+                            onMouseUp={(e) => {
+                              setNoteTextSelection({
+                                noteId: note.id,
+                                start: e.currentTarget.selectionStart ?? 0,
+                                end: e.currentTarget.selectionEnd ?? 0,
+                              });
+                            }}
                             onKeyDown={(e) => {
                               e.stopPropagation();
                             }}
+                            onContextMenu={(e) => handleNoteTextContextMenu(e as unknown as ReactMouseEvent, note.id)}
                             onBlur={() => {
                               if (onTopologyChange) {
                                 onTopologyChange(devices, connections, notes);
                               }
                             }}
                             className="w-full h-full min-h-full px-2 py-1 bg-transparent outline-none resize-none overflow-y-auto whitespace-pre-wrap break-words"
-                            style={{ fontSize: note.fontSize, lineHeight: 1.35 }}
+                            style={{ fontSize: note.fontSize, lineHeight: 1.35, color: '#000000' }}
                           />
                         </div>
 
                         {/* Resize Handle - Bottom Right */}
                         <div
-                          onMouseDown={(e) => handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id)}
-                          className="absolute right-1 bottom-1 w-4 h-4 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id);
+                          }}
+                          className="absolute right-1 bottom-1 z-10 w-4 h-4 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity"
                           title={language === 'tr' ? 'Yeniden Boyutlandır' : 'Resize'}
                         >
                           <svg viewBox="0 0 12 12" className="w-full h-full text-black">
@@ -3969,12 +4137,19 @@ export function NetworkTopology({
       {/* Context Menu */}
       {contextMenu && (
         <div
+          ref={contextMenuRef}
           className={`context-menu fixed z-50 py-1 rounded-lg shadow-xl min-w-[140px] ${isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-slate-200'
             }`}
-          style={{ left: contextMenu.x, top: contextMenu.y }}
+          style={{
+            left: contextMenu.x,
+            top: contextMenu.y,
+            maxHeight: 'calc(100vh - 20px)',
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
+          }}
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && contextMenu.deviceId) {
+            if (e.key === 'Enter' && contextMenu.mode === 'device' && contextMenu.deviceId) {
               const device = devices.find((d) => d.id === contextMenu.deviceId);
               if (device) handleDeviceDoubleClick(device);
               setContextMenu(null);
@@ -3982,8 +4157,100 @@ export function NetworkTopology({
           }}
           tabIndex={0}
         >
+          {contextMenu.noteId && contextMenu.mode === 'note-edit' && (() => {
+            const selection = getNoteSelection(contextMenu.noteId!);
+            const hasSelection = !!selection?.hasSelection;
+            return (
+              <div className="px-2 py-2 space-y-1">
+                <button
+                  onClick={() => {
+                    handleNoteTextCut(contextMenu.noteId!);
+                    setContextMenu(null);
+                  }}
+                  disabled={!hasSelection}
+                  className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${hasSelection
+                    ? isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                    : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
+                    }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 1 0 -4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 1 0 -4.243-4.243 3 3 0 004.243 4.243z" />
+                  </svg>
+                  {language === 'tr' ? 'Kes' : 'Cut'}
+                  {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+X</span>}
+                </button>
+
+                <button
+                  onClick={() => {
+                    handleNoteTextCopy(contextMenu.noteId!);
+                    setContextMenu(null);
+                  }}
+                  disabled={!hasSelection}
+                  className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${hasSelection
+                    ? isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                    : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
+                    }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2m-6 12h8a2 2 0 0 0 2-2v-8a2 2 0 0 0 -2-2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2z" />
+                  </svg>
+                  {language === 'tr' ? 'Kopyala' : 'Copy'}
+                  {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+C</span>}
+                </button>
+
+                <button
+                  onClick={() => {
+                    handleNoteTextPaste(contextMenu.noteId!);
+                    setContextMenu(null);
+                  }}
+                  className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                    }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0 -2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" />
+                  </svg>
+                  {language === 'tr' ? 'Yapıştır' : 'Paste'}
+                  {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+V</span>}
+                </button>
+
+                <button
+                  onClick={() => {
+                    handleNoteTextDelete(contextMenu.noteId!);
+                    setContextMenu(null);
+                  }}
+                  disabled={!hasSelection}
+                  className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${hasSelection
+                    ? isDark ? 'hover:bg-slate-700 text-red-400' : 'hover:bg-slate-100 text-red-500'
+                    : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
+                    }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1 -1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0 -1-1h-4a1 1 0 0 0 -1 1v3M4 7h16" />
+                  </svg>
+                  {language === 'tr' ? 'Sil' : 'Delete'}
+                  {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Del</span>}
+                </button>
+
+                <button
+                  onClick={() => {
+                    handleNoteTextSelectAll(contextMenu.noteId!);
+                    setContextMenu(null);
+                  }}
+                  className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                    }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                  {language === 'tr' ? 'Tümünü Seç' : 'Select All'}
+                  {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+A</span>}
+                </button>
+              </div>
+            );
+          })()}
+
           {/* Device-specific actions */}
-          {contextMenu.deviceId && (
+          {contextMenu.deviceId && contextMenu.mode === 'device' && (
             <>
               {/* Open */}
               <button
@@ -4099,14 +4366,14 @@ export function NetworkTopology({
 
           {/* Common actions (available on both device and empty area) */}
 
-          {/* Paste */}
           <button
-            onClick={() => pasteDevice()}
-            disabled={clipboard.length === 0}
-            className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${clipboard.length > 0
+            onClick={() => { pasteDevice(); setContextMenu(null); }}
+            disabled={clipboard.length === 0 || contextMenu.mode !== 'canvas'}
+            className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${(clipboard.length > 0 && contextMenu.mode === 'canvas')
               ? isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
               : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
               }`}
+            style={{ display: contextMenu.mode === 'canvas' ? 'flex' : 'none' }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0 -2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" />
@@ -4115,7 +4382,7 @@ export function NetworkTopology({
             {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+V</span>}
           </button>
 
-          <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
+          <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} style={{ display: contextMenu.mode === 'canvas' ? 'block' : 'none' }} />
 
           {/* Undo */}
           <button
@@ -4125,6 +4392,7 @@ export function NetworkTopology({
               ? isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
               : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
               }`}
+            style={{ display: contextMenu.mode === 'canvas' ? 'flex' : 'none' }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 0 1 8 8v2M3 10l6 6m-6-6l6-6" />
@@ -4141,6 +4409,7 @@ export function NetworkTopology({
               ? isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
               : isDark ? 'text-slate-600 cursor-not-allowed' : 'text-slate-300 cursor-not-allowed'
               }`}
+            style={{ display: contextMenu.mode === 'canvas' ? 'flex' : 'none' }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 0 0 -8 8v2M21 10l-6 6m6-6l-6-6" />
@@ -4149,13 +4418,14 @@ export function NetworkTopology({
             {!isMobile && <span className={`ml-auto text-[10px] opacity-40 font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Ctrl+Y</span>}
           </button>
 
-          <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
+          <div className={`h-px ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} style={{ display: contextMenu.mode === 'canvas' ? 'block' : 'none' }} />
 
           {/* Select All */}
           <button
             onClick={() => selectAllDevices()}
             className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
               }`}
+            style={{ display: contextMenu.mode === 'canvas' ? 'flex' : 'none' }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
