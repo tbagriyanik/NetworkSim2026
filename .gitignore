@@ -50,3 +50,8 @@ server.log
 # Skills directory
 /skills/
 .dyad/
+.idea/vcs.xml
+.idea/modules.xml
+.idea/misc.xml
+.gitignore
+.idea/ciscosim.iml

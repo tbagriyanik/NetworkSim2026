@@ -77,6 +77,7 @@ import {
 import { exampleProjects } from '@/lib/network/exampleProjects';
 
 import { DeviceIcon } from '@/components/network/DeviceIcon';
+import { AppSkeleton } from '@/components/ui/AppSkeleton';
 
 type TabType = 'topology' | 'cmd' | 'terminal' | 'tasks';
 
@@ -157,6 +158,7 @@ export default function Home() {
   } = useDeviceManager();
 
   const [isAppLoading, setIsLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(true);
   const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
@@ -421,14 +423,24 @@ export default function Home() {
   // No longer needed here as it's declared earlier
 
   useEffect(() => {
-    // Initial loading sequence: short splash, then reveal content.
+    // Initial loading sequence: short splash, then skeleton, then content.
     const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     const splashMs = prefersReducedMotion ? 300 : 700;
+    const skeletonMs = splashMs + 400;
+
     const timer = setTimeout(() => {
       setIsLoading(false);
-      setTimeout(() => setShowContent(true), 100);
     }, splashMs);
-    return () => clearTimeout(timer);
+
+    const skeletonTimer = setTimeout(() => {
+      setShowSkeleton(false);
+      setTimeout(() => setShowContent(true), 100);
+    }, skeletonMs);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(skeletonTimer);
+    };
   }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topologyContainerRef = useRef<HTMLDivElement | null>(null);
@@ -1569,6 +1581,13 @@ export default function Home() {
 
           {/* Background scanline effect */}
           <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] bg-[length:100%_4px,3px_100%]" />
+        </div>
+      )}
+
+      {/* Skeleton Loading State */}
+      {showSkeleton && !isAppLoading && (
+        <div className="fixed inset-0 z-[9998] bg-background">
+          <AppSkeleton />
         </div>
       )}
 
