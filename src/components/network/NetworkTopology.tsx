@@ -3852,7 +3852,7 @@ export function NetworkTopology({
                                   F
                                 </button>
                               </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Yazý Tipi' : 'Font'}</TooltipContent>
+                              <TooltipContent>{language === 'tr' ? 'Yazı Tipi' : 'Font'}</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -3880,7 +3880,7 @@ export function NetworkTopology({
                                   {Math.round(note.opacity * 100)}
                                 </button>
                               </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Saydamlýk' : 'Opacity'}</TooltipContent>
+                              <TooltipContent>{language === 'tr' ? 'Saydamlık' : 'Opacity'}</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -3894,7 +3894,7 @@ export function NetworkTopology({
                                   D
                                 </button>
                               </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Çoðalt' : 'Duplicate'}</TooltipContent>
+                              <TooltipContent>{language === 'tr' ? 'Çoğalt' : 'Duplicate'}</TooltipContent>
                             </Tooltip>
                           </div>
                           <Tooltip>
