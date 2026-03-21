@@ -142,8 +142,8 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
           </TooltipTrigger>
           <TooltipContent
             side="bottom"
-            hideArrow
-            className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-3 max-w-xs`}
+
+            className={`${isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'} p-3 max-w-xs rounded-[25px] shadow-2xl`}
           >
             <div className="space-y-1 text-xs">
               <div className="font-bold text-cyan-400">{port.id.toUpperCase()}</div>
@@ -207,8 +207,8 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
         </TooltipTrigger>
         <TooltipContent
           side="bottom"
-          hideArrow
-          className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-3 max-w-xs`}
+
+          className={`${isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'} p-3 max-w-xs rounded-[25px] shadow-2xl`}
         >
           <div className="space-y-1 text-xs">
             <div className="font-bold text-cyan-400">{port.id.toUpperCase()}</div>
@@ -274,7 +274,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
                     </svg>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent hideArrow side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-2 text-xs`}>
+                <TooltipContent hideArrow side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'} p-2 text-xs rounded-[25px] shadow-2xl`}>
                   {t.language === 'tr'
                     ? `Güç: ${isDevicePoweredOff ? 'Kapalı' : 'Açık'}`
                     : `Power: ${isDevicePoweredOff ? 'Off' : 'On'}`}

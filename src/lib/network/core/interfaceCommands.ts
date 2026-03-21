@@ -1,4 +1,5 @@
 import type { CommandHandler } from './commandTypes';
+import { normalizePortId } from '../initialState';
 
 // Interface-level komutlar (interface, shutdown, speed, duplex, switchport, ip address, vs.)
 
@@ -39,8 +40,26 @@ function cmdInterface(state: any, input: string, ctx: any): any {
 
   const interfaceName = match[1].trim();
 
+  if (/^range\s+/i.test(interfaceName)) {
+    const rangeSpec = interfaceName.replace(/^range\s+/i, '').trim();
+    const selectedInterfaces = expandInterfaceRange(rangeSpec, state);
+    if (selectedInterfaces.length === 0) {
+      return { success: false, error: `% Invalid interface range: ${rangeSpec}` };
+    }
+
+    return {
+      success: true,
+      newState: {
+        currentMode: 'interface',
+        currentInterface: selectedInterfaces[0],
+        selectedInterfaces
+      }
+    };
+  }
+
   // Validate interface exists
-  if (!state.ports || !state.ports[interfaceName]) {
+  const normalized = normalizePortId(interfaceName) || interfaceName.toLowerCase();
+  if (!state.ports || !state.ports[normalized]) {
     return { success: false, error: `% Interface ${interfaceName} does not exist` };
   }
 
@@ -48,7 +67,8 @@ function cmdInterface(state: any, input: string, ctx: any): any {
     success: true,
     newState: {
       currentMode: 'interface',
-      currentInterface: interfaceName
+      currentInterface: normalized,
+      selectedInterfaces: [normalized]
     }
   };
 }
@@ -61,11 +81,7 @@ function cmdShutdown(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = {
-    ...newPorts[state.currentInterface],
-    shutdown: true
-  };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, shutdown: true }));
 
   return {
     success: true,
@@ -81,11 +97,7 @@ function cmdNoShutdown(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = {
-    ...newPorts[state.currentInterface],
-    shutdown: false
-  };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, shutdown: false }));
 
   return {
     success: true,
@@ -106,11 +118,7 @@ function cmdSpeed(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid speed value (10, 100, 1000, auto)' };
   }
 
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = {
-    ...newPorts[state.currentInterface],
-    speed: match[1].toLowerCase()
-  };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, speed: match[1].toLowerCase() }));
 
   return {
     success: true,
@@ -131,11 +139,7 @@ function cmdDuplex(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid duplex value (half, full, auto)' };
   }
 
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = {
-    ...newPorts[state.currentInterface],
-    duplex: match[1].toLowerCase()
-  };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, duplex: match[1].toLowerCase() }));
 
   return {
     success: true,
@@ -156,11 +160,7 @@ function cmdDescription(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid description command' };
   }
 
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = {
-    ...newPorts[state.currentInterface],
-    description: match[1]
-  };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, description: match[1] }));
 
   return {
     success: true,
@@ -176,11 +176,7 @@ function cmdSwitchportModeAccess(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = {
-    ...newPorts[state.currentInterface],
-    mode: 'access'
-  };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, mode: 'access' }));
 
   return {
     success: true,
@@ -196,11 +192,7 @@ function cmdSwitchportModeTrunk(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = {
-    ...newPorts[state.currentInterface],
-    mode: 'trunk'
-  };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, mode: 'trunk' }));
 
   return {
     success: true,
@@ -222,12 +214,7 @@ function cmdSwitchportAccessVlan(state: any, input: string, ctx: any): any {
   }
 
   const vlanId = match[1];
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = {
-    ...newPorts[state.currentInterface],
-    accessVlan: vlanId,
-    mode: 'access'
-  };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, accessVlan: vlanId, mode: 'access' }));
 
   return {
     success: true,
@@ -248,11 +235,7 @@ function cmdSwitchportTrunkNativeVlan(state: any, input: string, ctx: any): any 
     return { success: false, error: '% Invalid VLAN ID' };
   }
 
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = {
-    ...newPorts[state.currentInterface],
-    nativeVlan: match[1]
-  };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, nativeVlan: match[1] }));
 
   return {
     success: true,
@@ -273,11 +256,7 @@ function cmdSwitchportTrunkAllowedVlan(state: any, input: string, ctx: any): any
     return { success: false, error: '% Invalid VLAN list' };
   }
 
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = {
-    ...newPorts[state.currentInterface],
-    allowedVlans: match[1]
-  };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, allowedVlans: match[1] }));
 
   return {
     success: true,
@@ -433,13 +412,7 @@ function cmdIpAddress(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid IP address format' };
   }
 
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = {
-    ...newPorts[state.currentInterface],
-    ipAddress: ip,
-    subnetMask: mask,
-    mode: 'routed'
-  };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, ipAddress: ip, subnetMask: mask, mode: 'routed' }));
 
   return {
     success: true,
@@ -455,13 +428,7 @@ function cmdNoIpAddress(state: any, input: string, ctx: any): any {
     return { success: false, error: '% No interface selected' };
   }
 
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = {
-    ...newPorts[state.currentInterface],
-    ipAddress: undefined,
-    subnetMask: undefined,
-    mode: 'access'
-  };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, ipAddress: undefined, subnetMask: undefined, mode: 'access' }));
 
   return {
     success: true,
@@ -480,4 +447,41 @@ function isValidIP(ip: string): boolean {
     if (isNaN(num) || num < 0 || num > 255) return false;
   }
   return true;
+}
+
+function expandInterfaceRange(rangeSpec: string, state: any): string[] {
+  const normalized = rangeSpec.replace(/\s+/g, '').toLowerCase();
+  const match = normalized.match(/^(fa|fastethernet|gi|gig|gigabit|gigabitethernet)(\d+)\/(\d+)(?:-(\d+))?$/);
+  if (!match) return [];
+
+  const prefix = match[1].startsWith('f') ? 'fa' : 'gi';
+  const moduleNum = match[2];
+  const startPort = parseInt(match[3], 10);
+  const endPort = match[4] ? parseInt(match[4], 10) : startPort;
+  if (Number.isNaN(startPort) || Number.isNaN(endPort) || endPort < startPort) return [];
+
+  const available = Object.keys(state.ports || {});
+  const ports: string[] = [];
+  for (let port = startPort; port <= endPort; port++) {
+    const normalizedId = `${prefix}${moduleNum}/${port}`;
+    if (available.includes(normalizedId)) ports.push(normalizedId);
+  }
+  return ports;
+}
+
+function applyToSelectedPorts(state: any, updater: (port: any) => any) {
+  const newPorts = { ...state.ports };
+  const targets = Array.isArray(state.selectedInterfaces) && state.selectedInterfaces.length > 0
+    ? state.selectedInterfaces
+    : state.currentInterface
+      ? [state.currentInterface]
+      : [];
+
+  targets.forEach((portId: string) => {
+    if (newPorts[portId]) {
+      newPorts[portId] = updater(newPorts[portId]);
+    }
+  });
+
+  return newPorts;
 }
