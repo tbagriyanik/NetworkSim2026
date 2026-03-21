@@ -5,6 +5,8 @@ import type { CommandHandler } from './commandTypes';
 export const globalConfigHandlers: Record<string, CommandHandler> = {
   'hostname': cmdHostname,
   'vlan': cmdVlan,
+  'name': cmdVlanName,
+  'state': cmdVlanState,
   'vtp mode': cmdVtpMode,
   'vtp domain': cmdVtpDomain,
   'spanning-tree mode': cmdSpanningTreeMode,
@@ -54,7 +56,12 @@ function cmdVlan(state: any, input: string, ctx: any): any {
   const newVlans = { ...state.vlans };
 
   if (!newVlans[vlanId]) {
-    newVlans[vlanId] = { name: `VLAN${vlanId}`, state: 'active' };
+    newVlans[vlanId] = {
+      id: parseInt(vlanId, 10),
+      name: `VLAN${vlanId}`,
+      status: 'active',
+      ports: []
+    };
   }
 
   return {
@@ -63,6 +70,72 @@ function cmdVlan(state: any, input: string, ctx: any): any {
       vlans: newVlans,
       currentMode: 'vlan',
       currentVlan: vlanId
+    }
+  };
+}
+
+/**
+ * VLAN Name
+ */
+function cmdVlanName(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'vlan' || state.currentVlan == null) {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  const match = input.match(/^name\s+(.+)$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid VLAN name command' };
+  }
+
+  const vlanId = String(state.currentVlan);
+  const vlan = state.vlans?.[vlanId];
+  if (!vlan) {
+    return { success: false, error: '% VLAN not found' };
+  }
+
+  return {
+    success: true,
+    newState: {
+      vlans: {
+        ...state.vlans,
+        [vlanId]: {
+          ...vlan,
+          name: match[1]
+        }
+      }
+    }
+  };
+}
+
+/**
+ * VLAN State
+ */
+function cmdVlanState(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'vlan' || state.currentVlan == null) {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  const match = input.match(/^state\s+(active|suspend)$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid VLAN state command' };
+  }
+
+  const vlanId = String(state.currentVlan);
+  const vlan = state.vlans?.[vlanId];
+  if (!vlan) {
+    return { success: false, error: '% VLAN not found' };
+  }
+
+  return {
+    success: true,
+    newState: {
+      vlans: {
+        ...state.vlans,
+        [vlanId]: {
+          ...vlan,
+          status: match[1].toLowerCase()
+        }
+      }
     }
   };
 }

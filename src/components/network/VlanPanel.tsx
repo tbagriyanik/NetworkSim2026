@@ -1,16 +1,16 @@
 'use client';
 
-import { Vlan, Port } from '@/lib/network/types';
+import { Vlan, Port, SwitchState } from '@/lib/network/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Translations } from '@/contexts/LanguageContext';
 import { Layers, Trash2 } from 'lucide-react';
+import { vlanTasks, getTaskStatus } from '@/lib/network/taskDefinitions';
 
 interface VlanPanelProps {
   vlans: Record<number, Vlan>;
@@ -26,14 +26,7 @@ interface VlanPanelProps {
   isDevicePoweredOff?: boolean;
 }
 
-interface VlanTask {
-  id: string;
-  name: string;
-  description: string;
-  weight: number;
-  completed: boolean;
-  hint: string;
-}
+
 
 export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onTogglePower, onExecuteCommand, t, theme, activeDeviceType, isDevicePoweredOff = false }: VlanPanelProps) {
   const [newVlanId, setNewVlanId] = useState('');
@@ -72,71 +65,17 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
 
   const getPortsForVlan = (vlanId: number): string[] => {
     return Object.values(ports)
-      .filter(p => p.vlan === vlanId && !p.shutdown)
+      .filter(p => Number(p.accessVlan || p.vlan || 1) === vlanId && !p.shutdown)
       .map(p => p.id.toUpperCase());
   };
 
-  const getVlanTasks = (): VlanTask[] => {
-    const userVlans = Object.values(vlans).filter(v => v.id > 1 && v.id < 1002);
-    const namedVlans = userVlans.filter(v => v.name !== `VLAN${v.id}`);
-    const trunkPorts = Object.values(ports).filter(p => p.mode === 'trunk' && !p.shutdown);
-    const portsWithNonDefaultVlan = Object.values(ports).filter(p => p.vlan !== 1 && !p.shutdown);
-
-    return [
-      {
-        id: 'create-vlan',
-        name: t.vTaskCreateName,
-        description: t.vTaskCreateDesc,
-        weight: 20,
-        completed: userVlans.length >= 1,
-        hint: 'vlan 10'
-      },
-      {
-        id: 'name-vlan',
-        name: t.vTaskNameName,
-        description: t.vTaskNameDesc,
-        weight: 15,
-        completed: namedVlans.length >= 1,
-        hint: 'name MUHASEBE'
-      },
-      {
-        id: 'assign-port',
-        name: t.vTaskAssignName,
-        description: t.vTaskAssignDesc,
-        weight: 20,
-        completed: portsWithNonDefaultVlan.length >= 1,
-        hint: 'switchport access vlan 10'
-      },
-      {
-        id: 'create-trunk',
-        name: t.vTaskTrunkName,
-        description: t.vTaskTrunkDesc,
-        weight: 20,
-        completed: trunkPorts.length >= 1,
-        hint: 'switchport mode trunk'
-      },
-      {
-        id: 'multiple-vlans',
-        name: t.vTaskMultipleName,
-        description: t.vTaskMultipleDesc,
-        weight: 15,
-        completed: userVlans.length >= 3,
-        hint: 'vlan 20, vlan 30'
-      },
-      {
-        id: 'all-named',
-        name: t.vTaskFullNamingName,
-        description: t.vTaskFullNamingDesc,
-        weight: 10,
-        completed: userVlans.length > 0 && namedVlans.length === userVlans.length,
-        hint: t.vTaskFullNamingHint
-      }
-    ];
-  };
-
-  const vlanTasks = getVlanTasks();
-  const totalScore = vlanTasks.reduce((acc, task) => acc + (task.completed ? task.weight : 0), 0);
-  const completedTasks = vlanTasks.filter(task => task.completed).length;
+  const localState = {
+    vlans,
+    ports,
+  } as SwitchState;
+  const taskContext = { language: t.language as 'tr' | 'en', cableInfo: null as any, showPCPanel: false, selectedDevice: null };
+  const completedCount = vlanTasks.filter(task => getTaskStatus(task, localState, taskContext)).length;
+  const totalScore = vlanTasks.reduce((acc, task) => acc + (getTaskStatus(task, localState, taskContext) ? task.weight : 0), 0);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return isDark ? 'text-green-400' : 'text-green-600';
@@ -192,6 +131,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
   };
 
   const sortedVlans = Object.values(vlans).sort((a, b) => a.id - b.id);
+  const visibleVlans = sortedVlans.filter(vlan => vlan.id !== 1 || getPortsForVlan(1).length > 0 || vlan.name === 'default');
 
   return (
     <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
@@ -265,7 +205,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
               <div className="col-span-1"></div>
             </div>
 
-            {sortedVlans.map((vlan) => {
+            {visibleVlans.map((vlan) => {
               const vlanPorts = getPortsForVlan(vlan.id);
               const isDefault = [1, 1002, 1003, 1004, 1005].includes(vlan.id);
 

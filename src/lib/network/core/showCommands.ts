@@ -54,7 +54,7 @@ function cmdShowRunningConfig(
       const vlan = state.vlans[vlanId];
       output += `vlan ${vlanId}\n`;
       output += ` name ${vlan?.name || `VLAN${vlanId}`}\n`;
-      output += ` state ${vlan?.state || 'active'}\n`;
+      output += ` state ${vlan?.status || 'active'}\n`;
       output += '!\n';
     });
   }
@@ -272,10 +272,10 @@ function cmdShowVlan(
     if (vlanId !== '1') {
       const vlan = state.vlans[vlanId];
       const vlanName = (vlan?.name || `VLAN${vlanId}`).padEnd(32);
-      const vlanStatus = vlan?.state || 'active';
+      const vlanStatus = vlan?.status || 'active';
       const vlanPorts = Object.keys(state.ports || {}).filter(p => {
         const port = state.ports[p];
-        return port.accessVlan === vlanId;
+        return String(port.accessVlan || port.vlan || 1) === vlanId;
       });
 
       output += `${vlanId.padEnd(4)}${vlanName}${vlanStatus.padEnd(10)}${vlanPorts.join(', ') || '-'}\n`;

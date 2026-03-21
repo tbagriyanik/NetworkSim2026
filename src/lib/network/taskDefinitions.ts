@@ -105,10 +105,7 @@ export const vlanTasks: TaskDefinition[] = [
     description: { tr: 'VLAN\'lara anlamlı isim verin', en: 'Give meaningful names to VLANs' },
     tip: { tr: 'name Muhasebe komutu ile isimlendirin', en: 'Name with name Accounting command' },
     weight: 15,
-    checkFn: (state) => {
-      const userVlans = Object.values(state.vlans).filter(v => v.id > 1 && v.id < 1002);
-      return userVlans.some(v => v.name !== `VLAN${v.id}`);
-    },
+    checkFn: (state) => Object.values(state.vlans).some(v => v.id > 1 && v.id < 1002 && v.name !== `VLAN${v.id}`),
   },
   {
     id: 'assign-port',
@@ -116,7 +113,7 @@ export const vlanTasks: TaskDefinition[] = [
     description: { tr: 'Portları VLAN\'lara atayın', en: 'Assign ports to VLANs' },
     tip: { tr: 'switchport access vlan 10 komutu ile', en: 'Use switchport access vlan 10 command' },
     weight: 20,
-    checkFn: (state) => Object.values(state.ports).filter(p => p.vlan !== 1 && !p.shutdown).length >= 1,
+    checkFn: (state) => Object.values(state.ports).filter(p => Number(p.accessVlan || p.vlan || 1) !== 1 && !p.shutdown).length >= 1,
   },
   {
     id: 'multiple-vlans',
