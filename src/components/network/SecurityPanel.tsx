@@ -6,8 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Translations } from '@/contexts/LanguageContext';
 import { ShieldCheck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 interface SecurityPanelProps {
   security: SecurityConfig;
@@ -102,30 +101,6 @@ export function SecurityPanel({ security, t, theme, deviceId, isDevicePoweredOff
             <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
             {t.securityControls}
           </CardTitle>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deviceId && onTogglePower?.(deviceId)}
-                  className={`h-8 w-8 rounded-lg transition-all ${isDevicePoweredOff ? 'text-rose-500 hover:bg-rose-500/10' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
-                  aria-label={t.language === 'tr' ? 'Güç' : 'Power'}
-                  disabled={!deviceId || !onTogglePower}
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-                  </svg>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent hideArrow side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-2 text-xs`}>
-                {t.language === 'tr'
-                  ? `Güç: ${isDevicePoweredOff ? 'Kapalı' : 'Açık'}`
-                  : `Power: ${isDevicePoweredOff ? 'Off' : 'On'}`}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
       </CardHeader>
       <CardContent>
@@ -134,21 +109,6 @@ export function SecurityPanel({ security, t, theme, deviceId, isDevicePoweredOff
             {t.language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
           </div>
         )}
-        <div className={`mb-4 p-2 sm:p-3 ${innerBg} rounded-lg transition-all duration-300 hover:bg-opacity-80`}>
-          <div className="flex items-center justify-between mb-2">
-            <span className={`text-xs sm:text-sm ${textSecondary}`}>{t.securityLevel}</span>
-            <span className={`text-base sm:text-lg font-bold ${getScoreColor(totalScore)} transition-all duration-300`}>
-              {totalScore}%
-            </span>
-          </div>
-          <Progress
-            value={totalScore}
-            className="h-2 bg-slate-700 transition-all duration-500"
-          />
-          <div className={`mt-1 text-xs ${textMuted} transition-colors duration-300`}>
-            {getScoreText(totalScore)}
-          </div>
-        </div>
 
         <div className="space-y-1.5 sm:space-y-2">
           {securityItems.map((item, index) => (
@@ -168,8 +128,8 @@ export function SecurityPanel({ security, t, theme, deviceId, isDevicePoweredOff
               <Badge
                 variant={item.enabled ? 'default' : 'destructive'}
                 className={`text-xs flex-shrink-0 ml-1 transition-all duration-300 ${item.enabled
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'
-                    : 'hover:bg-red-500/20'
+                  ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'
+                  : 'hover:bg-red-500/20'
                   }`}
               >
                 {item.enabled ? t.on : t.off}

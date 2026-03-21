@@ -1811,6 +1811,15 @@ export function NetworkTopology({
           const targetDevice = devices.find(d => d.id === nextDeviceId);
 
           if (sourceDevice && targetDevice) {
+            // Check if devices are powered on
+            const sourceIsOffline = sourceDevice.status === 'offline';
+            const targetIsOffline = targetDevice.status === 'offline';
+
+            if (sourceIsOffline || targetIsOffline) {
+              // Cannot traverse through powered off devices
+              continue;
+            }
+
             // Check if cable is compatible
             const isCompatible = isCableCompatible({
               connected: true,
@@ -2394,14 +2403,15 @@ export function NetworkTopology({
             const portY = startY + idx * portSpacing;
             const isConnected = port.status === 'connected';
             const isShutdown = port.shutdown;
+            const isDeviceOffline = device.status === 'offline';
 
             // Determine port label: E for Ethernet, C for COM/Console
             const portLabel = port.id.toLowerCase().startsWith('com') ? 'C' : 'E';
 
             // Port colors:
             // PC Ethernet: Blue, PC COM (Console): Turquoise
-            // Shutdown: Red
-            const portColor = isShutdown ? '#ef4444' :
+            // Shutdown or device offline: Red
+            const portColor = (isShutdown || isDeviceOffline) ? '#ef4444' :
               port.id.toLowerCase().startsWith('com')
                 ? (isConnected ? '#06b6d4' : '#0891b2')  // Turquoise for console
                 : (isConnected ? '#3b82f6' : '#1d4ed8'); // Blue for ethernet
@@ -2421,8 +2431,8 @@ export function NetworkTopology({
                 <circle
                   r={7}
                   fill={portColor}
-                  stroke={isShutdown ? '#991b1b' : isConnected ? '#22c55e' : '#4b5563'}
-                  strokeWidth={isShutdown || isConnected ? 2 : 1}
+                  stroke={isShutdown || isDeviceOffline ? '#991b1b' : isConnected ? '#22c55e' : '#4b5563'}
+                  strokeWidth={isShutdown || isDeviceOffline || isConnected ? 2 : 1}
                 />
                 <text y={1} fill="#fff" fontSize="7" textAnchor="middle" dominantBaseline="middle" className="select-none pointer-events-none">
                   {portLabel}
@@ -2445,6 +2455,7 @@ export function NetworkTopology({
             const portY = startY + row * rowSpacing;
             const isConnected = port.status === 'connected';
             const isShutdown = port.shutdown;
+            const isDeviceOffline = device.status === 'offline';
 
             // Determine port type
             const portId = port.id.toLowerCase();
@@ -2458,11 +2469,11 @@ export function NetworkTopology({
 
             // Port colors:
             // Console: Turquoise, Fa: Blue, Gi: Orange
-            // Shutdown: Red
+            // Shutdown or device offline: Red
             let portFill: string;
             let portStroke: string;
 
-            if (isShutdown) {
+            if (isShutdown || isDeviceOffline) {
               portFill = '#ef4444';
               portStroke = '#991b1b';
             } else if (isConsole) {
@@ -2494,8 +2505,8 @@ export function NetworkTopology({
                 <circle
                   r={6}
                   fill={portFill}
-                  stroke={isShutdown || isConnected ? portStroke : '#4b5563'}
-                  strokeWidth={isShutdown || isConnected ? 2 : 1}
+                  stroke={isShutdown || isDeviceOffline || isConnected ? portStroke : '#4b5563'}
+                  strokeWidth={isShutdown || isDeviceOffline || isConnected ? 2 : 1}
                 />
                 <text y={1} fill="#fff" fontSize="6" textAnchor="middle" dominantBaseline="middle" className="select-none pointer-events-none">
                   {displayNum}
@@ -4162,12 +4173,13 @@ export function NetworkTopology({
               }`}
           >
             <div className="flex items-center gap-2 mb-1">
-              <div className={`w-2 h-2 rounded-full ${devices.find(d => d.id === portTooltip.deviceId)?.ports.find(p => p.id === portTooltip.portId)?.shutdown
-                ? 'bg-red-500'
-                : devices.find(d => d.id === portTooltip.deviceId)?.ports.find(p => p.id === portTooltip.portId)?.status === 'connected'
-                  ? 'bg-green-500'
-                  : 'bg-slate-400'
-                }`} />
+              <div className={`w-2 h-2 rounded-full ${
+                (() => {
+                  const dev = devices.find(d => d.id === portTooltip.deviceId);
+                  const prt = dev?.ports.find(p => p.id === portTooltip.portId);
+                  return dev?.status === 'offline' || prt?.shutdown ? 'bg-red-500' : prt?.status === 'connected' ? 'bg-green-500' : 'bg-slate-400';
+                })()
+              }`} />
               <span className="text-[10px] font-black tracking-widest uppercase opacity-60">
                 {portTooltip.portId}
               </span>
@@ -4177,18 +4189,27 @@ export function NetworkTopology({
               <div className="text-xs font-bold">
                 {language === 'tr' ? 'Durum:' : 'Status:'}{' '}
                 <span className={
-                  devices.find(d => d.id === portTooltip.deviceId)?.ports.find(p => p.id === portTooltip.portId)?.shutdown
-                    ? 'text-red-500'
-                    : devices.find(d => d.id === portTooltip.deviceId)?.ports.find(p => p.id === portTooltip.portId)?.status === 'connected'
-                      ? 'text-green-500'
-                      : 'text-slate-400'
+                  (() => {
+                    const dev = devices.find(d => d.id === portTooltip.deviceId);
+                    const prt = dev?.ports.find(p => p.id === portTooltip.portId);
+                    return dev?.status === 'offline' || prt?.shutdown ? 'text-red-500' : prt?.status === 'connected' ? 'text-green-500' : 'text-slate-400';
+                  })()
                 }>
-                  {devices.find(d => d.id === portTooltip.deviceId)?.ports.find(p => p.id === portTooltip.portId)?.shutdown
-                    ? (language === 'tr' ? 'Kapalı (Shutdown)' : 'Shutdown')
-                    : devices.find(d => d.id === portTooltip.deviceId)?.ports.find(p => p.id === portTooltip.portId)?.status === 'connected'
-                      ? (language === 'tr' ? 'Bağlı (Up)' : 'Connected (Up)')
-                      : (language === 'tr' ? 'Bağlı Değil (Down)' : 'Not Connected (Down)')
-                  }
+                  {(() => {
+                    const dev = devices.find(d => d.id === portTooltip.deviceId);
+                    const prt = dev?.ports.find(p => p.id === portTooltip.portId);
+                    if (dev?.status === 'offline') {
+                      return language === 'tr' ? 'Cihaz Kapalı' : 'Device Off';
+                    }
+                    if (prt?.shutdown) {
+                      return language === 'tr' ? 'Kapalı (Shutdown)' : 'Shutdown';
+                    }
+                    if (prt?.status === 'connected') {
+                      return language === 'tr' ? 'Bağlı (Up)' : 'Connected (Up)';
+                    }
+                    return language === 'tr' ? 'Bağlı Değil (Down)' : 'Not Connected (Down)';
+                  })()
+                }
                 </span>
               </div>
 

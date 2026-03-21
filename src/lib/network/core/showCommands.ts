@@ -148,14 +148,14 @@ function cmdShowVersion(
   input: string,
   ctx: any
 ): any {
-  let output = '\nCisco IOS Software, C2960 Software (C2960-LANBASE-M), Version 15.0(2)SE4\n';
-  output += 'Technical Support: http://www.cisco.com/techsupport\n';
-  output += 'Copyright (c) 1986-2024 by Cisco Systems, Inc.\n\n';
+  let output = '\Network NOS Software, C2960 Software (C2960-LANBASE-M), Version 15.0(2)SE4\n';
+  output += 'Technical Support: http://yunus.sf.net\n';
+  output += 'Copyright (c) 1986-2024 by Network Systems, Inc.\n\n';
   output += 'ROM: Bootstrap program is C2960 boot loader\n';
   output += 'BOOTLDR: C2960 Boot Loader (C2960-HBOOT-M) Version 12.2(25)FX\n\n';
   output += `Switch uptime is ${state.uptime || '1 day, 2 hours, 3 minutes'}\n`;
   output += 'System image file is "flash:c2960-lanbase-mz.150-2.SE4.bin"\n\n';
-  output += 'cisco WS-C2960-24TT-L (PowerPC405) processor (revision C0) with 65536K bytes of memory.\n';
+  output += 'WS-C2960-24TT-L (PowerPC405) processor (revision C0) with 65536K bytes of memory.\n';
   output += 'Processor board ID FOC1234X5YZ\n';
   output += 'Last reload reason: power-on\n\n';
   output += '24 FastEthernet/IEEE 802.3 interface(s)\n';

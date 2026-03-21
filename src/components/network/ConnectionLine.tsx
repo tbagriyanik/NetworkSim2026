@@ -57,6 +57,7 @@ export const ConnectionLine = memo(function ConnectionLine({
   const isEffectivelyActive = connection.active && isCompatible && !isShutdown && !isPoweredOff;
   const color = !isCompatible ? CABLE_COLORS.error.primary : 
                 isShutdown ? (isDark ? '#475569' : '#94a3b8') : // Gray if shutdown
+                isPoweredOff ? (isDark ? '#374151' : '#9ca3af') : // Gray if device offline
                 CABLE_COLORS[connection.cableType].primary;
 
   // Calculate offset for parallel lines (spread out from center)

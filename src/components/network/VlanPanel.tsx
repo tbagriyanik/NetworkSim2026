@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Translations } from '@/contexts/LanguageContext';
 import { Layers, Trash2 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface VlanPanelProps {
   vlans: Record<number, Vlan>;
@@ -205,30 +204,6 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
               {deviceModel}
             </span>
           </CardTitle>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deviceId && onTogglePower?.(deviceId)}
-                  className={`h-8 w-8 rounded-lg transition-all ${isDevicePoweredOff ? 'text-rose-500 hover:bg-rose-500/10' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
-                  aria-label={t.language === 'tr' ? 'Güç' : 'Power'}
-                  disabled={!deviceId || !onTogglePower}
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-                  </svg>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent hideArrow side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} ${isDark ? 'text-white' : 'text-slate-900'} p-2 text-xs`}>
-                {t.language === 'tr'
-                  ? `Güç: ${isDevicePoweredOff ? 'Kapalı' : 'Açık'}`
-                  : `Power: ${isDevicePoweredOff ? 'Off' : 'On'}`}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
       </CardHeader>
       <CardContent>
@@ -237,80 +212,6 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
             {t.language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
           </div>
         )}
-        <div className={`mb-4 p-2 sm:p-3 ${innerBg} rounded-lg transition-all duration-300 hover:bg-opacity-80`}>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className={`text-xs sm:text-sm ${textSecondary}`}>
-                {t.vlanScore}
-              </span>
-              <Badge variant="outline" className="text-xs transition-transform hover:scale-105">
-                {completedTasks}/{vlanTasks.length}
-              </Badge>
-            </div>
-            <span className={`text-base sm:text-lg font-bold ${getScoreColor(totalScore)} transition-all duration-300`}>
-              {totalScore}%
-            </span>
-          </div>
-          <Progress
-            value={totalScore}
-            className="h-2 bg-slate-700 transition-all duration-500"
-          />
-          <div className={`mt-1 text-[12px] ${textMuted} transition-colors duration-300`}>
-            {getScoreText(totalScore)}
-          </div>
-        </div>
-
-        <div className={`mb-4 p-2 sm:p-3 ${innerBg} rounded-lg`}>
-          <div className={`text-xs font-medium ${textSecondary} mb-2 flex items-center gap-1`}>
-            <svg className="w-3 h-3 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            {t.vlanTasks}
-          </div>
-          <div className="space-y-1.5">
-            {vlanTasks.map((task, index) => (
-              <div
-                key={task.id}
-                className={`flex items-center justify-between p-1.5 sm:p-2 rounded-lg transition-all duration-300 ${task.completed
-                    ? 'bg-green-500/10 border border-green-500/20'
-                    : itemBg
-                  }`}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${task.completed
-                      ? 'bg-green-500 text-white scale-110'
-                      : isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500'
-                    }`}>
-                    {task.completed ? (
-                      <svg className="w-3 h-3 animate-success-pop" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : (
-                      <span className="text-xs font-bold">{task.weight}</span>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <div className={`text-xs font-medium ${task.completed ? 'text-green-400' : textPrimary} truncate transition-colors`}>
-                      {task.name}
-                    </div>
-                    <div className={`text-xs ${textMuted} truncate hidden sm:block`}>
-                      {task.description}
-                    </div>
-                  </div>
-                </div>
-                {!task.completed && (
-                  <Badge
-                    variant="outline"
-                    className="text-xs px-1.5 py-0.5 text-purple-400 border-purple-500/30 transition-all hover:scale-105 hover:bg-purple-500/10"
-                  >
-                    +{task.weight}
-                  </Badge>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
 
         <div className={`mb-4 p-2 sm:p-3 ${innerBg} rounded-lg`}>
           <div className={`text-xs ${textSecondary} mb-2`}>{t.newVlan}</div>
@@ -370,7 +271,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
 
               return (
                 <div
-                  key={vlan.id}
+                  key={`${vlan.id}-${vlan.name}`}
                   className={`grid grid-cols-12 gap-1 sm:gap-2 px-2 py-1.5 sm:py-2 text-[12px] rounded hover:${isDark ? 'bg-slate-700/50' : 'bg-slate-100'} ${isDefault ? 'opacity-75' : ''}`}
                 >
                   <div className="col-span-1 font-mono text-yellow-400">
