@@ -15,6 +15,8 @@ export interface CanvasPort {
   name?: string;
   speed?: '10' | '100' | '1000' | 'auto';
   duplex?: 'half' | 'full' | 'auto';
+  ipAddress?: string;
+  subnetMask?: string;
 }
 
 export interface NetworkTopologyProps {

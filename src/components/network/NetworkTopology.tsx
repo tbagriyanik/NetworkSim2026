@@ -2078,6 +2078,8 @@ export function NetworkTopology({
               speed: simulatorPort.speed ?? port.speed,
               duplex: simulatorPort.duplex ?? port.duplex,
               shutdown: simulatorPort.shutdown ?? port.shutdown,
+              ipAddress: simulatorPort.ipAddress ?? port.ipAddress,
+              subnetMask: simulatorPort.subnetMask ?? port.subnetMask,
             };
             const changed =
               nextPort.status !== port.status ||
@@ -2087,7 +2089,9 @@ export function NetworkTopology({
               nextPort.name !== port.name ||
               nextPort.speed !== port.speed ||
               nextPort.duplex !== port.duplex ||
-              nextPort.shutdown !== port.shutdown;
+              nextPort.shutdown !== port.shutdown ||
+              nextPort.ipAddress !== port.ipAddress ||
+              nextPort.subnetMask !== port.subnetMask;
             if (changed) {
               portChanged = true;
               hasChanges = true;
@@ -5326,6 +5330,22 @@ export function NetworkTopology({
                     }
                   </span>
                 </div>
+
+                {(() => {
+                  const dev = devices.find(d => d.id === portTooltip.deviceId);
+                  const prt = dev?.ports.find(p => p.id === portTooltip.portId);
+                  if (prt?.ipAddress) {
+                    return (
+                      <div className="text-xs font-bold">
+                        IP:{' '}
+                        <span className="text-amber-400">
+                          {prt.ipAddress}{prt.subnetMask ? `/${prt.subnetMask}` : ''}
+                        </span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
 
                 {devices.find(d => d.id === portTooltip.deviceId)?.ports.find(p => p.id === portTooltip.portId)?.status === 'connected' && (
                   <div className="text-[10px] opacity-70">
