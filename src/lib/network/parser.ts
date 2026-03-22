@@ -375,7 +375,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 2,
     maxArgs: 3
   },
-  
+
   // Interface komutları - interface range ÖNCE gelmeli (daha spesifik)
   'interface range': {
     pattern: /^interface\s+r(?:ange)?\s+(?:(?:fa|fastethernet|gi|gigabitethernet|e|ethernet|po|port-channel|vlan)\s*)?(.+)$/i,
@@ -767,7 +767,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  
+
   // VLAN config komutları
   'name': {
     pattern: /^name\s+(.+)$/i,
@@ -787,7 +787,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  
+
   // Line komutları
   'line console': {
     pattern: /^line\s+console\s+0$/i,
@@ -951,8 +951,14 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
-  
+
   // Show komutları
+  'show': {
+    pattern: /^show\s*$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'show running-config': {
     pattern: /^show(\s+running-config|\s+run|\s+running)(\s+\|\s+(include|section|begin|exclude)\s+(.+))?$/i,
     modes: ['privileged'],
@@ -1313,7 +1319,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 2
   },
-  
+
   // Kaydetme komutları
   'write memory': {
     pattern: /^(?:wr[ite]*(\s+me[mory]*)?)$/i,
@@ -1363,7 +1369,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  
+
   // Yardım
   'help': {
     pattern: /^(\?|help)$/i,
@@ -1371,7 +1377,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
-  
+
   // Do komutları (config moddan show çalıştırma)
   'do show': {
     pattern: /^do\s+(show\s+.+)$/i,
@@ -1397,7 +1403,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  
+
   // Ping
   'ping': {
     pattern: /^ping\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(\s+(repeat\s+\d+|size\s+\d+|timeout\s+\d+))*$/i,
@@ -1405,7 +1411,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 6
   },
-  
+
   // Traceroute
   'traceroute': {
     pattern: /^traceroute\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
@@ -1413,7 +1419,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  
+
   // Telnet
   'telnet': {
     pattern: /^telnet\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(\s+(\d+))?$/i,
@@ -1421,7 +1427,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 2
   },
-  
+
   // SSH
   'ssh': {
     pattern: /^ssh\s+(-l\s+\S+\s+)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
@@ -1429,7 +1435,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 3
   },
-  
+
   // Terminal
   'terminal length': {
     pattern: /^terminal\s+length\s+(\d+)$/i,
@@ -1461,7 +1467,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  
+
   // Reload
   'reload': {
     pattern: /^reload(\s+(in\s+\d+|at\s+\S+|cancel))?$/i,
@@ -1469,7 +1475,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 2
   },
-  
+
   // Clear commands
   'clear arp-cache': {
     pattern: /^clear\s+arp-cache$/i,
@@ -1501,7 +1507,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  
+
   // Debug commands
   'debug': {
     pattern: /^debug\s+(.+)$/i,
@@ -1527,7 +1533,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
-  
+
   // Setup
   'setup': {
     pattern: /^setup$/i,
@@ -1535,7 +1541,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
-  
+
   // Test
   'test': {
     pattern: /^test\s+(.+)$/i,
@@ -1543,7 +1549,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  
+
   // Configure replace
   'configure replace': {
     pattern: /^configure\s+replace\s+(.+)$/i,
@@ -1551,7 +1557,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  
+
   // More
   'more': {
     pattern: /^more\s+(.+)$/i,
@@ -1559,7 +1565,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  
+
   // Disconnect
   'disconnect': {
     pattern: /^disconnect(\s+(\d+))?$/i,
@@ -1567,7 +1573,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 1
   },
-  
+
   // Resume
   'resume': {
     pattern: /^resume(\s+(\d+))?$/i,
@@ -1575,7 +1581,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 1
   },
-  
+
   // Suspend
   'suspend': {
     pattern: /^suspend$/i,
@@ -1583,7 +1589,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
-  
+
   // Access-list
   'access-list': {
     pattern: /^(access-list|ip\s+access-list)\s+(standard|extended)\s+(\S+)$/i,
@@ -1597,7 +1603,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 3
   },
-  
+
   // Mac access-list
   'mac access-list': {
     pattern: /^mac\s+access-list\s+extended\s+(\S+)$/i,
@@ -1605,7 +1611,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 2,
     maxArgs: 2
   },
-  
+
   // Monitor session (SPAN)
   'monitor session': {
     pattern: /^monitor\s+session\s+(\d+)(\s+(source|destination)\s+(.+))?$/i,
@@ -1619,7 +1625,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 3
   },
-  
+
   // Class-map
   'class-map': {
     pattern: /^class-map\s+(match-any|match-all)\s+(\S+)$/i,
@@ -1627,7 +1633,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 2,
     maxArgs: 2
   },
-  
+
   // Policy-map
   'policy-map': {
     pattern: /^policy-map\s+(\S+)$/i,
@@ -1635,7 +1641,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  
+
   // Template
   'template': {
     pattern: /^template\s+(\S+)$/i,
@@ -1648,17 +1654,17 @@ const commandPatterns: Record<string, CommandPattern> = {
 // Komut alias'larını çöz - Gelişmiş versiyon
 function resolveAliases(input: string): string {
   const trimmed = input.trim().toLowerCase();
-  
+
   // Tam eşleşme - direkt alias
   if (commandAliases[trimmed]) {
     return commandAliases[trimmed];
   }
-  
+
   // Kısmi eşleşme - daha uzun komutlar için
   // Önce en uzun alias'ları dene
   const sortedAliases = Object.entries(commandAliases)
     .sort((a, b) => b[0].length - a[0].length);
-  
+
   for (const [alias, full] of sortedAliases) {
     // Alias ile başlıyor ve devamında bir şey varsa
     if (trimmed === alias.toLowerCase()) {
@@ -1670,7 +1676,7 @@ function resolveAliases(input: string): string {
       return full + ' ' + rest;
     }
   }
-  
+
   return input;
 }
 
@@ -1678,14 +1684,14 @@ function resolveAliases(input: string): string {
 export function parseCommand(input: string, currentMode: CommandMode): ParsedCommand | null {
   const resolvedInput = resolveAliases(input);
   const trimmed = resolvedInput.trim();
-  
+
   if (!trimmed) return null;
-  
+
   // Komut ve argümanları ayır
   const parts = trimmed.split(/\s+/);
   const command = parts[0];
   const args = parts.slice(1);
-  
+
   return {
     command: command.toLowerCase(),
     args: args.map(a => a.toLowerCase()),
@@ -1696,17 +1702,17 @@ export function parseCommand(input: string, currentMode: CommandMode): ParsedCom
 
 // Komut geçerli mi kontrol et
 export function validateCommand(
-  parsed: ParsedCommand, 
+  parsed: ParsedCommand,
   currentMode: CommandMode
 ): { valid: boolean; error?: string; matchedPattern?: string } {
-  
+
   const input = parsed.rawInput.toLowerCase();
   const resolvedInput = resolveAliases(parsed.rawInput);
-  
+
   // Tüm pattern'leri kontrol et
   for (const [name, pattern] of Object.entries(commandPatterns)) {
     const match = resolvedInput.match(pattern.pattern);
-    
+
     if (match) {
       // Mode kontrolü
       if (!pattern.modes.includes(currentMode)) {
@@ -1715,11 +1721,11 @@ export function validateCommand(
           error: getModeError(name, currentMode)
         };
       }
-      
+
       return { valid: true, matchedPattern: name };
     }
   }
-  
+
   // Eşleşme bulunamadı
   return {
     valid: false,
@@ -1738,7 +1744,7 @@ function getModeError(command: string, currentMode: CommandMode): string {
     vlan: 'VLAN Configuration',
     'router-config': 'Router Configuration',
   };
-  
+
   return `          ^
 % Invalid input detected at '^' marker.
 
@@ -2093,7 +2099,7 @@ Available commands:
   end                         - Return to privileged mode
 `
   };
-  
+
   return language === 'en' ? helpContentsEN[mode] : helpContentsTR[mode];
 }
 

@@ -3,6 +3,7 @@ import type { CommandHandler } from './commandTypes';
 // Show komutları (show running-config, show vlan, show ip route, vs.)
 
 export const showHandlers: Record<string, CommandHandler> = {
+  'show': cmdShow,
   'show running-config': cmdShowRunningConfig,
   'show version': cmdShowVersion,
   'show interfaces': cmdShowInterfaces,
@@ -19,6 +20,30 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show spanning-tree': cmdShowSpanningTree,
   'show port-security': cmdShowPortSecurity,
 };
+
+/**
+ * Show - Display summary information
+ */
+function cmdShow(
+  state: any,
+  input: string,
+  ctx: any
+): any {
+  let output = '\n';
+  output += `Switch Name: ${state.hostname}\n`;
+  output += `MAC Address: ${state.macAddress}\n`;
+  output += `IP Routing: ${state.ipRouting ? 'enabled' : 'disabled'}\n`;
+  output += `Spanning Tree Mode: ${state.spanningTreeMode || 'pvst'}\n`;
+  output += `CDP: ${state.cdpEnabled ? 'enabled' : 'disabled'}\n`;
+  output += `VTP Mode: ${state.vtpMode || 'server'}\n`;
+  if (state.vtpDomain) {
+    output += `VTP Domain: ${state.vtpDomain}\n`;
+  }
+  output += `\nVLANs: ${Object.keys(state.vlans || {}).length}\n`;
+  output += `Ports: ${Object.keys(state.ports || {}).filter((p: string) => !p.toLowerCase().startsWith('vlan')).length}\n`;
+  output += `\n!\n`;
+  return { success: true, output };
+}
 
 /**
  * Show Running Configuration
@@ -466,26 +491,50 @@ function cmdShowSpanningTree(
   input: string,
   ctx: any
 ): any {
-  let output = '\nVLAN0001\n';
-  output += '  Spanning tree enabled protocol ieee\n';
-  output += '  Root ID    Priority    32769\n';
-  output += '             Address     0000.0000.0000\n';
-  output += '             Cost        19\n';
-  output += '             Port        1 (FastEthernet0/1)\n';
-  output += '             Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec\n\n';
-  output += '  Bridge ID  Priority    32769  (priority 32768 sys-id-ext 1)\n';
-  output += '             Address     001A.2B3C.4D5E\n';
-  output += '             Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec\n';
-  output += '             Aging Time  300\n\n';
+  let output = '';
 
-  output += 'Interface           Role Sts Cost      Prio.Nbr Type\n';
-  output += '------------------- ---- --- --------- -------- --------------------------------\n';
+  // Get spanning tree mode
+  const stpMode = state.spanningTreeMode || 'pvst';
 
-  Object.keys(state.ports || {}).forEach(portName => {
-    const port = state.ports[portName];
-    if (!port.shutdown) {
-      output += `${portName.padEnd(19)}Desg FWD 19         128.1    Shr P2p\n`;
-    }
+  // Show for each VLAN
+  const vlans = Object.keys(state.vlans || {});
+  if (vlans.length === 0) {
+    vlans.push('1'); // Default VLAN
+  }
+
+  vlans.forEach((vlanId: string) => {
+    const vlan = state.vlans?.[vlanId];
+    const vlanName = vlan?.name || `VLAN${vlanId}`;
+
+    output += `\nVLAN${String(vlanId).padStart(4, '0')}\n`;
+    output += `  Spanning tree enabled protocol ${stpMode === 'mst' ? 'mstp' : 'ieee'}\n`;
+    output += `  Root ID    Priority    32769\n`;
+    output += `             Address     ${state.macAddress || '0000.0000.0000'}\n`;
+    output += `             Cost        19\n`;
+    output += `             Port        1 (FastEthernet0/1)\n`;
+    output += `             Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec\n\n`;
+    output += `  Bridge ID  Priority    32769  (priority 32768 sys-id-ext ${vlanId})\n`;
+    output += `             Address     ${state.macAddress || '001A.2B3C.4D5E'}\n`;
+    output += `             Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec\n`;
+    output += `             Aging Time  300\n\n`;
+
+    output += `Interface           Role Sts Cost      Prio.Nbr Type\n`;
+    output += `------------------- ---- --- --------- -------- --------------------------------\n`;
+
+    Object.keys(state.ports || {}).forEach((portName: string) => {
+      const port = state.ports[portName];
+      // Skip VLAN interfaces
+      if (portName.toLowerCase().startsWith('vlan')) {
+        return;
+      }
+
+      const portVlan = port.vlan || port.accessVlan || 1;
+      if (String(portVlan) === String(vlanId)) {
+        const status = port.shutdown ? 'DIS' : 'FWD';
+        const role = port.shutdown ? 'Desg' : 'Desg';
+        output += `${portName.padEnd(19)}${role} ${status} 19         128.1    Shr P2p\n`;
+      }
+    });
   });
 
   output += '!\n';
