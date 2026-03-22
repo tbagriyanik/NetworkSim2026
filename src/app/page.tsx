@@ -199,19 +199,23 @@ export default function Home() {
     const handleDeviceUpdate = (event: any) => {
       const { deviceId, config } = event.detail;
 
-      // Update topology devices
-      setDevices(topologyDevices.map((d) =>
-        d.id === deviceId
-          ? { ...d, ...config }
-          : d
-      ));
+      // Update topology devices using functional update to avoid stale closure
+      setDevices(prev => 
+        prev.map((d) =>
+          d.id === deviceId
+            ? { ...d, ...config }
+            : d
+        )
+      );
 
       // Update deviceStates (CLI hostname)
       if (config.name) {
         setDeviceStates((prev) => {
           const state = prev.get(deviceId);
           if (state) {
-            return new Map(prev).set(deviceId, { ...state, hostname: config.name });
+            const next = new Map(prev);
+            next.set(deviceId, { ...state, hostname: config.name });
+            return next;
           }
           return prev;
         });
@@ -220,7 +224,7 @@ export default function Home() {
 
     window.addEventListener('update-topology-device-config', handleDeviceUpdate);
     return () => window.removeEventListener('update-topology-device-config', handleDeviceUpdate);
-  }, []);
+  }, []); // Actions from useAppStore are stable, and functional updates avoid stale data issues.
 
   // Initialize defaults on mount to avoid hydration mismatch
   useEffect(() => {
@@ -2333,7 +2337,6 @@ export default function Home() {
                     selectedDevice={selectedDevice}
                     onDeviceSelect={handleDeviceSelectFromCanvas}
                     onDeviceDoubleClick={handleDeviceDoubleClick}
-                    onTopologyChange={(devices, connections, notes) => handleTopologyChange(devices, connections, notes)}
                     onDeviceDelete={handleDeviceDelete}
                     onDeviceRename={handleDeviceRename}
                     initialDevices={topologyDevices || undefined}
