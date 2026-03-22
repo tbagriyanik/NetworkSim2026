@@ -57,6 +57,37 @@ function cmdInterface(state: any, input: string, ctx: any): any {
     };
   }
 
+  // VLAN interface kontrolü (vlan 10, vlan 20, etc.)
+  const vlanMatch = interfaceName.match(/^vlan\s+(\d+)$/i);
+  if (vlanMatch) {
+    const vlanId = parseInt(vlanMatch[1], 10);
+    const vlanPortId = `vlan${vlanId}`;
+
+    // VLAN port'u oluştur (eğer yoksa)
+    const newPorts = { ...state.ports };
+    if (!newPorts[vlanPortId]) {
+      newPorts[vlanPortId] = {
+        id: vlanPortId,
+        name: `Vlan${vlanId}`,
+        type: 'vlan',
+        vlan: vlanId,
+        status: 'up',
+        shutdown: false,
+        mode: 'routed'
+      };
+    }
+
+    return {
+      success: true,
+      newState: {
+        currentMode: 'interface',
+        currentInterface: vlanPortId,
+        selectedInterfaces: [vlanPortId],
+        ports: newPorts
+      }
+    };
+  }
+
   // Validate interface exists
   const normalized = normalizePortId(interfaceName) || interfaceName.toLowerCase();
   if (!state.ports || !state.ports[normalized]) {
@@ -81,6 +112,18 @@ function cmdShutdown(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
+  // VLAN interface'i için shutdown
+  if (state.currentInterface.startsWith('vlan')) {
+    const newPorts = { ...state.ports };
+    if (newPorts[state.currentInterface]) {
+      newPorts[state.currentInterface] = { ...newPorts[state.currentInterface], shutdown: true };
+    }
+    return {
+      success: true,
+      newState: { ports: newPorts }
+    };
+  }
+
   const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, shutdown: true }));
 
   return {
@@ -95,6 +138,18 @@ function cmdShutdown(state: any, input: string, ctx: any): any {
 function cmdNoShutdown(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'interface' || !state.currentInterface) {
     return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  // VLAN interface'i için no shutdown
+  if (state.currentInterface.startsWith('vlan')) {
+    const newPorts = { ...state.ports };
+    if (newPorts[state.currentInterface]) {
+      newPorts[state.currentInterface] = { ...newPorts[state.currentInterface], shutdown: false };
+    }
+    return {
+      success: true,
+      newState: { ports: newPorts }
+    };
   }
 
   const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, shutdown: false }));
@@ -400,7 +455,7 @@ function cmdSpanningTreeBpduguard(state: any, input: string, ctx: any): any {
 }
 
 /**
- * IP Address - Assign IP to routed port
+ * IP Address - Assign IP to routed port or VLAN interface
  */
 function cmdIpAddress(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'interface' || !state.currentInterface) {
@@ -417,6 +472,28 @@ function cmdIpAddress(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid IP address format' };
   }
 
+  // VLAN interface'i için IP atama
+  if (state.currentInterface.startsWith('vlan')) {
+    const vlanId = parseInt(state.currentInterface.replace('vlan', ''), 10);
+    const newPorts = { ...state.ports };
+
+    if (newPorts[state.currentInterface]) {
+      newPorts[state.currentInterface] = {
+        ...newPorts[state.currentInterface],
+        ipAddress: ip,
+        subnetMask: mask,
+        mode: 'routed'
+      };
+    }
+
+    return {
+      success: true,
+      output: `Interface Vlan${vlanId} configured with IP ${ip} ${mask}`,
+      newState: { ports: newPorts }
+    };
+  }
+
+  // Fiziksel port'a IP atama
   const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, ipAddress: ip, subnetMask: mask, mode: 'routed' }));
 
   return {
@@ -433,6 +510,25 @@ function cmdNoIpAddress(state: any, input: string, ctx: any): any {
     return { success: false, error: '% No interface selected' };
   }
 
+  // VLAN interface'i için IP kaldırma
+  if (state.currentInterface.startsWith('vlan')) {
+    const newPorts = { ...state.ports };
+
+    if (newPorts[state.currentInterface]) {
+      newPorts[state.currentInterface] = {
+        ...newPorts[state.currentInterface],
+        ipAddress: undefined,
+        subnetMask: undefined
+      };
+    }
+
+    return {
+      success: true,
+      newState: { ports: newPorts }
+    };
+  }
+
+  // Fiziksel port'tan IP kaldırma
   const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, ipAddress: undefined, subnetMask: undefined, mode: 'access' }));
 
   return {

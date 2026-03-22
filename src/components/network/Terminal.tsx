@@ -84,6 +84,8 @@ export function Terminal({
   const isInputDisabled = isLoading || isConnectionError || state.awaitingPassword;
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
+  const commandQueueRef = useRef<string[]>([]);
+  const isProcessingQueueRef = useRef(false);
 
   // Advanced Command Help Tree for Network
   const networkHelp: Record<string, Record<string, string[]>> = {
@@ -172,6 +174,48 @@ export function Terminal({
     if (!value) return;
     await onCommand(value);
     setPasswordInput('');
+  };
+
+  const processCommandQueue = async () => {
+    // Eğer zaten işleniyor veya queue boşsa, çık
+    if (isProcessingQueueRef.current || commandQueueRef.current.length === 0) {
+      return;
+    }
+
+    isProcessingQueueRef.current = true;
+
+    while (commandQueueRef.current.length > 0) {
+      const command = commandQueueRef.current.shift();
+      if (command) {
+        // History'ye ekle
+        if (history[0] !== command) {
+          const newHistory = [command, ...history].slice(0, 50);
+          setHistory(newHistory);
+          if (onUpdateHistory) {
+            onUpdateHistory(deviceId, newHistory);
+          }
+        }
+
+        await handleSubmit(command);
+        // Komut tamamlanana kadar bekle (isLoading false olana kadar)
+        await new Promise(resolve => {
+          const checkInterval = setInterval(() => {
+            // isLoading prop'u kontrol et
+            if (!isLoading) {
+              clearInterval(checkInterval);
+              resolve(null);
+            }
+          }, 100);
+          // Maksimum 10 saniye bekle
+          setTimeout(() => {
+            clearInterval(checkInterval);
+            resolve(null);
+          }, 10000);
+        });
+      }
+    }
+
+    isProcessingQueueRef.current = false;
   };
 
   const handleTabComplete = useCallback(() => {
@@ -477,7 +521,7 @@ export function Terminal({
                   <div key={line.id || index} className="animate-in fade-in slide-in-from-left-1 duration-200">
                     {line.type === 'command' ? (
                       <div className="flex gap-2.5 text-cyan-500 font-bold group">
-                        <span className="shrink-0 opacity-50 select-none">{prompt}</span>
+                        <span className="shrink-0 opacity-50 select-none">{line.prompt || prompt}</span>
                         <span className={cmdColor}>{highlightText(line.content)}</span>
                       </div>
                     ) : (
@@ -515,25 +559,25 @@ export function Terminal({
                     ref={inputRef}
                     type="text"
                     value={input}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Yapıştırılan metinde newline varsa, komutları ayrı ayrı işle
-                      if (value.includes('\n')) {
-                        const lines = value.split('\n').filter(line => line.trim());
+                    onChange={(e) => setInput(e.target.value)}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pastedText = e.clipboardData.getData('text');
+                      // Yapıştırılan metinde CR LF (\r\n) veya LF (\n) varsa, komutları ayrı ayrı işle
+                      if (pastedText.includes('\n') || pastedText.includes('\r')) {
+                        // CR LF (\r\n) ve LF (\n) her ikisini de ayırıcı olarak kullan
+                        const lines = pastedText.split(/\r\n|\r|\n/).filter(line => line.trim());
                         if (lines.length > 0) {
-                          // İlk satırı input'a koy ve gönder
+                          // Input'u temizle
                           setInput('');
-                          // Komutları sırayla gönder
-                          let delay = 0;
-                          lines.forEach((line) => {
-                            setTimeout(() => {
-                              handleSubmit(line);
-                            }, delay);
-                            delay += 150; // Her komut arasında 150ms bekle
-                          });
+                          // Komutları queue'ye ekle
+                          commandQueueRef.current.push(...lines);
+                          // Queue işlemeyi başlat
+                          processCommandQueue();
                         }
                       } else {
-                        setInput(value);
+                        // Tek satırlı metin ise input'a yaz
+                        setInput(pastedText);
                       }
                     }}
                     onKeyDown={handleKeyDown}

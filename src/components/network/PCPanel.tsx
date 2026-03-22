@@ -252,6 +252,8 @@ export function PCPanel({
 
   const outputRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const commandQueueRef = useRef<string[]>([]);
+  const isProcessingQueueRef = useRef(false);
 
   const highlightText = useCallback((text: string) => {
     const q = searchQuery.trim();
@@ -721,6 +723,48 @@ export function PCPanel({
     setConsolePasswordInput('');
   };
 
+  const processCommandQueue = async () => {
+    // Eğer zaten işleniyor veya queue boşsa, çık
+    if (isProcessingQueueRef.current || commandQueueRef.current.length === 0) {
+      return;
+    }
+
+    isProcessingQueueRef.current = true;
+
+    while (commandQueueRef.current.length > 0) {
+      const command = commandQueueRef.current.shift();
+      if (command) {
+        // History'ye ekle
+        if (history[0] !== command) {
+          const newHistory = [command, ...history].slice(0, 50);
+          setHistory(newHistory);
+          if (onUpdatePCHistory) {
+            onUpdatePCHistory(deviceId, newHistory);
+          }
+        }
+
+        await executeCommand(command);
+        // Komut tamamlanana kadar bekle (output güncellenene kadar)
+        await new Promise(resolve => {
+          const checkInterval = setInterval(() => {
+            // Eğer output güncellenirse, komut tamamlanmış demektir
+            if (pcOutput.length > 0 || activeTab === 'terminal') {
+              clearInterval(checkInterval);
+              resolve(null);
+            }
+          }, 100);
+          // Maksimum 10 saniye bekle
+          setTimeout(() => {
+            clearInterval(checkInterval);
+            resolve(null);
+          }, 10000);
+        });
+      }
+    }
+
+    isProcessingQueueRef.current = false;
+  };
+
   const handleClearOutput = useCallback(() => {
     if (activeTab === 'desktop') {
       setPcOutput([]);
@@ -1187,25 +1231,25 @@ export function PCPanel({
                     ref={inputRef}
                     type="text"
                     value={input}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Yapıştırılan metinde newline varsa, komutları ayrı ayrı işle
-                      if (value.includes('\n')) {
-                        const lines = value.split('\n').filter(line => line.trim());
+                    onChange={(e) => setInput(e.target.value)}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pastedText = e.clipboardData.getData('text');
+                      // Yapıştırılan metinde CR LF (\r\n) veya LF (\n) varsa, komutları ayrı ayrı işle
+                      if (pastedText.includes('\n') || pastedText.includes('\r')) {
+                        // CR LF (\r\n) ve LF (\n) her ikisini de ayırıcı olarak kullan
+                        const lines = pastedText.split(/\r\n|\r|\n/).filter(line => line.trim());
                         if (lines.length > 0) {
                           // Input'u temizle
                           setInput('');
-                          // Komutları sırayla gönder
-                          let delay = 0;
-                          lines.forEach((line) => {
-                            setTimeout(() => {
-                              executeCommand(line);
-                            }, delay);
-                            delay += 150; // Her komut arasında 150ms bekle
-                          });
+                          // Komutları queue'ye ekle
+                          commandQueueRef.current.push(...lines);
+                          // Queue işlemeyi başlat
+                          processCommandQueue();
                         }
                       } else {
-                        setInput(value);
+                        // Tek satırlı metin ise input'a yaz
+                        setInput(pastedText);
                       }
                     }}
                     disabled={activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled}
