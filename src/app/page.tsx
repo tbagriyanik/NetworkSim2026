@@ -75,6 +75,7 @@ import {
   getTaskStatus
 } from '@/lib/network/taskDefinitions';
 import { exampleProjects } from '@/lib/network/exampleProjects';
+import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 
 import { DeviceIcon } from '@/components/network/DeviceIcon';
 import { AppSkeleton } from '@/components/ui/AppSkeleton';
@@ -470,6 +471,8 @@ export default function Home() {
     showPCPanel: false, // Updated later
     selectedDevice: null, // Updated later
     language,
+    deviceStates,
+    topologyConnections,
   };
 
   // Calculate total score
@@ -1037,6 +1040,17 @@ export default function Home() {
     }
     setHasUnsavedChanges(true);
   }, [activeDeviceId, showPCDeviceId, selectedDevice, setDeviceStates, setDeviceOutputs, setPcOutputs, setShowPCPanel, setShowPCDeviceId, setSelectedDevice, setActiveDeviceId, setActiveDeviceType, setActiveTab, setHasUnsavedChanges]);
+
+  // Handle device rename - propagate topology label change to deviceStates hostname
+  const handleDeviceRename = useCallback((deviceId: string, newName: string) => {
+    setDeviceStates(prev => {
+      const state = prev.get(deviceId);
+      if (!state) return prev;
+      const updated = { ...state, hostname: newName };
+      updated.runningConfig = buildRunningConfig(updated);
+      return new Map(prev).set(deviceId, updated);
+    });
+  }, [setDeviceStates]);
 
   const handleUpdateHistory = useCallback((deviceId: string, history: string[]) => {
     setDeviceStates(prev => {
@@ -2280,6 +2294,7 @@ export default function Home() {
                     onDeviceDoubleClick={handleDeviceDoubleClick}
                     onTopologyChange={(devices, connections, notes) => handleTopologyChange(devices, connections, notes)}
                     onDeviceDelete={handleDeviceDelete}
+                    onDeviceRename={handleDeviceRename}
                     initialDevices={topologyDevices || undefined}
                     initialConnections={topologyConnections || undefined}
                     initialNotes={topologyNotes || undefined}

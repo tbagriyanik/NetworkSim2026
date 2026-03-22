@@ -1,5 +1,6 @@
 // Task definitions with descriptions and tips
 import { SwitchState, CableInfo } from './types';
+import { CanvasConnection } from '@/components/network/networkTopology.types';
 
 export interface TaskDefinition {
   id: string;
@@ -15,6 +16,8 @@ export interface TaskContext {
   showPCPanel: boolean;
   selectedDevice: 'pc' | 'switch' | 'router' | null;
   language: 'tr' | 'en';
+  deviceStates?: Map<string, SwitchState>;
+  topologyConnections?: CanvasConnection[];
 }
 
 // Topoloji görevleri - PUAN YOK (0)

@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { SwitchState } from '@/lib/network/types';
-import { createInitialState, createInitialRouterState, applyStartupConfig } from '@/lib/network/initialState';
+import { createInitialState, createInitialRouterState, applyStartupConfig, buildStartupConfig } from '@/lib/network/initialState';
+import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import { executeCommand, getPrompt } from '@/lib/network/executor';
 import type { TerminalOutput } from '@/components/network/Terminal';
 import { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
@@ -163,7 +164,7 @@ export function useDeviceManager() {
           const shouldPropagateVlans = !!topologyConnections && !!topologyDevices && /^(no\s+)?vlan\s+\d+/i.test(command.trim());
           setDeviceStates(prev => {
             const next = new Map(prev);
-            const mergedState = { ...deviceState, ...newState };
+            const mergedState = { ...deviceState, ...newState, runningConfig: buildRunningConfig({ ...deviceState, ...newState }) };
             next.set(deviceId, mergedState);
 
             if (shouldPropagateVlans) {
@@ -243,6 +244,24 @@ export function useDeviceManager() {
               }
             }
 
+            return next;
+          });
+        }
+        if ((result as any).saveConfig) {
+          setDeviceStates(prev => {
+            const next = new Map(prev);
+            const current = next.get(deviceId);
+            if (current) {
+              next.set(deviceId, { ...current, startupConfig: buildStartupConfig(current) });
+            }
+            return next;
+          });
+        }
+        if ((result as any).eraseConfig) {
+          setDeviceStates(prev => {
+            const next = new Map(prev);
+            const current = next.get(deviceId);
+            if (current) next.set(deviceId, { ...current, startupConfig: undefined });
             return next;
           });
         }

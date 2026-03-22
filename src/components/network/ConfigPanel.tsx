@@ -185,7 +185,9 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     }
   };
 
-  const configText = generateConfig();
+  const configText = state.runningConfig?.length
+    ? state.runningConfig.join('\n')
+    : generateConfig();
 
   const cardBg = isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
   const innerBg = isDark ? 'bg-slate-900' : 'bg-slate-900';

@@ -38,6 +38,7 @@ interface NetworkTopologyProps {
   canRedo?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
+  onDeviceRename?: (deviceId: string, newName: string) => void;
 }
 
 // Drag item from palette
@@ -105,6 +106,7 @@ export function NetworkTopology({
   isActive = true,
   activeDeviceId,
   deviceStates,
+  onDeviceRename,
 }: NetworkTopologyProps) {
   const { language, t } = useLanguage();
   const { theme } = useTheme();
@@ -200,7 +202,7 @@ export function NetworkTopology({
     if (activeDeviceId !== undefined) {
       setSelectedDeviceIds(activeDeviceId ? [activeDeviceId] : []);
     }
-  }, [activeDeviceId]);
+  }, [activeDeviceId, isActive]);
 
   // Select all state
   const [selectAllMode, setSelectAllMode] = useState(false);
@@ -2197,10 +2199,11 @@ export function NetworkTopology({
       setDevices(prev => prev.map(d =>
         d.id === renamingDevice ? { ...d, name: renameValue.trim() } : d
       ));
+      onDeviceRename?.(renamingDevice, renameValue.trim());
     }
     setRenamingDevice(null);
     setRenameValue('');
-  }, [renamingDevice, renameValue, saveToHistory]);
+  }, [renamingDevice, renameValue, saveToHistory, onDeviceRename]);
   // Paste devices
   const pasteDevice = useCallback(() => {
     if (clipboard.length === 0) return;
