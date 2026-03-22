@@ -38,6 +38,15 @@ export const DeviceNode = memo(function DeviceNode({
 }: DeviceNodeProps) {
   return (
     <g
+      role="button"
+      tabIndex={0}
+      aria-label={`${device.type} ${device.name}, Status: ${device.status}, IP: ${device.ip || 'Not assigned'}`}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick(e as any, device);
+        }
+      }}
       onMouseDown={(e) => onMouseDown(e, device.id)}
       onClick={(e) => onClick(e, device)}
       onDoubleClick={() => onDoubleClick(device)}
@@ -47,8 +56,17 @@ export const DeviceNode = memo(function DeviceNode({
       onTouchStart={(e) => onTouchStart(e, device.id)}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      style={{ cursor: 'move', touchAction: 'none' }}
+      style={{ cursor: 'move', touchAction: 'none', outline: 'none' }}
     >
+      {/* Invisible touch target area for better mobile interaction */}
+      <rect 
+        x={-20} 
+        y={-20} 
+        width={80} 
+        height={80} 
+        fill="transparent" 
+        pointerEvents="all" 
+      />
       {renderDeviceContent(device, isDragging)}
     </g>
   );

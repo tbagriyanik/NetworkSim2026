@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
+import useAppStore from '@/lib/store/appStore';
 import { SwitchState, CableType, CableInfo, isCableCompatible } from '@/lib/network/types';
 import { checkDeviceConnectivity, getPingDiagnostics } from '@/lib/network/connectivity';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -176,10 +177,17 @@ export function NetworkTopology({
     },
   ];
 
-  // Canvas state
-  const [devices, setDevices] = useState<CanvasDevice[]>(initialDevices || defaultDevices);
-  const [connections, setConnections] = useState<CanvasConnection[]>(initialConnections || []);
-  const [notes, setNotes] = useState<CanvasNote[]>(initialNotes || []);
+  // Zustand store state
+  const { topology, setDevices, setConnections, setNotes } = useAppStore();
+  
+  const devices = topology.devices;
+  const connections = topology.connections;
+  const notes = topology.notes;
+
+  // Sync state functions for local component logic
+  const setDevicesState = setDevices;
+  const setConnectionsState = setConnections;
+  const setNotesState = setNotes;
 
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [pan, setPan] = useState({ x: 0, y: 0 });

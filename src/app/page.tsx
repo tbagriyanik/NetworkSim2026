@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { SwitchState, CableInfo } from '@/lib/network/types';
 import { useDeviceManager } from '@/hooks/useDeviceManager';
+import useAppStore from '@/lib/store/appStore';
 // Duplicate removed
 import { NetworkTopology } from '@/components/network/NetworkTopology';
 import { CanvasDevice, CanvasConnection, CanvasNote } from '@/components/network/networkTopology.types';
@@ -167,17 +168,31 @@ export default function Home() {
   }, []);
   const [showContent, setShowContent] = useState(false);
 
-  // Define tab state first to avoid temporal deadzone errors in callbacks
-  const [activeTab, setActiveTab] = useState<TabType>('topology');
+  const { 
+    topology, 
+    setDevices, 
+    setConnections, 
+    setNotes, 
+    setZoom, 
+    setPan,
+    setActiveTab
+  } = useAppStore();
+
+  const topologyDevices = topology.devices;
+  const topologyConnections = topology.connections;
+  const topologyNotes = topology.notes;
+  const zoom = topology.zoom;
+  const pan = topology.pan;
+  const activeTab = useAppStore((state) => state.activeTab);
+
+  // Helper functions for state setters to maintain compatibility
+  const setTopologyDevices = setDevices;
+  const setTopologyConnections = setConnections;
+  const setTopologyNotes = setNotes;
 
   // Currently active device in terminal
   const [activeDeviceId, setActiveDeviceId] = useState<string>('switch-1');
   const [activeDeviceType, setActiveDeviceType] = useState<'pc' | 'switch' | 'router'>('switch');
-
-  // Topology state - managed in page.tsx for save/load functionality
-  const [topologyDevices, setTopologyDevices] = useState<CanvasDevice[]>([]);
-  const [topologyConnections, setTopologyConnections] = useState<CanvasConnection[]>([]);
-  const [topologyNotes, setTopologyNotes] = useState<CanvasNote[]>([]);
 
   // Listen for device config updates from PCPanel
   useEffect(() => {
@@ -185,13 +200,11 @@ export default function Home() {
       const { deviceId, config } = event.detail;
 
       // Update topology devices
-      setTopologyDevices((prev) =>
-        prev.map((d) =>
-          d.id === deviceId
-            ? { ...d, ...config }
-            : d
-        )
-      );
+      setDevices(topologyDevices.map((d) =>
+        d.id === deviceId
+          ? { ...d, ...config }
+          : d
+      ));
 
       // Update deviceStates (CLI hostname)
       if (config.name) {
@@ -247,8 +260,6 @@ export default function Home() {
       ]);
     }
   }, []);
-  const [zoom, setZoom] = useState(1.0);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -297,9 +308,9 @@ export default function Home() {
 
   // Get current state helper
   const getCurrentState = useCallback((): ProjectState => ({
-    topologyDevices: JSON.parse(JSON.stringify(topologyDevices || [])),
-    topologyConnections: JSON.parse(JSON.stringify(topologyConnections || [])),
-    topologyNotes: JSON.parse(JSON.stringify(topologyNotes || [])),
+    topologyDevices: Array.isArray(topologyDevices) ? [...topologyDevices] : [],
+    topologyConnections: Array.isArray(topologyConnections) ? [...topologyConnections] : [],
+    topologyNotes: Array.isArray(topologyNotes) ? [...topologyNotes] : [],
     deviceStates: new Map(deviceStates || []),
     deviceOutputs: new Map(deviceOutputs || []),
     pcOutputs: new Map(pcOutputs || []),
@@ -455,7 +466,7 @@ export default function Home() {
 
   // Legacy state for compatibility with other panels (uses active device's state)
   const state = (() => {
-    const activeDevice = topologyDevices?.find(d => d.id === activeDeviceId);
+    const activeDevice = (topologyDevices || []).find(d => d.id === activeDeviceId);
     return getOrCreateDeviceState(activeDeviceId, activeDeviceType, activeDevice?.name, activeDevice?.macAddress);
   })();
   const output = activeTab === 'topology' ? [] : getOrCreateDeviceOutputs(activeDeviceId);

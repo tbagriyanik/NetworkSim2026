@@ -31,9 +31,9 @@ interface AppState {
     sidebarOpen: boolean;
 
     // Actions
-    setDevices: (devices: CanvasDevice[]) => void;
-    setConnections: (connections: CanvasConnection[]) => void;
-    setNotes: (notes: CanvasNote[]) => void;
+    setDevices: (devices: CanvasDevice[] | ((prev: CanvasDevice[]) => CanvasDevice[])) => void;
+    setConnections: (connections: CanvasConnection[] | ((prev: CanvasConnection[]) => CanvasConnection[])) => void;
+    setNotes: (notes: CanvasNote[] | ((prev: CanvasNote[]) => CanvasNote[])) => void;
     addDevice: (device: CanvasDevice) => void;
     removeDevice: (deviceId: string) => void;
     updateDevice: (deviceId: string, updates: Partial<CanvasDevice>) => void;
@@ -43,8 +43,8 @@ interface AppState {
     removeNote: (noteId: string) => void;
     updateNote: (noteId: string, updates: Partial<CanvasNote>) => void;
     setSelectedDevice: (deviceId: string | null) => void;
-    setZoom: (zoom: number) => void;
-    setPan: (pan: { x: number; y: number }) => void;
+    setZoom: (zoom: number | ((prev: number) => number)) => void;
+    setPan: (pan: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => void;
 
     // Device state management
     setSwitchState: (deviceId: string, state: SwitchState) => void;
@@ -87,9 +87,18 @@ const initialState: Omit<AppState, keyof ReturnType<typeof createActions>> = {
 // Helper to create actions
 const createActions = (set: any, get: any) => ({
     // Topology actions
-    setDevices: (devices: CanvasDevice[]) => set({ topology: { ...get().topology, devices } }),
-    setConnections: (connections: CanvasConnection[]) => set({ topology: { ...get().topology, connections } }),
-    setNotes: (notes: CanvasNote[]) => set({ topology: { ...get().topology, notes } }),
+    setDevices: (devices: CanvasDevice[] | ((prev: CanvasDevice[]) => CanvasDevice[])) => {
+        const nextDevices = typeof devices === 'function' ? devices(get().topology.devices) : devices;
+        set({ topology: { ...get().topology, devices: nextDevices } });
+    },
+    setConnections: (connections: CanvasConnection[] | ((prev: CanvasConnection[]) => CanvasConnection[])) => {
+        const nextConnections = typeof connections === 'function' ? connections(get().topology.connections) : connections;
+        set({ topology: { ...get().topology, connections: nextConnections } });
+    },
+    setNotes: (notes: CanvasNote[] | ((prev: CanvasNote[]) => CanvasNote[])) => {
+        const nextNotes = typeof notes === 'function' ? notes(get().topology.notes) : notes;
+        set({ topology: { ...get().topology, notes: nextNotes } });
+    },
 
     addDevice: (device: CanvasDevice) =>
         set({
@@ -153,11 +162,15 @@ const createActions = (set: any, get: any) => ({
     setSelectedDevice: (deviceId: string | null) =>
         set({ topology: { ...get().topology, selectedDeviceId: deviceId } }),
 
-    setZoom: (zoom: number) =>
-        set({ topology: { ...get().topology, zoom } }),
+    setZoom: (zoom: number | ((prev: number) => number)) => {
+        const nextZoom = typeof zoom === 'function' ? zoom(get().topology.zoom) : zoom;
+        set({ topology: { ...get().topology, zoom: nextZoom } });
+    },
 
-    setPan: (pan: { x: number; y: number }) =>
-        set({ topology: { ...get().topology, pan } }),
+    setPan: (pan: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => {
+        const nextPan = typeof pan === 'function' ? pan(get().topology.pan) : pan;
+        set({ topology: { ...get().topology, pan: nextPan } });
+    },
 
     // Device state actions
     setSwitchState: (deviceId: string, state: SwitchState) =>
