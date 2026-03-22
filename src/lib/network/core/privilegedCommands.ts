@@ -34,21 +34,21 @@ function cmdPing(state: any, input: string, ctx: any): any {
     const size = match[2] || '56';
     const count = match[3] || '5';
     if (ctx?.sourceDeviceId && Array.isArray(ctx.devices)) {
-      const connectivity = checkConnectivity(
-        ctx.sourceDeviceId,
-        host,
-        ctx.devices,
-        ctx.connections || [],
-        ctx.deviceStates
-      );
+        const connectivity = checkConnectivity(
+            ctx.sourceDeviceId,
+            host,
+            ctx.devices,
+            ctx.connections || [],
+            ctx.deviceStates
+        );
 
-      if (!connectivity.success) {
-        return {
-          success: false,
-          output: `\nType escape sequence to abort.\nSending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n.....\n`,
-          error: connectivity.error || `Destination host unreachable.`,
-        };
-      }
+        if (!connectivity.success) {
+            return {
+                success: false,
+                output: `\nType escape sequence to abort.\nSending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n.....\n`,
+                error: connectivity.error || `Destination host unreachable.`,
+            };
+        }
     }
 
     let output = `\nType escape sequence to abort.\n`;
@@ -135,6 +135,9 @@ function cmdEraseStartupConfig(state: any, input: string, ctx: any): any {
     return {
         success: true,
         output: 'Erasing the nvram filesystem will remove startup configuration files.\nErase of nvram: complete\n',
+        requiresConfirmation: true,
+        confirmationMessage: 'Erase startup configuration? This cannot be undone.',
+        confirmationAction: 'erase',
         eraseConfig: true
     };
 }
@@ -150,6 +153,9 @@ function cmdEraseNvram(state: any, input: string, ctx: any): any {
     return {
         success: true,
         output: 'Erasing the nvram filesystem will remove all configuration files.\nErase of nvram: complete\n',
+        requiresConfirmation: true,
+        confirmationMessage: 'Erase nvram? This will remove all configuration files.',
+        confirmationAction: 'erase',
         eraseConfig: true
     };
 }
@@ -160,6 +166,19 @@ function cmdEraseNvram(state: any, input: string, ctx: any): any {
 function cmdReload(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: '% Invalid command at this mode' };
+    }
+
+    // Check if this is a confirmation (user pressed Enter after [confirm])
+    const isConfirmation = input.toLowerCase().trim() === 'confirm' ||
+        input.toLowerCase().trim() === 'y' ||
+        input.toLowerCase().trim() === '';
+
+    if (isConfirmation) {
+        return {
+            success: true,
+            output: 'Reloading...\n',
+            reloadDevice: true
+        };
     }
 
     return {

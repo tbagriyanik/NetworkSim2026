@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { SwitchState } from '@/lib/network/types';
 import { createInitialState, createInitialRouterState, applyStartupConfig, buildStartupConfig } from '@/lib/network/initialState';
@@ -28,6 +28,65 @@ export function useDeviceManager() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ show: boolean; message: string; action: string; onConfirm: () => void; } | null>(null);
+
+  // Listen for power toggle events from topology and handle device reset
+  useEffect(() => {
+    const handlePowerToggle = (event: CustomEvent<{ deviceId: string; nextStatus: 'online' | 'offline' }>) => {
+      const { deviceId, nextStatus } = event.detail;
+
+      if (nextStatus === 'online') {
+        // Power on: reset device state and show boot sequence
+        const isRouter = deviceId.includes('router');
+        const baseState = isRouter ? createInitialRouterState() : createInitialState();
+
+        // Get existing hostname to preserve it
+        const existingState = deviceStates.get(deviceId);
+        const hostname = existingState?.hostname || (isRouter ? 'Router' : 'Switch');
+
+        const reloadedState: SwitchState = {
+          ...baseState,
+          hostname,
+          macAddress: existingState?.macAddress || baseState.macAddress,
+          version: existingState?.version || baseState.version,
+          currentMode: 'user',
+          currentInterface: undefined,
+          selectedInterfaces: undefined,
+          currentLine: undefined,
+          currentVlan: undefined,
+          awaitingPassword: false,
+          commandHistory: [],
+          historyIndex: -1
+        };
+
+        setDeviceStates(prev => new Map(prev).set(deviceId, reloadedState));
+
+        const bootOutputs: TerminalOutput[] = [
+          { id: `boot-1-${reloadedState.macAddress}`, type: 'output', content: isRouter ? '\n\nSystem Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' : '\n\nSystem Bootstrap, Version 12.1(11r)EA1, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' },
+          { id: `boot-2-${reloadedState.macAddress}`, type: 'output', content: isRouter ? 'C1900 platform with 524288K bytes of main memory\nMain memory configured to 64 bit mode with ECC disabled\n' : 'C2960 platform with 262144K bytes of main memory\nMain memory configured to 32 bit mode with ECC enabled\n' },
+          { id: `boot-3-${reloadedState.macAddress}`, type: 'output', content: '\nLoading the runtime image: ######################################## [OK]\n' },
+          { id: `boot-beep-${reloadedState.macAddress}`, type: 'output', content: '\nSystem is powering on...\n' },
+          { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: '\nReady!\n' }
+        ];
+
+        setDeviceOutputs(prev => new Map(prev).set(deviceId, bootOutputs));
+      } else {
+        // Power off: clear device state and outputs
+        setDeviceStates(prev => {
+          const next = new Map(prev);
+          next.delete(deviceId);
+          return next;
+        });
+        setDeviceOutputs(prev => {
+          const next = new Map(prev);
+          next.set(deviceId, []);
+          return next;
+        });
+      }
+    };
+
+    window.addEventListener('trigger-topology-toggle-power', handlePowerToggle as EventListener);
+    return () => window.removeEventListener('trigger-topology-toggle-power', handlePowerToggle as EventListener);
+  }, [deviceStates]);
 
   const getOrCreateDeviceState = useCallback((deviceId: string, deviceType: 'pc' | 'switch' | 'router', initialHostname?: string, initialMac?: string): SwitchState => {
     let deviceState = deviceStates.get(deviceId);
@@ -120,7 +179,9 @@ export function useDeviceManager() {
 
       const trimmedCommand = command.trim().toLowerCase();
       const isInternalCommand = command === '__CONSOLE_CONNECT__';
-      if (!requiresConfirmation && !skipConfirm && trimmedCommand.startsWith('reload')) {
+
+      // Handle reload confirmation (uses requiresReloadConfirm instead of requiresConfirmation)
+      if (!skipConfirm && trimmedCommand.startsWith('reload') && (result as any).requiresReloadConfirm) {
         setIsLoading(false);
         setConfirmDialog({
           show: true,
@@ -294,8 +355,8 @@ export function useDeviceManager() {
             { id: `boot-1-${reloadedState.macAddress}`, type: 'output', content: isRouter ? '\n\nSystem Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' : '\n\nSystem Bootstrap, Version 12.1(11r)EA1, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' },
             { id: `boot-2-${reloadedState.macAddress}`, type: 'output', content: isRouter ? 'C1900 platform with 524288K bytes of main memory\nMain memory configured to 64 bit mode with ECC disabled\n' : 'C2960 platform with 262144K bytes of main memory\nMain memory configured to 32 bit mode with ECC enabled\n' },
             { id: `boot-3-${reloadedState.macAddress}`, type: 'output', content: '\nLoading the runtime image: ######################################## [OK]\n' },
-            { id: `boot-beep-${reloadedState.macAddress}`, type: 'output', content: '\n*BEEP* System is powering on...\n' },
-            { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: '\nPress RETURN to get started!\n' }
+            { id: `boot-beep-${reloadedState.macAddress}`, type: 'output', content: '\nSystem is powering on...\n' },
+            { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: '\nReady!\n' }
           ];
           setDeviceOutputs(prev => new Map(prev).set(deviceId, bootOutputs));
         }

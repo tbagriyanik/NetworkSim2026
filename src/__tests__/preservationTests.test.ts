@@ -43,11 +43,11 @@ describe('Observation 1 — reload restores state via applyStartupConfig', () =>
         const base = createInitialState();
         const stateWithSecret = {
             ...base,
-            security: { ...base.security, enableSecret: 'cisco123', enableSecretEncrypted: false }
+            security: { ...base.security, enableSecret: 'pass123', enableSecretEncrypted: false }
         };
         const startup = buildStartupConfig(stateWithSecret);
         const restored = applyStartupConfig(base, startup);
-        expect(restored.security.enableSecret).toBe('cisco123');
+        expect(restored.security.enableSecret).toBe('pass123');
     });
 });
 
@@ -188,8 +188,8 @@ describe('Property Test 1 — non-saveConfig commands preserve startupConfig', (
         { cmd: 'ip routing', mode: 'config' },
         { cmd: 'no ip routing', mode: 'config' },
         { cmd: 'banner motd #Hello#', mode: 'config' },
-        { cmd: 'enable secret cisco', mode: 'config' },
-        { cmd: 'username admin password cisco', mode: 'config' },
+        { cmd: 'enable secret paswd', mode: 'config' },
+        { cmd: 'username admin password paswd', mode: 'config' },
         { cmd: 'exit', mode: 'config' },
         { cmd: 'end', mode: 'config' },
     ];

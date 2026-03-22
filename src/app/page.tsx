@@ -2366,6 +2366,7 @@ export default function Home() {
                     theme={theme}
                     language={language}
                     onUpdateHistory={handleUpdateHistory}
+                    confirmDialog={confirmDialog}
                   />
                   <QuickCommands
                     currentMode={state.currentMode}

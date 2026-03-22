@@ -40,6 +40,7 @@ interface TerminalProps {
   theme: string;
   language: string;
   onUpdateHistory?: (deviceId: string, history: string[]) => void;
+  confirmDialog?: { show: boolean; onConfirm: () => void } | null;
 }
 
 export function Terminal({
@@ -59,7 +60,8 @@ export function Terminal({
   t,
   theme,
   language,
-  onUpdateHistory
+  onUpdateHistory,
+  confirmDialog
 }: TerminalProps) {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<string[]>(() => state.commandHistory || []);
@@ -168,6 +170,11 @@ export function Terminal({
     await onCommand(command);
   };
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleSubmit();
+  };
+
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const value = passwordInput.trim();
@@ -265,6 +272,13 @@ export function Terminal({
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      // If confirm dialog is showing, pressing Enter confirms it
+      if (confirmDialog?.show) {
+        e.preventDefault();
+        confirmDialog.onConfirm();
+        return;
+      }
+      e.preventDefault();
       handleSubmit();
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
@@ -514,9 +528,9 @@ export function Terminal({
           <CardContent className="p-0 flex-1 flex flex-col overflow-hidden relative min-h-0">
             <div
               ref={terminalRef}
-              className={`flex-1 overflow-y-auto p-6 font-mono text-sm leading-relaxed scroll-smooth custom-scrollbar ${terminalBg}`}
+              className={`flex-1 overflow-y-auto p-6 font-mono text-sm leading-relaxed scroll-smooth custom-scrollbar ${isPoweredOff ? 'bg-black' : terminalBg}`}
             >
-              <div className="space-y-2">
+              {!isPoweredOff && <div className="space-y-2">
                 {output.map((line, index) => (
                   <div key={line.id || index} className="animate-in fade-in slide-in-from-left-1 duration-200">
                     {line.type === 'command' ? (
@@ -540,17 +554,17 @@ export function Terminal({
                     <span className="text-xs font-bold tracking-wider">{t.processing}</span>
                   </div>
                 )}
-              </div>
+              </div>}
             </div>
 
             {/* Input Area - Always Visible */}
-            <div className={`shrink-0 p-3 border-t ${isDark ? 'border-slate-800 bg-slate-900/50' : 'bg-slate-50 border-slate-200'}`}>
+            {!isPoweredOff && <div className={`shrink-0 p-3 border-t ${isDark ? 'border-slate-800 bg-slate-900/50' : 'bg-slate-50 border-slate-200'}`}>
               {isConnectionError && (
                 <div className="mb-2 px-3 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 text-xs font-bold tracking-wider">
                   {connectionErrorMessage || (language === 'tr' ? 'Bağlantı hatası' : 'Connection error')}
                 </div>
               )}
-              <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="flex items-center gap-2 max-w-full">
+              <form onSubmit={handleFormSubmit} className="flex items-center gap-2 max-w-full">
                 <div className={`flex items-center gap-2 px-3 py-2 ${inputBg} rounded-lg border ${inputBorder} flex-1 group focus-within:border-cyan-500/50 transition-all`}>
                   <span className="text-cyan-500 font-bold text-xs select-none shrink-0 group-focus-within:opacity-100 transition-opacity">
                     {prompt}
@@ -602,7 +616,7 @@ export function Terminal({
                   <CornerDownLeft className="w-5 h-5" />
                 </Button>
               </form>
-            </div>
+            </div>}
           </CardContent>
         </Card>
 
