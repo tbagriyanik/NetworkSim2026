@@ -14,6 +14,7 @@ import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from "@/hooks/use-toast";
 import { isValidMAC, normalizeMAC } from "@/lib/utils";
+import { commandHelp } from '@/lib/network/executor';
 
 // PC Icon component matching the main screen
 const PCIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -54,31 +55,15 @@ interface PCPanelProps {
 
 type PCActiveTab = 'desktop' | 'terminal' | 'settings';
 
-// Advanced Command Help Tree for Network
-const networkHelp: Record<string, Record<string, string[]>> = {
-  user: {
-    '': ['enable', 'exit', 'show', 'ping', 'telnet', 'ssh'],
-    'sh': ['version', 'ip', 'interfaces', 'vlan'],
-    'show ip': ['interface', 'route', 'arp'],
-    'show ip interface': ['brief'],
-  },
-  privileged: {
-    '': ['configure', 'disable', 'show', 'write', 'ping', 'telnet', 'reload', 'exit', 'copy', 'erase'],
-    'sh': ['running-config', 'startup-config', 'interfaces', 'vlan', 'version', 'mac', 'ip'],
-    'show ip': ['interface', 'route', 'arp', 'dhcp'],
-    'show ip interface': ['brief'],
-    'conf': ['terminal'],
-    'copy': ['running-config', 'startup-config'],
-    'write': ['memory'],
-  },
-  config: {
-    '': ['hostname', 'interface', 'vlan', 'enable', 'line', 'banner', 'ip', 'no', 'exit', 'end', 'do'],
-    'int': ['FastEthernet0/', 'GigabitEthernet0/', 'Vlan'],
-    'line': ['console 0', 'vty 0 4'],
-    'banner': ['motd'],
-    'ip': ['address', 'default-gateway', 'domain-name', 'route'],
-    'no': ['shutdown', 'ip', 'vlan'],
-  }
+const expandCommandContext = (mode: keyof typeof commandHelp, rawValue: string) => {
+  const helpTree = commandHelp[mode] || commandHelp.user;
+  const tokens = rawValue.trim().split(/\s+/).filter(Boolean);
+  const hasTrailingSpace = rawValue.endsWith(' ');
+  const contextTokens = hasTrailingSpace ? tokens : tokens.slice(0, -1);
+  const currentWord = hasTrailingSpace ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
+  const contextKey = contextTokens.join(' ').toLowerCase();
+  const candidates = contextTokens.length === 0 ? (helpTree[''] || []) : (helpTree[contextKey] || []);
+  return { candidates, currentWord, contextTokens };
 };
 
 export function PCPanel({
@@ -673,20 +658,15 @@ export function PCPanel({
   dir          Displays the list of files  in C: directory.
   exit         Quits the CMD.EXE program (command interpreter)
   ftp          Transfers files to and from a computer running an FTP server.
-  help         Display the list of available commands
-  ide          Starts IoX development environment
-  ioxclient    Command line tool to assist in app development for Network IOx
-               platforms
+  help         Display the list of available commands 
   ipconfig     Display network configuration for each network adapter
   ipv6config   Display network configuration for each network adapter
-  js           JavaScript Interactive Interpreter
   mkdir        Creates a directory.
   netsh        
   netstat      Displays protocol statistics and current TCP/IP network
                connections
   nslookup     DNS Lookup
   ping         Send echo messages
-  python       Python Interactive Interpreter
   quit         Exit Telnet/SSH
   rmdir        Removes a directory.
   snake        Play Snake game
@@ -819,17 +799,22 @@ export function PCPanel({
 
     if (activeTab === 'desktop') {
       const pcCmds = ['ipconfig', 'ipv6config', 'ping', 'tracert', 'nslookup', 'arp', 'netstat', 'hostname', 'dir', 'ver', 'help', 'cls', 'exit', 'quit', 'mkdir', 'rmdir', 'delete', 'ftp', 'ssh', 'telnet', 'python', 'js', 'ide', 'ioxclient', 'snake', 'yilan'];
-      const matches = pcCmds.filter(c => c.toLowerCase().startsWith(value.toLowerCase()));
+      const tokens = value.trim().split(/\s+/).filter(Boolean);
+      const hasTrailingSpace = value.endsWith(' ');
+      const currentWord = hasTrailingSpace ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
+      const prefixTokens = hasTrailingSpace ? tokens : tokens.slice(0, -1);
+      const prefix = prefixTokens.join(' ');
+      const matches = pcCmds.filter(c => c.toLowerCase().startsWith(currentWord));
 
       if (matches.length > 0) {
         if (tabCycleIndex === -1) {
           setLastTabInput(value);
           setTabCycleIndex(0);
-          setInput(matches[0]);
+          setInput(prefix ? `${prefix} ${matches[0]}` : matches[0]);
         } else {
           const nextIndex = (tabCycleIndex + 1) % matches.length;
           setTabCycleIndex(nextIndex);
-          setInput(matches[nextIndex]);
+          setInput(prefix ? `${prefix} ${matches[nextIndex]}` : matches[nextIndex]);
         }
       }
     } else if (isConsoleConnected && connectedDeviceId && deviceStates) {
@@ -837,23 +822,8 @@ export function PCPanel({
       if (!state) return;
 
       const mode = state.currentMode;
-      const helpTree = networkHelp[mode] || networkHelp.user;
-
-      const parts = value.split(/\s+/);
-      const hasTrailingSpace = value.endsWith(' ');
-
-      const currentWord = hasTrailingSpace ? '' : parts[parts.length - 1].toLowerCase();
-      const previousContext = hasTrailingSpace ? value.trim() : parts.slice(0, -1).join(' ');
-      const contextKey = previousContext.toLowerCase();
-
-      let options: string[] = [];
-      if (!previousContext) {
-        options = helpTree[''];
-      } else {
-        options = helpTree[contextKey] || [];
-      }
-
-      const matches = options.filter(opt => opt.toLowerCase().startsWith(currentWord));
+      const { candidates, currentWord, contextTokens } = expandCommandContext(mode, value);
+      const matches = candidates.filter(opt => opt.toLowerCase().startsWith(currentWord));
 
       if (matches.length > 0) {
         if (tabCycleIndex === -1) {
@@ -861,7 +831,8 @@ export function PCPanel({
           const nextIndex = 0;
           setTabCycleIndex(nextIndex);
           const completion = matches[nextIndex];
-          setInput(previousContext ? `${previousContext} ${completion}` : completion);
+          const prefix = contextTokens.join(' ');
+          setInput(prefix ? `${prefix} ${completion}` : completion);
         } else {
           const nextIndex = (tabCycleIndex + 1) % matches.length;
           setTabCycleIndex(nextIndex);

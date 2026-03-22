@@ -57,7 +57,7 @@ export type CommandHandler = (
 ) => CommandResult;
 
 // --- Inline help tree (kept as-is for now) ---
-const commandHelp: Record<string, Record<string, string[]>> = {
+export const commandHelp: Record<string, Record<string, string[]>> = {
   user: {
     '': ['enable', 'exit', 'show', '?'],
     'e': ['enable', 'exit'],

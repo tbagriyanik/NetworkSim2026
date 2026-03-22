@@ -383,6 +383,7 @@ export function useDeviceManager() {
             { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: '\nReady!\n' }
           ];
           setDeviceOutputs(prev => new Map(prev).set(deviceId, bootOutputs));
+          return;
         }
 
         if (result.telnetTarget && topologyDevices) {

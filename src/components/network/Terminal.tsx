@@ -13,6 +13,7 @@ import { QuickCommands } from './QuickCommands';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from "@/hooks/use-toast";
+import { commandHelp } from '@/lib/network/executor';
 
 export interface TerminalOutput {
   id: string;
@@ -95,42 +96,19 @@ export function Terminal({
   );
 
   // Advanced Command Help Tree for Network
-  const networkHelp: Record<string, Record<string, string[]>> = {
-    user: {
-      '': ['enable', 'exit', 'show', 'ping', 'telnet', 'ssh'],
-      'sh': ['version', 'ip', 'interfaces', 'vlan'],
-      'show ip': ['interface', 'route', 'arp'],
-      'show ip interface': ['brief'],
-    },
-    privileged: {
-      '': ['configure', 'disable', 'show', 'write', 'ping', 'telnet', 'reload', 'exit', 'copy', 'erase'],
-      'sh': ['running-config', 'startup-config', 'interfaces', 'vlan', 'version', 'mac', 'ip'],
-      'show ip': ['interface', 'route', 'arp', 'dhcp'],
-      'show ip interface': ['brief'],
-      'conf': ['terminal'],
-      'copy': ['running-config', 'startup-config'],
-      'write': ['memory'],
-    },
-    config: {
-      '': ['hostname', 'interface', 'vlan', 'enable', 'line', 'banner', 'ip', 'no', 'exit', 'end', 'do'],
-      'int': ['FastEthernet0/', 'GigabitEthernet0/', 'Vlan'],
-      'line': ['console 0', 'vty 0 4'],
-      'banner': ['motd'],
-      'ip': ['address', 'default-gateway', 'domain-name', 'route'],
-      'no': ['shutdown', 'ip', 'vlan'],
-    },
-    interface: {
-      '': ['ip', 'no', 'shutdown', 'description', 'exit', 'end'],
-      'ip': ['address', 'ipv6'],
-      'no': ['shutdown', 'ip', 'description'],
-    },
-    line: {
-      '': ['password', 'login', 'exit', 'end'],
-    },
-    vlan: {
-      '': ['name', 'exit', 'end'],
-    }
-  };
+  const expandCommandContext = useCallback((mode: keyof typeof commandHelp, rawValue: string) => {
+    const helpTree = commandHelp[mode] || commandHelp.user;
+    const tokens = rawValue.trim().split(/\s+/).filter(Boolean);
+    const hasTrailingSpace = rawValue.endsWith(' ');
+    const contextTokens = hasTrailingSpace ? tokens : tokens.slice(0, -1);
+    const currentWord = hasTrailingSpace ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
+    const contextKey = contextTokens.join(' ').toLowerCase();
+    const candidates = contextTokens.length === 0
+      ? helpTree[''] || []
+      : helpTree[contextKey] || [];
+
+    return { candidates, currentWord, contextTokens, hasTrailingSpace };
+  }, []);
 
   // Auto-scroll and focus
   useEffect(() => {
@@ -263,25 +241,8 @@ export function Terminal({
     if (!value && tabCycleIndex === -1) return;
 
     const mode = state.currentMode;
-    const helpTree = networkHelp[mode] || networkHelp.user;
-
-    // Split input but handle multiple spaces carefully
-    const parts = value.split(/\s+/);
-    const hasTrailingSpace = value.endsWith(' ');
-
-    // If it ends with space, we're looking for sub-commands of the current input
-    const currentWord = hasTrailingSpace ? '' : parts[parts.length - 1].toLowerCase();
-    const previousContext = hasTrailingSpace ? value.trim() : parts.slice(0, -1).join(' ');
-    const contextKey = previousContext.toLowerCase();
-
-    let options: string[] = [];
-    if (!previousContext) {
-      options = helpTree[''];
-    } else {
-      options = helpTree[contextKey] || [];
-    }
-
-    const matches = options.filter(opt => opt.toLowerCase().startsWith(currentWord));
+    const { candidates, currentWord, contextTokens } = expandCommandContext(mode, value);
+    const matches = candidates.filter(opt => opt.toLowerCase().startsWith(currentWord));
 
     if (matches.length > 0) {
       if (tabCycleIndex === -1) {
@@ -289,7 +250,8 @@ export function Terminal({
         const nextIndex = 0;
         setTabCycleIndex(nextIndex);
         const completion = matches[nextIndex];
-        setInput(previousContext ? `${previousContext} ${completion}` : completion);
+        const prefix = contextTokens.join(' ');
+        setInput(prefix ? `${prefix} ${completion}` : completion);
       } else {
         const nextIndex = (tabCycleIndex + 1) % matches.length;
         setTabCycleIndex(nextIndex);
@@ -301,7 +263,7 @@ export function Terminal({
         setInput(originalContext ? `${originalContext} ${completion}` : completion);
       }
     }
-  }, [input, tabCycleIndex, lastTabInput, state.currentMode]);
+  }, [input, tabCycleIndex, lastTabInput, state.currentMode, expandCommandContext]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {

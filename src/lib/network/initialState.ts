@@ -722,6 +722,23 @@ export const commandAliases: Record<string, string> = {
   // Write/Copy commands (Patterns now handle these natively)
   'cop': 'copy',
   'copy': 'copy',
+
+  // Erase commands
+  'era': 'erase',
+  'eras': 'erase',
+  'erase s': 'erase startup-config',
+  'erase st': 'erase startup-config',
+  'erase sta': 'erase startup-config',
+  'erase star': 'erase startup-config',
+  'erase start': 'erase startup-config',
+  'erase startu': 'erase startup-config',
+  'erase startup': 'erase startup-config',
+  'erase startup-': 'erase startup-config',
+  'erase startup-c': 'erase startup-config',
+  'erase startup-co': 'erase startup-config',
+  'erase startup-con': 'erase startup-config',
+  'erase startup-conf': 'erase startup-config',
+  'erase startup-confi': 'erase startup-config',
   
   // Enable secret/password
   'en s': 'enable secret',
