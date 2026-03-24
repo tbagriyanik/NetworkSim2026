@@ -2423,6 +2423,7 @@ export default function Home() {
                     language={language}
                     onUpdateHistory={handleUpdateHistory}
                     confirmDialog={confirmDialog}
+                    setConfirmDialog={setConfirmDialog}
                     onRequestFocus={() => {
                       requestAnimationFrame(() => {
                         const el = document.querySelector('input[placeholder="' + t.typeCommand + '"]') as HTMLInputElement | null;

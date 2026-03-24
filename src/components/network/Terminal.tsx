@@ -40,7 +40,8 @@ interface TerminalProps {
   theme: string;
   language: string;
   onUpdateHistory?: (deviceId: string, history: string[]) => void;
-  confirmDialog?: { show: boolean; onConfirm: () => void } | null;
+  confirmDialog?: { show: boolean; message?: string; onConfirm: () => void } | null;
+  setConfirmDialog?: (dialog: { show: boolean; message: string; action: string; onConfirm: () => void } | null) => void;
   onRequestFocus?: () => void;
 }
 
@@ -63,6 +64,7 @@ export function Terminal({
   language,
   onUpdateHistory,
   confirmDialog,
+  setConfirmDialog,
   onRequestFocus
 }: TerminalProps) {
   const [input, setInput] = useState('');
@@ -437,6 +439,37 @@ export function Terminal({
               {language === 'tr' ? 'Gönder' : 'Submit'}
             </Button>
           </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!confirmDialog?.show} onOpenChange={() => { }}>
+        <DialogContent showCloseButton={false} className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-md`}>
+          <DialogHeader>
+            <DialogTitle>{language === 'tr' ? 'Onay Gerekli' : 'Confirmation Required'}</DialogTitle>
+            <DialogDescription className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+              {confirmDialog?.message || (language === 'tr' ? 'Bu işlemi onaylıyor musunuz?' : 'Are you sure you want to proceed?')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 pt-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirmDialog?.(null);
+                focusTerminalInput();
+              }}
+              className="text-xs font-semibold"
+            >
+              {language === 'tr' ? 'İptal' : 'Cancel'}
+            </Button>
+            <Button
+              onClick={() => {
+                confirmDialog?.onConfirm();
+                focusTerminalInput();
+              }}
+              className="text-xs font-semibold bg-red-600 hover:bg-red-700 text-white"
+            >
+              {language === 'tr' ? 'Onayla' : 'Confirm'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
       <div className="flex flex-col flex-1 gap-4 overflow-hidden h-full">
