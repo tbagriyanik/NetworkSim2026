@@ -431,7 +431,6 @@ export function PCPanel({
     if (consoleAwaitingPassword) {
       setShowConsolePasswordPrompt(true);
       setConsolePasswordInput('');
-      setConsolePasswordAttempted(false);
       setTimeout(() => consolePasswordRef.current?.focus(), 0);
     } else {
       setShowConsolePasswordPrompt(false);
@@ -445,27 +444,25 @@ export function PCPanel({
   }, [connectedDeviceId, deviceStates]);
 
   useEffect(() => {
-    if (!isConsoleConnected || !connectedDeviceId) return;
+    if (!connectedDeviceId) return;
 
     // Check for failed password attempt
-    if (consolePasswordAttempted && !consoleAwaitingPassword && !consoleAuthenticated) {
+    if (consolePasswordAttempted && consoleAwaitingPassword) {
+      // Password was rejected, show error toast and reset connection
       toast({
-        title: language === 'tr' ? 'Kimlik Doğrulama Başarısız' : 'Authentication Failed',
-        description: language === 'tr' ? 'Hatalı parola girdiniz.' : 'Incorrect password.',
+        title: language === 'tr' ? 'Parola Hatalı' : 'Incorrect Password',
+        description: language === 'tr' ? 'Lütfen doğru parolayı girin.' : 'Please enter the correct password.',
         variant: 'destructive',
       });
-
-      // Reset flow
+      setConsolePasswordAttempted(false);
       setIsConsoleConnected(false);
       setConnectedDeviceId(null);
-      setShowConsolePasswordPrompt(false);
-      setConsolePasswordAttempted(false);
-      setConsolePasswordInput('');
-    } else if (consoleAuthenticated && consolePasswordAttempted) {
-      // Success case
+    } else if (consolePasswordAttempted && !consoleAwaitingPassword && consoleAuthenticated) {
+      // Success case - password was accepted
+      setIsConsoleConnected(true);
       setConsolePasswordAttempted(false);
     }
-  }, [consoleAuthenticated, consoleAwaitingPassword, consolePasswordAttempted, connectedDeviceId, isConsoleConnected, language]);
+  }, [consoleAuthenticated, consoleAwaitingPassword, consolePasswordAttempted, connectedDeviceId, language]);
 
   const connectionErrorText = useMemo(() => {
     if (!isPcPoweredOff && !isConsoleTargetPoweredOff) return '';
@@ -716,26 +713,6 @@ export function PCPanel({
     setConsolePasswordAttempted(true);
     await onExecuteDeviceCommand(connectedDeviceId, value);
     setConsolePasswordInput('');
-
-    // Check if authentication was successful
-    const deviceState = deviceStates?.get(connectedDeviceId);
-    if (deviceState) {
-      if (!deviceState.awaitingPassword) {
-        // Password was accepted, set as connected
-        setIsConsoleConnected(true);
-      } else {
-        // Password was rejected, keep waiting for password
-        setIsConsoleConnected(false);
-      }
-    }
-
-    // Focus back to console input after password submission
-    setTimeout(() => {
-      if (activeTab === 'terminal') {
-        const consoleInput = document.querySelector('input[placeholder*="' + (internalPcHostname || 'PC') + '"]') as HTMLInputElement | null;
-        consoleInput?.focus();
-      }
-    }, 100);
   };
 
   const processCommandQueue = async () => {
@@ -926,8 +903,13 @@ export function PCPanel({
       <Dialog
         open={showConsolePasswordPrompt}
         onOpenChange={(open) => {
-          if (!open && consoleAwaitingPassword) return;
-          setShowConsolePasswordPrompt(open);
+          if (!open) {
+            // Dialog is being closed (ESC, back button, or outside click)
+            // Treat it as a failed password attempt
+            setShowConsolePasswordPrompt(false);
+            setConsolePasswordAttempted(true);
+            setConsolePasswordInput('');
+          }
         }}
       >
         <DialogContent showCloseButton={false} className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-sm`}>

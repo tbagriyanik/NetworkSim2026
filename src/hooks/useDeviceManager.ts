@@ -12,6 +12,7 @@ interface PCOutputLine {
   id: string;
   type: 'command' | 'output' | 'error' | 'success';
   content: string;
+  prompt?: string;
 }
 
 export function useDeviceManager() {

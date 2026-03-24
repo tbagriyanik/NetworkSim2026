@@ -933,8 +933,10 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
   const needsLogin = !!(state.security.consoleLine.login && state.security.consoleLine.password);
 
   if (!needsLogin) {
+    const prompt = getPrompt(state);
     return {
       success: true,
+      output: `\n${prompt}`,
       newState: { consoleAuthenticated: true }
     };
   }
@@ -985,8 +987,10 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
   if (state.passwordContext === 'console') {
     const validPassword = password === state.security.consoleLine.password;
     if (validPassword) {
+      const prompt = getPrompt(state);
       return {
         success: true,
+        output: `\n${prompt}`,
         newState: {
           consoleAuthenticated: true,
           awaitingPassword: false,
