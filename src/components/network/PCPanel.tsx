@@ -37,7 +37,7 @@ interface PCPanelProps {
   isVisible: boolean;
   onClose: () => void;
   onTogglePower?: (deviceId: string) => void;
-  topologyDevices?: { id: string; type: string; name: string; ip: string; subnet?: string; gateway?: string; dns?: string; macAddress?: string; status?: string; vlan?: number; ports: { id: string; status: string }[] }[];
+  topologyDevices?: { id: string; type: string; name: string; ip: string; subnet?: string; ipv6?: string; ipv6Prefix?: string; gateway?: string; dns?: string; macAddress?: string; status?: string; vlan?: number; ports: { id: string; status: string }[] }[];
   topologyConnections?: {
     sourceDeviceId: string;
     sourcePort: string;
@@ -141,6 +141,8 @@ export function PCPanel({
   const [pcGateway, setPcGateway] = useState(deviceFromTopology?.gateway || '192.168.1.1');
   const [pcDNS, setPcDNS] = useState(deviceFromTopology?.dns || '8.8.8.8');
   const [pcSubnet, setPcSubnet] = useState(deviceFromTopology?.subnet || '255.255.255.0');
+  const [pcIPv6, setPcIPv6] = useState(deviceFromTopology?.ipv6 || '2001:db8:acad:1::10');
+  const [pcIPv6Prefix, setPcIPv6Prefix] = useState(deviceFromTopology?.ipv6Prefix || '64');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateIP = (ip: string) => /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ip);
@@ -168,12 +170,14 @@ export function PCPanel({
             macAddress: isValidMAC(pcMAC) ? normalizeMAC(pcMAC) : pcMAC,
             subnet: pcSubnet,
             gateway: pcGateway,
-            dns: pcDNS
+            dns: pcDNS,
+            ipv6: pcIPv6,
+            ipv6Prefix: pcIPv6Prefix
           }
         }
       }));
     }
-  }, [internalPcHostname, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, deviceId, deviceFromTopology]);
+  }, [internalPcHostname, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, deviceId, deviceFromTopology]);
 
   // Trigger sync on change (debounced)
   useEffect(() => {
@@ -181,7 +185,7 @@ export function PCPanel({
       syncToGlobal();
     }, 500);
     return () => clearTimeout(handler);
-  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, internalPcHostname, syncToGlobal]);
+  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, internalPcHostname, syncToGlobal]);
 
   // Local output for Desktop (Local) - initialize from prop if available
   const getInitialPcOutput = (): OutputLine[] => {
@@ -539,12 +543,12 @@ export function PCPanel({
           setPcIP(restoredIP);
           addLocalOutput('success', `IP address renewed successfully. New IP: ${restoredIP}`);
         } else if (args.includes('/all')) {
-          addLocalOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${internalPcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Generic Gigabit Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}`);
+          addLocalOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${internalPcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Generic Gigabit Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}/${pcIPv6Prefix}\n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12`);
         } else {
-          addLocalOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}`);
+          addLocalOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet0:\n   Connection-specific DNS Suffix  . : \n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}/${pcIPv6Prefix}\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}`);
         }
       } else if (cmd === 'ipv6config') {
-        addLocalOutput('output', `OS IPv6 Configuration\n\nEthernet adapter Ethernet0:\n   IPv6 Address. . . . . . . . . . . : 2001:db8:acad:1::10\n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   Default Gateway . . . . . . . . . : fe80::1`);
+        addLocalOutput('output', `OS IPv6 Configuration\n\nEthernet adapter Ethernet0:\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}/${pcIPv6Prefix}\n   Link-local IPv6 Address . . . . . : fe80::a1b2:c3d4:e5f6%12\n   Default Gateway . . . . . . . . . : fe80::1`);
       } else if (cmd === 'ping') {
         const target = args[0];
         if (!target) {
@@ -1073,6 +1077,24 @@ export function PCPanel({
                     placeholder="255.255.255.0"
                   />
                   {errors.subnet && <p className="text-rose-500 text-xs mt-1">{language === 'tr' ? 'Geçersiz Alt Ağ Maskesi.' : 'Invalid Subnet Mask.'}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">IPv6 Address</label>
+                  <Input
+                    value={pcIPv6}
+                    onChange={(e) => setPcIPv6(e.target.value)}
+                    placeholder="2001:db8:acad:1::10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">IPv6 Prefix</label>
+                  <Input
+                    value={pcIPv6Prefix}
+                    onChange={(e) => setPcIPv6Prefix(e.target.value)}
+                    placeholder="64"
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

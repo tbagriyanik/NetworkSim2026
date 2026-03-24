@@ -288,11 +288,24 @@ export default function Home() {
     });
   }, []);
 
-  const [cableInfo, setCableInfo] = useState<CableInfo>({
-    connected: true,
-    cableType: 'straight',
-    sourceDevice: 'pc',
-    targetDevice: 'switch',
+  const [cableInfo, setCableInfo] = useState<CableInfo>(() => {
+    try {
+      const savedData = localStorage.getItem('netsim_autosave');
+      if (savedData) {
+        const projectData = JSON.parse(savedData);
+        if (projectData.cableInfo) {
+          return projectData.cableInfo;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return {
+      connected: true,
+      cableType: 'straight',
+      sourceDevice: 'pc',
+      targetDevice: 'switch',
+    };
   });
 
   // Initial App Loading State
@@ -528,6 +541,7 @@ export default function Home() {
         devices: Array.from(deviceStates.entries()).map(([id, state]) => ({ id, state })),
         deviceOutputs: Array.from(deviceOutputs.entries()).map(([id, outputs]) => ({ id, outputs })),
         pcOutputs: Array.from(pcOutputs.entries()).map(([id, outputs]) => ({ id, outputs })),
+        pcHistories: Array.from(pcHistories.entries()).map(([id, history]) => ({ id, history })),
         topology: {
           devices: topologyDevices,
           connections: topologyConnections,
@@ -551,7 +565,7 @@ export default function Home() {
         clearTimeout(autosaveTimerRef.current);
       }
     };
-  }, [deviceStates, deviceOutputs, pcOutputs, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, activeTab, isAppLoading, zoom, pan]);
+  }, [deviceStates, deviceOutputs, pcOutputs, pcHistories, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, activeTab, isAppLoading, zoom, pan]);
 
   // Load project from JSON data
   const loadProjectData = useCallback((projectData: any) => {
@@ -674,7 +688,13 @@ export default function Home() {
       try {
         const projectData = JSON.parse(savedData);
         loadProjectData(projectData);
-        setLastSaveTime(new Date().toLocaleTimeString());
+        // Load last save time from timestamp
+        if (projectData.timestamp) {
+          const date = new Date(projectData.timestamp);
+          setLastSaveTime(date.toLocaleTimeString());
+        } else {
+          setLastSaveTime(new Date().toLocaleTimeString());
+        }
       } catch (e) {
         console.error("Failed to load autosave", e);
       }
@@ -2502,7 +2522,7 @@ export default function Home() {
                   </span>
                   {lastSaveTime && (
                     <span className={`text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                      {(language === 'tr' ? 'Son: ' : 'Last: ') + lastSaveTime}
+                      {(language === 'tr' ? 'Son kaydedilme: ' : 'Last saved: ') + lastSaveTime}
                     </span>
                   )}
                 </div>

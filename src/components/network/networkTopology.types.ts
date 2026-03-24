@@ -52,6 +52,8 @@ export interface CanvasDevice {
   macAddress?: string;
   ip: string;
   subnet?: string;
+  ipv6?: string;
+  ipv6Prefix?: string;
   gateway?: string;
   dns?: string;
   vlan?: number;

@@ -22,9 +22,43 @@ export function useDeviceManager() {
 
   const [deviceOutputs, setDeviceOutputs] = useState<Map<string, TerminalOutput[]>>(() => new Map());
 
-  const [pcOutputs, setPcOutputs] = useState<Map<string, PCOutputLine[]>>(new Map());
+  const [pcOutputs, setPcOutputs] = useState<Map<string, PCOutputLine[]>>(() => {
+    try {
+      const savedData = localStorage.getItem('netsim_autosave');
+      if (savedData) {
+        const projectData = JSON.parse(savedData);
+        if (projectData.pcOutputs && Array.isArray(projectData.pcOutputs)) {
+          const newPcOutputs = new Map<string, PCOutputLine[]>();
+          projectData.pcOutputs.forEach((item: { id: string; outputs: PCOutputLine[] }) => {
+            newPcOutputs.set(item.id, item.outputs || []);
+          });
+          return newPcOutputs;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return new Map();
+  });
 
-  const [pcHistories, setPcHistories] = useState<Map<string, string[]>>(() => new Map());
+  const [pcHistories, setPcHistories] = useState<Map<string, string[]>>(() => {
+    try {
+      const savedData = localStorage.getItem('netsim_autosave');
+      if (savedData) {
+        const projectData = JSON.parse(savedData);
+        if (projectData.pcHistories && Array.isArray(projectData.pcHistories)) {
+          const newPcHistories = new Map<string, string[]>();
+          projectData.pcHistories.forEach((item: { id: string; history: string[] }) => {
+            newPcHistories.set(item.id, item.history || []);
+          });
+          return newPcHistories;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return new Map();
+  });
 
   const [isLoading, setIsLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ show: boolean; message: string; action: string; onConfirm: () => void; } | null>(null);
@@ -169,14 +203,14 @@ export function useDeviceManager() {
       const content = line.content || '';
       const animatedLine = content.includes('Loading the runtime image')
         ? {
-            ...line,
-            content: '\nLoading the runtime image: #\n'
-          }
+          ...line,
+          content: '\nLoading the runtime image: #\n'
+        }
         : content.includes('Sending') && content.includes('!')
           ? {
-              ...line,
-              content: content.replace(/!+/g, (match) => '!'.repeat(Math.max(1, Math.min(5, match.length))))
-            }
+            ...line,
+            content: content.replace(/!+/g, (match) => '!'.repeat(Math.max(1, Math.min(5, match.length))))
+          }
           : line;
 
       setDeviceOutputs(prev => new Map(prev).set(deviceId, [...(prev.get(deviceId) || []), animatedLine]));
