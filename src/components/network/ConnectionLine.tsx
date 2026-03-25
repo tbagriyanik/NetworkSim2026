@@ -111,6 +111,7 @@ export const ConnectionLine = memo(function ConnectionLine({
         fill="none"
         strokeDasharray={isCompatible ? 'none' : '6,3'}
         className="pointer-events-none"
+        vectorEffect="non-scaling-stroke"
         style={{
           filter: isHovered ? 
             'drop-shadow(0 0 4px ' + color + ') drop-shadow(0 0 8px ' + color + ') drop-shadow(0 0 16px ' + color + ') drop-shadow(0 0 24px ' + color + ')' : 
@@ -148,6 +149,7 @@ export const ConnectionLine = memo(function ConnectionLine({
             fill="none"
             stroke={isDark ? '#0f172a' : '#ffffff'}
             strokeWidth="4"
+            vectorEffect="non-scaling-stroke"
             strokeLinejoin="round"
             fontSize="10"
             textAnchor="middle"

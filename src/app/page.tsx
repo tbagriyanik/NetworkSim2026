@@ -288,24 +288,11 @@ export default function Home() {
     });
   }, []);
 
-  const [cableInfo, setCableInfo] = useState<CableInfo>(() => {
-    try {
-      const savedData = localStorage.getItem('netsim_autosave');
-      if (savedData) {
-        const projectData = JSON.parse(savedData);
-        if (projectData.cableInfo) {
-          return projectData.cableInfo;
-        }
-      }
-    } catch {
-      // ignore
-    }
-    return {
-      connected: true,
-      cableType: 'straight',
-      sourceDevice: 'pc',
-      targetDevice: 'switch',
-    };
+  const [cableInfo, setCableInfo] = useState<CableInfo>({
+    connected: true,
+    cableType: 'straight',
+    sourceDevice: 'pc',
+    targetDevice: 'switch',
   });
 
   // Initial App Loading State
@@ -314,6 +301,9 @@ export default function Home() {
   // Device manager hook moved to top
 
   const [topologyKey, setTopologyKey] = useState(0);
+  const [selectedDevice, setSelectedDevice] = useState<'pc' | 'switch' | 'router' | null>(null);
+  const [showPCPanel, setShowPCPanel] = useState(false);
+  const [showPCDeviceId, setShowPCDeviceId] = useState<string>('pc-1');
 
   // Get current state helper
   const getCurrentState = useCallback((): ProjectState => ({
@@ -488,8 +478,8 @@ export default function Home() {
   // Task context for task calculations
   const taskContext: TaskContext = {
     cableInfo,
-    showPCPanel: false, // Updated later
-    selectedDevice: null, // Updated later
+    showPCPanel,
+    selectedDevice,
     language,
     deviceStates,
     topologyConnections,
@@ -503,10 +493,6 @@ export default function Home() {
 
   // Per-tab task completion counts for badges
   const completedTasks = portTasks.filter(task => getTaskStatus(task, state, taskContext)).length + vlanTasks.filter(task => getTaskStatus(task, state, taskContext)).length + securityTasks.filter(task => getTaskStatus(task, state, taskContext)).length;
-
-  const [selectedDevice, setSelectedDevice] = useState<'pc' | 'switch' | 'router' | null>(null);
-  const [showPCPanel, setShowPCPanel] = useState(false);
-  const [showPCDeviceId, setShowPCDeviceId] = useState<string>('pc-1');
 
   // Unsaved changes tracking
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -1599,7 +1585,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className={`min-h-screen flex flex-col ${isAppLoading ? 'bg-slate-950 overflow-hidden' : (isDark ? 'bg-slate-950' : 'bg-slate-50')} transition-colors duration-700`}>
+    <div className={`min-h-screen w-full flex flex-col ${isAppLoading ? 'bg-slate-950 overflow-hidden' : (isDark ? 'bg-slate-950' : 'bg-slate-50')} transition-colors duration-700`}>
       {/* App Loading Screen */}
       {isAppLoading && (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-950">
@@ -2336,7 +2322,7 @@ export default function Home() {
 
         {/* Main Content with matching top background */}
         <main className={`flex-1 overflow-hidden flex flex-col min-h-0 ${isDark ? 'bg-slate-950' : 'bg-slate-100'}`}>
-          <div className={`${activeTab === 'topology' ? 'p-0 pb-0 sm:pb-0' : 'p-5 pb-16 sm:pb-5'} w-full flex-1 flex flex-col min-h-0`}>
+          <div className={`${activeTab === 'topology' ? 'p-0 pb-0 sm:pb-0' : 'p-4 sm:p-5'} w-full flex-1 flex flex-col min-h-0 overflow-hidden`}>
             {/* Tab Content */}
             {activeTab === 'topology' && (
               <div className="flex-1 flex flex-col min-h-0 h-full">
@@ -2374,7 +2360,7 @@ export default function Home() {
 
             {/* CMD Terminal Sekmesi */}
             {/* CMD Terminal Sekmesi - Always mounted, hidden via CSS */}
-            <div className={`w-full h-full overflow-hidden flex flex-col min-h-[calc(100vh-8rem)] sm:min-h-[450px] ${activeTab === 'cmd' ? 'block' : 'hidden'}`}>
+            <div className={`w-full flex-1 min-h-0 overflow-hidden flex flex-col ${activeTab === 'cmd' ? 'flex' : 'hidden'}`}>
               <PCPanel
                 key={`pc-panel-${activeDeviceId}`}
                 deviceId={activeDeviceId}
@@ -2394,7 +2380,7 @@ export default function Home() {
             </div>
 
             {/* Terminal Sekmesi - Always mounted, hidden via CSS */}
-            <div className={`flex-1 flex flex-col gap-4 overflow-hidden min-h-[450px] ${activeTab === 'terminal' ? 'flex' : 'hidden'}`}>
+            <div className={`flex-1 min-h-0 flex flex-col gap-4 overflow-hidden ${activeTab === 'terminal' ? 'flex' : 'hidden'}`}>
               <div className="grid lg:grid-cols-4 gap-4 flex-1 overflow-hidden">
                 <div className="lg:col-span-3 flex flex-col gap-4 overflow-hidden">
                   <Terminal
@@ -2454,7 +2440,7 @@ export default function Home() {
 
             {/* Tasks Sekmesi */}
             {activeTab === 'tasks' && (
-              <div className="grid lg:grid-cols-3 gap-4 flex-1 overflow-y-auto custom-scrollbar">
+              <div className="grid lg:grid-cols-3 gap-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                 <div className="lg:col-span-2">
                   <PortPanel
                     ports={state.ports}
@@ -2505,7 +2491,7 @@ export default function Home() {
         </main>
 
         {/* Footer - Save Status & Hints */}
-        <footer className={`hidden md:block sticky bottom-0 border-t backdrop-blur-xl transition-all ${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'
+        <footer className={`hidden md:block shrink-0 border-t backdrop-blur-xl transition-all ${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'
           } ${showProjectPicker || showOnboarding ? 'hidden' : ''}`}>
           <div className="w-full px-5 py-2">
             <div className="flex items-center justify-between gap-4">

@@ -1,63 +1,206 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 
-type Theme = 'dark' | 'light';
+type Theme = 'dark' | 'light' | 'high-contrast' | 'auto';
 
 interface ThemeContextType {
   theme: Theme;
+  effectiveTheme: 'dark' | 'light' | 'high-contrast';
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
+  isTransitioning: boolean;
+  systemThemePreference: 'dark' | 'light' | null;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark');
-  const [initialized, setInitialized] = useState(false);
+const THEME_STORAGE_KEY = 'network-sim-theme';
+const TRANSITION_DURATION = 300; // ms
 
-  // İlk mount'ta localStorage'dan tema yükle (sadece bir kez)
+/**
+ * Detects the system theme preference using prefers-color-scheme media query
+ */
+function detectSystemTheme(): 'dark' | 'light' {
+  if (typeof window === 'undefined') return 'light';
+
+  try {
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
+  } catch {
+    return 'light';
+  }
+}
+
+/**
+ * Detects if the user prefers reduced motion
+ */
+function detectReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Applies theme to the DOM with smooth transition
+ * Respects reduced motion preferences for accessibility
+ */
+function applyTheme(
+  theme: 'dark' | 'light' | 'high-contrast',
+  onTransitionStart?: () => void,
+  onTransitionEnd?: () => void
+) {
+  if (typeof document === 'undefined') return;
+
+  const root = document.documentElement;
+  const prefersReducedMotion = detectReducedMotion();
+  const duration = prefersReducedMotion ? 0 : TRANSITION_DURATION;
+
+  // Start transition
+  onTransitionStart?.();
+
+  // Add transition class for smooth animation (unless reduced motion is preferred)
+  if (!prefersReducedMotion) {
+    root.style.transition = `background-color ${duration}ms ease-in-out, color ${duration}ms ease-in-out`;
+  }
+
+  // Remove all theme classes
+  root.classList.remove('dark', 'light', 'high-contrast');
+
+  // Add new theme class
+  if (theme !== 'light') {
+    root.classList.add(theme);
+  }
+
+  // Trigger reflow to ensure transition is applied
+  void root.offsetHeight;
+
+  // Remove transition class after animation completes
+  setTimeout(() => {
+    root.style.transition = '';
+    onTransitionEnd?.();
+  }, duration);
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>('auto');
+  const [effectiveTheme, setEffectiveTheme] = useState<'dark' | 'light' | 'high-contrast'>('light');
+  const [systemThemePreference, setSystemThemePreference] = useState<'dark' | 'light' | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  const mediaQueryListRef = useRef<MediaQueryList | null>(null);
+
+  // Initialize theme from storage and system preferences
   useEffect(() => {
     if (initialized) return;
-    
+
     try {
-      const saved = localStorage.getItem('network-sim-theme');
-      if (saved === 'dark' || saved === 'light') {
-        setTheme(saved);
-      }
+      // Load saved theme preference
+      const saved = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+      const validTheme = saved && ['dark', 'light', 'high-contrast', 'auto'].includes(saved) ? saved : 'auto';
+
+      // Detect system theme
+      const systemTheme = detectSystemTheme();
+      setSystemThemePreference(systemTheme);
+
+      // Determine effective theme
+      const effective = validTheme === 'auto' ? systemTheme : validTheme;
+      setEffectiveTheme(effective);
+      setThemeState(validTheme);
+
+      // Apply theme immediately without transition on first load
+      applyTheme(effective);
     } catch {
-      // localStorage erişim hatası - varsayılan dark kullan
+      // Fallback to light theme
+      setEffectiveTheme('light');
+      setThemeState('auto');
+      applyTheme('light');
     }
+
     setInitialized(true);
   }, [initialized]);
 
-  // Tema değiştiğinde kaydet ve uygula
+  // Setup system theme change listener
   useEffect(() => {
     if (!initialized) return;
-    
+
     try {
-      localStorage.setItem('network-sim-theme', theme);
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      mediaQueryListRef.current = mediaQuery;
+
+      const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+        const newSystemTheme = e.matches ? 'dark' : 'light';
+        setSystemThemePreference(newSystemTheme);
+
+        // If auto theme is enabled, update effective theme
+        if (theme === 'auto') {
+          setEffectiveTheme(newSystemTheme);
+          applyTheme(newSystemTheme, () => setIsTransitioning(true), () => setIsTransitioning(false));
+        }
+      };
+
+      // Use addEventListener for better compatibility
+      mediaQuery.addEventListener('change', handleChange);
+
+      return () => {
+        mediaQuery.removeEventListener('change', handleChange);
+      };
     } catch {
-      // localStorage erişim hatası
+      // System theme detection not supported
     }
-    
-    // DOM'u güncelle
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-      root.classList.remove('light');
-    } else {
-      root.classList.add('light');
-      root.classList.remove('dark');
+  }, [initialized, theme]);
+
+  // Apply theme when it changes
+  useEffect(() => {
+    if (!initialized) return;
+
+    try {
+      // Determine effective theme
+      const effective = theme === 'auto' ? (systemThemePreference || 'light') : theme;
+
+      // Only apply if effective theme changed
+      if (effective !== effectiveTheme) {
+        setEffectiveTheme(effective);
+        applyTheme(effective, () => setIsTransitioning(true), () => setIsTransitioning(false));
+      }
+
+      // Persist theme preference
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // localStorage not available
     }
-  }, [theme, initialized]);
+  }, [theme, initialized, systemThemePreference, effectiveTheme]);
+
+  const setTheme = useCallback((newTheme: Theme) => {
+    setThemeState(newTheme);
+  }, []);
 
   const toggleTheme = useCallback(() => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    setThemeState(prev => {
+      if (prev === 'auto') return 'light';
+      if (prev === 'light') return 'dark';
+      if (prev === 'dark') return 'high-contrast';
+      return 'auto';
+    });
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        effectiveTheme,
+        setTheme,
+        toggleTheme,
+        isTransitioning,
+        systemThemePreference,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

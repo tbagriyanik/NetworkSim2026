@@ -198,15 +198,63 @@ export function NetworkTopology({
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>(activeDeviceId ? [activeDeviceId] : []);
   const [snapToGrid, setSnapToGrid] = useState(true); // Snap-to-grid toggle
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  const { visibleDevices, visibleConnections } = useMemo(() => {
+    if (!canvasRef.current) return { visibleDevices: devices, visibleConnections: connections };
+
+    const { width, height } = canvasRef.current.getBoundingClientRect();
+    const margin = 100; // Extra margin to prevent pop-in
+
+    const vDevices = devices.filter(device => {
+      const x = device.x * zoom + pan.x;
+      const y = device.y * zoom + pan.y;
+      const deviceWidth = (device.type === 'pc' ? 90 : 130) * zoom;
+      const deviceHeight = 100 * zoom;
+
+      return (
+        x + deviceWidth + margin > 0 &&
+        x - margin < width &&
+        y + deviceHeight + margin > 0 &&
+        y - margin < height
+      );
+    });
+
+    const vConnections = connections.filter(conn => {
+      const source = devices.find(d => d.id === conn.sourceDeviceId);
+      const target = devices.find(d => d.id === conn.targetDeviceId);
+      if (!source || !target) return false;
+
+      // Check if either end is visible
+      const sourceVisible = vDevices.some(d => d.id === source.id);
+      const targetVisible = vDevices.some(d => d.id === target.id);
+      if (sourceVisible || targetVisible) return true;
+
+      const minX = Math.min(source.x, target.x) * zoom + pan.x;
+      const maxX = Math.max(source.x, target.x) * zoom + pan.x;
+      const minY = Math.min(source.y, target.y) * zoom + pan.y;
+      const maxY = Math.max(source.y, target.y) * zoom + pan.y;
+
+      return (
+        maxX + margin > 0 &&
+        minX - margin < width &&
+        maxY + margin > 0 &&
+        minY - margin < height
+      );
+    });
+
+    return { visibleDevices: vDevices, visibleConnections: vConnections };
+  }, [devices, connections, pan, zoom]);
+
   const devicesSortedForRender = useMemo(() => {
-    return [...devices].sort((a, b) => {
+    return [...visibleDevices].sort((a, b) => {
       if (a.id === activeDeviceId) return 1;
       if (b.id === activeDeviceId) return -1;
       if (selectedDeviceIds.includes(a.id) && !selectedDeviceIds.includes(b.id)) return 1;
       if (!selectedDeviceIds.includes(a.id) && selectedDeviceIds.includes(b.id)) return -1;
       return 0;
     });
-  }, [devices, activeDeviceId, selectedDeviceIds]);
+  }, [visibleDevices, activeDeviceId, selectedDeviceIds]);
 
   // Sync internal selection with prop from parent
   useEffect(() => {
@@ -247,6 +295,10 @@ export function NetworkTopology({
   const snapToGridRef = useRef(true);
   const isDrawingConnectionRef = useRef(false);
   const panAnimationFrameRef = useRef<number | null>(null);
+  const momentumAnimationFrameRef = useRef<number | null>(null);
+  const velocityRef = useRef({ x: 0, y: 0 });
+  const lastMouseMoveTimeRef = useRef<number>(0);
+  const lastMouseMovePosRef = useRef({ x: 0, y: 0 });
 
   // ─── Touch performance refs ───
   const isTouchDraggingRef = useRef(false);
@@ -414,7 +466,6 @@ export function NetworkTopology({
   } | null>(null);
 
   // Refs
-  const canvasRef = useRef<HTMLDivElement>(null);
   const deviceCounterRef = useRef<{ pc: number; switch: number; router: number }>({ pc: 0, switch: 0, router: 0 });
   const pingAnimationRef = useRef<number | null>(null);
 
@@ -742,6 +793,21 @@ export function NetworkTopology({
 
     const handleMouseMove = (e: globalThis.MouseEvent) => {
       if (isPanningRef.current) {
+        // Track velocity for momentum
+        const now = Date.now();
+        const dt = now - lastMouseMoveTimeRef.current;
+        if (dt > 0) {
+          const dx = e.clientX - lastMouseMovePosRef.current.x;
+          const dy = e.clientY - lastMouseMovePosRef.current.y;
+          // Exponential moving average for velocity to smooth out noise
+          velocityRef.current = {
+            x: velocityRef.current.x * 0.2 + (dx / dt) * 0.8,
+            y: velocityRef.current.y * 0.2 + (dy / dt) * 0.8,
+          };
+        }
+        lastMouseMoveTimeRef.current = now;
+        lastMouseMovePosRef.current = { x: e.clientX, y: e.clientY };
+
         // Throttle pan with RAF for smooth rendering
         if (panAnimationFrameRef.current !== null) return;
         const ps = panStartRef.current;
@@ -861,9 +927,42 @@ export function NetworkTopology({
         panAnimationFrameRef.current = null;
       }
 
-      // Save to history if we were actually dragging a device
-      if (isActuallyDraggingRef.current && draggedDeviceRef.current) {
-        // history already saved at drag start; no-op here
+      // Start momentum if panning and velocity is high enough
+      if (isPanningRef.current) {
+        const vx = velocityRef.current.x;
+        const vy = velocityRef.current.y;
+        const speed = Math.sqrt(vx * vx + vy * vy);
+
+        if (speed > 0.1) {
+          let lastTime = Date.now();
+          const friction = 0.95; // Deceleration rate
+
+          const animateMomentum = () => {
+            const now = Date.now();
+            const dt = now - lastTime;
+            lastTime = now;
+
+            if (dt > 0) {
+              const currentVx = velocityRef.current.x * Math.pow(friction, dt / 16);
+              const currentVy = velocityRef.current.y * Math.pow(friction, dt / 16);
+              velocityRef.current = { x: currentVx, y: currentVy };
+
+              const currentSpeed = Math.sqrt(currentVx * currentVx + currentVy * currentVy);
+              if (currentSpeed > 0.01) {
+                setPan(prev => ({
+                  x: prev.x + currentVx * dt,
+                  y: prev.y + currentVy * dt
+                }));
+                momentumAnimationFrameRef.current = requestAnimationFrame(animateMomentum);
+              } else {
+                momentumAnimationFrameRef.current = null;
+              }
+            } else {
+              momentumAnimationFrameRef.current = requestAnimationFrame(animateMomentum);
+            }
+          };
+          momentumAnimationFrameRef.current = requestAnimationFrame(animateMomentum);
+        }
       }
 
       setIsPanning(false);

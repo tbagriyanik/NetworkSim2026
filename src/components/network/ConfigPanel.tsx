@@ -1,11 +1,12 @@
 'use client';
 
 import { SwitchState } from '@/lib/network/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { Translations } from '@/contexts/LanguageContext';
+import { ModernPanel } from '@/components/ui/ModernPanel';
+import { Save, FileText } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ConfigPanelProps {
   state: SwitchState;
@@ -19,7 +20,6 @@ const TIMESTAMP = '2026-02-26 22:00:00';
 
 export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = false, t, theme }: ConfigPanelProps) {
   const [isSaving, setIsSaving] = useState(false);
-
   const isDark = theme === 'dark';
 
   const generateConfig = (): string => {
@@ -64,7 +64,6 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
       config += `!\\n`;
     }
 
-    // IP Routing
     if (state.ipRouting) {
       config += `ip routing\\n`;
       config += `!\\n`;
@@ -79,65 +78,36 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     });
 
     Object.values(state.ports).forEach(port => {
-      // Skip VLAN interfaces - they're handled separately
-      if (port.id.toLowerCase().startsWith('vlan')) {
-        return;
-      }
-
+      if (port.id.toLowerCase().startsWith('vlan')) return;
       const portUpper = port.id.toUpperCase().replace('FA', 'FastEthernet').replace('GI', 'GigabitEthernet');
       config += `interface ${portUpper}\\n`;
-      if (port.name) {
-        config += ` description ${port.name}\\n`;
-      }
-      if (port.shutdown) {
-        config += ` shutdown\\n`;
-      }
-      if (port.speed !== 'auto') {
-        config += ` speed ${port.speed}\\n`;
-      }
-      if (port.duplex !== 'auto') {
-        config += ` duplex ${port.duplex}\\n`;
-      }
-      if (port.mode === 'trunk') {
-        config += ` switchport mode trunk\\n`;
-      } else {
+      if (port.name) config += ` description ${port.name}\\n`;
+      if (port.shutdown) config += ` shutdown\\n`;
+      if (port.speed !== 'auto') config += ` speed ${port.speed}\\n`;
+      if (port.duplex !== 'auto') config += ` duplex ${port.duplex}\\n`;
+      if (port.mode === 'trunk') config += ` switchport mode trunk\\n`;
+      else {
         config += ` switchport mode access\\n`;
         const vlanId = Number((port as any).accessVlan || port.vlan || 1);
-        if (vlanId !== 1) {
-          config += ` switchport access vlan ${vlanId}\\n`;
-        }
+        if (vlanId !== 1) config += ` switchport access vlan ${vlanId}\\n`;
       }
-      if (port.ipAddress && port.subnetMask) {
-        config += ` ip address ${port.ipAddress} ${port.subnetMask}\\n`;
-      }
+      if (port.ipAddress && port.subnetMask) config += ` ip address ${port.ipAddress} ${port.subnetMask}\\n`;
       config += `!\\n`;
     });
 
-    // VLAN interfaces with IP addresses
     Object.keys(state.ports || {}).forEach(portName => {
       if (portName.toLowerCase().startsWith('vlan')) {
         const port = state.ports[portName];
         const vlanNum = portName.toLowerCase().replace('vlan', '');
-
-        // Skip Vlan1 if it doesn't have an IP address - it's handled at the end
-        if (vlanNum === '1' && (!port.ipAddress || !port.subnetMask)) {
-          return;
-        }
-
+        if (vlanNum === '1' && (!port.ipAddress || !port.subnetMask)) return;
         config += `interface Vlan${vlanNum}\\n`;
-        if (port.ipAddress && port.subnetMask) {
-          config += ` ip address ${port.ipAddress} ${port.subnetMask}\\n`;
-        }
-        if (!port.shutdown) {
-          config += ` no shutdown\\n`;
-        } else {
-          config += ` shutdown\\n`;
-        }
+        if (port.ipAddress && port.subnetMask) config += ` ip address ${port.ipAddress} ${port.subnetMask}\\n`;
+        if (!port.shutdown) config += ` no shutdown\\n`;
+        else config += ` shutdown\\n`;
         config += `!\\n`;
       }
     });
 
-    // Default Vlan1 configuration (only if not already configured above)
     const vlan1Port = state.ports['vlan1'];
     if (!vlan1Port || !vlan1Port.ipAddress || !vlan1Port.subnetMask) {
       config += `interface Vlan1\\n`;
@@ -149,29 +119,18 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     config += `!\\n`;
 
     config += `line con 0\\n`;
-    if (state.security.consoleLine.password) {
-      config += ` password ${state.security.consoleLine.password}\\n`;
-    }
-    if (state.security.consoleLine.login) {
-      config += ` login\\n`;
-    }
+    if (state.security.consoleLine.password) config += ` password ${state.security.consoleLine.password}\\n`;
+    if (state.security.consoleLine.login) config += ` login\\n`;
     config += `!\\n`;
 
     config += `line vty 0 15\\n`;
-    if (state.security.vtyLines.password) {
-      config += ` password ${state.security.vtyLines.password}\\n`;
-    }
-    if (state.security.vtyLines.login) {
-      config += ` login\\n`;
-    }
-    if (state.security.vtyLines.transportInput.length > 0 &&
-      state.security.vtyLines.transportInput[0] !== 'all') {
+    if (state.security.vtyLines.password) config += ` password ${state.security.vtyLines.password}\\n`;
+    if (state.security.vtyLines.login) config += ` login\\n`;
+    if (state.security.vtyLines.transportInput.length > 0 && state.security.vtyLines.transportInput[0] !== 'all') {
       config += ` transport input ${state.security.vtyLines.transportInput.join(' ')}\\n`;
     }
     config += `!\\n`;
-
     config += `end\\n`;
-
     return config;
   };
 
@@ -185,46 +144,46 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     }
   };
 
+  const headerAction = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={isSaving || isDevicePoweredOff}
+          className="bg-blue-600 hover:bg-blue-700 h-8 gap-2"
+        >
+          <Save className="w-4 h-4" />
+          <span className="hidden sm:inline">{isSaving ? t.saving : t.save}</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{t.save} Configuration</TooltipContent>
+    </Tooltip>
+  );
+
   const configText = state.runningConfig?.length
     ? state.runningConfig.join('\n')
     : generateConfig();
 
-  const cardBg = isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
-  const innerBg = isDark ? 'bg-slate-900' : 'bg-slate-900';
-  const textPrimary = isDark ? 'text-white' : 'text-white';
-
   return (
-    <Card className={`${cardBg}`}>
-      <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-blue-400 text-base sm:text-lg flex items-center gap-2">
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            {t.runningConfig}
-          </CardTitle>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={isSaving || isDevicePoweredOff}
-            className="bg-blue-600 hover:bg-blue-700 text-xs px-2 sm:px-3"
-          >
-            {isSaving ? t.saving : t.save}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-48 sm:h-64">
-          <pre className={`text-xs text-green-400 font-mono whitespace-pre-wrap ${innerBg} p-2 sm:p-3 rounded-lg`}>
+    <ModernPanel
+      id={`config-${state.hostname}`}
+      title={t.runningConfig}
+      headerAction={headerAction}
+      className="max-w-3xl w-full h-[500px]"
+    >
+      <div className="flex flex-col h-full overflow-hidden p-4 bg-background">
+        <div className="flex-1 overflow-auto rounded-lg border border-slate-800 bg-slate-950 custom-scrollbar">
+          <pre className="p-4 text-xs text-emerald-400 font-mono whitespace-pre-wrap leading-relaxed">
             {configText.replace(/\\n/g, '\n')}
           </pre>
-        </ScrollArea>
+        </div>
 
-        <div className={`mt-2 text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'} flex items-center gap-2`}>
-          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500 animate-pulse" />
+        <div className="mt-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           {t.realTimeUpdate}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </ModernPanel>
   );
 }
