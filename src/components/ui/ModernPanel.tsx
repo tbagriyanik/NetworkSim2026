@@ -19,6 +19,8 @@ export interface ModernPanelProps {
     className?: string;
     style?: React.CSSProperties;
     headerAction?: ReactNode;
+    headerStart?: ReactNode;
+    footer?: ReactNode;
 }
 
 export function ModernPanel({
@@ -35,6 +37,8 @@ export function ModernPanel({
     className,
     style,
     headerAction,
+    headerStart,
+    footer,
 }: ModernPanelProps) {
     const { panelLayout } = useLayout();
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -91,10 +95,13 @@ export function ModernPanel({
         >
             {/* Header */}
             <div className="flex items-center justify-between gap-2 p-4 border-b bg-muted/50">
-                {resizable && isOverlay && (
-                    <GripHorizontal className="w-4 h-4 text-muted-foreground cursor-grab" />
-                )}
-                <h2 className="font-semibold text-sm flex-1">{title}</h2>
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {resizable && isOverlay && (
+                        <GripHorizontal className="w-4 h-4 text-muted-foreground cursor-grab" />
+                    )}
+                    {headerStart}
+                    <h2 className="font-semibold text-sm flex-1 truncate">{title}</h2>
+                </div>
                 <div className="flex items-center gap-2">
                     {headerAction}
                     {collapsible && (
@@ -122,6 +129,7 @@ export function ModernPanel({
             {!isCollapsed && (
                 <div className="flex-1 overflow-y-auto p-4">
                     {children}
+                    {footer && <div className="mt-4 border-t pt-3">{footer}</div>}
                 </div>
             )}
 

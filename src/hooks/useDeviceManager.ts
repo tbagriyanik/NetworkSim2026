@@ -7,6 +7,8 @@ import { executeCommand, getPrompt } from '@/lib/network/executor';
 import type { TerminalOutput } from '@/components/network/Terminal';
 import { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAppFeedback } from '@/hooks/useAppFeedback';
+import { formatErrorForUser } from '@/lib/errors/errorHandler';
 
 interface PCOutputLine {
   id: string;
@@ -17,6 +19,7 @@ interface PCOutputLine {
 
 export function useDeviceManager() {
   const { toast } = useToast();
+  const { notifyErrorInfo } = useAppFeedback();
   const { language } = useLanguage();
 
   const [deviceStates, setDeviceStates] = useState<Map<string, SwitchState>>(new Map());

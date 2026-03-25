@@ -9,6 +9,14 @@ export interface ErrorInfo {
     context?: Record<string, any>;
 }
 
+export interface RecoveryFeedback {
+    title: string;
+    description: string;
+    recoveryHint?: string;
+    severity: ErrorInfo['severity'];
+    recoverable: boolean;
+}
+
 export class ApplicationError extends Error {
     code: string;
     userMessage: string;
@@ -115,6 +123,20 @@ export class ErrorHandler {
         return () => this.listeners.delete(listener);
     }
 
+    toRecoveryFeedback(errorInfo: ErrorInfo): RecoveryFeedback {
+        const recoveryHint = errorInfo.recoverySteps?.length
+            ? `Recovery steps: ${errorInfo.recoverySteps.join(' | ')}`
+            : undefined;
+
+        return {
+            title: errorInfo.code,
+            description: errorInfo.userMessage,
+            recoveryHint,
+            severity: errorInfo.severity,
+            recoverable: errorInfo.recoverable,
+        };
+    }
+
     private notifyListeners(error: ErrorInfo) {
         this.listeners.forEach((listener) => listener(error));
     }
@@ -133,6 +155,22 @@ export function useErrorHandler() {
         clearErrors: () => errorHandler.clearErrors(),
         subscribe: (listener: (error: ErrorInfo) => void) =>
             errorHandler.subscribe(listener),
+    };
+}
+
+export function formatErrorForUser(error: Error | ApplicationError, fallbackMessage?: string) {
+    if (error instanceof ApplicationError) {
+        return error.toErrorInfo();
+    }
+
+    return {
+        code: 'UNKNOWN_ERROR',
+        message: error.message,
+        userMessage: fallbackMessage ?? 'An unexpected error occurred. Please try again.',
+        severity: 'error' as const,
+        recoverable: false,
+        timestamp: Date.now(),
+        context: undefined,
     };
 }
 

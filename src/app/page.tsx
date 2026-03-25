@@ -11,6 +11,7 @@ import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNot
 import { NetworkTopology } from '@/components/network/NetworkTopology';
 import { CanvasDevice, CanvasConnection, CanvasNote } from '@/components/network/networkTopology.types';
 import { getPrompt } from '@/lib/network/executor';
+import { formatErrorForUser } from '@/lib/errors/errorHandler';
 import type { TerminalOutput } from '@/components/network/Terminal';
 import {
   AlertDialog,
@@ -73,6 +74,7 @@ import { performanceMonitor } from '@/lib/performance/monitoring';
 
 import { DeviceIcon } from '@/components/network/DeviceIcon';
 import { AppSkeleton } from '@/components/ui/AppSkeleton';
+import { AppErrorBoundary } from '@/components/ui/AppErrorBoundary';
 
 const PCPanel = dynamic(() => import('@/components/network/PCPanel').then((m) => m.PCPanel), { ssr: false });
 const Terminal = dynamic(() => import('@/components/network/Terminal').then((m) => m.Terminal), { ssr: false });
@@ -1579,7 +1581,7 @@ export default function Home() {
       } catch (error) {
         toast({
           title: language === 'tr' ? 'Yükleme başarısız' : 'Load failed',
-          description: t.failedLoadProject,
+          description: formatErrorForUser(error as Error, t.failedLoadProject).userMessage,
           variant: "destructive",
         });
       }
@@ -1605,6 +1607,7 @@ export default function Home() {
   }, []);
 
   return (
+    <AppErrorBoundary fallbackTitle={language === 'tr' ? 'Uygulama hatası' : 'Application error'}>
     <div className={`min-h-screen w-full flex flex-col ${isAppLoading ? 'bg-slate-950 overflow-hidden' : (isDark ? 'bg-slate-950' : 'bg-slate-50')} transition-colors duration-700`}>
       {/* App Loading Screen */}
       {isAppLoading && (
@@ -2597,5 +2600,6 @@ export default function Home() {
         <AboutModal isOpen={showAboutModal} onClose={() => setShowAboutModal(false)} />
       </motion.div>
     </div>
+    </AppErrorBoundary>
   );
 }

@@ -21,6 +21,10 @@ export interface AppShellProps {
     footer?: ReactNode;
     bottomNav?: ReactNode;
     breadcrumbs?: Array<{ label: string; href?: string; active?: boolean }>;
+    headerExtras?: ReactNode;
+    sidebarFooter?: ReactNode;
+    mainBefore?: ReactNode;
+    mainAfter?: ReactNode;
     className?: string;
 }
 
@@ -31,6 +35,10 @@ export function ModernAppShell({
     footer,
     bottomNav,
     breadcrumbs,
+    headerExtras,
+    sidebarFooter,
+    mainBefore,
+    mainAfter,
     className,
 }: AppShellProps) {
     const { sidebarCollapsed } = useLayout();
@@ -46,6 +54,7 @@ export function ModernAppShell({
                 <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                     <div className="flex flex-col">
                         {header}
+                        {headerExtras}
                         {breadcrumbs && breadcrumbs.length > 0 && (
                             <div className="px-4 py-2 border-t bg-muted/30">
                                 <ModernBreadcrumbs items={breadcrumbs} />
@@ -65,12 +74,16 @@ export function ModernAppShell({
                             sidebarWidth
                         )}
                     >
-                        {sidebar}
+                        <div className="flex h-full min-h-0 flex-col">
+                            <div className="flex-1 min-h-0">{sidebar}</div>
+                            {sidebarFooter && <div className="border-t bg-muted/20">{sidebarFooter}</div>}
+                        </div>
                     </aside>
                 )}
 
                 {/* Main Content */}
                 <main className="flex-1 overflow-hidden flex flex-col relative">
+                    {mainBefore}
                     <div className="flex-1 overflow-auto custom-scrollbar">
                         {main}
                     </div>
@@ -81,6 +94,7 @@ export function ModernAppShell({
                             {footer}
                         </footer>
                     )}
+                    {mainAfter}
                 </main>
             </div>
 

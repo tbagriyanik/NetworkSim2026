@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import fc from 'fast-check';
-import { ApplicationError, ErrorHandler, COMMON_ERRORS } from '../errorHandler';
+import { ApplicationError, ErrorHandler, COMMON_ERRORS, formatErrorForUser } from '../errorHandler';
 
 describe('Error Handling and User Feedback - Property Tests', () => {
     let errorHandler: ErrorHandler;
@@ -197,6 +197,31 @@ describe('Error Handling and User Feedback - Property Tests', () => {
 
                     const errorInfo = error.toErrorInfo();
                     expect(errorInfo.context).toEqual(context);
+                }
+            )
+        );
+    });
+
+    it('should format recoverable errors into user-facing feedback', () => {
+        fc.assert(
+            fc.property(
+                fc.string({ minLength: 1, maxLength: 20 }).filter(s => s.trim().length > 0),
+                fc.array(fc.string({ minLength: 1, maxLength: 20 }).filter(s => s.trim().length > 0), { minLength: 1, maxLength: 4 }),
+                (code, steps) => {
+                    const error = new ApplicationError(code, 'Technical failure', 'Friendly message', {
+                        severity: 'critical',
+                        recoverable: true,
+                        recoverySteps: steps,
+                    });
+
+                    const info = formatErrorForUser(error);
+                    const feedback = errorHandler.toRecoveryFeedback(info);
+
+                    expect(info.code).toBe(code);
+                    expect(feedback.title).toBe(code);
+                    expect(feedback.description).toBe('Friendly message');
+                    expect(feedback.recoverable).toBe(true);
+                    expect(feedback.recoveryHint).toContain('Recovery steps:');
                 }
             )
         );
