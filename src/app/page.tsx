@@ -437,7 +437,7 @@ export default function Home() {
 
       // Debounce history pushes
       const timer = setTimeout(() => {
-        pushState(currentState);
+        pushState(currentState, activeTab === 'topology' ? 'topology' : 'ui');
         lastPushedStateRef.current = stateString;
       }, 500);
       return () => clearTimeout(timer);

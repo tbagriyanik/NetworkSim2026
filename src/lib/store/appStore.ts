@@ -84,6 +84,66 @@ const initialState: Omit<AppState, keyof ReturnType<typeof createActions>> = {
     sidebarOpen: true,
 };
 
+const STORE_KEY = 'network-simulator-storage';
+const STORE_VERSION = 2;
+const STORE_BACKUP_KEY = `${STORE_KEY}-backup`;
+
+function isValidTopologyState(value: any): value is TopologyState {
+    return !!value &&
+        Array.isArray(value.devices) &&
+        Array.isArray(value.connections) &&
+        Array.isArray(value.notes) &&
+        typeof value.zoom === 'number' &&
+        !!value.pan &&
+        typeof value.pan.x === 'number' &&
+        typeof value.pan.y === 'number';
+}
+
+function isValidDeviceStates(value: any): value is DeviceStates {
+    return !!value &&
+        typeof value.switchStates === 'object' &&
+        !Array.isArray(value.switchStates) &&
+        typeof value.pcOutputs === 'object' &&
+        !Array.isArray(value.pcOutputs);
+}
+
+function sanitizePersistedState(input: any): Partial<AppState> {
+    const safe: Partial<AppState> = {};
+
+    if (isValidTopologyState(input?.topology)) {
+        safe.topology = input.topology;
+    } else {
+        safe.topology = initialTopologyState;
+    }
+
+    if (isValidDeviceStates(input?.deviceStates)) {
+        safe.deviceStates = input.deviceStates;
+    } else {
+        safe.deviceStates = initialDeviceStates;
+    }
+
+    if (input?.activeTab === 'topology' || input?.activeTab === 'cmd' || input?.activeTab === 'terminal' || input?.activeTab === 'tasks') {
+        safe.activeTab = input.activeTab;
+    } else {
+        safe.activeTab = 'topology';
+    }
+
+    if (input?.activePanel === 'port' || input?.activePanel === 'vlan' || input?.activePanel === 'security' || input?.activePanel === 'config' || input?.activePanel === null) {
+        safe.activePanel = input.activePanel;
+    } else {
+        safe.activePanel = null;
+    }
+
+    safe.sidebarOpen = typeof input?.sidebarOpen === 'boolean' ? input.sidebarOpen : true;
+
+    return safe;
+}
+
+export function migrateAndValidatePersistedState(persistedState: any): Partial<AppState> {
+    const stateCandidate = persistedState?.state ?? persistedState ?? {};
+    return sanitizePersistedState(stateCandidate);
+}
+
 // Helper to create actions
 const createActions = (set: any, get: any) => ({
     // Topology actions
@@ -221,15 +281,104 @@ export const useAppStore = create<AppState>()(
             ...createActions(set, get),
         }),
         {
-            name: 'network-simulator-storage',
+            name: STORE_KEY,
+            version: STORE_VERSION,
             storage: createJSONStorage(() => localStorage),
             partialize: (state: AppState) => ({
                 topology: state.topology,
                 deviceStates: state.deviceStates,
+                activeTab: state.activeTab,
+                activePanel: state.activePanel,
+                sidebarOpen: state.sidebarOpen,
             }),
+            migrate: (persistedState: any) => {
+                try {
+                    return migrateAndValidatePersistedState(persistedState) as AppState;
+                } catch {
+                    return {
+                        ...initialState,
+                        ...createActions(() => { }, () => initialState),
+                    } as AppState;
+                }
+            },
+            onRehydrateStorage: () => (state, error) => {
+                if (typeof window === 'undefined') return;
+
+                if (error) {
+                    try {
+                        const raw = localStorage.getItem(STORE_KEY);
+                        if (raw) {
+                            localStorage.setItem(STORE_BACKUP_KEY, raw);
+                        }
+                        localStorage.removeItem(STORE_KEY);
+                    } catch {
+                        // noop
+                    }
+                    return;
+                }
+
+                try {
+                    const raw = localStorage.getItem(STORE_KEY);
+                    if (!raw) return;
+                    const parsed = JSON.parse(raw);
+                    const sanitized = migrateAndValidatePersistedState(parsed);
+                    const sanitizedPayload = {
+                        ...parsed,
+                        state: sanitized,
+                        version: STORE_VERSION,
+                    };
+                    localStorage.setItem(STORE_KEY, JSON.stringify(sanitizedPayload));
+                    localStorage.setItem(STORE_BACKUP_KEY, JSON.stringify(sanitizedPayload));
+                } catch {
+                    // If we cannot parse persisted value, preserve raw payload and reset.
+                    try {
+                        const raw = localStorage.getItem(STORE_KEY);
+                        if (raw) {
+                            localStorage.setItem(STORE_BACKUP_KEY, raw);
+                            localStorage.removeItem(STORE_KEY);
+                        }
+                    } catch {
+                        // noop
+                    }
+                }
+            }
         }
     )
 );
+
+// Cross-tab synchronization for persisted Zustand state.
+// When another tab writes to the same storage key, hydrate current tab store snapshot.
+if (typeof window !== 'undefined') {
+    const syncFlag = '__netsim_store_sync_initialized__';
+    const globalRef = window as unknown as Record<string, unknown>;
+
+    if (!globalRef[syncFlag]) {
+        window.addEventListener('storage', (event: StorageEvent) => {
+            if (event.key !== 'network-simulator-storage' || !event.newValue) return;
+
+            try {
+                const parsed = JSON.parse(event.newValue) as {
+                    state?: Partial<AppState>;
+                };
+                const nextState = parsed.state;
+                if (!nextState) return;
+
+                useAppStore.setState((prev) => ({
+                    ...prev,
+                    ...(nextState.topology ? { topology: nextState.topology } : {}),
+                    ...(nextState.deviceStates ? { deviceStates: nextState.deviceStates } : {}),
+                    ...(nextState.activeTab ? { activeTab: nextState.activeTab } : {}),
+                    ...(typeof nextState.activePanel !== 'undefined' ? { activePanel: nextState.activePanel } : {}),
+                    ...(typeof nextState.sidebarOpen === 'boolean' ? { sidebarOpen: nextState.sidebarOpen } : {}),
+                }));
+            } catch {
+                // Ignore malformed payloads from storage.
+            }
+        });
+
+        globalRef[syncFlag] = true;
+    }
+}
 
 // ─── Selectors for granular state access ───
 // These selectors prevent cascading re-renders by allowing components to subscribe to specific state slices
