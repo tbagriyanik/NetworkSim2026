@@ -1,17 +1,23 @@
 'use client';
 
-import { useState, useRef, useEffect, KeyboardEvent, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, KeyboardEvent, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSwitchState } from '@/lib/store/appStore';
 import { SwitchState } from '@/lib/network/types';
-import { Translations } from '@/contexts/LanguageContext';
+import { useLanguage, Translations } from '@/contexts/LanguageContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import type { TerminalOutput as TerminalOutputType } from './Terminal';
+import { checkConnectivity } from '@/lib/network/connectivity';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { CornerDownLeft, Terminal as TerminalIcon, Trash2, History, X, Copy, Search, Download, Settings as SettingsIcon } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Copy, Save, Trash2, Download, Settings } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from "@/hooks/use-toast";
 import { commandHelp } from '@/lib/network/executor';
 import { ModernPanel } from '@/components/ui/ModernPanel';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-breakpoint';
 
 export interface TerminalOutput {
   id: string;
@@ -28,7 +34,7 @@ interface TerminalProps {
   state: SwitchState;
   onCommand: (command: string) => Promise<void>;
   onClear: () => void;
-  output: TerminalOutput[];
+  output: TerminalOutputType[];
   isLoading: boolean;
   isConnectionError?: boolean;
   connectionErrorMessage?: string;
@@ -79,6 +85,7 @@ export function Terminal({
   const [fontSize, setFontSize] = useState(13);
 
   const isDark = theme === 'dark';
+  const isMobile = useIsMobile();
 
   // Sync with global history
   useEffect(() => {
@@ -319,7 +326,7 @@ export function Terminal({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button variant="ghost" size="icon" onClick={() => setShowSettings(!showSettings)} className={cn("h-8 w-8 rounded-lg", showSettings && "bg-accent")}>
-            <SettingsIcon className="w-4 h-4" />
+            <Settings className="w-4 h-4" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>{t.settings}</TooltipContent>
@@ -345,8 +352,7 @@ export function Terminal({
       title={title || deviceName}
       onClose={onClose}
       headerAction={headerAction}
-      mobileAutoHeight
-      className={cn("flex flex-col min-h-0 lg:flex-1", className)}
+      className={cn("flex flex-col h-full", className)}
     >
       <div className="flex flex-col h-full overflow-hidden bg-background">
         {/* Settings Bar */}
@@ -370,7 +376,8 @@ export function Terminal({
           <div
             ref={terminalRef}
             className={cn(
-              "flex-1 overflow-y-auto p-6 font-mono leading-relaxed custom-scrollbar",
+              "flex-1 overflow-y-auto font-mono leading-relaxed custom-scrollbar",
+              isMobile ? "p-3" : "p-6",
               isPoweredOff ? "bg-black" : (isDark ? "bg-slate-950" : "bg-slate-50")
             )}
             style={{ fontSize: `${fontSize}px` }}
@@ -406,9 +413,15 @@ export function Terminal({
           </div>
 
           {!isPoweredOff && (
-            <div className="p-4 border-t bg-muted/20">
+            <div className={cn(
+              "border-t bg-muted/20",
+              isMobile ? "p-2" : "p-4"
+            )}>
               <form onSubmit={handleFormSubmit} className="flex items-center gap-3">
-                <div className="flex items-center gap-3 px-4 py-2.5 bg-background rounded-xl border border-input flex-1 group focus-within:ring-1 focus-within:ring-primary/50 transition-all shadow-inner">
+                <div className={cn(
+                  "flex items-center gap-3 px-4 py-2.5 bg-background rounded-xl border border-input flex-1 group focus-within:ring-1 focus-within:ring-primary/50 transition-all shadow-inner",
+                  isMobile && "px-3 py-2"
+                )}>
                   <span className="text-primary font-bold text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity">{prompt}</span>
                   <input
                     ref={inputRef}
@@ -423,8 +436,16 @@ export function Terminal({
                     spellCheck={false}
                   />
                 </div>
-                <Button type="submit" disabled={isInputDisabled || !input.trim()} size="icon" className="shrink-0 h-11 w-11 rounded-xl shadow-lg">
-                  <CornerDownLeft className="w-5 h-5" />
+                <Button 
+                  type="submit" 
+                  disabled={isInputDisabled || !input.trim()} 
+                  size="icon" 
+                  className={cn(
+                    "shrink-0 rounded-xl shadow-lg",
+                    isMobile ? "h-9 w-9" : "h-11 w-11"
+                  )}
+                >
+                  <CornerDownLeft className={cn("w-5 h-5", isMobile && "w-4 h-4")} />
                 </Button>
               </form>
             </div>

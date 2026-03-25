@@ -8,6 +8,7 @@ import { ModernPanel } from '@/components/ui/ModernPanel';
 import { Save, FileText } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { useIsMobile, useIsTablet, useIsDesktop } from '@/hooks/use-breakpoint';
 
 interface ConfigPanelProps {
   state: SwitchState;
@@ -24,6 +25,11 @@ const TIMESTAMP = '2026-02-26 22:00:00';
 export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = false, t, theme, className, title }: ConfigPanelProps) {
   const [isSaving, setIsSaving] = useState(false);
   const isDark = theme === 'dark';
+  
+  // Responsive hooks
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isDesktop = useIsDesktop();
 
   const generateConfig = (): string => {
     let config = '!\\n';
@@ -173,19 +179,21 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
       id={`config-${state.hostname}`}
       title={title || t.runningConfig}
       headerAction={headerAction}
-      mobileAutoHeight
-      className={cn("w-full max-w-none lg:h-[500px]", className)}
+      className={cn(
+        "w-full max-w-none",
+        className
+      )}
     >
-      <div className="flex flex-col h-full overflow-hidden p-4 bg-background">
+      <div className="flex flex-col h-full overflow-hidden p-3 sm:p-4 bg-background">
         <div className="flex-1 overflow-auto rounded-lg border border-slate-800 bg-slate-950 custom-scrollbar">
-          <pre className="p-4 text-xs text-emerald-400 font-mono whitespace-pre-wrap leading-relaxed">
+          <pre className="p-3 sm:p-4 text-xs sm:text-sm text-emerald-400 font-mono whitespace-pre-wrap leading-relaxed">
             {configText.replace(/\\n/g, '\n')}
           </pre>
         </div>
 
-        <div className="mt-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+        <div className="mt-3 flex items-center gap-2 text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-500">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          {t.realTimeUpdate}
+          <span className={isMobile ? 'text-[9px]' : ''}>{t.realTimeUpdate}</span>
         </div>
       </div>
     </ModernPanel>

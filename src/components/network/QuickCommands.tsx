@@ -2,10 +2,12 @@
 
 import { CommandMode } from '@/lib/network/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Translations } from '@/contexts/LanguageContext';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { useIsMobile, useIsTablet, useIsDesktop } from '@/hooks/use-breakpoint';
+import { ModernPanel } from '@/components/ui/ModernPanel';
+import { cn } from '@/lib/utils';
 
 interface QuickCommandsProps {
   currentMode: CommandMode;
@@ -42,6 +44,11 @@ const quickCommands: QuickCommand[] = [
 export function QuickCommands({ currentMode, onExecuteCommand, t, theme, language, isDevicePoweredOff = false }: QuickCommandsProps) {
   const isDark = theme === 'dark';
   
+  // Responsive hooks
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isDesktop = useIsDesktop();
+  
   const availableCommands = quickCommands.filter(cmd => 
     cmd.modes.includes(currentMode)
   );
@@ -62,50 +69,46 @@ export function QuickCommands({ currentMode, onExecuteCommand, t, theme, languag
   const kbdBg = isDark ? 'bg-slate-700' : 'bg-slate-200';
 
   return (
-    <Card className={`${cardBg}`}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className={`${textPrimary} text-sm flex items-center gap-2`}>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            {t.quickCommands}
-          </CardTitle>
-          <Badge variant="outline" className="text-xs sm:text-xs">
-            {modeLabels[currentMode]}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
+    <ModernPanel
+      id="quickcommands"
+      title={t.quickCommands}
+      headerAction={
+        <Badge variant="outline" className={`text-xs ${isMobile ? 'text-[10px] px-1' : 'sm:text-xs'}`}>
+          <span className="truncate">{modeLabels[currentMode]}</span>
+        </Badge>
+      }
+      className={cn("w-full max-w-none", cardBg)}
+    >
+      <div className="space-y-4">
         {isDevicePoweredOff ? (
           <div className="px-3 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 text-xs font-bold tracking-wider text-center">
             {language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
           </div>
         ) : availableCommands.length > 0 ? (
-          <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 sm:gap-2">
+          <div className={`grid gap-2 ${isMobile ? 'grid-cols-2' : 'sm:flex sm:flex-wrap sm:gap-2'}`}>
             {availableCommands.map((cmd) => (
               <Tooltip key={cmd.command}>
                 <TooltipTrigger asChild>
                   <Button
                     size="sm"
                     onClick={() => onExecuteCommand(cmd.command)}
-                    className={`text-xs sm:text-xs px-2 sm:px-3 h-10 sm:h-8 ${cmd.color} transition-transform hover:scale-105`}
+                    className={`text-xs px-2 py-2 h-auto min-h-[32px] ${cmd.color} transition-transform hover:scale-105 ${isMobile ? 'text-[10px] leading-tight' : 'sm:text-xs sm:px-3 sm:h-8'}`}
                   >
-                    {cmd.label}
+                    <span className="truncate">{cmd.label}</span>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>{cmd.command}</TooltipContent>
+                <TooltipContent className="text-xs">
+                  <span className="truncate">{cmd.command}</span>
+                </TooltipContent>
               </Tooltip>
             ))}
           </div>
         ) : (
-          <div className={`text-xs ${textMuted} text-center py-2`}>
+          <div className={`text-xs ${textMuted} text-center py-2 ${isMobile ? 'text-[10px]' : ''}`}>
             {t.noCommandsAvailable}
           </div>
         )}
-        
-
-      </CardContent>
-    </Card>
+      </div>
+    </ModernPanel>
   );
 }

@@ -110,25 +110,36 @@ export function ModernPanel({
             )}
             style={{
                 width: isOverlay || isStacked ? width : '100%',
-                height: isCollapsed || (isMobile && mobileAutoHeight) ? 'auto' : height,
+                height: isCollapsed ? 'auto' : (isMobile ? '500px' : (style?.height || 'auto')),
                 ...style
             }}
         >
             {/* Header */}
-            <div className="flex items-center justify-between gap-2 p-4 border-b bg-muted/50">
+            <div 
+                className={cn(
+                    "flex items-center justify-between gap-2 p-4 border-b bg-muted/50",
+                    isMobile && "p-3 min-h-[48px] touch-manipulation"
+                )}
+            >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                     {canResize && (
                         <GripHorizontal className="w-4 h-4 text-muted-foreground cursor-grab" />
                     )}
                     {headerStart}
-                    <h2 className="font-semibold text-sm flex-1 truncate">{title}</h2>
+                    <h2 className={cn(
+                        "font-semibold flex-1 truncate",
+                        isMobile ? "text-sm" : "text-sm"
+                    )}>{title}</h2>
                 </div>
                 <div className="flex items-center gap-2">
                     {headerAction}
                     {canCollapse && (
                         <button
                             onClick={() => setIsCollapsed(!isCollapsed)}
-                            className="p-1 hover:bg-accent rounded"
+                            className={cn(
+                                "p-1 hover:bg-accent rounded",
+                                isMobile && "p-2 min-w-[36px] min-h-[36px]"
+                            )}
                             aria-label={isCollapsed ? 'Expand' : 'Collapse'}
                         >
                             {isCollapsed ? '▼' : '▲'}
@@ -137,7 +148,10 @@ export function ModernPanel({
                     {onClose && (
                         <button
                             onClick={onClose}
-                            className="p-1 hover:bg-accent rounded"
+                            className={cn(
+                                "p-1 hover:bg-accent rounded",
+                                isMobile && "p-2 min-w-[36px] min-h-[36px]"
+                            )}
                             aria-label="Close"
                         >
                             <X className="w-4 h-4" />

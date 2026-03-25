@@ -17,6 +17,7 @@ import { toast } from "@/hooks/use-toast";
 import { isValidMAC, normalizeMAC } from "@/lib/utils";
 import { commandHelp } from '@/lib/network/executor';
 import { ModernPanel } from '@/components/ui/ModernPanel';
+import { useIsMobile, useIsTablet, useIsDesktop } from '@/hooks/use-breakpoint';
 
 // PC Icon component matching the main screen
 const PCIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -84,6 +85,11 @@ export function PCPanel({
   const { language, t } = useLanguage();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  
+  // Responsive hooks
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isDesktop = useIsDesktop();
 
   // Use granular selector for device state to prevent cascading re-renders
   const deviceState = useSwitchState(deviceId);
@@ -611,7 +617,11 @@ export function PCPanel({
       title={`${internalPcHostname} (${pcIP})`}
       onClose={onClose}
       headerAction={headerAction}
-      className="w-full h-full min-w-0 max-w-none 2xl:max-w-[1400px] 2xl:mx-auto"
+      className={`
+        w-full h-full min-w-0 
+        ${isMobile ? 'max-w-none' : 'max-w-none'} 
+        ${isDesktop ? '2xl:max-w-[1400px] 2xl:mx-auto' : ''}
+      `}
     >
       <div className="flex flex-col h-full overflow-hidden bg-background">
         <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
@@ -635,33 +645,33 @@ export function PCPanel({
         </Dialog>
 
         {/* Navigation Tabs */}
-        <div className={`px-4 py-1.5 flex items-center gap-1 border-b ${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+        <div className={`px-4 py-1.5 flex items-center gap-1 border-b ${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'} ${isMobile ? 'flex-wrap' : ''}`}>
           <Button
             variant={activeTab === 'desktop' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setActiveTab('desktop')}
-            className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'desktop' ? 'bg-blue-500/10 text-blue-400' : 'text-slate-500'}`}
+            className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'desktop' ? 'bg-blue-500/10 text-blue-400' : 'text-slate-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
           >
             <Command className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === 'tr' ? 'Komut İstemi' : 'Command Prompt'}</span>
+            <span className={isMobile ? 'text-[10px]' : 'hidden sm:inline'}>{language === 'tr' ? 'Komut İstemi' : 'Command Prompt'}</span>
           </Button>
           <Button
             variant={activeTab === 'terminal' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setActiveTab('terminal')}
-            className={`h-9 px-4 text-xs font-black tracking-wider  transition-all gap-2 ${activeTab === 'terminal' ? 'bg-emerald-500/10 text-emerald-500' : 'text-slate-500 hover:text-emerald-500'}`}
+            className={`h-9 px-4 text-xs font-black tracking-wider  transition-all gap-2 ${activeTab === 'terminal' ? 'bg-emerald-500/10 text-emerald-500' : 'text-slate-500 hover:text-emerald-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
           >
             <TerminalIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === 'tr' ? 'Konsol' : 'Console'}</span>
+            <span className={isMobile ? 'text-[10px]' : 'hidden sm:inline'}>{language === 'tr' ? 'Konsol' : 'Console'}</span>
           </Button>
           <Button
             variant={activeTab === 'settings' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setActiveTab('settings')}
-            className={`h-9 px-4 text-xs font-black tracking-wider  transition-all gap-2 ${activeTab === 'settings' ? 'bg-purple-500/10 text-purple-500' : 'text-slate-500 hover:text-purple-500'}`}
+            className={`h-9 px-4 text-xs font-black tracking-wider  transition-all gap-2 ${activeTab === 'settings' ? 'bg-purple-500/10 text-purple-500' : 'text-slate-500 hover:text-purple-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
           >
             <ShieldCheck className="w-4 h-4" />
-            <span className="hidden sm:inline">{language === 'tr' ? 'Ayarlar' : 'Settings'}</span>
+            <span className={isMobile ? 'text-[10px]' : 'hidden sm:inline'}>{language === 'tr' ? 'Ayarlar' : 'Settings'}</span>
           </Button>
         </div>
 
@@ -677,7 +687,7 @@ export function PCPanel({
                 <label className="text-xs font-bold text-slate-500 uppercase">MAC Address</label>
                 <Input value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} className={errors.mac ? 'border-rose-500' : ''} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">IP Address</label>
                   <Input value={pcIP} onChange={(e) => setPcIP(e.target.value)} className={errors.ip ? 'border-rose-500' : ''} />
@@ -687,7 +697,7 @@ export function PCPanel({
                   <Input value={pcSubnet} onChange={(e) => setPcSubnet(e.target.value)} className={errors.subnet ? 'border-rose-500' : ''} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">Gateway</label>
                   <Input value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} className={errors.gateway ? 'border-rose-500' : ''} />
@@ -697,7 +707,7 @@ export function PCPanel({
                   <Input value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} className={errors.dns ? 'border-rose-500' : ''} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase">IPv6 Address</label>
                   <Input value={pcIPv6} onChange={(e) => setPcIPv6(e.target.value)} />
@@ -733,7 +743,7 @@ export function PCPanel({
               )}
               <div
                 ref={outputRef}
-                className={`flex-1 overflow-y-auto scroll-smooth custom-scrollbar p-6 space-y-2 font-mono text-sm leading-relaxed flex flex-col ${isPcPoweredOff ? 'bg-black' : ''}`}
+                className={`flex-1 overflow-y-auto scroll-smooth custom-scrollbar p-4 sm:p-6 space-y-2 font-mono text-sm leading-relaxed flex flex-col ${isPcPoweredOff ? 'bg-black' : ''}`}
               >
                 {isPcPoweredOff ? (
                   <div className="flex-1 flex items-center justify-center text-slate-700">POWERED OFFLINE</div>
@@ -764,9 +774,9 @@ export function PCPanel({
           )}
 
           {activeTab !== 'settings' && !isPcPoweredOff && (
-            <div className={`p-4 border-t ${isDark ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-50'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`flex items-center gap-3 px-4 py-2.5 ${inputBg} rounded-xl border ${inputBorder} flex-1 group`}>
+            <div className={`p-3 sm:p-4 border-t ${isDark ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-50'}`}>
+              <div className={`flex items-center gap-2 sm:gap-3 ${isMobile ? 'flex-col' : ''}`}>
+                <div className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 ${inputBg} rounded-xl border ${inputBorder} flex-1 group ${isMobile ? 'w-full' : ''}`}>
                   <span className="text-emerald-500 font-black text-xs select-none shrink-0 opacity-50">
                     {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : '>'}
                   </span>
@@ -786,7 +796,7 @@ export function PCPanel({
                   onClick={() => executeCommand()}
                   disabled={!input.trim() || (activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled)}
                   size="icon"
-                  className="shrink-0 h-11 w-11 rounded-xl bg-blue-600 text-white"
+                  className={`shrink-0 h-11 w-11 rounded-xl bg-blue-600 text-white ${isMobile ? 'w-full' : ''}`}
                 >
                   <CornerDownLeft className="w-5 h-5" />
                 </Button>

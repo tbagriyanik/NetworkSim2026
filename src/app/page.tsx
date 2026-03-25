@@ -2404,67 +2404,110 @@ export default function Home() {
 
               {/* Terminal Sekmesi - Always mounted, hidden via CSS */}
               <div className={`flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto xl:overflow-hidden custom-scrollbar ${activeTab === 'terminal' ? 'flex' : 'hidden'}`}>
-                <div className="flex flex-col xl:grid xl:grid-cols-4 xl:grid-rows-[minmax(0,1fr)_auto] gap-4 flex-1 min-h-0 xl:overflow-hidden">
-                  <div className="flex flex-col min-h-[400px] xl:min-h-0 xl:col-start-1 xl:col-end-4 xl:row-start-1">
-                    <Terminal
-                      key={`terminal-${activeDeviceId}`}
-                      title={isMobile ? "CLI" : undefined}
-                      className="flex-1"
-                      deviceId={activeDeviceId}
-                      // use same display name as the dropdown (hostname or topology name)
-                      deviceName={
-                        (() => {
-                          const deviceState = deviceStates.get(activeDeviceId);
-                          return deviceState?.hostname || activeDeviceId;
-                        })()
-                      }
-                      prompt={prompt}
-                      state={state}
-                      onCommand={handleCommand}
-                      onClear={handleClearTerminal}
-                      output={output}
-                      isLoading={isExecutingCommand}
-                      isConnectionError={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                      connectionErrorMessage={language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
-                      isPoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                      onTogglePower={toggleDevicePower}
-                      onClose={() => setActiveTab('topology')}
-                      t={t}
-                      theme={theme}
-                      language={language}
-                      onUpdateHistory={handleUpdateHistory}
-                      confirmDialog={confirmDialog}
-                      setConfirmDialog={setConfirmDialog}
-                      onRequestFocus={() => {
-                        requestAnimationFrame(() => {
-                          const el = document.querySelector('input[placeholder="' + t.typeCommand + '"]') as HTMLInputElement | null;
-                          el?.focus();
-                        });
-                      }}
-                    />
+                {isMobile ? (
+                  /* Mobile Layout: Only CLI - Full screen with scroll */
+                  <div className="flex flex-col h-[300px] min-h-[300px]">
+                    <div className="flex-1 min-h-0">
+                      <Terminal
+                        key={`terminal-${activeDeviceId}`}
+                        title="CLI"
+                        className="h-full"
+                        deviceId={activeDeviceId}
+                        deviceName={
+                          (() => {
+                            const deviceState = deviceStates.get(activeDeviceId);
+                            return deviceState?.hostname || activeDeviceId;
+                          })()
+                        }
+                        prompt={prompt}
+                        state={state}
+                        onCommand={handleCommand}
+                        onClear={handleClearTerminal}
+                        output={output}
+                        isLoading={isExecutingCommand}
+                        isConnectionError={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                        connectionErrorMessage={language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
+                        isPoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                        onTogglePower={toggleDevicePower}
+                        onClose={() => setActiveTab('topology')}
+                        t={t}
+                        theme={theme}
+                        language={language}
+                        onUpdateHistory={handleUpdateHistory}
+                        confirmDialog={confirmDialog}
+                        setConfirmDialog={setConfirmDialog}
+                        onRequestFocus={() => {
+                          requestAnimationFrame(() => {
+                            const el = document.querySelector('input[placeholder="' + t.typeCommand + '"]') as HTMLInputElement | null;
+                            el?.focus();
+                          });
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="min-h-0 xl:col-start-1 xl:col-end-4 xl:row-start-2">
-                    <QuickCommands
-                      currentMode={state.currentMode}
-                      onExecuteCommand={handleCommand}
-                      isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                      t={t}
-                      theme={theme}
-                      language={language}
-                    />
+                ) : (
+                  /* Desktop Layout: 4 kolon grid - Terminal + QuickCommands solda, ConfigPanel sağda */
+                  <div className="flex flex-col xl:grid xl:grid-cols-4 xl:grid-rows-[minmax(0,1fr)_auto] gap-4 flex-1 min-h-0 xl:overflow-hidden">
+                    <div className="flex flex-col min-h-[400px] xl:min-h-0 xl:col-start-1 xl:col-end-4 xl:row-start-1">
+                      <Terminal
+                        key={`terminal-${activeDeviceId}`}
+                        title={isMobile ? "CLI" : undefined}
+                        className="flex-1"
+                        deviceId={activeDeviceId}
+                        deviceName={
+                          (() => {
+                            const deviceState = deviceStates.get(activeDeviceId);
+                            return deviceState?.hostname || activeDeviceId;
+                          })()
+                        }
+                        prompt={prompt}
+                        state={state}
+                        onCommand={handleCommand}
+                        onClear={handleClearTerminal}
+                        output={output}
+                        isLoading={isExecutingCommand}
+                        isConnectionError={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                        connectionErrorMessage={language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
+                        isPoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                        onTogglePower={toggleDevicePower}
+                        onClose={() => setActiveTab('topology')}
+                        t={t}
+                        theme={theme}
+                        language={language}
+                        onUpdateHistory={handleUpdateHistory}
+                        confirmDialog={confirmDialog}
+                        setConfirmDialog={setConfirmDialog}
+                        onRequestFocus={() => {
+                          requestAnimationFrame(() => {
+                            const el = document.querySelector('input[placeholder="' + t.typeCommand + '"]') as HTMLInputElement | null;
+                            el?.focus();
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="min-h-0 xl:col-start-1 xl:col-end-4 xl:row-start-2">
+                      <QuickCommands
+                        currentMode={state.currentMode}
+                        onExecuteCommand={handleCommand}
+                        isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                        t={t}
+                        theme={theme}
+                        language={language}
+                      />
+                    </div>
+                    <div className="flex flex-col min-h-[400px] xl:min-h-0 xl:col-start-4 xl:row-start-1 xl:row-end-3">
+                      <ConfigPanel
+                        state={state}
+                        title={isMobile ? (language === "tr" ? "Running Config" : "Running Config") : undefined}
+                        className="flex-1"
+                        onExecuteCommand={handleCommand}
+                        isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                        t={t}
+                        theme={theme}
+                      />
+                    </div>
                   </div>
-                  <div className="flex flex-col min-h-[400px] xl:min-h-0 xl:col-start-4 xl:row-start-1 xl:row-end-3">
-                    <ConfigPanel
-                      state={state}
-                      title={isMobile ? (language === "tr" ? "Running Config" : "Running Config") : undefined}
-                      className="flex-1"
-                      onExecuteCommand={handleCommand}
-                      isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                      t={t}
-                      theme={theme}
-                    />
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Tasks Sekmesi */}
