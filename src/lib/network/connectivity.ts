@@ -63,7 +63,7 @@ export function checkConnectivity(
           return getPortVlan(peerPort);
         }
       }
-      return getDeviceVlan(device, state);
+      return Number(device.vlan || 1);
     }
     if (!state) return 1;
 
