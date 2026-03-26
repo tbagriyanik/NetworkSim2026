@@ -79,6 +79,9 @@ export interface Translations {
 
   // Tips
   tips: string;
+  levelBasic: string;
+  levelIntermediate: string;
+  levelAdvanced: string;
   portClickTip: string;
 
   // Simulator
@@ -360,6 +363,9 @@ const translations: Record<Language, Translations> = {
     uptime: 'Uptime',
     activePorts: 'Aktif Portlar',
     tips: 'İpuçları',
+    levelBasic: 'Basit Seviye',
+    levelIntermediate: 'Orta Seviye',
+    levelAdvanced: 'İleri Seviye',
     portClickTip: 'Port LED\'lerine tıklayarak hızlıca interface moduna geçebilirsiniz',
     simulatorTitle: 'Network Simulator 2026 v1.0',
     simulatorCopyright: 'Telif hakkı (c) 2024 Simulator. Tüm hakları saklıdır.',
@@ -623,6 +629,9 @@ const translations: Record<Language, Translations> = {
     uptime: 'Uptime',
     activePorts: 'Active Ports',
     tips: 'Tips',
+    levelBasic: 'Basic Level',
+    levelIntermediate: 'Intermediate Level',
+    levelAdvanced: 'Advanced Level',
     portClickTip: 'Click on port LEDs to quickly switch to interface mode',
     simulatorTitle: 'Network Simulator 2026 v1.0',
     simulatorCopyright: 'Copyright (c) 2024 Simulator. All rights reserved.',

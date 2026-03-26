@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
@@ -68,7 +68,7 @@ import {
   TaskContext,
   getTaskStatus
 } from '@/lib/network/taskDefinitions';
-import { exampleProjects } from '@/lib/network/exampleProjects';
+import { exampleProjects, type ExampleProject, type ExampleProjectLevel } from '@/lib/network/exampleProjects';
 import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import { performanceMonitor } from '@/lib/performance/monitoring';
 
@@ -139,11 +139,33 @@ const ALL_TABS: TabDefinition[] = [
   },
 ];
 
+const exampleLevelOrder: ExampleProjectLevel[] = ['basic', 'intermediate', 'advanced'];
+
 import { useHistory, ProjectState } from '@/hooks/useHistory';
 
 export default function Home() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+
+  const exampleLevelLabels = useMemo(
+    () => ({
+      basic: t.levelBasic,
+      intermediate: t.levelIntermediate,
+      advanced: t.levelAdvanced
+    }),
+    [t]
+  );
+
+  const groupedExampleProjects = useMemo(() => {
+    const grouping: Record<ExampleProjectLevel, ExampleProject[]> = {
+      basic: [],
+      intermediate: [],
+      advanced: []
+    };
+
+    exampleProjects(language).forEach((project) => grouping[project.level].push(project));
+    return grouping;
+  }, [language]);
 
   const {
     deviceStates,
@@ -2220,44 +2242,92 @@ export default function Home() {
               );
             })}
           </div>
-          {/* Mobile bottom nav div moved to bottom */}
+
           <Dialog open={showProjectPicker} onOpenChange={setShowProjectPicker}>
-            <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} w-screen h-screen max-w-none m-0 rounded-none`}>
-              <DialogHeader>
-                <DialogTitle>{language === 'tr' ? 'Yeni Proje' : 'New Project'}</DialogTitle>
-                <DialogDescription className={isDark ? 'text-slate-400' : 'text-slate-500'}>
-                  {language === 'tr' ? 'Boş bir proje başlat veya hazır örneklerden birini seç.' : 'Start with an empty project or choose a ready-made example.'}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid grid-cols-1 gap-3 h-[calc(100vh-8rem)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800 hover:scrollbar-thumb-slate-500 transition-colors">
-                <Button
-                  variant="outline"
-                  className={`justify-between ${isDark ? 'border-slate-800 hover:bg-slate-800/60' : ''}`}
-                  onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => { resetToEmptyProject(); }); }}
-                >
-                  <span className="font-semibold">{language === 'tr' ? 'Boş Proje' : 'Empty Project'}</span>
-                  <span className="text-xs opacity-70">{language === 'tr' ? 'Sıfırdan başla' : 'Start from scratch'}</span>
-                </Button>
-                {exampleProjects(language).map((example) => (
-                  <Button
-                    key={example.id}
-                    variant="ghost"
-                    className={`h-auto flex-col items-start gap-1 px-4 py-3 text-left border ${isDark ? 'border-slate-800 hover:bg-slate-800/60' : 'border-slate-200 hover:bg-slate-100'}`}
-                    onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => applyExampleProject(example.data)); }}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span className="font-semibold">{example.title}</span>
-                      <span className={`text-[10px] uppercase tracking-wider ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{example.tag}</span>
+            <DialogContent className={`${isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-white'} w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl ring-1 ring-slate-800/10 rounded-none md:rounded-3xl`}>
+              <div className='flex flex-col flex-1 overflow-hidden h-full max-w-full'>
+                <div className='p-4 md:p-8 pb-2 md:pb-4'>
+                  <div className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r from-cyan-500/20 to-blue-500/10 p-4 md:p-6 shadow-xl shadow-cyan-500/10'>
+                    <DialogTitle className='text-xl md:text-3xl lg:text-4xl font-black tracking-tight bg-gradient-to-br from-white to-slate-400 bg-clip-text text-transparent break-words'>{language === 'tr' ? 'Yeni Proje Aç' : 'Open a New Project'}</DialogTitle>
+                    <p className={`text-xs md:text-base mt-1 md:mt-2 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'} break-words`}>
+                      {language === 'tr' ? 'Bir örnek üzerinden başlayın veya sıfırdan tasarımınızı oluşturun.' : 'Build from scratch or choose a template to get started.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className='flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-12 pb-12 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent'>
+                  <div className='flex flex-col gap-12 max-w-full'>
+                    {/* Top Section: Start from Scratch */}
+                    <div className='w-full'>
+                      <div className='rounded-[2.5rem] border border-slate-200/70 bg-white/70 p-1 shadow-xl shadow-slate-900/5 dark:border-slate-800/60 dark:bg-slate-900/60'>
+                        <Button
+                          variant='outline'
+                          className={`group relative flex h-auto min-h-[140px] md:h-[200px] w-full flex-col md:flex-row items-center justify-between gap-6 md:gap-12 rounded-[2.2rem] border-0 px-8 md:px-12 py-8 text-left transition-all hover:scale-[1.005] active:scale-95 duration-500 ${isDark ? 'bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-2xl' : 'bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-xl shadow-blue-500/20'}`}
+                          onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => { resetToEmptyProject(); }); }}
+                        >
+                          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 flex-1">
+                            <div className="w-16 h-16 md:w-24 md:h-24 rounded-3xl bg-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform duration-700 backdrop-blur-md shrink-0">
+                              <Plus className="w-8 h-8 md:w-12 md:h-12" />
+                            </div>
+                            <div className="text-center md:text-left">
+                              <p className='text-2xl md:text-4xl font-black mb-2 md:mb-4 tracking-tighter'>{language === 'tr' ? 'Boş Proje' : 'Empty Project'}</p>
+                            </div>
+                          </div>
+
+                          <div className="absolute bottom-0 left-10 right-10 h-1.5 bg-white/5 rounded-t-full overflow-hidden">
+                            <div className="w-0 group-hover:w-full h-full bg-gradient-to-r from-cyan-400 to-blue-400 transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(34,211,238,0.6)]" />
+                          </div>
+                        </Button>
+                      </div>
                     </div>
-                    <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{example.description}</span>
-                    {example.detail && (
-                      <span className={`text-[11px] ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>{example.detail}</span>
-                    )}
-                  </Button>
-                ))}
+
+                    {/* Bottom Section: Examples organized in levels */}
+                    <div className='flex flex-col gap-16'>
+                      {exampleLevelOrder.map((level) => {
+                        const projects = groupedExampleProjects[level];
+                        if (!projects || projects.length === 0) return null;
+
+                        return (
+                          <section key={level} className='space-y-4 md:space-y-6 w-full'>
+                            <div className='flex items-center gap-3 md:gap-4 px-1 md:px-2'>
+                              <p className='text-[10px] md:text-xs font-black uppercase tracking-[0.3em] md:tracking-[0.4em] text-slate-500 dark:text-slate-400 whitespace-nowrap'>
+                                {exampleLevelLabels[level]}
+                              </p>
+                              <div className={`h-px flex-1 ${isDark ? 'bg-slate-800/60' : 'bg-slate-200'}`} />
+                            </div>
+
+                            <div className='grid grid-cols-1 xl:grid-cols-2 gap-6 w-full max-w-full'>
+                              {projects.map((example) => (
+                                <Button
+                                  key={example.id}
+                                  variant='ghost'
+                                  className={`group h-auto min-h-[120px] md:min-h-[160px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/80 hover:border-cyan-500/30' : 'border-slate-200/50 bg-white hover:bg-slate-50 hover:border-blue-500/20'} w-full overflow-hidden shadow-sm hover:shadow-2xl`}
+                                  onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => applyProjectState(example.data)); applyExampleProject(example.data); }}
+                                >
+                                  <div className='flex items-start justify-between w-full gap-4 overflow-hidden'>
+                                    <span className='font-black text-base md:text-2xl leading-none group-hover:text-cyan-400 transition-colors duration-300 break-words flex-1'>{example.title}</span>
+                                    <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 ${isDark ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>{example.tag}</span>
+                                  </div>
+                                  <p className={`text-[11px] md:text-sm leading-relaxed ${isDark ? 'text-slate-400/80' : 'text-slate-600'} font-medium italic group-hover:text-slate-200 transition-colors break-words w-full`}>{example.description}</p>
+                                  {example.detail && (
+                                    <div className='mt-auto pt-2 md:pt-4 flex items-center gap-2 md:gap-3 w-full border-t border-slate-800/10 dark:border-slate-800/50'>
+                                      <div className='w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.5)]' />
+                                      <span className={`text-[8px] md:text-[11px] font-bold tracking-wide uppercase ${isDark ? 'text-amber-400/80' : 'text-amber-700/80'} break-words`}>{example.detail}</span>
+                                    </div>
+                                  )}
+                                </Button>
+                              ))}
+                            </div>
+                          </section>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
+
 
           <Dialog
             open={showOnboarding}

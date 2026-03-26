@@ -443,7 +443,7 @@ function formatMacAddressSimple(mac: string): string {
   const cleanMac = mac.replace(/[-:]/g, '').toUpperCase();
   // Pad with zeros to ensure 12 characters
   const padded = cleanMac.padStart(12, '0').slice(0, 12);
-  // Add dots every 4 characters for Cisco format
+  // Add dots every 4 characters for format
   return padded.match(/.{1,4}/g)?.join('.') || padded;
 }
 

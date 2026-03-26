@@ -1,6 +1,11 @@
 import { createInitialState, createInitialRouterState } from './initialState';
 import type { SwitchState } from './types';
 import type { CanvasDevice, CanvasConnection, CanvasNote } from '@/components/network/networkTopology.types';
+import macExampleA from './examples/40-sayfa2-mac-tablosu.json';
+import dnsHttpExample from './examples/59-sayfa3-dns-http.json';
+import macExampleB from './examples/69-sayfa4-mac-tablosu.json';
+import ipConfigExample from './examples/76-sayfa1-ip-yapilandirma.json';
+import dhcpExample from './examples/87-sayfa6-dhcp.json';
 
 type ProjectData = {
   version: string;
@@ -27,14 +32,23 @@ type ProjectData = {
   pan: { x: number; y: number };
 };
 
-type ExampleProject = {
+export type ExampleProjectLevel = 'basic' | 'intermediate' | 'advanced';
+
+export type ExampleProject = {
   id: string;
   tag: string;
   title: string;
   description: string;
   detail?: string;
   data: ProjectData;
+  level: ExampleProjectLevel;
 };
+
+const macExampleAData: ProjectData = macExampleA as ProjectData;
+const dnsHttpExampleData: ProjectData = dnsHttpExample as ProjectData;
+const macExampleBData: ProjectData = macExampleB as ProjectData;
+const ipConfigExampleData: ProjectData = ipConfigExample as ProjectData;
+const dhcpExampleData: ProjectData = dhcpExample as ProjectData;
 
 const createSwitchDevice = (id: string, name: string, x: number, y: number): CanvasDevice => ({
   id,
@@ -591,6 +605,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       detail: isTr
         ? 'enable secret: class, enable password: paswd, console: console, vty: vty123'
         : 'enable secret: class, enable password: paswd, console: console, vty: vty123',
+      level: 'basic',
       data: baseProjectData(basicDevices, basicConnections, basicNotes, [{ id: 'switch-1', state: basicState }])
     },
     {
@@ -598,6 +613,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       tag: isTr ? 'VLAN' : 'VLAN',
       title: isTr ? '1 Switch VLAN' : 'Single Switch VLANs',
       description: isTr ? 'VLAN 10/20 ve iki PC erişim portu.' : 'VLAN 10/20 with two access PCs.',
+      level: 'basic',
       data: baseProjectData(vlanDevices, vlanConnections, vlanNotes, [{ id: 'switch-1', state: vlanState }])
     },
     {
@@ -605,6 +621,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       tag: isTr ? 'TRUNK/VTP' : 'TRUNK/VTP',
       title: isTr ? '2 Switch Trunk + VTP' : 'Two Switch Trunk + VTP',
       description: isTr ? 'Gi0/1 trunk, VTP domain LAB, VLAN 10/20 hazır.' : 'Gi0/1 trunk, VTP domain LAB, VLAN 10/20 ready.',
+      level: 'intermediate',
       data: baseProjectData(vtpDevices, vtpConnections, vtpNotes, [
         { id: 'switch-1', state: vtpSw1 },
         { id: 'switch-2', state: vtpSw2 }
@@ -615,6 +632,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       tag: isTr ? 'ROAS' : 'ROAS',
       title: isTr ? 'ROAS (Konsept)' : 'ROAS (Concept)',
       description: isTr ? 'Switch trunk + router (subinterface notlarıyla).' : 'Switch trunk + router with ROAS notes.',
+      level: 'intermediate',
       data: baseProjectData(roasDevices, roasConnections, roasNotes, [
         { id: 'switch-1', state: roasSw },
         { id: 'router-1', state: roasRouter }
@@ -625,6 +643,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       tag: isTr ? 'GÜVENLİK' : 'SECURITY',
       title: isTr ? 'Port-Security' : 'Port-Security',
       description: isTr ? 'Fa0/3 üzerinde port-security hazır.' : 'Port-security enabled on Fa0/3.',
+      level: 'intermediate',
       data: baseProjectData(psDevices, psConnections, psNotes, [{ id: 'switch-1', state: psState }])
     },
     {
@@ -633,6 +652,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       title: isTr ? 'Inter-VLAN Routing (L3 Switch)' : 'Inter-VLAN Routing (L3 Switch)',
       description: isTr ? '4 VLAN, L3 switch, inter-VLAN routing aktif.' : '4 VLANs, L3 switch, inter-VLAN routing enabled.',
       detail: isTr ? 'ip routing, VLAN 10/20/30/40 SVI' : 'ip routing, VLAN 10/20/30/40 SVI',
+      level: 'advanced',
       data: baseProjectData(l3RoutingDevices, l3RoutingConnections, l3RoutingNotes, [{ id: 'switch-1', state: l3RoutingState }])
     },
     {
@@ -641,6 +661,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       title: isTr ? 'Static Routing Lab' : 'Static Routing Lab',
       description: isTr ? '2 router, 2 switch, 2 PC, static routes.' : '2 routers, 2 switches, 2 PCs, static routes.',
       detail: isTr ? 'R1: ip route 192.168.20.0/24 192.168.2.2' : 'R1: ip route 192.168.20.0/24 192.168.2.2',
+      level: 'advanced',
       data: baseProjectData(staticRoutingDevices, staticRoutingConnections, staticRoutingNotes, [
         { id: 'switch-1', state: staticSw1 },
         { id: 'router-1', state: staticR1 },
@@ -654,6 +675,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       title: isTr ? 'EtherChannel Lab' : 'EtherChannel Lab',
       description: isTr ? '2 switch, LACP, link aggregation.' : '2 switches, LACP, link aggregation.',
       detail: isTr ? 'channel-group 1 mode active, Po1 trunk' : 'channel-group 1 mode active, Po1 trunk',
+      level: 'advanced',
       data: baseProjectData(etherChannelDevices, etherChannelConnections, etherChannelNotes, [
         { id: 'switch-1', state: etherSw1 },
         { id: 'switch-2', state: etherSw2 }
@@ -665,6 +687,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       title: isTr ? 'STP Redundant Links' : 'STP Redundant Links',
       description: isTr ? '2 switch, redundant links, Rapid-PVST.' : '2 switches, redundant links, Rapid-PVST.',
       detail: isTr ? 'spanning-tree priority 28672' : 'spanning-tree priority 28672',
+      level: 'advanced',
       data: baseProjectData(stpDevices, stpConnections, stpNotes, [
         { id: 'switch-1', state: stpSw1 },
         { id: 'switch-2', state: stpSw2 }
@@ -676,11 +699,75 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       title: isTr ? 'Campus Network' : 'Campus Network',
       description: isTr ? 'Core router + 2 access switches, routing.' : 'Core router + 2 access switches, routing.',
       detail: isTr ? 'CORE-R1 ip routing, VLAN 10/20' : 'CORE-R1 ip routing, VLAN 10/20',
+      level: 'advanced',
       data: baseProjectData(campusDevices, campusConnections, campusNotes, [
         { id: 'switch-1', state: campusAcc1 },
         { id: 'router-1', state: campusCore },
         { id: 'switch-2', state: campusAcc2 }
       ])
+    },
+    {
+      id: 'mac-table-lab',
+      tag: isTr ? 'MAC' : 'MAC',
+      title: isTr ? 'MAC Tablo Öğrenme' : 'MAC Table Lab',
+      description: isTr
+        ? 'SW1 üzerinde show mac address-table ile PC1/PC2 ve ROUTER-2 adreslerini karşılaştırın.'
+        : 'Use show mac address-table on SWITCH-1 to compare the MAC entries for PC1, PC2, and ROUTER-2.',
+      detail: isTr
+        ? 'PC1: 00-e0-f7-01-a1-b1, PC2: 97-31-e5-97-a7-03, SW1: 042c.802b.9da9, R2: 4145.c35d.e6d1'
+        : 'PC1: 00-e0-f7-01-a1-b1, PC2: 97-31-e5-97-a7-03, SW1: 042c.802b.9da9, R2: 4145.c35d.e6d1',
+      level: 'basic',
+      data: macExampleAData
+    },
+    {
+      id: 'dns-http',
+      tag: isTr ? 'DNS/HTTP' : 'DNS/HTTP',
+      title: isTr ? 'DNS ve HTTP Test' : 'DNS + HTTP Test',
+      description: isTr
+        ? 'PC-1 üzerinden HTTP istekleri gönderip nslookup yaparak sunucu hizmetlerini doğrulayın.'
+        : 'From PC-1 send HTTP requests and use nslookup to verify the server services.',
+      detail: 'http 192.168.1.10 / http a10.com / nslookup a10.com',
+      level: 'intermediate',
+      data: dnsHttpExampleData
+    },
+    {
+      id: 'mac-arp-lab',
+      tag: isTr ? 'MAC' : 'MAC',
+      title: isTr ? 'ARP & MAC Tablo Çalışması' : 'ARP vs MAC Table',
+      description: isTr
+        ? 'PC terminalinden arp -a ve SWITCH-1 konsolundan show mac ile adresleri eşleştirin.'
+        : 'Match ARP and show mac address-table output between the PCs and SWITCH-1.',
+      detail: isTr
+        ? 'PC terminali: arp, arp -a | SWITCH-1#: show mac address-table'
+        : 'PC terminal: arp, arp -a | SWITCH-1#: show mac address-table',
+      level: 'basic',
+      data: macExampleBData
+    },
+    {
+      id: 'ip-config-lab',
+      tag: isTr ? 'IP' : 'IP',
+      title: isTr ? 'IP Yapılandırma Laboratuvarı' : 'IP Configuration Lab',
+      description: isTr
+        ? 'PC1 & PC2 aynı IP/mask ile iletişim kurarken, PC3 farklı ayarlamayla farkı keşfedin.'
+        : 'Discover how identical IP/mask on PC1 & PC2 enables connectivity while PC3 differs.',
+      detail: isTr
+        ? 'PC1/PC2: 192.168.1.x/255.255.255.0; PC3: farklı yapılandırma, ping başarısız.'
+        : 'PC1/PC2: 192.168.1.x/255.255.255.0; PC3: different config, ping fails.',
+      level: 'basic',
+      data: ipConfigExampleData
+    },
+    {
+      id: 'dhcp-distribution',
+      tag: isTr ? 'DHCP' : 'DHCP',
+      title: isTr ? 'DHCP Dağıtım Senaryosu' : 'DHCP Distribution Scenario',
+      description: isTr
+        ? 'DHCP sunucusunun PC1 ve PC2’ye IP atamasını izleyin, PC3 ise manuel kalıyor.'
+        : 'Observe the DHCP server handing out IPs to PC1 & PC2 while PC3 stays static.',
+      detail: isTr
+        ? 'PC1/PC2 DHCP ile, PC3 elle yapılandırılmış; sh ip dhcp binding kontrolü yapın.'
+        : 'PC1/PC2 via DHCP, PC3 manual; verify with sh ip dhcp binding.',
+      level: 'intermediate',
+      data: dhcpExampleData
     }
   ];
 };
