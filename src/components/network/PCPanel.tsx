@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useRef, useEffect, KeyboardEvent, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -899,8 +899,47 @@ export function PCPanel({
         } else {
           addLocalOutput('output', 'Usage: arp -a');
         }
+      } else if (cmd === 'tracert') {
+        const target = args[0];
+        if (!target) {
+          addLocalOutput('output', 'Usage: tracert <target_name_or_address>');
+        } else {
+          addLocalOutput('output', `Tracing route to ${target} over a maximum of 30 hops:\n`);
+          const result = checkConnectivity(deviceId, target, topologyDevices as any, topologyConnections as any, deviceStates || new Map());
+          
+          if (result.hops && result.hops.length > 0) {
+            let hopOutput = '';
+            result.hops.forEach((hop, index) => {
+              // Simulate some variation in hop display
+              const hopName = hop;
+              const hopIp = topologyDevices.find(d => d.name === hop || d.id === hop)?.ip || '?.?.?.?';
+              hopOutput += `  ${index + 1}    <1 ms    <1 ms    <1 ms  ${hopName} [${hopIp}]\n`;
+            });
+            addLocalOutput('output', hopOutput + '\nTrace complete.');
+          } else {
+            addLocalOutput('output', `  1    *        *        *     Request timed out.\n\nTrace complete.`);
+          }
+        }
+      } else if (cmd === 'netstat') {
+        let output = '\nActive Connections\n\n  Proto  Local Address          Foreign Address        State\n';
+        output += `  TCP    ${pcIP}:135            0.0.0.0:0              LISTENING\n`;
+        output += `  TCP    ${pcIP}:445            0.0.0.0:0              LISTENING\n`;
+        
+        if (serviceHttpEnabled) output += `  TCP    ${pcIP}:80             0.0.0.0:0              LISTENING\n`;
+        if (serviceDnsEnabled) output += `  UDP    ${pcIP}:53             *:*                    \n`;
+        if (serviceDhcpEnabled) output += `  UDP    ${pcIP}:67             *:*                    \n`;
+        
+        output += `  TCP    ${pcIP}:49664          0.0.0.0:0              LISTENING\n`;
+        output += `  TCP    ${pcIP}:49665          0.0.0.0:0              LISTENING\n`;
+        addLocalOutput('output', output);
+      } else if (cmd === 'nbtstat') {
+        if (args.includes('-n')) {
+          addLocalOutput('output', `\nNetBIOS Local Name Table\n\n       Name               Type         Status\n    ---------------------------------------------\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <00>  UNIQUE      Registered\n    WORKGROUP        <00>  GROUP       Registered\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <20>  UNIQUE      Registered\n`);
+        } else {
+          addLocalOutput('output', 'Usage: nbtstat [-n]');
+        }
       } else if (cmd === 'help' || cmd === '?') {
-        addLocalOutput('output', `Available commands: ipconfig, ping, nslookup, http, tracert, arp, netstat, hostname, dir, ver, cls, exit, quit, snake`);
+        addLocalOutput('output', `Available commands: ipconfig, ping, tracert, netstat, nbtstat, nslookup, http, arp, hostname, dir, ver, cls, exit, quit, snake`);
       } else if (cmd === 'cls') {
         setPcOutput([]);
       } else if (cmd === 'exit' || cmd === 'quit') {

@@ -60,11 +60,18 @@ export type CommandHandler = (
 // --- Inline help tree (kept as-is for now) ---
 export const commandHelp: Record<string, Record<string, string[]>> = {
   user: {
-    '': ['enable', 'exit', 'show', '?'],
-    'e': ['enable', 'exit'],
-    'en': ['enable'],
-    'ex': ['exit'],
-    's': ['show'],
+    '': ['enable', 'exit', 'show', 'ipconfig', 'ping', 'tracert', 'netstat', 'nbtstat', 'nslookup', 'http', 'arp', 'hostname', 'snake', '?'],
+    'i': ['ipconfig'],
+    'ip': ['ipconfig'],
+    'p': ['ping'],
+    't': ['tracert'],
+    'n': ['netstat', 'nbtstat', 'nslookup'],
+    'ne': ['netstat'],
+    'nb': ['nbtstat'],
+    'ns': ['nslookup'],
+    'h': ['http', 'hostname'],
+    'a': ['arp'],
+    's': ['snake', 'show'],
     'sh': ['show'],
     'sho': ['show'],
     'show': ['version'],
