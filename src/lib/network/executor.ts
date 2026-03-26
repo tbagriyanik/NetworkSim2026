@@ -60,7 +60,7 @@ export type CommandHandler = (
 // --- Inline help tree (kept as-is for now) ---
 export const commandHelp: Record<string, Record<string, string[]>> = {
   user: {
-    '': ['enable', 'exit', 'show', 'ipconfig', 'ping', 'tracert', 'netstat', 'nbtstat', 'nslookup', 'http', 'arp', 'hostname', 'snake', '?'],
+    '': ['enable', 'exit', 'show', 'ipconfig', 'ping', 'tracert', 'netstat', 'nbtstat', 'nslookup', 'http', 'arp', 'hostname', 'snake', '?', 'help'],
     'i': ['ipconfig'],
     'ip': ['ipconfig'],
     'p': ['ping'],
@@ -77,7 +77,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'show': ['version'],
   },
   privileged: {
-    '': ['configure', 'disable', 'show', 'write', 'ping', 'telnet', 'reload', 'exit', 'copy', 'erase', 'ip', '?'],
+    '': ['configure', 'disable', 'show', 'write', 'ping', 'telnet', 'reload', 'exit', 'copy', 'erase', 'ip', '?', 'help'],
     'c': ['configure', 'clear', 'copy'],
     'co': ['configure', 'copy'],
     'con': ['configure'],
@@ -214,7 +214,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'erase nvra': ['nvram'],
   },
   config: {
-    '': ['hostname', 'interface', 'vlan', 'enable', 'service', 'username', 'line', 'banner', 'ip', 'no', 'spanning-tree', 'vtp', 'cdp', 'exit', 'end', 'do', '?'],
+    '': ['hostname', 'interface', 'vlan', 'enable', 'service', 'username', 'line', 'banner', 'ip', 'no', 'spanning-tree', 'vtp', 'cdp', 'exit', 'end', 'do', '?', 'help'],
     'h': ['hostname'],
     'ho': ['hostname'],
     'hos': ['hostname'],
@@ -487,7 +487,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'do write': ['memory'],
   },
   interface: {
-    '': ['shutdown', 'no', 'speed', 'duplex', 'description', 'switchport', 'cdp', 'spanning-tree', 'channel-group', 'ip', 'exit', 'end', 'do', '?'],
+    '': ['shutdown', 'no', 'speed', 'duplex', 'description', 'switchport', 'cdp', 'spanning-tree', 'channel-group', 'ip', 'exit', 'end', 'do', '?', 'help'],
     's': ['shutdown', 'speed', 'spanning-tree'],
     'sh': ['shutdown'],
     'shu': ['shutdown'],
@@ -696,7 +696,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'do show': ['running-config', 'interfaces', 'vlan'],
   },
   line: {
-    '': ['password', 'login', 'transport', 'exec-timeout', 'logging', 'history', 'privilege', 'exit', 'end', 'do', '?'],
+    '': ['password', 'login', 'transport', 'exec-timeout', 'logging', 'history', 'privilege', 'exit', 'end', 'do', '?', 'help'],
     'p': ['password'],
     'pa': ['password'],
     'pas': ['password'],
@@ -795,7 +795,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'do show': ['running-config'],
   },
   vlan: {
-    '': ['name', 'state', 'exit', 'end', '?'],
+    '': ['name', 'state', 'exit', 'end', '?', 'help'],
     'n': ['name'],
     'na': ['name'],
     'nam': ['name'],
@@ -806,6 +806,53 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'stat': ['state'],
     'state': ['active', 'suspend'],
 
+    'exit': [''],
+    'end': [''],
+  },
+  'router-config': {
+    '': ['network', 'router-id', 'passive-interface', 'default-information', 'exit', 'end', '?', 'help'],
+    'n': ['network'],
+    'ne': ['network'],
+    'net': ['network'],
+    'netw': ['network'],
+    'netwo': ['network'],
+    'networ': ['network'],
+    'network': [''],
+
+    'r': ['router-id'],
+    'ro': ['router-id'],
+    'rou': ['router-id'],
+    'rout': ['router-id'],
+    'route': ['router-id'],
+    'router': ['router-id'],
+    'router-': ['router-id'],
+    'router-i': ['router-id'],
+    'router-id': ['<ip-address>'],
+
+    'p': ['passive-interface'],
+    'pa': ['passive-interface'],
+    'pas': ['passive-interface'],
+    'pass': ['passive-interface'],
+    'passi': ['passive-interface'],
+    'passiv': ['passive-interface'],
+    'passive': ['passive-interface'],
+    'passive-': ['passive-interface'],
+    'passive-i': ['passive-interface'],
+    'passive-interface': ['FastEthernet', 'GigabitEthernet'],
+
+    'd': ['default-information'],
+    'de': ['default-information'],
+    'def': ['default-information'],
+    'defa': ['default-information'],
+    'defau': ['default-information'],
+    'defaul': ['default-information'],
+    'default': ['default-information'],
+    'default-': ['default-information'],
+    'default-i': ['default-information'],
+    'default-information': ['originate'],
+
+    'ex': ['exit'],
+    'exi': ['exit'],
     'exit': [''],
     'end': [''],
   },
@@ -898,8 +945,18 @@ export function executeCommand(
     if (lowerInput.startsWith('int vlan')) cmdToProcess = cmdToProcess.replace(/int vlan/i, 'interface vlan');
   }
 
-  if (cmdToProcess.endsWith('?') && cmdToProcess.length > 0) {
-    const partialInput = cmdToProcess.slice(0, -1).trim();
+  const isHelpRequest = (cmdToProcess.endsWith('?') && cmdToProcess.length > 0) || 
+                       cmdToProcess.toLowerCase().trim() === 'help' || 
+                       cmdToProcess.toLowerCase().trim().endsWith(' help');
+
+  if (isHelpRequest) {
+    let partialInput = '';
+    if (cmdToProcess.endsWith('?')) {
+      partialInput = cmdToProcess.slice(0, -1).trim();
+    } else if (cmdToProcess.toLowerCase().trim().endsWith(' help')) {
+      const idx = cmdToProcess.toLowerCase().trim().lastIndexOf(' help');
+      partialInput = cmdToProcess.trim().substring(0, idx).trim();
+    }
     const prompt = getModePrompt(state.currentMode, state.hostname);
     const helpOutput = getInlineHelp(state.currentMode, partialInput, prompt);
     return {

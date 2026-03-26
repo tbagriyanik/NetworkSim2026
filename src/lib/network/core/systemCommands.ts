@@ -137,13 +137,14 @@ function cmdExit(
         }
       };
     case 'privileged':
+    case 'user':
       return {
         success: true,
         output: '',
         exitSession: true
       };
     default:
-      return { success: true, output: '' };
+      return { success: true, output: '', exitSession: true };
   }
 }
 

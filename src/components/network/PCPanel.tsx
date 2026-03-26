@@ -312,6 +312,16 @@ export function PCPanel({
   const isProcessingQueueRef = useRef(false);
   const prevIpConfigModeRef = useRef(ipConfigMode);
 
+  // Auto-focus input when visible, tab changes, or command completes
+  useEffect(() => {
+    if (isVisible && activeTab === 'desktop') {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, activeTab, pcOutput]);
+
   const highlightText = useCallback((text: string) => {
     const q = searchQuery.trim();
     if (!q) return text;
@@ -1002,6 +1012,11 @@ export function PCPanel({
   }, [input, tabCycleIndex, lastTabInput, activeTab, isConsoleConnected]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.ctrlKey && e.key.toLowerCase() === 'l') {
+      e.preventDefault();
+      setPcOutput([]);
+      return;
+    }
     if (e.key === 'Enter') executeCommand();
     else if (e.key === 'Tab') {
       e.preventDefault();
@@ -1488,14 +1503,19 @@ export function PCPanel({
             <>
               {activeTab === 'terminal' && (
                 <div className={`px-4 py-2 border-b ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-slate-50'} flex items-center justify-between gap-3`}>
-                  <div className="text-xs">
-                    {isConsoleConnected && connectedDeviceId ? (
-                      <span className="text-emerald-500">
-                        {t.physicalConnectionDetected} {topologyDevices.find(d => d.id === connectedDeviceId)?.name || connectedDeviceId}
-                      </span>
-                    ) : (
-                      <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{t.noConsoleCableDetected}</span>
-                    )}
+                  <div className="flex flex-col gap-1">
+                    <div className="text-xs">
+                      {isConsoleConnected && connectedDeviceId ? (
+                        <span className="text-emerald-500 font-medium">
+                          {t.physicalConnectionDetected} {topologyDevices.find((d: any) => d.id === connectedDeviceId)?.name || connectedDeviceId}
+                        </span>
+                      ) : (
+                        <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{t.noConsoleCableDetected}</span>
+                      )}
+                    </div>
+                    <div className={`text-[10px] opacity-70 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {t.consoleConfiguration}
+                    </div>
                   </div>
                   <Button
                     size="sm"

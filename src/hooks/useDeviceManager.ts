@@ -233,19 +233,19 @@ export function useDeviceManager() {
     setActiveDeviceType: (type: 'pc' | 'switch' | 'router') => void,
     topologyConnections: CanvasConnection[] | null = null,
     skipConfirm = false
-  ) => {
+  ): Promise<any> => {
     if (command.includes('\n')) {
       for (const line of command.split('\n').filter(l => l.trim())) {
         await handleCommandForDevice(deviceId, line.trim(), topologyDevices, setActiveDeviceId, setActiveDeviceType, topologyConnections, skipConfirm);
       }
-      return;
+      return { success: true };
     }
 
     setIsLoading(true);
     try {
       const deviceState = deviceStates.get(deviceId) || (deviceId.includes('router') ? createInitialRouterState() : createInitialState());
       const devicePrompt = getPrompt(deviceState);
-      const { requiresConfirmation, confirmationMessage, confirmationAction, success, newState, error, ...result } = executeCommand(
+      const result = executeCommand(
         deviceState,
         command,
         language,
@@ -255,6 +255,7 @@ export function useDeviceManager() {
         deviceId
       );
 
+      const { requiresConfirmation, confirmationMessage, confirmationAction, success, newState, error } = result;
       const trimmedCommand = command.trim().toLowerCase();
       const isInternalCommand = command === '__CONSOLE_CONNECT__';
 
@@ -270,7 +271,7 @@ export function useDeviceManager() {
             handleCommandForDevice(deviceId, command, topologyDevices, setActiveDeviceId, setActiveDeviceType, topologyConnections, true);
           }
         });
-        return;
+        return result;
       }
 
       if (requiresConfirmation && !skipConfirm) {
@@ -284,7 +285,7 @@ export function useDeviceManager() {
             handleCommandForDevice(deviceId, command, topologyDevices, setActiveDeviceId, setActiveDeviceType, topologyConnections, true);
           }
         });
-        return;
+        return result;
       }
 
       const newOutputs: TerminalOutput[] = [];
@@ -417,7 +418,7 @@ export function useDeviceManager() {
         if (result.reloadDevice) {
           if ((result as any).requiresReloadConfirm) {
             setDeviceStates(prev => new Map(prev).set(deviceId, { ...deviceState, awaitingReloadConfirm: true } as any));
-            return;
+            return result;
           }
           const baseState = deviceId.includes('router') ? createInitialRouterState() : createInitialState();
           const startupConfig = deviceState.startupConfig;
@@ -454,7 +455,7 @@ export function useDeviceManager() {
             { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: '\nReady!\n' }
           ];
           void appendOutputsWithDelay(deviceId, bootOutputs, { clearFirst: true, minDelay: 120, maxDelay: 420 });
-          return;
+          return result;
         }
 
         if (result.telnetTarget && topologyDevices) {
@@ -492,6 +493,8 @@ export function useDeviceManager() {
         }
       }
 
+      return result;
+
     } catch (e) {
       const errorMsg = (e as Error).message;
       if (errorMsg.toLowerCase().includes('password') || errorMsg.toLowerCase().includes('auth')) {
@@ -502,6 +505,7 @@ export function useDeviceManager() {
         });
       }
       setDeviceOutputs(prev => new Map(prev).set(deviceId, [...(prev.get(deviceId) || []), { id: `${Date.now()}-sys-err`, type: 'error', content: `System error: ${errorMsg}`, timestamp: Date.now() }]));
+      return { success: false, error: errorMsg };
     } finally {
       setIsLoading(false);
     }

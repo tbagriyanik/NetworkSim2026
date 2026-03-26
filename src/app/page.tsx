@@ -881,7 +881,7 @@ export default function Home() {
 
   // Handle command using active device
   const handleCommand = useCallback(async (command: string) => {
-    await handleCommandForDevice(
+    const result = await handleCommandForDevice(
       activeDeviceId,
       command,
       topologyDevices,
@@ -889,6 +889,9 @@ export default function Home() {
       setActiveDeviceType,
       topologyConnections
     );
+    if (result?.exitSession) {
+      setActiveTab('topology');
+    }
   }, [activeDeviceId, handleCommandForDevice, topologyDevices, topologyConnections, setActiveDeviceId, setActiveDeviceType]);
 
   const prompt = getPrompt(state);
