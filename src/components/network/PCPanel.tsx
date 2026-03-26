@@ -462,6 +462,11 @@ export function PCPanel({
     }, 0);
   }, []);
 
+  const canReachTargetIp = useCallback((targetIp: string) => {
+    const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map());
+    return result.success;
+  }, [deviceId, topologyDevices, topologyConnections, deviceStates]);
+
   const resolveDomainWithDnsServices = useCallback((domain: string) => {
     const normalized = domain.trim().toLowerCase();
     if (!normalized) return null;
@@ -471,6 +476,9 @@ export function PCPanel({
     );
 
     for (const server of dnsServers) {
+      if (!server.ip || !canReachTargetIp(server.ip)) {
+        continue;
+      }
       const record = server.services?.dns?.records?.find((r) => r.domain.toLowerCase() === normalized);
       if (record) {
         return { address: record.address, server };
@@ -478,7 +486,7 @@ export function PCPanel({
     }
 
     return null;
-  }, [topologyDevices]);
+  }, [canReachTargetIp, topologyDevices]);
 
   const findHttpServerByTarget = useCallback((target: string) => {
     const normalizedTarget = target.trim().toLowerCase();
@@ -487,15 +495,18 @@ export function PCPanel({
     const byIp = topologyDevices.find(
       (d) => d.type === 'pc' && d.ip === target && d.services?.http?.enabled
     );
-    if (byIp) return byIp;
+    if (byIp && byIp.ip && canReachTargetIp(byIp.ip)) return byIp;
 
     const dnsResult = resolveDomainWithDnsServices(normalizedTarget);
     if (!dnsResult) return null;
 
-    return topologyDevices.find(
+    const resolvedServer = topologyDevices.find(
       (d) => d.type === 'pc' && d.ip === dnsResult.address && d.services?.http?.enabled
     ) || null;
-  }, [resolveDomainWithDnsServices, topologyDevices]);
+
+    if (!resolvedServer?.ip || !canReachTargetIp(resolvedServer.ip)) return null;
+    return resolvedServer;
+  }, [canReachTargetIp, resolveDomainWithDnsServices, topologyDevices]);
 
   const handleConnect = async () => {
     if (!consoleDevice) return;
