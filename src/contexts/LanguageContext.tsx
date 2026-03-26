@@ -110,6 +110,45 @@ export interface Translations {
   pcTerminalClosing: string;
   pcLoginSuccess: string;
   pcConnectionClosed: string;
+  copyToastSuccessTitle: string;
+  copyToastSuccessDescription: string;
+  copyToastFailureTitle: string;
+  copyToastFailureDescription: string;
+  consolePasswordErrorTitle: string;
+  consolePasswordErrorDescription: string;
+  pcConnectionError: string;
+  dnsInvalidAddress: string;
+  dnsGatewayRequired: string;
+  targetGatewayRequired: string;
+  dnsAddressRequired: string;
+  pcNoDeviceConnected: string;
+  pcConsoleHelp: string;
+  searchOutputTitle: string;
+  searchOutputDescription: string;
+  searchPlaceholder: string;
+  commandPromptTab: string;
+  consoleTab: string;
+  settingsTab: string;
+  servicesTab: string;
+  ipConfigurationLabel: string;
+  staticLabel: string;
+  dnsRecordManagerTip: string;
+  dnsDomainPlaceholder: string;
+  dnsAddressPlaceholder: string;
+  addDnsRecord: string;
+  dnsNoRecords: string;
+  httpServiceDescription: string;
+  dhcpPoolsDescription: string;
+  dhcpPoolNamePlaceholder: string;
+  dhcpPoolGatewayPlaceholder: string;
+  dhcpPoolDnsPlaceholder: string;
+  dhcpPoolStartIpPlaceholder: string;
+  dhcpPoolSubnetPlaceholder: string;
+  dhcpPoolMaxUsersPlaceholder: string;
+  addPool: string;
+  updatePool: string;
+  noDhcpPools: string;
+  edit: string;
   load: string;
   saveLabel: string;
   languageLabel: string;
@@ -342,6 +381,45 @@ const translations: Record<Language, Translations> = {
     pcTerminalClosing: 'PC terminali kapatılıyor...',
     pcLoginSuccess: 'Giriş başarılı',
     pcConnectionClosed: 'Bağlantı uzak bilgisayar tarafından kapatıldı.',
+    copyToastSuccessTitle: 'Kopyalandı',
+    copyToastSuccessDescription: 'Çıktı panoya kopyalandı.',
+    copyToastFailureTitle: 'Kopyalama başarısız',
+    copyToastFailureDescription: 'Panoya erişilemedi.',
+    consolePasswordErrorTitle: 'Parola Hatalı',
+    consolePasswordErrorDescription: 'Lütfen doğru parolayı girin.',
+    pcConnectionError: 'Bağlantı hatası',
+    dnsInvalidAddress: 'DNS adresi geçersiz veya eksik.',
+    dnsGatewayRequired: 'DNS sunucusuna erişim için gateway gerekli.',
+    targetGatewayRequired: 'Hedefe erişim için gateway gerekli.',
+    dnsAddressRequired: 'Alan adı çözümlemek için DNS adresi gerekli.',
+    pcNoDeviceConnected: 'Bağlı bir cihaz yok',
+    pcConsoleHelp: 'Mevcut komutlar:\n  enable   - Privileged mode\n  exit     - Konsoldan çık\n  show     - Bilgi göster\n  ?        - Yardım\n',
+    searchOutputTitle: 'Çıktıda ara',
+    searchOutputDescription: 'Eşleşmeler çıktı alanında vurgulanır.',
+    searchPlaceholder: 'Arama...',
+    commandPromptTab: 'Komut İstemi',
+    consoleTab: 'Konsol',
+    settingsTab: 'Ayarlar',
+    servicesTab: 'Servisler',
+    ipConfigurationLabel: 'IP Yapılandırma',
+    staticLabel: 'Statik',
+    dnsRecordManagerTip: 'Alan adı -> IP adresi kayıtlarını yönet.',
+    dnsDomainPlaceholder: 'Alan adı (or: site.local)',
+    dnsAddressPlaceholder: 'Adres (or: 192.168.1.10)',
+    addDnsRecord: 'Kayıt Ekle',
+    dnsNoRecords: 'Henüz DNS kaydı yok.',
+    httpServiceDescription: 'HTTP açıkken bu cihazın web içeriği yayınlanır.',
+    dhcpPoolsDescription: 'DHCP havuzlarını ekle, düzenle ve sil.',
+    dhcpPoolNamePlaceholder: 'Havuz Adı',
+    dhcpPoolGatewayPlaceholder: 'Varsayılan Ağ Geçidi',
+    dhcpPoolDnsPlaceholder: 'DNS Sunucusu',
+    dhcpPoolStartIpPlaceholder: 'Start IP',
+    dhcpPoolSubnetPlaceholder: 'Alt Ağ Maskesi',
+    dhcpPoolMaxUsersPlaceholder: 'Maksimum Kullanıcı',
+    addPool: 'Havuz Ekle',
+    updatePool: 'Havuzu Güncelle',
+    noDhcpPools: 'Henüz DHCP havuzu yok.',
+    edit: 'Düzenle',
     load: 'Yükle',
     saveLabel: 'Kaydet',
     languageLabel: 'Dil',
@@ -562,6 +640,45 @@ const translations: Record<Language, Translations> = {
     pcTerminalClosing: 'Closing PC terminal...',
     pcLoginSuccess: 'Login successful',
     pcConnectionClosed: 'Connection closed by foreign host.',
+    copyToastSuccessTitle: 'Copied',
+    copyToastSuccessDescription: 'Output copied to clipboard.',
+    copyToastFailureTitle: 'Copy failed',
+    copyToastFailureDescription: 'Clipboard access was blocked.',
+    consolePasswordErrorTitle: 'Incorrect Password',
+    consolePasswordErrorDescription: 'Please enter the correct password.',
+    pcConnectionError: 'Connection error',
+    dnsInvalidAddress: 'DNS address is missing or invalid.',
+    dnsGatewayRequired: 'Gateway is required to reach DNS server.',
+    targetGatewayRequired: 'Gateway is required to reach target.',
+    dnsAddressRequired: 'A valid DNS address is required to resolve domain.',
+    pcNoDeviceConnected: 'No device connected',
+    pcConsoleHelp: 'Available commands:\n  enable   - Enter privileged mode\n  exit     - Disconnect from console\n  show     - Show information\n  ?        - Help\n',
+    searchOutputTitle: 'Search output',
+    searchOutputDescription: 'Matches will be highlighted in the output.',
+    searchPlaceholder: 'Search...',
+    commandPromptTab: 'Command Prompt',
+    consoleTab: 'Console',
+    settingsTab: 'Settings',
+    servicesTab: 'Services',
+    ipConfigurationLabel: 'IP Configuration',
+    staticLabel: 'Static',
+    dnsRecordManagerTip: 'Manage domain to IP address records.',
+    dnsDomainPlaceholder: 'Domain (ex: site.local)',
+    dnsAddressPlaceholder: 'Address (ex: 192.168.1.10)',
+    addDnsRecord: 'Add Record',
+    dnsNoRecords: 'No DNS records yet.',
+    httpServiceDescription: 'When enabled, this PC serves web content.',
+    dhcpPoolsDescription: 'Add, edit and delete DHCP pools.',
+    dhcpPoolNamePlaceholder: 'Pool Name',
+    dhcpPoolGatewayPlaceholder: 'Default Gateway',
+    dhcpPoolDnsPlaceholder: 'DNS Server',
+    dhcpPoolStartIpPlaceholder: 'Start IP',
+    dhcpPoolSubnetPlaceholder: 'Subnet Mask',
+    dhcpPoolMaxUsersPlaceholder: 'Max User',
+    addPool: 'Add Pool',
+    updatePool: 'Update Pool',
+    noDhcpPools: 'No DHCP pools yet.',
+    edit: 'Edit',
     load: 'Load',
     saveLabel: 'Save',
     languageLabel: 'Language',

@@ -92,7 +92,7 @@ export function PCPanel({
   onUpdatePCHistory,
   onExecuteDeviceCommand
 }: PCPanelProps) {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -435,17 +435,17 @@ export function PCPanel({
       });
       await navigator.clipboard.writeText(lines.join('\n'));
       toast({
-        title: language === 'tr' ? 'Kopyalandı' : 'Copied',
-        description: language === 'tr' ? 'Çıktı panoya kopyalandı.' : 'Output copied to clipboard.',
+        title: t.copyToastSuccessTitle,
+        description: t.copyToastSuccessDescription,
       });
     } catch {
       toast({
-        title: language === 'tr' ? 'Kopyalama başarısız' : 'Copy failed',
-        description: language === 'tr' ? 'Panoya erişilemedi.' : 'Clipboard access was blocked.',
+        title: t.copyToastFailureTitle,
+        description: t.copyToastFailureDescription,
         variant: "destructive",
       });
     }
-  }, [activeTab, pcOutput, activeConsoleOutput, language]);
+  }, [activeTab, pcOutput, activeConsoleOutput, t]);
 
   const connectedConsoleDevice = useMemo(() => {
     if (!connectedDeviceId) return null;
@@ -481,8 +481,8 @@ export function PCPanel({
     if (!connectedDeviceId) return;
     if (consolePasswordAttempted && consoleAwaitingPassword) {
       toast({
-        title: language === 'tr' ? 'Parola Hatalı' : 'Incorrect Password',
-        description: language === 'tr' ? 'Lütfen doğru parolayı girin.' : 'Please enter the correct password.',
+        title: t.consolePasswordErrorTitle,
+        description: t.consolePasswordErrorDescription,
         variant: 'destructive',
       });
       setConsolePasswordAttempted(false);
@@ -492,12 +492,12 @@ export function PCPanel({
       setIsConsoleConnected(true);
       setConsolePasswordAttempted(false);
     }
-  }, [consoleAuthenticated, consoleAwaitingPassword, consolePasswordAttempted, connectedDeviceId, language]);
+  }, [consoleAuthenticated, consoleAwaitingPassword, consolePasswordAttempted, connectedDeviceId, t]);
 
   const connectionErrorText = useMemo(() => {
     if (!isPcPoweredOff && !isConsoleTargetPoweredOff) return '';
-    return language === 'tr' ? 'Bağlantı hatası' : 'Connection error';
-  }, [isPcPoweredOff, isConsoleTargetPoweredOff, language]);
+    return t.pcConnectionError;
+  }, [isPcPoweredOff, isConsoleTargetPoweredOff, t]);
 
   const addLocalOutput = useCallback((type: OutputLine['type'], content: string, prompt?: string) => {
     const newLine: OutputLine = { id: Math.random().toString(36).substr(2, 9), type, content, prompt };
@@ -768,7 +768,7 @@ export function PCPanel({
     const command = (cmdToExecute || input).trim();
     if (!command) return;
     if ((activeTab === 'desktop' && isCmdInputDisabled) || (activeTab === 'terminal' && isConsoleInputDisabled)) {
-      addLocalOutput('error', connectionErrorText || (language === 'tr' ? 'Bağlantı hatası' : 'Connection error'));
+      addLocalOutput('error', connectionErrorText || t.pcConnectionError);
       setInput('');
       return;
     }
@@ -837,9 +837,9 @@ export function PCPanel({
         if (!targetDomain) {
           addLocalOutput('output', 'Usage: nslookup <domain>');
         } else if (!isValidIpv4(pcDNS)) {
-          addLocalOutput('error', language === 'tr' ? 'DNS adresi geçersiz veya eksik.' : 'DNS address is missing or invalid.');
+          addLocalOutput('error', t.dnsInvalidAddress);
         } else if (!hasGatewayForTarget(pcDNS)) {
-          addLocalOutput('error', language === 'tr' ? 'DNS sunucusuna erişim için gateway gerekli.' : 'Gateway is required to reach DNS server.');
+          addLocalOutput('error', t.dnsGatewayRequired);
         } else {
           const dnsResult = resolveDomainWithDnsServices(targetDomain);
           if (!dnsResult) {
@@ -856,11 +856,11 @@ export function PCPanel({
         if (!target) {
           addLocalOutput('output', 'Usage: http <ip_or_domain>');
         } else if (isValidIpv4(target) && !hasGatewayForTarget(target)) {
-          addLocalOutput('error', language === 'tr' ? 'Hedefe erişim için gateway gerekli.' : 'Gateway is required to reach target.');
+          addLocalOutput('error', t.targetGatewayRequired);
         } else if (!isValidIpv4(target) && !isValidIpv4(pcDNS)) {
-          addLocalOutput('error', language === 'tr' ? 'Alan adı çözümlemek için DNS adresi gerekli.' : 'A valid DNS address is required to resolve domain.');
+          addLocalOutput('error', t.dnsAddressRequired);
         } else if (!isValidIpv4(target) && !hasGatewayForTarget(pcDNS)) {
-          addLocalOutput('error', language === 'tr' ? 'DNS sunucusuna erişim için gateway gerekli.' : 'Gateway is required to reach DNS server.');
+          addLocalOutput('error', t.dnsGatewayRequired);
         } else {
           const httpServer = findHttpServerByTarget(target);
           if (!httpServer) {
@@ -894,15 +894,13 @@ export function PCPanel({
     } else {
       // Console mode - send to connected device
       if (!isConsoleConnected) {
-        addLocalOutput('error', language === 'tr' ? 'Bağlı bir cihaz yok' : 'No device connected');
+        addLocalOutput('error', t.pcNoDeviceConnected);
         return;
       }
       const trimmedCmd = command.trim().toLowerCase();
       // Handle help command
       if (trimmedCmd === '?' || trimmedCmd === 'help') {
-        const helpOutput = language === 'tr'
-          ? 'Mevcut komutlar:\n  enable   - Privileged mode\n  exit     - Konsoldan çık\n  show     - Bilgi göster\n  ?        - Yardım\n'
-          : 'Available commands:\n  enable   - Enter privileged mode\n  exit     - Disconnect from console\n  show     - Show information\n  ?        - Help\n';
+        const helpOutput = t.pcConsoleHelp;
         addLocalOutput('output', helpOutput);
         return;
       }
@@ -1041,18 +1039,18 @@ export function PCPanel({
         <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
           <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-md`}>
             <DialogHeader>
-              <DialogTitle>{language === 'tr' ? 'Çıktıda ara' : 'Search output'}</DialogTitle>
-              <DialogDescription className={isDark ? 'text-slate-400' : 'text-slate-600'}>
-                {language === 'tr' ? 'Eşleşmeler çıktı alanında vurgulanır.' : 'Matches will be highlighted in the output.'}
-              </DialogDescription>
-            </DialogHeader>
-            <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={language === 'tr' ? 'Arama...' : 'Search...'} autoFocus />
+            <DialogTitle>{t.searchOutputTitle}</DialogTitle>
+            <DialogDescription className={isDark ? 'text-slate-400' : 'text-slate-600'}>
+              {t.searchOutputDescription}
+            </DialogDescription>
+          </DialogHeader>
+            <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t.searchPlaceholder} autoFocus />
             <div className="flex justify-end gap-2 pt-1">
               <Button variant="outline" onClick={() => setSearchQuery('')} className="text-xs font-semibold" disabled={!searchQuery.trim()}>
-                {language === 'tr' ? 'Temizle' : 'Clear'}
+                {t.clearTerminalBtn}
               </Button>
               <Button onClick={() => setSearchOpen(false)} className="text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white">
-                {language === 'tr' ? 'Kapat' : 'Close'}
+                {t.close}
               </Button>
             </div>
           </DialogContent>
@@ -1067,7 +1065,7 @@ export function PCPanel({
             className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'desktop' ? 'bg-blue-500/10 text-blue-400' : 'text-slate-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
           >
             <Command className="w-4 h-4" />
-            <span className={isMobile ? 'text-[10px]' : 'hidden sm:inline'}>{language === 'tr' ? 'Komut 0stemi' : 'Command Prompt'}</span>
+            <span className={isMobile ? 'text-[10px]' : 'hidden sm:inline'}>{t.commandPromptTab}</span>
           </Button>
           <Button
             variant={activeTab === 'terminal' ? 'secondary' : 'ghost'}
@@ -1076,7 +1074,7 @@ export function PCPanel({
             className={`h-9 px-4 text-xs font-black tracking-wider  transition-all gap-2 ${activeTab === 'terminal' ? 'bg-emerald-500/10 text-emerald-500' : 'text-slate-500 hover:text-emerald-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
           >
             <TerminalIcon className="w-4 h-4" />
-            <span className={isMobile ? 'text-[10px]' : 'hidden sm:inline'}>{language === 'tr' ? 'Konsol' : 'Console'}</span>
+            <span className={isMobile ? 'text-[10px]' : 'hidden sm:inline'}>{t.consoleTab}</span>
           </Button>
           <Button
             variant={activeTab === 'settings' ? 'secondary' : 'ghost'}
@@ -1085,7 +1083,7 @@ export function PCPanel({
             className={`h-9 px-4 text-xs font-black tracking-wider  transition-all gap-2 ${activeTab === 'settings' ? 'bg-purple-500/10 text-purple-500' : 'text-slate-500 hover:text-purple-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
           >
             <ShieldCheck className="w-4 h-4" />
-            <span className={isMobile ? 'text-[10px]' : 'hidden sm:inline'}>{language === 'tr' ? 'Ayarlar' : 'Settings'}</span>
+            <span className={isMobile ? 'text-[10px]' : 'hidden sm:inline'}>{t.settingsTab}</span>
           </Button>
           <Button
             variant={activeTab === 'services' ? 'secondary' : 'ghost'}
@@ -1095,7 +1093,7 @@ export function PCPanel({
           >
             <Globe className="w-4 h-4" />
             <span className={isMobile ? 'text-[10px]' : 'hidden sm:inline'}>
-              {(language === 'tr' ? 'Servisler' : 'Services') + ` (${activeServiceCount}/3)`}
+              {`${t.servicesTab} (${activeServiceCount}/3)`}
             </span>
           </Button>
         </div>
@@ -1106,7 +1104,7 @@ export function PCPanel({
             <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-500 uppercase">
-                  {language === 'tr' ? 'IP Yapılandırma' : 'IP Configuration'}
+                  {t.ipConfigurationLabel}
                 </label>
                 <div className={`inline-flex p-1 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
                   <button
@@ -1134,12 +1132,12 @@ export function PCPanel({
                       : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-200')
                       }`}
                   >
-                    {language === 'tr' ? 'Statik' : 'Static'}
+                    {t.staticLabel}
                   </button>
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{language === 'tr' ? 'Cihaz Ad1' : 'Hostname'}</label>
+                <label className="text-xs font-bold text-slate-500 uppercase">{t.hostname}</label>
                 <Input value={internalPcHostname} onChange={(e) => setPcHostname(e.target.value)} />
               </div>
               <div className="space-y-2">
@@ -1183,9 +1181,9 @@ export function PCPanel({
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-bold">DNS</h3>
-                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {language === 'tr' ? 'Alan adı -> IP adresi kayıtlarını yönet.' : 'Manage domain to IP address records.'}
-                    </p>
+                  <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {t.dnsRecordManagerTip}
+                  </p>
                   </div>
                   <button
                     type="button"
@@ -1208,12 +1206,12 @@ export function PCPanel({
                   <Input
                     value={dnsFormDomain}
                     onChange={(e) => setDnsFormDomain(e.target.value)}
-                    placeholder={language === 'tr' ? 'Alan adı (or: site.local)' : 'Domain (ex: site.local)'}
+                    placeholder={t.dnsDomainPlaceholder}
                   />
                   <Input
                     value={dnsFormAddress}
                     onChange={(e) => setDnsFormAddress(e.target.value)}
-                    placeholder={language === 'tr' ? 'Adres (or: 192.168.1.10)' : 'Address (ex: 192.168.1.10)'}
+                    placeholder={t.dnsAddressPlaceholder}
                   />
                   <Button
                     onClick={() => {
@@ -1228,14 +1226,14 @@ export function PCPanel({
                       setDnsFormAddress('');
                     }}
                   >
-                    {language === 'tr' ? 'Kayıt Ekle' : 'Add Record'}
+                    {t.addDnsRecord}
                   </Button>
                 </div>
 
                 <div className="space-y-2">
                   {serviceDnsRecords.length === 0 && (
                     <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                      {language === 'tr' ? 'Henüz DNS kaydı yok.' : 'No DNS records yet.'}
+                      {t.dnsNoRecords}
                     </div>
                   )}
                   {serviceDnsRecords.map((record) => (
@@ -1250,7 +1248,7 @@ export function PCPanel({
                         variant="outline"
                         onClick={() => setServiceDnsRecords((prev) => prev.filter((r) => !(r.domain === record.domain && r.address === record.address)))}
                       >
-                        {language === 'tr' ? 'Sil' : 'Delete'}
+                        {t.delete}
                       </Button>
                     </div>
                   ))}
@@ -1262,7 +1260,7 @@ export function PCPanel({
                   <div>
                     <h3 className="text-sm font-bold">HTTP</h3>
                     <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {language === 'tr' ? 'HTTP açıkken bu cihazın web içeriği yayınlanır.' : 'When enabled, this PC serves web content.'}
+                    {t.httpServiceDescription}
                     </p>
                   </div>
                   <button
@@ -1302,7 +1300,7 @@ export function PCPanel({
                   <div>
                     <h3 className="text-sm font-bold">DHCP</h3>
                     <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {language === 'tr' ? 'DHCP havuzlarını ekle, düzenle ve sil.' : 'Add, edit and delete DHCP pools.'}
+                      {t.dhcpPoolsDescription}
                     </p>
                   </div>
                   <button
@@ -1326,57 +1324,55 @@ export function PCPanel({
                   <Input
                     value={dhcpForm.poolName}
                     onChange={(e) => setDhcpForm((prev) => ({ ...prev, poolName: e.target.value }))}
-                    placeholder={language === 'tr' ? 'Havuz Adı' : 'Pool Name'}
+                    placeholder={t.dhcpPoolNamePlaceholder}
                   />
                   <Input
                     value={dhcpForm.defaultGateway}
                     onChange={(e) => setDhcpForm((prev) => ({ ...prev, defaultGateway: e.target.value }))}
-                    placeholder={language === 'tr' ? 'Varsayılan Ağ Geçidi' : 'Default Gateway'}
+                    placeholder={t.dhcpPoolGatewayPlaceholder}
                   />
                   <Input
                     value={dhcpForm.dnsServer}
                     onChange={(e) => setDhcpForm((prev) => ({ ...prev, dnsServer: e.target.value }))}
-                    placeholder={language === 'tr' ? 'DNS Sunucusu' : 'DNS Server'}
+                    placeholder={t.dhcpPoolDnsPlaceholder}
                   />
                   <Input
                     value={dhcpForm.startIp}
                     onChange={(e) => setDhcpForm((prev) => ({ ...prev, startIp: e.target.value }))}
-                    placeholder={language === 'tr' ? 'Start IP' : 'Start IP'}
+                    placeholder={t.dhcpPoolStartIpPlaceholder}
                   />
                   <Input
                     value={dhcpForm.subnetMask}
                     onChange={(e) => setDhcpForm((prev) => ({ ...prev, subnetMask: e.target.value }))}
-                    placeholder={language === 'tr' ? 'Alt Ağ Maskesi' : 'Subnet Mask'}
+                    placeholder={t.dhcpPoolSubnetPlaceholder}
                   />
                   <Input
                     type="number"
                     min={1}
                     value={dhcpForm.maxUsers}
                     onChange={(e) => setDhcpForm((prev) => ({ ...prev, maxUsers: Number(e.target.value || 1) }))}
-                    placeholder={language === 'tr' ? 'Maksimum Kullanıcı' : 'Max User'}
+                    placeholder={t.dhcpPoolMaxUsersPlaceholder}
                   />
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Button onClick={saveDhcpPool}>
-                    {editingDhcpIndex === null
-                      ? (language === 'tr' ? 'Havuz Ekle' : 'Add Pool')
-                      : (language === 'tr' ? 'Havuzu Güncelle' : 'Update Pool')}
+                    {editingDhcpIndex === null ? t.addPool : t.updatePool}
                   </Button>
                   {editingDhcpIndex !== null && (
                     <Button variant="outline" onClick={resetDhcpForm}>
-                      {language === 'tr' ? 'İptal' : 'Cancel'}
+                      {t.cancel}
                     </Button>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  {serviceDhcpPools.length === 0 && (
-                    <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                      {language === 'tr' ? 'Henüz DHCP havuzu yok.' : 'No DHCP pools yet.'}
-                    </div>
-                  )}
-                  {serviceDhcpPools.map((pool, index) => (
+                  <div className="space-y-2">
+                    {serviceDhcpPools.length === 0 && (
+                      <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                        {t.noDhcpPools}
+                      </div>
+                    )}
+                    {serviceDhcpPools.map((pool, index) => (
                     <div key={`${pool.poolName}-${index}`} className={`rounded-lg px-3 py-2 space-y-2 ${isDark ? 'bg-slate-950 border border-slate-800' : 'bg-slate-50 border border-slate-200'}`}>
                       <div className="text-xs font-mono">
                         <div>{pool.poolName}</div>
@@ -1392,7 +1388,7 @@ export function PCPanel({
                             setEditingDhcpIndex(index);
                           }}
                         >
-                          {language === 'tr' ? 'Düzenle' : 'Edit'}
+                          {t.edit}
                         </Button>
                         <Button
                           size="sm"
@@ -1404,7 +1400,7 @@ export function PCPanel({
                             }
                           }}
                         >
-                          {language === 'tr' ? 'Sil' : 'Delete'}
+                          {t.delete}
                         </Button>
                       </div>
                     </div>
