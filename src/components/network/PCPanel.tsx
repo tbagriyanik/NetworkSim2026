@@ -1204,7 +1204,11 @@ export function PCPanel({
               <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-bold">DNS</h3>
+                    <h3 className="text-sm font-bold">
+                      {t.language === 'tr'
+                        ? 'DNS (Domain Name System - isim çözümleme)'
+                        : 'DNS (Domain Name System - name resolution)'}
+                    </h3>
                   <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     {t.dnsRecordManagerTip}
                   </p>
@@ -1282,7 +1286,11 @@ export function PCPanel({
               <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-bold">HTTP</h3>
+                    <h3 className="text-sm font-bold">
+                      {t.language === 'tr'
+                        ? 'HTTP (Hypertext Transfer Protocol - web içeriği)'
+                        : 'HTTP (Hypertext Transfer Protocol - web content)'}
+                    </h3>
                     <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     {t.httpServiceDescription}
                     </p>
@@ -1322,7 +1330,11 @@ export function PCPanel({
               <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-bold">DHCP</h3>
+                    <h3 className="text-sm font-bold">
+                      {t.language === 'tr'
+                        ? 'DHCP (Dynamic Host Configuration Protocol - otomatik IP)'
+                        : 'DHCP (Dynamic Host Configuration Protocol - auto IP)'}
+                    </h3>
                     <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                       {t.dhcpPoolsDescription}
                     </p>

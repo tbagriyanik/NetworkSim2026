@@ -759,7 +759,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'dns-http',
       tag: isTr ? 'DNS/HTTP' : 'DNS/HTTP',
-      title: isTr ? 'DNS ve HTTP Test' : 'DNS + HTTP Test',
+      title: isTr
+        ? 'DNS ve HTTP Test (Domain Name System / Hypertext Transfer Protocol - görev: isim çözümleme + web erişimi)'
+        : 'DNS + HTTP Test (Domain Name System / Hypertext Transfer Protocol - task: name resolution + web access)',
       description: isTr
         ? 'PC-1 üzerinden HTTP istekleri gönderip nslookup yaparak sunucu hizmetlerini doğrulayın.'
         : 'From PC-1 send HTTP requests and use nslookup to verify the server services.',
@@ -796,7 +798,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'dhcp-distribution',
       tag: isTr ? 'DHCP' : 'DHCP',
-      title: isTr ? 'DHCP Dağıtım Senaryosu' : 'DHCP Distribution Scenario',
+      title: isTr
+        ? 'DHCP Dağıtım Senaryosu (Dynamic Host Configuration Protocol - görev: otomatik IP dağıtımı)'
+        : 'DHCP Distribution Scenario (Dynamic Host Configuration Protocol - task: automatic IP assignment)',
       description: isTr
         ? 'DHCP sunucusunun PC1 ve PC2’ye IP atamasını izleyin, PC3 ise manuel kalıyor.'
         : 'Observe the DHCP server handing out IPs to PC1 & PC2 while PC3 stays static.',

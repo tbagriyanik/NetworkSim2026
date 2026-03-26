@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Monitor, Server, Router, Database, Smartphone, Laptop, Globe, Shield, Cpu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DEVICE_ICON_COLORS } from './networkTopology.constants';
 import type { DeviceType } from './networkTopology.types';
@@ -27,25 +26,62 @@ export function DeviceIcon({
     DEVICE_ICON_COLORS.switch
   );
 
-  const iconProps = {
-    size,
-    color: defaultColor,
+  const strokeWidth = active ? 2.5 : 1.5;
+  const svgProps = {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: defaultColor,
+    strokeWidth,
     className: cn(
       'transition-all duration-300',
       active && 'filter drop-shadow-[0_0_8px_rgba(var(--color-primary),0.5)]',
       className
-    ),
-    strokeWidth: active ? 2.5 : 1.5,
+    )
   };
 
   switch (type) {
     case 'pc':
-      return <Monitor {...iconProps} />;
+      return (
+        <svg {...svgProps}>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z"
+          />
+        </svg>
+      );
     case 'router':
-      return <Router {...iconProps} />;
+      return (
+        <svg {...svgProps}>
+          <circle cx="12" cy="12" r="9" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2"
+          />
+        </svg>
+      );
     case 'switch':
-      return <Server {...iconProps} />;
+      return (
+        <svg {...svgProps}>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01"
+          />
+        </svg>
+      );
     default:
-      return <Cpu {...iconProps} />;
+      return (
+        <svg {...svgProps}>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01"
+          />
+        </svg>
+      );
   }
 }
