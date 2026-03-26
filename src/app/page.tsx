@@ -156,6 +156,15 @@ export default function Home() {
     [t]
   );
 
+  const exampleLevelHints = useMemo(
+    () => ({
+      basic: language === 'tr' ? 'Temel komutlar ve ilk topoloji adımları' : 'Core commands and first topology steps',
+      intermediate: language === 'tr' ? 'Servisler, VLAN ve yönlendirme senaryoları' : 'Services, VLAN and routing scenarios',
+      advanced: language === 'tr' ? 'Kapsamlı kurulum ve doğrulama laboratuvarları' : 'Comprehensive setup and verification labs'
+    }),
+    [language]
+  );
+
   const groupedExampleProjects = useMemo(() => {
     const grouping: Record<ExampleProjectLevel, ExampleProject[]> = {
       basic: [],
@@ -2261,7 +2270,9 @@ export default function Home() {
                   <div className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r from-cyan-500/20 to-blue-500/10 p-4 md:p-6 shadow-xl shadow-cyan-500/10'>
                     <DialogTitle className='text-xl md:text-3xl lg:text-4xl font-black tracking-tight bg-gradient-to-br from-white to-slate-400 bg-clip-text text-transparent break-words'>{language === 'tr' ? 'Yeni Proje Aç' : 'Open a New Project'}</DialogTitle>
                     <p className={`text-xs md:text-base mt-1 md:mt-2 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'} break-words`}>
-                      {language === 'tr' ? 'Bir örnek üzerinden başlayın veya sıfırdan tasarımınızı oluşturun.' : 'Build from scratch or choose a template to get started.'}
+                      {language === 'tr'
+                        ? 'Yeni laboratuvar akışına göre boş projeyle başlayın ya da seviyelendirilmiş hazır senaryolardan birini seçin.'
+                        : 'Start with an empty lab or choose one of the level-based ready scenarios in the new workflow.'}
                     </p>
                   </div>
                 </div>
@@ -2282,6 +2293,11 @@ export default function Home() {
                             </div>
                             <div className="text-center md:text-left">
                               <p className='text-xl md:text-3xl font-black mb-1 md:mb-3 tracking-tighter'>{language === 'tr' ? 'Boş Proje' : 'Empty Project'}</p>
+                              <p className={`text-[11px] md:text-sm ${isDark ? 'text-slate-300/80' : 'text-white/80'} break-words`}>
+                                {language === 'tr'
+                                  ? 'Topolojini kur, senaryonu tasarla.'
+                                  : 'Build your topology, design a scenario.'}
+                              </p>
                             </div>
                           </div>
 
@@ -2304,10 +2320,13 @@ export default function Home() {
                               <p className='text-[10px] md:text-xs font-black  tracking-[0.3em] md:tracking-[0.4em] text-slate-500 dark:text-slate-400 whitespace-nowrap'>
                                 {exampleLevelLabels[level]}
                               </p>
+                              <p className={`text-[10px] md:text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} truncate`}>
+                                {exampleLevelHints[level]}
+                              </p>
                               <div className={`h-px flex-1 ${isDark ? 'bg-slate-800/60' : 'bg-slate-200'}`} />
                             </div>
 
-                            <div className='grid grid-cols-1 xl:grid-cols-2 gap-6 w-full max-w-full'>
+                            <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
                               {projects.map((example) => (
                                 <Button
                                   key={example.id}
@@ -2319,11 +2338,11 @@ export default function Home() {
                                     <span className='font-black text-base md:text-2xl leading-none group-hover:text-cyan-400 transition-colors duration-300 break-words flex-1'>{example.title}</span>
                                     <span className={`text-[8px] md:text-[10px] font-black  tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 ${isDark ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>{example.tag}</span>
                                   </div>
-                                  <p className={`text-[11px] md:text-sm leading-relaxed ${isDark ? 'text-slate-400/80' : 'text-slate-600'} font-medium italic group-hover:text-slate-200 transition-colors break-words w-full`}>{example.description}</p>
+                                  <p className={`text-[11px] md:text-sm leading-relaxed ${isDark ? 'text-slate-400/80' : 'text-slate-600'} font-medium italic group-hover:text-slate-200 transition-colors whitespace-normal break-words break-all w-full`}>{example.description}</p>
                                   {example.detail && (
                                     <div className='mt-auto pt-2 md:pt-4 flex items-center gap-2 md:gap-3 w-full border-t border-slate-800/10 dark:border-slate-800/50'>
                                       <div className='w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.5)]' />
-                                      <span className={`text-[8px] md:text-[11px] font-bold tracking-wide  ${isDark ? 'text-amber-400/80' : 'text-amber-700/80'} break-words`}>{example.detail}</span>
+                                      <span className={`text-[8px] md:text-[11px] font-bold tracking-wide  ${isDark ? 'text-amber-400/80' : 'text-amber-700/80'} whitespace-normal break-words break-all w-full`}>{example.detail}</span>
                                     </div>
                                   )}
                                 </Button>
