@@ -2289,8 +2289,8 @@ export default function Home() {
             <DialogContent className={`liquid-glass-strong w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl`}>
               <div className='flex flex-col flex-1 overflow-hidden h-full max-w-full'>
                 <div className='p-4 md:p-8 pb-2 md:pb-4'>
-                  <div className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r from-cyan-500/20 to-blue-500/10 p-4 md:p-6 shadow-xl shadow-cyan-500/10'>
-                    <DialogTitle className='text-xl md:text-3xl lg:text-4xl font-black tracking-tight bg-gradient-to-br from-white to-slate-400 bg-clip-text text-transparent break-words'>{language === 'tr' ? 'Yeni Proje Aç' : 'Open a New Project'}</DialogTitle>
+                  <div className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r  p-4 md:p-6 '>
+                    <DialogTitle className='text-xl md:text-3xl lg:text-4xl  bg-gradient-to-br from-white to-slate-400 bg-clip-text text-transparent break-words'>{language === 'tr' ? 'Yeni Proje Aç' : 'Open a New Project'}</DialogTitle>
                     <DialogDescription className="sr-only">
                       {language === 'tr'
                         ? 'Yeni proje penceresi: boş projeyle başlayın veya hazır örneklerden birini seçin.'

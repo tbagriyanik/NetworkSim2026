@@ -1681,8 +1681,10 @@ export function NetworkTopology({
             : generateRouterPorts(),
     };
     setDevices((prev) => [...prev, newDevice]);
+    setSelectedDeviceIds([newDevice.id]);
+    onDeviceSelect(type === 'router' ? 'switch' : type, newDevice.id);
 
-  }, [devices.length, saveToHistory, generateUniqueIp]);
+  }, [devices.length, saveToHistory, generateUniqueIp, onDeviceSelect]);
 
   // Note management functions
   const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
@@ -3811,18 +3813,22 @@ export function NetworkTopology({
                     <rect x="0" y="0" width={getCanvasDimensions().width} height={getCanvasDimensions().height} />
                   </clipPath>
                   {/* Canvas background gradient */}
-                  <radialGradient id="canvasBgGradient" cx="45%" cy="30%" r="85%">
+                  <radialGradient id="canvasBgGradient" cx="46%" cy="30%" r="88%">
                     {isDark ? (
                       <>
-                        <stop offset="0%" stopColor="#1e293b" />
-                        <stop offset="55%" stopColor="#162235" />
-                        <stop offset="100%" stopColor="#0b1322" />
+                        <stop offset="0%" stopColor="#24344d" />
+                        <stop offset="28%" stopColor="#1e2c43" />
+                        <stop offset="55%" stopColor="#18253a" />
+                        <stop offset="78%" stopColor="#142033" />
+                        <stop offset="100%" stopColor="#0d1728" />
                       </>
                     ) : (
                       <>
-                        <stop offset="0%" stopColor="#f9fbff" />
-                        <stop offset="55%" stopColor="#edf3fb" />
-                        <stop offset="100%" stopColor="#dde7f3" />
+                        <stop offset="0%" stopColor="#fcfdff" />
+                        <stop offset="28%" stopColor="#f6faff" />
+                        <stop offset="55%" stopColor="#eef4fc" />
+                        <stop offset="78%" stopColor="#e7eff9" />
+                        <stop offset="100%" stopColor="#dde8f4" />
                       </>
                     )}
                   </radialGradient>
@@ -4423,20 +4429,22 @@ export function NetworkTopology({
             >
               {/* Canvas background */}
               <defs>
-                <radialGradient id="canvasBgGradient" cx="45%" cy="30%" r="85%">
+                <radialGradient id="canvasBgGradient" cx="46%" cy="30%" r="88%">
                   {isDark ? (
                     <>
-                      <stop offset="0%" stopColor="#0b1220" />
-                      <stop offset="45%" stopColor="#111a2b" />
-                      <stop offset="75%" stopColor="#131f33" />
-                      <stop offset="100%" stopColor="#0c1424" />
+                      <stop offset="0%" stopColor="#15243a" />
+                      <stop offset="25%" stopColor="#132035" />
+                      <stop offset="50%" stopColor="#101b2e" />
+                      <stop offset="75%" stopColor="#0e1829" />
+                      <stop offset="100%" stopColor="#0b1424" />
                     </>
                   ) : (
                     <>
-                      <stop offset="0%" stopColor="#f8fbff" />
-                      <stop offset="45%" stopColor="#f2f7ff" />
-                      <stop offset="75%" stopColor="#eef4fb" />
-                      <stop offset="100%" stopColor="#e9f0f8" />
+                      <stop offset="0%" stopColor="#fbfdff" />
+                      <stop offset="25%" stopColor="#f6faff" />
+                      <stop offset="50%" stopColor="#f1f7ff" />
+                      <stop offset="75%" stopColor="#ecf3fb" />
+                      <stop offset="100%" stopColor="#e6eef8" />
                     </>
                   )}
                 </radialGradient>
