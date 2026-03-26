@@ -32,6 +32,43 @@ type ProjectData = {
   pan: { x: number; y: number };
 };
 
+type CableInfo = {
+  connected: boolean;
+  cableType: 'straight' | 'crossover' | 'console';
+  sourceDevice: 'pc' | 'switch' | 'router';
+  targetDevice: 'pc' | 'switch' | 'router';
+};
+
+const defaultCableInfo: CableInfo = {
+  connected: true,
+  cableType: 'straight',
+  sourceDevice: 'pc',
+  targetDevice: 'switch'
+};
+
+const ensureProjectData = (source: any): ProjectData => {
+  const partial = source || {};
+  return {
+    version: partial.version ?? '1.0',
+    timestamp: partial.timestamp ?? new Date().toISOString(),
+    devices: partial.devices ?? [],
+    deviceOutputs: partial.deviceOutputs ?? [],
+    pcOutputs: partial.pcOutputs ?? [],
+    pcHistories: partial.pcHistories ?? [],
+    topology: {
+      devices: partial.topology?.devices ?? [],
+      connections: partial.topology?.connections ?? [],
+      notes: partial.topology?.notes ?? []
+    },
+    cableInfo: partial.cableInfo ?? defaultCableInfo,
+    activeDeviceId: partial.activeDeviceId ?? 'switch-1',
+    activeDeviceType: partial.activeDeviceType ?? 'switch',
+    activeTab: partial.activeTab ?? 'topology',
+    zoom: partial.zoom ?? 1,
+    pan: partial.pan ?? { x: 0, y: 0 }
+  };
+};
+
 export type ExampleProjectLevel = 'basic' | 'intermediate' | 'advanced';
 
 export type ExampleProject = {
@@ -44,11 +81,11 @@ export type ExampleProject = {
   level: ExampleProjectLevel;
 };
 
-const macExampleAData: ProjectData = macExampleA as ProjectData;
-const dnsHttpExampleData: ProjectData = dnsHttpExample as ProjectData;
-const macExampleBData: ProjectData = macExampleB as ProjectData;
-const ipConfigExampleData: ProjectData = ipConfigExample as ProjectData;
-const dhcpExampleData: ProjectData = dhcpExample as ProjectData;
+const macExampleAData: ProjectData = ensureProjectData(macExampleA);
+const dnsHttpExampleData: ProjectData = ensureProjectData(dnsHttpExample);
+const macExampleBData: ProjectData = ensureProjectData(macExampleB);
+const ipConfigExampleData: ProjectData = ensureProjectData(ipConfigExample);
+const dhcpExampleData: ProjectData = ensureProjectData(dhcpExample);
 
 const createSwitchDevice = (id: string, name: string, x: number, y: number): CanvasDevice => ({
   id,

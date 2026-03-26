@@ -2302,7 +2302,7 @@ export default function Home() {
                                   key={example.id}
                                   variant='ghost'
                                   className={`group h-auto min-h-[120px] md:min-h-[160px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/80 hover:border-cyan-500/30' : 'border-slate-200/50 bg-white hover:bg-slate-50 hover:border-blue-500/20'} w-full overflow-hidden shadow-sm hover:shadow-2xl`}
-                                  onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => applyProjectState(example.data)); applyExampleProject(example.data); }}
+                                  onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => applyExampleProject(example.data)); }}
                                 >
                                   <div className='flex items-start justify-between w-full gap-4 overflow-hidden'>
                                     <span className='font-black text-base md:text-2xl leading-none group-hover:text-cyan-400 transition-colors duration-300 break-words flex-1'>{example.title}</span>
