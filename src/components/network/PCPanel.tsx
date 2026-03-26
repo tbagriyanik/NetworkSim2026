@@ -158,6 +158,7 @@ export function PCPanel({
   const [serviceHttpEnabled, setServiceHttpEnabled] = useState(deviceFromTopology?.services?.http?.enabled ?? false);
   const [serviceHttpContent, setServiceHttpContent] = useState(deviceFromTopology?.services?.http?.content || 'Merhaba Dünya!');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const activeServiceCount = Number(serviceDnsEnabled) + Number(serviceHttpEnabled);
 
   useEffect(() => {
     setServiceDnsEnabled(deviceFromTopology?.services?.dns?.enabled ?? false);
@@ -467,26 +468,44 @@ export function PCPanel({
     return result.success;
   }, [deviceId, topologyDevices, topologyConnections, deviceStates]);
 
+  const isValidIpv4 = useCallback((value: string) => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(value.trim()), []);
+
+  const isSameSubnet = useCallback((sourceIp: string, targetIp: string, subnetMask: string) => {
+    try {
+      const a = sourceIp.split('.').map(Number);
+      const b = targetIp.split('.').map(Number);
+      const m = subnetMask.split('.').map(Number);
+      if (a.length !== 4 || b.length !== 4 || m.length !== 4) return false;
+      for (let i = 0; i < 4; i += 1) {
+        if ((a[i] & m[i]) !== (b[i] & m[i])) return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const hasGatewayForTarget = useCallback((targetIp: string) => {
+    if (!isValidIpv4(pcIP) || !isValidIpv4(targetIp) || !isValidIpv4(pcSubnet)) return false;
+    if (isSameSubnet(pcIP, targetIp, pcSubnet)) return true;
+    return isValidIpv4(pcGateway);
+  }, [isSameSubnet, isValidIpv4, pcGateway, pcIP, pcSubnet]);
+
   const resolveDomainWithDnsServices = useCallback((domain: string) => {
     const normalized = domain.trim().toLowerCase();
     if (!normalized) return null;
 
-    const dnsServers = topologyDevices.filter(
-      (d) => d.type === 'pc' && d.services?.dns?.enabled && (d.services?.dns?.records?.length || 0) > 0
+    if (!isValidIpv4(pcDNS)) return null;
+    const configuredDnsServer = topologyDevices.find(
+      (d) => d.type === 'pc' && d.ip === pcDNS && d.services?.dns?.enabled && (d.services?.dns?.records?.length || 0) > 0
     );
+    if (!configuredDnsServer?.ip || !canReachTargetIp(configuredDnsServer.ip)) return null;
 
-    for (const server of dnsServers) {
-      if (!server.ip || !canReachTargetIp(server.ip)) {
-        continue;
-      }
-      const record = server.services?.dns?.records?.find((r) => r.domain.toLowerCase() === normalized);
-      if (record) {
-        return { address: record.address, server };
-      }
-    }
+    const record = configuredDnsServer.services?.dns?.records?.find((r) => r.domain.toLowerCase() === normalized);
+    if (!record) return null;
 
-    return null;
-  }, [canReachTargetIp, topologyDevices]);
+    return { address: record.address, server: configuredDnsServer };
+  }, [canReachTargetIp, isValidIpv4, pcDNS, topologyDevices]);
 
   const findHttpServerByTarget = useCallback((target: string) => {
     const normalizedTarget = target.trim().toLowerCase();
@@ -582,6 +601,10 @@ export function PCPanel({
         const targetDomain = args[0];
         if (!targetDomain) {
           addLocalOutput('output', 'Usage: nslookup <domain>');
+        } else if (!isValidIpv4(pcDNS)) {
+          addLocalOutput('error', language === 'tr' ? 'DNS adresi geçersiz veya eksik.' : 'DNS address is missing or invalid.');
+        } else if (!hasGatewayForTarget(pcDNS)) {
+          addLocalOutput('error', language === 'tr' ? 'DNS sunucusuna erişim için gateway gerekli.' : 'Gateway is required to reach DNS server.');
         } else {
           const dnsResult = resolveDomainWithDnsServices(targetDomain);
           if (!dnsResult) {
@@ -597,6 +620,12 @@ export function PCPanel({
         const target = args[0];
         if (!target) {
           addLocalOutput('output', 'Usage: http <ip_or_domain>');
+        } else if (isValidIpv4(target) && !hasGatewayForTarget(target)) {
+          addLocalOutput('error', language === 'tr' ? 'Hedefe erişim için gateway gerekli.' : 'Gateway is required to reach target.');
+        } else if (!isValidIpv4(target) && !isValidIpv4(pcDNS)) {
+          addLocalOutput('error', language === 'tr' ? 'Alan adı çözümlemek için DNS adresi gerekli.' : 'A valid DNS address is required to resolve domain.');
+        } else if (!isValidIpv4(target) && !hasGatewayForTarget(pcDNS)) {
+          addLocalOutput('error', language === 'tr' ? 'DNS sunucusuna erişim için gateway gerekli.' : 'Gateway is required to reach DNS server.');
         } else {
           const httpServer = findHttpServerByTarget(target);
           if (!httpServer) {
@@ -824,7 +853,9 @@ export function PCPanel({
             className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'services' ? 'bg-amber-500/10 text-amber-500' : 'text-slate-500 hover:text-amber-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
           >
             <Globe className="w-4 h-4" />
-            <span className={isMobile ? 'text-[10px]' : 'hidden sm:inline'}>{language === 'tr' ? 'Servisler' : 'Services'}</span>
+            <span className={isMobile ? 'text-[10px]' : 'hidden sm:inline'}>
+              {(language === 'tr' ? 'Servisler' : 'Services') + ` (${activeServiceCount}/2)`}
+            </span>
           </Button>
         </div>
 
@@ -881,13 +912,23 @@ export function PCPanel({
                       {language === 'tr' ? 'Alan adı -> IP adresi kayıtlarını yönet.' : 'Manage domain to IP address records.'}
                     </p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant={serviceDnsEnabled ? 'default' : 'outline'}
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={serviceDnsEnabled}
                     onClick={() => setServiceDnsEnabled((prev) => !prev)}
+                    className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60 ${
+                      serviceDnsEnabled
+                        ? 'bg-cyan-500/90 border-cyan-400'
+                        : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
+                    }`}
                   >
-                    {serviceDnsEnabled ? (language === 'tr' ? 'Açık' : 'On') : (language === 'tr' ? 'Kapalı' : 'Off')}
-                  </Button>
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                        serviceDnsEnabled ? 'translate-x-8' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -951,13 +992,23 @@ export function PCPanel({
                       {language === 'tr' ? 'HTTP açıkken bu cihazın web içeriği yayınlanır.' : 'When enabled, this PC serves web content.'}
                     </p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant={serviceHttpEnabled ? 'default' : 'outline'}
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={serviceHttpEnabled}
                     onClick={() => setServiceHttpEnabled((prev) => !prev)}
+                    className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 ${
+                      serviceHttpEnabled
+                        ? 'bg-emerald-500/90 border-emerald-400'
+                        : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
+                    }`}
                   >
-                    {serviceHttpEnabled ? (language === 'tr' ? 'Açık' : 'On') : (language === 'tr' ? 'Kapalı' : 'Off')}
-                  </Button>
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                        serviceHttpEnabled ? 'translate-x-8' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
                 </div>
 
                 <div className="space-y-2">
