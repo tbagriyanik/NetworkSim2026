@@ -145,7 +145,7 @@ import { useHistory, ProjectState } from '@/hooks/useHistory';
 
 export default function Home() {
   const { t, language, setLanguage } = useLanguage();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, effectiveTheme, setTheme } = useTheme();
 
   const exampleLevelLabels = useMemo(
     () => ({
@@ -1649,7 +1649,7 @@ export default function Home() {
     window.scrollTo(0, 0);
   }, [loadProjectData, setShowProjectPicker]);
 
-  const isDark = theme === 'dark';
+  const isDark = (effectiveTheme ?? theme) === 'dark';
 
   // Helper function to truncate long names with an ellipsis
   const truncateWithEllipsis = useCallback((text: string, maxLength: number) => {
@@ -1872,7 +1872,12 @@ export default function Home() {
                     </Button>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-yellow-400' : 'text-slate-600 hover:text-yellow-600'}`} onClick={toggleTheme}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-yellow-400' : 'text-slate-600 hover:text-yellow-600'}`}
+                          onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                        >
                           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                         </Button>
                       </TooltipTrigger>
@@ -2262,15 +2267,15 @@ export default function Home() {
                       <div className='rounded-[2.5rem] border border-slate-200/70 bg-white/70 p-1 shadow-xl shadow-slate-900/5 dark:border-slate-800/60 dark:bg-slate-900/60'>
                         <Button
                           variant='outline'
-                          className={`group relative flex h-auto min-h-[140px] md:h-[200px] w-full flex-col md:flex-row items-center justify-between gap-6 md:gap-12 rounded-[2.2rem] border-0 px-8 md:px-12 py-8 text-left transition-all hover:scale-[1.005] active:scale-95 duration-500 ${isDark ? 'bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-2xl' : 'bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-xl shadow-blue-500/20'}`}
+                          className={`group relative flex h-auto min-h-[110px] md:h-[160px] w-full flex-col md:flex-row items-center justify-between gap-4 md:gap-8 rounded-[2.2rem] border-0 px-6 md:px-10 py-6 text-left transition-all hover:scale-[1.005] active:scale-95 duration-500 ${isDark ? 'bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-2xl' : 'bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-xl shadow-blue-500/20'}`}
                           onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => { resetToEmptyProject(); }); }}
                         >
                           <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 flex-1">
-                            <div className="w-16 h-16 md:w-24 md:h-24 rounded-3xl bg-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform duration-700 backdrop-blur-md shrink-0">
-                              <Plus className="w-8 h-8 md:w-12 md:h-12" />
+                            <div className="w-12 h-12 md:w-20 md:h-20 rounded-3xl bg-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform duration-700 backdrop-blur-md shrink-0">
+                              <Plus className="w-6 h-6 md:w-10 md:h-10" />
                             </div>
                             <div className="text-center md:text-left">
-                              <p className='text-2xl md:text-4xl font-black mb-2 md:mb-4 tracking-tighter'>{language === 'tr' ? 'Boş Proje' : 'Empty Project'}</p>
+                              <p className='text-xl md:text-3xl font-black mb-1 md:mb-3 tracking-tighter'>{language === 'tr' ? 'Boş Proje' : 'Empty Project'}</p>
                             </div>
                           </div>
 

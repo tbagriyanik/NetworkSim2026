@@ -385,16 +385,6 @@
   }
 }
 
-/* Glassmorphism card */
-.glass-card {
-  @apply backdrop-blur-md bg-white/10 border border-white/20;
-}
-
-/* Selection color */
-::selection {
-  @apply bg-cyan-500/30 text-cyan-200;
-}
-
 /* Performance optimization for accessibility */
 @media (prefers-reduced-motion: reduce) {
 
@@ -405,6 +395,73 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Liquid Glass Effect Essentials */
+.liquid-glass {
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  background-color: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+.dark .liquid-glass {
+  background-color: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+}
+
+.liquid-glass-strong {
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  background-color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.dark .liquid-glass-strong {
+  background-color: rgba(2, 6, 23, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.liquid-glass-button {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.liquid-glass-button:hover {
+  background-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+/* Fluid Animation */
+@keyframes fluid-bg {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-liquid {
+  background: linear-gradient(-45deg, #06b6d4, #3b82f6, #8b5cf6, #22d3ee);
+  background-size: 400% 400%;
+  animation: fluid-bg 15s ease infinite;
+}
+
+.mesh-gradient {
+  background-color: hsla(200, 100%, 50%, 1);
+  background-image:
+    radial-gradient(at 40% 20%, hsla(222, 100%, 70%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(186, 100%, 80%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(300, 100%, 80%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsla(240, 100%, 70%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(22, 100%, 80%, 1) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, hsla(240, 100%, 80%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, hsla(343, 100%, 70%, 1) 0px, transparent 50%);
 }
 
 /* Safe area inset utilities for mobile (notch / home indicator) */
