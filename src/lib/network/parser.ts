@@ -207,6 +207,71 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  // Routing protocols
+  'router rip': {
+    pattern: /^router\s+rip$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'router ospf': {
+    pattern: /^router\s+ospf\s*(\d*)$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'no router rip': {
+    pattern: /^no\s+router\s+rip$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no router ospf': {
+    pattern: /^no\s+router\s+ospf$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  // Router config subcommands
+  'network': {
+    pattern: /^network\s+([0-9.]+)(\s+([0-9.]+))?(\s+area\s+(\d+))?$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 4
+  },
+  'router-id': {
+    pattern: /^router-id\s+([0-9.]+)$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'passive-interface': {
+    pattern: /^passive-interface\s+(\S+)$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'default-information originate': {
+    pattern: /^default-information\s+originate$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'default-information always': {
+    pattern: /^default-information\s+always$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+
+  // Alias for subcommands in router config
+  'router-config network': {
+    pattern: /^network\s+([0-9.]+)(\s+([0-9.]+))?(\s+area\s+(\d+))?$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 4
+  },
+
   'cdp timer': {
     pattern: /^cdp\s+timer\s+(\d+)$/i,
     modes: ['config'],
@@ -1836,6 +1901,10 @@ Mevcut komutlar:
   vtp domain <name>         - VTP domain ayarla
   cdp run                   - CDP'yi etkinleştir
   no cdp run                - CDP'yi devre dışı bırak
+  router rip                - RIP yönlendirme etkinleştir
+  router ospf <id>          - OSPF yönlendirme etkinleştir
+  no router rip             - RIP yönlendirme devre dışı
+  no router ospf            - OSPF yönlendirme devre dışı
   exit                      - Privileged mode'a dön
   end                       - Privileged mode'a dön
   do <command>              - Privileged komutlarını çalıştır

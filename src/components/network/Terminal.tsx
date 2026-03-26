@@ -415,7 +415,7 @@ export function Terminal({
 
           {!isPoweredOff && (
             <div className={cn(
-              "sticky bottom-0 border-t bg-muted/20 backdrop-blur-sm",
+              "sticky bottom-0 inset-x-0 z-10 border-t bg-muted/95 backdrop-blur-sm",
               isMobile ? "p-2" : "p-4"
             )}>
               <form onSubmit={handleFormSubmit} className="flex items-center gap-3">

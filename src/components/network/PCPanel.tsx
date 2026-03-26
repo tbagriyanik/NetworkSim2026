@@ -85,7 +85,7 @@ export function PCPanel({
   const { language, t } = useLanguage();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  
+
   // Responsive hooks
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
@@ -128,7 +128,7 @@ export function PCPanel({
   // Local settings state
   const [pcIP, setPcIP] = useState(deviceFromTopology?.ip || defaultConfig.ip);
   const [internalPcHostname, setInternalPcHostname] = useState(deviceFromTopology?.name || deviceId);
-  
+
   const setPcHostname = useCallback((hostname: string) => {
     let processedHostname = hostname.trim();
     if (processedHostname.length > 20) {
@@ -201,7 +201,7 @@ export function PCPanel({
       content: 'OS Windows [Version 10.0.19045.4412]\n(c) OS Corporation. All rights reserved.\n'
     }];
   };
-  
+
   const [pcOutput, setPcOutput] = useState<OutputLine[]>(() => getInitialPcOutput());
 
   // Sync pcOutput when deviceId changes or pcOutputs prop updates
@@ -523,15 +523,57 @@ export function PCPanel({
         addLocalOutput('error', `'${command}' is not recognized as an internal or external command.`);
       }
     } else {
-      if (!isConsoleConnected) return;
+      // Console mode - send to connected device
+      if (!isConsoleConnected) {
+        addLocalOutput('error', language === 'tr' ? 'Bağlı bir cihaz yok' : 'No device connected');
+        return;
+      }
+      const trimmedCmd = command.trim().toLowerCase();
+      // Handle help command
+      if (trimmedCmd === '?' || trimmedCmd === 'help') {
+        const helpOutput = language === 'tr'
+          ? 'Mevcut komutlar:\n  enable   - Privileged mode\n  exit     - Konsoldan çık\n  show     - Bilgi göster\n  ?        - Yardım\n'
+          : 'Available commands:\n  enable   - Enter privileged mode\n  exit     - Disconnect from console\n  show     - Show information\n  ?        - Help\n';
+        addLocalOutput('output', helpOutput);
+        return;
+      }
       if (onExecuteDeviceCommand && connectedDeviceId) {
         try { await onExecuteDeviceCommand(connectedDeviceId, command); } catch (err) { }
       }
     }
   };
 
+  const handleTabComplete = useCallback(() => {
+    const value = input;
+    if (!value && tabCycleIndex === -1) return;
+    const mode = activeTab === 'desktop' ? 'user' : 'user';
+    const { candidates, currentWord, contextTokens } = expandCommandContext(mode, value);
+    const matches = candidates.filter(opt => opt.toLowerCase().startsWith(currentWord));
+
+    if (matches.length > 0) {
+      if (tabCycleIndex === -1) {
+        setLastTabInput(value);
+        setTabCycleIndex(0);
+        const completion = matches[0];
+        const prefix = contextTokens.join(' ');
+        setInput(prefix ? `${prefix} ${completion}` : completion);
+      } else {
+        const nextIndex = (tabCycleIndex + 1) % matches.length;
+        setTabCycleIndex(nextIndex);
+        const originalParts = lastTabInput.split(/\s+/);
+        const originalContext = lastTabInput.endsWith(' ') ? lastTabInput.trim() : originalParts.slice(0, -1).join(' ');
+        const completion = matches[nextIndex];
+        setInput(originalContext ? `${originalContext} ${completion}` : completion);
+      }
+    }
+  }, [input, tabCycleIndex, lastTabInput, activeTab]);
+
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') executeCommand();
+    else if (e.key === 'Tab') {
+      e.preventDefault();
+      handleTabComplete();
+    }
     else if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (history.length > 0 && historyIndex < history.length - 1) {
@@ -774,7 +816,7 @@ export function PCPanel({
           )}
 
           {activeTab !== 'settings' && !isPcPoweredOff && (
-            <div className={`p-3 sm:p-4 border-t ${isDark ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-50'}`}>
+            <div className={`sticky bottom-0 inset-x-0 z-10 p-3 sm:p-4 border-t ${isDark ? 'border-slate-800 bg-slate-900/95' : 'border-slate-200 bg-slate-50/95'}`}>
               <div className={`flex items-center gap-2 sm:gap-3 ${isMobile ? 'flex-col' : ''}`}>
                 <div className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 ${inputBg} rounded-xl border ${inputBorder} flex-1 group ${isMobile ? 'w-full' : ''}`}>
                   <span className="text-emerald-500 font-black text-xs select-none shrink-0 opacity-50">

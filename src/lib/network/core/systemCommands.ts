@@ -129,6 +129,13 @@ function cmdExit(
           currentMode: 'privileged'
         }
       };
+    case 'router-config':
+      return {
+        success: true,
+        newState: {
+          currentMode: 'config'
+        }
+      };
     case 'privileged':
       return {
         success: true,

@@ -300,8 +300,8 @@ export function EnhancedTerminal({
             {/* Input */}
             <div
                 className={cn(
-                    'sticky bottom-0 flex items-center gap-2 p-3 border-t backdrop-blur-sm',
-                    isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
+                    'sticky bottom-0 inset-x-0 z-10 flex items-center gap-2 p-3 border-t backdrop-blur-sm',
+                    isDark ? 'bg-slate-800/95 border-slate-700' : 'bg-slate-50/95 border-slate-200'
                 )}
             >
                 <span className={cn('font-mono', isDark ? 'text-green-400' : 'text-green-600')}>$</span>
