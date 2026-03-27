@@ -1679,7 +1679,25 @@ export function PCPanel({
                     ? 'text-amber-400'
                     : 'text-emerald-500'
                     }`}>
-                    {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : (consoleNeedsPassword ? 'Password:' : '>')}
+                    {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : (() => {
+                      if (consoleNeedsPassword) return 'Password:';
+                      if (!connectedDeviceId || !deviceStates) return '>';
+                      const state = deviceStates.get(connectedDeviceId);
+                      const hostname = state?.hostname || 'Device';
+                      const mode = state?.currentMode || 'user';
+                      // Map CommandMode to prompt suffix
+                      const modeSuffix: Record<string, string> = {
+                        'user': '>',
+                        'privileged': '#',
+                        'config': '(config)#',
+                        'interface': '(config-if)#',
+                        'line': '(config-line)#',
+                        'vlan': '(config-vlan)#',
+                        'router-config': '(config)#'
+                      };
+                      const suffix = modeSuffix[mode] || '>';
+                      return `${hostname}${suffix}`;
+                    })()}
                   </span>
                   <input
                     ref={inputRef}
