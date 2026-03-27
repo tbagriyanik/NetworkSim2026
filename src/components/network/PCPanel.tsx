@@ -974,6 +974,17 @@ export function PCPanel({
         } else {
           addLocalOutput('output', internalPcHostname);
         }
+      } else if (cmd === 'ver') {
+        addLocalOutput('output', `OS Windows [Version 10.0.19045.4412]`);
+      } else if (cmd === 'dir') {
+        addLocalOutput('output', ` Volume in drive C is OS
+ Volume Serial Number is 1234-5678
+
+ Directory of C:\\n
+03/27/2026  10:00 AM    <DIR>          .
+03/27/2026  10:00 AM    <DIR>          ..
+               0 File(s)              0 bytes
+               2 Dir(s)  100,000,000,000 bytes free`);
       } else {
         addLocalOutput('error', `'${command}' is not recognized as an internal or external command.`);
       }
@@ -1032,8 +1043,15 @@ export function PCPanel({
   const handleTabComplete = useCallback(() => {
     const value = input;
     if (!value && tabCycleIndex === -1) return;
-    const mode = activeTab === 'desktop' ? 'user' : 'user';
-    const { candidates, currentWord, contextTokens } = expandCommandContext(mode, value);
+    
+    // Determine mode: PC tab always uses 'user', Console tab uses connected device's mode
+    let mode: string = 'user';
+    if (activeTab === 'terminal' && isConsoleConnected && connectedDeviceId && deviceStates) {
+      const state = deviceStates.get(connectedDeviceId);
+      mode = state?.currentMode || 'user';
+    }
+    
+    const { candidates, currentWord, contextTokens } = expandCommandContext(mode as any, value);
     const matches = candidates.filter(opt => opt.toLowerCase().startsWith(currentWord));
 
     if (matches.length > 0) {
@@ -1055,7 +1073,7 @@ export function PCPanel({
       // No matches in console mode - trigger help
       executeCommand(value.trim() + ' ?');
     }
-  }, [input, tabCycleIndex, lastTabInput, activeTab, isConsoleConnected]);
+  }, [input, tabCycleIndex, lastTabInput, activeTab, isConsoleConnected, connectedDeviceId, deviceStates, executeCommand]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.ctrlKey && e.key.toLowerCase() === 'l') {
@@ -1633,6 +1651,43 @@ export function PCPanel({
                         {gameLanguage === 'tr' ? 'Oyun Bitti!' : 'Game Over!'}
                       </div>
                     )}
+                    {/* Mobile Touch Controls */}
+                    <div className="grid grid-cols-3 gap-1 mt-2 md:hidden">
+                      <div />
+                      <button
+                        onClick={() => direction.y === 0 && setDirection({ x: 0, y: -1 })}
+                        className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-700 active:bg-slate-600' : 'bg-slate-200 active:bg-slate-300'}`}
+                      >
+                        <ChevronUp className="w-6 h-6" />
+                      </button>
+                      <div />
+                      <button
+                        onClick={() => direction.x === 0 && setDirection({ x: -1, y: 0 })}
+                        className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-700 active:bg-slate-600' : 'bg-slate-200 active:bg-slate-300'}`}
+                      >
+                        <ChevronLeft className="w-6 h-6" />
+                      </button>
+                      <button
+                        onClick={() => gameOver && (() => { setSnake([{ x: 10, y: 10 }]); setFood({ x: 15, y: 15 }); setDirection({ x: 1, y: 0 }); setGameScore(0); setGameOver(false); })()}
+                        className={`w-12 h-12 rounded-lg flex items-center justify-center text-xs font-bold ${gameOver ? 'bg-emerald-500 text-white' : (isDark ? 'bg-slate-800' : 'bg-slate-100')}`}
+                      >
+                        {gameOver ? (gameLanguage === 'tr' ? 'YENİ' : 'NEW') : ''}
+                      </button>
+                      <button
+                        onClick={() => direction.x === 0 && setDirection({ x: 1, y: 0 })}
+                        className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-700 active:bg-slate-600' : 'bg-slate-200 active:bg-slate-300'}`}
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
+                      <div />
+                      <button
+                        onClick={() => direction.y === 0 && setDirection({ x: 0, y: 1 })}
+                        className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-700 active:bg-slate-600' : 'bg-slate-200 active:bg-slate-300'}`}
+                      >
+                        <ChevronDown className="w-6 h-6" />
+                      </button>
+                      <div />
+                    </div>
                   </div>
                 ) : (
                   (activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line) => (
