@@ -101,19 +101,15 @@ export function Terminal({
 
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
 
-  const isInputDisabled = isLoading || isConnectionError || state.awaitingPassword;
-
-  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
-  const [passwordInput, setPasswordInput] = useState('');
+  const isInputDisabled = isLoading || isConnectionError;
 
   const commandQueueRef = useRef<string[]>([]);
   const isProcessingQueueRef = useRef(false);
 
   const isReloadConfirmationPending = output.some(
     (line) => line.type === 'output' && /Proceed with reload\? \[confirm\]/i.test(line.content)
-  );
+  ) || state.awaitingReloadConfirm || false;
 
   // Command Context for Autocomplete
   const expandCommandContext = useCallback((mode: keyof typeof commandHelp, rawValue: string) => {
@@ -175,24 +171,36 @@ export function Terminal({
   }, [output, isLoading, deviceId]);
 
   useEffect(() => {
-    if (state.awaitingPassword) {
-      setShowPasswordPrompt(true);
-      setPasswordInput('');
-      setTimeout(() => passwordRef.current?.focus(), 0);
-    } else {
-      setShowPasswordPrompt(false);
-      setPasswordInput('');
+    if (state.awaitingPassword || confirmDialog?.show || isReloadConfirmationPending) {
+      setInput('');
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
-  }, [state.awaitingPassword]);
+  }, [state.awaitingPassword, confirmDialog?.show, isReloadConfirmationPending]);
 
   const handleSubmit = async (cmdToExecute?: string) => {
-    const command = (cmdToExecute || input).trim();
-    if (!command || isInputDisabled) {
-      if (isReloadConfirmationPending && !isInputDisabled) {
-        await onCommand('confirm');
-      }
+    // Password mode: send whatever is typed (including empty) as password
+    if (state.awaitingPassword) {
+      const pwd = cmdToExecute ?? input;
+      setInput('');
+      await onCommand(pwd);
       return;
     }
+
+    // Confirm dialog (e.g. "reload" confirmation)
+    if (confirmDialog?.show) {
+      confirmDialog.onConfirm();
+      setInput('');
+      return;
+    }
+
+    // Inline reload confirmation: empty Enter sends "confirm"
+    if (isReloadConfirmationPending && !(cmdToExecute || input).trim()) {
+      await onCommand('confirm');
+      return;
+    }
+
+    const command = (cmdToExecute || input).trim();
+    if (!command || isInputDisabled) return;
 
     if (history[0] !== command) {
       const newHistory = [command, ...history].slice(0, 50);
@@ -240,18 +248,30 @@ export function Terminal({
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      if (confirmDialog?.show) {
-        e.preventDefault();
-        confirmDialog.onConfirm();
-        return;
-      }
       e.preventDefault();
-      if (isReloadConfirmationPending && !input.trim()) {
-        onCommand('confirm');
+      void handleSubmit();
+      return;
+    }
+    // Escape cancels password/confirm and returns to normal input
+    if (e.key === 'Escape') {
+      if (state.awaitingPassword || confirmDialog?.show || isReloadConfirmationPending) {
+        e.preventDefault();
+        if (onCommand) {
+          if (state.awaitingPassword) {
+            onCommand('__PASSWORD_CANCELLED__');
+          } else if (isReloadConfirmationPending) {
+            // Send 'n' to cancel reload
+            onCommand('n');
+          }
+        }
+        setInput('');
         return;
       }
-      handleSubmit();
-    } else if (e.key === 'ArrowUp') {
+    }
+    // Block history/tab navigation during password/confirm modes
+    if (state.awaitingPassword || confirmDialog?.show) return;
+
+    if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (history.length > 0 && historyIndex < history.length - 1) {
         const ni = historyIndex + 1;
@@ -422,32 +442,86 @@ export function Terminal({
               "sticky bottom-0 inset-x-0 z-10 border-t bg-muted/95 backdrop-blur-sm",
               isMobile ? "p-2" : "p-4"
             )}>
-              <form onSubmit={handleFormSubmit} className="flex items-center gap-3">
+              <form onSubmit={handleFormSubmit} className="flex items-center gap-3 relative">
+                {/* Contextual hint above input for confirm/reload states */}
+                {(confirmDialog?.show || isReloadConfirmationPending) && (
+                  <div className="absolute -top-7 left-4 right-4 text-[10px] font-black tracking-widest text-amber-400 animate-pulse">
+                    {confirmDialog?.show
+                      ? (confirmDialog.message || (language === 'tr' ? 'Onaylamak için Enter\'a basın' : 'Press Enter to confirm'))
+                      : (language === 'tr' ? 'Devam etmek için Enter\'a basın [confirm]' : 'Press Enter to confirm [confirm]')}
+                  </div>
+                )}
                 <div className={cn(
-                  "flex items-center gap-3 px-4 py-2.5 bg-background rounded-xl border border-input flex-1 group focus-within:ring-1 focus-within:ring-primary/50 transition-all shadow-inner",
+                  "flex items-center gap-3 px-4 py-2.5 bg-background rounded-xl border flex-1 group focus-within:ring-1 transition-all shadow-inner",
+                  state.awaitingPassword
+                    ? "border-amber-500/50 focus-within:ring-amber-500/50"
+                    : confirmDialog?.show || isReloadConfirmationPending
+                      ? "border-amber-500/50 focus-within:ring-amber-500/50"
+                      : "border-input focus-within:ring-primary/50",
                   isMobile && "px-3 py-2"
                 )}>
-                  <span className="text-primary font-bold text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity">{prompt}</span>
+                  <span className={cn(
+                    "font-bold text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0",
+                    state.awaitingPassword || confirmDialog?.show || isReloadConfirmationPending
+                      ? "text-amber-400"
+                      : "text-primary"
+                  )}>
+                    {state.awaitingPassword
+                      ? (language === 'tr' ? 'Parola:' : 'Password:')
+                      : confirmDialog?.show || isReloadConfirmationPending
+                        ? '[confirm]'
+                        : prompt}
+                  </span>
                   <input
                     ref={inputRef}
-                    type="text"
+                    type={state.awaitingPassword ? 'password' : 'text'}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     disabled={isInputDisabled}
                     className="flex-1 bg-transparent border-none outline-none font-mono text-[13px] placeholder:text-muted-foreground/50"
-                    placeholder={t.typeCommand}
+                    placeholder={
+                      state.awaitingPassword
+                        ? (language === 'tr' ? 'Parolayı girin...' : 'Enter password...')
+                        : confirmDialog?.show || isReloadConfirmationPending
+                          ? (language === 'tr' ? 'Enter\'a basın veya yazın...' : 'Press Enter or type...')
+                          : t.typeCommand
+                    }
                     autoComplete="off"
                     spellCheck={false}
                   />
                 </div>
+                {(state.awaitingPassword || confirmDialog?.show || isReloadConfirmationPending) && (
+                  <Button
+                    type="button"
+                    disabled={isInputDisabled}
+                    size="icon"
+                    variant="ghost"
+                    className="shrink-0 rounded-xl hover:bg-rose-500/20 text-rose-500"
+                    onClick={() => {
+                      if (onCommand) {
+                        if (state.awaitingPassword) {
+                          onCommand('__PASSWORD_CANCELLED__');
+                        } else if (isReloadConfirmationPending) {
+                          // Send 'n' to cancel reload
+                          onCommand('n');
+                        }
+                      }
+                      setInput('');
+                    }}
+                    title={language === 'tr' ? 'İptal' : 'Cancel'}
+                  >
+                    <X className={cn("w-5 h-5", isMobile && "w-4 h-4")} />
+                  </Button>
+                )}
                 <Button
                   type="submit"
-                  disabled={isInputDisabled || !input.trim()}
+                  disabled={isInputDisabled}
                   size="icon"
                   className={cn(
                     "shrink-0 rounded-xl shadow-lg",
-                    isMobile ? "h-9 w-9" : "h-11 w-11"
+                    isMobile ? "h-9 w-9" : "h-11 w-11",
+                    (state.awaitingPassword || confirmDialog?.show || isReloadConfirmationPending) && "bg-amber-500 hover:bg-amber-600"
                   )}
                 >
                   <CornerDownLeft className={cn("w-5 h-5", isMobile && "w-4 h-4")} />

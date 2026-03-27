@@ -48,7 +48,7 @@ export const AccessibleDialog = React.forwardRef<HTMLDivElement, AccessibleDialo
         const containerRef = useFocusManagement({
             trapFocus: true,
             restoreFocus: true,
-        });
+        }) as React.RefObject<HTMLDivElement>;
 
         const titleId = useRef(`dialog-title-${Math.random().toString(36).substr(2, 9)}`).current;
         const descriptionId = useRef(`dialog-description-${Math.random().toString(36).substr(2, 9)}`).current;

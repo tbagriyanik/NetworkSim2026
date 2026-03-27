@@ -92,7 +92,7 @@ export function PCPanel({
   onUpdatePCHistory,
   onExecuteDeviceCommand
 }: PCPanelProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -466,22 +466,35 @@ export function PCPanel({
   const isConsoleTargetPoweredOff = isConsoleConnected && !!connectedConsoleDevice && connectedConsoleDevice.status === 'offline';
   const isCmdInputDisabled = isPcPoweredOff;
   const consoleAwaitingPassword = !!(connectedDeviceId && deviceStates?.get(connectedDeviceId)?.awaitingPassword);
-  const isConsoleInputDisabled = isPcPoweredOff || !isConsoleConnected || isConsoleTargetPoweredOff || consoleAwaitingPassword;
-  const [showConsolePasswordPrompt, setShowConsolePasswordPrompt] = useState(false);
-  const [consolePasswordInput, setConsolePasswordInput] = useState('');
-  const [consolePasswordAttempted, setConsolePasswordAttempted] = useState(false);
-  const consolePasswordRef = useRef<HTMLInputElement>(null);
+  const isConsoleInputDisabled = isPcPoweredOff || !isConsoleConnected || isConsoleTargetPoweredOff;
 
-  useEffect(() => {
-    if (consoleAwaitingPassword) {
-      setShowConsolePasswordPrompt(true);
-      setConsolePasswordInput('');
-      setTimeout(() => consolePasswordRef.current?.focus(), 0);
-    } else {
-      setShowConsolePasswordPrompt(false);
-      setConsolePasswordInput('');
+  // Detect password/confirm states from device state
+  const consoleNeedsPassword = useMemo(() => {
+    if (!isConsoleConnected || !connectedDeviceId) return false;
+    const state = deviceStates?.get(connectedDeviceId);
+    // Only show password prompt if explicitly awaiting password
+    return state?.awaitingPassword === true;
+  }, [isConsoleConnected, connectedDeviceId, deviceStates]);
+
+  const consoleReloadPending = useMemo(() => {
+    if (!isConsoleConnected || !connectedDeviceId) return false;
+    const output = deviceOutputs?.get(connectedDeviceId) || [];
+    return output.some((line: any) => line.type === 'output' && /Proceed with reload\? \[confirm\]/i.test(line.content));
+  }, [isConsoleConnected, connectedDeviceId, deviceOutputs]);
+
+  const consoleConfirmDialog = useMemo(() => {
+    if (!isConsoleConnected || !connectedDeviceId) return null;
+    // Don't show confirm dialog if password is still being entered
+    if (consoleNeedsPassword) return null;
+    const output = deviceOutputs?.get(connectedDeviceId) || [];
+    const confirmLine = output.find((line: any) => line.type === 'output' && /\[confirm\]/i.test(line.content));
+    if (confirmLine) {
+      return { show: true, message: confirmLine.content };
     }
-  }, [consoleAwaitingPassword]);
+    return null;
+  }, [isConsoleConnected, connectedDeviceId, deviceOutputs, consoleNeedsPassword]);
+
+  const [consolePasswordAttempted, setConsolePasswordAttempted] = useState(false);
 
   const consoleAuthenticated = useMemo(() => {
     if (!connectedDeviceId) return true;
@@ -916,7 +929,7 @@ export function PCPanel({
         } else {
           addLocalOutput('output', `Tracing route to ${target} over a maximum of 30 hops:\n`);
           const result = checkConnectivity(deviceId, target, topologyDevices as any, topologyConnections as any, deviceStates || new Map());
-          
+
           if (result.hops && result.hops.length > 0) {
             let hopOutput = '';
             result.hops.forEach((hop, index) => {
@@ -934,11 +947,11 @@ export function PCPanel({
         let output = '\nActive Connections\n\n  Proto  Local Address          Foreign Address        State\n';
         output += `  TCP    ${pcIP}:135            0.0.0.0:0              LISTENING\n`;
         output += `  TCP    ${pcIP}:445            0.0.0.0:0              LISTENING\n`;
-        
+
         if (serviceHttpEnabled) output += `  TCP    ${pcIP}:80             0.0.0.0:0              LISTENING\n`;
         if (serviceDnsEnabled) output += `  UDP    ${pcIP}:53             *:*                    \n`;
         if (serviceDhcpEnabled) output += `  UDP    ${pcIP}:67             *:*                    \n`;
-        
+
         output += `  TCP    ${pcIP}:49664          0.0.0.0:0              LISTENING\n`;
         output += `  TCP    ${pcIP}:49665          0.0.0.0:0              LISTENING\n`;
         addLocalOutput('output', output);
@@ -965,20 +978,166 @@ export function PCPanel({
         addLocalOutput('error', `'${command}' is not recognized as an internal or external command.`);
       }
     } else {
-      // Console mode - send to connected device
+      // Console (terminal) tab
       if (!isConsoleConnected) {
         addLocalOutput('error', t.pcNoDeviceConnected);
         return;
       }
-      const trimmedCmd = command.trim().toLowerCase();
-      // Handle help command
-      if (trimmedCmd === '?' || trimmedCmd === 'help') {
-        const helpOutput = t.pcConsoleHelp;
-        addLocalOutput('output', helpOutput);
+
+      // Handle password input
+      if (consoleNeedsPassword) {
+        if (onExecuteDeviceCommand && connectedDeviceId) {
+          try { await onExecuteDeviceCommand(connectedDeviceId, input); } catch (err) { }
+        }
+        setInput('');
         return;
       }
-      if (onExecuteDeviceCommand && connectedDeviceId) {
-        try { await onExecuteDeviceCommand(connectedDeviceId, command); } catch (err) { }
+
+      // After password is correct, check for confirm states
+      // Handle confirm dialog (reload confirmation, etc.)
+      // Only send "confirm" if input is empty (Enter pressed with no text)
+      if ((consoleConfirmDialog?.show || consoleReloadPending)) {
+        if (!command) {
+          // Empty input = confirm
+          if (onExecuteDeviceCommand && connectedDeviceId) {
+            try { await onExecuteDeviceCommand(connectedDeviceId, 'confirm'); } catch (err) { }
+          }
+          setInput('');
+          return;
+        }
+        // User typed something - check if it's a known confirmation response
+        const lowerCmd = command.toLowerCase().trim();
+        if (lowerCmd === 'confirm' || lowerCmd === 'y' || lowerCmd === 'yes') {
+          // These are valid confirm responses
+          if (onExecuteDeviceCommand && connectedDeviceId) {
+            try { await onExecuteDeviceCommand(connectedDeviceId, 'confirm'); } catch (err) { }
+          }
+          setInput('');
+          return;
+        }
+        // User typed something else - send as command (will fail on switch)
+      }
+
+      const parts = command.split(' ');
+      const cmd = parts[0].toLowerCase().replace(/ı/g, 'i').replace(/İ/g, 'i').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const args = parts.slice(1);
+
+      // PC-local commands work in console tab too
+      if (cmd === 'ipconfig') {
+        addLocalOutput('command', command);
+        if (args.includes('/release')) {
+          setPcIP('0.0.0.0');
+          addLocalOutput('success', 'IP address released successfully.');
+        } else if (args.includes('/renew')) {
+          const lease = applyDhcpLease();
+          if (lease) {
+            addLocalOutput('success', `DHCP lease acquired from ${lease.serverName}/${lease.poolName}. New IP: ${lease.ip}`);
+          } else {
+            addLocalOutput('error', 'No reachable DHCP server/pool found. Using existing IP.');
+          }
+        } else if (args.includes('/all')) {
+          addLocalOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${internalPcHostname}\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}`);
+        } else {
+          addLocalOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet0:\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}`);
+        }
+      } else if (cmd === 'ping') {
+        addLocalOutput('command', command);
+        const target = args[0];
+        if (!target) {
+          addLocalOutput('output', 'Usage: ping <target_name_or_address>');
+        } else {
+          const result = checkConnectivity(deviceId, target, topologyDevices as any, topologyConnections as any, deviceStates || new Map());
+          if (result.success) {
+            addLocalOutput('output', `Pinging ${target} with 32 bytes of data:\nReply from ${target}: bytes=32 time<1ms TTL=128\nReply from ${target}: bytes=32 time<1ms TTL=128\nReply from ${target}: bytes=32 time<1ms TTL=128\nReply from ${target}: bytes=32 time<1ms TTL=128\n\nPing statistics for ${target}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`);
+          } else {
+            addLocalOutput('output', `Pinging ${target} with 32 bytes of data:\nRequest timed out.\nRequest timed out.\nRequest timed out.\nRequest timed out.\n\nPing statistics for ${target}:\n    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)\n${result.error ? `\nError: ${result.error}` : ''}`);
+          }
+        }
+      } else if (cmd === 'tracert') {
+        addLocalOutput('command', command);
+        const target = args[0];
+        if (!target) {
+          addLocalOutput('output', 'Usage: tracert <target_name_or_address>');
+        } else {
+          addLocalOutput('output', `Tracing route to ${target} over a maximum of 30 hops:\n`);
+          const result = checkConnectivity(deviceId, target, topologyDevices as any, topologyConnections as any, deviceStates || new Map());
+          if (result.hops && result.hops.length > 0) {
+            let hopOutput = '';
+            result.hops.forEach((hop, index) => {
+              const hopIp = topologyDevices.find(d => d.name === hop || d.id === hop)?.ip || '?.?.?.?';
+              hopOutput += `  ${index + 1}    <1 ms    <1 ms    <1 ms  ${hop} [${hopIp}]\n`;
+            });
+            addLocalOutput('output', hopOutput + '\nTrace complete.');
+          } else {
+            addLocalOutput('output', `  1    *        *        *     Request timed out.\n\nTrace complete.`);
+          }
+        }
+      } else if (cmd === 'arp') {
+        addLocalOutput('command', command);
+        if (args.length === 0 || (args.length === 1 && args[0].toLowerCase() === '-a')) {
+          addLocalOutput('output', buildArpTableOutput());
+        } else {
+          addLocalOutput('output', 'Usage: arp -a');
+        }
+      } else if (cmd === 'http') {
+        addLocalOutput('command', command);
+        const target = args[0];
+        if (!target) {
+          addLocalOutput('output', 'Usage: http <ip_or_domain>');
+        } else {
+          const httpServer = findHttpServerByTarget(target);
+          if (!httpServer) {
+            addLocalOutput('error', `HTTP service is unavailable for ${target}`);
+          } else {
+            addLocalOutput('output', httpServer.services?.http?.content || 'Hello World!');
+          }
+        }
+      } else if (cmd === 'nslookup') {
+        addLocalOutput('command', command);
+        const targetDomain = args[0];
+        if (!targetDomain) {
+          addLocalOutput('output', 'Usage: nslookup <domain>');
+        } else {
+          const dnsResult = resolveDomainWithDnsServices(targetDomain);
+          if (!dnsResult) {
+            addLocalOutput('output', `*** DNS request timed out\n*** Can't find ${targetDomain}: Non-existent domain`);
+          } else {
+            addLocalOutput('output', `Server: ${dnsResult.server.name}\nAddress: ${dnsResult.server.ip}\n\nName: ${targetDomain}\nAddress: ${dnsResult.address}`);
+          }
+        }
+      } else if (cmd === 'netstat') {
+        addLocalOutput('command', command);
+        let out = '\nActive Connections\n\n  Proto  Local Address          Foreign Address        State\n';
+        out += `  TCP    ${pcIP}:135            0.0.0.0:0              LISTENING\n`;
+        out += `  TCP    ${pcIP}:445            0.0.0.0:0              LISTENING\n`;
+        if (serviceHttpEnabled) out += `  TCP    ${pcIP}:80             0.0.0.0:0              LISTENING\n`;
+        if (serviceDnsEnabled) out += `  UDP    ${pcIP}:53             *:*                    \n`;
+        if (serviceDhcpEnabled) out += `  UDP    ${pcIP}:67             *:*                    \n`;
+        addLocalOutput('output', out);
+      } else if (cmd === 'nbtstat') {
+        addLocalOutput('command', command);
+        if (args.includes('-n')) {
+          addLocalOutput('output', `\nNetBIOS Local Name Table\n\n       Name               Type         Status\n    ---------------------------------------------\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <00>  UNIQUE      Registered\n    WORKGROUP        <00>  GROUP       Registered\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <20>  UNIQUE      Registered\n`);
+        } else {
+          addLocalOutput('output', 'Usage: nbtstat [-n]');
+        }
+      } else if (cmd === 'cls') {
+        setPcOutput([]);
+      } else if (cmd === 'hostname') {
+        addLocalOutput('command', command);
+        if (args[0]) {
+          setPcHostname(args[0]);
+          addLocalOutput('success', `Hostname set to ${args[0]}`);
+        } else {
+          addLocalOutput('output', internalPcHostname);
+        }
+      } else if (cmd === '?' || cmd === 'help') {
+        addLocalOutput('output', t.pcConsoleHelp);
+      } else {
+        // Not a PC command - forward to connected device (switch/router)
+        if (onExecuteDeviceCommand && connectedDeviceId) {
+          try { await onExecuteDeviceCommand(connectedDeviceId, command); } catch (err) { }
+        }
       }
     }
   };
@@ -1016,6 +1175,22 @@ export function PCPanel({
       e.preventDefault();
       setPcOutput([]);
       return;
+    }
+    // Escape cancels password/confirm and returns to normal input
+    if (e.key === 'Escape') {
+      if (activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)) {
+        e.preventDefault();
+        if (onExecuteDeviceCommand && connectedDeviceId) {
+          if (consoleNeedsPassword) {
+            onExecuteDeviceCommand(connectedDeviceId, '__PASSWORD_CANCELLED__');
+          } else if (consoleReloadPending) {
+            // For reload, send 'n' to cancel
+            onExecuteDeviceCommand(connectedDeviceId, 'n');
+          }
+        }
+        setInput('');
+        return;
+      }
     }
     if (e.key === 'Enter') executeCommand();
     else if (e.key === 'Tab') {
@@ -1600,28 +1775,74 @@ export function PCPanel({
 
           {(activeTab === 'desktop' || activeTab === 'terminal') && !isPcPoweredOff && (
             <div className={`sticky bottom-0 inset-x-0 z-10 p-3 sm:p-4 border-t ${isDark ? 'border-slate-800 bg-slate-900/95' : 'border-slate-200 bg-slate-50/95'}`}>
-              <div className={`flex items-center gap-2 sm:gap-3 ${isMobile ? 'flex-col' : ''}`}>
-                <div className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 ${inputBg} rounded-xl border ${inputBorder} flex-1 group ${isMobile ? 'w-full' : ''}`}>
-                  <span className="text-emerald-500 font-black text-xs select-none shrink-0 opacity-50">
-                    {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : '>'}
+              <div className={`flex items-center gap-2 sm:gap-3 relative ${isMobile ? 'flex-col' : ''}`}>
+                {/* Context hint for password/confirm in console mode */}
+                {activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (
+                  <div className="absolute -top-7 left-0 right-0 text-[10px] font-black tracking-widest text-amber-400 animate-pulse text-center">
+                    {consoleNeedsPassword
+                      ? (language === 'tr' ? 'Parola girin ve Enter\'a basın' : 'Enter password and press Enter')
+                      : (language === 'tr' ? 'Onaylamak için Enter\'a basın' : 'Press Enter to confirm')}
+                  </div>
+                )}
+                <div className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 ${inputBg} rounded-xl border flex-1 group ${isMobile ? 'w-full' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                  ? 'border-amber-500/50 focus-within:ring-1 focus-within:ring-amber-500/50'
+                  : inputBorder
+                  }`}>
+                  <span className={`font-black text-xs select-none shrink-0 opacity-50 ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                    ? 'text-amber-400'
+                    : 'text-emerald-500'
+                    }`}>
+                    {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : (consoleNeedsPassword ? 'Password:' : '>')}
                   </span>
                   <input
                     ref={inputRef}
-                    type="text"
+                    type={activeTab === 'terminal' && isConsoleConnected && consoleNeedsPassword ? 'password' : 'text'}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     className="flex-1 bg-transparent border-none outline-none font-mono text-[13px]"
-                    placeholder={t.typeCommand}
+                    placeholder={
+                      activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                        ? (consoleNeedsPassword
+                          ? (language === 'tr' ? 'Parolayı girin...' : 'Enter password...')
+                          : (language === 'tr' ? 'Enter\'a basın veya yazın...' : 'Press Enter or type...'))
+                        : t.typeCommand
+                    }
                     autoComplete="off"
                     disabled={activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled}
                   />
                 </div>
+                {activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (
+                  <Button
+                    type="button"
+                    disabled={isConsoleInputDisabled}
+                    size="icon"
+                    variant="ghost"
+                    className="shrink-0 rounded-xl hover:bg-rose-500/20 text-rose-500"
+                    onClick={() => {
+                      if (onExecuteDeviceCommand && connectedDeviceId) {
+                        if (consoleNeedsPassword) {
+                          onExecuteDeviceCommand(connectedDeviceId, '__PASSWORD_CANCELLED__');
+                        } else if (consoleReloadPending) {
+                          // For reload, send 'n' to cancel
+                          onExecuteDeviceCommand(connectedDeviceId, 'n');
+                        }
+                      }
+                      setInput('');
+                    }}
+                    title={language === 'tr' ? 'İptal' : 'Cancel'}
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                )}
                 <Button
                   onClick={() => executeCommand()}
-                  disabled={!input.trim() || (activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled)}
+                  disabled={activeTab === 'desktop' ? (!input.trim() || isCmdInputDisabled) : isConsoleInputDisabled}
                   size="icon"
-                  className={`shrink-0 h-11 w-11 rounded-xl bg-blue-600 text-white ${isMobile ? 'w-full' : ''}`}
+                  className={`shrink-0 h-11 w-11 rounded-xl text-white ${isMobile ? 'w-full' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                    ? 'bg-amber-500 hover:bg-amber-600'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
                 >
                   <CornerDownLeft className="w-5 h-5" />
                 </Button>
