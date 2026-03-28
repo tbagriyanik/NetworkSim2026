@@ -2515,15 +2515,6 @@ export default function Home() {
               {/* Tab Content */}
               {activeTab === 'topology' && (
                 <div className="flex-1 flex flex-col min-h-0 h-full">
-                  {/* Topology Header */}
-                  <div className={`hidden md:flex items-center justify-between px-4 py-2 border-b ${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
-                    <h2 className={`text-sm font-semibold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-                      {language === 'tr' ? 'Ağ Topolojisi' : 'Network Topology'}
-                    </h2>
-                    <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                      {topologyDevices?.length || 0} {language === 'tr' ? 'cihaz' : 'devices'}
-                    </span>
-                  </div>
                   {/* Network Topology fills remaining space */}
                   <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0">
                     <NetworkTopology
@@ -2765,17 +2756,14 @@ export default function Home() {
                           <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
                             }`}>Ctrl+S</kbd>
                           <span className="mx-1">{language === 'tr' ? 'Kaydet' : 'Save'}</span>
+                          <span className={`mx-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>|</span>
+                          <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                            {topologyDevices?.length || 0} {language === 'tr' ? 'cihaz' : 'devices'}
+                          </span>
                         </>
                       )}
                       {(activeTab === 'cmd' || activeTab === 'terminal') && (
-                        <>
-                          <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
-                            }`}>Ctrl+L</kbd>
-                          <span className="mx-1">{language === 'tr' ? 'Temizle' : 'Clear'}</span>
-                          <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
-                            }`}>↑↓</kbd>
-                          <span className="mx-1">{language === 'tr' ? 'Geçmiş' : 'History'}</span>
-                        </>
+                        <span className="text-[11px] italic">{language === 'tr' ? 'Program çalıştırmak için simgeleri tıklayınız' : 'Click icons to run programs'}</span>
                       )}
                       {activeTab !== 'topology' && activeTab !== 'cmd' && activeTab !== 'terminal' && (
                         <>

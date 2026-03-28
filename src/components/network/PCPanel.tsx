@@ -1506,7 +1506,7 @@ export function PCPanel({
                           <TerminalIcon className={`w-8 h-8 md:w-10 md:h-10 ${isDark ? 'text-blue-200' : 'text-white'} drop-shadow-md`} />
                         </div>
                         <span className={`text-xs md:text-sm font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                          {language === 'tr' ? 'CMD' : 'CMD'}
+                          {language === 'tr' ? 'Komut İstemi' : 'Command Prompt'}
                         </span>
                       </button>
                       <button

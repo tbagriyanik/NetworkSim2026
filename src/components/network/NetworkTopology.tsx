@@ -2110,7 +2110,7 @@ export function NetworkTopology({
       clearTimeout(portTooltipTimerRef.current);
     }
 
-    // 500ms sonra tooltip'i göster
+    // Hemen tooltip'i göster
     portTooltipTimerRef.current = setTimeout(() => {
       setPortTooltip({
         deviceId,
@@ -2120,11 +2120,11 @@ export function NetworkTopology({
         visible: true,
       });
 
-      // 1500ms sonra tooltip'i gizle
+      // 2000ms sonra tooltip'i gizle
       portTooltipTimerRef.current = setTimeout(() => {
         setPortTooltip(prev => prev ? { ...prev, visible: false } : null);
-      }, 1500);
-    }, 500);
+      }, 2000);
+    }, 0);
   }, [devices, getLivePort]);
 
   const handlePortHover = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
@@ -2134,8 +2134,10 @@ export function NetworkTopology({
   }, [showPortTooltip, isDrawingConnection]);
 
   const handlePortMouseLeave = useCallback(() => {
-    // We don't immediately hide on leave if we want it to stay for 3s
-    // but we could if needed. The requirement says 3s after open.
+    if (portTooltipTimerRef.current) {
+      clearTimeout(portTooltipTimerRef.current);
+    }
+    setPortTooltip(null);
   }, []);
 
   // Sync device counters with current devices to prevent ID collisions

@@ -13,7 +13,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <LanguageProvider>
           <LayoutProvider>
             <FeatureFlagProvider>
-              <TooltipProvider>
+              <TooltipProvider delayDuration={0}>
                 <SidebarProvider>
                   {children}
                 </SidebarProvider>
