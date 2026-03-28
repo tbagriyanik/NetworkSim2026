@@ -1652,6 +1652,18 @@ export default function Home() {
       // Ctrl Shortcuts
       if (e.ctrlKey || e.metaKey) {
         const key = e.key.toLowerCase();
+        
+        // Print - switch to topology tab first
+        if (key === 'p') {
+          e.preventDefault();
+          if (activeTabRef.current !== 'topology') {
+            setActiveTab('topology');
+            setTimeout(() => window.print(), 150);
+          } else {
+            window.print();
+          }
+        }
+        
         if (key === 'z') {
           if (activeTabRef.current === 'topology') {
             e.preventDefault();
@@ -1715,8 +1727,20 @@ export default function Home() {
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showProjectPicker, handleSaveProject, handleNewProject, handleUndo, handleRedo, tabs, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowProjectPicker, isTopologyFullscreen]);
+    
+    // Handle print dialog (from browser menu or Ctrl+P)
+    const handleBeforePrint = () => {
+      if (activeTabRef.current !== 'topology') {
+        setActiveTab('topology');
+      }
+    };
+    window.addEventListener('beforeprint', handleBeforePrint);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('beforeprint', handleBeforePrint);
+    };
+  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showProjectPicker, handleSaveProject, handleNewProject, handleUndo, handleRedo, tabs, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowProjectPicker, isTopologyFullscreen, setActiveTab, activeTab]);
 
   // Load project from JSON file
   const handleLoadProject = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -2618,12 +2642,11 @@ export default function Home() {
           {/* Main Content */}
           <main className="flex-1 overflow-hidden flex flex-col min-h-0 md:pb-[68px]">
             <div className={`${activeTab === 'topology' ? 'p-0 pb-0 sm:pb-0' : 'p-0'} w-full flex-1 flex flex-col min-h-0 overflow-hidden`}>
-              {/* Tab Content */}
-              {activeTab === 'topology' && (
-                <div className="flex-1 flex flex-col min-h-0 h-full">
-                  {/* Network Topology fills remaining space */}
-                  <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0">
-                    <NetworkTopology
+              {/* Tab Content - Always render but hide non-active */}
+              <div className={`flex-1 flex flex-col min-h-0 h-full ${activeTab === 'topology' ? 'block' : 'hidden'} print:block`}>
+                {/* Network Topology fills remaining space */}
+                <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0 print:hidden">
+                  <NetworkTopology
                       key={topologyKey}
                       cableInfo={cableInfo}
                       onCableChange={setCableInfo}
@@ -2651,7 +2674,6 @@ export default function Home() {
                     />
                   </div>
                 </div>
-              )}
 
               {/* CMD Terminal Sekmesi */}
               {/* CMD Terminal Sekmesi - Always mounted, hidden via CSS */}

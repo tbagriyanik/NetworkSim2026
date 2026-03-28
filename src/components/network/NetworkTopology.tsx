@@ -3073,10 +3073,11 @@ export function NetworkTopology({
           }
 
           if (showWifi) {
+            let isConnected = false;
+
             if (!isEnabled || device.status === 'offline') {
               wifiColor = isDark ? '#475569' : '#94a3b8'; // Grey
             } else {
-              let isConnected = false;
               if (isPC && deviceStates) {
                 // PC: check if SSID matches an active AP wlan0 on another device
                 const pcSsid = pcWifi?.ssid || wlanState?.wifi?.ssid || '';
@@ -3120,32 +3121,152 @@ export function NetworkTopology({
               wifiColor = isConnected ? '#22c55e' : '#f59e0b'; // Green or Orange
             }
 
+            // Prepare WiFi info for tooltip
+            let wifiSsid = '';
+            let wifiSecurity = 'open';
+            let wifiMode = 'disabled';
+            let wifiChannel = '';
+            let connectedDevices = 0;
+
+            if (isPC) {
+              wifiSsid = pcWifi?.ssid || wlanState?.wifi?.ssid || '';
+              wifiSecurity = pcWifi?.security || wlanState?.wifi?.security || 'open';
+              wifiMode = wlanState?.wifi?.mode || (pcWifi?.enabled ? 'client' : 'disabled');
+              wifiChannel = wlanState?.wifi?.channel?.toString() || '';
+            } else if (isSwitch || isRouter) {
+              wifiSsid = wlanState?.wifi?.ssid || '';
+              wifiSecurity = wlanState?.wifi?.security || 'open';
+              wifiMode = wlanState?.wifi?.mode || 'disabled';
+              wifiChannel = wlanState?.wifi?.channel?.toString() || '';
+
+              // Count connected devices
+              if (wifiMode === 'ap' && deviceStates) {
+                devices.forEach(otherDev => {
+                  if (otherDev.id === device.id || otherDev.type !== 'pc') return;
+                  const pcwifi = otherDev.wifi;
+                  const otherWlan = deviceStates.get(otherDev.id)?.ports['wlan0'];
+                  const clientSsid = pcwifi?.ssid || otherWlan?.wifi?.ssid || '';
+                  const clientSecurity = pcwifi?.security || otherWlan?.wifi?.security || 'open';
+                  if (clientSsid === wifiSsid && clientSecurity === wifiSecurity) {
+                    connectedDevices++;
+                  }
+                });
+              }
+            }
+
+            const getStatusText = () => {
+              if (device.status === 'offline') return language === 'tr' ? 'Cihaz Kapalı' : 'Device Off';
+              if (!isEnabled) return language === 'tr' ? 'WiFi Kapalı' : 'WiFi Off';
+              if (isConnected) return language === 'tr' ? 'Bağlı' : 'Connected';
+              return language === 'tr' ? 'Açık (Bağlı Değil)' : 'On (Not Connected)';
+            };
+
+            const getModeText = () => {
+              if (wifiMode === 'ap') return language === 'tr' ? 'Erişim Noktası (AP)' : 'Access Point (AP)';
+              if (wifiMode === 'client') return language === 'tr' ? 'İstemci (STA)' : 'Client (STA)';
+              return language === 'tr' ? 'Kapalı' : 'Disabled';
+            };
+
+            const getSecurityText = () => {
+              if (wifiSecurity === 'wpa3') return 'WPA3';
+              if (wifiSecurity === 'wpa2') return 'WPA2';
+              if (wifiSecurity === 'wpa') return 'WPA';
+              return language === 'tr' ? 'Açık' : 'Open';
+            };
+
+            const getStatusColor = () => {
+              if (device.status === 'offline' || !isEnabled) return 'text-red-500';
+              if (isConnected) return 'text-green-500';
+              return 'text-orange-500';
+            };
+
             return (
-              <g transform="translate(2, 0) scale(0.9)" filter="url(#wifiIconShadow)">
-                <path
-                  d="M5 10.55a11 11 0 0 1 14.08 0"
-                  stroke={wifiColor}
-                  fill="none"
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                  className="transition-colors duration-300"
-                />
-                <path
-                  d="M8.53 13.11a6 6 0 0 1 6.95 0"
-                  stroke={wifiColor}
-                  fill="none"
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                  className="transition-colors duration-300"
-                />
-                <circle
-                  cx="12"
-                  cy="16"
-                  r="1"
-                  fill={wifiColor}
-                  className="transition-colors duration-300"
-                />
-              </g>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <g transform="translate(2, 0) scale(0.9)" filter="url(#wifiIconShadow)" style={{ cursor: 'pointer' }}>
+                    {/* Invisible rect for easier hover */}
+                    <rect x="0" y="5" width="24" height="20" fill="transparent" />
+                    <path
+                      d="M5 10.55a11 11 0 0 1 14.08 0"
+                      stroke={wifiColor}
+                      fill="none"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      className="transition-colors duration-300"
+                    />
+                    <path
+                      d="M8.53 13.11a6 6 0 0 1 6.95 0"
+                      stroke={wifiColor}
+                      fill="none"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      className="transition-colors duration-300"
+                    />
+                    <circle
+                      cx="12"
+                      cy="16"
+                      r="1"
+                      fill={wifiColor}
+                      className="transition-colors duration-300"
+                    />
+                  </g>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div
+
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className={`w-2 h-2  ${device.status === 'offline' || !isEnabled
+                        ? 'bg-red-500'
+                        : isConnected
+                          ? 'bg-green-500'
+                          : 'bg-orange-500'
+                        }`} />
+                      <span className="text-[10px] font-black tracking-widest opacity-60">
+                        WiFi
+                      </span>
+                    </div>
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-bold">
+                        {language === 'tr' ? 'Durum:' : 'Status:'}{' '}
+                        <span className={getStatusColor()}>
+                          {getStatusText()}
+                        </span>
+                      </div>
+                      {wifiSsid && (
+                        <div className="text-xs font-bold">
+                          SSID:{' '}
+                          <span className="text-cyan-500">{wifiSsid}</span>
+                        </div>
+                      )}
+                      <div className="text-xs font-bold">
+                        {language === 'tr' ? 'Mod:' : 'Mode:'}{' '}
+                        <span>{getModeText()}</span>
+                      </div>
+                      {wifiMode !== 'disabled' && (
+                        <>
+                          <div className="text-xs font-bold">
+                            {language === 'tr' ? 'Güvenlik:' : 'Security:'}{' '}
+                            <span>{getSecurityText()}</span>
+                          </div>
+                          {wifiChannel && (
+                            <div className="text-xs font-bold">
+                              {language === 'tr' ? 'Kanal:' : 'Channel:'}{' '}
+                              <span>{wifiChannel}</span>
+                            </div>
+                          )}
+                          {wifiMode === 'ap' && (
+                            <div className="text-xs font-bold">
+                              {language === 'tr' ? 'Bağlı:' : 'Connected:'}{' '}
+                              <span className="text-cyan-500">{connectedDevices}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             );
           }
           return null;
@@ -3917,7 +4038,7 @@ export function NetworkTopology({
             <svg
               width="100%"
               height="100%"
-              className="block select-none print:w-full print:h-auto"
+              className="block select-none print:w-full print:h-auto print:block"
             >
               <g
                 style={{

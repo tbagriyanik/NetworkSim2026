@@ -545,65 +545,46 @@ svg text {
     size: landscape;
   }
 
-  body,
-  html {
-    background: white !important;
-    height: 100% !important;
-    width: 100% !important;
-    overflow: visible !important;
-    color: black !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  body {
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Hide everything */
-  body>*:not(main),
-  main>*:not(.topology-print-area),
+  /* Hide UI elements */
   button,
   header,
   footer,
-  .mobile-top-nav,
-  .mobile-bottom-nav,
+  nav,
+  .hidden,
+  [role="tooltip"],
   .zoom-controls,
   .minimap,
-  .instructions-panel,
   .context-menu,
-  [role="tooltip"],
-  .about-modal {
+  .instructions-panel,
+  .tabs,
+  .tab-list,
+  .mobile-top-nav,
+  .mobile-bottom-nav,
+  .print\:hidden {
     display: none !important;
   }
 
-  /* Specifically show main/topology and ensure it expands */
-  main,
+  /* Force main to show */
+  main {
+    display: block !important;
+  }
+
+  /* Show topology */
   .topology-print-area {
     display: block !important;
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    width: 100vw !important;
+    width: 100% !important;
     height: 100vh !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    visibility: visible !important;
-    z-index: 99999 !important;
-    overflow: visible !important;
     background: white !important;
   }
 
-  /* Force white background for SVG canvas during print */
-  svg {
-    width: 100vw !important;
+  .topology-print-area svg {
+    display: block !important;
+    width: 100% !important;
     height: 100vh !important;
     background: white !important;
-    flex: 1;
-    /* tüm boş alanı kaplar */
-    overflow: auto;
-    /* taşarsa scroll */
   }
 }
 
