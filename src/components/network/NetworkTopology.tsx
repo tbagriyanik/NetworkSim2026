@@ -2990,15 +2990,15 @@ export function NetworkTopology({
 
     const deviceFill = isDark
       ? (device.type === 'pc'
-        ? '#1e3a5f'
+        ? 'url(#pcGradientDark)'
         : device.type === 'switch'
-          ? '#14532d'
-          : '#4c1d95')
+          ? 'url(#switchGradientDark)'
+          : 'url(#routerGradientDark)')
       : (device.type === 'pc'
-        ? '#dbeafe'
+        ? 'url(#pcGradientLight)'
         : device.type === 'switch'
-          ? '#dcfce7'
-          : '#ede9fe');
+          ? 'url(#switchGradientLight)'
+          : 'url(#routerGradientLight)');
 
     // Calculate device height based on number of ports (8 per row for switch/router)
     const portsPerRow = device.type === 'pc' ? 2 : 8;
@@ -3014,7 +3014,7 @@ export function NetworkTopology({
       ? '#ef4444'
       : (hasConnection
         ? '#22c55e'
-        : (device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#22c55e' : '#a855f7'));
+        : (device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#14b8a6' : '#a855f7'));
 
     return (
       <g
@@ -3045,10 +3045,24 @@ export function NetworkTopology({
           height={deviceHeight}
           rx={8}
           fill={deviceFill}
-          stroke={isSelected ? '#06b6d4' : isDark ? '#475569' : '#cbd5e1'}
+          stroke={isSelected ? '#06b6d4' : isDark 
+            ? (device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#22c55e' : '#a855f7')
+            : '#cbd5e1'}
           strokeWidth={isSelected ? 2.5 : 1.5}
           className={isDragging ? '' : 'transition-all duration-150'}
         />
+        {/* Device body highlight for 3D effect in dark mode */}
+        {isDark && (
+          <rect
+            x={2}
+            y={2}
+            width={deviceWidth - 4}
+            height={deviceHeight / 3}
+            rx={6}
+            fill="white"
+            opacity="0.08"
+          />
+        )}
 
         {/* WiFi Status Icon */}
         {(() => {
@@ -3301,8 +3315,8 @@ export function NetworkTopology({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={1.5}
-                stroke="#3b82f6"
+                strokeWidth={2}
+                stroke={isDark ? '#60a5fa' : '#3b82f6'}
                 fill="none"
                 d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z"
                 transform="scale(1.2)"
@@ -3312,8 +3326,8 @@ export function NetworkTopology({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={1.5}
-                stroke="#22c55e"
+                strokeWidth={2}
+                stroke={isDark ? '#14b8a6' : '#0d9488'}
                 fill="none"
                 d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01"
                 transform="scale(1.2)"
@@ -3321,8 +3335,8 @@ export function NetworkTopology({
             )}
             {device.type === 'router' && (
               <g transform="scale(1.2)">
-                <circle cx="12" cy="12" r="9" strokeWidth={1.5} stroke="#a855f7" fill="none" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} stroke="#a855f7" fill="none" d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
+                <circle cx="12" cy="12" r="9" strokeWidth={2} stroke={isDark ? '#c084fc' : '#a855f7'} fill="none" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} stroke={isDark ? '#c084fc' : '#a855f7'} fill="none" d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
               </g>
             )}
           </g>
@@ -3435,24 +3449,31 @@ export function NetworkTopology({
             // Port colors:
             // Console: Turquoise, Fa: Blue, Gi: Orange
             // Shutdown or device offline: Red
+            // Not connected: Gray
             let portFill: string;
             let portStroke: string;
 
             if (isShutdown || isDeviceOffline) {
               portFill = '#ef4444';
               portStroke = '#991b1b';
-            } else if (isConsole) {
-              portFill = isConnected ? '#06b6d4' : '#0891b2'; // Turquoise
-              portStroke = isConnected ? '#22c55e' : '#0891b2';
-            } else if (isGigabit) {
-              portFill = isConnected ? '#f97316' : '#c2410c'; // Orange
-              portStroke = isConnected ? '#22c55e' : '#c2410c';
-            } else if (isFastEthernet) {
-              portFill = isConnected ? '#3b82f6' : '#1d4ed8'; // Blue
-              portStroke = isConnected ? '#22c55e' : '#1d4ed8';
+            } else if (isConnected) {
+              if (isConsole) {
+                portFill = '#06b6d4';
+                portStroke = '#22c55e';
+              } else if (isGigabit) {
+                portFill = '#f97316';
+                portStroke = '#22c55e';
+              } else if (isFastEthernet) {
+                portFill = '#3b82f6';
+                portStroke = '#22c55e';
+              } else {
+                portFill = '#22c55e';
+                portStroke = '#22c55e';
+              }
             } else {
-              portFill = isConnected ? '#22c55e' : '#6b7280'; // Default green/gray
-              portStroke = isConnected ? '#22c55e' : '#4b5563';
+              // Not connected - Gray
+              portFill = '#6b7280';
+              portStroke = '#4b5563';
             }
 
             return (
@@ -4084,6 +4105,35 @@ export function NetworkTopology({
                   <pattern id="majorGridPattern" width="100" height="100" patternUnits="userSpaceOnUse">
                     <rect width="100" height="100" fill="none" stroke={isDark ? '#334155' : '#cbd5e1'} strokeWidth="0.5" opacity="0.3" />
                   </pattern>
+                  {/* Device 3D Gradients for Dark Mode */}
+                  <linearGradient id="pcGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#2563eb" />
+                    <stop offset="30%" stopColor="#1e40af" />
+                    <stop offset="100%" stopColor="#1e3a8a" />
+                  </linearGradient>
+                  <linearGradient id="switchGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#14b8a6" />
+                    <stop offset="30%" stopColor="#0f766e" />
+                    <stop offset="100%" stopColor="#115e59" />
+                  </linearGradient>
+                  <linearGradient id="routerGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#a855f7" />
+                    <stop offset="30%" stopColor="#7c3aed" />
+                    <stop offset="100%" stopColor="#5b21b6" />
+                  </linearGradient>
+                  {/* Device 3D Gradients for Light Mode */}
+                  <linearGradient id="pcGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#eff6ff" />
+                    <stop offset="100%" stopColor="#dbeafe" />
+                  </linearGradient>
+                  <linearGradient id="switchGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#f0fdfa" />
+                    <stop offset="100%" stopColor="#ccfbf1" />
+                  </linearGradient>
+                  <linearGradient id="routerGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#f5f3ff" />
+                    <stop offset="100%" stopColor="#ede9fe" />
+                  </linearGradient>
                 </defs>
 
                 {/* Canvas Background with Grid - clipped to boundaries */}
