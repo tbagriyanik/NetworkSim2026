@@ -195,6 +195,71 @@ const baseProjectData = (devices: CanvasDevice[], connections: CanvasConnection[
 export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   const isTr = language === 'tr';
 
+  // Example 11: Wireless Lab (Intermediate) - 2 PCs, 1 Router
+  const wifiDevices = [
+    createPcDevice('pc-1', 'PC-1', 40, 220, '192.168.1.10', 1),
+    createRouterDevice('router-1', 'R1', 350, 220),
+    createPcDevice('pc-2', 'PC-2', 650, 220, '192.168.1.11', 1)
+  ];
+  // Configure R1 for WiFi
+  wifiDevices[1].wifi = {
+    enabled: true,
+    ssid: 'HomeWiFi',
+    security: 'open',
+    password: '',
+    channel: '2.4GHz',
+    mode: 'ap'
+  };
+  // Configure PCs for WiFi (Clients)
+  wifiDevices[0].wifi = {
+    enabled: true,
+    ssid: 'HomeWiFi',
+    security: 'open',
+    password: '',
+    channel: '2.4GHz',
+    mode: 'client'
+  };
+  wifiDevices[2].wifi = {
+    enabled: true,
+    ssid: 'HomeWiFi',
+    security: 'open',
+    password: '',
+    channel: '2.4GHz',
+    mode: 'client'
+  };
+
+  const wifiConnections: CanvasConnection[] = [];
+  const wifiNotes: CanvasNote[] = [
+    {
+      id: 'wifi-note',
+      text: isTr
+        ? 'WiFi Laboratuvarı (Orta Seviye):\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: HomeWiFi yayınlar.\n2) PC-1 ve PC-2 kablosuz ağa (SSID match) bağlıdır.\n3) Tüm cihazlar aynı subnet (192.168.1.x) içindedir.\n4) PC-1 > ping 192.168.1.11 ile kablosuz iletişimi test edin.'
+        : 'WiFi Lab (Intermediate):\n1) R1 (Router) broadcasts SSID: HomeWiFi on wlan0 in AP mode.\n2) PC-1 and PC-2 are connected wirelessly (SSID match).\n3) All devices are on the same subnet (192.168.1.x).\n4) Test wireless connectivity with PC-1 > ping 192.168.1.11.',
+      x: 300,
+      y: 400,
+      width: 450,
+      height: 180,
+      color: '#f59e0b',
+      font: 'verdana',
+      fontSize: 16,
+      opacity: 0.75
+    }
+  ];
+  const wifiR1State = createInitialRouterState();
+  wifiR1State.hostname = 'R1';
+  wifiR1State.ports['wlan0'] = {
+    ...wifiR1State.ports['wlan0'],
+    status: 'connected',
+    shutdown: false,
+    wifi: {
+      ssid: 'HomeWiFi',
+      security: 'open',
+      password: '',
+      channel: '2.4GHz',
+      mode: 'ap'
+    }
+  };
+
   // Example 1: Basic switch + passwords
   const basicDevices = [
     createPcDevice('pc-1', 'PC-1', 40, 180, '192.168.10.10', 10),
@@ -741,6 +806,17 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         { id: 'switch-1', state: campusAcc1 },
         { id: 'router-1', state: campusCore },
         { id: 'switch-2', state: campusAcc2 }
+      ])
+    },
+    {
+      id: 'wifi-intermediate',
+      tag: isTr ? 'WiFi' : 'WiFi',
+      title: isTr ? 'Kablosuz Ağ (WiFi)' : 'Wireless Network (WiFi)',
+      description: isTr ? 'Router AP ve iki PC kablosuz bağlantısı.' : 'Router AP and two PCs wireless connectivity.',
+      detail: isTr ? 'SSID: HomeWiFi, Router AP mode' : 'SSID: HomeWiFi, Router AP mode',
+      level: 'intermediate',
+      data: baseProjectData(wifiDevices, wifiConnections, wifiNotes, [
+        { id: 'router-1', state: wifiR1State }
       ])
     },
     {

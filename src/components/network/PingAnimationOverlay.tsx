@@ -77,11 +77,11 @@ export function PingAnimationOverlay({
 
     const controlPoint1 = {
       x: midX + perpX,
-      y: source.y + perpY + Math.abs(offset) * 0.5
+      y: source.y + perpY + Math.abs(offset) * 0.5 - (!conn ? 50 : 0)
     };
     const controlPoint2 = {
       x: midX + perpX,
-      y: target.y + perpY - Math.abs(offset) * 0.5
+      y: target.y + perpY - Math.abs(offset) * 0.5 - (!conn ? 50 : 0)
     };
 
     // Bezier curve calculation (Cubic Bezier)
