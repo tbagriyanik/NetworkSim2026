@@ -2509,9 +2509,9 @@ export default function Home() {
             </AlertDialogContent>
           </AlertDialog>
 
-          {/* Main Content with matching top background */}
-          <main className={`flex-1 overflow-hidden flex flex-col min-h-0 md:pb-[68px] ${isDark ? 'bg-slate-950' : 'bg-slate-100'}`}>
-            <div className={`${activeTab === 'topology' ? 'p-0 pb-0 sm:pb-0' : 'p-4 sm:p-5'} w-full flex-1 flex flex-col min-h-0 overflow-hidden`}>
+          {/* Main Content */}
+          <main className="flex-1 overflow-hidden flex flex-col min-h-0 md:pb-[68px]">
+            <div className={`${activeTab === 'topology' ? 'p-0 pb-0 sm:pb-0' : 'p-0'} w-full flex-1 flex flex-col min-h-0 overflow-hidden`}>
               {/* Tab Content */}
               {activeTab === 'topology' && (
                 <div className="flex-1 flex flex-col min-h-0 h-full">
