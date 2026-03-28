@@ -3062,11 +3062,42 @@ export function NetworkTopology({
             if (!isEnabled || device.status === 'offline') {
               wifiColor = isDark ? '#475569' : '#94a3b8'; // Grey
             } else {
-              // Check if connected
-              const isConnected = connections.some(c =>
-                (c.sourceDeviceId === device.id && c.sourcePort === 'wlan0' && c.active !== false) ||
-                (c.targetDeviceId === device.id && c.targetPort === 'wlan0' && c.active !== false)
-              );
+              let isConnected = false;
+              if (isPC && deviceStates) {
+                // PC: check if SSID matches an active AP wlan0 on another device
+                const pcSsid = pcWifi?.ssid || wlanState?.wifi?.ssid || '';
+                const pcPass = pcWifi?.password || wlanState?.wifi?.password || '';
+                const pcBssid = pcWifi?.bssid;
+                if (pcSsid) {
+                  deviceStates.forEach((state, stateId) => {
+                    if (stateId === device.id) return;
+                    const apWlan = state.ports['wlan0'];
+                    if (!apWlan || apWlan.shutdown || apWlan.wifi?.mode !== 'ap') return;
+                    if (pcBssid && pcBssid !== stateId) return; // Must match specific bssid if set
+                    if (apWlan.wifi?.ssid !== pcSsid) return;
+                    if (apWlan.wifi?.password && apWlan.wifi.password !== pcPass) return;
+                    isConnected = true;
+                  });
+                }
+              } else if ((isSwitch || isRouter) && deviceStates) {
+                // Switch acting as AP: check if any PC is associated to this device
+                const apSsid = wlanState?.wifi?.ssid || '';
+                const apPass = wlanState?.wifi?.password || '';
+                if (apSsid && wlanState?.wifi?.mode === 'ap') {
+                  devices.forEach(otherDev => {
+                    if (otherDev.id === device.id || otherDev.type !== 'pc') return;
+                    const pcwifi = otherDev.wifi;
+                    const otherState = deviceStates.get(otherDev.id);
+                    const otherWlan = otherState?.ports['wlan0'];
+                    const clientSsid = pcwifi?.ssid || otherWlan?.wifi?.ssid || '';
+                    const clientPass = pcwifi?.password || otherWlan?.wifi?.password || '';
+                    const clientBssid = pcwifi?.bssid;
+                    if ((!clientBssid || clientBssid === device.id) && clientSsid === apSsid && (apPass === '' || apPass === clientPass)) {
+                      isConnected = true;
+                    }
+                  });
+                }
+              }
               wifiColor = isConnected ? '#22c55e' : '#f59e0b'; // Green or Orange
             }
 
@@ -3236,7 +3267,7 @@ export function NetworkTopology({
           })
         ) : (
           // Switch/Router - wrap 8 ports per row for wider device
-          device.ports.map((port, idx) => {
+          (device.type === 'router' ? device.ports.filter(p => p.id !== 'wlan0') : device.ports).map((port, idx) => {
             const portsPerRow = 8;
             const col = idx % portsPerRow;
             const row = Math.floor(idx / portsPerRow);

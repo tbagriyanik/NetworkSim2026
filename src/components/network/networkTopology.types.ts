@@ -91,6 +91,7 @@ export interface CanvasDevice {
   wifi?: {
     enabled: boolean;
     ssid: string;
+    bssid?: string;
     security: 'open' | 'wpa' | 'wpa2' | 'wpa3';
     password?: string;
     channel: '2.4GHz' | '5GHz';

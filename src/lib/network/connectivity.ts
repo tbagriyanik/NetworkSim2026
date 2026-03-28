@@ -14,9 +14,39 @@ export function checkConnectivity(
   sourceId: string,
   targetIp: string,
   devices: CanvasDevice[],
-  connections: CanvasConnection[],
+  _connections: CanvasConnection[],
   deviceStates?: Map<string, SwitchState>
 ): { success: boolean; hops: string[]; error?: string } {
+  // 1.5. Implicit Wireless Connections
+  const connections = [..._connections];
+  if (deviceStates) {
+    const apDevices = devices.filter(d => ['switch', 'router'].includes(d.type));
+    const pcDevices = devices.filter(d => d.type === 'pc' && d.wifi && d.wifi.enabled && d.wifi.ssid);
+
+    for (const pc of pcDevices) {
+      const pcWifi = pc.wifi!;
+      for (const ap of apDevices) {
+        const apState = deviceStates.get(ap.id);
+        const wlan = apState?.ports['wlan0'];
+        if (wlan && !wlan.shutdown && wlan.wifi?.mode === 'ap' && wlan.wifi?.ssid === pcWifi.ssid) {
+          if (!pcWifi.bssid || pcWifi.bssid === ap.id) {
+            if (!wlan.wifi.password || wlan.wifi.password === pcWifi.password) {
+              connections.push({
+                id: `wireless-${pc.id}-${ap.id}`,
+                sourceDeviceId: pc.id,
+                sourcePort: 'wlan0',
+                targetDeviceId: ap.id,
+                targetPort: 'wlan0',
+                cableType: 'wireless',
+                active: true
+              } as CanvasConnection);
+            }
+          }
+        }
+      }
+    }
+  }
+
   // 1. Find target device by IP
   // First check topology devices (PCs usually)
   let targetDevice = devices.find(d => d.ip === targetIp);
@@ -553,6 +583,9 @@ function isPortShutdown(deviceId: string, portId: string, devices: CanvasDevice[
   const device = devices.find(d => d.id === deviceId);
   if (device) {
     const port = device.ports.find(p => p.id === portId);
+    if (portId === 'wlan0' && device.type === 'pc') {
+      return !device.wifi?.enabled;
+    }
     return port?.status === 'disabled';
   }
 
