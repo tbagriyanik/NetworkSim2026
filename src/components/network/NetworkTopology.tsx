@@ -8,6 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { toast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CanvasDevice, CanvasConnection, CanvasNote } from './networkTopology.types';
 import { DeviceIcon } from './DeviceIcon';
@@ -202,12 +203,67 @@ export function NetworkTopology({
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>(activeDeviceId ? [activeDeviceId] : []);
   const [snapToGrid, setSnapToGrid] = useState(true); // Snap-to-grid toggle
+
+  // Background sync service - monitors all network changes and keeps topology in sync
+  const [networkSyncTrigger, setNetworkSyncTrigger] = useState(0);
+  const prevDeviceStatesRef = useRef<string>('');
+  const prevDevicesRef = useRef<string>('');
+  const prevConnectionsRef = useRef<string>('');
+
+  useEffect(() => {
+    const checkForChanges = () => {
+      // Serialize current state for comparison
+      const currentDeviceStates = JSON.stringify(Array.from(deviceStates?.entries() || []));
+      const currentDevices = JSON.stringify(devices);
+      const currentConnections = JSON.stringify(connections);
+
+      // Check if any state has changed
+      if (prevDeviceStatesRef.current !== currentDeviceStates ||
+        prevDevicesRef.current !== currentDevices ||
+        prevConnectionsRef.current !== currentConnections) {
+        prevDeviceStatesRef.current = currentDeviceStates;
+        prevDevicesRef.current = currentDevices;
+        prevConnectionsRef.current = currentConnections;
+        setNetworkSyncTrigger(prev => prev + 1);
+      }
+    };
+
+    // Check immediately
+    checkForChanges();
+
+    // Set up interval for background monitoring
+    const intervalId = setInterval(checkForChanges, 500);
+
+    // Also listen for specific events
+    const handleWifiChange = () => {
+      prevDeviceStatesRef.current = ''; // Force refresh
+      setNetworkSyncTrigger(prev => prev + 1);
+    };
+    window.addEventListener('wifi-status-changed', handleWifiChange);
+    window.addEventListener('wifi-config-changed', handleWifiChange);
+    window.addEventListener('network-topology-changed', handleWifiChange);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('wifi-status-changed', handleWifiChange);
+      window.removeEventListener('wifi-config-changed', handleWifiChange);
+      window.removeEventListener('network-topology-changed', handleWifiChange);
+    };
+  }, [deviceStates, devices, connections]);
+
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const { visibleDevices, visibleConnections } = useMemo(() => {
+    // When not active (hidden), return all devices to prevent rendering issues when switching back
+    if (!isActive) return { visibleDevices: devices, visibleConnections: connections };
+
     if (!canvasRef.current) return { visibleDevices: devices, visibleConnections: connections };
 
-    const { width, height } = canvasRef.current.getBoundingClientRect();
+    const rect = canvasRef.current.getBoundingClientRect();
+    // Ensure canvas has valid dimensions and zoom is valid
+    if (rect.width === 0 || rect.height === 0 || !zoom || zoom <= 0) return { visibleDevices: devices, visibleConnections: connections };
+
+    const { width, height } = rect;
     const margin = 100; // Extra margin to prevent pop-in
 
     const vDevices = devices.filter(device => {
@@ -248,7 +304,7 @@ export function NetworkTopology({
     });
 
     return { visibleDevices: vDevices, visibleConnections: vConnections };
-  }, [devices, connections, pan, zoom]);
+  }, [devices, connections, pan, zoom, isActive, networkSyncTrigger]);
 
   const devicesSortedForRender = useMemo(() => {
     return [...visibleDevices].sort((a, b) => {
@@ -2663,12 +2719,12 @@ export function NetworkTopology({
   }, [startPingAnimation]);
 
   // Toast notification state
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [canvasToast, setCanvasToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Show toast notification
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    setCanvasToast({ message, type });
+    setTimeout(() => setCanvasToast(null), 3000);
   }, []);
 
   // Get device position (center based on device type)
@@ -2988,17 +3044,17 @@ export function NetworkTopology({
         ? (isDark ? 'fill-red-500' : 'fill-red-600')
         : (hasConnection ? (isDark ? 'fill-green-500' : 'fill-green-600') : (isDark ? 'fill-slate-800' : 'fill-slate-300'));
 
-    const deviceFill = isDark
-      ? (device.type === 'pc'
-        ? 'url(#pcGradientDark)'
-        : device.type === 'switch'
-          ? 'url(#switchGradientDark)'
-          : 'url(#routerGradientDark)')
-      : (device.type === 'pc'
-        ? 'url(#pcGradientLight)'
-        : device.type === 'switch'
-          ? 'url(#switchGradientLight)'
-          : 'url(#routerGradientLight)');
+    // Solid fills for devices
+    const getDeviceFill = () => {
+      if (device.type === 'pc') {
+        return isDark ? '#1e40af' : '#dbeafe';
+      }
+      if (device.type === 'switch') {
+        return isDark ? '#0f766e' : '#ccfbf1';
+      }
+      return isDark ? '#6d28d9' : '#ede9fe';
+    };
+    const deviceFill = getDeviceFill();
 
     // Calculate device height based on number of ports (8 per row for switch/router)
     const portsPerRow = device.type === 'pc' ? 2 : 8;
@@ -3045,8 +3101,8 @@ export function NetworkTopology({
           height={deviceHeight}
           rx={8}
           fill={deviceFill}
-          stroke={isSelected ? '#06b6d4' : isDark 
-            ? (device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#22c55e' : '#a855f7')
+          stroke={isSelected ? '#06b6d4' : isDark
+            ? (device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#14b8a6' : '#a855f7')
             : '#cbd5e1'}
           strokeWidth={isSelected ? 2.5 : 1.5}
           className={isDragging ? '' : 'transition-all duration-150'}
@@ -3086,11 +3142,14 @@ export function NetworkTopology({
             isEnabled = wlanState ? (wlanState.wifi?.mode !== 'ap' && wlanState.wifi?.mode !== 'client' ? false : !wlanState.shutdown) : (wlanPort ? !wlanPort.shutdown : false);
           }
 
+          // Check if device is powered off
+          const isPoweredOff = device.status === 'offline';
+
           if (showWifi) {
             let isConnected = false;
 
-            if (!isEnabled || device.status === 'offline') {
-              wifiColor = isDark ? '#475569' : '#94a3b8'; // Grey
+            if (isPoweredOff || !isEnabled) {
+              wifiColor = '#ef4444'; // Red - Device off or WiFi disabled
             } else {
               if (isPC && deviceStates) {
                 // PC: check if SSID matches an active AP wlan0 on another device
@@ -3194,10 +3253,23 @@ export function NetworkTopology({
               return 'text-orange-500';
             };
 
+            const handleWifiClick = () => {
+              setNetworkSyncTrigger((prev: number) => prev + 1);
+              toast({
+                title: language === 'tr' ? 'WiFi bilgileri yenilendi' : 'WiFi info refreshed',
+                duration: 1500,
+              });
+            };
+
             return (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <g transform="translate(2, 0) scale(0.9)" filter="url(#wifiIconShadow)" style={{ cursor: 'pointer' }}>
+                  <g
+                    transform="translate(2, 0) scale(0.9)"
+                    filter="url(#wifiIconShadow)"
+                    style={{ cursor: 'pointer' }}
+                    onClick={handleWifiClick}
+                  >
                     {/* Invisible rect for easier hover */}
                     <rect x="0" y="5" width="24" height="20" fill="transparent" />
                     <path
@@ -3226,9 +3298,7 @@ export function NetworkTopology({
                   </g>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <div
-
-                  >
+                  <div className="px-1">
                     <div className="flex items-center gap-2 mb-1">
                       <div className={`w-2 h-2  ${device.status === 'offline' || !isEnabled
                         ? 'bg-red-500'
@@ -3342,8 +3412,19 @@ export function NetworkTopology({
           </g>
         </g>
 
-        {/* Status LED */}
-        <circle cx={deviceWidth - 10} cy={10} r={5} className={`${statusColor} transition-colors duration-300`} />
+        {/* Status LED with lightning bolt icon */}
+        <g>
+          <circle cx={deviceWidth - 10} cy={10} r={5} className={`${statusColor} transition-colors duration-300`} />
+          {/* Lightning bolt icon inside LED */}
+          <path
+            d={`M ${deviceWidth - 9.5} 7 L ${deviceWidth - 10} 10 L ${deviceWidth - 8.5} 10 L ${deviceWidth - 10.5} 13.5 L ${deviceWidth - 10} 10.5 L ${deviceWidth - 11.5} 10.5 Z`}
+            fill={isDark ? '#1e293b' : '#ffffff'}
+            className="opacity-80"
+            stroke={isDark ? '#1e293b' : '#ffffff'}
+            strokeWidth="0.5"
+            strokeLinejoin="round"
+          />
+        </g>
 
         {/* Device name */}
         <text x={deviceWidth / 2} y={58} fill={isDark ? '#f1f5f9' : '#1e293b'} fontSize="10" textAnchor="middle" fontWeight="bold" className="select-none pointer-events-none">
@@ -4235,213 +4316,216 @@ export function NetworkTopology({
                   })}
 
                   {/* Notes */}
-                  {notes.map((note) => (
-                    <foreignObject
-                      key={note.id}
-                      x={note.x}
-                      y={note.y}
-                      width={note.width}
-                      height={note.height}
-                      data-note-id={note.id}
-                      className="pointer-events-none"
-                    >
-                      <div
-                        className={`pointer-events-auto relative flex flex-col w-full h-full overflow-hidden rounded-lg shadow-lg border ${isDark
-                          ? 'border-amber-300/60'
-                          : 'border-yellow-200'
-                          } ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-emerald-400/70' : ''}`}
+                  {notes.map((note) => {
+                    const isDragging = draggedNoteId === note.id || resizingNoteId === note.id;
+                    return (
+                      <foreignObject
+                        key={note.id}
+                        x={note.x}
+                        y={note.y}
+                        width={note.width}
+                        height={note.height}
                         data-note-id={note.id}
-                        style={{ backgroundColor: note.color, fontFamily: note.font, opacity: note.opacity }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if ((e as any).shiftKey) {
-                            setSelectedNoteIds((prev) => prev.includes(note.id) ? prev.filter(id => id !== note.id) : [...prev, note.id]);
-                          } else {
-                            setSelectedNoteIds([note.id]);
-                            setSelectedDeviceIds([]);
-                          }
-                        }}
+                        className="pointer-events-none"
                       >
-                        {/* Note Header - Draggable */}
                         <div
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleNoteHeaderMouseDown(e as unknown as ReactMouseEvent, note.id);
+                          className={`pointer-events-auto relative flex flex-col w-full h-full overflow-hidden rounded-lg shadow-lg border ${isDark
+                            ? 'border-amber-300/60'
+                            : 'border-yellow-200'
+                            } ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-emerald-400/70' : ''}`}
+                          data-note-id={note.id}
+                          style={{ backgroundColor: note.color, fontFamily: note.font, opacity: isDragging ? 0.5 : note.opacity }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if ((e as any).shiftKey) {
+                              setSelectedNoteIds((prev) => prev.includes(note.id) ? prev.filter(id => id !== note.id) : [...prev, note.id]);
+                            } else {
+                              setSelectedNoteIds([note.id]);
+                              setSelectedDeviceIds([]);
+                            }
                           }}
-                          className={`flex items-center gap-2 px-2 text-[10px] font-semibold  tracking-widest cursor-move select-none ${isDark ? 'bg-black/10' : 'bg-black/5'
-                            }`}
-                          style={{ height: '24px' }}
                         >
+                          {/* Note Header - Draggable */}
                           <div
-                            className="flex items-center gap-1"
                             onMouseDown={(e) => {
                               e.preventDefault();
+                              handleNoteHeaderMouseDown(e as unknown as ReactMouseEvent, note.id);
+                            }}
+                            className={`flex items-center gap-2 px-2 text-[10px] font-semibold  tracking-widest cursor-move select-none ${isDark ? 'bg-black/10' : 'bg-black/5'
+                              }`}
+                            style={{ height: '24px' }}
+                          >
+                            <div
+                              className="flex items-center gap-1"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                            >
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      cycleNoteColor(note.id);
+                                    }}
+                                    className="w-4 h-4 rounded border border-black/20"
+                                    style={{ backgroundColor: note.color }}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent>{language === 'tr' ? 'Renk' : 'Color'}</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      cycleNoteFont(note.id);
+                                    }}
+                                    className="px-1 rounded text-[9px] leading-4 bg-black/10 hover:bg-black/20"
+                                  >
+                                    F
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>{language === 'tr' ? 'Yazı Tipi' : 'Font'}</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      cycleNoteFontSize(note.id);
+                                    }}
+                                    className="px-1 rounded text-[9px] leading-4 bg-black/10 hover:bg-black/20"
+                                  >
+                                    {note.fontSize}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>{language === 'tr' ? 'Boyut' : 'Size'}</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      cycleNoteOpacity(note.id);
+                                    }}
+                                    className="px-1 rounded text-[9px] leading-4 bg-black/10 hover:bg-black/20"
+                                  >
+                                    {Math.round(note.opacity * 100)}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>{language === 'tr' ? 'Saydamlık' : 'Opacity'}</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      duplicateNote(note.id);
+                                    }}
+                                    className="px-1 rounded text-[9px] leading-4 bg-black/10 hover:bg-black/20"
+                                  >
+                                    D
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>{language === 'tr' ? 'Çoğalt' : 'Duplicate'}</TooltipContent>
+                              </Tooltip>
+                            </div>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteNote(note.id);
+                                  }}
+                                  className="ml-auto px-1.5 py-0.5 rounded hover:bg-black/10"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1 -1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0 -1-1h-4a1 1 0 0 0 -1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>{language === 'tr' ? 'Sil' : 'Delete'}</TooltipContent>
+                            </Tooltip>
+                          </div>
+
+                          {/* Note Content - Scrollable */}
+                          <div
+                            data-note-scroll
+                            className="flex-1 min-h-0 overflow-hidden"
+                            style={{
+                              height: `calc(100% - 24px)`,
+                              scrollBehavior: 'smooth',
+                            }}
+                            onWheel={(e) => {
+                              // Allow scroll within note without affecting canvas zoom
+                              e.stopPropagation();
+                            }}
+                            onMouseDown={(e) => {
+                              // Prevent note content interactions from starting a drag on the note shell
                               e.stopPropagation();
                             }}
                           >
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    cycleNoteColor(note.id);
-                                  }}
-                                  className="w-4 h-4 rounded border border-black/20"
-                                  style={{ backgroundColor: note.color }}
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Renk' : 'Color'}</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    cycleNoteFont(note.id);
-                                  }}
-                                  className="px-1 rounded text-[9px] leading-4 bg-black/10 hover:bg-black/20"
-                                >
-                                  F
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Yazı Tipi' : 'Font'}</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    cycleNoteFontSize(note.id);
-                                  }}
-                                  className="px-1 rounded text-[9px] leading-4 bg-black/10 hover:bg-black/20"
-                                >
-                                  {note.fontSize}
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Boyut' : 'Size'}</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    cycleNoteOpacity(note.id);
-                                  }}
-                                  className="px-1 rounded text-[9px] leading-4 bg-black/10 hover:bg-black/20"
-                                >
-                                  {Math.round(note.opacity * 100)}
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Saydamlık' : 'Opacity'}</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    duplicateNote(note.id);
-                                  }}
-                                  className="px-1 rounded text-[9px] leading-4 bg-black/10 hover:bg-black/20"
-                                >
-                                  D
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Çoğalt' : 'Duplicate'}</TooltipContent>
-                            </Tooltip>
+                            <textarea
+                              ref={(el) => { noteTextareaRefs.current[note.id] = el; }}
+                              value={note.text}
+                              onChange={(e) => updateNoteText(note.id, e.target.value)}
+                              onSelect={(e) => {
+                                setNoteTextSelection({
+                                  noteId: note.id,
+                                  start: e.currentTarget.selectionStart ?? 0,
+                                  end: e.currentTarget.selectionEnd ?? 0,
+                                });
+                              }}
+                              onMouseUp={(e) => {
+                                setNoteTextSelection({
+                                  noteId: note.id,
+                                  start: e.currentTarget.selectionStart ?? 0,
+                                  end: e.currentTarget.selectionEnd ?? 0,
+                                });
+                              }}
+                              onKeyDown={(e) => {
+                                e.stopPropagation();
+                                // ESC tuşu ile context menu'yü kapat
+                                if (e.key === 'Escape' && contextMenu?.noteId === note.id) {
+                                  setContextMenu(null);
+                                }
+                              }}
+                              onContextMenu={(e) => handleNoteTextContextMenu(e as unknown as ReactMouseEvent, note.id)}
+                              onBlur={() => {
+                                // Textarea'nın dışında tıklanınca context menu'yü kapat
+                                if (contextMenu?.noteId === note.id) {
+                                  setContextMenu(null);
+                                }
+                                if (onTopologyChange) {
+                                  onTopologyChange(devices, connections, notes);
+                                }
+                              }}
+                              className="w-full h-full min-h-full px-2 py-1 bg-transparent outline-none resize-none overflow-y-auto whitespace-pre-wrap break-words"
+                              style={{ fontSize: note.fontSize, lineHeight: 1.35, color: '#000000' }}
+                            />
                           </div>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteNote(note.id);
-                                }}
-                                className="ml-auto px-1.5 py-0.5 rounded hover:bg-black/10"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1 -1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0 -1-1h-4a1 1 0 0 0 -1 1v3M4 7h16" />
-                                </svg>
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent>{language === 'tr' ? 'Sil' : 'Delete'}</TooltipContent>
-                          </Tooltip>
-                        </div>
 
-                        {/* Note Content - Scrollable */}
-                        <div
-                          data-note-scroll
-                          className="flex-1 min-h-0 overflow-hidden"
-                          style={{
-                            height: `calc(100% - 24px)`,
-                            scrollBehavior: 'smooth',
-                          }}
-                          onWheel={(e) => {
-                            // Allow scroll within note without affecting canvas zoom
-                            e.stopPropagation();
-                          }}
-                          onMouseDown={(e) => {
-                            // Prevent note content interactions from starting a drag on the note shell
-                            e.stopPropagation();
-                          }}
-                        >
-                          <textarea
-                            ref={(el) => { noteTextareaRefs.current[note.id] = el; }}
-                            value={note.text}
-                            onChange={(e) => updateNoteText(note.id, e.target.value)}
-                            onSelect={(e) => {
-                              setNoteTextSelection({
-                                noteId: note.id,
-                                start: e.currentTarget.selectionStart ?? 0,
-                                end: e.currentTarget.selectionEnd ?? 0,
-                              });
+                          {/* Resize Handle - Bottom Right */}
+                          <div
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id);
                             }}
-                            onMouseUp={(e) => {
-                              setNoteTextSelection({
-                                noteId: note.id,
-                                start: e.currentTarget.selectionStart ?? 0,
-                                end: e.currentTarget.selectionEnd ?? 0,
-                              });
-                            }}
-                            onKeyDown={(e) => {
-                              e.stopPropagation();
-                              // ESC tuşu ile context menu'yü kapat
-                              if (e.key === 'Escape' && contextMenu?.noteId === note.id) {
-                                setContextMenu(null);
-                              }
-                            }}
-                            onContextMenu={(e) => handleNoteTextContextMenu(e as unknown as ReactMouseEvent, note.id)}
-                            onBlur={() => {
-                              // Textarea'nın dışında tıklanınca context menu'yü kapat
-                              if (contextMenu?.noteId === note.id) {
-                                setContextMenu(null);
-                              }
-                              if (onTopologyChange) {
-                                onTopologyChange(devices, connections, notes);
-                              }
-                            }}
-                            className="w-full h-full min-h-full px-2 py-1 bg-transparent outline-none resize-none overflow-y-auto whitespace-pre-wrap break-words"
-                            style={{ fontSize: note.fontSize, lineHeight: 1.35, color: '#000000' }}
-                          />
+                            className="absolute right-1 bottom-1 z-10 w-4 h-4 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity"
+                            title={language === 'tr' ? 'Yeniden Boyutlandır' : 'Resize'}
+                          >
+                            <svg viewBox="0 0 12 12" className="w-full h-full text-black">
+                              <path d="M4 12 L12 4" stroke="currentColor" strokeWidth="1" />
+                              <path d="M7 12 L12 7" stroke="currentColor" strokeWidth="1" />
+                              <path d="M10 12 L12 10" stroke="currentColor" strokeWidth="1" />
+                            </svg>
+                          </div>
                         </div>
-
-                        {/* Resize Handle - Bottom Right */}
-                        <div
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id);
-                          }}
-                          className="absolute right-1 bottom-1 z-10 w-4 h-4 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity"
-                          title={language === 'tr' ? 'Yeniden Boyutlandır' : 'Resize'}
-                        >
-                          <svg viewBox="0 0 12 12" className="w-full h-full text-black">
-                            <path d="M4 12 L12 4" stroke="currentColor" strokeWidth="1" />
-                            <path d="M7 12 L12 7" stroke="currentColor" strokeWidth="1" />
-                            <path d="M10 12 L12 10" stroke="currentColor" strokeWidth="1" />
-                          </svg>
-                        </div>
-                      </div>
-                    </foreignObject>
-                  ))}
+                      </foreignObject>
+                    );
+                  })}
 
                   {/* Ping Animation - rendered LAST for top z-order */}
                   {pingAnimation && (() => {
@@ -5746,9 +5830,9 @@ export function NetworkTopology({
             }}
           >
             <div
-              className={`px-3 py-2 rounded-xl shadow-2xl border backdrop-blur-md ${isDark
-                ? 'bg-slate-900/90 border-slate-700 text-white shadow-cyan-500/10'
-                : 'bg-white/90 border-slate-200 text-slate-900 shadow-slate-200/50'
+              className={`px-3 py-2 rounded-xl shadow-2xl border backdrop-blur-xl ${isDark
+                  ? 'bg-slate-900/80 border-slate-700/50 text-white shadow-cyan-500/10'
+                  : 'bg-white/80 border-slate-200/50 text-slate-900 shadow-slate-200/50'
                 }`}
             >
               <div className="flex items-center gap-2 mb-1">
@@ -5828,14 +5912,14 @@ export function NetworkTopology({
         )}
 
       {/* Toast Notification */}
-      {toast && (
+      {canvasToast && (
         <div
-          className={`fixed bottom-4 left-4 px-4 py-3 rounded-lg shadow-lg text-sm font-medium transition-all duration-300 z-40 ${toast.type === 'success'
+          className={`fixed bottom-4 left-4 px-4 py-3 rounded-lg shadow-lg text-sm font-medium transition-all duration-300 z-40 ${canvasToast.type === 'success'
             ? isDark ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'
             : isDark ? 'bg-red-500/20 border border-red-500/50 text-red-300' : 'bg-red-50 border border-red-200 text-red-700'
             }`}
         >
-          {toast.message}
+          {canvasToast.message}
         </div>
       )}
     </div>

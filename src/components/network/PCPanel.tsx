@@ -343,13 +343,41 @@ export function PCPanel({
     }
   }, [internalPcHostname, ipConfigMode, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, deviceId]);
 
-  // Trigger sync on change (debounced)
+  // Immediately sync WiFi changes to topology
   useEffect(() => {
-    const handler = setTimeout(() => {
-      syncToGlobal();
-    }, 500);
-    return () => clearTimeout(handler);
-  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, internalPcHostname, ipConfigMode, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, syncToGlobal]);
+    syncToGlobal();
+  }, [wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, syncToGlobal]);
+
+  // Broadcast WiFi status change to topology
+  const prevWifiConnectedRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (!deviceStates) return;
+    
+    const isConnected = Array.from(deviceStates.entries()).some(([id, state]) => {
+      const wlan = state.ports['wlan0'];
+      if (!wlan || wlan.shutdown || wlan.wifi?.mode !== 'ap') return false;
+      if (wifiBSSID && wifiBSSID !== id) return false;
+      if (wlan.wifi?.ssid !== wifiSSID) return false;
+      const apSecurity = wlan.wifi?.security || 'open';
+      if (apSecurity !== wifiSecurity) return false;
+      if (apSecurity !== 'open' && wlan.wifi?.password !== wifiPassword) return false;
+      return true;
+    });
+    
+    const connected = wifiEnabled && isConnected;
+    
+    if (prevWifiConnectedRef.current !== null && prevWifiConnectedRef.current !== connected) {
+      window.dispatchEvent(new CustomEvent('wifi-status-changed', {
+        detail: { deviceId, connected, ssid: wifiSSID }
+      }));
+    }
+    prevWifiConnectedRef.current = connected;
+
+    // Broadcast WiFi config change (enabled/disabled, SSID, etc.)
+    window.dispatchEvent(new CustomEvent('wifi-config-changed', {
+      detail: { deviceId, enabled: wifiEnabled, ssid: wifiSSID, mode: 'client' }
+    }));
+  }, [wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, deviceStates, deviceId]);
 
   // Local output for Desktop (Local) - initialize from prop if available
   const getInitialPcOutput = (): OutputLine[] => {
@@ -1962,7 +1990,7 @@ export function PCPanel({
                                 }
                               }}
                               disabled={!wifiEnabled}
-                              className={`w-full h-10 px-3 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                              className={`w-full h-10 px-3 rounded-lg border text-sm font-sans focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
                                 }`}
                             >
                               <option value="" disabled hidden>{language === 'tr' ? 'Ağ Seçiniz...' : 'Select Network...'}</option>
@@ -1992,7 +2020,7 @@ export function PCPanel({
                             value={wifiSecurity}
                             onChange={(e) => setWifiSecurity(e.target.value as any)}
                             disabled={!wifiEnabled}
-                            className={`w-full h-10 px-3 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                            className={`w-full h-10 px-3 rounded-lg border text-sm font-sans focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
                               }`}
                           >
                             <option value="open">Open</option>
@@ -2026,7 +2054,7 @@ export function PCPanel({
                             value={wifiChannel}
                             onChange={(e) => setWifiChannel(e.target.value as any)}
                             disabled={!wifiEnabled}
-                            className={`w-full h-10 px-3 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                            className={`w-full h-10 px-3 rounded-lg border text-sm font-sans focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
                               }`}
                           >
                             <option value="2.4GHz">2.4 GHz</option>
