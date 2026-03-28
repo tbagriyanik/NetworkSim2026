@@ -210,7 +210,7 @@ export function NetworkTopology({
     if (!isActive || !canvasRef.current) return { visibleDevices: devices, visibleConnections: connections };
 
     const { width, height } = canvasRef.current.getBoundingClientRect();
-    
+
     // If container has 0 width or height (e.g. hidden by CSS), don't filter out things
     if (width === 0 || height === 0 || !zoom || zoom <= 0) {
       return { visibleDevices: devices, visibleConnections: connections };
@@ -477,6 +477,7 @@ export function NetworkTopology({
     error?: string; // Error message if ping failed
     hopCount: number; // Current hop number
   } | null>(null);
+  const [errorToast, setErrorToast] = useState<{ message: string; details?: string } | null>(null);
 
   // Refs
   const deviceCounterRef = useRef<{ pc: number; switch: number; router: number }>({ pc: 0, switch: 0, router: 0 });
@@ -997,8 +998,8 @@ export function NetworkTopology({
       window.removeEventListener('mouseup', handleMouseUp);
       if (dragAnimationFrameRef.current) cancelAnimationFrame(dragAnimationFrameRef.current);
       if (panAnimationFrameRef.current) cancelAnimationFrame(panAnimationFrameRef.current);
-      };
-      }, []);
+    };
+  }, []);
   // Global touch event handlers for device dragging on mobile
   // FIXED: uses refs to avoid re-registering the listener on ogni state change
   useEffect(() => {
@@ -2588,6 +2589,12 @@ export function NetworkTopology({
         hopCount: 0
       });
 
+      // Show persistent error toast
+      setErrorToast({
+        message: language === 'tr' ? 'Ping başarısız!' : 'Ping failed!',
+        details: errorMessage
+      });
+
       setTimeout(() => setPingAnimation(null), 3000);
       return;
     }
@@ -2609,6 +2616,12 @@ export function NetworkTopology({
         hopCount: 0
       });
 
+      // Show persistent error toast
+      setErrorToast({
+        message: language === 'tr' ? 'Ping başarısız!' : 'Ping failed!',
+        details: 'Fiziksel bağlantı yok'
+      });
+
       setTimeout(() => setPingAnimation(null), 3000);
       return;
     }
@@ -2624,6 +2637,9 @@ export function NetworkTopology({
       frame: 0,
       hopCount: 0
     });
+
+    // Clear any previous error toast
+    setErrorToast(null);
 
     // Animate ping - each hop takes 800ms
     const hopDuration = 800;
@@ -2646,8 +2662,8 @@ export function NetworkTopology({
         // Check if this segment was a hop before moving to next
         const fromId = path[currentHop];
         const toId = path[currentHop + 1];
-        
-        const conn = connections.find(c => 
+
+        const conn = connections.find(c =>
           (c.sourceDeviceId === fromId && c.targetDeviceId === toId) ||
           (c.sourceDeviceId === toId && c.targetDeviceId === fromId)
         );
@@ -2657,7 +2673,7 @@ export function NetworkTopology({
 
         // Calculate currentSegmentHopCountIncrement for the segment that just finished
         const currentSegmentHopCountIncrement = (isWifi || isRouter) ? 1 : 0;
-        
+
         if (currentHop < path.length - 1) { // If there are more segments to animate
           // Prepare for the NEXT segment
           currentHop++; // Increment hop index
@@ -3087,7 +3103,7 @@ export function NetworkTopology({
           height={deviceHeight}
           rx={8}
           fill={deviceFill}
-          stroke={isSelected ? '#06b6d4' : isDark 
+          stroke={isSelected ? '#06b6d4' : isDark
             ? (device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#22c55e' : '#a855f7')
             : '#cbd5e1'}
           strokeWidth={isSelected ? 2.5 : 1.5}
@@ -5457,34 +5473,44 @@ export function NetworkTopology({
         </div>
       )}
 
-      {/* Success/Error Toast - sadece ping tamamlandığında göster */}
-      {pingAnimation && pingAnimation.success !== null && (
+      {/* Success Toast - ping başarılı olduğunda göster, otomatik kapanır */}
+      {pingAnimation && pingAnimation.success === true && (
         <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
-          <div className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 ${pingAnimation?.success
-            ? 'bg-green-600 text-white'
-            : 'bg-red-600 text-white'
-            }`}>
-            {pingAnimation?.success ? (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-sm font-medium">
-                  {language === 'tr'
-                    ? `${devices.find(d => d.id === pingAnimation?.sourceId)?.name} → ${devices.find(d => d.id === pingAnimation?.targetId)?.name} Ping Başarılı! (${pingAnimation?.path?.length - 1} hop)`
-                    : `${devices.find(d => d.id === pingAnimation?.sourceId)?.name} → ${devices.find(d => d.id === pingAnimation?.targetId)?.name} Ping Successful! (${pingAnimation?.path?.length - 1} hop${pingAnimation?.path?.length > 2 ? 's' : ''})`}
-                </span>
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span className="text-sm font-medium">
-                  {language === 'tr' ? 'Ping başarısız - bağlantı yok!' : 'Ping failed - no connection!'}
-                </span>
-              </>
-            )}
+          <div className="px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 bg-green-600 text-white">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="text-sm font-medium">
+              {language === 'tr'
+                ? `${devices.find(d => d.id === pingAnimation?.sourceId)?.name} → ${devices.find(d => d.id === pingAnimation?.targetId)?.name} Ping Başarılı! (${pingAnimation?.path?.length - 1} hop)`
+                : `${devices.find(d => d.id === pingAnimation?.sourceId)?.name} → ${devices.find(d => d.id === pingAnimation?.targetId)?.name} Ping Successful! (${pingAnimation?.path?.length - 1} hop${pingAnimation?.path?.length > 2 ? 's' : ''})`}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Persistent Error Toast - ping başarısız olduğunda göster, kullanıcı kapatana kadar açık kalır */}
+      {errorToast && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="px-4 py-3 rounded-lg shadow-lg flex items-start gap-2 bg-red-600 text-white max-w-md">
+            <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex flex-col flex-grow">
+              <span className="text-sm font-medium">{errorToast.message}</span>
+              {errorToast.details && (
+                <span className="text-xs opacity-90 mt-0.5">{errorToast.details}</span>
+              )}
+            </div>
+            <button
+              onClick={() => setErrorToast(null)}
+              className="flex-shrink-0 ml-2 hover:bg-red-700 rounded p-1 transition-colors"
+              title={language === 'tr' ? 'Kapat' : 'Close'}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
