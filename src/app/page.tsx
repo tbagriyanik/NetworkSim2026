@@ -357,14 +357,7 @@ export default function Home() {
 
     window.addEventListener('update-topology-device-config', handleDeviceUpdate);
     return () => window.removeEventListener('update-topology-device-config', handleDeviceUpdate);
-  }, []);
-
-  // Broadcast network topology changes to all components
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('network-topology-changed', {
-      detail: { timestamp: Date.now() }
-    }));
-  }, [deviceStates, topologyDevices, topologyConnections]);
+  }, []); // Actions from useAppStore are stable, and functional updates avoid stale data issues.
 
   // Initialize defaults on mount to avoid hydration mismatch
   useEffect(() => {
@@ -451,7 +444,6 @@ export default function Home() {
   const [topologyKey, setTopologyKey] = useState(0);
   const [selectedDevice, setSelectedDevice] = useState<'pc' | 'switch' | 'router' | null>(null);
   const [showPCPanel, setShowPCPanel] = useState(false);
-  const [showLabProgress, setShowLabProgress] = useState(false);
   const [showPCDeviceId, setShowPCDeviceId] = useState<string>('pc-1');
 
   // Get current state helper
@@ -1902,8 +1894,7 @@ export default function Home() {
                   </div>
                 </Button>
 
-                {/* Total Score - Desktop - Hide when PC is selected */}
-                {showLabProgress && (activeTab !== 'cmd' && activeTab !== 'terminal' && selectedDevice !== 'pc') && (
+                {/* Total Score - Desktop */}
                 <div className="hidden md:flex items-center gap-4">
                   <div className="flex flex-col items-end gap-1">
                     <div className="flex items-center gap-2">
@@ -1945,7 +1936,6 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                )}
 
                 {/* Right Controls - Integrated Toolbar */}
                 <div className="flex items-center gap-2">
@@ -2039,19 +2029,6 @@ export default function Home() {
                       <Languages className="w-4 h-4 mr-1" />
                       {language.toUpperCase()}
                     </Button>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={`h-8 w-8 ui-hover-surface ${showLabProgress ? 'text-cyan-400' : isDark ? 'text-slate-300 hover:text-cyan-400' : 'text-slate-600 hover:text-cyan-600'}`}
-                          onClick={() => setShowLabProgress(!showLabProgress)}
-                        >
-                          <ShieldCheck className="w-4 h-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Lab İlerlemesi' : 'Lab Progress'}</TooltipContent>
-                    </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -2158,8 +2135,7 @@ export default function Home() {
 
                         <Separator className="bg-slate-800/30" />
 
-                        {/* Lab Progress Mobile - Hide when PC is selected */}
-                        {showLabProgress && (activeTab !== 'cmd' && activeTab !== 'terminal' && selectedDevice !== 'pc') && (
+                        {/* Lab Progress Mobile */}
                         <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-800/30' : 'bg-slate-50'} border ${isDark ? 'border-slate-800/50' : 'border-slate-200'}`}>
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-xs font-bold tracking-[0.15em] text-slate-500">{t.labProgress}</span>
@@ -2173,7 +2149,6 @@ export default function Home() {
                           </div>
                           <p className={`text-center text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{totalScore} / {maxScore} {t.pts}</p>
                         </div>
-                        )}
                       </div>
                     </ScrollArea>
                   </SheetContent>
@@ -2930,8 +2905,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Lab Progress - Hide when PC is selected */}
-                {showLabProgress && totalScore > 0 && (activeTab !== 'cmd' && activeTab !== 'terminal' && selectedDevice !== 'pc') && (
+                {/* Lab Progress */}
+                {totalScore > 0 && (
                   <div className={`hidden md:flex items-center gap-2`}>
                     <span className={`text-[11px] font-bold  tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
                       {t.labProgress}
