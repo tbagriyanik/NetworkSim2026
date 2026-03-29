@@ -1718,6 +1718,10 @@ export default function Home() {
       if (e.ctrlKey || e.metaKey) {
         const key = e.key.toLowerCase();
 
+        // Check if an input element is focused
+        const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
+        const isEditable = tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable;
+
         // Print - switch to topology tab first
         if (key === 'p') {
           e.preventDefault();
@@ -1729,14 +1733,15 @@ export default function Home() {
           }
         }
 
+        // Only handle undo/redo in topology tab if no input is focused
         if (key === 'z') {
-          if (activeTabRef.current === 'topology') {
+          if (activeTabRef.current === 'topology' && !isEditable) {
             e.preventDefault();
             handleUndo();
           }
         }
         if (key === 'y') {
-          if (activeTabRef.current === 'topology') {
+          if (activeTabRef.current === 'topology' && !isEditable) {
             e.preventDefault();
             handleRedo();
           }

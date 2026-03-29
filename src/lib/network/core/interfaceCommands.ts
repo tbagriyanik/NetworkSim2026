@@ -557,7 +557,7 @@ function isValidIP(ip: string): boolean {
 
 function expandInterfaceRange(rangeSpec: string, state: any): string[] {
   const normalized = rangeSpec.replace(/\s+/g, '').toLowerCase();
-  const match = normalized.match(/^(fa|fastethernet|gi|gig|gigabit|gigabitethernet)(\d+)\/(\d+)(?:-(\d+))?$/);
+  const match = normalized.match(/^(fastethernet|gigabitethernet|gigabit|fastethernet|fa|gig|gi)(\d+)\/(\d+)(?:-(\d+))?$/);
   if (!match) return [];
 
   const prefix = match[1].startsWith('f') ? 'fa' : 'gi';
