@@ -58,11 +58,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     }
 
     if (state.security.enableSecret) {
-      if (state.security.enableSecretEncrypted) {
-        config += `enable secret 5 $1$xxxx$xxxxxxxxxxxxxxxx\\n`;
-      } else {
-        config += `enable secret ${state.security.enableSecret}\\n`;
-      }
+      config += `enable secret 5 $1$xxxx$xxxxxxxxxxxxxxxx\\n`;
     }
     if (state.security.enablePassword) {
       if (state.security.servicePasswordEncryption) {

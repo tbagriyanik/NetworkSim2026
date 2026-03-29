@@ -175,7 +175,7 @@ function cmdShowRunningConfig(
 
   // Enable secret
   if (state.security?.enableSecret) {
-    output += `enable secret ${state.security.enableSecret}\n`;
+    output += `enable secret 5 $1$xxxx$xxxxxxxxxxxxxxxx\n`;
   } else if (state.security?.enablePassword) {
     if (state.security?.servicePasswordEncryption) {
       output += `enable password 7 ********\n`;

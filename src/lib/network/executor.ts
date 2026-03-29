@@ -1050,18 +1050,27 @@ export function executeCommand(
 function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): CommandResult {
   const needsLogin = !!(state.security.consoleLine.login && state.security.consoleLine.password);
 
+  let output = '';
+
+  // Display banner MOTD first
+  if (state.bannerMOTD) {
+    output += `\n${state.bannerMOTD}\n\n`;
+  }
+
   if (!needsLogin) {
     const prompt = getPrompt(state);
+    output += prompt;
     return {
       success: true,
-      output: `\n${prompt}`,
+      output,
       newState: { consoleAuthenticated: true }
     };
   }
 
+  output += 'User Access Verification\n\nPassword: ';
   return {
     success: true,
-    output: 'Password: ',
+    output,
     requiresPassword: true,
     passwordPrompt: 'Password: ',
     passwordContext: 'console',
