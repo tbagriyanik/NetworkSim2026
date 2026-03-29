@@ -375,10 +375,10 @@ export function getModePrompt(mode: CommandMode, hostname: string, context?: str
       return `${hostname}(config-if)#`;
     case 'config-if-range':
       return `${hostname}(config-if-range)#`;
-    case 'line':
-      return `${hostname}(config-line)#`;
     case 'vlan':
       return `${hostname}(config-vlan)#`;
+    case 'line':
+      return `${hostname}(config-line)#`;
     case 'router-config':
       return `${hostname}(config-router)#`;
     default:
@@ -776,7 +776,7 @@ export const commandAliases: Record<string, string> = {
 
   // VLAN commands
   'vl': 'vlan',
-  'vla': 'vlan',
+  'vla': 'vlan',  
   'vl n': 'vlan name',
   'vla n': 'vlan name',
   'vlan n': 'vlan name',

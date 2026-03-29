@@ -441,18 +441,18 @@ const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 3
   },
 
-  // Interface komutları - interface range ÖNCE gelmeli (daha spesifik)
+  // Interface komutları - interface ÖNCE gelmeli (daha spesifik)
+  'interface': {
+    pattern: /^interface\s+(?!r(?:ange)?\s)(fa|fastethernet|gi|gigabitethernet|e|ethernet|po|port-channel|vlan)?\s*(.+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
   'interface range': {
     pattern: /^interface\s+r(?:ange)?\s+(?:(?:fa|fastethernet|gi|gigabitethernet|e|ethernet|po|port-channel|vlan)\s*)?(.+)$/i,
     modes: ['config'],
     minArgs: 1,
     maxArgs: 1
-  },
-  'interface': {
-    pattern: /^interface\s+(?!r(?:ange)?\s)(fa|fastethernet|gi|gigabitethernet|e|ethernet|po|port-channel|vlan)?\s*(.+)$/i,
-    modes: ['config'],
-    minArgs: 1,
-    maxArgs: 2
   },
   'default interface': {
     pattern: /^default\s+interface\s+(.+)$/i,
