@@ -4156,7 +4156,7 @@ export function NetworkTopology({
                   <span className="hidden sm:inline">{language === 'tr' ? 'Ağı Yenile' : 'Refresh Network'}</span>
                 </button>
               </TooltipTrigger>
-              <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh (F5) Network'}</TooltipContent>
+              <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh Network (F5) '}</TooltipContent>
             </Tooltip>
           </div>
         </div>

@@ -144,6 +144,9 @@ export default function NetworkTopologyContextMenu({
   // Render logic follows hook calls
   if (!contextMenu) return null;
 
+  // Don't render if position is at origin (0,0) - prevents flash at top-left
+  if (position.x === 0 && position.y === 0) return null;
+
   return (
     <div
       ref={contextMenuRef}
@@ -156,8 +159,7 @@ export default function NetworkTopologyContextMenu({
         resize: contextMenu.mode.startsWith('note') ? 'both' : 'none',
         minWidth: contextMenu.mode.startsWith('note') ? 180 : undefined,
         minHeight: contextMenu.mode.startsWith('note') ? 120 : undefined,
-        maxWidth: '300px',
-        display: contextMenu ? 'block' : 'none'
+        maxWidth: '300px'
       }}
       onClick={(e) => e.stopPropagation()}
     >
