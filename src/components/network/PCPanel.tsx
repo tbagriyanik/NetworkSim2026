@@ -11,6 +11,7 @@ import { checkConnectivity } from '@/lib/network/connectivity';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Copy, Save, Trash2, Download, Settings, Wifi } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from "@/hooks/use-toast";
@@ -1647,36 +1648,36 @@ export function PCPanel({
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-500 ">MAC Address</label>
-                      <Input value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} className={errors.mac ? 'border-rose-500' : ''} />
+                      <Input value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} placeholder="00:1A:2B:3C:4D:5E" className={errors.mac ? 'border-rose-500' : ''} />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 ">IP Address</label>
-                        <Input value={pcIP} onChange={(e) => setPcIP(e.target.value)} className={errors.ip ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
+                        <Input value={pcIP} onChange={(e) => setPcIP(e.target.value)} placeholder="192.168.1.100" className={errors.ip ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 ">Subnet Mask</label>
-                        <Input value={pcSubnet} onChange={(e) => setPcSubnet(e.target.value)} className={errors.subnet ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
+                        <Input value={pcSubnet} onChange={(e) => setPcSubnet(e.target.value)} placeholder="255.255.255.0" className={errors.subnet ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 ">Gateway</label>
-                        <Input value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} className={errors.gateway ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
+                        <Input value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} placeholder="192.168.1.1" className={errors.gateway ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 ">DNS</label>
-                        <Input value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} className={errors.dns ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
+                        <Input value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} placeholder="8.8.8.8" className={errors.dns ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 ">IPv6 Address</label>
-                        <Input value={pcIPv6} onChange={(e) => setPcIPv6(e.target.value)} />
+                        <Input value={pcIPv6} onChange={(e) => setPcIPv6(e.target.value)} placeholder="2001:db8:acad:1::10" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 ">IPv6 Prefix</label>
-                        <Input value={pcIPv6Prefix} onChange={(e) => setPcIPv6Prefix(e.target.value)} />
+                        <Input value={pcIPv6Prefix} onChange={(e) => setPcIPv6Prefix(e.target.value)} placeholder="64" />
                       </div>
                     </div>
                   </div>
@@ -1955,59 +1956,52 @@ export function PCPanel({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="space-y-2">
                           <label className="text-[10px] font-black tracking-widest text-slate-500 ml-1">SSID (Service Set Identifier)</label>
-                          <div className="relative">
-                            <select
-                              value={wifiBSSID ? `${wifiBSSID}|${wifiSSID}` : wifiSSID}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (val.includes('|')) {
-                                  const [bssid, ssid] = val.split('|');
-                                  setWifiBSSID(bssid);
-                                  setWifiSSID(ssid);
-                                } else {
-                                  setWifiBSSID('');
-                                  setWifiSSID(val);
-                                }
-                              }}
-                              disabled={!wifiEnabled}
-                              className={`w-full h-10 px-3 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-                                }`}
-                            >
-                              <option value="" disabled hidden>{language === 'tr' ? 'Ağ Seçiniz...' : 'Select Network...'}</option>
-                              {availableSSIDs.length === 0 && <option value="" disabled>{language === 'tr' ? 'Etrafta Ağ Bulunamadı' : 'No Networks Found'}</option>}
+                          <Select value={wifiBSSID ? `${wifiBSSID}|${wifiSSID}` : wifiSSID} onValueChange={(val) => {
+                            if (val.includes('|')) {
+                              const [bssid, ssid] = val.split('|');
+                              setWifiBSSID(bssid);
+                              setWifiSSID(ssid);
+                            } else {
+                              setWifiBSSID('');
+                              setWifiSSID(val);
+                            }
+                          }} disabled={!wifiEnabled}>
+                            <SelectTrigger className={`w-full ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                              <SelectValue placeholder={language === 'tr' ? 'Ağ Seçiniz...' : 'Select Network...'} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableSSIDs.length === 0 && <SelectItem value="no-networks" disabled>{language === 'tr' ? 'Etrafta Ağ Bulunamadı' : 'No Networks Found'}</SelectItem>}
                               {availableSSIDs.map((entry) => {
                                 const hasDupe = availableSSIDs.filter(e => e.ssid === entry.ssid).length > 1;
                                 const label = hasDupe ? `${entry.ssid} (${entry.deviceName})` : entry.ssid;
                                 return (
-                                  <option key={`${entry.deviceId}-${entry.ssid}`} value={`${entry.deviceId}|${entry.ssid}`}>
+                                  <SelectItem key={`${entry.deviceId}-${entry.ssid}`} value={`${entry.deviceId}|${entry.ssid}`}>
                                     {label}
-                                  </option>
+                                  </SelectItem>
                                 );
                               })}
                               {wifiSSID && !availableSSIDs.some(e => e.ssid === wifiSSID && (!wifiBSSID || e.deviceId === wifiBSSID)) && (
-                                <option value={wifiBSSID ? `${wifiBSSID}|${wifiSSID}` : wifiSSID}>{wifiSSID} ({language === 'tr' ? 'Kaydedildi' : 'Saved'})</option>
+                                <SelectItem value={wifiBSSID ? `${wifiBSSID}|${wifiSSID}` : wifiSSID}>{wifiSSID} ({language === 'tr' ? 'Kaydedildi' : 'Saved'})</SelectItem>
                               )}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
-                          </div>
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         <div className="space-y-2">
                           <label className="text-[10px] font-black tracking-widest  text-slate-500 ml-1">
                             {language === 'tr' ? 'Güvenlik' : 'Security'}
                           </label>
-                          <select
-                            value={wifiSecurity}
-                            onChange={(e) => setWifiSecurity(e.target.value as any)}
-                            disabled={!wifiEnabled}
-                            className={`w-full h-10 px-3 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-                              }`}
-                          >
-                            <option value="open">Open</option>
-                            <option value="wpa">WPA</option>
-                            <option value="wpa2">WPA2 Personal</option>
-                            <option value="wpa3">WPA3</option>
-                          </select>
+                          <Select value={wifiSecurity} onValueChange={(val) => setWifiSecurity(val as any)} disabled={!wifiEnabled}>
+                            <SelectTrigger className={`w-full ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="open">Open</SelectItem>
+                              <SelectItem value="wpa">WPA</SelectItem>
+                              <SelectItem value="wpa2">WPA2 Personal</SelectItem>
+                              <SelectItem value="wpa3">WPA3</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         {wifiSecurity !== 'open' && (
@@ -2030,16 +2024,15 @@ export function PCPanel({
                           <label className="text-[10px] font-black tracking-widest  text-slate-500 ml-1">
                             {language === 'tr' ? 'Kanal' : 'Channel'}
                           </label>
-                          <select
-                            value={wifiChannel}
-                            onChange={(e) => setWifiChannel(e.target.value as any)}
-                            disabled={!wifiEnabled}
-                            className={`w-full h-10 px-3 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-                              }`}
-                          >
-                            <option value="2.4GHz">2.4 GHz</option>
-                            <option value="5GHz">5 GHz</option>
-                          </select>
+                          <Select value={wifiChannel} onValueChange={(val) => setWifiChannel(val as any)} disabled={!wifiEnabled}>
+                            <SelectTrigger className={`w-full ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="2.4GHz">2.4 GHz</SelectItem>
+                              <SelectItem value="5GHz">5 GHz</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
 

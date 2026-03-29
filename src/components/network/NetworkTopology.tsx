@@ -1205,6 +1205,8 @@ export function NetworkTopology({
       setSelectedDeviceIds([device.id]);
       // Notify parent component - select device, don't open terminal
       onDeviceSelect(device.type, device.id);
+      // Focus canvas for keyboard navigation
+      canvasRef.current?.focus();
     }
   }, [onDeviceSelect]);
 
@@ -1550,6 +1552,15 @@ export function NetworkTopology({
           e.preventDefault();
           setZoom(1);
           setPan({ x: 0, y: 0 });
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (selectedDeviceIds.length === 1) {
+            const selectedDevice = devices.find(d => d.id === selectedDeviceIds[0]);
+            if (selectedDevice) {
+              handleDeviceDoubleClick(selectedDevice);
+            }
+          }
           break;
         case 'Delete':
         case 'Backspace':
@@ -4209,12 +4220,21 @@ export function NetworkTopology({
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onClick={() => {
+              canvasRef.current?.focus();
               if (isDrawingConnection) {
                 setIsDrawingConnection(false);
                 setConnectionStart(null);
               }
             }}
             onContextMenu={(e) => handleContextMenu(e as unknown as ReactMouseEvent)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && selectedDeviceIds.length === 1) {
+                const selectedDevice = devices.find(d => d.id === selectedDeviceIds[0]);
+                if (selectedDevice) {
+                  handleDeviceDoubleClick(selectedDevice);
+                }
+              }
+            }}
           >
             {/* SVG Layer with Grid and Content */}
             <svg

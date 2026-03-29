@@ -351,7 +351,7 @@ export default function NetworkTopologyContextMenu({
                   disabled: !device
                 })}
                 {renderMenuItem({
-                  label: language === 'tr' ? 'Güç Aç/Kapat' : 'Power ON/OFF',
+                  label: language === 'tr' ? 'Güç' : 'Power',
                   icon: 'power',
                   onClick: () => { onSaveToHistory(); onTogglePowerDevices(targets); onClose(); },
                   disabled: !device
