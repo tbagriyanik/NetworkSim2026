@@ -2193,6 +2193,34 @@ Shortcuts:
   chan       = channel-group
   span port  = spanning-tree portfast
 `,
+    'config-if-range': `
+Available commands (Multiple Ports):
+  shutdown                  - Disable selected ports
+  no shutdown               - Enable selected ports
+  speed <10|100|1000|auto>  - Port speed
+  duplex <half|full|auto>   - Duplex setting
+  description <text>        - Port description
+  switchport mode <access|trunk> - Port mode
+  switchport access vlan <id>    - Assign VLAN
+  switchport trunk allowed vlan <list> - Trunk VLANs
+  switchport trunk native vlan <id> - Native VLAN
+  switchport port-security        - Enable port security
+  switchport port-security maximum <n> - Max MAC addresses
+  switchport port-security violation <mode> - Violation mode
+  spanning-tree portfast   - Enable PortFast
+  spanning-tree bpduguard enable - Enable BPDU Guard
+  exit                      - Return to config mode
+  end                       - Return to privileged mode
+
+Shortcuts:
+  no sh      = no shutdown
+  sh         = shutdown
+  sw mode    = switchport mode
+  sw acc vlan = switchport access vlan
+  sw m a     = switchport mode access
+  sw m t     = switchport mode trunk
+  desc       = description
+`,
     line: `
 Available commands:
   password <password>       - Line password
