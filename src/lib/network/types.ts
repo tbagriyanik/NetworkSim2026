@@ -106,8 +106,9 @@ export interface SwitchState {
   macAddressTable: { mac: string; vlan: number; port: string; type: string }[];
   // Password prompt state
   awaitingPassword?: boolean;
-  passwordContext?: 'enable' | 'console';
+  passwordContext?: 'enable' | 'console' | 'vty';
   consoleAuthenticated?: boolean;
+  telnetAuthenticated?: boolean;
   // Reload confirmation state
   awaitingReloadConfirm?: boolean;
   // New optional properties for extended features
@@ -163,7 +164,7 @@ export interface CommandResult {
   modeChange?: CommandMode;
   requiresPassword?: boolean;        // Şifre gerekiyor mu?
   passwordPrompt?: string;           // Şifre istemi metni
-  passwordContext?: 'enable' | 'console';        // Şifre bağlamı
+  passwordContext?: 'enable' | 'console' | 'vty';        // Şifre bağlamı
   requiresConfirmation?: boolean;    // Onay gerekiyor mu?
   confirmationMessage?: string;      // Onay mesajı
   confirmationAction?: string;       // Onay sonrası yapılacak işlem

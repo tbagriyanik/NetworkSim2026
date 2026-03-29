@@ -273,12 +273,12 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'basic-note-1',
       text: isTr
-        ? 'Amaç: Konsol, VTY ve enable parolalarını ayarlayıp doğrulamak.\n1) SW1’de: enable, conf t\n2) enable secret class\n3) enable password paswd\n4) line con 0 -> password console, login\n5) line vty 0 4 -> password vty123, login\n6) write memory\nPC-2 (Console) ile COM1 üzerinden konsol bağlantısı kullan.'
-        : 'Goal: Configure and verify console, VTY, and enable passwords.\n1) SW1: enable, conf t\n2) enable secret class\n3) enable password paswd\n4) line con 0 -> password console, login\n5) line vty 0 4 -> password vty123, login\n6) write memory\nUse PC-2 (Console) via COM1 to connect to console.',
+        ? 'Amaç: Konsol, VTY ve enable parolalarını ayarlayıp doğrulamak.\n1) SW1’de: enable, conf t\n2) enable secret class\n3) enable password paswd\n4) line con 0 -> password console, login\n5) line vty 0 4 -> password vty123, login\n6) int vlan 10 -> ip address 192.168.10.150 255.255.255.0\n7) write memory\n8) PC-2 (Console) ile COM1 üzerinden konsol bağlantısı kullan.\n9) PC-1 CMD ekranından "telnet 192.168.10.150" komutu ile bağlanın.'
+        : 'Goal: Configure and verify console, VTY, and enable passwords.\n1) SW1: enable, conf t\n2) enable secret class\n3) enable password paswd\n4) line con 0 -> password console, login\n5) line vty 0 4 -> password vty123, login\n6) int vlan 10 -> ip address 192.168.10.150 255.255.255.0\n7) write memory\n8) Use PC-2 (Console) via COM1 to connect to console.\n9) Connect from PC-1 CMD using "telnet 192.168.10.150" command.',
       x: 600,
       y: 40,
       width: 420,
-      height: 180,
+      height: 250,
       color: '#22d3ee',
       font: 'verdana',
       fontSize: 16,
@@ -296,6 +296,19 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     vtyLines: { ...basicState.security.vtyLines, password: 'vty123', login: true }
   };
   basicState.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: [] };
+  basicState.ports['vlan10'] = {
+    id: 'vlan10',
+    name: 'VLAN10 Interface',
+    status: 'connected',
+    vlan: 10,
+    mode: 'access',
+    duplex: 'auto',
+    speed: 'auto',
+    shutdown: false,
+    type: 'fastethernet',
+    ipAddress: '192.168.10.150',
+    subnetMask: '255.255.255.0'
+  };
   basicState.ports['fa0/1'] = { ...basicState.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
 
   // Example 2: Single switch VLANs

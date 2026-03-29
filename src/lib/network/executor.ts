@@ -1007,6 +1007,10 @@ export function executeCommand(
     return { success: false, error: '% Unknown command' };
   }
 
+  if (input === '__TELNET_CONNECT__') {
+    return handleTelnetConnect(state, language);
+  }
+
   if (state.awaitingPassword) {
     if (input === '__PASSWORD_CANCELLED__') {
       // Password dialog was cancelled (ESC, back, outside click)
@@ -1150,6 +1154,41 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
   };
 }
 
+function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): CommandResult {
+  const needsLogin = !!(state.security.vtyLines?.login && state.security.vtyLines?.password);
+
+  let output = '';
+
+  // Display banner MOTD first
+  if (state.bannerMOTD) {
+    output += `\n${state.bannerMOTD}\n\n`;
+  }
+
+  if (!needsLogin) {
+    const prompt = getPrompt(state);
+    output += prompt;
+    return {
+      success: true,
+      output,
+      newState: { telnetAuthenticated: true }
+    };
+  }
+
+  output += 'User Access Verification\n\nPassword: ';
+  return {
+    success: true,
+    output,
+    requiresPassword: true,
+    passwordPrompt: 'Password: ',
+    passwordContext: 'vty',
+    newState: {
+      telnetAuthenticated: false,
+      awaitingPassword: true,
+      passwordContext: 'vty'
+    }
+  };
+}
+
 function handlePasswordInput(state: SwitchState, password: string, language: 'tr' | 'en'): CommandResult {
   if (state.passwordContext === 'enable') {
     const validPassword = state.security.enableSecret
@@ -1209,6 +1248,36 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
         newState: {
           awaitingPassword: true,
           passwordContext: 'console'
+        }
+      };
+    }
+  }
+
+  if (state.passwordContext === 'vty') {
+    const validPassword = password === state.security.vtyLines.password;
+    if (validPassword) {
+      let output = '';
+      if (state.bannerMOTD) {
+        output = `\n${state.bannerMOTD}\n\n`;
+      }
+      const prompt = getPrompt(state);
+      output += prompt;
+      return {
+        success: true,
+        output,
+        newState: {
+          telnetAuthenticated: true,
+          awaitingPassword: false,
+          passwordContext: undefined
+        }
+      };
+    } else {
+      return {
+        success: false,
+        error: language === 'tr' ? '% Erişim reddedildi' : '% Access denied',
+        newState: {
+          awaitingPassword: true,
+          passwordContext: 'vty'
         }
       };
     }
