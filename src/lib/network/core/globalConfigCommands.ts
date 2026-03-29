@@ -20,6 +20,7 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'no enable password': cmdNoEnablePassword,
   'banner motd': cmdBannerMotd,
   'ip default-gateway': cmdIpDefaultGateway,
+  'no ip default-gateway': cmdNoIpDefaultGateway,
   'ip domain-name': cmdIpDomainName,
   'cdp run': cmdCdpRun,
   'no cdp run': cmdNoCdpRun,
@@ -371,6 +372,20 @@ function cmdIpDefaultGateway(state: any, input: string, ctx: any): any {
   return {
     success: true,
     newState: { defaultGateway: match[1] }
+  };
+}
+
+/**
+ * No IP Default-Gateway
+ */
+function cmdNoIpDefaultGateway(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  return {
+    success: true,
+    newState: { defaultGateway: undefined }
   };
 }
 

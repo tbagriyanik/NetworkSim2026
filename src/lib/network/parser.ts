@@ -155,9 +155,15 @@ const commandPatterns: Record<string, CommandPattern> = {
   },
   'ip default-gateway': {
     pattern: /^ip\s+default-gateway\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
-    modes: ['config'],
+    modes: ['config', 'interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
+  },
+  'no ip default-gateway': {
+    pattern: /^no\s+ip\s+default-gateway$/i,
+    modes: ['config', 'interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
   },
   'ip routing': {
     pattern: /^ip\s+routing$/i,
