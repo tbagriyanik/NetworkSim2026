@@ -2487,6 +2487,11 @@ export function NetworkTopology({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
+
+      // Check if an input element is focused
+      const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
+      const isEditable = tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable;
+
       // ESC to close context menu
       if (key === 'escape') {
         setContextMenu(null);
@@ -2512,8 +2517,6 @@ export function NetworkTopology({
 
       // Delete selected device(s)
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
-        const isEditable = tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable;
         if (!isEditable && selectedDeviceIds.length > 0) {
           saveToHistory();
           selectedDeviceIds.forEach(id => deleteDevice(id));
@@ -2521,8 +2524,8 @@ export function NetworkTopology({
         }
       }
 
-      // Ctrl Shortcuts
-      if (e.ctrlKey || e.metaKey) {
+      // Ctrl Shortcuts - skip if input is focused
+      if ((e.ctrlKey || e.metaKey) && !isEditable) {
         // Ctrl+A to select all
         if (key === 'a') {
           e.preventDefault();
@@ -2541,13 +2544,13 @@ export function NetworkTopology({
           handleRedo();
         }
         // Ctrl+C to copy
-        if (key === 'c' && (e.ctrlKey || e.metaKey)) {
+        if (key === 'c') {
           if (selectedDeviceIds.length > 0) {
             copyDevice(selectedDeviceIds);
           }
         }
         // Ctrl+X to cut
-        if (key === 'x' && (e.ctrlKey || e.metaKey)) {
+        if (key === 'x') {
           if (selectedDeviceIds.length > 0) {
             cutDevice(selectedDeviceIds);
           }

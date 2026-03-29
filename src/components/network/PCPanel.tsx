@@ -171,6 +171,10 @@ export function PCPanel({
   });
   const [historyIndex, setHistoryIndex] = useState(-1);
 
+  // Undo/Redo state
+  const [undoStack, setUndoStack] = useState<string[]>([]);
+  const [redoStack, setRedoStack] = useState<string[]>([]);
+
   // Sync with global history if it changes externally
   useEffect(() => {
     const globalHistory = pcHistories?.get(deviceId) || [];
@@ -1198,12 +1202,54 @@ export function PCPanel({
     }
   }, [input, tabCycleIndex, lastTabInput, activeTab, isConsoleConnected, connectedDeviceId, deviceStates, executeCommand]);
 
+  // Undo/Redo helpers
+  const handleUndo = useCallback(() => {
+    if (undoStack.length > 0) {
+      const newUndoStack = [...undoStack];
+      const previousInput = newUndoStack.pop() || '';
+      setRedoStack([input, ...redoStack]);
+      setInput(previousInput);
+      setUndoStack(newUndoStack);
+    }
+  }, [input, undoStack, redoStack]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.length > 0) {
+      const newRedoStack = [...redoStack];
+      const nextInput = newRedoStack.shift() || '';
+      setUndoStack([...undoStack, input]);
+      setInput(nextInput);
+      setRedoStack(newRedoStack);
+    }
+  }, [input, undoStack, redoStack]);
+
+  const handleInputChange = useCallback((newValue: string) => {
+    setUndoStack([...undoStack, input]);
+    setRedoStack([]);
+    setInput(newValue);
+  }, [input, undoStack]);
+
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.ctrlKey && e.key.toLowerCase() === 'l') {
       e.preventDefault();
       setPcOutput([]);
       return;
     }
+
+    // Handle Ctrl+Z (Undo)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      handleUndo();
+      return;
+    }
+
+    // Handle Ctrl+Y (Redo)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+      e.preventDefault();
+      handleRedo();
+      return;
+    }
+
     // Escape cancels password/confirm and returns to normal input
     if (e.key === 'Escape') {
       if (activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)) {
@@ -1220,6 +1266,70 @@ export function PCPanel({
         return;
       }
     }
+
+    // Handle Ctrl+A (Select All)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+      e.preventDefault();
+      const inputElement = e.currentTarget as HTMLInputElement;
+      inputElement.select();
+      return;
+    }
+
+    // Handle Ctrl+X (Cut)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
+      e.preventDefault();
+      const inputElement = e.currentTarget as HTMLInputElement;
+      if (input) {
+        const start = inputElement.selectionStart || 0;
+        const end = inputElement.selectionEnd || 0;
+        if (start !== end) {
+          const selectedText = input.substring(start, end);
+          navigator.clipboard.writeText(selectedText).then(() => {
+            const newInput = input.substring(0, start) + input.substring(end);
+            setInput(newInput);
+          });
+        }
+      }
+      return;
+    }
+
+    // Handle Ctrl+C (Copy)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+      e.preventDefault();
+      const inputElement = e.currentTarget as HTMLInputElement;
+      if (input) {
+        const start = inputElement.selectionStart || 0;
+        const end = inputElement.selectionEnd || 0;
+        if (start !== end) {
+          const selectedText = input.substring(start, end);
+          navigator.clipboard.writeText(selectedText);
+        } else if (input) {
+          // If no selection, copy all
+          navigator.clipboard.writeText(input);
+        }
+      }
+      return;
+    }
+
+    // Handle Ctrl+V (Paste)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+      e.preventDefault();
+      navigator.clipboard.readText().then(text => {
+        const inputElement = e.currentTarget as HTMLInputElement;
+        const start = inputElement.selectionStart || 0;
+        const end = inputElement.selectionEnd || 0;
+        const newInput = input.substring(0, start) + text + input.substring(end);
+        setInput(newInput);
+        // Move cursor to end of pasted text
+        setTimeout(() => {
+          inputElement.setSelectionRange(start + text.length, start + text.length);
+        }, 0);
+      }).catch(() => {
+        // Clipboard access denied, silently fail
+      });
+      return;
+    }
+
     if (e.key === 'Enter') executeCommand();
     else if (e.key === 'Tab') {
       e.preventDefault();
@@ -2284,7 +2394,7 @@ export function PCPanel({
                           ref={inputRef}
                           type={activeTab === 'terminal' && isConsoleConnected && consoleNeedsPassword ? 'password' : 'text'}
                           value={input}
-                          onChange={(e) => setInput(e.target.value)}
+                          onChange={(e) => handleInputChange(e.target.value)}
                           onKeyDown={handleKeyDown}
                           onFocus={() => {
                             // Scroll input into view on mobile when keyboard opens
