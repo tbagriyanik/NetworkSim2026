@@ -29,7 +29,7 @@ export interface Port {
   duplex: DuplexMode;
   speed: SpeedMode;
   shutdown: boolean;
-  type: 'fastethernet' | 'gigabitethernet';
+  type: 'fastethernet' | 'gigabitethernet' | 'vlan';
   previousStatus?: PortStatus;  // shutdown öncesi durum (no shutdown için)
   ipAddress?: string;           // For L3 ports or SVI
   subnetMask?: string;
@@ -47,6 +47,8 @@ export interface Port {
   ipv6Address?: string;         // For CCNA 1 v7 support
   ipv6Prefix?: number;
   isRoutedPort?: boolean;       // For L3 switch routed ports
+  isSubinterface?: boolean;     // For subinterfaces (e.g., gi0/0.10)
+  parentInterface?: string;     // Parent interface for subinterfaces
   wifi?: {
     ssid: string;
     security: 'open' | 'wpa' | 'wpa2' | 'wpa3';

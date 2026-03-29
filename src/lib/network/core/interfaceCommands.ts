@@ -91,7 +91,7 @@ function cmdInterface(state: any, input: string, ctx: any): any {
     return {
       success: true,
       newState: {
-        currentMode: 'interface',
+        currentMode: 'vlan',
         currentInterface: vlanPortId,
         selectedInterfaces: [vlanPortId],
         ports: newPorts
@@ -99,10 +99,37 @@ function cmdInterface(state: any, input: string, ctx: any): any {
     };
   }
 
-  // Validate interface exists
+  // Validate interface exists or create subinterface
   const normalized = normalizePortId(interfaceName) || interfaceName.toLowerCase();
-  if (!state.ports || !state.ports[normalized]) {
+
+  // Check if it's a subinterface (contains a dot)
+  const isSubinterface = normalized.includes('.');
+
+  if (!isSubinterface && (!state.ports || !state.ports[normalized])) {
     return { success: false, error: `% Interface ${interfaceName} does not exist` };
+  }
+
+  // For subinterfaces, create them if they don't exist
+  let newPorts = state.ports;
+  if (isSubinterface && (!state.ports || !state.ports[normalized])) {
+    newPorts = { ...state.ports };
+    // Extract base interface and subinterface number
+    const parts = normalized.split('.');
+    const baseInterface = parts[0];
+    const subinterfaceNum = parts[1];
+
+    // Create the subinterface
+    newPorts[normalized] = {
+      id: normalized,
+      name: `${normalized}`,
+      type: normalized.startsWith('fa') ? 'fastethernet' : 'gigabitethernet',
+      vlan: parseInt(subinterfaceNum) || 1,
+      status: 'up',
+      shutdown: false,
+      mode: 'routed',
+      isSubinterface: true,
+      parentInterface: baseInterface
+    };
   }
 
   return {
@@ -110,7 +137,8 @@ function cmdInterface(state: any, input: string, ctx: any): any {
     newState: {
       currentMode: 'interface',
       currentInterface: normalized,
-      selectedInterfaces: [normalized]
+      selectedInterfaces: [normalized],
+      ...(isSubinterface && newPorts !== state.ports ? { ports: newPorts } : {})
     }
   };
 }
