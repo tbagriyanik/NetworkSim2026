@@ -156,7 +156,8 @@ export default function NetworkTopologyContextMenu({
         resize: contextMenu.mode.startsWith('note') ? 'both' : 'none',
         minWidth: contextMenu.mode.startsWith('note') ? 180 : undefined,
         minHeight: contextMenu.mode.startsWith('note') ? 120 : undefined,
-        maxWidth: '300px'
+        maxWidth: '300px',
+        display: contextMenu ? 'block' : 'none'
       }}
       onClick={(e) => e.stopPropagation()}
     >

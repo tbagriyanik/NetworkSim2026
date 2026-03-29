@@ -650,6 +650,7 @@ export default function Home() {
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showProjectPicker, setShowProjectPicker] = useState(false);
+  const [projectSearchQuery, setProjectSearchQuery] = useState('');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -687,6 +688,7 @@ export default function Home() {
       localStorage.setItem('netsim_autosave', JSON.stringify(projectData));
       autosaveTimerRef.current = null;
       setLastSaveTime(new Date().toLocaleTimeString());
+      setHasUnsavedChanges(false);
     }, 800);
 
     return () => {
@@ -2402,22 +2404,30 @@ export default function Home() {
             })}
           </div>
 
-          <Dialog open={showProjectPicker} onOpenChange={setShowProjectPicker}>
+          <Dialog open={showProjectPicker} onOpenChange={(open) => { setShowProjectPicker(open); if (!open) setProjectSearchQuery(''); }}>
             <DialogContent className={`liquid-glass-strong w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl`}>
               <div className='flex flex-col flex-1 overflow-hidden h-full max-w-full'>
-                <div className='p-4 md:p-8 pb-2 md:pb-4'>
+                <div className='p-4 md:p-8 pb-2 md:pb-4 space-y-4'>
                   <div className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r  p-4 md:p-6 '>
-                    <DialogTitle className='text-xl md:text-3xl lg:text-4xl  bg-gradient-to-br from-white to-slate-400 bg-clip-text text-transparent break-words'>{language === 'tr' ? 'Yeni Proje Aç' : 'Open a New Project'}</DialogTitle>
+                    <DialogTitle className='text-xl bg-gradient-to-br from-white to-slate-900 bg-clip-text text-transparent break-words'>{language === 'tr' ? 'Yeni Proje Aç' : 'Open a New Project'}</DialogTitle>
                     <DialogDescription className="sr-only">
                       {language === 'tr'
                         ? 'Yeni proje penceresi: boş projeyle başlayın veya hazır örneklerden birini seçin.'
                         : 'New project dialog: start with an empty project or choose one of the ready examples.'}
                     </DialogDescription>
-                    <p className={`text-xs md:text-base mt-1 md:mt-2 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'} break-words`}>
-                      {language === 'tr'
-                        ? 'Yeni laboratuvar akışına göre boş projeyle başlayın ya da seviyelendirilmiş hazır senaryolardan birini seçin.'
-                        : 'Start with an empty lab or choose one of the level-based ready scenarios in the new workflow.'}
-                    </p>
+                  </div>
+
+                  {/* Search Box */}
+                  <div className={`rounded-xl border px-4 py-2.5 flex items-center gap-2 ${isDark ? 'bg-slate-900/40 border-slate-800/60' : 'bg-white/50 border-slate-200/60'}`}>
+                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder={language === 'tr' ? 'Proje ara...' : 'Search projects...'}
+                      onChange={(e) => setProjectSearchQuery(e.target.value)}
+                      className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`}
+                    />
                   </div>
                 </div>
 
@@ -2458,6 +2468,18 @@ export default function Home() {
                         const projects = groupedExampleProjects[level];
                         if (!projects || projects.length === 0) return null;
 
+                        // Filter projects based on search query
+                        const filteredProjects = projectSearchQuery.trim() === ''
+                          ? projects
+                          : projects.filter(project =>
+                            project.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                            project.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                            project.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                            (project.detail && project.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
+                          );
+
+                        if (filteredProjects.length === 0) return null;
+
                         return (
                           <section key={level} className='space-y-4 md:space-y-6 w-full'>
                             <div className='flex items-center gap-3 md:gap-4 px-1 md:px-2'>
@@ -2471,22 +2493,22 @@ export default function Home() {
                             </div>
 
                             <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
-                              {projects.map((example) => (
+                              {filteredProjects.map((example) => (
                                 <Button
                                   key={example.id}
                                   variant='ghost'
                                   className={`group h-auto min-h-[120px] md:min-h-[160px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/80 hover:border-cyan-500/30' : 'border-slate-200/50 bg-white hover:bg-slate-50 hover:border-blue-500/20'} w-full overflow-hidden shadow-sm hover:shadow-2xl`}
                                   onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => applyExampleProject(example.data)); }}
                                 >
-                                  <div className='flex items-start justify-between w-full gap-4 overflow-hidden'>
-                                    <span className='font-black text-base md:text-2xl leading-none group-hover:text-cyan-400 transition-colors duration-300 break-words flex-1'>{example.title}</span>
-                                    <span className={`text-[8px] md:text-[10px] font-black  tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 ${isDark ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>{example.tag}</span>
+                                  <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
+                                    <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-cyan-400' : 'group-hover:text-blue-600'}`}>{example.title}</span>
+                                    <span className={`text-[8px] md:text-[10px] font-black  tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>{example.tag}</span>
                                   </div>
-                                  <p className={`text-[11px] md:text-sm leading-relaxed ${isDark ? 'text-slate-400/80' : 'text-slate-600'} font-medium italic group-hover:text-slate-200 transition-colors whitespace-normal break-words break-all w-full`}>{example.description}</p>
+                                  <p className={`text-[11px] md:text-sm leading-relaxed font-medium italic transition-colors whitespace-normal break-words break-all w-full ${isDark ? 'text-slate-400/80 group-hover:text-slate-200' : 'text-slate-600 group-hover:text-slate-800'}`}>{example.description}</p>
                                   {example.detail && (
                                     <div className='mt-auto pt-2 md:pt-4 flex items-center gap-2 md:gap-3 w-full border-t border-slate-800/10 dark:border-slate-800/50'>
                                       <div className='w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.5)]' />
-                                      <span className={`text-[8px] md:text-[11px] font-bold tracking-wide  ${isDark ? 'text-amber-400/80' : 'text-amber-700/80'} whitespace-normal break-words break-all w-full`}>{example.detail}</span>
+                                      <span className={`text-[8px] md:text-[11px] font-bold tracking-wide whitespace-normal break-words break-all w-full ${isDark ? 'text-amber-400/80' : 'text-amber-700/80'}`}>{example.detail}</span>
                                     </div>
                                   )}
                                 </Button>

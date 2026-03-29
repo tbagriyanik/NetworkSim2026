@@ -2655,8 +2655,42 @@ export function NetworkTopology({
       cancelAnimationFrame(pingAnimationRef.current);
     }
 
+    // Validate source device IP
+    const sourceDevice = devices.find(d => d.id === sourceId);
+    const sourceIp = sourceDevice?.ip || '';
+    const isSourceIpValid = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(sourceIp);
+
+    // Validate target device IP
     const targetDevice = devices.find(d => d.id === targetId);
     const targetIp = targetDevice?.ip || deviceStates?.get(targetId)?.ports['vlan1']?.ipAddress || '';
+    const isTargetIpValid = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(targetIp);
+
+    // Check if both IPs are valid
+    if (!isSourceIpValid || !isTargetIpValid) {
+      const errorMessage = !isSourceIpValid
+        ? (language === 'tr' ? 'Kaynak cihazın IP adresi geçersiz' : 'Source device IP is invalid')
+        : (language === 'tr' ? 'Hedef cihazın IP adresi geçersiz' : 'Target device IP is invalid');
+
+      setPingAnimation({
+        sourceId,
+        targetId,
+        path: [sourceId, targetId],
+        currentHopIndex: 0,
+        progress: 1,
+        success: false,
+        frame: 0,
+        error: errorMessage,
+        hopCount: 0
+      });
+
+      setErrorToast({
+        message: language === 'tr' ? 'Ping başarısız!' : 'Ping failed!',
+        details: errorMessage
+      });
+
+      setTimeout(() => setPingAnimation(null), 3000);
+      return;
+    }
 
     // Get detailed diagnostics
     const diagnostics = getPingDiagnostics(sourceId, targetIp, devices, connections, deviceStates);
@@ -5018,18 +5052,27 @@ export function NetworkTopology({
                     </text>
 
                     {/* IP address if exists */}
-                    {device.ip && (
-                      <text
-                        x={device.x + deviceWidth / 2}
-                        y={device.y + deviceHeight / 2 + 16}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        fontSize="10"
-                        fill="#666"
-                      >
-                        {device.ip}
-                      </text>
-                    )}
+                    {(() => {
+                      // Validate IP format
+                      const isValidIP = device.ip ? /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(device.ip) : false;
+                      const isValidSubnet = device.subnet ? /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(device.subnet) : false;
+                      const hasError = !isValidIP || !isValidSubnet;
+                      const displayText = device.ip || (language === 'tr' ? 'IP Yok' : 'No IP');
+
+                      return (
+                        <text
+                          x={device.x + deviceWidth / 2}
+                          y={device.y + deviceHeight / 2 + 16}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fontSize="10"
+                          fill={hasError ? '#ef4444' : '#666'}
+                          fontWeight={hasError ? '700' : '400'}
+                        >
+                          {hasError ? '⚠ ' : ''}{displayText}
+                        </text>
+                      );
+                    })()}
                   </g>
                 );
               })}
