@@ -117,6 +117,11 @@ export function useDeviceManager() {
           { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: '\nReady!\n' }
         ];
 
+        // Add banner MOTD if available
+        if (reloadedState.bannerMOTD) {
+          bootOutputs.push({ id: `banner-${reloadedState.macAddress}`, type: 'output', content: `\n${reloadedState.bannerMOTD}\n` });
+        }
+
         setDeviceOutputs(prev => new Map(prev).set(deviceId, bootOutputs));
       } else {
         // Power off: keep saved state so configuration survives future power cycles
@@ -171,9 +176,13 @@ export function useDeviceManager() {
         { id: `boot-2`, type: 'output', content: isRouter ? 'C1900 platform with 524288K bytes of main memory\nMain memory configured to 64 bit mode with ECC disabled\n' : 'C2960 platform with 262144K bytes of main memory\nMain memory configured to 32 bit mode with ECC enabled\n' },
         { id: `boot-3`, type: 'output', content: '\nLoading the runtime image: ######################################## [OK]\n' }
       ];
-      if (state?.bannerMOTD) {
-        outputs.push({ id: `banner-initial`, type: 'output', content: `\n${state.bannerMOTD}\n` });
+
+      // Add banner MOTD if available
+      const deviceState = state || (isRouter ? createInitialRouterState() : createInitialState());
+      if (deviceState?.bannerMOTD) {
+        outputs.push({ id: `banner-initial`, type: 'output', content: `\n${deviceState.bannerMOTD}\n` });
       }
+
       outputs.push({ id: `boot-ready`, type: 'output', content: '\nPress RETURN to get started!\n' });
       setDeviceOutputs(prev => new Map(prev).set(deviceId, outputs!));
     }
@@ -272,13 +281,13 @@ export function useDeviceManager() {
           }
         });
 
-      if (triggerPingAnimation) {
-        window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
-          detail: { sourceId: deviceId, targetId: triggerPingAnimation }
-        }));
-      }
+        if (triggerPingAnimation) {
+          window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
+            detail: { sourceId: deviceId, targetId: triggerPingAnimation }
+          }));
+        }
 
-      return result;
+        return result;
       }
 
       if (requiresConfirmation && !skipConfirm) {
@@ -293,13 +302,13 @@ export function useDeviceManager() {
           }
         });
 
-      if (triggerPingAnimation) {
-        window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
-          detail: { sourceId: deviceId, targetId: triggerPingAnimation }
-        }));
-      }
+        if (triggerPingAnimation) {
+          window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
+            detail: { sourceId: deviceId, targetId: triggerPingAnimation }
+          }));
+        }
 
-      return result;
+        return result;
       }
 
       const newOutputs: TerminalOutput[] = [];
@@ -433,13 +442,13 @@ export function useDeviceManager() {
           if ((result as any).requiresReloadConfirm) {
             setDeviceStates(prev => new Map(prev).set(deviceId, { ...deviceState, awaitingReloadConfirm: true } as any));
 
-      if (triggerPingAnimation) {
-        window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
-          detail: { sourceId: deviceId, targetId: triggerPingAnimation }
-        }));
-      }
+            if (triggerPingAnimation) {
+              window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
+                detail: { sourceId: deviceId, targetId: triggerPingAnimation }
+              }));
+            }
 
-      return result;
+            return result;
           }
           const baseState = deviceId.includes('router') ? createInitialRouterState() : createInitialState();
           const startupConfig = deviceState.startupConfig;
@@ -477,13 +486,13 @@ export function useDeviceManager() {
           ];
           void appendOutputsWithDelay(deviceId, bootOutputs, { clearFirst: true, minDelay: 120, maxDelay: 420 });
 
-      if (triggerPingAnimation) {
-        window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
-          detail: { sourceId: deviceId, targetId: triggerPingAnimation }
-        }));
-      }
+          if (triggerPingAnimation) {
+            window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
+              detail: { sourceId: deviceId, targetId: triggerPingAnimation }
+            }));
+          }
 
-      return result;
+          return result;
         }
 
         if (result.telnetTarget && topologyDevices) {
