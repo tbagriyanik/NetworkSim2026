@@ -3,13 +3,14 @@ import { normalizePortId } from '../initialState';
 
 // Helper function to check if in interface mode (single or range)
 function isInInterfaceMode(state: any): boolean {
-  return state.currentMode === 'interface' || state.currentMode === 'interface-range';
+  return state.currentMode === 'interface' || state.currentMode === 'config-if-range';
 }
 
 // Interface-level komutlar (interface, shutdown, speed, duplex, switchport, ip address, vs.)
 
 export const interfaceHandlers: Record<string, CommandHandler> = {
   'interface': cmdInterface,
+  'interface range': cmdInterface,
   'shutdown': cmdShutdown,
   'no shutdown': cmdNoShutdown,
   'speed': cmdSpeed,
@@ -60,7 +61,7 @@ function cmdInterface(state: any, input: string, ctx: any): any {
     return {
       success: true,
       newState: {
-        currentMode: 'interface-range',
+        currentMode: 'config-if-range',
         currentInterface: selectedInterfaces[0],
         selectedInterfaces
       }
@@ -711,3 +712,5 @@ function cmdWifiMode(state: any, input: string, ctx: any): any {
 
   return { success: true, newState: { ports: newPorts } };
 }
+
+

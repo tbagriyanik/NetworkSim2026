@@ -33,19 +33,19 @@ const commandPatterns: Record<string, CommandPattern> = {
   },
   'exit': {
     pattern: /^(exit|quit)$/i,
-    modes: ['privileged', 'config', 'interface', 'line', 'vlan'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan'],
     minArgs: 0,
     maxArgs: 0
   },
   'end': {
     pattern: /^end$/i,
-    modes: ['config', 'interface', 'line', 'vlan'],
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan'],
     minArgs: 0,
     maxArgs: 0
   },
   'abort': {
     pattern: /^abort$/i,
-    modes: ['config', 'interface', 'line', 'vlan'],
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan'],
     minArgs: 0,
     maxArgs: 0
   },
@@ -316,13 +316,13 @@ const commandPatterns: Record<string, CommandPattern> = {
   },
   'spanning-tree portfast': {
     pattern: /^spanning-tree\s+portfast(\s+(default|edge|bpduguard\s+(enable|disable)))?$/i,
-    modes: ['config', 'interface'],
+    modes: ['config', 'interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 2
   },
   'spanning-tree bpduguard': {
     pattern: /^spanning-tree\s+bpduguard\s+(enable|disable)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
@@ -436,7 +436,7 @@ const commandPatterns: Record<string, CommandPattern> = {
   },
   'macro': {
     pattern: /^macro\s+(name|global|auto\s+(execute|processing))\s+(.+)$/i,
-    modes: ['config', 'interface'],
+    modes: ['config', 'interface', 'config-if-range'],
     minArgs: 2,
     maxArgs: 3
   },
@@ -468,397 +468,397 @@ const commandPatterns: Record<string, CommandPattern> = {
   },
   'ipv6 address': {
     pattern: /^ipv6\s+address\s+([0-9a-f:]+)\/(\d+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 2,
     maxArgs: 2
   },
   'no shutdown': {
     pattern: /^no\s+shutdown$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'shutdown': {
     pattern: /^shutdown$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'speed': {
     pattern: /^speed\s+(10|100|1000|2500|5000|10000|auto)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'duplex': {
     pattern: /^duplex\s+(half|full|auto)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'description': {
     pattern: /^description\s+(.+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'no description': {
     pattern: /^no\s+description$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'switchport mode': {
     pattern: /^switchport\s+mode\s+(access|trunk|dynamic\s+(auto|desirable)|dot1q-tunnel)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 2
   },
   'no switchport mode': {
     pattern: /^no\s+switchport\s+mode$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'switchport access vlan': {
     pattern: /^switchport\s+access\s+vlan\s+(\d+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'no switchport access vlan': {
     pattern: /^no\s+switchport\s+access\s+vlan$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'switchport trunk allowed vlan': {
     pattern: /^switchport\s+trunk\s+allowed\s+vlan\s+(.+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'switchport trunk native vlan': {
     pattern: /^switchport\s+trunk\s+native\s+vlan\s+(\d+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'switchport trunk encapsulation': {
     pattern: /^switchport\s+trunk\s+encapsulation\s+(dot1q|isl|negotiate)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'encapsulation dot1q': {
     pattern: /^encapsulation\s+dot1q\s+(\d+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'switchport nonegotiate': {
     pattern: /^switchport\s+nonegotiate$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'switchport protected': {
     pattern: /^switchport\s+protected$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'switchport block': {
     pattern: /^switchport\s+block\s+(unicast|multicast)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'switchport port-security': {
     pattern: /^switchport\s+port-security$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'no switchport port-security': {
     pattern: /^no\s+switchport\s+port-security$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'switchport port-security maximum': {
     pattern: /^switchport\s+port-security\s+maximum\s+(\d+)(\s+vlan\s+(.+))?$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 3
   },
   'switchport port-security violation': {
     pattern: /^switchport\s+port-security\s+violation\s+(protect|restrict|shutdown)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'switchport port-security mac-address': {
     pattern: /^switchport\s+port-security\s+mac-address\s+(.+?)(\s+vlan\s+(\d+))?$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 3
   },
   'switchport port-security mac-address sticky': {
     pattern: /^switchport\s+port-security\s+mac-address\s+sticky$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'switchport voice vlan': {
     pattern: /^switchport\s+voice\s+vlan\s+(\d+|dot1p|none|untagged)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'switchport voice': {
     pattern: /^switchport\s+voice\s+(.+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'cdp enable': {
     pattern: /^cdp\s+enable$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'no cdp enable': {
     pattern: /^no\s+cdp\s+enable$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'channel-group': {
     pattern: /^channel-group\s+(\d+)(\s+mode\s+(on|active|passive|desirable|auto))?$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 3
   },
   'no channel-group': {
     pattern: /^no\s+channel-group\s+(\d+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'channel-protocol': {
     pattern: /^channel-protocol\s+(lacp|pagp)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'storm-control': {
     pattern: /^storm-control\s+(broadcast|multicast|unicast)\s+level\s+(.+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 2,
     maxArgs: 2
   },
   'storm-control action': {
     pattern: /^storm-control\s+action\s+(shutdown|trap)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'udld enable': {
     pattern: /^udld\s+enable$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'udld port': {
     pattern: /^udld\s+port(\s+aggressive)?$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 1
   },
   'no udld': {
     pattern: /^no\s+udld(\s+(enable|port))?$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 1
   },
   'mls qos trust': {
     pattern: /^mls\s+qos\s+trust\s+(cos|dscp|ip-precedence)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'mls qos cos': {
     pattern: /^mls\s+qos\s+cos\s+(\d+)(\s+override)?$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 2
   },
   'priority-queue out': {
     pattern: /^priority-queue\s+out$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'queue-set': {
     pattern: /^queue-set\s+(\d+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'tx-queue': {
     pattern: /^tx-queue\s+(\d+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'power inline': {
     pattern: /^power\s+inline\s+(auto|static|never)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'power inline consumption': {
     pattern: /^power\s+inline\s+consumption\s+(\d+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'ssid': {
     pattern: /^ssid\s+(.+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'encryption': {
     pattern: /^encryption\s+(open|wpa|wpa2|wpa3)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'wifi-password': {
     pattern: /^wifi-password\s+(.+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'wifi-channel': {
     pattern: /^wifi-channel\s+(2\.4ghz|5ghz)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'wifi-mode': {
     pattern: /^wifi-mode\s+(ap|client|disabled)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'ip address': {
     pattern: /^ip\s+address\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(\s+secondary)?$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 2,
     maxArgs: 3
   },
   'no ip address': {
     pattern: /^no\s+ip\s+address$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'ip helper-address': {
     pattern: /^ip\s+helper-address\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'ip directed-broadcast': {
     pattern: /^ip\s+directed-broadcast$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'ip proxy-arp': {
     pattern: /^ip\s+proxy-arp$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'no ip proxy-arp': {
     pattern: /^no\s+ip\s+proxy-arp$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'ip verify source': {
     pattern: /^ip\s+verify\s+source(\s+vlan\s+dhcp-snooping)?$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 2
   },
   'ip dhcp snooping trust': {
     pattern: /^ip\s+dhcp\s+snooping\s+trust$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'no ip dhcp snooping trust': {
     pattern: /^no\s+ip\s+dhcp\s+snooping\s+trust$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'ip arp inspection trust': {
     pattern: /^ip\s+arp\s+inspection\s+trust$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'no ip arp inspection trust': {
     pattern: /^no\s+ip\s+arp\s+inspection\s+trust$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'ip arp inspection limit': {
     pattern: /^ip\s+arp\s+inspection\s+limit\s+(rate\s+\d+|none)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 2
   },
   'keepalive': {
     pattern: /^keepalive(\s+(\d+))?$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 1
   },
   'no keepalive': {
     pattern: /^no\s+keepalive$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
   'carrier-delay': {
     pattern: /^carrier-delay\s+(\d+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'bandwidth': {
     pattern: /^bandwidth\s+(\d+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'delay': {
     pattern: /^delay\s+(\d+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'load-interval': {
     pattern: /^load-interval\s+(\d+)$/i,
-    modes: ['interface'],
+    modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
@@ -1134,13 +1134,13 @@ const commandPatterns: Record<string, CommandPattern> = {
   },
   'show ip route': {
     pattern: /^show\s+ip\s+route(\s+(.+))?$/i,
-    modes: ['privileged', 'config', 'interface', 'vlan', 'line'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 0
   },
   'show ipv6 interface brief': {
     pattern: /^show\s+ipv6\s+interface\s+brief$/i,
-    modes: ['privileged', 'config', 'interface', 'vlan', 'line'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 0
   },
@@ -1468,7 +1468,7 @@ const commandPatterns: Record<string, CommandPattern> = {
   // Yardım
   'help': {
     pattern: /^(\?|help)$/i,
-    modes: ['user', 'privileged', 'config', 'interface', 'line', 'vlan'],
+    modes: ['user', 'privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan'],
     minArgs: 0,
     maxArgs: 0
   },
@@ -1476,25 +1476,25 @@ const commandPatterns: Record<string, CommandPattern> = {
   // Do komutları (config moddan show çalıştırma)
   'do show': {
     pattern: /^do\s+(show\s+.+)$/i,
-    modes: ['config', 'interface', 'line', 'vlan'],
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan'],
     minArgs: 1,
     maxArgs: 1
   },
   'do write': {
     pattern: /^do\s+(?:wr[ite]*(\s+me[mory]*)?)$/i,
-    modes: ['config', 'interface', 'line', 'vlan'],
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan'],
     minArgs: 0,
     maxArgs: 1
   },
   'do ping': {
     pattern: /^do\s+ping\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
-    modes: ['config', 'interface', 'line', 'vlan'],
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan'],
     minArgs: 1,
     maxArgs: 1
   },
   'do': {
     pattern: /^do\s+(.+)$/i,
-    modes: ['config', 'interface', 'line', 'vlan'],
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan'],
     minArgs: 1,
     maxArgs: 1
   },
@@ -1835,6 +1835,7 @@ function getModeError(command: string, currentMode: CommandMode): string {
     privileged: 'Privileged EXEC',
     config: 'Global Configuration',
     interface: 'Interface Configuration',
+    'config-if-range': 'Interface Range Configuration',
     line: 'Line Configuration',
     vlan: 'VLAN Configuration',
     'router-config': 'Router Configuration',
@@ -1991,6 +1992,34 @@ Hızlı yazım:
   desc       = description
   chan       = channel-group
   span port  = spanning-tree portfast
+`,
+    'config-if-range': `
+Mevcut komutlar (Çoklu Portlar):
+  shutdown                  - Seçili portları kapat
+  no shutdown               - Seçili portları aç
+  speed <10|100|1000|auto>  - Port hızı
+  duplex <half|full|auto>   - Duplex ayarı
+  description <metin>       - Port açıklaması
+  switchport mode <access|trunk> - Port modu
+  switchport access vlan <id>    - VLAN ata
+  switchport trunk allowed vlan <list> - Trunk VLAN'ları
+  switchport trunk native vlan <id> - Native VLAN
+  switchport port-security        - Port güvenliği etkinleştir
+  switchport port-security maximum <n> - Max MAC adresi
+  switchport port-security violation <mode> - İhlal modu
+  spanning-tree portfast   - PortFast etkinleştir
+  spanning-tree bpduguard enable - BPDU Guard etkinleştir
+  exit                      - Config mode'a dön
+  end                       - Privileged mode'a dön
+
+Hızlı yazım:
+  no sh      = no shutdown
+  sh         = shutdown
+  sw mode    = switchport mode
+  sw acc vlan = switchport access vlan
+  sw m a     = switchport mode access
+  sw m t     = switchport mode trunk
+  desc       = description
 `,
     line: `
 Mevcut komutlar:
@@ -2213,3 +2242,8 @@ Available commands:
 }
 
 export { commandPatterns };
+
+
+
+
+

@@ -22,6 +22,8 @@ export function getPrompt(state: SwitchState): string {
       return `${hostname}(config)#`;
     case 'interface':
       return `${hostname}(config-if)#`;
+    case 'config-if-range':
+      return `${hostname}(config-if-range)#`;
     case 'line':
       return `${hostname}(config-line)#`;
     case 'vlan':
@@ -1180,3 +1182,5 @@ const commandHandlers: Record<string, CommandHandler> = {
   // Privileged EXEC commands
   ...privilegedHandlers,
 };
+
+

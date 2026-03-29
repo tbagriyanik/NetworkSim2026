@@ -43,13 +43,13 @@ const quickCommands: QuickCommand[] = [
 
 export function QuickCommands({ currentMode, onExecuteCommand, t, theme, language, isDevicePoweredOff = false }: QuickCommandsProps) {
   const isDark = theme === 'dark';
-  
+
   // Responsive hooks
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const isDesktop = useIsDesktop();
-  
-  const availableCommands = quickCommands.filter(cmd => 
+
+  const availableCommands = quickCommands.filter(cmd =>
     cmd.modes.includes(currentMode)
   );
 
@@ -58,6 +58,7 @@ export function QuickCommands({ currentMode, onExecuteCommand, t, theme, languag
     privileged: t.modePrivileged,
     config: t.modeConfig,
     interface: t.modeInterface,
+    'config-if-range': 'Interface Range',
     line: t.modeLine,
     vlan: t.modeVlanLabel,
     'router-config': t.modeConfig,
@@ -113,3 +114,5 @@ export function QuickCommands({ currentMode, onExecuteCommand, t, theme, languag
     </ModernPanel>
   );
 }
+
+

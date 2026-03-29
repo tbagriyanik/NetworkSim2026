@@ -5,7 +5,7 @@ export type CommandMode =
   | 'privileged'     // Switch#
   | 'config'         // Switch(config)#
   | 'interface'      // Switch(config-if)#
-  | 'interface-range' // Switch(config-range)#
+  | 'config-if-range' // Switch(config-if-range)#
   | 'line'           // Switch(config-line)#
   | 'vlan'           // Switch(config-vlan)#
   | 'router-config'; // Router(config)#

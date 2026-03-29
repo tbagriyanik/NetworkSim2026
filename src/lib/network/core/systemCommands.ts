@@ -106,6 +106,15 @@ function cmdExit(
           currentInterface: undefined
         }
       };
+    case 'config-if-range':
+      return {
+        success: true,
+        newState: {
+          currentMode: 'config',
+          currentInterface: undefined,
+          selectedInterfaces: undefined
+        }
+      };
     case 'line':
       return {
         success: true,
@@ -159,6 +168,7 @@ function cmdEnd(
   // Handle all sub-modes and return to privileged
   switch (state.currentMode) {
     case 'interface':
+    case 'config-if-range':
     case 'line':
     case 'vlan':
     case 'router-config':
@@ -167,6 +177,7 @@ function cmdEnd(
         newState: {
           currentMode: 'privileged',
           currentInterface: undefined,
+          selectedInterfaces: undefined,
           currentLine: undefined,
           currentVlan: undefined,
           ospfProcessId: undefined,
@@ -210,3 +221,5 @@ function cmdDo(
   // Return error - this should be handled by specific do handlers
   return { success: false, error: `% Unknown command: ${command}` };
 }
+
+

@@ -373,7 +373,7 @@ export function getModePrompt(mode: CommandMode, hostname: string, context?: str
       return `${hostname}(config)#`;
     case 'interface':
       return `${hostname}(config-if)#`;
-    case 'interface-range':
+    case 'config-if-range':
       return `${hostname}(config-if-range)#`;
     case 'line':
       return `${hostname}(config-line)#`;
@@ -1847,3 +1847,5 @@ export const commandAliases: Record<string, string> = {
   'setu': 'setup',
   'setup': 'setup'
 };
+
+
