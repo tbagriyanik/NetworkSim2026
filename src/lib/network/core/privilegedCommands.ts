@@ -160,26 +160,12 @@ function cmdReload(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: '% Invalid command at this mode' };
     }
-
-    // Check if this is a confirmation (user pressed Enter after [confirm])
-    const isConfirmation = input.toLowerCase().trim() === 'confirm' ||
-        input.toLowerCase().trim() === 'y' ||
-        input.toLowerCase().trim() === '';
-
-    if (isConfirmation) {
-        return {
-            success: true,
-            output: 'Reloading...\n',
-            reloadDevice: true,
-            requiresReloadConfirm: false
-        };
-    }
-
+    // Immediately perform reload without confirmation
     return {
         success: true,
-        output: 'Proceed with reload? [confirm]',
-        requiresReloadConfirm: true,
-        confirmationAction: 'reload'
+        output: 'Reloading...\n',
+        reloadDevice: true,
+        requiresReloadConfirm: false
     };
 }
 

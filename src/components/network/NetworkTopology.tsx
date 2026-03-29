@@ -3519,6 +3519,8 @@ export function NetworkTopology({
         )}
 
         {/* Device icon */}
+        {/* Removed powered-off icon background — keep original icon only */}
+
         <g transform={`translate(${deviceWidth / 2 - 12}, 10)`}>
           <g style={{ color: iconColor }}>
             {device.type === 'pc' && (

@@ -194,16 +194,45 @@ export function Terminal({
       return;
     }
 
-    // Confirm dialog (e.g. "reload" confirmation)
+    // Handle confirmation dialog - trigger inline confirmation or cancel
     if (confirmDialog?.show) {
-      confirmDialog.onConfirm();
+      const trimmedInput = (cmdToExecute || input).trim().toLowerCase();
       setInput('');
+      // 'n' or 'no' cancels the operation
+      if (trimmedInput === 'n' || trimmedInput === 'no') {
+        if (setConfirmDialog) {
+          setConfirmDialog(null);
+        }
+        return;
+      }
+      // Any other input (including empty, 'confirm', 'y', 'yes') confirms
+      if (confirmDialog.onConfirm) {
+        confirmDialog.onConfirm();
+      }
       return;
     }
 
-    // Inline reload confirmation: empty Enter sends "confirm"
-    if (isReloadConfirmationPending && !(cmdToExecute || input).trim()) {
-      await onCommand('confirm');
+    // Inline reload confirmation: send the actual input as command
+    if (isReloadConfirmationPending) {
+      const command = (cmdToExecute || input).trim().toLowerCase();
+      if (command === 'n' || command === 'no') {
+        await onCommand('__RELOAD_CANCEL__');
+        setInput('');
+        setTimeout(() => inputRef.current?.focus(), 0);
+        return;
+      }
+      if (!command || command === 'confirm' || command === 'y') {
+        await onCommand('__RELOAD_CONFIRM__');
+        setInput('');
+        setTimeout(() => inputRef.current?.focus(), 0);
+        return;
+      }
+      // Any other input - cancel confirmation and send as normal command
+      await onCommand('__RELOAD_CANCEL__');
+      setInput('');
+      setTimeout(() => inputRef.current?.focus(), 0);
+      // then send the typed value as normal command
+      await onCommand(command);
       return;
     }
 

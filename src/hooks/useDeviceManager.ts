@@ -109,20 +109,25 @@ export function useDeviceManager() {
 
         setDeviceStates(prev => new Map(prev).set(deviceId, reloadedState));
 
-        const bootOutputs: TerminalOutput[] = [
-          { id: `boot-1-${reloadedState.macAddress}`, type: 'output', content: isRouter ? '\n\nSystem Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' : '\n\nSystem Bootstrap, Version 12.1(11r)EA1, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' },
-          { id: `boot-2-${reloadedState.macAddress}`, type: 'output', content: isRouter ? 'C1900 platform with 524288K bytes of main memory\nMain memory configured to 64 bit mode with ECC disabled\n' : 'C2960 platform with 262144K bytes of main memory\nMain memory configured to 32 bit mode with ECC enabled\n' },
-          { id: `boot-3-${reloadedState.macAddress}`, type: 'output', content: '\nLoading the runtime image: ######################################## [OK]\n' },
-          { id: `boot-beep-${reloadedState.macAddress}`, type: 'output', content: '\nSystem is powering on...\n' },
-          { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: '\nReady!\n' }
-        ];
+        // Show a short loading line before boot outputs (small loading animation)
+        (async () => {
+          setDeviceOutputs(prev => new Map(prev).set(deviceId, [
+            { id: `loading-${reloadedState.macAddress}`, type: 'output', content: 'Powering on' }
+          ]));
+          await sleep(600);
 
-        // Add banner MOTD if available
-        if (reloadedState.bannerMOTD) {
-          bootOutputs.push({ id: `banner-${reloadedState.macAddress}`, type: 'output', content: `\n${reloadedState.bannerMOTD}\n` });
-        }
+          const bootOutputs: TerminalOutput[] = [
+            { id: `boot-1-${reloadedState.macAddress}`, type: 'output', content: isRouter ? '\n\nSystem Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' : '\n\nSystem Bootstrap, Version 12.1(11r)EA1, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' },
+            { id: `boot-2-${reloadedState.macAddress}`, type: 'output', content: isRouter ? 'C1900 platform with 524288K bytes of main memory\nMain memory configured to 64 bit mode with ECC disabled\n' : 'C2960 platform with 262144K bytes of main memory\nMain memory configured to 32 bit mode with ECC enabled\n' },
+            { id: `boot-3-${reloadedState.macAddress}`, type: 'output', content: '\nLoading the runtime image: ######################################## [OK]\n' },
+            // Insert banner MOTD here if present so it's visible during boot
+            ...(reloadedState.bannerMOTD ? [{ id: `banner-${reloadedState.macAddress}`, type: 'output' as const, content: `\n${reloadedState.bannerMOTD}\n` }] : []),
+            { id: `boot-beep-${reloadedState.macAddress}`, type: 'output', content: '\nSystem is powering on...\n' },
+            { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: '\nReady!\n' }
+          ];
 
-        setDeviceOutputs(prev => new Map(prev).set(deviceId, bootOutputs));
+          setDeviceOutputs(prev => new Map(prev).set(deviceId, bootOutputs));
+        })();
       } else {
         // Power off: keep saved state so configuration survives future power cycles
         // Only clear the visible terminal output.
@@ -481,6 +486,7 @@ export function useDeviceManager() {
             { id: `boot-1-${reloadedState.macAddress}`, type: 'output', content: isRouter ? '\n\nSystem Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' : '\n\nSystem Bootstrap, Version 12.1(11r)EA1, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' },
             { id: `boot-2-${reloadedState.macAddress}`, type: 'output', content: isRouter ? 'C1900 platform with 524288K bytes of main memory\nMain memory configured to 64 bit mode with ECC disabled\n' : 'C2960 platform with 262144K bytes of main memory\nMain memory configured to 32 bit mode with ECC enabled\n' },
             { id: `boot-3-${reloadedState.macAddress}`, type: 'output', content: '\nLoading the runtime image: ######################################## [OK]\n' },
+            ...(reloadedState.bannerMOTD ? [{ id: `banner-${reloadedState.macAddress}`, type: 'output' as const, content: `\n${reloadedState.bannerMOTD}\n` }] : []),
             { id: `boot-beep-${reloadedState.macAddress}`, type: 'output', content: '\nSystem is powering on...\n' },
             { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: '\nReady!\n' }
           ];
