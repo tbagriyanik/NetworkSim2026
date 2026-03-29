@@ -1675,33 +1675,10 @@ export default function Home() {
 
   // Refresh network connections and WiFi status
   const handleRefreshNetwork = useCallback(() => {
-    if (topologyDevices && topologyConnections && deviceStates) {
+    if (topologyDevices && deviceStates) {
       const updatedDeviceStates = new Map(deviceStates);
 
-      // Check each connection's validity and create updated connections array
-      const updatedConnections = topologyConnections.map(conn => {
-        const sourceDevice = topologyDevices.find(d => d.id === conn.sourceDeviceId);
-        const targetDevice = topologyDevices.find(d => d.id === conn.targetDeviceId);
-
-        if (sourceDevice && targetDevice) {
-          // Check connectivity between devices
-          const result = checkDeviceConnectivity(
-            conn.sourceDeviceId,
-            conn.targetDeviceId,
-            topologyDevices,
-            topologyConnections,
-            deviceStates
-          );
-
-          // Update connection active state based on connectivity check
-          if (result.success !== conn.active) {
-            return { ...conn, active: result.success };
-          }
-        }
-        return conn;
-      });
-
-      // Update WiFi status for all PCs
+      // Update WiFi status for all PCs - just trigger re-render
       topologyDevices.forEach(device => {
         if (device.type === 'pc' && device.wifi?.enabled) {
           const deviceState = updatedDeviceStates.get(device.id);
@@ -1712,11 +1689,10 @@ export default function Home() {
         }
       });
 
-      // Update both states to trigger re-render
+      // Update device states to trigger re-render
       setDeviceStates(updatedDeviceStates);
-      setTopologyConnections(updatedConnections);
     }
-  }, [topologyDevices, topologyConnections, deviceStates, setDeviceStates, setTopologyConnections]);
+  }, [topologyDevices, deviceStates, setDeviceStates]);
 
   // Handle key events: ESC to close, ENTER to confirm
   useEffect(() => {
@@ -2269,7 +2245,7 @@ export default function Home() {
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Ağı Yenile' : 'Refresh Network'}</TooltipContent>
+                      <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh Network (F5)'}</TooltipContent>
                     </Tooltip>
 
                     <div className={`w-px h-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} mx-0.5`} />
@@ -2335,7 +2311,7 @@ export default function Home() {
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Ağı Yenile' : 'Refresh Network'}</TooltipContent>
+                      <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh Network (F5)'}</TooltipContent>
                     </Tooltip>
 
                     <div className={`w-px h-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} mx-0.5`} />
