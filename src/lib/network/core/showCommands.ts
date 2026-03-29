@@ -138,7 +138,11 @@ function cmdShowRunningConfig(
   // Line console
   output += 'line console 0\n';
   if (state.security?.consoleLine?.password) {
-    output += ` password ${state.security.consoleLine.password}\n`;
+    if (state.security?.servicePasswordEncryption) {
+      output += ` password 7 ********\n`;
+    } else {
+      output += ` password ${state.security.consoleLine.password}\n`;
+    }
   }
   if (state.security?.consoleLine?.login) {
     output += ' login\n';
@@ -148,10 +152,14 @@ function cmdShowRunningConfig(
   // Line vty
   output += 'line vty 0 15\n';
   if (state.security?.vtyLines?.password) {
-    output += ` password ${state.security.vtyLines.password}\n`;
+    if (state.security?.servicePasswordEncryption) {
+      output += ` password 7 ********\n`;
+    } else {
+      output += ` password ${state.security.vtyLines.password}\n`;
+    }
   }
   if (state.security?.vtyLines?.login) {
-    output += ` login\n`;
+    output += ' login\n';
   }
   if (state.security?.vtyLines?.transportInput && state.security.vtyLines.transportInput.length > 0) {
     output += ` transport input ${state.security.vtyLines.transportInput.join(' ')}\n`;

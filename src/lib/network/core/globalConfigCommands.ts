@@ -284,14 +284,14 @@ function cmdBannerMotd(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  const match = input.match(/^banner\s+motd\s+(.)(.*)\1$/i);
+  const match = input.match(/^banner\s+motd\s+(.)([\s\S]*?)\1\s*$/i);
   if (!match) {
     return { success: false, error: '% Invalid banner command. Use: banner motd #message#' };
   }
 
   return {
     success: true,
-    newState: { banner: match[2] }
+    newState: { bannerMOTD: match[2] }
   };
 }
 

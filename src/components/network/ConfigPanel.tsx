@@ -65,7 +65,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     }
     if (state.security.enablePassword) {
       if (state.security.servicePasswordEncryption) {
-        config += `enable password 7 ${Buffer.from(state.security.enablePassword).toString('base64')}\\n`;
+        config += `enable password 7 ********\\n`;
       } else {
         config += `enable password ${state.security.enablePassword}\\n`;
       }
@@ -74,7 +74,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
 
     state.security.users.forEach(user => {
       if (state.security.servicePasswordEncryption) {
-        config += `username ${user.username} privilege ${user.privilege} secret 7 ${Buffer.from(user.password).toString('base64')}\\n`;
+        config += `username ${user.username} privilege ${user.privilege} secret 7 ********\\n`;
       } else {
         config += `username ${user.username} privilege ${user.privilege} secret ${user.password}\\n`;
       }
@@ -145,12 +145,24 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     config += `!\\n`;
 
     config += `line con 0\\n`;
-    if (state.security.consoleLine.password) config += ` password ${state.security.consoleLine.password}\\n`;
+    if (state.security.consoleLine.password) {
+      if (state.security.servicePasswordEncryption) {
+        config += ` password 7 ********\\n`;
+      } else {
+        config += ` password ${state.security.consoleLine.password}\\n`;
+      }
+    }
     if (state.security.consoleLine.login) config += ` login\\n`;
     config += `!\\n`;
 
     config += `line vty 0 15\\n`;
-    if (state.security.vtyLines.password) config += ` password ${state.security.vtyLines.password}\\n`;
+    if (state.security.vtyLines.password) {
+      if (state.security.servicePasswordEncryption) {
+        config += ` password 7 ********\\n`;
+      } else {
+        config += ` password ${state.security.vtyLines.password}\\n`;
+      }
+    }
     if (state.security.vtyLines.login) config += ` login\\n`;
     if (state.security.vtyLines.transportInput.length > 0 && state.security.vtyLines.transportInput[0] !== 'all') {
       config += ` transport input ${state.security.vtyLines.transportInput.join(' ')}\\n`;
