@@ -1524,7 +1524,7 @@ const commandPatterns: Record<string, CommandPattern> = {
   // Telnet
   'telnet': {
     pattern: /^telnet\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(\s+(\d+))?$/i,
-    modes: ['privileged'],
+    modes: ['user', 'privileged'],
     minArgs: 1,
     maxArgs: 2
   },

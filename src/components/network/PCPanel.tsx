@@ -1043,6 +1043,49 @@ export function PCPanel({
             addLocalOutput('output', httpServer.services?.http?.content || 'Merhaba Dünya!');
           }
         }
+      } else if (cmd === 'telnet') {
+        const target = args[0];
+        const port = args[1] || '23';
+        if (!target) {
+          addLocalOutput('output', 'Usage: telnet <ip_or_domain> [port]');
+        } else {
+          // Check if target is a domain and resolve it
+          let targetIp = target;
+          if (!isValidIpv4(target)) {
+            const dnsResult = resolveDomainWithDnsServices(target);
+            if (dnsResult) {
+              targetIp = dnsResult.address;
+            } else {
+              addLocalOutput('error', `Could not resolve hostname ${target}`);
+              return;
+            }
+          }
+
+          // Check connectivity
+          const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map());
+          
+          if (result.success && result.targetId) {
+            // Find target device to see if it's a switch or router
+            const targetDevice = topologyDevices.find(d => d.id === result.targetId);
+            if (targetDevice && (targetDevice.type === 'switch' || targetDevice.type === 'router')) {
+              // Successfully connected - switch to terminal tab and connect
+              addLocalOutput('success', `Trying ${targetIp} ${port} ...\nConnected to ${targetIp}.`);
+              
+              // Give it a tiny delay for the user to see the "Connected" message before switching
+              setTimeout(() => {
+                setConnectedDeviceId(result.targetId!);
+                setConsoleConnectionTime(Date.now());
+                setIsConsoleConnected(true);
+                setActiveTab('terminal');
+                onNavigate?.('terminal');
+              }, 500);
+            } else {
+              addLocalOutput('error', `Connection refused by ${targetIp}`);
+            }
+          } else {
+            addLocalOutput('error', `Connecting to ${targetIp}... failed: ${result.error || 'Destination unreachable'}`);
+          }
+        }
       } else if (cmd === 'arp') {
         if (args.length === 0 || (args.length === 1 && args[0].toLowerCase() === '-a')) {
           addLocalOutput('output', buildArpTableOutput());
@@ -1089,7 +1132,7 @@ export function PCPanel({
           addLocalOutput('output', 'Usage: nbtstat [-n]');
         }
       } else if (cmd === 'help' || cmd === '?') {
-        addLocalOutput('output', `Available commands: ipconfig, ping, tracert, netstat, nbtstat, nslookup, http, arp, hostname, dir, ver, cls, exit, quit, snake`);
+        addLocalOutput('output', `Available commands: ipconfig, ping, tracert, telnet, netstat, nbtstat, nslookup, http, arp, hostname, dir, ver, cls, exit, quit, snake`);
       } else if (cmd === 'cls') {
         setPcOutput([]);
       } else if (cmd === 'exit' || cmd === 'quit') {
