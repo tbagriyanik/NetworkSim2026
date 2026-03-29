@@ -52,7 +52,8 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     config += `!\\n`;
 
     if (state.bannerMOTD) {
-      config += `banner motd #${state.bannerMOTD}#\\n`;
+      const escapedBanner = state.bannerMOTD.replace(/\n/g, '\\n');
+      config += `banner motd #${escapedBanner}#\\n`;
       config += `!\\n`;
     }
 

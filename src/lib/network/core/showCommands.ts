@@ -61,6 +61,13 @@ function cmdShowRunningConfig(
   output += `version 15.0\n`;
   output += `hostname ${state.hostname || 'Switch'}\n`;
 
+  // Banner MOTD
+  if (state.bannerMOTD) {
+    const escapedBanner = state.bannerMOTD.replace(/\n/g, '\\n');
+    output += `banner motd #${escapedBanner}#\n`;
+    output += '!\n';
+  }
+
   // Boot system
   output += 'boot system flash:c2960-lanbase-mz.150-2.SE4.bin\n';
   output += '!\n';

@@ -29,7 +29,8 @@ export function buildRunningConfig(state: SwitchState): string[] {
     lines.push('!');
 
     if (state.bannerMOTD) {
-        lines.push(`banner motd #${state.bannerMOTD}#`);
+        const escapedBanner = state.bannerMOTD.replace(/\n/g, '\\n');
+        lines.push(`banner motd #${escapedBanner}#`);
         lines.push('!');
     }
 

@@ -987,9 +987,9 @@ export function executeCommand(
     if (lowerInput.startsWith('int vlan')) cmdToProcess = cmdToProcess.replace(/int vlan/i, 'interface vlan');
   }
 
-  const isHelpRequest = (cmdToProcess.endsWith('?') && cmdToProcess.length > 0) || 
-                       cmdToProcess.toLowerCase().trim() === 'help' || 
-                       cmdToProcess.toLowerCase().trim().endsWith(' help');
+  const isHelpRequest = (cmdToProcess.endsWith('?') && cmdToProcess.length > 0) ||
+    cmdToProcess.toLowerCase().trim() === 'help' ||
+    cmdToProcess.toLowerCase().trim().endsWith(' help');
 
   if (isHelpRequest) {
     let partialInput = '';
@@ -1082,8 +1082,13 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
         : true;
 
     if (validPassword) {
+      let output = '';
+      if (state.bannerMOTD) {
+        output = `\n${state.bannerMOTD}\n\n`;
+      }
       return {
         success: true,
+        output,
         newState: {
           currentMode: 'privileged',
           awaitingPassword: false,
@@ -1105,10 +1110,15 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
   if (state.passwordContext === 'console') {
     const validPassword = password === state.security.consoleLine.password;
     if (validPassword) {
+      let output = '';
+      if (state.bannerMOTD) {
+        output = `\n${state.bannerMOTD}\n\n`;
+      }
       const prompt = getPrompt(state);
+      output += prompt;
       return {
         success: true,
-        output: `\n${prompt}`,
+        output,
         newState: {
           consoleAuthenticated: true,
           awaitingPassword: false,
