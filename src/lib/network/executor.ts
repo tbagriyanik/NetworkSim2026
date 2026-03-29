@@ -1157,14 +1157,12 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
 function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): CommandResult {
   const needsLogin = !!(state.security.vtyLines?.login && state.security.vtyLines?.password);
 
-  let output = '';
-
-  // Display banner MOTD first
-  if (state.bannerMOTD) {
-    output += `\n${state.bannerMOTD}\n\n`;
-  }
-
   if (!needsLogin) {
+    let output = '';
+    // Display banner MOTD for open access
+    if (state.bannerMOTD) {
+      output += `\n${state.bannerMOTD}\n\n`;
+    }
     const prompt = getPrompt(state);
     output += prompt;
     return {
@@ -1174,10 +1172,10 @@ function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): Command
     };
   }
 
-  output += 'User Access Verification\n\nPassword: ';
+  // If login required, show password prompt FIRST
   return {
     success: true,
-    output,
+    output: 'User Access Verification\n\nPassword: ',
     requiresPassword: true,
     passwordPrompt: 'Password: ',
     passwordContext: 'vty',
