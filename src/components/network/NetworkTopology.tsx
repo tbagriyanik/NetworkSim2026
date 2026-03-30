@@ -215,6 +215,11 @@ export function NetworkTopology({
   const [snapToGrid, setSnapToGrid] = useState(true); // Snap-to-grid toggle
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  // Zoom input editing state
+  const [isEditingZoom, setIsEditingZoom] = useState(false);
+  const [zoomInputValue, setZoomInputValue] = useState('');
+  const zoomInputRef = useRef<HTMLInputElement>(null);
+
   // Use spatial partitioning for efficient visibility culling
   const { visibleDeviceIds, visibleConnectionIds, updateViewport } = useSpatialPartitioning(
     devices,
@@ -701,6 +706,53 @@ export function NetworkTopology({
       y: (clientY - rect.top - pan.y) / zoom,
     };
   }, [pan, zoom]);
+
+  // Zoom input editing handlers
+  const startEditingZoom = useCallback(() => {
+    setIsEditingZoom(true);
+    setZoomInputValue(Math.round(zoom * 100).toString());
+    // Focus input after render
+    setTimeout(() => {
+      zoomInputRef.current?.focus();
+      zoomInputRef.current?.select();
+    }, 0);
+  }, [zoom]);
+
+  const cancelEditingZoom = useCallback(() => {
+    setIsEditingZoom(false);
+    setZoomInputValue('');
+  }, []);
+
+  const confirmEditingZoom = useCallback(() => {
+    const value = parseFloat(zoomInputValue);
+    if (!isNaN(value) && value >= MIN_ZOOM * 100 && value <= MAX_ZOOM * 100) {
+      const newZoom = value / 100;
+      if (!canvasRef.current) {
+        setZoom(newZoom);
+        setIsEditingZoom(false);
+        setZoomInputValue('');
+        return;
+      }
+      const rect = canvasRef.current.getBoundingClientRect();
+      const cursorX = rect.width / 2;
+      const cursorY = rect.height / 2;
+      setPan(prevPan => ({
+        x: cursorX - (cursorX - prevPan.x) * (newZoom / zoom),
+        y: cursorY - (cursorY - prevPan.y) * (newZoom / zoom)
+      }));
+      setZoom(newZoom);
+    }
+    setIsEditingZoom(false);
+    setZoomInputValue('');
+  }, [zoomInputValue, zoom]);
+
+  const handleZoomInputKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      confirmEditingZoom();
+    } else if (e.key === 'Escape') {
+      cancelEditingZoom();
+    }
+  }, [confirmEditingZoom, cancelEditingZoom]);
 
 
   // Close context menu when clicking outside
@@ -4004,9 +4056,26 @@ export function NetworkTopology({
           >
             −
           </button>
-          <span className="text-xs font-mono w-10 text-center text-slate-300">
-            {Math.round(zoom * 100)}%
-          </span>
+          {isEditingZoom ? (
+            <input
+              ref={zoomInputRef}
+              type="number"
+              value={zoomInputValue}
+              onChange={(e) => setZoomInputValue(e.target.value)}
+              onBlur={confirmEditingZoom}
+              onKeyDown={handleZoomInputKeyDown}
+              className="text-xs font-mono w-10 text-center bg-slate-700 text-slate-300 rounded border border-slate-600 focus:outline-none focus:border-blue-500"
+              min={Math.round(MIN_ZOOM * 100)}
+              max={Math.round(MAX_ZOOM * 100)}
+            />
+          ) : (
+            <span
+              onClick={startEditingZoom}
+              className="text-xs font-mono w-10 text-center text-slate-300 cursor-pointer hover:bg-slate-700 rounded transition-colors"
+            >
+              {Math.round(zoom * 100)}%
+            </span>
+          )}
           <button
             onClick={() => setZoom((z) => {
               const newZoom = Math.min(MAX_ZOOM, z + 0.25);
