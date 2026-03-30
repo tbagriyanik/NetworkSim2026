@@ -2885,45 +2885,49 @@ export default function Home() {
 
               {/* Terminal Sekmesi - Always mounted, hidden via CSS */}
               <div className={`flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto xl:overflow-hidden custom-scrollbar ${activeTab === 'terminal' ? 'flex' : 'hidden'}`}>
-                {/* Desktop Layout: Terminal + QuickCommands üstte, Running Config en altta */}
-                  <div className="flex flex-col gap-4 flex-1 min-h-0 xl:overflow-hidden">
-                    <div className="flex flex-col min-h-[400px] xl:min-h-0 ">
-                      <Terminal
-                        key={`terminal-${activeDeviceId}`}
-                        className="flex-1"
-                        deviceId={activeDeviceId}
-                        deviceName={
-                          (() => {
-                            const deviceState = deviceStates.get(activeDeviceId);
-                            return deviceState?.hostname || activeDeviceId;
-                          })()
-                        }
-                        prompt={prompt}
-                        state={state}
-                        onCommand={handleCommand}
-                        onClear={handleClearTerminal}
-                        output={output}
-                        isLoading={isExecutingCommand}
-                        isConnectionError={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                        connectionErrorMessage={language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
-                        isPoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                        onTogglePower={toggleDevicePower}
-                        onClose={() => setActiveTab('topology')}
-                        t={t}
-                        theme={theme}
-                        language={language}
-                        onUpdateHistory={handleUpdateHistory}
-                        confirmDialog={confirmDialog}
-                        setConfirmDialog={setConfirmDialog}
-                        onRequestFocus={() => {
-                          requestAnimationFrame(() => {
-                            const el = document.querySelector('input[placeholder="' + t.typeCommand + '"]') as HTMLInputElement | null;
-                            el?.focus();
-                          });
-                        }}
-                      />
+                {/* Desktop Layout: Terminal sol, Running Config sağda sabit */}
+                  <div className="flex flex-col xl:flex-row gap-4 flex-1 min-h-0 xl:overflow-hidden">
+                    {/* Terminal - Left side with content-based height */}
+                    <div className="flex flex-col xl:h-auto xl:min-h-0 xl:flex-1 xl:overflow-y-auto custom-scrollbar">
+                      <div className="flex flex-col min-h-[400px] xl:min-h-0 xl:h-auto">
+                        <Terminal
+                          key={`terminal-${activeDeviceId}`}
+                          className="flex-1"
+                          deviceId={activeDeviceId}
+                          deviceName={
+                            (() => {
+                              const deviceState = deviceStates.get(activeDeviceId);
+                              return deviceState?.hostname || activeDeviceId;
+                            })()
+                          }
+                          prompt={prompt}
+                          state={state}
+                          onCommand={handleCommand}
+                          onClear={handleClearTerminal}
+                          output={output}
+                          isLoading={isExecutingCommand}
+                          isConnectionError={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                          connectionErrorMessage={language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
+                          isPoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                          onTogglePower={toggleDevicePower}
+                          onClose={() => setActiveTab('topology')}
+                          t={t}
+                          theme={theme}
+                          language={language}
+                          onUpdateHistory={handleUpdateHistory}
+                          confirmDialog={confirmDialog}
+                          setConfirmDialog={setConfirmDialog}
+                          onRequestFocus={() => {
+                            requestAnimationFrame(() => {
+                              const el = document.querySelector('input[placeholder="' + t.typeCommand + '"]') as HTMLInputElement | null;
+                              el?.focus();
+                            });
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="flex flex-col min-h-[400px] xl:min-h-0">
+                    {/* ConfigPanel - Right side fixed on wide screens */}
+                    <div className="flex flex-col min-h-[400px] xl:min-h-0 xl:w-96 xl:flex-shrink-0 xl:max-h-full xl:overflow-y-auto custom-scrollbar">
                       <ConfigPanel
                         state={state}
                         className="flex-1"
