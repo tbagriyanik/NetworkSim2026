@@ -304,7 +304,6 @@ export interface Translations {
   copy: string;
   power: string;
   tasks: string;
-  routing: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -571,7 +570,6 @@ const translations: Record<Language, Translations> = {
     copy: 'Kopyala',
     power: 'Güç',
     tasks: 'Görevler',
-    routing: 'Routing',
     dhcpSuccessTitle: 'DHCP ataması başarılı',
     dhcpSuccessDescription: 'DHCP ile {ip} atandı.',
     dhcpFailureTitle: 'DHCP ataması başarısız',
@@ -840,7 +838,6 @@ const translations: Record<Language, Translations> = {
     copy: 'Copy',
     power: 'Power',
     tasks: 'Tasks',
-    routing: 'Routing',
     dhcpSuccessTitle: 'DHCP assignment successful',
     dhcpSuccessDescription: 'Assigned via DHCP: {ip}',
     dhcpFailureTitle: 'DHCP assignment failed',

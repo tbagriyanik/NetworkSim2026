@@ -10,6 +10,7 @@ export interface DeviceIconProps {
   className?: string;
   size?: number | string;
   color?: string;
+  switchModel?: string;
   active?: boolean;
 }
 
@@ -18,12 +19,13 @@ export function DeviceIcon({
   className, 
   size = 24, 
   color,
+  switchModel,
   active = false 
 }: DeviceIconProps) {
   const defaultColor = color || (
     type === 'pc' ? DEVICE_ICON_COLORS.pc : 
     type === 'router' ? DEVICE_ICON_COLORS.router : 
-    DEVICE_ICON_COLORS.switch
+    (type === 'switch' && switchModel === 'WS-C3560-24PS' ? '#a855f7' : DEVICE_ICON_COLORS.switch)
   );
 
   const strokeWidth = active ? 2.5 : 1.5;

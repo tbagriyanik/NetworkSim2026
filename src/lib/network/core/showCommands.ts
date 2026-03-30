@@ -354,14 +354,23 @@ function cmdShowVersion(
   input: string,
   ctx: any
 ): any {
-  let output = '\Network NOS Software, C2960 Software (C2960-LANBASE-M), Version 15.0(2)SE4\n';
+  const switchModel = state.switchModel || 'WS-C2960-24TT-L';
+  const isL3 = switchModel === 'WS-C3560-24PS';
+  
+  const softwareImage = isL3 ? 'C3560 Software (C3560-IPBASE-M), Version 15.0(2)SE4' : 'C2960 Software (C2960-LANBASE-M), Version 15.0(2)SE4';
+  const rom = isL3 ? 'C3560 boot loader' : 'C2960 boot loader';
+  const bootldr = isL3 ? 'C3560 Boot Loader (C3560-HBOOT-M) Version 12.2(25)SEE3' : 'C2960 Boot Loader (C2960-HBOOT-M) Version 12.2(25)FX';
+  const systemImage = isL3 ? 'flash:c3560-ipbase-mz.150-2.SE4.bin' : 'flash:c2960-lanbase-mz.150-2.SE4.bin';
+  const processor = isL3 ? 'WS-C3560-24PS (PowerPC405) processor (revision 01) with 131072K bytes of memory' : 'WS-C2960-24TT-L (PowerPC405) processor (revision C0) with 65536K bytes of memory';
+  
+  let output = `\nNetwork NOS Software, ${softwareImage}\n`;
   output += 'Technical Support: http://yunus.sf.net\n';
   output += 'Copyright (c) 1986-2024 by Network Systems, Inc.\n\n';
-  output += 'ROM: Bootstrap program is C2960 boot loader\n';
-  output += 'BOOTLDR: C2960 Boot Loader (C2960-HBOOT-M) Version 12.2(25)FX\n\n';
+  output += `ROM: Bootstrap program is ${rom}\n`;
+  output += `BOOTLDR: ${bootldr}\n\n`;
   output += `Switch uptime is ${state.uptime || '1 day, 2 hours, 3 minutes'}\n`;
-  output += 'System image file is "flash:c2960-lanbase-mz.150-2.SE4.bin"\n\n';
-  output += 'WS-C2960-24TT-L (PowerPC405) processor (revision C0) with 65536K bytes of memory.\n';
+  output += `System image file is "${systemImage}"\n\n`;
+  output += `${processor}\n`;
   output += 'Processor board ID FOC1234X5YZ\n';
   output += 'Last reload reason: power-on\n\n';
   output += '24 FastEthernet/IEEE 802.3 interface(s)\n';
@@ -369,7 +378,7 @@ function cmdShowVersion(
   output += '64K bytes of flash-simulated non-volatile configuration memory.\n';
   output += 'Base ethernet MAC Address       : 00:1A:2B:3C:4D:5E\n';
   output += 'Motherboard assembly number   : 73-10000-01\n';
-  output += 'Model number                  : WS-C2960-24TT-L\n';
+  output += `Model number                  : ${switchModel}\n`;
   output += '!\n';
 
   return { success: true, output };

@@ -91,7 +91,7 @@ const QuickCommands = dynamic(() => import('@/components/network/QuickCommands')
 const TaskCard = dynamic(() => import('@/components/network/TaskCard').then((m) => m.TaskCard), { ssr: false });
 const LazyAboutModal = dynamic(() => import('@/components/network/LazyAboutModal').then((m) => m.LazyAboutModal), { ssr: false });
 
-type TabType = 'topology' | 'cmd' | 'terminal' | 'tasks' | 'routing';
+type TabType = 'topology' | 'cmd' | 'terminal' | 'tasks';
 
 // PC Output type for PCPanel
 interface PCOutputLine {
@@ -138,17 +138,9 @@ const ALL_TABS: TabDefinition[] = [
     id: 'tasks',
     labelKey: 'tasks',
     icon: <ShieldCheck className="w-4 h-4" />,
-    tasks: [...portTasks, ...vlanTasks, ...securityTasks],
+    tasks: [...portTasks, ...vlanTasks, ...securityTasks, ...routingTasks],
     color: 'from-red-500 to-rose-500',
     showFor: ['switch', 'router']
-  },
-  {
-    id: 'routing',
-    labelKey: 'routing',
-    icon: <Network className="w-4 h-4" />,
-    tasks: routingTasks,
-    color: 'from-purple-500 to-indigo-500',
-    showFor: ['switch'] // Only for L3 switches
   },
 ];
 
@@ -1624,6 +1616,8 @@ export default function Home() {
           return 'Switch / router CLI üzerinden yapılandırma komutlarını çalıştır.';
         case 'tasks':
           return 'Port, VLAN ve güvenlik görevlerini tamamlayarak puan kazan.';
+        default:
+          return '';
       }
     } else {
       switch (tabId) {
@@ -1635,6 +1629,8 @@ export default function Home() {
           return 'Configure switches/routers using the CLI terminal.';
         case 'tasks':
           return 'Complete port, VLAN, and security tasks to earn points.';
+        default:
+          return '';
       }
     }
   }, [language]);
@@ -2485,7 +2481,8 @@ export default function Home() {
                               <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} />
                               <DeviceIcon
                                 type={device.type}
-                                className={`${device.type === 'pc' ? 'text-blue-500' : device.type === 'router' ? 'text-purple-500' : 'text-emerald-500'} w-5 h-5`}
+                                switchModel={device.switchModel}
+                                className="w-5 h-5"
                               />
                               <div className="flex flex-col">
                                 <span className="text-xs font-bold leading-none">{truncateWithEllipsis(displayName, 12)}</span>
@@ -3051,55 +3048,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Routing Sekmesi */}
-              {activeTab === 'routing' && (
-                <div className="grid lg:grid-cols-3 gap-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-                  <div className="lg:col-span-2">
-                    <PortPanel
-                      ports={state.ports}
-                      t={t}
-                      theme={theme}
-                      deviceName={state.hostname}
-                      deviceModel={activeDeviceType === 'router' ? 'NETWORK-1941' : (state.switchModel || 'WS-C2960-24TT-L')}
-                      activeDeviceId={activeDeviceId}
-                      isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                      topologyDevices={topologyDevices}
-                      onTogglePower={toggleDevicePower}
-                      topologyConnections={topologyConnections || undefined}
-                    />
-                    <VlanPanel
-                      vlans={state.vlans}
-                      ports={state.ports}
-                      deviceName={state.hostname}
-                      deviceModel={activeDeviceType === 'router' ? 'NETWORK-1941' : (state.switchModel || 'WS-C2960-24TT-L')}
-                      deviceId={activeDeviceId}
-                      onTogglePower={toggleDevicePower}
-                      onExecuteCommand={handleCommand}
-                      t={t}
-                      theme={theme}
-                      activeDeviceType={activeDeviceType}
-                      isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                    />
-                    <SecurityPanel
-                      security={state.security}
-                      t={t}
-                      theme={theme}
-                      deviceId={activeDeviceId}
-                      isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                      onTogglePower={toggleDevicePower}
-                    />
-                  </div>
-                  <div>
-                    <TaskCard
-                      tasks={routingTasks}
-                      state={state}
-                      context={taskContext}
-                      color="from-purple-500 to-indigo-500"
-                      isDark={isDark}
-                    />
-                  </div>
-                </div>
-              )}
             </div>
           </main>
 

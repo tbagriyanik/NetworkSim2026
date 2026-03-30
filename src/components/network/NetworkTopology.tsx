@@ -2625,12 +2625,18 @@ export function NetworkTopology({
         return;
       }
 
-      // Delete selected device(s)
+      // Delete selected device(s) or note(s)
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (!isEditable && selectedDeviceIds.length > 0) {
-          saveToHistory();
-          selectedDeviceIds.forEach(id => deleteDevice(id));
-          setSelectedDeviceIds([]);
+        if (!isEditable) {
+          if (selectedDeviceIds.length > 0) {
+            saveToHistory();
+            selectedDeviceIds.forEach(id => deleteDevice(id));
+            setSelectedDeviceIds([]);
+          } else if (selectedNoteIds.length > 0) {
+            saveToHistory();
+            selectedNoteIds.forEach(id => deleteNote(id));
+            setSelectedNoteIds([]);
+          }
         }
       }
 
@@ -2690,7 +2696,7 @@ export function NetworkTopology({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('close-menus-broadcast', handleCloseBroadcast);
     };
-  }, [selectedDeviceIds, deleteDevice, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, showPortSelector, toggleFullscreen, isFullscreen, resetView]);
+  }, [selectedDeviceIds, selectedNoteIds, deleteDevice, deleteNote, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, showPortSelector, toggleFullscreen, isFullscreen, resetView]);
 
   // Find path between devices using BFS
   const findPath = useCallback((sourceId: string, targetId: string): string[] | null => {
@@ -3996,26 +4002,65 @@ export function NetworkTopology({
           <div className={`text-[10px] font-bold tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} whitespace-nowrap`}>
             {t.devices}
           </div>
-          <div className="flex gap-2">
-            {(['pc', 'switch', 'router'] as const).map((type) => (
-              <button
-                key={type}
-                onClick={() => { addDevice(type); setIsPaletteOpen(false); }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${isDark
-                  ? 'border-slate-700 bg-slate-800'
-                  : 'border-slate-300 bg-white'
-                  }`}
-              >
-                <div className={
-                  type === 'pc' ? 'text-blue-500' : type === 'switch' ? 'text-green-500' : 'text-purple-500'
-                }>
-                  {DEVICE_ICONS[type]}
-                </div>
-                <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                  {type === 'pc' ? t.addPcShort : type === 'switch' ? t.addSwitchShort : t.addRouterShort}
-                </span>
-              </button>
-            ))}
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => { addDevice('pc'); setIsPaletteOpen(false); }}
+              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-all ${isDark
+                ? 'border-slate-700 bg-slate-800'
+                : 'border-slate-300 bg-white'
+                }`}
+            >
+              <div className="text-blue-500">
+                {DEVICE_ICONS['pc']}
+              </div>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                PC
+              </span>
+            </button>
+            <button
+              onClick={() => { addDevice('switch'); setIsPaletteOpen(false); }}
+              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-all ${isDark
+                ? 'border-slate-700 bg-slate-800'
+                : 'border-slate-300 bg-white'
+                }`}
+            >
+              <div className="text-green-500">
+                {DEVICE_ICONS['switch']}
+              </div>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                L2
+              </span>
+            </button>
+            <button
+              onClick={() => { addDevice('switch', 'L3'); setIsPaletteOpen(false); }}
+              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-all ${isDark
+                ? 'border-slate-700 bg-slate-800'
+                : 'border-slate-300 bg-white'
+                }`}
+            >
+              <div className="text-purple-500">
+                <svg className="w-4 h-4" fill="none" stroke="#a855f7" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2M5 12a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2m-2-4h.01M17 16h.01" />
+                </svg>
+              </div>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                L3
+              </span>
+            </button>
+            <button
+              onClick={() => { addDevice('router'); setIsPaletteOpen(false); }}
+              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-all ${isDark
+                ? 'border-slate-700 bg-slate-800'
+                : 'border-slate-300 bg-white'
+                }`}
+            >
+              <div className="text-purple-500">
+                {DEVICE_ICONS['router']}
+              </div>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                Router
+              </span>
+            </button>
           </div>
         </div>
 

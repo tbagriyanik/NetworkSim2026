@@ -26,7 +26,7 @@ interface AppState {
     deviceStates: DeviceStates;
 
     // UI state
-    activeTab: 'topology' | 'cmd' | 'terminal' | 'tasks' | 'routing';
+    activeTab: 'topology' | 'cmd' | 'terminal' | 'tasks';
     activePanel: 'port' | 'vlan' | 'security' | 'config' | null;
     sidebarOpen: boolean;
 
@@ -53,7 +53,7 @@ interface AppState {
     getPCOutput: (deviceId: string) => any[];
 
     // UI actions
-    setActiveTab: (tab: 'topology' | 'cmd' | 'terminal' | 'tasks' | 'routing') => void;
+    setActiveTab: (tab: 'topology' | 'cmd' | 'terminal' | 'tasks') => void;
     setActivePanel: (panel: 'port' | 'vlan' | 'security' | 'config' | null) => void;
     setSidebarOpen: (open: boolean) => void;
 
@@ -122,7 +122,7 @@ function sanitizePersistedState(input: any): Partial<AppState> {
         safe.deviceStates = initialDeviceStates;
     }
 
-    if (input?.activeTab === 'topology' || input?.activeTab === 'cmd' || input?.activeTab === 'terminal' || input?.activeTab === 'tasks' || input?.activeTab === 'routing') {
+    if (input?.activeTab === 'topology' || input?.activeTab === 'cmd' || input?.activeTab === 'terminal' || input?.activeTab === 'tasks') {
         safe.activeTab = input.activeTab;
     } else {
         safe.activeTab = 'topology';
@@ -260,7 +260,7 @@ const createActions = (set: any, get: any) => ({
     getPCOutput: (deviceId: string) => get().deviceStates.pcOutputs[deviceId],
 
     // UI actions
-    setActiveTab: (tab: 'topology' | 'cmd' | 'terminal' | 'tasks' | 'routing') => set({ activeTab: tab }),
+    setActiveTab: (tab: 'topology' | 'cmd' | 'terminal' | 'tasks') => set({ activeTab: tab }),
     setActivePanel: (panel: 'port' | 'vlan' | 'security' | 'config' | null) => set({ activePanel: panel }),
     setSidebarOpen: (open: boolean) => set({ sidebarOpen: open }),
 
