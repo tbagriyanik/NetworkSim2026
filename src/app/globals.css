@@ -166,22 +166,57 @@
   }
 }
 
-/* Custom Scrollbar - Sharp and Minimal */
+/* Custom Scrollbar - More prominent and consistent across all screen sizes */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  @apply bg-slate-100/50 dark:bg-slate-800/50;
+  border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-slate-700/30 rounded-full transition-colors hover:bg-slate-700/50;
+  @apply bg-slate-400/60 dark:bg-slate-500/40 rounded-full transition-all duration-200 hover:bg-slate-500/80 dark:hover:bg-slate-400/60;
+  border: 1px solid rgb(148 163 184 / 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-500/90 dark:bg-slate-400/80;
+  transform: scale(1.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  @apply bg-slate-600/90 dark:bg-slate-300/90;
+  transform: scale(0.95);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  @apply bg-slate-100/50 dark:bg-slate-800/50;
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-slate-400/10 hover:bg-slate-400/20;
+  @apply bg-slate-500/40;
+  border-color: rgb(148 163 184 / 0.1);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400/60;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:active {
+  @apply bg-slate-300/80;
+}
+
+/* Firefox scrollbar support - more prominent */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.6) rgb(241 245 249 / 0.5);
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: rgb(148 163 184 / 0.4) rgb(30 41 59 / 0.5);
 }
 
 /* No Scrollbar helper */

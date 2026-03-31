@@ -583,8 +583,8 @@ export function Terminal({
 
           {!isPoweredOff && (
             <div className={cn(
-              "sticky bottom-0 inset-x-0 z-10 border-t bg-muted/95 backdrop-blur-sm",
-              isMobile ? "p-2" : "p-4"
+              "relative z-10 border-t bg-muted/95 backdrop-blur-sm",
+              isMobile ? "p-2" : "p-3"
             )}>
               <form onSubmit={handleFormSubmit} className="flex items-center gap-3 relative">
                 {/* Contextual hint above input for confirm/reload states */}
@@ -596,7 +596,7 @@ export function Terminal({
                   </div>
                 )}
                 <div className={cn(
-                  "flex items-center gap-3 px-4 py-2.5 bg-background rounded-xl border flex-1 group focus-within:ring-1 transition-all shadow-inner",
+                  "flex items-center gap-3 px-3 py-2 bg-background rounded-lg border flex-1 group focus-within:ring-1 transition-all shadow-inner",
                   state.awaitingPassword
                     ? "border-amber-500/50 focus-within:ring-amber-500/50"
                     : confirmDialog?.show || isReloadConfirmationPending
