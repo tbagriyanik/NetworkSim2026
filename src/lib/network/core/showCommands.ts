@@ -58,135 +58,106 @@ function cmdShowRunningConfig(
 ): any {
   let output = '\nBuilding configuration...\n\n';
   output += 'Current configuration : 1024 bytes\n\n';
-  output += '!\n';
-  output += `version 15.0\n`;
-  output += `hostname ${state.hostname || 'Switch'}\n`;
 
-  // Banner MOTD
-  if (state.bannerMOTD) {
-    const escapedBanner = state.bannerMOTD.replace(/\n/g, '\\n');
-    output += `banner motd #${escapedBanner}#\n`;
+  // Use actual runningConfig if available, otherwise generate fallback
+  if (state.runningConfig && state.runningConfig.length > 0) {
+    output += state.runningConfig.join('\n');
+  } else {
+    // Fallback to generated config if runningConfig is empty
     output += '!\n';
-  }
+    output += `version 15.0\n`;
+    output += `hostname ${state.hostname || 'Switch'}\n`;
 
-  // Boot system
-  output += 'boot system flash:c2960-lanbase-mz.150-2.SE4.bin\n';
-  output += '!\n';
-
-  // Service passwords-encryption
-  if (state.security?.servicePasswordEncryption) {
-    output += 'service password-encryption\n';
-  }
-  output += '!\n';
-
-  // Spanning-tree mode
-  output += `spanning-tree mode ${state.spanningTree?.mode || 'pvst'}\n`;
-  output += '!\n';
-
-  // VLANs
-  const vlanIds = Object.keys(state.vlans || {}).filter(v => v !== '1');
-  if (vlanIds.length > 0) {
-    vlanIds.forEach(vlanId => {
-      const vlan = state.vlans[vlanId];
-      output += `vlan ${vlanId}\n`;
-      output += ` name ${vlan?.name || `VLAN${vlanId}`}\n`;
-      output += ` state ${vlan?.status || 'active'}\n`;
+    // Banner MOTD
+    if (state.bannerMOTD) {
+      const escapedBanner = state.bannerMOTD.replace(/\n/g, '\\n');
+      output += `banner motd #${escapedBanner}#\n`;
       output += '!\n';
-    });
-  }
-
-  // Interfaces
-  Object.keys(state.ports || {}).forEach(portName => {
-    const port = state.ports[portName];
-    output += `interface ${portName}\n`;
-
-    if (port.description) {
-      output += ` description ${port.description}\n`;
     }
 
-    if (port.mode === 'trunk') {
-      output += ' switchport mode trunk\n';
-      if (port.nativeVlan) {
-        output += ` switchport trunk native vlan ${port.nativeVlan}\n`;
-      }
-      if (port.allowedVlans) {
-        output += ` switchport trunk allowed vlan ${port.allowedVlans}\n`;
-      }
-    } else {
-      output += ` switchport access vlan ${port.accessVlan || 1}\n`;
-    }
-
-    if (port.speed && port.speed !== 'auto') {
-      output += ` speed ${port.speed}\n`;
-    }
-
-    if (port.duplex && port.duplex !== 'auto') {
-      output += ` duplex ${port.duplex}\n`;
-    }
-
-    if (port.shutdown) {
-      output += ' shutdown\n';
-    }
-
-    if (port.ipAddress && port.subnetMask) {
-      output += ` ip address ${port.ipAddress} ${port.subnetMask}\n`;
-    }
-
-    if (port.spanningTree?.portfast) {
-      output += ' spanning-tree portfast\n';
-    }
-
-    if (port.spanningTree?.bpduguard) {
-      output += ' spanning-tree bpduguard enable\n';
-    }
-
+    // Boot system
+    output += 'boot system flash:c2960-lanbase-mz.150-2.SE4.bin\n';
     output += '!\n';
-  });
 
-  // Line console
-  output += 'line console 0\n';
-  if (state.security?.consoleLine?.password) {
+    // Service passwords-encryption
     if (state.security?.servicePasswordEncryption) {
-      output += ` password 7 ********\n`;
-    } else {
-      output += ` password ${state.security.consoleLine.password}\n`;
+      output += 'service password-encryption\n';
     }
-  }
-  if (state.security?.consoleLine?.login) {
+    output += '!\n';
+
+    // Spanning-tree mode
+    output += `spanning-tree mode ${state.spanningTree?.mode || 'pvst'}\n`;
+    output += '!\n';
+
+    // Interface configurations
+    Object.entries(state.ports || {}).forEach(([portId, port]: [string, any]) => {
+      if (port.description || port.ipAddress || port.mode !== 'access' || port.vlan !== 1 || port.shutdown !== false) {
+        output += `interface ${portId}\n`;
+        if (port.description) {
+          output += ` description ${port.description}\n`;
+        }
+        if (port.mode === 'trunk') {
+          output += ` switchport mode trunk\n`;
+          if (port.trunkAllowedVlans && port.trunkAllowedVlans !== '1-4094') {
+            output += ` switchport trunk allowed vlan ${port.trunkAllowedVlans}\n`;
+          }
+        } else if (port.vlan && port.vlan !== 1) {
+          output += ` switchport access vlan ${port.vlan}\n`;
+        }
+        if (port.ipAddress) {
+          output += ` ip address ${port.ipAddress} ${port.subnetMask || '255.255.255.0'}\n`;
+        }
+        if (port.shutdown) {
+          output += ` shutdown\n`;
+        }
+        output += '!\n';
+      }
+    });
+
+    // VLAN configurations
+    Object.entries(state.vlans || {}).forEach(([vlanId, vlan]: [string, any]) => {
+      if (parseInt(vlanId) !== 1 && vlan.name) {
+        output += `vlan ${vlanId}\n`;
+        output += ` name ${vlan.name}\n`;
+        if (vlan.state === 'suspend') {
+          output += ` state suspend\n`;
+        }
+        output += '!\n';
+      }
+    });
+
+    // Line configurations
+    output += 'line con 0\n';
+    if (state.security?.consolePassword) {
+      if (state.security?.servicePasswordEncryption) {
+        output += ` password 7 ********\n`;
+      } else {
+        output += ` password ${state.security.consolePassword}\n`;
+      }
+    }
+    output += 'line vty 0 4\n';
+    if (state.security?.vtyLines?.transportInput && state.security.vtyLines.transportInput.length > 0) {
+      output += ` transport input ${state.security.vtyLines.transportInput.join(' ')}\n`;
+    }
     output += ' login\n';
-  }
-  output += '!\n';
-
-  // Line vty
-  output += 'line vty 0 15\n';
-  if (state.security?.vtyLines?.password) {
-    if (state.security?.servicePasswordEncryption) {
-      output += ` password 7 ********\n`;
-    } else {
-      output += ` password ${state.security.vtyLines.password}\n`;
-    }
-  }
-  if (state.security?.vtyLines?.login) {
+    output += 'line vty 5 15\n';
     output += ' login\n';
-  }
-  if (state.security?.vtyLines?.transportInput && state.security.vtyLines.transportInput.length > 0) {
-    output += ` transport input ${state.security.vtyLines.transportInput.join(' ')}\n`;
-  }
-  output += '!\n';
+    output += '!\n';
 
-  // Enable secret
-  if (state.security?.enableSecret) {
-    output += `enable secret 5 $1$xxxx$xxxxxxxxxxxxxxxx\n`;
-  } else if (state.security?.enablePassword) {
-    if (state.security?.servicePasswordEncryption) {
-      output += `enable password 7 ********\n`;
-    } else {
-      output += `enable password ${state.security.enablePassword}\n`;
+    // Enable secret
+    if (state.security?.enableSecret) {
+      output += `enable secret 5 $1$xxxx$xxxxxxxxxxxxxxxx\n`;
+    } else if (state.security?.enablePassword) {
+      if (state.security?.servicePasswordEncryption) {
+        output += `enable password 7 ********\n`;
+      } else {
+        output += `enable password ${state.security.enablePassword}\n`;
+      }
     }
-  }
+    output += '!\n';
+    }
 
-  output += 'end\n';
-
+  output += '\nend\n';
   return { success: true, output };
 }
 

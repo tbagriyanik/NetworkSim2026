@@ -46,17 +46,33 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
       config += `service password-encryption\\n`;
     }
 
+    // VTP configuration
+    if (state.vtpMode && state.vtpMode !== 'transparent') {
+      config += `!\\n`;
+      config += `vtp version 2\\n`;
+      config += `vtp mode ${state.vtpMode}\\n`;
+      if (state.vtpDomain) {
+        config += `vtp domain ${state.vtpDomain}\\n`;
+      }
+      config += `!\\n`;
+    }
+
     config += `!\\n`;
     config += `hostname ${state.hostname}\\n`;
-    config += `! base mac-address ${state.macAddress}\\n`;
     config += `!\\n`;
 
+    // Banner MOTD
     if (state.bannerMOTD) {
       const escapedBanner = state.bannerMOTD.replace(/\n/g, '\\n');
       config += `banner motd #${escapedBanner}#\\n`;
       config += `!\\n`;
     }
 
+    // Boot system
+    config += `boot system flash:${state.switchModel === 'WS-C3560-24PS' ? 'c3560-ipbase-mz.150-2.SE4.bin' : 'c2960-lanbase-mz.150-2.SE4.bin'}\\n`;
+    config += `!\\n`;
+
+    // Enable configurations
     if (state.security.enableSecret) {
       config += `enable secret 5 $1$xxxx$xxxxxxxxxxxxxxxx\\n`;
     }
@@ -69,6 +85,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     }
     config += `!\\n`;
 
+    // Username configurations
     state.security.users.forEach(user => {
       if (state.security.servicePasswordEncryption) {
         config += `username ${user.username} privilege ${user.privilege} secret 7 ********\\n`;
@@ -80,34 +97,59 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
       config += `!\\n`;
     }
 
+    // IP routing (for L3 switches)
     if (state.ipRouting) {
       config += `ip routing\\n`;
       config += `!\\n`;
     }
 
+    // Default gateway
+    if (state.defaultGateway) {
+      config += `ip default-gateway ${state.defaultGateway}\\n`;
+      config += `!\\n`;
+    }
+
+    // VLAN configurations
     Object.values(state.vlans).forEach(vlan => {
-      if (vlan.id >= 2 && vlan.id <= 1001) {
+      if (vlan.id >= 2 && vlan.id <= 1001 && vlan.name) {
         config += `vlan ${vlan.id}\\n`;
         config += ` name ${vlan.name}\\n`;
+        if (vlan.status === 'suspend') {
+          config += ` state suspend\\n`;
+        }
         config += `!\\n`;
       }
     });
 
+    // Physical interface configurations
     Object.values(state.ports).forEach(port => {
       if (port.id.toLowerCase().startsWith('vlan')) return;
       const portUpper = port.id.toUpperCase().replace('FA', 'FastEthernet').replace('GI', 'GigabitEthernet');
       config += `interface ${portUpper}\\n`;
-      if (port.name) config += ` description ${port.name}\\n`;
-      if (port.shutdown) config += ` shutdown\\n`;
-      if (port.speed !== 'auto') config += ` speed ${port.speed}\\n`;
-      if (port.duplex !== 'auto') config += ` duplex ${port.duplex}\\n`;
-      if (port.mode === 'trunk') config += ` switchport mode trunk\\n`;
-      else {
+      
+      if ((port as any).description) config += ` description ${(port as any).description}\\n`;
+      
+      // Switchport mode
+      if (port.mode === 'trunk') {
+        config += ` switchport mode trunk\\n`;
+        if (port.allowedVlans && port.allowedVlans !== 'all' && port.allowedVlans.length > 0) {
+          config += ` switchport trunk allowed vlan ${port.allowedVlans.join(',')|| '1-4094'}\\n`;
+        }
+      } else {
         config += ` switchport mode access\\n`;
         const vlanId = Number((port as any).accessVlan || port.vlan || 1);
         if (vlanId !== 1) config += ` switchport access vlan ${vlanId}\\n`;
       }
+      
+      // IP address for routed ports (L3 switches)
       if (port.ipAddress && port.subnetMask) config += ` ip address ${port.ipAddress} ${port.subnetMask}\\n`;
+      
+      // Port settings
+      if (port.speed !== 'auto') config += ` speed ${port.speed}\\n`;
+      if (port.duplex !== 'auto') config += ` duplex ${port.duplex}\\n`;
+      if (port.shutdown) config += ` shutdown\\n`;
+      
+      // WiFi configurations
       if (port.id.toLowerCase().startsWith('wlan') && port.wifi) {
         if (port.wifi.ssid) config += ` ssid ${port.wifi.ssid}\\n`;
         if (port.wifi.security) config += ` encryption ${port.wifi.security}\\n`;
@@ -115,9 +157,11 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
         if (port.wifi.channel) config += ` wifi-channel ${port.wifi.channel}\\n`;
         if (port.wifi.mode) config += ` wifi-mode ${port.wifi.mode}\\n`;
       }
+      
       config += `!\\n`;
     });
 
+    // VLAN interface configurations
     Object.keys(state.ports || {}).forEach(portName => {
       if (portName.toLowerCase().startsWith('vlan')) {
         const port = state.ports[portName];
@@ -131,6 +175,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
       }
     });
 
+    // Default VLAN1 interface
     const vlan1Port = state.ports['vlan1'];
     if (!vlan1Port || !vlan1Port.ipAddress || !vlan1Port.subnetMask) {
       config += `interface Vlan1\\n`;
@@ -138,32 +183,35 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
       config += ` shutdown\\n`;
       config += `!\\n`;
     }
-    config += ` shutdown\\n`;
-    config += `!\\n`;
 
+    // Line configurations
     config += `line con 0\\n`;
-    if (state.security.consoleLine.password) {
+    if (state.security.consoleLine?.password) {
       if (state.security.servicePasswordEncryption) {
         config += ` password 7 ********\\n`;
       } else {
         config += ` password ${state.security.consoleLine.password}\\n`;
       }
     }
-    if (state.security.consoleLine.login) config += ` login\\n`;
+    if (state.security.consoleLine?.login) config += ` login\\n`;
     config += `!\\n`;
 
-    config += `line vty 0 15\\n`;
-    if (state.security.vtyLines.password) {
+    config += `line vty 0 4\\n`;
+    config += ` login\\n`;
+    if (state.security.vtyLines?.password) {
       if (state.security.servicePasswordEncryption) {
         config += ` password 7 ********\\n`;
       } else {
         config += ` password ${state.security.vtyLines.password}\\n`;
       }
     }
-    if (state.security.vtyLines.login) config += ` login\\n`;
-    if (state.security.vtyLines.transportInput.length > 0 && state.security.vtyLines.transportInput[0] !== 'all') {
+    if (state.security.vtyLines?.transportInput && state.security.vtyLines.transportInput.length > 0 && state.security.vtyLines.transportInput[0] !== 'all') {
       config += ` transport input ${state.security.vtyLines.transportInput.join(' ')}\\n`;
     }
+    config += `line vty 5 15\\n`;
+    config += ` login\\n`;
+    config += `!\\n`;
+    
     config += `!\\n`;
     config += `end\\n`;
     return config;
@@ -196,7 +244,9 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     </Tooltip>
   );
 
-  const configText = generateConfig();
+  const configText = state.runningConfig && state.runningConfig.length > 0 
+    ? state.runningConfig.join('\n')
+    : generateConfig();
 
   return (
     <ModernPanel

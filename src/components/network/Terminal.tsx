@@ -554,6 +554,7 @@ export function Terminal({
               <div className="h-full flex items-center justify-center text-slate-800 font-black tracking-tighter text-2xl  italic">Offline</div>
             ) : (
               <div className="space-y-1.5">
+                {/* Show all output with natural scrolling */}
                 {output.map((line, i) => (
                   <div key={line.id || i} className="animate-in fade-in slide-in-from-left-1 duration-200">
                     {line.type === 'command' ? (

@@ -2926,8 +2926,8 @@ export default function Home() {
                         />
                       </div>
                     </div>
-                    {/* ConfigPanel - Right side fixed on wide screens */}
-                    <div className="flex flex-col min-h-[400px] xl:min-h-0 xl:w-96 xl:flex-shrink-0 xl:max-h-full xl:overflow-y-auto custom-scrollbar">
+                    {/* ConfigPanel - Right side fixed on wide screens, hidden on mobile */}
+                    <div className="hidden md:flex flex-col min-h-[400px] xl:min-h-0 xl:w-96 xl:flex-shrink-0 xl:max-h-full xl:overflow-y-auto custom-scrollbar">
                       <ConfigPanel
                         state={state}
                         className="flex-1"
