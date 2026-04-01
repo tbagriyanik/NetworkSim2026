@@ -1,6 +1,6 @@
 import { createInitialState, createInitialRouterState } from './initialState';
-import type { SwitchState } from './types';
-import type { CanvasDevice, CanvasConnection, CanvasNote } from '@/components/network/networkTopology.types';
+import type { SwitchState, CableInfo } from './types';
+import type { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from '@/components/network/networkTopology.types';
 import macExampleA from './examples/40-sayfa2-mac-tablosu.json';
 import dnsHttpExample from './examples/59-sayfa3-dns-http.json';
 import macExampleB from './examples/69-sayfa4-mac-tablosu.json';
@@ -19,31 +19,25 @@ type ProjectData = {
     connections: CanvasConnection[];
     notes: CanvasNote[];
   };
-  cableInfo: {
-    connected: boolean;
-    cableType: 'straight' | 'crossover' | 'console';
-    sourceDevice: 'pc' | 'switch' | 'router';
-    targetDevice: 'pc' | 'switch' | 'router';
-  };
+  cableInfo: CableInfo;
   activeDeviceId: string;
-  activeDeviceType: 'pc' | 'switch' | 'router';
+  activeDeviceType: DeviceType;
   activeTab: 'topology' | 'cmd' | 'terminal' | 'ports' | 'vlan' | 'security';
   zoom: number;
   pan: { x: number; y: number };
-};
-
-type CableInfo = {
-  connected: boolean;
-  cableType: 'straight' | 'crossover' | 'console';
-  sourceDevice: 'pc' | 'switch' | 'router';
-  targetDevice: 'pc' | 'switch' | 'router';
 };
 
 const defaultCableInfo: CableInfo = {
   connected: true,
   cableType: 'straight',
   sourceDevice: 'pc',
-  targetDevice: 'switch'
+  targetDevice: 'switchL2'
+};
+
+const normalizeDeviceType = (type: string): CanvasDevice['type'] => {
+  if (type === 'switch') return 'switchL2';
+  if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'router') return type;
+  return 'pc';
 };
 
 const ensureProjectData = (source: any): ProjectData => {
@@ -56,13 +50,22 @@ const ensureProjectData = (source: any): ProjectData => {
     pcOutputs: partial.pcOutputs ?? [],
     pcHistories: partial.pcHistories ?? [],
     topology: {
-      devices: partial.topology?.devices ?? [],
+      devices: (partial.topology?.devices ?? []).map((device: CanvasDevice) => ({
+        ...device,
+        type: normalizeDeviceType(device.type),
+      })),
       connections: partial.topology?.connections ?? [],
       notes: partial.topology?.notes ?? []
     },
-    cableInfo: partial.cableInfo ?? defaultCableInfo,
+    cableInfo: partial.cableInfo
+      ? {
+        ...partial.cableInfo,
+        sourceDevice: normalizeDeviceType(partial.cableInfo.sourceDevice),
+        targetDevice: normalizeDeviceType(partial.cableInfo.targetDevice),
+      }
+      : defaultCableInfo,
     activeDeviceId: partial.activeDeviceId ?? 'switch-1',
-    activeDeviceType: partial.activeDeviceType ?? 'switch',
+    activeDeviceType: normalizeDeviceType(partial.activeDeviceType ?? 'switchL2'),
     activeTab: partial.activeTab ?? 'topology',
     zoom: partial.zoom ?? 1,
     pan: partial.pan ?? { x: 0, y: 0 }
@@ -89,13 +92,14 @@ const dhcpExampleData: ProjectData = ensureProjectData(dhcpExample);
 
 const createSwitchDevice = (id: string, name: string, x: number, y: number): CanvasDevice => ({
   id,
-  type: 'switch',
+  type: 'switchL2',
   name,
   x,
   y,
   ip: '',
   macAddress: id === 'switch-1' ? '0011.2233.4401' : '0011.2233.4402',
   status: 'online',
+  switchModel: 'WS-C2960-24TT-L',
   ports: [
     { id: 'console', label: 'Console', status: 'disconnected' as const },
     ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' as const })),
@@ -183,10 +187,10 @@ const baseProjectData = (devices: CanvasDevice[], connections: CanvasConnection[
     connected: true,
     cableType: 'straight',
     sourceDevice: 'pc',
-    targetDevice: 'switch'
+    targetDevice: 'switchL2'
   },
   activeDeviceId: deviceStates[0]?.id || 'switch-1',
-  activeDeviceType: 'switch',
+  activeDeviceType: 'switchL2',
   activeTab: 'topology',
   zoom: 1.0,
   pan: { x: 0, y: 0 }

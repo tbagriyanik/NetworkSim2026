@@ -1,6 +1,6 @@
 // Task definitions with descriptions and tips
 import { SwitchState, CableInfo } from './types';
-import { CanvasConnection } from '@/components/network/networkTopology.types';
+import { CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 
 export interface TaskDefinition {
   id: string;
@@ -15,7 +15,7 @@ export interface TaskDefinition {
 export interface TaskContext {
   cableInfo: CableInfo;
   showPCPanel: boolean;
-  selectedDevice: 'pc' | 'switch' | 'router' | null;
+  selectedDevice: DeviceType | null;
   language: 'tr' | 'en';
   deviceStates?: Map<string, SwitchState>;
   topologyConnections?: CanvasConnection[];
@@ -37,7 +37,7 @@ export const topologyTasks: TaskDefinition[] = [
     description: { tr: 'Switch terminaline bağlanın', en: 'Connect to Switch terminal' },
     tip: { tr: 'Switch\'e çift tıklayarak açın', en: 'Double-click Switch to open' },
     weight: 0,
-    checkFn: (_, ctx) => ctx.selectedDevice === 'switch' || ctx.selectedDevice === 'router',
+    checkFn: (_, ctx) => ctx.selectedDevice === 'switchL2' || ctx.selectedDevice === 'switchL3' || ctx.selectedDevice === 'router',
   },
 ];
 

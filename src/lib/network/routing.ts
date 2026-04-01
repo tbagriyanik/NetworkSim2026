@@ -1,4 +1,4 @@
-import { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
+import { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 import { SwitchState } from './types';
 
 export interface Route {
@@ -105,8 +105,9 @@ function checkL3Routing(
  * Check if device has routing capability
  */
 function hasRoutingCapability(device: CanvasDevice, state: SwitchState): boolean {
+  const isSwitchDeviceType = (type: DeviceType) => type === 'switchL2' || type === 'switchL3';
   if (device.type === 'router') return true;
-  if (device.type === 'switch' && state.isLayer3Switch) return true;
+  if (isSwitchDeviceType(device.type) && state.isLayer3Switch) return true;
   return false;
 }
 

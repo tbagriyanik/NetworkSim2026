@@ -22,10 +22,13 @@ export function DeviceIcon({
   switchModel,
   active = false 
 }: DeviceIconProps) {
+  const isSwitch = type === 'switchL2' || type === 'switchL3';
   const defaultColor = color || (
-    type === 'pc' ? DEVICE_ICON_COLORS.pc : 
-    type === 'router' ? DEVICE_ICON_COLORS.router : 
-    (type === 'switch' && switchModel === 'WS-C3560-24PS' ? '#a855f7' : DEVICE_ICON_COLORS.switch)
+    type === 'pc'
+      ? DEVICE_ICON_COLORS.pc
+      : type === 'router'
+        ? DEVICE_ICON_COLORS.router
+        : (isSwitch && switchModel === 'WS-C3560-24PS' ? '#a855f7' : DEVICE_ICON_COLORS.switch)
   );
 
   const strokeWidth = active ? 2.5 : 1.5;
@@ -65,7 +68,8 @@ export function DeviceIcon({
           />
         </svg>
       );
-    case 'switch':
+    case 'switchL2':
+    case 'switchL3':
       return (
         <svg {...svgProps}>
           <path

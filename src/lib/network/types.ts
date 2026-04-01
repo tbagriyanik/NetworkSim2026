@@ -191,20 +191,23 @@ export type CableType = 'straight' | 'crossover' | 'console' | 'wireless';
 export interface CableInfo {
   connected: boolean;
   cableType: CableType;
-  sourceDevice: 'pc' | 'switch' | 'router';
-  targetDevice: 'pc' | 'switch' | 'router';
+  sourceDevice: 'pc' | 'switchL2' | 'switchL3' | 'router';
+  targetDevice: 'pc' | 'switchL2' | 'switchL3' | 'router';
   sourcePort?: string;  // Port ID (e.g., 'eth0', 'com1', 'console', 'fa0/1')
   targetPort?: string;  // Port ID
 }
 
 // Kablo uyumluluk kuralları
 export const CABLE_COMPATIBILITY: Record<string, CableType[]> = {
-  'pc-switch': ['straight', 'wireless'],
-  'switch-pc': ['straight', 'wireless'],
-  'pc-router': ['straight', 'wireless'],
-  'router-pc': ['straight', 'wireless'],
+  'pc-switch': ['straight', 'crossover'],
+  'switch-pc': ['straight', 'crossover'],
+  'pc-router': ['straight', 'crossover'],
+  'router-pc': ['straight', 'crossover'],
+  'switch-router': ['straight', 'crossover'],
+  'router-switch': ['straight', 'crossover'],
+  'router-router': ['straight', 'crossover'],
   'pc-pc': ['crossover'],
-  'switch-switch': ['crossover'],
+  'switch-switch': ['straight', 'crossover'],
   'pc-console': ['console'],
   'console-pc': ['console'],
 };
@@ -240,7 +243,9 @@ export function isCableCompatible(cable: CableInfo): boolean {
   }
 
   // Normal Ethernet bağlantıları için standart kurallar
-  const connection = `${cable.sourceDevice}-${cable.targetDevice}`;
+  const normalize = (t: CableInfo['sourceDevice']): 'pc' | 'switch' | 'router' =>
+    t === 'switchL2' || t === 'switchL3' ? 'switch' : t;
+  const connection = `${normalize(cable.sourceDevice)}-${normalize(cable.targetDevice)}`;
   const allowedTypes = CABLE_COMPATIBILITY[connection];
   return allowedTypes ? allowedTypes.includes(cable.cableType) : false;
 }

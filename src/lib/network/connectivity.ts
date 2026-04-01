@@ -1,4 +1,4 @@
-import { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
+import { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 import { CableInfo, SwitchState, isCableCompatible } from './types';
 import { findRoute, ipToNumber, getRoutingTable } from './routing';
 
@@ -17,11 +17,12 @@ export function checkConnectivity(
   _connections: CanvasConnection[],
   deviceStates?: Map<string, SwitchState>
 ): { success: boolean; hops: string[]; hopIds: string[]; targetId?: string; error?: string } {
+  const isSwitchDeviceType = (type: DeviceType) => type === 'switchL2' || type === 'switchL3';
 
   // 1.5. Implicit Wireless Connections
   const connections = [..._connections];
   if (deviceStates) {
-    const apDevices = devices.filter(d => ['switch', 'router'].includes(d.type));
+    const apDevices = devices.filter(d => isSwitchDeviceType(d.type) || d.type === 'router');
     const pcDevices = devices.filter(d => d.type === 'pc' && d.wifi && d.wifi.enabled && d.wifi.ssid);
 
     for (const pc of pcDevices) {
@@ -244,7 +245,7 @@ export function checkConnectivity(
 
       // If a PC connects to a switch, enforce VLAN match unless the switch port is trunk.
       const pc = a.type === 'pc' ? a : b.type === 'pc' ? b : null;
-      const sw = a.type === 'switch' ? a : b.type === 'switch' ? b : null;
+      const sw = isSwitchDeviceType(a.type) ? a : isSwitchDeviceType(b.type) ? b : null;
       if (pc && sw) {
         const swPortId = conn.sourceDeviceId === sw.id ? conn.sourcePort : conn.targetPort;
         const swState = deviceStates.get(sw.id);
@@ -271,7 +272,7 @@ export function checkConnectivity(
     for (let i = 1; i < path.length - 1; i++) {
       const deviceId = path[i];
       const device = devices.find(d => d.id === deviceId);
-      if (device?.type === 'switch') {
+      if (device && isSwitchDeviceType(device.type)) {
         const switchState = deviceStates.get(deviceId);
         if (!switchState) continue;
 
@@ -699,14 +700,11 @@ function isDevicePoweredOn(device: CanvasDevice | undefined): boolean {
 function isConnectionCableCompatible(conn: CanvasConnection, a?: CanvasDevice, b?: CanvasDevice): boolean {
   if (!a || !b) return true;
 
-  // The compatibility helper only knows pc/switch + ports; treat router as switch for physical cabling.
-  const toCompatType = (t: CanvasDevice['type']): 'pc' | 'switch' => (t === 'pc' ? 'pc' : 'switch');
-
   const cable: CableInfo = {
     connected: true,
     cableType: conn.cableType,
-    sourceDevice: toCompatType(a.type),
-    targetDevice: toCompatType(b.type),
+    sourceDevice: a.type,
+    targetDevice: b.type,
     sourcePort: conn.sourceDeviceId === a.id ? conn.sourcePort : conn.targetPort,
     targetPort: conn.sourceDeviceId === a.id ? conn.targetPort : conn.sourcePort,
   };

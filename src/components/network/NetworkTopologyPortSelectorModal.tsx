@@ -99,6 +99,7 @@ export function NetworkTopologyPortSelectorModal({
 
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8 max-h-[50vh]">
           {devices.map((device) => {
+            const isSwitch = device.type === 'switchL2' || device.type === 'switchL3';
             // In the "connect cable" panel, we want to show all ports regardless of cable type
             // But we still separate them by availability for better UX
             const filteredPorts = device.ports.filter((p) => {
@@ -113,10 +114,10 @@ export function NetworkTopologyPortSelectorModal({
                 <div className="flex items-center justify-between group">
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-xl border transition-colors ${device.type === 'pc' ? 'bg-blue-500/10 border-blue-500/20 text-blue-500' :
-                      device.type === 'switch' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :
+                      isSwitch ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :
                         'bg-purple-500/10 border-purple-500/20 text-purple-500'
                       }`}>
-                      {DEVICE_ICONS[device.type]}
+                      {DEVICE_ICONS[isSwitch ? 'switch' : device.type]}
                     </div>
                     <span className={`text-base font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'} group-hover:text-cyan-500 transition-colors`}>
                       {device.name}

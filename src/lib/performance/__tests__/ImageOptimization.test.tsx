@@ -47,7 +47,7 @@ describe('OptimizedDeviceIcon', () => {
     it('should apply custom className', () => {
         const { container } = render(
             <OptimizedDeviceIcon
-                type="switch"
+                type="switchL2"
                 className="custom-class"
                 alt="Switch"
             />
@@ -87,7 +87,7 @@ describe('OptimizedDeviceIcon', () => {
     });
 
     it('should support all device types', () => {
-        const types = ['pc', 'router', 'switch'] as const;
+        const types = ['pc', 'router', 'switchL2', 'switchL3'] as const;
         types.forEach(type => {
             const { container } = render(
                 <OptimizedDeviceIcon type={type} alt={`${type} icon`} />

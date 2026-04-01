@@ -5,10 +5,14 @@ import { createInitialState, createInitialRouterState, applyStartupConfig, build
 import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import { executeCommand, getPrompt } from '@/lib/network/executor';
 import type { TerminalOutput } from '@/components/network/Terminal';
-import { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
+import { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAppFeedback } from '@/hooks/useAppFeedback';
 import { formatErrorForUser } from '@/lib/errors/errorHandler';
+
+const isSwitchDeviceType = (type?: DeviceType | string) => type === 'switchL2' || type === 'switchL3';
+const resolveSwitchBootType = (switchModel?: string): 'switchL2' | 'switchL3' =>
+  switchModel === 'WS-C3560-24PS' ? 'switchL3' : 'switchL2';
 
 interface PCOutputLine {
   id: string;
@@ -67,12 +71,13 @@ export function useDeviceManager() {
   const [isLoading, setIsLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ show: boolean; message: string; action: string; onConfirm: () => void; } | null>(null);
 
-  const getBootMemoryLine = useCallback((deviceType: 'switch' | 'router', switchModel?: string) => {
+  const getBootMemoryLine = useCallback((deviceType: Exclude<DeviceType, 'pc'>, switchModel?: string) => {
     if (deviceType === 'router') {
       return 'C1900 platform with 524288K bytes of main memory\nMain memory configured to 64 bit mode with ECC disabled\n';
     }
+    const resolvedModel = switchModel || 'WS-C2960-24TT-L';
 
-    if (switchModel === 'WS-C3560-24PS') {
+    if (resolvedModel === 'WS-C3560-24PS') {
       return 'C3560 platform with 131072K bytes of main memory\nMain memory configured to 64 bit mode with ECC disabled\n';
     }
 
@@ -100,16 +105,16 @@ export function useDeviceManager() {
 
   // Listen for power toggle events from topology and handle device reset
   useEffect(() => {
-    const handlePowerToggle = (event: CustomEvent<{ deviceId: string; nextStatus: 'online' | 'offline' }>) => {
-      const { deviceId, nextStatus } = event.detail;
+    const handlePowerToggle = (event: CustomEvent<{ deviceId: string; nextStatus: 'online' | 'offline'; switchModel?: string }>) => {
+      const { deviceId, nextStatus, switchModel: incomingModel } = event.detail;
 
       if (nextStatus === 'online') {
         // Power on: reset device state and show boot sequence
         const isRouter = deviceId.includes('router');
         const existingState = deviceStates.get(deviceId);
-        
+
         // Get the switch model from existing state or default
-        const switchModel = existingState?.switchModel || (isRouter ? 'WS-C3560-24PS' : 'WS-C2960-24TT-L');
+        const switchModel = existingState?.switchModel || incomingModel || (isRouter ? 'WS-C3560-24PS' : 'WS-C2960-24TT-L');
         const baseState = isRouter ? createInitialRouterState() : createInitialState(undefined, switchModel as any);
 
         // Get existing state to preserve saved configuration and identity
@@ -154,7 +159,7 @@ export function useDeviceManager() {
 
           const bootOutputs: TerminalOutput[] = [
             { id: `boot-1-${reloadedState.macAddress}`, type: 'output', content: isRouter ? '\n\nSystem Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' : '\n\nSystem Bootstrap, Version 12.1(11r)EA1, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' },
-            { id: `boot-2-${reloadedState.macAddress}`, type: 'output', content: getBootMemoryLine(isRouter ? 'router' : 'switch', reloadedState.switchModel) },
+            { id: `boot-2-${reloadedState.macAddress}`, type: 'output', content: getBootMemoryLine(isRouter ? 'router' : resolveSwitchBootType(reloadedState.switchModel), reloadedState.switchModel) },
             { id: `boot-3-${reloadedState.macAddress}`, type: 'output', content: '\nLoading the runtime image: ######################################## [OK]\n' },
             // Insert banner MOTD here if present so it's visible during boot
             ...(reloadedState.bannerMOTD ? [{ id: `banner-${reloadedState.macAddress}`, type: 'output' as const, content: `\n${reloadedState.bannerMOTD}\n` }] : []),
@@ -179,13 +184,13 @@ export function useDeviceManager() {
     return () => window.removeEventListener('trigger-topology-toggle-power', handlePowerToggle as EventListener);
   }, [deviceStates, getBootMemoryLine]);
 
-  const getOrCreateDeviceState = useCallback((deviceId: string, deviceType: 'pc' | 'switch' | 'router', initialHostname?: string, initialMac?: string, switchModel?: string): SwitchState => {
+  const getOrCreateDeviceState = useCallback((deviceId: string, deviceType: DeviceType, initialHostname?: string, initialMac?: string, switchModel?: string): SwitchState => {
     let deviceState = deviceStates.get(deviceId);
     const defaultName = deviceType === 'router' ? 'Router' : 'Switch';
 
     if (!deviceState) {
       // Use the provided switchModel, default to L2 for switches, or L3 for routers
-      const model = switchModel || (deviceType === 'router' ? 'WS-C3560-24PS' : 'WS-C2960-24TT-L');
+      const model = switchModel || (deviceType === 'router' ? 'WS-C3560-24PS' : deviceType === 'switchL3' ? 'WS-C3560-24PS' : 'WS-C2960-24TT-L');
       deviceState = deviceType === 'router' ? createInitialRouterState(initialMac) : createInitialState(initialMac, model as any);
       const hostname = initialHostname || defaultName;
       deviceState = { ...deviceState, hostname };
@@ -204,12 +209,19 @@ export function useDeviceManager() {
         deviceState = updatedState;
       }
 
-      if (deviceType === 'switch' && deviceState.switchModel === 'WS-C3560-24PS' && (!deviceState.ports['gi0/3'] || !deviceState.ports['gi0/4'])) {
+      if (!deviceState.switchModel) {
+        const fallbackModel = switchModel || (deviceType === 'router' ? 'WS-C3560-24PS' : deviceType === 'switchL3' ? 'WS-C3560-24PS' : 'WS-C2960-24TT-L');
+        const updatedState = ensureSwitchModelConsistency(deviceState, fallbackModel, initialMac);
+        setDeviceStates(prev => new Map(prev).set(deviceId, updatedState));
+        deviceState = updatedState;
+      }
+
+      if (isSwitchDeviceType(deviceType) && deviceState.switchModel === 'WS-C3560-24PS' && (!deviceState.ports['gi0/3'] || !deviceState.ports['gi0/4'])) {
         const healedState = ensureSwitchModelConsistency(deviceState, deviceState.switchModel, initialMac);
         setDeviceStates(prev => new Map(prev).set(deviceId, healedState));
         deviceState = healedState;
       }
-      
+
       if (initialHostname && (deviceState.hostname === 'Switch' || deviceState.hostname === 'Router') && initialHostname !== deviceState.hostname) {
         const updatedState = { ...deviceState, hostname: initialHostname };
         if (updatedState.runningConfig) {
@@ -231,7 +243,7 @@ export function useDeviceManager() {
       const isRouter = deviceId.includes('router');
       outputs = [
         { id: `boot-1`, type: 'output', content: isRouter ? '\n\nSystem Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' : '\n\nSystem Bootstrap, Version 12.1(11r)EA1, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' },
-        { id: `boot-2`, type: 'output', content: getBootMemoryLine(isRouter ? 'router' : 'switch', state?.switchModel) },
+        { id: `boot-2`, type: 'output', content: getBootMemoryLine(isRouter ? 'router' : resolveSwitchBootType(state?.switchModel), state?.switchModel) },
         { id: `boot-3`, type: 'output', content: '\nLoading the runtime image: ######################################## [OK]\n' }
       ];
 
@@ -298,7 +310,7 @@ export function useDeviceManager() {
     command: string,
     topologyDevices: CanvasDevice[] | null,
     setActiveDeviceId: (id: string) => void,
-    setActiveDeviceType: (type: 'pc' | 'switch' | 'router') => void,
+    setActiveDeviceType: (type: DeviceType) => void,
     topologyConnections: CanvasConnection[] | null = null,
     skipConfirm = false
   ): Promise<any> => {
@@ -396,7 +408,7 @@ export function useDeviceManager() {
               const removedVlans = Array.from(beforeVlans).filter(v => !afterVlans.has(v));
 
               const sourceDevice = topologyDevices.find(d => d.id === deviceId);
-              if (sourceDevice?.type === 'switch') {
+              if (isSwitchDeviceType(sourceDevice?.type)) {
                 const sourceMode = mergedState.vtpMode;
                 if (sourceMode !== 'transparent' && sourceMode !== 'off' && sourceMode !== 'client') {
                   const sourceDomain = mergedState.vtpDomain || '';
@@ -407,7 +419,7 @@ export function useDeviceManager() {
 
                     const neighborId = conn.sourceDeviceId === deviceId ? conn.targetDeviceId : conn.sourceDeviceId;
                     const neighborDevice = topologyDevices.find(d => d.id === neighborId);
-                    if (neighborDevice?.type !== 'switch') return;
+                    if (!isSwitchDeviceType(neighborDevice?.type)) return;
 
                     const sourcePortId = conn.sourceDeviceId === deviceId ? conn.sourcePort : conn.targetPort;
                     const neighborPortId = conn.sourceDeviceId === deviceId ? conn.targetPort : conn.sourcePort;
@@ -565,7 +577,7 @@ export function useDeviceManager() {
           const isRouter = deviceId.includes('router');
           const bootOutputs: TerminalOutput[] = [
             { id: `boot-1-${reloadedState.macAddress}`, type: 'output', content: isRouter ? '\n\nSystem Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' : '\n\nSystem Bootstrap, Version 12.1(11r)EA1, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n' },
-            { id: `boot-2-${reloadedState.macAddress}`, type: 'output', content: getBootMemoryLine(isRouter ? 'router' : 'switch', reloadedState.switchModel) },
+            { id: `boot-2-${reloadedState.macAddress}`, type: 'output', content: getBootMemoryLine(isRouter ? 'router' : resolveSwitchBootType(reloadedState.switchModel), reloadedState.switchModel) },
             { id: `boot-3-${reloadedState.macAddress}`, type: 'output', content: '\nLoading the runtime image: ######################################## [OK]\n' },
             ...(reloadedState.bannerMOTD ? [{ id: `banner-${reloadedState.macAddress}`, type: 'output' as const, content: `\n${reloadedState.bannerMOTD}\n` }] : []),
             { id: `boot-beep-${reloadedState.macAddress}`, type: 'output', content: '\nSystem is powering on...\n' },
@@ -586,7 +598,7 @@ export function useDeviceManager() {
           const targetDevice = topologyDevices.find(d => d.ip === result.telnetTarget);
           if (targetDevice && targetDevice.type !== 'pc') {
             newOutputs.push({ id: `${now}-telnet`, type: 'output', content: ` Open\n\n**** Connected to ${targetDevice.name} (${result.telnetTarget}) via VTY ****\n`, timestamp: now });
-            const targetType = targetDevice.type as 'switch' | 'router';
+            const targetType = targetDevice.type;
             getOrCreateDeviceState(targetDevice.id, targetType, targetDevice.name);
             getOrCreateDeviceOutputs(targetDevice.id);
             setActiveDeviceId(targetDevice.id);

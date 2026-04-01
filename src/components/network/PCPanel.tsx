@@ -480,7 +480,7 @@ export function PCPanel({
     });
     if (!connection) return null;
     const otherId = connection.sourceDeviceId === deviceId ? connection.targetDeviceId : connection.sourceDeviceId;
-    return topologyDevices.find(d => d.id === otherId && (d.type === 'switch' || d.type === 'router')) || null;
+    return topologyDevices.find(d => d.id === otherId && ((d.type === 'switchL2' || d.type === 'switchL3') || d.type === 'router')) || null;
   }, [deviceId, topologyConnections, topologyDevices]);
 
   const consoleDevice = getConsoleDevice();
@@ -1071,7 +1071,7 @@ export function PCPanel({
           if (result.success && result.targetId) {
             // Find target device to see if it's a switch or router
             const targetDevice = topologyDevices.find(d => d.id === result.targetId);
-            if (targetDevice && (targetDevice.type === 'switch' || targetDevice.type === 'router')) {
+            if (targetDevice && ((targetDevice.type === 'switchL2' || targetDevice.type === 'switchL3') || targetDevice.type === 'router')) {
               // Successfully connected - switch to terminal tab and connect
               addLocalOutput('success', `Trying ${targetIp} ${port} ...\nConnected to ${targetIp}.`);
               

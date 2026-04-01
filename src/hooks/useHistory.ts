@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { SwitchState, CableInfo } from '@/lib/network/types';
-import { CanvasDevice, CanvasConnection, CanvasNote } from '@/components/network/networkTopology.types';
+import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from '@/components/network/networkTopology.types';
 import { TerminalOutput } from '@/components/network/Terminal';
 
 export interface ProjectState {
@@ -13,7 +13,7 @@ export interface ProjectState {
   pcHistories: Map<string, string[]>;
   cableInfo: CableInfo;
   activeDeviceId: string;
-  activeDeviceType: 'pc' | 'switch' | 'router';
+  activeDeviceType: DeviceType;
   zoom: number;
   pan: { x: number; y: number };
   activeTab?: string;

@@ -14,7 +14,7 @@ import { CanvasDevice } from '@/components/network/networkTopology.types';
 // Arbitraries for generating test data
 const deviceArbitrary = fc.record({
     id: fc.uuid(),
-    type: fc.constantFrom<'pc' | 'switch' | 'router'>('pc', 'switch', 'router'),
+    type: fc.constantFrom<'pc' | 'switchL2' | 'switchL3' | 'router'>('pc', 'switchL2', 'switchL3', 'router'),
     name: fc.string({ minLength: 1, maxLength: 20 }),
     ip: fc.ipV4(),
     x: fc.integer({ min: 0, max: 1000 }),
@@ -48,7 +48,7 @@ describe('VirtualDeviceList - Property Tests', () => {
                     // All devices should have valid properties
                     devices.forEach((device) => {
                         expect(device.id).toBeTruthy();
-                        expect(device.type).toMatch(/^(pc|switch|router)$/);
+                        expect(device.type).toMatch(/^(pc|switchL2|switchL3|router)$/);
                         expect(device.ip).toBeTruthy();
                         expect(device.status).toMatch(/^(online|offline|error)$/);
                     });
@@ -152,7 +152,7 @@ describe('VirtualDeviceList - Property Tests', () => {
             fc.assert(
                 fc.property(
                     deviceListArbitrary,
-                    fc.constantFrom<'pc' | 'switch' | 'router'>('pc', 'switch', 'router'),
+                    fc.constantFrom<'pc' | 'switchL2' | 'switchL3' | 'router'>('pc', 'switchL2', 'switchL3', 'router'),
                     (devices, filterType) => {
                         const filteredDevices = devices.filter((d) => d.type === filterType);
 

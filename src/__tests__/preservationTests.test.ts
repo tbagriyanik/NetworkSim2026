@@ -245,8 +245,8 @@ describe('Property Test 2 — VLAN propagates to trunk-connected neighbor', () =
         const neighborId = 'switch-b';
 
         const topologyDevices = [
-            { id: deviceId, type: 'switch', name: 'Switch-A', ip: '192.168.1.1', x: 0, y: 0 },
-            { id: neighborId, type: 'switch', name: 'Switch-B', ip: '192.168.1.2', x: 100, y: 0 },
+            { id: deviceId, type: 'switchL2', name: 'Switch-A', ip: '192.168.1.1', x: 0, y: 0 },
+            { id: neighborId, type: 'switchL2', name: 'Switch-B', ip: '192.168.1.2', x: 100, y: 0 },
         ];
 
         const topologyConnections = [

@@ -10,7 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useSpatialPartitioning } from '@/lib/performance/spatial';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { CanvasDevice, CanvasConnection, CanvasNote } from './networkTopology.types';
+import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from './networkTopology.types';
 import { DeviceIcon } from './DeviceIcon';
 import { ConnectionLine } from './ConnectionLine';
 import { DeviceNode } from './DeviceNode';
@@ -21,9 +21,9 @@ import { Plus, Power, Trash2 } from "lucide-react";
 interface NetworkTopologyProps {
   cableInfo: CableInfo;
   onCableChange: (cableInfo: CableInfo) => void;
-  selectedDevice: 'pc' | 'switch' | 'router' | null;
-  onDeviceSelect: (device: 'pc' | 'switch' | 'router', deviceId?: string, switchModel?: string) => void;
-  onDeviceDoubleClick?: (device: 'pc' | 'switch' | 'router', deviceId: string) => void;
+  selectedDevice: DeviceType | null;
+  onDeviceSelect: (device: DeviceType, deviceId?: string, switchModel?: string) => void;
+  onDeviceDoubleClick?: (device: DeviceType, deviceId: string) => void;
   onTopologyChange?: (devices: CanvasDevice[], connections: CanvasConnection[], notes: CanvasNote[]) => void;
   onDeviceDelete?: (deviceId: string) => void;
   initialDevices?: CanvasDevice[];
@@ -52,13 +52,23 @@ interface DragItem {
   icon: React.ReactNode;
 }
 
-const DEVICE_ICONS = {
+const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
   pc: (
     <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#3b82f6" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
     </svg>
   ),
   switch: (
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
+    </svg>
+  ),
+  switchL2: (
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
+    </svg>
+  ),
+  switchL3: (
     <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
     </svg>
@@ -70,6 +80,8 @@ const DEVICE_ICONS = {
     </svg>
   ),
 };
+
+const isSwitchDeviceType = (type: DeviceType) => type === 'switchL2' || type === 'switchL3';
 
 const CABLE_COLORS = {
   straight: { primary: '#3b82f6', bg: 'bg-blue-500', text: 'text-blue-400', border: 'border-blue-500/30' },
@@ -191,13 +203,14 @@ export function NetworkTopology({
     },
     {
       id: 'switch-1',
-      type: 'switch',
+      type: 'switchL2',
       name: 'Switch-1',
       macAddress: generateMacAddress(),
       ip: '',
       x: 300,
       y: 150,
       status: 'online',
+      switchModel: 'WS-C2960-24TT-L',
       ports: generateSwitchPorts(),
     },
   ];
@@ -540,6 +553,11 @@ export function NetworkTopology({
 
   // Refs
   const deviceCounterRef = useRef<{ pc: number; switch: number; router: number }>({ pc: 0, switch: 0, router: 0 });
+  const getCounterKey = useCallback((type: DeviceType | string): 'pc' | 'switch' | 'router' => {
+    if (type === 'switchL2' || type === 'switchL3' || type === 'switch') return 'switch';
+    if (type === 'pc' || type === 'router') return type;
+    return 'pc';
+  }, []);
   const pingAnimationRef = useRef<number | null>(null);
 
   // Start device config (Name and IP)
@@ -1217,7 +1235,7 @@ export function NetworkTopology({
         const device = latestDevicesRef.current.find(d => d.id === currentTouchDraggedDevice);
         if (device) {
           setSelectedDeviceIds([device.id]);
-          onDeviceSelect(device.type, device.id);
+          onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
         }
       }
 
@@ -1288,7 +1306,7 @@ export function NetworkTopology({
       // If it IS already selected, keep selection for group dragging
       if (!selectedDeviceIds.includes(deviceId)) {
         setSelectedDeviceIds([deviceId]);
-        onDeviceSelect(device.type === 'router' ? 'switch' : device.type, deviceId);
+        onDeviceSelect(device.type, deviceId, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
       }
     }
 
@@ -1325,7 +1343,7 @@ export function NetworkTopology({
     if (!e.shiftKey) {
       setSelectedDeviceIds([device.id]);
       // Notify parent component - select device, don't open terminal
-      onDeviceSelect(device.type, device.id);
+      onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
       // Focus canvas for keyboard navigation
       canvasRef.current?.focus();
     }
@@ -1340,8 +1358,8 @@ export function NetworkTopology({
       // Fallback to old behavior
       if (device.type === 'pc') {
         onDeviceSelect('pc', device.id);
-      } else if (device.type === 'switch' || device.type === 'router') {
-        onDeviceSelect('switch', device.id);
+      } else if (isSwitchDeviceType(device.type) || device.type === 'router') {
+        onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
       }
     }
   }, [onDeviceDoubleClick, onDeviceSelect]);
@@ -1458,7 +1476,7 @@ export function NetworkTopology({
       const device = devices.find(d => d.id === touchDraggedDevice);
       if (device) {
         setSelectedDeviceIds([device.id]);
-        onDeviceSelect(device.type, device.id);
+        onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
       }
     }
 
@@ -1785,8 +1803,8 @@ export function NetworkTopology({
         onCableChange({
           ...cableInfo,
           connected: true,
-          sourceDevice: sourceDevice.type === 'router' ? 'switch' : sourceDevice.type,
-          targetDevice: targetDevice.type === 'router' ? 'switch' : targetDevice.type,
+          sourceDevice: sourceDevice.type,
+          targetDevice: targetDevice.type,
         });
       }
 
@@ -1844,10 +1862,13 @@ export function NetworkTopology({
     // Determine switch layer (default L2)
     const switchLayer = layer || 'L2';
     const switchModel = switchLayer === 'L3' ? 'WS-C3560-24PS' : 'WS-C2960-24TT-L';
+    const resolvedType = type === 'switch'
+      ? (switchLayer === 'L3' ? 'switchL3' : 'switchL2')
+      : type;
 
     const newDevice: CanvasDevice = {
       id: `${type}-${deviceCounterRef.current[type]}`,
-      type,
+      type: resolvedType,
       name: type === 'switch' && switchLayer === 'L3' ? `Switch-${deviceCounterRef.current[type]}` : `${type.toUpperCase()}-${deviceCounterRef.current[type]}`,
       macAddress: generateMacAddress(),
       ip: type === 'pc' ? generateUniqueIp() : '',
@@ -1869,7 +1890,7 @@ export function NetworkTopology({
     setDevices((prev) => [...prev, newDevice]);
     setSelectedDeviceIds([newDevice.id]);
     // Pass the switchModel directly to avoid race condition
-    onDeviceSelect(type === 'router' ? 'switch' : type, newDevice.id, newDevice.switchModel);
+    onDeviceSelect(resolvedType, newDevice.id, newDevice.switchModel);
 
   }, [devices.length, saveToHistory, generateUniqueIp, onDeviceSelect]);
 
@@ -2361,7 +2382,8 @@ export function NetworkTopology({
       devices.forEach(d => {
         const match = d.id.match(/^(\w+)-(\d+)$/);
         if (match) {
-          const type = match[1] as 'pc' | 'switch' | 'router';
+          const rawType = match[1];
+          const type = getCounterKey(rawType);
           const num = parseInt(match[2]);
           if (counters[type] !== undefined) {
             counters[type] = Math.max(counters[type], num);
@@ -2370,7 +2392,7 @@ export function NetworkTopology({
       });
       deviceCounterRef.current = counters;
     }
-  }, [devices]);
+  }, [devices, getCounterKey]);
 
   // Sync port shutdown status from deviceStates
   // FIXED: removed `devices` from deps — using functional setState (prev =>) to read latest devices
@@ -2550,13 +2572,14 @@ export function NetworkTopology({
 
     clipboard.forEach(device => {
       const type = device.type;
-      deviceCounterRef.current[type]++;
-      const newId = `${type}-${deviceCounterRef.current[type]}`;
+      const counterKey = getCounterKey(type);
+      deviceCounterRef.current[counterKey]++;
+      const newId = `${type}-${deviceCounterRef.current[counterKey]}`;
 
       newDevices.push({
         ...device,
         id: newId,
-        name: `${type.toUpperCase()}-${deviceCounterRef.current[type]}`,
+        name: `${type.toUpperCase()}-${deviceCounterRef.current[counterKey]}`,
         ip: type === 'pc' ? generateUniqueIp() : '',
         x: device.x + 30,
         y: device.y + 30,
@@ -2566,7 +2589,7 @@ export function NetworkTopology({
 
     setDevices(prev => [...prev, ...newDevices]);
     setContextMenu(null);
-  }, [clipboard, saveToHistory, generateUniqueIp]);
+  }, [clipboard, saveToHistory, generateUniqueIp, getCounterKey]);
 
   // Paste notes
   const pasteNotes = useCallback((x: number, y: number) => {
@@ -2762,8 +2785,8 @@ export function NetworkTopology({
             const isCompatible = isCableCompatible({
               connected: true,
               cableType: conn.cableType,
-              sourceDevice: sourceDevice.type === 'router' ? 'switch' : sourceDevice.type,
-              targetDevice: targetDevice.type === 'router' ? 'switch' : targetDevice.type,
+              sourceDevice: sourceDevice.type,
+              targetDevice: targetDevice.type,
               sourcePort: conn.sourcePort,
               targetPort: conn.targetPort,
             });
@@ -3052,12 +3075,14 @@ export function NetworkTopology({
     const cableInfoForConnection: CableInfo = {
       connected: true,
       cableType: conn.cableType,
-      sourceDevice: sourceDevice.type === 'router' ? 'switch' : sourceDevice.type,
-      targetDevice: targetDevice.type === 'router' ? 'switch' : targetDevice.type,
+      sourceDevice: sourceDevice.type,
+      targetDevice: targetDevice.type,
       sourcePort: conn.sourcePort,
       targetPort: conn.targetPort,
     };
-    const isCompatible = isCableCompatible(cableInfoForConnection);
+    const isCompatible = conn.cableType === 'console'
+      ? isCableCompatible(cableInfoForConnection)
+      : true;
     const color = isCompatible ? CABLE_COLORS[conn.cableType].primary : CABLE_COLORS.error.primary;
 
     // Calculate parallel offset for multiple connections between same devices
@@ -3232,14 +3257,16 @@ export function NetworkTopology({
       3 * invT * tTrash * tTrash * controlPoint2.y +
       tTrash * tTrash * tTrash * target.y;
 
-    const isCompatible = isCableCompatible({
-      connected: true,
-      cableType: conn.cableType,
-      sourceDevice: sourceDevice.type === 'router' ? 'switch' : sourceDevice.type,
-      targetDevice: targetDevice.type === 'router' ? 'switch' : targetDevice.type,
-      sourcePort: conn.sourcePort,
-      targetPort: conn.targetPort,
-    });
+    const isCompatible = conn.cableType === 'console'
+      ? isCableCompatible({
+        connected: true,
+        cableType: conn.cableType,
+        sourceDevice: sourceDevice.type,
+        targetDevice: targetDevice.type,
+        sourcePort: conn.sourcePort,
+        targetPort: conn.targetPort,
+      })
+      : true;
 
     return (
       <g key={`handle-${conn.id}`}>
@@ -3286,6 +3313,8 @@ export function NetworkTopology({
     );
   };
 
+  const isSwitchDevice = (t: CanvasDevice['type']) => t === 'switchL2' || t === 'switchL3';
+
   // Render device
   const renderDevice = (device: CanvasDevice, isDragging: boolean = false) => {
     const isSelected = selectedDeviceIds.includes(device.id);
@@ -3296,14 +3325,16 @@ export function NetworkTopology({
       const source = devices.find(d => d.id === conn.sourceDeviceId);
       const target = devices.find(d => d.id === conn.targetDeviceId);
       if (!source || !target) return false;
-      return !isCableCompatible({
+      return conn.cableType === 'console'
+        ? !isCableCompatible({
         connected: true,
         cableType: conn.cableType,
-        sourceDevice: source.type === 'router' ? 'switch' : source.type,
-        targetDevice: target.type === 'router' ? 'switch' : target.type,
+        sourceDevice: source.type,
+        targetDevice: target.type,
         sourcePort: conn.sourcePort,
         targetPort: conn.targetPort,
-      });
+        })
+        : false;
     });
 
     const isPoweredOff = device.status === 'offline';
@@ -3316,12 +3347,12 @@ export function NetworkTopology({
     const deviceFill = isDark
       ? (device.type === 'pc'
         ? 'url(#pcGradientDark)'
-        : device.type === 'switch'
+        : isSwitchDevice(device.type)
           ? 'url(#switchGradientDark)'
           : 'url(#routerGradientDark)')
       : (device.type === 'pc'
         ? 'url(#pcGradientLight)'
-        : device.type === 'switch'
+        : isSwitchDevice(device.type)
           ? 'url(#switchGradientLight)'
           : 'url(#routerGradientLight)');
 
@@ -3338,8 +3369,8 @@ export function NetworkTopology({
     const iconColor = isPoweredOff
       ? '#ef4444'
       : (hasConnection
-        ? (device.type === 'switch' && device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e')
-        : (device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? (device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e') : '#a855f7'));
+        ? (isSwitchDevice(device.type) && device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e')
+        : (device.type === 'pc' ? '#3b82f6' : isSwitchDevice(device.type) ? (device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e') : '#a855f7'));
 
     return (
       <g
@@ -3371,7 +3402,7 @@ export function NetworkTopology({
           rx={8}
           fill={deviceFill}
           stroke={isSelected ? '#06b6d4' : isDark
-            ? (device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? '#22c55e' : '#a855f7')
+            ? (device.type === 'pc' ? '#3b82f6' : isSwitchDeviceType(device.type) ? '#22c55e' : '#a855f7')
             : '#cbd5e1'}
           strokeWidth={isSelected ? 2.5 : 1.5}
           className={isDragging ? '' : 'transition-all duration-150'}
@@ -3395,7 +3426,7 @@ export function NetworkTopology({
           const wlanPort = device.ports.find(p => p.id === 'wlan0');
           const pcWifi = device.wifi;
           const isPC = device.type === 'pc';
-          const isSwitch = device.type === 'switch';
+          const isSwitch = isSwitchDeviceType(device.type);
           const isRouter = device.type === 'router';
           const devState = deviceStates?.get(device.id);
           const wlanState = devState?.ports['wlan0'];
@@ -3661,7 +3692,7 @@ export function NetworkTopology({
                 transform="scale(1.2)"
               />
             )}
-            {device.type === 'switch' && (
+            {isSwitchDeviceType(device.type) && (
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -5357,7 +5388,11 @@ export function NetworkTopology({
               {devicesSortedForRender.map((device) => {
                 const deviceWidth = device.type === 'pc' ? 90 : device.type === 'router' ? 90 : 130;
                 const deviceHeight = device.type === 'pc' ? 99 : 80;
-                const color = device.type === 'pc' ? '#3b82f6' : device.type === 'switch' ? (device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e') : '#a855f7';
+                const color = device.type === 'pc'
+                  ? '#3b82f6'
+                  : isSwitchDeviceType(device.type)
+                    ? (device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e')
+                    : '#a855f7';
 
                 return (
                   <g key={device.id}>
@@ -5816,8 +5851,8 @@ export function NetworkTopology({
               onCableChange({
                 ...cableInfo,
                 connected: true,
-                sourceDevice: sourceDevice.type === 'router' ? 'switch' : sourceDevice.type,
-                targetDevice: targetDevice.type === 'router' ? 'switch' : targetDevice.type,
+                sourceDevice: sourceDevice.type,
+                targetDevice: targetDevice.type,
               });
             }
 

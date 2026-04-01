@@ -27,6 +27,16 @@ export const DEVICE_ICONS = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={DEVICE_ICON_PATHS.switch} />
     </svg>
   ),
+  switchL2: (
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke={DEVICE_ICON_COLORS.switch} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={DEVICE_ICON_PATHS.switch} />
+    </svg>
+  ),
+  switchL3: (
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke={DEVICE_ICON_COLORS.switch} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={DEVICE_ICON_PATHS.switch} />
+    </svg>
+  ),
   router: (
     <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke={DEVICE_ICON_COLORS.router} viewBox="0 0 24 24">
       <circle cx={DEVICE_ICON_PATHS.router.circle.cx} cy={DEVICE_ICON_PATHS.router.circle.cy} r={DEVICE_ICON_PATHS.router.circle.r} strokeWidth={1.5} />

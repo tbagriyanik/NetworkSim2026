@@ -43,8 +43,8 @@ export const ConnectionLine = memo(function ConnectionLine({
   const cableInfoForConnection = {
     connected: true,
     cableType: connection.cableType,
-    sourceDevice: sourceDevice.type === 'router' ? 'switch' : sourceDevice.type,
-    targetDevice: targetDevice.type === 'router' ? 'switch' : targetDevice.type,
+    sourceDevice: sourceDevice.type,
+    targetDevice: targetDevice.type,
     sourcePort: connection.sourcePort,
     targetPort: connection.targetPort,
   };

@@ -8,7 +8,7 @@ import { useDeviceManager } from '@/hooks/useDeviceManager';
 import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes, useZoom, usePan, useActiveTab } from '@/lib/store/appStore';
 // Duplicate removed
 import { NetworkTopology } from '@/components/network/NetworkTopology';
-import { CanvasDevice, CanvasConnection, CanvasNote } from '@/components/network/networkTopology.types';
+import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from '@/components/network/networkTopology.types';
 import { getPrompt } from '@/lib/network/executor';
 import { formatErrorForUser } from '@/lib/errors/errorHandler';
 import { checkDeviceConnectivity } from '@/lib/network/connectivity';
@@ -105,8 +105,11 @@ interface TabDefinition {
   icon: React.ReactNode;
   tasks: any[];
   color: string;
-  showFor: string[];
+  showFor: DeviceType[];
 }
+
+const SWITCH_DEVICE_TYPES: DeviceType[] = ['switchL2', 'switchL3'];
+const isSwitchDeviceType = (type?: DeviceType) => type === 'switchL2' || type === 'switchL3';
 
 const ALL_TABS: TabDefinition[] = [
   {
@@ -115,7 +118,7 @@ const ALL_TABS: TabDefinition[] = [
     icon: <Network className="w-4 h-4" />,
     tasks: topologyTasks,
     color: 'from-cyan-500 to-blue-500',
-    showFor: ['pc', 'switch', 'router']
+    showFor: ['pc', ...SWITCH_DEVICE_TYPES, 'router']
   },
   {
     id: 'cmd',
@@ -131,7 +134,7 @@ const ALL_TABS: TabDefinition[] = [
     icon: <TerminalIcon className="w-4 h-4" />,
     tasks: [],
     color: 'from-emerald-500 to-teal-500',
-    showFor: ['switch', 'router']
+    showFor: [...SWITCH_DEVICE_TYPES, 'router']
   },
   {
     id: 'tasks',
@@ -139,7 +142,7 @@ const ALL_TABS: TabDefinition[] = [
     icon: <ShieldCheck className="w-4 h-4" />,
     tasks: [...portTasks, ...vlanTasks, ...securityTasks, ...routingTasks],
     color: 'from-red-500 to-rose-500',
-    showFor: ['switch', 'router']
+    showFor: [...SWITCH_DEVICE_TYPES, 'router']
   },
 ];
 
@@ -254,7 +257,7 @@ export default function Home() {
 
   // Currently active device in terminal
   const [activeDeviceId, setActiveDeviceId] = useState<string>('switch-1');
-  const [activeDeviceType, setActiveDeviceType] = useState<'pc' | 'switch' | 'router'>('switch');
+  const [activeDeviceType, setActiveDeviceType] = useState<DeviceType>('switchL2');
 
   // Navigation history for back/forward support
   const navigationHistoryRef = useRef<{ tab: TabType; deviceId?: string; program?: string }[]>([{ tab: 'topology' }]);
@@ -294,7 +297,7 @@ export default function Home() {
   }, [setActiveTab]);
 
   // Custom device tab setter with navigation history (for PC terminal)
-  const setDeviceTabWithHistory = useCallback((tab: TabType, deviceId: string, deviceType: 'pc' | 'switch' | 'router') => {
+  const setDeviceTabWithHistory = useCallback((tab: TabType, deviceId: string, deviceType: DeviceType) => {
     if (isInternalNavRef.current) {
       isInternalNavRef.current = false;
       setActiveDeviceId(deviceId);
@@ -395,7 +398,7 @@ export default function Home() {
         },
         {
           id: 'switch-1',
-          type: 'switch',
+          type: 'switchL2',
           name: 'SWITCH-1',
           x: 200,
           y: 50,
@@ -417,7 +420,7 @@ export default function Home() {
     setTopologyDevices((prev) => {
       const current = prev.find(d => d.id === deviceId);
       const nextStatus: 'online' | 'offline' = current?.status === 'offline' ? 'online' : 'offline';
-      window.dispatchEvent(new CustomEvent('trigger-topology-toggle-power', { detail: { deviceId, nextStatus } }));
+      window.dispatchEvent(new CustomEvent('trigger-topology-toggle-power', { detail: { deviceId, nextStatus, switchModel: current?.switchModel } }));
 
       const nextDevices = prev.map((d) => (d.id === deviceId ? { ...d, status: nextStatus } : d));
       const byId = new Map(nextDevices.map(d => [d.id, d] as const));
@@ -440,7 +443,7 @@ export default function Home() {
     connected: true,
     cableType: 'straight',
     sourceDevice: 'pc',
-    targetDevice: 'switch',
+    targetDevice: 'switchL2',
   });
 
   // Initial App Loading State
@@ -449,7 +452,7 @@ export default function Home() {
   // Device manager hook moved to top
 
   const [topologyKey, setTopologyKey] = useState(0);
-  const [selectedDevice, setSelectedDevice] = useState<'pc' | 'switch' | 'router' | null>(null);
+  const [selectedDevice, setSelectedDevice] = useState<DeviceType | null>(null);
   const [showPCPanel, setShowPCPanel] = useState(false);
   const [showPCDeviceId, setShowPCDeviceId] = useState<string>('pc-1');
 
@@ -464,7 +467,7 @@ export default function Home() {
     pcHistories: new Map(pcHistories || []),
     cableInfo: { ...cableInfo },
     activeDeviceId: activeDeviceId || '',
-    activeDeviceType: activeDeviceType || 'switch',
+    activeDeviceType: activeDeviceType || 'switchL2',
     zoom,
     pan: { ...pan },
     activeTab
@@ -614,7 +617,8 @@ export default function Home() {
   // Legacy state for compatibility with other panels (uses active device's state)
   const state = useMemo(() => {
     const activeDevice = (topologyDevices || []).find(d => d.id === activeDeviceId);
-    return getOrCreateDeviceState(activeDeviceId, activeDeviceType, activeDevice?.name, activeDevice?.macAddress, activeDevice?.switchModel);
+    const resolvedType = activeDevice?.type ?? activeDeviceType;
+    return getOrCreateDeviceState(activeDeviceId, resolvedType, activeDevice?.name, activeDevice?.macAddress, activeDevice?.switchModel);
   }, [activeDeviceId, activeDeviceType, topologyDevices, deviceStates, getOrCreateDeviceState]);
   const output = activeTab === 'topology' ? [] : getOrCreateDeviceOutputs(activeDeviceId);
 
@@ -698,6 +702,12 @@ export default function Home() {
   const [onboardingStep, setOnboardingStep] = useState(0);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const modalHistoryPushedRef = useRef(false);
+
+  const normalizeDeviceType = useCallback((type: string): DeviceType => {
+    if (type === 'switch') return 'switchL2';
+    if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'router') return type;
+    return 'pc';
+  }, []);
 
   // Persistence: Save to localStorage
   useEffect(() => {
@@ -797,7 +807,11 @@ export default function Home() {
 
       // Load topology
       if (projectData.topology) {
-        setTopologyDevices(projectData.topology.devices || []);
+        const normalizedDevices = (projectData.topology.devices || []).map((device: CanvasDevice) => ({
+          ...device,
+          type: normalizeDeviceType(device.type),
+        }));
+        setTopologyDevices(normalizedDevices);
         setTopologyConnections(projectData.topology.connections || []);
         setTopologyNotes(projectData.topology.notes || []);
         if (projectData.topology.zoom) setZoom(projectData.topology.zoom);
@@ -806,7 +820,11 @@ export default function Home() {
 
       // Load cable info
       if (projectData.cableInfo) {
-        setCableInfo(projectData.cableInfo);
+        setCableInfo({
+          ...projectData.cableInfo,
+          sourceDevice: normalizeDeviceType(projectData.cableInfo.sourceDevice),
+          targetDevice: normalizeDeviceType(projectData.cableInfo.targetDevice),
+        });
       }
 
       // Load active device
@@ -814,7 +832,7 @@ export default function Home() {
         setActiveDeviceId(projectData.activeDeviceId);
       }
       if (projectData.activeDeviceType) {
-        setActiveDeviceType(projectData.activeDeviceType);
+        setActiveDeviceType(normalizeDeviceType(projectData.activeDeviceType));
       }
 
       // Load active tab
@@ -828,16 +846,25 @@ export default function Home() {
 
       // Reset history with the loaded state
       resetHistory({
-        topologyDevices: projectData.topology?.devices || [],
+        topologyDevices: (projectData.topology?.devices || []).map((device: CanvasDevice) => ({
+          ...device,
+          type: normalizeDeviceType(device.type),
+        })),
         topologyConnections: projectData.topology?.connections || [],
         topologyNotes: projectData.topology?.notes || [],
         deviceStates: new Map(projectData.devices?.map((item: any) => [item.id, item.state]) || []),
         deviceOutputs: new Map(projectData.deviceOutputs?.map((item: any) => [item.id, item.outputs]) || []),
         pcOutputs: new Map(projectData.pcOutputs?.map((item: any) => [item.id, item.outputs]) || []),
         pcHistories: new Map(projectData.pcHistories?.map((item: any) => [item.id, item.history]) || []),
-        cableInfo: projectData.cableInfo || { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switch' },
+        cableInfo: projectData.cableInfo
+          ? {
+            ...projectData.cableInfo,
+            sourceDevice: normalizeDeviceType(projectData.cableInfo.sourceDevice),
+            targetDevice: normalizeDeviceType(projectData.cableInfo.targetDevice),
+          }
+          : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
         activeDeviceId: projectData.activeDeviceId || 'switch-1',
-        activeDeviceType: projectData.activeDeviceType || 'switch',
+        activeDeviceType: normalizeDeviceType(projectData.activeDeviceType || 'switchL2'),
         zoom: projectData.zoom || 1.0,
         pan: projectData.pan || { x: 0, y: 0 },
         activeTab: projectData.activeTab || 'topology'
@@ -853,7 +880,7 @@ export default function Home() {
       });
       return false;
     }
-  }, [setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setCableInfo, setActiveDeviceId, setActiveDeviceType, setActiveTab, setTopologyKey, setHasUnsavedChanges, resetHistory, toast, setZoom, setPan, language]);
+  }, [setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setCableInfo, setActiveDeviceId, setActiveDeviceType, setActiveTab, setTopologyKey, setHasUnsavedChanges, resetHistory, toast, setZoom, setPan, language, normalizeDeviceType]);
 
   // Persistence: Load from localStorage on mount
   useEffect(() => {
@@ -895,7 +922,7 @@ export default function Home() {
       // Current tab is not supported by new device type
       if (activeDeviceType === 'pc') {
         setActiveTabWithHistory('cmd');
-      } else if (activeDeviceType === 'switch' || activeDeviceType === 'router') {
+      } else if (isSwitchDeviceType(activeDeviceType) || activeDeviceType === 'router') {
         setActiveTabWithHistory('terminal');
       } else {
         setActiveTabWithHistory('topology');
@@ -970,30 +997,29 @@ export default function Home() {
     setActiveTab(isCompatible ? tabId : 'topology');
   }, [activeDeviceId, activeDeviceType, topologyDevices, setActiveTab]);
 
-  const applyDeviceSelection = useCallback((device: 'pc' | 'switch' | 'router', deviceId?: string, switchModel?: string) => {
+  const applyDeviceSelection = useCallback((device: DeviceType, deviceId?: string, switchModel?: string) => {
     setSelectedDevice(device);
     if (!deviceId) return;
 
-    const actualDeviceType = deviceId.includes('router') ? 'router' : deviceId.includes('pc') ? 'pc' : 'switch';
     setActiveDeviceId(deviceId);
-    setActiveDeviceType(actualDeviceType);
+    setActiveDeviceType(device);
 
-    if (actualDeviceType !== 'pc') {
+    if (device !== 'pc') {
       const deviceObj = topologyDevices?.find(d => d.id === deviceId);
       // Use the passed switchModel or fall back to deviceObj's switchModel
       const modelToUse = switchModel || deviceObj?.switchModel;
-      getOrCreateDeviceState(deviceId, actualDeviceType, deviceObj?.name, deviceObj?.macAddress, modelToUse);
+      getOrCreateDeviceState(deviceId, device, deviceObj?.name, deviceObj?.macAddress, modelToUse);
       getOrCreateDeviceOutputs(deviceId);
     }
   }, [getOrCreateDeviceState, getOrCreateDeviceOutputs, topologyDevices, setSelectedDevice, setActiveDeviceId, setActiveDeviceType]);
 
   // Topology canvas click: selects device only (no zoom/pan).
-  const handleDeviceSelectFromCanvas = useCallback((device: 'pc' | 'switch' | 'router', deviceId?: string, switchModel?: string) => {
+  const handleDeviceSelectFromCanvas = useCallback((device: DeviceType, deviceId?: string, switchModel?: string) => {
     applyDeviceSelection(device, deviceId, switchModel);
   }, [applyDeviceSelection]);
 
   // Device dropdown/menu click: focus the selected device at 100% zoom.
-  const handleDeviceSelectFromMenu = useCallback((device: 'pc' | 'switch' | 'router', deviceId?: string, switchModel?: string) => {
+  const handleDeviceSelectFromMenu = useCallback((device: DeviceType, deviceId?: string, switchModel?: string) => {
     applyDeviceSelection(device, deviceId, switchModel);
     if (!deviceId) return;
 
@@ -1077,23 +1103,18 @@ export default function Home() {
   }, []);
 
   // Handle device double click (Open terminal or PC panel)
-  const handleDeviceDoubleClick = useCallback((device: 'pc' | 'switch' | 'router', deviceId: string) => {
-    // Determine actual device type
-    const actualDeviceType = deviceId.includes('router') ? 'router' : deviceId.includes('pc') ? 'pc' : 'switch';
-
-    if (actualDeviceType === 'pc') {
+  const handleDeviceDoubleClick = useCallback((device: DeviceType, deviceId: string) => {
+    if (device === 'pc') {
       // PC - open CMD tab directly
       setDeviceTabWithHistory('cmd', deviceId, 'pc');
       setShowPCDeviceId(deviceId);
     } else {
       // Switch or Router - set as CLI device and switch to terminal
-      const actualType = actualDeviceType as 'switch' | 'router';
-
       const deviceObj = topologyDevices?.find(d => d.id === deviceId);
-      getOrCreateDeviceState(deviceId, actualType, deviceObj?.name, deviceObj?.macAddress, deviceObj?.switchModel);
+      getOrCreateDeviceState(deviceId, device, deviceObj?.name, deviceObj?.macAddress, deviceObj?.switchModel);
       getOrCreateDeviceOutputs(deviceId);
 
-      setDeviceTabWithHistory('terminal', deviceId, actualType);
+      setDeviceTabWithHistory('terminal', deviceId, device);
     }
   }, [getOrCreateDeviceState, getOrCreateDeviceOutputs, topologyDevices, setDeviceTabWithHistory, setShowPCDeviceId]);
 
@@ -1241,11 +1262,11 @@ export default function Home() {
         if (currentDevices.length > 0) {
           const nextDevice = currentDevices[0];
           setActiveDeviceId(nextDevice.id);
-          setActiveDeviceType(nextDevice.type as 'pc' | 'switch' | 'router');
+          setActiveDeviceType(nextDevice.type as DeviceType);
           setActiveTab('topology');
         } else {
           setActiveDeviceId('');
-          setActiveDeviceType('switch');
+          setActiveDeviceType('switchL2');
           setActiveTab('topology');
         }
         return prev;
@@ -1355,13 +1376,14 @@ export default function Home() {
       },
       {
         id: 'switch-1',
-        type: 'switch',
+        type: 'switchL2',
         name: 'SWITCH-1',
         x: 200,
         y: 50,
         macAddress: '0011.2233.4401',
         ip: '',
         status: 'online',
+        switchModel: 'WS-C2960-24TT-L',
         ports: [
           { id: 'console', label: 'Console', status: 'disconnected' as const },
           ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' as const })),
@@ -1386,7 +1408,7 @@ export default function Home() {
 
     // Reset active selections
     setActiveDeviceId('switch-1');
-    setActiveDeviceType('switch');
+    setActiveDeviceType('switchL2');
     setSelectedDevice(null);
     setShowPCPanel(false);
 
@@ -1416,13 +1438,14 @@ export default function Home() {
         },
         {
           id: 'switch-1',
-          type: 'switch',
+          type: 'switchL2',
           name: 'SWITCH-1',
           x: 200,
           y: 50,
           macAddress: '0011.2233.4401',
           ip: '',
           status: 'online',
+          switchModel: 'WS-C2960-24TT-L',
           ports: [
             { id: 'console', label: 'Console', status: 'disconnected' as const },
             ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' as const })),
@@ -1437,9 +1460,9 @@ export default function Home() {
       deviceOutputs: new Map(),
       pcOutputs: new Map(),
       pcHistories: new Map(),
-      cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switch' },
+      cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
       activeDeviceId: 'switch-1',
-      activeDeviceType: 'switch',
+      activeDeviceType: 'switchL2',
       zoom: 1.0,
       pan: { x: 0, y: 0 },
       activeTab: 'topology'
@@ -1556,7 +1579,7 @@ export default function Home() {
         if (state.tab === 'cmd' || state.tab === 'terminal') {
           if (state.deviceId) {
             setActiveDeviceId(state.deviceId);
-            setActiveDeviceType(state.deviceId.startsWith('pc') ? 'pc' : state.deviceId.startsWith('router') ? 'router' : 'switch');
+            setActiveDeviceType(state.deviceId.startsWith('pc') ? 'pc' : state.deviceId.startsWith('router') ? 'router' : 'switchL2');
           }
           setActiveTab(state.tab);
         } else {

@@ -105,7 +105,7 @@ describe('Topology Store', () => {
                     x: 200,
                     y: 200,
                     label: 'Device 2',
-                    type: 'switch',
+                    type: 'switchL2',
                 },
             ];
 
@@ -129,7 +129,7 @@ describe('Topology Store', () => {
                     x: 200,
                     y: 200,
                     label: 'Device 2',
-                    type: 'switch',
+                    type: 'switchL2',
                 },
             ];
 
@@ -238,7 +238,7 @@ describe('Topology Store', () => {
                     x: 200,
                     y: 200,
                     label: 'Device 2',
-                    type: 'switch',
+                    type: 'switchL2',
                 },
             ];
 
@@ -263,7 +263,7 @@ describe('Topology Store', () => {
                     x: 200,
                     y: 200,
                     label: 'Device 2',
-                    type: 'switch',
+                    type: 'switchL2',
                 },
             ];
 
@@ -355,7 +355,7 @@ describe('Topology Store', () => {
                     x: 500,
                     y: 500,
                     label: 'Device 2',
-                    type: 'switch',
+                    type: 'switchL2',
                 },
             ];
 
@@ -387,7 +387,7 @@ describe('Topology Store', () => {
                     x: 100,
                     y: 100,
                     label: 'Device 2',
-                    type: 'switch',
+                    type: 'switchL2',
                 },
                 {
                     id: 'node-3',

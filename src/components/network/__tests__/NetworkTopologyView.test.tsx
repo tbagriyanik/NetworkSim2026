@@ -202,7 +202,7 @@ function createBaseProps(overrides: Partial<NetworkTopologyViewMockProps> = {}):
     // Topology data
     devices: [
       { id: 'device-1', name: 'PC-1', type: 'pc', x: 100, y: 100, power: true },
-      { id: 'device-2', name: 'Switch-1', type: 'switch', x: 300, y: 100, power: true },
+      { id: 'device-2', name: 'Switch-1', type: 'switchL2', x: 300, y: 100, power: true },
     ],
     connections: [
       { id: 'conn-1', sourceDeviceId: 'device-1', sourcePort: 'eth0', targetDeviceId: 'device-2', targetPort: 'fa0/1', cableType: 'copper' },

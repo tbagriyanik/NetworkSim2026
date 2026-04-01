@@ -1,12 +1,13 @@
 'use client';
 
 import { SwitchState } from '@/lib/network/types';
+import type { DeviceType } from './networkTopology.types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface AppFooterProps {
   state: SwitchState;
-  selectedDevice: 'pc' | 'switch' | null;
+  selectedDevice: DeviceType | null;
   activeDeviceId: string;
   activeDeviceName?: string;
   isDark: boolean;

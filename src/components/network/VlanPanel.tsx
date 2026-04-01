@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Translations } from '@/contexts/LanguageContext';
 import { Layers, Trash2 } from 'lucide-react';
 import { vlanTasks, getTaskStatus } from '@/lib/network/taskDefinitions';
+import type { DeviceType } from './networkTopology.types';
 
 interface VlanPanelProps {
   vlans: Record<number, Vlan>;
@@ -22,7 +23,7 @@ interface VlanPanelProps {
   onExecuteCommand: (command: string) => Promise<void>;
   t: Translations;
   theme: string;
-  activeDeviceType?: 'pc' | 'switch' | 'router';
+  activeDeviceType?: DeviceType;
   isDevicePoweredOff?: boolean;
 }
 
