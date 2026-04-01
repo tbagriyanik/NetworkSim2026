@@ -29,7 +29,7 @@ const PCIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
 
 interface OutputLine {
   id: string;
-  type: 'command' | 'output' | 'error' | 'success' | 'prompt';
+  type: 'command' | 'output' | 'error' | 'success' | 'prompt' | 'html';
   content: string;
   prompt?: string;
 }
@@ -1008,16 +1008,33 @@ export function PCPanel({
         if (!target) {
           addLocalOutput('output', 'Usage: ping <target_name_or_address>');
         } else {
-          const result = checkConnectivity(deviceId, target, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en');
+          let targetIp = target;
+          let dnsResolved = false;
+
+          // If target is not an IP, try to resolve it via DNS
+          if (!isValidIpv4(target)) {
+            const dnsResult = resolveDomainWithDnsServices(target);
+            if (dnsResult) {
+              targetIp = dnsResult.address;
+              dnsResolved = true;
+            } else {
+              addLocalOutput('output', `Ping request could not find host ${target}. Please check the name and try again.`);
+              return;
+            }
+          }
+
+          const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en');
           if (result.success) {
             if (result.targetId) {
               window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
                 detail: { sourceId: deviceId, targetId: result.targetId }
               }));
             }
-            addLocalOutput('output', `Pinging ${target} with 32 bytes of data:\nReply from ${target}: bytes=32 time<1ms TTL=128\nReply from ${target}: bytes=32 time<1ms TTL=128\nReply from ${target}: bytes=32 time<1ms TTL=128\nReply from ${target}: bytes=32 time<1ms TTL=128\n\nPing statistics for ${target}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`);
+            const pingTargetDisplay = dnsResolved ? `${target} [${targetIp}]` : targetIp;
+            addLocalOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nReply from ${targetIp}: bytes=32 time<1ms TTL=128\nReply from ${targetIp}: bytes=32 time<1ms TTL=128\nReply from ${targetIp}: bytes=32 time<1ms TTL=128\nReply from ${targetIp}: bytes=32 time<1ms TTL=128\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`);
           } else {
-            addLocalOutput('output', `Pinging ${target} with 32 bytes of data:\nRequest timed out.\nRequest timed out.\nRequest timed out.\nRequest timed out.\n\nPing statistics for ${target}:\n    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)`);
+            const pingTargetDisplay = dnsResolved ? `${target} [${targetIp}]` : targetIp;
+            addLocalOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nRequest timed out.\nRequest timed out.\nRequest timed out.\nRequest timed out.\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)`);
           }
         }
       } else if (cmd === 'nslookup') {
@@ -1054,7 +1071,7 @@ export function PCPanel({
           if (!httpServer) {
             addLocalOutput('error', `HTTP service is unavailable for ${target}`);
           } else {
-            addLocalOutput('output', httpServer.services?.http?.content || 'Merhaba Dünya!');
+            addLocalOutput('html', httpServer.services?.http?.content || 'Merhaba Dünya!');
           }
         }
       } else if (cmd === 'telnet') {

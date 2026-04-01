@@ -1378,6 +1378,13 @@ export function NetworkTopology({
       onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
       // Focus canvas for keyboard navigation
       canvasRef.current?.focus();
+    } else {
+      // Toggle selection with Shift+Click
+      setSelectedDeviceIds(prev =>
+        prev.includes(device.id)
+          ? prev.filter(id => id !== device.id)
+          : [...prev, device.id]
+      );
     }
   }, [onDeviceSelect, pingMode, pingSource, devices, connections, deviceStates]);
 
