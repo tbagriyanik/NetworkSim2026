@@ -776,8 +776,8 @@ export function NetworkTopology({
       const cursorX = rect.width / 2;
       const cursorY = rect.height / 2;
       setPan(prevPan => ({
-        x: cursorX - (cursorX - prevPan.x) * (newZoom / zoom),
-        y: cursorY - (cursorY - prevPan.y) * (newZoom / zoom)
+        x: cursorX - (cursorX - prevPan.x) * (newZoom / zoomRef.current),
+        y: cursorY - (cursorY - prevPan.y) * (newZoom / zoomRef.current)
       }));
       setZoom(newZoom);
     };
