@@ -244,6 +244,13 @@ export function NetworkTopology({
   const [snapToGrid, setSnapToGrid] = useState(true); // Snap-to-grid toggle
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  // Ping mode state
+  const [pingMode, setPingMode] = useState(false);
+  const [pingSource, setPingSource] = useState<CanvasDevice | null>(null);
+  const [pingResult, setPingResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [pingCursorPos, setPingCursorPos] = useState<{ x: number; y: number } | null>(null);
+  const startPingAnimationRef = useRef<((sourceId: string, targetId: string) => void) | null>(null);
+
   // Zoom mouse drag state
   const [isDraggingZoom, setIsDraggingZoom] = useState(false);
   const [zoomDragStart, setZoomDragStart] = useState({ x: 0, zoom: 0 });
@@ -531,7 +538,6 @@ export function NetworkTopology({
   const [lastTouchCenter, setLastTouchCenter] = useState<{ x: number; y: number } | null>(null);
 
   // Ping and port selector state
-  const [pingSource, setPingSource] = useState<string | null>(null);
   const [showPortSelector, setShowPortSelector] = useState(false);
   const [portSelectorStep, setPortSelectorStep] = useState<'source' | 'target'>('source');
   const [selectedSourcePort, setSelectedSourcePort] = useState<{ deviceId: string; portId: string } | null>(null);
@@ -928,6 +934,13 @@ export function NetworkTopology({
       e.preventDefault();
       openContextMenu(e.clientX, e.clientY, null, 'canvas');
     } else if (e.button === 0 && !(e.target as HTMLElement).closest('[data-device-id]')) {
+      // Cancel ping mode on empty canvas click
+      if (pingMode) {
+        setPingMode(false);
+        setPingSource(null);
+        setPingResult(null);
+        return;
+      }
       const currentPan = panRef.current;
       const ps = { x: e.clientX - currentPan.x, y: e.clientY - currentPan.y };
       setPanStart(ps);
@@ -937,7 +950,7 @@ export function NetworkTopology({
       setContextMenu(null);
       setSelectAllMode(false);
     }
-  }, [openContextMenu]);
+  }, [openContextMenu, pingMode]);
 
   // Keep refs in sync with state on every render (no cost - just ref assignment)
   isPanningRef.current = isPanning;
@@ -1342,6 +1355,24 @@ export function NetworkTopology({
     // Don't handle click if we were dragging (check ref to avoid stale closure)
     if (wasDraggingRef.current) return;
 
+    // Ping mode: select source then target
+    if (pingMode) {
+      if (!pingSource) {
+        // First click: select source
+        setPingSource(device);
+        setPingResult(null);
+      } else {
+        // Second click: run ping immediately
+        if (device.id === pingSource.id) return; // same device, ignore
+        // Exit ping mode immediately, then run animation
+        setPingMode(false);
+        setPingSource(null);
+        // Trigger full ping animation (includes connectivity check + toast)
+        startPingAnimationRef.current?.(pingSource.id, device.id);
+      }
+      return;
+    }
+
     if (!e.shiftKey) {
       setSelectedDeviceIds([device.id]);
       // Notify parent component - select device, don't open terminal
@@ -1349,7 +1380,7 @@ export function NetworkTopology({
       // Focus canvas for keyboard navigation
       canvasRef.current?.focus();
     }
-  }, [onDeviceSelect]);
+  }, [onDeviceSelect, pingMode, pingSource, devices, connections, deviceStates]);
 
   // Handle device double click - open terminal
   const handleDeviceDoubleClick = useCallback((device: CanvasDevice) => {
@@ -2646,6 +2677,12 @@ export function NetworkTopology({
       // ESC to close context menu
       if (key === 'escape') {
         setContextMenu(null);
+        // Cancel ping mode
+        if (pingMode) {
+          setPingMode(false);
+          setPingSource(null);
+          setPingResult(null);
+        }
         // Also cancel drawing connection
         if (isDrawingConnection) {
           setIsDrawingConnection(false);
@@ -2737,7 +2774,7 @@ export function NetworkTopology({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('close-menus-broadcast', handleCloseBroadcast);
     };
-  }, [selectedDeviceIds, selectedNoteIds, deleteDevice, deleteNote, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, showPortSelector, toggleFullscreen, isFullscreen, resetView]);
+  }, [selectedDeviceIds, selectedNoteIds, deleteDevice, deleteNote, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, pingMode, showPortSelector, toggleFullscreen, isFullscreen, resetView]);
 
   // Find path between devices using BFS
   const findPath = useCallback((sourceId: string, targetId: string): string[] | null => {
@@ -2856,7 +2893,7 @@ export function NetworkTopology({
         details: errorMessage
       });
 
-      setTimeout(() => setPingAnimation(null), 3000);
+      setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000);
       return;
     }
 
@@ -2887,7 +2924,7 @@ export function NetworkTopology({
         details: errorMessage
       });
 
-      setTimeout(() => setPingAnimation(null), 3000);
+      setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000);
       return;
     }
 
@@ -2914,7 +2951,7 @@ export function NetworkTopology({
         details: 'Fiziksel bağlantı yok'
       });
 
-      setTimeout(() => setPingAnimation(null), 3000);
+      setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000);
       return;
     }
 
@@ -2992,13 +3029,16 @@ export function NetworkTopology({
               hopCount: prev.hopCount + currentSegmentHopCountIncrement // Update hopCount with increment from last segment
             };
           });
-          setTimeout(() => setPingAnimation(null), 3000); // Clear animation after delay
+          setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000); // Clear animation after delay
         }
       }
     };
 
     pingAnimationRef.current = requestAnimationFrame(animate);
   }, [connections, deviceStates, devices, findPath]);
+
+  // Keep ref in sync so handleDeviceClick can call it before declaration order
+  startPingAnimationRef.current = startPingAnimation;
 
   // Listen for global ping animation trigger
   useEffect(() => {
@@ -4353,6 +4393,34 @@ export function NetworkTopology({
               <span className="sm:hidden">{language === 'tr' ? 'Bağla' : 'Connect'}</span>
             </button>
 
+            {/* Ping Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => {
+                    setPingMode(m => !m);
+                    setPingSource(null);
+                    setPingResult(null);
+                  }}
+                  className={`cursor-pointer hidden md:flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition-all ${pingMode
+                    ? (isDark ? 'bg-yellow-500 hover:bg-yellow-600 text-white ring-2 ring-yellow-400' : 'bg-yellow-400 hover:bg-yellow-500 text-white ring-2 ring-yellow-300')
+                    : (isDark ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-indigo-500 hover:bg-indigo-600 text-white')
+                    }`}
+                >
+                  {/* Envelope/letter icon for ping */}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span className="hidden sm:inline">Ping</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {pingMode
+                  ? (language === 'tr' ? 'Ping modundan çık (ESC)' : 'Exit ping mode (ESC)')
+                  : (language === 'tr' ? 'Ping: Kaynak → Hedef seç' : 'Ping: Select source → target')}
+              </TooltipContent>
+            </Tooltip>
+
             {/* Add Note Button */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -4495,6 +4563,26 @@ export function NetworkTopology({
             </SheetContent>
           </Sheet>
           {/* Multiple Selection Indicator & Tools */}
+          {/* Ping mode cursor label */}
+          {pingMode && pingCursorPos && (
+            <div
+              className="fixed z-[200] pointer-events-none select-none"
+              style={{ left: pingCursorPos.x + 16, top: pingCursorPos.y + 16 }}
+            >
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-lg ${pingSource
+                ? (isDark ? 'bg-yellow-500 text-white' : 'bg-yellow-400 text-white')
+                : (isDark ? 'bg-indigo-600 text-white' : 'bg-indigo-500 text-white')
+                }`}>
+                <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                {pingSource
+                  ? (language === 'tr' ? `Hedef seç` : `Select target`)
+                  : (language === 'tr' ? 'Kaynak seç' : 'Select source')
+                }
+              </div>
+            </div>
+          )}
           {selectedDeviceIds.length > 1 && (
             <div className={`absolute top-2 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-xl shadow-2xl flex items-center gap-4 ${isDark ? 'bg-slate-800/95 text-white border border-slate-700' : 'bg-white text-slate-900 border border-slate-200'
               } backdrop-blur-md`}>
@@ -4573,7 +4661,7 @@ export function NetworkTopology({
           {/* Canvas */}
           <div
             ref={canvasRef}
-            className="w-full h-full flex-1 min-h-[500px] overflow-hidden cursor-grab active:cursor-grabbing relative touch-none select-none print:overflow-visible print:h-auto print:min-h-full topology-print-area"
+            className={`w-full h-full flex-1 min-h-[500px] overflow-hidden relative touch-none select-none print:overflow-visible print:h-auto print:min-h-full topology-print-area ${pingMode ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}
             role="application"
             aria-label={language === 'tr' ? 'Ağ topolojisi tuvali. Cihazları sürükleyerek taşıyabilirsiniz.' : 'Network topology canvas. You can drag devices to move them.'}
             tabIndex={0}
@@ -4581,6 +4669,10 @@ export function NetworkTopology({
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            onMouseMove={(e) => {
+              if (pingMode) setPingCursorPos({ x: e.clientX, y: e.clientY });
+            }}
+            onMouseLeave={() => setPingCursorPos(null)}
             onClick={() => {
               canvasRef.current?.focus();
               if (isDrawingConnection) {
@@ -4769,7 +4861,7 @@ export function NetworkTopology({
                       <DeviceNode
                         key={device.id}
                         device={device}
-                        isSelected={selectedDeviceIds.includes(device.id)}
+                        isSelected={selectedDeviceIds.includes(device.id) || (pingMode && pingSource?.id === device.id)}
                         isDragging={isCurrentlyDragging}
                         isActive={activeDeviceId === device.id}
                         isDark={isDark}
@@ -5531,7 +5623,14 @@ export function NetworkTopology({
             setTimeout(() => configInputRef.current?.focus(), 0);
           }
         }}
-        onStartPing={(id) => setPingSource(id)}
+        onStartPing={(id) => {
+          const device = devices.find(d => d.id === id);
+          if (device) {
+            setPingMode(true);
+            setPingSource(device);
+            setPingResult(null);
+          }
+        }}
         onTogglePowerDevices={(ids) => { saveToHistory(); togglePowerDevices(ids); }}
         onSaveToHistory={() => saveToHistory()}
         onClearDeviceSelection={() => setSelectedDeviceIds([])}
@@ -5694,47 +5793,6 @@ export function NetworkTopology({
               </div>
 
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Ping Target Selection Overlay */}
-      {pingSource && (
-        <div className="fixed inset-0 z-40 bg-transparent flex items-center justify-center" onClick={() => setPingSource(null)}>
-          <div
-            className={`${isDark ? 'bg-slate-800' : 'bg-white'} rounded-xl p-4 m-4 max-w-sm shadow-2xl shadow-black/20`}
-            onClick={e => e.stopPropagation()}
-          >
-            <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              {language === 'tr' ? 'Ping Hedefi Seçin' : 'Select Ping Target'}
-            </h3>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {devices.filter(d => d.id !== pingSource).map(device => (
-                <button
-                  key={device.id}
-                  onClick={() => {
-                    startPingAnimation(pingSource, device.id);
-                    setPingSource(null);
-                  }}
-                  className={`w-full px-3 py-2 rounded-lg text-sm text-left flex items-center gap-2 ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                    }`}
-                >
-                  <span className={`w-2 h-2 rounded-full ${device.type === 'pc' ? 'bg-blue-500' : device.type === 'router' ? 'bg-purple-500' : 'bg-emerald-500'}`} />
-                  {device.name}
-                </button>
-              ))}
-              {devices.filter(d => d.id !== pingSource).length === 0 && (
-                <p className={`text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                  {language === 'tr' ? 'Başka cihaz yok' : 'No other devices'}
-                </p>
-              )}
-            </div>
-            <button
-              onClick={() => setPingSource(null)}
-              className={`mt-3 w-full py-2 rounded-lg text-sm ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}
-            >
-              {language === 'tr' ? 'İptal' : 'Cancel'}
-            </button>
           </div>
         </div>
       )}
