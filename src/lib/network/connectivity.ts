@@ -3,6 +3,190 @@ import { CableInfo, SwitchState, isCableCompatible } from './types';
 import { findRoute, ipToNumber, getRoutingTable } from './routing';
 
 /**
+ * Check if a hostname is an external domain (not in local network)
+ */
+function isExternalDomain(hostname: string, devices: CanvasDevice[], deviceStates?: Map<string, SwitchState>): boolean {
+  // Clean hostname
+  const cleanHostname = hostname.toLowerCase().replace(/^www\./, '');
+  
+  // Check if it's an IP address (not external)
+  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (ipRegex.test(cleanHostname)) {
+    return false;
+  }
+  
+  // Check if it matches any local device name
+  for (const device of devices) {
+    const deviceName = device.name?.toLowerCase();
+    if (deviceName === cleanHostname) {
+      return false;
+    }
+  }
+  
+  // Check if it matches any configured hostname
+  if (deviceStates) {
+    for (const [deviceId, state] of deviceStates.entries()) {
+      const deviceHostname = state.hostname?.toLowerCase();
+      if (deviceHostname === cleanHostname) {
+        return false;
+      }
+    }
+  }
+  
+  // Check if it's a known external domain (has dots and not local)
+  if (cleanHostname.includes('.')) {
+    const parts = cleanHostname.split('.');
+    if (parts.length >= 2) {
+      const tld = parts[parts.length - 1];
+      // Common TLDs indicate external domains
+      const commonTlds = ['com', 'org', 'net', 'edu', 'gov', 'mil', 'int', 'io', 'co', 'us', 'uk', 'de', 'fr', 'jp', 'cn', 'au', 'ca'];
+      return commonTlds.includes(tld);
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * Simulate external DNS lookup for domain names
+ * Generates consistent IP addresses for known domains
+ */
+function simulateDnsLookup(hostname: string): string | null {
+  // Clean hostname
+  const cleanHostname = hostname.toLowerCase().replace(/^www\./, '');
+  
+  // Known domain mappings (simulated DNS records)
+  const knownDomains: Record<string, string> = {
+    'google.com': '142.250.185.78',
+    'github.com': '140.82.112.4',
+    'microsoft.com': '20.112.52.29',
+    'amazon.com': '52.94.236.248',
+    'facebook.com': '157.240.229.35',
+    'twitter.com': '104.244.42.1',
+    'linkedin.com': '108.174.10.10',
+    'youtube.com': '142.250.185.14',
+    'instagram.com': '157.240.229.174',
+    'wikipedia.org': '208.80.154.224',
+    'stackoverflow.com': '151.101.1.69',
+    'a10.com': '52.8.34.123', // Added for the specific case
+  };
+  
+  // Return known domain IP if exists
+  if (knownDomains[cleanHostname]) {
+    return knownDomains[cleanHostname];
+  }
+  
+  // Generate consistent pseudo-random IP for unknown domains
+  // This ensures the same domain always gets the same IP
+  let hash = 0;
+  for (let i = 0; i < cleanHostname.length; i++) {
+    const char = cleanHostname.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  // Generate IP from hash (ensuring valid public IP ranges)
+  const octet1 = Math.abs(hash % 224) + 1; // 1-224 (avoid multicast/reserved)
+  const octet2 = Math.abs((hash >> 8) % 256);
+  const octet3 = Math.abs((hash >> 16) % 256);
+  const octet4 = Math.abs((hash >> 24) % 256);
+  
+  // Avoid private IP ranges
+  if (octet1 === 10 || (octet1 === 192 && octet2 === 168) || (octet1 === 172 && octet2 >= 16 && octet2 <= 31)) {
+    return simulateDnsLookup(cleanHostname + '1'); // Recurse with slight variation
+  }
+  
+  return `${octet1}.${octet2}.${octet3}.${octet4}`;
+}
+
+/**
+ * Resolve hostname to IP address
+ * Checks device hostnames and domain names to find matching IP
+ * Falls back to external DNS lookup for unknown domains
+ */
+function resolveHostname(
+  hostname: string,
+  devices: CanvasDevice[],
+  deviceStates?: Map<string, SwitchState>
+): string | null {
+  // Clean hostname (remove www., convert to lowercase)
+  const cleanHostname = hostname.toLowerCase().replace(/^www\./, '');
+  
+  // 1. Check exact hostname matches against device names
+  for (const device of devices) {
+    const deviceName = device.name?.toLowerCase();
+    if (deviceName === cleanHostname && device.ip) {
+      return device.ip;
+    }
+  }
+  
+  // 2. Check against device hostnames in device states
+  if (deviceStates) {
+    for (const [deviceId, state] of deviceStates.entries()) {
+      const deviceHostname = state.hostname?.toLowerCase();
+      if (deviceHostname === cleanHostname) {
+        // Find the device and get its IP
+        const device = devices.find(d => d.id === deviceId);
+        if (device?.ip) return device.ip;
+        
+        // Check interfaces for IP if device IP is not set
+        for (const portId in state.ports) {
+          const port = state.ports[portId];
+          if (port.ipAddress) {
+            return port.ipAddress;
+          }
+        }
+      }
+    }
+  }
+  
+  // 3. Check domain name matches (hostname.domain.com)
+  const parts = cleanHostname.split('.');
+  if (parts.length > 1) {
+    const baseHostname = parts[0];
+    const domain = parts.slice(1).join('.');
+    
+    // Check devices with matching domain
+    if (deviceStates) {
+      for (const [deviceId, state] of deviceStates.entries()) {
+        const deviceDomain = state.domainName?.toLowerCase();
+        const deviceHostname = state.hostname?.toLowerCase();
+        
+        if (deviceDomain === domain && deviceHostname === baseHostname) {
+          const device = devices.find(d => d.id === deviceId);
+          if (device?.ip) return device.ip;
+          
+          // Check interfaces for IP
+          for (const portId in state.ports) {
+            const port = state.ports[portId];
+            if (port.ipAddress) {
+              return port.ipAddress;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // 4. Fallback: check if any device name contains the hostname as substring
+  for (const device of devices) {
+    const deviceName = device.name?.toLowerCase();
+    if (deviceName && deviceName.includes(cleanHostname) && device.ip) {
+      return device.ip;
+    }
+  }
+  
+  // 5. External DNS lookup for unknown domains
+  // This handles external domain names like a10.com, google.com, etc.
+  const externalIp = simulateDnsLookup(cleanHostname);
+  if (externalIp) {
+    return externalIp;
+  }
+  
+  return null;
+}
+
+/**
  * Robust Network connectivity checker for simulation
  * Checks if two devices can communicate based on:
  * 1. Physical connection (Topology)
@@ -54,21 +238,56 @@ export function checkConnectivity(
     }
   }
 
+  // 0. Resolve hostname to IP if necessary
+  let resolvedTargetIp = targetIp;
+  let isExternal = false;
+  
+  // Check if targetIp is a hostname (not an IP address)
+  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (!ipRegex.test(targetIp)) {
+    // Check if this is an external domain
+    isExternal = isExternalDomain(targetIp, devices, deviceStates);
+    
+    const resolvedIp = resolveHostname(targetIp, devices, deviceStates);
+    if (!resolvedIp) {
+      return { success: false, hops: [], hopIds: [], error: 'Request timed out.' };
+    }
+    resolvedTargetIp = resolvedIp;
+  }
+
+  // For external domains, simulate successful internet routing
+  if (isExternal) {
+    const sourceDevice = devices.find(d => d.id === sourceId);
+    if (sourceDevice) {
+      // Simulate internet routing path
+      const hops = ['Internet Gateway', 'ISP Router', 'External Network'];
+      const hopIds = [sourceId, 'internet-gateway', 'external-network'];
+      
+      return {
+        success: true,
+        hops,
+        hopIds,
+        targetId: 'external-domain',
+        error: undefined
+      };
+    }
+  }
+
   // 1. Find target device by IP
   // First check topology devices (PCs usually)
-  let targetDevice = devices.find(d => d.ip === targetIp);
+  let targetDevice = devices.find(d => d.ip === resolvedTargetIp);
 
   // Then check Switch/Router management/interface IPs if not found
   if (!targetDevice && deviceStates) {
     for (const [id, state] of deviceStates.entries()) {
       // Check management IP (SVI)
-      if (state.ports['vlan1']?.ipAddress === targetIp) {
+      if (state.ports['vlan1']?.ipAddress === resolvedTargetIp) {
         targetDevice = devices.find(d => d.id === id);
         break;
       }
       // Check physical interface IPs (for Routers)
       for (const portId in state.ports) {
-        if (state.ports[portId].ipAddress === targetIp) {
+        if (state.ports[portId].ipAddress === resolvedTargetIp) {
           targetDevice = devices.find(d => d.id === id);
           break;
         }
@@ -207,7 +426,7 @@ export function checkConnectivity(
   if (sourceDeviceForSubnet && targetDevice) {
     const sourceIp = sourceDeviceForSubnet.ip || '';
     const sourceSubnet = sourceDeviceForSubnet.subnet || '255.255.255.0';
-    const targetIp_check = targetIp;
+    const targetIp_check = resolvedTargetIp;
     
     // Resolve target subnet mask
     let targetSubnet = '255.255.255.0';
@@ -217,7 +436,7 @@ export function checkConnectivity(
       const state = deviceStates.get(targetDevice.id);
       if (state) {
         for (const pId in state.ports) {
-          if (state.ports[pId].ipAddress === targetIp) {
+          if (state.ports[pId].ipAddress === resolvedTargetIp) {
             targetSubnet = state.ports[pId].subnetMask || '255.255.255.0';
             break;
           }
@@ -382,7 +601,7 @@ export function checkConnectivity(
     }
     const sourceIp = resolvedSourceIp;
     const sourceVlan = sourceIp ? getDeviceVlanForIp(sourceId, sourceIp) : null;
-    const targetVlan = getDeviceVlanForIp(targetDevice.id, targetIp);
+    const targetVlan = getDeviceVlanForIp(targetDevice.id, resolvedTargetIp);
 
     // Skip VLAN enforcement for L3 routing scenarios
     const isSourceL3 = sourceVlan === null;
@@ -420,7 +639,7 @@ export function checkConnectivity(
     // Check if source has routing capability and a route to target
     if (sourceState?.ipRouting) {
       const sourceRoutes = getRoutingTable(sourceId, deviceStates);
-      const route = findRoute(targetIp, sourceRoutes);
+      const route = findRoute(resolvedTargetIp, sourceRoutes);
 
       if (route) {
         // Route found - allow communication through L3 routing
@@ -446,7 +665,7 @@ export function checkConnectivity(
         const srcDevice = devices.find(d => d.id === sourceId);
         const srcIp = srcDevice?.ip || deviceStates.get(sourceId)?.ports['vlan1']?.ipAddress || '';
         const sourceRoute = findRoute(srcIp, routes);
-        const targetRoute = findRoute(targetIp, routes);
+        const targetRoute = findRoute(resolvedTargetIp, routes);
 
         if (sourceRoute && targetRoute) {
           return {
@@ -532,13 +751,26 @@ export function getPingDiagnostics(
 ): { success: boolean; reasons: string[] } {
   const reasons: string[] = [];
   const sourceDevice = devices.find(d => d.id === sourceId);
-  let targetDevice = devices.find(d => d.ip === targetIp);
+  
+  // Resolve hostname to IP if necessary
+  let resolvedTargetIp = targetIp;
+  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (!ipRegex.test(targetIp)) {
+    const resolvedIp = resolveHostname(targetIp, devices, deviceStates);
+    if (!resolvedIp) {
+      reasons.push('Hostname could not be resolved');
+      return { success: false, reasons };
+    }
+    resolvedTargetIp = resolvedIp;
+  }
+  
+  let targetDevice = devices.find(d => d.ip === resolvedTargetIp);
   
   // Resolve target for routers/switches if not found in topology IPs
   if (!targetDevice && deviceStates) {
     for (const [id, state] of deviceStates.entries()) {
       for (const pId in state.ports) {
-        if (state.ports[pId].ipAddress === targetIp) {
+        if (state.ports[pId].ipAddress === resolvedTargetIp) {
           targetDevice = devices.find(d => d.id === id);
           break;
         }
@@ -588,7 +820,7 @@ export function getPingDiagnostics(
   }
 
   // 4. Check target has IP address
-  if (!targetIp) {
+  if (!resolvedTargetIp) {
     reasons.push('Hedef cihazın IP adresi yok');
     return { success: false, reasons };
   }
@@ -597,11 +829,11 @@ export function getPingDiagnostics(
   const sourceSubnet = sourceDevice.subnet || '255.255.255.0';
   const targetSubnet = targetDevice.subnet || '255.255.255.0';
 
-  const isSourceInSameSubnet = isIpInSubnet(sourceIp, targetIp, sourceSubnet);
-  const isTargetInSameSubnet = isIpInSubnet(targetIp, sourceIp, targetSubnet);
+  const isSourceInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);
+  const isTargetInSameSubnet = isIpInSubnet(resolvedTargetIp, sourceIp, targetSubnet);
 
   if (!isSourceInSameSubnet && !isTargetInSameSubnet) {
-    reasons.push(`Subnet uyumsuzluğu: Kaynak ${sourceIp}/${sourceSubnet}, Hedef ${targetIp}/${targetSubnet}. Router ile routing gerekli.`);
+    reasons.push(`Subnet uyumsuzluğu: Kaynak ${sourceIp}/${sourceSubnet}, Hedef ${resolvedTargetIp}/${targetSubnet}. Router ile routing gerekli.`);
     return { success: false, reasons };
   }
 
@@ -619,7 +851,7 @@ export function getPingDiagnostics(
   }
 
   // 7. Check physical connectivity
-  const result = checkConnectivity(sourceId, targetIp, devices, connections, deviceStates, language);
+  const result = checkConnectivity(sourceId, resolvedTargetIp, devices, connections, deviceStates, language);
   if (!result.success) {
     if (result.error) {
       reasons.push(result.error);

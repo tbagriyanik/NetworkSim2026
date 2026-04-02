@@ -6,6 +6,8 @@ import { checkConnectivity } from '../connectivity';
 export const privilegedHandlers: Record<string, CommandHandler> = {
     'ping': cmdPing,
     'telnet': cmdTelnet,
+    'traceroute': cmdTraceroute,
+    'tracert': cmdTracert,
     'write memory': cmdWriteMemory,
     'copy running-config startup-config': cmdCopyRunningStartup,
     'erase startup-config': cmdEraseStartupConfig,
@@ -291,4 +293,191 @@ function cmdDoPing(state: any, input: string, ctx: any): any {
 
     // Execute ping
     return cmdPing(state, pingCommand, ctx);
+}
+
+/**
+ * Traceroute - Trace route to destination (Unix/Linux style)
+ */
+function cmdTraceroute(state: any, input: string, ctx: any): any {
+    if (state.currentMode !== 'privileged') {
+        return { success: false, error: '% Invalid command at this mode' };
+    }
+
+    const match = input.match(/^traceroute\s+([0-9.]+|[\w.-]+)$/i);
+    if (!match) {
+        return { success: false, error: '% Invalid traceroute command. Use: traceroute <host>' };
+    }
+
+    const host = match[1];
+
+    if (ctx?.sourceDeviceId && Array.isArray(ctx.devices)) {
+        const connectivity = checkConnectivity(
+            ctx.sourceDeviceId,
+            host,
+            ctx.devices,
+            ctx.connections || [],
+            ctx.deviceStates,
+            ctx.language
+        );
+
+        if (connectivity.success) {
+            // Resolve hostname to show IP address
+            let resolvedIp = host;
+            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            if (!ipRegex.test(host)) {
+                // For external domains, we'll simulate the IP
+                const knownDomains: Record<string, string> = {
+                    'a10.com': '52.8.34.123',
+                    'google.com': '142.250.185.78',
+                    'github.com': '140.82.112.4',
+                    'microsoft.com': '20.112.52.29',
+                    'amazon.com': '52.94.236.248',
+                    'facebook.com': '157.240.229.35',
+                    'twitter.com': '104.244.42.1',
+                };
+                resolvedIp = knownDomains[host.toLowerCase()] || 'Unknown';
+            }
+
+            let output = `\nType escape sequence to abort.\n`;
+            output += `Tracing the route to ${host} (${resolvedIp})\n`;
+            
+            // Use the hops from connectivity result
+            if (connectivity.hops && connectivity.hops.length > 0) {
+                for (let i = 0; i < connectivity.hops.length; i++) {
+                    const hop = connectivity.hops[i];
+                    const hopTime = Math.floor(Math.random() * 20) + 1; // 1-20ms
+                    output += `  ${i + 1} ${hop} ${hopTime} ms ${hopTime} ms ${hopTime} ms\n`;
+                }
+            } else {
+                // Fallback hops
+                const hops = Math.floor(Math.random() * 3) + 2; // 2-4 hops
+                for (let i = 1; i <= hops; i++) {
+                    const hopTime = Math.floor(Math.random() * 20) + 1; // 1-20ms
+                    output += `  ${i} ${connectivity.targetId || '192.168.1.1'} ${hopTime} ms ${hopTime} ms ${hopTime} ms\n`;
+                }
+            }
+            
+            output += `\nTrace complete.\n`;
+            return { success: true, output, triggerPingAnimation: connectivity.targetId };
+        } else {
+            // For failed connections, still try to show resolved IP
+            let resolvedIp = host;
+            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            if (!ipRegex.test(host)) {
+                const knownDomains: Record<string, string> = {
+                    'a10.com': '52.8.34.123',
+                    'google.com': '142.250.185.78',
+                    'github.com': '140.82.112.4',
+                    'microsoft.com': '20.112.52.29',
+                    'amazon.com': '52.94.236.248',
+                    'facebook.com': '157.240.229.35',
+                    'twitter.com': '104.244.42.1',
+                };
+                resolvedIp = knownDomains[host.toLowerCase()] || 'Unknown';
+            }
+
+            return {
+                success: false,
+                output: `\nType escape sequence to abort.\nTracing the route to ${host} (${resolvedIp})\n`,
+                error: connectivity.error || `Destination host unreachable.`,
+            };
+        }
+    }
+
+    return { success: false, error: '% Traceroute requires network context' };
+}
+
+/**
+ * Tracert - Trace route to destination (Windows style)
+ */
+function cmdTracert(state: any, input: string, ctx: any): any {
+    if (state.currentMode !== 'privileged') {
+        return { success: false, error: '% Invalid command at this mode' };
+    }
+
+    const match = input.match(/^tracert\s+([0-9.]+|[\w.-]+)$/i);
+    if (!match) {
+        return { success: false, error: '% Invalid tracert command. Use: tracert <host>' };
+    }
+
+    const host = match[1];
+
+    if (ctx?.sourceDeviceId && Array.isArray(ctx.devices)) {
+        const connectivity = checkConnectivity(
+            ctx.sourceDeviceId,
+            host,
+            ctx.devices,
+            ctx.connections || [],
+            ctx.deviceStates,
+            ctx.language
+        );
+
+        if (connectivity.success) {
+            // Resolve hostname to show IP address
+            let resolvedIp = host;
+            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            if (!ipRegex.test(host)) {
+                // For external domains, we'll simulate the IP
+                const knownDomains: Record<string, string> = {
+                    'a10.com': '52.8.34.123',
+                    'google.com': '142.250.185.78',
+                    'github.com': '140.82.112.4',
+                    'microsoft.com': '20.112.52.29',
+                    'amazon.com': '52.94.236.248',
+                    'facebook.com': '157.240.229.35',
+                    'twitter.com': '104.244.42.1',
+                };
+                resolvedIp = knownDomains[host.toLowerCase()] || 'Unknown';
+            }
+
+            let output = `\nTracing route to ${host} [${resolvedIp}] over a maximum of 30 hops\n`;
+            
+            // Use the hops from connectivity result
+            if (connectivity.hops && connectivity.hops.length > 0) {
+                for (let i = 0; i < connectivity.hops.length; i++) {
+                    const hop = connectivity.hops[i];
+                    const hopTime1 = Math.floor(Math.random() * 20) + 1; // 1-20ms
+                    const hopTime2 = Math.floor(Math.random() * 20) + 1; // 1-20ms
+                    const hopTime3 = Math.floor(Math.random() * 20) + 1; // 1-20ms
+                    output += `  ${i + 1}    <1 ms    <1 ms    <1 ms ${hop}\n`;
+                }
+            } else {
+                // Fallback hops
+                const hops = Math.floor(Math.random() * 3) + 2; // 2-4 hops
+                for (let i = 1; i <= hops; i++) {
+                    const hopTime1 = Math.floor(Math.random() * 20) + 1; // 1-20ms
+                    const hopTime2 = Math.floor(Math.random() * 20) + 1; // 1-20ms
+                    const hopTime3 = Math.floor(Math.random() * 20) + 1; // 1-20ms
+                    output += `  ${i}    <1 ms    <1 ms    <1 ms ${connectivity.targetId || '192.168.1.1'}\n`;
+                }
+            }
+            
+            output += `\nTrace complete.\n`;
+            return { success: true, output, triggerPingAnimation: connectivity.targetId };
+        } else {
+            // For failed connections, still try to show resolved IP
+            let resolvedIp = host;
+            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            if (!ipRegex.test(host)) {
+                const knownDomains: Record<string, string> = {
+                    'a10.com': '52.8.34.123',
+                    'google.com': '142.250.185.78',
+                    'github.com': '140.82.112.4',
+                    'microsoft.com': '20.112.52.29',
+                    'amazon.com': '52.94.236.248',
+                    'facebook.com': '157.240.229.35',
+                    'twitter.com': '104.244.42.1',
+                };
+                resolvedIp = knownDomains[host.toLowerCase()] || 'Unknown';
+            }
+
+            return {
+                success: false,
+                output: `\nTracing route to ${host} [${resolvedIp}] over a maximum of 30 hops\n  1    *        *        *     Request timed out.\n`,
+                error: connectivity.error || `Request timed out.`,
+            };
+        }
+    }
+
+    return { success: false, error: '% Tracert requires network context' };
 }

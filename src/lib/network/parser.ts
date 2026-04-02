@@ -1493,7 +1493,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'do ping': {
-    pattern: /^do\s+ping\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
+    pattern: /^do\s+ping\s+([0-9.]+|[\w.-]+)$/i,
     modes: ['config', 'interface', 'config-if-range', 'line', 'vlan'],
     minArgs: 1,
     maxArgs: 1
@@ -1507,7 +1507,7 @@ const commandPatterns: Record<string, CommandPattern> = {
 
   // Ping
   'ping': {
-    pattern: /^ping\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(\s+(repeat\s+\d+|size\s+\d+|timeout\s+\d+))*$/i,
+    pattern: /^ping\s+([0-9.]+|[\w.-]+)(\s+(repeat\s+\d+|size\s+\d+|timeout\s+\d+))*$/i,
     modes: ['privileged'],
     minArgs: 1,
     maxArgs: 6
@@ -1515,7 +1515,15 @@ const commandPatterns: Record<string, CommandPattern> = {
 
   // Traceroute
   'traceroute': {
-    pattern: /^traceroute\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
+    pattern: /^traceroute\s+([0-9.]+|[\w.-]+)$/i,
+    modes: ['privileged'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+
+  // Tracert (Windows traceroute equivalent)
+  'tracert': {
+    pattern: /^tracert\s+([0-9.]+|[\w.-]+)$/i,
     modes: ['privileged'],
     minArgs: 1,
     maxArgs: 1
