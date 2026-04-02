@@ -6,7 +6,7 @@ A modern and interactive web-based Network simulator designed for students and n
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016%20|%20React%2019%20|%20TypeScript%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Commits](https://img.shields.io/badge/commits-350-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-45.2k-blueviolet)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-76.5k-blueviolet)
 
 ## ✨ Key Features
 
@@ -175,6 +175,13 @@ Theme selection is done from the theme selector in the top right corner.
 - **Node.js**: 18.0 or higher
 - **npm**: 9.0 or higher (or bun)
 - **Browser**: Modern browser (Chrome, Firefox, Safari, Edge)
+
+## 🔢 Code Metrics
+
+- Scope: `src/`
+- Source files: `242`
+- Total lines: `76,507`
+- Last updated: `2026-04-02`
 
 ## 🐛 Troubleshooting
 
