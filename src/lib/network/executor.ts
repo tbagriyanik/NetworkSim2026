@@ -1145,25 +1145,131 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
 
   let output = '';
 
-  // Display system bootstrap information first - like real device boot
-  const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900');
+  // Device type detection for realistic boot messages
+  const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900') || state.version.modelName.includes('1941');
   const isL3Switch = state.version.modelName.includes('3560');
-  
-  // Bootstrap version based on device type
-  const bootstrapVersion = isRouter ? '15.1(4)M4' : isL3Switch ? '12.2(55)SE' : '12.1(11r)EA1';
-  
-  // Memory configuration based on device type
-  const memoryConfig = isRouter ? 
-    `[${state.version.modelName}] platform with 524288K bytes of main memory\nMain memory configured to 64 bit mode with ECC disabled` :
-    isL3Switch ?
-    `[${state.version.modelName}] platform with 131072K bytes of main memory\nMain memory configured to 64 bit mode with ECC disabled` :
-    `[${state.version.modelName}] platform with 65536K bytes of main memory\nMain memory configured to 32 bit mode with ECC enabled`;
+  const isL2Switch = !isRouter && !isL3Switch;
 
-  const bootstrapText = language === 'tr' ? 
-    `System Bootstrap, Sürüm ${bootstrapVersion}, YAYIN YAZILIMI (fc1)\nTeknik Destek: http://yunus.sf.net\nTelif hakkı (c) 1986-2026 by Systems, Inc.\n${memoryConfig}\nLoading the runtime image: ######################################## [OK]` : 
-    `System Bootstrap, Version ${bootstrapVersion}, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n${memoryConfig}\nLoading the runtime image: ######################################## [OK]`;
-  
-  output += `${bootstrapText}\n`;
+  // Generate realistic boot messages based on device type
+  let bootMessages: string;
+
+  if (isRouter) {
+    // Cisco ISR Router boot sequence
+    const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
+    bootMessages = language === 'tr' ? 
+`System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1994-2011 by cisco Systems, Inc.
+ISR4451/K9 platform with 4096 K bytes of memory
+
+${syslog}
+Load/bootstrap symbols loaded, GOXR initialization
+Reading all bootflash vectors
+POST: CPU PCIe port Check PASS
+CPU memory test . . . . . . . . . . . . . OK
+Board initialization completed
+Initializing flash file system
+
+Booting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!
+Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
+  ######################################################################################################################################### [OK]
+  0 bytes remaining in flash device` :
+`System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1994-2011 by cisco Systems, Inc.
+ISR4451/K9 platform with 4096 K bytes of memory
+
+${syslog}
+Load/bootstrap symbols loaded, GOXR initialization
+Reading all bootflash vectors
+POST: CPU PCIe port Check PASS
+CPU memory test . . . . . . . . . . . . . OK
+Board initialization completed
+Initializing flash file system
+
+Booting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!
+Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
+  ######################################################################################################################################### [OK]
+  0 bytes remaining in flash device`;
+  } else if (isL3Switch) {
+    // Cisco 3560 L3 Switch boot sequence
+    const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
+    bootMessages = language === 'tr' ? 
+`System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1994-2011 by cisco Systems, Inc.
+C3560 platform with 131072 K bytes of memory
+
+${syslog}
+Load/bootstrap symbols loaded
+Reading all bootflash vectors
+POST: CPU PCIe port Check PASS
+CPU memory test . . . . . . . . . . . . . OK
+Board initialization completed
+Initializing flash file system
+
+Booting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!
+Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
+  ######################################################################################################################################### [OK]
+  0 bytes remaining in flash device` :
+`System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1994-2011 by cisco Systems, Inc.
+C3560 platform with 131072 K bytes of memory
+
+${syslog}
+Load/bootstrap symbols loaded
+Reading all bootflash vectors
+POST: CPU PCIe port Check PASS
+CPU memory test . . . . . . . . . . . . . OK
+Board initialization completed
+Initializing flash file system
+
+Booting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!
+Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
+  ######################################################################################################################################### [OK]
+  0 bytes remaining in flash device`;
+  } else {
+    // Cisco 2960 L2 Switch boot sequence
+    const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
+    bootMessages = language === 'tr' ? 
+`System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1994-2010 by cisco Systems, Inc.
+C2960 platform with 65536 K bytes of memory
+
+${syslog}
+Load/bootstrap symbols loaded
+Reading all bootflash vectors
+POST: CPU Ethernet port Check PASS
+CPU memory test . . . . . . . . . . . . . OK
+Board initialization completed
+Initializing flash file system
+
+Booting flash:c2960-lanbase-mz.152-2.E6.bin...OK!
+Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
+  ######################################################################################################################################### [OK]
+  0 bytes remaining in flash device` :
+`System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1994-2010 by cisco Systems, Inc.
+C2960 platform with 65536 K bytes of memory
+
+${syslog}
+Load/bootstrap symbols loaded
+Reading all bootflash vectors
+POST: CPU Ethernet port Check PASS
+CPU memory test . . . . . . . . . . . . . OK
+Board initialization completed
+Initializing flash file system
+
+Booting flash:c2960-lanbase-mz.152-2.E6.bin...OK!
+Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
+  ######################################################################################################################################### [OK]
+  0 bytes remaining in flash device`;
+  }
+
+  output += `${bootMessages}\n`;
 
   // Display banner MOTD next
   if (state.bannerMOTD) {
@@ -1202,25 +1308,131 @@ function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): Command
 
   let output = '';
 
-  // Display system bootstrap information first - like real device boot
-  const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900');
+  // Device type detection for realistic boot messages
+  const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900') || state.version.modelName.includes('1941');
   const isL3Switch = state.version.modelName.includes('3560');
-  
-  // Bootstrap version based on device type
-  const bootstrapVersion = isRouter ? '15.1(4)M4' : isL3Switch ? '12.2(55)SE' : '12.1(11r)EA1';
-  
-  // Memory configuration based on device type
-  const memoryConfig = isRouter ? 
-    `[${state.version.modelName}] platform with 524288K bytes of main memory\nMain memory configured to 64 bit mode with ECC disabled` :
-    isL3Switch ?
-    `[${state.version.modelName}] platform with 131072K bytes of main memory\nMain memory configured to 64 bit mode with ECC disabled` :
-    `[${state.version.modelName}] platform with 65536K bytes of main memory\nMain memory configured to 32 bit mode with ECC enabled`;
+  const isL2Switch = !isRouter && !isL3Switch;
 
-  const bootstrapText = language === 'tr' ? 
-    `System Bootstrap, Sürüm ${bootstrapVersion}, YAYIN YAZILIMI (fc1)\nTeknik Destek: http://yunus.sf.net\nTelif hakkı (c) 1986-2026 by Systems, Inc.\n${memoryConfig}\nLoading the runtime image: ######################################## [OK]` : 
-    `System Bootstrap, Version ${bootstrapVersion}, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1986-2026 by Systems, Inc.\n${memoryConfig}\nLoading the runtime image: ######################################## [OK]`;
-  
-  output += `${bootstrapText}\n`;
+  // Generate realistic boot messages based on device type
+  let bootMessages: string;
+
+  if (isRouter) {
+    // Cisco ISR Router boot sequence
+    const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
+    bootMessages = language === 'tr' ? 
+`System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1994-2011 by cisco Systems, Inc.
+ISR4451/K9 platform with 4096 K bytes of memory
+
+${syslog}
+Load/bootstrap symbols loaded, GOXR initialization
+Reading all bootflash vectors
+POST: CPU PCIe port Check PASS
+CPU memory test . . . . . . . . . . . . . OK
+Board initialization completed
+Initializing flash file system
+
+Booting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!
+Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
+  ######################################################################################################################################### [OK]
+  0 bytes remaining in flash device` :
+`System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1994-2011 by cisco Systems, Inc.
+ISR4451/K9 platform with 4096 K bytes of memory
+
+${syslog}
+Load/bootstrap symbols loaded, GOXR initialization
+Reading all bootflash vectors
+POST: CPU PCIe port Check PASS
+CPU memory test . . . . . . . . . . . . . OK
+Board initialization completed
+Initializing flash file system
+
+Booting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!
+Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
+  ######################################################################################################################################### [OK]
+  0 bytes remaining in flash device`;
+  } else if (isL3Switch) {
+    // Cisco 3560 L3 Switch boot sequence
+    const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
+    bootMessages = language === 'tr' ? 
+`System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1994-2011 by cisco Systems, Inc.
+C3560 platform with 131072 K bytes of memory
+
+${syslog}
+Load/bootstrap symbols loaded
+Reading all bootflash vectors
+POST: CPU PCIe port Check PASS
+CPU memory test . . . . . . . . . . . . . OK
+Board initialization completed
+Initializing flash file system
+
+Booting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!
+Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
+  ######################################################################################################################################### [OK]
+  0 bytes remaining in flash device` :
+`System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1994-2011 by cisco Systems, Inc.
+C3560 platform with 131072 K bytes of memory
+
+${syslog}
+Load/bootstrap symbols loaded
+Reading all bootflash vectors
+POST: CPU PCIe port Check PASS
+CPU memory test . . . . . . . . . . . . . OK
+Board initialization completed
+Initializing flash file system
+
+Booting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!
+Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
+  ######################################################################################################################################### [OK]
+  0 bytes remaining in flash device`;
+  } else {
+    // Cisco 2960 L2 Switch boot sequence
+    const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
+    bootMessages = language === 'tr' ? 
+`System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1994-2010 by cisco Systems, Inc.
+C2960 platform with 65536 K bytes of memory
+
+${syslog}
+Load/bootstrap symbols loaded
+Reading all bootflash vectors
+POST: CPU Ethernet port Check PASS
+CPU memory test . . . . . . . . . . . . . OK
+Board initialization completed
+Initializing flash file system
+
+Booting flash:c2960-lanbase-mz.152-2.E6.bin...OK!
+Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
+  ######################################################################################################################################### [OK]
+  0 bytes remaining in flash device` :
+`System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1994-2010 by cisco Systems, Inc.
+C2960 platform with 65536 K bytes of memory
+
+${syslog}
+Load/bootstrap symbols loaded
+Reading all bootflash vectors
+POST: CPU Ethernet port Check PASS
+CPU memory test . . . . . . . . . . . . . OK
+Board initialization completed
+Initializing flash file system
+
+Booting flash:c2960-lanbase-mz.152-2.E6.bin...OK!
+Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
+  ######################################################################################################################################### [OK]
+  0 bytes remaining in flash device`;
+  }
+
+  output += `${bootMessages}\n`;
 
   if (!needsLogin) {
     // Display banner MOTD for open access
