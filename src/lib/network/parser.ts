@@ -154,7 +154,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'ip default-gateway': {
-    pattern: /^ip\s+default-gateway\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
+    pattern: /^ip\s+default-gateway\s+([0-9.]+|[\w.-]+)$/i,
     modes: ['config', 'interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
@@ -417,7 +417,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'ntp server': {
-    pattern: /^ntp\s+server\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
+    pattern: /^ntp\s+server\s+([0-9.]+|[\w.-]+)$/i,
     modes: ['config'],
     minArgs: 1,
     maxArgs: 1
@@ -773,7 +773,7 @@ const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 0
   },
   'ip helper-address': {
-    pattern: /^ip\s+helper-address\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
+    pattern: /^ip\s+helper-address\s+([0-9.]+|[\w.-]+)$/i,
     modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
@@ -1531,7 +1531,7 @@ const commandPatterns: Record<string, CommandPattern> = {
 
   // Telnet
   'telnet': {
-    pattern: /^telnet\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(\s+(\d+))?$/i,
+    pattern: /^telnet\s+([0-9.]+|[\w.-]+)(\s+(\d+))?$/i,
     modes: ['user', 'privileged'],
     minArgs: 1,
     maxArgs: 2
@@ -1539,7 +1539,7 @@ const commandPatterns: Record<string, CommandPattern> = {
 
   // SSH
   'ssh': {
-    pattern: /^ssh\s+(-l\s+\S+\s+)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
+    pattern: /^ssh\s+(-l\s+\S+\s+)?([0-9.]+|[\w.-]+)$/i,
     modes: ['privileged'],
     minArgs: 1,
     maxArgs: 3

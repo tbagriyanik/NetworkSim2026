@@ -62,7 +62,7 @@ export type CommandHandler = (
 // --- Inline help tree (kept as-is for now) ---
 export const commandHelp: Record<string, Record<string, string[]>> = {
   user: {
-    '': ['enable', 'exit', 'show', 'ipconfig', 'ping', 'telnet', 'tracert', 'traceroute', 'netstat', 'nbtstat', 'nslookup', 'http', 'arp', 'hostname', 'snake', '?', 'help'],
+    '': ['enable', 'exit', 'show', 'ipconfig', 'ping', 'telnet', 'ssh', 'tracert', 'traceroute', 'netstat', 'nbtstat', 'nslookup', 'http', 'arp', 'hostname', 'snake', '?', 'help'],
     'i': ['ipconfig'],
     'ip': ['ipconfig'],
     'p': ['ping'],
@@ -78,19 +78,21 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'tracer': ['traceroute'],
     'traceroute': [''],
     'tracert': [''],
+    's': ['ssh', 'snake', 'show'],
+    'sh': ['ssh', 'show'],
+    'ssh': [''],
     'n': ['netstat', 'nbtstat', 'nslookup'],
     'ne': ['netstat'],
     'nb': ['nbtstat'],
     'ns': ['nslookup'],
     'h': ['http', 'hostname'],
     'a': ['arp'],
-    's': ['snake', 'show'],
-    'sh': ['show'],
+    'sn': ['snake', 'show'],
     'sho': ['show'],
     'show': ['version', 'wireless'],
   },
   privileged: {
-    '': ['configure', 'disable', 'show', 'write', 'ping', 'telnet', 'tracert', 'traceroute', 'reload', 'exit', 'copy', 'erase', 'ip', '?', 'help'],
+    '': ['configure', 'disable', 'show', 'write', 'ping', 'telnet', 'ssh', 'tracert', 'traceroute', 'reload', 'exit', 'copy', 'erase', 'ip', '?', 'help'],
     'c': ['configure', 'clear', 'copy'],
     'co': ['configure', 'copy'],
     'con': ['configure'],
@@ -115,7 +117,6 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'disab': ['disable'],
     'disabl': ['disable'],
 
-    's': ['show'],
     'sh': ['show'],
     'sho': ['show'],
     'show': ['running-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'spanning-tree', 'port-security', 'wireless'],
@@ -175,6 +176,8 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'tracer': ['traceroute'],
     'tracert': [''],
     'traceroute': [''],
+    's': ['ssh'],
+    'ssh': [''],
 
     'r': ['reload'],
     're': ['reload'],

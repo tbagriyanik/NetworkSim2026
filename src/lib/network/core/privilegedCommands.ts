@@ -6,6 +6,7 @@ import { checkConnectivity } from '../connectivity';
 export const privilegedHandlers: Record<string, CommandHandler> = {
     'ping': cmdPing,
     'telnet': cmdTelnet,
+    'ssh': cmdSsh,
     'traceroute': cmdTraceroute,
     'tracert': cmdTracert,
     'write memory': cmdWriteMemory,
@@ -87,6 +88,58 @@ function cmdTelnet(state: any, input: string, ctx: any): any {
         output: `Trying ${host} ${port} ...\nOpen\n\nUser Access Verification\n\nPassword: `,
         requiresTelnetPassword: true,
         telnetTarget: { host, port }
+    };
+}
+
+/**
+ * SSH - Connect to remote device via SSH
+ */
+function cmdSsh(state: any, input: string, ctx: any): any {
+    if (state.currentMode !== 'privileged') {
+        return { success: false, error: '% Invalid command at this mode' };
+    }
+
+    const match = input.match(/^ssh\s+(-l\s+\S+\s+)?([0-9.]+|[\w.-]+)$/i);
+    if (!match) {
+        return { success: false, error: '% Invalid ssh command. Use: ssh [-l username] host' };
+    }
+
+    const username = match[1] ? match[1].replace(/^-l\s+/, '') : undefined;
+    const host = match[2];
+
+    // Resolve hostname to show IP address
+    let resolvedIp = host;
+    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+    if (!ipRegex.test(host)) {
+        const knownDomains: Record<string, string> = {
+            'a10.com': '52.8.34.123',
+            'google.com': '142.250.185.78',
+            'github.com': '140.82.112.4',
+            'microsoft.com': '20.112.52.29',
+            'amazon.com': '52.94.236.248',
+            'facebook.com': '157.240.229.35',
+            'twitter.com': '104.244.42.1',
+        };
+        resolvedIp = knownDomains[host.toLowerCase()] || host;
+    }
+
+    let output = `Connecting to ${host}`;
+    if (resolvedIp !== host) {
+        output += ` (${resolvedIp})`;
+    }
+    output += ` port 22...\n`;
+    
+    if (username) {
+        output += `${username}@${host}'s password: `;
+    } else {
+        output += `Password: `;
+    }
+
+    return {
+        success: true,
+        output,
+        requiresSshPassword: true,
+        sshTarget: { host, username, port: 22 }
     };
 }
 
