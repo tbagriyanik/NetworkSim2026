@@ -128,7 +128,7 @@ function cmdSsh(state: any, input: string, ctx: any): any {
         output += ` (${resolvedIp})`;
     }
     output += ` port 22...\n`;
-    
+
     if (username) {
         output += `${username}@${host}'s password: `;
     } else {
@@ -220,8 +220,7 @@ function cmdReload(state: any, input: string, ctx: any): any {
     return {
         success: true,
         output: 'Reloading...\n',
-        reloadDevice: true,
-        requiresReloadConfirm: true
+        reloadDevice: true
     };
 }
 
@@ -393,7 +392,7 @@ function cmdTraceroute(state: any, input: string, ctx: any): any {
 
             let output = `\nType escape sequence to abort.\n`;
             output += `Tracing the route to ${host} (${resolvedIp})\n`;
-            
+
             // Use the hops from connectivity result
             if (connectivity.hops && connectivity.hops.length > 0) {
                 for (let i = 0; i < connectivity.hops.length; i++) {
@@ -409,7 +408,7 @@ function cmdTraceroute(state: any, input: string, ctx: any): any {
                     output += `  ${i} ${connectivity.targetId || '192.168.1.1'} ${hopTime} ms ${hopTime} ms ${hopTime} ms\n`;
                 }
             }
-            
+
             output += `\nTrace complete.\n`;
             return { success: true, output, triggerPingAnimation: connectivity.targetId };
         } else {
@@ -484,7 +483,7 @@ function cmdTracert(state: any, input: string, ctx: any): any {
             }
 
             let output = `\nTracing route to ${host} [${resolvedIp}] over a maximum of 30 hops\n`;
-            
+
             // Use the hops from connectivity result
             if (connectivity.hops && connectivity.hops.length > 0) {
                 for (let i = 0; i < connectivity.hops.length; i++) {
@@ -504,7 +503,7 @@ function cmdTracert(state: any, input: string, ctx: any): any {
                     output += `  ${i}    <1 ms    <1 ms    <1 ms ${connectivity.targetId || '192.168.1.1'}\n`;
                 }
             }
-            
+
             output += `\nTrace complete.\n`;
             return { success: true, output, triggerPingAnimation: connectivity.targetId };
         } else {

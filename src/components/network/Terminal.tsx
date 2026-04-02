@@ -133,6 +133,22 @@ export function Terminal({
 
     const lastOutput = output[output.length - 1];
 
+    // Detect if this is a fresh output (e.g., after device reload)
+    // by checking if we have a large gap in output IDs or if output was cleared and restarted
+    const isFirstOutput = output.length === 1;
+    const hasBootMessage = lastOutput.content?.includes('System Bootstrap') ||
+      lastOutput.content?.includes('Loading Flash') ||
+      lastOutput.content?.includes('Initializing') ||
+      lastOutput.content?.toLowerCase().includes('boot');
+
+    // Clear screen on first output or boot message
+    if (isFirstOutput || hasBootMessage) {
+      setDisplayedLines([]);
+      processedOutputIdsRef.current.clear();
+      setIsProcessingMultiline(false);
+      pendingLinesRef.current = [];
+    }
+
     // Skip if already processed this output
     if (processedOutputIdsRef.current.has(lastOutput.id)) return;
 
@@ -191,6 +207,14 @@ export function Terminal({
       }
     }
   }, [output]);
+
+  // Clear displayed lines when switching devices
+  useEffect(() => {
+    setDisplayedLines([]);
+    processedOutputIdsRef.current.clear();
+    setIsProcessingMultiline(false);
+    pendingLinesRef.current = [];
+  }, [deviceId]);
 
   const isReloadConfirmationPending = output.some(
     (line) => line.type === 'output' && /Proceed with reload\? \[confirm\]/i.test(line.content)
@@ -286,30 +310,6 @@ export function Terminal({
       if (confirmDialog.onConfirm) {
         confirmDialog.onConfirm();
       }
-      return;
-    }
-
-    // Inline reload confirmation: send the actual input as command
-    if (isReloadConfirmationPending) {
-      const command = (cmdToExecute || input).trim().toLowerCase();
-      if (command === 'n' || command === 'no') {
-        await onCommand('__RELOAD_CANCEL__');
-        setInput('');
-        setTimeout(() => inputRef.current?.focus(), 0);
-        return;
-      }
-      if (!command || command === 'confirm' || command === 'y') {
-        await onCommand('__RELOAD_CONFIRM__');
-        setInput('');
-        setTimeout(() => inputRef.current?.focus(), 0);
-        return;
-      }
-      // Any other input - cancel confirmation and send as normal command
-      await onCommand('__RELOAD_CANCEL__');
-      setInput('');
-      setTimeout(() => inputRef.current?.focus(), 0);
-      // then send the typed value as normal command
-      await onCommand(command);
       return;
     }
 

@@ -322,6 +322,28 @@ export function useDeviceManager() {
     topologyConnections: CanvasConnection[] | null = null,
     skipConfirm = false
   ): Promise<any> => {
+    // Handle cancellation token
+    if (command === '__CANCEL__') {
+      setIsLoading(false);
+      const deviceState = deviceStates.get(deviceId) || (deviceId.includes('router') ? createInitialRouterState() : createInitialState());
+      getOrCreateDeviceOutputs(deviceId);
+      setDeviceOutputs(prev => {
+        const newMap = new Map(prev);
+        const outputs = newMap.get(deviceId) || [];
+        newMap.set(deviceId, [
+          ...outputs,
+          {
+            id: `${Date.now()}-cancel`,
+            type: 'output',
+            content: language === 'tr' ? '\n^C\nKomut iptal edildi.' : '\n^C\nCommand cancelled.',
+            timestamp: Date.now()
+          }
+        ]);
+        return newMap;
+      });
+      return { success: false, error: 'Cancelled' };
+    }
+
     if (command.includes('\n')) {
       for (const line of command.split('\n').filter(l => l.trim())) {
         await handleCommandForDevice(deviceId, line.trim(), topologyDevices, setActiveDeviceId, setActiveDeviceType, topologyConnections, skipConfirm);
@@ -346,28 +368,6 @@ export function useDeviceManager() {
       const { requiresConfirmation, confirmationMessage, confirmationAction, success, newState, error, triggerPingAnimation } = result as any;
       const trimmedCommand = command.trim().toLowerCase();
       const isInternalCommand = command === '__CONSOLE_CONNECT__';
-
-      // Handle reload confirmation (uses requiresReloadConfirm instead of requiresConfirmation)
-      if (!skipConfirm && trimmedCommand.startsWith('reload') && (result as any).requiresReloadConfirm) {
-        setIsLoading(false);
-        setConfirmDialog({
-          show: true,
-          message: confirmationMessage || 'Proceed with reload? [confirm]',
-          action: confirmationAction || 'reload',
-          onConfirm: () => {
-            setConfirmDialog(null);
-            handleCommandForDevice(deviceId, command, topologyDevices, setActiveDeviceId, setActiveDeviceType, topologyConnections, true);
-          }
-        });
-
-        if (triggerPingAnimation) {
-          window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
-            detail: { sourceId: deviceId, targetId: triggerPingAnimation }
-          }));
-        }
-
-        return result;
-      }
 
       if (requiresConfirmation && !skipConfirm) {
         setIsLoading(false);

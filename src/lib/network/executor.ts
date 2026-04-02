@@ -1004,6 +1004,11 @@ export function executeCommand(
   deviceStates?: Map<string, SwitchState>,
   sourceDeviceId?: string
 ): CommandResult {
+  if (input === '__CANCEL__') {
+    // Cancellation token - handled by useDeviceManager
+    return { success: false, error: '% Command cancelled' };
+  }
+
   if (input === '__CONSOLE_CONNECT__') {
     return handleConsoleConnect(state, language);
   }

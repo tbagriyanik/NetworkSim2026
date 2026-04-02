@@ -172,31 +172,22 @@ export function PCPanel({
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // History State - separate for CMD and Console
-  const [cmdHistory, setCmdHistory] = useState<string[]>(() => {
+  // History State
+  const [history, setHistory] = useState<string[]>(() => {
     return pcHistories?.get(deviceId) || [];
   });
-  const [cmdHistoryIndex, setCmdHistoryIndex] = useState(-1);
-
-  const [consoleHistory, setConsoleHistory] = useState<string[]>([]);
-  const [consoleHistoryIndex, setConsoleHistoryIndex] = useState(-1);
-
-  // Use appropriate history based on active tab
-  const currentHistory = activeTab === 'desktop' ? cmdHistory : consoleHistory;
-  const currentHistoryIndex = activeTab === 'desktop' ? cmdHistoryIndex : consoleHistoryIndex;
-  const setCurrentHistory = activeTab === 'desktop' ? setCmdHistory : setConsoleHistory;
-  const setCurrentHistoryIndex = activeTab === 'desktop' ? setCmdHistoryIndex : setConsoleHistoryIndex;
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   // Undo/Redo state
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
 
-  // Sync with global CMD history if it changes externally
+  // Sync with global history if it changes externally
   useEffect(() => {
     const globalHistory = pcHistories?.get(deviceId) || [];
-    if (JSON.stringify(globalHistory) !== JSON.stringify(cmdHistory)) {
-      setCmdHistory(globalHistory);
-      setCmdHistoryIndex(-1);
+    if (JSON.stringify(globalHistory) !== JSON.stringify(history)) {
+      setHistory(globalHistory);
+      setHistoryIndex(-1);
     }
   }, [pcHistories, deviceId]);
 
@@ -995,24 +986,12 @@ export function PCPanel({
       return;
     }
 
-    // Save to appropriate history based on active tab
-    if (activeTab === 'desktop') {
-      // CMD history
-      if (cmdHistory[0] !== command) {
-        const newHistory = [command, ...cmdHistory].slice(0, 50);
-        setCmdHistory(newHistory);
-        if (onUpdatePCHistory) onUpdatePCHistory(deviceId, newHistory);
-      }
-      setCmdHistoryIndex(-1);
-    } else if (activeTab === 'terminal') {
-      // Console history
-      if (consoleHistory[0] !== command) {
-        const newHistory = [command, ...consoleHistory].slice(0, 50);
-        setConsoleHistory(newHistory);
-      }
-      setConsoleHistoryIndex(-1);
+    if (history[0] !== command) {
+      const newHistory = [command, ...history].slice(0, 50);
+      setHistory(newHistory);
+      if (onUpdatePCHistory) onUpdatePCHistory(deviceId, newHistory);
     }
-
+    setHistoryIndex(-1);
     setInput('');
     if (activeTab === 'desktop') {
       addLocalOutput('command', command);
@@ -1464,25 +1443,25 @@ export function PCPanel({
     }
     else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      if (currentHistory.length > 0 && currentHistoryIndex < currentHistory.length - 1) {
-        const ni = currentHistoryIndex + 1;
-        setCurrentHistoryIndex(ni);
-        setInput(currentHistory[ni]);
+      if (history.length > 0 && historyIndex < history.length - 1) {
+        const ni = historyIndex + 1;
+        setHistoryIndex(ni);
+        setInput(history[ni]);
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      if (currentHistoryIndex > 0) {
-        const ni = currentHistoryIndex - 1;
-        setCurrentHistoryIndex(ni);
-        setInput(currentHistory[ni]);
-      } else if (currentHistoryIndex === 0) {
-        setCurrentHistoryIndex(-1);
+      if (historyIndex > 0) {
+        const ni = historyIndex - 1;
+        setHistoryIndex(ni);
+        setInput(history[ni]);
+      } else if (historyIndex === 0) {
+        setHistoryIndex(-1);
         setInput('');
       }
     }
   };
 
-  const recentCommands = currentHistory.slice(0, 10);
+  const recentCommands = history.slice(0, 10);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
