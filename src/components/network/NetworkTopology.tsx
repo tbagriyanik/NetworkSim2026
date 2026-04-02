@@ -370,6 +370,9 @@ export function NetworkTopology({
   // Ref to track if we were dragging (for click handler to check without stale closure)
   const wasDraggingRef = useRef(false);
 
+  // Ref to track if shift key was pressed during mousedown
+  const shiftKeyPressedRef = useRef(false);
+
   // ─── Performance refs: always hold latest values to avoid stale closures ───
   // These allow event handlers registered once (on mount) to always use fresh state
   const isPanningRef = useRef(false);
@@ -1090,14 +1093,14 @@ export function NetworkTopology({
       } else if (isDrawingConnectionRef.current && canvasRef.current) {
         // Smooth mouse position tracking for connection drawing
         if (mousePosAnimationFrameRef.current !== null) return;
-        
+
         mousePosAnimationFrameRef.current = requestAnimationFrame(() => {
           const rect = canvasRef.current?.getBoundingClientRect();
           if (!rect) {
             mousePosAnimationFrameRef.current = null;
             return;
           }
-          
+
           const currentPan = panRef.current;
           const currentZoom = zoomRef.current;
           const newPos = {
@@ -1328,31 +1331,34 @@ export function NetworkTopology({
     wasDraggingRef.current = false;
 
     // Shift key for multi-selection
-    let newSelectedIds: string[];
     if (e.shiftKey) {
-      // Toggle selection when Shift is pressed
-      newSelectedIds = selectedDeviceIds.includes(deviceId)
-        ? selectedDeviceIds.filter(id => id !== deviceId)
-        : [...selectedDeviceIds, deviceId];
-      setSelectedDeviceIds(newSelectedIds);
-      selectedDeviceIdsRef.current = newSelectedIds;
+      // Toggle selection when Shift is pressed - use functional update to avoid stale state
+      setSelectedDeviceIds(prevSelected => {
+        const newSelectedIds = prevSelected.includes(deviceId)
+          ? prevSelected.filter(id => id !== deviceId)
+          : [...prevSelected, deviceId];
 
-      // Update parent component with the first selected device
-      const firstSelectedDevice = devices.find(d => d.id === newSelectedIds[0]);
-      if (firstSelectedDevice && newSelectedIds.length > 0) {
-        onDeviceSelect(firstSelectedDevice.type === 'router' ? 'router' : firstSelectedDevice.type, newSelectedIds[0]);
-      }
-    } else if (e.ctrlKey || e.metaKey) {
-      // Ctrl+Click toggles selection without starting drag
-      newSelectedIds = selectedDeviceIds.includes(deviceId)
-        ? selectedDeviceIds.filter(id => id !== deviceId)
-        : [...selectedDeviceIds, deviceId];
-      setSelectedDeviceIds(newSelectedIds);
-      selectedDeviceIdsRef.current = newSelectedIds;
+        // Update ref immediately
+        selectedDeviceIdsRef.current = newSelectedIds;
 
-      // Don't start drag for Ctrl+Click
+        // Update parent component with the first selected device
+        const firstSelectedDevice = devices.find(d => d.id === newSelectedIds[0]);
+        if (firstSelectedDevice && newSelectedIds.length > 0) {
+          onDeviceSelect(firstSelectedDevice.type === 'router' ? 'router' : firstSelectedDevice.type, newSelectedIds[0]);
+        }
+
+        return newSelectedIds;
+      });
+
+      // Mark that shift was used so handleClick knows to skip
+      shiftKeyPressedRef.current = true;
       return;
     } else {
+      // Reset shift key flag for normal clicks
+      shiftKeyPressedRef.current = false;
+
+      let newSelectedIds: string[];
+
       // If clicking a device that's not selected, make it the only selection
       // If it IS already selected, keep selection for group dragging
       if (!selectedDeviceIds.includes(deviceId)) {
@@ -1364,32 +1370,39 @@ export function NetworkTopology({
         newSelectedIds = selectedDeviceIds;
         selectedDeviceIdsRef.current = selectedDeviceIds;
       }
+
+      // Store starting positions of all selected devices for group dragging
+      const initialPositions: { [key: string]: { x: number, y: number } } = {};
+      devices.forEach(d => {
+        if (newSelectedIds.includes(d.id)) {
+          initialPositions[d.id] = { x: d.x, y: d.y };
+        }
+      });
+      setDragStartDevicePositions(initialPositions);
+
+      // Store the starting position for distance calculation
+      setDragStartPos({ x: e.clientX, y: e.clientY });
+      setIsActuallyDragging(false);
+      setDraggedDevice(deviceId);
+      setDragOffset({
+        x: (e.clientX - rect.left - pan.x) - device.x * zoom,
+        y: (e.clientY - rect.top - pan.y) - device.y * zoom,
+      });
     }
-
-    // Store starting positions of all selected devices for group dragging
-    const initialPositions: { [key: string]: { x: number, y: number } } = {};
-    devices.forEach(d => {
-      if (newSelectedIds.includes(d.id)) {
-        initialPositions[d.id] = { x: d.x, y: d.y };
-      }
-    });
-    setDragStartDevicePositions(initialPositions);
-
-    // Store the starting position for distance calculation
-    setDragStartPos({ x: e.clientX, y: e.clientY });
-    setIsActuallyDragging(false);
-    setDraggedDevice(deviceId);
-    setDragOffset({
-      x: (e.clientX - rect.left - pan.x) - device.x * zoom,
-      y: (e.clientY - rect.top - pan.y) - device.y * zoom,
-    });
   }, [devices, pan, zoom, selectedDeviceIds, onDeviceSelect, isSwitchDeviceType]);
 
   // Handle device click (single click - select only)
   const handleDeviceClick = useCallback((e: ReactMouseEvent, device: CanvasDevice) => {
     e.stopPropagation();
+
     // Don't handle click if we were dragging (check ref to avoid stale closure)
     if (wasDraggingRef.current) return;
+
+    // Don't handle click if Shift was used (already handled in mousedown)
+    if (shiftKeyPressedRef.current) {
+      shiftKeyPressedRef.current = false; // Reset for next click
+      return;
+    }
 
     // Ping mode: select source then target
     if (pingMode) {
@@ -1410,16 +1423,12 @@ export function NetworkTopology({
     }
 
     // Only handle selection if Shift was NOT pressed during mousedown
-    // (Shift+click is already handled in handleDeviceMouseDown)
-    if (!e.shiftKey) {
-      setSelectedDeviceIds([device.id]);
-      selectedDeviceIdsRef.current = [device.id];
-      // Notify parent component - select device, don't open terminal
-      onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
-      // Focus canvas for keyboard navigation
-      canvasRef.current?.focus();
-    }
-    // If Shift was pressed, selection is already handled in handleDeviceMouseDown
+    setSelectedDeviceIds([device.id]);
+    selectedDeviceIdsRef.current = [device.id];
+    // Notify parent component - select device, don't open terminal
+    onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
+    // Focus canvas for keyboard navigation
+    canvasRef.current?.focus();
   }, [onDeviceSelect, pingMode, pingSource, devices, connections, deviceStates, isSwitchDeviceType]);
 
   // Handle device double click - open terminal
@@ -3018,20 +3027,20 @@ export function NetworkTopology({
     const calculateHopDuration = (fromId: string, toId: string): number => {
       const fromDevice = devices.find(d => d.id === fromId);
       const toDevice = devices.find(d => d.id === toId);
-      
+
       if (!fromDevice || !toDevice) return hopDuration;
-      
+
       // Calculate pixel distance between devices
       const dx = toDevice.x - fromDevice.x;
       const dy = toDevice.y - fromDevice.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      
+
       // Scale duration based on distance (longer cables = slower animation)
       // Base 800ms for ~200px, scale up for longer distances
       const baseDistance = 200;
       const scaleFactor = Math.max(1, distance / baseDistance);
       const maxDuration = 2000; // Cap at 2 seconds for very long cables
-      
+
       return Math.min(hopDuration * scaleFactor, maxDuration);
     };
 
@@ -3045,7 +3054,7 @@ export function NetworkTopology({
       const fromId = path[currentHop];
       const toId = path[currentHop + 1];
       const currentHopDuration = calculateHopDuration(fromId, toId);
-      
+
       const elapsed = Date.now() - startTime;
       const rawProgress = Math.min(elapsed / currentHopDuration, 1);
       const progress = easeInOutCubic(rawProgress); // Apply smooth easing

@@ -86,6 +86,12 @@ export function Terminal({
   const [showSettings, setShowSettings] = useState(false);
   const [fontSize, setFontSize] = useState(13);
 
+  // State for displaying multiline output with delays
+  const [displayedLines, setDisplayedLines] = useState<Array<{ id: string, type: string, content: string, prompt?: string }>>([]);
+  const [isProcessingMultiline, setIsProcessingMultiline] = useState(false);
+  const pendingLinesRef = useRef<Array<{ id: string, type: string, content: string, prompt?: string }>>([]);
+  const processedOutputIdsRef = useRef<Set<string>>(new Set());
+
   // Undo/Redo state
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
@@ -114,6 +120,77 @@ export function Terminal({
 
   const commandQueueRef = useRef<string[]>([]);
   const isProcessingQueueRef = useRef(false);
+
+  // Process output lines with delays for multiline content
+  useEffect(() => {
+    if (output.length === 0) {
+      setDisplayedLines([]);
+      setIsProcessingMultiline(false);
+      pendingLinesRef.current = [];
+      processedOutputIdsRef.current.clear();
+      return;
+    }
+
+    const lastOutput = output[output.length - 1];
+
+    // Skip if already processed this output
+    if (processedOutputIdsRef.current.has(lastOutput.id)) return;
+
+    const hasNewlines = lastOutput.content && lastOutput.content.includes('\n');
+
+    // If already processing multiline, skip until done
+    if (isProcessingMultiline) return;
+
+    if (hasNewlines) {
+      // Mark as processed
+      processedOutputIdsRef.current.add(lastOutput.id);
+
+      // Split multiline content into individual lines
+      const lines = lastOutput.content.split('\n');
+      const newLines = lines.map((line, index) => ({
+        id: `${lastOutput.id}-line-${index}`,
+        type: lastOutput.type,
+        content: line,
+        prompt: index === 0 ? lastOutput.prompt : ''
+      }));
+
+      // Remove any existing lines with this output ID (in case of re-render)
+      const otherLines = displayedLines.filter(l => !l.id.startsWith(`${lastOutput.id}`));
+
+      setDisplayedLines([...otherLines, newLines[0]]);
+      pendingLinesRef.current = newLines.slice(1);
+
+      setIsProcessingMultiline(true);
+
+      // Display remaining lines with delay
+      const displayRemainingLines = async () => {
+        for (let i = 0; i < pendingLinesRef.current.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+          setDisplayedLines(prev => [...prev, pendingLinesRef.current[i]]);
+
+          // Auto-scroll
+          if (terminalRef.current) {
+            terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+          }
+        }
+        setIsProcessingMultiline(false);
+        pendingLinesRef.current = [];
+      };
+
+      displayRemainingLines();
+    } else if (!hasNewlines) {
+      // Single line output - only add if not already displayed
+      if (!displayedLines.find(l => l.id === lastOutput.id)) {
+        processedOutputIdsRef.current.add(lastOutput.id);
+        setDisplayedLines(prev => [...prev, {
+          id: lastOutput.id,
+          type: lastOutput.type,
+          content: lastOutput.content,
+          prompt: lastOutput.prompt
+        }]);
+      }
+    }
+  }, [output]);
 
   const isReloadConfirmationPending = output.some(
     (line) => line.type === 'output' && /Proceed with reload\? \[confirm\]/i.test(line.content)
@@ -555,8 +632,8 @@ export function Terminal({
             ) : (
               <div className="space-y-1.5">
                 {/* Show all output with natural scrolling */}
-                {output.map((line, i) => (
-                  <div key={line.id || i} className="animate-in fade-in slide-in-from-left-1 duration-200">
+                {displayedLines.map((line, i) => (
+                  <div key={line.id} className="animate-in fade-in slide-in-from-left-1 duration-200">
                     {line.type === 'command' ? (
                       <div className="flex gap-2 text-cyan-500 font-bold group">
                         <span className="shrink-0 opacity-40 select-none">{line.prompt || prompt}</span>

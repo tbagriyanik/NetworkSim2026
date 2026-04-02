@@ -172,22 +172,31 @@ export function PCPanel({
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // History State
-  const [history, setHistory] = useState<string[]>(() => {
+  // History State - separate for CMD and Console
+  const [cmdHistory, setCmdHistory] = useState<string[]>(() => {
     return pcHistories?.get(deviceId) || [];
   });
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [cmdHistoryIndex, setCmdHistoryIndex] = useState(-1);
+
+  const [consoleHistory, setConsoleHistory] = useState<string[]>([]);
+  const [consoleHistoryIndex, setConsoleHistoryIndex] = useState(-1);
+
+  // Use appropriate history based on active tab
+  const currentHistory = activeTab === 'desktop' ? cmdHistory : consoleHistory;
+  const currentHistoryIndex = activeTab === 'desktop' ? cmdHistoryIndex : consoleHistoryIndex;
+  const setCurrentHistory = activeTab === 'desktop' ? setCmdHistory : setConsoleHistory;
+  const setCurrentHistoryIndex = activeTab === 'desktop' ? setCmdHistoryIndex : setConsoleHistoryIndex;
 
   // Undo/Redo state
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
 
-  // Sync with global history if it changes externally
+  // Sync with global CMD history if it changes externally
   useEffect(() => {
     const globalHistory = pcHistories?.get(deviceId) || [];
-    if (JSON.stringify(globalHistory) !== JSON.stringify(history)) {
-      setHistory(globalHistory);
-      setHistoryIndex(-1);
+    if (JSON.stringify(globalHistory) !== JSON.stringify(cmdHistory)) {
+      setCmdHistory(globalHistory);
+      setCmdHistoryIndex(-1);
     }
   }, [pcHistories, deviceId]);
 
@@ -658,6 +667,35 @@ export function PCPanel({
     }, 0);
   }, []);
 
+  // Add multi-line output with delay between each line for realistic typing effect
+  const addMultilineOutput = useCallback(async (type: OutputLine['type'], content: string, delayMs: number = 50) => {
+    const lines = content.split('\n');
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const isLast = i === lines.length - 1;
+
+      const newLine: OutputLine = {
+        id: Math.random().toString(36).substr(2, 9),
+        type,
+        content: line,
+        prompt: i === 0 ? undefined : '' // Empty prompt for continuation lines
+      };
+
+      setPcOutput(prev => [...prev, newLine]);
+
+      // Scroll after each line
+      setTimeout(() => {
+        if (outputRef.current) outputRef.current.scrollTop = outputRef.current.scrollHeight;
+      }, 0);
+
+      // Wait before next line (except for last)
+      if (!isLast && delayMs > 0) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+  }, []);
+
   const canReachTargetIp = useCallback((targetIp: string) => {
     const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en');
     return result.success;
@@ -956,12 +994,25 @@ export function PCPanel({
       setInput('');
       return;
     }
-    if (history[0] !== command) {
-      const newHistory = [command, ...history].slice(0, 50);
-      setHistory(newHistory);
-      if (onUpdatePCHistory) onUpdatePCHistory(deviceId, newHistory);
+
+    // Save to appropriate history based on active tab
+    if (activeTab === 'desktop') {
+      // CMD history
+      if (cmdHistory[0] !== command) {
+        const newHistory = [command, ...cmdHistory].slice(0, 50);
+        setCmdHistory(newHistory);
+        if (onUpdatePCHistory) onUpdatePCHistory(deviceId, newHistory);
+      }
+      setCmdHistoryIndex(-1);
+    } else if (activeTab === 'terminal') {
+      // Console history
+      if (consoleHistory[0] !== command) {
+        const newHistory = [command, ...consoleHistory].slice(0, 50);
+        setConsoleHistory(newHistory);
+      }
+      setConsoleHistoryIndex(-1);
     }
-    setHistoryIndex(-1);
+
     setInput('');
     if (activeTab === 'desktop') {
       addLocalOutput('command', command);
@@ -1000,9 +1051,9 @@ export function PCPanel({
             addLocalOutput('error', 'No reachable DHCP server/pool found. Using existing IP.');
           }
         } else if (args.includes('/all')) {
-          addLocalOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${internalPcHostname}\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}`);
+          await addMultilineOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${internalPcHostname}\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}`, 80);
         } else {
-          addLocalOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet0:\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}`);
+          await addMultilineOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet0:\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}`, 80);
         }
       } else if (cmd === 'ping') {
         const target = args[0];
@@ -1032,10 +1083,10 @@ export function PCPanel({
               }));
             }
             const pingTargetDisplay = dnsResolved ? `${target} [${targetIp}]` : targetIp;
-            addLocalOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nReply from ${targetIp}: bytes=32 time<1ms TTL=128\nReply from ${targetIp}: bytes=32 time<1ms TTL=128\nReply from ${targetIp}: bytes=32 time<1ms TTL=128\nReply from ${targetIp}: bytes=32 time<1ms TTL=128\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`);
+            await addMultilineOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nReply from ${targetIp}: bytes=32 time<1ms TTL=128\nReply from ${targetIp}: bytes=32 time<1ms TTL=128\nReply from ${targetIp}: bytes=32 time<1ms TTL=128\nReply from ${targetIp}: bytes=32 time<1ms TTL=128\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`, 100);
           } else {
             const pingTargetDisplay = dnsResolved ? `${target} [${targetIp}]` : targetIp;
-            addLocalOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nRequest timed out.\nRequest timed out.\nRequest timed out.\nRequest timed out.\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)`);
+            await addMultilineOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nRequest timed out.\nRequest timed out.\nRequest timed out.\nRequest timed out.\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)`, 100);
           }
         }
       } else if (cmd === 'nslookup') {
@@ -1049,11 +1100,12 @@ export function PCPanel({
         } else {
           const dnsResult = resolveDomainWithDnsServices(targetDomain);
           if (!dnsResult) {
-            addLocalOutput('output', `*** DNS request timed out\n*** Can't find ${targetDomain}: Non-existent domain`);
+            await addMultilineOutput('output', `*** DNS request timed out\n*** Can't find ${targetDomain}: Non-existent domain`, 80);
           } else {
-            addLocalOutput(
+            await addMultilineOutput(
               'output',
-              `Server: ${dnsResult.server.name}\nAddress: ${dnsResult.server.ip}\n\nName: ${targetDomain}\nAddress: ${dnsResult.address}`
+              `Server: ${dnsResult.server.name}\nAddress: ${dnsResult.server.ip}\n\nName: ${targetDomain}\nAddress: ${dnsResult.address}`,
+              80
             );
           }
         }
@@ -1140,9 +1192,9 @@ export function PCPanel({
               const hopIp = topologyDevices.find(d => d.name === hop || d.id === hop)?.ip || '?.?.?.?';
               hopOutput += `  ${index + 1}    <1 ms    <1 ms    <1 ms  ${hopName} [${hopIp}]\n`;
             });
-            addLocalOutput('output', hopOutput + '\nTrace complete.');
+            await addMultilineOutput('output', hopOutput + '\nTrace complete.', 80);
           } else {
-            addLocalOutput('output', `  1    *        *        *     Request timed out.\n\nTrace complete.`);
+            await addMultilineOutput('output', `  1    *        *        *     Request timed out.\n\nTrace complete.`, 80);
           }
         }
       } else if (cmd === 'netstat') {
@@ -1156,10 +1208,10 @@ export function PCPanel({
 
         output += `  TCP    ${pcIP}:49664          0.0.0.0:0              LISTENING\n`;
         output += `  TCP    ${pcIP}:49665          0.0.0.0:0              LISTENING\n`;
-        addLocalOutput('output', output);
+        await addMultilineOutput('output', output, 60);
       } else if (cmd === 'nbtstat') {
         if (args.includes('-n')) {
-          addLocalOutput('output', `\nNetBIOS Local Name Table\n\n       Name               Type         Status\n    ---------------------------------------------\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <00>  UNIQUE      Registered\n    WORKGROUP        <00>  GROUP       Registered\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <20>  UNIQUE      Registered\n`);
+          await addMultilineOutput('output', `\nNetBIOS Local Name Table\n\n       Name               Type         Status\n    ---------------------------------------------\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <00>  UNIQUE      Registered\n    WORKGROUP        <00>  GROUP       Registered\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <20>  UNIQUE      Registered\n`, 80);
         } else {
           addLocalOutput('output', 'Usage: nbtstat [-n]');
         }
@@ -1412,25 +1464,25 @@ export function PCPanel({
     }
     else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      if (history.length > 0 && historyIndex < history.length - 1) {
-        const ni = historyIndex + 1;
-        setHistoryIndex(ni);
-        setInput(history[ni]);
+      if (currentHistory.length > 0 && currentHistoryIndex < currentHistory.length - 1) {
+        const ni = currentHistoryIndex + 1;
+        setCurrentHistoryIndex(ni);
+        setInput(currentHistory[ni]);
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      if (historyIndex > 0) {
-        const ni = historyIndex - 1;
-        setHistoryIndex(ni);
-        setInput(history[ni]);
-      } else if (historyIndex === 0) {
-        setHistoryIndex(-1);
+      if (currentHistoryIndex > 0) {
+        const ni = currentHistoryIndex - 1;
+        setCurrentHistoryIndex(ni);
+        setInput(currentHistory[ni]);
+      } else if (currentHistoryIndex === 0) {
+        setCurrentHistoryIndex(-1);
         setInput('');
       }
     }
   };
 
-  const recentCommands = history.slice(0, 10);
+  const recentCommands = currentHistory.slice(0, 10);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
