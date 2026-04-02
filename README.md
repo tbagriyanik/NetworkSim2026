@@ -1,6 +1,6 @@
 # 🚀 Network Simulator 2026
 
-Öğrenciler ve ağ meraklıları için tasarlanmış, modern ve etkileşimli bir web tabanlı Network simülatörü.
+A modern and interactive web-based Network simulator designed for students and networking enthusiasts.
 
 ![Version](https://img.shields.io/badge/version-1.1.1-blue)
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016%20|%20React%2019%20|%20TypeScript%20|%20Tailwind%204-green)
@@ -8,67 +8,69 @@
 ![Commits](https://img.shields.io/badge/commits-350-orange)
 ![Lines of Code](https://img.shields.io/badge/lines--of--code-45.2k-blueviolet)
 
-## ✨ Temel Özellikler
+## ✨ Key Features
 
-### 🌐 İnteraktif Network Topolojisi
-- **Cihaz Yönetimi**: PC, Switch ve Router cihazlarını kanvasa sürükle-bırak
-- **Zoom & Pan**: Smooth zoom ve pan işlemleri
-- **Kablo Sistemi**: Straight-through, Crossover ve Console kablolar
-- **Bağlantı Yönetimi**: Cihazlar arasında bağlantı oluştur ve yönet
-- **Görsel Geri Bildirim**: Cihaz durumu göstergeleri ve port etiketleri
-- **Kablosuz (WiFi) Simülasyonu**: SSID, WPA2 güvenlik ve AP/Client modları ile kablosuz ağ simülasyonu
+### 🌐 Interactive Network Topology
+- **Device Management**: Drag and drop PC, Switch, and Router devices to canvas
+- **Zoom & Pan**: Smooth zoom and pan operations
+- **Cable System**: Straight-through, Crossover, and Console cables
+- **Connection Management**: Create and manage connections between devices
+- **Visual Feedback**: Device status indicators and port labels
+- **Wireless (WiFi) Simulation**: Wireless network simulation with SSID, WPA2 security, and AP/Client modes
 
-### 💻 Network CLI Simülasyonu
-- **Komut Desteği**: enable, configure, interface, show komutları
-- **Mod Sistemi**: User, Privileged, Config, Interface modları
-- **Komut Geçmişi**: Her cihaz için bağımsız komut geçmişi
-- **Hata Kontrolü**: Geçersiz komutlar için hata mesajları
+### 💻 Network CLI Simulation
+- **Command Support**: enable, configure, interface, show commands
+- **Mode System**: User, Privileged, Config, and Interface modes
+- **Command History**: Independent command history for each device
+- **Error Checking**: Error messages for invalid commands
 
-### 🔌 Fiziksel Cihaz Görselleştirmesi
-- **Port Paneli**: Gerçekçi port gösterimi
-- **LED Göstergeleri**: Bağlantı durumunu gösteren renkli LED'ler
-- **Port Durumu**: Connected, Disconnected, Shutdown durumları
+### 🔌 Physical Device Visualization
+- **Port Panel**: Realistic port display
+- **LED Indicators**: Colored LEDs showing connection status
+- **Port Status**: Connected, Disconnected, and Shutdown states
 
-### 🛠️ Konfigürasyon Özellikleri
-- **VLAN Yönetimi**: VLAN oluştur ve portları ata
-- **IP Konfigürasyonu**: IP adresi, subnet ve gateway ayarları
-- **Interface Yönetimi**: Port hızı, duplex ve shutdown ayarları
-- **Routing**: IP routing ve statik route yönetimi
+### 🛠️ Configuration Features
+- **VLAN Management**: Create VLANs and assign ports
+- **IP Configuration**: IP address, subnet, and gateway settings
+- **Interface Management**: Port speed, duplex, and shutdown settings
+- **Routing**: IP routing and static route management
 
-### 📝 Not Sistemi
-- **Not Ekleme**: Kanvasa not ekle
-- **Not Sürükleme**: Notları kanvas üzerinde sürükle
-- **Not Yeniden Boyutlandırma**: Notları yeniden boyutlandır
-- **Not Stil Özelleştirmesi**: Renk, yazı tipi, boyut ve opaklık ayarları
-- **Undo/Redo**: Tüm işlemler için geri al/yinele desteği
+### 📝 Note System
+- **Add Notes**: Add notes to canvas
+- **Drag Notes**: Drag notes on canvas
+- **Resize Notes**: Resize notes
+- **Note Style Customization**: Color, font type, size, and opacity settings
+- **Undo/Redo**: Undo/redo support for all operations
 
-### 🔍 Ping ve Bağlantı Kontrolü
-- **Ping Atma**: Cihazlar arasında ping at
-- **Detaylı Diagnostics**: Ping başarısızlığında hata nedeni göster
-- **Subnet Doğrulama**: Farklı subnet'te ping kontrolü
-- **Routing Kontrolü**: Router routing kontrolü
-- **Görsel Ping Animasyonu**: Mail ikonu ile cihazlar arası (kablolu/kablosuz) arched ping yolu gösterimi
-- **Global Animasyon Tetikleyici**: Terminal veya CLI üzerinden ping atıldığında otomatik animasyon
+### 🔍 Ping and Connectivity Testing
+- **Ping Testing**: Ping between devices
+- **Detailed Diagnostics**: Show error cause when ping fails
+- **Subnet Validation**: Ping control across different subnets
+- **Routing Check**: Router routing verification
+- **Visual Ping Animation**: Mail icon with arched path between devices (wired/wireless)
+- **Global Animation Trigger**: Automatic animation when ping is sent from terminal or CLI
 
-### ⚡ Gelişmiş Özellikler
-- **Bulk Power Control**: Seçili cihazların gücünü toplu aç/kapat
-- **Multi-Select**: Birden fazla cihaz seç
-- **Keyboard Shortcuts**: Ctrl+Z (Undo), Ctrl+Y (Redo), vb.
-- **Dark/Light Mode**: Koyu ve açık tema desteği
-- **Turkish/English**: Türkçe ve İngilizce dil desteği
-- **Offline Storage**: Çevrimdışı veri saklama
-- **Görev Sistemi (Tasks)**: WLAN bağlantısı, güvenlik ve port yapılandırma görevlerini takip etme
+### ⚡ Advanced Features
+- **Bulk Power Control**: Bulk power on/off for selected devices
+- **Multi-Select**: Select multiple devices
+- **Keyboard Shortcuts**: Ctrl+Z (Undo), Ctrl+Y (Redo), etc.
+- **Dark/Light Mode**: Dark and light theme support
+- **Turkish/English**: Turkish and English language support
+- **Offline Storage**: Offline data storage
+- **Task System (Tasks)**: Track WLAN connection, security, and port configuration tasks
 
-## 🛠️ Teknoloji Stack
+---
+
+## 🛠️ Technology Stack
 
 - **Framework**: [Next.js 16](https://nextjs.org/) + [React 19](https://react.dev/)
-- **Dil**: [TypeScript 5](https://www.typescriptlang.org/)
+- **Language**: [TypeScript 5](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
 - **UI Components**: [shadcn/ui](https://ui.shadcn.com/) + [Lucide React](https://lucide.dev/)
 - **State Management**: [Zustand](https://docs.pmnd.rs/zustand) + Context API
 - **Storage**: localStorage + Custom offline storage
 
-## 📁 Proje Yapısı
+## 📁 Project Structure
 
 ```
 src/
@@ -104,96 +106,147 @@ kiro/                         # Project documentation
 └── ...
 ```
 
-## 🚀 Hızlı Başlangıç
+## 🚀 Quick Start
 
-### Kurulum
+### Installation
 
 ```bash
-# Bağımlılıkları yükle
+# Install dependencies
 npm install
 
-# Geliştirme sunucusunu başlat
+# Start development server
 npm run dev
 
 # Production build
 npm run build
 
-# Production sunucusunu başlat
+# Start production server
 npm start
 ```
 
-Tarayıcıda açın: [http://localhost:3000](http://localhost:3000)
+Open in browser: [http://localhost:3000](http://localhost:3000)
 
-Detaylı kurulum talimatları için [INSTALL.md](INSTALL.md) dosyasını okuyun.
+For detailed installation instructions, read [INSTALL.md](INSTALL.md).
 
-## 📚 Belgelendirme
+## 📚 Documentation
 
-Detaylı belgelendirme `kiro/` klasöründe bulunur:
+Detailed documentation can be found in the `kiro/` folder:
 
-## 🎯 Kullanım Örnekleri
+## 🎯 Usage Examples
 
-### Cihaz Ekleme
-1. Sol panelden PC, Switch veya Router seç
-2. Kanvasa sürükle
-3. Cihaz otomatik eklenir
+### Adding Devices
+1. Select PC, Switch, or Router from left panel
+2. Drag to canvas
+3. Device is automatically added
 
-### Bağlantı Oluşturma
-1. Cihazın portuna tıkla
-2. Başka bir cihazın portuna tıkla
-3. Bağlantı otomatik oluşturulur
+### Creating Connections
+1. Click on a device port
+2. Click on another device port
+3. Connection is automatically created
 
-### Ping Atma
-1. Cihaza sağ tıkla
-2. "Ping At" seç
-3. Hedef cihaza tıkla
-4. Ping animasyonu başlar
+### Ping Testing
+1. Right-click on device
+2. Select "Ping"
+3.
+3. Target the device
+4. Ping animation starts
 
-### Not Ekleme
-1. "Not Ekle" butonuna tıkla
-2. Not kanvasa eklenir
-3. Notu sürükle, yeniden boyutlandır, stil özelleştir
+### Adding Notes
+1. Click "Add Note" button
+2. Note is added to canvas
+3. Drag note, resize, customize style
 
-## 🌍 Dil Desteği
+## 🌍 Language Support
 
-- ✅ **Türkçe** - Tam destek
+- ✅ **Turkish** - Full support
 - ✅ **English** - Full support
+
+Language selection is done from the language selector in the top right corner.
+
+## 🎨 Theme Support
+
+- ✅ **Dark Mode** - Dark theme
+- ✅ **Light Mode** - Light theme
+
+Theme selection is done from the theme selector in the top right corner.
+
+## 📊 System Requirements
+
+- **Node.js**: 18.0 or higher
+- **npm**: 9.0 or higher (or bun)
+- **Browser**: Modern browser (Chrome, Firefox, Safari, Edge)
+
+## 🐛 Troubleshooting
+
+For issues, check the "Troubleshooting" section in [INSTALL.md](INSTALL.md).
+
+## 📝 License
+
+FOSS License - Check [LICENSE](LICENSE) for details.
+
+## 🤝 Contributing
+
+Contributions are welcome. Please:
+
+1. Fork
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit (`git commit -m 'Add some AmazingFeature'`)
+4. Push (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
+
+## 📞 Contact
+
+For questions or suggestions, please open an issue.
+
+---
+
+## 🌍 Dil Desteği / Language Support
+
+- ✅ **Türkçe** - Tam destek / Full support
+- ✅ **English** - Tam destek / Full support
 
 Dil seçimi sağ üst köşedeki dil seçicisinden yapılır.
 
-## 🎨 Tema Desteği
+## 🎨 Tema Desteği / Theme Support
 
-- ✅ **Dark Mode** - Koyu tema
-- ✅ **Light Mode** - Açık tema
+- ✅ **Dark Mode** - Koyu tema / Dark theme
+- ✅ **Light Mode** - Açık tema / Light theme
 
 Tema seçimi sağ üst köşedeki tema seçicisinden yapılır.
 
-## 📊 Sistem Gereksinimleri
+## 📊 Sistem Gereksinimleri / System Requirements
 
-- **Node.js**: 18.0 veya üzeri
-- **npm**: 9.0 veya üzeri (veya bun)
-- **Tarayıcı**: Modern tarayıcı (Chrome, Firefox, Safari, Edge)
+- **Node.js**: 18.0 veya üzeri / 18.0 or higher
+- **npm**: 9.0 veya üzeri (veya Bun) / 9.0 or higher (or bun)
+- **Tarayıcı**: Modern tarayıcı (Chrome, Firefox, Safari, Edge) / Modern browser (Chrome, Firefox, Safari, Edge)
 
-## 🐛 Sorun Giderme
+## 🐛 Sorun Giderme / Troubleshooting
 
-Sorunlar için [INSTALL.md](INSTALL.md) dosyasındaki "Sorun Giderme" bölümünü kontrol edin.
+Sorunlar için [INSTALL.md](INSTALL.md) dosyasındaki "Sorun Giderme" bölümünü kontrol edin. / For issues, check the "Troubleshooting" section in [INSTALL.md](INSTALL.md).
 
-## 📝 Lisans
+## 📝 Lisans / License
 
-FOSS License - Detaylar için [LICENSE](LICENSE) dosyasını kontrol edin.
+FOSS License - Detaylar için [LICENSE](LICENSE) dosyasını kontrol edin. / FOSS License - Check [LICENSE](LICENSE) for details.
 
-## 🤝 Katkıda Bulunma
+## 🤝 Katkıda Bulunma / Contributing
 
-Katkılar memnuniyetle karşılanır. Lütfen:
+Katkılar memnuniyetle karşılanır. Lütfen: / Contributions are welcome. Please:
 
-1. Fork yapın
-2. Feature branch oluşturun (`git checkout -b feature/AmazingFeature`)
-3. Commit yapın (`git commit -m 'Add some AmazingFeature'`)
-4. Push yapın (`git push origin feature/AmazingFeature`)
-5. Pull Request açın
+1. Fork yapın / Fork
+2. Feature branch oluşturun (`git checkout -b feature/AmazingFeature`) / Create feature branch
+3. Commit yapın (`git commit -m 'Add some AmazingFeature'`) / Commit
+4. Push yapın (`git push origin feature/AmazingFeature`) / Push
+5. Pull Request açın / Open Pull Request
 
-## 📞 İletişim
+## 📞 İletişim / Contact
 
-Sorular veya öneriler için lütfen issue açın.
+Sorular veya öneriler için lütfen issue açın. / For questions or suggestions, please open an issue.
+
+---
+
+**Sürüm**: 1.1.1  
+**Son Güncelleme**: 2026-04-02  
+**Durum**: Production Ready ✅
 
 ---
 

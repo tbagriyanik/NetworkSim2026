@@ -199,6 +199,10 @@ const baseProjectData = (devices: CanvasDevice[], connections: CanvasConnection[
 export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   const isTr = language === 'tr';
 
+  // 🌍 Dil Desteği / Language Support
+  // ✅ Türkçe - Tam destek / Full support
+  // ✅ English - Tam destek / Full support
+
   // Example 11: Wireless Lab (Intermediate) - 2 PCs, 1 Router
   const wifiDevices = [
     createPcDevice('pc-1', 'PC-1', 40, 220, '192.168.1.10', 1),
