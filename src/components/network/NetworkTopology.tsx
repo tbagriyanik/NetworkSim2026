@@ -507,7 +507,7 @@ export function NetworkTopology({
   // Touch/Mobile state
   const isMobile = useIsMobile();
   const [isTouchDragging, setIsTouchDragging] = useState(false);
-  const [touchDraggedDevice, setTouchDraggedDevice] = useState<string | null>(null);
+  const [touchDraggedDevice, setTouchDraggedDevice] = useState<CanvasDevice | null>(null);
   const [touchDragStartPos, setTouchDragStartPos] = useState<{ x: number; y: number } | null>(null);
   const [touchDragOffset, setTouchDragOffset] = useState({ x: 0, y: 0 });
   const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
@@ -1238,7 +1238,7 @@ export function NetworkTopology({
             if (lastDragPositionRef.current && touchDraggedDeviceRef.current) {
               setDevices((prev) =>
                 prev.map((d) =>
-                  d.id === touchDraggedDeviceRef.current
+                  d.id === touchDraggedDeviceRef.current?.id
                     ? { ...d, x: lastDragPositionRef.current!.x, y: lastDragPositionRef.current!.y }
                     : d
                 )
@@ -1263,7 +1263,7 @@ export function NetworkTopology({
       // If we weren't dragging, treat it as a tap (select)
       if (currentTouchDraggedDevice && !currentIsTouchDragging) {
         // We use latestDevicesRef to avoid stale devices closure
-        const device = latestDevicesRef.current.find(d => d.id === currentTouchDraggedDevice);
+        const device = latestDevicesRef.current.find(d => d.id === currentTouchDraggedDevice.id);
         if (device) {
           setSelectedDeviceIds([device.id]);
           onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
@@ -1490,7 +1490,7 @@ export function NetworkTopology({
     // Store the starting position for distance calculation
     setTouchDragStartPos({ x: touch.clientX, y: touch.clientY });
     setIsTouchDragging(false);
-    setTouchDraggedDevice(deviceId);
+    setTouchDraggedDevice(device); // device is already CanvasDevice from find() above
     setTouchDragOffset({
       x: (touch.clientX - rect.left - pan.x) - device.x * zoom,
       y: (touch.clientY - rect.top - pan.y) - device.y * zoom,
@@ -1534,7 +1534,7 @@ export function NetworkTopology({
       const canvasDims = getCanvasDimensions();
       setDevices((prev) =>
         prev.map((d) =>
-          d.id === touchDraggedDevice
+          d.id === touchDraggedDevice?.id
             ? { ...d, x: Math.max(50, Math.min(newX, canvasDims.width - 120)), y: Math.max(50, Math.min(newY, canvasDims.height - 150)) }
             : d
         )
@@ -1546,17 +1546,15 @@ export function NetworkTopology({
   const handleDeviceTouchEnd = useCallback(() => {
     // If we weren't dragging, treat it as a tap (select)
     if (touchDraggedDevice && !isTouchDragging) {
-      const device = devices.find(d => d.id === touchDraggedDevice);
-      if (device) {
-        setSelectedDeviceIds([device.id]);
-        onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
-      }
+      // touchDraggedDevice is already CanvasDevice, no need to find again
+      setSelectedDeviceIds([touchDraggedDevice.id]);
+      onDeviceSelect(touchDraggedDevice.type, touchDraggedDevice.id, isSwitchDeviceType(touchDraggedDevice.type) ? touchDraggedDevice.switchModel : undefined);
     }
 
     setTouchDraggedDevice(null);
     setTouchDragStartPos(null);
     setIsTouchDragging(false);
-  }, [touchDraggedDevice, isTouchDragging, devices, onDeviceSelect]);
+  }, [touchDraggedDevice, isTouchDragging, onDeviceSelect]);
 
   // Canvas-level touch handlers (pan, pinch, long-press for context)
   const handleTouchStart = useCallback((e: ReactTouchEvent) => {
@@ -4929,7 +4927,7 @@ export function NetworkTopology({
 
                   {/* Devices */}                  {devicesSortedForRender.map((device) => {
                     const isCurrentlyDragging = (draggedDevice === device.id && isActuallyDragging) ||
-                      (touchDraggedDevice === device.id && isTouchDragging);
+                      (touchDraggedDevice?.id === device.id && isTouchDragging);
                     return (
                       <DeviceNode
                         key={device.id}
