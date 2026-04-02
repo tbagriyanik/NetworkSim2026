@@ -1145,6 +1145,11 @@ export function PCPanel({
                 setIsConsoleConnected(true);
                 setActiveTab('terminal');
                 onNavigate?.('terminal');
+
+                // Trigger remote VTY session bootstrap so password/login policy is applied.
+                if (onExecuteDeviceCommand) {
+                  void onExecuteDeviceCommand(result.targetId!, '__TELNET_CONNECT__');
+                }
               }, 500);
             } else {
               addLocalOutput('error', `Connection refused by ${targetIp}`);
