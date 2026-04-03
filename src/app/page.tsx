@@ -453,6 +453,23 @@ export default function Home() {
         }
       }));
 
+      // Clear previous outputs/history so fresh boot output is visible
+      setDeviceOutputs(prevOutputs => {
+        const next = new Map(prevOutputs);
+        next.set(deviceId, []);
+        return next;
+      });
+      setPcOutputs(prevOutputs => {
+        const next = new Map(prevOutputs);
+        next.set(deviceId, []);
+        return next;
+      });
+      setPcHistories(prevHistories => {
+        const next = new Map(prevHistories);
+        next.set(deviceId, []);
+        return next;
+      });
+
       const nextDevices = prev.map((d) => (d.id === deviceId ? { ...d, status: nextStatus } : d));
       const byId = new Map(nextDevices.map(d => [d.id, d] as const));
 

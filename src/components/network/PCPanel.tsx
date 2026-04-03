@@ -171,6 +171,9 @@ export function PCPanel({
   const [input, setInput] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [autocompleteIndex, setAutocompleteIndex] = useState(-1);
+  const [autocompleteNavigated, setAutocompleteNavigated] = useState(false);
 
   // Keep desktop CMD and console histories separate.
   const [desktopHistory, setDesktopHistory] = useState<string[]>(() => {
@@ -431,6 +434,7 @@ export function PCPanel({
 
   const outputRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const autocompleteRef = useRef<HTMLDivElement>(null);
   const commandQueueRef = useRef<string[]>([]);
   const isProcessingQueueRef = useRef(false);
   const prevIpConfigModeRef = useRef(ipConfigMode);
@@ -628,6 +632,57 @@ export function PCPanel({
     }
     return null;
   }, [isConsoleConnected, connectedDeviceId, deviceOutputs, consoleNeedsPassword]);
+
+  const getCommandMode = useCallback((): string => {
+    if (activeTab === 'terminal' && isConsoleConnected && connectedDeviceId && deviceStates) {
+      const state = deviceStates.get(connectedDeviceId);
+      return state?.currentMode || 'user';
+    }
+    return 'user';
+  }, [activeTab, isConsoleConnected, connectedDeviceId, deviceStates]);
+
+  const getAutocompleteSuggestions = useCallback((value: string) => {
+    const mode = getCommandMode();
+    const { candidates, currentWord } = expandCommandContext(mode as any, value);
+    const suggestions = candidates.filter(
+      opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord)
+    );
+    return suggestions.slice(0, 8);
+  }, [getCommandMode]);
+
+  const buildCompletedInput = useCallback((selected: string) => {
+    const mode = getCommandMode();
+    const { contextTokens } = expandCommandContext(mode as any, input);
+    const prefix = contextTokens.join(' ');
+    return prefix ? `${prefix} ${selected}` : selected;
+  }, [input, getCommandMode]);
+
+  const completeAutocompleteSelection = useCallback((selected: string) => {
+    const completed = buildCompletedInput(selected);
+    setInput(completed);
+    setShowAutocomplete(false);
+    setAutocompleteIndex(-1);
+    setAutocompleteNavigated(false);
+    return completed;
+  }, [buildCompletedInput]);
+
+  useEffect(() => {
+    if (!showAutocomplete) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (autocompleteRef.current && target && !autocompleteRef.current.contains(target)) {
+        setShowAutocomplete(false);
+        setAutocompleteIndex(-1);
+        setAutocompleteNavigated(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showAutocomplete]);
 
   const [consolePasswordAttempted, setConsolePasswordAttempted] = useState(false);
 
@@ -1013,6 +1068,9 @@ export function PCPanel({
       setConsoleHistoryIndex(-1);
     }
     setInput('');
+    setShowAutocomplete(false);
+    setAutocompleteIndex(-1);
+    setAutocompleteNavigated(false);
     if (activeTab === 'desktop') {
       addLocalOutput('command', command);
       const parts = command.split(' ');
@@ -1301,15 +1359,9 @@ export function PCPanel({
     const value = input;
     if (!value && tabCycleIndex === -1) return;
 
-    // Determine mode: PC tab always uses 'user', Console tab uses connected device's mode
-    let mode: string = 'user';
-    if (activeTab === 'terminal' && isConsoleConnected && connectedDeviceId && deviceStates) {
-      const state = deviceStates.get(connectedDeviceId);
-      mode = state?.currentMode || 'user';
-    }
-
+    const mode = getCommandMode();
     const { candidates, currentWord, contextTokens } = expandCommandContext(mode as any, value);
-    const matches = candidates.filter(opt => opt.toLowerCase().startsWith(currentWord));
+    const matches = candidates.filter(opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord));
 
     if (matches.length > 0) {
       if (tabCycleIndex === -1) {
@@ -1330,7 +1382,7 @@ export function PCPanel({
       // No matches in console mode - trigger help
       executeCommand(value.trim() + ' ?');
     }
-  }, [input, tabCycleIndex, lastTabInput, activeTab, isConsoleConnected, connectedDeviceId, deviceStates, executeCommand]);
+  }, [input, tabCycleIndex, lastTabInput, getCommandMode, executeCommand]);
 
   // Undo/Redo helpers
   const handleUndo = useCallback(() => {
@@ -1357,9 +1409,25 @@ export function PCPanel({
     setUndoStack([...undoStack, input]);
     setRedoStack([]);
     setInput(newValue);
-  }, [input, undoStack]);
+    setAutocompleteNavigated(false);
+
+    if (newValue.trim().length > 0) {
+      const suggestions = getAutocompleteSuggestions(newValue);
+      if (suggestions.length > 0) {
+        setShowAutocomplete(true);
+        setAutocompleteIndex(-1);
+      } else {
+        setShowAutocomplete(false);
+      }
+    } else {
+      setShowAutocomplete(false);
+    }
+  }, [input, undoStack, getAutocompleteSuggestions]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    const autocompleteSuggestions = getAutocompleteSuggestions(input);
+    const canUseAutocomplete = showAutocomplete && autocompleteSuggestions.length > 0;
+
     if (e.ctrlKey && e.key.toLowerCase() === 'l') {
       e.preventDefault();
       setPcOutput([]);
@@ -1382,6 +1450,13 @@ export function PCPanel({
 
     // Escape cancels password/confirm and returns to normal input
     if (e.key === 'Escape') {
+      if (showAutocomplete) {
+        e.preventDefault();
+        setShowAutocomplete(false);
+        setAutocompleteIndex(-1);
+        setAutocompleteNavigated(false);
+        return;
+      }
       if (activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)) {
         e.preventDefault();
         if (onExecuteDeviceCommand && connectedDeviceId) {
@@ -1464,12 +1539,31 @@ export function PCPanel({
       return;
     }
 
-    if (e.key === 'Enter') executeCommand();
-    else if (e.key === 'Tab') {
+    if (e.key === 'Enter') {
+      if (canUseAutocomplete && autocompleteNavigated) {
+        e.preventDefault();
+        const completed = completeAutocompleteSelection(autocompleteSuggestions[autocompleteIndex] || autocompleteSuggestions[0]);
+        executeCommand(completed);
+        return;
+      }
+      executeCommand();
+    } else if (e.key === 'Tab') {
       e.preventDefault();
+      if (canUseAutocomplete) {
+        completeAutocompleteSelection(autocompleteSuggestions[autocompleteIndex] || autocompleteSuggestions[0]);
+        return;
+      }
       handleTabComplete();
-    }
-    else if (e.key === 'ArrowUp') {
+    } else if (e.key === 'ArrowUp') {
+      if (canUseAutocomplete) {
+        e.preventDefault();
+        setAutocompleteIndex(prev => {
+          if (prev === -1) return autocompleteSuggestions.length - 1;
+          return prev <= 0 ? autocompleteSuggestions.length - 1 : prev - 1;
+        });
+        setAutocompleteNavigated(true);
+        return;
+      }
       e.preventDefault();
       if (activeTab === 'desktop') {
         if (desktopHistory.length > 0 && desktopHistoryIndex < desktopHistory.length - 1) {
@@ -1485,6 +1579,15 @@ export function PCPanel({
         }
       }
     } else if (e.key === 'ArrowDown') {
+      if (canUseAutocomplete) {
+        e.preventDefault();
+        setAutocompleteIndex(prev => {
+          if (prev === -1) return 0;
+          return (prev + 1) % autocompleteSuggestions.length;
+        });
+        setAutocompleteNavigated(true);
+        return;
+      }
       e.preventDefault();
       if (activeTab === 'desktop') {
         if (desktopHistoryIndex > 0) {
@@ -2586,6 +2689,38 @@ export function PCPanel({
                           disabled={activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled}
                         />
                       </div>
+                      {showAutocomplete && input.trim().length > 0 && (
+                        <div
+                          ref={autocompleteRef}
+                          className="absolute bottom-16 left-3 right-3 z-20 sm:left-4 sm:right-4"
+                        >
+                          <div className={cn(
+                            "rounded-lg border shadow-xl overflow-hidden",
+                            isDark ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
+                          )}>
+                            <div className="max-h-40 overflow-y-auto">
+                              {getAutocompleteSuggestions(input).map((cmd, idx) => (
+                                <button
+                                  key={`${cmd}-${idx}`}
+                                  type="button"
+                                  onClick={() => {
+                                    completeAutocompleteSelection(cmd);
+                                    inputRef.current?.focus();
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-2.5 py-1 text-[11px] font-mono transition-colors",
+                                    autocompleteIndex >= 0 && idx === autocompleteIndex
+                                      ? (isDark ? "bg-cyan-500/20 text-cyan-200" : "bg-cyan-50 text-cyan-900")
+                                      : (isDark ? "text-slate-300 hover:bg-primary/10" : "text-slate-700 hover:bg-primary/10")
+                                  )}
+                                >
+                                  {cmd}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       {activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (
                         <Button
                           type="button"
@@ -2622,200 +2757,6 @@ export function PCPanel({
                       </Button>
                     </div>
 
-                    {/* Quick Command Buttons */}
-                    {activeTab === 'desktop' && !isPcPoweredOff && (
-                      <div className={`px-1 sm:px-4 pb-1 sm:pb-3 border-t ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-slate-50'}`}>
-                        {isMobile ? (
-                          <div className="grid grid-cols-2 gap-1">
-                            <div className="col-span-2 space-y-2">
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setInput('ipconfig');
-                                    executeCommand('ipconfig');
-                                  }}
-                                  className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                                >
-                                  ipconfig
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setInput('ping 8.8.8.8');
-                                    //executeCommand('ping 8.8.8.8');
-                                  }}
-                                  className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                                >
-                                  ping
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setInput('tracert 8.8.8.8');
-                                    //executeCommand('tracert 8.8.8.8');
-                                  }}
-                                  className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                                >
-                                  tracert
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setInput('nslookup test.com');
-                                    //executeCommand('nslookup test.com');
-                                  }}
-                                  className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                                >
-                                  nslookup
-                                </Button>
-                              </div>
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setInput('arp -a');
-                                    executeCommand('arp -a');
-                                  }}
-                                  className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                                >
-                                  arp -a
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setInput('netstat -an');
-                                    executeCommand('netstat -an');
-                                  }}
-                                  className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                                >
-                                  netstat
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setInput('dir');
-                                    executeCommand('dir');
-                                  }}
-                                  className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                                >
-                                  dir
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setInput('ver');
-                                    executeCommand('ver');
-                                  }}
-                                  className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                                >
-                                  ver
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setInput('ipconfig');
-                                executeCommand('ipconfig');
-                              }}
-                              className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                            >
-                              ipconfig
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setInput('ping 8.8.8.8');
-                                //executeCommand('ping 8.8.8.8');
-                              }}
-                              className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                            >
-                              ping
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setInput('tracert 8.8.8.8');
-                                //executeCommand('tracert 8.8.8.8');
-                              }}
-                              className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                            >
-                              tracert
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setInput('nslookup test.com');
-                                //executeCommand('nslookup test.com');
-                              }}
-                              className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                            >
-                              nslookup
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setInput('arp -a');
-                                executeCommand('arp -a');
-                              }}
-                              className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                            >
-                              arp -a
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setInput('netstat -an');
-                                executeCommand('netstat -an');
-                              }}
-                              className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                            >
-                              netstat
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setInput('dir');
-                                executeCommand('dir');
-                              }}
-                              className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                            >
-                              dir
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setInput('ver');
-                                executeCommand('ver');
-                              }}
-                              className="text-[10px] sm:text-xs font-mono h-6 sm:h-8"
-                            >
-                              ver
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
