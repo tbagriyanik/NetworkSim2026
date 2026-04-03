@@ -1397,11 +1397,26 @@ export function PCPanel({
       }
     }
 
-    // Handle Ctrl+A (Select All)
+    // Handle Ctrl+A (Select All) - Let browser handle natively
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
-      e.preventDefault();
-      const inputElement = e.currentTarget as HTMLInputElement;
-      inputElement.select();
+      // Don't preventDefault - let browser handle select all
+      return;
+    }
+
+    // Handle Ctrl+X (Cut) - Let browser handle natively
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
+      // Don't preventDefault - let browser handle cut
+      return;
+    }
+
+    // Handle Ctrl+C (Copy) - Let browser handle natively
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+      // Don't preventDefault - let browser handle copy
+      return;
+    }
+
+    // Handle Ctrl+V (Paste) - Let browser handle natively
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
       return;
     }
 
@@ -1441,22 +1456,11 @@ export function PCPanel({
       return;
     }
 
-    // Handle Ctrl+V (Paste)
+    // Handle Ctrl+V (Paste) - Let browser handle it naturally, just prevent default to stop any global handlers
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
-      e.preventDefault();
-      navigator.clipboard.readText().then(text => {
-        const inputElement = e.currentTarget as HTMLInputElement;
-        const start = inputElement.selectionStart || 0;
-        const end = inputElement.selectionEnd || 0;
-        const newInput = input.substring(0, start) + text + input.substring(end);
-        setInput(newInput);
-        // Move cursor to end of pasted text
-        setTimeout(() => {
-          inputElement.setSelectionRange(start + text.length, start + text.length);
-        }, 0);
-      }).catch(() => {
-        // Clipboard access denied, silently fail
-      });
+      // Don't prevent default - let the browser handle paste natively
+      // The only reason we had custom handling was to control cursor position
+      // But browser default is more reliable
       return;
     }
 

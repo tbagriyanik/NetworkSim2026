@@ -163,6 +163,8 @@ export interface Translations {
   themeLabel: string;
   errorPrefix: string;
   newBtn: string;
+  dhcpEnabled: string;
+  openServices: string;
   modeUser: string;
   modePrivileged: string;
   modeConfig: string;
@@ -440,6 +442,8 @@ const translations: Record<Language, Translations> = {
     themeLabel: 'Tema',
     errorPrefix: 'HATA',
     newBtn: 'Yeni',
+    dhcpEnabled: 'DHCP Etkin',
+    openServices: 'Açık Servisler',
     modeUser: 'Kullanıcı EXEC',
     modePrivileged: 'Ayrıcalıklı EXEC',
     modeConfig: 'Global Yapılandırma',
@@ -709,6 +713,8 @@ const translations: Record<Language, Translations> = {
     themeLabel: 'Theme',
     errorPrefix: 'ERROR',
     newBtn: 'New',
+    dhcpEnabled: 'DHCP Enabled',
+    openServices: 'Open Services',
     modeUser: 'User EXEC',
     modePrivileged: 'Privileged EXEC',
     modeConfig: 'Global Config',

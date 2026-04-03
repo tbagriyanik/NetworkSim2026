@@ -16,7 +16,7 @@ import { ConnectionLine } from './ConnectionLine';
 import { DeviceNode } from './DeviceNode';
 import LazyNetworkTopologyContextMenu from './LazyNetworkTopologyContextMenu';
 import { LazyNetworkTopologyPortSelectorModal } from './LazyNetworkTopologyPortSelectorModal';
-import { Plus, Power, Trash2 } from "lucide-react";
+import { Plus, Power, Trash2, Monitor, Network, Laptop } from "lucide-react";
 
 interface NetworkTopologyProps {
   cableInfo: CableInfo;
@@ -2361,6 +2361,15 @@ export function NetworkTopology({
   } | null>(null);
   const portTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Device Tooltip state
+  const [deviceTooltip, setDeviceTooltip] = useState<{
+    deviceId: string;
+    x: number;
+    y: number;
+    visible: boolean;
+  } | null>(null);
+  const deviceTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const getLivePort = useCallback((deviceId: string, portId: string) => {
     const deviceState = deviceStates?.get(deviceId);
     if (deviceState?.ports?.[portId]) {
@@ -2453,6 +2462,40 @@ export function NetworkTopology({
       clearTimeout(portTooltipTimerRef.current);
     }
     setPortTooltip(null);
+  }, []);
+
+  const showDeviceTooltip = useCallback((deviceId: string) => {
+    const device = devices.find(d => d.id === deviceId);
+    if (!device) return;
+    
+    const canvasRect = canvasRef.current?.getBoundingClientRect?.();
+    if (!canvasRect) return;
+    
+    const currentZoom = zoomRef.current;
+    const currentPan = panRef.current;
+    const deviceWidth = device.type === 'pc' ? 90 : 130;
+    const x = canvasRect.left + device.x * currentZoom + currentPan.x + deviceWidth * currentZoom / 2;
+    const y = canvasRect.top + device.y * currentZoom + currentPan.y;
+    
+    setDeviceTooltip({
+      deviceId,
+      x,
+      y,
+      visible: true,
+    });
+  }, [devices]);
+
+  const handleDeviceHover = useCallback((deviceId: string) => {
+    if (isDrawingConnection || draggedDevice || selectedDeviceIds.length > 1) return;
+    showDeviceTooltip(deviceId);
+  }, [showDeviceTooltip, isDrawingConnection, draggedDevice, selectedDeviceIds]);
+
+  const handleDeviceMouseLeave = useCallback(() => {
+    if (deviceTooltipTimerRef.current) {
+      clearTimeout(deviceTooltipTimerRef.current);
+      deviceTooltipTimerRef.current = null;
+    }
+    setDeviceTooltip(null);
   }, []);
 
   // Sync device counters with current devices to prevent ID collisions
@@ -4359,9 +4402,6 @@ export function NetworkTopology({
       >
         <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <h3 className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              <span className="hidden">{language === 'tr' ? 'Ağ Topolojisi' : 'Network Topology'}</span>
-            </h3>
 
             {/* MD/LG Screen Quick Tools */}
             <div className="hidden md:flex items-center ">
@@ -5569,7 +5609,11 @@ export function NetworkTopology({
                     : '#a855f7';
 
                 return (
-                  <g key={device.id}>
+                  <g
+                    key={device.id}
+                    onMouseEnter={() => handleDeviceHover(device.id)}
+                    onMouseLeave={handleDeviceMouseLeave}
+                  >
                     {/* Device box */}
                     <rect
                       x={device.x}
@@ -6094,6 +6138,151 @@ export function NetworkTopology({
 
               {/* Arrow */}
               <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] ${isDark ? 'border-t-slate-800' : 'border-t-white'
+                }`} />
+            </div>
+          </div>
+        )}
+
+      {/* Device Tooltip */}
+      {
+        deviceTooltip && deviceTooltip.visible && (
+          <div
+            className={`fixed z-[100] pointer-events-none transition-opacity duration-300 ${deviceTooltip.visible ? 'opacity-100' : 'opacity-0'
+              }`}
+            style={{
+              left: deviceTooltip.x,
+              top: deviceTooltip.y + 20, // Display below the device icon
+              transform: 'translateX(-50%)',
+            }}
+          >
+            <div
+              className={`px-4 py-3 rounded-2xl shadow-2xl border backdrop-blur-md min-w-[200px] ${isDark
+                ? 'bg-slate-900/95 border-slate-700/50 text-white shadow-cyan-500/20'
+                : 'bg-white/95 border-slate-200/50 text-slate-900 shadow-slate-200/80'
+                }`}
+            >
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
+                <div className={`p-1.5 rounded-lg ${isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>
+                  {(() => {
+                    const dev = devices.find(d => d.id === deviceTooltip.deviceId);
+                    if (dev?.type === 'pc') return <Monitor className="w-3.5 h-3.5" />;
+                    if (dev?.type === 'router') return <Network className="w-3.5 h-3.5" />;
+                    return <Laptop className="w-3.5 h-3.5" />;
+                  })()}
+                </div>
+                <div>
+                  <div className="text-[10px] font-black tracking-widest opacity-60 leading-none">
+                    {devices.find(d => d.id === deviceTooltip.deviceId)?.type.toUpperCase()}
+                  </div>
+                  <div className="text-sm font-black tracking-tight leading-none mt-1">
+                    {devices.find(d => d.id === deviceTooltip.deviceId)?.name}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                {(() => {
+                  const dev = devices.find(d => d.id === deviceTooltip.deviceId);
+                  if (!dev) return null;
+
+                  return (
+                    <>
+                      <div className="flex justify-between items-center gap-4">
+                        <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.ipAddress}</span>
+                        <span className="text-xs font-mono font-bold text-cyan-500">{dev.ip || '0.0.0.0'}</span>
+                      </div>
+                      <div className="flex justify-between items-center gap-4">
+                        <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.subnetMask}</span>
+                        <span className="text-xs font-mono font-bold opacity-80">{dev.subnet || '255.255.255.0'}</span>
+                      </div>
+                      <div className="flex justify-between items-center gap-4">
+                        <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.gateway}</span>
+                        <span className="text-xs font-mono font-bold opacity-80">{dev.gateway || '0.0.0.0'}</span>
+                      </div>
+                      <div className="flex justify-between items-center gap-4">
+                        <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.dnsServer}</span>
+                        <span className="text-xs font-mono font-bold opacity-80">{dev.dns || '0.0.0.0'}</span>
+                      </div>
+                      <div className="flex justify-between items-center gap-4">
+                        <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.macAddress}</span>
+                        <span className="text-[10px] font-mono opacity-60">{dev.macAddress || 'N/A'}</span>
+                      </div>
+
+                      {dev.type === 'pc' && (
+                        <div className="flex justify-between items-center gap-4 mt-1 pt-1 border-t border-white/5">
+                          <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.dhcpEnabled}</span>
+                          <span className={`text-[10px] font-black tracking-widest ${dev.ipConfigMode === 'dhcp' ? 'text-green-500' : 'opacity-40'}`}>
+                            {dev.ipConfigMode === 'dhcp' ? (t.language === 'tr' ? 'EVET' : 'YES') : (t.language === 'tr' ? 'HAYIR' : 'NO')}
+                          </span>
+                        </div>
+                      )}
+
+                      {dev.services && (
+                        <div className="mt-2 pt-2 border-t border-white/10">
+                          <div className="text-[10px] font-bold opacity-50 uppercase tracking-wider mb-1">{t.openServices}</div>
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {dev.services.http?.enabled && (
+                              <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-500 text-[9px] font-black tracking-widest border border-amber-500/20">HTTP</span>
+                            )}
+                            {dev.services.dns?.enabled && (
+                              <span className="px-1.5 py-0.5 rounded-md bg-blue-500/20 text-blue-500 text-[9px] font-black tracking-widest border border-blue-500/20">DNS</span>
+                            )}
+                            {dev.services.dhcp?.enabled && (
+                              <span className="px-1.5 py-0.5 rounded-md bg-purple-500/20 text-purple-500 text-[9px] font-black tracking-widest border border-purple-500/20">DHCP</span>
+                            )}
+                            {(!dev.services.http?.enabled && !dev.services.dns?.enabled && !dev.services.dhcp?.enabled) && (
+                              <span className="text-[9px] opacity-40 italic">{t.language === 'tr' ? 'Servis yok' : 'No services'}</span>
+                            )}
+                          </div>
+
+                          {dev.services.dhcp?.enabled && dev.services.dhcp.pools && dev.services.dhcp.pools.length > 0 && (
+                            <div className="space-y-1 mt-2 pt-2 border-t border-white/5">
+                              <div className="text-[9px] font-bold opacity-60 uppercase tracking-wider">{t.language === 'tr' ? 'DHCP Pool' : 'DHCP Pool'}</div>
+                              {dev.services.dhcp.pools.map((pool, idx) => (
+                                <div key={idx} className="text-[9px] space-y-0.5 bg-purple-500/10 rounded p-1.5">
+                                  <div className="flex justify-between"><span className="opacity-50">Pool:</span><span className="font-mono">{pool.poolName}</span></div>
+                                  <div className="flex justify-between"><span className="opacity-50">IP:</span><span className="font-mono">{pool.startIp}</span></div>
+                                  <div className="flex justify-between"><span className="opacity-50">Mask:</span><span className="font-mono">{pool.subnetMask}</span></div>
+                                  <div className="flex justify-between"><span className="opacity-50">GW:</span><span className="font-mono">{pool.defaultGateway}</span></div>
+                                  <div className="flex justify-between"><span className="opacity-50">Max:</span><span className="font-mono">{pool.maxUsers}</span></div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {dev.services.dns?.enabled && dev.services.dns.records && dev.services.dns.records.length > 0 && (
+                            <div className="space-y-1 mt-2 pt-2 border-t border-white/5">
+                              <div className="text-[9px] font-bold opacity-60 uppercase tracking-wider">{t.language === 'tr' ? 'DNS Kayıtları' : 'DNS Records'}</div>
+                              {dev.services.dns.records.map((record, idx) => (
+                                <div key={idx} className="text-[9px] flex justify-between items-center gap-2 bg-blue-500/10 rounded px-1.5 py-0.5">
+                                  <span className="font-mono text-blue-400 truncate max-w-[80px]">{record.domain}</span>
+                                  <span className="opacity-50">→</span>
+                                  <span className="font-mono">{record.address}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {dev.services.http?.enabled && (
+                            <div className="mt-2 pt-2 border-t border-white/5">
+                              <div className="text-[9px] flex justify-between items-center">
+                                <span className="opacity-60 uppercase tracking-wider">{t.language === 'tr' ? 'HTTP Sunucu' : 'HTTP Server'}</span>
+                                <span className="text-green-500 text-[9px] font-bold">✓ {t.language === 'tr' ? 'Aktif' : 'Active'}</span>
+                              </div>
+                              {dev.services.http.content && (
+                                <div className="text-[8px] opacity-50 mt-1 truncate">{dev.services.http.content.substring(0, 50)}...</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Arrow */}
+              <div className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[6px] ${isDark ? 'border-b-slate-900' : 'border-b-white'
                 }`} />
             </div>
           </div>
