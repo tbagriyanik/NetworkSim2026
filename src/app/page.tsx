@@ -2996,7 +2996,7 @@ export default function Home() {
                     const pc = topologyDevices.find(d => d.id === activeDeviceId);
                     if (!pc) return null;
                     return (
-                      <div className="hidden md:block fixed bottom-4 right-4 z-50 animate-scale-in">
+                      <div className="hidden md:block fixed bottom-24 right-4 z-50 animate-scale-in">
                         <div className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[260px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}>
                           <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
                             <div className="flex items-center gap-1.5">
