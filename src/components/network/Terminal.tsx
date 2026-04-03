@@ -99,7 +99,7 @@ export function Terminal({
 
   // Autocomplete state
   const [showAutocomplete, setShowAutocomplete] = useState(false);
-  const [autocompleteIndex, setAutocompleteIndex] = useState(0);
+  const [autocompleteIndex, setAutocompleteIndex] = useState(-1);
   const [autocompleteNavigated, setAutocompleteNavigated] = useState(false);
 
   const isDark = theme === 'dark';
@@ -135,7 +135,7 @@ export function Terminal({
       const target = event.target as Node | null;
       if (autocompleteRef.current && target && !autocompleteRef.current.contains(target)) {
         setShowAutocomplete(false);
-        setAutocompleteIndex(0);
+        setAutocompleteIndex(-1);
         setAutocompleteNavigated(false);
       }
     };
@@ -375,7 +375,7 @@ export function Terminal({
     setTabCycleIndex(-1);
     setInput('');
     setShowAutocomplete(false);
-    setAutocompleteIndex(0);
+    setAutocompleteIndex(-1);
     await onCommand(command);
   };
 
@@ -384,11 +384,27 @@ export function Terminal({
     void handleSubmit();
   };
 
+  const getAutocompleteContext = useCallback((value: string) => {
+    const mode = state.currentMode;
+    const base = expandCommandContext(mode, value);
+    const helpTree = commandHelp[mode] || commandHelp.user || {};
+    const contextKey = base.contextTokens.join(' ').toLowerCase();
+
+    if (contextKey === 'conf' && helpTree['configure']) {
+      return {
+        ...base,
+        candidates: helpTree['configure'],
+        contextTokens: ['configure']
+      };
+    }
+
+    return base;
+  }, [state.currentMode, expandCommandContext]);
+
   const handleTabComplete = useCallback(() => {
     const value = input;
     if (!value && tabCycleIndex === -1) return;
-    const mode = state.currentMode;
-    const { candidates, currentWord, contextTokens } = expandCommandContext(mode, value);
+    const { candidates, currentWord, contextTokens } = getAutocompleteContext(value);
     const matches = candidates.filter(
       opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord)
     );
@@ -412,7 +428,7 @@ export function Terminal({
       // No matches - trigger help by appending ?
       onCommand(value.trim() + ' ?');
     }
-  }, [input, tabCycleIndex, lastTabInput, state.currentMode, expandCommandContext, onCommand]);
+  }, [input, tabCycleIndex, lastTabInput, getAutocompleteContext, onCommand]);
 
   // Undo/Redo helpers
   const handleUndo = useCallback(() => {
@@ -436,13 +452,12 @@ export function Terminal({
   }, [input, undoStack, redoStack]);
 
   const getAutocompleteSuggestions = useCallback((value: string) => {
-    const mode = state.currentMode;
-    const { candidates, currentWord } = expandCommandContext(mode, value);
+    const { candidates, currentWord } = getAutocompleteContext(value);
     const suggestions = candidates.filter(
       opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord)
     );
     return suggestions.slice(0, 8);
-  }, [state.currentMode, expandCommandContext]);
+  }, [getAutocompleteContext]);
 
   const handleInputChange = useCallback((newValue: string) => {
     setUndoStack([...undoStack, input]);
@@ -455,7 +470,7 @@ export function Terminal({
       const suggestions = getAutocompleteSuggestions(newValue);
       if (suggestions.length > 0) {
         setShowAutocomplete(true);
-        setAutocompleteIndex(0);
+        setAutocompleteIndex(-1);
       } else {
         setShowAutocomplete(false);
       }
@@ -465,17 +480,16 @@ export function Terminal({
   }, [input, undoStack, getAutocompleteSuggestions]);
 
   const buildCompletedInput = useCallback((selected: string) => {
-    const mode = state.currentMode;
-    const { contextTokens } = expandCommandContext(mode, input);
+    const { contextTokens } = getAutocompleteContext(input);
     const prefix = contextTokens.join(' ');
     return prefix ? `${prefix} ${selected}` : selected;
-  }, [input, state.currentMode, expandCommandContext]);
+  }, [input, getAutocompleteContext]);
 
   const completeAutocompleteSelection = useCallback((selected: string) => {
     const completed = buildCompletedInput(selected);
     setInput(completed);
     setShowAutocomplete(false);
-    setAutocompleteIndex(0);
+    setAutocompleteIndex(-1);
     setAutocompleteNavigated(false);
     return completed;
   }, [buildCompletedInput]);
@@ -601,7 +615,10 @@ export function Terminal({
     if (e.key === 'ArrowUp') {
       if (canUseAutocomplete) {
         e.preventDefault();
-        setAutocompleteIndex(prev => (prev <= 0 ? autocompleteSuggestions.length - 1 : prev - 1));
+        setAutocompleteIndex(prev => {
+          if (prev === -1) return autocompleteSuggestions.length - 1;
+          return prev <= 0 ? autocompleteSuggestions.length - 1 : prev - 1;
+        });
         setAutocompleteNavigated(true);
         return;
       }
@@ -614,7 +631,10 @@ export function Terminal({
     } else if (e.key === 'ArrowDown') {
       if (canUseAutocomplete) {
         e.preventDefault();
-        setAutocompleteIndex(prev => (prev + 1) % autocompleteSuggestions.length);
+        setAutocompleteIndex(prev => {
+          if (prev === -1) return 0;
+          return (prev + 1) % autocompleteSuggestions.length;
+        });
         setAutocompleteNavigated(true);
         return;
       }
@@ -638,7 +658,7 @@ export function Terminal({
       if (showAutocomplete) {
         e.preventDefault();
         setShowAutocomplete(false);
-        setAutocompleteIndex(0);
+        setAutocompleteIndex(-1);
         setAutocompleteNavigated(false);
         return;
       }
@@ -908,7 +928,7 @@ export function Terminal({
                           }}
                           className={cn(
                             "w-full text-left px-2.5 py-1 text-[11px] font-mono transition-colors",
-                            idx === autocompleteIndex
+                            autocompleteIndex >= 0 && idx === autocompleteIndex
                               ? (isDark ? "bg-cyan-500/20 text-cyan-200" : "bg-cyan-50 text-cyan-900")
                               : (isDark ? "text-slate-300 hover:bg-primary/10" : "text-slate-700 hover:bg-primary/10")
                           )}

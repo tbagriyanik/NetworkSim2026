@@ -3100,7 +3100,7 @@ export default function Home() {
 
               {/* CMD Terminal Sekmesi */}
               {/* CMD Terminal Sekmesi - Always mounted, hidden via CSS */}
-              <div className={`w-full flex-1 min-h-0 overflow-hidden flex flex-col ${activeTab === 'cmd' ? 'flex' : 'hidden'}`}>
+              <div className={`w-full flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col lg:h-[calc(100vh-300px)] lg:max-h-[calc(100vh-300px)] ${activeTab === 'cmd' ? 'flex' : 'hidden'}`}>
                 <PCPanel
                   key={`pc-panel-${activeDeviceId}`}
                   deviceId={activeDeviceId}
@@ -3123,9 +3123,9 @@ export default function Home() {
               {/* Terminal Sekmesi - Always mounted, hidden via CSS */}
               <div className={`flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto custom-scrollbar ${activeTab === 'terminal' ? 'flex' : 'hidden'}`}>
                 {/* Desktop Layout: Terminal sol, Running Config sağda sabit */}
-                <div className="flex flex-col md:flex-row gap-4 flex-1 min-h-0">
+                <div className="flex flex-col md:flex-row gap-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                   {/* Terminal - Simplified: small (<640px no constraints), medium+ (640px+ 300px margin), 640-770px (50px less) */}
-                  <div className="flex flex-col h-full md:flex-1 md:max-h-[calc(100vh-300px)] max-h-[calc(100vh-250px)]">
+                  <div className="flex flex-col h-full md:flex-1 md:max-h-[calc(100vh-300px)] max-h-[calc(100vh-250px)] lg:h-[calc(100vh-300px)] lg:max-h-[calc(100vh-300px)]">
                     <div className="flex flex-col h-full min-h-[400px]">
                       <Terminal
                         key={`terminal-${activeDeviceId}`}

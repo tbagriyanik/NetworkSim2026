@@ -122,7 +122,7 @@ export function ModernPanel({
             )}
             style={{
                 width: isOverlay ? (isMobile ? '100vw' : width) : '100%',
-                height: isCollapsed ? 'auto' : (isMobile ? '550px' : (style?.height || 'auto')),
+                height: '550px',
                 ...overlayMobileStyle,
                 ...style
             }}

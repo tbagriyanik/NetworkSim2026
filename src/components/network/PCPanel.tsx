@@ -1594,7 +1594,7 @@ export function PCPanel({
 
   return (
     <div className={`
-      w-full h-full flex items-center justify-center p-0 md:p-4
+      w-full h-full lg:h-[calc(100vh-300px)] lg:max-h-[calc(100vh-300px)] flex items-center justify-center p-0 md:p-4
       ${isDark ? 'bg-slate-900' : 'bg-slate-100'}
     `}>
       {/* Tablet Frame - Full screen on mobile */}
@@ -1717,7 +1717,7 @@ export function PCPanel({
         </div>
         {/* Screen Bezel */}
         <div className={`
-          h-[calc(100%-40px)] overflow-hidden relative
+          h-[calc(100%-40px)] min-h-0 overflow-hidden relative
           ${isDark
             ? 'bg-gradient-to-br from-slate-900/95 via-blue-900/20 to-purple-900/20 border border-slate-800/50'
             : 'bg-gradient-to-br from-white/70 via-blue-50/50 to-purple-50/50 border border-slate-200/50'
@@ -1740,9 +1740,9 @@ export function PCPanel({
             collapsible={false}
             hideTitle
             hideHeader
-            className="w-full h-full min-w-0"
+            className="w-full h-full min-w-0 min-h-0"
           >
-            <div className={`flex flex-col h-full overflow-hidden ${isDark ? 'bg-transparent' : 'bg-white/30'}`}>
+            <div className={`flex flex-col h-full min-h-0 overflow-hidden ${isDark ? 'bg-transparent' : 'bg-white/30'}`}>
               <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
                 <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-md`}>
                   <DialogHeader>
