@@ -17,6 +17,7 @@ import { DeviceNode } from './DeviceNode';
 import LazyNetworkTopologyContextMenu from './LazyNetworkTopologyContextMenu';
 import { LazyNetworkTopologyPortSelectorModal } from './LazyNetworkTopologyPortSelectorModal';
 import { Plus, Power, Trash2, Monitor, Network, Laptop } from "lucide-react";
+import { cn } from '@/lib/utils';
 
 interface NetworkTopologyProps {
   cableInfo: CableInfo;
@@ -4493,23 +4494,18 @@ export function NetworkTopology({
 
           <div className="flex items-center gap-1.5 sm:gap-2">
 
-            {/* Desktop Connect Button */}
             <button
               onClick={() => {
                 setShowPortSelector(true);
                 setPortSelectorStep('source');
                 setSelectedSourcePort(null);
               }}
-              className={`cursor-pointer hidden md:flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-black tracking-widest shadow-sm transition-all hover:scale-[1.02] active:scale-95 ${isDark
-                ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-500/20'
-                : 'bg-cyan-500 hover:bg-cyan-600 text-white shadow-cyan-500/10'
-                }`}
+              className="btn-glass-primary hidden md:flex"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 0 0 -5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0 -5.656-5.656l-1.1 1.1" />
               </svg>
               <span className="hidden sm:inline">{language === 'tr' ? 'Bağla' : 'Connect'}</span>
-              <span className="sm:hidden">{language === 'tr' ? 'Bağla' : 'Connect'}</span>
             </button>
 
             {/* Ping Button */}
@@ -4521,12 +4517,11 @@ export function NetworkTopology({
                     setPingSource(null);
                     setPingResult(null);
                   }}
-                  className={`cursor-pointer hidden md:flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-black tracking-widest shadow-sm transition-all hover:scale-[1.02] active:scale-95 ${pingMode
-                    ? (isDark ? 'bg-yellow-500 hover:bg-yellow-600 text-white ring-2 ring-yellow-400' : 'bg-yellow-400 hover:bg-yellow-500 text-white ring-2 ring-yellow-300')
-                    : (isDark ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20' : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/10')
-                    }`}
+                  className={cn(
+                    "hidden md:flex",
+                    pingMode ? "btn-glass-warning ring-2 ring-amber-400" : "btn-glass-indigo"
+                  )}
                 >
-                  {/* Envelope/letter icon for ping */}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
@@ -4545,10 +4540,7 @@ export function NetworkTopology({
               <TooltipTrigger asChild>
                 <button
                   onClick={addNote}
-                  className={`cursor-pointer hidden md:flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition-all ${isDark
-                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                    : 'bg-amber-500 hover:bg-amber-600 text-white'
-                    }`}
+                  className="btn-glass-warning hidden md:flex"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 0 0 -2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -4564,15 +4556,11 @@ export function NetworkTopology({
               <TooltipTrigger asChild>
                 <button
                   onClick={() => {
-                    // Refresh network by checking all connections and device states
                     if (onRefreshNetwork) {
                       onRefreshNetwork();
                     }
                   }}
-                  className={`cursor-pointer hidden md:flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition-all ${isDark
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                    : 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                    }`}
+                  className="btn-glass-success hidden md:flex"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />

@@ -8,6 +8,7 @@ import { useDeviceManager } from '@/hooks/useDeviceManager';
 import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes, useZoom, usePan, useActiveTab } from '@/lib/store/appStore';
 // Duplicate removed
 import { NetworkTopology } from '@/components/network/NetworkTopology';
+import { cn } from '@/lib/utils';
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from '@/components/network/networkTopology.types';
 import { getPrompt } from '@/lib/network/executor';
 import { formatErrorForUser } from '@/lib/errors/errorHandler';
@@ -2156,40 +2157,34 @@ export default function Home() {
                     <div className="hidden md:flex items-center gap-1">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-green-400' : 'text-slate-600 hover:text-green-600'}`}
+                          <button
+                            className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-green-400' : 'text-slate-600 hover:text-green-600')}
                             onClick={handleNewProject}
                           >
                             <File className="w-4 h-4" />
-                          </Button>
+                          </button>
                         </TooltipTrigger>
                         <TooltipContent>{t.newProject} (Alt+N)</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-amber-400' : 'text-slate-600 hover:text-amber-600'}`}
+                          <button
+                            className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-amber-400' : 'text-slate-600 hover:text-amber-600')}
                             onClick={() => fileInputRef.current?.click()}
                           >
                             <FolderOpen className="w-4 h-4" />
-                          </Button>
+                          </button>
                         </TooltipTrigger>
                         <TooltipContent>{t.loadProject} (Ctrl+O)</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-blue-400' : 'text-slate-600 hover:text-blue-600'}`}
+                          <button
+                            className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-blue-400' : 'text-slate-600 hover:text-blue-600')}
                             onClick={handleSaveProject}
                           >
                             <Save className="w-4 h-4" />
-                          </Button>
+                          </button>
                         </TooltipTrigger>
                         <TooltipContent>{t.saveProject} (Ctrl+S)</TooltipContent>
                       </Tooltip>
@@ -2202,44 +2197,38 @@ export default function Home() {
                     {/* Info & Settings */}
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-sky-400' : 'text-slate-600 hover:text-sky-600'}`} onClick={() => setShowAboutModal(true)}>
+                        <button className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-sky-400' : 'text-slate-600 hover:text-sky-600')} onClick={() => setShowAboutModal(true)}>
                           <Info className="w-4 h-4" />
-                        </Button>
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent>{t.about}</TooltipContent>
                     </Tooltip>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <button
                       onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
-                      className={`text-xs font-bold h-8 px-2 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-purple-400' : 'text-slate-600 hover:text-purple-600'}`}
+                      className={cn("text-xs font-black tracking-widest h-8 px-2 flex items-center gap-1 rounded-lg transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-purple-400' : 'text-slate-600 hover:text-purple-600')}
                     >
-                      <Languages className="w-4 h-4 mr-1" />
+                      <Languages className="w-4 h-4" />
                       {language.toUpperCase()}
-                    </Button>
+                    </button>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-yellow-400' : 'text-slate-600 hover:text-yellow-600'}`}
+                        <button
+                          className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-yellow-400' : 'text-slate-600 hover:text-yellow-600')}
                           onClick={() => setTheme(isDark ? 'light' : 'dark')}
                         >
                           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                        </Button>
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent>{isDark ? (language === 'tr' ? 'Açık Tema' : 'Light Mode') : (language === 'tr' ? 'Koyu Tema' : 'Dark Mode')}</TooltipContent>
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={`h-8 w-8 ui-hover-surface ${graphicsQuality === 'high' ? (isDark ? 'text-slate-300 hover:text-green-400' : 'text-slate-600 hover:text-green-600') : (isDark ? 'text-slate-300 hover:text-orange-400' : 'text-slate-600 hover:text-orange-600')}`}
+                        <button
+                          className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-all ui-hover-surface", graphicsQuality === 'high' ? (isDark ? 'text-slate-300 hover:text-green-400' : 'text-slate-600 hover:text-green-600') : (isDark ? 'text-slate-300 hover:text-orange-400' : 'text-slate-600 hover:text-orange-600'))}
                           onClick={() => setGraphicsQuality(graphicsQuality === 'high' ? 'low' : 'high')}
                         >
                           {graphicsQuality === 'high' ? <Sparkles className="w-4 h-4" /> : <Cloud className="w-4 h-4" />}
-                        </Button>
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent>{graphicsQuality === 'high' ? (language === 'tr' ? 'Yüksek Çözünürlük' : 'High Resolution') : (language === 'tr' ? 'Düşük Çözünürlük' : 'Low Resolution')}</TooltipContent>
                     </Tooltip>
@@ -3007,7 +2996,7 @@ export default function Home() {
                     const pc = topologyDevices.find(d => d.id === activeDeviceId);
                     if (!pc) return null;
                     return (
-                      <div className="fixed bottom-4 right-4 z-50 animate-scale-in">
+                      <div className="hidden md:block fixed bottom-4 right-4 z-50 animate-scale-in">
                         <div className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[260px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}>
                           <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
                             <div className="flex items-center gap-1.5">

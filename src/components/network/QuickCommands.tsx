@@ -26,19 +26,19 @@ interface QuickCommand {
 }
 
 const quickCommands: QuickCommand[] = [
-  { command: 'enable', label: 'enable', modes: ['user'], color: 'bg-green-600 hover:bg-green-700' },
-  { command: 'disable', label: 'disable', modes: ['privileged'], color: 'bg-gray-600 hover:bg-gray-700' },
-  { command: 'configure terminal', label: 'conf t', modes: ['privileged'], color: 'bg-blue-600 hover:bg-blue-700' },
-  { command: 'exit', label: 'exit', modes: ['privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config'], color: 'bg-orange-600 hover:bg-orange-700' },
-  { command: 'end', label: 'end', modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config'], color: 'bg-red-600 hover:bg-red-700' },
-  { command: 'show running-config', label: 'sh run', modes: ['privileged'], color: 'bg-slate-600 hover:bg-slate-700' },
-  { command: 'show vlan brief', label: 'sh vlan', modes: ['privileged'], color: 'bg-gray-600 hover:bg-gray-700' },
-  { command: 'show interfaces', label: 'sh int', modes: ['privileged'], color: 'bg-gray-600 hover:bg-gray-700' },
-  { command: 'show version', label: 'sh ver', modes: ['privileged'], color: 'bg-gray-600 hover:bg-gray-700' },
-  { command: 'show mac address-table', label: 'sh mac', modes: ['privileged'], color: 'bg-gray-600 hover:bg-gray-700' },
-  { command: 'write memory', label: 'wr', modes: ['privileged'], color: 'bg-yellow-600 hover:bg-yellow-700' },
-  { command: 'no shutdown', label: 'no shut', modes: ['interface'], color: 'bg-green-600 hover:bg-green-700' },
-  { command: 'shutdown', label: 'shut', modes: ['interface'], color: 'bg-red-600 hover:bg-red-700' },
+  { command: 'enable', label: 'enable', modes: ['user'], color: 'btn-glass-success' },
+  { command: 'disable', label: 'disable', modes: ['privileged'], color: 'btn-glass-secondary' },
+  { command: 'configure terminal', label: 'conf t', modes: ['privileged'], color: 'btn-glass-primary' },
+  { command: 'exit', label: 'exit', modes: ['privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config'], color: 'btn-glass-warning' },
+  { command: 'end', label: 'end', modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config'], color: 'btn-glass-danger' },
+  { command: 'show running-config', label: 'sh run', modes: ['privileged'], color: 'btn-glass-indigo' },
+  { command: 'show vlan brief', label: 'sh vlan', modes: ['privileged'], color: 'btn-glass-secondary' },
+  { command: 'show interfaces', label: 'sh int', modes: ['privileged'], color: 'btn-glass-secondary' },
+  { command: 'show version', label: 'sh ver', modes: ['privileged'], color: 'btn-glass-secondary' },
+  { command: 'show mac address-table', label: 'sh mac', modes: ['privileged'], color: 'btn-glass-secondary' },
+  { command: 'write memory', label: 'wr', modes: ['privileged'], color: 'btn-glass-warning' },
+  { command: 'no shutdown', label: 'no shut', modes: ['interface'], color: 'btn-glass-success' },
+  { command: 'shutdown', label: 'shut', modes: ['interface'], color: 'btn-glass-danger' },
 ];
 
 export function QuickCommands({ currentMode, onExecuteCommand, t, theme, language, isDevicePoweredOff = false }: QuickCommandsProps) {
@@ -91,13 +91,16 @@ export function QuickCommands({ currentMode, onExecuteCommand, t, theme, languag
             {availableCommands.map((cmd) => (
               <Tooltip key={cmd.command}>
                 <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
+                  <button
                     onClick={() => onExecuteCommand(cmd.command)}
-                    className={`text-xs px-2 py-1 h-auto min-h-[28px] ${cmd.color} transition-transform hover:scale-105 ${isMobile ? 'text-[9px] leading-tight' : 'sm:text-xs sm:px-2 sm:h-6'}`}
+                    className={cn(
+                      cmd.color,
+                      "text-[9px] px-2 py-1 rounded-lg font-black tracking-widest transition-all",
+                      isMobile ? 'flex-1' : 'min-w-[50px]'
+                    )}
                   >
                     <span className="truncate">{cmd.label}</span>
-                  </Button>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent className="text-xs">
                   <span className="truncate">{cmd.command}</span>
