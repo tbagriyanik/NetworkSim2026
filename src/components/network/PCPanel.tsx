@@ -848,6 +848,16 @@ export function PCPanel({
   }, [httpAppContent, isMobile]);
 
   useEffect(() => {
+    if (!httpAppDeviceId) return;
+    const targetDevice = topologyDevices.find((d) => d.id === httpAppDeviceId);
+    if (!targetDevice || !isRouterDevice(targetDevice)) return;
+
+    const runtimeState = deviceStates?.get(httpAppDeviceId);
+    const refreshed = generateRouterAdminPage(targetDevice, runtimeState);
+    setHttpAppContent(refreshed);
+  }, [httpAppDeviceId, topologyDevices, deviceStates]);
+
+  useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
       if (dragStateRef.current) {
         const dx = event.clientX - dragStateRef.current.startX;

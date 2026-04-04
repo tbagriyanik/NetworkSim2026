@@ -58,13 +58,13 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     `<option value="${opt.value}" ${wifi.mode === opt.value ? 'selected' : ''}>${opt.label}</option>`
   ).join('');
 
-  const passwordField = wifi.security !== 'open' ? `
+  const passwordField = `
     <div class="form-group">
       <label for="wifi-password">WiFi Password / Security Key</label>
       <input type="password" id="wifi-password" name="password" value="${wifi.password || ''}" placeholder="Enter password (min 8 characters)" minlength="8">
       <span class="hint">Minimum 8 characters required</span>
     </div>
-  ` : '';
+  `;
 
   const hiddenCheckbox = `
     <div class="form-group checkbox-group">
@@ -518,7 +518,9 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
           <span class="hint">WPA2 Personal is recommended for most networks</span>
         </div>
         
-        ${passwordField}
+        <div id="wifi-password-wrap" style="${wifi.security === 'open' ? 'display:none;' : ''}">
+          ${passwordField}
+        </div>
         
         <div class="grid-2">
           ${hiddenCheckbox}
@@ -616,8 +618,12 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     
     // Security type change handler
     document.getElementById('wifi-security').addEventListener('change', function() {
+      const passwordWrap = document.getElementById('wifi-password-wrap');
+      const isOpen = this.value === 'open';
+      if (passwordWrap) {
+        passwordWrap.style.display = isOpen ? 'none' : 'block';
+      }
       console.log('Security type changed to:', this.value);
-      // Password field visibility is handled by CSS in real implementation
     });
   </script>
 </body>

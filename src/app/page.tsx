@@ -392,7 +392,8 @@ export default function Home() {
                   security: config.wifi.security || 'open',
                   password: config.wifi.password || '',
                   channel: config.wifi.channel || '2.4GHz',
-                  mode: config.wifi.enabled ? (config.wifi.mode || 'ap') : 'disabled',
+                  // Keep selected mode even when disabled; shutdown controls operational state.
+                  mode: config.wifi.mode || 'ap',
                 },
               },
             },
