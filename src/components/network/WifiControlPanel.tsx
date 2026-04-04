@@ -17,6 +17,7 @@ export interface RouterWebConfig {
   wifi: WifiAdminConfig;
   deviceName: string;
   deviceIp: string;
+  deviceId?: string;
   adminPassword?: string;
 }
 
@@ -25,7 +26,7 @@ export interface RouterWebConfig {
  * Styled like a typical router web admin page (e.g., 192.168.1.1)
  */
 export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
-  const { wifi, deviceName, deviceIp } = config;
+  const { wifi, deviceName, deviceIp, deviceId } = config;
 
   const securityOptions = [
     { value: 'open', label: 'Open (No Security)' },
@@ -570,6 +571,25 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
         btn.style.background = '';
         alert('✅ WiFi settings have been saved successfully!\\n\\nChanges will take effect immediately.');
       }, 1000);
+
+      try {
+        window.parent.postMessage({
+          type: 'router-admin-save-wifi',
+          deviceId: '${deviceId || ''}',
+          payload: {
+            enabled,
+            ssid,
+            security,
+            channel,
+            mode,
+            hidden,
+            maxClients: Number(maxClients),
+            password
+          }
+        }, '*');
+      } catch (err) {
+        console.warn('Could not sync router settings to parent:', err);
+      }
       
       console.log('WiFi Configuration:', {
         enabled, ssid, security, channel, mode, hidden, maxClients, password: password ? '***' : 'none'
@@ -635,6 +655,7 @@ export function generateRouterAdminPage(device: CanvasDevice): string {
     wifi: getDefaultWifiConfig(device),
     deviceName: device.name,
     deviceIp: device.ip || '192.168.1.1',
+    deviceId: device.id,
     adminPassword: 'admin',
   };
 

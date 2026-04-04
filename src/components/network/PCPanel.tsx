@@ -404,8 +404,20 @@ export function PCPanel({
   };
 
   const [pcOutput, setPcOutput] = useState<OutputLine[]>(() => getInitialPcOutput());
-  const [htmlModalContent, setHtmlModalContent] = useState<string | null>(null);
-  const [htmlModalTitle, setHtmlModalTitle] = useState<string>('HTTP Page');
+  const [httpAppContent, setHttpAppContent] = useState<string | null>(null);
+  const [httpAppUrl, setHttpAppUrl] = useState<string>('');
+  const [httpAppTitle, setHttpAppTitle] = useState<string>('HTTP Page');
+  const [httpAppDeviceId, setHttpAppDeviceId] = useState<string | null>(null);
+  const [browserWindow, setBrowserWindow] = useState({ x: 40, y: 140, width: 960, height: 400 });
+  const dragStateRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
+  const resizeStateRef = useRef<{
+    side: 'left' | 'right' | 'bottom';
+    startX: number;
+    startY: number;
+    originX: number;
+    originW: number;
+    originH: number;
+  } | null>(null);
 
   // Sync pcOutput when deviceId changes or pcOutputs prop updates
   useEffect(() => {
@@ -441,6 +453,7 @@ export function PCPanel({
   const outputRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
+  const httpContentRef = useRef<HTMLTextAreaElement>(null);
   const commandQueueRef = useRef<string[]>([]);
   const isProcessingQueueRef = useRef(false);
   const prevIpConfigModeRef = useRef(ipConfigMode);
@@ -583,6 +596,14 @@ export function PCPanel({
     return allOutput.filter((line: any) => (line.timestamp || 0) >= consoleConnectionTime);
   }, [isConsoleConnected, connectedDeviceId, deviceOutputs, consoleConnectionTime]);
 
+  // Always keep CMD/Console views pinned to the latest output
+  useEffect(() => {
+    if (!outputRef.current) return;
+    requestAnimationFrame(() => {
+      outputRef.current!.scrollTop = outputRef.current!.scrollHeight;
+    });
+  }, [pcOutput, activeConsoleOutput, activeTab]);
+
   const handleCopyAll = useCallback(async () => {
     try {
       const lines = (activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line: any) => {
@@ -665,6 +686,21 @@ export function PCPanel({
     () => showAutocomplete && input.trim().length > 0 && renderAutocompleteSuggestions.length > 0,
     [showAutocomplete, input, renderAutocompleteSuggestions]
   );
+  const httpAppSrcDoc = useMemo(() => {
+    if (!httpAppContent) return '';
+    return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html, body { margin: 0; padding: 0; }
+      body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
+    </style>
+  </head>
+  <body>${httpAppContent}</body>
+</html>`;
+  }, [httpAppContent]);
 
   const buildCompletedInput = useCallback((selected: string) => {
     const mode = getCommandMode();
@@ -730,12 +766,14 @@ export function PCPanel({
   }, [isPcPoweredOff, isConsoleTargetPoweredOff, t]);
 
   const addLocalOutput = useCallback((type: OutputLine['type'], content: string, prompt?: string) => {
-    // HTML çıktısı terminal içinde gösterilmesin; ayrı bir modalda açalım
+    // HTML çıktısını pop-up (modal) içinde aç
     if (type === 'html') {
-      setHtmlModalContent(content);
-      setHtmlModalTitle(language === 'tr' ? 'HTTP Yönetim Sayfası' : 'HTTP Management Page');
+      const safe = sanitizeHTTPContent(content || '') || ' ';
+      const withLineBreaks = safe.replace(/\r?\n/g, '<br />');
+      setHttpAppContent(withLineBreaks.trim() ? withLineBreaks : '<em>No HTTP content</em>');
+      setHttpAppTitle(language === 'tr' ? 'HTTP Yönetim Sayfası' : 'HTTP Management Page');
 
-      // Kullanıcıya terminalde bildirim bırak
+      // Terminalde bilgilendir
       setPcOutput(prev => [...prev, {
         id: Math.random().toString(36).substr(2, 9),
         type: 'success',
@@ -755,6 +793,103 @@ export function PCPanel({
       if (outputRef.current) outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }, 0);
   }, [language]);
+
+  useEffect(() => {
+    if (!httpAppDeviceId) return;
+
+    const handleRouterAdminMessage = (event: MessageEvent) => {
+      const data = event.data;
+      if (!data || data.type !== 'router-admin-save-wifi') return;
+      if (data.deviceId !== httpAppDeviceId) return;
+
+      const device = topologyDevices.find((d) => d.id === httpAppDeviceId);
+      const payload = data.payload || {};
+      const nextWifi = {
+        enabled: Boolean(payload.enabled),
+        ssid: String(payload.ssid || ''),
+        security: payload.security || 'open',
+        password: String(payload.password || ''),
+        channel: payload.channel || '2.4GHz',
+        mode: payload.mode || 'ap',
+        hidden: Boolean(payload.hidden),
+        maxClients: Number(payload.maxClients || 32),
+        bssid: device?.wifi?.bssid || '',
+      };
+
+      window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+        detail: {
+          deviceId: httpAppDeviceId,
+          config: {
+            wifi: nextWifi,
+          },
+        },
+      }));
+
+      addLocalOutput(
+        'success',
+        language === 'tr'
+          ? `${device?.name || 'Cihaz'} WiFi ayarlari uygulandi.`
+          : `${device?.name || 'Device'} WiFi settings applied.`
+      );
+    };
+
+    window.addEventListener('message', handleRouterAdminMessage);
+    return () => window.removeEventListener('message', handleRouterAdminMessage);
+  }, [addLocalOutput, httpAppDeviceId, language, topologyDevices]);
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      if (dragStateRef.current) {
+        const dx = event.clientX - dragStateRef.current.startX;
+        const dy = event.clientY - dragStateRef.current.startY;
+        setBrowserWindow((prev) => ({
+          ...prev,
+          x: Math.max(0, dragStateRef.current!.originX + dx),
+          y: Math.max(0, dragStateRef.current!.originY + dy),
+        }));
+      } else if (resizeStateRef.current) {
+        const state = resizeStateRef.current;
+        const dx = event.clientX - state.startX;
+        const dy = event.clientY - state.startY;
+        setBrowserWindow((prev) => {
+          if (state.side === 'bottom') {
+            return {
+              ...prev,
+              height: Math.max(260, state.originH + dy),
+            };
+          }
+          if (state.side === 'right') {
+            return {
+              ...prev,
+              width: Math.max(420, state.originW + dx),
+            };
+          }
+
+          const nextWidth = Math.max(420, state.originW - dx);
+          const widthDiff = nextWidth - state.originW;
+          return {
+            ...prev,
+            width: nextWidth,
+            x: Math.max(0, state.originX - widthDiff),
+          };
+        });
+      }
+    };
+
+    const handlePointerEnd = () => {
+      dragStateRef.current = null;
+      resizeStateRef.current = null;
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerEnd);
+    window.addEventListener('pointercancel', handlePointerEnd);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerEnd);
+      window.removeEventListener('pointercancel', handlePointerEnd);
+    };
+  }, []);
 
   // Add multi-line output with delay between each line for realistic typing effect
   const addMultilineOutput = useCallback(async (type: OutputLine['type'], content: string, delayMs: number = 50) => {
@@ -783,6 +918,24 @@ export function PCPanel({
         await new Promise(resolve => setTimeout(resolve, delayMs));
       }
     }
+  }, []);
+
+  const applyHttpFormatting = useCallback((tag: 'b' | 'u' | 'i') => {
+    const textarea = httpContentRef.current;
+    if (!textarea) return;
+    const { selectionStart, selectionEnd, value } = textarea;
+    if (selectionStart === null || selectionEnd === null || selectionStart === selectionEnd) return;
+
+    const selected = value.slice(selectionStart, selectionEnd);
+    const wrapped = `<${tag}>${selected}</${tag}>`;
+    const nextValue = value.slice(0, selectionStart) + wrapped + value.slice(selectionEnd);
+    setServiceHttpContent(nextValue);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const caret = selectionStart + wrapped.length;
+      textarea.setSelectionRange(caret, caret);
+    });
   }, []);
 
   const canReachTargetIp = useCallback((targetIp: string) => {
@@ -927,6 +1080,67 @@ export function PCPanel({
 
     return null;
   }, [canReachTargetIp, resolveDomainWithDnsServices, topologyDevices, deviceStates]);
+
+  const openHttpTarget = useCallback((rawTarget?: string) => {
+    const rawInput = (rawTarget || '').trim();
+    const normalizedInput = rawInput || '192.168.1.10';
+    let lookupTarget = normalizedInput;
+    let displayUrl = normalizedInput.startsWith('http://') || normalizedInput.startsWith('https://')
+      ? normalizedInput
+      : `http://${normalizedInput}`;
+
+    // Browser-style inputs can include protocol/path/query. We only resolve host/IP.
+    try {
+      const parsed = new URL(displayUrl);
+      lookupTarget = parsed.hostname || lookupTarget;
+      displayUrl = parsed.toString();
+    } catch {
+      // Keep raw fallback and continue with existing validation flow.
+    }
+
+    const target = lookupTarget.trim() || '192.168.1.10';
+    if (isValidIpv4(target) && !hasGatewayForTarget(target)) {
+      addLocalOutput('error', t.targetGatewayRequired);
+      return;
+    }
+    if (!isValidIpv4(target)) {
+      if (!isValidIpv4(pcDNS)) {
+        addLocalOutput('error', t.dnsAddressRequired);
+        return;
+      }
+      if (!hasGatewayForTarget(pcDNS)) {
+        addLocalOutput('error', t.dnsGatewayRequired);
+        return;
+      }
+    }
+
+    const httpServer = findHttpServerByTarget(target);
+    setHttpAppUrl(displayUrl);
+
+    if (!httpServer) {
+      setHttpAppDeviceId(null);
+      setHttpAppTitle('404 Not Found');
+      setHttpAppContent(`
+        <main style="padding:32px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;">
+          <h1 style="margin:0 0 8px;font-size:28px;">404</h1>
+          <p style="margin:0 0 12px;font-size:16px;">Sayfa bulunamadi / Page not found</p>
+          <code style="display:inline-block;padding:6px 10px;border-radius:8px;background:#f1f5f9;color:#0f172a;">${displayUrl}</code>
+        </main>
+      `);
+      addLocalOutput('error', `404 Not Found: ${target}`);
+    } else if (isRouterDevice(httpServer)) {
+      const adminPage = generateRouterAdminPage(httpServer);
+      setHttpAppDeviceId(httpServer.id);
+      setHttpAppContent(adminPage);
+      setHttpAppTitle(language === 'tr' ? 'Yönlendirici Yönetimi' : 'Router Management');
+      addLocalOutput('success', language === 'tr'
+        ? 'HTTP sayfası yeni pencerede açıldı.'
+        : 'HTTP page opened in a new window.');
+    } else {
+      setHttpAppDeviceId(null);
+      addLocalOutput('html', httpServer.services?.http?.content || 'Merhaba Dünya!');
+    }
+  }, [addLocalOutput, findHttpServerByTarget, hasGatewayForTarget, isValidIpv4, language, pcDNS, t]);
 
   const formatMacForArp = useCallback((mac?: string) => {
     if (!mac) return '';
@@ -1251,28 +1465,7 @@ export function PCPanel({
           }
         }
       } else if (cmd === 'http') {
-        const target = args[0];
-        if (!target) {
-          addLocalOutput('output', 'Usage: http <ip_or_domain>');
-        } else if (isValidIpv4(target) && !hasGatewayForTarget(target)) {
-          addLocalOutput('error', t.targetGatewayRequired);
-        } else if (!isValidIpv4(target) && !isValidIpv4(pcDNS)) {
-          addLocalOutput('error', t.dnsAddressRequired);
-        } else if (!isValidIpv4(target) && !hasGatewayForTarget(pcDNS)) {
-          addLocalOutput('error', t.dnsGatewayRequired);
-        } else {
-          const httpServer = findHttpServerByTarget(target);
-          if (!httpServer) {
-            addLocalOutput('error', `HTTP service is unavailable for ${target}`);
-          } else if (isRouterDevice(httpServer)) {
-            // For routers/switches, show the WiFi admin control panel
-            const adminPage = generateRouterAdminPage(httpServer);
-            addLocalOutput('html', adminPage);
-          } else {
-            // For PCs, show their HTTP content
-            addLocalOutput('html', httpServer.services?.http?.content || 'Merhaba Dünya!');
-          }
-        }
+        openHttpTarget(args[0]);
       } else if (cmd === 'telnet') {
         const target = args[0];
         const port = args[1] || '23';
@@ -1786,809 +1979,805 @@ export function PCPanel({
 
   return (
     <>
-    <div className={`
+      <div className={`
         w-full h-full flex flex-col items-center justify-center p-0 md:p-4
         ${isDark ? 'bg-slate-900' : 'bg-slate-100'}
       `}>
-      {/* External Toolbar - Above Tablet Frame */}
-      <div className={`
+        {/* External Toolbar - Above Tablet Frame */}
+        <div className={`
         w-full max-w-full lg:max-w-4xl mx-auto mb-2 px-3 py-1.5 flex items-center justify-between relative z-50
         rounded-lg border
         ${isDark
-          ? 'bg-slate-800/90 border-slate-700 shadow-md'
-          : 'bg-white/90 border-slate-200 shadow-md'
-        }
+            ? 'bg-slate-800/90 border-slate-700 shadow-md'
+            : 'bg-white/90 border-slate-200 shadow-md'
+          }
       `}>
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${isPcPoweredOff ? 'bg-red-500' : 'bg-green-500 animate-pulse'}`} />
-          <span className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-            {internalPcHostname}
-          </span>
-          <span className={`text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-            {pcIP}
-          </span>
-          {/* Program Buttons - Left of Power */}
-          <div className="flex items-center gap-1 ml-2">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${isPcPoweredOff ? 'bg-red-500' : 'bg-green-500 animate-pulse'}`} />
+            <span className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+              {internalPcHostname}
+            </span>
+            <span className={`text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+              {pcIP}
+            </span>
+            {/* Program Buttons - Left of Power */}
+            <div className="flex items-center gap-1 ml-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigateToProgram('desktop')}
+                    disabled={isPcPoweredOff}
+                    className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'desktop' ? (isDark ? 'bg-blue-500/30 text-blue-300' : 'bg-blue-500/30 text-blue-700') : (isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500')}`}
+                    aria-label="CMD"
+                  >
+                    <TerminalIcon className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>CMD</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigateToProgram('terminal')}
+                    disabled={isPcPoweredOff}
+                    className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'terminal' ? (isDark ? 'bg-emerald-500/30 text-emerald-300' : 'bg-emerald-500/30 text-emerald-700') : (isDark ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-500')}`}
+                    aria-label={language === 'tr' ? 'Konsol' : 'Console'}
+                  >
+                    <Laptop className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{language === 'tr' ? 'Konsol' : 'Console'}</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setActiveTab('services')}
+                    disabled={isPcPoweredOff}
+                    className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'services' ? (isDark ? 'bg-amber-500/30 text-amber-300' : 'bg-amber-500/30 text-amber-700') : (isDark ? 'text-amber-400 hover:text-amber-300' : 'text-amber-600 hover:text-amber-500')}`}
+                    aria-label={language === 'tr' ? 'Servisler' : 'Services'}
+                  >
+                    <Globe className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{language === 'tr' ? 'Servisler' : 'Services'}</TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            {/* Settings - Left of Power */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => navigateToProgram('desktop')}
+                  onClick={() => navigateToProgram('settings')}
                   disabled={isPcPoweredOff}
-                  className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'desktop' ? (isDark ? 'bg-blue-500/30 text-blue-300' : 'bg-blue-500/30 text-blue-700') : (isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500')}`}
-                  aria-label="CMD"
+                  className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'settings' ? (isDark ? 'bg-purple-500/30 text-purple-300' : 'bg-purple-500/30 text-purple-700') : (isDark ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-500')}`}
+                  aria-label={language === 'tr' ? 'Ayarlar' : 'Settings'}
                 >
-                  <TerminalIcon className="w-4 h-4" />
+                  <Settings className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>CMD</TooltipContent>
+              <TooltipContent>{language === 'tr' ? 'Ayarlar' : 'Settings'}</TooltipContent>
             </Tooltip>
+            {/* WiFi */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => navigateToProgram('terminal')}
+                  onClick={() => setActiveTab('wireless')}
                   disabled={isPcPoweredOff}
-                  className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'terminal' ? (isDark ? 'bg-emerald-500/30 text-emerald-300' : 'bg-emerald-500/30 text-emerald-700') : (isDark ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-500')}`}
-                  aria-label={language === 'tr' ? 'Konsol' : 'Console'}
+                  className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'wireless' ? (isDark ? 'bg-cyan-500/30 text-cyan-300' : 'bg-cyan-500/30 text-cyan-700') : (isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-500')}`}
+                  aria-label={language === 'tr' ? 'Kablosuz' : 'Wireless'}
                 >
-                  <Laptop className="w-4 h-4" />
+                  <Wifi className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{language === 'tr' ? 'Konsol' : 'Console'}</TooltipContent>
+              <TooltipContent>{language === 'tr' ? 'Kablosuz' : 'Wireless'}</TooltipContent>
             </Tooltip>
+            {/* Power Button - Always visible */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setActiveTab('services')}
-                  disabled={isPcPoweredOff}
-                  className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'services' ? (isDark ? 'bg-amber-500/30 text-amber-300' : 'bg-amber-500/30 text-amber-700') : (isDark ? 'text-amber-400 hover:text-amber-300' : 'text-amber-600 hover:text-amber-500')}`}
-                  aria-label={language === 'tr' ? 'Servisler' : 'Services'}
+                  onClick={() => {
+                    goHome();
+                    onTogglePower?.(deviceId);
+                  }}
+                  className={`h-6 w-6 rounded-md ui-hover-surface transition-all ${isPcPoweredOff ? 'text-rose-500 hover:text-rose-400' : 'text-emerald-500 hover:text-emerald-400'}`}
+                  aria-label={t.power}
+                  disabled={!onTogglePower}
                 >
-                  <Globe className="w-4 h-4" />
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+                  </svg>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{language === 'tr' ? 'Servisler' : 'Services'}</TooltipContent>
+              <TooltipContent>{t.power}</TooltipContent>
+            </Tooltip>
+            {/* Clock */}
+            <div className={`ml-2 text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+              {formatTime(currentTime)}
+            </div>
+            {/* Close Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className={`h-6 w-6 rounded-md ui-hover-surface ${isDark ? 'text-slate-300 hover:text-red-400' : 'text-slate-600 hover:text-red-600'}`}
+                  aria-label={language === 'tr' ? 'Kapat' : 'Close'}
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{language === 'tr' ? 'Kapat' : 'Close'}</TooltipContent>
             </Tooltip>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          {/* Settings - Left of Power */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigateToProgram('settings')}
-                disabled={isPcPoweredOff}
-                className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'settings' ? (isDark ? 'bg-purple-500/30 text-purple-300' : 'bg-purple-500/30 text-purple-700') : (isDark ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-500')}`}
-                aria-label={language === 'tr' ? 'Ayarlar' : 'Settings'}
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{language === 'tr' ? 'Ayarlar' : 'Settings'}</TooltipContent>
-          </Tooltip>
-          {/* WiFi */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setActiveTab('wireless')}
-                disabled={isPcPoweredOff}
-                className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'wireless' ? (isDark ? 'bg-cyan-500/30 text-cyan-300' : 'bg-cyan-500/30 text-cyan-700') : (isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-500')}`}
-                aria-label={language === 'tr' ? 'Kablosuz' : 'Wireless'}
-              >
-                <Wifi className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{language === 'tr' ? 'Kablosuz' : 'Wireless'}</TooltipContent>
-          </Tooltip>
-          {/* Power Button - Always visible */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  goHome();
-                  onTogglePower?.(deviceId);
-                }}
-                className={`h-6 w-6 rounded-md ui-hover-surface transition-all ${isPcPoweredOff ? 'text-rose-500 hover:text-rose-400' : 'text-emerald-500 hover:text-emerald-400'}`}
-                aria-label={t.power}
-                disabled={!onTogglePower}
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-                </svg>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t.power}</TooltipContent>
-          </Tooltip>
-          {/* Clock */}
-          <div className={`ml-2 text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-            {formatTime(currentTime)}
-          </div>
-          {/* Close Button */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                className={`h-6 w-6 rounded-md ui-hover-surface ${isDark ? 'text-slate-300 hover:text-red-400' : 'text-slate-600 hover:text-red-600'}`}
-                aria-label={language === 'tr' ? 'Kapat' : 'Close'}
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{language === 'tr' ? 'Kapat' : 'Close'}</TooltipContent>
-          </Tooltip>
-        </div>
-      </div>
 
-      {/* Tablet Frame - Simple modern tablet design */}
-      <div className={`
+        {/* Tablet Frame - Simple modern tablet design */}
+        <div className={`
         w-full max-w-full lg:max-w-4xl mx-auto overflow-hidden self-center
         relative flex flex-col h-[500px]
         ${isDark
-          ? 'bg-slate-800 md:border-2 md:border-slate-600 md:rounded-2xl md:shadow-xl'
-          : 'bg-slate-200 md:border-2 md:border-slate-300 md:rounded-2xl md:shadow-xl'
-        }
+            ? 'bg-slate-800 md:border-2 md:border-slate-600 md:rounded-2xl md:shadow-xl'
+            : 'bg-slate-200 md:border-2 md:border-slate-300 md:rounded-2xl md:shadow-xl'
+          }
       `}>
-        {/* Screen Area - Clean and simple */}
-        <div className={`
+          {/* Screen Area - Clean and simple */}
+          <div className={`
           flex-1 relative overflow-hidden
           ${isDark
-            ? 'bg-slate-900'
-            : 'bg-white'
-          }
+              ? 'bg-slate-900'
+              : 'bg-white'
+            }
         `}>
-          {/* Power Off Overlay - Tablet ekranını tamamen karartır */}
-          {isPcPoweredOff && (
-            <div className="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center">
-              <div className="relative">
-                <div className="absolute inset-0 bg-red-500/20 blur-3xl rounded-full animate-pulse" />
-                <svg className="w-16 h-16 text-red-600 drop-shadow-xl relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-                </svg>
+            {/* Power Off Overlay - Tablet ekranını tamamen karartır */}
+            {isPcPoweredOff && (
+              <div className="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-red-500/20 blur-3xl rounded-full animate-pulse" />
+                  <svg className="w-16 h-16 text-red-600 drop-shadow-xl relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+                  </svg>
+                </div>
               </div>
-            </div>
-          )}
-          <ModernPanel
-            id={deviceId}
-            title={internalPcHostname}
-            onClose={onClose}
-            collapsible={false}
-            hideTitle
-            hideHeader
-            className={cn(
-              "w-full min-w-0",
-              isDark
-                ? "bg-slate-900/40 border border-slate-700/40 backdrop-blur-xl"
-                : "bg-white/25 border border-white/40 backdrop-blur-xl shadow-lg shadow-white/10"
             )}
-          >
-            <div className="flex flex-col h-[400px] overflow-hidden bg-transparent">
-              <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-                <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-md`}>
-                  <DialogHeader>
-                    <DialogTitle>{t.searchOutputTitle}</DialogTitle>
-                    <DialogDescription className={isDark ? 'text-slate-400' : 'text-slate-600'}>
-                      {t.searchOutputDescription}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t.searchPlaceholder} autoFocus />
-                  <div className="flex justify-end gap-2 pt-1">
-                    <Button variant="outline" onClick={() => setSearchQuery('')} className="text-xs font-semibold" disabled={!searchQuery.trim()}>
-                      {t.clearTerminalBtn}
-                    </Button>
-                    <Button onClick={() => setSearchOpen(false)} className="text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white">
-                      {t.close}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              {/* Navigation Tabs - Hide on mobile, use main app tabs */}
-              <div className="hidden">
-                <Button
-                  variant={activeTab === 'home' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('home')}
-                  className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'home' ? 'bg-slate-500/10 text-slate-300' : 'text-slate-500 hover:text-slate-300'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
-                >
-                  <Monitor className="w-4 h-4" />
-                  <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{language === 'tr' ? 'Ana Ekran' : 'Home'}</span>
-                </Button>
-                <Button
-                  variant={activeTab === 'desktop' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('desktop')}
-                  className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'desktop' ? 'bg-blue-500/10 text-blue-400' : 'text-slate-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
-                >
-                  <Command className="w-4 h-4" />
-                  <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{t.commandPromptTab}</span>
-                </Button>
-                <Button
-                  variant={activeTab === 'terminal' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('terminal')}
-                  className={`h-9 px-4 text-xs font-black tracking-wider  transition-all gap-2 ${activeTab === 'terminal' ? 'bg-emerald-500/10 text-emerald-500' : 'text-slate-500 hover:text-emerald-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
-                >
-                  <TerminalIcon className="w-4 h-4" />
-                  <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{t.consoleTab}</span>
-                </Button>
-                <Button
-                  variant={activeTab === 'settings' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('settings')}
-                  className={`h-9 px-4 text-xs font-black tracking-wider  transition-all gap-2 ${activeTab === 'settings' ? 'bg-purple-500/10 text-purple-500' : 'text-slate-500 hover:text-purple-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{t.settingsTab}</span>
-                </Button>
-                <Button
-                  variant={activeTab === 'services' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('services')}
-                  className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'services' ? 'bg-amber-500/10 text-amber-500' : 'text-slate-500 hover:text-amber-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
-                >
-                  <Globe className="w-4 h-4" />
-                  <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>
-                    {`${t.servicesTab} (${activeServiceCount}/3)`}
-                  </span>
-                </Button>
-                <Button
-                  variant={activeTab === 'wireless' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('wireless')}
-                  className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'wireless' ? 'bg-purple-500/10 text-purple-500' : 'text-slate-500 hover:text-purple-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
-                >
-                  <Network className="w-4 h-4" />
-                  <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{language === 'tr' ? 'Kablosuz' : 'Wireless'}</span>
-                </Button>
-              </div>
-
-              {/* Content Area */}
-              <div className={`flex-1 flex flex-col ${terminalBg} relative overflow-hidden h-[400px] pt-2.5`}>
-                {activeTab === 'home' && (
-                  <div className="flex-1 flex items-center justify-center p-2.5 pt-0">
-                    <div className="w-full h-full max-w-[700px] grid grid-cols-5 gap-2 rounded-xl p-2.5 bg-slate-800/30 border border-slate-700/30 shadow-sm place-items-center">
-                      <button
-                        onClick={() => navigateToProgram('desktop')}
-                        className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
-                      >
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-600">
-                          <TerminalIcon className="w-6 h-6 text-white" />
-                        </div>
-                        <span className="text-xs font-medium text-slate-300">
-                          CMD
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => navigateToProgram('terminal')}
-                        className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
-                      >
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-600">
-                          <Laptop className="w-6 h-6 text-white" />
-                        </div>
-                        <span className="text-xs font-medium text-slate-300">
-                          {language === 'tr' ? 'Konsol' : 'Console'}
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => navigateToProgram('settings')}
-                        className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
-                      >
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-purple-600">
-                          <Settings className="w-6 h-6 text-white" />
-                        </div>
-                        <span className="text-xs font-medium text-slate-300">
-                          {language === 'tr' ? 'Ayarlar' : 'Settings'}
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => setActiveTab('services')}
-                        className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
-                      >
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-600">
-                          <Globe className="w-6 h-6 text-white" />
-                        </div>
-                        <span className="text-xs font-medium text-slate-300">
-                          {language === 'tr' ? 'Servisler' : 'Services'}
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => setActiveTab('wireless')}
-                        className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
-                      >
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-cyan-600">
-                          <Wifi className="w-6 h-6 text-white" />
-                        </div>
-                        <span className="text-xs font-medium text-slate-300">
-                          {language === 'tr' ? 'Kablosuz' : 'Wireless'}
-                        </span>
-                      </button>
+            <ModernPanel
+              id={deviceId}
+              title={internalPcHostname}
+              onClose={onClose}
+              collapsible={false}
+              hideTitle
+              hideHeader
+              className={cn(
+                "w-full min-w-0",
+                isDark
+                  ? "bg-slate-900/40 border border-slate-700/40 backdrop-blur-xl"
+                  : "bg-white/25 border border-white/40 backdrop-blur-xl shadow-lg shadow-white/10"
+              )}
+            >
+              <div className="flex flex-col h-[400px] overflow-hidden bg-transparent">
+                <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+                  <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-md`}>
+                    <DialogHeader>
+                      <DialogTitle>{t.searchOutputTitle}</DialogTitle>
+                      <DialogDescription className={isDark ? 'text-slate-400' : 'text-slate-600'}>
+                        {t.searchOutputDescription}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t.searchPlaceholder} autoFocus />
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button variant="outline" onClick={() => setSearchQuery('')} className="text-xs font-semibold" disabled={!searchQuery.trim()}>
+                        {t.clearTerminalBtn}
+                      </Button>
+                      <Button onClick={() => setSearchOpen(false)} className="text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white">
+                        {t.close}
+                      </Button>
                     </div>
-                  </div>
-                )}
+                  </DialogContent>
+                </Dialog>
 
-                {activeTab === 'settings' && (
-                  <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden h-[400px] pt-2.5">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 ">
-                        {t.ipConfigurationLabel}
-                      </label>&nbsp;
-                      <div className={`inline-flex p-1 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
+                {/* Navigation Tabs - Hide on mobile, use main app tabs */}
+                <div className="hidden">
+                  <Button
+                    variant={activeTab === 'home' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setActiveTab('home')}
+                    className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'home' ? 'bg-slate-500/10 text-slate-300' : 'text-slate-500 hover:text-slate-300'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
+                  >
+                    <Monitor className="w-4 h-4" />
+                    <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{language === 'tr' ? 'Ana Ekran' : 'Home'}</span>
+                  </Button>
+                  <Button
+                    variant={activeTab === 'desktop' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setActiveTab('desktop')}
+                    className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'desktop' ? 'bg-blue-500/10 text-blue-400' : 'text-slate-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
+                  >
+                    <Command className="w-4 h-4" />
+                    <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{t.commandPromptTab}</span>
+                  </Button>
+                  <Button
+                    variant={activeTab === 'terminal' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setActiveTab('terminal')}
+                    className={`h-9 px-4 text-xs font-black tracking-wider  transition-all gap-2 ${activeTab === 'terminal' ? 'bg-emerald-500/10 text-emerald-500' : 'text-slate-500 hover:text-emerald-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
+                  >
+                    <TerminalIcon className="w-4 h-4" />
+                    <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{t.consoleTab}</span>
+                  </Button>
+                  <Button
+                    variant={activeTab === 'settings' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setActiveTab('settings')}
+                    className={`h-9 px-4 text-xs font-black tracking-wider  transition-all gap-2 ${activeTab === 'settings' ? 'bg-purple-500/10 text-purple-500' : 'text-slate-500 hover:text-purple-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{t.settingsTab}</span>
+                  </Button>
+                  <Button
+                    variant={activeTab === 'services' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setActiveTab('services')}
+                    className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'services' ? 'bg-amber-500/10 text-amber-500' : 'text-slate-500 hover:text-amber-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
+                  >
+                    <Globe className="w-4 h-4" />
+                    <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>
+                      {`${t.servicesTab} (${activeServiceCount}/3)`}
+                    </span>
+                  </Button>
+                  <Button
+                    variant={activeTab === 'wireless' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setActiveTab('wireless')}
+                    className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'wireless' ? 'bg-purple-500/10 text-purple-500' : 'text-slate-500 hover:text-purple-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
+                  >
+                    <Network className="w-4 h-4" />
+                    <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{language === 'tr' ? 'Kablosuz' : 'Wireless'}</span>
+                  </Button>
+                </div>
+
+                {/* Content Area */}
+                <div className={`flex-1 flex flex-col ${terminalBg} relative overflow-hidden h-[400px] pt-2.5`}>
+                  {activeTab === 'home' && (
+                    <div className="flex-1 flex items-center justify-center p-2.5 pt-0">
+                      <div className="w-full h-full max-w-[700px] grid grid-cols-5 gap-2 rounded-xl p-2.5 bg-slate-800/30 border border-slate-700/30 shadow-sm place-items-center">
                         <button
-                          type="button"
-                          role="radio"
-                          aria-checked={ipConfigMode === 'dhcp'}
-                          onClick={() => {
-                            setIpConfigMode('dhcp');
-                            applyDhcpLease(true);
-                          }}
-                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${ipConfigMode === 'dhcp'
-                            ? 'bg-cyan-500 text-white shadow-sm'
-                            : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-200')
-                            }`}
+                          onClick={() => navigateToProgram('desktop')}
+                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
                         >
-                          DHCP
-                        </button>
-                        <button
-                          type="button"
-                          role="radio"
-                          aria-checked={ipConfigMode === 'static'}
-                          onClick={() => setIpConfigMode('static')}
-                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${ipConfigMode === 'static'
-                            ? 'bg-blue-500 text-white shadow-sm'
-                            : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-200')
-                            }`}
-                        >
-                          {t.staticLabel}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 ">{t.hostname}</label>
-                      <Input value={internalPcHostname} onChange={(e) => setPcHostname(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 ">MAC Address</label>
-                      <Input value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} placeholder="00:1A:2B:3C:4D:5E" className={errors.mac ? 'border-rose-500' : ''} />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 ">IP Address</label>
-                        <Input value={pcIP} onChange={(e) => setPcIP(e.target.value)} placeholder="192.168.1.100" className={errors.ip ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 ">Subnet Mask</label>
-                        <Input value={pcSubnet} onChange={(e) => setPcSubnet(e.target.value)} placeholder="255.255.255.0" className={errors.subnet ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 ">Gateway</label>
-                        <Input value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} placeholder="192.168.1.1" className={errors.gateway ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 ">DNS</label>
-                        <Input value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} placeholder="8.8.8.8" className={errors.dns ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 ">IPv6 Address</label>
-                        <Input value={pcIPv6} onChange={(e) => setPcIPv6(e.target.value)} placeholder="2001:db8:acad:1::10" className={errors.ipv6 ? 'border-rose-500' : ''} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 ">IPv6 Prefix</label>
-                        <Input value={pcIPv6Prefix} onChange={(e) => setPcIPv6Prefix(e.target.value)} placeholder="64" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'services' && (
-                  <div className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
-                    <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <h3 className="text-sm font-bold">
-                            {t.language === 'tr'
-                              ? 'DNS (Domain Name System - isim çözümleme)'
-                              : 'DNS (Domain Name System - name resolution)'}
-                          </h3>
-                          <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            {t.dnsRecordManagerTip}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceDnsEnabled ? 'bg-cyan-500/15 text-cyan-600 border border-cyan-500/30' : 'bg-slate-200 text-slate-500 border border-slate-300'}`}>
-                            {serviceDnsEnabled ? 'ON' : 'OFF'}
+                          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-600">
+                            <TerminalIcon className="w-6 h-6 text-white" />
+                          </div>
+                          <span className="text-xs font-medium text-slate-300">
+                            CMD
                           </span>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={serviceDnsEnabled}
-                          onClick={() => setServiceDnsEnabled((prev) => !prev)}
-                          className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60 ${serviceDnsEnabled
-                            ? 'bg-cyan-500/90 border-cyan-400'
-                            : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
-                            }`}
-                        >
-                          <span
-                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${serviceDnsEnabled ? 'translate-x-8' : 'translate-x-1'
-                              }`}
-                          />
                         </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <Input
-                          value={dnsFormDomain}
-                          onChange={(e) => setDnsFormDomain(e.target.value)}
-                          placeholder={t.dnsDomainPlaceholder}
-                        />
-                        {dnsFormDomain.trim() === '' && <div className="text-[11px] text-rose-500">{language === 'tr' ? 'Domain gerekli' : 'Domain required'}</div>}
-                        <Input
-                          value={dnsFormAddress}
-                          onChange={(e) => setDnsFormAddress(e.target.value)}
-                          placeholder={t.dnsAddressPlaceholder}
-                        />
-                        {dnsFormAddress.trim() === '' && <div className="text-[11px] text-rose-500">{language === 'tr' ? 'IP adresi gerekli' : 'IP address required'}</div>}
-                        <Button
-                          onClick={() => {
-                            const domain = dnsFormDomain.trim().toLowerCase();
-                            const address = dnsFormAddress.trim();
-                            if (!domain || !address) return;
-                            setServiceDnsRecords((prev) => {
-                              const withoutSame = prev.filter((r) => r.domain.toLowerCase() !== domain);
-                              return [...withoutSame, { domain, address }];
-                            });
-                            setDnsFormDomain('');
-                            setDnsFormAddress('');
-                          }}
+                        <button
+                          onClick={() => navigateToProgram('terminal')}
+                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
                         >
-                          {t.addDnsRecord}
-                        </Button>
-                      </div>
-
-                      <div className="space-y-2">
-                        {serviceDnsRecords.length === 0 && (
-                          <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                            {t.dnsNoRecords}
+                          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-600">
+                            <Laptop className="w-6 h-6 text-white" />
                           </div>
-                        )}
-                        {serviceDnsRecords.map((record) => (
-                          <div key={`${record.domain}-${record.address}`} className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 ${isDark ? 'bg-slate-950 border border-slate-800' : 'bg-slate-50 border border-slate-200'}`}>
-                            <div className="text-xs font-mono">
-                              <span>{record.domain}</span>
-                              <span className="mx-2 opacity-30">-&gt;</span>
-                              <span>{record.address}</span>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setServiceDnsRecords((prev) => prev.filter((r) => !(r.domain === record.domain && r.address === record.address)))}
-                            >
-                              {t.delete}
-                            </Button>
+                          <span className="text-xs font-medium text-slate-300">
+                            {language === 'tr' ? 'Konsol' : 'Console'}
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => navigateToProgram('settings')}
+                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                        >
+                          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-purple-600">
+                            <Settings className="w-6 h-6 text-white" />
                           </div>
-                        ))}
+                          <span className="text-xs font-medium text-slate-300">
+                            {language === 'tr' ? 'Ayarlar' : 'Settings'}
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('services')}
+                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                        >
+                          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-600">
+                            <Globe className="w-6 h-6 text-white" />
+                          </div>
+                          <span className="text-xs font-medium text-slate-300">
+                            {language === 'tr' ? 'Servisler' : 'Services'}
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('wireless')}
+                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                        >
+                          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-cyan-600">
+                            <Wifi className="w-6 h-6 text-white" />
+                          </div>
+                          <span className="text-xs font-medium text-slate-300">
+                            {language === 'tr' ? 'Kablosuz' : 'Wireless'}
+                          </span>
+                        </button>
                       </div>
                     </div>
+                  )}
 
-                    <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <h3 className="text-sm font-bold">
-                            {t.language === 'tr'
-                              ? 'HTTP (Hypertext Transfer Protocol - web içeriği)'
-                              : 'HTTP (Hypertext Transfer Protocol - web content)'}
-                          </h3>
-                          <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            {t.httpServiceDescription}
-                          </p>
-                        </div>
-                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceHttpEnabled ? 'bg-emerald-500/15 text-emerald-600 border border-emerald-500/30' : 'bg-slate-200 text-slate-500 border border-slate-300'}`}>
-                          {serviceHttpEnabled ? 'ON' : 'OFF'}
-                        </span>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={serviceHttpEnabled}
-                          onClick={() => setServiceHttpEnabled((prev) => !prev)}
-                          className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 ${serviceHttpEnabled
-                            ? 'bg-emerald-500/90 border-emerald-400'
-                            : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
-                            }`}
-                        >
-                          <span
-                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${serviceHttpEnabled ? 'translate-x-8' : 'translate-x-1'
-                              }`}
-                          />
-                        </button>
-                      </div>
-
+                  {activeTab === 'settings' && (
+                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden h-[400px] pt-2.5">
                       <div className="space-y-2">
-                        <label className="text-xs font-bold  tracking-wide text-slate-500">HTTP Content</label>
-                        <Input
-                          value={serviceHttpContent}
-                          onChange={(e) => setServiceHttpContent(e.target.value)}
-                          placeholder="Merhaba Dünya!"
-                        />
-                        {serviceHttpEnabled && (
-                          <div className={`text-xs rounded-lg px-3 py-2 ${isDark ? 'bg-slate-950 border border-slate-800 text-slate-200' : 'bg-slate-50 border border-slate-200 text-slate-700'}`}>
-                            <span dangerouslySetInnerHTML={{ __html: sanitizeHTTPContent(serviceHttpContent || 'Merhaba Dünya!') }} />
-                          </div>
-                        )}
+                        <label className="text-xs font-bold text-slate-500 ">
+                          {t.ipConfigurationLabel}
+                        </label>&nbsp;
+                        <div className={`inline-flex p-1 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
+                          <button
+                            type="button"
+                            role="radio"
+                            aria-checked={ipConfigMode === 'dhcp'}
+                            onClick={() => {
+                              setIpConfigMode('dhcp');
+                              applyDhcpLease(true);
+                            }}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${ipConfigMode === 'dhcp'
+                              ? 'bg-cyan-500 text-white shadow-sm'
+                              : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-200')
+                              }`}
+                          >
+                            DHCP
+                          </button>
+                          <button
+                            type="button"
+                            role="radio"
+                            aria-checked={ipConfigMode === 'static'}
+                            onClick={() => setIpConfigMode('static')}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${ipConfigMode === 'static'
+                              ? 'bg-blue-500 text-white shadow-sm'
+                              : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-200')
+                              }`}
+                          >
+                            {t.staticLabel}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 ">{t.hostname}</label>
+                        <Input value={internalPcHostname} onChange={(e) => setPcHostname(e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 ">MAC Address</label>
+                        <Input value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} placeholder="00:1A:2B:3C:4D:5E" className={errors.mac ? 'border-rose-500' : ''} />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 ">IP Address</label>
+                          <Input value={pcIP} onChange={(e) => setPcIP(e.target.value)} placeholder="192.168.1.100" className={errors.ip ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 ">Subnet Mask</label>
+                          <Input value={pcSubnet} onChange={(e) => setPcSubnet(e.target.value)} placeholder="255.255.255.0" className={errors.subnet ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 ">Gateway</label>
+                          <Input value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} placeholder="192.168.1.1" className={errors.gateway ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 ">DNS</label>
+                          <Input value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} placeholder="8.8.8.8" className={errors.dns ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 ">IPv6 Address</label>
+                          <Input value={pcIPv6} onChange={(e) => setPcIPv6(e.target.value)} placeholder="2001:db8:acad:1::10" className={errors.ipv6 ? 'border-rose-500' : ''} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-slate-500 ">IPv6 Prefix</label>
+                          <Input value={pcIPv6Prefix} onChange={(e) => setPcIPv6Prefix(e.target.value)} placeholder="64" />
+                        </div>
                       </div>
                     </div>
+                  )}
 
-                    <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <h3 className="text-sm font-bold">
-                            {t.language === 'tr'
-                              ? 'DHCP (Dynamic Host Configuration Protocol - otomatik IP)'
-                              : 'DHCP (Dynamic Host Configuration Protocol - auto IP)'}
-                          </h3>
-                          <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            {t.dhcpPoolsDescription}
-                          </p>
-                        </div>
-                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceDhcpEnabled ? 'bg-sky-500/15 text-sky-600 border border-sky-500/30' : 'bg-slate-200 text-slate-500 border border-slate-300'}`}>
-                          {serviceDhcpEnabled ? 'ON' : 'OFF'}
-                        </span>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={serviceDhcpEnabled}
-                          onClick={() => setServiceDhcpEnabled((prev) => !prev)}
-                          className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 ${serviceDhcpEnabled
-                            ? 'bg-sky-500/90 border-sky-400'
-                            : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
-                            }`}
-                        >
-                          <span
-                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${serviceDhcpEnabled ? 'translate-x-8' : 'translate-x-1'
+                  {activeTab === 'services' && (
+                    <div className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
+                      <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-sm font-bold">
+                              {t.language === 'tr'
+                                ? 'DNS (Domain Name System - isim çözümleme)'
+                                : 'DNS (Domain Name System - name resolution)'}
+                            </h3>
+                            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                              {t.dnsRecordManagerTip}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceDnsEnabled ? 'bg-cyan-500/15 text-cyan-600 border border-cyan-500/30' : 'bg-slate-200 text-slate-500 border border-slate-300'}`}>
+                              {serviceDnsEnabled ? 'ON' : 'OFF'}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={serviceDnsEnabled}
+                            onClick={() => setServiceDnsEnabled((prev) => !prev)}
+                            className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60 ${serviceDnsEnabled
+                              ? 'bg-cyan-500/90 border-cyan-400'
+                              : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
                               }`}
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${serviceDnsEnabled ? 'translate-x-8' : 'translate-x-1'
+                                }`}
+                            />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <Input
+                            value={dnsFormDomain}
+                            onChange={(e) => setDnsFormDomain(e.target.value)}
+                            placeholder={t.dnsDomainPlaceholder}
                           />
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Input
-                          value={dhcpForm.poolName}
-                          onChange={(e) => setDhcpForm((prev) => ({ ...prev, poolName: e.target.value }))}
-                          placeholder={t.dhcpPoolNamePlaceholder}
-                        />
-                        <Input
-                          value={dhcpForm.defaultGateway}
-                          onChange={(e) => setDhcpForm((prev) => ({ ...prev, defaultGateway: e.target.value }))}
-                          placeholder={t.dhcpPoolGatewayPlaceholder}
-                        />
-                        <Input
-                          value={dhcpForm.dnsServer}
-                          onChange={(e) => setDhcpForm((prev) => ({ ...prev, dnsServer: e.target.value }))}
-                          placeholder={t.dhcpPoolDnsPlaceholder}
-                        />
-                        <Input
-                          value={dhcpForm.startIp}
-                          onChange={(e) => setDhcpForm((prev) => ({ ...prev, startIp: e.target.value }))}
-                          placeholder={t.dhcpPoolStartIpPlaceholder}
-                        />
-                        <Input
-                          value={dhcpForm.subnetMask}
-                          onChange={(e) => setDhcpForm((prev) => ({ ...prev, subnetMask: e.target.value }))}
-                          placeholder={t.dhcpPoolSubnetPlaceholder}
-                        />
-                        <Input
-                          type="number"
-                          min={1}
-                          value={dhcpForm.maxUsers}
-                          onChange={(e) => setDhcpForm((prev) => ({ ...prev, maxUsers: Number(e.target.value || 1) }))}
-                          placeholder={t.dhcpPoolMaxUsersPlaceholder}
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Button onClick={saveDhcpPool}>
-                          {editingDhcpIndex === null ? t.addPool : t.updatePool}
-                        </Button>
-                        {editingDhcpIndex !== null && (
-                          <Button variant="outline" onClick={resetDhcpForm}>
-                            {t.cancel}
+                          {dnsFormDomain.trim() === '' && <div className="text-[11px] text-rose-500">{language === 'tr' ? 'Domain gerekli' : 'Domain required'}</div>}
+                          <Input
+                            value={dnsFormAddress}
+                            onChange={(e) => setDnsFormAddress(e.target.value)}
+                            placeholder={t.dnsAddressPlaceholder}
+                          />
+                          {dnsFormAddress.trim() === '' && <div className="text-[11px] text-rose-500">{language === 'tr' ? 'IP adresi gerekli' : 'IP address required'}</div>}
+                          <Button
+                            onClick={() => {
+                              const domain = dnsFormDomain.trim().toLowerCase();
+                              const address = dnsFormAddress.trim();
+                              if (!domain || !address) return;
+                              setServiceDnsRecords((prev) => {
+                                const withoutSame = prev.filter((r) => r.domain.toLowerCase() !== domain);
+                                return [...withoutSame, { domain, address }];
+                              });
+                              setDnsFormDomain('');
+                              setDnsFormAddress('');
+                            }}
+                          >
+                            {t.addDnsRecord}
                           </Button>
-                        )}
-                      </div>
+                        </div>
 
-                      <div className="space-y-2">
-                        {serviceDhcpPools.length === 0 && (
-                          <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                            {t.noDhcpPools}
-                          </div>
-                        )}
-                        {serviceDhcpPools.map((pool, index) => (
-                          <div key={`${pool.poolName}-${index}`} className={`rounded-lg px-3 py-2 space-y-2 ${isDark ? 'bg-slate-950 border border-slate-800' : 'bg-slate-50 border border-slate-200'}`}>
-                            <div className="text-xs font-mono">
-                              <div>{pool.poolName}</div>
-                              <div>GW: {pool.defaultGateway} | DNS: {pool.dnsServer}</div>
-                              <div>Start: {pool.startIp} | Mask: {pool.subnetMask} | Max: {pool.maxUsers}</div>
+                        <div className="space-y-2">
+                          {serviceDnsRecords.length === 0 && (
+                            <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                              {t.dnsNoRecords}
                             </div>
-                            <div className="flex items-center gap-2">
+                          )}
+                          {serviceDnsRecords.map((record) => (
+                            <div key={`${record.domain}-${record.address}`} className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 ${isDark ? 'bg-slate-950 border border-slate-800' : 'bg-slate-50 border border-slate-200'}`}>
+                              <div className="text-xs font-mono">
+                                <span>{record.domain}</span>
+                                <span className="mx-2 opacity-30">-&gt;</span>
+                                <span>{record.address}</span>
+                              </div>
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => {
-                                  setDhcpForm(pool);
-                                  setEditingDhcpIndex(index);
-                                }}
-                              >
-                                {t.edit}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setServiceDhcpPools((prev) => prev.filter((_, i) => i !== index));
-                                  if (editingDhcpIndex === index) {
-                                    resetDhcpForm();
-                                  }
-                                }}
+                                onClick={() => setServiceDnsRecords((prev) => prev.filter((r) => !(r.domain === record.domain && r.address === record.address)))}
                               >
                                 {t.delete}
                               </Button>
                             </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-sm font-bold">
+                              {t.language === 'tr'
+                                ? 'HTTP (Hypertext Transfer Protocol - web içeriği)'
+                                : 'HTTP (Hypertext Transfer Protocol - web content)'}
+                            </h3>
+                            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                              {t.httpServiceDescription}
+                            </p>
                           </div>
-                        ))}
+                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceHttpEnabled ? 'bg-emerald-500/15 text-emerald-600 border border-emerald-500/30' : 'bg-slate-200 text-slate-500 border border-slate-300'}`}>
+                            {serviceHttpEnabled ? 'ON' : 'OFF'}
+                          </span>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={serviceHttpEnabled}
+                            onClick={() => setServiceHttpEnabled((prev) => !prev)}
+                            className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 ${serviceHttpEnabled
+                              ? 'bg-emerald-500/90 border-emerald-400'
+                              : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
+                              }`}
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${serviceHttpEnabled ? 'translate-x-8' : 'translate-x-1'
+                                }`}
+                            />
+                          </button>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold  tracking-wide text-slate-500">HTTP Content</label>
+                          <div className="flex items-center gap-2">
+                            <div className="flex gap-1">
+                              <Button type="button" size="icon" variant="outline" className="h-8 w-8 text-xs font-black" onClick={() => applyHttpFormatting('b')}>B</Button>
+                              <Button type="button" size="icon" variant="outline" className="h-8 w-8 text-xs font-black italic" onClick={() => applyHttpFormatting('i')}>I</Button>
+                              <Button type="button" size="icon" variant="outline" className="h-8 w-8 text-xs font-black underline" onClick={() => applyHttpFormatting('u')}>U</Button>
+                            </div>
+                            <span className="text-[10px] text-slate-500">{t.language === 'tr' ? 'Seçili metni biçimlendir' : 'Format selected text'}</span>
+                          </div>
+                          <textarea
+                            ref={httpContentRef}
+                            value={serviceHttpContent}
+                            onChange={(e) => setServiceHttpContent(e.target.value)}
+                            placeholder="Merhaba Dünya!"
+                            rows={6}
+                            className={`w-full rounded-lg border px-3 py-2 text-sm font-mono resize-y ${isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-700'}`}
+                          />
+                          {serviceHttpEnabled && (
+                            <div className={`text-xs rounded-lg px-3 py-2 ${isDark ? 'bg-slate-950 border border-slate-800 text-slate-200' : 'bg-slate-50 border border-slate-200 text-slate-700'}`}>
+                              <span dangerouslySetInnerHTML={{ __html: sanitizeHTTPContent(serviceHttpContent || 'Merhaba Dünya!') }} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-sm font-bold">
+                              {t.language === 'tr'
+                                ? 'DHCP (Dynamic Host Configuration Protocol - otomatik IP)'
+                                : 'DHCP (Dynamic Host Configuration Protocol - auto IP)'}
+                            </h3>
+                            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                              {t.dhcpPoolsDescription}
+                            </p>
+                          </div>
+                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceDhcpEnabled ? 'bg-sky-500/15 text-sky-600 border border-sky-500/30' : 'bg-slate-200 text-slate-500 border border-slate-300'}`}>
+                            {serviceDhcpEnabled ? 'ON' : 'OFF'}
+                          </span>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={serviceDhcpEnabled}
+                            onClick={() => setServiceDhcpEnabled((prev) => !prev)}
+                            className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 ${serviceDhcpEnabled
+                              ? 'bg-sky-500/90 border-sky-400'
+                              : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
+                              }`}
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${serviceDhcpEnabled ? 'translate-x-8' : 'translate-x-1'
+                                }`}
+                            />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <Input
+                            value={dhcpForm.poolName}
+                            onChange={(e) => setDhcpForm((prev) => ({ ...prev, poolName: e.target.value }))}
+                            placeholder={t.dhcpPoolNamePlaceholder}
+                          />
+                          <Input
+                            value={dhcpForm.defaultGateway}
+                            onChange={(e) => setDhcpForm((prev) => ({ ...prev, defaultGateway: e.target.value }))}
+                            placeholder={t.dhcpPoolGatewayPlaceholder}
+                          />
+                          <Input
+                            value={dhcpForm.dnsServer}
+                            onChange={(e) => setDhcpForm((prev) => ({ ...prev, dnsServer: e.target.value }))}
+                            placeholder={t.dhcpPoolDnsPlaceholder}
+                          />
+                          <Input
+                            value={dhcpForm.startIp}
+                            onChange={(e) => setDhcpForm((prev) => ({ ...prev, startIp: e.target.value }))}
+                            placeholder={t.dhcpPoolStartIpPlaceholder}
+                          />
+                          <Input
+                            value={dhcpForm.subnetMask}
+                            onChange={(e) => setDhcpForm((prev) => ({ ...prev, subnetMask: e.target.value }))}
+                            placeholder={t.dhcpPoolSubnetPlaceholder}
+                          />
+                          <Input
+                            type="number"
+                            min={1}
+                            value={dhcpForm.maxUsers}
+                            onChange={(e) => setDhcpForm((prev) => ({ ...prev, maxUsers: Number(e.target.value || 1) }))}
+                            placeholder={t.dhcpPoolMaxUsersPlaceholder}
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button onClick={saveDhcpPool}>
+                            {editingDhcpIndex === null ? t.addPool : t.updatePool}
+                          </Button>
+                          {editingDhcpIndex !== null && (
+                            <Button variant="outline" onClick={resetDhcpForm}>
+                              {t.cancel}
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          {serviceDhcpPools.length === 0 && (
+                            <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                              {t.noDhcpPools}
+                            </div>
+                          )}
+                          {serviceDhcpPools.map((pool, index) => (
+                            <div key={`${pool.poolName}-${index}`} className={`rounded-lg px-3 py-2 space-y-2 ${isDark ? 'bg-slate-950 border border-slate-800' : 'bg-slate-50 border border-slate-200'}`}>
+                              <div className="text-xs font-mono">
+                                <div>{pool.poolName}</div>
+                                <div>GW: {pool.defaultGateway} | DNS: {pool.dnsServer}</div>
+                                <div>Start: {pool.startIp} | Mask: {pool.subnetMask} | Max: {pool.maxUsers}</div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setDhcpForm(pool);
+                                    setEditingDhcpIndex(index);
+                                  }}
+                                >
+                                  {t.edit}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setServiceDhcpPools((prev) => prev.filter((_, i) => i !== index));
+                                    if (editingDhcpIndex === index) {
+                                      resetDhcpForm();
+                                    }
+                                  }}
+                                >
+                                  {t.delete}
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {activeTab === 'wireless' && (
-                  <div className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
-                    <div className={`rounded-2xl border p-5 space-y-5 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 text-purple-500">
-                          <Network className="w-5 h-5" />
-                          <h3 className="text-sm font-black tracking-widest ">
-                            {language === 'tr' ? 'Wi-Fi (Wireless Fidelity) Bağlantısı' : 'Wi-Fi (Wireless Fidelity) Connection'}
-                          </h3>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={wifiEnabled}
-                          onClick={() => setWifiEnabled(!wifiEnabled)}
-                          className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60 ${wifiEnabled
-                            ? 'bg-purple-500 border-purple-400'
-                            : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
-                            }`}
-                        >
-                          <span
-                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${wifiEnabled ? 'translate-x-8' : 'translate-x-1'
+                  {activeTab === 'wireless' && (
+                    <div className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
+                      <div className={`rounded-2xl border p-5 space-y-5 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 text-purple-500">
+                            <Network className="w-5 h-5" />
+                            <h3 className="text-sm font-black tracking-widest ">
+                              {language === 'tr' ? 'Wi-Fi (Wireless Fidelity) Bağlantısı' : 'Wi-Fi (Wireless Fidelity) Connection'}
+                            </h3>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={wifiEnabled}
+                            onClick={() => setWifiEnabled(!wifiEnabled)}
+                            className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60 ${wifiEnabled
+                              ? 'bg-purple-500 border-purple-400'
+                              : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
                               }`}
-                          />
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black tracking-widest text-slate-500 ml-1">SSID (Service Set Identifier)</label>
-                          <Select value={wifiBSSID ? `${wifiBSSID}|${wifiSSID}` : wifiSSID} onValueChange={(val) => {
-                            if (val.includes('|')) {
-                              const [bssid, ssid] = val.split('|');
-                              setWifiBSSID(bssid);
-                              setWifiSSID(ssid);
-                            } else {
-                              setWifiBSSID('');
-                              setWifiSSID(val);
-                            }
-                          }} disabled={!wifiEnabled}>
-                            <SelectTrigger className={`w-full ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
-                              <SelectValue placeholder={language === 'tr' ? 'Ağ Seçiniz...' : 'Select Network...'} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableSSIDs.length === 0 && <SelectItem value="no-networks" disabled>{language === 'tr' ? 'Çevrede Ağ Bulunamadı' : 'No Networks Found'}</SelectItem>}
-                              {availableSSIDs.map((entry) => {
-                                const hasDupe = availableSSIDs.filter(e => e.ssid === entry.ssid).length > 1;
-                                const label = hasDupe ? `${entry.ssid} (${entry.deviceName})` : entry.ssid;
-                                return (
-                                  <SelectItem key={`${entry.deviceId}-${entry.ssid}`} value={`${entry.deviceId}|${entry.ssid}`}>
-                                    {label}
-                                  </SelectItem>
-                                );
-                              })}
-                              {wifiSSID && !availableSSIDs.some(e => e.ssid === wifiSSID && (!wifiBSSID || e.deviceId === wifiBSSID)) && (
-                                <SelectItem value={wifiBSSID ? `${wifiBSSID}|${wifiSSID}` : wifiSSID}>{wifiSSID} ({language === 'tr' ? 'Kaydedildi' : 'Saved'})</SelectItem>
-                              )}
-                            </SelectContent>
-                          </Select>
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${wifiEnabled ? 'translate-x-8' : 'translate-x-1'
+                                }`}
+                            />
+                          </button>
                         </div>
 
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black tracking-widest  text-slate-500 ml-1">
-                            {language === 'tr' ? 'Güvenlik' : 'Security'}
-                          </label>
-                          <Select value={wifiSecurity} onValueChange={(val) => setWifiSecurity(val as any)} disabled={!wifiEnabled}>
-                            <SelectTrigger className={`w-full ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="open">Open</SelectItem>
-                              <SelectItem value="wpa">WPA</SelectItem>
-                              <SelectItem value="wpa2">WPA2 Personal</SelectItem>
-                              <SelectItem value="wpa3">WPA3</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black tracking-widest text-slate-500 ml-1">SSID (Service Set Identifier)</label>
+                            <Select value={wifiBSSID ? `${wifiBSSID}|${wifiSSID}` : wifiSSID} onValueChange={(val) => {
+                              if (val.includes('|')) {
+                                const [bssid, ssid] = val.split('|');
+                                setWifiBSSID(bssid);
+                                setWifiSSID(ssid);
+                              } else {
+                                setWifiBSSID('');
+                                setWifiSSID(val);
+                              }
+                            }} disabled={!wifiEnabled}>
+                              <SelectTrigger className={`w-full ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                                <SelectValue placeholder={language === 'tr' ? 'Ağ Seçiniz...' : 'Select Network...'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableSSIDs.length === 0 && <SelectItem value="no-networks" disabled>{language === 'tr' ? 'Çevrede Ağ Bulunamadı' : 'No Networks Found'}</SelectItem>}
+                                {availableSSIDs.map((entry) => {
+                                  const hasDupe = availableSSIDs.filter(e => e.ssid === entry.ssid).length > 1;
+                                  const label = hasDupe ? `${entry.ssid} (${entry.deviceName})` : entry.ssid;
+                                  return (
+                                    <SelectItem key={`${entry.deviceId}-${entry.ssid}`} value={`${entry.deviceId}|${entry.ssid}`}>
+                                      {label}
+                                    </SelectItem>
+                                  );
+                                })}
+                                {wifiSSID && !availableSSIDs.some(e => e.ssid === wifiSSID && (!wifiBSSID || e.deviceId === wifiBSSID)) && (
+                                  <SelectItem value={wifiBSSID ? `${wifiBSSID}|${wifiSSID}` : wifiSSID}>{wifiSSID} ({language === 'tr' ? 'Kaydedildi' : 'Saved'})</SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
 
-                        {wifiSecurity !== 'open' && (
                           <div className="space-y-2">
                             <label className="text-[10px] font-black tracking-widest  text-slate-500 ml-1">
-                              {language === 'tr' ? 'Parola' : 'Password'}
+                              {language === 'tr' ? 'Güvenlik' : 'Security'}
                             </label>
-                            <Input
-                              type="password"
-                              value={wifiPassword}
-                              onChange={(e) => setWifiPassword(e.target.value)}
-                              placeholder="Security Key"
-                              disabled={!wifiEnabled}
-                              className="bg-background"
-                            />
+                            <Select value={wifiSecurity} onValueChange={(val) => setWifiSecurity(val as any)} disabled={!wifiEnabled}>
+                              <SelectTrigger className={`w-full ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="open">Open</SelectItem>
+                                <SelectItem value="wpa">WPA</SelectItem>
+                                <SelectItem value="wpa2">WPA2 Personal</SelectItem>
+                                <SelectItem value="wpa3">WPA3</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
-                        )}
 
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black tracking-widest  text-slate-500 ml-1">
-                            {language === 'tr' ? 'Kanal' : 'Channel'}
-                          </label>
-                          <Select value={wifiChannel} onValueChange={(val) => setWifiChannel(val as any)} disabled={!wifiEnabled}>
-                            <SelectTrigger className={`w-full ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="2.4GHz">2.4 GHz</SelectItem>
-                              <SelectItem value="5GHz">5 GHz</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          {wifiSecurity !== 'open' && (
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black tracking-widest  text-slate-500 ml-1">
+                                {language === 'tr' ? 'Parola' : 'Password'}
+                              </label>
+                              <Input
+                                type="password"
+                                value={wifiPassword}
+                                onChange={(e) => setWifiPassword(e.target.value)}
+                                placeholder="Security Key"
+                                disabled={!wifiEnabled}
+                                className="bg-background"
+                              />
+                            </div>
+                          )}
+
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black tracking-widest  text-slate-500 ml-1">
+                              {language === 'tr' ? 'Kanal' : 'Channel'}
+                            </label>
+                            <Select value={wifiChannel} onValueChange={(val) => setWifiChannel(val as any)} disabled={!wifiEnabled}>
+                              <SelectTrigger className={`w-full ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="2.4GHz">2.4 GHz</SelectItem>
+                                <SelectItem value="5GHz">5 GHz</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className={`p-4 rounded-xl text-xs flex items-center gap-3 ${(() => {
-                        if (!wifiEnabled) return 'text-slate-500 bg-slate-500/5';
-                        // Check if connected: SSID matches an active AP
-                        const isConnected = !!deviceStates && Array.from(deviceStates.entries()).some(([id, state]) => {
-                          const wlan = state.ports['wlan0'];
-                          if (!wlan || wlan.shutdown || wlan.wifi?.mode !== 'ap') return false;
-                          if (wifiBSSID && wifiBSSID !== id) return false;
-                          if (wlan.wifi?.ssid !== wifiSSID) return false;
-                          const apSecurity = wlan.wifi?.security || 'open';
-                          if (apSecurity !== wifiSecurity) return false;
-                          if (apSecurity !== 'open' && wlan.wifi?.password !== wifiPassword) return false;
-                          return true;
-                        });
-                        return isConnected ? 'text-emerald-500 bg-emerald-500/10' : 'text-amber-500 bg-amber-500/10';
-                      })()
-                        }`}>
-                        <div className={`p-2 rounded-lg ${(() => {
-                          if (!wifiEnabled) return 'bg-slate-500/10';
+                        <div className={`p-4 rounded-xl text-xs flex items-center gap-3 ${(() => {
+                          if (!wifiEnabled) return 'text-slate-500 bg-slate-500/5';
+                          // Check if connected: SSID matches an active AP
                           const isConnected = !!deviceStates && Array.from(deviceStates.entries()).some(([id, state]) => {
                             const wlan = state.ports['wlan0'];
                             if (!wlan || wlan.shutdown || wlan.wifi?.mode !== 'ap') return false;
@@ -2599,344 +2788,481 @@ export function PCPanel({
                             if (apSecurity !== 'open' && wlan.wifi?.password !== wifiPassword) return false;
                             return true;
                           });
-                          return isConnected ? 'bg-emerald-500/20' : 'bg-amber-500/20';
+                          return isConnected ? 'text-emerald-500 bg-emerald-500/10' : 'text-amber-500 bg-amber-500/10';
                         })()
                           }`}>
-                          <Monitor className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <div className="font-bold  tracking-wider mb-0.5">
-                            {language === 'tr' ? 'Durum' : 'Status'}
+                          <div className={`p-2 rounded-lg ${(() => {
+                            if (!wifiEnabled) return 'bg-slate-500/10';
+                            const isConnected = !!deviceStates && Array.from(deviceStates.entries()).some(([id, state]) => {
+                              const wlan = state.ports['wlan0'];
+                              if (!wlan || wlan.shutdown || wlan.wifi?.mode !== 'ap') return false;
+                              if (wifiBSSID && wifiBSSID !== id) return false;
+                              if (wlan.wifi?.ssid !== wifiSSID) return false;
+                              const apSecurity = wlan.wifi?.security || 'open';
+                              if (apSecurity !== wifiSecurity) return false;
+                              if (apSecurity !== 'open' && wlan.wifi?.password !== wifiPassword) return false;
+                              return true;
+                            });
+                            return isConnected ? 'bg-emerald-500/20' : 'bg-amber-500/20';
+                          })()
+                            }`}>
+                            <Monitor className="w-4 h-4" />
                           </div>
-                          <div className="opacity-80">
-                            {!wifiEnabled
-                              ? (language === 'tr' ? 'Kablosuz alıcı kapalı' : 'Wireless receiver disabled')
-                              : (() => {
-                                const apEntry = !!deviceStates && Array.from(deviceStates.entries()).find(([id, state]) => {
-                                  const wlan = state.ports['wlan0'];
-                                  if (!wlan || wlan.shutdown || wlan.wifi?.mode !== 'ap') return false;
-                                  if (wifiBSSID && wifiBSSID !== id) return false;
-                                  if (wlan.wifi?.ssid !== wifiSSID) return false;
-                                  const apSecurity = wlan.wifi?.security || 'open';
-                                  if (apSecurity !== wifiSecurity) return false;
-                                  if (apSecurity !== 'open' && wlan.wifi?.password !== wifiPassword) return false;
-                                  return true;
-                                });
-                                if (apEntry) return language === 'tr' ? `Bağlı • SSID: ${wifiSSID}` : `Connected • SSID: ${wifiSSID}`;
-                                return wifiSSID
-                                  ? (language === 'tr' ? `Ağ bulunamadı: ${wifiSSID}` : `Network not found: ${wifiSSID}`)
-                                  : (language === 'tr' ? 'WLAN0 aktif, ağ seçilmedi' : 'WLAN0 active, no network selected');
-                              })()
-                            }
+                          <div>
+                            <div className="font-bold  tracking-wider mb-0.5">
+                              {language === 'tr' ? 'Durum' : 'Status'}
+                            </div>
+                            <div className="opacity-80">
+                              {!wifiEnabled
+                                ? (language === 'tr' ? 'Kablosuz alıcı kapalı' : 'Wireless receiver disabled')
+                                : (() => {
+                                  const apEntry = !!deviceStates && Array.from(deviceStates.entries()).find(([id, state]) => {
+                                    const wlan = state.ports['wlan0'];
+                                    if (!wlan || wlan.shutdown || wlan.wifi?.mode !== 'ap') return false;
+                                    if (wifiBSSID && wifiBSSID !== id) return false;
+                                    if (wlan.wifi?.ssid !== wifiSSID) return false;
+                                    const apSecurity = wlan.wifi?.security || 'open';
+                                    if (apSecurity !== wifiSecurity) return false;
+                                    if (apSecurity !== 'open' && wlan.wifi?.password !== wifiPassword) return false;
+                                    return true;
+                                  });
+                                  if (apEntry) return language === 'tr' ? `Bağlı • SSID: ${wifiSSID}` : `Connected • SSID: ${wifiSSID}`;
+                                  return wifiSSID
+                                    ? (language === 'tr' ? `Ağ bulunamadı: ${wifiSSID}` : `Network not found: ${wifiSSID}`)
+                                    : (language === 'tr' ? 'WLAN0 aktif, ağ seçilmedi' : 'WLAN0 active, no network selected');
+                                })()
+                              }
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {(activeTab === 'desktop' || activeTab === 'terminal') && (
-                  <>
-                    {activeTab === 'terminal' && (
-                      <div className={`px-3 md:px-4 py-2 border-b ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-slate-50'} flex items-center justify-between gap-3`}>
-                        <div className="flex flex-col gap-1">
-                          <div className="text-xs">
-                            {isConsoleConnected && connectedDeviceId ? (
-                              <span className="text-emerald-500 font-medium">
-                                {t.physicalConnectionDetected} {topologyDevices.find((d: any) => d.id === connectedDeviceId)?.name || connectedDeviceId}
-                              </span>
-                            ) : (
-                              <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{t.noConsoleCableDetected}</span>
-                            )}
-                          </div>
-                          <div className={`text-[10px] opacity-70 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                            {t.consoleConfiguration}
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={isConsoleConnected ? () => { setIsConsoleConnected(false); setConnectedDeviceId(null); } : handleConnect}
-                          disabled={isPcPoweredOff || (!consoleDevice && !isConsoleConnected)}
-                          className={isConsoleConnected ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}
-                        >
-                          {isConsoleConnected ? t.disconnect : t.connect}
-                        </Button>
-                      </div>
-                    )}
-                    <div
-                      ref={outputRef}
-                      className={`flex-1 overflow-y-auto scroll-smooth custom-scrollbar p-2 md:p-3 space-y-2 font-mono text-sm leading-relaxed flex flex-col overflow-x-hidden ${isPcPoweredOff ? 'bg-red-500' : ''}`}
-                    >
-                      {isPcPoweredOff ? (
-                        <div className="flex-1 flex items-center justify-center text-slate-700">OFFLINE</div>
-                      ) : gameActive && activeTab === 'desktop' ? (
-                        <div className="flex-1 flex flex-col items-center justify-center gap-3">
-                          <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                            {gameLanguage === 'tr'
-                              ? `Skor: ${gameScore} | Çıkış: ESC | Yeniden: SPACE`
-                              : `Score: ${gameScore} | Exit: ESC | Restart: SPACE`}
-                          </div>
-                          <div
-                            className={`grid border rounded-md p-1 ${isDark ? 'border-slate-700 bg-slate-950' : 'border-slate-300 bg-white'}`}
-                            style={{ gridTemplateColumns: 'repeat(30, minmax(0, 10px))', gridTemplateRows: 'repeat(20, minmax(0, 10px))', gap: '1px' }}
-                          >
-                            {Array.from({ length: 30 * 20 }).map((_, idx) => {
-                              const x = idx % 30;
-                              const y = Math.floor(idx / 30);
-                              const isHead = snake[0]?.x === x && snake[0]?.y === y;
-                              const isBody = snake.slice(1).some((s) => s.x === x && s.y === y);
-                              const isFood = food.x === x && food.y === y;
-
-                              return (
-                                <div
-                                  key={idx}
-                                  className={`w-[10px] h-[10px] ${isHead
-                                    ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
-                                    : isBody
-                                      ? 'bg-emerald-600'
-                                      : isFood
-                                        ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)] animate-pulse'
-                                        : (isDark ? 'bg-slate-800' : 'bg-slate-100')
-                                    }`}
-                                />
-                              );
-                            })}
-                          </div>
-                          {gameOver && (
-                            <div className="text-rose-500 font-bold text-sm">
-                              {gameLanguage === 'tr' ? 'Oyun Bitti!' : 'Game Over!'}
-                            </div>
-                          )}
-                          {/* Mobile Touch Controls */}
-                          <div className="grid grid-cols-3 gap-1 mt-2 md:hidden">
-                            <div />
-                            <button
-                              onClick={() => direction.y === 0 && setDirection({ x: 0, y: -1 })}
-                              className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-700 active:bg-slate-600' : 'bg-slate-200 active:bg-slate-300'}`}
-                            >
-                              <ChevronUp className="w-6 h-6" />
-                            </button>
-                            <div />
-                            <button
-                              onClick={() => direction.x === 0 && setDirection({ x: -1, y: 0 })}
-                              className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-700 active:bg-slate-600' : 'bg-slate-200 active:bg-slate-300'}`}
-                            >
-                              <ChevronLeft className="w-6 h-6" />
-                            </button>
-                            <button
-                              onClick={() => gameOver && (() => { setSnake([{ x: 10, y: 10 }]); setFood({ x: 15, y: 15 }); setDirection({ x: 1, y: 0 }); setGameScore(0); setGameOver(false); })()}
-                              className={`w-12 h-12 rounded-lg flex items-center justify-center text-xs font-bold ${gameOver ? 'bg-emerald-500 text-white' : (isDark ? 'bg-slate-800' : 'bg-slate-100')}`}
-                            >
-                              {gameOver ? (gameLanguage === 'tr' ? 'YENİ' : 'NEW') : ''}
-                            </button>
-                            <button
-                              onClick={() => direction.x === 0 && setDirection({ x: 1, y: 0 })}
-                              className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-700 active:bg-slate-600' : 'bg-slate-200 active:bg-slate-300'}`}
-                            >
-                              <ChevronRight className="w-6 h-6" />
-                            </button>
-                            <div />
-                            <button
-                              onClick={() => direction.y === 0 && setDirection({ x: 0, y: 1 })}
-                              className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-700 active:bg-slate-600' : 'bg-slate-200 active:bg-slate-300'}`}
-                            >
-                              <ChevronDown className="w-6 h-6" />
-                            </button>
-                            <div />
-                          </div>
-                        </div>
-                      ) : (
-                        (activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line) => (
-                          <div key={line.id} className="break-all animate-in fade-in slide-in-from-left-1 duration-200">
-                            {line.type === 'command' && (
-                              <div className="flex items-start gap-3">
-                                <span className="text-emerald-500 shrink-0 font-black opacity-50 select-none">
-                                  {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : (line.prompt || '>')}
+                  {(activeTab === 'desktop' || activeTab === 'terminal') && (
+                    <>
+                      {activeTab === 'terminal' && (
+                        <div className={`px-3 md:px-4 py-2 border-b ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-slate-50'} flex items-center justify-between gap-3`}>
+                          <div className="flex flex-col gap-1">
+                            <div className="text-xs">
+                              {isConsoleConnected && connectedDeviceId ? (
+                                <span className="text-emerald-500 font-medium">
+                                  {t.physicalConnectionDetected} {topologyDevices.find((d: any) => d.id === connectedDeviceId)?.name || connectedDeviceId}
                                 </span>
-                                <span className={cmdColor}>{highlightText(line.content)}</span>
+                              ) : (
+                                <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{t.noConsoleCableDetected}</span>
+                              )}
+                            </div>
+                            <div className={`text-[10px] opacity-70 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                              {t.consoleConfiguration}
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={isConsoleConnected ? () => { setIsConsoleConnected(false); setConnectedDeviceId(null); } : handleConnect}
+                            disabled={isPcPoweredOff || (!consoleDevice && !isConsoleConnected)}
+                            className={isConsoleConnected ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}
+                          >
+                            {isConsoleConnected ? t.disconnect : t.connect}
+                          </Button>
+                        </div>
+                      )}
+                      <div
+                        ref={outputRef}
+                        className={`flex-1 overflow-y-auto scroll-smooth custom-scrollbar p-2 md:p-3 space-y-2 font-mono text-sm leading-relaxed flex flex-col overflow-x-hidden ${isPcPoweredOff ? 'bg-red-500' : ''}`}
+                      >
+                        {isPcPoweredOff ? (
+                          <div className="flex-1 flex items-center justify-center text-slate-700">OFFLINE</div>
+                        ) : gameActive && activeTab === 'desktop' ? (
+                          <div className="flex-1 flex flex-col items-center justify-center gap-3">
+                            <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                              {gameLanguage === 'tr'
+                                ? `Skor: ${gameScore} | Çıkış: ESC | Yeniden: SPACE`
+                                : `Score: ${gameScore} | Exit: ESC | Restart: SPACE`}
+                            </div>
+                            <div
+                              className={`grid border rounded-md p-1 ${isDark ? 'border-slate-700 bg-slate-950' : 'border-slate-300 bg-white'}`}
+                              style={{ gridTemplateColumns: 'repeat(30, minmax(0, 10px))', gridTemplateRows: 'repeat(20, minmax(0, 10px))', gap: '1px' }}
+                            >
+                              {Array.from({ length: 30 * 20 }).map((_, idx) => {
+                                const x = idx % 30;
+                                const y = Math.floor(idx / 30);
+                                const isHead = snake[0]?.x === x && snake[0]?.y === y;
+                                const isBody = snake.slice(1).some((s) => s.x === x && s.y === y);
+                                const isFood = food.x === x && food.y === y;
+
+                                return (
+                                  <div
+                                    key={idx}
+                                    className={`w-[10px] h-[10px] ${isHead
+                                      ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
+                                      : isBody
+                                        ? 'bg-emerald-600'
+                                        : isFood
+                                          ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)] animate-pulse'
+                                          : (isDark ? 'bg-slate-800' : 'bg-slate-100')
+                                      }`}
+                                  />
+                                );
+                              })}
+                            </div>
+                            {gameOver && (
+                              <div className="text-rose-500 font-bold text-sm">
+                                {gameLanguage === 'tr' ? 'Oyun Bitti!' : 'Game Over!'}
                               </div>
                             )}
-                            {line.type === 'output' && <span className={`${textColor} whitespace-pre-wrap`}>{highlightText(line.content)}</span>}
-                            {line.type === 'error' && <span className="text-rose-500 font-bold italic">{highlightText(line.content)}</span>}
-                            {line.type === 'success' && <span className="text-cyan-500 font-bold  text-xs tracking-widest opacity-80">{highlightText(line.content)}</span>}
-                            {/* HTML çıktıları artık modalda gösteriliyor */}
+                            {/* Mobile Touch Controls */}
+                            <div className="grid grid-cols-3 gap-1 mt-2 md:hidden">
+                              <div />
+                              <button
+                                onClick={() => direction.y === 0 && setDirection({ x: 0, y: -1 })}
+                                className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-700 active:bg-slate-600' : 'bg-slate-200 active:bg-slate-300'}`}
+                              >
+                                <ChevronUp className="w-6 h-6" />
+                              </button>
+                              <div />
+                              <button
+                                onClick={() => direction.x === 0 && setDirection({ x: -1, y: 0 })}
+                                className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-700 active:bg-slate-600' : 'bg-slate-200 active:bg-slate-300'}`}
+                              >
+                                <ChevronLeft className="w-6 h-6" />
+                              </button>
+                              <button
+                                onClick={() => gameOver && (() => { setSnake([{ x: 10, y: 10 }]); setFood({ x: 15, y: 15 }); setDirection({ x: 1, y: 0 }); setGameScore(0); setGameOver(false); })()}
+                                className={`w-12 h-12 rounded-lg flex items-center justify-center text-xs font-bold ${gameOver ? 'bg-emerald-500 text-white' : (isDark ? 'bg-slate-800' : 'bg-slate-100')}`}
+                              >
+                                {gameOver ? (gameLanguage === 'tr' ? 'YENİ' : 'NEW') : ''}
+                              </button>
+                              <button
+                                onClick={() => direction.x === 0 && setDirection({ x: 1, y: 0 })}
+                                className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-700 active:bg-slate-600' : 'bg-slate-200 active:bg-slate-300'}`}
+                              >
+                                <ChevronRight className="w-6 h-6" />
+                              </button>
+                              <div />
+                              <button
+                                onClick={() => direction.y === 0 && setDirection({ x: 0, y: 1 })}
+                                className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-700 active:bg-slate-600' : 'bg-slate-200 active:bg-slate-300'}`}
+                              >
+                                <ChevronDown className="w-6 h-6" />
+                              </button>
+                              <div />
+                            </div>
                           </div>
-                        ))
-                      )}
-                      {activeTab === 'terminal' && !isPcPoweredOff && !isConsoleConnected && (
-                        <div className={`mt-auto text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                          {t.waitingForConnection}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {(activeTab === 'desktop' || activeTab === 'terminal') && !isPcPoweredOff && (
-                  <div className={`sticky bottom-0 inset-x-0 z-10 p-3 sm:p-4 border-t ${isDark ? 'border-slate-800 bg-slate-900/95' : 'border-slate-200 bg-slate-50/95'}`}>
-                    <div className={`flex items-center gap-2 sm:gap-3 relative ${isMobile ? 'flex-col' : ''}`}>
-                      {/* Context hint for password/confirm in console mode */}
-                      {activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (
-                        <div className="absolute -top-7 left-0 right-0 text-[10px] font-black tracking-widest text-amber-400 animate-pulse text-center">
-                          {consoleNeedsPassword
-                            ? (language === 'tr' ? 'Parola girin ve Enter\'a basın' : 'Enter password and press Enter')
-                            : (language === 'tr' ? 'Onaylamak için Enter\'a basın' : 'Press Enter to confirm')}
-                        </div>
-                      )}
-                      <div className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 ${inputBg} rounded-xl border flex-1 group ${isMobile ? 'w-full' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
-                        ? 'border-amber-500/50 focus-within:ring-1 focus-within:ring-amber-500/50'
-                        : inputBorder
-                        }`}>
-                        <span className={`font-black text-xs select-none shrink-0 opacity-50 ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
-                          ? 'text-amber-400'
-                          : 'text-emerald-500'
-                          }`}>
-                          {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : (() => {
-                            if (consoleNeedsPassword) return 'Password:';
-                            if (!connectedDeviceId || !deviceStates) return '>';
-                            const state = deviceStates.get(connectedDeviceId);
-                            const hostname = state?.hostname || 'Device';
-                            const mode = state?.currentMode || 'user';
-                            // Map CommandMode to prompt suffix
-                            const modeSuffix: Record<string, string> = {
-                              'user': '>',
-                              'privileged': '#',
-                              'config': '(config)#',
-                              'interface': '(config-if)#',
-                              'line': '(config-line)#',
-                              'vlan': '(config-vlan)#',
-                              'router-config': '(config)#'
-                            };
-                            const suffix = modeSuffix[mode] || '>';
-                            return `${hostname}${suffix}`;
-                          })()}
-                        </span>
-                        <input
-                          ref={inputRef}
-                          type={activeTab === 'terminal' && isConsoleConnected && consoleNeedsPassword ? 'password' : 'text'}
-                          value={input}
-                          onChange={(e) => handleInputChange(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          onFocus={() => {
-                            // Scroll input into view on mobile when keyboard opens
-                            if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                              setTimeout(() => {
-                                inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                              }, 300);
-                            }
-                          }}
-                          className="flex-1 bg-transparent border-none outline-none font-mono text-[13px]"
-                          placeholder={
-                            activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
-                              ? (consoleNeedsPassword
-                                ? (language === 'tr' ? 'Parolayı girin...' : 'Enter password...')
-                                : (language === 'tr' ? 'Enter\'a basın veya yazın...' : 'Press Enter or type...'))
-                              : t.typeCommand
-                          }
-                          autoComplete="off"
-                          disabled={activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled}
-                        />
+                        ) : (
+                          (activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line) => (
+                            <div key={line.id} className="break-all animate-in fade-in slide-in-from-left-1 duration-200">
+                              {line.type === 'command' && (
+                                <div className="flex items-start gap-3">
+                                  <span className="text-emerald-500 shrink-0 font-black opacity-50 select-none">
+                                    {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : (line.prompt || '>')}
+                                  </span>
+                                  <span className={cmdColor}>{highlightText(line.content)}</span>
+                                </div>
+                              )}
+                              {line.type === 'output' && <span className={`${textColor} whitespace-pre-wrap`}>{highlightText(line.content)}</span>}
+                              {line.type === 'error' && <span className="text-rose-500 font-bold italic">{highlightText(line.content)}</span>}
+                              {line.type === 'success' && <span className="text-cyan-500 font-bold  text-xs tracking-widest opacity-80">{highlightText(line.content)}</span>}
+                              {/* HTML çıktıları pop-up içinde gösteriliyor */}
+                            </div>
+                          ))
+                        )}
+                        {activeTab === 'terminal' && !isPcPoweredOff && !isConsoleConnected && (
+                          <div className={`mt-auto text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                            {t.waitingForConnection}
+                          </div>
+                        )}
                       </div>
-                      {shouldShowAutocomplete && (
-                        <div
-                          ref={autocompleteRef}
-                          className="absolute bottom-16 left-3 right-3 z-20 sm:left-4 sm:right-4"
-                        >
-                          <div className={cn(
-                            "rounded-lg border shadow-xl overflow-hidden",
-                            isDark ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
-                          )}>
-                            <div className={`flex items-center justify-between px-3 py-2 text-[11px] font-semibold ${isDark ? 'text-slate-200 bg-slate-900/60' : 'text-slate-700 bg-slate-50'}`}>
-                              <span>{language === 'tr' ? 'Komut önerileri' : 'Command suggestions'}</span>
-                              <span className={`text-[10px] font-bold ${isDark ? 'text-cyan-300' : 'text-cyan-700'}`}>
-                                Tab ↹ {language === 'tr' ? 'ile tamamla' : 'to complete'}
-                              </span>
-                            </div>
-                            <div className="max-h-40 overflow-y-auto">
-                              {renderAutocompleteSuggestions.map((cmd, idx) => (
-                                <button
-                                  key={`${cmd}-${idx}`}
-                                  type="button"
-                                  onClick={() => {
-                                    completeAutocompleteSelection(cmd);
-                                    inputRef.current?.focus();
-                                  }}
-                                  className={cn(
-                                    "w-full text-left px-2.5 py-1 text-[11px] font-mono transition-colors",
-                                    autocompleteIndex >= 0 && idx === autocompleteIndex
-                                      ? (isDark ? "bg-cyan-500/20 text-cyan-200" : "bg-cyan-50 text-cyan-900")
-                                      : (isDark ? "text-slate-300 hover:bg-primary/10" : "text-slate-700 hover:bg-primary/10")
-                                  )}
-                                >
-                                  {cmd}
-                                </button>
-                              ))}
+                    </>
+                  )}
+
+                  {(activeTab === 'desktop' || activeTab === 'terminal') && !isPcPoweredOff && (
+                    <div className={`sticky bottom-0 inset-x-0 z-10 p-3 sm:p-4 border-t ${isDark ? 'border-slate-800 bg-slate-900/95' : 'border-slate-200 bg-slate-50/95'}`}>
+                      <div className={`flex items-center gap-2 sm:gap-3 relative ${isMobile ? 'flex-col' : ''}`}>
+                        {/* Context hint for password/confirm in console mode */}
+                        {activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (
+                          <div className="absolute -top-7 left-0 right-0 text-[10px] font-black tracking-widest text-amber-400 animate-pulse text-center">
+                            {consoleNeedsPassword
+                              ? (language === 'tr' ? 'Parola girin ve Enter\'a basın' : 'Enter password and press Enter')
+                              : (language === 'tr' ? 'Onaylamak için Enter\'a basın' : 'Press Enter to confirm')}
+                          </div>
+                        )}
+                        <div className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 ${inputBg} rounded-xl border flex-1 group ${isMobile ? 'w-full' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                          ? 'border-amber-500/50 focus-within:ring-1 focus-within:ring-amber-500/50'
+                          : inputBorder
+                          }`}>
+                          <span className={`font-black text-xs select-none shrink-0 opacity-50 ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                            ? 'text-amber-400'
+                            : 'text-emerald-500'
+                            }`}>
+                            {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : (() => {
+                              if (consoleNeedsPassword) return 'Password:';
+                              if (!connectedDeviceId || !deviceStates) return '>';
+                              const state = deviceStates.get(connectedDeviceId);
+                              const hostname = state?.hostname || 'Device';
+                              const mode = state?.currentMode || 'user';
+                              // Map CommandMode to prompt suffix
+                              const modeSuffix: Record<string, string> = {
+                                'user': '>',
+                                'privileged': '#',
+                                'config': '(config)#',
+                                'interface': '(config-if)#',
+                                'line': '(config-line)#',
+                                'vlan': '(config-vlan)#',
+                                'router-config': '(config)#'
+                              };
+                              const suffix = modeSuffix[mode] || '>';
+                              return `${hostname}${suffix}`;
+                            })()}
+                          </span>
+                          <input
+                            ref={inputRef}
+                            type={activeTab === 'terminal' && isConsoleConnected && consoleNeedsPassword ? 'password' : 'text'}
+                            value={input}
+                            onChange={(e) => handleInputChange(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            onFocus={() => {
+                              // Scroll input into view on mobile when keyboard opens
+                              if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                                setTimeout(() => {
+                                  inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }, 300);
+                              }
+                            }}
+                            className="flex-1 bg-transparent border-none outline-none font-mono text-[13px]"
+                            placeholder={
+                              activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                                ? (consoleNeedsPassword
+                                  ? (language === 'tr' ? 'Parolayı girin...' : 'Enter password...')
+                                  : (language === 'tr' ? 'Enter\'a basın veya yazın...' : 'Press Enter or type...'))
+                                : t.typeCommand
+                            }
+                            autoComplete="off"
+                            disabled={activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled}
+                          />
+                        </div>
+                        {shouldShowAutocomplete && (
+                          <div
+                            ref={autocompleteRef}
+                            className="absolute bottom-16 left-3 right-3 z-20 sm:left-4 sm:right-4"
+                          >
+                            <div className={cn(
+                              "rounded-lg border shadow-xl overflow-hidden",
+                              isDark ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
+                            )}>
+                              <div className={`flex items-center justify-between px-3 py-2 text-[11px] font-semibold ${isDark ? 'text-slate-200 bg-slate-900/60' : 'text-slate-700 bg-slate-50'}`}>
+                                <span>{language === 'tr' ? 'Komut önerileri' : 'Command suggestions'}</span>
+                                <span className={`text-[10px] font-bold ${isDark ? 'text-cyan-300' : 'text-cyan-700'}`}>
+                                  Tab ↹ {language === 'tr' ? 'ile tamamla' : 'to complete'}
+                                </span>
+                              </div>
+                              <div className="max-h-40 overflow-y-auto">
+                                {renderAutocompleteSuggestions.map((cmd, idx) => (
+                                  <button
+                                    key={`${cmd}-${idx}`}
+                                    type="button"
+                                    onClick={() => {
+                                      completeAutocompleteSelection(cmd);
+                                      inputRef.current?.focus();
+                                    }}
+                                    className={cn(
+                                      "w-full text-left px-2.5 py-1 text-[11px] font-mono transition-colors",
+                                      autocompleteIndex >= 0 && idx === autocompleteIndex
+                                        ? (isDark ? "bg-cyan-500/20 text-cyan-200" : "bg-cyan-50 text-cyan-900")
+                                        : (isDark ? "text-slate-300 hover:bg-primary/10" : "text-slate-700 hover:bg-primary/10")
+                                    )}
+                                  >
+                                    {cmd}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
-                      {activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (
-                        <Button
-                          type="button"
-                          disabled={isConsoleInputDisabled}
-                          size="icon"
-                          variant="ghost"
-                          className="shrink-0 rounded-xl hover:bg-rose-500/20 text-rose-500"
-                          onClick={() => {
-                            if (onExecuteDeviceCommand && connectedDeviceId) {
-                              if (consoleNeedsPassword) {
-                                onExecuteDeviceCommand(connectedDeviceId, '__PASSWORD_CANCELLED__');
-                              } else if (consoleReloadPending) {
-                                // For reload, send 'n' to cancel
-                                onExecuteDeviceCommand(connectedDeviceId, 'n');
+                        )}
+                        {activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (
+                          <Button
+                            type="button"
+                            disabled={isConsoleInputDisabled}
+                            size="icon"
+                            variant="ghost"
+                            className="shrink-0 rounded-xl hover:bg-rose-500/20 text-rose-500"
+                            onClick={() => {
+                              if (onExecuteDeviceCommand && connectedDeviceId) {
+                                if (consoleNeedsPassword) {
+                                  onExecuteDeviceCommand(connectedDeviceId, '__PASSWORD_CANCELLED__');
+                                } else if (consoleReloadPending) {
+                                  // For reload, send 'n' to cancel
+                                  onExecuteDeviceCommand(connectedDeviceId, 'n');
+                                }
                               }
-                            }
-                            setInput('');
-                          }}
-                          title={language === 'tr' ? 'İptal' : 'Cancel'}
+                              setInput('');
+                            }}
+                            title={language === 'tr' ? 'İptal' : 'Cancel'}
+                          >
+                            <X className="w-5 h-5" />
+                          </Button>
+                        )}
+                        <Button
+                          onClick={() => executeCommand()}
+                          disabled={activeTab === 'desktop' ? (!input.trim() || isCmdInputDisabled) : isConsoleInputDisabled}
+                          size="icon"
+                          className={`shrink-0 h-11 w-11 rounded-xl text-white ${isMobile ? 'w-full' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                            ? 'bg-amber-500 hover:bg-amber-600'
+                            : 'bg-blue-600 hover:bg-blue-700'
+                            }`}
                         >
-                          <X className="w-5 h-5" />
+                          <CornerDownLeft className={cn("w-6 h-6", isMobile && "w-8 h-8")} />
                         </Button>
-                      )}
-                      <Button
-                        onClick={() => executeCommand()}
-                        disabled={activeTab === 'desktop' ? (!input.trim() || isCmdInputDisabled) : isConsoleInputDisabled}
-                        size="icon"
-                        className={`shrink-0 h-11 w-11 rounded-xl text-white ${isMobile ? 'w-full' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
-                          ? 'bg-amber-500 hover:bg-amber-600'
-                          : 'bg-blue-600 hover:bg-blue-700'
-                          }`}
-                      >
-                        <CornerDownLeft className={cn("w-6 h-6", isMobile && "w-8 h-8")} />
-                      </Button>
-                    </div>
+                      </div>
 
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </ModernPanel>
+            </ModernPanel>
+          </div>
         </div>
       </div>
-    </div>
 
-    {/* HTTP content modal */}
-    <Dialog open={!!htmlModalContent} onOpenChange={(open) => { if (!open) setHtmlModalContent(null); }}>
-      <DialogContent className="w-[95vw] max-w-6xl h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>{htmlModalTitle}</DialogTitle>
-          <DialogDescription>
-            {language === 'tr'
-              ? 'Cihaz HTTP yönetim sayfası ayrı bir pencerede görüntüleniyor.'
-              : 'Device HTTP management page is shown in a separate window.'}
-          </DialogDescription>
-        </DialogHeader>
-        <div
-          className="prose max-w-none bg-white/50 dark:bg-slate-900/40 p-4 rounded-lg border dark:border-slate-800 shadow-inner h-[calc(90vh-140px)] overflow-auto"
-          dangerouslySetInnerHTML={{ __html: htmlModalContent || '' }}
-        />
-      </DialogContent>
-    </Dialog>
+      {/* HTTP content in-tablet viewer */}
+      {httpAppContent && (
+        <div className="fixed inset-0 z-[999] pointer-events-auto">
+          <div
+            className="absolute"
+            style={{
+              left: browserWindow.x,
+              top: browserWindow.y,
+              width: browserWindow.width,
+              height: browserWindow.height,
+            }}
+          >
+            <div
+              className={`h-full w-full rounded-2xl shadow-2xl border ${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'} flex flex-col overflow-hidden`}
+              style={{ borderWidth: 3 }}
+            >
+              <div
+                className={`flex items-center justify-between px-4 py-2 border-b cursor-move select-none touch-none ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100'}`}
+                onPointerDown={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.closest('input, textarea, select, button')) return;
+                  e.preventDefault();
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  dragStateRef.current = {
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    originX: browserWindow.x,
+                    originY: browserWindow.y,
+                  };
+                }}
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openHttpTarget(httpAppUrl);
+                    }}
+                    onKeyDown={(e) => {
+                      // Prevent browser keys from bubbling into underlying CMD handlers.
+                      e.stopPropagation();
+                    }}
+                    className="flex items-center gap-2 flex-1 min-w-0"
+                  >
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="text-sm font-semibold truncate">{httpAppTitle}</span>
+                      <input
+                        value={httpAppUrl || ''}
+                        onChange={(e) => setHttpAppUrl(e.target.value)}
+                        onKeyDown={(e) => {
+                          e.stopPropagation();
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            openHttpTarget(httpAppUrl);
+                          }
+                        }}
+                        placeholder="http://"
+                        className={`mt-1 w-full text-xs rounded-md px-2 py-1 border ${isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-700'}`}
+                      />
+                    </div>
+                    <Button size="sm" type="submit" className="shrink-0">
+                      {language === 'tr' ? 'Git' : 'Go'}
+                    </Button>
+                  </form>
+                </div>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={() => {
+                    setHttpAppContent(null);
+                    setHttpAppDeviceId(null);
+                  }}
+                  className="ml-3 shrink-0"
+                  aria-label={language === 'tr' ? 'Kapat' : 'Close'}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="flex-1 overflow-hidden bg-gradient-to-b from-transparent to-slate-50 dark:to-slate-900">
+                <iframe
+                  title={httpAppTitle}
+                  srcDoc={httpAppSrcDoc}
+                  sandbox="allow-forms allow-scripts"
+                  className="h-full w-full border-0 bg-white"
+                />
+              </div>
+              <div
+                className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  resizeStateRef.current = {
+                    side: 'left',
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    originX: browserWindow.x,
+                    originW: browserWindow.width,
+                    originH: browserWindow.height,
+                  };
+                }}
+              />
+              <div
+                className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  resizeStateRef.current = {
+                    side: 'right',
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    originX: browserWindow.x,
+                    originW: browserWindow.width,
+                    originH: browserWindow.height,
+                  };
+                }}
+              />
+              <div
+                className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize select-none touch-none"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  resizeStateRef.current = {
+                    side: 'bottom',
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    originX: browserWindow.x,
+                    originW: browserWindow.width,
+                    originH: browserWindow.height,
+                  };
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
