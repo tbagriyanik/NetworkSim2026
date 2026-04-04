@@ -26,7 +26,7 @@ export interface RouterWebConfig {
  */
 export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
   const { wifi, deviceName, deviceIp } = config;
-  
+
   const securityOptions = [
     { value: 'open', label: 'Open (No Security)' },
     { value: 'wpa', label: 'WPA Personal' },
@@ -44,15 +44,15 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     { value: 'client', label: 'Client Mode' },
   ];
 
-  const securitySelect = securityOptions.map(opt => 
+  const securitySelect = securityOptions.map(opt =>
     `<option value="${opt.value}" ${wifi.security === opt.value ? 'selected' : ''}>${opt.label}</option>`
   ).join('');
 
-  const channelSelect = channelOptions.map(opt => 
+  const channelSelect = channelOptions.map(opt =>
     `<option value="${opt.value}" ${wifi.channel === opt.value ? 'selected' : ''}>${opt.label}</option>`
   ).join('');
 
-  const modeSelect = modeOptions.map(opt => 
+  const modeSelect = modeOptions.map(opt =>
     `<option value="${opt.value}" ${wifi.mode === opt.value ? 'selected' : ''}>${opt.label}</option>`
   ).join('');
 
@@ -531,7 +531,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     </div>
     
     <div class="footer">
-      © CiscoSim Router Administration | Model: ${deviceName} | Firmware: v1.0.0
+      © Network Simulator Router Administration | Model: ${deviceName} | Firmware: v1.0.0
     </div>
   </div>
   

@@ -553,6 +553,7 @@ function cmdIpHttpServer(state: any, input: string, ctx: any): any {
   }
 
   const lang = ctx.language || 'en';
+  const services = state.services || {};
   return {
     success: true,
     output: lang === 'tr' ?
@@ -560,7 +561,7 @@ function cmdIpHttpServer(state: any, input: string, ctx: any): any {
       'HTTP server enabled',
     newState: {
       services: {
-        ...state.services,
+        ...services,
         http: {
           enabled: true,
           content: ''
@@ -579,6 +580,7 @@ function cmdNoIpHttpServer(state: any, input: string, ctx: any): any {
   }
 
   const lang = ctx.language || 'en';
+  const services = state.services || {};
   return {
     success: true,
     output: lang === 'tr' ?
@@ -586,7 +588,7 @@ function cmdNoIpHttpServer(state: any, input: string, ctx: any): any {
       'HTTP server disabled',
     newState: {
       services: {
-        ...state.services,
+        ...services,
         http: {
           enabled: false,
           content: ''

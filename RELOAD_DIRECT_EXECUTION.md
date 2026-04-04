@@ -70,7 +70,7 @@ Reloading...
 ## Benefits
 
 1. **Faster Workflow**: No need to press Enter twice
-2. **More Realistic**: Matches behavior of some real Cisco devices in simulation mode
+2. **More Realistic**: Matches behavior of some real devices in simulation mode
 3. **Cleaner UI**: Removes unnecessary dialog interruption
 4. **Consistent**: Other destructive commands like `erase startup-config` still have confirmations where appropriate
 
@@ -141,4 +141,4 @@ Potential improvements:
 1. Add optional confirmation toggle in settings
 2. Add countdown timer before actual reload (e.g., "Reloading in 3 seconds...")
 3. Add reload scheduling capability (`reload in 5`, `reload at 10:00`)
-4. Add reload cancellation window (like real Cisco devices: "Cancel reload with Ctrl+C")
+4. Add reload cancellation window (like real devices: "Cancel reload with Ctrl+C")

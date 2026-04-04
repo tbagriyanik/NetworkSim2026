@@ -1173,7 +1173,7 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
   let bootMessages: string;
 
   if (isRouter) {
-    // Cisco ISR Router boot sequence
+    //  ISR Router boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
@@ -1211,7 +1211,7 @@ Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   ######################################################################################################################################### [OK]
   0 bytes remaining in flash device`;
   } else if (isL3Switch) {
-    // Cisco 3560 L3 Switch boot sequence
+    //  3560 L3 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
@@ -1249,7 +1249,7 @@ Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
   ######################################################################################################################################### [OK]
   0 bytes remaining in flash device`;
   } else {
-    // Cisco 2960 L2 Switch boot sequence
+    //  2960 L2 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
@@ -1336,7 +1336,7 @@ function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): Command
   let bootMessages: string;
 
   if (isRouter) {
-    // Cisco ISR Router boot sequence
+    //  ISR Router boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
@@ -1374,7 +1374,7 @@ Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   ######################################################################################################################################### [OK]
   0 bytes remaining in flash device`;
   } else if (isL3Switch) {
-    // Cisco 3560 L3 Switch boot sequence
+    //  3560 L3 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
@@ -1412,7 +1412,7 @@ Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
   ######################################################################################################################################### [OK]
   0 bytes remaining in flash device`;
   } else {
-    // Cisco 2960 L2 Switch boot sequence
+    //  2960 L2 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)

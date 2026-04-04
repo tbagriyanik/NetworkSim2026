@@ -404,6 +404,8 @@ export function PCPanel({
   };
 
   const [pcOutput, setPcOutput] = useState<OutputLine[]>(() => getInitialPcOutput());
+  const [htmlModalContent, setHtmlModalContent] = useState<string | null>(null);
+  const [htmlModalTitle, setHtmlModalTitle] = useState<string>('HTTP Page');
 
   // Sync pcOutput when deviceId changes or pcOutputs prop updates
   useEffect(() => {
@@ -718,12 +720,31 @@ export function PCPanel({
   }, [isPcPoweredOff, isConsoleTargetPoweredOff, t]);
 
   const addLocalOutput = useCallback((type: OutputLine['type'], content: string, prompt?: string) => {
+    // HTML çıktısı terminal içinde gösterilmesin; ayrı bir modalda açalım
+    if (type === 'html') {
+      setHtmlModalContent(content);
+      setHtmlModalTitle(language === 'tr' ? 'HTTP Yönetim Sayfası' : 'HTTP Management Page');
+
+      // Kullanıcıya terminalde bildirim bırak
+      setPcOutput(prev => [...prev, {
+        id: Math.random().toString(36).substr(2, 9),
+        type: 'success',
+        content: language === 'tr'
+          ? 'HTTP sayfası yeni pencerede açıldı.'
+          : 'HTTP page opened in a new window.'
+      }]);
+      setTimeout(() => {
+        if (outputRef.current) outputRef.current.scrollTop = outputRef.current.scrollHeight;
+      }, 0);
+      return;
+    }
+
     const newLine: OutputLine = { id: Math.random().toString(36).substr(2, 9), type, content, prompt };
     setPcOutput(prev => [...prev, newLine]);
     setTimeout(() => {
       if (outputRef.current) outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }, 0);
-  }, []);
+  }, [language]);
 
   // Add multi-line output with delay between each line for realistic typing effect
   const addMultilineOutput = useCallback(async (type: OutputLine['type'], content: string, delayMs: number = 50) => {
@@ -844,6 +865,23 @@ export function PCPanel({
     );
     if (routerByIp && routerByIp.ip && canReachTargetIp(routerByIp.ip)) return routerByIp;
 
+    // Fallback: look into deviceStates interface IPs (e.g., VLAN/SVI, routed ports) for devices that have HTTP enabled
+    if (deviceStates) {
+      for (const [stateId, state] of deviceStates.entries()) {
+        if (!state?.services?.http?.enabled) continue;
+        const topoDevice = topologyDevices.find(d => d.id === stateId);
+        if (!topoDevice || (topoDevice.type !== 'router' && topoDevice.type !== 'switchL2' && topoDevice.type !== 'switchL3')) continue;
+        const ports = state.ports || {};
+        const match = Object.values(ports).find((port: any) => port?.ipAddress === target);
+        if (match && canReachTargetIp(target)) {
+          return {
+            ...topoDevice,
+            ip: target
+          };
+        }
+      }
+    }
+
     // Try DNS resolution
     const dnsResult = resolveDomainWithDnsServices(normalizedTarget);
     if (!dnsResult) return null;
@@ -860,8 +898,25 @@ export function PCPanel({
     ) || null;
     if (resolvedRouter?.ip && canReachTargetIp(resolvedRouter.ip)) return resolvedRouter;
 
+    // DNS fallback via deviceStates interfaces
+    if (deviceStates) {
+      for (const [stateId, state] of deviceStates.entries()) {
+        if (!state?.services?.http?.enabled) continue;
+        const topoDevice = topologyDevices.find(d => d.id === stateId);
+        if (!topoDevice || (topoDevice.type !== 'router' && topoDevice.type !== 'switchL2' && topoDevice.type !== 'switchL3')) continue;
+        const ports = state.ports || {};
+        const match = Object.values(ports).find((port: any) => port?.ipAddress === dnsResult.address);
+        if (match && canReachTargetIp(match.ipAddress || dnsResult.address)) {
+          return {
+            ...topoDevice,
+            ip: match.ipAddress || dnsResult.address
+          };
+        }
+      }
+    }
+
     return null;
-  }, [canReachTargetIp, resolveDomainWithDnsServices, topologyDevices]);
+  }, [canReachTargetIp, resolveDomainWithDnsServices, topologyDevices, deviceStates]);
 
   const formatMacForArp = useCallback((mac?: string) => {
     if (!mac) return '';
@@ -1406,7 +1461,7 @@ export function PCPanel({
       // No matches in console mode - trigger help
       executeCommand(value.trim() + ' ?');
     }
-  }, [input, tabCycleIndex, lastTabInput, getCommandMode, executeCommand]);
+  }, [input, tabCycleIndex, lastTabInput, getCommandMode, executeCommand, isConsoleConnected, activeTab]);
 
   // Undo/Redo helpers
   const handleUndo = useCallback(() => {
@@ -1720,6 +1775,7 @@ export function PCPanel({
   if (!isVisible) return null;
 
   return (
+    <>
     <div className={`
         w-full h-full flex flex-col items-center justify-center p-0 md:p-4
         ${isDark ? 'bg-slate-900' : 'bg-slate-100'}
@@ -2680,12 +2736,7 @@ export function PCPanel({
                             {line.type === 'output' && <span className={`${textColor} whitespace-pre-wrap`}>{highlightText(line.content)}</span>}
                             {line.type === 'error' && <span className="text-rose-500 font-bold italic">{highlightText(line.content)}</span>}
                             {line.type === 'success' && <span className="text-cyan-500 font-bold  text-xs tracking-widest opacity-80">{highlightText(line.content)}</span>}
-                            {line.type === 'html' && (
-                              <div
-                                className="mt-2 p-4 rounded-lg border bg-white/5 backdrop-blur-sm"
-                                dangerouslySetInnerHTML={{ __html: sanitizeHTTPContent(line.content) }}
-                              />
-                            )}
+                            {/* HTML çıktıları artık modalda gösteriliyor */}
                           </div>
                         ))
                       )}
@@ -2839,6 +2890,25 @@ export function PCPanel({
         </div>
       </div>
     </div>
+
+    {/* HTTP content modal */}
+    <Dialog open={!!htmlModalContent} onOpenChange={(open) => { if (!open) setHtmlModalContent(null); }}>
+      <DialogContent className="w-[95vw] max-w-6xl h-[90vh] overflow-hidden">
+        <DialogHeader>
+          <DialogTitle>{htmlModalTitle}</DialogTitle>
+          <DialogDescription>
+            {language === 'tr'
+              ? 'Cihaz HTTP yönetim sayfası ayrı bir pencerede görüntüleniyor.'
+              : 'Device HTTP management page is shown in a separate window.'}
+          </DialogDescription>
+        </DialogHeader>
+        <div
+          className="prose max-w-none bg-white/50 dark:bg-slate-900/40 p-4 rounded-lg border dark:border-slate-800 shadow-inner h-[calc(90vh-140px)] overflow-auto"
+          dangerouslySetInnerHTML={{ __html: htmlModalContent || '' }}
+        />
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 

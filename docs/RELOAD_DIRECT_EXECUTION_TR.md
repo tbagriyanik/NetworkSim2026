@@ -39,7 +39,7 @@ Reloading...
 ## Avantajlar
 
 1. **Daha Hızlı İş Akışı**: İki kez Enter basmaya gerek yok
-2. **Daha Gerçekçi**: Bazı gerçek Cisco cihazlarının simülasyon moduyla eşleşiyor
+2. **Daha Gerçekçi**: Bazı gerçek cihazlarının simülasyon moduyla eşleşiyor
 3. **Daha Temiz UI**: Gereksiz diyalog kesintisi kaldırıldı
 4. **Tutarlı**: Diğer yıkıcı komutlar hala uygun yerlerde onay gerektiriyor
 
@@ -108,4 +108,4 @@ Olası iyileştirmeler:
 1. Ayarlardan isteğe bağlı onay toggle'ı ekleme
 2. Gerçekten önce geri sayım zamanlayıcısı ("3 saniye içinde yeniden başlatılıyor...")
 3. Reload zamanlama özelliği (`reload in 5`, `reload at 10:00`)
-4. Reload iptal penceresi (gerçek Cisco cihazları gibi: "Ctrl+C ile iptal edin")
+4. Reload iptal penceresi (gerçek cihazları gibi: "Ctrl+C ile iptal edin")
