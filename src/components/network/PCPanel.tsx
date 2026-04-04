@@ -1721,139 +1721,114 @@ export function PCPanel({
         w-full h-full flex flex-col items-center justify-center p-0 md:p-4
         ${isDark ? 'bg-slate-900' : 'bg-slate-100'}
       `}>
-      {/* Tablet Frame - Full screen on mobile */}
+      {/* External Toolbar - Above Tablet Frame */}
       <div className={`
-        w-full h-full max-w-full lg:max-w-4xl mx-auto overflow-hidden self-center
-        relative
+        w-full max-w-full lg:max-w-4xl mx-auto mb-2 px-3 py-1.5 flex items-center justify-between relative z-50
+        rounded-lg border
         ${isDark
-          ? 'bg-gradient-to-br from-slate-900 via-indigo-900/50 via-violet-900/40 to-slate-900 md:border-4 md:border-slate-600 md:shadow-2xl md:shadow-purple-500/20 md:rounded-3xl'
-          : 'bg-gradient-to-br from-blue-200 via-indigo-100 to-purple-200 md:border-4 md:border-slate-300 md:shadow-2xl md:shadow-purple-300/30 md:rounded-3xl'
+          ? 'bg-slate-800/90 border-slate-700 shadow-md'
+          : 'bg-white/90 border-slate-200 shadow-md'
         }
       `}>
-        {/* Animated colorful overlay */}
-        <div className="absolute inset-0 overflow-hidden -z-10">
-          {/* Moving gradient */}
-          <div className={`
-            absolute -top-1/2 -left-1/2 w-[200%] h-[200%] 
-            ${isDark
-              ? 'bg-gradient-to-br from-blue-600/30 via-purple-600/30 via-pink-500/20 to-cyan-500/30 animate-gradient'
-              : 'bg-gradient-to-br from-blue-400/40 via-purple-400/40 to-pink-400/40 animate-gradient'
-            }
-          `} />
-          {/* Colorful orbs */}
-          <div className={`
-            absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl
-            ${isDark ? 'bg-purple-600/40' : 'bg-purple-400/50'}
-          `} />
-          <div className={`
-            absolute bottom-0 left-0 w-48 h-48 rounded-full blur-3xl
-            ${isDark ? 'bg-cyan-600/30' : 'bg-cyan-400/40'}
-          `} />
-          <div className={`
-            absolute top-1/3 left-1/3 w-32 h-32 rounded-full blur-3xl
-            ${isDark ? 'bg-pink-600/30' : 'bg-pink-400/40'}
-          `} />
-          <div className={`
-            absolute bottom-1/4 right-1/4 w-36 h-36 rounded-full blur-3xl
-            ${isDark ? 'bg-blue-600/25' : 'bg-blue-400/35'}
-          `} />
-          <div className={`
-            absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 rounded-full blur-3xl
-            ${isDark ? 'bg-violet-600/20' : 'bg-violet-400/30'}
-          `} />
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${isPcPoweredOff ? 'bg-red-500' : 'bg-green-500 animate-pulse'}`} />
+          <span className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+            {internalPcHostname}
+          </span>
+          <span className={`text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+            {pcIP}
+          </span>
         </div>
-        {/* Tablet Header / Status Bar */}
-        <div className={`
-          px-4 py-2 flex items-center justify-between relative z-50
-          ${isDark ? 'bg-slate-900' : 'bg-white'}
-        `}>
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isPcPoweredOff ? 'bg-red-500' : 'bg-green-500 animate-pulse'}`} />
-            <span className={`text-xs font-medium  ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              {internalPcHostname} - {pcIP}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            {/* Home Button - Disabled when PC is off */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={goHome}
-                  disabled={isPcPoweredOff}
-                  className={`h-7 w-7 rounded-lg ui-hover-surface ${isPcPoweredOff ? 'opacity-30 cursor-not-allowed' : isDark ? 'text-slate-300 hover:text-cyan-400' : 'text-slate-600 hover:text-cyan-600'}`}
-                  aria-label={language === 'tr' ? 'Ana Ekran' : 'Home'}
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                    <polyline points="9 22 9 12 15 12 15 22" />
-                  </svg>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{language === 'tr' ? 'Ana Ekran' : 'Home'}</TooltipContent>
-            </Tooltip>
-            {/* Power Button */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    goHome();
-                    onTogglePower?.(deviceId);
-                  }}
-                  className={`h-7 w-7 rounded-lg ui-hover-surface transition-all ${isPcPoweredOff ? 'text-rose-500 hover:text-rose-400' : 'text-emerald-500 hover:text-emerald-400'}`}
-                  aria-label={t.power}
-                  disabled={!onTogglePower}
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-                  </svg>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t.power}</TooltipContent>
-            </Tooltip>
-            {/* Close Button */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onClose}
-                  className={`h-7 w-7 rounded-lg ui-hover-surface ${isDark ? 'text-slate-300 hover:text-red-400' : 'text-slate-600 hover:text-red-600'}`}
-                  aria-label={language === 'tr' ? 'Kapat' : 'Close'}
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{language === 'tr' ? 'Kapat' : 'Close'}</TooltipContent>
-            </Tooltip>
-            {/* Clock */}
-            <div className={`ml-2 text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-              {formatTime(currentTime)}
-            </div>
+        <div className="flex items-center gap-1">
+          {/* Home Button - Disabled when PC is off */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={goHome}
+                disabled={isPcPoweredOff}
+                className={`h-6 w-6 rounded-md ui-hover-surface ${isPcPoweredOff ? 'opacity-30 cursor-not-allowed' : isDark ? 'text-slate-300 hover:text-cyan-400' : 'text-slate-600 hover:text-cyan-600'}`}
+                aria-label={language === 'tr' ? 'Ana Ekran' : 'Home'}
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{language === 'tr' ? 'Ana Ekran' : 'Home'}</TooltipContent>
+          </Tooltip>
+          {/* Power Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  goHome();
+                  onTogglePower?.(deviceId);
+                }}
+                className={`h-6 w-6 rounded-md ui-hover-surface transition-all ${isPcPoweredOff ? 'text-rose-500 hover:text-rose-400' : 'text-emerald-500 hover:text-emerald-400'}`}
+                aria-label={t.power}
+                disabled={!onTogglePower}
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+                </svg>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t.power}</TooltipContent>
+          </Tooltip>
+          {/* Close Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className={`h-6 w-6 rounded-md ui-hover-surface ${isDark ? 'text-slate-300 hover:text-red-400' : 'text-slate-600 hover:text-red-600'}`}
+                aria-label={language === 'tr' ? 'Kapat' : 'Close'}
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{language === 'tr' ? 'Kapat' : 'Close'}</TooltipContent>
+          </Tooltip>
+          {/* Clock */}
+          <div className={`ml-1 text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+            {formatTime(currentTime)}
           </div>
         </div>
-        {/* Screen Bezel */}
+      </div>
+
+      {/* Tablet Frame - Simple modern tablet design */}
+      <div className={`
+        w-full h-full max-w-full lg:max-w-4xl mx-auto overflow-hidden self-center
+        relative flex flex-col
+        ${isDark
+          ? 'bg-slate-800 md:border-2 md:border-slate-600 md:rounded-2xl md:shadow-xl'
+          : 'bg-slate-200 md:border-2 md:border-slate-300 md:rounded-2xl md:shadow-xl'
+        }
+      `}>
+        {/* Screen Area - Clean and simple */}
         <div className={`
-          h-[calc(100%-40px)] min-h-0 overflow-hidden relative
+          flex-1 min-h-0 relative overflow-hidden
           ${isDark
-            ? 'bg-gradient-to-br from-slate-900/95 via-blue-900/20 to-purple-900/20 border border-slate-800/50'
-            : 'bg-gradient-to-br from-white/70 via-blue-50/50 to-purple-50/50 border border-slate-200/50'
+            ? 'bg-slate-900'
+            : 'bg-white'
           }
         `}>
-          {/* Power Off Overlay */}
+          {/* Power Off Overlay - Tablet ekranını tamamen karartır */}
           {isPcPoweredOff && (
-            <div className="absolute inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center animate-fade-in relative">
-              <div className="scanline" />
+            <div className="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center">
               <div className="relative mb-6">
-                <div className="absolute inset-0 bg-red-500/20 blur-2xl rounded-full animate-pulse" />
-                <svg className="w-16 h-16 text-red-500 drop-shadow-xl relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <div className="absolute inset-0 bg-red-500/20 blur-3xl rounded-full animate-pulse" />
+                <svg className="w-16 h-16 text-red-600 drop-shadow-xl relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
                 </svg>
@@ -1962,71 +1937,71 @@ export function PCPanel({
               </div>
 
               {/* Content Area */}
-              <div className={`flex-1 min-h-0 flex flex-col overflow-y-auto ${terminalBg} relative pt-16 md:pt-18 pb-4`}>
-                {activeTab === 'home' ? (
-                  <div className="flex-1 px-3 md:px-6">
-                    <div className="min-h-full flex items-center justify-center">
-                      <div className="w-full max-w-[720px] grid grid-cols-3 sm:grid-cols-5 gap-3 md:gap-4 rounded-3xl p-4 md:p-6 bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl place-items-center">
-                        <button
-                          onClick={() => navigateToProgram('desktop')}
-                          className="flex flex-col items-center gap-2 p-2 md:p-3 rounded-2xl cursor-pointer transition-all duration-200 hover:bg-white/5"
-                        >
-                          <div className={`w-[clamp(44px,7vw,72px)] h-[clamp(44px,7vw,72px)] rounded-2xl flex items-center justify-center ${isDark ? 'bg-gradient-to-br from-blue-500/40 to-blue-600/30 border border-blue-400/30 shadow-lg shadow-blue-500/20' : 'bg-gradient-to-br from-blue-400 to-blue-500 shadow-lg shadow-blue-400/30'}`}>
-                            <TerminalIcon className={`w-[clamp(20px,3.2vw,36px)] h-[clamp(20px,3.2vw,36px)] ${isDark ? 'text-blue-200' : 'text-white'}`} />
-                          </div>
-                          <span className={`text-[clamp(9px,1.6vw,13px)] font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                            {language === 'tr' ? 'Komut İstemi' : 'Command Prompt'}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => navigateToProgram('terminal')}
-                          className="flex flex-col items-center gap-2 p-2 md:p-3 rounded-2xl cursor-pointer transition-all duration-200 hover:bg-white/5"
-                        >
-                          <div className={`w-[clamp(44px,7vw,72px)] h-[clamp(44px,7vw,72px)] rounded-2xl flex items-center justify-center ${isDark ? 'bg-gradient-to-br from-emerald-500/40 to-emerald-600/30 border border-emerald-400/30 shadow-lg shadow-emerald-500/20' : 'bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-lg shadow-emerald-400/30'}`}>
-                            <Laptop className={`w-[clamp(20px,3.2vw,36px)] h-[clamp(20px,3.2vw,36px)] ${isDark ? 'text-emerald-200' : 'text-white'}`} />
-                          </div>
-                          <span className={`text-[clamp(9px,1.6vw,13px)] font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                            {language === 'tr' ? 'Konsol' : 'Console'}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => navigateToProgram('settings')}
-                          className="flex flex-col items-center gap-2 p-2 md:p-3 rounded-2xl cursor-pointer transition-all duration-200 hover:bg-white/5"
-                        >
-                          <div className={`w-[clamp(44px,7vw,72px)] h-[clamp(44px,7vw,72px)] rounded-2xl flex items-center justify-center ${isDark ? 'bg-gradient-to-br from-purple-500/40 to-purple-600/30 border border-purple-400/30 shadow-lg shadow-purple-500/20' : 'bg-gradient-to-br from-purple-400 to-purple-500 shadow-lg shadow-purple-400/30'}`}>
-                            <Settings className={`w-[clamp(20px,3.2vw,36px)] h-[clamp(20px,3.2vw,36px)] ${isDark ? 'text-purple-200' : 'text-white'}`} />
-                          </div>
-                          <span className={`text-[clamp(9px,1.6vw,13px)] font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                            {language === 'tr' ? 'Ayarlar' : 'Settings'}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('services')}
-                          className="flex flex-col items-center gap-2 p-2 md:p-3 rounded-2xl cursor-pointer transition-all duration-200 hover:bg-white/5"
-                        >
-                          <div className={`w-[clamp(44px,7vw,72px)] h-[clamp(44px,7vw,72px)] rounded-2xl flex items-center justify-center ${isDark ? 'bg-gradient-to-br from-amber-500/40 to-amber-600/30 border border-amber-400/30 shadow-lg shadow-amber-500/20' : 'bg-gradient-to-br from-amber-400 to-amber-500 shadow-lg shadow-amber-400/30'}`}>
-                            <Globe className={`w-[clamp(20px,3.2vw,36px)] h-[clamp(20px,3.2vw,36px)] ${isDark ? 'text-amber-200' : 'text-white'}`} />
-                          </div>
-                          <span className={`text-[clamp(9px,1.6vw,13px)] font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                            {language === 'tr' ? 'Servisler' : 'Services'}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('wireless')}
-                          className="flex flex-col items-center gap-2 p-2 md:p-3 rounded-2xl cursor-pointer transition-all duration-200 hover:bg-white/5"
-                        >
-                          <div className={`w-[clamp(44px,7vw,72px)] h-[clamp(44px,7vw,72px)] rounded-2xl flex items-center justify-center ${isDark ? 'bg-gradient-to-br from-cyan-500/40 to-cyan-600/30 border border-cyan-400/30 shadow-lg shadow-cyan-500/20' : 'bg-gradient-to-br from-cyan-400 to-cyan-500 shadow-lg shadow-cyan-400/30'}`}>
-                            <Wifi className={`w-[clamp(20px,3.2vw,36px)] h-[clamp(20px,3.2vw,36px)] ${isDark ? 'text-cyan-200' : 'text-white'}`} />
-                          </div>
-                          <span className={`text-[clamp(9px,1.6vw,13px)] font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                            {language === 'tr' ? 'Kablosuz' : 'Wireless'}
-                          </span>
-                        </button>
-                      </div>
+              <div className={`flex-1 min-h-0 flex flex-col ${terminalBg} relative`}>
+                {activeTab === 'home' && (
+                  <div className="flex-1 flex items-center justify-center p-2 md:p-3">
+                    <div className="w-full max-w-[600px] grid grid-cols-3 sm:grid-cols-5 gap-2 md:gap-3 rounded-xl p-3 md:p-4 bg-slate-800/30 border border-slate-700/30 shadow-sm place-items-center">
+                      <button
+                        onClick={() => navigateToProgram('desktop')}
+                        className="flex flex-col items-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                      >
+                        <div className={`w-[clamp(28px,4vw,40px)] h-[clamp(28px,4vw,40px)] rounded-lg flex items-center justify-center ${isDark ? 'bg-blue-600' : 'bg-blue-500'}`}>
+                          <TerminalIcon className={`w-[clamp(12px,2vw,20px)] h-[clamp(12px,2vw,20px)] text-white`} />
+                        </div>
+                        <span className={`text-[clamp(6px,1vw,9px)] font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                          CMD
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => navigateToProgram('terminal')}
+                        className="flex flex-col items-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                      >
+                        <div className={`w-[clamp(28px,4vw,40px)] h-[clamp(28px,4vw,40px)] rounded-lg flex items-center justify-center ${isDark ? 'bg-emerald-600' : 'bg-emerald-500'}`}>
+                          <Laptop className={`w-[clamp(12px,2vw,20px)] h-[clamp(12px,2vw,20px)] text-white`} />
+                        </div>
+                        <span className={`text-[clamp(6px,1vw,9px)] font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                          {language === 'tr' ? 'Konsol' : 'Console'}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => navigateToProgram('settings')}
+                        className="flex flex-col items-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                      >
+                        <div className={`w-[clamp(28px,4vw,40px)] h-[clamp(28px,4vw,40px)] rounded-lg flex items-center justify-center ${isDark ? 'bg-purple-600' : 'bg-purple-500'}`}>
+                          <Settings className={`w-[clamp(12px,2vw,20px)] h-[clamp(12px,2vw,20px)] text-white`} />
+                        </div>
+                        <span className={`text-[clamp(6px,1vw,9px)] font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                          {language === 'tr' ? 'Ayarlar' : 'Settings'}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('services')}
+                        className="flex flex-col items-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                      >
+                        <div className={`w-[clamp(28px,4vw,40px)] h-[clamp(28px,4vw,40px)] rounded-lg flex items-center justify-center ${isDark ? 'bg-amber-600' : 'bg-amber-500'}`}>
+                          <Globe className={`w-[clamp(12px,2vw,20px)] h-[clamp(12px,2vw,20px)] text-white`} />
+                        </div>
+                        <span className={`text-[clamp(6px,1vw,9px)] font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                          {language === 'tr' ? 'Servisler' : 'Services'}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('wireless')}
+                        className="flex flex-col items-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                      >
+                        <div className={`w-[clamp(28px,4vw,40px)] h-[clamp(28px,4vw,40px)] rounded-lg flex items-center justify-center ${isDark ? 'bg-cyan-600' : 'bg-cyan-500'}`}>
+                          <Wifi className={`w-[clamp(12px,2vw,20px)] h-[clamp(12px,2vw,20px)] text-white`} />
+                        </div>
+                        <span className={`text-[clamp(6px,1vw,9px)] font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                          {language === 'tr' ? 'Kablosuz' : 'Wireless'}
+                        </span>
+                      </button>
                     </div>
                   </div>
-                ) : activeTab === 'settings' ? (
-                  <div className="flex-1 min-h-0 p-6 space-y-4 overflow-y-auto custom-scrollbar">
+                )}
+
+                {activeTab === 'settings' && (
+                  <div className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-500 ">
                         {t.ipConfigurationLabel}
@@ -2100,8 +2075,10 @@ export function PCPanel({
                       </div>
                     </div>
                   </div>
-                ) : activeTab === 'services' ? (
-                  <div className="flex-1 min-h-0 p-6 space-y-6 overflow-y-auto custom-scrollbar">
+                )}
+
+                {activeTab === 'services' && (
+                  <div className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
                     <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
                       <div className="flex items-center justify-between gap-3">
                         <div>
@@ -2345,8 +2322,10 @@ export function PCPanel({
                       </div>
                     </div>
                   </div>
-                ) : activeTab === 'wireless' ? (
-                  <div className="flex-1 min-h-0 p-6 space-y-6 overflow-y-auto custom-scrollbar">
+                )}
+
+                {activeTab === 'wireless' && (
+                  <div className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
                     <div className={`rounded-2xl border p-5 space-y-5 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 text-purple-500">
@@ -2517,10 +2496,12 @@ export function PCPanel({
                       </div>
                     </div>
                   </div>
-                ) : (
+                )}
+
+                {(activeTab === 'desktop' || activeTab === 'terminal') && (
                   <>
                     {activeTab === 'terminal' && (
-                      <div className={`px-4 py-2 border-b ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-slate-50'} flex items-center justify-between gap-3`}>
+                      <div className={`px-3 md:px-4 py-2 border-b ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-slate-50'} flex items-center justify-between gap-3`}>
                         <div className="flex flex-col gap-1">
                           <div className="text-xs">
                             {isConsoleConnected && connectedDeviceId ? (
@@ -2547,7 +2528,7 @@ export function PCPanel({
                     )}
                     <div
                       ref={outputRef}
-                      className={`flex-1 overflow-y-auto scroll-smooth custom-scrollbar p-4 md:p-6 space-y-2 font-mono text-sm leading-relaxed flex flex-col ${isPcPoweredOff ? 'bg-red-500' : ''}`}
+                      className={`flex-1 overflow-y-auto scroll-smooth custom-scrollbar p-2 md:p-3 space-y-2 font-mono text-sm leading-relaxed flex flex-col ${isPcPoweredOff ? 'bg-red-500' : ''}`}
                     >
                       {isPcPoweredOff ? (
                         <div className="flex-1 flex items-center justify-center text-slate-700">OFFLINE</div>
