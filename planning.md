@@ -19,6 +19,16 @@ Bununla birlikte, bazı maddeler plan dosyasında tamamlanmış görünse de ür
 
 ## Yapılanlar
 
+### 2026-04-04 – HTTP/DHCP/DNS Hizmetleri ve PC Terminal UX
+- PC’lerde HTTP/DNS/DHCP servisleri varsayılan “açık” hale getirildi; `http` komutu doğrudan çalışıyor.
+- Switch/router `ip http server` komutu etkinleştirildi; HTTP yönetim sayfası PC’den erişilebilir.
+- HTTP sonucu artık PC terminalinde modal/pencere olarak açılıyor (tam ekran genişlikte), terminalde sadece bilgi mesajı gösteriliyor.
+- HTTP hedef çözümlemesi, router/switch interface IP’lerini (port ipAddress) ve DNS sonuçlarını doğru eşliyor.
+
+### 2026-04-04 – Plan/Gerçeklik Eşlemesi
+- README versiyon rozeti 1.1.2 ve LoC 80.5k olarak güncellendi (Next/Node hariç).
+- React compiler memoizasyon uyarıları giderildi (`handleTabComplete` bağımlılıkları güncellendi).
+
 ### Çekirdek Modernizasyon
 - Tasarım token sistemi, tema yapısı ve temel UI primitive’leri oluşturuldu
 - Accessibility yardımcıları, reduced motion ve high-contrast desteği eklendi
