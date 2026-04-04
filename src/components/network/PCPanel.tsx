@@ -308,12 +308,15 @@ export function PCPanel({
     setWifiChannel(deviceFromTopology?.wifi?.channel ?? '2.4GHz');
   }, [deviceId, deviceFromTopology?.services, deviceFromTopology?.wifi]);
 
-  // When tablet powers on, navigate to home screen
+  // When tablet powers on, navigate to CMD screen
   useEffect(() => {
     if (!isPcPoweredOff) {
-      goHome();
+      setActiveTab('desktop');
+      tabletHistoryRef.current = ['desktop'];
+      tabletHistoryIndexRef.current = 0;
+      onNavigate?.('desktop');
     }
-  }, [isPcPoweredOff, goHome]);
+  }, [isPcPoweredOff, onNavigate]);
 
   const validateIP = (ip: string) => /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ip);
 
@@ -1738,41 +1741,102 @@ export function PCPanel({
           <span className={`text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
             {pcIP}
           </span>
+          {/* Program Buttons - Left of Power */}
+          <div className="flex items-center gap-1 ml-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigateToProgram('desktop')}
+                  disabled={isPcPoweredOff}
+                  className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'desktop' ? (isDark ? 'bg-blue-500/30 text-blue-300' : 'bg-blue-500/30 text-blue-700') : (isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500')}`}
+                  aria-label="CMD"
+                >
+                  <TerminalIcon className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>CMD</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigateToProgram('terminal')}
+                  disabled={isPcPoweredOff}
+                  className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'terminal' ? (isDark ? 'bg-emerald-500/30 text-emerald-300' : 'bg-emerald-500/30 text-emerald-700') : (isDark ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-500')}`}
+                  aria-label={language === 'tr' ? 'Konsol' : 'Console'}
+                >
+                  <Laptop className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{language === 'tr' ? 'Konsol' : 'Console'}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setActiveTab('services')}
+                  disabled={isPcPoweredOff}
+                  className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'services' ? (isDark ? 'bg-amber-500/30 text-amber-300' : 'bg-amber-500/30 text-amber-700') : (isDark ? 'text-amber-400 hover:text-amber-300' : 'text-amber-600 hover:text-amber-500')}`}
+                  aria-label={language === 'tr' ? 'Servisler' : 'Services'}
+                >
+                  <Globe className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{language === 'tr' ? 'Servisler' : 'Services'}</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
         <div className="flex items-center gap-1">
-          {/* Home Button - Disabled when PC is off */}
+          {/* Settings - Left of clock */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={goHome}
+                onClick={() => navigateToProgram('settings')}
                 disabled={isPcPoweredOff}
-                className={`h-6 w-6 rounded-md ui-hover-surface ${isPcPoweredOff ? 'opacity-30 cursor-not-allowed' : isDark ? 'text-slate-300 hover:text-cyan-400' : 'text-slate-600 hover:text-cyan-600'}`}
-                aria-label={language === 'tr' ? 'Ana Ekran' : 'Home'}
+                className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'settings' ? (isDark ? 'bg-purple-500/30 text-purple-300' : 'bg-purple-500/30 text-purple-700') : (isDark ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-500')}`}
+                aria-label={language === 'tr' ? 'Ayarlar' : 'Settings'}
               >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
+                <Settings className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{language === 'tr' ? 'Ana Ekran' : 'Home'}</TooltipContent>
+            <TooltipContent>{language === 'tr' ? 'Ayarlar' : 'Settings'}</TooltipContent>
           </Tooltip>
-          {/* Power Button */}
+          {/* WiFi - Left of clock */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => {
-                  goHome();
-                  onTogglePower?.(deviceId);
-                }}
-                className={`h-6 w-6 rounded-md ui-hover-surface transition-all ${isPcPoweredOff ? 'text-rose-500 hover:text-rose-400' : 'text-emerald-500 hover:text-emerald-400'}`}
-                aria-label={t.power}
-                disabled={!onTogglePower}
+                onClick={() => setActiveTab('wireless')}
+                disabled={isPcPoweredOff}
+                className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'wireless' ? (isDark ? 'bg-cyan-500/30 text-cyan-300' : 'bg-cyan-500/30 text-cyan-700') : (isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-500')}`}
+                aria-label={language === 'tr' ? 'Kablosuz' : 'Wireless'}
               >
+                <Wifi className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{language === 'tr' ? 'Kablosuz' : 'Wireless'}</TooltipContent>
+          </Tooltip>
+          {/* Power Button - Only show when PC is OFF */}
+          {isPcPoweredOff && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    onTogglePower?.(deviceId);
+                  }}
+                  className="h-6 w-6 rounded-md ui-hover-surface transition-all text-rose-500 hover:text-rose-400"
+                  aria-label={t.power}
+                  disabled={!onTogglePower}
+                >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
@@ -1781,6 +1845,7 @@ export function PCPanel({
             </TooltipTrigger>
             <TooltipContent>{t.power}</TooltipContent>
           </Tooltip>
+          )}
           {/* Close Button */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -1826,19 +1891,13 @@ export function PCPanel({
           {/* Power Off Overlay - Tablet ekranını tamamen karartır */}
           {isPcPoweredOff && (
             <div className="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center">
-              <div className="relative mb-6">
+              <div className="relative">
                 <div className="absolute inset-0 bg-red-500/20 blur-3xl rounded-full animate-pulse" />
                 <svg className="w-16 h-16 text-red-600 drop-shadow-xl relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
                 </svg>
               </div>
-              <Button 
-                onClick={() => onTogglePower?.(deviceId)}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-black tracking-widest px-8 py-6 rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
-              >
-                {language === 'tr' ? 'CIHAZI AÇ' : 'POWER ON DEVICE'}
-              </Button>
             </div>
           )}
           <ModernPanel
@@ -1937,9 +1996,9 @@ export function PCPanel({
               </div>
 
               {/* Content Area */}
-              <div className={`flex-1 min-h-0 flex flex-col ${terminalBg} relative`}>
+              <div className={`flex-1 min-h-0 flex flex-col ${terminalBg} relative overflow-hidden`}>
                 {activeTab === 'home' && (
-                  <div className="flex-1 flex items-center justify-center p-2 md:p-3">
+                  <div className="flex-1 flex items-start justify-center p-2 md:p-3 pt-3 md:pt-4">
                     <div className="w-full max-w-[600px] grid grid-cols-3 sm:grid-cols-5 gap-2 md:gap-3 rounded-xl p-3 md:p-4 bg-slate-800/30 border border-slate-700/30 shadow-sm place-items-center">
                       <button
                         onClick={() => navigateToProgram('desktop')}
@@ -2528,7 +2587,7 @@ export function PCPanel({
                     )}
                     <div
                       ref={outputRef}
-                      className={`flex-1 overflow-y-auto scroll-smooth custom-scrollbar p-2 md:p-3 space-y-2 font-mono text-sm leading-relaxed flex flex-col ${isPcPoweredOff ? 'bg-red-500' : ''}`}
+                      className={`flex-1 overflow-y-auto scroll-smooth custom-scrollbar p-2 md:p-3 space-y-2 font-mono text-sm leading-relaxed flex flex-col overflow-x-hidden ${isPcPoweredOff ? 'bg-red-500' : ''}`}
                     >
                       {isPcPoweredOff ? (
                         <div className="flex-1 flex items-center justify-center text-slate-700">OFFLINE</div>
