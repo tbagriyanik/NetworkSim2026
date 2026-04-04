@@ -1791,7 +1791,7 @@ export function PCPanel({
           </div>
         </div>
         <div className="flex items-center gap-1">
-          {/* Settings - Left of clock */}
+          {/* Settings - Left of Power */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -1807,7 +1807,29 @@ export function PCPanel({
             </TooltipTrigger>
             <TooltipContent>{language === 'tr' ? 'Ayarlar' : 'Settings'}</TooltipContent>
           </Tooltip>
-          {/* WiFi - Left of clock */}
+          {/* Power Button - Always visible */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  goHome();
+                  onTogglePower?.(deviceId);
+                }}
+                className={`h-6 w-6 rounded-md ui-hover-surface transition-all ${isPcPoweredOff ? 'text-rose-500 hover:text-rose-400' : 'text-emerald-500 hover:text-emerald-400'}`}
+                aria-label={t.power}
+                disabled={!onTogglePower}
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+                </svg>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t.power}</TooltipContent>
+          </Tooltip>
+          {/* WiFi */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -1823,29 +1845,10 @@ export function PCPanel({
             </TooltipTrigger>
             <TooltipContent>{language === 'tr' ? 'Kablosuz' : 'Wireless'}</TooltipContent>
           </Tooltip>
-          {/* Power Button - Only show when PC is OFF */}
-          {isPcPoweredOff && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    onTogglePower?.(deviceId);
-                  }}
-                  className="h-6 w-6 rounded-md ui-hover-surface transition-all text-rose-500 hover:text-rose-400"
-                  aria-label={t.power}
-                  disabled={!onTogglePower}
-                >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-                </svg>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t.power}</TooltipContent>
-          </Tooltip>
-          )}
+          {/* Clock */}
+          <div className={`ml-2 text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+            {formatTime(currentTime)}
+          </div>
           {/* Close Button */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -1864,17 +1867,13 @@ export function PCPanel({
             </TooltipTrigger>
             <TooltipContent>{language === 'tr' ? 'Kapat' : 'Close'}</TooltipContent>
           </Tooltip>
-          {/* Clock */}
-          <div className={`ml-1 text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-            {formatTime(currentTime)}
-          </div>
         </div>
       </div>
 
       {/* Tablet Frame - Simple modern tablet design */}
       <div className={`
-        w-full h-full max-w-full lg:max-w-4xl mx-auto overflow-hidden self-center
-        relative flex flex-col
+        w-full max-w-full lg:max-w-4xl mx-auto overflow-hidden self-center
+        relative flex flex-col h-[500px]
         ${isDark
           ? 'bg-slate-800 md:border-2 md:border-slate-600 md:rounded-2xl md:shadow-xl'
           : 'bg-slate-200 md:border-2 md:border-slate-300 md:rounded-2xl md:shadow-xl'
@@ -1882,7 +1881,7 @@ export function PCPanel({
       `}>
         {/* Screen Area - Clean and simple */}
         <div className={`
-          flex-1 min-h-0 relative overflow-hidden
+          flex-1 relative overflow-hidden
           ${isDark
             ? 'bg-slate-900'
             : 'bg-white'
@@ -1908,13 +1907,13 @@ export function PCPanel({
             hideTitle
             hideHeader
             className={cn(
-              "w-full h-full min-w-0 min-h-0",
+              "w-full min-w-0",
               isDark
                 ? "bg-slate-900/40 border border-slate-700/40 backdrop-blur-xl"
                 : "bg-white/25 border border-white/40 backdrop-blur-xl shadow-lg shadow-white/10"
             )}
           >
-            <div className="flex flex-col h-full min-h-0 overflow-hidden bg-transparent">
+            <div className="flex flex-col h-[400px] overflow-hidden bg-transparent">
               <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
                 <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-md`}>
                   <DialogHeader>
@@ -1996,62 +1995,62 @@ export function PCPanel({
               </div>
 
               {/* Content Area */}
-              <div className={`flex-1 min-h-0 flex flex-col ${terminalBg} relative overflow-hidden`}>
+              <div className={`flex-1 flex flex-col ${terminalBg} relative overflow-hidden h-[400px] pt-2.5`}>
                 {activeTab === 'home' && (
-                  <div className="flex-1 flex items-start justify-center p-2 md:p-3 pt-3 md:pt-4">
-                    <div className="w-full max-w-[600px] grid grid-cols-3 sm:grid-cols-5 gap-2 md:gap-3 rounded-xl p-3 md:p-4 bg-slate-800/30 border border-slate-700/30 shadow-sm place-items-center">
+                  <div className="flex-1 flex items-center justify-center p-2.5 pt-0">
+                    <div className="w-full h-full max-w-[700px] grid grid-cols-5 gap-2 rounded-xl p-2.5 bg-slate-800/30 border border-slate-700/30 shadow-sm place-items-center">
                       <button
                         onClick={() => navigateToProgram('desktop')}
-                        className="flex flex-col items-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                        className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
                       >
-                        <div className={`w-[clamp(28px,4vw,40px)] h-[clamp(28px,4vw,40px)] rounded-lg flex items-center justify-center ${isDark ? 'bg-blue-600' : 'bg-blue-500'}`}>
-                          <TerminalIcon className={`w-[clamp(12px,2vw,20px)] h-[clamp(12px,2vw,20px)] text-white`} />
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-600">
+                          <TerminalIcon className="w-6 h-6 text-white" />
                         </div>
-                        <span className={`text-[clamp(6px,1vw,9px)] font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                        <span className="text-xs font-medium text-slate-300">
                           CMD
                         </span>
                       </button>
                       <button
                         onClick={() => navigateToProgram('terminal')}
-                        className="flex flex-col items-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                        className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
                       >
-                        <div className={`w-[clamp(28px,4vw,40px)] h-[clamp(28px,4vw,40px)] rounded-lg flex items-center justify-center ${isDark ? 'bg-emerald-600' : 'bg-emerald-500'}`}>
-                          <Laptop className={`w-[clamp(12px,2vw,20px)] h-[clamp(12px,2vw,20px)] text-white`} />
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-600">
+                          <Laptop className="w-6 h-6 text-white" />
                         </div>
-                        <span className={`text-[clamp(6px,1vw,9px)] font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                        <span className="text-xs font-medium text-slate-300">
                           {language === 'tr' ? 'Konsol' : 'Console'}
                         </span>
                       </button>
                       <button
                         onClick={() => navigateToProgram('settings')}
-                        className="flex flex-col items-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                        className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
                       >
-                        <div className={`w-[clamp(28px,4vw,40px)] h-[clamp(28px,4vw,40px)] rounded-lg flex items-center justify-center ${isDark ? 'bg-purple-600' : 'bg-purple-500'}`}>
-                          <Settings className={`w-[clamp(12px,2vw,20px)] h-[clamp(12px,2vw,20px)] text-white`} />
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-purple-600">
+                          <Settings className="w-6 h-6 text-white" />
                         </div>
-                        <span className={`text-[clamp(6px,1vw,9px)] font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                        <span className="text-xs font-medium text-slate-300">
                           {language === 'tr' ? 'Ayarlar' : 'Settings'}
                         </span>
                       </button>
                       <button
                         onClick={() => setActiveTab('services')}
-                        className="flex flex-col items-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                        className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
                       >
-                        <div className={`w-[clamp(28px,4vw,40px)] h-[clamp(28px,4vw,40px)] rounded-lg flex items-center justify-center ${isDark ? 'bg-amber-600' : 'bg-amber-500'}`}>
-                          <Globe className={`w-[clamp(12px,2vw,20px)] h-[clamp(12px,2vw,20px)] text-white`} />
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-600">
+                          <Globe className="w-6 h-6 text-white" />
                         </div>
-                        <span className={`text-[clamp(6px,1vw,9px)] font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                        <span className="text-xs font-medium text-slate-300">
                           {language === 'tr' ? 'Servisler' : 'Services'}
                         </span>
                       </button>
                       <button
                         onClick={() => setActiveTab('wireless')}
-                        className="flex flex-col items-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                        className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
                       >
-                        <div className={`w-[clamp(28px,4vw,40px)] h-[clamp(28px,4vw,40px)] rounded-lg flex items-center justify-center ${isDark ? 'bg-cyan-600' : 'bg-cyan-500'}`}>
-                          <Wifi className={`w-[clamp(12px,2vw,20px)] h-[clamp(12px,2vw,20px)] text-white`} />
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-cyan-600">
+                          <Wifi className="w-6 h-6 text-white" />
                         </div>
-                        <span className={`text-[clamp(6px,1vw,9px)] font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                        <span className="text-xs font-medium text-slate-300">
                           {language === 'tr' ? 'Kablosuz' : 'Wireless'}
                         </span>
                       </button>
@@ -2060,7 +2059,7 @@ export function PCPanel({
                 )}
 
                 {activeTab === 'settings' && (
-                  <div className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
+                  <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden h-[400px] pt-2.5">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-500 ">
                         {t.ipConfigurationLabel}
