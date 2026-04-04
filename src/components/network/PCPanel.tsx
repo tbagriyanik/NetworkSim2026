@@ -2217,8 +2217,8 @@ export function PCPanel({
               </TooltipTrigger>
               <TooltipContent>{t.power}</TooltipContent>
             </Tooltip>
-            {/* Clock */}
-            <div className={`ml-2 text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+            {/* Clock - hidden on mobile */}
+            <div className={`hidden sm:block ml-2 text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
               {formatTime(currentTime)}
             </div>
             {/* Close Button */}
