@@ -1016,6 +1016,51 @@ export function PCPanel({
     return isValidIpv4(pcGateway);
   }, [isSameSubnet, isValidIpv4, pcGateway, pcIP, pcSubnet]);
 
+  const isLoopbackTarget = useCallback((target: string) => target.trim() === '127.0.0.1', []);
+
+  const normalizeLookupTarget = useCallback((raw: string) => {
+    const value = (raw || '').trim();
+    if (!value) return '';
+    try {
+      const withScheme = value.startsWith('http://') || value.startsWith('https://')
+        ? value
+        : `http://${value}`;
+      const parsed = new URL(withScheme);
+      return parsed.hostname || value;
+    } catch {
+      return value.split('/')[0].split('?')[0].trim();
+    }
+  }, []);
+
+  const resolveDeviceNameTarget = useCallback((raw: string) => {
+    const normalized = (raw || '').trim().toLowerCase();
+    if (!normalized) return null;
+
+    if (normalized === 'localhost' || normalized === internalPcHostname.toLowerCase() || normalized === deviceId.toLowerCase()) {
+      return { ip: '127.0.0.1', label: internalPcHostname };
+    }
+
+    const matched = topologyDevices.find((d) =>
+      d.name?.toLowerCase() === normalized || d.id?.toLowerCase() === normalized
+    );
+    if (!matched) return null;
+
+    if (matched.ip && isValidIpv4(matched.ip)) {
+      return { ip: matched.ip, label: matched.name || matched.id };
+    }
+
+    const state = deviceStates?.get(matched.id);
+    if (state?.ports) {
+      for (const port of Object.values(state.ports)) {
+        if (port?.ipAddress && isValidIpv4(port.ipAddress)) {
+          return { ip: port.ipAddress, label: matched.name || matched.id };
+        }
+      }
+    }
+
+    return null;
+  }, [deviceId, deviceStates, internalPcHostname, isValidIpv4, topologyDevices]);
+
   const resolveDomainWithDnsServices = useCallback((domain: string) => {
     const normalized = domain.trim().toLowerCase();
     if (!normalized) return null;
@@ -1035,6 +1080,12 @@ export function PCPanel({
   const findHttpServerByTarget = useCallback((target: string) => {
     const normalizedTarget = target.trim().toLowerCase();
     if (!normalizedTarget) return null;
+
+    // Localhost should always resolve to the current PC first.
+    if (normalizedTarget === '127.0.0.1') {
+      const selfDevice = topologyDevices.find((d) => d.id === deviceId);
+      if (selfDevice && selfDevice.services?.http?.enabled) return selfDevice;
+    }
 
     // Check for PC HTTP servers
     const pcByIp = topologyDevices.find(
@@ -1099,12 +1150,12 @@ export function PCPanel({
     }
 
     return null;
-  }, [canReachTargetIp, resolveDomainWithDnsServices, topologyDevices, deviceStates]);
+  }, [canReachTargetIp, resolveDomainWithDnsServices, topologyDevices, deviceStates, deviceId]);
 
   const openHttpTarget = useCallback((rawTarget?: string) => {
     const rawInput = (rawTarget || '').trim();
     const normalizedInput = rawInput || '192.168.1.10';
-    let lookupTarget = normalizedInput;
+    let lookupTarget = normalizeLookupTarget(normalizedInput);
     let displayUrl = normalizedInput.startsWith('http://') || normalizedInput.startsWith('https://')
       ? normalizedInput
       : `http://${normalizedInput}`;
@@ -1119,11 +1170,13 @@ export function PCPanel({
     }
 
     const target = lookupTarget.trim() || '192.168.1.10';
-    if (isValidIpv4(target) && !hasGatewayForTarget(target)) {
+    const namedTarget = resolveDeviceNameTarget(target);
+    const resolvedTargetIp = namedTarget?.ip || target;
+    if (!isLoopbackTarget(resolvedTargetIp) && isValidIpv4(resolvedTargetIp) && !hasGatewayForTarget(resolvedTargetIp)) {
       addLocalOutput('error', t.targetGatewayRequired);
       return;
     }
-    if (!isValidIpv4(target)) {
+    if (!isValidIpv4(resolvedTargetIp)) {
       if (!isValidIpv4(pcDNS)) {
         addLocalOutput('error', t.dnsAddressRequired);
         return;
@@ -1134,7 +1187,7 @@ export function PCPanel({
       }
     }
 
-    const httpServer = findHttpServerByTarget(target);
+    const httpServer = findHttpServerByTarget(resolvedTargetIp);
     setHttpAppUrl(displayUrl);
 
     if (!httpServer) {
@@ -1161,7 +1214,7 @@ export function PCPanel({
       setHttpAppDeviceId(null);
       addLocalOutput('html', httpServer.services?.http?.content || 'Merhaba Dünya!');
     }
-  }, [addLocalOutput, deviceStates, findHttpServerByTarget, hasGatewayForTarget, isValidIpv4, language, pcDNS, t]);
+  }, [addLocalOutput, deviceStates, findHttpServerByTarget, hasGatewayForTarget, isLoopbackTarget, isValidIpv4, language, normalizeLookupTarget, pcDNS, resolveDeviceNameTarget, t]);
 
   const formatMacForArp = useCallback((mac?: string) => {
     if (!mac) return '';
@@ -1439,8 +1492,14 @@ export function PCPanel({
           let targetIp = target;
           let dnsResolved = false;
 
+          const namedResult = resolveDeviceNameTarget(target);
+          if (namedResult) {
+            targetIp = namedResult.ip;
+            dnsResolved = true;
+          }
+
           // If target is not an IP, try to resolve it via DNS
-          if (!isValidIpv4(target)) {
+          if (!isValidIpv4(targetIp)) {
             const dnsResult = resolveDomainWithDnsServices(target);
             if (dnsResult) {
               targetIp = dnsResult.address;
@@ -1449,6 +1508,12 @@ export function PCPanel({
               addLocalOutput('output', `Ping request could not find host ${target}. Please check the name and try again.`);
               return;
             }
+          }
+
+          if (isLoopbackTarget(targetIp)) {
+            const pingTargetDisplay = dnsResolved ? `${target} [127.0.0.1]` : '127.0.0.1';
+            await addMultilineOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`, 100);
+            return;
           }
 
           const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en');
@@ -1466,9 +1531,17 @@ export function PCPanel({
           }
         }
       } else if (cmd === 'nslookup') {
-        const targetDomain = args[0];
+        const rawTargetDomain = args[0];
+        const targetDomain = rawTargetDomain ? normalizeLookupTarget(rawTargetDomain) : '';
         if (!targetDomain) {
           addLocalOutput('output', 'Usage: nslookup <domain>');
+        } else if (resolveDeviceNameTarget(targetDomain)) {
+          const resolved = resolveDeviceNameTarget(targetDomain)!;
+          await addMultilineOutput(
+            'output',
+            `Server: local-device\nAddress: 127.0.0.1\n\nName: ${targetDomain}\nAddress: ${resolved.ip}`,
+            80
+          );
         } else if (!isValidIpv4(pcDNS)) {
           addLocalOutput('error', t.dnsInvalidAddress);
         } else if (!hasGatewayForTarget(pcDNS)) {
@@ -1495,7 +1568,11 @@ export function PCPanel({
         } else {
           // Check if target is a domain and resolve it
           let targetIp = target;
-          if (!isValidIpv4(target)) {
+          const namedResult = resolveDeviceNameTarget(target);
+          if (namedResult) {
+            targetIp = namedResult.ip;
+          }
+          if (!isValidIpv4(targetIp)) {
             const dnsResult = resolveDomainWithDnsServices(target);
             if (dnsResult) {
               targetIp = dnsResult.address;
@@ -1503,6 +1580,11 @@ export function PCPanel({
               addLocalOutput('error', `Could not resolve hostname ${target}`);
               return;
             }
+          }
+
+          if (isLoopbackTarget(targetIp)) {
+            addLocalOutput('success', `Trying 127.0.0.1 ${port} ...\nConnected to 127.0.0.1.`);
+            return;
           }
 
           // Check connectivity
@@ -1546,8 +1628,13 @@ export function PCPanel({
         if (!target) {
           addLocalOutput('output', 'Usage: tracert <target_name_or_address>');
         } else {
+          const resolvedTarget = resolveDeviceNameTarget(target)?.ip || target;
+          if (isLoopbackTarget(resolvedTarget)) {
+            await addMultilineOutput('output', `Tracing route to 127.0.0.1 over a maximum of 30 hops:\n\n  1    <1 ms    <1 ms    <1 ms  localhost [127.0.0.1]\n\nTrace complete.`, 80);
+            return;
+          }
           addLocalOutput('output', `Tracing route to ${target} over a maximum of 30 hops:\n`);
-          const result = checkConnectivity(deviceId, target, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en');
+          const result = checkConnectivity(deviceId, resolvedTarget, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en');
 
           if (result.hops && result.hops.length > 0) {
             let hopOutput = '';
