@@ -50,7 +50,6 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
     return {
       enabled,
       ssid: wlanState.wifi.ssid,
-      bssid: wlanState.wifi.bssid,
       password: wlanState.wifi.password,
       security: normalizeSecurity(wlanState.wifi.security),
       channel: normalizeChannel(wlanState.wifi.channel),
@@ -63,7 +62,6 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
     return {
       enabled: device.wifi.enabled ?? true,
       ssid: device.wifi.ssid,
-      bssid: device.wifi.bssid,
       password: device.wifi.password,
       security: normalizeSecurity(device.wifi.security),
       channel: normalizeChannel(device.wifi.channel),
@@ -77,7 +75,6 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
     return {
       enabled: mode !== 'disabled' && !(wlanPort.shutdown ?? false),
       ssid: wlanPort.wifi.ssid,
-      bssid: wlanPort.wifi.bssid,
       password: wlanPort.wifi.password,
       security: normalizeSecurity(wlanPort.wifi.security),
       channel: normalizeChannel(wlanPort.wifi.channel),
