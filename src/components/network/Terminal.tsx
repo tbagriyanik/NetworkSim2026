@@ -831,12 +831,21 @@ export function Terminal({
     URL.revokeObjectURL(url);
   };
 
-  // Calculate WiFi signal strength for PC devices
+  // Calculate WiFi signal strength for devices with WiFi
   const wifiSignalStrength = useMemo(() => {
-    if (!device || device.type !== 'pc') return null;
+    if (!device) return null;
     const wifi = getDeviceWifiConfig(device, deviceStates);
-    if (!wifi || !wifi.enabled || (wifi.mode !== 'client' && wifi.mode !== 'sta')) return null;
-    return getWirelessSignalStrength(device, devices, deviceStates);
+    if (!wifi || !wifi.enabled) return null;
+
+    // AP mode devices always show full signal (they are broadcasting)
+    if (wifi.mode === 'ap') return 5;
+
+    // Client mode devices show signal based on distance to AP
+    if (device.type === 'pc' && (wifi.mode === 'client' || wifi.mode === 'sta')) {
+      return getWirelessSignalStrength(device, devices, deviceStates);
+    }
+
+    return null;
   }, [device, devices, deviceStates]);
 
   const getSignalIcon = (strength: number) => {

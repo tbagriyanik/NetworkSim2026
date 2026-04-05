@@ -3757,7 +3757,7 @@ export function NetworkTopology({
                     {(() => {
                       const signalStrength = isPC
                         ? getWirelessSignalStrength(device, devices, deviceStates)
-                        : 0;
+                        : (isEnabled ? 3 : 0); // AP devices show full signal when enabled
 
                       const dimColor = isDark ? '#334155' : '#cbd5e1';
                       const arc1Color = signalStrength >= 1 ? wifiColor : dimColor;

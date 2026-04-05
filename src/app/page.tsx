@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from '@/components/network/networkTopology.types';
 import { getPrompt } from '@/lib/network/executor';
 import { formatErrorForUser } from '@/lib/errors/errorHandler';
-import { checkDeviceConnectivity } from '@/lib/network/connectivity';
+import { checkDeviceConnectivity, getWirelessSignalStrength } from '@/lib/network/connectivity';
 import type { TerminalOutput } from '@/components/network/Terminal';
 import {
   AlertDialog,
@@ -1948,6 +1948,8 @@ export default function Home() {
     let refreshCount = 0;
     let disconnectedPCs: string[] = [];
     let disconnectedAPs: string[] = [];
+    let connectedPCs: string[] = [];
+    let activeAPs: string[] = [];
 
     if (topologyDevices && deviceStates) {
       // 1. Check and update PC connections to APs
@@ -1974,10 +1976,12 @@ export default function Home() {
           isConnected = true;
         });
 
-        if (!isConnected) {
+        if (isConnected) {
+          connectedPCs.push(pc.name || pc.id);
+        } else {
           disconnectedPCs.push(pc.name || pc.id);
-          refreshCount++;
         }
+        refreshCount++;
       });
 
       // 2. Check and update AP connections (router/switch)
@@ -2002,13 +2006,15 @@ export default function Home() {
           hasClient = true;
         });
 
-        if (!hasClient) {
+        if (hasClient) {
+          activeAPs.push(ap.name || ap.id);
+        } else {
           disconnectedAPs.push(ap.name || ap.id);
-          refreshCount++;
         }
+        refreshCount++;
       });
 
-      // 3. Update deviceStates to trigger re-render
+      // 3. Force update deviceStates to trigger re-render of all terminals and WiFi indicators
       const updatedDeviceStates = new Map(deviceStates);
       topologyDevices.forEach(device => {
         const deviceState = updatedDeviceStates.get(device.id);
@@ -2018,25 +2024,49 @@ export default function Home() {
       });
       setDeviceStates(updatedDeviceStates);
 
-      // 4. Show notification if there were issues
-      const totalIssues = disconnectedPCs.length + disconnectedAPs.length;
-      if (totalIssues > 0) {
+      // 4. Force update topology devices — each device gets a new object reference
+      //    so NetworkTopology's WiFi signal useMemo re-evaluates for every device
+      setTopologyDevices(prev => prev.map(d => ({ ...d })));
+
+      // 5. Show detailed notification
+      const totalDevices = connectedPCs.length + activeAPs.length + disconnectedPCs.length + disconnectedAPs.length;
+      if (totalDevices > 0) {
+        const messages = [];
+        if (connectedPCs.length > 0) {
+          messages.push(language === 'tr'
+            ? `✓ ${connectedPCs.length} PC bağlı`
+            : `✓ ${connectedPCs.length} PC connected`);
+        }
+        if (activeAPs.length > 0) {
+          messages.push(language === 'tr'
+            ? `✓ ${activeAPs.length} AP aktif`
+            : `✓ ${activeAPs.length} AP active`);
+        }
+        if (disconnectedPCs.length > 0) {
+          messages.push(language === 'tr'
+            ? `⚠ ${disconnectedPCs.length} PC bağlantısız`
+            : `⚠ ${disconnectedPCs.length} PC disconnected`);
+        }
+        if (disconnectedAPs.length > 0) {
+          messages.push(language === 'tr'
+            ? `⚠ ${disconnectedAPs.length} AP istemcisiz`
+            : `⚠ ${disconnectedAPs.length} AP no clients`);
+        }
+
         toast({
-          title: language === 'tr' ? 'WiFi Bağlantıları' : 'WiFi Connections',
-          description: language === 'tr'
-            ? `${disconnectedPCs.length} PC, ${disconnectedAPs.length} AP bağlantısı kontrol edildi`
-            : `${disconnectedPCs.length} PC, ${disconnectedAPs.length} AP connections checked`,
+          title: language === 'tr' ? '🔄 WiFi Durumu Güncellendi' : '🔄 WiFi Status Updated',
+          description: messages.join(' • '),
           variant: 'default'
         });
       } else {
         toast({
-          title: language === 'tr' ? 'WiFi Bağlantıları' : 'WiFi Connections',
-          description: language === 'tr' ? 'Tüm WiFi bağlantıları aktif' : 'All WiFi connections active',
+          title: language === 'tr' ? '🔄 Ağ Yenilendi' : '🔄 Network Refreshed',
+          description: language === 'tr' ? 'WiFi cihazı bulunamadı' : 'No WiFi devices found',
           variant: 'default'
         });
       }
     }
-  }, [topologyDevices, deviceStates, setDeviceStates, toast, language]);
+  }, [topologyDevices, deviceStates, setDeviceStates, setTopologyDevices, toast, language]);
 
   // Handle key events: ESC to close, ENTER to confirm
   useEffect(() => {
@@ -3255,6 +3285,18 @@ export default function Home() {
                                   <span className="opacity-50">|</span>
                                   <span className="font-mono uppercase">{pc.wifi.security || '-'}</span>
                                 </div>
+                                {(() => {
+                                  const strength = getWirelessSignalStrength(pc, topologyDevices, deviceStates);
+                                  const pctMap: Record<number, string> = { 0: '0%', 1: '1%', 2: '25%', 3: '50%', 4: '75%', 5: '100%' };
+                                  const colorMap: Record<number, string> = { 0: 'text-slate-400', 1: 'text-rose-500', 2: 'text-orange-500', 3: 'text-yellow-500', 4: 'text-emerald-500', 5: 'text-emerald-500' };
+                                  if (strength === 0) return null;
+                                  return (
+                                    <div className="flex justify-between items-center text-[9px] mt-0.5">
+                                      <span className="opacity-50">{language === 'tr' ? 'Sinyal' : 'Signal'}</span>
+                                      <span className={`font-bold ${colorMap[strength]}`}>{pctMap[strength]}</span>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             )}
                             {pc.services && (
