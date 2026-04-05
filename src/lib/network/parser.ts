@@ -69,17 +69,29 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  'enable secret': {
-    pattern: /^enable\s+(secret|password)\s+(.+)$/i,
-    modes: ['config'],
-    minArgs: 2,
-    maxArgs: 2
-  },
   'enable password': {
     pattern: /^enable\s+password\s+(.+)$/i,
     modes: ['config'],
     minArgs: 1,
     maxArgs: 1
+  },
+  'enable secret': {
+    pattern: /^enable\s+secret\s+(.+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no enable secret': {
+    pattern: /^no\s+enable\s+secret$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no enable password': {
+    pattern: /^no\s+enable\s+password$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
   },
   'service password-encryption': {
     pattern: /^service\s+password-encryption$/i,

@@ -7,6 +7,7 @@ export const lineHandlers: Record<string, CommandHandler> = {
   'line vty': cmdLineVty,
   'password': cmdPassword,
   'login': cmdLogin,
+  'no login': cmdNoLogin,
   'transport input': cmdTransportInput,
   'logging synchronous': cmdLoggingSynchronous,
   'exec-timeout': cmdExecTimeout,
@@ -108,6 +109,34 @@ function cmdLogin(state: any, input: string, ctx: any): any {
     newSecurity.vtyLines = {
       ...newSecurity.vtyLines,
       login: true
+    };
+  }
+
+  return {
+    success: true,
+    newState: { security: newSecurity }
+  };
+}
+
+/**
+ * No Login - Disable password checking on line
+ */
+function cmdNoLogin(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'line' || !state.currentLine) {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  const newSecurity = { ...state.security };
+
+  if (state.currentLine.startsWith('console')) {
+    newSecurity.consoleLine = {
+      ...newSecurity.consoleLine,
+      login: false
+    };
+  } else if (state.currentLine.startsWith('vty')) {
+    newSecurity.vtyLines = {
+      ...newSecurity.vtyLines,
+      login: false
     };
   }
 
