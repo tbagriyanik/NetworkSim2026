@@ -375,17 +375,59 @@ function cmdSwitchportAccessVlan(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid VLAN ID' };
   }
 
-  const vlanId = match[1];
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
-    ...port,
-    accessVlan: vlanId,
-    vlan: Number(vlanId),
-    mode: 'access',
-  }));
+ const vlanId = match[1];
+  // Validate VLAN exists
+  const vlan = state.vlans?.[String(vlanId)];
+  if (!vlan) {
+    return { success: false, error: `% VLAN ${vlanId} does not exist` };
+  }
+  const targets = Array.isArray(state.selectedInterfaces) && state.selectedInterfaces.length > 0
+    ? state.selectedInterfaces
+    : state.currentInterface
+      ? [state.currentInterface]
+      : [];
+
+  const newPorts = { ...state.ports };
+  const newVlans = { ...state.vlans };
+
+  targets.forEach((portId: string) => {
+    const port = newPorts[portId];
+    if (!port) return;
+
+    const oldVlanId = Number((port as any).accessVlan || port.vlan || 1);
+    const targetVlanId = Number(vlanId);
+
+    // Remove port from previous VLAN membership
+    if (newVlans[oldVlanId]) {
+      newVlans[oldVlanId] = {
+        ...newVlans[oldVlanId],
+        ports: newVlans[oldVlanId].ports.filter(p => p.toLowerCase() !== port.id.toLowerCase())
+      };
+    }
+
+    // Add port to new VLAN membership
+    if (!newVlans[targetVlanId]) {
+      newVlans[targetVlanId] = { id: targetVlanId, name: `VLAN${targetVlanId}`, status: 'active', ports: [] };
+    }
+    const upperPortId = port.id.toUpperCase();
+    if (!newVlans[targetVlanId].ports.includes(upperPortId)) {
+      newVlans[targetVlanId] = {
+        ...newVlans[targetVlanId],
+        ports: [...newVlans[targetVlanId].ports, upperPortId]
+      };
+    }
+
+    newPorts[portId] = {
+      ...port,
+      accessVlan: vlanId,
+      vlan: targetVlanId,
+      mode: 'access',
+    };
+  });
 
   return {
     success: true,
-    newState: { ports: newPorts }
+    newState: { ports: newPorts, vlans: newVlans }
   };
 }
 
@@ -914,12 +956,48 @@ function cmdNoSwitchportAccessVlan(state: any, input: string, ctx: any): any {
     return { success: false, error: '% No interface selected' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
-    ...port,
-    accessVlan: 1
-  }));
+  const targets = Array.isArray(state.selectedInterfaces) && state.selectedInterfaces.length > 0
+    ? state.selectedInterfaces
+    : state.currentInterface
+      ? [state.currentInterface]
+      : [];
 
-  return { success: true, newState: { ports: newPorts } };
+  const newPorts = { ...state.ports };
+  const newVlans = { ...state.vlans };
+
+  targets.forEach((portId: string) => {
+    const port = newPorts[portId];
+    if (!port) return;
+
+    const oldVlanId = Number((port as any).accessVlan || port.vlan || 1);
+    const targetVlanId = 1;
+
+    if (newVlans[oldVlanId]) {
+      newVlans[oldVlanId] = {
+        ...newVlans[oldVlanId],
+        ports: newVlans[oldVlanId].ports.filter(p => p.toLowerCase() !== port.id.toLowerCase())
+      };
+    }
+
+    const upperPortId = port.id.toUpperCase();
+    if (!newVlans[targetVlanId]) {
+      newVlans[targetVlanId] = { id: 1, name: 'default', status: 'active', ports: [] };
+    }
+    if (!newVlans[targetVlanId].ports.includes(upperPortId)) {
+      newVlans[targetVlanId] = {
+        ...newVlans[targetVlanId],
+        ports: [...newVlans[targetVlanId].ports, upperPortId]
+      };
+    }
+
+    newPorts[portId] = {
+      ...port,
+      accessVlan: targetVlanId,
+      vlan: targetVlanId
+    };
+  });
+
+  return { success: true, newState: { ports: newPorts, vlans: newVlans } };
 }
 
 /**

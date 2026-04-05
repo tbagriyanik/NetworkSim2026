@@ -2,11 +2,11 @@
 
 A modern and interactive web-based Network simulator designed for students and networking enthusiasts.
 
-![Version](https://img.shields.io/badge/version-1.1.2-blue)
+![Version](https://img.shields.io/badge/version-1.2.0-blue)
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016%20|%20React%2019%20|%20TypeScript%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Commits](https://img.shields.io/badge/commits-350-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-80.5k-blueviolet)
+![Commits](https://img.shields.io/badge/commits-360-orange)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-65k-blueviolet)
 
 ## ✨ Key Features
 
@@ -179,9 +179,9 @@ Theme selection is done from the theme selector in the top right corner.
 ## 🔢 Code Metrics
 
 - Scope: `src/`
-- Source files: `242`
-- Total lines: `76,507`
-- Last updated: `2026-04-02`
+- Source files: `244`
+- Total lines: `64,651`
+- Last updated: `2026-04-05`
 
 ## 🐛 Troubleshooting
 
@@ -251,8 +251,8 @@ Sorular veya öneriler için lütfen issue açın. / For questions or suggestion
 
 ---
 
-**Sürüm**: 1.1.1  
-**Son Güncelleme**: 2026-04-02  
+**Sürüm**: 1.2.0  
+**Son Güncelleme**: 2026-04-05  
 **Durum**: Production Ready ✅
 
 ---
@@ -260,6 +260,6 @@ Sorular veya öneriler için lütfen issue açın. / For questions or suggestion
 **Bu proje açık kaynaklıdır.** 🚀  
 GitHub üzerinden katkıda bulunabilirsiniz: [github.com/tbagriyanik/ciscosim](https://github.com/tbagriyanik/ciscosim)
 
-**Sürüm**: 1.1.1  
-**Son Güncelleme**: 2026-04-02  
+**Sürüm**: 1.2.0  
+**Son Güncelleme**: 2026-04-05  
 **Durum**: Production Ready ✅
