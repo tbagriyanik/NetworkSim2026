@@ -434,7 +434,10 @@ export function useDeviceManager() {
           newOutputs.push({ id: `${now}-out`, type: 'output', content: result.output, timestamp: now });
         }
         if (newState) {
-          const shouldPropagateVlans = !!topologyConnections && !!topologyDevices && /^(no\s+)?vlan\s+\d+/i.test(command.trim());
+          const shouldPropagateVlans = !!topologyConnections && !!topologyDevices && (
+            /^(no\s+)?vlan\s+\d+/i.test(command.trim()) ||
+            /^switchport\s+access\s+vlan\s+\d+/i.test(command.trim())
+          );
           setDeviceStates(prev => {
             const next = new Map(prev);
             const mergedState = { ...deviceState, ...newState, runningConfig: buildRunningConfig({ ...deviceState, ...newState }) };

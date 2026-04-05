@@ -375,12 +375,8 @@ function cmdSwitchportAccessVlan(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid VLAN ID' };
   }
 
- const vlanId = match[1];
-  // Validate VLAN exists
-  const vlan = state.vlans?.[String(vlanId)];
-  if (!vlan) {
-    return { success: false, error: `% VLAN ${vlanId} does not exist` };
-  }
+  const vlanId = match[1];
+  const vlanIdNum = Number(vlanId);
   const targets = Array.isArray(state.selectedInterfaces) && state.selectedInterfaces.length > 0
     ? state.selectedInterfaces
     : state.currentInterface
@@ -389,19 +385,22 @@ function cmdSwitchportAccessVlan(state: any, input: string, ctx: any): any {
 
   const newPorts = { ...state.ports };
   const newVlans = { ...state.vlans };
+  if (!newVlans[vlanIdNum]) {
+    newVlans[vlanIdNum] = { id: vlanIdNum, name: `VLAN${vlanIdNum}`, status: 'active', ports: [] };
+  }
 
   targets.forEach((portId: string) => {
     const port = newPorts[portId];
     if (!port) return;
 
     const oldVlanId = Number((port as any).accessVlan || port.vlan || 1);
-    const targetVlanId = Number(vlanId);
+    const targetVlanId = vlanIdNum;
 
     // Remove port from previous VLAN membership
     if (newVlans[oldVlanId]) {
       newVlans[oldVlanId] = {
         ...newVlans[oldVlanId],
-        ports: newVlans[oldVlanId].ports.filter(p => p.toLowerCase() !== port.id.toLowerCase())
+        ports: newVlans[oldVlanId].ports.filter((p: string) => p.toLowerCase() !== port.id.toLowerCase())
       };
     }
 
@@ -975,7 +974,7 @@ function cmdNoSwitchportAccessVlan(state: any, input: string, ctx: any): any {
     if (newVlans[oldVlanId]) {
       newVlans[oldVlanId] = {
         ...newVlans[oldVlanId],
-        ports: newVlans[oldVlanId].ports.filter(p => p.toLowerCase() !== port.id.toLowerCase())
+        ports: newVlans[oldVlanId].ports.filter((p: string) => p.toLowerCase() !== port.id.toLowerCase())
       };
     }
 
