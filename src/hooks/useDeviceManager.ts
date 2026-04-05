@@ -217,12 +217,8 @@ export function useDeviceManager() {
       deviceState = deviceType === 'router' ? createInitialRouterState(initialMac) : createInitialState(initialMac, model as any);
       const hostname = initialHostname || defaultName;
       deviceState = { ...deviceState, hostname };
-
-      if (deviceState.runningConfig) {
-        deviceState.runningConfig = deviceState.runningConfig.map(line =>
-          line.startsWith('hostname') ? `hostname ${hostname}` : line
-        );
-      }
+      // Rebuild runningConfig from actual state so wlan0 and all ports are reflected correctly
+      deviceState = { ...deviceState, runningConfig: buildRunningConfig({ ...deviceState }) };
       setDeviceStates(prev => new Map(prev).set(deviceId, deviceState!));
     } else {
       // Update existing device state if switchModel is provided and differs

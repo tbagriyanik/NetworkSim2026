@@ -1124,24 +1124,11 @@ export default function Home() {
   }, [activeDeviceId, activeDeviceType, topologyDevices, setActiveTab]);
 
   const pendingDeviceSelectionRef = useRef<{ device: DeviceType; deviceId: string; switchModel?: string } | null>(null);
-  const [deviceSelectionTrigger, setDeviceSelectionTrigger] = useState(0);
 
   const applyDeviceSelection = useCallback((device: DeviceType, deviceId?: string, switchModel?: string) => {
     if (!deviceId) return;
-    // Store in ref, then trigger effect via state
-    pendingDeviceSelectionRef.current = { device, deviceId, switchModel };
-    setDeviceSelectionTrigger(prev => prev + 1);
-  }, []);
 
-  // Apply pending device selection in useLayoutEffect to avoid render-time state updates
-  useLayoutEffect(() => {
-    if (!pendingDeviceSelectionRef.current) return;
-
-    const { device, deviceId, switchModel } = pendingDeviceSelectionRef.current;
-    setSelectedDevice(device);
-    setActiveDeviceId(deviceId);
-    setActiveDeviceType(device);
-
+    // Immediately create device state so sync effects have correct data
     if (device !== 'pc') {
       const deviceObj = topologyDevices?.find(d => d.id === deviceId);
       const modelToUse = switchModel || deviceObj?.switchModel;
@@ -1149,8 +1136,17 @@ export default function Home() {
       getOrCreateDeviceOutputs(deviceId, deviceState);
     }
 
-    pendingDeviceSelectionRef.current = null;
-  }, [deviceSelectionTrigger, topologyDevices, getOrCreateDeviceState, getOrCreateDeviceOutputs, setSelectedDevice, setActiveDeviceId, setActiveDeviceType]);
+    // Schedule UI-only state updates outside render cycle
+    pendingDeviceSelectionRef.current = { device, deviceId, switchModel };
+    queueMicrotask(() => {
+      const pending = pendingDeviceSelectionRef.current;
+      if (!pending) return;
+      pendingDeviceSelectionRef.current = null;
+      setSelectedDevice(pending.device);
+      setActiveDeviceId(pending.deviceId);
+      setActiveDeviceType(pending.device);
+    });
+  }, [topologyDevices, getOrCreateDeviceState, getOrCreateDeviceOutputs, setSelectedDevice, setActiveDeviceId, setActiveDeviceType]);
 
   // Topology canvas click: selects device only (no zoom/pan).
   const handleDeviceSelectFromCanvas = useCallback((device: DeviceType, deviceId?: string, switchModel?: string) => {

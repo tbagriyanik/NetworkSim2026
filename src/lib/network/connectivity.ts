@@ -8,13 +8,13 @@ import { findRoute, ipToNumber, getRoutingTable } from './routing';
 function isExternalDomain(hostname: string, devices: CanvasDevice[], deviceStates?: Map<string, SwitchState>): boolean {
   // Clean hostname
   const cleanHostname = hostname.toLowerCase().replace(/^www\./, '');
-  
+
   // Check if it's an IP address (not external)
   const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
   if (ipRegex.test(cleanHostname)) {
     return false;
   }
-  
+
   // Check if it matches any local device name
   for (const device of devices) {
     const deviceName = device.name?.toLowerCase();
@@ -22,7 +22,7 @@ function isExternalDomain(hostname: string, devices: CanvasDevice[], deviceState
       return false;
     }
   }
-  
+
   // Check if it matches any configured hostname
   if (deviceStates) {
     for (const [deviceId, state] of deviceStates.entries()) {
@@ -32,7 +32,7 @@ function isExternalDomain(hostname: string, devices: CanvasDevice[], deviceState
       }
     }
   }
-  
+
   // Check if it's a known external domain (has dots and not local)
   if (cleanHostname.includes('.')) {
     const parts = cleanHostname.split('.');
@@ -43,7 +43,7 @@ function isExternalDomain(hostname: string, devices: CanvasDevice[], deviceState
       return commonTlds.includes(tld);
     }
   }
-  
+
   return false;
 }
 
@@ -54,7 +54,7 @@ function isExternalDomain(hostname: string, devices: CanvasDevice[], deviceState
 function simulateDnsLookup(hostname: string): string | null {
   // Clean hostname
   const cleanHostname = hostname.toLowerCase().replace(/^www\./, '');
-  
+
   // Known domain mappings (simulated DNS records)
   const knownDomains: Record<string, string> = {
     'google.com': '142.250.185.78',
@@ -70,12 +70,12 @@ function simulateDnsLookup(hostname: string): string | null {
     'stackoverflow.com': '151.101.1.69',
     'a10.com': '52.8.34.123', // Added for the specific case
   };
-  
+
   // Return known domain IP if exists
   if (knownDomains[cleanHostname]) {
     return knownDomains[cleanHostname];
   }
-  
+
   // Generate consistent pseudo-random IP for unknown domains
   // This ensures the same domain always gets the same IP
   let hash = 0;
@@ -84,18 +84,18 @@ function simulateDnsLookup(hostname: string): string | null {
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
-  
+
   // Generate IP from hash (ensuring valid public IP ranges)
   const octet1 = Math.abs(hash % 224) + 1; // 1-224 (avoid multicast/reserved)
   const octet2 = Math.abs((hash >> 8) % 256);
   const octet3 = Math.abs((hash >> 16) % 256);
   const octet4 = Math.abs((hash >> 24) % 256);
-  
+
   // Avoid private IP ranges
   if (octet1 === 10 || (octet1 === 192 && octet2 === 168) || (octet1 === 172 && octet2 >= 16 && octet2 <= 31)) {
     return simulateDnsLookup(cleanHostname + '1'); // Recurse with slight variation
   }
-  
+
   return `${octet1}.${octet2}.${octet3}.${octet4}`;
 }
 
@@ -111,7 +111,7 @@ function resolveHostname(
 ): string | null {
   // Clean hostname (remove www., convert to lowercase)
   const cleanHostname = hostname.toLowerCase().replace(/^www\./, '');
-  
+
   // 1. Check exact hostname matches against device names
   for (const device of devices) {
     const deviceName = device.name?.toLowerCase();
@@ -119,7 +119,7 @@ function resolveHostname(
       return device.ip;
     }
   }
-  
+
   // 2. Check against device hostnames in device states
   if (deviceStates) {
     for (const [deviceId, state] of deviceStates.entries()) {
@@ -128,7 +128,7 @@ function resolveHostname(
         // Find the device and get its IP
         const device = devices.find(d => d.id === deviceId);
         if (device?.ip) return device.ip;
-        
+
         // Check interfaces for IP if device IP is not set
         for (const portId in state.ports) {
           const port = state.ports[portId];
@@ -139,23 +139,23 @@ function resolveHostname(
       }
     }
   }
-  
+
   // 3. Check domain name matches (hostname.domain.com)
   const parts = cleanHostname.split('.');
   if (parts.length > 1) {
     const baseHostname = parts[0];
     const domain = parts.slice(1).join('.');
-    
+
     // Check devices with matching domain
     if (deviceStates) {
       for (const [deviceId, state] of deviceStates.entries()) {
         const deviceDomain = state.domainName?.toLowerCase();
         const deviceHostname = state.hostname?.toLowerCase();
-        
+
         if (deviceDomain === domain && deviceHostname === baseHostname) {
           const device = devices.find(d => d.id === deviceId);
           if (device?.ip) return device.ip;
-          
+
           // Check interfaces for IP
           for (const portId in state.ports) {
             const port = state.ports[portId];
@@ -167,7 +167,7 @@ function resolveHostname(
       }
     }
   }
-  
+
   // 4. Fallback: check if any device name contains the hostname as substring
   for (const device of devices) {
     const deviceName = device.name?.toLowerCase();
@@ -175,14 +175,14 @@ function resolveHostname(
       return device.ip;
     }
   }
-  
+
   // 5. External DNS lookup for unknown domains
   // This handles external domain names like a10.com, google.com, etc.
   const externalIp = simulateDnsLookup(cleanHostname);
   if (externalIp) {
     return externalIp;
   }
-  
+
   return null;
 }
 
@@ -216,7 +216,7 @@ export function checkConnectivity(
         password: baseWifi.password || '',
         security: baseWifi.security || 'open',
         channel: baseWifi.channel || '2.4GHz',
-        mode: baseWifi.mode || 'client',
+        mode: baseWifi.mode || 'ap',
         bssid: baseWifi.bssid
       };
     }
@@ -228,7 +228,7 @@ export function checkConnectivity(
         password: wlanPort.wifi.password || '',
         security: wlanPort.wifi.security || 'open',
         channel: wlanPort.wifi.channel || '2.4GHz',
-        mode: wlanPort.wifi.mode || 'client'
+        mode: wlanPort.wifi.mode || 'ap'
       };
     }
     return undefined;
@@ -239,23 +239,24 @@ export function checkConnectivity(
     // Get PC devices that have WiFi configured - check both device.wifi and deviceStates
     const pcDevices = devices.filter(d => {
       const wifi = getDeviceWifiConfig(d);
-      return d.type === 'pc' && !!wifi && wifi.enabled && !!wifi.ssid;
+      // PC must have wifi with a non-empty ssid and must be in client mode (not ap)
+      return d.type === 'pc' && !!wifi && wifi.enabled && !!wifi.ssid && (wifi.mode === 'client' || wifi.mode === 'sta');
     });
 
     for (const pc of pcDevices) {
       const pcWifi = getDeviceWifiConfig(pc);
-      if (!pcWifi || !pcWifi.enabled || !pcWifi.ssid) continue;
+      if (!pcWifi || !pcWifi.enabled || !pcWifi.ssid || (pcWifi.mode !== 'client' && pcWifi.mode !== 'sta')) continue;
       for (const ap of apDevices) {
         // Check AP in deviceStates first
         const apState = deviceStates.get(ap.id);
         const wlan = apState?.ports['wlan0'];
         let apWifi = wlan?.wifi;
-        
+
         // If no wlan in deviceStates, check if AP has WiFi config in topology
         if (!apWifi && ap.wifi && ap.wifi.ssid) {
           apWifi = ap.wifi;
         }
-        
+
         if (apWifi && (wlan?.shutdown === false || !wlan?.shutdown) && (apWifi.mode || 'ap').toLowerCase() === 'ap' && (apWifi.ssid || '').toLowerCase() === (pcWifi.ssid || '').toLowerCase()) {
           if (!pcWifi.bssid || pcWifi.bssid === ap.id) {
             const apSecurity = (apWifi.security || 'open').toLowerCase();
@@ -282,13 +283,13 @@ export function checkConnectivity(
   // 0. Resolve hostname to IP if necessary
   let resolvedTargetIp = targetIp;
   let isExternal = false;
-  
+
   // Check if targetIp is a hostname (not an IP address)
   const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
   if (!ipRegex.test(targetIp)) {
     // Check if this is an external domain
     isExternal = isExternalDomain(targetIp, devices, deviceStates);
-    
+
     const resolvedIp = resolveHostname(targetIp, devices, deviceStates);
     if (!resolvedIp) {
       return { success: false, hops: [], hopIds: [], error: 'Request timed out.' };
@@ -303,7 +304,7 @@ export function checkConnectivity(
       // Simulate internet routing path
       const hops = ['Internet Gateway', 'ISP Router', 'External Network'];
       const hopIds = [sourceId, 'internet-gateway', 'external-network'];
-      
+
       return {
         success: true,
         hops,
@@ -468,7 +469,7 @@ export function checkConnectivity(
     const sourceIp = sourceDeviceForSubnet.ip || '';
     const sourceSubnet = sourceDeviceForSubnet.subnet || '255.255.255.0';
     const targetIp_check = resolvedTargetIp;
-    
+
     // Resolve target subnet mask
     let targetSubnet = '255.255.255.0';
     if (targetDevice.type === 'pc') {
@@ -792,7 +793,7 @@ export function getPingDiagnostics(
 ): { success: boolean; reasons: string[] } {
   const reasons: string[] = [];
   const sourceDevice = devices.find(d => d.id === sourceId);
-  
+
   // Resolve hostname to IP if necessary
   let resolvedTargetIp = targetIp;
   const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
@@ -804,9 +805,9 @@ export function getPingDiagnostics(
     }
     resolvedTargetIp = resolvedIp;
   }
-  
+
   let targetDevice = devices.find(d => d.ip === resolvedTargetIp);
-  
+
   // Resolve target for routers/switches if not found in topology IPs
   if (!targetDevice && deviceStates) {
     for (const [id, state] of deviceStates.entries()) {

@@ -263,7 +263,7 @@ export function PCPanel({
   const availableSSIDs = useMemo(() => {
     const results: { ssid: string; deviceId: string; deviceName: string }[] = [];
     const addedSSIDs = new Set<string>();
-    
+
     // First check deviceStates (router/switch runtime state) - only AP mode
     if (deviceStates) {
       deviceStates.forEach((state, stateId) => {
@@ -373,6 +373,10 @@ export function PCPanel({
     setErrors(newErrors);
 
     if (deviceId) {
+      // Only sync wifi config for PC devices - router/switch wifi is managed via CLI
+      const deviceType = topologyDevices.find(d => d.id === deviceId)?.type;
+      if (deviceType !== 'pc') return;
+
       window.dispatchEvent(new CustomEvent('update-topology-device-config', {
         detail: {
           deviceId: deviceId,
@@ -413,7 +417,7 @@ export function PCPanel({
         }
       }));
     }
-  }, [internalPcHostname, ipConfigMode, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, deviceId]);
+  }, [internalPcHostname, ipConfigMode, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, deviceId, topologyDevices]);
 
   // Trigger sync on change (debounced)
   useEffect(() => {
@@ -631,8 +635,10 @@ export function PCPanel({
   // Always keep CMD/Console views pinned to the latest output
   useEffect(() => {
     if (!outputRef.current) return;
+    const el = outputRef.current;
     requestAnimationFrame(() => {
-      outputRef.current!.scrollTop = outputRef.current!.scrollHeight;
+      if (!el) return;
+      el.scrollTop = el.scrollHeight;
     });
   }, [pcOutput, activeConsoleOutput, activeTab]);
 
@@ -1655,7 +1661,7 @@ export function PCPanel({
               addLocalOutput('error', `Connection refused by ${targetIp}`);
             }
           } else {
-    addLocalOutput('error', `Connecting to ${targetIp}... failed: ${result.error || 'Destination unreachable'}`);
+            addLocalOutput('error', `Connecting to ${targetIp}... failed: ${result.error || 'Destination unreachable'}`);
           }
         }
       } else if (cmd === 'arp') {
@@ -2933,6 +2939,7 @@ export function PCPanel({
 
                         <div className={`p-4 rounded-xl text-xs flex items-center gap-3 ${(() => {
                           if (!wifiEnabled) return 'text-slate-500 bg-slate-500/5';
+                          if (!wifiSSID) return 'text-amber-500 bg-amber-500/10';
                           // Check if connected: SSID matches an active AP
                           const isConnected = !!deviceStates && Array.from(deviceStates.entries()).some(([id, state]) => {
                             const wlan = state.ports['wlan0'];
@@ -2949,6 +2956,7 @@ export function PCPanel({
                           }`}>
                           <div className={`p-2 rounded-lg ${(() => {
                             if (!wifiEnabled) return 'bg-slate-500/10';
+                            if (!wifiSSID) return 'bg-amber-500/20';
                             const isConnected = !!deviceStates && Array.from(deviceStates.entries()).some(([id, state]) => {
                               const wlan = state.ports['wlan0'];
                               if (!wlan || wlan.shutdown || wlan.wifi?.mode !== 'ap') return false;
@@ -2972,6 +2980,9 @@ export function PCPanel({
                               {!wifiEnabled
                                 ? (language === 'tr' ? 'Kablosuz alıcı kapalı' : 'Wireless receiver disabled')
                                 : (() => {
+                                  // No SSID configured - cannot be connected
+                                  if (!wifiSSID) return language === 'tr' ? 'WLAN0 aktif, ağ seçilmedi' : 'WLAN0 active, no network selected';
+
                                   // First check deviceStates (router/switch runtime state)
                                   const foundInStates = !!deviceStates && Array.from(deviceStates.entries()).find(([id, state]) => {
                                     const wlan = state.ports['wlan0'];
@@ -2983,7 +2994,7 @@ export function PCPanel({
                                     if (apSecurity !== 'open' && wlan.wifi?.password !== wifiPassword) return false;
                                     return true;
                                   });
-                                  
+
                                   // If not found in deviceStates, also check topologyDevices
                                   const foundInTopology = !foundInStates && topologyDevices.find((apDevice) => {
                                     if (apDevice.id === deviceId) return false;
@@ -2996,9 +3007,9 @@ export function PCPanel({
                                     if (apSecurity !== 'open' && apWifi.password !== wifiPassword) return false;
                                     return true;
                                   });
-                                  
+
                                   const isConnected = !!foundInStates || !!foundInTopology;
-                                  if (isConnected) return language === 'tr' ? `Bağlı • SSID: ${wifiSSID}` : `Connected • SSID: ${wifiSSID}`;
+                                  if (isConnected && wifiSSID) return language === 'tr' ? `Bağlı • SSID: ${wifiSSID}` : `Connected • SSID: ${wifiSSID}`;
                                   return wifiSSID
                                     ? (language === 'tr' ? `Ağ bulunamadı: ${wifiSSID}` : `Network not found: ${wifiSSID}`)
                                     : (language === 'tr' ? 'WLAN0 aktif, ağ seçilmedi' : 'WLAN0 active, no network selected');

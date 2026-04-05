@@ -2545,6 +2545,19 @@ export function NetworkTopology({
         const updatedPorts = device.ports.map(port => {
           const simulatorPort = deviceState.ports[port.id];
           if (simulatorPort) {
+            // Skip wlan ports from status sync - they are managed separately
+            if (port.id.toLowerCase().startsWith('wlan')) {
+              const wifiChanged = JSON.stringify((port as any).wifi) !== JSON.stringify(simulatorPort.wifi);
+              const shutdownChanged = port.shutdown !== simulatorPort.shutdown;
+              if (!wifiChanged && !shutdownChanged) return port;
+              portChanged = true;
+              hasChanges = true;
+              return {
+                ...port,
+                shutdown: simulatorPort.shutdown ?? port.shutdown,
+                ...(simulatorPort.wifi ? { wifi: { ...simulatorPort.wifi } } : {}),
+              } as typeof port;
+            }
             // Check if this port has an active connection in the topology
             const hasActiveConnection = connections.some(
               conn => (conn.sourceDeviceId === device.id && conn.sourcePort === port.id) ||
@@ -2574,6 +2587,8 @@ export function NetworkTopology({
               shutdown: simulatorPort.shutdown ?? port.shutdown,
               ipAddress: simulatorPort.ipAddress ?? port.ipAddress,
               subnetMask: simulatorPort.subnetMask ?? port.subnetMask,
+              // Preserve wifi config from simulator state
+              ...(simulatorPort.wifi ? { wifi: simulatorPort.wifi } : {}),
             };
             const changed =
               nextPort.status !== port.status ||
@@ -2585,7 +2600,8 @@ export function NetworkTopology({
               nextPort.duplex !== port.duplex ||
               nextPort.shutdown !== port.shutdown ||
               nextPort.ipAddress !== port.ipAddress ||
-              nextPort.subnetMask !== port.subnetMask;
+              nextPort.subnetMask !== port.subnetMask ||
+              JSON.stringify((nextPort as any).wifi) !== JSON.stringify((port as any).wifi);
             if (changed) {
               portChanged = true;
               hasChanges = true;
