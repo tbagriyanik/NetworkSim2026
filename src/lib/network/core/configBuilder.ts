@@ -159,11 +159,15 @@ export function buildRunningConfig(state: SwitchState): string[] {
     if (!vlan1Port || !vlan1Port.ipAddress || !vlan1Port.subnetMask) {
         lines.push('interface Vlan1');
         lines.push(' no ip address');
-        lines.push(' shutdown');
+        lines.push(' no shutdown');
         lines.push('!');
     }
-    lines.push(' shutdown');
-    lines.push('!');
+
+    // IP default-gateway
+    if (state.defaultGateway) {
+        lines.push(`ip default-gateway ${state.defaultGateway}`);
+        lines.push('!');
+    }
 
     // line con 0
     lines.push('line con 0');

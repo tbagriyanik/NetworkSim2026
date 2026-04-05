@@ -113,8 +113,9 @@ function cmdInterface(state: any, input: string, ctx: any): any {
     const vlanId = parseInt(vlanMatch[1], 10);
     const vlanPortId = `vlan${vlanId}`;
 
-    // VLAN port'u oluştur (eğer yoksa)
+    // VLAN port'u ve VLAN'ı oluştur (eğer yoksa)
     const newPorts = { ...state.ports };
+    const newVlans = { ...state.vlans };
     if (!newPorts[vlanPortId]) {
       newPorts[vlanPortId] = {
         id: vlanPortId,
@@ -126,6 +127,14 @@ function cmdInterface(state: any, input: string, ctx: any): any {
         mode: 'routed'
       };
     }
+    if (!newVlans[vlanId]) {
+      newVlans[vlanId] = {
+        id: vlanId,
+        name: `VLAN${vlanId}`,
+        status: 'active',
+        ports: []
+      };
+    }
 
     return {
       success: true,
@@ -133,7 +142,8 @@ function cmdInterface(state: any, input: string, ctx: any): any {
         currentMode: 'interface',
         currentInterface: vlanPortId,
         selectedInterfaces: [vlanPortId],
-        ports: newPorts
+        ports: newPorts,
+        vlans: newVlans
       }
     };
   }

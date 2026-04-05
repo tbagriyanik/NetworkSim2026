@@ -126,29 +126,29 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
       if (port.id.toLowerCase().startsWith('vlan')) return;
       const portUpper = port.id.toUpperCase().replace('FA', 'FastEthernet').replace('GI', 'GigabitEthernet');
       config += `interface ${portUpper}\\n`;
-      
+
       if ((port as any).description) config += ` description ${(port as any).description}\\n`;
-      
+
       // Switchport mode
       if (port.mode === 'trunk') {
         config += ` switchport mode trunk\\n`;
         if (port.allowedVlans && port.allowedVlans !== 'all' && port.allowedVlans.length > 0) {
-          config += ` switchport trunk allowed vlan ${port.allowedVlans.join(',')|| '1-4094'}\\n`;
+          config += ` switchport trunk allowed vlan ${port.allowedVlans.join(',') || '1-4094'}\\n`;
         }
       } else {
         config += ` switchport mode access\\n`;
         const vlanId = Number((port as any).accessVlan || port.vlan || 1);
         if (vlanId !== 1) config += ` switchport access vlan ${vlanId}\\n`;
       }
-      
+
       // IP address for routed ports (L3 switches)
       if (port.ipAddress && port.subnetMask) config += ` ip address ${port.ipAddress} ${port.subnetMask}\\n`;
-      
+
       // Port settings
       if (port.speed !== 'auto') config += ` speed ${port.speed}\\n`;
       if (port.duplex !== 'auto') config += ` duplex ${port.duplex}\\n`;
       if (port.shutdown) config += ` shutdown\\n`;
-      
+
       // WiFi configurations
       if (port.id.toLowerCase().startsWith('wlan') && port.wifi) {
         const wifiMode =
@@ -163,7 +163,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
         if (port.wifi.channel) config += ` wifi-channel ${port.wifi.channel}\\n`;
         if (wifiMode) config += ` wifi-mode ${wifiMode}\\n`;
       }
-      
+
       config += `!\\n`;
     });
 
@@ -186,7 +186,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     if (!vlan1Port || !vlan1Port.ipAddress || !vlan1Port.subnetMask) {
       config += `interface Vlan1\\n`;
       config += ` no ip address\\n`;
-      config += ` shutdown\\n`;
+      config += ` no shutdown\\n`;
       config += `!\\n`;
     }
 
@@ -217,7 +217,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     config += `line vty 5 15\\n`;
     config += ` login\\n`;
     config += `!\\n`;
-    
+
     config += `!\\n`;
     config += `end\\n`;
     return config;
@@ -250,7 +250,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     </Tooltip>
   );
 
-  const configText = state.runningConfig && state.runningConfig.length > 0 
+  const configText = state.runningConfig && state.runningConfig.length > 0
     ? state.runningConfig.join('\n')
     : generateConfig();
 

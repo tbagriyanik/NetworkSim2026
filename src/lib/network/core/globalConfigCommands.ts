@@ -176,29 +176,44 @@ function cmdInterface(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid interface command' };
   }
 
-  const iface = match[1].toLowerCase();
+  const iface = match[1].trim().toLowerCase();
 
   if (iface.startsWith('vlan')) {
-    const vlanMatch = iface.match(/vlan\s+(\d+)/i);
+    const vlanMatch = iface.match(/^vlan\s+(\d+)$/i);
     if (!vlanMatch) {
       return { success: false, error: '% Invalid VLAN interface' };
     }
     const vlanId = vlanMatch[1];
+    const vlanIdNum = parseInt(vlanId, 10);
+    const vlanPortId = `vlan${vlanIdNum}`;
     const newVlans = { ...state.vlans };
+    const newPorts = { ...state.ports };
     if (!newVlans[vlanId]) {
       newVlans[vlanId] = {
-        id: parseInt(vlanId),
+        id: vlanIdNum,
         name: `VLAN${vlanId}`,
         status: 'active',
         ports: []
+      };
+    }
+    if (!newPorts[vlanPortId]) {
+      newPorts[vlanPortId] = {
+        id: vlanPortId,
+        name: `Vlan${vlanIdNum}`,
+        type: 'vlan',
+        vlan: vlanIdNum,
+        status: 'up',
+        shutdown: false,
+        mode: 'routed'
       };
     }
     return {
       success: true,
       newState: {
         vlans: newVlans,
+        ports: newPorts,
         currentMode: 'interface',
-        currentInterface: `Vlan${vlanId}`
+        currentInterface: vlanPortId
       }
     };
   }
