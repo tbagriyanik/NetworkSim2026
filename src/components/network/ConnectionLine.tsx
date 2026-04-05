@@ -50,21 +50,21 @@ export const ConnectionLine = memo(function ConnectionLine({
     sourcePort: connection.sourcePort,
     targetPort: connection.targetPort,
   };
-  
+
   // Cast to specific types to satisfy TS if needed, but the logic is sound
   const isCompatible = isCableCompatible(cableInfoForConnection as CableInfo);
-  
+
   // Check if either port is shutdown
   const sourcePort = sourceDevice.ports.find(p => p.id === connection.sourcePort);
   const targetPort = targetDevice.ports.find(p => p.id === connection.targetPort);
   const isShutdown = sourcePort?.shutdown || targetPort?.shutdown;
-  
+
   const isPoweredOff = sourceDevice.status === 'offline' || targetDevice.status === 'offline';
   const isEffectivelyActive = connection.active && isCompatible && !isShutdown && !isPoweredOff;
-  const color = !isCompatible ? CABLE_COLORS.error.primary : 
-                isShutdown ? (isDark ? '#475569' : '#94a3b8') : // Gray if shutdown
-                isPoweredOff ? (isDark ? '#374151' : '#9ca3af') : // Gray if device offline
-                CABLE_COLORS[connection.cableType].primary;
+  const color = !isCompatible ? CABLE_COLORS.error.primary :
+    isShutdown ? (isDark ? '#475569' : '#94a3b8') : // Gray if shutdown
+      isPoweredOff ? (isDark ? '#374151' : '#9ca3af') : // Gray if device offline
+        CABLE_COLORS[connection.cableType].primary;
 
   // Calculate offset for parallel lines (spread out from center)
   const maxOffset = 20;
@@ -93,8 +93,45 @@ export const ConnectionLine = memo(function ConnectionLine({
     y: target.y + perpY - Math.abs(offset) * 0.5
   };
 
-  const pathD = `M ${source.x} ${source.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${target.x} ${target.y}`;
-  const reversePathD = `M ${target.x} ${target.y} C ${controlPoint2.x} ${controlPoint2.y}, ${controlPoint1.x} ${controlPoint1.y}, ${source.x} ${source.y}`;
+  const isWireless = connection.cableType === 'wireless';
+
+  // For wireless connections, generate a sinusoidal wave path
+  const buildWavePath = (sx: number, sy: number, tx: number, ty: number) => {
+    const dx = tx - sx;
+    const dy = ty - sy;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const ux = dx / len; // unit vector along line
+    const uy = dy / len;
+    const px = -uy;      // perpendicular unit vector
+    const py = ux;
+
+    const waveCount = Math.max(3, Math.round(len / 28)); // ~28px per arc
+    const amplitude = 8;
+    const points: string[] = [`M ${sx} ${sy}`];
+
+    for (let i = 0; i < waveCount; i++) {
+      const t0 = i / waveCount;
+      const t1 = (i + 0.5) / waveCount;
+      const t2 = (i + 1) / waveCount;
+
+      const mx = sx + ux * len * t1 + px * amplitude * (i % 2 === 0 ? 1 : -1);
+      const my = sy + uy * len * t1 + py * amplitude * (i % 2 === 0 ? 1 : -1);
+
+      const ex = sx + ux * len * t2;
+      const ey = sy + uy * len * t2;
+
+      points.push(`Q ${mx} ${my} ${ex} ${ey}`);
+    }
+    return points.join(' ');
+  };
+
+  const pathD = isWireless
+    ? buildWavePath(source.x, source.y, target.x, target.y)
+    : `M ${source.x} ${source.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${target.x} ${target.y}`;
+
+  const reversePathD = isWireless
+    ? buildWavePath(target.x, target.y, source.x, source.y)
+    : `M ${target.x} ${target.y} C ${controlPoint2.x} ${controlPoint2.y}, ${controlPoint1.x} ${controlPoint1.y}, ${source.x} ${source.y}`;
 
   return (
     <g>
@@ -108,7 +145,7 @@ export const ConnectionLine = memo(function ConnectionLine({
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       />
-      
+
       {/* Visual Connection line */}
       <path
         d={pathD}
@@ -119,8 +156,8 @@ export const ConnectionLine = memo(function ConnectionLine({
         className="pointer-events-none"
         vectorEffect="non-scaling-stroke"
         style={{
-          filter: isHovered ? 
-            'drop-shadow(0 0 4px ' + color + ') drop-shadow(0 0 8px ' + color + ') drop-shadow(0 0 16px ' + color + ') drop-shadow(0 0 24px ' + color + ')' : 
+          filter: isHovered ?
+            'drop-shadow(0 0 4px ' + color + ') drop-shadow(0 0 8px ' + color + ') drop-shadow(0 0 16px ' + color + ') drop-shadow(0 0 24px ' + color + ')' :
             'none',
           transition: 'all 0.2s ease'
         }}
@@ -211,9 +248,9 @@ export const ConnectionLine = memo(function ConnectionLine({
     prevProps.sourceDevice.y === nextProps.sourceDevice.y &&
     prevProps.targetDevice.x === nextProps.targetDevice.x &&
     prevProps.targetDevice.y === nextProps.targetDevice.y &&
-    prevProps.sourceDevice.ports.find(p => p.id === prevProps.connection.sourcePort)?.shutdown === 
+    prevProps.sourceDevice.ports.find(p => p.id === prevProps.connection.sourcePort)?.shutdown ===
     nextProps.sourceDevice.ports.find(p => p.id === nextProps.connection.sourcePort)?.shutdown &&
-    prevProps.targetDevice.ports.find(p => p.id === prevProps.connection.targetPort)?.shutdown === 
+    prevProps.targetDevice.ports.find(p => p.id === prevProps.connection.targetPort)?.shutdown ===
     nextProps.targetDevice.ports.find(p => p.id === nextProps.connection.targetPort)?.shutdown &&
     prevProps.sourceDevice.status === nextProps.sourceDevice.status &&
     prevProps.targetDevice.status === nextProps.targetDevice.status &&
