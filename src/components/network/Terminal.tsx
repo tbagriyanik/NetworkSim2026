@@ -130,6 +130,7 @@ export function Terminal({
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
+  const wasWifiConnectedRef = useRef<boolean>(true);
 
   const isInputDisabled = isLoading || isConnectionError;
 
@@ -156,6 +157,26 @@ export function Terminal({
   useEffect(() => {
     confirmDialogOpenRef.current = !!confirmDialog?.show;
   }, [confirmDialog?.show]);
+
+  // Check WiFi connectivity and close terminal if connection is lost
+  useEffect(() => {
+    if (!device || !devices || !deviceStates || !onClose) return;
+
+    // Check if this device has WiFi and if it's connected
+    if (device.type !== 'pc') return;
+
+    // For PC devices, check WiFi signal strength
+    const signalStrength = getWirelessSignalStrength(device, devices, deviceStates);
+    const isCurrentlyConnected = signalStrength > 0;
+
+    // If WiFi was connected before but is now disconnected, close terminal
+    if (wasWifiConnectedRef.current && !isCurrentlyConnected) {
+      onClose();
+    }
+
+    // Update the ref for next check
+    wasWifiConnectedRef.current = isCurrentlyConnected;
+  }, [device?.id, device?.type, devices?.length, deviceStates?.size]);
 
   const clearTerminalView = useCallback(() => {
     cancelOutputRef.current = true;

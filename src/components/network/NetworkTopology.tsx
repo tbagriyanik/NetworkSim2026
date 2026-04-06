@@ -820,14 +820,20 @@ export function NetworkTopology({
     }
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const cursorX = rect.width / 2;
-    const cursorY = rect.height / 2;
-    setPan(prevPan => ({
-      x: cursorX - (cursorX - prevPan.x) * (newZoom / zoom),
-      y: cursorY - (cursorY - prevPan.y) * (newZoom / zoom)
-    }));
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    // Calculate the canvas coordinates of the center point before zoom
+    const canvasCenterX = (centerX - pan.x) / zoom;
+    const canvasCenterY = (centerY - pan.y) / zoom;
+
+    // Calculate new pan so that the center point stays at the center after zoom
+    setPan({
+      x: centerX - canvasCenterX * newZoom,
+      y: centerY - canvasCenterY * newZoom
+    });
     setZoom(newZoom);
-  }, [zoom]);
+  }, [zoom, pan]);
 
 
   // Close context menu when clicking outside
@@ -3590,44 +3596,74 @@ export function NetworkTopology({
       >
         {/* Selection glow effect */}
         {isSelected && (
-          <rect
-            x="-4"
-            y="-4"
-            width={deviceWidth + 8}
-            height={deviceHeight + 8}
-            rx={10}
-            fill="none"
-            stroke="#06b6d4"
-            strokeWidth="3"
-            opacity="0.4"
-            className="animate-pulse"
-          />
+          device.type === 'router' ? (
+            <path
+              d={`M ${16} -4 L ${deviceWidth - 16} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 16 L ${deviceWidth + 4} ${deviceHeight + 4} L -4 ${deviceHeight + 4} L -4 16 Q -4 -4 16 -4`}
+              fill="none"
+              stroke="#06b6d4"
+              strokeWidth="3"
+              opacity="0.4"
+              className="animate-pulse"
+            />
+          ) : (
+            <rect
+              x="-4"
+              y="-4"
+              width={deviceWidth + 8}
+              height={deviceHeight + 8}
+              rx={10}
+              fill="none"
+              stroke="#06b6d4"
+              strokeWidth="3"
+              opacity="0.4"
+              className="animate-pulse"
+            />
+          )
         )}
 
         {/* Device body */}
-        <rect
-          width={deviceWidth}
-          height={deviceHeight}
-          rx={8}
-          fill={deviceFill}
-          stroke={isSelected ? '#06b6d4' : isDark
-            ? (device.type === 'pc' ? '#3b82f6' : isSwitchDeviceType(device.type) ? '#22c55e' : '#a855f7')
-            : '#cbd5e1'}
-          strokeWidth={isSelected ? 2.5 : 1.5}
-          className={isDragging ? '' : 'transition-all duration-150'}
-          filter="url(#deviceShadow)"
-        />
+        {device.type === 'router' ? (
+          <path
+            d={`M ${20} 0 L ${deviceWidth - 20} 0 Q ${deviceWidth} 0 ${deviceWidth} 20 L ${deviceWidth} ${deviceHeight} L 0 ${deviceHeight} L 0 20 Q 0 0 20 0`}
+            fill={deviceFill}
+            stroke={isSelected ? '#06b6d4' : isDark ? '#a855f7' : '#cbd5e1'}
+            strokeWidth={isSelected ? 2.5 : 1.5}
+            className={isDragging ? '' : 'transition-all duration-150'}
+            filter="url(#deviceShadow)"
+          />
+        ) : (
+          <rect
+            width={deviceWidth}
+            height={deviceHeight}
+            rx={8}
+            fill={deviceFill}
+            stroke={isSelected ? '#06b6d4' : isDark
+              ? (device.type === 'pc' ? '#3b82f6' : isSwitchDeviceType(device.type) ? '#22c55e' : '#a855f7')
+              : '#cbd5e1'}
+            strokeWidth={isSelected ? 2.5 : 1.5}
+            className={isDragging ? '' : 'transition-all duration-150'}
+            filter="url(#deviceShadow)"
+          />
+        )}
         {/* Device body highlight for 3D effect in dark mode */}
         {isDark && (
-          <rect
-            x={2}
-            y={2}
-            width={deviceWidth - 4}
-            height={deviceHeight / 3}
-            rx={6}
-            fill="white"
-            opacity="0.08"
-          />
+          device.type === 'router' ? (
+            <path
+              d={`M ${22} 2 L ${deviceWidth - 22} 2 Q ${deviceWidth - 2} 2 ${deviceWidth - 2} 20 L ${deviceWidth - 2} ${deviceHeight / 3} L 2 ${deviceHeight / 3} L 2 20 Q 2 2 22 2`}
+              fill="white"
+              opacity="0.08"
+            />
+          ) : (
+            <rect
+              x={2}
+              y={2}
+              width={deviceWidth - 4}
+              height={deviceHeight / 3}
+              rx={6}
+              fill="white"
+              opacity="0.08"
+            />
+          )
         )}
 
         {/* WiFi Status Icon */}
@@ -3768,7 +3804,11 @@ export function NetworkTopology({
             return (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <g transform="translate(2, 0) scale(0.9)" filter="url(#deviceShadow)" style={{ cursor: 'pointer' }}>
+                  <g
+                    transform="translate(2, 0) scale(0.9)"
+                    filter="url(#deviceShadow)"
+                    style={{ cursor: 'pointer' }}
+                  >
                     {/* Invisible rect for easier hover */}
                     <rect x="0" y="5" width="24" height="20" fill="transparent" />
                     {(() => {
@@ -3893,7 +3933,10 @@ export function NetworkTopology({
         {/* Device icon */}
         {/* Removed powered-off icon background — keep original icon only */}
 
-        <g transform={`translate(${deviceWidth / 2 - 12}, 10)`} filter="url(#deviceShadow)">
+        <g
+          transform={`translate(${deviceWidth / 2 - 12}, 10)`}
+          filter="url(#deviceShadow)"
+        >
           <g style={{ color: iconColor }}>
             {device.type === 'pc' && (
               <path
@@ -3955,7 +3998,15 @@ export function NetworkTopology({
         </Tooltip>
 
         {/* Device name */}
-        <text x={deviceWidth / 2} y={58} fill={isDark ? '#f1f5f9' : '#1e293b'} fontSize="10" textAnchor="middle" fontWeight="bold" className="select-none pointer-events-none">
+        <text
+          x={deviceWidth / 2}
+          y={58}
+          fill={isDark ? '#f1f5f9' : '#1e293b'}
+          fontSize="10"
+          textAnchor="middle"
+          fontWeight="bold"
+          className="select-none pointer-events-none"
+        >
           {device.name}
         </text>
 
@@ -4031,109 +4082,211 @@ export function NetworkTopology({
           })
         ) : (
           // Switch/Router - wrap 8 ports per row for wider device
-          (device.type === 'router'
-            ? device.ports.filter(p => p.id !== 'wlan0')
-            : device.ports.filter(p => !p.id.startsWith('vlan') && p.id !== 'wlan0')
-          ).map((port, idx) => {
-            const portsPerRow = 8;
-            const col = idx % portsPerRow;
-            const row = Math.floor(idx / portsPerRow);
-            // Adjust port spacing for wider device (130px)
-            const portSpacing = 14;
-            const rowSpacing = 14;
-            const startX = 14;
-            const startY = 80;
-            const portX = startX + col * portSpacing;
-            const portY = startY + row * rowSpacing;
-            const isConnected = port.status === 'connected';
-            const isShutdown = port.shutdown;
-            const isDeviceOffline = device.status === 'offline';
+          device.type === 'router' ? (
+            // Router: wrap 8 ports per row
+            device.ports.filter(p => p.id !== 'wlan0').map((port, idx) => {
+              const portsPerRow = 8;
+              const col = idx % portsPerRow;
+              const row = Math.floor(idx / portsPerRow);
+              // Adjust port spacing for wider device (130px)
+              const portSpacing = 14;
+              const rowSpacing = 14;
+              const startX = 14;
+              const startY = 80;
+              const portX = startX + col * portSpacing;
+              const portY = startY + row * rowSpacing;
+              const isConnected = port.status === 'connected';
+              const isShutdown = port.shutdown;
+              const isDeviceOffline = device.status === 'offline';
 
-            // Determine port type
-            const portId = port.id.toLowerCase();
-            const isConsole = portId === 'console';
-            const isGigabit = portId.startsWith('gi'); // GigabitEthernet
-            const isFastEthernet = portId.startsWith('fa'); // FastEthernet
+              // Determine port type
+              const portId = port.id.toLowerCase();
+              const isConsole = portId === 'console';
+              const isGigabit = portId.startsWith('gi'); // GigabitEthernet
+              const isFastEthernet = portId.startsWith('fa'); // FastEthernet
 
-            // Extract port number - remove leading zeros
-            const portNum = port.label.replace(/\D/g, '');
-            const displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
+              // Extract port number - remove leading zeros
+              const portNum = port.label.replace(/\D/g, '');
+              const displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
 
-            // Port colors:
-            // Console: Turquoise, Fa: Blue, Gi: Orange
-            // Shutdown or device offline: Red
-            // Not connected: Gray
-            let portFill: string;
-            let portStroke: string;
+              // Port colors:
+              // Console: Turquoise, Fa: Blue, Gi: Orange
+              // Shutdown or device offline: Red
+              // Not connected: Gray
+              let portFill: string;
+              let portStroke: string;
 
-            if (isShutdown || isDeviceOffline) {
-              // Güç kapalı - içi kırmızı, çerçeve gri
-              portFill = '#ef4444';
-              portStroke = '#4b5563';
-            } else if (isConnected) {
-              // Güç açık ve bağlı - içi mavi, çerçeve açık mavi
-              if (isConsole) {
-                portFill = '#06b6d4';
-                portStroke = '#67e8f9';
-              } else if (isGigabit) {
-                portFill = '#f97316';
-                portStroke = '#fdba74';
-              } else if (isFastEthernet) {
-                portFill = '#3b82f6';
-                portStroke = '#60a5fa';
+              if (isShutdown || isDeviceOffline) {
+                // Güç kapalı - içi kırmızı, çerçeve gri
+                portFill = '#ef4444';
+                portStroke = '#4b5563';
+              } else if (isConnected) {
+                // Güç açık ve bağlı - içi mavi, çerçeve açık mavi
+                if (isConsole) {
+                  portFill = '#06b6d4';
+                  portStroke = '#67e8f9';
+                } else if (isGigabit) {
+                  portFill = '#f97316';
+                  portStroke = '#fdba74';
+                } else if (isFastEthernet) {
+                  portFill = '#3b82f6';
+                  portStroke = '#60a5fa';
+                } else {
+                  portFill = '#3b82f6';
+                  portStroke = '#60a5fa';
+                }
               } else {
-                portFill = '#3b82f6';
-                portStroke = '#60a5fa';
+                // Güç açık ama bağlı değil - içi mavi, çerçeve gri
+                if (isConsole) {
+                  portFill = '#06b6d4';
+                  portStroke = '#4b5563';
+                } else if (isGigabit) {
+                  portFill = '#f97316';
+                  portStroke = '#4b5563';
+                } else if (isFastEthernet) {
+                  portFill = '#3b82f6';
+                  portStroke = '#4b5563';
+                } else {
+                  portFill = '#3b82f6';
+                  portStroke = '#4b5563';
+                }
               }
-            } else {
-              // Güç açık ama bağlı değil - içi mavi, çerçeve gri
-              if (isConsole) {
-                portFill = '#06b6d4';
-                portStroke = '#4b5563';
-              } else if (isGigabit) {
-                portFill = '#f97316';
-                portStroke = '#4b5563';
-              } else if (isFastEthernet) {
-                portFill = '#3b82f6';
-                portStroke = '#4b5563';
-              } else {
-                portFill = '#3b82f6';
-                portStroke = '#4b5563';
-              }
-            }
 
-            return (
-              <g
-                key={port.id}
-                transform={`translate(${portX}, ${portY})`}
-                style={{ cursor: 'pointer', pointerEvents: 'all' }}
-                onMouseEnter={(e) => handlePortHover(e, device.id, port.id)}
-                onMouseLeave={handlePortMouseLeave}
-              >
-                {/* Larger invisible hitbox for easier clicking */}
-                <circle
-                  r={10}
-                  fill="transparent"
-                  style={{ pointerEvents: 'all', cursor: 'pointer' }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id);
-                  }}
-                />
-                {/* Visible port circle */}
-                <circle
-                  r={6}
-                  fill={portFill}
-                  stroke={isShutdown || isDeviceOffline || isConnected ? portStroke : '#4b5563'}
-                  strokeWidth={isShutdown || isDeviceOffline || isConnected ? 2 : 1}
-                  style={{ pointerEvents: 'none' }}
-                />
-                <text y={1} fill="#fff" fontSize="6" textAnchor="middle" dominantBaseline="middle" style={{ userSelect: 'none', pointerEvents: 'none' }}>
-                  {displayNum}
-                </text>
-              </g>
-            );
-          })
+              return (
+                <g
+                  key={port.id}
+                  transform={`translate(${portX}, ${portY})`}
+                  style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                  onMouseEnter={(e) => handlePortHover(e, device.id, port.id)}
+                  onMouseLeave={handlePortMouseLeave}
+                >
+                  {/* Larger invisible hitbox for easier clicking */}
+                  <circle
+                    r={10}
+                    fill="transparent"
+                    style={{ pointerEvents: 'all', cursor: 'pointer' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id);
+                    }}
+                  />
+                  {/* Visible port circle */}
+                  <circle
+                    r={6}
+                    fill={portFill}
+                    stroke={isShutdown || isDeviceOffline || isConnected ? portStroke : '#4b5563'}
+                    strokeWidth={isShutdown || isDeviceOffline || isConnected ? 2 : 1}
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  <text y={1} fill="#fff" fontSize="6" textAnchor="middle" dominantBaseline="middle" style={{ userSelect: 'none', pointerEvents: 'none' }}>
+                    {displayNum}
+                  </text>
+                </g>
+              );
+            })
+          ) : (
+            // Switch: wrap 8 ports per row
+            device.ports.filter(p => !p.id.startsWith('vlan') && p.id !== 'wlan0').map((port, idx) => {
+              const portsPerRow = 8;
+              const col = idx % portsPerRow;
+              const row = Math.floor(idx / portsPerRow);
+              // Adjust port spacing for wider device (130px)
+              const portSpacing = 14;
+              const rowSpacing = 14;
+              const startX = 14;
+              const startY = 80;
+              const portX = startX + col * portSpacing;
+              const portY = startY + row * rowSpacing;
+              const isConnected = port.status === 'connected';
+              const isShutdown = port.shutdown;
+              const isDeviceOffline = device.status === 'offline';
+
+              // Determine port type
+              const portId = port.id.toLowerCase();
+              const isConsole = portId === 'console';
+              const isGigabit = portId.startsWith('gi'); // GigabitEthernet
+              const isFastEthernet = portId.startsWith('fa'); // FastEthernet
+
+              // Extract port number - remove leading zeros
+              const portNum = port.label.replace(/\D/g, '');
+              const displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
+
+              // Port colors:
+              // Console: Turquoise, Fa: Blue, Gi: Orange
+              // Shutdown or device offline: Red
+              // Not connected: Gray
+              let portFill: string;
+              let portStroke: string;
+
+              if (isShutdown || isDeviceOffline) {
+                // Güç kapalı - içi kırmızı, çerçeve gri
+                portFill = '#ef4444';
+                portStroke = '#4b5563';
+              } else if (isConnected) {
+                // Güç açık ve bağlı - içi mavi, çerçeve açık mavi
+                if (isConsole) {
+                  portFill = '#06b6d4';
+                  portStroke = '#67e8f9';
+                } else if (isGigabit) {
+                  portFill = '#f97316';
+                  portStroke = '#fdba74';
+                } else if (isFastEthernet) {
+                  portFill = '#3b82f6';
+                  portStroke = '#60a5fa';
+                } else {
+                  portFill = '#3b82f6';
+                  portStroke = '#60a5fa';
+                }
+              } else {
+                // Güç açık ama bağlı değil - içi mavi, çerçeve gri
+                if (isConsole) {
+                  portFill = '#06b6d4';
+                  portStroke = '#4b5563';
+                } else if (isGigabit) {
+                  portFill = '#f97316';
+                  portStroke = '#4b5563';
+                } else if (isFastEthernet) {
+                  portFill = '#3b82f6';
+                  portStroke = '#4b5563';
+                } else {
+                  portFill = '#3b82f6';
+                  portStroke = '#4b5563';
+                }
+              }
+
+              return (
+                <g
+                  key={port.id}
+                  transform={`translate(${portX}, ${portY})`}
+                  style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                  onMouseEnter={(e) => handlePortHover(e, device.id, port.id)}
+                  onMouseLeave={handlePortMouseLeave}
+                >
+                  {/* Larger invisible hitbox for easier clicking */}
+                  <circle
+                    r={10}
+                    fill="transparent"
+                    style={{ pointerEvents: 'all', cursor: 'pointer' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id);
+                    }}
+                  />
+                  {/* Visible port circle */}
+                  <circle
+                    r={6}
+                    fill={portFill}
+                    stroke={isShutdown || isDeviceOffline || isConnected ? portStroke : '#4b5563'}
+                    strokeWidth={isShutdown || isDeviceOffline || isConnected ? 2 : 1}
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  <text y={1} fill="#fff" fontSize="6" textAnchor="middle" dominantBaseline="middle" style={{ userSelect: 'none', pointerEvents: 'none' }}>
+                    {displayNum}
+                  </text>
+                </g>
+              );
+            })
+          )
         )}
       </g>
     );
