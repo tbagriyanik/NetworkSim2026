@@ -2,7 +2,7 @@
 import { SwitchState, CommandMode, CommandResult } from './types';
 import { checkConnectivity } from './connectivity';
 import { addStaticRoute, removeStaticRoute, getRoutingTable } from './routing';
-import { parseCommand, validateCommand, getHelpContent } from './parser';
+import { parseCommand, validateCommand, getHelpContent, commandPatterns } from './parser';
 import { getModePrompt } from './initialState';
 import { isValidMAC, normalizeMAC } from '../utils';
 
@@ -1007,9 +1007,13 @@ function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string):
 
   let suggestions: string[] = [];
 
+  // 1. Exact match in commandHelp tree
   if (modeCommands[lower]) {
-    suggestions = modeCommands[lower];
-  } else {
+    suggestions = [...modeCommands[lower]];
+  }
+
+  // 2. Prefix match in commandHelp tree
+  if (suggestions.length === 0) {
     for (const key of Object.keys(modeCommands)) {
       if (key.startsWith(lower) && key !== lower) {
         const remaining = key.substring(lower.length).trim();
@@ -1023,12 +1027,29 @@ function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string):
     }
   }
 
+  // 3. Fallback: derive suggestions from commandPatterns for this mode
+  //    This handles "no ip ?", "do ping ?", multi-word prefixes not in commandHelp tree
+  if (suggestions.length === 0) {
+    const patternSuggestions: string[] = [];
+    for (const [name, pattern] of Object.entries(commandPatterns)) {
+      if (!pattern.modes.includes(mode as any)) continue;
+      if (!name.startsWith(lower + ' ') && name !== lower) continue;
+      const remaining = name.substring(lower.length).trim();
+      if (!remaining) continue;
+      const nextWord = remaining.split(' ')[0];
+      if (nextWord && !patternSuggestions.includes(nextWord)) {
+        patternSuggestions.push(nextWord);
+      }
+    }
+    suggestions = patternSuggestions;
+  }
+
   const lines: string[] = [];
   lines.push(prompt + partialInput + '?');
   lines.push('');
 
   if (suggestions.length === 0) {
-    lines.push('% Ambiguous command:  "' + partialInput + '"');
+    lines.push('% Unrecognized command');
   } else {
     suggestions.forEach(cmd => {
       if (cmd && !cmd.startsWith('<')) {

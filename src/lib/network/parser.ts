@@ -11,7 +11,7 @@ interface CommandPattern {
 }
 
 // Desteklenen komutlar ve pattern'leri
-const commandPatterns: Record<string, CommandPattern> = {
+export const commandPatterns: Record<string, CommandPattern> = {
   // Mode değiştirme komutları
   'enable': {
     pattern: /^enable$/i,
@@ -2349,8 +2349,6 @@ Available commands:
 
   return language === 'en' ? helpContentsEN[mode] : helpContentsTR[mode];
 }
-
-export { commandPatterns };
 
 
 

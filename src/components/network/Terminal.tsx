@@ -14,6 +14,7 @@ import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, 
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from "@/hooks/use-toast";
 import { commandHelp } from '@/lib/network/executor';
+import { commandPatterns } from '@/lib/network/parser';
 import { ModernPanel } from '@/components/ui/ModernPanel';
 import { cn } from '@/lib/utils';
 import { useIsMobile, useIsTablet, useIsDesktop } from '@/hooks/use-breakpoint';
@@ -372,7 +373,30 @@ export function Terminal({
     const contextTokens = hasTrailingSpace ? tokens : tokens.slice(0, -1);
     const currentWord = hasTrailingSpace ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
     const contextKey = contextTokens.join(' ').toLowerCase();
-    const candidates = contextTokens.length === 0 ? helpTree[''] || [] : helpTree[contextKey] || [];
+
+    // 1. Try commandHelp tree first
+    let candidates: string[] = contextTokens.length === 0
+      ? helpTree[''] || []
+      : helpTree[contextKey] || [];
+
+    // 2. Fallback: derive from commandPatterns for multi-word prefixes (e.g. "no ip", "do ping")
+    if (candidates.length === 0 && contextKey) {
+      const patternCandidates: string[] = [];
+      for (const [name, pattern] of Object.entries(commandPatterns)) {
+        if (!pattern.modes.includes(mode as any)) continue;
+        const nameLower = name.toLowerCase();
+        const prefix = contextKey + ' ';
+        if (!nameLower.startsWith(prefix)) continue;
+        const remaining = nameLower.substring(prefix.length).trim();
+        if (!remaining) continue;
+        const nextWord = remaining.split(' ')[0];
+        if (nextWord && !patternCandidates.includes(nextWord)) {
+          patternCandidates.push(nextWord);
+        }
+      }
+      candidates = patternCandidates;
+    }
+
     return { candidates, currentWord, contextTokens, hasTrailingSpace };
   }, []);
 
