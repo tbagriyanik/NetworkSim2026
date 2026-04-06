@@ -147,8 +147,8 @@ const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
-  'no ip domain lookup': {
-    pattern: /^no\s+ip\s+domain\s+lookup$/i,
+  'no ip domain-lookup': {
+    pattern: /^no\s+ip\s+domain[-\s]lookup$/i,
     modes: ['config'],
     minArgs: 0,
     maxArgs: 0

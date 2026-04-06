@@ -411,6 +411,12 @@ export function checkConnectivity(
   // Check if targetIp is a hostname (not an IP address)
   const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
   if (!ipRegex.test(targetIp)) {
+    // Check if source device has domain lookup disabled
+    const sourceState = deviceStates?.get(sourceId);
+    if (sourceState?.domainLookup === false) {
+      return { success: false, hops: [], hopIds: [], error: `% Unknown command or domain lookup disabled.\nTranslating "${targetIp}"...domain server (255.255.255.255)\n% Unrecognized host or address, or protocol not running.` };
+    }
+
     // Check if this is an external domain
     isExternal = isExternalDomain(targetIp, devices, deviceStates);
 

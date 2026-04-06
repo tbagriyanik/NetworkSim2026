@@ -121,6 +121,7 @@ export interface SwitchState {
   domainName?: string;
   defaultGateway?: string;
   dnsServer?: string;
+  domainLookup?: boolean;
   sshVersion?: 1 | 2;
   cdpEnabled?: boolean;
   spanningTreeMode?: 'pvst' | 'rapid-pvst' | 'mst';
