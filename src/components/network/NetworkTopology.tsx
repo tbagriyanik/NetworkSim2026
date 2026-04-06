@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes } from '@/lib/store/appStore';
 import { SwitchState, CableType, CableInfo, isCableCompatible } from '@/lib/network/types';
-import { checkDeviceConnectivity, getPingDiagnostics, getWirelessSignalStrength } from '@/lib/network/connectivity';
+import { checkDeviceConnectivity, getPingDiagnostics, getWirelessSignalStrength, getWirelessDistance } from '@/lib/network/connectivity';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -3101,18 +3101,35 @@ export function NetworkTopology({
 
       if (!fromDevice || !toDevice) return hopDuration;
 
-      // Calculate pixel distance between devices
+      // Check if this hop is wireless
+      const conn = connections.find(c =>
+        (c.sourceDeviceId === fromId && c.targetDeviceId === toId) ||
+        (c.sourceDeviceId === toId && c.targetDeviceId === fromId)
+      );
+      const isWifi = conn?.cableType === 'wireless';
+
+      if (isWifi) {
+        // For WiFi hops: use the weaker signal of the two endpoints
+        // Exponential slowdown matching ping ms logic: 0px→fast, 549px→slow
+        const srcDist = getWirelessDistance(fromDevice, devices, deviceStates);
+        const dstDist = getWirelessDistance(toDevice, devices, devices ? deviceStates : undefined);
+        // Use the larger distance (weaker signal dominates)
+        const effectiveDist = Math.max(
+          srcDist === Infinity ? 0 : srcDist,
+          dstDist === Infinity ? 0 : dstDist
+        );
+        // Map 0px→300ms, 549px→2000ms using exponential curve
+        const wifiBase = 300 * Math.exp(effectiveDist / 200);
+        return Math.min(wifiBase, 2000);
+      }
+
+      // Wired: scale by pixel distance
       const dx = toDevice.x - fromDevice.x;
       const dy = toDevice.y - fromDevice.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-
-      // Scale duration based on distance (longer cables = slower animation)
-      // Base 800ms for ~200px, scale up for longer distances
       const baseDistance = 200;
       const scaleFactor = Math.max(1, distance / baseDistance);
-      const maxDuration = 2000; // Cap at 2 seconds for very long cables
-
-      return Math.min(hopDuration * scaleFactor, maxDuration);
+      return Math.min(hopDuration * scaleFactor, 2000);
     };
 
     // Smooth easing function for fluent animation

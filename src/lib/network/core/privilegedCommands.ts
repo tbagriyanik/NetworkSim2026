@@ -1,5 +1,5 @@
 import type { CommandHandler } from './commandTypes';
-import { checkConnectivity, getWirelessSignalStrength } from '../connectivity';
+import { checkConnectivity, getWirelessSignalStrength, getWirelessDistance } from '../connectivity';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
 
 // Privileged EXEC komutları (ping, telnet, write, copy, erase, reload, debug, vs.)
@@ -24,55 +24,22 @@ export const privilegedHandlers: Record<string, CommandHandler> = {
 };
 
 /**
- * Estimate ping latencies based on signal strength (0-5) and add randomness.
+ * Generate ping latencies proportional to WiFi distance.
+ * Uses exponential curve: close = very fast, far = much slower (realistic WiFi behavior).
+ * distance 0px → ~1ms, 450px (signal 1) → ~150ms, 549px → ~210ms
  */
-function generatePingLatencies(signalStrength: number): { min: number; avg: number; max: number } {
-    const between = (min: number, max: number) => {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    };
+function generatePingLatencies(distance: number): { min: number; avg: number; max: number } {
+    const jitter = (base: number, pct: number) =>
+        Math.max(1, Math.round(base * (1 + (Math.random() * 2 - 1) * pct)));
 
-    if (signalStrength >= 5) {
-        // 100% - Excellent
-        const min = between(1, 3);
-        const avg = between(min + 1, min + 3);
-        const max = between(avg + 1, avg + 3);
-        return { min, avg, max };
-    }
+    // Exponential: base = e^(distance/130) scaled to 1ms at 0px, ~210ms at 549px
+    const basePing = Math.exp(distance / 130);
 
-    if (signalStrength === 4) {
-        // 75% - Good
-        const min = between(5, 10);
-        const avg = between(min + 2, min + 8);
-        const max = between(avg + 2, avg + 6);
-        return { min, avg, max };
-    }
+    const min = jitter(basePing * 0.8, 0.08);
+    const avg = jitter(basePing, 0.08);
+    const max = jitter(basePing * 1.25, 0.08);
 
-    if (signalStrength === 3) {
-        // 50% - Fair
-        const min = between(15, 25);
-        const avg = between(min + 5, min + 15);
-        const max = between(avg + 5, avg + 15);
-        return { min, avg, max };
-    }
-
-    if (signalStrength === 2) {
-        // 25% - Weak
-        const min = between(40, 60);
-        const avg = between(min + 10, min + 40);
-        const max = between(avg + 10, avg + 40);
-        return { min, avg, max };
-    }
-
-    if (signalStrength === 1) {
-        // 1% - Very Weak
-        const min = between(100, 150);
-        const avg = between(min + 20, min + 50);
-        const max = between(avg + 20, avg + 50);
-        return { min, avg, max };
-    }
-
-    // strength 0 - No signal (should not reach here)
-    return { min: 1, avg: 2, max: 5 };
+    return { min, avg: Math.max(min, avg), max: Math.max(avg, max) };
 }
 
 /**
@@ -107,10 +74,28 @@ function cmdPing(state: any, input: string, ctx: any): any {
             const successCount = parseInt(count, 10) || 5;
             const devices = (ctx.devices || []) as CanvasDevice[];
             const sourceDevice = ctx.sourceDeviceId ? devices.find(d => d.id === ctx.sourceDeviceId) : undefined;
-            const signalStrength = getWirelessSignalStrength(sourceDevice, devices, ctx.deviceStates);
-            const { min, avg, max } = generatePingLatencies(signalStrength);
+            const targetDevice = connectivity.targetId ? devices.find(d => d.id === connectivity.targetId) : undefined;
+
+            const srcDist = getWirelessDistance(sourceDevice, devices, ctx.deviceStates);
+            const dstDist = getWirelessDistance(targetDevice, devices, ctx.deviceStates);
+
+            // Both wired → <1ms
+            // One or both wireless → sum their distances for total path latency
+            const srcWired = srcDist === Infinity;
+            const dstWired = dstDist === Infinity;
+
+            let pingResult: { min: number; avg: number; max: number };
+            if (srcWired && dstWired) {
+                pingResult = { min: 1, avg: 1, max: 2 };
+            } else {
+                // Use effective distance: sum wireless hops, ignore wired (0 cost)
+                const effectiveDist = (srcWired ? 0 : srcDist) + (dstWired ? 0 : dstDist);
+                pingResult = generatePingLatencies(effectiveDist);
+            }
+
+            const fmtMs = (ms: number) => ms <= 1 ? '<1' : String(ms);
             for (let i = 0; i < successCount; i++) output += '!';
-            output += `\n\nSuccess rate is 100 percent (${successCount}/${successCount}), round-trip min/avg/max = ${min}/${avg}/${max} ms\n`;
+            output += `\n\nSuccess rate is 100 percent (${successCount}/${successCount}), round-trip min/avg/max = ${fmtMs(pingResult.min)}/${fmtMs(pingResult.avg)}/${fmtMs(pingResult.max)} ms\n`;
             return { success: true, output, triggerPingAnimation: connectivity.targetId };
         } else {
             return {

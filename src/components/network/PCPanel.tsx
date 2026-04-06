@@ -7,7 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { TerminalOutput } from './Terminal';
 import type { CanvasDevice } from './networkTopology.types';
-import { checkConnectivity, getWirelessSignalStrength } from '@/lib/network/connectivity';
+import { checkConnectivity, getWirelessSignalStrength, getWirelessDistance } from '@/lib/network/connectivity';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -1604,28 +1604,21 @@ export function PCPanel({
             }
             const pingTargetDisplay = dnsResolved ? `${target} [${targetIp}]` : targetIp;
 
-            // Calculate ping latencies based on WiFi signal strength
-            const signalStrength = wifiSignalStrength;
+            // Calculate ping latency from both source and target WiFi distances
+            const srcDist = getWirelessDistance(deviceFromTopology, topologyDevices, deviceStates);
+            const targetDevice = result.targetId ? topologyDevices.find(d => d.id === result.targetId) : undefined;
+            const dstDist = getWirelessDistance(targetDevice, topologyDevices, deviceStates);
+
+            const srcWired = srcDist === Infinity;
+            const dstWired = dstDist === Infinity;
+            const effectiveDist = (srcWired ? 0 : srcDist) + (dstWired ? 0 : dstDist);
+            const allWired = srcWired && dstWired;
+
             const generatePingTime = () => {
-              if (signalStrength >= 5) {
-                // 100% - Excellent: 1-6ms
-                return Math.floor(Math.random() * 6) + 1;
-              } else if (signalStrength === 4) {
-                // 75% - Good: 5-24ms
-                return Math.floor(Math.random() * 20) + 5;
-              } else if (signalStrength === 3) {
-                // 50% - Fair: 15-55ms
-                return Math.floor(Math.random() * 41) + 15;
-              } else if (signalStrength === 2) {
-                // 25% - Weak: 40-110ms
-                return Math.floor(Math.random() * 71) + 40;
-              } else if (signalStrength === 1) {
-                // 1% - Very Weak: 100-220ms
-                return Math.floor(Math.random() * 121) + 100;
-              } else {
-                // No WiFi or wired connection: <1ms
-                return 0;
-              }
+              if (allWired) return 0; // <1ms
+              // Exponential curve over combined distance
+              const base = Math.exp(effectiveDist / 130);
+              return Math.max(1, Math.round(base * (1 + (Math.random() * 0.16 - 0.08))));
             };
 
             const time1 = generatePingTime();

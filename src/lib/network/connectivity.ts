@@ -119,6 +119,37 @@ export function getWirelessSignalStrength(
 }
 
 /**
+ * Returns the distance (px) to the nearest AP with matching SSID.
+ * Returns Infinity if no AP found or device is not a WiFi client.
+ */
+export function getWirelessDistance(
+  device: CanvasDevice | undefined,
+  devices: CanvasDevice[] = [],
+  deviceStates?: Map<string, SwitchState>
+): number {
+  if (!device) return Infinity;
+  const pcWifi = getDeviceWifiConfig(device, deviceStates);
+  if (!pcWifi || !pcWifi.enabled || !pcWifi.ssid) return Infinity;
+  if (pcWifi.mode !== 'client' && pcWifi.mode !== 'sta') return Infinity;
+
+  const targetSsid = pcWifi.ssid.toLowerCase();
+  let minDist = Infinity;
+
+  devices.forEach(dev => {
+    if (dev.id === device.id) return;
+    const apWifi = getDeviceWifiConfig(dev, deviceStates);
+    if (!apWifi || apWifi.mode !== 'ap' || !apWifi.enabled) return;
+    if (!apWifi.ssid || apWifi.ssid.toLowerCase() !== targetSsid) return;
+    const dx = (device.x || 0) - (dev.x || 0);
+    const dy = (device.y || 0) - (dev.y || 0);
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < minDist) minDist = dist;
+  });
+
+  return minDist;
+}
+
+/**
  * Check if a hostname is an external domain (not in local network)
  */
 function isExternalDomain(hostname: string, devices: CanvasDevice[], deviceStates?: Map<string, SwitchState>): boolean {
@@ -352,15 +383,19 @@ export function checkConnectivity(
             const pcSecurity = (pcWifi.security || 'open').toLowerCase();
             if (apSecurity === pcSecurity) {
               if (apSecurity === 'open' || apWifi.password === pcWifi.password) {
-                connections.push({
-                  id: `wireless-${pc.id}-${ap.id}`,
-                  sourceDeviceId: pc.id,
-                  sourcePort: 'wlan0',
-                  targetDeviceId: ap.id,
-                  targetPort: 'wlan0',
-                  cableType: 'wireless',
-                  active: true
-                } as CanvasConnection);
+                // No signal = no connection
+                const signalStrength = getWirelessSignalStrength(pc, devices, deviceStates);
+                if (signalStrength > 0) {
+                  connections.push({
+                    id: `wireless-${pc.id}-${ap.id}`,
+                    sourceDeviceId: pc.id,
+                    sourcePort: 'wlan0',
+                    targetDeviceId: ap.id,
+                    targetPort: 'wlan0',
+                    cableType: 'wireless',
+                    active: true
+                  } as CanvasConnection);
+                }
               }
             }
           }
