@@ -191,11 +191,20 @@ export function PCPanel({
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showNetworkMenu, setShowNetworkMenu] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [fontSize, setFontSize] = useState<number>(() => {
+    try { return parseInt(localStorage.getItem('terminal-font-size') || '13', 10); } catch { return 13; }
+  });
+  const [showCmdSettings, setShowCmdSettings] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const handleFontSizeChange = (val: number) => {
+    setFontSize(val);
+    try { localStorage.setItem('terminal-font-size', String(val)); } catch { }
+  };
   const [input, setInput] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -2147,6 +2156,22 @@ export function PCPanel({
           </Tooltip>
         </>
       )}
+      {(activeTab === 'desktop' || activeTab === 'terminal') && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowCmdSettings(v => !v)}
+              className={`h-8 w-8 rounded-lg ui-hover-surface ${showCmdSettings ? 'bg-accent' : ''} ${isDark ? 'text-slate-300 hover:text-amber-400' : 'text-slate-600 hover:text-amber-600'}`}
+              aria-label={language === 'tr' ? 'Yazı Boyutu' : 'Font Size'}
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{language === 'tr' ? 'Yazı Boyutu' : 'Font Size'}</TooltipContent>
+        </Tooltip>
+      )}
       {/* Home Button */}
       <Tooltip>
         <TooltipTrigger asChild>
@@ -2480,10 +2505,12 @@ export function PCPanel({
                 <div className={`flex-1 flex flex-col ${terminalBg} relative pt-2.5`}>
                   {activeTab === 'home' && (
                     <div className="flex-1 flex items-center justify-center p-2.5 pt-0">
-                      <div className="w-full h-full max-w-[700px] grid grid-cols-5 gap-2 rounded-xl p-2.5 bg-slate-800/30 border border-slate-700/30 shadow-sm place-items-center">
+                      <div className="w-full max-w-[700px] flex flex-row overflow-x-auto gap-2 rounded-xl p-2.5 bg-slate-800/30 border border-slate-700/30 shadow-sm md:grid md:grid-cols-5 md:place-items-center scrollbar-hide"
+                        style={{ WebkitOverflowScrolling: 'touch' }}
+                      >
                         <button
                           onClick={() => navigateToProgram('desktop')}
-                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10 shrink-0 min-w-[64px]"
                         >
                           <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-600">
                             <TerminalIcon className="w-6 h-6 text-white" />
@@ -2494,7 +2521,7 @@ export function PCPanel({
                         </button>
                         <button
                           onClick={() => navigateToProgram('terminal')}
-                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10 shrink-0 min-w-[64px]"
                         >
                           <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-600">
                             <Laptop className="w-6 h-6 text-white" />
@@ -2505,7 +2532,7 @@ export function PCPanel({
                         </button>
                         <button
                           onClick={() => navigateToProgram('settings')}
-                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10 shrink-0 min-w-[64px]"
                         >
                           <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-purple-600">
                             <Settings className="w-6 h-6 text-white" />
@@ -2516,7 +2543,7 @@ export function PCPanel({
                         </button>
                         <button
                           onClick={() => setActiveTab('services')}
-                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10 shrink-0 min-w-[64px]"
                         >
                           <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-600">
                             <Globe className="w-6 h-6 text-white" />
@@ -2527,7 +2554,7 @@ export function PCPanel({
                         </button>
                         <button
                           onClick={() => setActiveTab('wireless')}
-                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10"
+                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10 shrink-0 min-w-[64px]"
                         >
                           <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-cyan-600">
                             <Wifi className="w-6 h-6 text-white" />
@@ -2541,7 +2568,7 @@ export function PCPanel({
                   )}
 
                   {activeTab === 'settings' && (
-                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden pt-2.5">
+                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden scroll-y-sm pt-2.5">
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 ">
                           {t.ipConfigurationLabel}
@@ -2618,7 +2645,7 @@ export function PCPanel({
                   )}
 
                   {activeTab === 'services' && (
-                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden">
+                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden scroll-y-sm">
                       <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
                         <div className="flex items-center justify-between gap-3">
                           <div>
@@ -2891,7 +2918,7 @@ export function PCPanel({
                   )}
 
                   {activeTab === 'wireless' && (
-                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden">
+                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden scroll-y-sm">
                       <div className={`rounded-2xl border p-5 space-y-5 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3 text-purple-500">
@@ -3168,9 +3195,32 @@ export function PCPanel({
                           </Button>
                         </div>
                       )}
+                      {showCmdSettings && (
+                        <div className="px-4 py-2 border-b bg-muted/30 flex items-center gap-4 animate-in slide-in-from-top-2">
+                          <label className="text-[10px] font-black tracking-widest text-muted-foreground whitespace-nowrap">
+                            {language === 'tr' ? 'Yazı Boyutu' : 'Font Size'}: {fontSize}px
+                          </label>
+                          <input
+                            type="range" min="10" max="20" value={fontSize}
+                            onChange={(e) => handleFontSizeChange(parseInt(e.target.value))}
+                            className="flex-1 h-1 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                          />
+                          <Button
+                            variant="ghost" size="sm"
+                            onClick={() => {
+                              if (activeTab === 'desktop') setPcOutput([]);
+                              else setConsoleConnectionTime(Date.now());
+                            }}
+                            className="h-7 text-[10px] font-black tracking-widest text-rose-500 shrink-0"
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" /> {t.clearTerminalBtn}
+                          </Button>
+                        </div>
+                      )}
                       <div
                         ref={outputRef}
-                        className={`flex-1 scroll-smooth custom-scrollbar p-2 md:p-3 space-y-2 font-mono text-sm leading-relaxed flex flex-col overflow-x-hidden ${isPcPoweredOff ? 'bg-red-500' : ''}`}
+                        className={`flex-1 scroll-smooth custom-scrollbar p-2 md:p-3 space-y-2 font-mono leading-relaxed flex flex-col overflow-x-hidden scroll-y-sm ${isPcPoweredOff ? 'bg-red-500' : ''}`}
+                        style={{ fontSize: `${fontSize}px` }}
                       >
                         {isPcPoweredOff ? (
                           <div className="flex-1 flex items-center justify-center text-slate-700">OFFLINE</div>

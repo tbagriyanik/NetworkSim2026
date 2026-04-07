@@ -37,7 +37,7 @@ const completedBootIds = new Set<string>();
 function BootProgressBar({ id, isDark, onDone }: { id: string; isDark: boolean; onDone: (id: string) => void }) {
   const [filled, setFilled] = useState(0);
   const [done, setDone] = useState(false);
-  const total = 10;
+  const total = 9;
 
   useEffect(() => {
     if (filled < total) {
@@ -126,7 +126,9 @@ export function Terminal({
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSettings, setShowSettings] = useState(false);
-  const [fontSize, setFontSize] = useState(13);
+  const [fontSize, setFontSize] = useState<number>(() => {
+    try { return parseInt(localStorage.getItem('terminal-font-size') || '13', 10); } catch { return 13; }
+  });
 
   // State for displaying multiline output with delays
   const [displayedLines, setDisplayedLines] = useState<Array<{ id: string, type: string, content: string, prompt?: string }>>([]);
@@ -1032,7 +1034,7 @@ export function Terminal({
             </label>
             <input
               type="range" min="10" max="20" value={fontSize}
-              onChange={(e) => setFontSize(parseInt(e.target.value))}
+              onChange={(e) => { const v = parseInt(e.target.value); setFontSize(v); try { localStorage.setItem('terminal-font-size', String(v)); } catch { } }}
               className="flex-1 h-1 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
             />
             <Button variant="ghost" size="sm" onClick={clearTerminalView} className="h-7 text-[10px] font-black  tracking-widest text-rose-500">
@@ -1045,7 +1047,7 @@ export function Terminal({
           <div
             ref={terminalRef}
             className={cn(
-              "flex-1 overflow-y-auto font-mono leading-relaxed custom-scrollbar",
+              "flex-1 scroll-y-sm font-mono leading-relaxed custom-scrollbar",
               isMobile ? "p-3" : "p-6",
               isPoweredOff ? "bg-black" : (isDark ? "bg-slate-950" : "bg-slate-50")
             )}

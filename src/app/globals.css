@@ -181,6 +181,27 @@
   -ms-overflow-style: auto;
 }
 
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Auto scroll on small screens */
+.scroll-y-sm {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 640px) {
+  .scroll-y-sm {
+    overflow-y: visible;
+  }
+}
+
 /* Liquid Glass Effects */
 .liquid-glass {
   backdrop-filter: blur(28px) saturate(180%);
