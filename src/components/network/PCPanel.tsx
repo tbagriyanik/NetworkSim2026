@@ -713,11 +713,7 @@ export function PCPanel({
     return state?.awaitingPassword === true;
   }, [isConsoleConnected, connectedDeviceId, deviceStates]);
 
-  const consoleReloadPending = useMemo(() => {
-    if (!isConsoleConnected || !connectedDeviceId) return false;
-    const output = deviceOutputs?.get(connectedDeviceId) || [];
-    return output.some((line: any) => line.type === 'output' && /Proceed with reload\? \[confirm\]/i.test(line.content));
-  }, [isConsoleConnected, connectedDeviceId, deviceOutputs]);
+  const consoleReloadPending = false;
 
   const consoleConfirmDialog = useMemo(() => {
     if (!isConsoleConnected || !connectedDeviceId) return null;

@@ -1785,7 +1785,7 @@
         {
           "id": "boot-beep-0000.0000.0001",
           "type": "output",
-          "content": "\nSystem is powering on...\n"
+          "content": "\n"
         },
         {
           "id": "boot-ready-0000.0000.0001",

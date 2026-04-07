@@ -14,6 +14,7 @@ import { getPrompt } from '@/lib/network/executor';
 import { formatErrorForUser } from '@/lib/errors/errorHandler';
 import { checkDeviceConnectivity, getWirelessSignalStrength } from '@/lib/network/connectivity';
 import type { TerminalOutput } from '@/components/network/Terminal';
+import { BOOT_PROGRESS_MARKER } from '@/components/network/Terminal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -881,30 +882,27 @@ export default function Home() {
             bootMessages = [
               { id: `boot-1-${suffix}`, type: 'output', content: `\n\nSystem Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1994-2011 by Network Systems, Inc.\n` },
               { id: `boot-2-${suffix}`, type: 'output', content: `ISR4451/K9 platform with 4096 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded, GOXR initialization\nReading all bootflash vectors\nPOST: CPU PCIe port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n` },
-              { id: `boot-3-${suffix}`, type: 'output', content: `\nBooting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!\nExtracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...\n  ########## [OK]\n  0 bytes remaining in flash device` },
+              { id: `boot-3-${suffix}`, type: 'output', content: `\nBooting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!\nExtracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n` },
               ...(state?.bannerMOTD ? [{ id: `banner-${suffix}`, type: 'output' as const, content: `\n${state.bannerMOTD}\n` }] : []),
-              { id: `boot-beep-${suffix}`, type: 'output', content: `\n${language === 'tr' ? 'Sistem başlatılıyor' : 'Initializing system'}...\n` },
-              { id: `boot-ready-${suffix}`, type: 'output', content: '\nReady!\n\n' }
+              { id: `boot-ready-${suffix}`, type: 'output', content: BOOT_PROGRESS_MARKER }
             ];
           } else if (isL3Switch) {
             const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
             bootMessages = [
               { id: `boot-1-${suffix}`, type: 'output', content: `\n\nSystem Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1994-2011 by Network Systems, Inc.\n` },
               { id: `boot-2-${suffix}`, type: 'output', content: `C3560 platform with 131072 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded\nReading all bootflash vectors\nPOST: CPU PCIe port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n` },
-              { id: `boot-3-${suffix}`, type: 'output', content: `\nBooting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!\nExtracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...\n  ########## [OK]\n  0 bytes remaining in flash device` },
+              { id: `boot-3-${suffix}`, type: 'output', content: `\nBooting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!\nExtracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n` },
               ...(state?.bannerMOTD ? [{ id: `banner-${suffix}`, type: 'output' as const, content: `\n${state.bannerMOTD}\n` }] : []),
-              { id: `boot-beep-${suffix}`, type: 'output', content: `\n${language === 'tr' ? 'Sistem açılıyor' : 'System is powering on'}...\n` },
-              { id: `boot-ready-${suffix}`, type: 'output', content: '\nReady!\n\n' }
+              { id: `boot-ready-${suffix}`, type: 'output', content: BOOT_PROGRESS_MARKER }
             ];
           } else {
             const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
             bootMessages = [
               { id: `boot-1-${suffix}`, type: 'output', content: `\n\nSystem Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1994-2010 by Network Systems, Inc.\n` },
               { id: `boot-2-${suffix}`, type: 'output', content: `C2960 platform with 65536 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded\nReading all bootflash vectors\nPOST: CPU Ethernet port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n` },
-              { id: `boot-3-${suffix}`, type: 'output', content: `\nBooting flash:c2960-lanbase-mz.152-2.E6.bin...OK!\nExtracting files from flash:c2960-lanbase-mz.152-2.E6.bin...\n  ########## [OK]\n  0 bytes remaining in flash device` },
+              { id: `boot-3-${suffix}`, type: 'output', content: `\nBooting flash:c2960-lanbase-mz.152-2.E6.bin...OK!\nExtracting files from flash:c2960-lanbase-mz.152-2.E6.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n` },
               ...(state?.bannerMOTD ? [{ id: `banner-${suffix}`, type: 'output' as const, content: `\n${state.bannerMOTD}\n` }] : []),
-              { id: `boot-beep-${suffix}`, type: 'output', content: `\n${language === 'tr' ? 'Sistem açılıyor' : 'System is powering on'}...\n` },
-              { id: `boot-ready-${suffix}`, type: 'output', content: '\nReady!\n\n' }
+              { id: `boot-ready-${suffix}`, type: 'output', content: BOOT_PROGRESS_MARKER }
             ];
           }
 

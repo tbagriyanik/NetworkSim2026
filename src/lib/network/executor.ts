@@ -1084,16 +1084,7 @@ export function executeCommand(
 
   // Special reload control tokens from Terminal to avoid normal parsing
   if (input === '__RELOAD_CONFIRM__' || input === '__RELOAD_CANCEL__') {
-    if (state.awaitingReloadConfirm) {
-      if (input === '__RELOAD_CONFIRM__') {
-        // treat as confirm
-        return privilegedHandlers['reload'](state, 'confirm', { language, devices, connections, deviceStates: deviceStates || new Map() });
-      } else {
-        // treat as cancel
-        return privilegedHandlers['reload'](state, 'no', { language, devices, connections, deviceStates: deviceStates || new Map() });
-      }
-    }
-    // If not awaiting confirmation, ignore as unknown
+    // No longer used - reload is immediate
     return { success: false, error: '% Unknown command' };
   }
 
@@ -1118,22 +1109,6 @@ export function executeCommand(
 
   let cmdToProcess = input.trim();
   const lowerInput = cmdToProcess.toLowerCase();
-
-  // If we're awaiting a reload confirmation, handle confirmation/cancellation directly
-  if (state.awaitingReloadConfirm) {
-    const confirmInputs = ['', 'confirm', 'y', 'n', 'no'];
-    if (confirmInputs.includes(lowerInput)) {
-      // call the reload handler directly to avoid normal parsing/routing
-      const result = privilegedHandlers['reload'](state, cmdToProcess, { language, devices, connections, deviceStates: deviceStates || new Map() });
-      return result;
-    }
-    // For any other input, clear awaiting flag and return invalid-confirmation result
-    return {
-      success: false,
-      error: '% Invalid input during reload confirmation. Use "confirm" to proceed or "no" to cancel.',
-      newState: { awaitingReloadConfirm: false }
-    };
-  }
 
   if (state.currentMode === 'privileged') {
     if (lowerInput === 'conf t') cmdToProcess = 'configure terminal';

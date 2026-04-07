@@ -29,6 +29,34 @@ export interface TerminalOutput {
   timestamp?: number;
 }
 
+export const BOOT_PROGRESS_MARKER = '\x00BOOT_PROGRESS\x00';
+
+function BootProgressBar({ isDark }: { isDark: boolean }) {
+  const [filled, setFilled] = useState(0);
+  const [done, setDone] = useState(false);
+  const total = 9;
+
+  useEffect(() => {
+    if (filled < total) {
+      const t = setTimeout(() => setFilled(f => f + 1), 220);
+      return () => clearTimeout(t);
+    } else {
+      const t = setTimeout(() => setDone(true), 300);
+      return () => clearTimeout(t);
+    }
+  }, [filled]);
+
+  return (
+    <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>
+      {done ? (
+        <span className="font-bold">{'#'.repeat(total)} Ready!</span>
+      ) : (
+        <span>{'#'.repeat(filled)}<span className="opacity-30">{'#'.repeat(total - filled)}</span></span>
+      )}
+    </span>
+  );
+}
+
 interface TerminalProps {
   deviceId: string;
   deviceName: string;
@@ -229,7 +257,7 @@ export function Terminal({
         }
 
         // If command triggered an interactive mode, pause the queue.
-        if (awaitingPasswordRef.current || confirmDialogOpenRef.current || reloadConfirmPendingRef.current) {
+        if (awaitingPasswordRef.current || confirmDialogOpenRef.current) {
           break;
         }
       }
@@ -378,13 +406,7 @@ export function Terminal({
     isProcessingQueueRef.current = false;
   }, [deviceId]);
 
-  const isReloadConfirmationPending = output.some(
-    (line) => line.type === 'output' && /Proceed with reload\? \[confirm\]/i.test(line.content)
-  ) || state.awaitingReloadConfirm || false;
-
-  useEffect(() => {
-    reloadConfirmPendingRef.current = !!isReloadConfirmationPending;
-  }, [isReloadConfirmationPending]);
+  const isReloadConfirmationPending = false;
 
   // Command Context for Autocomplete
   const expandCommandContext = useCallback((mode: keyof typeof commandHelp, rawValue: string) => {
@@ -1025,7 +1047,12 @@ export function Terminal({
             style={{ fontSize: `${fontSize}px` }}
           >
             {isPoweredOff ? (
-              <div className="h-full flex items-center justify-center text-slate-800 font-black tracking-tighter text-2xl  italic">Offline</div>
+              <div className="h-full flex flex-col items-center justify-center gap-3">
+                <svg className="w-16 h-16 text-red-600 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.36 5.64a9 9 0 1 1-12.73 0" />
+                </svg>
+              </div>
             ) : (
               <div className="space-y-1.5">
                 {/* Show all output with natural scrolling */}
@@ -1041,7 +1068,9 @@ export function Terminal({
                         "whitespace-pre-wrap",
                         line.type === 'error' ? "text-rose-500" : (line.type === 'success' ? "text-emerald-500" : (isDark ? "text-slate-300" : "text-slate-700"))
                       )}>
-                        {highlightText(line.content)}
+                        {line.content === BOOT_PROGRESS_MARKER
+                          ? <BootProgressBar isDark={isDark} />
+                          : highlightText(line.content)}
                       </div>
                     )}
                   </div>

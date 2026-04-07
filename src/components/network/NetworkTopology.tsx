@@ -3982,12 +3982,12 @@ export function NetworkTopology({
               }}
             >
               {/* Background circle - 2px margin from top-right */}
-              <circle cx={deviceWidth - 12} cy={10} r={8} className={isPoweredOff ? (isDark ? 'fill-slate-800' : 'fill-slate-200') : (isDark ? 'fill-slate-700' : 'fill-slate-100')} />
+              <circle cx={deviceWidth - 12} cy={10} r={8} className={isPoweredOff ? 'fill-red-500' : (isDark ? 'fill-slate-700' : 'fill-slate-100')} />
               {/* Lightning bolt - centered in circle */}
               <path
                 d="M0 -4l-4 5h3l-1 4 4-5h-3l1-4z"
                 transform={`translate(${deviceWidth - 11}, 10) scale(1)`}
-                className={`${statusColor} transition-colors duration-300`}
+                className={isPoweredOff ? 'fill-white' : `${statusColor} transition-colors duration-300`}
                 fill="currentColor"
               />
             </g>

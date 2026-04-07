@@ -5,6 +5,7 @@ import { createInitialState, createInitialRouterState, applyStartupConfig, build
 import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import { executeCommand, getPrompt } from '@/lib/network/executor';
 import type { TerminalOutput } from '@/components/network/Terminal';
+import { BOOT_PROGRESS_MARKER } from '@/components/network/Terminal';
 import { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAppFeedback } from '@/hooks/useAppFeedback';
@@ -81,7 +82,7 @@ export function useDeviceManager() {
       return {
         boot1: `\n\nSystem Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1994-2011 by Network Systems, Inc.\n`,
         boot2: `ISR4451/K9 platform with 4096 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded, GOXR initialization\nReading all bootflash vectors\nPOST: CPU PCIe port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n`,
-        boot3: `\nBooting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!\nExtracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...\n  ########## [OK]\n  0 bytes remaining in flash device`,
+        boot3: `\nBooting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!\nExtracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n`,
         initMessage: language === 'tr' ? 'Sistem başlatılıyor' : 'Initializing system'
       };
     }
@@ -91,8 +92,8 @@ export function useDeviceManager() {
       return {
         boot1: `\n\nSystem Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1994-2011 by Network Systems, Inc.\n`,
         boot2: `C3560 platform with 131072 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded\nReading all bootflash vectors\nPOST: CPU PCIe port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n`,
-        boot3: `\nBooting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!\nExtracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...\n  ########## [OK]\n  0 bytes remaining in flash device`,
-        initMessage: language === 'tr' ? 'Sistem açılıyor' : 'System is powering on'
+        boot3: `\nBooting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!\nExtracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n`,
+        initMessage: language === 'tr' ? 'Sistem açıldı' : 'System is powered on'
       };
     }
 
@@ -100,8 +101,8 @@ export function useDeviceManager() {
     return {
       boot1: `\n\nSystem Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1994-2010 by Network Systems, Inc.\n`,
       boot2: `C2960 platform with 65536 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded\nReading all bootflash vectors\nPOST: CPU Ethernet port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n`,
-      boot3: `\nBooting flash:c2960-lanbase-mz.152-2.E6.bin...OK!\nExtracting files from flash:c2960-lanbase-mz.152-2.E6.bin...\n  ########## [OK]\n  0 bytes remaining in flash device`,
-      initMessage: language === 'tr' ? 'Sistem açılıyor' : 'System is powering on'
+      boot3: `\nBooting flash:c2960-lanbase-mz.152-2.E6.bin...OK!\nExtracting files from flash:c2960-lanbase-mz.152-2.E6.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n`,
+      initMessage: language === 'tr' ? 'Sistem açıldı' : 'System is powered on'
     };
   }, []);
 
@@ -186,8 +187,7 @@ export function useDeviceManager() {
             { id: `boot-3-${reloadedState.macAddress}`, type: 'output', content: bootInfo.boot3 },
             // Insert banner MOTD here if present so it's visible during boot
             ...(reloadedState.bannerMOTD ? [{ id: `banner-${reloadedState.macAddress}`, type: 'output' as const, content: `\n${reloadedState.bannerMOTD}\n` }] : []),
-            { id: `boot-beep-${reloadedState.macAddress}`, type: 'output', content: `\n${bootInfo.initMessage}...\n` },
-            { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: '\nReady!\n\n' }
+            { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: BOOT_PROGRESS_MARKER }
           ];
 
           setDeviceOutputs(prev => new Map(prev).set(deviceId, bootOutputs));
@@ -279,8 +279,7 @@ export function useDeviceManager() {
         { id: `boot-2-${suffix}`, type: 'output', content: bootInfo.boot2 },
         { id: `boot-3-${suffix}`, type: 'output', content: bootInfo.boot3 },
         ...(fallbackState?.bannerMOTD ? [{ id: `banner-${suffix}`, type: 'output' as const, content: `\n${fallbackState.bannerMOTD}\n` }] : []),
-        { id: `boot-beep-${suffix}`, type: 'output', content: `\n${bootInfo.initMessage}...\n` },
-        { id: `boot-ready-${suffix}`, type: 'output', content: '\nReady!\n\n' }
+        { id: `boot-ready-${suffix}`, type: 'output', content: BOOT_PROGRESS_MARKER }
       ];
 
       // If we have existing outputs, append them; otherwise use just boot messages
@@ -575,17 +574,6 @@ export function useDeviceManager() {
           setDeviceOutputs(prev => new Map(prev).set(deviceId, []));
         }
         if (result.reloadDevice) {
-          if ((result as any).requiresReloadConfirm) {
-            setDeviceStates(prev => new Map(prev).set(deviceId, { ...deviceState, awaitingReloadConfirm: true } as any));
-
-            if (triggerPingAnimation) {
-              window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
-                detail: { sourceId: deviceId, targetId: triggerPingAnimation }
-              }));
-            }
-
-            return result;
-          }
           const baseState = deviceId.includes('router') ? createInitialRouterState() : createInitialState();
           const startupConfig = deviceState.startupConfig;
           const hasStartupConfig = !!startupConfig;
@@ -607,22 +595,28 @@ export function useDeviceManager() {
             currentLine: undefined,
             currentVlan: undefined,
             awaitingPassword: false,
-            awaitingReloadConfirm: false,
             commandHistory: [],
             historyIndex: -1
           };
           setDeviceStates(prev => new Map(prev).set(deviceId, reloadedState));
           const isRouter = deviceId.includes('router');
           const bootInfo = getBootMessage(isRouter ? 'router' : resolveSwitchBootType(reloadedState.switchModel), reloadedState.switchModel, language);
-          const bootOutputs: TerminalOutput[] = [
-            { id: `boot-1-${reloadedState.macAddress}`, type: 'output', content: bootInfo.boot1 },
-            { id: `boot-2-${reloadedState.macAddress}`, type: 'output', content: bootInfo.boot2 },
-            { id: `boot-3-${reloadedState.macAddress}`, type: 'output', content: bootInfo.boot3 },
-            ...(reloadedState.bannerMOTD ? [{ id: `banner-${reloadedState.macAddress}`, type: 'output' as const, content: `\n${reloadedState.bannerMOTD}\n` }] : []),
-            { id: `boot-beep-${reloadedState.macAddress}`, type: 'output', content: `\n${bootInfo.initMessage}...\n` },
-            { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: '\nReady!\n\n' }
-          ];
-          void appendOutputsWithDelay(deviceId, bootOutputs, { clearFirst: true, minDelay: 120, maxDelay: 420 });
+          const mac = reloadedState.macAddress;
+          // Clear screen immediately (sync), then show boot sequence after delay
+          setDeviceOutputs(prev => new Map(prev).set(deviceId, [
+            { id: `loading-${mac}`, type: 'output', content: 'Reloading...' }
+          ]));
+          ; (async () => {
+            await sleep(600);
+            const bootOutputs: TerminalOutput[] = [
+              { id: `boot-1-${mac}`, type: 'output', content: bootInfo.boot1 },
+              { id: `boot-2-${mac}`, type: 'output', content: bootInfo.boot2 },
+              { id: `boot-3-${mac}`, type: 'output', content: bootInfo.boot3 },
+              ...(reloadedState.bannerMOTD ? [{ id: `banner-${mac}`, type: 'output' as const, content: `\n${reloadedState.bannerMOTD}\n` }] : []),
+              { id: `boot-ready-${mac}`, type: 'output', content: BOOT_PROGRESS_MARKER }
+            ];
+            setDeviceOutputs(prev => new Map(prev).set(deviceId, bootOutputs));
+          })();
 
           if (triggerPingAnimation) {
             window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
