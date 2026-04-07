@@ -144,6 +144,14 @@ export function PCPanel({
   const tabletHistoryRef = useRef<PCActiveTab[]>(['home']);
   const tabletHistoryIndexRef = useRef(0);
   const isInternalTabletNavRef = useRef(false);
+  const mobileVerticalScrollStyle = isMobile
+    ? {
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch' as const,
+      overscrollBehaviorY: 'contain' as const,
+      touchAction: 'pan-y' as const,
+    }
+    : undefined;
 
   const goHome = useCallback(() => {
     setActiveTab('home');
@@ -2219,7 +2227,7 @@ export function PCPanel({
   return (
     <>
       <div className={`
-        w-full flex flex-col items-center justify-start p-0 md:p-4
+        w-full flex-1 min-h-0 overflow-hidden flex flex-col items-center justify-start p-0 md:p-4
         ${isDark ? 'bg-slate-900' : 'bg-slate-100'}
       `}>
         {/* External Toolbar - Above Tablet Frame */}
@@ -2379,7 +2387,7 @@ export function PCPanel({
 
         {/* Tablet Frame - Simple modern tablet design */}
         <div className={`
-        w-full h-full flex-1 max-w-full mx-auto overflow-auto self-center
+        w-full h-full min-h-0 flex-1 max-w-full mx-auto overflow-hidden self-center
         relative flex flex-col 
         ${isDark
             ? 'bg-slate-800 md:border-2 md:border-slate-600 md:rounded-2xl md:shadow-xl'
@@ -2388,7 +2396,7 @@ export function PCPanel({
       `}>
           {/* Screen Area - Clean and simple */}
           <div className={`
-          flex-1 relative overflow-y-auto
+          flex-1 min-h-0 relative overflow-hidden
           ${isDark
               ? 'bg-slate-900'
               : 'bg-white'
@@ -2420,7 +2428,7 @@ export function PCPanel({
                   : "bg-white/25 border border-white/40 backdrop-blur-xl shadow-lg shadow-white/10"
               )}
             >
-              <div className="flex flex-col flex-1 overflow-y-auto bg-transparent">
+              <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-transparent">
                 <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
                   <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-md`}>
                     <DialogHeader>
@@ -2502,9 +2510,12 @@ export function PCPanel({
                 </div>
 
                 {/* Content Area */}
-                <div className={`flex-1 flex flex-col ${terminalBg} relative pt-2.5 overflow-y-auto md:overflow-visible`}>
+                <div className={`flex-1 min-h-0 flex flex-col ${terminalBg} relative pt-2.5 overflow-hidden md:overflow-visible`}>
                   {activeTab === 'home' && (
-                    <div className="flex-1 flex items-center justify-center p-2.5 pt-0">
+                    <div
+                      className="flex-1 min-h-0 flex items-center justify-center p-2.5 pt-0 overflow-y-auto mobile-scroll custom-scrollbar"
+                      style={mobileVerticalScrollStyle}
+                    >
                       <div className="w-full max-w-[700px] flex flex-row overflow-x-auto gap-2 rounded-xl p-2.5 bg-slate-800/30 border border-slate-700/30 shadow-sm md:grid md:grid-cols-5 md:place-items-center scrollbar-hide"
                         style={{ WebkitOverflowScrolling: 'touch' }}
                       >
@@ -2568,7 +2579,10 @@ export function PCPanel({
                   )}
 
                   {activeTab === 'settings' && (
-                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden scroll-y-sm pt-2.5">
+                    <div
+                      className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden overflow-y-auto md:overflow-y-visible mobile-scroll custom-scrollbar pt-2.5"
+                      style={mobileVerticalScrollStyle}
+                    >
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 ">
                           {t.ipConfigurationLabel}
@@ -2645,7 +2659,10 @@ export function PCPanel({
                   )}
 
                   {activeTab === 'services' && (
-                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden scroll-y-sm">
+                    <div
+                      className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden overflow-y-auto md:overflow-y-visible mobile-scroll custom-scrollbar"
+                      style={mobileVerticalScrollStyle}
+                    >
                       <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
                         <div className="flex items-center justify-between gap-3">
                           <div>
@@ -2918,7 +2935,10 @@ export function PCPanel({
                   )}
 
                   {activeTab === 'wireless' && (
-                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden scroll-y-sm">
+                    <div
+                      className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden overflow-y-auto md:overflow-y-visible mobile-scroll custom-scrollbar"
+                      style={mobileVerticalScrollStyle}
+                    >
                       <div className={`rounded-2xl border p-5 space-y-5 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3 text-purple-500">
@@ -3219,8 +3239,8 @@ export function PCPanel({
                       )}
                       <div
                         ref={outputRef}
-                        className={`flex-1 scroll-smooth custom-scrollbar p-2 md:p-3 space-y-2 font-mono leading-relaxed flex flex-col overflow-x-hidden scroll-y-sm mobile-scroll ${isPcPoweredOff ? 'bg-red-500' : ''}`}
-                        style={{ fontSize: `${fontSize}px` }}
+                        className={`flex-1 min-h-0 scroll-smooth custom-scrollbar p-2 md:p-3 space-y-2 font-mono leading-relaxed flex flex-col overflow-x-hidden overflow-y-auto mobile-scroll ${isPcPoweredOff ? 'bg-red-500' : ''}`}
+                        style={{ ...mobileVerticalScrollStyle, fontSize: `${fontSize}px` }}
                       >
                         {isPcPoweredOff ? (
                           <div className="flex-1 flex items-center justify-center text-slate-700">OFFLINE</div>

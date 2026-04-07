@@ -206,11 +206,11 @@
 }
 
 .mobile-scroll::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgb(148 163 184 / 0.18);
 }
 
 .mobile-scroll::-webkit-scrollbar-thumb {
-  background: rgb(148 163 184 / 0.3);
+  background: rgb(100 116 139 / 0.55);
   border-radius: 2px;
 }
 
@@ -221,7 +221,7 @@
   }
   
   .mobile-scroll::-webkit-scrollbar-thumb {
-    background: rgb(148 163 184 / 0.5);
+    background: rgb(100 116 139 / 0.7);
   }
 }
 
