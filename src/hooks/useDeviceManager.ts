@@ -181,13 +181,14 @@ export function useDeviceManager() {
           await sleep(600);
 
           const bootInfo = getBootMessage(isRouter ? 'router' : resolveSwitchBootType(reloadedState.switchModel), reloadedState.switchModel, language);
+          const bootTs = Date.now();
           const bootOutputs: TerminalOutput[] = [
             { id: `boot-1-${reloadedState.macAddress}`, type: 'output', content: bootInfo.boot1 },
             { id: `boot-2-${reloadedState.macAddress}`, type: 'output', content: bootInfo.boot2 },
             { id: `boot-3-${reloadedState.macAddress}`, type: 'output', content: bootInfo.boot3 },
             // Insert banner MOTD here if present so it's visible during boot
             ...(reloadedState.bannerMOTD ? [{ id: `banner-${reloadedState.macAddress}`, type: 'output' as const, content: `\n${reloadedState.bannerMOTD}\n` }] : []),
-            { id: `boot-ready-${reloadedState.macAddress}`, type: 'output', content: BOOT_PROGRESS_MARKER }
+            { id: `boot-ready-${reloadedState.macAddress}-${bootTs}`, type: 'output', content: BOOT_PROGRESS_MARKER }
           ];
 
           setDeviceOutputs(prev => new Map(prev).set(deviceId, bootOutputs));
@@ -602,6 +603,7 @@ export function useDeviceManager() {
           const isRouter = deviceId.includes('router');
           const bootInfo = getBootMessage(isRouter ? 'router' : resolveSwitchBootType(reloadedState.switchModel), reloadedState.switchModel, language);
           const mac = reloadedState.macAddress;
+          const bootTs = Date.now();
           // Clear screen immediately (sync), then show boot sequence after delay
           setDeviceOutputs(prev => new Map(prev).set(deviceId, [
             { id: `loading-${mac}`, type: 'output', content: 'Reloading...' }
@@ -613,7 +615,7 @@ export function useDeviceManager() {
               { id: `boot-2-${mac}`, type: 'output', content: bootInfo.boot2 },
               { id: `boot-3-${mac}`, type: 'output', content: bootInfo.boot3 },
               ...(reloadedState.bannerMOTD ? [{ id: `banner-${mac}`, type: 'output' as const, content: `\n${reloadedState.bannerMOTD}\n` }] : []),
-              { id: `boot-ready-${mac}`, type: 'output', content: BOOT_PROGRESS_MARKER }
+              { id: `boot-ready-${mac}-${bootTs}`, type: 'output', content: BOOT_PROGRESS_MARKER }
             ];
             setDeviceOutputs(prev => new Map(prev).set(deviceId, bootOutputs));
           })();

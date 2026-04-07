@@ -31,17 +31,23 @@ export interface TerminalOutput {
 
 export const BOOT_PROGRESS_MARKER = '\x00BOOT_PROGRESS\x00';
 
-function BootProgressBar({ isDark }: { isDark: boolean }) {
+// Global set — animasyon tamamlanan boot id'lerini tutar, tab değişiminde sıfırlanmaz
+const completedBootIds = new Set<string>();
+
+function BootProgressBar({ id, isDark, onDone }: { id: string; isDark: boolean; onDone: (id: string) => void }) {
   const [filled, setFilled] = useState(0);
   const [done, setDone] = useState(false);
-  const total = 9;
+  const total = 10;
 
   useEffect(() => {
     if (filled < total) {
       const t = setTimeout(() => setFilled(f => f + 1), 220);
       return () => clearTimeout(t);
     } else {
-      const t = setTimeout(() => setDone(true), 300);
+      const t = setTimeout(() => {
+        setDone(true);
+        onDone(id);
+      }, 300);
       return () => clearTimeout(t);
     }
   }, [filled]);
@@ -285,29 +291,27 @@ export function Terminal({
   }, [showAutocomplete]);
 
   // Process output lines with delays for multiline content
+  const prevFirstOutputIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (output.length === 0) {
       setDisplayedLines([]);
       setIsProcessingMultiline(false);
       pendingLinesRef.current = [];
       processedOutputIdsRef.current.clear();
+      prevFirstOutputIdRef.current = null;
       return;
     }
 
-    // Check if we have boot messages in the output
-    const hasBootMessages = output.some(o =>
-      o.id?.startsWith('boot-') ||
-      o.content?.includes('System Bootstrap') ||
-      o.content?.includes('Loading Flash') ||
-      o.content?.includes('Initializing')
-    );
-
-    // If this is a fresh set of outputs (boot sequence), clear everything
-    if (hasBootMessages && processedOutputIdsRef.current.size === 0) {
+    // Detect a full output reset (boot/reload): first item id changed
+    const firstId = output[0]?.id ?? null;
+    if (firstId !== prevFirstOutputIdRef.current) {
+      prevFirstOutputIdRef.current = firstId;
       setDisplayedLines([]);
       processedOutputIdsRef.current.clear();
       setIsProcessingMultiline(false);
       pendingLinesRef.current = [];
+      cancelOutputRef.current = false;
     }
 
     // Process all unprocessed outputs in order
@@ -400,6 +404,7 @@ export function Terminal({
   useEffect(() => {
     setDisplayedLines([]);
     processedOutputIdsRef.current.clear();
+    prevFirstOutputIdRef.current = null;
     setIsProcessingMultiline(false);
     pendingLinesRef.current = [];
     commandQueueRef.current = [];
@@ -1069,7 +1074,9 @@ export function Terminal({
                         line.type === 'error' ? "text-rose-500" : (line.type === 'success' ? "text-emerald-500" : (isDark ? "text-slate-300" : "text-slate-700"))
                       )}>
                         {line.content === BOOT_PROGRESS_MARKER
-                          ? <BootProgressBar isDark={isDark} />
+                          ? (completedBootIds.has(line.id)
+                            ? <span className={isDark ? 'text-emerald-400 font-bold' : 'text-emerald-600 font-bold'}>{'#'.repeat(10)} Ready!</span>
+                            : <BootProgressBar key={line.id} id={line.id} isDark={isDark} onDone={(id) => { completedBootIds.add(id); }} />)
                           : highlightText(line.content)}
                       </div>
                     )}
