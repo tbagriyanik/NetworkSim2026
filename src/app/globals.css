@@ -3,22 +3,54 @@
 @custom-variant dark (&:is(.dark *));
 
 @keyframes gradient {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  25% { transform: translate(2%, 2%) rotate(5deg); }
-  50% { transform: translate(0, 4%) rotate(0deg); }
-  75% { transform: translate(-2%, 2%) rotate(-5deg); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  25% {
+    transform: translate(2%, 2%) rotate(5deg);
+  }
+
+  50% {
+    transform: translate(0, 4%) rotate(0deg);
+  }
+
+  75% {
+    transform: translate(-2%, 2%) rotate(-5deg);
+  }
 }
 
-.animate-gradient { animation: gradient 20s ease-in-out infinite; }
+.animate-gradient {
+  animation: gradient 20s ease-in-out infinite;
+}
 
 @keyframes ping-pulse {
-  0% { transform: scale(0.8); opacity: 0.6; }
-  50% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(0.8); opacity: 0.6; }
+  0% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
 }
 
-.ping-envelope { animation: ping-pulse 0.8s ease-in-out infinite; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.ping-element { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.ping-envelope {
+  animation: ping-pulse 0.8s ease-in-out infinite;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ping-element {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -111,15 +143,43 @@
 }
 
 @layer base {
-  * { @apply border-border outline-ring/50; -webkit-font-smoothing: antialiased; }
-  body { @apply bg-background text-foreground font-sans; overscroll-behavior: none; }
-  button:not(:disabled), a, [role="button"]:not(:disabled) { cursor: pointer !important; }
+  * {
+    @apply border-border outline-ring/50;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    overscroll-behavior: none;
+  }
+
+  button:not(:disabled),
+  a,
+  [role="button"]:not(:disabled) {
+    cursor: pointer !important;
+  }
 }
 
-/* Custom Scrollbar */
-.custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
-.custom-scrollbar::-webkit-scrollbar-track { @apply bg-slate-100/50 dark:bg-slate-800/50; border-radius: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-slate-400/60 dark:bg-slate-500/40 rounded-full transition-all duration-200; border: 1px solid rgb(148 163 184 / 0.2); }
+/* Custom Scrollbar - Visible */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-slate-100/50 dark:bg-slate-800/50;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-400/60 dark:bg-slate-500/40 rounded-full transition-all duration-200;
+  border: 1px solid rgb(148 163 184 / 0.2);
+}
+
+.custom-scrollbar {
+  scrollbar-width: auto;
+  -ms-overflow-style: auto;
+}
 
 /* Liquid Glass Effects */
 .liquid-glass {
@@ -128,17 +188,31 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
 }
-.dark .liquid-glass { background-color: rgba(15, 23, 42, 0.65); border-color: rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6); }
+
+.dark .liquid-glass {
+  background-color: rgba(15, 23, 42, 0.65);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+}
 
 .liquid-glass-strong {
   backdrop-filter: blur(40px) saturate(200%);
   background-color: rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
-.dark .liquid-glass-strong { background-color: rgba(2, 6, 23, 0.85); border-color: rgba(255, 255, 255, 0.12); }
+
+.dark .liquid-glass-strong {
+  background-color: rgba(2, 6, 23, 0.85);
+  border-color: rgba(255, 255, 255, 0.12);
+}
 
 /* Button Styles - Explicit declarations to satisfy Tailwind v4 engine */
-.btn-glass-primary, .btn-glass-secondary, .btn-glass-success, .btn-glass-danger, .btn-glass-warning, .btn-glass-indigo {
+.btn-glass-primary,
+.btn-glass-secondary,
+.btn-glass-success,
+.btn-glass-danger,
+.btn-glass-warning,
+.btn-glass-indigo {
   @apply relative flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-black tracking-widest transition-all duration-300 backdrop-blur-md border outline-none select-none overflow-hidden;
   @apply hover:scale-[1.02] active:scale-95 shadow-lg;
 }
@@ -152,8 +226,14 @@
   @apply border-slate-700/50 text-slate-300 shadow-slate-900/40;
   @apply bg-slate-800/80 hover:bg-slate-700 hover:border-slate-600 hover:text-white;
 }
-.dark .btn-glass-secondary { @apply bg-slate-900/60 border-slate-800 hover:bg-slate-800 hover:border-slate-700; }
-:root:not(.dark) .btn-glass-secondary { @apply bg-white/60 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300; }
+
+.dark .btn-glass-secondary {
+  @apply bg-slate-900/60 border-slate-800 hover:bg-slate-800 hover:border-slate-700;
+}
+
+:root:not(.dark) .btn-glass-secondary {
+  @apply bg-white/60 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300;
+}
 
 .btn-glass-success {
   @apply border-emerald-500/30 text-white shadow-emerald-500/10;
@@ -176,16 +256,78 @@
 }
 
 /* Animations */
-@keyframes scanline { 0% { bottom: 100%; } 100% { bottom: 0%; } }
-.scanline { width: 100%; height: 2px; background: rgba(0, 255, 255, 0.02); opacity: 0.1; position: absolute; bottom: 100%; animation: scanline 6s linear infinite; pointer-events: none; }
+@keyframes scanline {
+  0% {
+    bottom: 100%;
+  }
 
-@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-.animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+  100% {
+    bottom: 0%;
+  }
+}
 
-@keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-.animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
+.scanline {
+  width: 100%;
+  height: 2px;
+  background: rgba(0, 255, 255, 0.02);
+  opacity: 0.1;
+  position: absolute;
+  bottom: 100%;
+  animation: scanline 6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out forwards;
+}
 
 @media print {
-  @page { margin: 0; size: landscape; }
-  button, header, footer, nav, .hidden, [role="tooltip"], .zoom-controls, .minimap, .context-menu, .instructions-panel, .tabs, .tab-list, .mobile-top-nav, .mobile-bottom-nav, .print\:hidden { display: none !important; }
+  @page {
+    margin: 0;
+    size: landscape;
+  }
+
+  button,
+  header,
+  footer,
+  nav,
+  .hidden,
+  [role="tooltip"],
+  .zoom-controls,
+  .minimap,
+  .context-menu,
+  .instructions-panel,
+  .tabs,
+  .tab-list,
+  .mobile-top-nav,
+  .mobile-bottom-nav,
+  .print\:hidden {
+    display: none !important;
+  }
 }

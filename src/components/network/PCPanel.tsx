@@ -2198,12 +2198,12 @@ export function PCPanel({
   return (
     <>
       <div className={`
-        w-full h-full flex flex-col items-center justify-center p-0 md:p-4
+        w-full flex flex-col items-center justify-start p-0 md:p-4
         ${isDark ? 'bg-slate-900' : 'bg-slate-100'}
       `}>
         {/* External Toolbar - Above Tablet Frame */}
         <div className={`
-        w-full max-w-full lg:max-w-4xl mx-auto mb-2 px-3 py-1.5 flex items-center justify-between relative z-50
+        w-full max-w-full md:max-w-4xl mx-auto mb-2 px-3 py-1.5 flex items-center justify-between relative z-50
         rounded-lg border
         ${isDark
             ? 'bg-slate-800/90 border-slate-700 shadow-md'
@@ -2358,8 +2358,8 @@ export function PCPanel({
 
         {/* Tablet Frame - Simple modern tablet design */}
         <div className={`
-        w-full max-w-full lg:max-w-4xl mx-auto overflow-hidden self-center
-        relative flex flex-col h-[500px]
+        w-full h-full flex-1 max-w-full mx-auto overflow-auto self-center
+        relative flex flex-col 
         ${isDark
             ? 'bg-slate-800 md:border-2 md:border-slate-600 md:rounded-2xl md:shadow-xl'
             : 'bg-slate-200 md:border-2 md:border-slate-300 md:rounded-2xl md:shadow-xl'
@@ -2367,7 +2367,7 @@ export function PCPanel({
       `}>
           {/* Screen Area - Clean and simple */}
           <div className={`
-          flex-1 relative overflow-hidden
+          flex-1 relative overflow-y-auto
           ${isDark
               ? 'bg-slate-900'
               : 'bg-white'
@@ -2399,7 +2399,7 @@ export function PCPanel({
                   : "bg-white/25 border border-white/40 backdrop-blur-xl shadow-lg shadow-white/10"
               )}
             >
-              <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-transparent">
+              <div className="flex flex-col flex-1 overflow-y-auto bg-transparent">
                 <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
                   <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-md`}>
                     <DialogHeader>
@@ -2481,7 +2481,7 @@ export function PCPanel({
                 </div>
 
                 {/* Content Area */}
-                <div className={`flex-1 min-h-0 flex flex-col ${terminalBg} relative overflow-hidden pt-2.5`}>
+                <div className={`flex-1 flex flex-col ${terminalBg} relative pt-2.5`}>
                   {activeTab === 'home' && (
                     <div className="flex-1 flex items-center justify-center p-2.5 pt-0">
                       <div className="w-full h-full max-w-[700px] grid grid-cols-5 gap-2 rounded-xl p-2.5 bg-slate-800/30 border border-slate-700/30 shadow-sm place-items-center">
@@ -2545,7 +2545,7 @@ export function PCPanel({
                   )}
 
                   {activeTab === 'settings' && (
-                    <div className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden pt-2.5">
+                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden pt-2.5">
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 ">
                           {t.ipConfigurationLabel}
@@ -2622,7 +2622,7 @@ export function PCPanel({
                   )}
 
                   {activeTab === 'services' && (
-                    <div className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
+                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden">
                       <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
                         <div className="flex items-center justify-between gap-3">
                           <div>
@@ -2895,7 +2895,7 @@ export function PCPanel({
                   )}
 
                   {activeTab === 'wireless' && (
-                    <div className="flex-1 min-h-0 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
+                    <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-x-hidden">
                       <div className={`rounded-2xl border p-5 space-y-5 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3 text-purple-500">
@@ -3174,7 +3174,7 @@ export function PCPanel({
                       )}
                       <div
                         ref={outputRef}
-                        className={`flex-1 min-h-0 overflow-y-auto scroll-smooth custom-scrollbar p-2 md:p-3 space-y-2 font-mono text-sm leading-relaxed flex flex-col overflow-x-hidden ${isPcPoweredOff ? 'bg-red-500' : ''}`}
+                        className={`flex-1 scroll-smooth custom-scrollbar p-2 md:p-3 space-y-2 font-mono text-sm leading-relaxed flex flex-col overflow-x-hidden ${isPcPoweredOff ? 'bg-red-500' : ''}`}
                       >
                         {isPcPoweredOff ? (
                           <div className="flex-1 flex items-center justify-center text-slate-700">OFFLINE</div>
