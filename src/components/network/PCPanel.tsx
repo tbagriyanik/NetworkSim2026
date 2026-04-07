@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, KeyboardEvent, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, KeyboardEvent, useCallback, useMemo, type CSSProperties } from 'react';
 import { useSwitchState, useAppStore } from '@/lib/store/appStore';
 import { CableInfo, isCableCompatible, SwitchState } from '@/lib/network/types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -144,9 +144,9 @@ export function PCPanel({
   const tabletHistoryRef = useRef<PCActiveTab[]>(['home']);
   const tabletHistoryIndexRef = useRef(0);
   const isInternalTabletNavRef = useRef(false);
-  const mobileVerticalScrollStyle = isMobile
+  const mobileVerticalScrollStyle: CSSProperties | undefined = isMobile
     ? {
-      overflowY: 'auto',
+      overflowY: 'auto' as const,
       WebkitOverflowScrolling: 'touch' as const,
       overscrollBehaviorY: 'contain' as const,
       touchAction: 'pan-y' as const,
