@@ -1,6 +1,7 @@
 import type { CommandHandler } from './commandTypes';
 import { normalizePortId } from '../initialState';
 import { canAssignIPToPhysicalPort } from '../switchModels';
+import { buildRunningConfig } from './configBuilder';
 
 // Helper function to check if in interface mode (single or range)
 function isInInterfaceMode(state: any): boolean {
@@ -676,10 +677,11 @@ function cmdIpAddress(state: any, input: string, ctx: any): any {
       };
     }
 
+    const updatedState = { ...state, ports: newPorts };
     return {
       success: true,
       output: `Interface Vlan${vlanId} configured with IP ${ip} ${mask}`,
-      newState: { ports: newPorts }
+      newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) }
     };
   }
 
@@ -697,9 +699,10 @@ function cmdIpAddress(state: any, input: string, ctx: any): any {
   // Fiziksel port'a IP atama (Layer 3 switch veya routed port)
   const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, ipAddress: ip, subnetMask: mask, mode: 'routed' }));
 
+  const updatedState = { ...state, ports: newPorts };
   return {
     success: true,
-    newState: { ports: newPorts }
+    newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) }
   };
 }
 
@@ -724,18 +727,20 @@ function cmdNoIpAddress(state: any, input: string, ctx: any): any {
       };
     }
 
+    const updatedState = { ...state, ports: newPorts };
     return {
       success: true,
-      newState: { ports: newPorts }
+      newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) }
     };
   }
 
   // Fiziksel port'tan IP kaldırma
   const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, ipAddress: undefined, subnetMask: undefined, mode: 'access' }));
 
+  const updatedState = { ...state, ports: newPorts };
   return {
     success: true,
-    newState: { ports: newPorts }
+    newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) }
   };
 }
 

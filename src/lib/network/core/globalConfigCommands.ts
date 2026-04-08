@@ -1,6 +1,7 @@
 'use client';
 
 import type { CommandHandler } from './commandTypes';
+import { buildRunningConfig } from './configBuilder';
 import { canAssignIPToPhysicalPort } from '../switchModels';
 
 // Global config (hostname, vlan, vtp, spanning-tree, security, ip domain-name, etc.)
@@ -1170,12 +1171,32 @@ function cmdIpDhcpPool(state: any, input: string, ctx: any): any {
   if (!pools[poolName]) {
     pools[poolName] = {};
   }
+
+  // Sync with services.dhcp.pools for PC DHCP functionality
+  const services = { ...state.services };
+  if (!services.dhcp) services.dhcp = { enabled: true, pools: [] };
+  const existingServicePool = services.dhcp.pools?.find((p: any) => p.poolName === poolName);
+  if (!existingServicePool) {
+    services.dhcp.pools = services.dhcp.pools || [];
+    services.dhcp.pools.push({
+      poolName,
+      subnetMask: '255.255.255.0',
+      startIp: '192.168.1.100',
+      defaultGateway: '192.168.1.1',
+      dnsServer: '8.8.8.8',
+      maxUsers: 50
+    });
+  }
+
+  const updatedState = { ...state, dhcpPools: pools, services };
   return {
     success: true,
     newState: {
       currentMode: 'dhcp-config',
       currentDhcpPool: poolName,
       dhcpPools: pools,
+      services,
+      runningConfig: buildRunningConfig(updatedState)
     }
   };
 }
@@ -1196,7 +1217,15 @@ function cmdNoIpDhcpPool(state: any, input: string, ctx: any): any {
     return { success: false, error: `% DHCP pool ${poolName} not found` };
   }
   delete pools[poolName];
-  return { success: true, newState: { dhcpPools: pools } };
+
+  // Sync with services.dhcp.pools
+  const services = { ...state.services };
+  if (services.dhcp && services.dhcp.pools) {
+    services.dhcp.pools = services.dhcp.pools.filter((p: any) => p.poolName !== poolName);
+  }
+
+  const updatedState = { ...state, dhcpPools: pools, services };
+  return { success: true, newState: { dhcpPools: pools, services, runningConfig: buildRunningConfig(updatedState) } };
 }
 
 /**

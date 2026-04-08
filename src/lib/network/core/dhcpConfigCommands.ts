@@ -1,6 +1,7 @@
 'use client';
 
 import type { CommandHandler } from './commandTypes';
+import { buildRunningConfig } from './configBuilder';
 
 // ── DHCP Pool sub-command handlers ──────────────────────────────────────────
 
@@ -17,7 +18,31 @@ function cmdDhcpNetwork(state: any, input: string, ctx: any): any {
 
     const pools = { ...(state.dhcpPools || {}) };
     pools[poolName] = { ...(pools[poolName] || {}), network: match[1], subnetMask: match[2] };
-    return { success: true, newState: { dhcpPools: pools } };
+
+    // Sync with services.dhcp.pools for PC DHCP functionality
+    const services = { ...state.services };
+    if (!services.dhcp) services.dhcp = { enabled: true, pools: [] };
+    const existingServicePool = services.dhcp.pools?.find((p: any) => p.poolName === poolName);
+    if (existingServicePool) {
+        existingServicePool.subnetMask = match[2];
+        // Calculate start IP from network
+        const networkParts = match[1].split('.');
+        existingServicePool.startIp = `${networkParts[0]}.${networkParts[1]}.${networkParts[2]}.100`;
+    } else {
+        const networkParts = match[1].split('.');
+        services.dhcp.pools = services.dhcp.pools || [];
+        services.dhcp.pools.push({
+            poolName,
+            subnetMask: match[2],
+            startIp: `${networkParts[0]}.${networkParts[1]}.${networkParts[2]}.100`,
+            defaultGateway: pools[poolName].defaultRouter || match[1].replace(/\d+$/, '1'),
+            dnsServer: pools[poolName].dnsServer || '8.8.8.8',
+            maxUsers: 50
+        });
+    }
+
+    const updatedState = { ...state, dhcpPools: pools, services };
+    return { success: true, newState: { dhcpPools: pools, services, runningConfig: buildRunningConfig(updatedState) } };
 }
 
 function cmdDhcpDefaultRouter(state: any, input: string, ctx: any): any {
@@ -33,7 +58,17 @@ function cmdDhcpDefaultRouter(state: any, input: string, ctx: any): any {
     const primaryGw = match[1].trim().split(/\s+/)[0];
     const pools = { ...(state.dhcpPools || {}) };
     pools[poolName] = { ...(pools[poolName] || {}), defaultRouter: primaryGw };
-    return { success: true, newState: { dhcpPools: pools } };
+
+    // Sync with services.dhcp.pools
+    const services = { ...state.services };
+    if (!services.dhcp) services.dhcp = { enabled: true, pools: [] };
+    const existingServicePool = services.dhcp.pools?.find((p: any) => p.poolName === poolName);
+    if (existingServicePool) {
+        existingServicePool.defaultGateway = primaryGw;
+    }
+
+    const updatedState = { ...state, dhcpPools: pools, services };
+    return { success: true, newState: { dhcpPools: pools, services, runningConfig: buildRunningConfig(updatedState) } };
 }
 
 function cmdDhcpDnsServer(state: any, input: string, ctx: any): any {
@@ -49,7 +84,17 @@ function cmdDhcpDnsServer(state: any, input: string, ctx: any): any {
     const primaryDns = match[1].trim().split(/\s+/)[0];
     const pools = { ...(state.dhcpPools || {}) };
     pools[poolName] = { ...(pools[poolName] || {}), dnsServer: primaryDns };
-    return { success: true, newState: { dhcpPools: pools } };
+
+    // Sync with services.dhcp.pools
+    const services = { ...state.services };
+    if (!services.dhcp) services.dhcp = { enabled: true, pools: [] };
+    const existingServicePool = services.dhcp.pools?.find((p: any) => p.poolName === poolName);
+    if (existingServicePool) {
+        existingServicePool.dnsServer = primaryDns;
+    }
+
+    const updatedState = { ...state, dhcpPools: pools, services };
+    return { success: true, newState: { dhcpPools: pools, services, runningConfig: buildRunningConfig(updatedState) } };
 }
 
 function cmdDhcpLease(state: any, input: string, ctx: any): any {
@@ -64,7 +109,9 @@ function cmdDhcpLease(state: any, input: string, ctx: any): any {
 
     const pools = { ...(state.dhcpPools || {}) };
     pools[poolName] = { ...(pools[poolName] || {}), leaseTime: match[1].trim() };
-    return { success: true, newState: { dhcpPools: pools } };
+
+    const updatedState = { ...state, dhcpPools: pools };
+    return { success: true, newState: { dhcpPools: pools, runningConfig: buildRunningConfig(updatedState) } };
 }
 
 function cmdDhcpDomainName(state: any, input: string, ctx: any): any {
@@ -79,7 +126,9 @@ function cmdDhcpDomainName(state: any, input: string, ctx: any): any {
 
     const pools = { ...(state.dhcpPools || {}) };
     pools[poolName] = { ...(pools[poolName] || {}), domainName: match[1] };
-    return { success: true, newState: { dhcpPools: pools } };
+
+    const updatedState = { ...state, dhcpPools: pools };
+    return { success: true, newState: { dhcpPools: pools, runningConfig: buildRunningConfig(updatedState) } };
 }
 
 export const dhcpConfigHandlers: Record<string, CommandHandler> = {
