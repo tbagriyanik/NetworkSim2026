@@ -112,6 +112,7 @@ const DESKTOP_COMMANDS = [
   'ping',
   'tracert',
   'telnet',
+  'ssh',
   'netstat',
   'nbtstat',
   'getmac',
@@ -767,6 +768,18 @@ export function PCPanel({
     return null;
   }, [isConsoleConnected, connectedDeviceId, deviceOutputs, consoleNeedsPassword]);
 
+  // Keep password prompts focused so SSH/Telnet input is immediately usable.
+  useEffect(() => {
+    if (activeTab !== 'terminal' || !isConsoleConnected) return;
+    if (!consoleNeedsPassword && !consoleConfirmDialog?.show && !consoleReloadPending) return;
+    const timer = setTimeout(() => {
+      if (consoleNeedsPassword) setInput('');
+      inputRef.current?.focus();
+      inputRef.current?.select?.();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [activeTab, isConsoleConnected, consoleNeedsPassword, consoleConfirmDialog?.show, consoleReloadPending]);
+
   const getCommandMode = useCallback((): string => {
     if (activeTab === 'terminal' && isConsoleConnected && connectedDeviceId && deviceStates) {
       const state = deviceStates.get(connectedDeviceId);
@@ -874,6 +887,10 @@ export function PCPanel({
     } else if (consolePasswordAttempted && !consoleAwaitingPassword && consoleAuthenticated) {
       setIsConsoleConnected(true);
       setConsolePasswordAttempted(false);
+    } else if (consolePasswordAttempted && !consoleAwaitingPassword && !consoleAuthenticated) {
+      setConsolePasswordAttempted(false);
+      setIsConsoleConnected(false);
+      setConnectedDeviceId(null);
     }
   }, [consoleAuthenticated, consoleAwaitingPassword, consolePasswordAttempted, connectedDeviceId, t]);
 
@@ -1804,11 +1821,20 @@ export function PCPanel({
         }
       } else if (cmd === 'http') {
         openHttpTarget(args[0], args[1]);
-      } else if (cmd === 'telnet') {
-        const target = args[0];
-        const port = args[1] || '23';
+      } else if (cmd === 'telnet' || cmd === 'ssh') {
+        const targetSpec = args[0];
+        const extraPort = args[1];
+        const sshUserFromSpec = cmd === 'ssh' && targetSpec?.includes('@')
+          ? targetSpec.split('@')[0].trim()
+          : '';
+        const targetFromSpec = cmd === 'ssh' && targetSpec?.includes('@')
+          ? targetSpec.split('@').slice(1).join('@').trim()
+          : targetSpec;
+        const username = cmd === 'ssh' ? (sshUserFromSpec || 'admin') : '';
+        const target = targetFromSpec;
+        const port = cmd === 'ssh' ? (extraPort || '22') : (extraPort || '23');
         if (!target) {
-          addLocalOutput('output', 'Usage: telnet <ip_or_domain> [port]');
+          addLocalOutput('output', `Usage: ${cmd} <ip_or_domain> [port]`);
         } else {
           // Check if target is a domain and resolve it
           let targetIp = target;
@@ -1827,7 +1853,9 @@ export function PCPanel({
           }
 
           if (isLoopbackTarget(targetIp)) {
-            addLocalOutput('success', `Trying 127.0.0.1 ${port} ...\nConnected to 127.0.0.1.`);
+            addLocalOutput('success', cmd === 'ssh'
+              ? `Trying ${username}@127.0.0.1 ${port} ...\nConnected to 127.0.0.1 as ${username}.`
+              : `Trying 127.0.0.1 ${port} ...\nConnected to 127.0.0.1.`);
             return;
           }
 
@@ -1839,7 +1867,9 @@ export function PCPanel({
             const targetDevice = topologyDevices.find(d => d.id === result.targetId);
             if (targetDevice && ((targetDevice.type === 'switchL2' || targetDevice.type === 'switchL3') || targetDevice.type === 'router')) {
               // Successfully connected - switch to terminal tab and connect
-              addLocalOutput('success', `Trying ${targetIp} ${port} ...\nConnected to ${targetIp}.`);
+              addLocalOutput('success', cmd === 'ssh'
+                ? `Trying ${username}@${targetIp} ${port} ...\nConnected to ${targetIp} as ${username}.`
+                : `Trying ${targetIp} ${port} ...\nConnected to ${targetIp}.`);
 
               // Give it a tiny delay for the user to see the "Connected" message before switching
               setTimeout(() => {
@@ -1851,7 +1881,7 @@ export function PCPanel({
 
                 // Trigger remote VTY session bootstrap so password/login policy is applied.
                 if (onExecuteDeviceCommand) {
-                  void onExecuteDeviceCommand(result.targetId!, '__TELNET_CONNECT__');
+                  void onExecuteDeviceCommand(result.targetId!, cmd === 'ssh' ? '__SSH_CONNECT__' : '__TELNET_CONNECT__');
                 }
               }, 500);
             } else {
@@ -1919,7 +1949,7 @@ export function PCPanel({
           60
         );
       } else if (cmd === 'help' || cmd === '?') {
-        addLocalOutput('output', `Available commands: ipconfig, ping, tracert, telnet, netstat, nbtstat, getmac, nslookup, http, arp, hostname, dir, ver, cls, exit, quit, snake`);
+        addLocalOutput('output', `Available commands: ipconfig, ping, tracert, telnet, ssh, netstat, nbtstat, getmac, nslookup, http, arp, hostname, dir, ver, cls, exit, quit, snake`);
       } else if (cmd === 'cls') {
         setPcOutput([]);
       } else if (cmd === 'exit' || cmd === 'quit') {
@@ -2123,6 +2153,11 @@ export function PCPanel({
             // For reload, send 'n' to cancel
             onExecuteDeviceCommand(connectedDeviceId, 'n');
           }
+        }
+        if (consoleNeedsPassword) {
+          setConsolePasswordAttempted(false);
+          setIsConsoleConnected(false);
+          setConnectedDeviceId(null);
         }
         setInput('');
         return;
@@ -3664,6 +3699,9 @@ export function PCPanel({
                                   onExecuteDeviceCommand(connectedDeviceId, 'n');
                                 }
                               }
+                              setConsolePasswordAttempted(false);
+                              setIsConsoleConnected(false);
+                              setConnectedDeviceId(null);
                               setInput('');
                             }}
                             title={language === 'tr' ? 'İptal' : 'Cancel'}

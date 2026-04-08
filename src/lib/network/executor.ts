@@ -100,7 +100,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'cl': ['cls'],
     'q': ['quit'],
     'sho': ['show'],
-    'show': ['version', 'wireless'],
+    'show': ['version', 'wireless', 'ssh'],
   },
   privileged: {
     '': ['configure', 'disable', 'show', 'write', 'ping', 'telnet', 'ssh', 'tracert', 'traceroute', 'reload', 'exit', 'copy', 'erase', 'ip', '?', 'help'],
@@ -130,7 +130,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
 
     'sh': ['show'],
     'sho': ['show'],
-    'show': ['running-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'spanning-tree', 'port-security', 'wireless'],
+    'show': ['running-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'spanning-tree', 'port-security', 'wireless', 'ssh'],
     'show r': ['running-config'],
     'show ru': ['running-config'],
     'show run': ['running-config'],
@@ -579,7 +579,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'do s': ['show'],
     'do sh': ['show'],
     'do sho': ['show'],
-    'do show': ['running-config', 'interfaces', 'vlan', 'version'],
+    'do show': ['running-config', 'interfaces', 'vlan', 'version', 'ssh'],
     'do w': ['write'],
     'do wr': ['write'],
     'do wri': ['write'],
@@ -970,7 +970,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'do s': ['show'],
     'do sh': ['show'],
     'do sho': ['show'],
-    'do show': ['running-config'],
+    'do show': ['running-config', 'ssh'],
   },
   vlan: {
     '': ['name', 'state', 'exit', 'end', '?', 'help'],
@@ -1184,6 +1184,10 @@ export function executeCommand(
     return handleTelnetConnect(state, language);
   }
 
+  if (input === '__SSH_CONNECT__') {
+    return handleSshConnect(state, language);
+  }
+
   if (state.awaitingPassword) {
     if (input === '__PASSWORD_CANCELLED__') {
       // Password dialog was cancelled (ESC, back, outside click)
@@ -1192,7 +1196,9 @@ export function executeCommand(
         error: language === 'tr' ? '% Erişim reddedildi' : '% Access denied',
         newState: {
           awaitingPassword: false,
-          passwordContext: undefined
+          passwordContext: undefined,
+          consoleAuthenticated: false,
+          telnetAuthenticated: false
         }
       };
     }
@@ -1207,6 +1213,7 @@ export function executeCommand(
     if (lowerInput.startsWith('sh ip int br')) cmdToProcess = 'show ip interface brief';
     if (lowerInput.startsWith('sh run')) cmdToProcess = 'show running-config';
     if (lowerInput.startsWith('sh ip ro')) cmdToProcess = 'show ip route';
+    if (lowerInput === 'sh ssh' || lowerInput === 'show ssh') cmdToProcess = 'show ssh';
     if (lowerInput === 'wr') cmdToProcess = 'write memory';
   } else if (state.currentMode === 'user') {
     if (lowerInput === 'en') cmdToProcess = 'enable';
@@ -1605,6 +1612,30 @@ Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
   };
 }
 
+function handleSshConnect(state: SwitchState, language: 'tr' | 'en'): CommandResult {
+  const user = state.sshLastUser || state.hostname || 'admin';
+  const source = state.sshLastSource || 'vty0';
+
+  let output = '';
+  if (state.bannerMOTD) {
+    output = `\n${state.bannerMOTD}\n\n`;
+  }
+  output += 'Password: ';
+  return {
+    success: true,
+    output,
+    passwordPrompt: 'Password: ',
+    passwordContext: 'vty' as const,
+    newState: {
+      telnetAuthenticated: false,
+      awaitingPassword: true,
+      passwordContext: 'vty' as const,
+      sshLastUser: user,
+      sshLastSource: source,
+    }
+  };
+}
+
 function handlePasswordInput(state: SwitchState, password: string, language: 'tr' | 'en'): CommandResult {
   if (state.passwordContext === 'enable') {
     const validPassword = state.security.enableSecret
@@ -1670,7 +1701,8 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
   }
 
   if (state.passwordContext === 'vty') {
-    const validPassword = password === state.security.vtyLines.password;
+    const configuredPassword = state.security.vtyLines.password || '';
+    const validPassword = password === configuredPassword;
     if (validPassword) {
       let output = '';
       if (state.bannerMOTD) {
@@ -1684,7 +1716,14 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
         newState: {
           telnetAuthenticated: true,
           awaitingPassword: false,
-          passwordContext: undefined
+          passwordContext: undefined,
+          sshSessions: [{
+            user: state.sshLastUser || state.hostname || 'admin',
+            source: state.sshLastSource || 'vty0',
+            state: 'established'
+          }],
+          sshLastUser: state.sshLastUser || state.hostname || 'admin',
+          sshLastSource: state.sshLastSource || 'vty0',
         }
       };
     } else {

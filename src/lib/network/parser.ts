@@ -1192,6 +1192,12 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 2
   },
+  'show ssh': {
+    pattern: /^show\s+ssh(\s+(.+)?)?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
   'show etherchannel': {
     pattern: /^show\s+etherchannel(\s+(summary|detail|port|load-balance)\s*(.+)?)?$/i,
     modes: ['privileged'],
@@ -2032,6 +2038,7 @@ Mevcut komutlar:
     show cdp neighbors    - CDP komşularını göster
     show spanning-tree    - Spanning-tree durumunu göster
     show port-security    - Port güvenlik durumunu göster
+    show ssh              - SSH durumunu göster
     show ip interface brief - IP arayüz özetini göster
   write memory       - Konfigürasyonu kaydet
   copy run start     - Konfigürasyonu kaydet (alternatif)
@@ -2049,6 +2056,7 @@ Hızlı yazım:
   sh ver      = show version
   sh mac      = show mac address-table
   sh cdp ne   = show cdp neighbors
+  sh ssh      = show ssh
   wr          = write memory
   cop run sta = copy running-config startup-config
 `,
@@ -2246,6 +2254,7 @@ Available commands:
     show cdp neighbors    - Show CDP neighbors
     show spanning-tree    - Show spanning-tree status
     show port-security    - Show port security status
+    show ssh              - Show SSH status
     show ip interface brief - Show IP interface summary
   write memory       - Save configuration
   copy run start     - Save configuration (alternative)
@@ -2263,6 +2272,7 @@ Shortcuts:
   sh ver      = show version
   sh mac      = show mac address-table
   sh cdp ne   = show cdp neighbors
+  sh ssh      = show ssh
   wr          = write memory
   cop run sta = copy running-config startup-config
 `,

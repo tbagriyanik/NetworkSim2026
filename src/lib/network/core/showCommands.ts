@@ -22,6 +22,7 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show spanning-tree': cmdShowSpanningTree,
   'show port-security': cmdShowPortSecurity,
   'show wireless': cmdShowWireless,
+  'show ssh': cmdShowSsh,
   'do show': cmdDoShow,
   'show ip dhcp snooping': cmdShowIpDhcpSnooping,
   'show interfaces status': cmdShowInterfacesStatus,
@@ -970,6 +971,8 @@ function cmdDoShow(
       return cmdShowPortSecurity(state, showCommand, ctx);
     } else if (subCmd.startsWith('wireless')) {
       return cmdShowWireless(state, showCommand, ctx);
+    } else if (subCmd.startsWith('ssh')) {
+      return cmdShowSsh(state, showCommand, ctx);
     } else {
       return cmdShow(state, showCommand, ctx);
     }
@@ -1009,6 +1012,54 @@ function cmdShowWireless(
 
   if (!found) {
     output += 'No wireless interfaces found on this device.\n';
+  }
+
+  output += '!\n';
+  return { success: true, output };
+}
+
+/**
+ * Show SSH - Display SSH server configuration and session summary
+ */
+function cmdShowSsh(
+  state: any,
+  input: string,
+  ctx: any
+): any {
+  const version = state.sshVersion || 2;
+  const transportInput = state.security?.vtyLines?.transportInput || [];
+  const sshEnabled = version > 0 && transportInput.includes('ssh');
+  const timeout = state.sshTimeout || 60;
+  const retries = state.sshAuthenticationRetries || 3;
+  const domainName = state.domainName || 'not set';
+
+  let output = '\nSSH Server Status\n';
+  output += '-----------------\n';
+  output += `SSH Version: ${version}\n`;
+  output += `SSH Status: ${sshEnabled ? 'enabled' : 'disabled'}\n`;
+  output += `Authentication Retries: ${retries}\n`;
+  output += `Timeout: ${timeout} seconds\n`;
+  output += `Domain Name: ${domainName}\n`;
+  output += `VTY Transport Input: ${transportInput.length > 0 ? transportInput.join(' ') : 'none'}\n`;
+
+  const activeSessions = Array.isArray(state.sshSessions) ? state.sshSessions : [];
+  const normalizedSessions = activeSessions.length > 0
+    ? activeSessions
+    : (sshEnabled
+      ? [{
+        user: state.sshLastUser || state.hostname || 'admin',
+        source: state.sshLastSource || 'vty0',
+        state: 'established',
+      }]
+      : []);
+
+  output += `\nActive SSH Sessions: ${normalizedSessions.length}\n`;
+  if (normalizedSessions.length > 0) {
+    output += 'Session   User       Source\n';
+    output += '--------  ---------  ----------------\n';
+    normalizedSessions.forEach((session: any, index: number) => {
+      output += `${String(index + 1).padEnd(8)}  ${(session.user || 'unknown').padEnd(9)}  ${session.source || 'unknown'}\n`;
+    });
   }
 
   output += '!\n';

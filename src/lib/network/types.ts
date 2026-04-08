@@ -117,6 +117,9 @@ export interface SwitchState {
   passwordContext?: 'enable' | 'console' | 'vty';
   consoleAuthenticated?: boolean;
   telnetAuthenticated?: boolean;
+  sshSessions?: { user: string; source: string; state: string }[];
+  sshLastUser?: string;
+  sshLastSource?: string;
   // Reload confirmation state
   awaitingReloadConfirm?: boolean;
   // New optional properties for extended features

@@ -145,6 +145,7 @@ export function Terminal({
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteIndex, setAutocompleteIndex] = useState(-1);
   const [autocompleteNavigated, setAutocompleteNavigated] = useState(false);
+  const [localPasswordPrompt, setLocalPasswordPrompt] = useState(false);
 
   const isDark = theme === 'dark';
   const isMobile = useIsMobile();
@@ -513,9 +514,19 @@ export function Terminal({
     }
   }, [state.awaitingPassword, confirmDialog?.show, isReloadConfirmationPending]);
 
+  useEffect(() => {
+    const hasPasswordPrompt = output.some(line => line.type === 'password-prompt')
+      || displayedLines.some(line => line.type === 'password-prompt');
+    if (state.awaitingPassword || hasPasswordPrompt) {
+      setLocalPasswordPrompt(true);
+    } else {
+      setLocalPasswordPrompt(false);
+    }
+  }, [state.awaitingPassword, output, displayedLines]);
+
   const handleSubmit = async (cmdToExecute?: string) => {
     // Password mode: send whatever is typed (including empty) as password
-    if (state.awaitingPassword) {
+    if (state.awaitingPassword || localPasswordPrompt) {
       const pwd = cmdToExecute ?? input;
       setInput('');
       await onCommand(pwd);
@@ -734,12 +745,15 @@ export function Terminal({
             onCommand('n');
           }
         }
+        if (state.awaitingPassword || localPasswordPrompt) {
+          setLocalPasswordPrompt(false);
+        }
         setInput('');
         return;
       }
     }
     // Block history/tab navigation during password/confirm modes
-    if (state.awaitingPassword || confirmDialog?.show) return;
+    if (state.awaitingPassword || localPasswordPrompt || confirmDialog?.show) return;
 
     // Handle Ctrl+Z (Undo)
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
@@ -1109,7 +1123,7 @@ export function Terminal({
                 )}
                 <div className={cn(
                   "flex items-center gap-3 px-3 py-2 bg-background rounded-lg border flex-1 group focus-within:ring-1 transition-all shadow-inner",
-                  state.awaitingPassword
+                  state.awaitingPassword || localPasswordPrompt
                     ? "border-amber-500/50 focus-within:ring-amber-500/50"
                     : confirmDialog?.show || isReloadConfirmationPending
                       ? "border-amber-500/50 focus-within:ring-amber-500/50"
@@ -1118,11 +1132,11 @@ export function Terminal({
                 )}>
                   <span className={cn(
                     "font-bold text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0",
-                    state.awaitingPassword || confirmDialog?.show || isReloadConfirmationPending
+                    state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending
                       ? "text-amber-400"
                       : "text-primary"
                   )}>
-                    {state.awaitingPassword
+                    {state.awaitingPassword || localPasswordPrompt
                       ? (language === 'tr' ? 'Parola:' : 'Password:')
                       : confirmDialog?.show || isReloadConfirmationPending
                         ? '[confirm]'
@@ -1130,7 +1144,7 @@ export function Terminal({
                   </span>
                   <input
                     ref={inputRef}
-                    type={state.awaitingPassword ? 'password' : 'text'}
+                    type={state.awaitingPassword || localPasswordPrompt ? 'password' : 'text'}
                     value={input}
                     onChange={(e) => handleInputChange(e.target.value)}
                     onPaste={handlePaste}
@@ -1146,7 +1160,7 @@ export function Terminal({
                     disabled={isInputDisabled}
                     className="flex-1 bg-transparent border-none outline-none font-mono text-[13px] placeholder:text-muted-foreground/50"
                     placeholder={
-                      state.awaitingPassword
+                      state.awaitingPassword || localPasswordPrompt
                         ? (language === 'tr' ? 'Parolayı girin...' : 'Enter password...')
                         : confirmDialog?.show || isReloadConfirmationPending
                           ? (language === 'tr' ? 'Enter\'a basın veya yazın...' : 'Press Enter or type...')
@@ -1156,7 +1170,7 @@ export function Terminal({
                     spellCheck={false}
                   />
                 </div>
-                {(state.awaitingPassword || confirmDialog?.show || isReloadConfirmationPending) && (
+                {(state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending) && (
                   <Button
                     type="button"
                     disabled={isInputDisabled}
@@ -1165,12 +1179,15 @@ export function Terminal({
                     className="shrink-0 rounded-xl hover:bg-rose-500/20 text-rose-500"
                     onClick={() => {
                       if (onCommand) {
-                        if (state.awaitingPassword) {
+                        if (state.awaitingPassword || localPasswordPrompt) {
                           onCommand('__PASSWORD_CANCELLED__');
                         } else if (isReloadConfirmationPending) {
                           // Send 'n' to cancel reload
                           onCommand('n');
                         }
+                      }
+                      if (state.awaitingPassword || localPasswordPrompt) {
+                        setLocalPasswordPrompt(false);
                       }
                       setInput('');
                     }}
@@ -1186,7 +1203,7 @@ export function Terminal({
                   className={cn(
                     "shrink-0 rounded-xl shadow-lg",
                     isMobile ? "h-9 w-9" : "h-11 w-11",
-                    (state.awaitingPassword || confirmDialog?.show || isReloadConfirmationPending) && "bg-amber-500 hover:bg-amber-600"
+                    (state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending) && "bg-amber-500 hover:bg-amber-600"
                   )}
                 >
                   <CornerDownLeft className={cn("w-5 h-5", isMobile && "w-4 h-4")} />
