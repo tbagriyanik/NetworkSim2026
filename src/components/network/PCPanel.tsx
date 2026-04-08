@@ -1906,7 +1906,10 @@ export function PCPanel({
 
 		              // Trigger remote VTY session bootstrap so password/login policy is applied.
 		              if (onExecuteDeviceCommand) {
-		                void onExecuteDeviceCommand(result.targetId!, isSsh ? '__SSH_CONNECT__' : '__TELNET_CONNECT__');
+		                void onExecuteDeviceCommand(
+		                  result.targetId!,
+		                  isSsh ? `__SSH_CONNECT__:${username}` : '__TELNET_CONNECT__'
+		                );
 		              }
 
 		              setActiveTab('terminal');

@@ -1184,8 +1184,9 @@ export function executeCommand(
     return handleTelnetConnect(state, language);
   }
 
-  if (input === '__SSH_CONNECT__') {
-    return handleSshConnect(state, language);
+  if (input.startsWith('__SSH_CONNECT__')) {
+    const sshUser = input.includes(':') ? input.split(':').slice(1).join(':').trim() : '';
+    return handleSshConnect(state, language, sshUser || undefined);
   }
 
   if (state.awaitingPassword) {
@@ -1612,10 +1613,10 @@ Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
   };
 }
 
-function handleSshConnect(state: SwitchState, language: 'tr' | 'en'): CommandResult {
+function handleSshConnect(state: SwitchState, language: 'tr' | 'en', requestedUser?: string): CommandResult {
   const existingSessions = Array.isArray(state.sshSessions) ? state.sshSessions : [];
   const nextSourceIndex = existingSessions.length;
-  const user = state.sshLastUser || state.hostname || 'admin';
+  const user = requestedUser || state.sshLastUser || state.hostname || 'admin';
   const source = `vty${nextSourceIndex}`;
 
   let output = '';
