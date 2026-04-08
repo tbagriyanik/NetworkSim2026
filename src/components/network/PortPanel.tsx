@@ -254,9 +254,9 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
             <div className={isDark ? 'text-slate-300' : 'text-slate-600'}>
               <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t.duplex}:</span> {port.duplex === 'auto' ? 'Auto' : <span className="capitalize">{port.duplex}</span>}
             </div>
-            {port.name && (
+            {(port.description || port.name) && (
               <div className={isDark ? 'text-slate-300' : 'text-slate-600'}>
-                <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t.description}:</span> {port.name}
+                <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t.description}:</span> {port.description || port.name}
               </div>
             )}
           </div>

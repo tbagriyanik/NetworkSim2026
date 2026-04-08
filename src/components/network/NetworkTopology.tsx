@@ -2588,6 +2588,7 @@ export function NetworkTopology({
               accessVlan: simulatorPort.accessVlan ?? (port as any).accessVlan,
               mode: simulatorPort.mode ?? port.mode,
               name: simulatorPort.name ?? port.name,
+              description: simulatorPort.description ?? (port as any).description,
               speed: simulatorPort.speed ?? port.speed,
               duplex: simulatorPort.duplex ?? port.duplex,
               shutdown: simulatorPort.shutdown ?? port.shutdown,
@@ -2602,6 +2603,7 @@ export function NetworkTopology({
               nextPort.accessVlan !== (port as any).accessVlan ||
               nextPort.mode !== port.mode ||
               nextPort.name !== port.name ||
+              (nextPort as any).description !== (port as any).description ||
               nextPort.speed !== port.speed ||
               nextPort.duplex !== port.duplex ||
               nextPort.shutdown !== port.shutdown ||

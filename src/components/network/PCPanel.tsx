@@ -107,6 +107,28 @@ const expandCommandContext = (mode: keyof typeof commandHelp, rawValue: string) 
   return { candidates, currentWord, contextTokens };
 };
 
+const DESKTOP_COMMANDS = [
+  'ipconfig',
+  'ping',
+  'tracert',
+  'telnet',
+  'netstat',
+  'nbtstat',
+  'getmac',
+  'nslookup',
+  'http',
+  'arp',
+  'hostname',
+  'dir',
+  'ver',
+  'cls',
+  'exit',
+  'quit',
+  'snake',
+  'help',
+  '?',
+];
+
 export function PCPanel({
   deviceId,
   cableInfo,
@@ -748,19 +770,29 @@ export function PCPanel({
   const getCommandMode = useCallback((): string => {
     if (activeTab === 'terminal' && isConsoleConnected && connectedDeviceId && deviceStates) {
       const state = deviceStates.get(connectedDeviceId);
-      return state?.currentMode || 'user';
+      const mode = state?.currentMode || 'user';
+      if (mode === 'config-if-range') return 'interface';
+      return mode;
     }
     return 'user';
   }, [activeTab, isConsoleConnected, connectedDeviceId, deviceStates]);
 
   const getAutocompleteSuggestions = useCallback((value: string) => {
+    if (activeTab === 'desktop') {
+      const tokens = value.trim().split(/\s+/).filter(Boolean);
+      const currentWord = value.endsWith(' ') ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
+      return DESKTOP_COMMANDS
+        .filter((cmd) => cmd !== '?' && cmd.startsWith(currentWord))
+        .slice(0, 8);
+    }
+
     const mode = getCommandMode();
     const { candidates, currentWord } = expandCommandContext(mode as any, value);
     const suggestions = candidates.filter(
       opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord)
     );
     return suggestions.slice(0, 8);
-  }, [getCommandMode]);
+  }, [activeTab, getCommandMode]);
 
   const renderAutocompleteSuggestions = useMemo(
     () => getAutocompleteSuggestions(input),
@@ -1968,9 +2000,20 @@ export function PCPanel({
     const value = input;
     if (!value && tabCycleIndex === -1) return;
 
-    const mode = getCommandMode();
-    const { candidates, currentWord, contextTokens } = expandCommandContext(mode as any, value);
-    const matches = candidates.filter(opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord));
+    let matches: string[] = [];
+    let contextTokens: string[] = [];
+
+    if (activeTab === 'desktop') {
+      const tokens = value.trim().split(/\s+/).filter(Boolean);
+      const currentWord = value.endsWith(' ') ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
+      contextTokens = [];
+      matches = DESKTOP_COMMANDS.filter(opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord));
+    } else {
+      const mode = getCommandMode();
+      const context = expandCommandContext(mode as any, value);
+      contextTokens = context.contextTokens;
+      matches = context.candidates.filter(opt => opt !== '?' && opt.toLowerCase().startsWith(context.currentWord));
+    }
 
     if (matches.length > 0) {
       if (tabCycleIndex === -1) {

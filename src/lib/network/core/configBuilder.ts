@@ -90,8 +90,9 @@ export function buildRunningConfig(state: SwitchState): string[] {
 
         lines.push(`interface ${portUpper}`);
 
-        if (port.name) {
-            lines.push(` description ${port.name}`);
+        const portDescription = port.description || port.name;
+        if (portDescription) {
+            lines.push(` description ${portDescription}`);
         }
 
         if (isWlan) {

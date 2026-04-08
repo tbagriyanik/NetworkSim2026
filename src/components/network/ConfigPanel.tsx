@@ -127,7 +127,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
       const portUpper = port.id.toUpperCase().replace('FA', 'FastEthernet').replace('GI', 'GigabitEthernet');
       config += `interface ${portUpper}\\n`;
 
-      if ((port as any).description) config += ` description ${(port as any).description}\\n`;
+      if ((port as any).description || port.name) config += ` description ${((port as any).description || port.name)}\\n`;
 
       // Switchport mode
       if (port.mode === 'trunk') {

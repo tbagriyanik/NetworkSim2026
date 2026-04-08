@@ -139,8 +139,9 @@ function cmdShowRunningConfig(
     Object.entries(state.ports || {}).forEach(([portId, port]: [string, any]) => {
       if (port.description || port.ipAddress || port.mode !== 'access' || port.vlan !== 1 || port.shutdown !== false) {
         output += `interface ${portId}\n`;
-        if (port.description) {
-          output += ` description ${port.description}\n`;
+        const portDescription = port.description || port.name;
+        if (portDescription) {
+          output += ` description ${portDescription}\n`;
         }
         if (port.mode === 'trunk') {
           output += ` switchport mode trunk\n`;
@@ -270,8 +271,9 @@ function cmdShowStartupConfig(
     const port = startupPorts[portName];
     output += `interface ${portName}\n`;
 
-    if (port.description) {
-      output += ` description ${port.description}\n`;
+    const portDescription = port.description || port.name;
+    if (portDescription) {
+      output += ` description ${portDescription}\n`;
     }
 
     if (port.mode === 'trunk') {
@@ -407,7 +409,7 @@ function cmdShowInterfaces(
 
   Object.keys(state.ports || {}).forEach(portName => {
     const port = state.ports[portName];
-    const description = port.description || '';
+    const description = port.description || port.name || '';
 
     output += `${portName} is ${port.shutdown ? 'administratively down' : 'up'}, line protocol is ${port.shutdown ? 'down' : 'up'}\n`;
     output += `  Hardware is Fast Ethernet, address is ${port.macAddress || '0000.0000.0000'}\n`;
@@ -462,7 +464,7 @@ function cmdShowInterface(
     return { success: false, error: `% Interface ${match[1].trim()} not found` };
   }
 
-  const description = port.description || '';
+  const description = port.description || port.name || '';
   let output = '';
   output += `${requestedInterface} is ${port.shutdown ? 'administratively down' : 'up'}, line protocol is ${port.shutdown ? 'down' : 'up'}\n`;
   output += `  Hardware is Fast Ethernet, address is ${port.macAddress || '0000.0000.0000'}\n`;
@@ -507,7 +509,7 @@ function cmdShowIpInterfaceBrief(
     const port = state.ports[portName];
     const status = port.shutdown ? 'administratively down' : 'up';
     const protocol = port.shutdown ? 'down' : 'up';
-    const description = port.description || '';
+    const description = port.description || port.name || '';
 
     if (port.ipAddress && port.subnetMask) {
       output += `${portName.padEnd(22)} ${port.ipAddress.padEnd(15)} YES manual ${status.padEnd(23)} ${protocol.padEnd(23)} ${description.padEnd(25)}\n`;
@@ -1049,7 +1051,7 @@ function cmdShowInterfacesStatus(state: any, input: string, ctx: any): any {
     const vlan = port.accessVlan || port.vlan || 1;
     const duplex = port.duplex || 'a-full';
     const speed = port.speed || 'a-100';
-    output += `${portName.padEnd(10)}${(port.description || '').padEnd(19)}${status.padEnd(13)}${String(vlan).padEnd(11)}${duplex.padEnd(8)}${speed.padEnd(6)}10/100BaseTX\n`;
+    output += `${portName.padEnd(10)}${(port.description || port.name || '').padEnd(19)}${status.padEnd(13)}${String(vlan).padEnd(11)}${duplex.padEnd(8)}${speed.padEnd(6)}10/100BaseTX\n`;
   });
   return { success: true, output };
 }

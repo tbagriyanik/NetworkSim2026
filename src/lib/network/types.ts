@@ -22,6 +22,7 @@ export type EtherChannelMode = 'on' | 'active' | 'passive' | 'desirable' | 'auto
 export interface Port {
   id: string;              // fa0/1, gi0/1 etc.
   name: string;            // description
+  description?: string;    // interface description (CLI: description <text>)
   status: PortStatus;
   vlan: number;
   accessVlan?: number | string;
