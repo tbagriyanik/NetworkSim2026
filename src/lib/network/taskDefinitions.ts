@@ -63,9 +63,9 @@ export const portTasks: TaskDefinition[] = [
     id: 'add-description',
     name: { tr: 'Port Açıklaması', en: 'Port Description' },
     description: { tr: 'Portlara açıklayıcı isim verin', en: 'Add descriptive names to ports' },
-    tip: { tr: 'description "isim" komutu ile ekleyin', en: 'Add with description "name" command' },
+    tip: { tr: 'description isim komutu ile ekleyin', en: 'Add with description name command' },
     weight: 20,
-    checkFn: (state) => Object.values(state.ports).some(p => p.name),
+    checkFn: (state) => Object.values(state.ports).some(p => !!(p.description?.trim() || p.name?.trim())),
   },
   {
     id: 'configure-speed',
