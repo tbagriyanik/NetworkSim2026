@@ -166,6 +166,22 @@ function cmdUsername(state: any, input: string, ctx: any): any {
 }
 
 /**
+ * Normalize interface name to the short key used in state.ports
+ * e.g. "FastEthernet 0/1" -> "fa0/1"
+ *      "GigabitEthernet0/0" -> "gi0/0"
+ *      "fastethernet0/1" -> "fa0/1"
+ */
+function normalizeInterfaceName(raw: string): string {
+  const s = raw.trim().toLowerCase().replace(/\s+/g, '');
+  if (s.startsWith('gigabitethernet')) return 'gi' + s.slice('gigabitethernet'.length);
+  if (s.startsWith('fastethernet')) return 'fa' + s.slice('fastethernet'.length);
+  if (s.startsWith('ethernet')) return 'e' + s.slice('ethernet'.length);
+  if (s.startsWith('port-channel')) return 'po' + s.slice('port-channel'.length);
+  // already short (gi0/0, fa0/1, wlan0, vlan1 …)
+  return s;
+}
+
+/**
  * Interface - Enter interface configuration
  */
 function cmdInterface(state: any, input: string, ctx: any): any {
@@ -220,11 +236,33 @@ function cmdInterface(state: any, input: string, ctx: any): any {
     };
   }
 
+  // Normalize port name to match state.ports keys (e.g. "GigabitEthernet0/0" -> "gi0/0")
+  const normalizedIface = normalizeInterfaceName(match[1]);
+
+  // Auto-create port entry if it doesn't exist (router ports entered via CLI)
+  const newPorts = { ...state.ports };
+  if (!newPorts[normalizedIface]) {
+    const isGig = normalizedIface.startsWith('gi');
+    const isFa = normalizedIface.startsWith('fa');
+    newPorts[normalizedIface] = {
+      id: normalizedIface,
+      name: '',
+      status: 'notconnect',
+      vlan: 1,
+      mode: 'routed',
+      duplex: 'auto',
+      speed: 'auto',
+      shutdown: true,
+      type: isGig ? 'gigabitethernet' : isFa ? 'fastethernet' : 'fastethernet',
+    };
+  }
+
   return {
     success: true,
     newState: {
+      ports: newPorts,
       currentMode: 'interface',
-      currentInterface: match[1]
+      currentInterface: normalizedIface
     }
   };
 }
