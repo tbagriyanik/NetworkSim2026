@@ -151,7 +151,9 @@ export function useDeviceManager() {
           macAddress: existingState?.macAddress || baseState.macAddress,
           switchModel: switchModel as any,
           switchLayer: baseState.switchLayer,
-          version: existingState?.version || baseState.version
+          version: existingState?.version || baseState.version,
+          flashFiles: existingState?.flashFiles || {},
+          flashStartupConfigs: existingState?.flashStartupConfigs || {}
         };
 
         const restoredState = startupConfig
@@ -161,6 +163,8 @@ export function useDeviceManager() {
         const reloadedState: SwitchState = {
           ...restoredState,
           startupConfig,
+          flashFiles: existingState?.flashFiles || {},
+          flashStartupConfigs: existingState?.flashStartupConfigs || {},
           currentMode: 'user',
           currentInterface: undefined,
           selectedInterfaces: undefined,
@@ -542,6 +546,72 @@ export function useDeviceManager() {
             variant: "default"
           });
         }
+        if ((result as any).saveFlashConfig) {
+          const flashFilename = ((result as any).flashFilename || 'running-config').trim();
+          setDeviceStates(prev => {
+            const next = new Map(prev);
+            const current = next.get(deviceId);
+            if (current) {
+              const flashFiles = { ...(current.flashFiles || {}) };
+              const flashStartupConfigs = { ...(current.flashStartupConfigs || {}) };
+              flashFiles[flashFilename] = buildRunningConfig(current);
+              flashStartupConfigs[flashFilename] = buildStartupConfig(current);
+              next.set(deviceId, { ...current, flashFiles, flashStartupConfigs });
+            }
+            return next;
+          });
+
+          const device = topologyDevices?.find(d => d.id === deviceId);
+          const deviceName = device?.name || deviceId;
+          const timestamp = new Date().toLocaleString();
+
+          toast({
+            title: language === 'tr' ? 'Flash Kaydı Tamamlandı' : 'Flash Save Complete',
+            description: language === 'tr'
+              ? `${deviceName} - running-config → flash:${flashFilename} (${timestamp})`
+              : `${deviceName} - running-config → flash:${flashFilename} (${timestamp})`,
+            variant: "default"
+          });
+        }
+        if ((result as any).restoreFlashConfig) {
+          const sourceFilename = ((result as any).flashSourceFilename || 'running-config').trim();
+          const currentState = deviceStates.get(deviceId);
+          const startupFromFlash = currentState?.flashStartupConfigs?.[sourceFilename];
+          const restored = !!(currentState && startupFromFlash);
+
+          if (restored) {
+            setDeviceStates(prev => {
+              const next = new Map(prev);
+              const current = next.get(deviceId);
+              if (current && startupFromFlash) {
+                next.set(deviceId, { ...current, startupConfig: startupFromFlash });
+              }
+              return next;
+            });
+          }
+
+          const device = topologyDevices?.find(d => d.id === deviceId);
+          const deviceName = device?.name || deviceId;
+          const timestamp = new Date().toLocaleString();
+
+          if (restored) {
+            toast({
+              title: language === 'tr' ? 'Flash Geri Yükleme Tamamlandı' : 'Flash Restore Complete',
+              description: language === 'tr'
+                ? `${deviceName} - flash:${sourceFilename} → startup-config (${timestamp})`
+                : `${deviceName} - flash:${sourceFilename} → startup-config (${timestamp})`,
+              variant: "default"
+            });
+          } else {
+            toast({
+              title: language === 'tr' ? 'Flash Dosyası Bulunamadı' : 'Flash File Not Found',
+              description: language === 'tr'
+                ? `${deviceName} üzerinde flash:${sourceFilename} bulunamadı`
+                : `flash:${sourceFilename} was not found on ${deviceName}`,
+              variant: "destructive"
+            });
+          }
+        }
         if ((result as any).eraseConfig) {
           setDeviceStates(prev => {
             const next = new Map(prev);
@@ -582,7 +652,9 @@ export function useDeviceManager() {
             ...baseState,
             hostname: hasStartupConfig ? deviceState.hostname : baseState.hostname,
             macAddress: deviceState.macAddress,
-            version: deviceState.version
+            version: deviceState.version,
+            flashFiles: deviceState.flashFiles || {},
+            flashStartupConfigs: deviceState.flashStartupConfigs || {}
           };
           const appliedState = hasStartupConfig
             ? applyStartupConfig(baseIdentityState, startupConfig)
@@ -590,6 +662,8 @@ export function useDeviceManager() {
           const reloadedState = {
             ...appliedState,
             startupConfig: deviceState.startupConfig,
+            flashFiles: deviceState.flashFiles || {},
+            flashStartupConfigs: deviceState.flashStartupConfigs || {},
             currentMode: 'user' as const,
             currentInterface: undefined,
             selectedInterfaces: undefined,

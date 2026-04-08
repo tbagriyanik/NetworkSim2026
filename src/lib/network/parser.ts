@@ -1482,6 +1482,12 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'copy running-config flash': {
+    pattern: /^cop[y]*\s+run[ning\-config]*\s+flash:(\S+)?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
   'copy running-config tftp': {
     pattern: /^copy\s+running-config\s+tftp$/i,
     modes: ['privileged'],
@@ -1499,6 +1505,12 @@ export const commandPatterns: Record<string, CommandPattern> = {
     modes: ['privileged'],
     minArgs: 0,
     maxArgs: 0
+  },
+  'copy flash startup-config': {
+    pattern: /^copy\s+flash:(\S+)?\s+startup-config$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
   },
   'erase startup-config': {
     pattern: /^erase\s+startup-config$/i,

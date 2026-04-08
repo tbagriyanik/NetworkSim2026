@@ -140,6 +140,8 @@ export interface SwitchState {
   ipv6Enabled?: boolean;
   ipRouting: boolean;
   startupConfig?: StartupConfig;
+  flashFiles?: Record<string, string[]>;
+  flashStartupConfigs?: Record<string, StartupConfig>;
   // New routing fields
   isLayer3Switch?: boolean;        // L3 switch capability
   staticRoutes?: Route[];          // Static routing table
@@ -215,6 +217,10 @@ export interface CommandResult {
   requiresReloadConfirm?: boolean;   // Reload sonrası Enter ile onay gerekiyor mu?
   telnetTarget?: string;             // Telnet bağlantı hedef IP
   reloadDevice?: boolean;            // Cihazı sıfırla
+  saveFlashConfig?: boolean;         // running-config'i flash'a kaydet
+  flashFilename?: string;            // flash dosya adı (örn: running-config)
+  restoreFlashConfig?: boolean;      // flash'tan startup-config'e geri yükle
+  flashSourceFilename?: string;      // kaynak flash dosya adı
 }
 
 export interface ParsedCommand {

@@ -785,11 +785,40 @@ function cmdShowFlash(
 ): any {
   const { bootImage } = getSwitchDisplayProfile(state);
   let output = '\n-#- --length-- -----date/time------ path\n';
-  output += '1     616      Mar 01 2024 00:00:00 +00:00  vlan.dat\n';
-  output += '2     1599     Mar 01 2024 00:00:00 +00:00  config.text\n';
-  output += '3     1464     Mar 01 2024 00:00:00 +00:00  private-config.text\n';
-  output += `4     3024     Mar 01 2024 00:00:00 +00:00  ${bootImage}\n`;
-  output += '\n32505856 bytes available (29720576 bytes used)\n';
+  const staticFiles = [
+    { name: 'vlan.dat', length: 616 },
+    { name: 'config.text', length: 1599 },
+    { name: 'private-config.text', length: 1464 },
+    { name: bootImage, length: 3024 },
+  ];
+
+  const flashBackups: Array<{ name: string; length: number }> = Object.entries(state.flashFiles || {}).map(
+    ([name, lines]: [string, string[]]) => ({
+      name,
+      length: Array.isArray(lines) ? lines.join('\n').length : 0,
+    })
+  );
+
+  const now = new Date();
+  const dateText = now.toLocaleString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).replace(',', '');
+
+  const files = [...staticFiles, ...flashBackups];
+  files.forEach((file, idx) => {
+    output += `${String(idx + 1).padEnd(5)} ${String(file.length).padEnd(8)} ${dateText} +00:00  ${file.name}\n`;
+  });
+
+  const usedBytes = files.reduce((sum, f) => sum + f.length, 0);
+  const totalBytes = 32505856;
+  const availableBytes = Math.max(0, totalBytes - usedBytes);
+  output += `\n${availableBytes} bytes available (${usedBytes} bytes used)\n`;
 
   return { success: true, output };
 }

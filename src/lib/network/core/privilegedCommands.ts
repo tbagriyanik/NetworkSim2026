@@ -12,6 +12,8 @@ export const privilegedHandlers: Record<string, CommandHandler> = {
     'tracert': cmdTracert,
     'write memory': cmdWriteMemory,
     'copy running-config startup-config': cmdCopyRunningStartup,
+    'copy running-config flash': cmdCopyRunningFlash,
+    'copy flash startup-config': cmdCopyFlashStartup,
     'erase startup-config': cmdEraseStartupConfig,
     'erase nvram': cmdEraseNvram,
     'reload': cmdReload,
@@ -212,6 +214,70 @@ function cmdCopyRunningStartup(state: any, input: string, ctx: any): any {
         success: true,
         output: 'Destination filename [startup-config]?\nBuilding configuration...\n[OK]\n',
         saveConfig: true
+    };
+}
+
+/**
+ * Copy Running-Config Flash:
+ */
+function cmdCopyRunningFlash(state: any, input: string, ctx: any): any {
+    if (state.currentMode !== 'privileged') {
+        return { success: false, error: '% Invalid command at this mode' };
+    }
+
+    const match = input.match(/^copy\s+running-config\s+flash:(\S+)?$/i);
+    if (!match) {
+        return { success: false, error: '% Invalid copy command. Use: copy running-config flash:[:filename]' };
+    }
+
+    const requestedFilename = (match[1] || '').trim();
+    const filename = requestedFilename || 'running-config';
+
+    return {
+        success: true,
+        output: `Destination filename [${filename}]?\nBuilding configuration...\n[OK]\n`,
+        saveFlashConfig: true,
+        flashFilename: filename
+    };
+}
+
+/**
+ * Copy Flash: Startup-Config
+ */
+function cmdCopyFlashStartup(state: any, input: string, ctx: any): any {
+    if (state.currentMode !== 'privileged') {
+        return { success: false, error: '% Invalid command at this mode' };
+    }
+
+    const match = input.match(/^copy\s+flash:(\S+)?\s+startup-config$/i);
+    if (!match) {
+        return { success: false, error: '% Invalid copy command. Use: copy flash:[:filename] startup-config' };
+    }
+
+    const requestedFilename = (match[1] || '').trim();
+    const sourceFilename = requestedFilename || 'running-config';
+    const hasSnapshot = !!state.flashStartupConfigs?.[sourceFilename];
+    const hasLegacyTextBackup = !!state.flashFiles?.[sourceFilename];
+
+    if (!hasSnapshot && hasLegacyTextBackup) {
+        return {
+            success: false,
+            error: `%Error: flash:${sourceFilename} is legacy backup format. Re-save with "copy running-config flash:${sourceFilename}" and try again.`
+        };
+    }
+
+    if (!hasSnapshot) {
+        return {
+            success: false,
+            error: `%Error: flash:${sourceFilename} not found`
+        };
+    }
+
+    return {
+        success: true,
+        output: `Loading flash:${sourceFilename} to startup-config...\n[OK]\nStartup config updated. Reload required to apply.\n`,
+        restoreFlashConfig: true,
+        flashSourceFilename: sourceFilename
     };
 }
 
