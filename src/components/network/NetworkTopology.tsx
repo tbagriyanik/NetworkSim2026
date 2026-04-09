@@ -23,7 +23,7 @@ interface NetworkTopologyProps {
   cableInfo: CableInfo;
   onCableChange: (cableInfo: CableInfo) => void;
   selectedDevice: DeviceType | null;
-  onDeviceSelect: (device: DeviceType, deviceId?: string, switchModel?: string) => void;
+  onDeviceSelect: (device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string) => void;
   onDeviceDoubleClick?: (device: DeviceType, deviceId: string) => void;
   onTopologyChange?: (devices: CanvasDevice[], connections: CanvasConnection[], notes: CanvasNote[]) => void;
   onDeviceDelete?: (deviceId: string) => void;
@@ -1282,7 +1282,7 @@ export function NetworkTopology({
         const device = latestDevicesRef.current.find(d => d.id === currentTouchDraggedDevice.id);
         if (device) {
           setSelectedDeviceIds([device.id]);
-          onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
+          onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined, device.name);
         }
       }
 
@@ -1357,7 +1357,7 @@ export function NetworkTopology({
         // Update parent component with the first selected device
         const firstSelectedDevice = devices.find(d => d.id === newSelectedIds[0]);
         if (firstSelectedDevice && newSelectedIds.length > 0) {
-          onDeviceSelect(firstSelectedDevice.type === 'router' ? 'router' : firstSelectedDevice.type, newSelectedIds[0]);
+          onDeviceSelect(firstSelectedDevice.type === 'router' ? 'router' : firstSelectedDevice.type, newSelectedIds[0], undefined, firstSelectedDevice.name);
         }
 
         return newSelectedIds;
@@ -1378,7 +1378,7 @@ export function NetworkTopology({
         newSelectedIds = [deviceId];
         setSelectedDeviceIds(newSelectedIds);
         selectedDeviceIdsRef.current = newSelectedIds;
-        onDeviceSelect(device.type, deviceId, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
+        onDeviceSelect(device.type, deviceId, isSwitchDeviceType(device.type) ? device.switchModel : undefined, device.name);
       } else {
         newSelectedIds = selectedDeviceIds;
         selectedDeviceIdsRef.current = selectedDeviceIds;
@@ -1444,7 +1444,7 @@ export function NetworkTopology({
     setSelectedDeviceIds([device.id]);
     selectedDeviceIdsRef.current = [device.id];
     // Notify parent component - select device, don't open terminal
-    onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
+    onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined, device.name);
     // Focus canvas for keyboard navigation
     canvasRef.current?.focus();
   }, [onDeviceSelect, pingMode, pingSource, devices, connections, deviceStates, isSwitchDeviceType]);
@@ -1457,9 +1457,9 @@ export function NetworkTopology({
     } else {
       // Fallback to old behavior
       if (device.type === 'pc') {
-        onDeviceSelect('pc', device.id);
+        onDeviceSelect('pc', device.id, undefined, device.name);
       } else if (isSwitchDeviceType(device.type) || device.type === 'router') {
-        onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined);
+        onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined, device.name);
       }
     }
   }, [onDeviceDoubleClick, onDeviceSelect]);
@@ -1575,7 +1575,7 @@ export function NetworkTopology({
     if (touchDraggedDevice && !isTouchDragging) {
       // touchDraggedDevice is already CanvasDevice, no need to find again
       setSelectedDeviceIds([touchDraggedDevice.id]);
-      onDeviceSelect(touchDraggedDevice.type, touchDraggedDevice.id, isSwitchDeviceType(touchDraggedDevice.type) ? touchDraggedDevice.switchModel : undefined);
+      onDeviceSelect(touchDraggedDevice.type, touchDraggedDevice.id, isSwitchDeviceType(touchDraggedDevice.type) ? touchDraggedDevice.switchModel : undefined, touchDraggedDevice.name);
     }
 
     setTouchDraggedDevice(null);
@@ -1939,13 +1939,40 @@ export function NetworkTopology({
   }, [devices, isDrawingConnection, connectionStart, cableInfo, onCableChange, saveToHistory]);
 
   // generate an unused IP within 192.168.1.x (skip existing addresses)
-  const generateUniqueIp = useCallback(() => {
+  const generateUniqueIp = useCallback((reservedIps: string[] = []) => {
+    const usedIps = new Set([
+      ...devices.map((d) => d.ip).filter(Boolean),
+      ...reservedIps.filter(Boolean),
+    ]);
     let suffix = 100;
-    while (devices.some(d => d.ip === `192.168.1.${suffix}`) || suffix === 1 || suffix === 10) {
+    while (usedIps.has(`192.168.1.${suffix}`) || suffix === 1 || suffix === 10) {
       suffix++;
     }
     return `192.168.1.${suffix}`;
   }, [devices]);
+
+  const generateUniqueHostname = useCallback((baseName: string, reservedNames: string[] = []) => {
+    const normalize = (value: string) => value.trim().toLowerCase();
+    const usedNames = new Set<string>();
+
+    devices.forEach((d) => usedNames.add(normalize(d.name)));
+    deviceStates?.forEach((state) => {
+      if (state?.hostname) {
+        usedNames.add(normalize(state.hostname));
+      }
+    });
+    reservedNames.forEach((name) => usedNames.add(normalize(name)));
+
+    if (!usedNames.has(normalize(baseName))) return baseName;
+
+    let suffix = 2;
+    let candidate = `${baseName}-${suffix}`;
+    while (usedNames.has(normalize(candidate))) {
+      suffix++;
+      candidate = `${baseName}-${suffix}`;
+    }
+    return candidate;
+  }, [devices, deviceStates]);
 
   // Add device from palette button
   const addDevice = useCallback((type: 'pc' | 'switch' | 'router', layer?: 'L2' | 'L3') => {
@@ -1964,10 +1991,15 @@ export function NetworkTopology({
       ? (switchLayer === 'L3' ? 'switchL3' : 'switchL2')
       : type;
 
+    const baseName =
+      type === 'switch' && switchLayer === 'L3'
+        ? `Switch-${deviceCounterRef.current[type]}`
+        : `${type.toUpperCase()}-${deviceCounterRef.current[type]}`;
+
     const newDevice: CanvasDevice = {
       id: `${type}-${deviceCounterRef.current[type]}`,
       type: resolvedType,
-      name: type === 'switch' && switchLayer === 'L3' ? `Switch-${deviceCounterRef.current[type]}` : `${type.toUpperCase()}-${deviceCounterRef.current[type]}`,
+      name: generateUniqueHostname(baseName),
       macAddress: generateMacAddress(),
       ip: type === 'pc' ? generateUniqueIp() : '',
       // Position near top-left with staggered layout
@@ -1988,9 +2020,9 @@ export function NetworkTopology({
     setDevices((prev) => [...prev, newDevice]);
     setSelectedDeviceIds([newDevice.id]);
     // Pass the switchModel directly to avoid race condition
-    onDeviceSelect(resolvedType, newDevice.id, newDevice.switchModel);
+    onDeviceSelect(resolvedType, newDevice.id, newDevice.switchModel, newDevice.name);
 
-  }, [devices.length, saveToHistory, generateUniqueIp, onDeviceSelect]);
+  }, [devices.length, saveToHistory, generateUniqueHostname, generateUniqueIp, onDeviceSelect]);
 
   // Note management functions
   const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
@@ -2728,6 +2760,8 @@ export function NetworkTopology({
     saveToHistory();
 
     const newDevices: CanvasDevice[] = [];
+    const reservedIps: string[] = [];
+    const reservedHostnames: string[] = [];
 
     clipboard.forEach(device => {
       const type = device.type;
@@ -2735,11 +2769,19 @@ export function NetworkTopology({
       deviceCounterRef.current[counterKey]++;
       const newId = `${type}-${deviceCounterRef.current[counterKey]}`;
 
+      const baseName = `${type.toUpperCase()}-${deviceCounterRef.current[counterKey]}`;
+      const hostname = generateUniqueHostname(baseName, reservedHostnames);
+      const generatedIp = type === 'pc' ? generateUniqueIp(reservedIps) : '';
+      if (generatedIp) {
+        reservedIps.push(generatedIp);
+      }
+      reservedHostnames.push(hostname);
+
       newDevices.push({
         ...device,
         id: newId,
-        name: `${type.toUpperCase()}-${deviceCounterRef.current[counterKey]}`,
-        ip: type === 'pc' ? generateUniqueIp() : '',
+        name: hostname,
+        ip: generatedIp,
         x: device.x + 30,
         y: device.y + 30,
         ports: device.ports.map(p => ({ ...p, status: 'disconnected' as const })),
@@ -2748,7 +2790,7 @@ export function NetworkTopology({
 
     setDevices(prev => [...prev, ...newDevices]);
     setContextMenu(null);
-  }, [clipboard, saveToHistory, generateUniqueIp, getCounterKey]);
+  }, [clipboard, saveToHistory, generateUniqueHostname, generateUniqueIp, getCounterKey]);
 
   // Paste notes
   const pasteNotes = useCallback((x: number, y: number) => {
@@ -2786,7 +2828,7 @@ export function NetworkTopology({
             const firstId = selectedDeviceIds[0];
             const firstDevice = devices.find(d => d.id === firstId);
             setSelectedDeviceIds([firstId]);
-            if (firstDevice) onDeviceSelect(firstDevice.type === 'router' ? 'router' : firstDevice.type, firstId);
+            if (firstDevice) onDeviceSelect(firstDevice.type === 'router' ? 'router' : firstDevice.type, firstId, undefined, firstDevice.name);
           }
         }
       }
@@ -4961,7 +5003,7 @@ export function NetworkTopology({
                       const firstId = selectedDeviceIds[0];
                       const firstDevice = devices.find(d => d.id === firstId);
                       setSelectedDeviceIds(firstId ? [firstId] : []);
-                      if (firstDevice) onDeviceSelect(firstDevice.type === 'router' ? 'router' : firstDevice.type, firstId);
+                      if (firstDevice) onDeviceSelect(firstDevice.type === 'router' ? 'router' : firstDevice.type, firstId, undefined, firstDevice.name);
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
                   >

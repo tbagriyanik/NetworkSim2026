@@ -1043,14 +1043,8 @@ export default function Home() {
   useEffect(() => {
     const currentTabDef = ALL_TABS.find(t => t.id === activeTab);
     if (currentTabDef && !currentTabDef.showFor.includes(activeDeviceType)) {
-      // Current tab is not supported by new device type
-      if (activeDeviceType === 'pc') {
-        setActiveTabWithHistory('cmd');
-      } else if (isSwitchDeviceType(activeDeviceType) || activeDeviceType === 'router') {
-        setActiveTabWithHistory('terminal');
-      } else {
-        setActiveTabWithHistory('topology');
-      }
+      // Keep current tab when possible; otherwise fallback to topology
+      setActiveTabWithHistory('topology');
     }
   }, [activeDeviceType, activeTab]);
 
@@ -1121,50 +1115,61 @@ export default function Home() {
     setActiveTab(isCompatible ? tabId : 'topology');
   }, [activeDeviceId, activeDeviceType, topologyDevices, setActiveTab]);
 
-  const pendingDeviceSelectionRef = useRef<{ device: DeviceType; deviceId: string; switchModel?: string } | null>(null);
+  const pendingDeviceSelectionRef = useRef<{ device: DeviceType; deviceId: string; switchModel?: string; deviceName?: string } | null>(null);
 
-  const applyDeviceSelection = useCallback((device: DeviceType, deviceId?: string, switchModel?: string) => {
+  const applyDeviceSelection = useCallback((device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string) => {
     if (!deviceId) return;
 
     // Immediately create device state so sync effects have correct data
     if (device !== 'pc') {
       const deviceObj = topologyDevices?.find(d => d.id === deviceId);
       const modelToUse = switchModel || deviceObj?.switchModel;
-      const deviceState = getOrCreateDeviceState(deviceId, device, deviceObj?.name, deviceObj?.macAddress, modelToUse);
+      const initialHostname = deviceObj?.name || deviceName;
+      const deviceState = getOrCreateDeviceState(deviceId, device, initialHostname, deviceObj?.macAddress, modelToUse);
       getOrCreateDeviceOutputs(deviceId, deviceState);
     }
 
     // Schedule UI-only state updates outside render cycle
-    pendingDeviceSelectionRef.current = { device, deviceId, switchModel };
+    pendingDeviceSelectionRef.current = { device, deviceId, switchModel, deviceName };
     queueMicrotask(() => {
       const pending = pendingDeviceSelectionRef.current;
       if (!pending) return;
       pendingDeviceSelectionRef.current = null;
+
+      const currentTab = activeTabRef.current;
+      const currentTabDef = ALL_TABS.find(t => t.id === currentTab);
+      const nextTab: TabType =
+        currentTabDef && currentTabDef.showFor.includes(pending.device)
+          ? currentTab
+          : 'topology';
+
       setSelectedDevice(pending.device);
       setActiveDeviceId(pending.deviceId);
       setActiveDeviceType(pending.device);
+      if (nextTab !== currentTab) {
+        setActiveTabWithHistory(nextTab);
+      }
     });
-  }, [topologyDevices, getOrCreateDeviceState, getOrCreateDeviceOutputs, setSelectedDevice, setActiveDeviceId, setActiveDeviceType]);
+  }, [topologyDevices, getOrCreateDeviceState, getOrCreateDeviceOutputs, setSelectedDevice, setActiveDeviceId, setActiveDeviceType, setActiveTabWithHistory]);
 
   // Topology canvas click: selects device only (no zoom/pan).
-  const handleDeviceSelectFromCanvas = useCallback((device: DeviceType, deviceId?: string, switchModel?: string) => {
-    applyDeviceSelection(device, deviceId, switchModel);
+  const handleDeviceSelectFromCanvas = useCallback((device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string) => {
+    applyDeviceSelection(device, deviceId, switchModel, deviceName);
   }, [applyDeviceSelection]);
 
   // Device dropdown/menu click: focus the selected device at 100% zoom.
-  const handleDeviceSelectFromMenu = useCallback((device: DeviceType, deviceId?: string, switchModel?: string) => {
-    applyDeviceSelection(device, deviceId, switchModel);
+  const handleDeviceSelectFromMenu = useCallback((device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string) => {
+    applyDeviceSelection(device, deviceId, switchModel, deviceName);
     if (!deviceId) return;
 
-    switchTabOrTopology('topology');
-    if (topologyContainerRef.current) {
+    if (activeTab === 'topology' && topologyContainerRef.current) {
       resetTopologyView();
       focusDeviceInTopology(deviceId);
       pendingFocusDeviceRef.current = null;
-    } else {
+    } else if (activeTab === 'topology') {
       pendingFocusDeviceRef.current = deviceId;
     }
-  }, [applyDeviceSelection, focusDeviceInTopology, resetTopologyView, switchTabOrTopology]);
+  }, [activeTab, applyDeviceSelection, focusDeviceInTopology, resetTopologyView]);
 
   useLayoutEffect(() => {
     if (activeTab !== 'topology') return;
@@ -2941,7 +2946,7 @@ export default function Home() {
                             <DropdownMenuItem
                               key={device.id}
                               className={`flex items-center gap-2 py-1.5 cursor-pointer ${activeDeviceId === device.id ? 'bg-cyan-500/10 text-cyan-400' : ''}`}
-                              onClick={() => { handleDeviceSelectFromMenu(device.type, device.id); setDeviceSearchQuery(''); }}
+                              onClick={() => { handleDeviceSelectFromMenu(device.type, device.id, device.switchModel, device.name); setDeviceSearchQuery(''); }}
                             >
                               <div className="flex items-center gap-2 cursor-pointer">
                                 <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} />
