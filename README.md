@@ -441,7 +441,7 @@ Theme selection is done from the theme selector in the top right corner.
 
 - Scope: `src/`
 - Source files: `244`
-- Total lines: `69,377`
+- Total lines: `50,339`
 - CLI commands: `100+`
 - Last updated: `2026-04-09`
 

@@ -6,6 +6,7 @@ import dnsHttpExample from './examples/59-sayfa3-dns-http.json';
 import macExampleB from './examples/69-sayfa4-mac-tablosu.json';
 import ipConfigExample from './examples/76-sayfa1-ip-yapilandirma.json';
 import dhcpExample from './examples/87-sayfa6-dhcp.json';
+import trunk2SwitchExample from './examples/166-sayfa5uygulama-2switchTrunk.json';
 
 type ProjectData = {
   version: string;
@@ -89,6 +90,7 @@ const dnsHttpExampleData: ProjectData = ensureProjectData(dnsHttpExample);
 const macExampleBData: ProjectData = ensureProjectData(macExampleB);
 const ipConfigExampleData: ProjectData = ensureProjectData(ipConfigExample);
 const dhcpExampleData: ProjectData = ensureProjectData(dhcpExample);
+const trunk2SwitchData: ProjectData = ensureProjectData(trunk2SwitchExample);
 
 let exampleMacCounter = 0;
 const nextExampleMac = () => {
@@ -1139,6 +1141,19 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         : 'PC1/PC2 via DHCP, PC3 manual; verify with sh ip dhcp binding.',
       level: 'intermediate',
       data: dhcpExampleData
+    },
+    {
+      id: 'trunk-2switch',
+      tag: isTr ? 'TRUNK' : 'TRUNK',
+      title: isTr ? '2 Switch Trunk Uygulaması' : '2 Switch Trunk Application',
+      description: isTr
+        ? '2 switch, trunk bağlantı, VLAN 100/200 erişim portları.'
+        : '2 switches, trunk connection, VLAN 100/200 access ports.',
+      detail: isTr
+        ? 'SW-1: Fa0/1=VLAN100, Fa0/11=VLAN200, Gi0/1=trunk | SW-2: Fa0/1=VLAN100, Fa0/11=VLAN200, Gi0/1=trunk'
+        : 'SW-1: Fa0/1=VLAN100, Fa0/11=VLAN200, Gi0/1=trunk | SW-2: Fa0/1=VLAN100, Fa0/11=VLAN200, Gi0/1=trunk',
+      level: 'intermediate',
+      data: trunk2SwitchData
     }
   ];
 };
