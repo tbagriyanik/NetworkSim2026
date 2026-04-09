@@ -791,21 +791,41 @@ export function PCPanel({
   }, [activeTab, isConsoleConnected, connectedDeviceId, deviceStates]);
 
   const getAutocompleteSuggestions = useCallback((value: string) => {
+    const isIpv4 = (raw: string) => /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(raw);
+    const collectKnownIps = () => {
+      const fromDevices = (topologyDevices || [])
+        .map((d) => d.ip)
+        .filter((ip): ip is string => !!ip && isIpv4(ip) && ip !== '0.0.0.0' && ip !== '169.254.0.0');
+      const fromStates = Array.from(deviceStates?.values() || [])
+        .flatMap((s) => Object.values(s.ports || {}).map((p: any) => p?.ipAddress))
+        .filter((ip): ip is string => !!ip && isIpv4(ip) && ip !== '0.0.0.0' && ip !== '169.254.0.0');
+      return Array.from(new Set([...fromDevices, ...fromStates]));
+    };
+
+    const trimmed = value.trim();
+    const tokens = trimmed.split(/\s+/).filter(Boolean);
+    const currentWord = value.endsWith(' ') ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
+    const expectsIpArg = /^(?:telnet|ssh|ping|http|ip\s+default-gateway|default-router|dns-server)\s+\S*$/i.test(trimmed)
+      || /^(?:telnet|ssh|ping|http|ip\s+default-gateway|default-router|dns-server)\s*$/i.test(trimmed);
+
     if (activeTab === 'desktop') {
-      const tokens = value.trim().split(/\s+/).filter(Boolean);
-      const currentWord = value.endsWith(' ') ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
-      return DESKTOP_COMMANDS
+      const base = DESKTOP_COMMANDS
         .filter((cmd) => cmd !== '?' && cmd.startsWith(currentWord))
         .slice(0, 8);
+      if (!expectsIpArg) return base;
+      const ipSuggestions = collectKnownIps().filter((ip) => ip.toLowerCase().startsWith(currentWord));
+      return Array.from(new Set([...ipSuggestions, ...base])).slice(0, 8);
     }
 
     const mode = getCommandMode();
-    const { candidates, currentWord } = expandCommandContext(mode as any, value);
+    const { candidates, currentWord: ctxCurrentWord } = expandCommandContext(mode as any, value);
     const suggestions = candidates.filter(
-      opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord)
+      opt => opt !== '?' && opt.toLowerCase().startsWith(ctxCurrentWord)
     );
-    return suggestions.slice(0, 8);
-  }, [activeTab, getCommandMode]);
+    if (!expectsIpArg) return suggestions.slice(0, 8);
+    const ipSuggestions = collectKnownIps().filter((ip) => ip.toLowerCase().startsWith(ctxCurrentWord || currentWord));
+    return Array.from(new Set([...ipSuggestions, ...suggestions])).slice(0, 8);
+  }, [activeTab, getCommandMode, topologyDevices, deviceStates]);
 
   const renderAutocompleteSuggestions = useMemo(
     () => getAutocompleteSuggestions(input),
@@ -2059,6 +2079,56 @@ export function PCPanel({
   const handleTabComplete = useCallback(() => {
     const value = input;
     if (!value && tabCycleIndex === -1) return;
+
+    const isIpv4 = (raw: string) => /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(raw);
+    const trimmed = value.trim();
+    const hasTrailingSpace = /\s$/.test(value);
+
+    const ipAddressMatch = trimmed.match(/^ip\s+address\s+(\S+)(?:\s+(\S+))?$/i);
+    if (ipAddressMatch) {
+      const ip = ipAddressMatch[1];
+      const mask = ipAddressMatch[2];
+      if (isIpv4(ip) && !mask) {
+        setInput(`ip address ${ip} 255.255.255.0`);
+        setTabCycleIndex(-1);
+        return;
+      }
+      if (isIpv4(ip) && mask && isIpv4(mask) && !hasTrailingSpace) {
+        setInput(`${trimmed} `);
+        setTabCycleIndex(-1);
+        return;
+      }
+    }
+
+    const singleIpArgMatch = trimmed.match(/^(?:ip\s+default-gateway|ping|http|telnet|ssh)\s+(\S+)$/i);
+    if (singleIpArgMatch && isIpv4(singleIpArgMatch[1]) && !hasTrailingSpace) {
+      setInput(`${trimmed} `);
+      setTabCycleIndex(-1);
+      return;
+    }
+
+    const networkMatch = trimmed.match(/^network\s+(\S+)(?:\s+(\S+))?$/i);
+    if (networkMatch) {
+      const netIp = networkMatch[1];
+      const mask = networkMatch[2];
+      if (isIpv4(netIp) && !mask) {
+        setInput(`network ${netIp} 255.255.255.0`);
+        setTabCycleIndex(-1);
+        return;
+      }
+      if (isIpv4(netIp) && mask && isIpv4(mask) && !hasTrailingSpace) {
+        setInput(`${trimmed} `);
+        setTabCycleIndex(-1);
+        return;
+      }
+    }
+
+    const dhcpSingleIpArgMatch = trimmed.match(/^(?:default-router|dns-server)\s+(\S+)$/i);
+    if (dhcpSingleIpArgMatch && isIpv4(dhcpSingleIpArgMatch[1]) && !hasTrailingSpace) {
+      setInput(`${trimmed} `);
+      setTabCycleIndex(-1);
+      return;
+    }
 
     let matches: string[] = [];
     let contextTokens: string[] = [];

@@ -515,14 +515,10 @@ export function Terminal({
   }, [state.awaitingPassword, confirmDialog?.show, isReloadConfirmationPending]);
 
   useEffect(() => {
-    const hasPasswordPrompt = output.some(line => line.type === 'password-prompt')
-      || displayedLines.some(line => line.type === 'password-prompt');
-    if (state.awaitingPassword || hasPasswordPrompt) {
-      setLocalPasswordPrompt(true);
-    } else {
-      setLocalPasswordPrompt(false);
-    }
-  }, [state.awaitingPassword, output, displayedLines]);
+    // Keep password mode strictly tied to live device state.
+    // Old password-prompt lines can remain in output history and must not lock input.
+    setLocalPasswordPrompt(!!state.awaitingPassword);
+  }, [state.awaitingPassword]);
 
   const handleSubmit = async (cmdToExecute?: string) => {
     // Password mode: send whatever is typed (including empty) as password
@@ -602,6 +598,57 @@ export function Terminal({
   const handleTabComplete = useCallback(() => {
     const value = input;
     if (!value && tabCycleIndex === -1) return;
+
+    const isIpv4 = (raw: string) => /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(raw);
+    const trimmed = value.trim();
+    const hasTrailingSpace = /\s$/.test(value);
+
+    const ipAddressMatch = trimmed.match(/^ip\s+address\s+(\S+)(?:\s+(\S+))?$/i);
+    if (ipAddressMatch) {
+      const ip = ipAddressMatch[1];
+      const mask = ipAddressMatch[2];
+      if (isIpv4(ip) && !mask) {
+        setInput(`ip address ${ip} 255.255.255.0`);
+        setTabCycleIndex(-1);
+        return;
+      }
+      if (isIpv4(ip) && mask && isIpv4(mask) && !hasTrailingSpace) {
+        setInput(`${trimmed} `);
+        setTabCycleIndex(-1);
+        return;
+      }
+    }
+
+    const singleIpArgMatch = trimmed.match(/^(?:ip\s+default-gateway|ping|http|telnet|ssh)\s+(\S+)$/i);
+    if (singleIpArgMatch && isIpv4(singleIpArgMatch[1]) && !hasTrailingSpace) {
+      setInput(`${trimmed} `);
+      setTabCycleIndex(-1);
+      return;
+    }
+
+    const networkMatch = trimmed.match(/^network\s+(\S+)(?:\s+(\S+))?$/i);
+    if (networkMatch) {
+      const netIp = networkMatch[1];
+      const mask = networkMatch[2];
+      if (isIpv4(netIp) && !mask) {
+        setInput(`network ${netIp} 255.255.255.0`);
+        setTabCycleIndex(-1);
+        return;
+      }
+      if (isIpv4(netIp) && mask && isIpv4(mask) && !hasTrailingSpace) {
+        setInput(`${trimmed} `);
+        setTabCycleIndex(-1);
+        return;
+      }
+    }
+
+    const dhcpSingleIpArgMatch = trimmed.match(/^(?:default-router|dns-server)\s+(\S+)$/i);
+    if (dhcpSingleIpArgMatch && isIpv4(dhcpSingleIpArgMatch[1]) && !hasTrailingSpace) {
+      setInput(`${trimmed} `);
+      setTabCycleIndex(-1);
+      return;
+    }
+
     const { candidates, currentWord, contextTokens } = getAutocompleteContext(value);
     const matches = candidates.filter(
       opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord)
@@ -650,12 +697,34 @@ export function Terminal({
   }, [input, undoStack, redoStack]);
 
   const getAutocompleteSuggestions = useCallback((value: string) => {
+    const isIpv4 = (raw: string) => /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(raw);
+    const collectKnownIps = () => {
+      const fromDevices = (devices || [])
+        .map((d) => d.ip)
+        .filter((ip): ip is string => !!ip && isIpv4(ip) && ip !== '0.0.0.0' && ip !== '169.254.0.0');
+      const fromStates = Array.from(deviceStates?.values() || [])
+        .flatMap((s) => Object.values(s.ports || {}).map((p: any) => p?.ipAddress))
+        .filter((ip): ip is string => !!ip && isIpv4(ip) && ip !== '0.0.0.0' && ip !== '169.254.0.0');
+      return Array.from(new Set([...fromDevices, ...fromStates]));
+    };
+
     const { candidates, currentWord } = getAutocompleteContext(value);
-    const suggestions = candidates.filter(
+    const baseSuggestions = candidates.filter(
       opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord)
     );
-    return suggestions.slice(0, 8);
-  }, [getAutocompleteContext]);
+
+    const trimmed = value.trim();
+    const expectsIpArg = /^(?:telnet|ssh|ping|http|ip\s+default-gateway|default-router|dns-server)\s+\S*$/i.test(trimmed)
+      || /^(?:telnet|ssh|ping|http|ip\s+default-gateway|default-router|dns-server)\s*$/i.test(trimmed);
+
+    if (!expectsIpArg) {
+      return baseSuggestions.slice(0, 8);
+    }
+
+    const knownIps = collectKnownIps().filter((ip) => ip.toLowerCase().startsWith(currentWord));
+    const merged = Array.from(new Set([...knownIps, ...baseSuggestions]));
+    return merged.slice(0, 8);
+  }, [getAutocompleteContext, devices, deviceStates]);
 
   const renderAutocompleteSuggestions = useMemo(
     () => getAutocompleteSuggestions(input),
