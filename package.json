@@ -42,11 +42,14 @@
     "@types/node": "25.5.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.20",
     "eslint": "^9.7.0",
     "eslint-config-next": "^16.2.1",
     "jsdom": "^29.0.1",
+    "postcss": "^8.4.38",
     "shx": "^0.4.0",
     "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4.2.2",
     "typescript": "5.9.3",
     "vitest": "^4.1.1"
   }
