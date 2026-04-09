@@ -12,7 +12,7 @@ export type CommandMode =
   | 'dhcp-config';   // Router(dhcp-config)#
 
 export type PortStatus = 'connected' | 'notconnect' | 'disabled' | 'blocked';
-export type PortMode = 'access' | 'trunk' | 'routed';
+export type PortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
 export type DuplexMode = 'half' | 'full' | 'auto';
 export type SpeedMode = '10' | '100' | '1000' | 'auto';
 export type VoiceVlanMode = number | 'dot1p' | 'none' | 'untagged';

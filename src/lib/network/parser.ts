@@ -2122,7 +2122,7 @@ Mevcut komutlar:
   speed <10|100|1000|auto>  - Port hızı
   duplex <half|full|auto>   - Duplex ayarı
   description <metin>       - Port açıklaması
-  switchport mode <access|trunk> - Port modu
+  switchport mode <access|trunk|dynamic auto|dynamic desirable> - Port modu
   switchport access vlan <id>    - VLAN ata
   switchport trunk allowed vlan <list> - Trunk VLAN'ları
   switchport trunk native vlan <id> - Native VLAN
@@ -2166,7 +2166,7 @@ Mevcut komutlar (Çoklu Portlar):
   speed <10|100|1000|auto>  - Port hızı
   duplex <half|full|auto>   - Duplex ayarı
   description <metin>       - Port açıklaması
-  switchport mode <access|trunk> - Port modu
+  switchport mode <access|trunk|dynamic auto|dynamic desirable> - Port modu
   switchport access vlan <id>    - VLAN ata
   switchport trunk allowed vlan <list> - Trunk VLAN'ları
   switchport trunk native vlan <id> - Native VLAN
@@ -2334,7 +2334,7 @@ Available commands:
   speed <10|100|1000|auto>  - Port speed
   duplex <half|full|auto>   - Duplex setting
   description <text>        - Port description
-  switchport mode <access|trunk> - Port mode
+  switchport mode <access|trunk|dynamic auto|dynamic desirable> - Port mode
   switchport access vlan <id>    - Assign VLAN
   switchport trunk allowed vlan <list> - Trunk VLANs
   switchport trunk native vlan <id> - Native VLAN
@@ -2378,7 +2378,7 @@ Available commands (Multiple Ports):
   speed <10|100|1000|auto>  - Port speed
   duplex <half|full|auto>   - Duplex setting
   description <text>        - Port description
-  switchport mode <access|trunk> - Port mode
+  switchport mode <access|trunk|dynamic auto|dynamic desirable> - Port mode
   switchport access vlan <id>    - Assign VLAN
   switchport trunk allowed vlan <list> - Trunk VLANs
   switchport trunk native vlan <id> - Native VLAN

@@ -6,7 +6,7 @@ A modern and interactive web-based Network simulator designed for students and n
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016%20|%20React%2019%20|%20TypeScript%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Commits](https://img.shields.io/badge/commits-365+-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-68k+-blueviolet)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-69k+-blueviolet)
 
 ## ✨ Key Features
 
@@ -127,6 +127,8 @@ The simulator supports **100+ commands** across multiple configuration modes:
 | `no description` | Clear description |
 | `switchport mode access` | Set access mode |
 | `switchport mode trunk` | Set trunk mode |
+| `switchport mode dynamic auto` | Set DTP dynamic auto mode |
+| `switchport mode dynamic desirable` | Set DTP dynamic desirable mode |
 | `no switchport mode` | Reset switchport mode |
 | `switchport access vlan <id>` | Assign VLAN |
 | `no switchport access vlan` | Remove VLAN assignment |
@@ -439,9 +441,9 @@ Theme selection is done from the theme selector in the top right corner.
 
 - Scope: `src/`
 - Source files: `244`
-- Total lines: `68,068`
+- Total lines: `69,377`
 - CLI commands: `100+`
-- Last updated: `2026-04-08`
+- Last updated: `2026-04-09`
 
 ## 🐛 Troubleshooting
 
@@ -512,7 +514,7 @@ Sorular veya öneriler için lütfen issue açın. / For questions or suggestion
 ---
 
 **Sürüm**: 1.2.2  
-**Son Güncelleme**: 2026-04-08  
+**Son Güncelleme**: 2026-04-09  
 **Durum**: Production Ready ✅
 
 ---
@@ -521,5 +523,5 @@ Sorular veya öneriler için lütfen issue açın. / For questions or suggestion
 GitHub üzerinden katkıda bulunabilirsiniz: [github.com/tbagriyanik/ciscosim](https://github.com/tbagriyanik/ciscosim)
 
 **Sürüm**: 1.2.2  
-**Son Güncelleme**: 2026-04-08  
+**Son Güncelleme**: 2026-04-09  
 **Durum**: Production Ready ✅

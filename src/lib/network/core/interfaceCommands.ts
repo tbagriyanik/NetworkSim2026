@@ -33,6 +33,7 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'speed': cmdSpeed,
   'duplex': cmdDuplex,
   'description': cmdDescription,
+  'switchport mode': cmdSwitchportMode,
   'switchport mode access': cmdSwitchportModeAccess,
   'switchport mode trunk': cmdSwitchportModeTrunk,
   'switchport access vlan': cmdSwitchportAccessVlan,
@@ -373,15 +374,22 @@ function cmdNoSwitchport(state: any, input: string, ctx: any): any {
 }
 
 /**
- * Switchport Mode Access
+ * Switchport Mode - access | trunk | dynamic auto | dynamic desirable | dot1q-tunnel
  */
-function cmdSwitchportModeAccess(state: any, input: string, ctx: any): any {
+function cmdSwitchportMode(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, mode: 'access' }));
+  const match = input.match(/^switchport\s+mode\s+(access|trunk|dynamic\s+auto|dynamic\s+desirable|dot1q-tunnel)$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid switchport mode' };
+  }
 
+  const requestedMode = match[1].toLowerCase().replace(/\s+/g, '-');
+  const normalizedMode = requestedMode as 'access' | 'trunk' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
+
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, mode: normalizedMode }));
   return {
     success: true,
     newState: { ports: newPorts }
@@ -389,19 +397,17 @@ function cmdSwitchportModeAccess(state: any, input: string, ctx: any): any {
 }
 
 /**
+ * Switchport Mode Access
+ */
+function cmdSwitchportModeAccess(state: any, input: string, ctx: any): any {
+  return cmdSwitchportMode(state, 'switchport mode access', ctx);
+}
+
+/**
  * Switchport Mode Trunk
  */
 function cmdSwitchportModeTrunk(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
-  }
-
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, mode: 'trunk' }));
-
-  return {
-    success: true,
-    newState: { ports: newPorts }
-  };
+  return cmdSwitchportMode(state, 'switchport mode trunk', ctx);
 }
 
 /**
@@ -1006,7 +1012,7 @@ function cmdNoSwitchportMode(state: any, input: string, ctx: any): any {
 
   const newPorts = applyToSelectedPorts(state, (port: any) => ({
     ...port,
-    switchportMode: 'auto'
+    mode: 'access'
   }));
 
   return { success: true, newState: { ports: newPorts } };

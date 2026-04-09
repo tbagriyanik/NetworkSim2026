@@ -146,6 +146,15 @@ function cmdShowRunningConfig(
         }
         if (port.mode === 'trunk') {
           output += ` switchport mode trunk\n`;
+        } else if (port.mode === 'dynamic-auto') {
+          output += ` switchport mode dynamic auto\n`;
+        } else if (port.mode === 'dynamic-desirable') {
+          output += ` switchport mode dynamic desirable\n`;
+        } else if (port.mode === 'dot1q-tunnel') {
+          output += ` switchport mode dot1q-tunnel\n`;
+        }
+
+        if (port.mode === 'trunk') {
           if (port.trunkAllowedVlans && port.trunkAllowedVlans !== '1-4094') {
             output += ` switchport trunk allowed vlan ${port.trunkAllowedVlans}\n`;
           }
@@ -285,6 +294,12 @@ function cmdShowStartupConfig(
       if (port.allowedVlans) {
         output += ` switchport trunk allowed vlan ${port.allowedVlans}\n`;
       }
+    } else if (port.mode === 'dynamic-auto') {
+      output += ' switchport mode dynamic auto\n';
+    } else if (port.mode === 'dynamic-desirable') {
+      output += ' switchport mode dynamic desirable\n';
+    } else if (port.mode === 'dot1q-tunnel') {
+      output += ' switchport mode dot1q-tunnel\n';
     } else {
       output += ` switchport access vlan ${port.accessVlan || 1}\n`;
     }

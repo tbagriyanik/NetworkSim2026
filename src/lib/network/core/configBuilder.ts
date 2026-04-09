@@ -132,6 +132,12 @@ export function buildRunningConfig(state: SwitchState): string[] {
             }
             if (port.mode === 'trunk') {
                 lines.push(' switchport mode trunk');
+            } else if (port.mode === 'dynamic-auto') {
+                lines.push(' switchport mode dynamic auto');
+            } else if (port.mode === 'dynamic-desirable') {
+                lines.push(' switchport mode dynamic desirable');
+            } else if (port.mode === 'dot1q-tunnel') {
+                lines.push(' switchport mode dot1q-tunnel');
             } else if (port.mode === 'access') {
                 lines.push(' switchport mode access');
                 const vlanId = Number((port as any).accessVlan || port.vlan || 1);

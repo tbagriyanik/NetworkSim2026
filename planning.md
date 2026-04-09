@@ -12,7 +12,7 @@ Bu belge, projenin mevcut durumunu dürüst biçimde özetler. Amaç, "tamamland
 Proje tamamlanmış durumda:
 - `next build` başarılı ✅
 - TypeScript derlemesi temiz ✅
-- **67,068 satır kod** (.ts/.tsx) - toplam proje kodu
+- **69,377 satır kod** (.ts/.tsx) - toplam proje kodu
 - **100+ CLI komutu** destekleniyor
 - Tüm CLI komutları çalışır durumda
 - Tablet UI, WiFi (sinyal gücü göstergesi), Ping animasyonları (gerçekçi gecikmeler), Notes sistemi aktif
@@ -94,6 +94,8 @@ Proje tamamlanmış durumda:
 | `description <metin>` | Açıklama ekle |
 | `switchport mode access` | Erişim modu |
 | `switchport mode trunk` | Trunk modu |
+| `switchport mode dynamic auto` | DTP dynamic auto modu |
+| `switchport mode dynamic desirable` | DTP dynamic desirable modu |
 | `switchport access vlan <id>` | VLAN ata |
 | `switchport trunk native vlan <id>` | Yerel VLAN |
 | `switchport trunk allowed vlan <liste>` | İzin verilen VLANlar |
@@ -182,6 +184,16 @@ Proje tamamlanmış durumda:
 ---
 
 ## Tamamlananlar
+
+### 2026-04-09 – Sekme Koruma, Cihaz Kimliği Benzersizliği ve Dynamic Switchport Modları
+- Cihaz menüsünden seçimde aktif sekme korunacak şekilde davranış düzeltildi.
+- Seçilen cihaz mevcut sekmeyi desteklemiyorsa fallback `topology` olacak şekilde sabitlendi.
+- PC terminal sekmesindeyken bir PC’den başka PC’ye geçişte terminal sekmesi korunuyor.
+- Yeni cihaz ekleme/yapıştırma akışlarında `hostname` benzersiz üretilecek şekilde güncellendi.
+- Yeni cihaz ekleme/yapıştırma akışlarında `ip` çakışmasını engelleyen üretim iyileştirildi.
+- Switch/Router yeni cihaz oluşturma sırasında topology adı ile CLI hostname senkronu güçlendirildi.
+- `switchport mode dynamic auto` ve `switchport mode dynamic desirable` komutları eklendi.
+- `show running-config` / `show startup-config` çıktılarında dynamic switchport modları gösterilmeye başlandı.
 
 ### 2026-04-08 – DHCP Pool CLI Desteği
 - `ip dhcp pool <ad>` komutu eklendi — `Router(dhcp-config)#` moduna giriş
@@ -293,5 +305,5 @@ Proje tamamlanmış durumda:
 - Dokümantasyon: Güncellendi ✅
 
 **Sürüm**: 1.2.2  
-**Son Güncelleme**: 2026-04-08  
+**Son Güncelleme**: 2026-04-09  
 **Durum**: Tamamlandı ✅

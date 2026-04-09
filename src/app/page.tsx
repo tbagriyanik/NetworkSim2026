@@ -2173,12 +2173,17 @@ export default function Home() {
           variant: 'default'
         });
       } else {
-        const dhcpSummary = language === 'tr'
-          ? `DHCP: ${dhcpServerActiveCount} sunucu aktif, ${dhcpClientWithLeaseCount} lease`
-          : `DHCP: ${dhcpServerActiveCount} active servers, ${dhcpClientWithLeaseCount} leases`;
+        const isDhcpMissing = dhcpServerActiveCount === 0 && dhcpClientWithLeaseCount === 0;
+        const dhcpSummary = isDhcpMissing
+          ? (language === 'tr' ? 'DHCP bulunamadı' : 'No DHCP found')
+          : (language === 'tr'
+            ? `DHCP: ${dhcpServerActiveCount} sunucu aktif, ${dhcpClientWithLeaseCount} lease`
+            : `DHCP: ${dhcpServerActiveCount} active servers, ${dhcpClientWithLeaseCount} leases`);
         toast({
           title: language === 'tr' ? '🔄 Ağ Yenilendi' : '🔄 Network Refreshed',
-          description: `${language === 'tr' ? 'WiFi cihazı bulunamadı' : 'No WiFi devices found'} • ${dhcpSummary}`,
+          description: isDhcpMissing
+            ? dhcpSummary
+            : `${language === 'tr' ? 'WiFi cihazı bulunamadı' : 'No WiFi devices found'} • ${dhcpSummary}`,
           variant: 'default'
         });
       }

@@ -1,7 +1,7 @@
 import { CableInfo, CableType, SwitchState } from '@/lib/network/types';
 
 export type DeviceType = 'pc' | 'switchL2' | 'switchL3' | 'router';
-export type CanvasPortMode = 'access' | 'trunk' | 'routed';
+export type CanvasPortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
 export type CanvasPortStatus = 'connected' | 'disconnected' | 'notconnect' | 'blocked' | 'disabled';
 
 export interface CanvasPort {
@@ -31,7 +31,7 @@ export interface NetworkTopologyProps {
   cableInfo: CableInfo;
   onCableChange: (cableInfo: CableInfo) => void;
   selectedDevice: 'pc' | 'switchL2' | 'switchL3' | 'router' | null;
-  onDeviceSelect: (device: 'pc' | 'switchL2' | 'switchL3' | 'router', deviceId?: string, switchModel?: string) => void;
+  onDeviceSelect: (device: 'pc' | 'switchL2' | 'switchL3' | 'router', deviceId?: string, switchModel?: string, deviceName?: string) => void;
   onDeviceDoubleClick?: (device: 'pc' | 'switchL2' | 'switchL3' | 'router', deviceId: string) => void;
   onTopologyChange?: (devices: CanvasDevice[], connections: CanvasConnection[], notes: CanvasNote[]) => void;
   onDeviceDelete?: (deviceId: string) => void;
