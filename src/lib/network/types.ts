@@ -105,6 +105,8 @@ export interface SwitchState {
   commandHistory: string[];
   historyIndex: number;
   bannerMOTD?: string;
+  bannerLogin?: string;
+  bannerExec?: string;
   version: {
     nosVersion: string;
     modelName: string;
@@ -187,6 +189,8 @@ export interface StartupConfig {
   vlans: Record<number, Vlan>;
   security: SecurityConfig;
   bannerMOTD?: string;
+  bannerLogin?: string;
+  bannerExec?: string;
   domainName?: string;
   defaultGateway?: string;
   dnsServer?: string;

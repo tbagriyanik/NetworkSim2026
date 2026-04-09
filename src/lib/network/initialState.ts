@@ -201,6 +201,8 @@ export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' 
     commandHistory: [],
     historyIndex: -1,
     bannerMOTD: 'Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.',
+    bannerLogin: undefined,
+    bannerExec: undefined,
     version: {
       nosVersion: '15.0(2)SE4',
       modelName: switchModel,

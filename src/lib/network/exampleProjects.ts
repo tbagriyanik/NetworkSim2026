@@ -869,8 +869,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'router-ssh-note',
       text: isTr
-        ? 'Router SSH Lab:\nR1 hazır SSH ayarlı.\nPC-1 CMD: ssh user@192.168.1.150\nŞifre: 1234\nKontrol: show ssh'
-        : 'Router SSH Lab:\nR1 is preconfigured for SSH.\nPC-1 CMD: ssh user@192.168.1.150\nPassword: 1234\nVerify: show ssh',
+        ? 'Router SSH Lab:\nR1 hazır SSH ayarlı.\nPC-1 CMD: ssh user@192.168.1.150\nŞifre: 1234\nKontrol: show ssh\nEnable şifresi:123'
+        : 'Router SSH Lab:\nR1 is preconfigured for SSH.\nPC-1 CMD: ssh user@192.168.1.150\nPassword: 1234\nVerify: show ssh\nEnable password:123',
       x: 580,
       y: 80,
       width: 360,
@@ -894,6 +894,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   routerSshR1.security = {
     ...routerSshR1.security,
     users: [{ username: 'user', password: '1234', privilege: 15 }],
+    enableSecret: '123',
     vtyLines: {
       ...routerSshR1.security.vtyLines,
       login: true,
@@ -908,7 +909,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     'ip domain-name lab.local',
     'ip ssh version 2',
     '!',
-    'username user privilege 15 secret 1234',
+    'username user privilege 15 secret 123',
+    'enable secret 123',
     '!',
     'interface GigabitEthernet0/0',
     ' ip address 192.168.1.150 255.255.255.0',

@@ -24,6 +24,10 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'no enable password': cmdNoEnablePassword,
   'banner motd': cmdBannerMotd,
   'no banner motd': cmdNoBannerMotd,
+  'banner login': cmdBannerLogin,
+  'no banner login': cmdNoBannerLogin,
+  'banner exec': cmdBannerExec,
+  'no banner exec': cmdNoBannerExec,
   'ip default-gateway': cmdIpDefaultGateway,
   'no ip default-gateway': cmdNoIpDefaultGateway,
   'ip domain-name': cmdIpDomainName,
@@ -605,6 +609,86 @@ function cmdBannerMotd(state: any, input: string, ctx: any): any {
   return {
     success: true,
     newState: { bannerMOTD: match[2] }
+  };
+}
+
+/**
+ * No Banner MOTD
+ */
+function cmdNoBannerMotd(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  return {
+    success: true,
+    newState: { bannerMOTD: undefined }
+  };
+}
+
+/**
+ * Banner Login
+ */
+function cmdBannerLogin(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  const match = input.match(/^banner\s+login\s+(.)([\s\S]*?)\1\s*$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid banner command. Use: banner login #message#' };
+  }
+
+  return {
+    success: true,
+    newState: { bannerLogin: match[2] }
+  };
+}
+
+/**
+ * No Banner Login
+ */
+function cmdNoBannerLogin(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  return {
+    success: true,
+    newState: { bannerLogin: undefined }
+  };
+}
+
+/**
+ * Banner Exec
+ */
+function cmdBannerExec(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  const match = input.match(/^banner\s+exec\s+(.)([\s\S]*?)\1\s*$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid banner command. Use: banner exec #message#' };
+  }
+
+  return {
+    success: true,
+    newState: { bannerExec: match[2] }
+  };
+}
+
+/**
+ * No Banner Exec
+ */
+function cmdNoBannerExec(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  return {
+    success: true,
+    newState: { bannerExec: undefined }
   };
 }
 

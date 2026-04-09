@@ -27,10 +27,20 @@ function cmdEnable(
   // Check if enable secret/password is configured
   const needsPassword = !!(state.security?.enableSecret || state.security?.enablePassword);
 
+  // Build output with banners
+  let output = '';
+  
+  // Display login banner before password prompt (if configured and password is required)
+  if (needsPassword && state.bannerLogin) {
+    output = `\n${state.bannerLogin}\n\nPassword: `;
+  } else if (needsPassword) {
+    output = 'Password: ';
+  }
+
   if (needsPassword) {
     return {
       success: true,
-      output: 'Password: ',
+      output: output,
       requiresPassword: true,
       passwordPrompt: 'Password: ',
       passwordContext: 'enable',
@@ -41,9 +51,15 @@ function cmdEnable(
     };
   }
 
-  // If no enable password is set, allow direct access to privileged mode
+  // No password required - directly enter privileged mode
+  // Display exec banner (if configured) when entering privileged EXEC mode
+  if (state.bannerExec) {
+    output = `\n${state.bannerExec}\n`;
+  }
+  
   return {
     success: true,
+    output: output,
     newState: {
       currentMode: 'privileged'
     }

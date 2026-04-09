@@ -135,6 +135,24 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
+  'no banner login': {
+    pattern: /^no\s+banner\s+login$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'banner exec': {
+    pattern: /^banner\s+exec\s+(.+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no banner exec': {
+    pattern: /^no\s+banner\s+exec$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'ip domain-name': {
     pattern: /^ip\s+domain-name\s+(.+)$/i,
     modes: ['config'],

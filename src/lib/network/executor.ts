@@ -284,6 +284,24 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
   },
   config: {
     '': ['hostname', 'interface', 'vlan', 'enable', 'service', 'username', 'line', 'banner', 'ip', 'no', 'spanning-tree', 'vtp', 'cdp', 'exit', 'end', 'do', '?', 'help'],
+    'b': ['banner'],
+    'ba': ['banner'],
+    'ban': ['banner'],
+    'bann': ['banner'],
+    'banne': ['banner'],
+    'banner': ['motd', 'login', 'exec'],
+    'banner m': ['motd'],
+    'banner mo': ['motd'],
+    'banner mot': ['motd'],
+    'banner motd': [''],
+    'banner l': ['login'],
+    'banner lo': ['login'],
+    'banner log': ['login'],
+    'banner logi': ['login'],
+    'banner login': [''],
+    'banner e': ['exec'],
+    'banner ex': ['exec'],
+    'banner exec': [''],
     'h': ['hostname'],
     'ho': ['hostname'],
     'hos': ['hostname'],
@@ -1664,7 +1682,11 @@ Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
     };
   }
 
-  // Display banner MOTD before login prompt
+  // Display banner MOTD before login prompt (and banner login if configured)
+  let output = '';
+  if (state.bannerLogin) {
+    output += `${state.bannerLogin}\n`;
+  }
   if (state.bannerMOTD) {
     output += `\n${state.bannerMOTD}\n`;
   }
@@ -1738,8 +1760,12 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
 
     if (validPassword) {
       let output = '';
+      // Display exec banner when entering privileged EXEC mode
+      if (state.bannerExec) {
+        output = `\n${state.bannerExec}\n`;
+      }
       if (state.bannerMOTD) {
-        output = `\n${state.bannerMOTD}\n\n`;
+        output += `\n${state.bannerMOTD}\n\n`;
       }
       return {
         success: true,
