@@ -4854,22 +4854,28 @@ export function NetworkTopology({
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2">
-
-            <button
-              onClick={() => {
-                setShowPortSelector(true);
-                setPortSelectorStep('source');
-                setSelectedSourcePort(null);
-              }}
-              className="btn-glass-primary hidden md:flex"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 0 0 -5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0 -5.656-5.656l-1.1 1.1" />
-              </svg>
-              <span className="hidden sm:inline">{language === 'tr' ? 'Bağla' : 'Connect'}</span>
-            </button>
-
+          {/* Toolbar Button Group - Unified */}
+          <div className="hidden md:flex items-center rounded-lg border overflow-hidden bg-slate-800/50 border-slate-700">
+            {/* Connect Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => {
+                    setShowPortSelector(true);
+                    setPortSelectorStep('source');
+                    setSelectedSourcePort(null);
+                  }}
+                  className="h-8 px-3 flex items-center gap-1.5 transition-all hover:bg-slate-700/50 text-slate-300 hover:text-slate-100"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 0 0 -5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0 -5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  <span className="hidden sm:inline text-sm">{language === 'tr' ? 'Bağla' : 'Connect'}</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{language === 'tr' ? 'Bağla' : 'Connect'}</TooltipContent>
+            </Tooltip>
+            <div className="w-px h-4 bg-slate-700" />
             {/* Ping Button */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -4880,14 +4886,14 @@ export function NetworkTopology({
                     setPingResult(null);
                   }}
                   className={cn(
-                    "hidden md:flex",
-                    pingMode ? "btn-glass-warning ring-2 ring-amber-400" : "btn-glass-indigo"
+                    "h-8 px-3 flex items-center gap-1.5 transition-all hover:bg-slate-700/50",
+                    pingMode ? "bg-slate-700/50 text-amber-400" : "text-slate-300 hover:text-slate-100"
                   )}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  <span className="hidden sm:inline">Ping</span>
+                  <span className="hidden sm:inline text-sm">Ping</span>
                 </button>
               </TooltipTrigger>
               <TooltipContent>
@@ -4896,23 +4902,23 @@ export function NetworkTopology({
                   : (language === 'tr' ? 'Ping: Kaynak → Hedef seç' : 'Ping: Select source → target')}
               </TooltipContent>
             </Tooltip>
-
+            <div className="w-px h-4 bg-slate-700" />
             {/* Add Note Button */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={addNote}
-                  className="btn-glass-warning hidden md:flex"
+                  className="h-8 px-3 flex items-center gap-1.5 transition-all hover:bg-slate-700/50 text-slate-300 hover:text-slate-100"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 0 0 -2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
-                  <span className="hidden sm:inline">{language === 'tr' ? 'Not' : 'Note'}</span>
+                  <span className="hidden sm:inline text-sm">{language === 'tr' ? 'Not' : 'Note'}</span>
                 </button>
               </TooltipTrigger>
               <TooltipContent>{language === 'tr' ? 'Not' : 'Note'}</TooltipContent>
             </Tooltip>
-
+            <div className="w-px h-4 bg-slate-700" />
             {/* Refresh Network Button */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -4922,12 +4928,12 @@ export function NetworkTopology({
                       onRefreshNetwork();
                     }
                   }}
-                  className="btn-glass-success hidden md:flex"
+                  className="h-8 px-3 flex items-center gap-1.5 transition-all hover:bg-slate-700/50 text-slate-300 hover:text-slate-100"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  <span className="hidden sm:inline">{language === 'tr' ? 'Yenile' : 'Refresh'}</span>
+                  <span className="hidden sm:inline text-sm">{language === 'tr' ? 'Yenile' : 'Refresh'}</span>
                 </button>
               </TooltipTrigger>
               <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh Network (F5) '}</TooltipContent>

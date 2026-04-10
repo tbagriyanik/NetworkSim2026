@@ -2515,55 +2515,58 @@ export default function Home() {
                     )}
 
                     {/* Project Controls - Desktop only */}
-                    <div className="hidden md:flex items-center gap-1">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-green-400' : 'text-slate-600 hover:text-green-600')}
-                            onClick={handleNewProject}
-                          >
-                            <File className="w-4 h-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>{t.newProject} (Alt+N)</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-amber-400' : 'text-slate-600 hover:text-amber-600')}
-                            onClick={() => fileInputRef.current?.click()}
-                          >
-                            <FolderOpen className="w-4 h-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>{t.loadProject} (Ctrl+O)</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-blue-400' : 'text-slate-600 hover:text-blue-600')}
-                            onClick={handleSaveProject}
-                          >
-                            <Save className="w-4 h-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>{t.saveProject} (Ctrl+S)</TooltipContent>
-                      </Tooltip>
+                    <div className="hidden md:flex items-center">
+                      <div className={cn("flex items-center rounded-lg border overflow-hidden", isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200')}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-slate-100 hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')}
+                              onClick={handleNewProject}
+                            >
+                              <File className="w-4 h-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.newProject} (Alt+N)</TooltipContent>
+                        </Tooltip>
+                        <div className={cn("w-px h-4", isDark ? 'bg-slate-700' : 'bg-slate-200')} />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-slate-100 hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')}
+                              onClick={() => fileInputRef.current?.click()}
+                            >
+                              <FolderOpen className="w-4 h-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.loadProject} (Ctrl+O)</TooltipContent>
+                        </Tooltip>
+                        <div className={cn("w-px h-4", isDark ? 'bg-slate-700' : 'bg-slate-200')} />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-slate-100 hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')}
+                              onClick={handleSaveProject}
+                            >
+                              <Save className="w-4 h-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.saveProject} (Ctrl+S)</TooltipContent>
+                        </Tooltip>
+                        <div className={cn("w-px h-4", isDark ? 'bg-slate-700' : 'bg-slate-200')} />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-slate-100 hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')} onClick={() => setShowAboutModal(true)}>
+                              <Info className="w-4 h-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.about}</TooltipContent>
+                        </Tooltip>
+                      </div>
                     </div>
                     <input ref={fileInputRef} type="file" accept=".json" onChange={handleLoadProject} className="hidden" />
-                    {(activeTab === 'topology') && (
-                      <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'} hidden md:block`} />
-                    )}
 
-                    {/* Info & Settings */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-sky-400' : 'text-slate-600 hover:text-sky-600')} onClick={() => setShowAboutModal(true)}>
-                          <Info className="w-4 h-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>{t.about}</TooltipContent>
-                    </Tooltip>
+                    {/* Info & Settings - Info button moved to Project Controls group */}
+                    <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'} hidden md:block`} />
                     <button
                       onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
                       className={cn("text-xs font-black tracking-widest h-8 px-2 flex items-center gap-1 rounded-lg transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-purple-400' : 'text-slate-600 hover:text-purple-600')}
