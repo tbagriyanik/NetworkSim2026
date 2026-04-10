@@ -60,10 +60,12 @@ const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
     </svg>
   ),
   iot: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#f97316" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="2" fill="#f97316" stroke="none" />
-      <circle cx="12" cy="12" r="5" strokeWidth={1.5} />
-      <circle cx="12" cy="12" r="8" strokeWidth={1.5} />
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#16cbf9" viewBox="0 0 24 24">
+      <path d="M16.247 7.761a6 6 0 0 1 0 8.478" />
+      <path d="M19.075 4.933a10 10 0 0 1 0 14.134" />
+      <path d="M4.925 19.067a10 10 0 0 1 0-14.134" />
+      <path d="M7.753 16.239a6 6 0 0 1 0-8.478" />
+      <circle cx="12" cy="12" r="2" />
     </svg>
   ),
   switch: (
@@ -5967,8 +5969,8 @@ export function NetworkTopology({
                   : device.type === 'iot'
                     ? '#f97316'
                     : isSwitchDeviceType(device.type)
-                    ? (device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e')
-                    : '#a855f7';
+                      ? (device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e')
+                      : '#a855f7';
 
                 return (
                   <g
