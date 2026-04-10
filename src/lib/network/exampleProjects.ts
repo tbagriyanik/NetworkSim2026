@@ -37,7 +37,7 @@ const defaultCableInfo: CableInfo = {
 
 const normalizeDeviceType = (type: string): CanvasDevice['type'] => {
   if (type === 'switch') return 'switchL2';
-  if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'router') return type;
+  if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'iot' || type === 'router') return type;
   return 'pc';
 };
 

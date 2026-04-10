@@ -3,6 +3,11 @@ import { CanvasNote } from './networkTopology.types';
 
 export const DEVICE_ICON_PATHS = {
   pc: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z',
+  iot: {
+    center: { cx: 12, cy: 12, r: 2 },
+    ring1: { cx: 12, cy: 12, r: 5 },
+    ring2: { cx: 12, cy: 12, r: 8 },
+  },
   switch: 'M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01',
   router: {
     circle: { cx: 12, cy: 12, r: 9 },
@@ -12,6 +17,7 @@ export const DEVICE_ICON_PATHS = {
 
 export const DEVICE_ICON_COLORS = {
   pc: '#3b82f6',
+  iot: '#f97316',
   switch: '#22c55e',
   router: '#a855f7',
 } as const;
@@ -20,6 +26,13 @@ export const DEVICE_ICONS = {
   pc: (
     <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke={DEVICE_ICON_COLORS.pc} viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={DEVICE_ICON_PATHS.pc} />
+    </svg>
+  ),
+  iot: (
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke={DEVICE_ICON_COLORS.iot} viewBox="0 0 24 24">
+      <circle cx={DEVICE_ICON_PATHS.iot.center.cx} cy={DEVICE_ICON_PATHS.iot.center.cy} r={DEVICE_ICON_PATHS.iot.center.r} fill={DEVICE_ICON_COLORS.iot} stroke="none" />
+      <circle cx={DEVICE_ICON_PATHS.iot.ring1.cx} cy={DEVICE_ICON_PATHS.iot.ring1.cy} r={DEVICE_ICON_PATHS.iot.ring1.r} strokeWidth={1.5} />
+      <circle cx={DEVICE_ICON_PATHS.iot.ring2.cx} cy={DEVICE_ICON_PATHS.iot.ring2.cy} r={DEVICE_ICON_PATHS.iot.ring2.r} strokeWidth={1.5} />
     </svg>
   ),
   switch: (

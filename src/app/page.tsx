@@ -121,7 +121,7 @@ const ALL_TABS: TabDefinition[] = [
     icon: <Network className="w-4 h-4" />,
     tasks: topologyTasks,
     color: 'from-cyan-500 to-blue-500',
-    showFor: ['pc', ...SWITCH_DEVICE_TYPES, 'router']
+    showFor: ['pc', 'iot', ...SWITCH_DEVICE_TYPES, 'router']
   },
   {
     id: 'cmd',
@@ -784,7 +784,7 @@ export default function Home() {
 
   const normalizeDeviceType = useCallback((type: string): DeviceType => {
     if (type === 'switch') return 'switchL2';
-    if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'router') return type;
+    if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'iot' || type === 'router') return type;
     return 'pc';
   }, []);
 

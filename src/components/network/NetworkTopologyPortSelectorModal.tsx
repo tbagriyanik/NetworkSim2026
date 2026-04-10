@@ -113,7 +113,7 @@ export function NetworkTopologyPortSelectorModal({
               <div key={device.id} className="space-y-4">
                 <div className="flex items-center justify-between group">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-xl border transition-colors ${device.type === 'pc' ? 'bg-blue-500/10 border-blue-500/20 text-blue-500' :
+                    <div className={`p-2 rounded-xl border transition-colors ${(device.type === 'pc' || device.type === 'iot') ? 'bg-blue-500/10 border-blue-500/20 text-blue-500' :
                       isSwitch ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :
                         'bg-purple-500/10 border-purple-500/20 text-purple-500'
                       }`}>
@@ -130,10 +130,12 @@ export function NetworkTopologyPortSelectorModal({
 
                 <div className={`grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 p-4 rounded-3xl border ${isDark ? 'bg-slate-950/40 border-slate-800/50' : 'bg-slate-50 border-slate-200'}`}>
                   <div className="col-span-full flex flex-wrap gap-3 mb-2 pb-2 border-b border-dashed border-slate-700/30 text-xs">
-                    {device.type === 'pc' ? (
+                    {(device.type === 'pc' || device.type === 'iot') ? (
                       <>
                         <span className="flex items-center gap-1 text-slate-400"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /> ETH</span>
-                        <span className="flex items-center gap-1 text-slate-400"><span className="w-2 h-2 rounded-full bg-cyan-500 inline-block" /> COM</span>
+                        {device.type === 'pc' && (
+                          <span className="flex items-center gap-1 text-slate-400"><span className="w-2 h-2 rounded-full bg-cyan-500 inline-block" /> COM</span>
+                        )}
                       </>
                     ) : (
                       <>

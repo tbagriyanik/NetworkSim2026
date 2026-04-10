@@ -49,7 +49,7 @@ interface NetworkTopologyProps {
 
 // Drag item from palette
 interface DragItem {
-  type: 'pc' | 'switch' | 'router';
+  type: 'pc' | 'iot' | 'switch' | 'router';
   icon: React.ReactNode;
 }
 
@@ -57,6 +57,13 @@ const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
   pc: (
     <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#3b82f6" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
+    </svg>
+  ),
+  iot: (
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#f97316" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="2" fill="#f97316" stroke="none" />
+      <circle cx="12" cy="12" r="5" strokeWidth={1.5} />
+      <circle cx="12" cy="12" r="8" strokeWidth={1.5} />
     </svg>
   ),
   switch: (
@@ -305,7 +312,7 @@ export function NetworkTopology({
     const vDevices = devices.filter(device => {
       const x = device.x * zoom + pan.x;
       const y = device.y * zoom + pan.y;
-      const deviceWidth = (device.type === 'pc' ? 90 : 130) * zoom;
+      const deviceWidth = ((device.type === 'pc' || device.type === 'iot') ? 90 : 130) * zoom;
       const deviceHeight = 100 * zoom;
 
       return (
@@ -570,10 +577,11 @@ export function NetworkTopology({
   const [errorToast, setErrorToast] = useState<{ message: string; details?: string } | null>(null);
 
   // Refs
-  const deviceCounterRef = useRef<{ pc: number; switch: number; router: number }>({ pc: 0, switch: 0, router: 0 });
-  const getCounterKey = useCallback((type: DeviceType | string): 'pc' | 'switch' | 'router' => {
+  const deviceCounterRef = useRef<{ pc: number; iot: number; switch: number; router: number }>({ pc: 0, iot: 0, switch: 0, router: 0 });
+  const getCounterKey = useCallback((type: DeviceType | string): 'pc' | 'iot' | 'switch' | 'router' => {
     if (type === 'switchL2' || type === 'switchL3' || type === 'switch') return 'switch';
     if (type === 'pc' || type === 'router') return type;
+    if (type === 'iot') return 'iot';
     return 'pc';
   }, []);
   const pingAnimationRef = useRef<number | null>(null);
@@ -1456,7 +1464,7 @@ export function NetworkTopology({
       onDeviceDoubleClick(device.type, device.id);
     } else {
       // Fallback to old behavior
-      if (device.type === 'pc') {
+      if (device.type === 'pc' || device.type === 'iot') {
         onDeviceSelect('pc', device.id, undefined, device.name);
       } else if (isSwitchDeviceType(device.type) || device.type === 'router') {
         onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined, device.name);
@@ -1911,15 +1919,15 @@ export function NetworkTopology({
     } else {
       // Start connection - calculate port position inline
       const portIndex = device.ports.findIndex(p => p.id === portId);
-      const portsPerRow = device.type === 'pc' ? 2 : 8;
+      const portsPerRow = (device.type === 'pc' || device.type === 'iot') ? 2 : 8;
       const col = portIndex % portsPerRow;
       const row = Math.floor(portIndex / portsPerRow);
-      const deviceWidth = device.type === 'pc' ? 90 : device.type === 'router' ? 90 : 130;
-      const deviceHeight = device.type === 'pc' ? 99 : 80 + Math.ceil(device.ports.length / 8) * 14 + 5;
+      const deviceWidth = (device.type === 'pc' || device.type === 'iot') ? 90 : device.type === 'router' ? 90 : 130;
+      const deviceHeight = (device.type === 'pc' || device.type === 'iot') ? 99 : 80 + Math.ceil(device.ports.length / 8) * 14 + 5;
       let portX = 0;
       let portY = 0;
 
-      if (device.type === 'pc') {
+      if (device.type === 'pc' || device.type === 'iot') {
         const pcPortSpacing = 18;
         const pcStartY = deviceHeight / 2 - ((device.ports.length - 1) * pcPortSpacing) / 2;
         portX = device.x + deviceWidth - 8;
@@ -1975,7 +1983,7 @@ export function NetworkTopology({
   }, [devices, deviceStates]);
 
   // Add device from palette button
-  const addDevice = useCallback((type: 'pc' | 'switch' | 'router', layer?: 'L2' | 'L3') => {
+  const addDevice = useCallback((type: 'pc' | 'iot' | 'switch' | 'router', layer?: 'L2' | 'L3') => {
     saveToHistory();
     deviceCounterRef.current[type]++;
 
@@ -2001,21 +2009,24 @@ export function NetworkTopology({
       type: resolvedType,
       name: generateUniqueHostname(baseName),
       macAddress: generateMacAddress(),
-      ip: type === 'pc' ? generateUniqueIp() : '',
+      ip: type === 'pc' || type === 'iot' ? generateUniqueIp() : '',
       // Position near top-left with staggered layout
       x: 100 + offsetX + Math.random() * 30,
       y: 80 + offsetY + Math.random() * 30,
       status: 'online',
       switchModel: type === 'switch' ? switchModel : undefined,
       ports:
-        type === 'pc'
+        type === 'pc' || type === 'iot'
           ? [
             { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
-            { id: 'com1', label: 'COM1', status: 'disconnected' as const },
+            ...(type === 'pc' ? [{ id: 'com1', label: 'COM1', status: 'disconnected' as const }] : []),
           ]
           : type === 'switch'
             ? switchLayer === 'L3' ? generateL3SwitchPorts() : generateSwitchPorts()
             : generateRouterPorts(),
+      iot: type === 'iot'
+        ? { sensorType: 'temperature', collaborationEnabled: false, dataStore: '' }
+        : undefined,
     };
     setDevices((prev) => [...prev, newDevice]);
     setSelectedDeviceIds([newDevice.id]);
@@ -2451,12 +2462,30 @@ export function NetworkTopology({
     return Number((otherPort as any).accessVlan || otherPort.vlan || 1);
   }, [connections, getLivePort]);
 
+  const getIotMeasuredValue = useCallback((device: CanvasDevice) => {
+    const sensorType = device.iot?.sensorType || 'temperature';
+    switch (sensorType) {
+      case 'temperature':
+        return '35C';
+      case 'sound':
+        return '62dB';
+      case 'motion':
+        return language === 'tr' ? 'Hareket: Var' : 'Motion: Yes';
+      case 'humidity':
+        return '%48 RH';
+      case 'light':
+        return '420lx';
+      default:
+        return '-';
+    }
+  }, [language]);
+
   const getLivePortVlanText = useCallback((deviceId: string, portId: string) => {
     const device = devices.find(d => d.id === deviceId);
     const livePort = getLivePort(deviceId, portId);
     if (!device || !livePort) return '1';
 
-    if (device.type === 'pc') {
+    if (device.type === 'pc' || device.type === 'iot') {
       const conn = connections.find(c =>
         (c.sourceDeviceId === deviceId && c.sourcePort === portId) ||
         (c.targetDeviceId === deviceId && c.targetPort === portId)
@@ -2523,7 +2552,7 @@ export function NetworkTopology({
 
     const currentZoom = zoomRef.current;
     const currentPan = panRef.current;
-    const deviceWidth = device.type === 'pc' ? 90 : 130;
+    const deviceWidth = (device.type === 'pc' || device.type === 'iot') ? 90 : 130;
     const x = canvasRect.left + device.x * currentZoom + currentPan.x + deviceWidth * currentZoom / 2;
     const y = canvasRect.top + device.y * currentZoom + currentPan.y;
 
@@ -2551,7 +2580,7 @@ export function NetworkTopology({
   // Sync device counters with current devices to prevent ID collisions
   useEffect(() => {
     if (devices.length > 0) {
-      const counters = { pc: 0, switch: 0, router: 0 };
+      const counters = { pc: 0, iot: 0, switch: 0, router: 0 };
       devices.forEach(d => {
         const match = d.id.match(/^(\w+)-(\d+)$/);
         if (match) {
@@ -2654,7 +2683,7 @@ export function NetworkTopology({
         const baseDevice = portChanged ? { ...device, ports: updatedPorts } : device;
 
         // Keep PC VLAN in sync with the connected switch/router access VLAN.
-        if (baseDevice.type === 'pc') {
+        if (baseDevice.type === 'pc' || baseDevice.type === 'iot') {
           const pcConnection = connections.find((conn) =>
             (conn.sourceDeviceId === baseDevice.id && conn.sourcePort === 'eth0') ||
             (conn.targetDeviceId === baseDevice.id && conn.targetPort === 'eth0')
@@ -2746,7 +2775,7 @@ export function NetworkTopology({
     setDevices([]);
     setConnections([]);
     setSelectedDeviceIds([]);
-    deviceCounterRef.current = { pc: 0, switch: 0, router: 0 };
+    deviceCounterRef.current = { pc: 0, iot: 0, switch: 0, router: 0 };
   }, []);
 
   // Copy devices
@@ -2799,7 +2828,7 @@ export function NetworkTopology({
 
       const baseName = `${type.toUpperCase()}-${deviceCounterRef.current[counterKey]}`;
       const hostname = generateUniqueHostname(baseName, reservedHostnames);
-      const generatedIp = type === 'pc' ? generateUniqueIp(reservedIps) : '';
+      const generatedIp = type === 'pc' || type === 'iot' ? generateUniqueIp(reservedIps) : '';
       if (generatedIp) {
         reservedIps.push(generatedIp);
       }
@@ -3321,13 +3350,13 @@ export function NetworkTopology({
 
   // Get device position (center based on device type)
   const getDeviceCenter = useCallback((device: CanvasDevice) => {
-    const deviceWidth = device.type === 'pc' ? 90 : device.type === 'router' ? 90 : 130;
+    const deviceWidth = (device.type === 'pc' || device.type === 'iot') ? 90 : device.type === 'router' ? 90 : 130;
     const iconColor = device.status === 'online'
       ? '#22c55e'
       : '#ef4444';
     const portsPerRow = 8;
     const numRows = Math.ceil(device.ports.length / portsPerRow);
-    const deviceHeight = device.type === 'pc' ? 99 : 80 + numRows * 14 + 5;
+    const deviceHeight = (device.type === 'pc' || device.type === 'iot') ? 99 : 80 + numRows * 14 + 5;
     return { x: device.x + deviceWidth / 2, y: device.y + deviceHeight / 2 };
   }, []);
 
@@ -3336,12 +3365,12 @@ export function NetworkTopology({
     const portIndex = device.ports.findIndex(p => p.id === portId);
     if (portIndex === -1) return getDeviceCenter(device);
 
-    const deviceWidth = device.type === 'pc' ? 90 : device.type === 'router' ? 90 : 130;
-    const portsPerRow = device.type === 'pc' ? 2 : 8;
+    const deviceWidth = (device.type === 'pc' || device.type === 'iot') ? 90 : device.type === 'router' ? 90 : 130;
+    const portsPerRow = (device.type === 'pc' || device.type === 'iot') ? 2 : 8;
     const col = portIndex % portsPerRow;
     const row = Math.floor(portIndex / portsPerRow);
 
-    if (device.type === 'pc') {
+    if (device.type === 'pc' || device.type === 'iot') {
       const pcPortSpacing = 18;
       const pcStartY = 99 / 2 - ((device.ports.length - 1) * pcPortSpacing) / 2;
       return {
@@ -3638,6 +3667,7 @@ export function NetworkTopology({
     });
 
     const isPoweredOff = device.status === 'offline';
+    const isPcLike = device.type === 'pc' || device.type === 'iot';
     const statusColor = isPoweredOff
       ? (isDark ? 'fill-red-500' : 'fill-red-600')
       : hasError
@@ -3645,32 +3675,38 @@ export function NetworkTopology({
         : (hasConnection ? (isDark ? 'fill-green-500' : 'fill-green-600') : (isDark ? 'fill-slate-800' : 'fill-slate-300'));
 
     const deviceFill = isDark
-      ? (device.type === 'pc'
+      ? (isPcLike
         ? 'url(#pcGradientDark)'
         : isSwitchDevice(device.type)
           ? 'url(#switchGradientDark)'
           : 'url(#routerGradientDark)')
-      : (device.type === 'pc'
+      : (isPcLike
         ? 'url(#pcGradientLight)'
         : isSwitchDevice(device.type)
           ? 'url(#switchGradientLight)'
           : 'url(#routerGradientLight)');
 
     // Calculate device height based on number of ports (8 per row for switch/router)
-    const portsPerRow = device.type === 'pc' ? 2 : 8;
+    const portsPerRow = isPcLike ? 2 : 8;
     const numRows = Math.ceil(device.ports.length / portsPerRow);
-    const deviceHeight = device.type === 'pc' ? 85 : 80 + numRows * 14 + 5;
+    const deviceHeight = isPcLike ? 85 : 80 + numRows * 14 + 5;
 
     // Calculate device width to fit all ports with proper spacing
     // For switch/router: startX=12, portSpacing=13, portRadius=6
     // Width needed = startX + (portsPerRow - 1) * portSpacing + portRadius + margin
     // For 8 ports: 12 + 7*13 + 6 + 10 = 119, so we use 130 for more breathing room
-    const deviceWidth = device.type === 'pc' ? 90 : device.type === 'router' ? 90 : 130;
+    const deviceWidth = isPcLike ? 90 : device.type === 'router' ? 90 : 130;
     const iconColor = isPoweredOff
       ? '#ef4444'
       : (hasConnection
         ? (isSwitchDevice(device.type) && device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e')
-        : (device.type === 'pc' ? '#3b82f6' : isSwitchDevice(device.type) ? (device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e') : '#a855f7'));
+        : (device.type === 'pc'
+          ? '#3b82f6'
+          : device.type === 'iot'
+            ? '#f97316'
+            : isSwitchDevice(device.type)
+              ? (device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e')
+              : '#a855f7'));
 
     return (
       <g
@@ -3723,7 +3759,7 @@ export function NetworkTopology({
             rx={8}
             fill={deviceFill}
             stroke={isSelected ? '#06b6d4' : isDark
-              ? (device.type === 'pc' ? '#3b82f6' : isSwitchDeviceType(device.type) ? '#22c55e' : '#a855f7')
+              ? (device.type === 'pc' ? '#3b82f6' : device.type === 'iot' ? '#f97316' : isSwitchDeviceType(device.type) ? '#22c55e' : '#a855f7')
               : '#cbd5e1'}
             strokeWidth={isSelected ? 2.5 : 1.5}
             className={isDragging ? '' : 'transition-all duration-150'}
@@ -3755,7 +3791,7 @@ export function NetworkTopology({
         {(() => {
           const wlanPort = device.ports.find(p => p.id === 'wlan0');
           const pcWifi = device.wifi;
-          const isPC = device.type === 'pc';
+          const isPC = isPcLike;
           const isSwitch = isSwitchDeviceType(device.type);
           const isRouter = device.type === 'router';
           const devState = deviceStates?.get(device.id);
@@ -4034,6 +4070,13 @@ export function NetworkTopology({
                 transform="scale(1.2)"
               />
             )}
+            {device.type === 'iot' && (
+              <g transform="translate(12, 12)">
+                <circle cx="0" cy="0" r="2" fill="#f97316" />
+                <circle cx="0" cy="0" r="5" fill="none" stroke="#f97316" strokeWidth="1.5" />
+                <circle cx="0" cy="0" r="8" fill="none" stroke="#f97316" strokeWidth="1.5" />
+              </g>
+            )}
             {isSwitchDeviceType(device.type) && (
               <path
                 strokeLinecap="round"
@@ -4096,22 +4139,27 @@ export function NetworkTopology({
         </text>
 
         {/* Device IP */}
-        {device.type === 'pc' && (
+        {isPcLike && (
           <text x={deviceWidth / 2} y={70} fill={isDark ? '#94a3b8' : '#64748b'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
             {device.ip}
           </text>
         )}
 
-        {/* Device VLAN */}
+        {/* Device VLAN / IoT Measured Value */}
         {device.type === 'pc' && (
           <text x={deviceWidth / 2} y={81} fill={isDark ? '#38bdf8' : '#0f766e'} fontSize="9" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
             VLAN {String(getLiveDeviceVlan(device))}
           </text>
         )}
+        {device.type === 'iot' && (
+          <text x={deviceWidth / 2} y={81} fill={isDark ? '#fb923c' : '#ea580c'} fontSize="9" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
+            {getIotMeasuredValue(device)}
+          </text>
+        )}
 
         {/* Ports - wrapped 6 per row */}
-        {device.type === 'pc' ? (
-          // PC has Eth0 and COM1 ports, show side by side
+        {isPcLike ? (
+          // PC/IoT have compact edge ports
           device.ports.map((port, idx) => {
             // İki portu yan yana göster
             const portSpacing = 18;
@@ -4562,6 +4610,20 @@ export function NetworkTopology({
                 Router
               </span>
             </button>
+            <button
+              onClick={() => { addDevice('iot'); setIsPaletteOpen(false); }}
+              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-all ${isDark
+                ? 'border-slate-700 bg-slate-800'
+                : 'border-slate-300 bg-white'
+                }`}
+            >
+              <div className="text-cyan-500">
+                {DEVICE_ICONS['iot']}
+              </div>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                IoT
+              </span>
+            </button>
           </div>
         </div>
 
@@ -4749,6 +4811,17 @@ export function NetworkTopology({
                     </TooltipTrigger>
                     <TooltipContent>{language === 'tr' ? 'Router Ekle' : 'Add Router'}</TooltipContent>
                   </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => addDevice('iot')}
+                        className={`p-1.5 rounded-lg ui-hover-surface ${isDark ? 'text-orange-500 hover:text-orange-400' : 'text-orange-600 hover:text-orange-700'}`}
+                      >
+                        {DEVICE_ICONS['iot']}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>{language === 'tr' ? 'IoT Ekle' : 'Add IoT'}</TooltipContent>
+                  </Tooltip>
                 </div>
 
                 {/* Cable Types Group */}
@@ -4877,7 +4950,7 @@ export function NetworkTopology({
                 {/* Devices Section */}
                 <div className="space-y-4">
                   <p className="text-[10px] font-bold  tracking-widest text-slate-500 ml-1">{t.devices}</p>
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-5 gap-3">
                     <button
                       onClick={() => { addDevice('pc'); setIsPaletteOpen(false); }}
                       className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700' : 'bg-slate-50 border-slate-200 active:bg-slate-100'
@@ -4926,6 +4999,18 @@ export function NetworkTopology({
                       </div>
                       <span className="text-xs font-bold text-center">
                         {language === 'tr' ? 'Router Ekle' : 'Add Router'}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => { addDevice('iot'); setIsPaletteOpen(false); }}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700' : 'bg-slate-50 border-slate-200 active:bg-slate-100'
+                        }`}
+                    >
+                      <div className='text-cyan-500'>
+                        {DEVICE_ICONS['iot']}
+                      </div>
+                      <span className="text-xs font-bold text-center">
+                        {language === 'tr' ? 'IoT Ekle' : 'Add IoT'}
                       </span>
                     </button>
                   </div>
@@ -5854,10 +5939,10 @@ export function NetworkTopology({
                 const targetDevice = devices.find(d => d.id === conn.targetDeviceId);
                 if (!sourceDevice || !targetDevice) return null;
 
-                const sourceX = sourceDevice.x + (sourceDevice.type === 'pc' ? 45 : 50);
-                const sourceY = sourceDevice.y + (sourceDevice.type === 'pc' ? 45 : 60);
-                const targetX = targetDevice.x + (targetDevice.type === 'pc' ? 45 : 50);
-                const targetY = targetDevice.y + (targetDevice.type === 'pc' ? 45 : 60);
+                const sourceX = sourceDevice.x + ((sourceDevice.type === 'pc' || sourceDevice.type === 'iot') ? 45 : 50);
+                const sourceY = sourceDevice.y + ((sourceDevice.type === 'pc' || sourceDevice.type === 'iot') ? 45 : 60);
+                const targetX = targetDevice.x + ((targetDevice.type === 'pc' || targetDevice.type === 'iot') ? 45 : 50);
+                const targetY = targetDevice.y + ((targetDevice.type === 'pc' || targetDevice.type === 'iot') ? 45 : 60);
 
                 return (
                   <line
@@ -5875,11 +5960,13 @@ export function NetworkTopology({
 
               {/* Devices */}
               {devicesSortedForRender.map((device) => {
-                const deviceWidth = device.type === 'pc' ? 90 : device.type === 'router' ? 90 : 130;
-                const deviceHeight = device.type === 'pc' ? 99 : 80;
+                const deviceWidth = (device.type === 'pc' || device.type === 'iot') ? 90 : device.type === 'router' ? 90 : 130;
+                const deviceHeight = (device.type === 'pc' || device.type === 'iot') ? 99 : 80;
                 const color = device.type === 'pc'
                   ? '#3b82f6'
-                  : isSwitchDeviceType(device.type)
+                  : device.type === 'iot'
+                    ? '#f97316'
+                    : isSwitchDeviceType(device.type)
                     ? (device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e')
                     : '#a855f7';
 
@@ -6099,7 +6186,7 @@ export function NetworkTopology({
               </div>
 
               {/* IP Configuration Section - Only for PCs */}
-              {devices.find(d => d.id === configuringDevice)?.type === 'pc' && (
+              {(devices.find(d => d.id === configuringDevice)?.type === 'pc' || devices.find(d => d.id === configuringDevice)?.type === 'iot') && (
                 <div className={`${isMobile ? 'p-3' : 'p-4'} rounded-2xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200/50'}`}>
                   <div className={`text-[10px] font-black tracking-widest ${isMobile ? 'mb-3' : 'mb-4'} opacity-70 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
                     {language === 'tr' ? 'IP Yapılandırması' : 'IP Configuration'}
@@ -6356,10 +6443,25 @@ export function NetworkTopology({
 
               <div className="space-y-0.5">
                 <div className="text-xs font-bold">
-                  VLAN:{' '}
-                  <span className="text-cyan-500">
-                    {getLivePortVlanText(portTooltip.deviceId, portTooltip.portId)}
-                  </span>
+                  {(() => {
+                    const dev = devices.find(d => d.id === portTooltip.deviceId);
+                    if (dev?.type === 'iot') {
+                      return (
+                        <>
+                          {language === 'tr' ? 'Olcum:' : 'Measurement:'}{' '}
+                          <span className="text-cyan-500">{getIotMeasuredValue(dev)}</span>
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        VLAN:{' '}
+                        <span className="text-cyan-500">
+                          {getLivePortVlanText(portTooltip.deviceId, portTooltip.portId)}
+                        </span>
+                      </>
+                    );
+                  })()}
                 </div>
                 <div className="text-xs font-bold">
                   {language === 'tr' ? 'Durum:' : 'Status:'}{' '}
@@ -6440,7 +6542,7 @@ export function NetworkTopology({
                 <div className={`p-1.5 rounded-lg ${isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>
                   {(() => {
                     const dev = devices.find(d => d.id === deviceTooltip.deviceId);
-                    if (dev?.type === 'pc') return <Monitor className="w-3.5 h-3.5" />;
+                    if (dev?.type === 'pc' || dev?.type === 'iot') return <Monitor className="w-3.5 h-3.5" />;
                     if (dev?.type === 'router') return <Network className="w-3.5 h-3.5" />;
                     return <Laptop className="w-3.5 h-3.5" />;
                   })()}
@@ -6483,7 +6585,7 @@ export function NetworkTopology({
                         <span className="text-[10px] font-mono opacity-30">{dev.macAddress || 'N/A'}</span>
                       </div>
 
-                      {dev.type === 'pc' && (
+                      {(dev.type === 'pc' || dev.type === 'iot') && (
                         <div className="flex justify-between items-center gap-4 mt-1 pt-1 border-t border-white/5">
                           <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.dhcpEnabled}</span>
                           <span className={`text-[10px] font-black tracking-widest ${dev.ipConfigMode === 'dhcp' ? 'text-green-500' : 'opacity-40'}`}>

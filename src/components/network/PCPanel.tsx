@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff } from 'lucide-react';
+import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from "@/hooks/use-toast";
 import { isValidMAC, normalizeMAC, cn } from "@/lib/utils";
@@ -335,6 +335,18 @@ export function PCPanel({
   const [showWifiPassword, setShowWifiPassword] = useState(false);
   const [wifiChannel, setWifiChannel] = useState(deviceFromTopology?.wifi?.channel ?? '2.4GHz');
   const [wifiBSSID, setWifiBSSID] = useState(deviceFromTopology?.wifi?.bssid ?? '');
+  const iotDevices = useMemo(
+    () => topologyDevices.filter((d) => d.type === 'iot'),
+    [topologyDevices]
+  );
+  const [selectedIotDeviceId, setSelectedIotDeviceId] = useState<string>('');
+  const selectedIotDevice = useMemo(
+    () => iotDevices.find((d) => d.id === selectedIotDeviceId) || null,
+    [iotDevices, selectedIotDeviceId]
+  );
+  const [iotSensorType, setIotSensorType] = useState<'temperature' | 'sound' | 'motion' | 'humidity' | 'light'>('temperature');
+  const [iotCollaborationEnabled, setIotCollaborationEnabled] = useState(false);
+  const [iotDataStore, setIotDataStore] = useState('');
 
   // Scan for available APs in the network topology dynamically - returns one entry per AP (allows duplicates)
   const availableSSIDs = useMemo(() => {
@@ -434,6 +446,23 @@ export function PCPanel({
     setWifiChannel(deviceFromTopology?.wifi?.channel ?? '2.4GHz');
   }, [deviceId]);
 
+  useEffect(() => {
+    if (!iotDevices.length) {
+      setSelectedIotDeviceId('');
+      return;
+    }
+    if (!selectedIotDeviceId || !iotDevices.some((d) => d.id === selectedIotDeviceId)) {
+      setSelectedIotDeviceId(iotDevices[0].id);
+    }
+  }, [iotDevices, selectedIotDeviceId]);
+
+  useEffect(() => {
+    if (!selectedIotDevice) return;
+    setIotSensorType(selectedIotDevice.iot?.sensorType || 'temperature');
+    setIotCollaborationEnabled(!!selectedIotDevice.iot?.collaborationEnabled);
+    setIotDataStore(selectedIotDevice.iot?.dataStore || '');
+  }, [selectedIotDevice]);
+
   // When tablet powers on, navigate to CMD screen
   useEffect(() => {
     if (!isPcPoweredOff) {
@@ -512,6 +541,26 @@ export function PCPanel({
       }));
     }
   }, [internalPcHostname, ipConfigMode, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, deviceId, topologyDevices]);
+
+  const saveIotConfig = useCallback(() => {
+    if (!selectedIotDeviceId) return;
+    window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+      detail: {
+        deviceId: selectedIotDeviceId,
+        config: {
+          iot: {
+            sensorType: iotSensorType,
+            collaborationEnabled: iotCollaborationEnabled,
+            dataStore: iotDataStore,
+          }
+        }
+      }
+    }));
+    toast({
+      title: language === 'tr' ? 'IoT kaydedildi' : 'IoT saved',
+      description: language === 'tr' ? 'Secili IoT nesnesi guncellendi.' : 'Selected IoT object updated.',
+    });
+  }, [selectedIotDeviceId, iotSensorType, iotCollaborationEnabled, iotDataStore, language]);
 
   // Trigger sync on change (debounced)
   useEffect(() => {
@@ -1766,7 +1815,9 @@ export function PCPanel({
   }, [canReachTargetIp, deviceId, deviceStates, hasPhysicalPathToDevice, ipToNumber, numberToIp, topologyDevices, validateIP]);
 
   // Keep ref in sync with callback
-  checkDhcpAvailabilityRef.current = checkDhcpAvailability;
+  useEffect(() => {
+    checkDhcpAvailabilityRef.current = checkDhcpAvailability;
+  }, [checkDhcpAvailability]);
 
   const applyDhcpLease = useCallback((force = false) => {
     const lease = getDhcpLease();
@@ -2776,6 +2827,21 @@ export function PCPanel({
                 </TooltipTrigger>
                 <TooltipContent>{language === 'tr' ? 'Servisler' : 'Services'}</TooltipContent>
               </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setActiveTab('iot')}
+                    disabled={isPcPoweredOff}
+                    className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'iot' ? (isDark ? 'bg-cyan-500/30 text-cyan-300' : 'bg-cyan-500/30 text-cyan-700') : (isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-500')}`}
+                    aria-label="IoT"
+                  >
+                    <Radio className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>IoT</TooltipContent>
+              </Tooltip>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -2985,6 +3051,15 @@ export function PCPanel({
                     <Network className="w-4 h-4" />
                     <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{language === 'tr' ? 'Kablosuz' : 'Wireless'}</span>
                   </Button>
+                  <Button
+                    variant={activeTab === 'iot' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setActiveTab('iot')}
+                    className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'iot' ? 'bg-cyan-500/10 text-cyan-500' : 'text-slate-500 hover:text-cyan-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
+                  >
+                    <Radio className="w-4 h-4" />
+                    <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>IoT</span>
+                  </Button>
                 </div>
 
                 {/* Content Area */}
@@ -3050,6 +3125,17 @@ export function PCPanel({
                           </div>
                           <span className="text-xs font-medium text-slate-300">
                             {language === 'tr' ? 'Kablosuz' : 'Wireless'}
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('iot')}
+                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10 shrink-0 min-w-[64px]"
+                        >
+                          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-cyan-700">
+                            <Radio className="w-6 h-6 text-white" />
+                          </div>
+                          <span className="text-xs font-medium text-slate-300">
+                            IoT
                           </span>
                         </button>
                       </div>
@@ -3475,6 +3561,84 @@ export function PCPanel({
                               </div>
                             </div>
                           </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'iot' && (
+                    <div className="flex-1 min-h-0 p-3 overflow-y-auto" style={mobileVerticalScrollStyle}>
+                      <div className={`rounded-2xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
+                        <div className="flex items-center gap-2 text-cyan-500">
+                          <Radio className="w-5 h-5" />
+                          <h3 className="text-sm font-black tracking-widest">
+                            {language === 'tr' ? 'IoT Yonetimi' : 'IoT Management'}
+                          </h3>
+                        </div>
+
+                        {iotDevices.length === 0 ? (
+                          <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                            {language === 'tr' ? 'Topolojide IoT nesnesi yok. Once topolojiye IoT ekleyin.' : 'No IoT object in topology. Add one first.'}
+                          </div>
+                        ) : (
+                          <>
+                            <div className="space-y-2">
+                              <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Nesne Secimi' : 'Object Selection'}</label>
+                              <Select value={selectedIotDeviceId} onValueChange={setSelectedIotDeviceId}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="IoT" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {iotDevices.map((d) => (
+                                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Sensor Tipi' : 'Sensor Type'}</label>
+                                <Select value={iotSensorType} onValueChange={(v) => setIotSensorType(v as any)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="temperature">{language === 'tr' ? 'Isı' : 'Temperature'}</SelectItem>
+                                    <SelectItem value="sound">{language === 'tr' ? 'Ses' : 'Sound'}</SelectItem>
+                                    <SelectItem value="motion">{language === 'tr' ? 'Hareket' : 'Motion'}</SelectItem>
+                                    <SelectItem value="humidity">{language === 'tr' ? 'Nem' : 'Humidity'}</SelectItem>
+                                    <SelectItem value="light">{language === 'tr' ? 'Işık' : 'Light'}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Birlikte Calisma' : 'Collaboration'}</label>
+                                <button
+                                  type="button"
+                                  role="switch"
+                                  aria-checked={iotCollaborationEnabled}
+                                  onClick={() => setIotCollaborationEnabled((prev) => !prev)}
+                                  className={`relative inline-flex h-7 w-14 items-center rounded-full border transition-colors ${iotCollaborationEnabled ? 'bg-cyan-500 border-cyan-400' : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')}`}
+                                >
+                                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${iotCollaborationEnabled ? 'translate-x-8' : 'translate-x-1'}`} />
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Veri Saklama (not/json/metin)' : 'Data Storage (note/json/text)'}</label>
+                              <textarea
+                                value={iotDataStore}
+                                onChange={(e) => setIotDataStore(e.target.value)}
+                                rows={5}
+                                className={`w-full rounded-md border px-3 py-2 text-sm ${isDark ? 'bg-slate-950 border-slate-800 text-slate-100' : 'bg-white border-slate-300 text-slate-900'}`}
+                                placeholder={language === 'tr' ? 'Sensor verisi veya notlar...' : 'Sensor data or notes...'}
+                              />
+                            </div>
+
+                            <Button onClick={saveIotConfig} className="bg-cyan-600 hover:bg-cyan-700 text-white">
+                              {language === 'tr' ? 'IoT Ayarlarini Kaydet' : 'Save IoT Settings'}
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -4195,7 +4359,7 @@ export function PCPanel({
   );
 }
 
-type PCActiveTab = 'home' | 'desktop' | 'terminal' | 'settings' | 'services' | 'wireless';
+type PCActiveTab = 'home' | 'desktop' | 'terminal' | 'settings' | 'services' | 'wireless' | 'iot';
 
 function getPCConfigDefaults(id: string) {
   const num = id.split('-')[1] || '1';

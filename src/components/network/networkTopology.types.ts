@@ -1,6 +1,6 @@
 import { CableInfo, CableType, SwitchState } from '@/lib/network/types';
 
-export type DeviceType = 'pc' | 'switchL2' | 'switchL3' | 'router';
+export type DeviceType = 'pc' | 'iot' | 'switchL2' | 'switchL3' | 'router';
 export type CanvasPortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
 export type CanvasPortStatus = 'connected' | 'disconnected' | 'notconnect' | 'blocked' | 'disabled';
 
@@ -30,9 +30,9 @@ export interface CanvasPort {
 export interface NetworkTopologyProps {
   cableInfo: CableInfo;
   onCableChange: (cableInfo: CableInfo) => void;
-  selectedDevice: 'pc' | 'switchL2' | 'switchL3' | 'router' | null;
-  onDeviceSelect: (device: 'pc' | 'switchL2' | 'switchL3' | 'router', deviceId?: string, switchModel?: string, deviceName?: string) => void;
-  onDeviceDoubleClick?: (device: 'pc' | 'switchL2' | 'switchL3' | 'router', deviceId: string) => void;
+  selectedDevice: DeviceType | null;
+  onDeviceSelect: (device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string) => void;
+  onDeviceDoubleClick?: (device: DeviceType, deviceId: string) => void;
   onTopologyChange?: (devices: CanvasDevice[], connections: CanvasConnection[], notes: CanvasNote[]) => void;
   onDeviceDelete?: (deviceId: string) => void;
   initialDevices?: CanvasDevice[];
@@ -100,6 +100,11 @@ export interface CanvasDevice {
     password?: string;
     channel: '2.4GHz' | '5GHz';
     mode: 'ap' | 'client';
+  };
+  iot?: {
+    sensorType: 'temperature' | 'sound' | 'motion' | 'humidity' | 'light';
+    collaborationEnabled?: boolean;
+    dataStore?: string;
   };
 }
 
