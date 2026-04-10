@@ -2468,7 +2468,7 @@ export function NetworkTopology({
     const sensorType = device.iot?.sensorType || 'temperature';
     switch (sensorType) {
       case 'temperature':
-        return '35C';
+        return '35°C';
       case 'sound':
         return '62dB';
       case 'motion':
@@ -4629,27 +4629,29 @@ export function NetworkTopology({
           </div>
         </div>
 
-        {/* Cable Type Selector - Grouped */}
+        {/* Cable Type Selector - Button Group with Color Coding */}
         <div className="px-4 py-3">
           <div className={`text-[10px] font-bold tracking-widest mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {t.cable}
           </div>
-          <div className={`flex gap-1.5 p-2 rounded-xl border ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
-            {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
+          <div className={`flex items-center rounded-lg border overflow-hidden ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+            {(['straight', 'crossover', 'console'] as CableType[]).map((type, index) => (
               <button
                 key={type}
-                onClick={() => {
-                  onCableChange({ ...cableInfo, cableType: type });
-
-                }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all flex-1 justify-center ${cableInfo.cableType === type
-                  ? `${CABLE_COLORS[type].bg} text-white border-transparent`
-                  : isDark
-                    ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                    : 'bg-white text-slate-600 hover:bg-slate-100'
+                onClick={() => onCableChange({ ...cableInfo, cableType: type })}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold transition-all hover:bg-slate-700/50
+                  ${cableInfo.cableType === type
+                    ? isDark ? 'bg-slate-700/80' : 'bg-slate-200/80'
+                    : ''
+                  }
+                  ${type === 'straight'
+                    ? (cableInfo.cableType === type ? 'text-blue-400' : 'text-blue-500 hover:text-blue-400')
+                    : type === 'crossover'
+                      ? (cableInfo.cableType === type ? 'text-orange-400' : 'text-orange-500 hover:text-orange-400')
+                      : (cableInfo.cableType === type ? 'text-cyan-400' : 'text-cyan-500 hover:text-cyan-400')
                   }`}
               >
-                <div className={`w-2.5 h-2.5 rounded-full ${CABLE_COLORS[type].bg}`} />
+                <div className={`w-2 h-2 rounded-full ${type === 'straight' ? 'bg-blue-500' : type === 'crossover' ? 'bg-orange-500' : 'bg-cyan-500'}`} />
                 {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : t.console}
               </button>
             ))}
@@ -4817,7 +4819,7 @@ export function NetworkTopology({
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => addDevice('iot')}
-                        className={`p-1.5 rounded-lg ui-hover-surface ${isDark ? 'text-orange-500 hover:text-orange-400' : 'text-orange-600 hover:text-orange-700'}`}
+                        className={`p-1.5 rounded-lg ui-hover-surface ${isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-500 hover:text-cyan-600'}`}
                       >
                         {DEVICE_ICONS['iot']}
                       </button>
@@ -4826,17 +4828,28 @@ export function NetworkTopology({
                   </Tooltip>
                 </div>
 
-                {/* Cable Types Group */}
-                <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-slate-800/50 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
-                  {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
+                {/* Cable Types Group - Button Group with Color Coding */}
+                <div className={`flex items-center rounded-lg border overflow-hidden ${isDark ? 'bg-slate-800/50 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
+                  {(['straight', 'crossover', 'console'] as CableType[]).map((type, index) => (
                     <Tooltip key={type}>
                       <TooltipTrigger asChild>
                         <button
                           onClick={() => onCableChange({ ...cableInfo, cableType: type })}
-                          className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all duration-300 ${cableInfo.cableType === type
-                            ? `${CABLE_COLORS[type].bg} text-white shadow-lg shadow-black/10`
-                            : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}
+                          className={`h-8 px-3 flex items-center gap-1.5 transition-all hover:bg-slate-700/50 text-xs font-bold
+                            ${cableInfo.cableType === type
+                              ? isDark
+                                ? 'bg-slate-700/80'
+                                : 'bg-slate-200/80'
+                              : ''
+                            }
+                            ${type === 'straight'
+                              ? (cableInfo.cableType === type ? 'text-blue-400' : 'text-blue-500 hover:text-blue-400')
+                              : type === 'crossover'
+                                ? (cableInfo.cableType === type ? 'text-orange-400' : 'text-orange-500 hover:text-orange-400')
+                                : (cableInfo.cableType === type ? 'text-cyan-400' : 'text-cyan-500 hover:text-cyan-400')
+                            }`}
                         >
+                          <div className={`w-2 h-2 rounded-full ${type === 'straight' ? 'bg-blue-500' : type === 'crossover' ? 'bg-orange-500' : 'bg-cyan-500'}`} />
                           {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : t.console}
                         </button>
                       </TooltipTrigger>
@@ -5024,21 +5037,28 @@ export function NetworkTopology({
                   </div>
                 </div>
 
-                {/* Cables Section - Grouped */}
+                {/* Cables Section - Button Group with Color Coding */}
                 <div className="space-y-2">
-                  <p className="text-[10px] font-bold  tracking-widest text-slate-500 ml-1">{t.cableTypes}</p>
-                  <div className={`grid grid-cols-3 gap-2 p-2 rounded-xl border ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+                  <p className="text-[10px] font-bold tracking-widest text-slate-500 ml-1">{t.cableTypes}</p>
+                  <div className={`flex items-center rounded-lg border overflow-hidden ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
                     {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
                       <button
                         key={type}
                         onClick={() => { onCableChange({ ...cableInfo, cableType: type }); setIsPaletteOpen(false); }}
-                        className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-all ${cableInfo.cableType === type
-                          ? `${CABLE_COLORS[type].bg} text-white`
-                          : isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-white text-slate-600 hover:bg-slate-100'
+                        className={`flex-1 flex flex-col items-center gap-1.5 p-3 transition-all hover:bg-slate-700/50
+                          ${cableInfo.cableType === type
+                            ? isDark ? 'bg-slate-700/80' : 'bg-slate-200/80'
+                            : ''
+                          }
+                          ${type === 'straight'
+                            ? (cableInfo.cableType === type ? 'text-blue-400' : 'text-blue-500 hover:text-blue-400')
+                            : type === 'crossover'
+                              ? (cableInfo.cableType === type ? 'text-orange-400' : 'text-orange-500 hover:text-orange-400')
+                              : (cableInfo.cableType === type ? 'text-cyan-400' : 'text-cyan-500 hover:text-cyan-400')
                           }`}
                       >
-                        <div className={`w-4 h-4 rounded-full ${isDark && cableInfo.cableType !== type ? 'bg-slate-600' : ''}`} style={cableInfo.cableType !== type ? { backgroundColor: CABLE_COLORS[type].primary } : {}} />
-                        <span className="text-[10px] font-bold capitalize">
+                        <div className={`w-3 h-3 rounded-full ${type === 'straight' ? 'bg-blue-500' : type === 'crossover' ? 'bg-orange-500' : 'bg-cyan-500'}`} />
+                        <span className="text-[10px] font-bold">
                           {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : t.console}
                         </span>
                       </button>
