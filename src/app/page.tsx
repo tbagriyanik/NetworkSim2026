@@ -51,7 +51,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass } from "lucide-react";
+import { ChevronDown, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf } from "lucide-react";
 
 import { Button } from '@/components/ui/button';
 import {
@@ -82,6 +82,7 @@ import { DeviceIcon } from '@/components/network/DeviceIcon';
 import { AppSkeleton } from '@/components/ui/AppSkeleton';
 import { AppErrorBoundary } from '@/components/ui/AppErrorBoundary';
 import { SwitchModel } from '@/lib/network/switchModels';
+import { EnvironmentSettingsPanel } from '@/components/network/EnvironmentSettingsPanel';
 
 const PCPanel = dynamic(() => import('@/components/network/PCPanel').then((m) => m.PCPanel), { ssr: false });
 const Terminal = dynamic(() => import('@/components/network/Terminal').then((m) => m.Terminal), { ssr: false });
@@ -775,6 +776,7 @@ export default function Home() {
   // UI state for dropdowns
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isEnvironmentPanelOpen, setIsEnvironmentPanelOpen] = useState(false);
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   const [projectSearchQuery, setProjectSearchQuery] = useState('');
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -2780,6 +2782,23 @@ export default function Home() {
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>{language === 'tr' ? 'Cihazları Bagla' : 'Connect Devices'}</TooltipContent>
+                    </Tooltip>
+                    
+                    <div className={`w-px h-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} mx-0.5`} />
+ 
+                    {/* Environment Settings Button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-emerald-500 hover:bg-emerald-500/10"
+                          onClick={() => setIsEnvironmentPanelOpen(true)}
+                        >
+                          <Leaf className="w-5 h-5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{language === 'tr' ? 'Çevresel Ayarlar' : 'Environment Settings'}</TooltipContent>
                     </Tooltip>
                   </div>
                 )}
