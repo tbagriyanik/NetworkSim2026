@@ -164,6 +164,11 @@ export function PCPanel({
   const inputBorder = isDark ? 'border-slate-800' : 'border-slate-300';
 
   const [activeTab, setActiveTab] = useState<PCActiveTab>('home');
+  const activeTabRef = useRef<PCActiveTab>(activeTab);
+  
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
   const [activeServiceTab, setActiveServiceTab] = useState<'dns' | 'http' | 'dhcp'>('dns');
   const tabletHistoryRef = useRef<PCActiveTab[]>(['home']);
   const tabletHistoryIndexRef = useRef(0);
@@ -598,7 +603,28 @@ export function PCPanel({
   const [httpAppUrl, setHttpAppUrl] = useState<string>('');
   const [httpAppTitle, setHttpAppTitle] = useState<string>('HTTP Page');
   const [httpAppDeviceId, setHttpAppDeviceId] = useState<string | null>(null);
-  const [browserWindow, setBrowserWindow] = useState({ x: 40, y: 140, width: 960, height: 400 });
+  const [browserWindow, setBrowserWindow] = useState(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('pc-browser-window-state') : null;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          x: typeof parsed.x === 'number' ? parsed.x : 40,
+          y: typeof parsed.y === 'number' ? parsed.y : 140,
+          width: typeof parsed.width === 'number' ? parsed.width : 960,
+          height: typeof parsed.height === 'number' ? parsed.height : 400,
+        };
+      } catch {
+        return { x: 40, y: 140, width: 960, height: 400 };
+      }
+    }
+    return { x: 40, y: 140, width: 960, height: 400 };
+  });
+
+  useEffect(() => {
+    localStorage.setItem('pc-browser-window-state', JSON.stringify(browserWindow));
+  }, [browserWindow]);
+
   const dragStateRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const resizeStateRef = useRef<{
     side: 'left' | 'right' | 'bottom';
@@ -2133,20 +2159,20 @@ export function PCPanel({
   const executeCommand = async (cmdToExecute?: string) => {
     const command = (cmdToExecute || input).trim();
     if (!command) return;
-    if ((activeTab === 'desktop' && isCmdInputDisabled) || (activeTab === 'terminal' && isConsoleInputDisabled)) {
+    if ((activeTabRef.current === 'desktop' && isCmdInputDisabled) || (activeTabRef.current === 'terminal' && isConsoleInputDisabled)) {
       addLocalOutput('error', connectionErrorText || t.pcConnectionError);
       setInput('');
       return;
     }
 
-    if (activeTab === 'desktop') {
+    if (activeTabRef.current === 'desktop') {
       if (desktopHistory[0] !== command) {
         const newHistory = [command, ...desktopHistory].slice(0, 50);
         setDesktopHistory(newHistory);
         if (onUpdatePCHistory) onUpdatePCHistory(deviceId, newHistory);
       }
       setDesktopHistoryIndex(-1);
-    } else if (activeTab === 'terminal') {
+    } else if (activeTabRef.current === 'terminal') {
       if (consoleHistory[0] !== command) {
         const newHistory = [command, ...consoleHistory].slice(0, 50);
         setConsoleHistory(newHistory);
@@ -2157,7 +2183,7 @@ export function PCPanel({
     setShowAutocomplete(false);
 	    setAutocompleteIndex(-1);
 	    setAutocompleteNavigated(false);
-	    if (activeTab === 'desktop') {
+	    if (activeTabRef.current === 'desktop') {
 	      addLocalOutput('command', command);
 	      const parts = command.split(' ');
 	      const cmd = parts[0].toLowerCase();
@@ -3883,29 +3909,12 @@ export function PCPanel({
                                   onClick={() => {
                                     const targetIp = selectedIotDevice?.ip;
                                     if (targetIp) {
-                                      addLocalOutput('command', `ping ${targetIp}`);
-                                      // Simulate ping
+                                      // Switch to CMD tab
+                                      navigateToProgram('desktop');
+                                      // Execute ping command after a short delay to allow tab transition
                                       setTimeout(() => {
-                                        addLocalOutput('output', `Pinging ${targetIp} with 32 bytes of data:`);
-                                      }, 100);
-                                      setTimeout(() => {
-                                        addLocalOutput('success', `Reply from ${targetIp}: bytes=32 time=1ms TTL=64`);
+                                        executeCommand(`ping ${targetIp}`);
                                       }, 300);
-                                      setTimeout(() => {
-                                        addLocalOutput('success', `Reply from ${targetIp}: bytes=32 time<1ms TTL=64`);
-                                      }, 500);
-                                      setTimeout(() => {
-                                        addLocalOutput('success', `Reply from ${targetIp}: bytes=32 time=1ms TTL=64`);
-                                      }, 700);
-                                      setTimeout(() => {
-                                        addLocalOutput('success', `Reply from ${targetIp}: bytes=32 time<1ms TTL=64`);
-                                      }, 900);
-                                      setTimeout(() => {
-                                        addLocalOutput('output', `Ping statistics for ${targetIp}:`);
-                                        addLocalOutput('output', `    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),`);
-                                        addLocalOutput('output', `Approximate round trip times in milli-seconds:`);
-                                        addLocalOutput('output', `    Minimum = 0ms, Maximum = 1ms, Average = 0ms`);
-                                      }, 1100);
                                     }
                                   }}
                                 >

@@ -113,19 +113,19 @@
 
 .dark {
   --background: #020617;
-  --foreground: #f8fafc;
+  --foreground: hsl(210 15% 85%);
   --card: #020617;
   --card-foreground: #f8fafc;
   --popover: #020617;
   --popover-foreground: #f8fafc;
-  --primary: #f8fafc;
+  --primary: hsl(195 70% 60%);
   --primary-foreground: #0f172a;
-  --secondary: #1e293b;
+  --secondary: hsl(210 20% 25%);
   --secondary-foreground: #f8fafc;
   --muted: #1e293b;
   --muted-foreground: #94a3b8;
-  --accent: #1e293b;
-  --accent-foreground: #f8fafc;
+  --accent: hsl(195 70% 60%);
+  --accent-foreground: #0f172a;
   --destructive: #7f1d1d;
   --destructive-foreground: #f8fafc;
   --border: #1e293b;

@@ -65,7 +65,7 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
         <TooltipContent>{t.environmentSettings}</TooltipContent>
       </Tooltip>
       <SheetContent side="right" className={cn(
-        'w-[320px] p-0',
+        'w-[320px] p-0 overflow-y-auto',
         isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
       )}>
         <SheetHeader className={cn(

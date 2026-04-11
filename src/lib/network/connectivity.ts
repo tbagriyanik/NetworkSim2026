@@ -356,11 +356,11 @@ export function checkConnectivity(
   if (deviceStates) {
     // Get AP devices - routers/switches from topology
     const apDevices = devices.filter(d => isSwitchDeviceType(d.type) || d.type === 'router');
-    // Get PC devices that have WiFi configured - check both device.wifi and deviceStates
+    // Get PC/IoT devices that have WiFi configured - check both device.wifi and deviceStates
     const pcDevices = devices.filter(d => {
       const wifi = getDeviceWifiConfig(d, deviceStates);
-      // PC must have wifi with a non-empty ssid and must be in client mode (not ap)
-      return d.type === 'pc' && !!wifi && wifi.enabled && !!wifi.ssid && (wifi.mode === 'client' || wifi.mode === 'sta');
+      // PC/IoT must have wifi with a non-empty ssid and must be in client mode (not ap)
+      return (d.type === 'pc' || d.type === 'iot') && !!wifi && wifi.enabled && !!wifi.ssid && (wifi.mode === 'client' || wifi.mode === 'sta');
     });
 
     for (const pc of pcDevices) {
@@ -477,7 +477,7 @@ export function checkConnectivity(
   };
 
   const getDeviceVlan = (device: CanvasDevice, state?: SwitchState): number | null => {
-    if (device.type === 'pc') {
+    if (device.type === 'pc' || device.type === 'iot') {
       const connectedConn = connections.find(conn =>
         conn.sourceDeviceId === device.id || conn.targetDeviceId === device.id
       );
@@ -736,9 +736,9 @@ export function checkConnectivity(
       const device = devices.find(d => d.id === deviceId);
       if (!device) return null;
       const state = deviceStates.get(deviceId);
-      if (!state) return device.type === 'pc' ? Number(device.vlan || 1) : 1;
+      if (!state) return (device.type === 'pc' || device.type === 'iot') ? Number(device.vlan || 1) : 1;
 
-      if (device.type === 'pc') return getDeviceVlan(device, state);
+      if (device.type === 'pc' || device.type === 'iot') return getDeviceVlan(device, state);
 
       // Check all VLAN SVIs first (vlan1, vlan10, vlan20, etc.)
       for (const [portId, port] of Object.entries(state.ports)) {
