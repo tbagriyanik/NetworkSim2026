@@ -882,13 +882,14 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       try {
         window.parent.postMessage({
           type: 'router-admin-disconnect-iot',
-          deviceId: '${deviceId || ''}',
           payload: {
             iotDeviceId: deviceId
           }
         }, '*');
         
         alert('✅ IoT device disconnected from the network');
+        // Reload panel to refresh device lists
+        setTimeout(() => location.reload(), 500);
       } catch (err) {
         console.warn('Could not disconnect IoT device:', err);
         alert('❌ Failed to disconnect IoT device');
@@ -909,7 +910,6 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
           try {
             window.parent.postMessage({
               type: 'router-admin-disconnect-iot',
-              deviceId: '${deviceId || ''}',
               payload: { iotDeviceId: deviceId }
             }, '*');
           } catch (err) {
@@ -921,6 +921,8 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       setTimeout(() => {
         selectedConnectedDevices.clear();
         alert('✅ ' + deviceIds.length + ' device(s) disconnected from the network');
+        // Reload panel to refresh device lists
+        location.reload();
       }, deviceIds.length * 100 + 200);
     };
     
@@ -956,7 +958,6 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
           try {
             window.parent.postMessage({
               type: 'router-admin-connect-iot',
-              deviceId: '${deviceId || ''}',
               payload: {
                 iotDeviceId: deviceId,
                 ssid: '${wifi.ssid || ''}',
@@ -970,7 +971,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
             console.warn('Could not connect IoT device ' + deviceId + ':', err);
             failCount++;
           }
-        }, index * 100); // 100ms delay between each
+        }, index * 100);
       });
       
       setTimeout(() => {
@@ -982,6 +983,8 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
           btn.disabled = false;
           clearIotSelection();
           alert('✅ ' + successCount + ' IoT device' + (successCount > 1 ? 's' : '') + ' connected to the network!' + (failCount > 0 ? ' (' + failCount + ' failed)' : ''));
+          // Reload panel to refresh device lists
+          location.reload();
         }, 1500);
       }, deviceIds.length * 100 + 500);
     };

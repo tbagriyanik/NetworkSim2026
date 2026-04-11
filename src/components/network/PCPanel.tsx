@@ -1179,13 +1179,23 @@ export function PCPanel({
           bssid: undefined,
         };
 
+        // Update ports to clear WiFi connection
+        const updatedPorts = iotDevice.ports.map(p => 
+          p.id === 'wlan0' 
+            ? { ...p, status: 'disconnected' as const, ipAddress: undefined, subnetMask: undefined, wifi: { ssid: '', security: 'open' as const, channel: '2.4GHz' as const, mode: 'client' as const } }
+            : p
+        );
+
         // Dispatch event to update the IoT device
         window.dispatchEvent(new CustomEvent('update-topology-device-config', {
           detail: {
             deviceId: iotDeviceId,
             config: {
               wifi: updatedWifi,
-              status: 'offline',
+              ip: '',
+              subnet: '',
+              gateway: '',
+              ports: updatedPorts,
             },
           },
         }));

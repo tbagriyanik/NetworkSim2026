@@ -3369,6 +3369,26 @@ export function NetworkTopology({
     return () => window.removeEventListener('trigger-ping-animation', handlePingTrigger);
   }, [startPingAnimation]);
 
+  // Handle device config updates from WiFi control panel (e.g., IoT disconnect)
+  useEffect(() => {
+    const handleUpdateDeviceConfig = (event: CustomEvent<{ deviceId: string; config: Partial<CanvasDevice> }>) => {
+      const { deviceId, config } = event.detail;
+      if (!deviceId) return;
+
+      saveToHistory();
+      setDevices((prev) =>
+        prev.map((d) =>
+          d.id === deviceId
+            ? { ...d, ...config }
+            : d
+        )
+      );
+    };
+
+    window.addEventListener('update-topology-device-config', handleUpdateDeviceConfig as EventListener);
+    return () => window.removeEventListener('update-topology-device-config', handleUpdateDeviceConfig as EventListener);
+  }, [setDevices, saveToHistory]);
+
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 

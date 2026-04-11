@@ -190,6 +190,17 @@ Proje tamamlanmış durumda:
 
 ## Tamamlananlar
 
+### 2026-04-11 – IoT WiFi Lab ve WiFi Kontrol Paneli İyileştirmeleri
+- **Yeni Örnek Proje**: `IoT WiFi Lab` eklendi — 3 IoT cihazı (Sıcaklık, Nem, Hareket sensörü) + PC + Router
+- **IoT Cihaz IP Atama**: Tüm IoT cihazlara statik IP atanabilir (192.168.1.101-103)
+- **WiFi Kontrol Paneli IoT Yönetimi**: 
+  - Bağlı IoT cihazlarını listeden tek tek veya toplu çıkarma (Disconnect)
+  - Inaktif cihazları ağa dahil etme (Connect Selected Devices)
+  - IoT cihaz bilgilerinde IP adresi gösterimi
+- **WiFi Badge Düzenlemesi**: Switch ve Router'da bağlı cihaz sayısı badge'i WiFi simgesinin altına taşındı
+- **Bug Düzeltmeleri**: WiFi paneli disconnect/connect butonları template literal hatası düzeltildi
+- **Versiyon**: 1.4.0, Kod satırı: 53,000+
+
 ### 2026-04-10 – UI/UX İyileştirmeleri ve Toolbar Düzenlemeleri
 - **Topology Toolbar**: Bağla, Ping, Not, Yenile düğmeleri tek renk (slate) button group haline getirildi
 - **Kablo Türü Düğmeleri**: Straight (mavi), Crossover (turuncu), Console (turkuaz) renk kodlamasıyla button group yapıldı
@@ -318,6 +329,8 @@ Aşağıdaki maddeler artık tamamen uygulanmış ve çalışır durumda:
 14. ✅ Dark/Light Mode - Tema desteği
 15. ✅ TR/EN Dil - Çift dil desteği
 16. ✅ Build Sağlığı - `npm run build` başarılı
+17. ✅ IoT WiFi Lab Örneği - 3 IoT cihazlı tam laboratuvar senaryosu
+18. ✅ WiFi Panel IoT Yönetimi - Bağlı cihazları çıkarma/dahil etme
 
 ## Sonraki Adımlar (Opsiyonel İyileştirmeler)
 
@@ -334,9 +347,10 @@ Proje tamamlanmış durumda:
 - Build ve test sağlığı: mükemmel ✅
 - CLI komut desteği: %100 ✅
 - WiFi simülasyonu: Tam özellikli (sinyal gücü + gecikme) ✅
+- IoT Lab: Tam laboratuvar senaryosu aktif ✅
 - UI/UX: Modern ve işlevsel ✅
 - Dokümantasyon: Güncellendi ✅
 
-**Sürüm**: 1.3.0  
-**Son Güncelleme**: 2026-04-10  
+**Sürüm**: 1.4.0  
+**Son Güncelleme**: 2026-04-11  
 **Durum**: Production Ready ✅

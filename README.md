@@ -6,7 +6,7 @@ A modern and interactive web-based Network simulator designed for students and n
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Commits](https://img.shields.io/badge/commits-600+-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-51.8k-blueviolet)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-53k+-blueviolet)
 
 ## ✨ Key Features
 
@@ -26,7 +26,13 @@ A modern and interactive web-based Network simulator designed for students and n
   - Configure SSID, security (Open/WPA/WPA2/WPA3), channel (2.4GHz/5GHz)
   - Switch between AP and Client modes
   - View connected devices in real-time
+  - **IoT Device Management**: Connect/disconnect IoT devices from WiFi panel
+  - Bulk operations for multiple IoT devices
+  - IP address display for connected IoT devices
   - Modern, responsive UI with dark/light theme support
+- **IoT WiFi Lab**: Complete lab scenario with 3 IoT device types (Temperature, Humidity, Motion sensors)
+  - Pre-configured example project with WiFi connectivity
+  - Static IP assignment support for IoT devices
 
 ### ⚡ Performance Optimization (Phase 2)
 - **Spatial Partitioning**: Grid-based 256x256px partitioning for efficient rendering of 500+ nodes
