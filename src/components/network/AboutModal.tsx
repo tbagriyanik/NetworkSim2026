@@ -71,8 +71,8 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] md:max-w-2xl lg:max-w-3xl max-h-[80vh]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] md:max-w-2xl lg:max-w-3xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2 shrink-0">
           <DialogTitle className="sr-only">
             {activeTab === 'about' ? t.aboutTitle : t.commandReference}
           </DialogTitle>
@@ -115,37 +115,9 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[50vh] w-full rounded-md border p-4">
-          {activeTab === 'about' ? (
-            <div className="space-y-4">
-              <h4 className="text-lg font-bold">{t.termsAndConditions}</h4>
-              <p className="text-sm">{t.termsText}</p>
-              <div className="p-3 bg-cyan-500/5 rounded-lg border border-cyan-500/20">
-                <p className="text-sm font-bold text-cyan-600 dark:text-cyan-400 mb-1">{t.gitAddressLabel}:</p>
-                <a 
-                  href="https://github.com/tbagriyanik/ciscosim" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-sm text-blue-500 hover:underline break-all"
-                >
-                  https://github.com/tbagriyanik/ciscosim
-                </a>
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.openSourceInfo}</p>
-              </div>
-              <div>
-                <a 
-                  href="https://tuzlamtal.meb.k12.tr" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 hover:underline"
-                >
-                  {t.licenseInfo}
-                </a>
-              </div>
-              <div className="text-xs text-slate-500">Version: {version}</div>
-            </div>
-          ) : (
-            <div className="space-y-3">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden border rounded-md mx-6 mb-2">
+          {activeTab === 'help' && (
+            <div className={cn('p-4 space-y-3 border-b shrink-0', isDark ? 'bg-slate-900/50' : 'bg-slate-50/50')}>
               {/* Search */}
               <div className="relative">
                 <Search className={cn('absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4', isDark ? 'text-slate-500' : 'text-slate-400')} />
@@ -181,7 +153,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
 
               {/* Command Modes Legend */}
               {!searchQuery.trim() && (
-                <div className={cn('p-3 rounded-lg text-xs space-y-1', isDark ? 'bg-slate-900 border border-slate-700' : 'bg-slate-50 border border-slate-200')}>
+                <div className={cn('p-3 rounded-lg text-xs space-y-1', isDark ? 'bg-slate-950/50 border border-slate-800' : 'bg-white border border-slate-200')}>
                   <p className={cn('font-semibold mb-2', isDark ? 'text-slate-200' : 'text-slate-700')}>
                     {t.commandModes}
                   </p>
@@ -195,51 +167,84 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
                   </div>
                 </div>
               )}
-
-              {/* Help Categories */}
-              {filteredHelpCategories.map((cat) => {
-                const Icon = cat.icon;
-                const isExp = expandedHelp[cat.id];
-                return (
-                  <div key={cat.id} className={cn('rounded-lg border overflow-hidden', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border border-slate-200')}>
-                    <button
-                      onClick={() => toggleHelp(cat.id)}
-                      className={cn('w-full flex items-center justify-between p-3 text-left transition-colors', isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Icon className={cn('w-4 h-4', isDark ? 'text-slate-400' : 'text-slate-500')} />
-                        <span className={cn('font-medium text-sm', isDark ? 'text-slate-200' : 'text-slate-700')}>{cat.title}</span>
-                        <span className={cn('text-xs px-2 py-0.5 rounded-full', isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')}>
-                          {cat.cmds.length}
-                        </span>
-                      </div>
-                      <ChevronDown className={cn('w-4 h-4 transition-transform', isExp ? 'rotate-180' : '', isDark ? 'text-slate-400' : 'text-slate-500')} />
-                    </button>
-                    {isExp && (
-                      <div className={cn('border-t', isDark ? 'border-slate-700' : 'border-slate-200')}>
-                        <table className="w-full text-xs">
-                          <tbody>
-                            {cat.cmds.map(([cmd, desc], idx) => (
-                              <tr key={idx} className={cn('border-b last:border-b-0', isDark ? 'border-slate-800 hover:bg-slate-800/50' : 'border-slate-100 hover:bg-slate-50')}>
-                                <td className="p-2 w-1/2">
-                                  <code className={cn('font-mono text-[11px]', isDark ? 'text-emerald-400' : 'text-emerald-600')}>{cmd}</code>
-                                </td>
-                                <td className={cn('p-2', isDark ? 'text-slate-400' : 'text-slate-600')}>{desc}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              
             </div>
           )}
-        </ScrollArea>
 
-        <div className="flex justify-end mt-4">
+          <div className="flex-1 overflow-y-auto p-4">
+            {activeTab === 'about' ? (
+              <div className="space-y-4">
+                <h4 className="text-lg font-bold">{t.termsAndConditions}</h4>
+                <p className="text-sm">{t.termsText}</p>
+                <div className="p-3 bg-cyan-500/5 rounded-lg border border-cyan-500/20">
+                  <p className="text-sm font-bold text-cyan-600 dark:text-cyan-400 mb-1">{t.gitAddressLabel}:</p>
+                  <a 
+                    href="https://github.com/tbagriyanik/ciscosim" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-sm text-blue-500 hover:underline break-all"
+                  >
+                    https://github.com/tbagriyanik/ciscosim
+                  </a>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.openSourceInfo}</p>
+                </div>
+                <div>
+                  <a 
+                    href="https://tuzlamtal.meb.k12.tr" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 hover:underline"
+                  >
+                    {t.licenseInfo}
+                  </a>
+                </div>
+                <div className="text-xs text-slate-500">Version: {version}</div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Help Categories */}
+                {filteredHelpCategories.map((cat) => {
+                  const Icon = cat.icon;
+                  const isExp = expandedHelp[cat.id];
+                  return (
+                    <div key={cat.id} className={cn('rounded-lg border overflow-hidden', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border border-slate-200')}>
+                      <button
+                        onClick={() => toggleHelp(cat.id)}
+                        className={cn('w-full flex items-center justify-between p-3 text-left transition-colors', isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Icon className={cn('w-4 h-4', isDark ? 'text-slate-400' : 'text-slate-500')} />
+                          <span className={cn('font-medium text-sm', isDark ? 'text-slate-200' : 'text-slate-700')}>{cat.title}</span>
+                          <span className={cn('text-xs px-2 py-0.5 rounded-full', isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')}>
+                            {cat.cmds.length}
+                          </span>
+                        </div>
+                        <ChevronDown className={cn('w-4 h-4 transition-transform', isExp ? 'rotate-180' : '', isDark ? 'text-slate-400' : 'text-slate-500')} />
+                      </button>
+                      {isExp && (
+                        <div className={cn('border-t', isDark ? 'border-slate-700' : 'border-slate-200')}>
+                          <table className="w-full text-xs">
+                            <tbody>
+                              {cat.cmds.map(([cmd, desc], idx) => (
+                                <tr key={idx} className={cn('border-b last:border-b-0', isDark ? 'border-slate-800 hover:bg-slate-800/50' : 'border-slate-100 hover:bg-slate-50')}>
+                                  <td className="p-2 w-1/2">
+                                    <code className={cn('font-mono text-[11px]', isDark ? 'text-emerald-400' : 'text-emerald-600')}>{cmd}</code>
+                                  </td>
+                                  <td className={cn('p-2', isDark ? 'text-slate-400' : 'text-slate-600')}>{desc}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end p-6 pt-2 shrink-0">
           <Button onClick={onClose}>{t.close}</Button>
         </div>
       </DialogContent>
