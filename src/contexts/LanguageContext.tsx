@@ -98,6 +98,8 @@ export interface Translations {
   clearTerminalBtn: string;
   switchMode: string;
   newVlanLabel: string;
+  // UI text for global controls in About modal / tour
+  close: string;  
   pcTerminal: string;
   pcConnected: string;
   pcNotConnected: string;
@@ -281,9 +283,9 @@ export interface Translations {
   termsAndConditions: string;
   termsText: string;
   licenseInfo: string;
-  close: string;
   gitAddressLabel: string;
   openSourceInfo: string;
+  startTour: string;
 
   // Network Topology
   connectDevices: string;
@@ -665,12 +667,13 @@ const translations: Record<Language, Translations> = {
     selectDeviceDropdown: 'Cihaz Seç',
     vlanNameExample: 'Örn: Muhasebe',
     hostnameExample: 'Örn: Router-X',
-    aboutTitle: 'Network Simulator 2026 Yardımı',
+    aboutTitle: 'Hakkında',
     aboutIntro: 'Bu uygulama, ağ teknolojilerini ve terminal komutlarını öğrenmek isteyenler için tasarlanmış interaktif bir simülasyon aracıdır.',
     termsAndConditions: 'Şartlar ve Koşullar',
     termsText: 'Bu yazılım eğitim amaçlıdır. Ticari olmayan amaçlarla özgürce kullanılabilir ve dağıtılabilir.',
     licenseInfo: 'Tuzla Mesleki ve Teknik Anadolu Lisesi',
     close: 'Kapat',
+    startTour: 'Tur',
     gitAddressLabel: 'Kaynak Adresi',
     openSourceInfo: 'Bu proje açık kaynaklıdır',
     connectDevices: 'Bağla',
@@ -1058,12 +1061,12 @@ const translations: Record<Language, Translations> = {
     selectDeviceDropdown: 'Select Device',
     vlanNameExample: 'e.g. Sales',
     hostnameExample: 'e.g. Router-X',
-    aboutTitle: ' Network Simulator 2026',
+    aboutTitle: 'About',
     aboutIntro: 'This application is an interactive simulation tool designed for those who want to learn network technologies and terminal commands.',
     termsAndConditions: 'Terms and Conditions',
     termsText: 'This software is for educational purposes. It can be freely used and distributed for non-commercial purposes.',
     licenseInfo: 'Tuzla Vocational and Technical Anatolian High School',
-    close: 'Close',
+    startTour: 'Tour',
     gitAddressLabel: 'Source Address',
     openSourceInfo: 'This project is open-source',
     connectDevices: 'Connect Devices',
@@ -1217,6 +1220,7 @@ const translations: Record<Language, Translations> = {
     confirmResetTitle: 'Reset to Factory Defaults?',
     confirmResetDescription: 'This will erase all configuration and restore factory defaults. The device will reload. This action cannot be undone.',
     confirmReset: 'Reset Device',
+    close: 'Close'
   }
 };
 

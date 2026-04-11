@@ -11,6 +11,7 @@ const AboutModalComponent = lazy(() =>
 interface LazyAboutModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onStartTour: () => void;
 }
 
 function AboutModalFallback() {
@@ -30,12 +31,12 @@ function AboutModalFallback() {
     );
 }
 
-export function LazyAboutModal({ isOpen, onClose }: LazyAboutModalProps) {
+export function LazyAboutModal({ isOpen, onClose, onStartTour }: LazyAboutModalProps) {
     if (!isOpen) return null;
 
     return (
         <Suspense fallback={<AboutModalFallback />}>
-            <AboutModalComponent isOpen={isOpen} onClose={onClose} />
+            <AboutModalComponent isOpen={isOpen} onClose={onClose} onStartTour={onStartTour} />
         </Suspense>
     );
 }

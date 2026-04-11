@@ -3001,11 +3001,11 @@ export default function Home() {
                   const isActive = activeTab === tab.id;
                   // Unified Color Mapping
                   const tabColors: Record<string, string> = {
-                    topology: 'text-blue-500 hover:text-blue-500',
-                    cmd: 'text-emerald-500 hover:text-emerald-500',
-                    terminal: 'text-emerald-500 hover:text-emerald-600',
-                    tasks: 'text-red-500 hover:text-red-600',
-                  }; const colorClass = tabColors[tab.id] || 'text-slate-500 hover:text-slate-600';
+                    topology: 'text-blue-500 hover:text-blue-400',
+                    cmd: 'text-emerald-500 hover:text-emerald-400',
+                    terminal: 'text-emerald-500 hover:text-emerald-400',
+                    tasks: 'text-red-500 hover:text-red-400',
+                  }; const colorClass = tabColors[tab.id] || 'text-slate-500 hover:text-slate-400';
 
                   return (
                     <Tooltip key={tab.id}>
@@ -3744,7 +3744,15 @@ export default function Home() {
             </div>
           </footer>
 
-          <LazyAboutModal isOpen={showAboutModal} onClose={() => setShowAboutModal(false)} />
+          <LazyAboutModal 
+            isOpen={showAboutModal} 
+            onClose={() => setShowAboutModal(false)} 
+            onStartTour={() => {
+              setShowAboutModal(false);
+              setShowOnboarding(true);
+              setOnboardingStep(0);
+            }}
+          />
         </div>
       </div >
     </AppErrorBoundary >

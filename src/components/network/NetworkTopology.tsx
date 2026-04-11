@@ -4768,7 +4768,7 @@ export function NetworkTopology({
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => addDevice('pc')}
-                        className={`p-1.5 rounded-lg ui-hover-surface ${isDark ? 'text-blue-500 hover:text-blue-400' : 'text-blue-600 hover:text-blue-700'}`}
+                        className={`p-1.5 rounded-lg ui-hover-surface ${isDark ? 'text-blue-500 hover:text-blue-400' : 'text-blue-600 hover:text-blue-500'}`}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="#3b82f6" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
@@ -4781,7 +4781,7 @@ export function NetworkTopology({
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => addDevice('switch', 'L2')}
-                        className={`p-1.5 rounded-lg ui-hover-surface ${isDark ? 'text-green-500 hover:text-green-400' : 'text-green-600 hover:text-green-700'}`}
+                        className={`p-1.5 rounded-lg ui-hover-surface ${isDark ? 'text-green-500 hover:text-green-400' : 'text-green-600 hover:text-green-500'}`}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
@@ -4794,7 +4794,7 @@ export function NetworkTopology({
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => addDevice('switch', 'L3')}
-                        className={`p-1.5 rounded-lg ui-hover-surface ${isDark ? 'text-purple-500 hover:text-purple-400' : 'text-purple-600 hover:text-purple-700'}`}
+                        className={`p-1.5 rounded-lg ui-hover-surface ${isDark ? 'text-purple-500 hover:text-purple-400' : 'text-purple-600 hover:text-purple-500'}`}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="#a855f7" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />

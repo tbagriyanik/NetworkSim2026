@@ -13,20 +13,21 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Info, Terminal, Search, X, ChevronDown } from 'lucide-react';
+import { Info, Terminal, Search, X, ChevronDown, Compass } from 'lucide-react';
 import { getCommandCategories } from './networkTopology.commands';
 
 interface AboutModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onStartTour: () => void;
 }
 
-type TabType = 'about' | 'help';
+type TabType = 'help' | 'about';
 
-export function AboutModal({ isOpen, onClose }: AboutModalProps) {
+export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
   const { t } = useLanguage();
   const { theme } = useTheme();
-  const [activeTab, setActiveTab] = useState<TabType>('about');
+  const [activeTab, setActiveTab] = useState<TabType>('help');
   const version = process.env.NEXT_PUBLIC_GIT_COMMIT_COUNT;
   const isDark = theme === 'dark';
   const lang = (t as any).language || 'en';
@@ -78,22 +79,6 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
           </DialogTitle>
           <div className="flex items-center gap-2 mb-2">
             <button
-              onClick={() => setActiveTab('about')}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                activeTab === 'about'
-                  ? isDark
-                    ? 'bg-cyan-500/20 text-cyan-400'
-                    : 'bg-cyan-100 text-cyan-700'
-                  : isDark
-                    ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-              )}
-            >
-              <Info className="w-4 h-4" />
-              {t.aboutTitle}
-            </button>
-            <button
               onClick={() => setActiveTab('help')}
               className={cn(
                 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
@@ -108,6 +93,22 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
             >
               <Terminal className="w-4 h-4" />
               {t.commandReference}
+            </button>
+            <button
+              onClick={() => setActiveTab('about')}
+              className={cn(
+                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                activeTab === 'about'
+                  ? isDark
+                    ? 'bg-cyan-500/20 text-cyan-400'
+                    : 'bg-cyan-100 text-cyan-700'
+                  : isDark
+                    ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+              )}
+            >
+              <Info className="w-4 h-4" />
+              {t.aboutTitle}
             </button>
           </div>
           <DialogDescription className="sr-only">
@@ -244,7 +245,15 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
           </div>
         </div>
 
-        <div className="flex justify-end p-6 pt-2 shrink-0">
+        <div className="flex justify-end p-6 pt-2 shrink-0 gap-2">
+          <Button 
+            variant="outline" 
+            onClick={onStartTour}
+            className="gap-2"
+          >
+            <Compass className="w-4 h-4" />
+            {t.startTour}
+          </Button>
           <Button onClick={onClose}>{t.close}</Button>
         </div>
       </DialogContent>
