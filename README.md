@@ -2,17 +2,17 @@
 
 A modern and interactive web-based Network simulator designed for students and networking enthusiasts.
 
-![Version](https://img.shields.io/badge/version-1.3.0-blue)
-![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
+![Version](https://img.shields.io/badge/version-1.4.0-blue)
+![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Commits](https://img.shields.io/badge/commits-540+-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-51.3k-blueviolet)
+![Commits](https://img.shields.io/badge/commits-600+-orange)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-81k+-blueviolet)
 
 ## ✨ Key Features
 
 ### 🌐 Interactive Network Topology
 - **Device Management**: Drag and drop PC, Switch, and Router devices to canvas
-- **Zoom & Pan**: Smooth zoom and pan operations
+- **Zoom & Pan**: Smooth zoom and pan operations with spatial partitioning
 - **Cable System**: Straight-through, Crossover, and Console cables
 - **Connection Management**: Create and manage connections between devices
 - **Visual Feedback**: Device status indicators and port labels
@@ -27,6 +27,27 @@ A modern and interactive web-based Network simulator designed for students and n
   - Switch between AP and Client modes
   - View connected devices in real-time
   - Modern, responsive UI with dark/light theme support
+
+### ⚡ Performance Optimization (Phase 2)
+- **Spatial Partitioning**: Grid-based 256x256px partitioning for efficient rendering of 500+ nodes
+- **Viewport Culling**: Only visible nodes and connections are rendered to maintain 60 FPS
+- **Virtual Scrolling**: Optimized device lists with `react-window` for memory efficiency
+- **Skeleton Screens**: Progressive loading with skeleton components for smoother transitions
+- **Asset Loading Strategy**: Next.js 16 optimized image and icon loading
+- **Node Pooling**: Efficient memory management for network elements
+
+### 🛣️ Layer 3 Switching & Routing
+- **L3 Switch Support**: Implementation of WS-C3560-24PS with 4 GigabitEthernet ports
+- **Routed Ports**: Convert physical switch ports to routed ports with `no switchport`
+- **Dynamic Routing**: Support for RIP and OSPF routing protocols
+- **IP Routing Engine**: Enable/disable global IP routing on L3 devices
+- **Routing Tasks**: Dedicated task system for routing configurations
+
+### ♿ Accessibility (WCAG 2.1 AA)
+- **ARIA Management**: Comprehensive ARIA attribute system for screen readers
+- **Keyboard Navigation**: Full focus management, trapping, and shortcut support
+- **High Contrast Support**: Optimized themes for improved visibility
+- **Screen Reader Announcements**: Real-time feedback for simulation actions
 
 ## 💻 Network CLI Simulation
 
@@ -80,6 +101,7 @@ The simulator supports **100+ commands** across multiple configuration modes:
 | `ip routing` | Enable IP routing (L3 switches) |
 | `no ip routing` | Disable IP routing |
 | `ip default-gateway <ip>` | Set default gateway |
+| `ip routing` | Enable IP routing (L3 switches) |
 | `ip domain-name <name>` | Set domain name |
 | `no ip domain lookup` | Disable DNS lookup |
 | `ip http server` | Enable HTTP server |
@@ -313,23 +335,25 @@ The simulator supports **100+ commands** across multiple configuration modes:
 
 ### ⚡ Advanced Features
 - **Bulk Power Control**: Bulk power on/off for selected devices
-- **Multi-Select**: Select multiple devices
-- **Keyboard Shortcuts**: Ctrl+Z (Undo), Ctrl+Y (Redo), etc.
-- **Dark/Light Mode**: Dark and light theme support
-- **Turkish/English**: Turkish and English language support
-- **Offline Storage**: Offline data storage
-- **Task System (Tasks)**: Track WLAN connection, security, and port configuration tasks
+- **Multi-Selection 2.0**: Improved selection logic with rubber-band and Shift+Click support
+- **DNS/HTTP System**: Enhanced web simulation with domain name resolution
+- **Keyboard Shortcuts**: Ctrl+Z (Undo), Ctrl+Y (Redo), Ctrl+A (Select All), etc.
+- **Dark/Light Mode**: Dark and light theme support with system preference detection
+- **Turkish/English**: Full localization support with dynamic switching
+- **Offline Storage**: Persistent simulation state using IndexedDB/localStorage
+- **Task System**: Interactive tasks for WLAN, Routing, Security, and VLANs
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Framework**: [Next.js 16](https://nextjs.org/) + [React 19](https://react.dev/)
-- **Language**: [TypeScript 5](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
-- **UI Components**: [shadcn/ui](https://ui.shadcn.com/) + [Lucide React](https://lucide.dev/)
-- **State Management**: [Zustand](https://docs.pmnd.rs/zustand) + Context API
-- **Storage**: localStorage + Custom offline storage
+- **Framework**: [Next.js 16.2](https://nextjs.org/) + [React 19](https://react.dev/)
+- **Language**: [TypeScript 5.9](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS 4.0](https://tailwindcss.com/)
+- **UI Components**: [shadcn/ui](https://ui.shadcn.com/) + [Lucide React 1.7](https://lucide.dev/)
+- **State Management**: [Zustand 5.0](https://docs.pmnd.rs/zustand)
+- **Storage**: IndexedDB (via custom offline storage) + localStorage
+- **Testing**: [Vitest 4.1](https://vitest.dev/)
 
 ## 📁 Project Structure
 
@@ -346,14 +370,18 @@ src/
 │   │   ├── DeviceNode.tsx            # Device visualization
 │   │   ├── PortPanel.tsx             # Port management
 │   │   └── ...
-│   └── ui/                   # shadcn/ui components
+│   ├── performance/          # Performance optimization components
+│   └── ui/                   # Modern shadcn/ui components
 ├── lib/
-│   └── network/              # Network logic
-│       ├── parser.ts         # Command parser
-│       ├── executor.ts       # Command executor
-│       ├── connectivity.ts   # Connectivity checker
-│       ├── routing.ts        # Routing logic
-│       └── types.ts          # Type definitions
+│   ├── network/              # Network logic
+│   │   ├── parser.ts         # Command parser
+│   │   ├── executor.ts       # Command executor
+│   │   ├── connectivity.ts   # Connectivity checker
+│   │   ├── routing.ts        # Routing logic
+│   │   └── types.ts          # Type definitions
+│   ├── performance/          # Optimization strategies (spatial, virtual)
+│   ├── accessibility/        # WCAG compliance logic
+│   └── design-system/        # Design tokens and responsive utils
 ├── contexts/                 # React contexts
 │   ├── ThemeContext.tsx      # Dark/Light mode
 │   └── LanguageContext.tsx   # TR/EN language
@@ -391,7 +419,13 @@ For detailed installation instructions, read [INSTALL.md](INSTALL.md).
 
 ## 📚 Documentation
 
-Detailed documentation can be found in the `kiro/` folder:
+Detailed documentation can be found in the `kiro/` and `docs/` folders:
+
+- **Performance**: [Optimization Guide](kiro/PERFORMANCE_OPTIMIZATION_GUIDE.md) | [Validation Report](kiro/PERFORMANCE_VALIDATION_REPORT.md)
+- **Accessibility**: [Implementation Guide](src/lib/accessibility/ACCESSIBILITY_GUIDE.md)
+- **Features**: [DNS/HTTP System](docs/DNS_HTTP_IMPROVEMENTS_SUMMARY.md) | [Multi-Selection](docs/MULTI_SELECTION_IMPROVEMENTS.md)
+- **Core Systems**: [Note System](kiro/NOTE_SYSTEM_SUMMARY.md) | [Ping Diagnostics](kiro/PING_DIAGNOSTICS_IMPLEMENTATION.md) | [Power Toggle](kiro/POWER_TOGGLE_IMPLEMENTATION.md)
+- **Validation**: [Subnet Validation](kiro/SUBNET_VALIDATION_IMPLEMENTATION.md) | [Project Structure](kiro/PROJECT_STRUCTURE_VERIFICATION.md)
 
 ## 🎯 Usage Examples
 
@@ -410,6 +444,12 @@ Detailed documentation can be found in the `kiro/` folder:
 2. Configure SSID, security, and channel in WiFi Control Panel
 3. Enable AP mode on router
 4. Connect PC as WiFi client with matching SSID
+
+### Layer 3 Routing
+1. Drag a **Router** or **L3 Switch** to the canvas
+2. Enter CLI and enable IP routing: `ip routing`
+3. Configure routed ports: `interface g0/1` -> `no switchport` -> `ip address 192.168.10.1 255.255.255.0`
+4. Configure RIP/OSPF: `router rip` -> `network 192.168.10.0`
 
 ### Ping Testing
 1. Right-click on device
@@ -446,14 +486,14 @@ Theme selection is done from the theme selector in the top right corner.
 ## 🔢 Code Metrics
 
 - Scope: `src/`
-- Source files: `160+`
-- Total lines: `51,332`
-- TS/TSX files: `150+`
-- Network components: `40+`
-- Custom hooks: `15+`
-- Example projects: `6`
-- CLI commands: `100+`
-- Last updated: `2026-04-10`
+- Source files: `170+`
+- Total lines: `81,000+`
+- TS/TSX files: `160+`
+- Network components: `50+`
+- Custom hooks: `20+`
+- Example projects: `8`
+- CLI commands: `110+`
+- Last updated: `2026-04-11`
 
 ## 🐛 Troubleshooting
 
@@ -475,8 +515,8 @@ Contributions are welcome. Please:
 
 ---
 
-**Sürüm**: 1.3.0
-**Son Güncelleme**: 2026-04-10
+**Sürüm**: 1.4.0
+**Son Güncelleme**: 2026-04-11
 **Durum**: Production Ready
 
 GitHub: [github.com/tbagriyanik/ciscosim](https://github.com/tbagriyanik/ciscosim)
