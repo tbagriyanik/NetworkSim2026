@@ -442,6 +442,13 @@ export interface Translations {
   lightLevel: string;
   celsius: string;
   percent: string;
+  // Room labels for floor plan
+  room1: string;
+  room2: string;
+  bedroom: string;
+  livingRoom: string;
+  kitchen: string;
+  bathroom: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -849,6 +856,13 @@ const translations: Record<Language, Translations> = {
     lightLevel: 'Işık',
     celsius: '°C',
     percent: '%',
+    // Room labels for floor plan
+    room1: 'Oda 1',
+    room2: 'Oda 2',
+    bedroom: 'Yatak',
+    livingRoom: 'Salon',
+    kitchen: 'Mutfak',
+    bathroom: 'Banyo',
   },
   en: {
     title: 'Network Simulator 2026',
@@ -1254,6 +1268,13 @@ const translations: Record<Language, Translations> = {
     lightLevel: 'Light',
     celsius: '°C',
     percent: '%',
+    // Room labels for floor plan
+    room1: 'Room 1',
+    room2: 'Room 2',
+    bedroom: 'Bedroom',
+    livingRoom: 'Living Room',
+    kitchen: 'Kitchen',
+    bathroom: 'Bathroom',
   }
 };
 

@@ -5351,83 +5351,94 @@ export function NetworkTopology({
                   {environment?.background !== 'none' && (
                     <g opacity="0.15">
                       {environment?.background === 'house' && (
-                        <svg x="50" y="50" width="600" height="450" viewBox="0 0 600 450">
-                          {/* House sketch - simple single story house */}
-                          <g fill="none" stroke={isDark ? '#94a3b8' : '#64748b'} strokeWidth="3">
-                            {/* Main house body */}
-                            <rect x="75" y="180" width="300" height="195" rx="3" />
-                            {/* Roof */}
-                            <path d="M60 180 L225 60 L390 180" />
-                            {/* Door */}
-                            <rect x="187.5" y="255" width="75" height="120" rx="3" />
-                            <circle cx="225" cy="315" r="4.5" fill={isDark ? '#94a3b8' : '#64748b'} />
-                            {/* Windows */}
-                            <rect x="105" y="225" width="60" height="60" rx="3" />
-                            <line x1="135" y1="225" x2="135" y2="285" />
-                            <line x1="105" y1="255" x2="165" y2="255" />
-                            <rect x="285" y="225" width="60" height="60" rx="3" />
-                            <line x1="315" y1="225" x2="315" y2="285" />
-                            <line x1="285" y1="255" x2="345" y2="255" />
-                            {/* Chimney */}
-                            <rect x="285" y="90" width="37.5" height="75" rx="3" />
-                            <ellipse cx="303.75" cy="82.5" rx="18" ry="6" />
-                            {/* Garage */}
-                            <rect x="390" y="240" width="150" height="135" rx="3" />
-                            <path d="M390 240 L465 195 L540 240" />
-                            {/* Garage door */}
-                            <rect x="412.5" y="277.5" width="105" height="97.5" rx="1.5" />
-                            <line x1="412.5" y1="300" x2="517.5" y2="300" />
-                            <line x1="412.5" y1="322.5" x2="517.5" y2="322.5" />
-                            <line x1="412.5" y1="345" x2="517.5" y2="345" />
+                        <svg x="0" y="0" width="1200" height="900" viewBox="0 0 1200 900">
+                          {/* 3+1 Apartment - Top-down floor plan */}
+                          <g fill="none" stroke={isDark ? '#94a3b8' : '#64748b'} strokeWidth="6">
+                            {/* Outer walls */}
+                            <rect x="150" y="150" width="900" height="600" rx="6" />
+                            {/* Living room (large room at bottom) */}
+                            <rect x="150" y="450" width="450" height="300" rx="4" />
+                            {/* Kitchen (right of living room) */}
+                            <rect x="600" y="450" width="450" height="300" rx="4" />
+                            {/* Kitchen counter */}
+                            <rect x="870" y="470" width="150" height="60" rx="4" fill={isDark ? '#94a3b820' : '#64748b20'} />
+                            {/* Bedroom 1 (top left) */}
+                            <rect x="150" y="150" width="300" height="300" rx="4" />
+                            {/* Bedroom 2 (top middle) */}
+                            <rect x="450" y="150" width="300" height="300" rx="4" />
+                            {/* Bedroom 3 (top right) */}
+                            <rect x="750" y="150" width="300" height="300" rx="4" />
+                            {/* Bathroom (small room between living and bedrooms) */}
+                            <rect x="600" y="360" width="150" height="90" rx="4" />
+                            {/* Hallway */}
+                            <rect x="450" y="360" width="150" height="90" rx="4" />
+                            {/* Entrance door */}
+                            <rect x="330" y="690" width="90" height="60" rx="4" fill={isDark ? '#94a3b820' : '#64748b20'} />
+                            <line x1="375" y1="690" x2="375" y2="750" strokeDasharray="10,10" />
+                            {/* Bedroom doors */}
+                            <line x1="300" y1="450" x2="360" y2="450" strokeDasharray="10,10" />
+                            <line x1="600" y1="450" x2="660" y2="450" strokeDasharray="10,10" />
+                            <line x1="900" y1="450" x2="960" y2="450" strokeDasharray="10,10" />
+                            {/* Kitchen doorway */}
+                            <line x1="600" y1="540" x2="600" y2="660" strokeDasharray="10,10" />
+                            {/* Bathroom door */}
+                            <line x1="660" y1="405" x2="690" y2="405" strokeDasharray="10,10" />
+                            {/* Room labels */}
+                            <text x="300" y="330" fontSize="40" fill={isDark ? '#94a3b8' : '#64748b'} textAnchor="middle">{t.room1}</text>
+                            <text x="600" y="330" fontSize="40" fill={isDark ? '#94a3b8' : '#64748b'} textAnchor="middle">{t.room2}</text>
+                            <text x="900" y="330" fontSize="40" fill={isDark ? '#94a3b8' : '#64748b'} textAnchor="middle">{t.bedroom}</text>
+                            <text x="375" y="630" fontSize="40" fill={isDark ? '#94a3b8' : '#64748b'} textAnchor="middle">{t.livingRoom}</text>
+                            <text x="825" y="630" fontSize="40" fill={isDark ? '#94a3b8' : '#64748b'} textAnchor="middle">{t.kitchen}</text>
+                            <text x="675" y="420" fontSize="28" fill={isDark ? '#94a3b8' : '#64748b'} textAnchor="middle">{t.bathroom}</text>
                           </g>
                         </svg>
                       )}
                       {environment?.background === 'twoStoryGarage' && (
-                        <svg x="50" y="20" width="750" height="600" viewBox="0 0 750 600">
+                        <svg x="0" y="0" width="1500" height="1200" viewBox="0 0 1500 1200">
                           {/* Two story building with garage */}
-                          <g fill="none" stroke={isDark ? '#94a3b8' : '#64748b'} strokeWidth="3">
+                          <g fill="none" stroke={isDark ? '#94a3b8' : '#64748b'} strokeWidth="6">
                             {/* Main building - 2 stories */}
-                            <rect x="75" y="120" width="300" height="360" rx="3" />
+                            <rect x="150" y="240" width="600" height="720" rx="6" />
                             {/* First floor line */}
-                            <line x1="75" y1="300" x2="375" y2="300" />
+                            <line x1="150" y1="600" x2="750" y2="600" />
                             {/* Roof */}
-                            <path d="M60 120 L225 30 L390 120" />
+                            <path d="M120 240 L450 60 L780 240" />
                             {/* Main entrance door */}
-                            <rect x="195" y="330" width="60" height="150" rx="3" />
-                            <circle cx="225" cy="405" r="4.5" fill={isDark ? '#94a3b8' : '#64748b'} />
+                            <rect x="390" y="660" width="120" height="300" rx="6" />
+                            <circle cx="450" cy="810" r="9" fill={isDark ? '#94a3b8' : '#64748b'} />
                             {/* First floor windows - 3 windows */}
-                            <rect x="105" y="195" width="67.5" height="75" rx="3" />
-                            <line x1="138" y1="195" x2="138" y2="270" />
-                            <line x1="105" y1="232.5" x2="172.5" y2="232.5" />
-                            <rect x="190.5" y="195" width="67.5" height="75" rx="3" />
-                            <line x1="223.5" y1="195" x2="223.5" y2="270" />
-                            <line x1="190.5" y1="232.5" x2="258" y2="232.5" />
-                            <rect x="277.5" y="195" width="67.5" height="75" rx="3" />
-                            <line x1="310.5" y1="195" x2="310.5" y2="270" />
-                            <line x1="277.5" y1="232.5" x2="345" y2="232.5" />
+                            <rect x="210" y="390" width="135" height="150" rx="6" />
+                            <line x1="276" y1="390" x2="276" y2="540" />
+                            <line x1="210" y1="465" x2="345" y2="465" />
+                            <rect x="381" y="390" width="135" height="150" rx="6" />
+                            <line x1="447" y1="390" x2="447" y2="540" />
+                            <line x1="381" y1="465" x2="516" y2="465" />
+                            <rect x="555" y="390" width="135" height="150" rx="6" />
+                            <line x1="621" y1="390" x2="621" y2="540" />
+                            <line x1="555" y1="465" x2="690" y2="465" />
                             {/* Ground floor windows */}
-                            <rect x="105" y="345" width="67.5" height="105" rx="3" />
-                            <line x1="138" y1="345" x2="138" y2="450" />
-                            <line x1="105" y1="397.5" x2="172.5" y2="397.5" />
-                            <rect x="277.5" y="345" width="67.5" height="105" rx="3" />
-                            <line x1="310.5" y1="345" x2="310.5" y2="450" />
-                            <line x1="277.5" y1="397.5" x2="345" y2="397.5" />
+                            <rect x="210" y="690" width="135" height="210" rx="6" />
+                            <line x1="276" y1="690" x2="276" y2="900" />
+                            <line x1="210" y1="795" x2="345" y2="795" />
+                            <rect x="555" y="690" width="135" height="210" rx="6" />
+                            <line x1="621" y1="690" x2="621" y2="900" />
+                            <line x1="555" y1="795" x2="690" y2="795" />
                             {/* Attached garage */}
-                            <rect x="405" y="270" width="240" height="210" rx="3" />
+                            <rect x="810" y="540" width="480" height="420" rx="6" />
                             {/* Garage roof */}
-                            <path d="M405 270 L525 210 L645 270" />
+                            <path d="M810 540 L1050 420 L1290 540" />
                             {/* Garage door */}
-                            <rect x="465" y="330" width="120" height="150" rx="1.5" />
-                            <line x1="465" y1="367.5" x2="585" y2="367.5" />
-                            <line x1="465" y1="405" x2="585" y2="405" />
-                            <line x1="465" y1="442.5" x2="585" y2="442.5" />
+                            <rect x="930" y="660" width="240" height="300" rx="3" />
+                            <line x1="930" y1="735" x2="1170" y2="735" />
+                            <line x1="930" y1="810" x2="1170" y2="810" />
+                            <line x1="930" y1="885" x2="1170" y2="885" />
                             {/* Garage side window */}
-                            <rect x="427.5" y="315" width="30" height="45" rx="3" />
-                            <line x1="442.5" y1="315" x2="442.5" y2="360" />
-                            <line x1="427.5" y1="337.5" x2="457.5" y2="337.5" />
+                            <rect x="855" y="630" width="60" height="90" rx="6" />
+                            <line x1="885" y1="630" x2="885" y2="720" />
+                            <line x1="855" y1="675" x2="915" y2="675" />
                             {/* Chimney */}
-                            <rect x="300" y="52.5" width="37.5" height="75" rx="3" />
-                            <ellipse cx="318.75" cy="45" rx="18" ry="6" />
+                            <rect x="600" y="105" width="75" height="150" rx="6" />
+                            <ellipse cx="637.5" cy="90" rx="36" ry="12" />
                           </g>
                         </svg>
                       )}
