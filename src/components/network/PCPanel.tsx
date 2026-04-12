@@ -94,6 +94,7 @@ interface PCPanelProps {
   onUpdatePCHistory?: (deviceId: string, history: string[]) => void;
   onExecuteDeviceCommand?: (deviceId: string, command: string) => Promise<any>;
   onNavigate?: (program: string) => void;
+  onDeleteDevice?: (deviceId: string) => void;
 }
 
 const expandCommandContext = (mode: keyof typeof commandHelp, rawValue: string) => {
@@ -144,7 +145,8 @@ export function PCPanel({
   pcHistories,
   onUpdatePCHistory,
   onExecuteDeviceCommand,
-  onNavigate
+  onNavigate,
+  onDeleteDevice
 }: PCPanelProps) {
   const { t, language } = useLanguage();
   const { theme } = useTheme();
@@ -165,7 +167,7 @@ export function PCPanel({
 
   const [activeTab, setActiveTab] = useState<PCActiveTab>('home');
   const activeTabRef = useRef<PCActiveTab>(activeTab);
-  
+
   useEffect(() => {
     activeTabRef.current = activeTab;
   }, [activeTab]);
@@ -410,25 +412,25 @@ export function PCPanel({
   // Track previous device ID and services to detect changes
   const prevDeviceIdRef = useRef<string | null>(null);
   const prevServicesRef = useRef<any>(null);
-  
+
   // Reset services state only when device changes or first entering services tab
   useEffect(() => {
     const deviceChanged = prevDeviceIdRef.current !== deviceId;
     const servicesChanged = JSON.stringify(deviceFromTopology?.services) !== JSON.stringify(prevServicesRef.current);
-    
+
     // Reset if device changed (user switched to different PC)
     // OR if this is first load (prevDeviceIdRef.current is null)
     if (deviceChanged || prevDeviceIdRef.current === null) {
       prevDeviceIdRef.current = deviceId;
       prevServicesRef.current = deviceFromTopology?.services;
-      
+
       setServiceDnsEnabled(deviceFromTopology?.services?.dns?.enabled ?? false);
       setServiceDnsRecords(deviceFromTopology?.services?.dns?.records || []);
       setServiceHttpEnabled(deviceFromTopology?.services?.http?.enabled ?? false);
       setServiceHttpContent(deviceFromTopology?.services?.http?.content || 'Merhaba Dünya!');
       setServiceDhcpEnabled(deviceFromTopology?.services?.dhcp?.enabled ?? false);
       setServiceDhcpPools(deviceFromTopology?.services?.dhcp?.pools || []);
-      
+
       setDnsFormDomain('');
       setDnsFormAddress('');
       setEditingDnsIndex(null);
@@ -442,7 +444,7 @@ export function PCPanel({
       });
       setEditingDhcpIndex(null);
     }
-    
+
     setIpConfigMode(deviceFromTopology?.ipConfigMode || 'static');
     setWifiEnabled(deviceFromTopology?.wifi?.enabled ?? false);
     setWifiSSID(deviceFromTopology?.wifi?.ssid ?? '');
@@ -992,15 +994,15 @@ export function PCPanel({
     };
   }, [showAutocomplete]);
 
-	  const [consolePasswordAttempted, setConsolePasswordAttempted] = useState(false);
+  const [consolePasswordAttempted, setConsolePasswordAttempted] = useState(false);
 
   const consoleAuthenticated = useMemo(() => {
     if (!connectedDeviceId) return true;
     return deviceStates?.get(connectedDeviceId)?.consoleAuthenticated !== false;
   }, [connectedDeviceId, deviceStates]);
 
-	  useEffect(() => {
-	    if (!connectedDeviceId) return;
+  useEffect(() => {
+    if (!connectedDeviceId) return;
     if (consolePasswordAttempted && consoleAwaitingPassword) {
       toast({
         title: t.consolePasswordErrorTitle,
@@ -1018,7 +1020,7 @@ export function PCPanel({
       setIsConsoleConnected(false);
       setConnectedDeviceId(null);
     }
-	  }, [consoleAuthenticated, consoleAwaitingPassword, consolePasswordAttempted, connectedDeviceId, t]);
+  }, [consoleAuthenticated, consoleAwaitingPassword, consolePasswordAttempted, connectedDeviceId, t]);
 
   const connectionErrorText = useMemo(() => {
     if (!isPcPoweredOff && !isConsoleTargetPoweredOff) return '';
@@ -1054,21 +1056,73 @@ export function PCPanel({
     }, 0);
   }, [language]);
 
+  // Get connected IoT devices for a router/AP
+  const getConnectedIotDevices = useCallback((routerId: string) => {
+    const routerDevice = topologyDevices.find(d => d.id === routerId);
+    if (!routerDevice) return [];
+
+    const routerSsid = routerDevice.wifi?.ssid || '';
+    const routerSecurity = routerDevice.wifi?.security || 'open';
+
+    if (!routerSsid) return [];
+
+    return topologyDevices
+      .filter(d => d.type === 'iot' && d.wifi?.ssid === routerSsid && d.wifi?.security === routerSecurity)
+      .map(d => ({
+        id: d.id,
+        name: d.name,
+        sensorType: d.iot?.sensorType || 'temperature',
+        connected: !!(d.status === 'online' && d.wifi?.enabled),
+        ip: d.ip,
+      }));
+  }, [topologyDevices]);
+
+  // Get available IoT devices that can be connected (not connected to this AP)
+  const getAvailableIotDevices = useCallback((routerId: string) => {
+    const routerDevice = topologyDevices.find(d => d.id === routerId);
+    if (!routerDevice) return [];
+
+    const routerSsid = routerDevice.wifi?.ssid || '';
+
+    return topologyDevices
+      .filter(d => {
+        if (d.type !== 'iot') return false;
+        if (!routerSsid) return true;
+        const isConnectedToThisAp = d.wifi?.ssid === routerSsid && d.wifi?.enabled;
+        return !isConnectedToThisAp;
+      })
+      .map(d => ({
+        id: d.id,
+        name: d.name,
+        sensorType: d.iot?.sensorType || 'temperature',
+        currentSsid: d.wifi?.ssid || undefined,
+      }));
+  }, [topologyDevices]);
+
   useEffect(() => {
     const handleRouterAdminMessage = (event: MessageEvent) => {
       const data = event.data;
-      console.log('Received message:', data, 'httpAppDeviceId:', httpAppDeviceId);
-      if (!data) return;
-      
+      console.log('=== MESSAGE RECEIVED ===');
+      console.log('Message type:', data?.type);
+      console.log('Full message data:', data);
+      console.log('httpAppDeviceId:', httpAppDeviceId);
+      console.log('========================');
+
+      if (!data) {
+        console.log('⚠️ No data in message, ignoring');
+        return;
+      }
+
       // For WiFi save operations, require httpAppDeviceId match
       const isRouterSpecificMessage = data.type === 'router-admin-save-wifi';
       if (isRouterSpecificMessage && httpAppDeviceId && data.deviceId && data.deviceId !== httpAppDeviceId) {
-        console.log('Ignoring message - deviceId mismatch for router-specific operation');
+        console.log('⚠️ Ignoring message - deviceId mismatch for router-specific operation');
         return;
       }
-      
+
       // IoT messages are always accepted (deviceId in payload)
       const isIoTMessage = data.type === 'router-admin-connect-iot' || data.type === 'router-admin-disconnect-iot';
+      console.log('Is IoT message:', isIoTMessage);
 
       // Handle WiFi settings save
       if (data.type === 'router-admin-save-wifi') {
@@ -1126,12 +1180,12 @@ export function PCPanel({
         const routerDevice = topologyDevices.find((d) => d.id === httpAppDeviceId);
         const routerIp = routerDevice?.ip || '192.168.1.1';
         const routerSubnet = routerDevice?.subnet || '255.255.255.0';
-        
+
         // Generate IP from same subnet as router
         const baseIpParts = routerIp.split('.');
         const subnetParts = routerSubnet.split('.');
         let newIp = '';
-        
+
         // Get all used IPs in topology
         const usedIps = new Set<string>();
         topologyDevices.forEach(d => {
@@ -1139,7 +1193,7 @@ export function PCPanel({
             usedIps.add(d.ip);
           }
         });
-        
+
         // Find available IP in subnet (.100-.254 range for clients)
         for (let i = 100; i <= 254; i++) {
           const testIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.${i}`;
@@ -1148,7 +1202,7 @@ export function PCPanel({
             break;
           }
         }
-        
+
         // If no IP found in client range, try .2-.99
         if (!newIp) {
           for (let i = 2; i < 100; i++) {
@@ -1159,7 +1213,7 @@ export function PCPanel({
             }
           }
         }
-        
+
         // Default fallback
         if (!newIp) {
           newIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.150`;
@@ -1200,6 +1254,18 @@ export function PCPanel({
         );
       }
 
+      // Handle IoT device delete
+      if (data.type === 'router-admin-delete-iot') {
+        const payload = data.payload || {};
+        const iotDeviceId = payload.iotDeviceId;
+
+        if (!iotDeviceId) return;
+
+        if (onDeleteDevice) {
+          onDeleteDevice(iotDeviceId);
+        }
+      }
+
       // Handle IoT device disconnect
       if (data.type === 'router-admin-disconnect-iot') {
         console.log('Handling disconnect-iot, payload:', data.payload);
@@ -1231,8 +1297,8 @@ export function PCPanel({
         };
 
         // Update ports to clear WiFi connection
-        const updatedPorts = iotDevice.ports.map(p => 
-          p.id === 'wlan0' 
+        const updatedPorts = iotDevice.ports.map(p =>
+          p.id === 'wlan0'
             ? { ...p, status: 'disconnected' as const, ipAddress: undefined, subnetMask: undefined, wifi: { ssid: '', security: 'open' as const, channel: '2.4GHz' as const, mode: 'client' as const } }
             : p
         );
@@ -1260,12 +1326,38 @@ export function PCPanel({
             : `IoT device "${iotDevice.name}" disconnected from the network.`
         );
         console.log('addLocalOutput called for disconnect');
+
+        // Refresh router admin page to update device list
+        if (httpAppDeviceId) {
+          const targetDevice = topologyDevices.find((d) => d.id === httpAppDeviceId);
+          if (targetDevice && isRouterDevice(targetDevice)) {
+            const runtimeState = deviceStates?.get(httpAppDeviceId);
+            const connectedIot = getConnectedIotDevices(httpAppDeviceId);
+            const availableIot = getAvailableIotDevices(httpAppDeviceId);
+            const refreshed = generateRouterAdminPage(targetDevice, runtimeState, connectedIot, availableIot);
+            setHttpAppContent(refreshed);
+          }
+        }
+      }
+
+      // Handle refresh devices request (after bulk operations)
+      if (data.type === 'router-admin-refresh-devices') {
+        if (httpAppDeviceId) {
+          const targetDevice = topologyDevices.find((d) => d.id === httpAppDeviceId);
+          if (targetDevice && isRouterDevice(targetDevice)) {
+            const runtimeState = deviceStates?.get(httpAppDeviceId);
+            const connectedIot = getConnectedIotDevices(httpAppDeviceId);
+            const availableIot = getAvailableIotDevices(httpAppDeviceId);
+            const refreshed = generateRouterAdminPage(targetDevice, runtimeState, connectedIot, availableIot);
+            setHttpAppContent(refreshed);
+          }
+        }
       }
     };
 
     window.addEventListener('message', handleRouterAdminMessage);
     return () => window.removeEventListener('message', handleRouterAdminMessage);
-  }, [addLocalOutput, httpAppDeviceId, language, topologyDevices]);
+  }, [addLocalOutput, httpAppDeviceId, language, topologyDevices, getConnectedIotDevices, getAvailableIotDevices]);
 
   useEffect(() => {
     if (!httpAppContent || !isMobile || typeof window === 'undefined') return;
@@ -1276,52 +1368,6 @@ export function PCPanel({
       width: Math.max(280, window.innerWidth - 16),
     }));
   }, [httpAppContent, isMobile]);
-
-  // Get connected IoT devices for a router/AP
-  const getConnectedIotDevices = useCallback((routerId: string) => {
-    const routerDevice = topologyDevices.find(d => d.id === routerId);
-    if (!routerDevice) return [];
-
-    const routerSsid = routerDevice.wifi?.ssid || '';
-    const routerSecurity = routerDevice.wifi?.security || 'open';
-
-    // If router has no SSID, no devices can be connected to it
-    if (!routerSsid) return [];
-
-    return topologyDevices
-      .filter(d => d.type === 'iot' && d.wifi?.ssid === routerSsid && d.wifi?.security === routerSecurity)
-      .map(d => ({
-        id: d.id,
-        name: d.name,
-        sensorType: d.iot?.sensorType || 'temperature',
-        connected: !!(d.status === 'online' && d.wifi?.enabled),
-        ip: d.ip,
-      }));
-  }, [topologyDevices]);
-
-  // Get available IoT devices that can be connected (not connected to this AP)
-  const getAvailableIotDevices = useCallback((routerId: string) => {
-    const routerDevice = topologyDevices.find(d => d.id === routerId);
-    if (!routerDevice) return [];
-
-    const routerSsid = routerDevice.wifi?.ssid || '';
-
-    return topologyDevices
-      .filter(d => {
-        if (d.type !== 'iot') return false;
-        // Include IoT devices that are not connected to this AP
-        // If router has no SSID, show all IoT devices as available
-        if (!routerSsid) return true;
-        const isConnectedToThisAp = d.wifi?.ssid === routerSsid && d.wifi?.enabled;
-        return !isConnectedToThisAp;
-      })
-      .map(d => ({
-        id: d.id,
-        name: d.name,
-        sensorType: d.iot?.sensorType || 'temperature',
-        currentSsid: d.wifi?.ssid || undefined,
-      }));
-  }, [topologyDevices]);
 
   useEffect(() => {
     if (!httpAppDeviceId) return;
@@ -1833,7 +1879,7 @@ export function PCPanel({
         const start = ipToNumber(pool.startIp);
         if (start === null) continue;
         const maxUsers = Math.max(1, Number(pool.maxUsers || 1));
-        
+
         // Check if pool is full
         let availableCount = 0;
         for (let i = 0; i < maxUsers; i += 1) {
@@ -1842,12 +1888,12 @@ export function PCPanel({
             availableCount++;
           }
         }
-        
+
         // Skip full pools
         if (availableCount === 0) {
           continue;
         }
-        
+
         for (let i = 0; i < maxUsers; i += 1) {
           const candidate = numberToIp(start + i);
           if (!usedIps.has(candidate)) {
@@ -1923,7 +1969,7 @@ export function PCPanel({
           const start = ipToNumber(pool.startIp);
           if (start === null) continue;
           const maxUsers = Math.max(1, Number(pool.maxUsers || 50));
-          
+
           // Check if pool is full
           let availableCount = 0;
           for (let i = 0; i < maxUsers; i += 1) {
@@ -1932,12 +1978,12 @@ export function PCPanel({
               availableCount++;
             }
           }
-          
+
           // Skip full pools
           if (availableCount === 0) {
             continue;
           }
-          
+
           for (let i = 0; i < maxUsers; i += 1) {
             const candidate = numberToIp(start + i);
             if (!usedIps.has(candidate)) {
@@ -1979,13 +2025,13 @@ export function PCPanel({
 
     // Check Router/Switch DHCP servers availability
     let hasAnyDhcpService = pcServers.length > 0;
-    
+
     if (!hasAnyDhcpService && deviceStates) {
       for (const [deviceId_, state] of deviceStates.entries()) {
         if (deviceId_ === deviceId) continue;
         const device = topologyDevices.find(d => d.id === deviceId_);
         if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3')) continue;
-        
+
         const mirroredPools = state.services?.dhcp?.pools || [];
         const cliPools = Object.entries(state.dhcpPools || {}).length;
         if (mirroredPools.length > 0 || cliPools > 0) {
@@ -2009,7 +2055,7 @@ export function PCPanel({
         const start = ipToNumber(pool.startIp);
         if (start === null) continue;
         const maxUsers = Math.max(1, Number(pool.maxUsers || 1));
-        
+
         let availableCount = 0;
         for (let i = 0; i < maxUsers; i += 1) {
           const candidate = numberToIp(start + i);
@@ -2017,7 +2063,7 @@ export function PCPanel({
             availableCount++;
           }
         }
-        
+
         if (availableCount > 0) {
           return { available: true, reason: '' };
         }
@@ -2075,7 +2121,7 @@ export function PCPanel({
           const start = ipToNumber(pool.startIp);
           if (start === null) continue;
           const maxUsers = Math.max(1, Number(pool.maxUsers || 50));
-          
+
           let availableCount = 0;
           for (let i = 0; i < maxUsers; i += 1) {
             const candidate = numberToIp(start + i);
@@ -2083,7 +2129,7 @@ export function PCPanel({
               availableCount++;
             }
           }
-          
+
           if (availableCount > 0) {
             return { available: true, reason: '' };
           }
@@ -2147,7 +2193,7 @@ export function PCPanel({
       if (prevIpConfigModeRef.current !== 'dhcp') {
         // Check if pools are full or no servers available
         const dhcpCheck = checkDhcpAvailabilityRef.current();
-        
+
         let errorMessage = t.dhcpFailureDescription;
         if (dhcpCheck.reason === 'all_pools_full') {
           errorMessage = language === 'tr'
@@ -2158,7 +2204,7 @@ export function PCPanel({
             ? 'Ağda DHCP hizmeti bulunamadı! Lütfen bir DHCP sunucusu yapılandırın.'
             : 'No DHCP service found on the network! Please configure a DHCP server.';
         }
-        
+
         toast({
           title: t.dhcpFailureTitle,
           description: errorMessage,
@@ -2214,13 +2260,13 @@ export function PCPanel({
     }
     setInput('');
     setShowAutocomplete(false);
-	    setAutocompleteIndex(-1);
-	    setAutocompleteNavigated(false);
-	    if (activeTabRef.current === 'desktop') {
-	      addLocalOutput('command', command);
-	      const parts = command.split(' ');
-	      const cmd = parts[0].toLowerCase();
-	      const normalizedCmd = cmd
+    setAutocompleteIndex(-1);
+    setAutocompleteNavigated(false);
+    if (activeTabRef.current === 'desktop') {
+      addLocalOutput('command', command);
+      const parts = command.split(' ');
+      const cmd = parts[0].toLowerCase();
+      const normalizedCmd = cmd
         .replace(/ı/g, 'i')
         .replace(/İ/g, 'i')
         .normalize('NFD')
@@ -2356,134 +2402,134 @@ export function PCPanel({
             );
           }
         }
-	      } else if (cmd === 'http') {
-	        openHttpTarget(args[0], args[1]);
-	      } else if (cmd === 'telnet' || cmd === 'ssh') {
-	        const isSsh = cmd === 'ssh';
-	        const targetSpec = args[0];
-	        const extraPort = args[1];
+      } else if (cmd === 'http') {
+        openHttpTarget(args[0], args[1]);
+      } else if (cmd === 'telnet' || cmd === 'ssh') {
+        const isSsh = cmd === 'ssh';
+        const targetSpec = args[0];
+        const extraPort = args[1];
 
-	        const isSshLoginFlag = isSsh && targetSpec === '-l';
-	        const sshUserFromFlag = isSshLoginFlag ? (args[1] || '') : '';
-	        const sshTargetFromFlag = isSshLoginFlag ? (args[2] || '') : '';
-	        const sshPortFromFlag = isSshLoginFlag ? args[3] : undefined;
+        const isSshLoginFlag = isSsh && targetSpec === '-l';
+        const sshUserFromFlag = isSshLoginFlag ? (args[1] || '') : '';
+        const sshTargetFromFlag = isSshLoginFlag ? (args[2] || '') : '';
+        const sshPortFromFlag = isSshLoginFlag ? args[3] : undefined;
 
-	        const sshUserFromSpec = isSsh && !isSshLoginFlag && targetSpec?.includes('@')
-	          ? targetSpec.split('@')[0].trim()
-	          : '';
-	        const targetFromSpec = isSsh && !isSshLoginFlag && targetSpec?.includes('@')
-	          ? targetSpec.split('@').slice(1).join('@').trim()
-	          : targetSpec;
+        const sshUserFromSpec = isSsh && !isSshLoginFlag && targetSpec?.includes('@')
+          ? targetSpec.split('@')[0].trim()
+          : '';
+        const targetFromSpec = isSsh && !isSshLoginFlag && targetSpec?.includes('@')
+          ? targetSpec.split('@').slice(1).join('@').trim()
+          : targetSpec;
 
-	        const username = isSsh ? ((sshUserFromFlag || sshUserFromSpec) || 'admin') : '';
-	        const target = isSshLoginFlag ? sshTargetFromFlag : targetFromSpec;
-	        const port = isSsh
-	          ? ((sshPortFromFlag || (isSshLoginFlag ? undefined : extraPort)) || '22')
-	          : (extraPort || '23');
-	        if (!target) {
-	          addLocalOutput('output', isSsh
-	            ? 'Usage: ssh -l <username> <ip> [port]\n       ssh <username>@<ip> [port]'
-	            : 'Usage: telnet <ip_or_domain> [port]');
-	          return;
-	        } else if (isSsh) {
-	          const isValidUsername = /^[A-Za-z0-9._-]+$/.test(username);
-	          const isValidTargetIp = isValidIpv4(target);
-	          if (!isValidUsername) {
-	            addLocalOutput('error', 'Invalid SSH username format');
-	            return;
-	          }
-	          if (!isValidTargetIp) {
-	            addLocalOutput('error', `Invalid SSH target IP: ${target}`);
-	            return;
-	          }
-	        }
+        const username = isSsh ? ((sshUserFromFlag || sshUserFromSpec) || 'admin') : '';
+        const target = isSshLoginFlag ? sshTargetFromFlag : targetFromSpec;
+        const port = isSsh
+          ? ((sshPortFromFlag || (isSshLoginFlag ? undefined : extraPort)) || '22')
+          : (extraPort || '23');
+        if (!target) {
+          addLocalOutput('output', isSsh
+            ? 'Usage: ssh -l <username> <ip> [port]\n       ssh <username>@<ip> [port]'
+            : 'Usage: telnet <ip_or_domain> [port]');
+          return;
+        } else if (isSsh) {
+          const isValidUsername = /^[A-Za-z0-9._-]+$/.test(username);
+          const isValidTargetIp = isValidIpv4(target);
+          if (!isValidUsername) {
+            addLocalOutput('error', 'Invalid SSH username format');
+            return;
+          }
+          if (!isValidTargetIp) {
+            addLocalOutput('error', `Invalid SSH target IP: ${target}`);
+            return;
+          }
+        }
 
-	        // Resolve target IP (telnet supports hostnames; ssh path already validated an IPv4).
-	        let targetIp = target;
-	        if (!isSsh) {
-	          const namedResult = resolveDeviceNameTarget(target);
-	          if (namedResult) {
-	            targetIp = namedResult.ip;
-	          }
-	          if (!isValidIpv4(targetIp)) {
-	            const dnsResult = resolveDomainWithDnsServices(target);
-	            if (dnsResult) {
-	              targetIp = dnsResult.address;
-	            } else {
-	              addLocalOutput('error', `Could not resolve hostname ${target}`);
-	              return;
-	            }
-	          }
-	        }
+        // Resolve target IP (telnet supports hostnames; ssh path already validated an IPv4).
+        let targetIp = target;
+        if (!isSsh) {
+          const namedResult = resolveDeviceNameTarget(target);
+          if (namedResult) {
+            targetIp = namedResult.ip;
+          }
+          if (!isValidIpv4(targetIp)) {
+            const dnsResult = resolveDomainWithDnsServices(target);
+            if (dnsResult) {
+              targetIp = dnsResult.address;
+            } else {
+              addLocalOutput('error', `Could not resolve hostname ${target}`);
+              return;
+            }
+          }
+        }
 
-	        if (isLoopbackTarget(targetIp)) {
-	          addLocalOutput('success', isSsh
-	            ? `Trying ${username}@127.0.0.1 ${port} ...\nConnected to 127.0.0.1 as ${username}.`
-	            : `Trying 127.0.0.1 ${port} ...\nConnected to 127.0.0.1.`);
-	          return;
-	        }
+        if (isLoopbackTarget(targetIp)) {
+          addLocalOutput('success', isSsh
+            ? `Trying ${username}@127.0.0.1 ${port} ...\nConnected to 127.0.0.1 as ${username}.`
+            : `Trying 127.0.0.1 ${port} ...\nConnected to 127.0.0.1.`);
+          return;
+        }
 
-	        // Check connectivity
-	        const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en');
+        // Check connectivity
+        const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en');
 
-	        if (result.success && result.targetId) {
-	          // Find target device to see if it's a switch or router
-	          const targetDevice = topologyDevices.find(d => d.id === result.targetId);
-	          if (targetDevice && ((targetDevice.type === 'switchL2' || targetDevice.type === 'switchL3') || targetDevice.type === 'router')) {
-	            // Check target device's transport input configuration
-	            if (deviceStates) {
-	              const targetState = deviceStates.get(result.targetId);
-	              if (targetState?.security?.vtyLines) {
-	                const transportInput = targetState.security.vtyLines.transportInput || [];
-	                if (isSsh) {
-	                  const isSshActive = transportInput.includes('all') || transportInput.includes('ssh');
-	                  if (!isSshActive) {
-	                    addLocalOutput('error', `Connecting to ${targetIp}...Could not open connection to the host, on port 22: Connect failed`);
-	                    return;
-	                  }
-	                } else {
-	                  const isTelnetActive = transportInput.includes('all') || transportInput.includes('telnet');
-	                  if (!isTelnetActive) {
-	                    addLocalOutput('error', `Connecting to ${targetIp}...Could not open connection to the host, on port 23: Connect failed`);
-	                    return;
-	                  }
-	                }
-	              }
-	            }
+        if (result.success && result.targetId) {
+          // Find target device to see if it's a switch or router
+          const targetDevice = topologyDevices.find(d => d.id === result.targetId);
+          if (targetDevice && ((targetDevice.type === 'switchL2' || targetDevice.type === 'switchL3') || targetDevice.type === 'router')) {
+            // Check target device's transport input configuration
+            if (deviceStates) {
+              const targetState = deviceStates.get(result.targetId);
+              if (targetState?.security?.vtyLines) {
+                const transportInput = targetState.security.vtyLines.transportInput || [];
+                if (isSsh) {
+                  const isSshActive = transportInput.includes('all') || transportInput.includes('ssh');
+                  if (!isSshActive) {
+                    addLocalOutput('error', `Connecting to ${targetIp}...Could not open connection to the host, on port 22: Connect failed`);
+                    return;
+                  }
+                } else {
+                  const isTelnetActive = transportInput.includes('all') || transportInput.includes('telnet');
+                  if (!isTelnetActive) {
+                    addLocalOutput('error', `Connecting to ${targetIp}...Could not open connection to the host, on port 23: Connect failed`);
+                    return;
+                  }
+                }
+              }
+            }
 
-	            // Successfully connected - switch to terminal tab and connect
-	            addLocalOutput('success', isSsh
-	              ? `Trying ${username}@${targetIp} ${port} ...\nConnected to ${targetIp} as ${username}.`
-	              : `Trying ${targetIp} ${port} ...\nConnected to ${targetIp}.`);
+            // Successfully connected - switch to terminal tab and connect
+            addLocalOutput('success', isSsh
+              ? `Trying ${username}@${targetIp} ${port} ...\nConnected to ${targetIp} as ${username}.`
+              : `Trying ${targetIp} ${port} ...\nConnected to ${targetIp}.`);
 
-		            // Give it a tiny delay for the user to see the "Connected" message before switching
-		            setTimeout(() => {
-		              setConnectedDeviceId(result.targetId!);
-		              setConsoleConnectionTime(Date.now());
-		              setIsConsoleConnected(true);
+            // Give it a tiny delay for the user to see the "Connected" message before switching
+            setTimeout(() => {
+              setConnectedDeviceId(result.targetId!);
+              setConsoleConnectionTime(Date.now());
+              setIsConsoleConnected(true);
 
-		              // Trigger remote VTY session bootstrap so password/login policy is applied.
-		              if (onExecuteDeviceCommand) {
-		                void onExecuteDeviceCommand(
-		                  result.targetId!,
-		                  isSsh ? `__SSH_CONNECT__:${username}` : '__TELNET_CONNECT__'
-		                );
-		              }
+              // Trigger remote VTY session bootstrap so password/login policy is applied.
+              if (onExecuteDeviceCommand) {
+                void onExecuteDeviceCommand(
+                  result.targetId!,
+                  isSsh ? `__SSH_CONNECT__:${username}` : '__TELNET_CONNECT__'
+                );
+              }
 
-		              setActiveTab('terminal');
-		              onNavigate?.('terminal');
-		            }, 500);
-	          } else {
-	            addLocalOutput('error', `Connection refused by ${targetIp}`);
-	          }
-	        } else {
-	          addLocalOutput('error', `Connecting to ${targetIp}... failed: ${result.error || 'Destination unreachable'}`);
-	        }
-	      } else if (cmd === 'arp') {
-	        if (args.length === 0 || (args.length === 1 && args[0].toLowerCase() === '-a')) {
-	          addLocalOutput('output', buildArpTableOutput());
-	        } else {
-	          addLocalOutput('output', 'Usage: arp -a');
+              setActiveTab('terminal');
+              onNavigate?.('terminal');
+            }, 500);
+          } else {
+            addLocalOutput('error', `Connection refused by ${targetIp}`);
+          }
+        } else {
+          addLocalOutput('error', `Connecting to ${targetIp}... failed: ${result.error || 'Destination unreachable'}`);
+        }
+      } else if (cmd === 'arp') {
+        if (args.length === 0 || (args.length === 1 && args[0].toLowerCase() === '-a')) {
+          addLocalOutput('output', buildArpTableOutput());
+        } else {
+          addLocalOutput('output', 'Usage: arp -a');
         }
       } else if (cmd === 'tracert') {
         const target = args[0];
@@ -2782,11 +2828,11 @@ export function PCPanel({
         setAutocompleteNavigated(false);
         return;
       }
-	      if (activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)) {
-	        e.preventDefault();
-	        if (onExecuteDeviceCommand && connectedDeviceId) {
-	          if (consoleNeedsPassword) {
-	            onExecuteDeviceCommand(connectedDeviceId, '__PASSWORD_CANCELLED__');
+      if (activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)) {
+        e.preventDefault();
+        if (onExecuteDeviceCommand && connectedDeviceId) {
+          if (consoleNeedsPassword) {
+            onExecuteDeviceCommand(connectedDeviceId, '__PASSWORD_CANCELLED__');
           } else if (consoleReloadPending) {
             // For reload, send 'n' to cancel
             onExecuteDeviceCommand(connectedDeviceId, 'n');
@@ -2797,10 +2843,10 @@ export function PCPanel({
           setIsConsoleConnected(false);
           setConnectedDeviceId(null);
         }
-	        setInput('');
-	        return;
-	      }
-	    }
+        setInput('');
+        return;
+      }
+    }
 
     // Handle Ctrl+A (Select All) - Let browser handle natively
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
@@ -3974,7 +4020,7 @@ export function PCPanel({
                                         const baseLight = 70;
                                         const variations = [0, 1, -1, 2, -2];
                                         const variation = variations[Math.floor(Math.random() * variations.length)];
-                                        
+
                                         switch (sensorType) {
                                           case 'temperature':
                                             return `${baseTemp + variation}°C`;
@@ -4471,15 +4517,15 @@ export function PCPanel({
                   {(activeTab === 'desktop' || activeTab === 'terminal') && !isPcPoweredOff && (
                     <div className={`shrink-0 z-10 p-3 sm:p-4 border-t sticky bottom-0 bg-inherit ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                       <div className={`flex items-center gap-2 sm:gap-3 relative ${isMobile ? 'flex-col' : ''}`}>
-	                        {/* Context hint for password/confirm in console mode */}
-	                        {activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (
-	                          <div className="absolute -top-7 left-0 right-0 text-[10px] font-black tracking-widest text-amber-400 animate-pulse text-center">
-	                            {consoleNeedsPassword
-	                              ? (language === 'tr' ? 'Parola girin ve Enter\'a basın' : 'Enter password and press Enter')
-	                              : (language === 'tr' ? 'Onaylamak için Enter\'a basın' : 'Press Enter to confirm')}
-	                          </div>
-	                        )}
-	                        <div className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 ${inputBg} rounded-xl border flex-1 group ${isMobile ? 'w-full' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                        {/* Context hint for password/confirm in console mode */}
+                        {activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (
+                          <div className="absolute -top-7 left-0 right-0 text-[10px] font-black tracking-widest text-amber-400 animate-pulse text-center">
+                            {consoleNeedsPassword
+                              ? (language === 'tr' ? 'Parola girin ve Enter\'a basın' : 'Enter password and press Enter')
+                              : (language === 'tr' ? 'Onaylamak için Enter\'a basın' : 'Press Enter to confirm')}
+                          </div>
+                        )}
+                        <div className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 ${inputBg} rounded-xl border flex-1 group ${isMobile ? 'w-full' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
                           ? 'border-amber-500/50 focus-within:ring-1 focus-within:ring-amber-500/50'
                           : inputBorder
                           }`}>
@@ -4487,12 +4533,12 @@ export function PCPanel({
                             ? 'text-amber-400'
                             : 'text-emerald-500'
                             }`}>
-	                            {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : (() => {
-	                              if (consoleNeedsPassword) return 'Password:';
-	                              if (!connectedDeviceId || !deviceStates) return '>';
-	                              const state = deviceStates.get(connectedDeviceId);
-	                              const hostname = state?.hostname || 'Device';
-	                              const mode = state?.currentMode || 'user';
+                            {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : (() => {
+                              if (consoleNeedsPassword) return 'Password:';
+                              if (!connectedDeviceId || !deviceStates) return '>';
+                              const state = deviceStates.get(connectedDeviceId);
+                              const hostname = state?.hostname || 'Device';
+                              const mode = state?.currentMode || 'user';
                               // Map CommandMode to prompt suffix
                               const modeSuffix: Record<string, string> = {
                                 'user': '>',
@@ -4507,12 +4553,12 @@ export function PCPanel({
                               return `${hostname}${suffix}`;
                             })()}
                           </span>
-	                          <input
-	                            ref={inputRef}
-	                            type={activeTab === 'terminal' && isConsoleConnected && consoleNeedsPassword ? 'password' : 'text'}
-	                            value={input}
-	                            onChange={(e) => handleInputChange(e.target.value)}
-	                            onKeyDown={handleKeyDown}
+                          <input
+                            ref={inputRef}
+                            type={activeTab === 'terminal' && isConsoleConnected && consoleNeedsPassword ? 'password' : 'text'}
+                            value={input}
+                            onChange={(e) => handleInputChange(e.target.value)}
+                            onKeyDown={handleKeyDown}
                             onFocus={() => {
                               // Scroll input into view on mobile when keyboard opens
                               if (typeof window !== 'undefined' && window.innerWidth < 768) {
@@ -4521,14 +4567,14 @@ export function PCPanel({
                                 }, 300);
                               }
                             }}
-	                            className="flex-1 bg-transparent border-none outline-none font-mono text-[13px]"
-	                            placeholder={
-	                              activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
-	                                ? (consoleNeedsPassword
-	                                  ? (language === 'tr' ? 'Parolayı girin...' : 'Enter password...')
-	                                  : (language === 'tr' ? 'Enter\'a basın veya yazın...' : 'Press Enter or type...'))
-	                                : t.typeCommand
-	                            }
+                            className="flex-1 bg-transparent border-none outline-none font-mono text-[13px]"
+                            placeholder={
+                              activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                                ? (consoleNeedsPassword
+                                  ? (language === 'tr' ? 'Parolayı girin...' : 'Enter password...')
+                                  : (language === 'tr' ? 'Enter\'a basın veya yazın...' : 'Press Enter or type...'))
+                                : t.typeCommand
+                            }
                             autoComplete="off"
                             disabled={activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled}
                           />
@@ -4710,7 +4756,7 @@ export function PCPanel({
                 <iframe
                   title={httpAppTitle}
                   srcDoc={httpAppSrcDoc}
-                  sandbox="allow-forms allow-scripts allow-same-origin"
+                  sandbox="allow-forms allow-scripts allow-same-origin allow-modals"
                   className="h-full w-full border-0 bg-white"
                 />
               </div>

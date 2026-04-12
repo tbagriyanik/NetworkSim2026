@@ -3634,6 +3634,7 @@ export default function Home() {
                   onUpdatePCHistory={handleUpdatePCHistory}
                   onExecuteDeviceCommand={handleExecuteCommand}
                   onNavigate={handlePCPanelNavigate}
+                  onDeleteDevice={handleDeviceDelete}
                 />
               </div>
 

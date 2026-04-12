@@ -572,8 +572,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
           <p style="color:#6c757d;margin-bottom:15px;font-size:13px;">Manage connected IoT devices:</p>
           ${connectedIotDevices.map(device => `
             <div class="iot-device-card connected" data-device-id="${device.id}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:1px solid #e9ecef;">
-              <div style="display:flex;align-items:center;gap:12px;">
-                <input type="checkbox" class="iot-disconnect-checkbox" data-device-id="${device.id}" style="width:20px;height:20px;cursor:pointer;" onclick="event.stopPropagation();toggleConnectedDeviceSelection('${device.id}')">
+              <div style="display:flex;align-items:center;gap:12px;">               
                 <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, #16cbf9 0%, #0ea5e9 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
                   🛜
                 </div>
@@ -589,20 +588,12 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
                 <span style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:${device.connected ? '#dcfce7' : '#fef3c7'};color:${device.connected ? '#166534' : '#92400e'};">
                   ${device.connected ? '● Connected' : '○ Disconnected'}
                 </span>
-                <button type="button" style="padding:6px 12px;border:none;border-radius:6px;background:#ef4444;color:white;font-size:12px;font-weight:600;cursor:pointer;" onclick="event.stopPropagation();disconnectIotDevice('${device.id}')">
-                  ✕
-                </button>
+                <button type="button" style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; padding:0; border:none; border-radius:6px; background:#ef4444; color:white; cursor:pointer; transition:all 0.2s;" onclick="event.stopPropagation();disconnectIotDevice('${device.id}')" title="Bağlantıyı Kes">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </button>               
               </div>
             </div>
           `).join('')}
-          <div class="actions" style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
-            <button type="button" class="btn btn-secondary" style="background:#ef4444;color:white;" onclick="disconnectSelectedDevices()" id="disconnect-selected-btn">
-              ✕ Disconnect Selected
-            </button>
-            <button type="button" class="btn btn-danger" style="background:#dc2626;color:white;" onclick="disconnectAllDevices()">
-              ✕ Disconnect All Devices
-            </button>
-          </div>
         </div>
         ` : `
         <div style="text-align:center;padding:30px;color:#6c757d;">
@@ -718,6 +709,10 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
   </div>
   
   <script>
+    console.log('Router WiFi admin panel script loaded');
+    console.log('window.parent available:', typeof window.parent !== 'undefined');
+    console.log('window.parent === window:', window.parent === window);
+    
     // Form handling simulation
     document.getElementById('wifi-form').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -891,7 +886,8 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     }
     
     window.disconnectIotDevice = function(deviceId) {
-      if (!confirm('Disconnect this IoT device from the network?')) return;
+      console.log('disconnectIotDevice called with:', deviceId);
+      if (!confirm('Bu cihazın ağ ile olan kablosuz bağlantısını (disconnect) kesmek istediğinize emin misiniz?')) return;
       
       try {
         console.log('Posting disconnect message for device:', deviceId);
@@ -902,49 +898,141 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
             iotDeviceId: deviceId
           }
         }, '*');
-        
-        alert('✅ IoT device disconnected from the network');
-        // Reload panel to refresh device lists
-        setTimeout(() => location.reload(), 500);
       } catch (err) {
         console.warn('Could not disconnect IoT device:', err);
-        alert('❌ Failed to disconnect IoT device');
+        alert('❌ Cihazın bağlantısı kesilemedi: ' + err.message);
+      }
+    };
+    
+    window.deleteIotDevice = function(deviceId) {
+      console.log('deleteIotDevice called with:', deviceId);
+      if (!confirm('⚠️ Are you sure you want to PERMANENTLY DELETE this device from the topology?')) return;
+      
+      try {
+        console.log('Posting delete message for device:', deviceId);
+        window.parent.postMessage({
+          type: 'router-admin-delete-iot',
+          deviceId: deviceId,
+          payload: {
+            iotDeviceId: deviceId
+          }
+        }, '*');
+        alert('✅ IoT device has been deleted');
+      } catch (err) {
+        console.warn('Could not delete IoT device:', err);
+        alert('❌ Failed to delete IoT device');
       }
     };
     
     window.disconnectAllDevices = function() {
       const deviceIds = getAllConnectedDeviceIds();
-      console.log('Disconnecting all devices:', deviceIds);
+      console.log('disconnectAllDevices called. Count:', deviceIds.length, 'Devices:', deviceIds);
       
       if (deviceIds.length === 0) {
-        alert('No connected IoT devices to disconnect');
+        alert('❌ No connected IoT devices to disconnect');
         return;
       }
       
-      if (!confirm('Disconnect all ' + deviceIds.length + ' IoT device(s) from the network?')) return;
+      if (!confirm('❓ Disconnect all ' + deviceIds.length + ' IoT device(s) from the network?')) {
+        console.log('Disconnect all cancelled');
+        return;
+      }
+      
+      console.log('Starting disconnect sequence for all devices');
+      
+      deviceIds.forEach((deviceId, index) => {
+        setTimeout(() => {
+          console.log('Processing device ' + (index + 1) + ' of ' + deviceIds.length + ': ' + deviceId);
+          try {
+            const message = {
+              type: 'router-admin-disconnect-iot',
+              deviceId: deviceId,
+              payload: { iotDeviceId: deviceId }
+            };
+            console.log('Sending postMessage:', message);
+            window.parent.postMessage(message, '*');
+            console.log('postMessage sent successfully for device:', deviceId);
+          } catch (err) {
+            console.error('Error posting message for device ' + deviceId + ':', err);
+            alert('❌ Error disconnecting device ' + deviceId);
+          }
+        }, index * 200);  // Increased delay to 200ms for safety
+      });
+      
+      setTimeout(() => {
+        selectedConnectedDevices.clear();
+        console.log('Disconnect all sequence completed');
+        alert('✅ Sent disconnect commands for ' + deviceIds.length + ' IoT device(s)');
+        // Notify parent to refresh the device list
+        try {
+          window.parent.postMessage({
+            type: 'router-admin-refresh-devices',
+            deviceId: '${deviceId || ''}'
+          }, '*');
+        } catch (err) {
+          console.warn('Could not send refresh message:', err);
+        }
+      }, deviceIds.length * 200 + 500);
+    };
+    
+    window.deleteSelectedDevices = function() {
+      const deviceIds = Array.from(selectedConnectedDevices);
+      if (deviceIds.length === 0) {
+        alert('❌ Please select at least one device to delete');
+        return;
+      }
+      
+      if (!confirm('⚠️ PERMANENTLY DELETE ' + deviceIds.length + ' device(s) from the topology?')) return;
       
       deviceIds.forEach((deviceId, index) => {
         setTimeout(() => {
           try {
-            console.log('Posting disconnect-all message for device:', deviceId);
             window.parent.postMessage({
-              type: 'router-admin-disconnect-iot',
+              type: 'router-admin-delete-iot',
               deviceId: deviceId,
               payload: { iotDeviceId: deviceId }
             }, '*');
           } catch (err) {
-            console.warn('Could not disconnect IoT device:', err);
+            console.warn('Could not delete IoT device:', err);
           }
         }, index * 100);
       });
       
       setTimeout(() => {
         selectedConnectedDevices.clear();
-        alert('✅ ' + deviceIds.length + ' IoT device(s) disconnected from the network');
-        location.reload();
+        alert('✅ ' + deviceIds.length + ' device(s) deleted');
       }, deviceIds.length * 100 + 200);
     };
-    
+
+    window.deleteAllDevices = function() {
+      const deviceIds = getAllConnectedDeviceIds();
+      if (deviceIds.length === 0) {
+        alert('❌ No devices to delete');
+        return;
+      }
+      
+      if (!confirm('⚠️ PERMANENTLY DELETE ALL ' + deviceIds.length + ' device(s)?')) return;
+      
+      deviceIds.forEach((deviceId, index) => {
+        setTimeout(() => {
+          try {
+            window.parent.postMessage({
+              type: 'router-admin-delete-iot',
+              deviceId: deviceId,
+              payload: { iotDeviceId: deviceId }
+            }, '*');
+          } catch (err) {
+            console.warn('Could not delete IoT device:', err);
+          }
+        }, index * 100);
+      });
+      
+      setTimeout(() => {
+        selectedConnectedDevices.clear();
+        alert('✅ All IoT devices deleted');
+      }, deviceIds.length * 100 + 200);
+    };
+
     window.disconnectSelectedDevices = function() {
       const deviceIds = Array.from(selectedConnectedDevices);
       if (deviceIds.length === 0) {
@@ -972,8 +1060,15 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       setTimeout(() => {
         selectedConnectedDevices.clear();
         alert('✅ ' + deviceIds.length + ' device(s) disconnected from the network');
-        // Reload panel to refresh device lists
-        location.reload();
+        // Notify parent to refresh the device list
+        try {
+          window.parent.postMessage({
+            type: 'router-admin-refresh-devices',
+            deviceId: '${deviceId || ''}'
+          }, '*');
+        } catch (err) {
+          console.warn('Could not send refresh message:', err);
+        }
       }, deviceIds.length * 100 + 200);
     };
     
@@ -1037,8 +1132,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
           btn.disabled = false;
           clearIotSelection();
           alert('✅ ' + successCount + ' IoT device' + (successCount > 1 ? 's' : '') + ' connected to the network!' + (failCount > 0 ? ' (' + failCount + ' failed)' : ''));
-          // Reload panel to refresh device lists
-          location.reload();
+          // Do not reload - let parent handle updates
         }, 1500);
       }, deviceIds.length * 100 + 500);
     };
