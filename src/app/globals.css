@@ -403,6 +403,70 @@
   animation: scale-in 0.3s ease-out forwards;
 }
 
+/* Low Graphics Mode - Disable animations and effects */
+body.graphics-low *,
+body.graphics-low *::before,
+body.graphics-low *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+body.graphics-low {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.graphics-low .backdrop-blur-sm,
+body.graphics-low .backdrop-blur-md,
+body.graphics-low .backdrop-blur-lg,
+body.graphics-low .backdrop-blur-xl,
+body.graphics-low [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.graphics-low .liquid-glass,
+body.graphics-low .liquid-glass-strong {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  background-color: var(--background) !important;
+  border: 1px solid var(--border) !important;
+}
+
+body.graphics-low.dark .liquid-glass,
+body.graphics-low.dark .liquid-glass-strong {
+  background-color: var(--background) !important;
+  border-color: var(--border) !important;
+}
+
+body.graphics-low * {
+  filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body.graphics-low .ping-envelope,
+body.graphics-low .ping-element,
+body.graphics-low [class*="animate-ping"],
+body.graphics-low [class*="animate-pulse"] {
+  animation: none !important;
+}
+
+body.graphics-low .transition-all,
+body.graphics-low .transition-colors,
+body.graphics-low .transition-transform,
+body.graphics-low .transition-opacity {
+  transition: none !important;
+}
+
+body.graphics-low .shadow-lg,
+body.graphics-low .shadow-xl,
+body.graphics-low .shadow-2xl,
+body.graphics-low [class*="shadow-"] {
+  box-shadow: none !important;
+}
+
 @media print {
   @page {
     margin: 0;

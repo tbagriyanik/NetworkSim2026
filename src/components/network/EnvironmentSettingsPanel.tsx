@@ -137,10 +137,10 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
                   isDark ? 'bg-slate-700' : 'bg-slate-200'
                 )}
                 style={{
-                  background: `linear-gradient(to right, 
-                    ${isDark ? '#3b82f6' : '#60a5fa'} 0%, 
-                    ${isDark ? '#3b82f6' : '#60a5fa'} ${((environment?.temperature ?? 22 + 20) / 70) * 100}%, 
-                    ${isDark ? '#334155' : '#e2e8f0'} ${((environment?.temperature ?? 22 + 20) / 70) * 100}%, 
+                  background: `linear-gradient(to right,
+                    ${isDark ? '#3b82f6' : '#60a5fa'} 0%,
+                    ${isDark ? '#3b82f6' : '#60a5fa'} ${(((environment?.temperature ?? 22) + 20) / 70) * 100}%,
+                    ${isDark ? '#334155' : '#e2e8f0'} ${(((environment?.temperature ?? 22) + 20) / 70) * 100}%,
                     ${isDark ? '#334155' : '#e2e8f0'} 100%)`
                 }}
               />
