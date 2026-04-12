@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio } from 'lucide-react';
+import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio, LayoutGrid } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from "@/hooks/use-toast";
 import { isValidMAC, normalizeMAC, cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ import { ModernPanel } from '@/components/ui/ModernPanel';
 import { useIsMobile, useIsDesktop } from '@/hooks/use-breakpoint';
 import { sanitizeHTTPContent } from '@/lib/security/sanitizer';
 import { generateRouterAdminPage, isRouterDevice } from '@/components/network/WifiControlPanel';
+import { generateIotWebPanelContent, generateIotDevicePageContent } from '@/lib/network/iotWebPanel';
 
 // PC Icon component matching the main screen
 const PCIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -1349,6 +1350,272 @@ export function PCPanel({
       }));
   }, [topologyDevices, topologyConnections]);
 
+  const canReachTargetIp = useCallback((targetIp: string) => {
+    const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en');
+    return result.success;
+  }, [deviceId, topologyDevices, topologyConnections, deviceStates, t.language]);
+
+  const isValidIpv4 = useCallback((value: string) => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(value.trim()), []);
+
+  const isSameSubnet = useCallback((sourceIp: string, targetIp: string, subnetMask: string) => {
+    try {
+      const a = sourceIp.split('.').map(Number);
+      const b = targetIp.split('.').map(Number);
+      const m = subnetMask.split('.').map(Number);
+      if (a.length !== 4 || b.length !== 4 || m.length !== 4) return false;
+      for (let i = 0; i < 4; i += 1) {
+        if ((a[i] & m[i]) !== (b[i] & m[i])) return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const hasGatewayForTarget = useCallback((targetIp: string) => {
+    if (!isValidIpv4(pcIP) || !isValidIpv4(targetIp) || !isValidIpv4(pcSubnet)) return false;
+    if (isSameSubnet(pcIP, targetIp, pcSubnet)) return true;
+    return isValidIpv4(pcGateway);
+  }, [isSameSubnet, isValidIpv4, pcGateway, pcIP, pcSubnet]);
+
+  const isLoopbackTarget = useCallback((target: string) => target.trim() === '127.0.0.1', []);
+
+  const normalizeLookupTarget = useCallback((raw: string) => {
+    const value = (raw || '').trim();
+    if (!value) return '';
+    try {
+      const withScheme = value.startsWith('http://') || value.startsWith('https://')
+        ? value
+        : `http://${value}`;
+      const parsed = new URL(withScheme);
+      return parsed.hostname || value;
+    } catch {
+      return value.split('/')[0].split('?')[0].trim();
+    }
+  }, []);
+
+  const resolveDeviceNameTarget = useCallback((raw: string) => {
+    const normalized = (raw || '').trim().toLowerCase();
+    if (!normalized) return null;
+
+    if (normalized === 'localhost' || normalized === internalPcHostname.toLowerCase() || normalized === deviceId.toLowerCase()) {
+      return { ip: '127.0.0.1', label: internalPcHostname };
+    }
+
+    const matched = topologyDevices.find((d) =>
+      d.name?.toLowerCase() === normalized || d.id?.toLowerCase() === normalized
+    );
+    if (!matched) return null;
+
+    if (matched.ip && isValidIpv4(matched.ip)) {
+      return { ip: matched.ip, label: matched.name || matched.id };
+    }
+
+    const state = deviceStates?.get(matched.id);
+    if (state?.ports) {
+      for (const port of Object.values(state.ports)) {
+        if (port?.ipAddress && isValidIpv4(port.ipAddress)) {
+          return { ip: port.ipAddress, label: matched.name || matched.id };
+        }
+      }
+    }
+
+    return null;
+  }, [deviceId, deviceStates, internalPcHostname, isValidIpv4, topologyDevices]);
+
+  const resolveDomainWithDnsServices = useCallback((domain: string) => {
+    const normalized = domain.trim().toLowerCase();
+    if (!normalized) return null;
+
+    if (!isValidIpv4(pcDNS)) return null;
+    const configuredDnsServer = topologyDevices.find(
+      (d) => d.type === 'pc' && d.ip === pcDNS && d.services?.dns?.enabled && (d.services?.dns?.records?.length || 0) > 0
+    );
+    if (!configuredDnsServer?.ip || !canReachTargetIp(configuredDnsServer.ip)) return null;
+
+    const record = configuredDnsServer.services?.dns?.records?.find((r) => r.domain.toLowerCase() === normalized);
+    if (!record) return null;
+
+    return { address: record.address, server: configuredDnsServer };
+  }, [canReachTargetIp, isValidIpv4, pcDNS, topologyDevices]);
+
+  const findHttpServerByTarget = useCallback((target: string) => {
+    const normalizedTarget = target.trim().toLowerCase();
+    if (!normalizedTarget) return null;
+
+    // Localhost should always resolve to the current PC first.
+    if (normalizedTarget === '127.0.0.1') {
+      const selfDevice = topologyDevices.find((d) => d.id === deviceId);
+      if (selfDevice && selfDevice.services?.http?.enabled) return selfDevice;
+    }
+
+    // Check for PC HTTP servers
+    const pcByIp = topologyDevices.find(
+      (d) => d.type === 'pc' && d.ip === target && d.services?.http?.enabled
+    );
+    if (pcByIp && pcByIp.ip && canReachTargetIp(pcByIp.ip)) return pcByIp;
+
+    // Check for router/switch devices with HTTP service enabled
+    const routerByIp = topologyDevices.find(
+      (d) => (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3') && d.ip === target && d.services?.http?.enabled
+    );
+    if (routerByIp && routerByIp.ip && canReachTargetIp(routerByIp.ip)) return routerByIp;
+
+    // Fallback: look into deviceStates interface IPs (e.g., VLAN/SVI, routed ports) for devices that have HTTP enabled
+    if (deviceStates) {
+      for (const [stateId, state] of deviceStates.entries()) {
+        if (!state?.services?.http?.enabled) continue;
+        const topoDevice = topologyDevices.find(d => d.id === stateId);
+        if (!topoDevice || (topoDevice.type !== 'router' && topoDevice.type !== 'switchL2' && topoDevice.type !== 'switchL3')) continue;
+        const ports = state.ports || {};
+        const match = Object.values(ports).find((port: any) => port?.ipAddress === target);
+        if (match && canReachTargetIp(target)) {
+          return {
+            ...topoDevice,
+            ip: target
+          };
+        }
+      }
+    }
+
+    // Try DNS resolution
+    const dnsResult = resolveDomainWithDnsServices(normalizedTarget);
+    if (!dnsResult) return null;
+
+    // Check resolved address for PC HTTP server
+    const resolvedPc = topologyDevices.find(
+      (d) => d.type === 'pc' && d.ip === dnsResult.address && d.services?.http?.enabled
+    ) || null;
+    if (resolvedPc?.ip && canReachTargetIp(resolvedPc.ip)) return resolvedPc;
+
+    // Check resolved address for router/switch with HTTP service enabled
+    const resolvedRouter = topologyDevices.find(
+      (d) => (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3') && d.ip === dnsResult.address && d.services?.http?.enabled
+    ) || null;
+    if (resolvedRouter?.ip && canReachTargetIp(resolvedRouter.ip)) return resolvedRouter;
+
+    // DNS fallback via deviceStates interfaces
+    if (deviceStates) {
+      for (const [stateId, state] of deviceStates.entries()) {
+        if (!state?.services?.http?.enabled) continue;
+        const topoDevice = topologyDevices.find(d => d.id === stateId);
+        if (!topoDevice || (topoDevice.type !== 'router' && topoDevice.type !== 'switchL2' && topoDevice.type !== 'switchL3')) continue;
+        const ports = state.ports || {};
+        const match = Object.values(ports).find((port: any) => port?.ipAddress === dnsResult.address);
+        if (match && canReachTargetIp(match.ipAddress || dnsResult.address)) {
+          return {
+            ...topoDevice,
+            ip: match.ipAddress || dnsResult.address
+          };
+        }
+      }
+    }
+
+    return null;
+  }, [canReachTargetIp, resolveDomainWithDnsServices, topologyDevices, deviceStates, deviceId]);
+
+  const openHttpTarget = useCallback((rawTarget?: string, rawUrl?: string) => {
+    const rawInput = (rawTarget || '').trim();
+    const normalizedInput = rawInput || '192.168.1.10';
+    let lookupTarget = normalizeLookupTarget(normalizedInput);
+    let displayUrl = normalizedInput.startsWith('http://') || normalizedInput.startsWith('https://')
+      ? normalizedInput
+      : `http://${normalizedInput}`;
+    if (rawUrl && rawUrl.trim().length > 0) {
+      const candidate = rawUrl.trim();
+      displayUrl = candidate.startsWith('http://') || candidate.startsWith('https://') ? candidate : `http://${candidate}`;
+      lookupTarget = normalizeLookupTarget(candidate);
+    }
+    setHttpAppUrl(displayUrl);
+    setHttpAppTitle(language === 'tr' ? 'HTTP Yönetim Sayfası' : 'HTTP Page');
+    setHttpAppContent(null);
+    setHttpAppDeviceId(null);
+
+    // Handle special IoT Web Panel URL
+    if (rawTarget === 'http://iot-panel') {
+      const iotPanelContent = generateIotWebPanelContent(iotDevices, language);
+      setHttpAppContent(iotPanelContent);
+      setHttpAppTitle(language === 'tr' ? 'IoT Web Paneli' : 'IoT Web Panel');
+      setHttpAppDeviceId(null);
+      addLocalOutput('success', language === 'tr' ? 'IoT Web Paneli açıldı.' : 'IoT Web Panel opened.');
+      return;
+    }
+
+    // Handle special IoT Device URL
+    if (rawTarget?.startsWith('iot://iot-device/')) {
+      const targetDeviceId = rawTarget.split('iot://iot-device/')[1];
+      const targetDevice = topologyDevices.find(d => d.id === targetDeviceId);
+      if (targetDevice && targetDevice.type === 'iot') {
+        const iotDevicePage = generateIotDevicePageContent(targetDevice.id, targetDevice.name || targetDevice.id, language);
+        setHttpAppContent(iotDevicePage);
+        setHttpAppTitle(`${targetDevice.name || targetDevice.id} ${language === 'tr' ? 'Yönetimi' : 'Management'}`);
+        setHttpAppDeviceId(targetDevice.id);
+        addLocalOutput('success', language === 'tr' ? `IoT cihazı '${targetDevice.name}' yönetim sayfası açıldı.` : `IoT device '${targetDevice.name}' management page opened.`);
+        return;
+      } else {
+        addLocalOutput('error', language === 'tr' ? 'Geçersiz IoT cihazı.' : 'Invalid IoT device.');
+        return;
+      }
+    }
+
+    // Browser-style inputs can include protocol/path/query. We only resolve host/IP.
+    try {
+      const parsed = new URL(displayUrl);
+      lookupTarget = parsed.hostname || lookupTarget;
+      displayUrl = parsed.toString();
+    } catch {
+      // Keep raw fallback and continue with existing validation flow.
+    }
+
+    const target = lookupTarget.trim() || '192.168.1.10';
+    const namedTarget = resolveDeviceNameTarget(target);
+    const resolvedTargetIp = namedTarget?.ip || target;
+    if (!isLoopbackTarget(resolvedTargetIp) && isValidIpv4(resolvedTargetIp) && !hasGatewayForTarget(resolvedTargetIp)) {
+      addLocalOutput('error', t.targetGatewayRequired);
+      return;
+    }
+    if (!isValidIpv4(resolvedTargetIp)) {
+      if (!isValidIpv4(pcDNS)) {
+        addLocalOutput('error', t.dnsAddressRequired);
+        return;
+      }
+      if (!hasGatewayForTarget(pcDNS)) {
+        addLocalOutput('error', t.dnsGatewayRequired);
+        return;
+      }
+    }
+
+    const httpServer = findHttpServerByTarget(resolvedTargetIp);
+    setHttpAppUrl(displayUrl);
+
+    if (!httpServer) {
+      setHttpAppDeviceId(null);
+      setHttpAppTitle('404 Not Found');
+      setHttpAppContent(`
+        <main style="padding:32px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;">
+          <h1 style="margin:0 0 8px;font-size:28px;">404</h1>
+          <p style="margin:0 0 12px;font-size:16px;">Sayfa bulunamadi / Page not found</p>
+          <code style="display:inline-block;padding:6px 10px;border-radius:8px;background:#f1f5f9;color:#0f172a;">${displayUrl}</code>
+        </main>
+      `);
+      addLocalOutput('error', `404 Not Found: ${target}`);
+    } else if (isRouterDevice(httpServer)) {
+      const runtimeState = deviceStates?.get(httpServer.id);
+      const connectedIot = getConnectedIotDevices(httpServer.id);
+      const availableIot = getAvailableIotDevices(httpServer.id);
+      const adminPage = generateRouterAdminPage(httpServer, runtimeState, connectedIot, availableIot);
+      setHttpAppDeviceId(httpServer.id);
+      setHttpAppContent(adminPage);
+      setHttpAppTitle(language === 'tr' ? 'Yönlendirici Yönetimi' : 'Router Management');
+      addLocalOutput('success', language === 'tr'
+        ? 'HTTP sayfası yeni pencerede açıldı.'
+        : 'HTTP page opened in a new window.');
+    } else {
+      setHttpAppDeviceId(null);
+      addLocalOutput('html', httpServer.services?.http?.content || 'Merhaba Dünya!');
+    }
+  }, [addLocalOutput, deviceStates, findHttpServerByTarget, getAvailableIotDevices, getConnectedIotDevices, hasGatewayForTarget, isLoopbackTarget, isValidIpv4, language, normalizeLookupTarget, pcDNS, resolveDeviceNameTarget, t, iotDevices, topologyDevices, generateIotWebPanelContent, generateIotDevicePageContent]);
+
   useEffect(() => {
     const handleRouterAdminMessage = (event: MessageEvent) => {
       const data = event.data;
@@ -1615,11 +1882,17 @@ export function PCPanel({
           }
         }
       }
+
+      // Handle messages from IoT Web Panel
+      if (data.type === 'open-iot-device') {
+        const { deviceId } = data;
+        openHttpTarget(`iot://iot-device/${deviceId}`);
+      }
     };
 
     window.addEventListener('message', handleRouterAdminMessage);
     return () => window.removeEventListener('message', handleRouterAdminMessage);
-  }, [addLocalOutput, httpAppDeviceId, language, topologyDevices, topologyConnections, getConnectedIotDevices, getAvailableIotDevices]);
+  }, [addLocalOutput, httpAppDeviceId, language, topologyDevices, topologyConnections, getConnectedIotDevices, getAvailableIotDevices, openHttpTarget]);
 
   useEffect(() => {
     if (!httpAppContent || !isMobile || typeof window === 'undefined') return;
@@ -1744,10 +2017,6 @@ export function PCPanel({
     });
   }, []);
 
-  const canReachTargetIp = useCallback((targetIp: string) => {
-    const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en');
-    return result.success;
-  }, [deviceId, topologyDevices, topologyConnections, deviceStates, t.language]);
 
   const hasPhysicalPathToDevice = useCallback((targetDeviceId: string) => {
     if (!targetDeviceId || targetDeviceId === deviceId) return false;
@@ -1796,239 +2065,11 @@ export function PCPanel({
     return false;
   }, [deviceId, topologyConnections, topologyDevices, deviceStates]);
 
-  const isValidIpv4 = useCallback((value: string) => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(value.trim()), []);
 
-  const isSameSubnet = useCallback((sourceIp: string, targetIp: string, subnetMask: string) => {
-    try {
-      const a = sourceIp.split('.').map(Number);
-      const b = targetIp.split('.').map(Number);
-      const m = subnetMask.split('.').map(Number);
-      if (a.length !== 4 || b.length !== 4 || m.length !== 4) return false;
-      for (let i = 0; i < 4; i += 1) {
-        if ((a[i] & m[i]) !== (b[i] & m[i])) return false;
-      }
-      return true;
-    } catch {
-      return false;
-    }
-  }, []);
 
-  const hasGatewayForTarget = useCallback((targetIp: string) => {
-    if (!isValidIpv4(pcIP) || !isValidIpv4(targetIp) || !isValidIpv4(pcSubnet)) return false;
-    if (isSameSubnet(pcIP, targetIp, pcSubnet)) return true;
-    return isValidIpv4(pcGateway);
-  }, [isSameSubnet, isValidIpv4, pcGateway, pcIP, pcSubnet]);
 
-  const isLoopbackTarget = useCallback((target: string) => target.trim() === '127.0.0.1', []);
 
-  const normalizeLookupTarget = useCallback((raw: string) => {
-    const value = (raw || '').trim();
-    if (!value) return '';
-    try {
-      const withScheme = value.startsWith('http://') || value.startsWith('https://')
-        ? value
-        : `http://${value}`;
-      const parsed = new URL(withScheme);
-      return parsed.hostname || value;
-    } catch {
-      return value.split('/')[0].split('?')[0].trim();
-    }
-  }, []);
 
-  const resolveDeviceNameTarget = useCallback((raw: string) => {
-    const normalized = (raw || '').trim().toLowerCase();
-    if (!normalized) return null;
-
-    if (normalized === 'localhost' || normalized === internalPcHostname.toLowerCase() || normalized === deviceId.toLowerCase()) {
-      return { ip: '127.0.0.1', label: internalPcHostname };
-    }
-
-    const matched = topologyDevices.find((d) =>
-      d.name?.toLowerCase() === normalized || d.id?.toLowerCase() === normalized
-    );
-    if (!matched) return null;
-
-    if (matched.ip && isValidIpv4(matched.ip)) {
-      return { ip: matched.ip, label: matched.name || matched.id };
-    }
-
-    const state = deviceStates?.get(matched.id);
-    if (state?.ports) {
-      for (const port of Object.values(state.ports)) {
-        if (port?.ipAddress && isValidIpv4(port.ipAddress)) {
-          return { ip: port.ipAddress, label: matched.name || matched.id };
-        }
-      }
-    }
-
-    return null;
-  }, [deviceId, deviceStates, internalPcHostname, isValidIpv4, topologyDevices]);
-
-  const resolveDomainWithDnsServices = useCallback((domain: string) => {
-    const normalized = domain.trim().toLowerCase();
-    if (!normalized) return null;
-
-    if (!isValidIpv4(pcDNS)) return null;
-    const configuredDnsServer = topologyDevices.find(
-      (d) => d.type === 'pc' && d.ip === pcDNS && d.services?.dns?.enabled && (d.services?.dns?.records?.length || 0) > 0
-    );
-    if (!configuredDnsServer?.ip || !canReachTargetIp(configuredDnsServer.ip)) return null;
-
-    const record = configuredDnsServer.services?.dns?.records?.find((r) => r.domain.toLowerCase() === normalized);
-    if (!record) return null;
-
-    return { address: record.address, server: configuredDnsServer };
-  }, [canReachTargetIp, isValidIpv4, pcDNS, topologyDevices]);
-
-  const findHttpServerByTarget = useCallback((target: string) => {
-    const normalizedTarget = target.trim().toLowerCase();
-    if (!normalizedTarget) return null;
-
-    // Localhost should always resolve to the current PC first.
-    if (normalizedTarget === '127.0.0.1') {
-      const selfDevice = topologyDevices.find((d) => d.id === deviceId);
-      if (selfDevice && selfDevice.services?.http?.enabled) return selfDevice;
-    }
-
-    // Check for PC HTTP servers
-    const pcByIp = topologyDevices.find(
-      (d) => d.type === 'pc' && d.ip === target && d.services?.http?.enabled
-    );
-    if (pcByIp && pcByIp.ip && canReachTargetIp(pcByIp.ip)) return pcByIp;
-
-    // Check for router/switch devices with HTTP service enabled
-    const routerByIp = topologyDevices.find(
-      (d) => (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3') && d.ip === target && d.services?.http?.enabled
-    );
-    if (routerByIp && routerByIp.ip && canReachTargetIp(routerByIp.ip)) return routerByIp;
-
-    // Fallback: look into deviceStates interface IPs (e.g., VLAN/SVI, routed ports) for devices that have HTTP enabled
-    if (deviceStates) {
-      for (const [stateId, state] of deviceStates.entries()) {
-        if (!state?.services?.http?.enabled) continue;
-        const topoDevice = topologyDevices.find(d => d.id === stateId);
-        if (!topoDevice || (topoDevice.type !== 'router' && topoDevice.type !== 'switchL2' && topoDevice.type !== 'switchL3')) continue;
-        const ports = state.ports || {};
-        const match = Object.values(ports).find((port: any) => port?.ipAddress === target);
-        if (match && canReachTargetIp(target)) {
-          return {
-            ...topoDevice,
-            ip: target
-          };
-        }
-      }
-    }
-
-    // Try DNS resolution
-    const dnsResult = resolveDomainWithDnsServices(normalizedTarget);
-    if (!dnsResult) return null;
-
-    // Check resolved address for PC HTTP server
-    const resolvedPc = topologyDevices.find(
-      (d) => d.type === 'pc' && d.ip === dnsResult.address && d.services?.http?.enabled
-    ) || null;
-    if (resolvedPc?.ip && canReachTargetIp(resolvedPc.ip)) return resolvedPc;
-
-    // Check resolved address for router/switch with HTTP service enabled
-    const resolvedRouter = topologyDevices.find(
-      (d) => (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3') && d.ip === dnsResult.address && d.services?.http?.enabled
-    ) || null;
-    if (resolvedRouter?.ip && canReachTargetIp(resolvedRouter.ip)) return resolvedRouter;
-
-    // DNS fallback via deviceStates interfaces
-    if (deviceStates) {
-      for (const [stateId, state] of deviceStates.entries()) {
-        if (!state?.services?.http?.enabled) continue;
-        const topoDevice = topologyDevices.find(d => d.id === stateId);
-        if (!topoDevice || (topoDevice.type !== 'router' && topoDevice.type !== 'switchL2' && topoDevice.type !== 'switchL3')) continue;
-        const ports = state.ports || {};
-        const match = Object.values(ports).find((port: any) => port?.ipAddress === dnsResult.address);
-        if (match && canReachTargetIp(match.ipAddress || dnsResult.address)) {
-          return {
-            ...topoDevice,
-            ip: match.ipAddress || dnsResult.address
-          };
-        }
-      }
-    }
-
-    return null;
-  }, [canReachTargetIp, resolveDomainWithDnsServices, topologyDevices, deviceStates, deviceId]);
-
-  const openHttpTarget = useCallback((rawTarget?: string, rawUrl?: string) => {
-    const rawInput = (rawTarget || '').trim();
-    const normalizedInput = rawInput || '192.168.1.10';
-    let lookupTarget = normalizeLookupTarget(normalizedInput);
-    let displayUrl = normalizedInput.startsWith('http://') || normalizedInput.startsWith('https://')
-      ? normalizedInput
-      : `http://${normalizedInput}`;
-    if (rawUrl && rawUrl.trim().length > 0) {
-      const candidate = rawUrl.trim();
-      displayUrl = candidate.startsWith('http://') || candidate.startsWith('https://') ? candidate : `http://${candidate}`;
-      lookupTarget = normalizeLookupTarget(candidate);
-    }
-    setHttpAppUrl(displayUrl);
-    setHttpAppTitle(language === 'tr' ? 'HTTP Yönetim Sayfası' : 'HTTP Page');
-    setHttpAppContent(null);
-    setHttpAppDeviceId(null);
-
-    // Browser-style inputs can include protocol/path/query. We only resolve host/IP.
-    try {
-      const parsed = new URL(displayUrl);
-      lookupTarget = parsed.hostname || lookupTarget;
-      displayUrl = parsed.toString();
-    } catch {
-      // Keep raw fallback and continue with existing validation flow.
-    }
-
-    const target = lookupTarget.trim() || '192.168.1.10';
-    const namedTarget = resolveDeviceNameTarget(target);
-    const resolvedTargetIp = namedTarget?.ip || target;
-    if (!isLoopbackTarget(resolvedTargetIp) && isValidIpv4(resolvedTargetIp) && !hasGatewayForTarget(resolvedTargetIp)) {
-      addLocalOutput('error', t.targetGatewayRequired);
-      return;
-    }
-    if (!isValidIpv4(resolvedTargetIp)) {
-      if (!isValidIpv4(pcDNS)) {
-        addLocalOutput('error', t.dnsAddressRequired);
-        return;
-      }
-      if (!hasGatewayForTarget(pcDNS)) {
-        addLocalOutput('error', t.dnsGatewayRequired);
-        return;
-      }
-    }
-
-    const httpServer = findHttpServerByTarget(resolvedTargetIp);
-    setHttpAppUrl(displayUrl);
-
-    if (!httpServer) {
-      setHttpAppDeviceId(null);
-      setHttpAppTitle('404 Not Found');
-      setHttpAppContent(`
-        <main style="padding:32px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;">
-          <h1 style="margin:0 0 8px;font-size:28px;">404</h1>
-          <p style="margin:0 0 12px;font-size:16px;">Sayfa bulunamadi / Page not found</p>
-          <code style="display:inline-block;padding:6px 10px;border-radius:8px;background:#f1f5f9;color:#0f172a;">${displayUrl}</code>
-        </main>
-      `);
-      addLocalOutput('error', `404 Not Found: ${target}`);
-    } else if (isRouterDevice(httpServer)) {
-      const runtimeState = deviceStates?.get(httpServer.id);
-      const connectedIot = getConnectedIotDevices(httpServer.id);
-      const availableIot = getAvailableIotDevices(httpServer.id);
-      const adminPage = generateRouterAdminPage(httpServer, runtimeState, connectedIot, availableIot);
-      setHttpAppDeviceId(httpServer.id);
-      setHttpAppContent(adminPage);
-      setHttpAppTitle(language === 'tr' ? 'Yönlendirici Yönetimi' : 'Router Management');
-      addLocalOutput('success', language === 'tr'
-        ? 'HTTP sayfası yeni pencerede açıldı.'
-        : 'HTTP page opened in a new window.');
-    } else {
-      setHttpAppDeviceId(null);
-      addLocalOutput('html', httpServer.services?.http?.content || 'Merhaba Dünya!');
-    }
-  }, [addLocalOutput, deviceStates, findHttpServerByTarget, getAvailableIotDevices, getConnectedIotDevices, hasGatewayForTarget, isLoopbackTarget, isValidIpv4, language, normalizeLookupTarget, pcDNS, resolveDeviceNameTarget, t]);
 
   const formatMacForArp = useCallback((mac?: string) => {
     if (!mac) return '';
@@ -3617,6 +3658,21 @@ export function PCPanel({
                   >
                     <Command className="w-4 h-4" />
                     <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{t.commandPromptTab}</span>
+                  </Button>
+                  {/* New IoT Web Panel Button */}
+                  <Button
+                    variant={httpAppDeviceId ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => {
+                      if (!httpAppDeviceId) {
+                        openHttpTarget('http://iot-panel');
+                      }
+                      setActiveTab('desktop'); // Ensure desktop tab is active when IoT panel is opened
+                    }}
+                    className={`h-9 px-4 text-xs font-black tracking-wider transition-all gap-2 ${activeTab === 'desktop' && httpAppContent && !httpAppDeviceId ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-500'} ${isMobile ? 'flex-1 min-w-0' : ''}`}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                    <span className={isMobile ? 'sr-only' : 'hidden md:inline'}>{language === 'tr' ? 'IoT Paneli' : 'IoT Panel'}</span>
                   </Button>
                   <Button
                     variant={activeTab === 'terminal' ? 'secondary' : 'ghost'}

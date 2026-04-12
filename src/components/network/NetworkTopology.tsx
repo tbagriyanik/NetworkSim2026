@@ -2186,7 +2186,7 @@ export function NetworkTopology({
       wifi: type === 'iot'
         ? { enabled: true, ssid: '', security: 'open', password: '', channel: '2.4GHz', mode: 'client' }
         : (type === 'router' || type === 'switch')
-          ? { enabled: false, ssid: 'Cisco-AP', security: 'open', password: '', channel: '2.4GHz', mode: 'ap' }
+          ? { enabled: false, ssid: 'Network-AP', security: 'open', password: '', channel: '2.4GHz', mode: 'ap' }
           : undefined,
     };
     setDevices((prev) => [...prev, newDevice]);

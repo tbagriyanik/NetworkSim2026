@@ -348,8 +348,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'iot-wifi-note',
       text: isTr
-        ? 'IoT WiFi Laboratuvarı:\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: IoT-Network (Open) yayınlar.\n2) PC-1 kablosuz ağa (WiFi Client) bağlıdır.\n3) 3 IoT cihazı (Sıcaklık, Nem, Hareket) WiFi üzerinden bağlıdır.\n4) PC-1 üzerinde http 192.168.1.1 ile WiFi panelinden IoT cihazlarını yönetin.\n5) PC-1 > ping 192.168.1.1 ile bağlantıyı test edin.'
-        : 'IoT WiFi Lab:\n1) R1 (Router) broadcasts SSID: IoT-Network (Open) on wlan0 in AP mode.\n2) PC-1 is connected wirelessly (WiFi Client).\n3) 3 IoT devices (Temperature, Humidity, Motion) connected via WiFi.\n4) Manage IoT devices from PC-1 WiFi panel via http 192.168.1.1.\n5) Test connectivity with PC-1 > ping 192.168.1.1.',
+        ? 'IoT WiFi Laboratuvarı:\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: IoT-Network (Open) yayınlar.\n2) PC-1 kablosuz ağa (WiFi Client) bağlıdır.\n3) 3 IoT cihazı (Sıcaklık, Nem, Hareket) WiFi üzerinden bağlıdır.\n4) PC-1 üzerinde http 192.168.1.1 ile WiFi panelinden IoT cihazlarını yönetin.\n5) PC-1 > ping 192.168.1.1 ile bağlantıyı test edin.\n6) PC-1 > http http://iot-panel ile cihaz kontrol paneline ulaşınız.'
+        : 'IoT WiFi Lab:\n1) R1 (Router) broadcasts SSID: IoT-Network (Open) on wlan0 in AP mode.\n2) PC-1 is connected wirelessly (WiFi Client).\n3) 3 IoT devices (Temperature, Humidity, Motion) connected via WiFi.\n4) Manage IoT devices from PC-1 WiFi panel via http 192.168.1.1.\n5) Test connectivity with PC-1 > ping 192.168.1.1.\n6) Access device control panel via PC-1 > http http://iot-panel',
       x: 500,
       y: 80,
       width: 450,

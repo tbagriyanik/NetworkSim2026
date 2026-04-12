@@ -72,6 +72,9 @@ export interface CanvasDevice {
     };
     http?: {
       enabled: boolean;
+      mode?: 'simple' | 'iot';
+      username?: string;
+      password?: string;
       content: string;
     };
     dhcp?: {

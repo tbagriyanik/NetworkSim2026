@@ -36,6 +36,8 @@ export interface RouterWebConfig {
   deviceIp: string;
   deviceId?: string;
   adminPassword?: string;
+  username?: string;
+  password?: string;
   connectedIotDevices?: ConnectedIoTDevice[];
   availableIotDevices?: AvailableIoTDevice[];
 }
@@ -45,7 +47,7 @@ export interface RouterWebConfig {
  * Styled like a typical router web admin page (e.g., 192.168.1.1)
  */
 export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
-  const { wifi, deviceName, deviceIp, deviceId, connectedIotDevices = [], availableIotDevices = [] } = config;
+  const { wifi, deviceName, deviceIp, deviceId, connectedIotDevices = [], availableIotDevices = [], username, password } = config;
 
   const securityOptions = [
     { value: 'open', label: 'Open (No Security)' },
@@ -104,6 +106,39 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       <span class="hint">Range: 1-128 clients</span>
     </div>
   `;
+
+  const loginFormHTML = username && password ? `
+    <div id="login-form" style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px;">
+      <div style="background: white; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 40px; width: 100%; max-width: 400px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="font-size: 24px; font-weight: 600; color: #333; margin-bottom: 10px;">${deviceName}</h1>
+          <p style="color: #666; font-size: 14px;">IoT Device Management</p>
+        </div>
+        <form id="auth-form" onsubmit="handleLogin(event)">
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 13px; font-weight: 500; color: #333; margin-bottom: 8px;">Username</label>
+            <input type="text" id="login-username" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+          </div>
+          <div style="margin-bottom: 25px;">
+            <label style="display: block; font-size: 13px; font-weight: 500; color: #333; margin-bottom: 8px;">Password</label>
+            <input type="password" id="login-password" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+          </div>
+          <button type="submit" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;">
+            Login
+          </button>
+          <p id="login-error" style="color: #dc3545; font-size: 13px; text-align: center; margin-top: 15px; display: none;">Invalid username or password</p>
+        </form>
+      </div>
+    </div>
+  ` : '';
+
+  const mainContent = `
+    <div id="main-content" style="display: ${username && password ? 'none' : 'block'};">
+  `;
+
+  const contentEnd = username && password ? `
+    </div>
+  ` : '';
 
   return `
 <!DOCTYPE html>
@@ -469,6 +504,8 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
   </style>
 </head>
 <body>
+  ${loginFormHTML}
+  ${mainContent}
   <div class="container">
     <div class="header">
       <h1>🔧 ${deviceName}</h1>
@@ -1162,7 +1199,24 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
         }, 1500);
       }, deviceIds.length * 100 + 500);
     };
+
+    // Handle login form submission
+    window.handleLogin = function(event) {
+      event.preventDefault();
+      const usernameInput = document.getElementById('login-username').value;
+      const passwordInput = document.getElementById('login-password').value;
+      const expectedUsername = '${username || ''}';
+      const expectedPassword = '${password || ''}';
+
+      if (usernameInput === expectedUsername && passwordInput === expectedPassword) {
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+      } else {
+        document.getElementById('login-error').style.display = 'block';
+      }
+    };
   </script>
+${contentEnd}
 </body>
 </html>
   `.trim();
@@ -1213,13 +1267,15 @@ export function getRouterWifiConfig(device: CanvasDevice, state?: SwitchState): 
 /**
  * Generate router admin page content for HTTP access
  */
-export function generateRouterAdminPage(device: CanvasDevice, state?: SwitchState, connectedIotDevices?: ConnectedIoTDevice[], availableIotDevices?: AvailableIoTDevice[]): string {
+export function generateRouterAdminPage(device: CanvasDevice, state?: SwitchState, connectedIotDevices?: ConnectedIoTDevice[], availableIotDevices?: AvailableIoTDevice[], username?: string, password?: string): string {
   const config: RouterWebConfig = {
     wifi: getRouterWifiConfig(device, state),
     deviceName: device.name,
     deviceIp: device.ip || '192.168.1.1',
     deviceId: device.id,
     adminPassword: 'admin',
+    username: username,
+    password: password,
     connectedIotDevices: connectedIotDevices || [],
     availableIotDevices: availableIotDevices || [],
   };

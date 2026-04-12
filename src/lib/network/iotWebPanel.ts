@@ -1,0 +1,394 @@
+
+import { CanvasDevice } from '@/components/network/networkTopology.types';
+
+export const generateIotWebPanelContent = (
+  iotDevices: CanvasDevice[],
+  language: string,
+): string => {
+  const isTurkish = language === 'tr';
+
+  const iotDeviceListHtml = iotDevices.length > 0
+    ? iotDevices.map(device => `
+      <div class="iot-device-card">
+        <span class="device-name">${device.name || device.id}</span>
+        <button onclick="window.parent.postMessage({ type: 'open-iot-device', deviceId: '${device.id}' }, '*')" class="connect-button">
+          ${isTurkish ? 'Bağlan' : 'Connect'}
+        </button>
+      </div>
+    `).join('')
+    : `<p class="no-devices">${isTurkish ? 'Hiç IoT cihazı bulunamadı.' : 'No IoT devices found.'}</p>`;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>${isTurkish ? 'IoT Web Paneli' : 'IoT Web Panel'}</title>
+        <style>
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+          .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            box-sizing: border-box;
+          }
+          h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 24px;
+            font-weight: 600;
+          }
+          .login-form {
+            text-align: center;
+          }
+          .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+          }
+          label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+          }
+          input[type="text"],
+          input[type="password"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+          }
+          .login-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            width: 100%;
+          }
+          .login-button:hover {
+            background-color: #218838;
+          }
+          .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+          }
+          .iot-device-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #e9ecef;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            transition: all 0.2s ease-in-out;
+          }
+          .iot-device-card:hover {
+            background-color: #e2e6ea;
+            border-color: #cdd2d6;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          }
+          .device-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+          }
+          .connect-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+          }
+          .connect-button:hover {
+            background-color: #0056b3;
+          }
+          .no-devices {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            margin-top: 20px;
+          }
+          .hidden {
+            display: none;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>${isTurkish ? 'IoT Web Paneli' : 'IoT Web Panel'}</h1>
+          
+          <div id="loginSection" class="login-form">
+            <div class="form-group">
+              <label for="username">${isTurkish ? 'Kullanıcı Adı' : 'Username'}:</label>
+              <input type="text" id="username" value="admin" placeholder="${isTurkish ? 'Kullanıcı adı girin' : 'Enter username'}" />
+            </div>
+            <div class="form-group">
+              <label for="password">${isTurkish ? 'Parola' : 'Password'}:</label>
+              <input type="password" id="password" placeholder="${isTurkish ? 'Parola girin' : 'Enter password'}" />
+            </div>
+            <button type="button" class="login-button" onclick="checkPassword()">
+              ${isTurkish ? 'Giriş Yap' : 'Login'}
+            </button>
+            <div id="errorMessage" class="error-message">
+              ${isTurkish ? 'Hatalı kullanıcı adı veya parola!' : 'Incorrect username or password!'}
+            </div>
+          </div>
+
+          <div id="deviceSection" class="hidden">
+            <div class="device-list">
+              ${iotDeviceListHtml}
+            </div>
+          </div>
+        </div>
+
+        <script>
+          function checkPassword() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const correctUsername = 'admin';
+            const correctPassword = 'admin';
+            
+            if (username === correctUsername && password === correctPassword) {
+              document.getElementById('loginSection').classList.add('hidden');
+              document.getElementById('deviceSection').classList.remove('hidden');
+            } else {
+              const errorMessage = document.getElementById('errorMessage');
+              errorMessage.style.display = 'block';
+              document.getElementById('username').value = '';
+              document.getElementById('password').value = '';
+              document.getElementById('username').focus();
+            }
+          }
+
+          document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+              checkPassword();
+            }
+          });
+
+          document.getElementById('username').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+              document.getElementById('password').focus();
+            }
+          });
+        </script>
+      </body>
+    </html>
+  `;
+};
+
+export const generateIotDevicePageContent = (
+  deviceId: string,
+  deviceName: string,
+  language: string,
+): string => {
+  const isTurkish = language === 'tr';
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>${isTurkish ? 'IoT Cihaz Yönetimi' : 'IoT Device Management'}: ${deviceName}</title>
+        <style>
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+          .device-panel {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+          }
+          h1 {
+            color: #0056b3;
+            margin-bottom: 25px;
+            font-size: 22px;
+            font-weight: 600;
+          }
+          .device-info {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: left;
+          }
+          .device-info p {
+            margin: 10px 0;
+            font-size: 14px;
+          }
+          .device-info strong {
+            color: #555;
+            display: inline-block;
+            width: 120px;
+          }
+          .toggle-section {
+            margin-bottom: 25px;
+          }
+          .toggle-label {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: block;
+          }
+          .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+          }
+          .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+          }
+          .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+          }
+          .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+          }
+          input:checked + .slider {
+            background-color: #28a745;
+          }
+          input:checked + .slider:before {
+            transform: translateX(26px);
+          }
+          .status-text {
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: 500;
+          }
+          .status-active {
+            color: #28a745;
+          }
+          .status-inactive {
+            color: #dc3545;
+          }
+          .back-button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            margin-top: 10px;
+          }
+          .back-button:hover {
+            background-color: #5a6268;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="device-panel">
+          <h1>${deviceName} ${isTurkish ? 'Yönetimi' : 'Management'}</h1>
+          
+          <div class="device-info">
+            <p><strong>${isTurkish ? 'Cihaz ID' : 'Device ID'}:</strong> ${deviceId}</p>
+            <p><strong>${isTurkish ? 'Cihaz Adı' : 'Device Name'}:</strong> ${deviceName}</p>
+            <p><strong>${isTurkish ? 'Durum' : 'Status'}:</strong> <span id="statusText" class="status-active">${isTurkish ? 'Aktif' : 'Active'}</span></p>
+          </div>
+
+          <div class="toggle-section">
+            <label class="toggle-label">${isTurkish ? 'Cihaz Durumu' : 'Device Status'}</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="deviceToggle" checked onchange="toggleDevice()">
+              <span class="slider"></span>
+            </label>
+            <div id="statusMessage" class="status-text status-active">
+              ${isTurkish ? 'Cihaz aktif' : 'Device is active'}
+            </div>
+          </div>
+
+          <button type="button" class="back-button" onclick="goBack()">
+            ${isTurkish ? 'Listeye Dön' : 'Back to List'}
+          </button>
+        </div>
+
+        <script>
+          function toggleDevice() {
+            const toggle = document.getElementById('deviceToggle');
+            const statusText = document.getElementById('statusText');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            if (toggle.checked) {
+              statusText.textContent = '${isTurkish ? 'Aktif' : 'Active'}';
+              statusText.className = 'status-text status-active';
+              statusMessage.textContent = '${isTurkish ? 'Cihaz aktif' : 'Device is active'}';
+              statusMessage.className = 'status-text status-active';
+              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: '${deviceId}', active: true }, '*');
+            } else {
+              statusText.textContent = '${isTurkish ? 'Pasif' : 'Inactive'}';
+              statusText.className = 'status-text status-inactive';
+              statusMessage.textContent = '${isTurkish ? 'Cihaz pasif' : 'Device is inactive'}';
+              statusMessage.className = 'status-text status-inactive';
+              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: '${deviceId}', active: false }, '*');
+            }
+          }
+
+          function goBack() {
+            window.parent.postMessage({ type: 'back-to-iot-list' }, '*');
+          }
+        </script>
+      </body>
+    </html>
+  `;
+};
