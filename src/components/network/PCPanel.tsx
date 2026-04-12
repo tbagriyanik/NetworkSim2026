@@ -1055,11 +1055,20 @@ export function PCPanel({
   }, [language]);
 
   useEffect(() => {
-    if (!httpAppDeviceId) return;
-
     const handleRouterAdminMessage = (event: MessageEvent) => {
       const data = event.data;
-      if (!data || data.deviceId !== httpAppDeviceId) return;
+      console.log('Received message:', data, 'httpAppDeviceId:', httpAppDeviceId);
+      if (!data) return;
+      
+      // For WiFi save operations, require httpAppDeviceId match
+      const isRouterSpecificMessage = data.type === 'router-admin-save-wifi';
+      if (isRouterSpecificMessage && httpAppDeviceId && data.deviceId && data.deviceId !== httpAppDeviceId) {
+        console.log('Ignoring message - deviceId mismatch for router-specific operation');
+        return;
+      }
+      
+      // IoT messages are always accepted (deviceId in payload)
+      const isIoTMessage = data.type === 'router-admin-connect-iot' || data.type === 'router-admin-disconnect-iot';
 
       // Handle WiFi settings save
       if (data.type === 'router-admin-save-wifi') {
@@ -1096,14 +1105,22 @@ export function PCPanel({
 
       // Handle IoT device connect (existing device)
       if (data.type === 'router-admin-connect-iot') {
+        console.log('Handling connect-iot, payload:', data.payload);
         const payload = data.payload || {};
         const iotDeviceId = payload.iotDeviceId;
-        
-        if (!iotDeviceId) return;
-        
+
+        if (!iotDeviceId) {
+          console.warn('No iotDeviceId provided');
+          return;
+        }
+
         // Find the existing IoT device in topology
         const iotDevice = topologyDevices.find((d) => d.id === iotDeviceId);
-        if (!iotDevice || iotDevice.type !== 'iot') return;
+        console.log('Found IoT device:', iotDevice);
+        if (!iotDevice || iotDevice.type !== 'iot') {
+          console.warn('IoT device not found or wrong type:', iotDeviceId);
+          return;
+        }
 
         // Find router/AP to get network info
         const routerDevice = topologyDevices.find((d) => d.id === httpAppDeviceId);
@@ -1185,14 +1202,22 @@ export function PCPanel({
 
       // Handle IoT device disconnect
       if (data.type === 'router-admin-disconnect-iot') {
+        console.log('Handling disconnect-iot, payload:', data.payload);
         const payload = data.payload || {};
         const iotDeviceId = payload.iotDeviceId;
-        
-        if (!iotDeviceId) return;
-        
+
+        if (!iotDeviceId) {
+          console.warn('No iotDeviceId provided for disconnect');
+          return;
+        }
+
         // Find the existing IoT device in topology
         const iotDevice = topologyDevices.find((d) => d.id === iotDeviceId);
-        if (!iotDevice || iotDevice.type !== 'iot') return;
+        console.log('Found IoT device for disconnect:', iotDevice);
+        if (!iotDevice || iotDevice.type !== 'iot') {
+          console.warn('IoT device not found or wrong type for disconnect:', iotDeviceId);
+          return;
+        }
 
         // Update the IoT device's WiFi config to disconnect (disable WiFi)
         const updatedWifi = {
@@ -1213,6 +1238,7 @@ export function PCPanel({
         );
 
         // Dispatch event to update the IoT device
+        console.log('Dispatching update-topology-device-config for disconnect:', iotDeviceId);
         window.dispatchEvent(new CustomEvent('update-topology-device-config', {
           detail: {
             deviceId: iotDeviceId,
@@ -1226,12 +1252,14 @@ export function PCPanel({
           },
         }));
 
+        console.log('Calling addLocalOutput for disconnect');
         addLocalOutput(
           'success',
           language === 'tr'
             ? `IoT cihaz "${iotDevice.name}" agdan cikarildi.`
             : `IoT device "${iotDevice.name}" disconnected from the network.`
         );
+        console.log('addLocalOutput called for disconnect');
       }
     };
 
@@ -1252,11 +1280,14 @@ export function PCPanel({
   // Get connected IoT devices for a router/AP
   const getConnectedIotDevices = useCallback((routerId: string) => {
     const routerDevice = topologyDevices.find(d => d.id === routerId);
-    if (!routerDevice?.wifi?.ssid) return [];
-    
-    const routerSsid = routerDevice.wifi.ssid;
-    const routerSecurity = routerDevice.wifi.security || 'open';
-    
+    if (!routerDevice) return [];
+
+    const routerSsid = routerDevice.wifi?.ssid || '';
+    const routerSecurity = routerDevice.wifi?.security || 'open';
+
+    // If router has no SSID, no devices can be connected to it
+    if (!routerSsid) return [];
+
     return topologyDevices
       .filter(d => d.type === 'iot' && d.wifi?.ssid === routerSsid && d.wifi?.security === routerSecurity)
       .map(d => ({
@@ -1272,13 +1303,15 @@ export function PCPanel({
   const getAvailableIotDevices = useCallback((routerId: string) => {
     const routerDevice = topologyDevices.find(d => d.id === routerId);
     if (!routerDevice) return [];
-    
+
     const routerSsid = routerDevice.wifi?.ssid || '';
-    
+
     return topologyDevices
       .filter(d => {
         if (d.type !== 'iot') return false;
         // Include IoT devices that are not connected to this AP
+        // If router has no SSID, show all IoT devices as available
+        if (!routerSsid) return true;
         const isConnectedToThisAp = d.wifi?.ssid === routerSsid && d.wifi?.enabled;
         return !isConnectedToThisAp;
       })
@@ -3016,7 +3049,7 @@ export function PCPanel({
       `}>
         {/* External Toolbar - Above Tablet Frame */}
         <div className={`
-        w-full max-w-full md:max-w-4xl mx-auto mb-2 px-3 py-1.5 flex items-center justify-between sticky top-2 z-[70]
+        w-full max-w-full md:max-w-4xl mx-auto mb-2 px-3 py-1.5 flex items-center justify-between sticky top-2 z-[30]
         rounded-lg border
         ${isDark
             ? 'bg-slate-800/90 border-slate-700 shadow-md'
@@ -4677,7 +4710,7 @@ export function PCPanel({
                 <iframe
                   title={httpAppTitle}
                   srcDoc={httpAppSrcDoc}
-                  sandbox="allow-forms allow-scripts"
+                  sandbox="allow-forms allow-scripts allow-same-origin"
                   className="h-full w-full border-0 bg-white"
                 />
               </div>

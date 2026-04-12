@@ -595,9 +595,12 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
               </div>
             </div>
           `).join('')}
-          <div class="actions" style="margin-top:20px;">
+          <div class="actions" style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
             <button type="button" class="btn btn-secondary" style="background:#ef4444;color:white;" onclick="disconnectSelectedDevices()" id="disconnect-selected-btn">
               ✕ Disconnect Selected
+            </button>
+            <button type="button" class="btn btn-danger" style="background:#dc2626;color:white;" onclick="disconnectAllDevices()">
+              ✕ Disconnect All Devices
             </button>
           </div>
         </div>
@@ -617,7 +620,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
           ${availableIotDevices.filter(d => !d.currentSsid).map(device => `
             <div class="iot-device-card available" data-device-id="${device.id}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:2px solid #e9ecef;cursor:pointer;transition:all 0.3s;" onclick="toggleIotDeviceSelection('${device.id}')">
               <div style="display:flex;align-items:center;gap:12px;">
-                <input type="checkbox" class="iot-checkbox" data-device-id="${device.id}" style="width:20px;height:20px;cursor:pointer;" onclick="event.stopPropagation()">
+                <input type="checkbox" class="iot-checkbox" data-device-id="${device.id}" style="width:20px;height:20px;cursor:pointer;" onclick="event.stopPropagation(); toggleIotDeviceSelection('${device.id}')">
                 <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
                   🛜
                 </div>
@@ -637,7 +640,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
           ${availableIotDevices.filter(d => d.currentSsid && d.currentSsid !== '${wifi.ssid}').map(device => `
             <div class="iot-device-card available" data-device-id="${device.id}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:2px solid #e9ecef;cursor:pointer;transition:all 0.3s;" onclick="toggleIotDeviceSelection('${device.id}')">
               <div style="display:flex;align-items:center;gap:12px;">
-                <input type="checkbox" class="iot-checkbox" data-device-id="${device.id}" style="width:20px;height:20px;cursor:pointer;" onclick="event.stopPropagation()">
+                <input type="checkbox" class="iot-checkbox" data-device-id="${device.id}" style="width:20px;height:20px;cursor:pointer;" onclick="event.stopPropagation(); toggleIotDeviceSelection('${device.id}')">
                 <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
                   🛜
                 </div>
@@ -826,23 +829,27 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     window.toggleIotDeviceSelection = function(deviceId) {
       const checkbox = document.querySelector('.iot-checkbox[data-device-id="' + deviceId + '"]');
       const card = document.querySelector('.iot-device-card[data-device-id="' + deviceId + '"]');
-      
-      if (selectedIotDevices.has(deviceId)) {
-        selectedIotDevices.delete(deviceId);
-        if (checkbox) checkbox.checked = false;
-        if (card) {
-          card.style.borderColor = '#e9ecef';
-          card.style.background = '#f8f9fa';
-        }
-      } else {
+
+      // Use checkbox's current state (browser already toggled it on click)
+      const isChecked = checkbox ? checkbox.checked : false;
+      console.log('Toggle IoT device:', deviceId, 'checked:', isChecked);
+
+      if (isChecked) {
         selectedIotDevices.add(deviceId);
-        if (checkbox) checkbox.checked = true;
         if (card) {
           card.style.borderColor = '#2a5298';
           card.style.background = '#e8f0fe';
         }
+      } else {
+        selectedIotDevices.delete(deviceId);
+        if (card) {
+          card.style.borderColor = '#e9ecef';
+          card.style.background = '#f8f9fa';
+        }
       }
-      
+
+      console.log('Selected IoT devices:', Array.from(selectedIotDevices));
+
       // Update button text
       const saveBtn = document.getElementById('save-iot-btn');
       if (saveBtn) {
@@ -857,17 +864,18 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     window.toggleConnectedDeviceSelection = function(deviceId) {
       const checkbox = document.querySelector('.iot-disconnect-checkbox[data-device-id="' + deviceId + '"]');
       const card = document.querySelector('.iot-device-card.connected[data-device-id="' + deviceId + '"]');
-      
-      if (selectedConnectedDevices.has(deviceId)) {
-        selectedConnectedDevices.delete(deviceId);
-        if (checkbox) checkbox.checked = false;
-        if (card) card.style.background = '#f8f9fa';
-      } else {
+
+      // Use checkbox's current state (browser already toggled it on click)
+      const isChecked = checkbox ? checkbox.checked : false;
+
+      if (isChecked) {
         selectedConnectedDevices.add(deviceId);
-        if (checkbox) checkbox.checked = true;
         if (card) card.style.background = '#fee2e2';
+      } else {
+        selectedConnectedDevices.delete(deviceId);
+        if (card) card.style.background = '#f8f9fa';
       }
-      
+
       // Update disconnect button
       const disconnectBtn = document.getElementById('disconnect-selected-btn');
       if (disconnectBtn) {
@@ -876,12 +884,20 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       }
     };
     
+    // Get all currently connected IoT device IDs from the DOM
+    function getAllConnectedDeviceIds() {
+      const checkboxes = document.querySelectorAll('.iot-disconnect-checkbox[data-device-id]');
+      return Array.from(checkboxes).map(cb => cb.getAttribute('data-device-id')).filter(Boolean);
+    }
+    
     window.disconnectIotDevice = function(deviceId) {
       if (!confirm('Disconnect this IoT device from the network?')) return;
       
       try {
+        console.log('Posting disconnect message for device:', deviceId);
         window.parent.postMessage({
           type: 'router-admin-disconnect-iot',
+          deviceId: deviceId,
           payload: {
             iotDeviceId: deviceId
           }
@@ -896,6 +912,39 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       }
     };
     
+    window.disconnectAllDevices = function() {
+      const deviceIds = getAllConnectedDeviceIds();
+      console.log('Disconnecting all devices:', deviceIds);
+      
+      if (deviceIds.length === 0) {
+        alert('No connected IoT devices to disconnect');
+        return;
+      }
+      
+      if (!confirm('Disconnect all ' + deviceIds.length + ' IoT device(s) from the network?')) return;
+      
+      deviceIds.forEach((deviceId, index) => {
+        setTimeout(() => {
+          try {
+            console.log('Posting disconnect-all message for device:', deviceId);
+            window.parent.postMessage({
+              type: 'router-admin-disconnect-iot',
+              deviceId: deviceId,
+              payload: { iotDeviceId: deviceId }
+            }, '*');
+          } catch (err) {
+            console.warn('Could not disconnect IoT device:', err);
+          }
+        }, index * 100);
+      });
+      
+      setTimeout(() => {
+        selectedConnectedDevices.clear();
+        alert('✅ ' + deviceIds.length + ' IoT device(s) disconnected from the network');
+        location.reload();
+      }, deviceIds.length * 100 + 200);
+    };
+    
     window.disconnectSelectedDevices = function() {
       const deviceIds = Array.from(selectedConnectedDevices);
       if (deviceIds.length === 0) {
@@ -908,8 +957,10 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       deviceIds.forEach((deviceId, index) => {
         setTimeout(() => {
           try {
+            console.log('Posting disconnect-selected message for device:', deviceId);
             window.parent.postMessage({
               type: 'router-admin-disconnect-iot',
+              deviceId: deviceId,
               payload: { iotDeviceId: deviceId }
             }, '*');
           } catch (err) {
@@ -939,6 +990,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     
     window.saveSelectedIotDevices = function() {
       const deviceIds = Array.from(selectedIotDevices);
+      console.log('Saving selected IoT devices:', deviceIds);
       if (deviceIds.length === 0) {
         alert('❌ Please select at least one IoT device');
         return;
@@ -956,8 +1008,10 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       deviceIds.forEach((deviceId, index) => {
         setTimeout(() => {
           try {
+            console.log('Posting connect message for device:', deviceId);
             window.parent.postMessage({
               type: 'router-admin-connect-iot',
+              deviceId: deviceId,
               payload: {
                 iotDeviceId: deviceId,
                 ssid: '${wifi.ssid || ''}',

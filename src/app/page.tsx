@@ -403,6 +403,33 @@ export default function Home() {
           return next;
         });
       }
+
+      // Handle IoT device disconnect - clear IP and WiFi state
+      if (config.ip === '' && config.wifi?.enabled === false) {
+        setDeviceStates((prev) => {
+          const state = prev.get(deviceId);
+          if (!state) return prev;
+          const next = new Map(prev);
+          next.set(deviceId, {
+            ...state,
+            ports: {
+              ...state.ports,
+              wlan0: {
+                ...state.ports?.['wlan0'],
+                shutdown: true,
+                wifi: {
+                  ssid: '',
+                  security: 'open',
+                  password: '',
+                  channel: '2.4GHz',
+                  mode: 'client',
+                },
+              },
+            },
+          });
+          return next;
+        });
+      }
     };
 
     window.addEventListener('update-topology-device-config', handleDeviceUpdate);
