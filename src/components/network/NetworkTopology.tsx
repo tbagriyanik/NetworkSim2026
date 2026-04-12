@@ -4269,12 +4269,17 @@ export function NetworkTopology({
                 togglePowerDevices([device.id]);
               }}
             >
-              {/* Background circle - 2px margin from top-right */}
-              <circle cx={deviceWidth - 12} cy={10} r={8} className={isPoweredOff ? 'fill-red-500' : (isDark ? 'fill-slate-700' : 'fill-slate-100')} />
+              {/* Background circle - adjusted Y for routers */}
+              <circle 
+                cx={deviceWidth - 12} 
+                cy={device.type === 'router' ? 14 : 10} 
+                r={8} 
+                className={isPoweredOff ? 'fill-red-500' : (isDark ? 'fill-slate-700' : 'fill-slate-100')} 
+              />
               {/* Lightning bolt - centered in circle */}
               <path
                 d="M0 -4l-4 5h3l-1 4 4-5h-3l1-4z"
-                transform={`translate(${deviceWidth - 11}, 10) scale(1)`}
+                transform={`translate(${deviceWidth - 11}, ${device.type === 'router' ? 14 : 10}) scale(1)`}
                 className={isPoweredOff ? 'fill-white' : `${statusColor} transition-colors duration-300`}
                 fill="currentColor"
               />
