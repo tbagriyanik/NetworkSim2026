@@ -3243,6 +3243,35 @@ export default function Home() {
                       onChange={(e) => setProjectSearchQuery(e.target.value)}
                       autoFocus
                       className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          if (!projectSearchQuery.trim()) {
+                            setShowProjectPicker(false);
+                            runWithSaveGuard(() => { resetToEmptyProject(); });
+                          } else {
+                            // Find the first filtered project across all levels
+                            let firstProject: any = null;
+                            for (const level of exampleLevelOrder) {
+                              const projects = groupedExampleProjects[level] || [];
+                              const filtered = projects.filter(project =>
+                                project.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                                project.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                                project.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                                (project.detail && project.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
+                              );
+                              if (filtered.length > 0) {
+                                firstProject = filtered[0];
+                                break;
+                              }
+                            }
+
+                            if (firstProject) {
+                              setShowProjectPicker(false);
+                              runWithSaveGuard(() => applyExampleProject(firstProject.data));
+                            }
+                          }
+                        }
+                      }}
                     />
                     {projectSearchQuery && (
                       <button

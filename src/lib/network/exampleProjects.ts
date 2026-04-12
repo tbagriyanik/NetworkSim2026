@@ -162,7 +162,7 @@ const createIotDevice = (id: string, name: string, x: number, y: number, sensorT
   status: 'online',
   iot: {
     sensorType,
-    collaborationEnabled: false,
+    collaborationEnabled: true,
     dataStore: ''
   },
   wifi: {

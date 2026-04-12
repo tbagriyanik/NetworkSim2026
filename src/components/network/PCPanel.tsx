@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, KeyboardEvent, useCallback, useMemo, type CSSProperties } from 'react';
-import { useSwitchState, useAppStore } from '@/lib/store/appStore';
+import { useSwitchState, useAppStore, useEnvironment } from '@/lib/store/appStore';
 import { CableInfo, isCableCompatible, SwitchState } from '@/lib/network/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -131,6 +131,189 @@ const DESKTOP_COMMANDS = [
   '?',
 ];
 
+const IoTSensorDisplay = ({
+  device,
+  environment,
+  language,
+  isDark
+}: {
+  device: CanvasDevice;
+  environment: any;
+  language: string;
+  isDark: boolean;
+}) => {
+  const [history, setHistory] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (!device?.iot?.sensorType || !device.iot?.collaborationEnabled) {
+      setHistory([]);
+      return;
+    }
+
+    const sensorType = device.iot.sensorType;
+    let baseValue = 0;
+    let maxDelta = 1;
+
+    switch (sensorType) {
+      case 'temperature': baseValue = environment?.temperature ?? 22; maxDelta = 0.5; break;
+      case 'humidity': baseValue = environment?.humidity ?? 50; maxDelta = 1.0; break;
+      case 'light': baseValue = environment?.light ?? 70; maxDelta = 3; break;
+      case 'sound': baseValue = 40; maxDelta = 5; break;
+      case 'motion': baseValue = 0; maxDelta = 1; break;
+    }
+
+    let seed = 0;
+    for (let i = 0; i < device.id.length; i++) seed += device.id.charCodeAt(i);
+    const pseudoRandom = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    const points: number[] = [];
+    let currentVal = baseValue;
+
+    for (let i = 0; i < 300; i++) {
+      if (sensorType === 'motion') {
+        points.push(pseudoRandom() > 0.8 ? 1 : 0);
+      } else {
+        const walk = (pseudoRandom() - 0.5) * maxDelta;
+        currentVal += walk;
+        if (currentVal > baseValue + maxDelta * 5) currentVal -= Math.abs(walk);
+        if (currentVal < baseValue - maxDelta * 5) currentVal += Math.abs(walk);
+        points.push(currentVal);
+      }
+    }
+    setHistory(points);
+
+    const interval = setInterval(() => {
+      setHistory(prev => {
+        let nextVal = 0;
+        if (sensorType === 'motion') {
+          nextVal = Math.random() > 0.8 ? 1 : 0;
+        } else {
+          const walk = (Math.random() - 0.5) * maxDelta;
+          const lastVal = prev[prev.length - 1] ?? baseValue;
+          nextVal = lastVal + walk;
+          if (nextVal > baseValue + maxDelta * 5) nextVal -= Math.abs(walk);
+          if (nextVal < baseValue - maxDelta * 5) nextVal += Math.abs(walk);
+        }
+        return [...prev.slice(1), nextVal];
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [device.id, device.iot?.sensorType, device.iot?.collaborationEnabled, environment]);
+
+  const isPassive = device.iot?.collaborationEnabled === false;
+  if (!device?.iot?.sensorType || (history.length === 0 && !isPassive)) return null;
+
+  const sensorType = device.iot.sensorType;
+  const latestVal = history.length > 0 ? history[history.length - 1] : 0;
+
+  let displayStr = '-';
+  if (!device.iot?.collaborationEnabled) {
+    displayStr = language === 'tr' ? 'PASİF' : 'PASSIVE';
+  } else {
+    switch (sensorType) {
+      case 'temperature': displayStr = `${latestVal.toFixed(1)} °C`; break;
+      case 'humidity': displayStr = `${latestVal.toFixed(1)} %`; break;
+      case 'light': displayStr = `${Math.round(latestVal)} lx`; break;
+      case 'sound': displayStr = `${Math.round(latestVal)} dB`; break;
+      case 'motion': displayStr = latestVal > 0.5 ? (language === 'tr' ? '🔴 Hareket Var' : '🔴 Detected') : (language === 'tr' ? '🟢 Hareket Yok' : '🟢 None'); break;
+    }
+  }
+
+  const isDigital = sensorType === 'motion';
+  const margin = { top: 10, right: 10, bottom: 10, left: 15 };
+  const width = 450;
+  const height = 100;
+  const gWidth = width - margin.left - margin.right;
+  const gHeight = height - margin.top - margin.bottom;
+
+  let min = isDigital ? 0 : Math.min(...history);
+  let max = isDigital ? 1 : Math.max(...history);
+  if (max === min) { max += 1; min -= 1; }
+
+  let pointsStr = '';
+  if (isDigital) {
+    pointsStr = history.map((val, i) => {
+      const x = margin.left + (i / (history.length - 1)) * gWidth;
+      const y = margin.top + gHeight - ((val - min) / (max - min)) * gHeight;
+      if (i === 0) return `${x},${y}`;
+      const prevX = margin.left + ((i - 1) / (history.length - 1)) * gWidth;
+      return `${prevX},${y} ${x},${y}`;
+    }).join(' ');
+  } else {
+    pointsStr = history.map((val, i) => {
+      const x = margin.left + (i / (history.length - 1)) * gWidth;
+      const y = margin.top + gHeight - ((val - min) / (max - min)) * gHeight;
+      return `${x},${y}`;
+    }).join(' ');
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className={`p-4 rounded-lg border-l-4 ${isDark ? 'bg-slate-800 border-cyan-500' : 'bg-cyan-50 border-cyan-500'}`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs text-slate-500 mb-1">
+              {language === 'tr' ? 'Anlık Sensör Değeri' : 'Live Sensor Value'}
+            </div>
+            <div className="text-2xl font-bold text-cyan-500">
+              {displayStr}
+            </div>
+          </div>
+          <div className={`p-3 rounded-full ${isDark ? 'bg-slate-700' : 'bg-white'}`}>
+            {sensorType === 'temperature' && <span className="text-2xl">🌡️</span>}
+            {sensorType === 'humidity' && <span className="text-2xl">💧</span>}
+            {sensorType === 'motion' && <span className="text-2xl">🏃</span>}
+            {sensorType === 'light' && <span className="text-2xl">💡</span>}
+            {sensorType === 'sound' && <span className="text-2xl">🔊</span>}
+          </div>
+        </div>
+      </div>
+
+      <div className={`p-4 rounded-lg ${isDark ? 'bg-slate-800/50' : 'bg-slate-100/50'}`}>
+        <div className="flex justify-between items-end mb-2">
+          <div className="text-xs font-semibold text-slate-500">
+            {language === 'tr' ? 'Son 5 Dakika (300sn) Geçmişi' : 'Last 5 Minutes History'}
+          </div>
+          {!isPassive && (
+            <div className="text-xs text-cyan-500/80 font-mono">
+              {latestVal.toFixed(isDigital ? 0 : 1)} {isDigital ? '' : (sensorType === 'temperature' ? '°C' : sensorType === 'humidity' ? '%' : sensorType === 'light' ? 'lx' : 'dB')}
+            </div>
+          )}
+        </div>
+
+        <div className="w-full overflow-hidden rounded relative" style={{ height: '100px' }}>
+          <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full h-full overflow-visible">
+            <line x1={margin.left} y1={margin.top} x2={width - margin.right} y2={margin.top} stroke={isDark ? '#334155' : '#cbd5e1'} strokeWidth="1" strokeDasharray="4 4" />
+            <line x1={margin.left} y1={margin.top + gHeight / 2} x2={width - margin.right} y2={margin.top + gHeight / 2} stroke={isDark ? '#334155' : '#cbd5e1'} strokeWidth="1" strokeDasharray="4 4" />
+            <line x1={margin.left} y1={margin.top + gHeight} x2={width - margin.right} y2={margin.top + gHeight} stroke={isDark ? '#334155' : '#cbd5e1'} strokeWidth="1" strokeDasharray="4 4" />
+
+            <text x={0} y={margin.top + 3} fill={isDark ? '#64748b' : '#94a3b8'} fontSize="8" fontFamily="monospace">{max.toFixed(1)}</text>
+            <text x={0} y={margin.top + gHeight + 3} fill={isDark ? '#64748b' : '#94a3b8'} fontSize="8" fontFamily="monospace">{min.toFixed(1)}</text>
+
+            <polyline
+              fill="none"
+              stroke="url(#lineGradHistory)"
+              strokeWidth={isDigital ? "1" : "2"}
+              points={pointsStr}
+              style={{ vectorEffect: 'non-scaling-stroke' }}
+            />
+            <defs>
+              <linearGradient id="lineGradHistory" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.1" />
+                <stop offset="100%" stopColor="#06b6d4" stopOpacity="1" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export function PCPanel({
   deviceId,
   cableInfo,
@@ -151,6 +334,7 @@ export function PCPanel({
   const { t, language } = useLanguage();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const environment = useEnvironment();
 
   // Responsive hooks
   const isMobile = useIsMobile();
@@ -351,6 +535,7 @@ export function PCPanel({
     () => iotDevices.find((d) => d.id === selectedIotDeviceId) || null,
     [iotDevices, selectedIotDeviceId]
   );
+
   const [iotSensorType, setIotSensorType] = useState<'temperature' | 'sound' | 'motion' | 'humidity' | 'light'>('temperature');
   const [iotCollaborationEnabled, setIotCollaborationEnabled] = useState(false);
   const [iotDataStore, setIotDataStore] = useState('');
@@ -1067,60 +1252,60 @@ export function PCPanel({
     return topologyDevices
       .filter(d => {
         if (d.type !== 'iot') return false;
-        
+
         let isWifiConnected = false;
         if (routerSsid) {
-          isWifiConnected = d.wifi?.ssid === routerSsid && 
-                            d.wifi?.security === routerSecurity;
+          isWifiConnected = d.wifi?.ssid === routerSsid &&
+            d.wifi?.security === routerSecurity;
         }
 
-        const isWiredConnected = topologyConnections.some(c => 
-          (c.sourceDeviceId === routerId && c.targetDeviceId === d.id) || 
+        const isWiredConnected = topologyConnections.some(c =>
+          (c.sourceDeviceId === routerId && c.targetDeviceId === d.id) ||
           (c.targetDeviceId === routerId && c.sourceDeviceId === d.id)
         );
 
         return isWifiConnected || isWiredConnected;
       })
       .map(d => {
-        const isWiredConnected = topologyConnections.some(c => 
-          (c.sourceDeviceId === routerId && c.targetDeviceId === d.id) || 
+        const isWiredConnected = topologyConnections.some(c =>
+          (c.sourceDeviceId === routerId && c.targetDeviceId === d.id) ||
           (c.targetDeviceId === routerId && c.sourceDeviceId === d.id)
         );
 
         let deviceIp = d.ip;
         if (isWiredConnected && !deviceIp) {
-            const routerIp = routerDevice?.ip || '192.168.1.1';
-            const baseIpParts = routerIp.split('.');
-            const usedIps = new Set<string>();
-            topologyDevices.forEach(td => {
-                if (td.ip && td.ip.startsWith(baseIpParts[0] + '.' + baseIpParts[1] + '.' + baseIpParts[2])) {
-                    usedIps.add(td.ip);
-                }
-            });
-            for (let i = 100; i <= 254; i++) {
-                const testIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.${i}`;
-                if (!usedIps.has(testIp)) {
-                    deviceIp = testIp;
-                    break;
-                }
+          const routerIp = routerDevice?.ip || '192.168.1.1';
+          const baseIpParts = routerIp.split('.');
+          const usedIps = new Set<string>();
+          topologyDevices.forEach(td => {
+            if (td.ip && td.ip.startsWith(baseIpParts[0] + '.' + baseIpParts[1] + '.' + baseIpParts[2])) {
+              usedIps.add(td.ip);
             }
-            if (!deviceIp) deviceIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.150`;
+          });
+          for (let i = 100; i <= 254; i++) {
+            const testIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.${i}`;
+            if (!usedIps.has(testIp)) {
+              deviceIp = testIp;
+              break;
+            }
+          }
+          if (!deviceIp) deviceIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.150`;
 
-            // Assign IP asynchronously to avoid state mutation during render
-            setTimeout(() => {
-                window.dispatchEvent(new CustomEvent('update-topology-device-config', {
-                    detail: {
-                        deviceId: d.id,
-                        config: {
-                            ip: deviceIp,
-                            ipConfigMode: 'dhcp',
-                            gateway: routerIp,
-                            subnet: routerDevice?.subnet || '255.255.255.0',
-                            dns: routerIp,
-                        },
-                    },
-                }));
-            }, 0);
+          // Assign IP asynchronously to avoid state mutation during render
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+              detail: {
+                deviceId: d.id,
+                config: {
+                  ip: deviceIp,
+                  ipConfigMode: 'dhcp',
+                  gateway: routerIp,
+                  subnet: routerDevice?.subnet || '255.255.255.0',
+                  dns: routerIp,
+                },
+              },
+            }));
+          }, 0);
         }
 
         return {
@@ -1145,11 +1330,11 @@ export function PCPanel({
       .filter(d => {
         if (d.type !== 'iot') return false;
 
-        const isWiredConnected = topologyConnections.some(c => 
-          (c.sourceDeviceId === routerId && c.targetDeviceId === d.id) || 
+        const isWiredConnected = topologyConnections.some(c =>
+          (c.sourceDeviceId === routerId && c.targetDeviceId === d.id) ||
           (c.targetDeviceId === routerId && c.sourceDeviceId === d.id)
         );
-        
+
         if (isWiredConnected) return false;
 
         if (!routerSsid) return true;
@@ -1387,7 +1572,7 @@ export function PCPanel({
         if (topologyConnections) {
           topologyConnections.forEach(conn => {
             if ((conn.sourceDeviceId === httpAppDeviceId && conn.targetDeviceId === iotDeviceId) ||
-                (conn.targetDeviceId === httpAppDeviceId && conn.sourceDeviceId === iotDeviceId)) {
+              (conn.targetDeviceId === httpAppDeviceId && conn.sourceDeviceId === iotDeviceId)) {
               window.dispatchEvent(new CustomEvent('delete-topology-connection', {
                 detail: { connectionId: (conn as any).id }
               }));
@@ -3567,78 +3752,84 @@ export function PCPanel({
                       className="flex-1 min-h-0 p-3 overflow-y-auto"
                       style={mobileVerticalScrollStyle}
                     >
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 ">
-                          {t.ipConfigurationLabel}
-                        </label>&nbsp;
-                        <div className={`inline-flex p-1 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
-                          <button
-                            type="button"
-                            role="radio"
-                            aria-checked={ipConfigMode === 'dhcp'}
-                            onClick={() => {
-                              setIpConfigMode('dhcp');
-                              applyDhcpLease(true);
-                            }}
-                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${ipConfigMode === 'dhcp'
-                              ? 'bg-cyan-500 text-white shadow-sm'
-                              : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-200')
-                              }`}
-                          >
-                            DHCP
-                          </button>
-                          <button
-                            type="button"
-                            role="radio"
-                            aria-checked={ipConfigMode === 'static'}
-                            onClick={() => setIpConfigMode('static')}
-                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${ipConfigMode === 'static'
-                              ? 'bg-blue-500 text-white shadow-sm'
-                              : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-200')
-                              }`}
-                          >
-                            {t.staticLabel}
-                          </button>
+                      <div className={`p-4 rounded-xl border space-y-4 ${isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="space-y-1.5 flex-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t.hostname}</label>
+                            <Input value={internalPcHostname} onChange={(e) => setPcHostname(e.target.value)} className="h-9" />
+                          </div>
+                          <div className="space-y-1.5 flex-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">MAC Address</label>
+                            <Input value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} placeholder="00:1A:2B:3C:4D:5E" className={`h-9 ${errors.mac ? 'border-rose-500' : ''}`} />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-center gap-4 py-2 border-y border-slate-800/10 dark:border-slate-800/50">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1 whitespace-nowrap">
+                            {t.ipConfigurationLabel}
+                          </label>
+                          <div className={`inline-flex p-1 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
+                            <button
+                              type="button"
+                              role="radio"
+                              aria-checked={ipConfigMode === 'dhcp'}
+                              onClick={() => {
+                                setIpConfigMode('dhcp');
+                                applyDhcpLease(true);
+                              }}
+                              className={`px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all ${ipConfigMode === 'dhcp'
+                                ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30'
+                                : (isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
+                                }`}
+                            >
+                              DHCP
+                            </button>
+                            <button
+                              type="button"
+                              role="radio"
+                              aria-checked={ipConfigMode === 'static'}
+                              onClick={() => setIpConfigMode('static')}
+                              className={`px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all ${ipConfigMode === 'static'
+                                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                                : (isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
+                                }`}
+                            >
+                              {t.staticLabel.toUpperCase()}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">IP Address</label>
+                            <Input value={pcIP} onChange={(e) => setPcIP(e.target.value)} placeholder="192.168.1.100" className={`h-9 ${errors.ip ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Subnet Mask</label>
+                            <Input value={pcSubnet} onChange={(e) => setPcSubnet(e.target.value)} placeholder="255.255.255.0" className={`h-9 ${errors.subnet ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Gateway</label>
+                            <Input value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} placeholder="192.168.1.1" className={`h-9 ${errors.gateway ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">DNS Server</label>
+                            <Input value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} placeholder="8.8.8.8" className={`h-9 ${errors.dns ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-x-4 pt-2 border-t border-slate-800/10 dark:border-slate-800/50">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">IPv6 Address</label>
+                            <Input value={pcIPv6} onChange={(e) => setPcIPv6(e.target.value)} placeholder="2001:db8:acad:1::10" className={`h-9 ${errors.ipv6 ? 'border-rose-500' : ''}`} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">IPv6 Prefix</label>
+                            <Input value={pcIPv6Prefix} onChange={(e) => setPcIPv6Prefix(e.target.value)} placeholder="64" className="h-9" />
+                          </div>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 ">{t.hostname}</label>
-                        <Input value={internalPcHostname} onChange={(e) => setPcHostname(e.target.value)} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 ">MAC Address</label>
-                        <Input value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} placeholder="00:1A:2B:3C:4D:5E" className={errors.mac ? 'border-rose-500' : ''} />
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-500 ">IP Address</label>
-                          <Input value={pcIP} onChange={(e) => setPcIP(e.target.value)} placeholder="192.168.1.100" className={errors.ip ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-500 ">Subnet Mask</label>
-                          <Input value={pcSubnet} onChange={(e) => setPcSubnet(e.target.value)} placeholder="255.255.255.0" className={errors.subnet ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-500 ">Gateway</label>
-                          <Input value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} placeholder="192.168.1.1" className={errors.gateway ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-500 ">DNS</label>
-                          <Input value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} placeholder="8.8.8.8" className={errors.dns ? 'border-rose-500' : ''} disabled={ipConfigMode === 'dhcp'} />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-500 ">IPv6 Address</label>
-                          <Input value={pcIPv6} onChange={(e) => setPcIPv6(e.target.value)} placeholder="2001:db8:acad:1::10" className={errors.ipv6 ? 'border-rose-500' : ''} />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-500 ">IPv6 Prefix</label>
-                          <Input value={pcIPv6Prefix} onChange={(e) => setPcIPv6Prefix(e.target.value)} placeholder="64" />
-                        </div>
-                      </div>
+
                     </div>
                   )}
 
@@ -4033,6 +4224,55 @@ export function PCPanel({
                               />
                             </div>
 
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Sensör Tipi' : 'Sensor Type'}</label>
+                                <Select value={iotSensorType} onValueChange={(v) => setIotSensorType(v as any)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="temperature">{language === 'tr' ? 'Isı' : 'Temperature'}</SelectItem>
+                                    <SelectItem value="sound">{language === 'tr' ? 'Ses' : 'Sound'}</SelectItem>
+                                    <SelectItem value="motion">{language === 'tr' ? 'Hareket' : 'Motion'}</SelectItem>
+                                    <SelectItem value="humidity">{language === 'tr' ? 'Nem' : 'Humidity'}</SelectItem>
+                                    <SelectItem value="light">{language === 'tr' ? 'Işık' : 'Light'}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 shrink-0">
+                                  {language === 'tr' ? 'Cihaz Durumu (Aktif/Pasif)' : 'Device Status (Active/Passive)'}
+                                </label>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[9px] font-bold ${!iotCollaborationEnabled ? 'text-rose-500' : 'text-slate-400'}`}>
+                                    {language === 'tr' ? 'PASİF' : 'PASSIVE'}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={iotCollaborationEnabled}
+                                    onClick={() => setIotCollaborationEnabled((prev) => !prev)}
+                                    className={`relative inline-flex h-7 w-14 items-center rounded-full border transition-all duration-300 shrink-0 ${iotCollaborationEnabled ? 'bg-cyan-500 border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.4)]' : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')}`}
+                                  >
+                                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${iotCollaborationEnabled ? 'translate-x-8' : 'translate-x-1'}`} />
+                                  </button>
+                                  <span className={`text-[9px] font-bold ${iotCollaborationEnabled ? 'text-cyan-500' : 'text-slate-400'}`}>
+                                    {language === 'tr' ? 'AKTİF' : 'ACTIVE'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Veri Saklama (not/json/metin)' : 'Data Storage (note/json/text)'}</label>
+                              <textarea
+                                value={iotDataStore}
+                                onChange={(e) => setIotDataStore(e.target.value)}
+                                rows={5}
+                                className={`w-full rounded-md border px-3 py-2 text-sm ${isDark ? 'bg-slate-950 border-slate-800 text-slate-100' : 'bg-white border-slate-300 text-slate-900'}`}
+                                placeholder={language === 'tr' ? 'Sensör verisi veya notlar...' : 'Sensor data or notes...'}
+                              />
+                            </div>
+
                             {/* IP Address Info */}
                             <div className={`p-3 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
                               <div className="grid grid-cols-2 gap-2 text-xs">
@@ -4061,7 +4301,7 @@ export function PCPanel({
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="mt-2 w-full"
+                                  className="mt-2 w-fit px-6 shadow-sm hover:shadow-md transition-all active:scale-95"
                                   onClick={() => {
                                     const targetIp = selectedIotDevice?.ip;
                                     if (targetIp) {
@@ -4080,93 +4320,15 @@ export function PCPanel({
                               )}
                             </div>
 
-                            {/* Sensor Value Display */}
-                            {selectedIotDevice?.iot?.sensorType && (
-                              <div className={`p-4 rounded-lg border-l-4 ${isDark ? 'bg-slate-800 border-cyan-500' : 'bg-cyan-50 border-cyan-500'}`}>
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <div className="text-xs text-slate-500 mb-1">
-                                      {language === 'tr' ? 'Sensör Değeri' : 'Sensor Value'}
-                                    </div>
-                                    <div className="text-2xl font-bold text-cyan-500">
-                                      {(() => {
-                                        const sensorType = selectedIotDevice?.iot?.sensorType || 'temperature';
-                                        // Simulated sensor values
-                                        const baseTemp = 22;
-                                        const baseHumidity = 50;
-                                        const baseLight = 70;
-                                        const variations = [0, 1, -1, 2, -2];
-                                        const variation = variations[Math.floor(Math.random() * variations.length)];
-
-                                        switch (sensorType) {
-                                          case 'temperature':
-                                            return `${baseTemp + variation}°C`;
-                                          case 'humidity':
-                                            return `${baseHumidity + variation}%`;
-                                          case 'light':
-                                            return `${baseLight + variation * 2}%`;
-                                          case 'motion':
-                                            return Math.random() > 0.7 ? '🔴 Detected' : '🟢 None';
-                                          case 'sound':
-                                            return `${(30 + Math.random() * 20).toFixed(1)} dB`;
-                                          default:
-                                            return '-';
-                                        }
-                                      })()}
-                                    </div>
-                                  </div>
-                                  <div className={`p-3 rounded-full ${isDark ? 'bg-slate-700' : 'bg-white'}`}>
-                                    {selectedIotDevice?.iot?.sensorType === 'temperature' && <span className="text-2xl">🌡️</span>}
-                                    {selectedIotDevice?.iot?.sensorType === 'humidity' && <span className="text-2xl">💧</span>}
-                                    {selectedIotDevice?.iot?.sensorType === 'motion' && <span className="text-2xl">🏃</span>}
-                                    {selectedIotDevice?.iot?.sensorType === 'light' && <span className="text-2xl">💡</span>}
-                                    {selectedIotDevice?.iot?.sensorType === 'sound' && <span className="text-2xl">🔊</span>}
-                                  </div>
-                                </div>
-                                <div className="text-xs text-slate-400 mt-2">
-                                  {language === 'tr' ? 'Son güncelleme: Az önce' : 'Last updated: Just now'}
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Sensör Tipi' : 'Sensor Type'}</label>
-                                <Select value={iotSensorType} onValueChange={(v) => setIotSensorType(v as any)}>
-                                  <SelectTrigger><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="temperature">{language === 'tr' ? 'Isı' : 'Temperature'}</SelectItem>
-                                    <SelectItem value="sound">{language === 'tr' ? 'Ses' : 'Sound'}</SelectItem>
-                                    <SelectItem value="motion">{language === 'tr' ? 'Hareket' : 'Motion'}</SelectItem>
-                                    <SelectItem value="humidity">{language === 'tr' ? 'Nem' : 'Humidity'}</SelectItem>
-                                    <SelectItem value="light">{language === 'tr' ? 'Işık' : 'Light'}</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <label className="text-xs font-bold text-slate-500 shrink-0">{language === 'tr' ? 'Birlikte Çalışma' : 'Collaboration'}</label>
-                                <button
-                                  type="button"
-                                  role="switch"
-                                  aria-checked={iotCollaborationEnabled}
-                                  onClick={() => setIotCollaborationEnabled((prev) => !prev)}
-                                  className={`relative inline-flex h-7 w-14 items-center rounded-full border transition-colors shrink-0 ${iotCollaborationEnabled ? 'bg-cyan-500 border-cyan-400' : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')}`}
-                                >
-                                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${iotCollaborationEnabled ? 'translate-x-8' : 'translate-x-1'}`} />
-                                </button>
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Veri Saklama (not/json/metin)' : 'Data Storage (note/json/text)'}</label>
-                              <textarea
-                                value={iotDataStore}
-                                onChange={(e) => setIotDataStore(e.target.value)}
-                                rows={5}
-                                className={`w-full rounded-md border px-3 py-2 text-sm ${isDark ? 'bg-slate-950 border-slate-800 text-slate-100' : 'bg-white border-slate-300 text-slate-900'}`}
-                                placeholder={language === 'tr' ? 'Sensör verisi veya notlar...' : 'Sensor data or notes...'}
+                            {/* Sensor Value & Graph Display */}
+                            {selectedIotDevice && (
+                              <IoTSensorDisplay
+                                device={selectedIotDevice}
+                                environment={environment}
+                                language={language}
+                                isDark={isDark}
                               />
-                            </div>
+                            )}
 
                             <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} flex items-center gap-1`}>
                               <Save className="w-3 h-3" />

@@ -2484,6 +2484,9 @@ export function NetworkTopology({
   }, [connections, getLivePort]);
 
   const getIotMeasuredValue = useCallback((device: CanvasDevice) => {
+    if (device.iot && device.iot.collaborationEnabled === false) {
+      return language === 'tr' ? 'PASİF' : 'PASSIVE';
+    }
     const sensorType = device.iot?.sensorType || 'temperature';
     const baseTemp = environment?.temperature ?? 22;
     const baseHumidity = environment?.humidity ?? 50;
@@ -4262,6 +4265,15 @@ export function NetworkTopology({
         )}
         {device.type === 'iot' && (
           (() => {
+            const isPassive = device.iot?.collaborationEnabled === false;
+            if (isPassive) {
+              return (
+                <text x={deviceWidth / 2} y={70} fill={isDark ? '#94a3b8' : '#64748b'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(1px 1px 0px rgba(0,0,0,1))">
+                  <tspan x={deviceWidth / 2} dy="6">{language === 'tr' ? 'PASİF' : 'PASSIVE'}</tspan>
+                </text>
+              );
+            }
+
             const sensorType = device.iot?.sensorType || 'temperature';
             const value = getIotMeasuredValue(device);
             switch (sensorType) {
