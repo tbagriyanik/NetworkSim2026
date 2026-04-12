@@ -1888,6 +1888,36 @@ export function PCPanel({
         const { deviceId } = data;
         openHttpTarget(`iot://iot-device/${deviceId}`);
       }
+
+      // Handle back to IoT list message
+      if (data.type === 'back-to-iot-list') {
+        openHttpTarget('http://iot-panel');
+      }
+
+      // Handle toggle IoT device status message
+      if (data.type === 'toggle-iot-device') {
+        const { deviceId, active } = data;
+        const targetDevice = topologyDevices.find((d) => d.id === deviceId);
+        if (targetDevice && targetDevice.type === 'iot') {
+          window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+            detail: {
+              deviceId: deviceId,
+              config: {
+                iot: {
+                  ...targetDevice.iot,
+                  collaborationEnabled: active,
+                },
+              },
+            },
+          }));
+          addLocalOutput(
+            'success',
+            language === 'tr'
+              ? `IoT cihaz "${targetDevice.name || deviceId}" okuma ${active ? 'aktif edildi.' : 'pasif edildi.'}`
+              : `IoT device "${targetDevice.name || deviceId}" reading ${active ? 'activated.' : 'deactivated.'}`
+          );
+        }
+      }
     };
 
     window.addEventListener('message', handleRouterAdminMessage);
@@ -1903,6 +1933,24 @@ export function PCPanel({
       width: Math.max(280, window.innerWidth - 16),
     }));
   }, [httpAppContent, isMobile]);
+
+  useEffect(() => {
+    if (!httpAppContent || typeof window === 'undefined') return;
+    
+    const handlePopState = () => {
+      if (httpAppContent) {
+        setHttpAppContent(null);
+        window.history.pushState(null, '', window.location.href);
+      }
+    };
+
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [httpAppContent]);
 
   useEffect(() => {
     if (!httpAppDeviceId) return;
@@ -4975,7 +5023,10 @@ export function PCPanel({
 
       {/* HTTP content in-tablet viewer */}
       {httpAppContent && (
-        <div className="fixed inset-0 z-[999] pointer-events-auto">
+        <div 
+          className="fixed inset-0 z-[999] pointer-events-auto backdrop-blur-sm bg-black/20"
+          onClick={() => setHttpAppContent(null)}
+        >
           <div
             className="absolute"
             style={isMobile
@@ -4992,6 +5043,7 @@ export function PCPanel({
                 width: browserWindow.width,
                 height: browserWindow.height,
               }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div
               className={`h-full w-full rounded-2xl shadow-2xl border ${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'} flex flex-col overflow-hidden`}
@@ -5133,8 +5185,3 @@ function getPCConfigDefaults(id: string) {
     mac: `00-40-96-99-88-7${num}`
   };
 }
-
-
-
-
-

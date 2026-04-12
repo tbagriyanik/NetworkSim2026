@@ -177,6 +177,7 @@ export const generateIotWebPanelContent = (
             const correctPassword = 'admin';
             
             if (username === correctUsername && password === correctPassword) {
+              sessionStorage.setItem('iotPanelAuthenticated', 'true');
               document.getElementById('loginSection').classList.add('hidden');
               document.getElementById('deviceSection').classList.remove('hidden');
             } else {
@@ -185,6 +186,17 @@ export const generateIotWebPanelContent = (
               document.getElementById('username').value = '';
               document.getElementById('password').value = '';
               document.getElementById('username').focus();
+            }
+          }
+
+          function checkAuthentication() {
+            const isAuthenticated = sessionStorage.getItem('iotPanelAuthenticated');
+            if (isAuthenticated === 'true') {
+              document.getElementById('loginSection').classList.add('hidden');
+              document.getElementById('deviceSection').classList.remove('hidden');
+            } else {
+              document.getElementById('loginSection').classList.remove('hidden');
+              document.getElementById('deviceSection').classList.add('hidden');
             }
           }
 
@@ -199,6 +211,9 @@ export const generateIotWebPanelContent = (
               document.getElementById('password').focus();
             }
           });
+
+          // Check authentication on page load
+          window.addEventListener('load', checkAuthentication);
         </script>
       </body>
     </html>

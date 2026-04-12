@@ -36,6 +36,14 @@ Network learing app [Test Address](https://network2026.vercel.app)
   - **IoT Device Management**: Safely connect/disconnect or fully delete IoT devices mapping to topology
   - Bulk operations for gracefully disconnecting or removing multiple IoT devices visually
   - IP address display for connected IoT devices
+- **IoT Web Panel**: Centralized IoT device management interface accessible via `http://iot-panel`
+  - **Password Protection**: Secure login with username/password (admin/admin)
+  - **Session-Based Authentication**: Remembers login state using sessionStorage
+  - **Device List**: View all connected IoT devices in the network
+  - **Device Management**: Access individual IoT device management pages
+  - **Active/Inactive Toggle**: Control IoT reading activation (collaborationEnabled property)
+  - **Back to List**: Navigate back to device list without re-authentication
+  - **Backdrop Blur**: Visual blur effect when browser popup opens
   - Context Menu Restrictions: Smart right-click menu tailored to device types (e.g., disabling 'Open' for non-interactive IoT devices)
   - Save file (JSON) optimization by abstracting away redundant switch parameters for PC and IoT devices
   - Modern, responsive UI with dark/light theme support
