@@ -2,11 +2,11 @@
 
 A modern and interactive web-based Network simulator designed for students and networking enthusiasts.
 
-![Version](https://img.shields.io/badge/version-1.4.0-blue)
+![Version](https://img.shields.io/badge/version-1.4.1-blue)
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Commits](https://img.shields.io/badge/commits-600+-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-53k+-blueviolet)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-53.7k+-blueviolet)
 
 Network learing app [Test Address](https://network2026.vercel.app)
 
@@ -28,9 +28,11 @@ Network learing app [Test Address](https://network2026.vercel.app)
   - Configure SSID, security (Open/WPA/WPA2/WPA3), channel (2.4GHz/5GHz)
   - Switch between AP and Client modes
   - View connected devices in real-time
-  - **IoT Device Management**: Connect/disconnect IoT devices from WiFi panel
-  - Bulk operations for multiple IoT devices
+  - **IoT Device Management**: Safely connect/disconnect or fully delete IoT devices mapping to topology
+  - Bulk operations for gracefully disconnecting or removing multiple IoT devices visually
   - IP address display for connected IoT devices
+  - Context Menu Restrictions: Smart right-click menu tailored to device types (e.g., disabling 'Open' for non-interactive IoT devices)
+  - Save file (JSON) optimization by abstracting away redundant switch parameters for PC and IoT devices
   - Modern, responsive UI with dark/light theme support
 - **IoT WiFi Lab**: Complete lab scenario with 3 IoT device types (Temperature, Humidity, Motion sensors)
   - Pre-configured example project with WiFi connectivity
@@ -495,13 +497,13 @@ Theme selection is done from the theme selector in the top right corner.
 
 - Scope: `src/`
 - Source files: `170+`
-- Total lines: `51,853`
+- Total lines: `53,700`
 - TS/TSX files: `160+`
 - Network components: `50+`
 - Custom hooks: `20+`
 - Example projects: `8`
 - CLI commands: `110+`
-- Last updated: `2026-04-11`
+- Last updated: `2026-04-12`
 
 ## 🐛 Troubleshooting
 
@@ -523,8 +525,8 @@ Contributions are welcome. Please:
 
 ---
 
-**Sürüm**: 1.4.0
-**Son Güncelleme**: 2026-04-11
+**Sürüm**: 1.4.1
+**Son Güncelleme**: 2026-04-12
 **Durum**: Production Ready
 
 GitHub: [github.com/tbagriyanik/ciscosim](https://github.com/tbagriyanik/ciscosim)

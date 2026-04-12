@@ -12,7 +12,7 @@ Bu belge, projenin mevcut durumunu dürüst biçimde özetler. Amaç, "tamamland
 Proje tamamlanmış durumda:
 - `next build` başarılı ✅
 - TypeScript derlemesi temiz ✅
-- **51,332 satır kod** (160+ kaynak dosya) - toplam proje kodu
+- **53,700 satır kod** (160+ kaynak dosya) - toplam proje kodu
 - **100+ CLI komutu** destekleniyor
 - Tüm CLI komutları çalışır durumda
 - Tablet UI, WiFi (sinyal gücü göstergesi), Ping animasyonları (gerçekçi gecikmeler), Notes sistemi aktif
@@ -190,6 +190,14 @@ Proje tamamlanmış durumda:
 
 ## Tamamlananlar
 
+### 2026-04-12 – IoT, Topoloji Yönetimi ve JSON Kaydetme İyileştirmeleri
+- **IoT Cihaz Yönetimi**: Router/Switch "WiFi Kontrol Paneli" arayüzünden IoT cihazının ağdan **silinmesi (delete)** veya **bağlantısının kesilmesi (disconnect)** süreçleri tamamen iyileştirildi. Delete işleminde cihaz topolojiden tam anlamıyla kalkar.
+- **Topoloji Sağ Tık Menüsü Kısıtlamaları**: Sağ tık (Context Menu) kısıtlamaları getirildi. IoT cihazlara sağ tıklandığında "Aç" seçeneği (içerisindeki terminal veya port yönetim paneli olmadığı için) pasif (disabled) duruma getirildi.
+- **Güvenlik / Sandbox Geliştirmeleri**: PC üzerinde açılan yönetim paneli `iframe` içerisine `allow-modals` yetkisi eklendi; böylece onay/alert diyalog pencerelerinin engellenmesi (cihaz koparma işlemlerinin hiç çalışmama sorunu) çözüldü.
+- **JSON Dosya İyileştirmesi**: Proje kaydet (Save .json) özelliğinde oluşan şişkinliği önlemek için PC ve IoT tipindeki aygıtların switch benzeri CLI state/running-config/port gereksiz verileri JSON çıktısından arındırılarak filtrelenmesi sağlandı.
+- **Arayüz Rötuşları**: Çöp kutusu (delete) butonu `flex` özellikleri ile SVG tamamen ortalanacak biçimde optimize edildi.
+- **Versiyon**: 1.4.1, Kod satırı: 53,700+
+
 ### 2026-04-11 – IoT WiFi Lab ve WiFi Kontrol Paneli İyileştirmeleri
 - **Yeni Örnek Proje**: `IoT WiFi Lab` eklendi — 3 IoT cihazı (Sıcaklık, Nem, Hareket sensörü) + PC + Router
 - **IoT Cihaz IP Atama**: Tüm IoT cihazlara statik IP atanabilir (192.168.1.101-103)
@@ -351,6 +359,6 @@ Proje tamamlanmış durumda:
 - UI/UX: Modern ve işlevsel ✅
 - Dokümantasyon: Güncellendi ✅
 
-**Sürüm**: 1.4.0  
-**Son Güncelleme**: 2026-04-11  
+**Sürüm**: 1.4.1  
+**Son Güncelleme**: 2026-04-12  
 **Durum**: Production Ready ✅
