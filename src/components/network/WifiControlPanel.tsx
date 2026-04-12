@@ -20,6 +20,7 @@ export interface ConnectedIoTDevice {
   sensorType: string;
   connected: boolean;
   ip?: string;
+  isWired?: boolean;
 }
 
 export interface AvailableIoTDevice {
@@ -573,8 +574,8 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
           ${connectedIotDevices.map(device => `
             <div class="iot-device-card connected" data-device-id="${device.id}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:1px solid #e9ecef;">
               <div style="display:flex;align-items:center;gap:12px;">               
-                <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, #16cbf9 0%, #0ea5e9 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
-                  🛜
+                <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, ${device.isWired ? '#22c55e 0%, #16a34a 100%' : '#16cbf9 0%, #0ea5e9 100%'});display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
+                  ${device.isWired ? '🔌' : '🛜'}
                 </div>
                 <div>
                   <div style="font-weight:600;color:#333;">${device.name}</div>

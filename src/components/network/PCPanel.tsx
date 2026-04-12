@@ -1064,18 +1064,75 @@ export function PCPanel({
     const routerSsid = routerDevice.wifi?.ssid || '';
     const routerSecurity = routerDevice.wifi?.security || 'open';
 
-    if (!routerSsid) return [];
-
     return topologyDevices
-      .filter(d => d.type === 'iot' && d.wifi?.ssid === routerSsid && d.wifi?.security === routerSecurity)
-      .map(d => ({
-        id: d.id,
-        name: d.name,
-        sensorType: d.iot?.sensorType || 'temperature',
-        connected: !!(d.status === 'online' && d.wifi?.enabled),
-        ip: d.ip,
-      }));
-  }, [topologyDevices]);
+      .filter(d => {
+        if (d.type !== 'iot') return false;
+        
+        let isWifiConnected = false;
+        if (routerSsid) {
+          isWifiConnected = d.wifi?.ssid === routerSsid && 
+                            d.wifi?.security === routerSecurity;
+        }
+
+        const isWiredConnected = topologyConnections.some(c => 
+          (c.sourceDeviceId === routerId && c.targetDeviceId === d.id) || 
+          (c.targetDeviceId === routerId && c.sourceDeviceId === d.id)
+        );
+
+        return isWifiConnected || isWiredConnected;
+      })
+      .map(d => {
+        const isWiredConnected = topologyConnections.some(c => 
+          (c.sourceDeviceId === routerId && c.targetDeviceId === d.id) || 
+          (c.targetDeviceId === routerId && c.sourceDeviceId === d.id)
+        );
+
+        let deviceIp = d.ip;
+        if (isWiredConnected && !deviceIp) {
+            const routerIp = routerDevice?.ip || '192.168.1.1';
+            const baseIpParts = routerIp.split('.');
+            const usedIps = new Set<string>();
+            topologyDevices.forEach(td => {
+                if (td.ip && td.ip.startsWith(baseIpParts[0] + '.' + baseIpParts[1] + '.' + baseIpParts[2])) {
+                    usedIps.add(td.ip);
+                }
+            });
+            for (let i = 100; i <= 254; i++) {
+                const testIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.${i}`;
+                if (!usedIps.has(testIp)) {
+                    deviceIp = testIp;
+                    break;
+                }
+            }
+            if (!deviceIp) deviceIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.150`;
+
+            // Assign IP asynchronously to avoid state mutation during render
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+                    detail: {
+                        deviceId: d.id,
+                        config: {
+                            ip: deviceIp,
+                            ipConfigMode: 'dhcp',
+                            gateway: routerIp,
+                            subnet: routerDevice?.subnet || '255.255.255.0',
+                            dns: routerIp,
+                        },
+                    },
+                }));
+            }, 0);
+        }
+
+        return {
+          id: d.id,
+          name: d.name,
+          sensorType: d.iot?.sensorType || 'temperature',
+          connected: !!(isWiredConnected || (d.status === 'online' && d.wifi?.enabled)),
+          ip: deviceIp,
+          isWired: isWiredConnected,
+        };
+      });
+  }, [topologyDevices, topologyConnections]);
 
   // Get available IoT devices that can be connected (not connected to this AP)
   const getAvailableIotDevices = useCallback((routerId: string) => {
@@ -1087,6 +1144,14 @@ export function PCPanel({
     return topologyDevices
       .filter(d => {
         if (d.type !== 'iot') return false;
+
+        const isWiredConnected = topologyConnections.some(c => 
+          (c.sourceDeviceId === routerId && c.targetDeviceId === d.id) || 
+          (c.targetDeviceId === routerId && c.sourceDeviceId === d.id)
+        );
+        
+        if (isWiredConnected) return false;
+
         if (!routerSsid) return true;
         const isConnectedToThisAp = d.wifi?.ssid === routerSsid && d.wifi?.enabled;
         return !isConnectedToThisAp;
@@ -1097,7 +1162,7 @@ export function PCPanel({
         sensorType: d.iot?.sensorType || 'temperature',
         currentSsid: d.wifi?.ssid || undefined,
       }));
-  }, [topologyDevices]);
+  }, [topologyDevices, topologyConnections]);
 
   useEffect(() => {
     const handleRouterAdminMessage = (event: MessageEvent) => {
@@ -1318,6 +1383,18 @@ export function PCPanel({
           },
         }));
 
+        // Delete any physical cable connections between this AP and the IoT device
+        if (topologyConnections) {
+          topologyConnections.forEach(conn => {
+            if ((conn.sourceDeviceId === httpAppDeviceId && conn.targetDeviceId === iotDeviceId) ||
+                (conn.targetDeviceId === httpAppDeviceId && conn.sourceDeviceId === iotDeviceId)) {
+              window.dispatchEvent(new CustomEvent('delete-topology-connection', {
+                detail: { connectionId: (conn as any).id }
+              }));
+            }
+          });
+        }
+
         console.log('Calling addLocalOutput for disconnect');
         addLocalOutput(
           'success',
@@ -1357,7 +1434,7 @@ export function PCPanel({
 
     window.addEventListener('message', handleRouterAdminMessage);
     return () => window.removeEventListener('message', handleRouterAdminMessage);
-  }, [addLocalOutput, httpAppDeviceId, language, topologyDevices, getConnectedIotDevices, getAvailableIotDevices]);
+  }, [addLocalOutput, httpAppDeviceId, language, topologyDevices, topologyConnections, getConnectedIotDevices, getAvailableIotDevices]);
 
   useEffect(() => {
     if (!httpAppContent || !isMobile || typeof window === 'undefined') return;

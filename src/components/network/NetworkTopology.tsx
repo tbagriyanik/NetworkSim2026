@@ -3385,9 +3385,20 @@ export function NetworkTopology({
       );
     };
 
+    const handleDeleteConnection = (event: CustomEvent<{ connectionId: string }>) => {
+      if (event.detail.connectionId) {
+        deleteConnection(event.detail.connectionId);
+      }
+    };
+
     window.addEventListener('update-topology-device-config', handleUpdateDeviceConfig as EventListener);
-    return () => window.removeEventListener('update-topology-device-config', handleUpdateDeviceConfig as EventListener);
-  }, [setDevices, saveToHistory]);
+    window.addEventListener('delete-topology-connection', handleDeleteConnection as EventListener);
+    
+    return () => {
+      window.removeEventListener('update-topology-device-config', handleUpdateDeviceConfig as EventListener);
+      window.removeEventListener('delete-topology-connection', handleDeleteConnection as EventListener);
+    };
+  }, [setDevices, saveToHistory, deleteConnection]);
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
