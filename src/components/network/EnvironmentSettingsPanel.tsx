@@ -7,7 +7,7 @@ import { useEnvironment } from '@/lib/store/appStore';
 import useAppStore, { EnvironmentBackground } from '@/lib/store/appStore';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Leaf, Sun, Droplets, Thermometer, Home, Building2, X } from 'lucide-react';
+import { Leaf, Sun, Droplets, Thermometer, Home, Building2, X, Sprout } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface EnvironmentSettingsPanelProps {
@@ -15,10 +15,11 @@ interface EnvironmentSettingsPanelProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-const BACKGROUND_OPTIONS: { value: EnvironmentBackground; icon: React.ReactNode; labelKey: 'backgroundNone' | 'backgroundHouse' | 'backgroundTwoStoryGarage' }[] = [
+const BACKGROUND_OPTIONS: { value: EnvironmentBackground; icon: React.ReactNode; labelKey: 'backgroundNone' | 'backgroundHouse' | 'backgroundTwoStoryGarage' | 'backgroundGreenhouse' }[] = [
   { value: 'none', icon: <X className="w-4 h-4" />, labelKey: 'backgroundNone' },
   { value: 'house', icon: <Home className="w-4 h-4" />, labelKey: 'backgroundHouse' },
   { value: 'twoStoryGarage', icon: <Building2 className="w-4 h-4" />, labelKey: 'backgroundTwoStoryGarage' },
+  { value: 'greenhouse', icon: <Sprout className="w-4 h-4" />, labelKey: 'backgroundGreenhouse' },
 ];
 
 export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSettingsPanelProps) {

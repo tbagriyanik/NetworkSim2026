@@ -74,7 +74,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
     vlans,
     ports,
   } as SwitchState;
-  const taskContext = { language: t.language as 'tr' | 'en', cableInfo: null as any, showPCPanel: false, selectedDevice: null };
+  const taskContext = { language: t.language as 'tr' | 'en', cableInfo: null as any, showPCPanel: false, showRouterPanel: false, selectedDevice: null };
   const completedCount = vlanTasks.filter(task => getTaskStatus(task, localState, taskContext)).length;
   const totalScore = vlanTasks.reduce((acc, task) => acc + (getTaskStatus(task, localState, taskContext) ? task.weight : 0), 0);
 

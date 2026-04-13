@@ -437,6 +437,7 @@ export interface Translations {
   backgroundNone: string;
   backgroundHouse: string;
   backgroundTwoStoryGarage: string;
+  backgroundGreenhouse: string;
   temperature: string;
   humidity: string;
   lightLevel: string;
@@ -851,6 +852,7 @@ const translations: Record<Language, Translations> = {
     backgroundNone: 'Yok',
     backgroundHouse: 'Ev Krokisi',
     backgroundTwoStoryGarage: '2 Katlı Bina (Garaj)',
+    backgroundGreenhouse: '🌱 Sera Krokisi',
     temperature: 'Sıcaklık',
     humidity: 'Nem',
     lightLevel: 'Işık',
@@ -1263,6 +1265,7 @@ const translations: Record<Language, Translations> = {
     backgroundNone: 'None',
     backgroundHouse: 'House Sketch',
     backgroundTwoStoryGarage: '2-Story Building (Garage)',
+    backgroundGreenhouse: '🌱 Greenhouse Sketch',
     temperature: 'Temperature',
     humidity: 'Humidity',
     lightLevel: 'Light',

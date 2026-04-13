@@ -85,6 +85,7 @@ import { SwitchModel } from '@/lib/network/switchModels';
 import { EnvironmentSettingsPanel } from '@/components/network/EnvironmentSettingsPanel';
 
 const PCPanel = dynamic(() => import('@/components/network/PCPanel').then((m) => m.PCPanel), { ssr: false });
+const RouterPanel = dynamic(() => import('@/components/network/RouterPanel').then((m) => m.RouterPanel), { ssr: false });
 const Terminal = dynamic(() => import('@/components/network/Terminal').then((m) => m.Terminal), { ssr: false });
 const PortPanel = dynamic(() => import('@/components/network/PortPanel').then((m) => m.PortPanel), { ssr: false });
 const VlanPanel = dynamic(() => import('@/components/network/VlanPanel').then((m) => m.VlanPanel), { ssr: false });
@@ -653,6 +654,8 @@ export default function Home() {
   const [selectedDevice, setSelectedDevice] = useState<DeviceType | null>(null);
   const [showPCPanel, setShowPCPanel] = useState(false);
   const [showPCDeviceId, setShowPCDeviceId] = useState<string>('pc-1');
+  const [showRouterPanel, setShowRouterPanel] = useState(false);
+  const [showRouterDeviceId, setShowRouterDeviceId] = useState<string>('router-1');
   const [deviceSearchQuery, setDeviceSearchQuery] = useState('');
   const [focusDeviceId, setFocusDeviceId] = useState<string | null>(null);
 
@@ -831,6 +834,7 @@ export default function Home() {
   const taskContext: TaskContext = {
     cableInfo,
     showPCPanel,
+    showRouterPanel,
     selectedDevice,
     language,
     deviceStates,
@@ -1513,6 +1517,12 @@ ${state.bannerMOTD}
       setShowPCDeviceId('pc-1');
     }
 
+    // Close Router panel if showing the deleted device
+    if (showRouterDeviceId === deviceId) {
+      setShowRouterPanel(false);
+      setShowRouterDeviceId('router-1');
+    }
+
     // Reset selected device if deleted
     if (selectedDevice) {
       setSelectedDevice(null);
@@ -1751,6 +1761,7 @@ ${state.bannerMOTD}
     setActiveDeviceType('switchL2');
     setSelectedDevice(null);
     setShowPCPanel(false);
+    setShowRouterPanel(false);
 
     // Force return to topology
     setActiveTab('topology');
@@ -1807,7 +1818,7 @@ ${state.bannerMOTD}
       pan: { x: 0, y: 0 },
       activeTab: 'topology'
     });
-  }, [resetHistory, setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setActiveDeviceId, setActiveDeviceType, setSelectedDevice, setShowPCPanel, setActiveTab, setHasUnsavedChanges, setTopologyKey, setZoom, setPan]);
+  }, [resetHistory, setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setActiveDeviceId, setActiveDeviceType, setSelectedDevice, setShowPCPanel, setShowRouterPanel, setActiveTab, setHasUnsavedChanges, setTopologyKey, setZoom, setPan]);
 
   const runWithSaveGuard = useCallback((action: () => void) => {
     if (hasUnsavedChanges) {
@@ -1949,6 +1960,7 @@ ${state.bannerMOTD}
       setConfirmDialog(null);
       setSaveDialog(null);
       setShowPCPanel(false);
+      setShowRouterPanel(false);
       setShowProjectPicker(false);
       setShowOnboarding(false);
       window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'back' } }));
@@ -1975,11 +1987,11 @@ ${state.bannerMOTD}
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowProjectPicker, setShowOnboarding, setActiveTab, setActiveDeviceId, setActiveDeviceType]);
+  }, [setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowProjectPicker, setShowOnboarding, setActiveTab, setActiveDeviceId, setActiveDeviceType]);
 
   // History pushState for back button tracking
   useEffect(() => {
-    const anyModalOpen = showMobileMenu || !!confirmDialog || !!saveDialog || showPCPanel || showProjectPicker || showOnboarding;
+    const anyModalOpen = showMobileMenu || !!confirmDialog || !!saveDialog || showPCPanel || showRouterPanel || showProjectPicker || showOnboarding;
     if (anyModalOpen && !modalHistoryPushedRef.current) {
       window.history.pushState({ modal: true }, '');
       modalHistoryPushedRef.current = true;
@@ -1987,7 +1999,7 @@ ${state.bannerMOTD}
     if (!anyModalOpen) {
       modalHistoryPushedRef.current = false;
     }
-  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showProjectPicker, showOnboarding]);
+  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel, showProjectPicker, showOnboarding]);
 
   const [isTopologyFullscreen, setIsTopologyFullscreen] = useState(false);
 
@@ -2366,6 +2378,7 @@ ${state.bannerMOTD}
         setConfirmDialog(null);
         setSaveDialog(null);
         setShowPCPanel(false);
+        setShowRouterPanel(false);
         setShowProjectPicker(false);
         setShowOnboarding(false);
         window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'escape' } }));
@@ -2467,7 +2480,7 @@ ${state.bannerMOTD}
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('beforeprint', handleBeforePrint);
     };
-  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showProjectPicker, handleSaveProject, handleNewProject, handleUndo, handleRedo, tabs, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowProjectPicker, isTopologyFullscreen, setActiveTab, activeTab, topologyDevices, topologyConnections, deviceStates, setDeviceStates, handleDeviceDoubleClick, handleRefreshNetwork]);
+  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel, showProjectPicker, handleSaveProject, handleNewProject, handleUndo, handleRedo, tabs, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowProjectPicker, isTopologyFullscreen, setActiveTab, activeTab, topologyDevices, topologyConnections, deviceStates, setDeviceStates, handleDeviceDoubleClick, handleRefreshNetwork]);
 
   // Load project from JSON file
   const handleLoadProject = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -4077,6 +4090,17 @@ ${state.bannerMOTD}
                   onDeleteDevice={handleDeviceDelete}
                 />
               </div>
+
+              {/* Router Panel */}
+              <RouterPanel
+                key={`router-panel-${showRouterDeviceId}`}
+                deviceId={showRouterDeviceId}
+                cableInfo={cableInfo}
+                isVisible={showRouterPanel}
+                onClose={() => setShowRouterPanel(false)}
+                topologyDevices={topologyDevices || undefined}
+                deviceStates={deviceStates}
+              />
 
               {/* Terminal Sekmesi - Always mounted, hidden via CSS */}
               <div className={`flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto custom-scrollbar animate-fade-in ${activeTab === 'terminal' ? 'flex' : 'hidden'}`}>

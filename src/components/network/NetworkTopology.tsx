@@ -5611,6 +5611,68 @@ export function NetworkTopology({
                           </g>
                         </svg>
                       )}
+                      {environment?.background === 'greenhouse' && (
+                        <svg x="0" y="0" width="1600" height="1200" viewBox="0 0 1600 1200">
+                          {/* Greenhouse / Sera Layout */}
+                          <g fill="none" stroke={isDark ? '#10b981' : '#059669'} strokeWidth="6">
+                            {/* Main greenhouse structure - rectangular with curved roof */}
+                            <rect x="200" y="300" width="1200" height="600" rx="12" />
+                            {/* Arched roof frame */}
+                            <path d="M200 300 Q800 150 1400 300" />
+                            <path d="M200 300 Q800 180 1400 300" />
+                            <path d="M200 300 Q800 210 1400 300" />
+
+                            {/* Support columns */}
+                            <line x1="350" y1="300" x2="350" y2="900" />
+                            <line x1="500" y1="300" x2="500" y2="900" />
+                            <line x1="650" y1="300" x2="650" y2="900" />
+                            <line x1="800" y1="300" x2="800" y2="900" />
+                            <line x1="950" y1="300" x2="950" y2="900" />
+                            <line x1="1100" y1="300" x2="1100" y2="900" />
+                            <line x1="1250" y1="300" x2="1250" y2="900" />
+
+                            {/* Horizontal support beams */}
+                            <line x1="200" y1="450" x2="1400" y2="450" />
+                            <line x1="200" y1="600" x2="1400" y2="600" />
+                            <line x1="200" y1="750" x2="1400" y2="750" />
+
+                            {/* Main entrance */}
+                            <rect x="700" y="750" width="200" height="150" rx="6" />
+                            <line x1="800" y1="750" x2="800" y2="900" />
+                            <circle cx="780" cy="825" r="8" fill={isDark ? '#10b981' : '#059669'} />
+
+                            {/* Ventilation windows on roof */}
+                            <rect x="400" y="240" width="120" height="60" rx="6" />
+                            <rect x="600" y="210" width="120" height="60" rx="6" />
+                            <rect x="800" y="195" width="120" height="60" rx="6" />
+                            <rect x="1000" y="210" width="120" height="60" rx="6" />
+                            <rect x="1200" y="240" width="120" height="60" rx="6" />
+
+                            {/* Plant rows inside */}
+                            <g stroke={isDark ? '#22c55e' : '#16a34a'} strokeWidth="4">
+                              <line x1="275" y1="400" x2="275" y2="700" />
+                              <line x1="425" y1="400" x2="425" y2="700" />
+                              <line x1="575" y1="400" x2="575" y2="700" />
+                              <line x1="1025" y1="400" x2="1025" y2="700" />
+                              <line x1="1175" y1="400" x2="1175" y2="700" />
+                              <line x1="1325" y1="400" x2="1325" y2="700" />
+                            </g>
+
+                            {/* Irrigation pipes */}
+                            <g stroke={isDark ? '#3b82f6' : '#2563eb'} strokeWidth="3" strokeDasharray="10,5">
+                              <line x1="200" y1="500" x2="1400" y2="500" />
+                              <line x1="200" y1="650" x2="1400" y2="650" />
+                            </g>
+
+                            {/* Control room / IoT hub */}
+                            <rect x="1300" y="200" width="200" height="150" rx="8" />
+                            <rect x="1350" y="250" width="100" height="60" rx="4" />
+                            <circle cx="1400" cy="280" r="20" stroke={isDark ? '#f59e0b' : '#d97706'} strokeWidth="3" />
+                            <line x1="1385" y1="280" x2="1415" y2="280" stroke={isDark ? '#f59e0b' : '#d97706'} strokeWidth="3" />
+                            <line x1="1400" y1="265" x2="1400" y2="295" stroke={isDark ? '#f59e0b' : '#d97706'} strokeWidth="3" />
+                          </g>
+                        </svg>
+                      )}
                     </g>
                   )}
 
@@ -7000,6 +7062,107 @@ export function NetworkTopology({
         )}
 
 
+
+
+      {/* Router Info Panel - Bottom Right */}
+      {activeDeviceId && devices.find((d: any) => d.id === activeDeviceId)?.type === 'router' && (
+        (() => {
+          const routerDevice = devices.find((d: any) => d.id === activeDeviceId);
+          if (!routerDevice) return null;
+          
+          // Get router state for port and DHCP info
+          const routerState = deviceStates?.get(activeDeviceId);
+          const ports = routerState?.ports ? Object.values(routerState.ports) : [];
+          const connectedPorts = ports.filter((p: any) => !p.shutdown && p.status === 'connected').length;
+          const totalPorts = ports.length;
+          const dhcpPools = routerState?.dhcpPools ? Object.keys(routerState.dhcpPools).length : 0;
+          const wifiEnabled = routerState?.ports?.['wlan0']?.wifi?.mode === 'ap' || routerDevice?.wifi?.enabled;
+          const ipRouting = routerState?.ipRouting;
+          
+          // Get IP addresses from router state
+          const ipAddresses = ports
+            .filter((p: any) => p.ipAddress && !p.shutdown)
+            .map((p: any) => `${p.id}: ${p.ipAddress}${p.subnetMask ? `/${p.subnetMask}` : ''}`)
+            .slice(0, 3);
+          
+          return (
+            <div className={`fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg text-xs z-40 ${isDark ? 'bg-slate-800/95 border border-slate-700' : 'bg-white/95 border border-slate-200'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-2 h-2 rounded-full ${routerDevice.status === 'offline' ? 'bg-red-500' : 'bg-purple-500 animate-pulse'}`} />
+                <span className={`font-semibold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                  {routerDevice.name || activeDeviceId}
+                </span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
+                  Router
+                </span>
+              </div>
+              
+              <div className="space-y-1.5">
+                {/* Port Status */}
+                <div className={`flex items-center justify-between ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  <span>{language === 'tr' ? 'Portlar' : 'Ports'}:</span>
+                  <span className="font-mono">
+                    <span className={isDark ? 'text-green-400' : 'text-green-600'}>{connectedPorts}</span>
+                    <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>/{totalPorts}</span>
+                    <span className="ml-1">{language === 'tr' ? 'bağlı' : 'connected'}</span>
+                  </span>
+                </div>
+                
+                {/* IP Routing */}
+                <div className={`flex items-center justify-between ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  <span>{language === 'tr' ? 'IP Yönlendirme' : 'IP Routing'}:</span>
+                  <span className={ipRouting ? (isDark ? 'text-green-400' : 'text-green-600') : (isDark ? 'text-red-400' : 'text-red-600')}>
+                    {ipRouting ? (language === 'tr' ? 'Aktif' : 'Enabled') : (language === 'tr' ? 'Pasif' : 'Disabled')}
+                  </span>
+                </div>
+                
+                {/* WiFi Status */}
+                {wifiEnabled && (
+                  <div className={`flex items-center justify-between ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                    <span className="flex items-center gap-1">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                        <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                        <line x1="12" y1="20" x2="12.01" y2="20" />
+                      </svg>
+                      WiFi:
+                    </span>
+                    <span className={isDark ? 'text-cyan-400' : 'text-cyan-600'}>
+                      {language === 'tr' ? 'Aktif' : 'Active'}
+                    </span>
+                  </div>
+                )}
+                
+                {/* DHCP Pools */}
+                {dhcpPools > 0 && (
+                  <div className={`flex items-center justify-between ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                    <span>DHCP:</span>
+                    <span className="font-mono">
+                      <span className={isDark ? 'text-orange-400' : 'text-orange-600'}>{dhcpPools}</span>
+                      <span className="ml-1">{language === 'tr' ? 'havuz' : 'pool(s)'}</span>
+                    </span>
+                  </div>
+                )}
+                
+                {/* IP Addresses */}
+                {ipAddresses.length > 0 && (
+                  <div className={`pt-2 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+                    <div className={`text-[10px] mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {language === 'tr' ? 'IP Adresleri' : 'IP Addresses'}:
+                    </div>
+                    {ipAddresses.map((ip, idx) => (
+                      <div key={idx} className={`font-mono text-[10px] ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                        {ip}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()
+      )}
 
       {/* Toast Notification */}
       {toast && (

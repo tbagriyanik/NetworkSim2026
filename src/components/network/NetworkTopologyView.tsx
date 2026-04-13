@@ -160,6 +160,7 @@ export const NetworkTopologyView = React.memo(
       selectedDeviceIds,
       selectedNoteIds,
       activeDeviceId,
+      deviceStates,
       isDrawingConnection,
       isActuallyDragging,
       isTouchDragging,
@@ -604,6 +605,7 @@ export const NetworkTopologyView = React.memo(
               })()}
             </>
           )}
+
           <button
             onClick={() => trackInteraction(() => props.setZoom((z: number) => {
               const newZoom = Math.max(MIN_ZOOM, z - 0.25);

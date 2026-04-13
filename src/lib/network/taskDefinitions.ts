@@ -15,6 +15,7 @@ export interface TaskDefinition {
 export interface TaskContext {
   cableInfo: CableInfo;
   showPCPanel: boolean;
+  showRouterPanel: boolean;
   selectedDevice: DeviceType | null;
   language: 'tr' | 'en';
   deviceStates?: Map<string, SwitchState>;

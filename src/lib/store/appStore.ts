@@ -4,7 +4,7 @@ import { CanvasDevice, CanvasConnection, CanvasNote } from '@/components/network
 import { SwitchState } from '@/lib/network/types';
 
 // Environment settings types
-export type EnvironmentBackground = 'none' | 'house' | 'twoStoryGarage';
+export type EnvironmentBackground = 'none' | 'house' | 'twoStoryGarage' | 'greenhouse';
 
 export interface EnvironmentSettings {
     background: EnvironmentBackground;
