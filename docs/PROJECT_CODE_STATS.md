@@ -2,7 +2,7 @@
 
 ## 📊 Summary
 
-**Total Lines of Code (excluding `.next` and `node_modules`): ~81,000+ lines**
+**Total Lines of Code (excluding `.next` and `node_modules`): 54,937 lines**
 
 ---
 
@@ -12,13 +12,13 @@
 
 | File Type | Count | Lines | Percentage |
 |-----------|-------|-------|------------|
-| **TypeScript/JavaScript** | 138 | 45,200 | 55.8% |
+| **TypeScript/JavaScript** | ~100 | 54,937 | ~67% |
 | - `.ts` files | ~70 | ~25,000 | ~31% |
 | - `.tsx` files | ~68 | ~20,200 | ~25% |
 | **Markdown Documentation** | 9 | 6,646 | 8.2% |
 | **JSON Configuration** | 5 | 29,000 | 35.8% |
 | **CSS Styles** | 1 | 754 | 0.9% |
-| **TOTAL** | **153** | **~81,600** | **100%** |
+| **TOTAL** | **~100** | **54,937** | **100%** |
 
 ---
 
@@ -263,12 +263,12 @@ Data Layer:                  ~5,200 lines (11%)
 
 ### Total Project Size
 ```
-Source Code:      45,200 lines
+Source Code:      54,937 lines
 Documentation:     6,646 lines
 Configuration:    29,000 lines
 Styles:                754 lines
 ─────────────────────────────
-TOTAL:           ~81,600 lines
+TOTAL:           54,937 lines
 ```
 
 ### File Counts

@@ -1281,18 +1281,19 @@ export function NetworkTopology({
         const x2 = Math.max(box.start.x, box.current.x);
         const y2 = Math.max(box.start.y, box.current.y);
 
-        // Detect devices inside selection box
+        // Detect devices inside selection box (Intersection check - same as mouse move)
         const selectedIds = latestDevicesRef.current.filter(d => {
           const deviceWidth = (d.type === 'pc' || d.type === 'iot') ? 90 : 130;
           const deviceHeight = 100;
-          
-          // Check if device center or box is within bounds
-          return (
-            d.x + deviceWidth / 2 >= x1 && 
-            d.x + deviceWidth / 2 <= x2 && 
-            d.y + deviceHeight / 2 >= y1 && 
-            d.y + deviceHeight / 2 <= y2
-          );
+
+          // Device bounds
+          const dX1 = d.x;
+          const dY1 = d.y;
+          const dX2 = d.x + deviceWidth;
+          const dY2 = d.y + deviceHeight;
+
+          // Intersection: rect1.x1 < rect2.x2 && rect1.x2 > rect2.x1 && rect1.y1 < rect2.y2 && rect1.y2 > rect2.y1
+          return x1 < dX2 && x2 > dX1 && y1 < dY2 && y2 > dY1;
         }).map(d => d.id);
 
         if (selectedIds.length > 0) {

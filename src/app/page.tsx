@@ -3590,9 +3590,9 @@ ${state.bannerMOTD}
             </AlertDialogContent>
           </AlertDialog>
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-hidden flex flex-col min-h-0">
-            <div className={`${activeTab === 'topology' ? 'p-0 pb-0 sm:pb-0' : 'p-0'} w-full flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden`}>
+          {/* Main Content - Fits between header and footer with scroll */}
+          <main className="flex-1 overflow-hidden flex flex-col min-h-0 md:pb-[44px]">
+            <div className={`${activeTab === 'topology' ? 'p-0 pb-0 sm:pb-0' : 'p-0'} w-full flex-1 flex flex-col min-h-0 overflow-hidden`}>
               {/* Tab Content - Always render but hide non-active */}
               <div className={`flex-1 flex flex-col min-h-0 h-full ${activeTab === 'topology' ? 'block' : 'hidden'} print:block`}>
                 {/* Topology Toolbar - Fixed at top */}
@@ -4057,7 +4057,7 @@ ${state.bannerMOTD}
 
               {/* CMD Terminal Sekmesi */}
               {/* CMD Terminal Sekmesi - Always mounted, hidden via CSS */}
-              <div className={`w-full animate-fade-in ${activeTab === 'cmd' ? 'flex' : 'hidden'}`}>
+              <div className={`flex-1 min-h-0 flex flex-col overflow-y-auto custom-scrollbar animate-fade-in ${activeTab === 'cmd' ? 'flex' : 'hidden'}`}>
                 <PCPanel
                   key={`pc-panel-${activeDeviceId}`}
                   deviceId={activeDeviceId}
@@ -4145,7 +4145,7 @@ ${state.bannerMOTD}
               {/* Tasks Sekmesi */}
               {activeTab === 'tasks' && (
                 <div className="grid lg:grid-cols-3 gap-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-                  <div className="lg:col-span-2">
+                  <div className="lg:col-span-2 overflow-y-auto custom-scrollbar">
                     <PortPanel
                       ports={state.ports}
                       t={t}
@@ -4180,7 +4180,7 @@ ${state.bannerMOTD}
                       onTogglePower={toggleDevicePower}
                     />
                   </div>
-                  <div>
+                  <div className="overflow-y-auto custom-scrollbar">
                     <TaskCard
                       tasks={[...portTasks, ...vlanTasks, ...securityTasks, ...wirelessTasks]}
                       state={state}
@@ -4196,7 +4196,7 @@ ${state.bannerMOTD}
           </main>
 
           {/* Footer - Save Status & Hints */}
-          <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-40 border-t backdrop-blur-xl transition-all ${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'
+          <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-40 border-t backdrop-blur-xl transition-all h-[44px] ${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'
             } ${showProjectPicker || showOnboarding || activeTab === 'terminal' ? 'hidden' : ''}`}>
             <div className="w-full px-5 py-2">
               <div className="flex items-center justify-between gap-4">

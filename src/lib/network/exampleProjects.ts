@@ -1069,8 +1069,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'router-ssh-note',
       text: isTr
-        ? 'Router SSH Lab:\nR1 hazır SSH ayarlı.\nPC-1 CMD: ssh user@192.168.1.150\nŞifre: 1234\nKontrol: show ssh\nEnable şifresi:123'
-        : 'Router SSH Lab:\nR1 is preconfigured for SSH.\nPC-1 CMD: ssh user@192.168.1.150\nPassword: 1234\nVerify: show ssh\nEnable password:123',
+        ? 'Router SSH Lab:\nR1 hazır SSH ayarlı.\nPC-1 CMD: ssh admin@192.168.1.150\nŞifre: 1234\nKontrol: show ssh\nEnable şifresi:123'
+        : 'Router SSH Lab:\nR1 is preconfigured for SSH.\nPC-1 CMD: ssh admin@192.168.1.150\nPassword: 1234\nVerify: show ssh\nEnable password:123',
       x: 580,
       y: 80,
       width: 360,
@@ -1109,7 +1109,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     'ip domain-name lab.local',
     'ip ssh version 2',
     '!',
-    'username user privilege 15 secret 123',
+    'username admin privilege 15 secret 123',
     'enable secret 123',
     '!',
     'interface GigabitEthernet0/0',
@@ -1273,7 +1273,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       tag: 'SSH',
       title: isTr ? 'Router SSH (1 PC + 1 Router)' : 'Router SSH (1 PC + 1 Router)',
       description: isTr ? 'PC-1 üzerinden R1 cihazına SSH ile bağlanma senaryosu.' : 'SSH access from PC-1 to router R1.',
-      detail: isTr ? 'Komut: ssh user@192.168.1.150 | parola: 1234' : 'Command: ssh user@192.168.1.150 | password: 1234',
+      detail: isTr ? 'Komut: ssh admin@192.168.1.150 | parola: 1234' : 'Command: ssh admin@192.168.1.150 | password: 1234',
       level: 'basic',
       data: routerSshData
     },

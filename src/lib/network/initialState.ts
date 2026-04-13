@@ -231,7 +231,7 @@ function createInitialRouterPorts(): Record<string, Port> {
       voiceVlan: 'none',
       duplex: 'auto',
       speed: 'auto',
-      shutdown: false,
+      shutdown: true,
       type: 'gigabitethernet',
       allowedVlans: 'all',
       channelGroup: undefined,
