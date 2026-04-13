@@ -673,23 +673,36 @@ export default function Home() {
       const savedPosition = localStorage.getItem('tasks-modal-position');
       const savedSize = localStorage.getItem('tasks-modal-size');
       
+      const maxWidth = window.innerWidth - 40;
+      const maxHeight = window.innerHeight - 40;
+      
+      let size = { width: 1200, height: 700 };
+      
       if (savedSize) {
-        setTasksModalSize(JSON.parse(savedSize));
+        const parsedSize = JSON.parse(savedSize);
+        // Ensure saved size doesn't exceed screen
+        size.width = Math.min(parsedSize.width, maxWidth);
+        size.height = Math.min(parsedSize.height, maxHeight);
       } else {
         // Safe initial size: fit within screen width
-        const width = Math.min(window.innerWidth - 40, 1200);
-        const height = Math.min(window.innerHeight - 40, 700);
-        setTasksModalSize({ width, height });
-        
-        // Default position: centered on screen
-        setTasksModalPosition({
-          x: (window.innerWidth - width) / 2,
-          y: (window.innerHeight - height) / 2
-        });
+        size.width = Math.min(maxWidth, 1200);
+        size.height = Math.min(maxHeight, 700);
       }
       
+      setTasksModalSize(size);
+      
       if (savedPosition) {
-        setTasksModalPosition(JSON.parse(savedPosition));
+        const position = JSON.parse(savedPosition);
+        // Ensure saved position is within bounds and modal stays fully visible
+        const x = Math.max(0, Math.min(position.x, window.innerWidth - size.width));
+        const y = Math.max(0, Math.min(position.y, window.innerHeight - size.height));
+        setTasksModalPosition({ x, y });
+      } else {
+        // Default position: centered on screen
+        setTasksModalPosition({
+          x: Math.max(0, (window.innerWidth - size.width) / 2),
+          y: Math.max(0, (window.innerHeight - size.height) / 2)
+        });
       }
     }
   }, []);
@@ -700,23 +713,36 @@ export default function Home() {
       const savedPosition = localStorage.getItem('cli-modal-position');
       const savedSize = localStorage.getItem('cli-modal-size');
       
+      const maxWidth = window.innerWidth - 40;
+      const maxHeight = window.innerHeight - 40;
+      
+      let size = { width: 1200, height: 700 };
+      
       if (savedSize) {
-        setCliModalSize(JSON.parse(savedSize));
+        const parsedSize = JSON.parse(savedSize);
+        // Ensure saved size doesn't exceed screen
+        size.width = Math.min(parsedSize.width, maxWidth);
+        size.height = Math.min(parsedSize.height, maxHeight);
       } else {
         // Safe initial size: fit within screen width
-        const width = Math.min(window.innerWidth - 40, 1200);
-        const height = Math.min(window.innerHeight - 40, 700);
-        setCliModalSize({ width, height });
-        
-        // Default position: centered on screen
-        setCliModalPosition({
-          x: (window.innerWidth - width) / 2,
-          y: (window.innerHeight - height) / 2
-        });
+        size.width = Math.min(maxWidth, 1200);
+        size.height = Math.min(maxHeight, 700);
       }
       
+      setCliModalSize(size);
+      
       if (savedPosition) {
-        setCliModalPosition(JSON.parse(savedPosition));
+        const position = JSON.parse(savedPosition);
+        // Ensure saved position is within bounds and modal stays fully visible
+        const x = Math.max(0, Math.min(position.x, window.innerWidth - size.width));
+        const y = Math.max(0, Math.min(position.y, window.innerHeight - size.height));
+        setCliModalPosition({ x, y });
+      } else {
+        // Default position: centered on screen
+        setCliModalPosition({
+          x: Math.max(0, (window.innerWidth - size.width) / 2),
+          y: Math.max(0, (window.innerHeight - size.height) / 2)
+        });
       }
     }
   }, []);
@@ -3816,7 +3842,7 @@ ${state.bannerMOTD}
           {/* Tasks Modal */}
           <Dialog open={showTasksModal} onOpenChange={setShowTasksModal}>
             <DialogContent 
-              className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col`}
+              className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: 'fixed',
                 left: tasksModalPosition.x,
@@ -3897,7 +3923,7 @@ ${state.bannerMOTD}
           {/* Terminal Full-Screen Modal */}
           <Dialog open={showTerminalModal} onOpenChange={setShowTerminalModal}>
             <DialogContent 
-              className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col`}
+              className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: 'fixed',
                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? cliModalPosition.x : 0,
