@@ -15,7 +15,7 @@ Network learing app [Test Address](https://network2026.vercel.app)
 ### 🌐 Interactive Network Topology
 - **Device Management**: Drag and drop PC, Switch, and Router devices to canvas
 - **Zoom & Pan**: Smooth zoom and pan operations with spatial partitioning
-  - **NEW: Advanced Navigation**: Right-click or middle-mouse button to pan the canvas (inertia-free)
+  - **NEW: Advanced Navigation**: Left-click to pan canvas, middle-click for rectangle selection, right-click for context menu
 - **Selection System**: Multi-device rubber-band selection with real-time feedback (box intersection detection)
 - **Cable System**: Straight-through, Crossover, and Console cables
 - **Connection Management**: Create and manage connections between devices

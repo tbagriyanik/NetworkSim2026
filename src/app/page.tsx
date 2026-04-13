@@ -3907,11 +3907,11 @@ ${state.bannerMOTD}
                   </div>
 
                   {/* Quick Hints */}
-                  <div className={`hidden md:flex items-center gap-2`}>
+                  <div className={`hidden md:flex items-center gap-2 whitespace-nowrap`}>
                     <span className={`text-[11px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                       {language === 'tr' ? 'İpuçları:' : 'Tips:'}
                     </span>
-                    <span className={`text-[11px] ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                    <span className={`text-[11px] ${isDark ? 'text-slate-300' : 'text-slate-700'} whitespace-nowrap`}>
                       {activeTab === 'topology' && (
                         <>
                           <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
@@ -3924,6 +3924,17 @@ ${state.bannerMOTD}
                           <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                             {topologyDevices?.length || 0} {language === 'tr' ? 'cihaz' : 'devices'}
                           </span>
+                          <span className={`mx-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>|</span>
+                          {/* Interaction Shortcuts Legend */}
+                          <div className={`flex items-center gap-1 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                            <span className="font-semibold">LMB</span>:{language === 'tr' ? 'Kaydır' : 'Pan'}
+                            <span className="mx-1">·</span>
+                            <span className="font-semibold">Mid</span>:{language === 'tr' ? 'Kutu' : 'Box'}
+                            <span className="mx-1">·</span>
+                            <span className="font-semibold">RMB</span>:{language === 'tr' ? 'Menü' : 'Menu'}
+                            <span className="mx-1">·</span>
+                            <span className="font-semibold">Scr</span>:Zoom
+                          </div>
                         </>
                       )}
                       {(activeTab === 'cmd' || activeTab === 'terminal') && (

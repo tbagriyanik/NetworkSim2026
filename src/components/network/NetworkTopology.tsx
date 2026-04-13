@@ -428,10 +428,6 @@ export function NetworkTopology({
   const selectionBoxRef = useRef<{ start: { x: number; y: number }; current: { x: number; y: number } } | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
   const isSelectingRef = useRef(false);
-  
-  // Right-click panning state
-  const rightClickStartRef = useRef<{ x: number, y: number } | null>(null);
-  const wasRightClickDraggingRef = useRef(false);
 
   // Drag state with position tracking
   const [draggedDevice, setDraggedDevice] = useState<string | null>(null);
@@ -1023,8 +1019,8 @@ export function NetworkTopology({
   // Handle canvas pan start
   // Reads pan via ref to avoid re-creating callback on every pan state change
   const handleCanvasMouseDown = useCallback((e: ReactMouseEvent) => {
-    if (e.button === 2) {
-      // Right click on canvas - START PANNING (instead of immediate context menu)
+    if (e.button === 0 && !(e.target as HTMLElement).closest('[data-device-id]')) {
+      // Left click on empty canvas - PAN
       e.preventDefault();
       const currentPan = panRef.current;
       const ps = { x: e.clientX - currentPan.x, y: e.clientY - currentPan.y };
@@ -1032,23 +1028,11 @@ export function NetworkTopology({
       panStartRef.current = ps;
       setIsPanning(true);
       isPanningRef.current = true;
-      
-      rightClickStartRef.current = { x: e.clientX, y: e.clientY };
-      wasRightClickDraggingRef.current = false;
       setContextMenu(null);
     } else if (e.button === 1) {
-      // Middle click on canvas - PAN (with preventDefault to stop auto-scroll)
+      // Middle click on canvas - RECTANGLE SELECTION
       e.preventDefault();
-      const currentPan = panRef.current;
-      const ps = { x: e.clientX - currentPan.x, y: e.clientY - currentPan.y };
-      setPanStart(ps);
-      panStartRef.current = ps;
-      setIsPanning(true);
-      isPanningRef.current = true;
-      setContextMenu(null);
-    } else if (e.button === 0 && !(e.target as HTMLElement).closest('[data-device-id]')) {
-      // Left click on empty canvas - RECTANGLE SELECTION or PAN (if not selecting)
-      // Cancel ping mode on empty canvas click
+      // Cancel ping mode on middle click
       if (pingMode) {
         setPingMode(false);
         setPingSource(null);
@@ -1072,6 +1056,7 @@ export function NetworkTopology({
       setContextMenu(null);
       setSelectAllMode(false);
     }
+    // Right click (button === 2) - handled by onContextMenu event for context menu only
   }, [openContextMenu, pingMode]);
 
   // Keep refs in sync with state on every render (no cost - just ref assignment)
@@ -1286,21 +1271,7 @@ export function NetworkTopology({
         mousePosAnimationFrameRef.current = null;
       }
 
-      // Handle Right-Click Context Menu vs Pan logic
-      if (e.button === 2 && rightClickStartRef.current) {
-        const dist = Math.sqrt(
-          Math.pow(e.clientX - rightClickStartRef.current.x, 2) +
-          Math.pow(e.clientY - rightClickStartRef.current.y, 2)
-        );
-        
-        // If it was a short click (not a drag), open the context menu
-        if (dist < 5) {
-          openContextMenu(e.clientX, e.clientY, null, 'canvas');
-        }
-        rightClickStartRef.current = null;
-      }
-
-      // Momentum removed as per user request to stop sliding immediately
+      // Right-click context menu handled by onContextMenu event only
 
       if (isSelectingRef.current && selectionBoxRef.current) {
         const box = selectionBoxRef.current;
@@ -6249,26 +6220,6 @@ export function NetworkTopology({
             </svg>
           </div>
 
-
-          {/* Interaction Shortcuts Legend - Hidden on mobile */}
-          {!isMobile && (
-          <div className={`fixed bottom-[60px] right-[210px] flex items-center gap-4 px-3 py-1.5 rounded-lg backdrop-blur-md border shadow-lg z-30 pointer-events-none select-none transition-opacity duration-300 ${isPanning || isSelecting || isDrawingConnection ? 'opacity-20' : 'opacity-100'
-            } ${isDark ? 'bg-slate-900/40 border-slate-800 text-slate-400' : 'bg-white/40 border-slate-200 text-slate-500'
-            }`}>
-            <div className="flex items-center gap-1.5">
-              <div className="px-1.5 py-0.5 rounded bg-slate-500/10 border border-slate-500/20 text-[9px] font-bold">LMB</div>
-              <span className="text-[9px] font-medium">{language === 'tr' ? 'Seçim' : 'Select'}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="px-1.5 py-0.5 rounded bg-slate-500/10 border border-slate-500/20 text-[9px] font-bold">RMB / Middle</div>
-              <span className="text-[9px] font-medium">{language === 'tr' ? 'Kaydır' : 'Pan'}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="px-1.5 py-0.5 rounded bg-slate-500/10 border border-slate-500/20 text-[9px] font-bold">Scroll</div>
-              <span className="text-[9px] font-medium">{language === 'tr' ? 'Zoom' : 'Zoom'}</span>
-            </div>
-          </div>
-          )}
 
           {/* Zoom Controls - Mobile Float - Above Footer */}
           <div

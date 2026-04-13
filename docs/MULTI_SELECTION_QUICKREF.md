@@ -39,8 +39,10 @@
 
 ### Single Click
 ```
-Left Click → Select device
-Right Click → Context menu
+Left Click (on empty canvas) → Pan canvas
+Left Click (on device) → Select device
+Middle Click → Rectangle selection
+Right Click → Context menu only
 Double Click → Open terminal
 ```
 
@@ -48,7 +50,7 @@ Double Click → Open terminal
 ```
 Click + Drag → Move device
 Shift+Drag → Move group
-Wheel → Pan canvas
+Wheel → Zoom in/out
 Scroll + Shift → Horizontal pan
 ```
 

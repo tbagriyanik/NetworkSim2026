@@ -660,14 +660,14 @@ export function Terminal({
         setTabCycleIndex(0);
         const completion = matches[0];
         const prefix = contextTokens.join(' ');
-        setInput(prefix ? `${prefix} ${completion}` : completion);
+        setInput(prefix ? `${prefix} ${completion} ` : `${completion} `);
       } else {
         const nextIndex = (tabCycleIndex + 1) % matches.length;
         setTabCycleIndex(nextIndex);
         const originalParts = lastTabInput.split(/\s+/);
         const originalContext = lastTabInput.endsWith(' ') ? lastTabInput.trim() : originalParts.slice(0, -1).join(' ');
         const completion = matches[nextIndex];
-        setInput(originalContext ? `${originalContext} ${completion}` : completion);
+        setInput(originalContext ? `${originalContext} ${completion} ` : `${completion} `);
       }
     } else if (value.trim()) {
       // No matches - trigger help by appending ?
@@ -759,7 +759,7 @@ export function Terminal({
   const buildCompletedInput = useCallback((selected: string) => {
     const { contextTokens } = getAutocompleteContext(input);
     const prefix = contextTokens.join(' ');
-    return prefix ? `${prefix} ${selected}` : selected;
+    return prefix ? `${prefix} ${selected} ` : `${selected} `;
   }, [input, getAutocompleteContext]);
 
   const completeAutocompleteSelection = useCallback((selected: string) => {
