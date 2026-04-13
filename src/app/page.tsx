@@ -658,26 +658,33 @@ export default function Home() {
   const [showRouterDeviceId, setShowRouterDeviceId] = useState<string>('router-1');
   const [showTasksModal, setShowTasksModal] = useState(false);
   const [showTerminalModal, setShowTerminalModal] = useState(false);
-  const [modalPosition, setModalPosition] = useState(() => {
+  const [modalPosition, setModalPosition] = useState({ x: 20, y: 20 });
+  const [modalSize, setModalSize] = useState({ width: 1200, height: 700 });
+
+  // Load modal position and size from localStorage after hydration
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('cli-modal-position');
-      if (saved) return JSON.parse(saved);
-      // Safe initial position: centered on screen
-      const width = Math.min(window.innerWidth * 0.9, 1200);
-      const height = Math.min(window.innerHeight * 0.9, 700);
-      return { x: (window.innerWidth - width) / 2, y: (window.innerHeight - height) / 2 };
+      const savedPosition = localStorage.getItem('cli-modal-position');
+      const savedSize = localStorage.getItem('cli-modal-size');
+      
+      if (savedPosition) {
+        setModalPosition(JSON.parse(savedPosition));
+      } else {
+        // Default position: top-left with padding
+        setModalPosition({ x: 20, y: 20 });
+      }
+      
+      if (savedSize) {
+        setModalSize(JSON.parse(savedSize));
+      } else {
+        // Safe initial size: fit within screen width
+        setModalSize({
+          width: Math.min(window.innerWidth - 40, 1200),
+          height: Math.min(window.innerHeight - 40, 700)
+        });
+      }
     }
-    return { x: 0, y: 0 };
-  });
-  const [modalSize, setModalSize] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('cli-modal-size');
-      if (saved) return JSON.parse(saved);
-      // Safe initial size
-      return { width: Math.min(window.innerWidth * 0.9, 1200), height: Math.min(window.innerHeight * 0.9, 700) };
-    }
-    return { width: 1200, height: 700 };
-  });
+  }, []);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeDirection, setResizeDirection] = useState<'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' | null>(null);
@@ -1570,15 +1577,17 @@ ${state.bannerMOTD}
       // PC - open CMD tab directly
       setDeviceTabWithHistory('cmd', deviceId, 'pc');
       setShowPCDeviceId(deviceId);
-    } else {
-      // Switch or Router - set as CLI device and switch to terminal
+    } else if (device === 'router' || device === 'switchL2' || device === 'switchL3') {
+      // Switch or Router - set as CLI device and open CLI modal
       const deviceObj = topologyDevices?.find(d => d.id === deviceId);
       getOrCreateDeviceState(deviceId, device, deviceObj?.name, deviceObj?.macAddress, deviceObj?.switchModel);
       getOrCreateDeviceOutputs(deviceId);
 
-      setDeviceTabWithHistory('terminal', deviceId, device);
+      setActiveDeviceId(deviceId);
+      setActiveDeviceType(device);
+      setShowTerminalModal(true);
     }
-  }, [getOrCreateDeviceState, getOrCreateDeviceOutputs, topologyDevices, setDeviceTabWithHistory, setShowPCDeviceId]);
+  }, [getOrCreateDeviceState, getOrCreateDeviceOutputs, topologyDevices, setDeviceTabWithHistory, setShowPCDeviceId, setActiveDeviceId, setActiveDeviceType]);
 
   // Handle topology change from NetworkTopology component
   const handleTopologyChange = useCallback((devices: CanvasDevice[], connections: CanvasConnection[], notes: CanvasNote[]) => {
@@ -2581,11 +2590,11 @@ ${state.bannerMOTD}
           e.preventDefault();
           const device = topologyDevices.find(d => d.id === activeDeviceId);
           if (device) {
-            // For routers and switches, open tasks modal
+            // For routers and switches, open CLI terminal modal
             if (device.type === 'router' || device.type === 'switchL2' || device.type === 'switchL3') {
               setActiveDeviceId(device.id);
               setActiveDeviceType(device.type);
-              setShowTasksModal(true);
+              setShowTerminalModal(true);
             } else {
               handleDeviceDoubleClick(device.type, device.id);
             }
@@ -3811,7 +3820,7 @@ ${state.bannerMOTD}
           {/* Terminal Full-Screen Modal */}
           <Dialog open={showTerminalModal} onOpenChange={setShowTerminalModal}>
             <DialogContent 
-              className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col md:rounded-lg`}
+              className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col`}
               style={{
                 position: 'fixed',
                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? modalPosition.x : 0,
@@ -3820,7 +3829,7 @@ ${state.bannerMOTD}
                 height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${modalSize.height}px` : '100vh',
                 maxWidth: 'none',
                 maxHeight: 'none',
-                borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '0.5rem' : '0',
+                borderRadius: 0,
               }}
               onMouseDown={handleMouseDown}
             >

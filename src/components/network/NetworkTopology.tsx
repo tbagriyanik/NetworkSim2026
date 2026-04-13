@@ -147,6 +147,7 @@ export function NetworkTopology({
   onPanChange,
   isFullscreen = false,
   onFullscreenChange,
+  onOpenTasks,
 }: NetworkTopologyProps) {
   const { language, t } = useLanguage();
   const { theme } = useTheme();
@@ -6481,6 +6482,7 @@ export function NetworkTopology({
         onTogglePowerDevices={(ids) => { saveToHistory(); togglePowerDevices(ids); }}
         onSaveToHistory={() => saveToHistory()}
         onClearDeviceSelection={() => setSelectedDeviceIds([])}
+        onOpenTasks={onOpenTasks}
         note={notes.find(n => n.id === contextMenu?.noteId)}
       />
       {/* Device Configuration Modal (Name & IP) */}
