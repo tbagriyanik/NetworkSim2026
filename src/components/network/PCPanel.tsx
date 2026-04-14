@@ -332,6 +332,30 @@ export function PCPanel({
           const otherDevice = topologyDevices.find(d => d.id === otherDeviceId);
           if (!otherDevice || (otherDevice.type !== 'router' && otherDevice.type !== 'switchL2' && otherDevice.type !== 'switchL3')) return false;
 
+          // Check if the router/switch is in the PC's network
+          if (otherDevice.ip && pcIP && pcSubnet) {
+            try {
+              const a = pcIP.split('.').map(Number);
+              const r = otherDevice.ip.split('.').map(Number);
+              const m = pcSubnet.split('.').map(Number);
+              if (a.length === 4 && r.length === 4 && m.length === 4) {
+                let routerInSameSubnet = true;
+                for (let i = 0; i < 4; i++) {
+                  if ((a[i] & m[i]) !== (r[i] & m[i])) {
+                    routerInSameSubnet = false;
+                    break;
+                  }
+                }
+                if (!routerInSameSubnet) return false;
+              }
+            } catch {
+              // Invalid IP format, skip
+            }
+          } else if (!otherDevice.ip) {
+            // Router has no IP, cannot verify network - skip
+            return false;
+          }
+
           return topologyConnections.some(c2 =>
             (c2.sourceDeviceId === otherDeviceId && c2.targetDeviceId === device.id) ||
             (c2.targetDeviceId === otherDeviceId && c2.sourceDeviceId === device.id)
