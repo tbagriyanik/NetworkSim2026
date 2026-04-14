@@ -280,8 +280,70 @@ export function PCPanel({
   const [wifiChannel, setWifiChannel] = useState(deviceFromTopology?.wifi?.channel ?? '2.4GHz');
   const [wifiBSSID, setWifiBSSID] = useState(deviceFromTopology?.wifi?.bssid ?? '');
   const iotDevices = useMemo(
-    () => topologyDevices.filter((d) => d.type === 'iot'),
-    [topologyDevices]
+    () => {
+      const allIotDevices = topologyDevices.filter((d) => d.type === 'iot');
+      // Filter IoT devices that are reachable from the PC
+      return allIotDevices.filter(device => {
+        // If device is powered off, don't include it
+        if (device.status === 'offline') return false;
+
+        // Check if device has an IP and is in the same subnet or reachable via gateway
+        if (device.ip && pcIP && pcSubnet && pcGateway) {
+          try {
+            const a = pcIP.split('.').map(Number);
+            const b = device.ip.split('.').map(Number);
+            const m = pcSubnet.split('.').map(Number);
+            if (a.length === 4 && b.length === 4 && m.length === 4) {
+              let sameSubnet = true;
+              for (let i = 0; i < 4; i++) {
+                if ((a[i] & m[i]) !== (b[i] & m[i])) {
+                  sameSubnet = false;
+                  break;
+                }
+              }
+              if (sameSubnet) return true;
+            }
+          } catch {
+            // Invalid IP format, skip
+          }
+          
+          // Check if device is reachable via gateway
+          if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(pcGateway.trim())) return true;
+        }
+
+        // Check if device is connected via WiFi to the same AP as PC
+        if (device.wifi?.enabled && device.wifi?.ssid && wifiEnabled && wifiSSID) {
+          if (device.wifi.ssid === wifiSSID) return true;
+        }
+
+        // Check if device is connected via cable to the PC or in the same network
+        if (topologyConnections.some(c => 
+          (c.sourceDeviceId === deviceId && c.targetDeviceId === device.id) ||
+          (c.targetDeviceId === deviceId && c.sourceDeviceId === device.id)
+        )) {
+          return true;
+        }
+
+        // Check if device is connected to the same router/AP as PC
+        const connectedToSameRouter = topologyConnections.some(c => {
+          const otherDeviceId = c.sourceDeviceId === deviceId ? c.targetDeviceId : c.sourceDeviceId === deviceId ? c.sourceDeviceId : null;
+          if (!otherDeviceId) return false;
+          
+          const otherDevice = topologyDevices.find(d => d.id === otherDeviceId);
+          if (!otherDevice || (otherDevice.type !== 'router' && otherDevice.type !== 'switchL2' && otherDevice.type !== 'switchL3')) return false;
+
+          return topologyConnections.some(c2 =>
+            (c2.sourceDeviceId === otherDeviceId && c2.targetDeviceId === device.id) ||
+            (c2.targetDeviceId === otherDeviceId && c2.sourceDeviceId === device.id)
+          );
+        });
+
+        if (connectedToSameRouter) return true;
+
+        return false;
+      });
+    },
+    [topologyDevices, pcIP, pcSubnet, pcGateway, wifiEnabled, wifiSSID, deviceId, topologyConnections]
   );
   const [selectedIotDeviceId, setSelectedIotDeviceId] = useState<string>('');
   const selectedIotDevice = useMemo(
@@ -1128,7 +1190,7 @@ export function PCPanel({
     if (!isValidIpv4(pcIP) || !isValidIpv4(targetIp) || !isValidIpv4(pcSubnet)) return false;
     if (isSameSubnet(pcIP, targetIp, pcSubnet)) return true;
     return isValidIpv4(pcGateway);
-  }, [isSameSubnet, isValidIpv4, pcGateway, pcIP, pcSubnet]);
+  }, [pcGateway, pcIP, pcSubnet]);
 
   const isLoopbackTarget = useCallback((target: string) => target.trim() === '127.0.0.1', []);
 
@@ -1281,10 +1343,8 @@ export function PCPanel({
 
   // Handle special IoT Web Panel URL
   if (rawTarget === 'http://iot-panel' || rawTarget === 'iot-panel') {
-    // If coming from a router admin panel, show only devices connected to that router
-    const routerDevice = httpAppDeviceId ? topologyDevices.find(d => d.id === httpAppDeviceId) : null;
-    const routerSsid = routerDevice?.wifi?.ssid ?? undefined;
-    const iotPanelContent = generateIotWebPanelContent(iotDevices, language, httpAppDeviceId ?? undefined, routerSsid, topologyConnections);
+    // Global IoT panel always shows all devices (not filtered by router)
+    const iotPanelContent = generateIotWebPanelContent(iotDevices, language, undefined, undefined, topologyConnections);
     setHttpAppContent(iotPanelContent);
     setHttpAppTitle(language === 'tr' ? 'IoT Web Paneli' : 'IoT Web Panel');
     setHttpAppDeviceId(null);
@@ -4098,42 +4158,70 @@ export function PCPanel({
                               />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Sensör Tipi' : 'Sensor Type'}</label>
-                                <Select value={iotSensorType} onValueChange={(v) => setIotSensorType(v as any)}>
-                                  <SelectTrigger><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="temperature">{language === 'tr' ? 'Isı' : 'Temperature'}</SelectItem>
-                                    <SelectItem value="sound">{language === 'tr' ? 'Ses' : 'Sound'}</SelectItem>
-                                    <SelectItem value="motion">{language === 'tr' ? 'Hareket' : 'Motion'}</SelectItem>
-                                    <SelectItem value="humidity">{language === 'tr' ? 'Nem' : 'Humidity'}</SelectItem>
-                                    <SelectItem value="light">{language === 'tr' ? 'Işık' : 'Light'}</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="flex items-center gap-4">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 shrink-0">
-                                  {language === 'tr' ? 'Cihaz Durumu (Aktif/Pasif)' : 'Device Status (Active/Passive)'}
-                                </label>
-                                <div className="flex items-center gap-2">
-                                  <span className={`text-[9px] font-bold ${!iotCollaborationEnabled ? 'text-rose-500' : 'text-slate-400'}`}>
-                                    {language === 'tr' ? 'PASİF' : 'PASSIVE'}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    role="switch"
-                                    aria-checked={iotCollaborationEnabled}
-                                    onClick={() => setIotCollaborationEnabled((prev) => !prev)}
-                                    className={`relative inline-flex h-7 w-14 items-center rounded-full border transition-all duration-300 shrink-0 ${iotCollaborationEnabled ? 'bg-cyan-500 border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.4)]' : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')}`}
-                                  >
-                                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${iotCollaborationEnabled ? 'translate-x-8' : 'translate-x-1'}`} />
-                                  </button>
-                                  <span className={`text-[9px] font-bold ${iotCollaborationEnabled ? 'text-cyan-500' : 'text-slate-400'}`}>
-                                    {language === 'tr' ? 'AKTİF' : 'ACTIVE'}
-                                  </span>
-                                </div>
-                              </div>
+                            <div className="space-y-2">
+                              <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Sensör Tipi' : 'Sensor Type'}</label>
+                              <Select value={iotSensorType} onValueChange={(v) => setIotSensorType(v as any)}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="temperature">{language === 'tr' ? 'Isı' : 'Temperature'}</SelectItem>
+                                  <SelectItem value="sound">{language === 'tr' ? 'Ses' : 'Sound'}</SelectItem>
+                                  <SelectItem value="motion">{language === 'tr' ? 'Hareket' : 'Motion'}</SelectItem>
+                                  <SelectItem value="humidity">{language === 'tr' ? 'Nem' : 'Humidity'}</SelectItem>
+                                  <SelectItem value="light">{language === 'tr' ? 'Işık' : 'Light'}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 shrink-0">
+                                {language === 'tr' ? 'Cihaz Durumu (Aktif/Pasif)' : 'Device Status (Active/Passive)'}
+                              </label>
+                              <span className={`text-[9px] font-bold ${!iotCollaborationEnabled ? 'text-rose-500' : 'text-slate-400'}`}>
+                                {language === 'tr' ? 'PASİF' : 'PASSIVE'}
+                              </span>
+                              <button
+                                type="button"
+                                role="switch"
+                                aria-checked={iotCollaborationEnabled}
+                                onClick={() => setIotCollaborationEnabled((prev) => !prev)}
+                                className={`relative inline-flex h-7 w-14 items-center rounded-full border transition-all duration-300 shrink-0 ${iotCollaborationEnabled ? 'bg-cyan-500 border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.4)]' : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')}`}
+                              >
+                                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${iotCollaborationEnabled ? 'translate-x-8' : 'translate-x-1'}`} />
+                              </button>
+                              <span className={`text-[9px] font-bold ${iotCollaborationEnabled ? 'text-cyan-500' : 'text-slate-400'}`}>
+                                {language === 'tr' ? 'AKTİF' : 'ACTIVE'}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 shrink-0">
+                                {language === 'tr' ? 'Güç Durumu (Açık/Kapalı)' : 'Power Status (On/Off)'}
+                              </label>
+                              <span className={`text-[9px] font-bold ${selectedIotDevice?.status === 'offline' ? 'text-rose-500' : 'text-slate-400'}`}>
+                                {language === 'tr' ? 'KAPALI' : 'OFF'}
+                              </span>
+                              <button
+                                type="button"
+                                role="switch"
+                                aria-checked={selectedIotDevice?.status !== 'offline'}
+                                onClick={() => {
+                                  if (selectedIotDevice) {
+                                    const newStatus = selectedIotDevice.status === 'offline' ? 'online' : 'offline';
+                                    window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+                                      detail: {
+                                        deviceId: selectedIotDeviceId,
+                                        config: { status: newStatus }
+                                      }
+                                    }));
+                                  }
+                                }}
+                                className={`relative inline-flex h-7 w-14 items-center rounded-full border transition-all duration-300 shrink-0 ${selectedIotDevice?.status !== 'offline' ? 'bg-emerald-500 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')}`}
+                              >
+                                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${selectedIotDevice?.status !== 'offline' ? 'translate-x-8' : 'translate-x-1'}`} />
+                              </button>
+                              <span className={`text-[9px] font-bold ${selectedIotDevice?.status !== 'offline' ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                {language === 'tr' ? 'AÇIK' : 'ON'}
+                              </span>
                             </div>
 
                             <div className="space-y-2">
