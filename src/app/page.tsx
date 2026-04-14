@@ -1028,7 +1028,7 @@ export default function Home() {
     const resolvedType = activeDevice?.type ?? activeDeviceType;
     return getOrCreateDeviceState(activeDeviceId, resolvedType, activeDevice?.name, activeDevice?.macAddress, activeDevice?.switchModel);
   }, [activeDeviceId, activeDeviceType, topologyDevices, deviceStates, getOrCreateDeviceState]);
-  const output = activeTab === 'topology' ? [] : getOrCreateDeviceOutputs(activeDeviceId, state);
+  const output = getOrCreateDeviceOutputs(activeDeviceId, state);
 
   // Redundant declaration of activeTab removed (moved higher)
   useEffect(() => {
