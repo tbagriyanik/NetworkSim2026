@@ -3671,9 +3671,19 @@ ${state.bannerMOTD}
                 data-modal-header
                 onMouseDown={(e) => handleMouseDown(e, 'tasks')}
               >
-                <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
-                  {language === 'tr' ? 'Görevler' : 'Tasks'}
-                </DialogTitle>
+                <div className="flex items-center justify-between">
+                  <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
+                    {language === 'tr' ? 'Görevler' : 'Tasks'}
+                  </DialogTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setShowTasksModal(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
                 <DialogDescription className="sr-only">
                   {language === 'tr' ? 'Cihaz görevleri ve yapılandırma görevleri' : 'Device tasks and configuration tasks'}
                 </DialogDescription>
@@ -3790,9 +3800,19 @@ ${state.bannerMOTD}
                 data-modal-header
                 onMouseDown={(e) => handleMouseDown(e, 'cli')}
               >
-                <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
-                  {language === 'tr' ? 'CLI Terminal' : 'CLI Terminal'}
-                </DialogTitle>
+                <div className="flex items-center justify-between">
+                  <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
+                    {language === 'tr' ? 'CLI Terminal' : 'CLI Terminal'}
+                  </DialogTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setShowTerminalModal(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
                 <DialogDescription className="sr-only">
                   {language === 'tr' ? 'Komut satırı arayüzü' : 'Command line interface'}
                 </DialogDescription>

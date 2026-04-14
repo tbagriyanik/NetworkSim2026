@@ -35,6 +35,7 @@ export const generateIotWebPanelContent = (
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: relative;
           }
           .container {
             background-color: #ffffff;
@@ -139,6 +140,124 @@ export const generateIotWebPanelContent = (
           .hidden {
             display: none;
           }
+          .logout-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+          }
+          .logout-button:hover {
+            background-color: #c82333;
+          }
+          .settings-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+          }
+          .settings-icon:hover {
+            background-color: #5a6268;
+          }
+          .settings-popup {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 15px;
+            min-width: 250px;
+            z-index: 1000;
+            display: none;
+          }
+          .settings-popup.show {
+            display: block;
+          }
+          .settings-popup-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+          }
+          .settings-option {
+            margin-bottom: 15px;
+          }
+          .settings-option:last-child {
+            margin-bottom: 0;
+          }
+          .settings-option label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 8px;
+          }
+          .settings-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+          }
+          .settings-button {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            margin-top: 5px;
+          }
+          .settings-button:hover {
+            background-color: #0056b3;
+          }
+          .settings-button.logout {
+            background-color: #dc3545;
+          }
+          .settings-button.logout:hover {
+            background-color: #c82333;
+          }
+          .password-success {
+            color: #28a745;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+          }
+          .password-error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+          }
         </style>
       </head>
       <body>
@@ -163,6 +282,27 @@ export const generateIotWebPanelContent = (
           </div>
 
           <div id="deviceSection" class="hidden">
+            <button type="button" class="settings-icon" onclick="toggleSettingsPopup()">
+              ⚙️
+            </button>
+            <div id="settingsPopup" class="settings-popup">
+              <div class="settings-popup-title">${isTurkish ? 'Ayarlar' : 'Settings'}</div>
+              <div class="settings-option">
+                <label>${isTurkish ? 'Parola Değiştir' : 'Change Password'}</label>
+                <input type="password" id="newPassword" class="settings-input" placeholder="${isTurkish ? 'Yeni parola' : 'New password'}" />
+                <input type="password" id="confirmPassword" class="settings-input" style="margin-top: 5px;" placeholder="${isTurkish ? 'Parolayı onayla' : 'Confirm password'}" />
+                <button type="button" class="settings-button" onclick="changePassword()">
+                  ${isTurkish ? 'Değiştir' : 'Change'}
+                </button>
+                <div id="passwordSuccess" class="password-success">${isTurkish ? 'Parola başarıyla değiştirildi!' : 'Password changed successfully!'}</div>
+                <div id="passwordError" class="password-error">${isTurkish ? 'Parolalar eşleşmiyor!' : 'Passwords do not match!'}</div>
+              </div>
+              <div class="settings-option">
+                <button type="button" class="settings-button logout" onclick="logout()">
+                  ${isTurkish ? 'Çıkış Yap' : 'Logout'}
+                </button>
+              </div>
+            </div>
             <div class="device-list">
               ${iotDeviceListHtml}
             </div>
@@ -174,7 +314,7 @@ export const generateIotWebPanelContent = (
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const correctUsername = 'admin';
-            const correctPassword = 'admin';
+            const correctPassword = sessionStorage.getItem('iotPanelPassword') || 'admin';
             
             if (username === correctUsername && password === correctPassword) {
               sessionStorage.setItem('iotPanelAuthenticated', 'true');
@@ -199,6 +339,60 @@ export const generateIotWebPanelContent = (
               document.getElementById('deviceSection').classList.add('hidden');
             }
           }
+
+          function logout() {
+            sessionStorage.removeItem('iotPanelAuthenticated');
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('deviceSection').classList.add('hidden');
+            document.getElementById('username').value = 'admin';
+            document.getElementById('password').value = '';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('settingsPopup').classList.remove('show');
+          }
+
+          function toggleSettingsPopup() {
+            const popup = document.getElementById('settingsPopup');
+            popup.classList.toggle('show');
+          }
+
+          function changePassword() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const successMessage = document.getElementById('passwordSuccess');
+            const errorMessage = document.getElementById('passwordError');
+
+            if (newPassword && newPassword === confirmPassword) {
+              sessionStorage.setItem('iotPanelPassword', newPassword);
+              successMessage.style.display = 'block';
+              errorMessage.style.display = 'none';
+              document.getElementById('newPassword').value = '';
+              document.getElementById('confirmPassword').value = '';
+              
+              // Hide success message after 3 seconds
+              setTimeout(() => {
+                successMessage.style.display = 'none';
+              }, 3000);
+
+              // Close popup after successful password change
+              setTimeout(() => {
+                document.getElementById('settingsPopup').classList.remove('show');
+              }, 1500);
+            } else {
+              errorMessage.style.display = 'block';
+              successMessage.style.display = 'none';
+            }
+          }
+
+          // Close popup when clicking outside
+          document.addEventListener('click', function(e) {
+            const popup = document.getElementById('settingsPopup');
+            const settingsIcon = document.querySelector('.settings-icon');
+            if (popup && settingsIcon) {
+              if (!popup.contains(e.target) && !settingsIcon.contains(e.target)) {
+                popup.classList.remove('show');
+              }
+            }
+          });
 
           document.getElementById('password').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {

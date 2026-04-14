@@ -1030,7 +1030,7 @@ export function NetworkTopology({
           const x2 = Math.max(newBox.start.x, newBox.current.x);
           const y2 = Math.max(newBox.start.y, newBox.current.y);
 
-          // Detect devices inside selection box (Intersection check)
+          // Detect devices inside selection box (Containment check - device must be fully inside)
           const selectedIds = latestDevicesRef.current.filter(d => {
             const deviceWidth = (d.type === 'pc' || d.type === 'iot') ? 90 : 130;
             const deviceHeight = 100;
@@ -1042,8 +1042,8 @@ export function NetworkTopology({
             const dY2 = d.y + deviceHeight;
 
             // Box bounds (x1, y1, x2, y2 already calculated)
-            // Intersection: rect1.x1 < rect2.x2 && rect1.x2 > rect2.x1 && rect1.y1 < rect2.y2 && rect1.y2 > rect2.y1
-            return x1 < dX2 && x2 > dX1 && y1 < dY2 && y2 > dY1;
+            // Containment: device is fully inside the selection box
+            return dX1 >= x1 && dX2 <= x2 && dY1 >= y1 && dY2 <= y2;
           }).map(d => d.id);
 
           // Update selection instantly for visual feedback
@@ -1188,7 +1188,7 @@ export function NetworkTopology({
         const x2 = Math.max(box.start.x, box.current.x);
         const y2 = Math.max(box.start.y, box.current.y);
 
-        // Detect devices inside selection box (Intersection check - same as mouse move)
+        // Detect devices inside selection box (Containment check - device must be fully inside)
         const selectedIds = latestDevicesRef.current.filter(d => {
           const deviceWidth = (d.type === 'pc' || d.type === 'iot') ? 90 : 130;
           const deviceHeight = 100;
@@ -1199,8 +1199,8 @@ export function NetworkTopology({
           const dX2 = d.x + deviceWidth;
           const dY2 = d.y + deviceHeight;
 
-          // Intersection: rect1.x1 < rect2.x2 && rect1.x2 > rect2.x1 && rect1.y1 < rect2.y2 && rect1.y2 > rect2.y1
-          return x1 < dX2 && x2 > dX1 && y1 < dY2 && y2 > dY1;
+          // Containment: device is fully inside the selection box
+          return dX1 >= x1 && dX2 <= x2 && dY1 >= y1 && dY2 <= y2;
         }).map(d => d.id);
 
         if (selectedIds.length > 0) {

@@ -1284,7 +1284,7 @@ export function PCPanel({
     setHttpAppDeviceId(null);
 
     // Handle special IoT Web Panel URL
-    if (rawTarget === 'http://iot-panel') {
+    if (rawTarget === 'http://iot-panel' || rawTarget === 'iot-panel') {
       const iotPanelContent = generateIotWebPanelContent(iotDevices, language);
       setHttpAppContent(iotPanelContent);
       setHttpAppTitle(language === 'tr' ? 'IoT Web Paneli' : 'IoT Web Panel');
