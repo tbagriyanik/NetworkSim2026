@@ -4,11 +4,36 @@ import { CanvasDevice } from '@/components/network/networkTopology.types';
 export const generateIotWebPanelContent = (
   iotDevices: CanvasDevice[],
   language: string,
+  routerId?: string,
+  routerSsid?: string,
+  topologyConnections?: any[],
 ): string => {
   const isTurkish = language === 'tr';
 
-  const iotDeviceListHtml = iotDevices.length > 0
-    ? iotDevices.map(device => `
+  // Filter IoT devices based on router if routerId is provided
+  const filteredIotDevices = routerId
+    ? iotDevices.filter(device => {
+        // Check if device is connected via WiFi to this router's SSID
+        if (routerSsid && device.wifi?.ssid === routerSsid && device.wifi?.enabled) {
+          return true;
+        }
+        // Check if device is connected via wired connection to this router
+        if (topologyConnections) {
+          const isWiredConnected = topologyConnections.some(c =>
+            (c.sourceDeviceId === routerId && c.targetDeviceId === device.id) ||
+            (c.targetDeviceId === routerId && c.sourceDeviceId === device.id)
+          );
+          if (isWiredConnected) {
+            return true;
+          }
+        }
+        // If no router-specific connection found, don't include this device
+        return false;
+      })
+    : iotDevices;
+
+  const iotDeviceListHtml = filteredIotDevices.length > 0
+    ? filteredIotDevices.map(device => `
       <div class="iot-device-card">
         <span class="device-name">${device.name || device.id}</span>
         <button onclick="window.parent.postMessage({ type: 'open-iot-device', deviceId: '${device.id}' }, '*')" class="connect-button">
@@ -418,6 +443,7 @@ export const generateIotDevicePageContent = (
   deviceId: string,
   deviceName: string,
   language: string,
+  isActive: boolean = true,
 ): string => {
   const isTurkish = language === 'tr';
   return `
@@ -553,17 +579,17 @@ export const generateIotDevicePageContent = (
           <div class="device-info">
             <p><strong>${isTurkish ? 'Cihaz ID' : 'Device ID'}:</strong> ${deviceId}</p>
             <p><strong>${isTurkish ? 'Cihaz Adı' : 'Device Name'}:</strong> ${deviceName}</p>
-            <p><strong>${isTurkish ? 'Durum' : 'Status'}:</strong> <span id="statusText" class="status-active">${isTurkish ? 'Aktif' : 'Active'}</span></p>
+            <p><strong>${isTurkish ? 'Durum' : 'Status'}:</strong> <span id="statusText" class="${isActive ? 'status-active' : 'status-inactive'}">${isActive ? (isTurkish ? 'Aktif' : 'Active') : (isTurkish ? 'Pasif' : 'Inactive')}</span></p>
           </div>
 
           <div class="toggle-section">
             <label class="toggle-label">${isTurkish ? 'Cihaz Durumu' : 'Device Status'}</label>
             <label class="toggle-switch">
-              <input type="checkbox" id="deviceToggle" checked onchange="toggleDevice()">
+              <input type="checkbox" id="deviceToggle" ${isActive ? 'checked' : ''} onchange="toggleDevice()">
               <span class="slider"></span>
             </label>
-            <div id="statusMessage" class="status-text status-active">
-              ${isTurkish ? 'Cihaz aktif' : 'Device is active'}
+            <div id="statusMessage" class="status-text ${isActive ? 'status-active' : 'status-inactive'}">
+              ${isActive ? (isTurkish ? 'Cihaz aktif' : 'Device is active') : (isTurkish ? 'Cihaz pasif' : 'Device is inactive')}
             </div>
           </div>
 

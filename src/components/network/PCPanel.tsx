@@ -1278,37 +1278,37 @@ export function PCPanel({
       displayUrl = candidate.startsWith('http://') || candidate.startsWith('https://') ? candidate : `http://${candidate}`;
       lookupTarget = normalizeLookupTarget(candidate);
     }
-    setHttpAppUrl(displayUrl);
-    setHttpAppTitle(language === 'tr' ? 'HTTP Yönetim Sayfası' : 'HTTP Page');
-    setHttpAppContent(null);
-    setHttpAppDeviceId(null);
 
-    // Handle special IoT Web Panel URL
-    if (rawTarget === 'http://iot-panel' || rawTarget === 'iot-panel') {
-      const iotPanelContent = generateIotWebPanelContent(iotDevices, language);
-      setHttpAppContent(iotPanelContent);
-      setHttpAppTitle(language === 'tr' ? 'IoT Web Paneli' : 'IoT Web Panel');
-      setHttpAppDeviceId(null);
-      addLocalOutput('success', language === 'tr' ? 'IoT Web Paneli açıldı.' : 'IoT Web Panel opened.');
+  // Handle special IoT Web Panel URL
+  if (rawTarget === 'http://iot-panel' || rawTarget === 'iot-panel') {
+    // If coming from a router admin panel, show only devices connected to that router
+    const routerDevice = httpAppDeviceId ? topologyDevices.find(d => d.id === httpAppDeviceId) : null;
+    const routerSsid = routerDevice?.wifi?.ssid ?? undefined;
+    const iotPanelContent = generateIotWebPanelContent(iotDevices, language, httpAppDeviceId ?? undefined, routerSsid, topologyConnections);
+    setHttpAppContent(iotPanelContent);
+    setHttpAppTitle(language === 'tr' ? 'IoT Web Paneli' : 'IoT Web Panel');
+    setHttpAppDeviceId(null);
+    addLocalOutput('success', language === 'tr' ? 'IoT Web Paneli açıldı.' : 'IoT Web Panel opened.');
+    return;
+  }
+
+  // Handle special IoT Device URL
+  if (rawTarget?.startsWith('iot://iot-device/')) {
+    const targetDeviceId = rawTarget.split('iot://iot-device/')[1];
+    const targetDevice = topologyDevices.find(d => d.id === targetDeviceId);
+    if (targetDevice && targetDevice.type === 'iot') {
+      const isActive = targetDevice.iot?.collaborationEnabled ?? true;
+      const iotDevicePage = generateIotDevicePageContent(targetDevice.id, targetDevice.name || targetDevice.id, language, isActive);
+      setHttpAppContent(iotDevicePage);
+      setHttpAppTitle(`${targetDevice.name || targetDevice.id} ${language === 'tr' ? 'Yönetimi' : 'Management'}`);
+      setHttpAppDeviceId(targetDevice.id);
+      addLocalOutput('success', language === 'tr' ? `IoT cihazı '${targetDevice.name}' yönetim sayfası açıldı.` : `IoT device '${targetDevice.name}' management page opened.`);
+      return;
+    } else {
+      addLocalOutput('error', language === 'tr' ? 'Geçersiz IoT cihazı.' : 'Invalid IoT device.');
       return;
     }
-
-    // Handle special IoT Device URL
-    if (rawTarget?.startsWith('iot://iot-device/')) {
-      const targetDeviceId = rawTarget.split('iot://iot-device/')[1];
-      const targetDevice = topologyDevices.find(d => d.id === targetDeviceId);
-      if (targetDevice && targetDevice.type === 'iot') {
-        const iotDevicePage = generateIotDevicePageContent(targetDevice.id, targetDevice.name || targetDevice.id, language);
-        setHttpAppContent(iotDevicePage);
-        setHttpAppTitle(`${targetDevice.name || targetDevice.id} ${language === 'tr' ? 'Yönetimi' : 'Management'}`);
-        setHttpAppDeviceId(targetDevice.id);
-        addLocalOutput('success', language === 'tr' ? `IoT cihazı '${targetDevice.name}' yönetim sayfası açıldı.` : `IoT device '${targetDevice.name}' management page opened.`);
-        return;
-      } else {
-        addLocalOutput('error', language === 'tr' ? 'Geçersiz IoT cihazı.' : 'Invalid IoT device.');
-        return;
-      }
-    }
+  }
 
     // Browser-style inputs can include protocol/path/query. We only resolve host/IP.
     try {
@@ -1366,7 +1366,7 @@ export function PCPanel({
       setHttpAppDeviceId(null);
       addLocalOutput('html', httpServer.services?.http?.content || 'Merhaba Dünya!');
     }
-  }, [addLocalOutput, deviceStates, findHttpServerByTarget, getAvailableIotDevices, getConnectedIotDevices, hasGatewayForTarget, isLoopbackTarget, isValidIpv4, language, normalizeLookupTarget, pcDNS, resolveDeviceNameTarget, t, iotDevices, topologyDevices, generateIotWebPanelContent, generateIotDevicePageContent]);
+  }, [addLocalOutput, deviceStates, findHttpServerByTarget, getAvailableIotDevices, getConnectedIotDevices, hasGatewayForTarget, isLoopbackTarget, isValidIpv4, language, normalizeLookupTarget, pcDNS, resolveDeviceNameTarget, t, iotDevices, topologyDevices, generateIotWebPanelContent, generateIotDevicePageContent, httpAppDeviceId, topologyConnections]);
 
   useEffect(() => {
     const handleRouterAdminMessage = (event: MessageEvent) => {
