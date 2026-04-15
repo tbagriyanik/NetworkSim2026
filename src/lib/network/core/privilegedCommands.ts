@@ -786,6 +786,31 @@ function cmdDeleteVlanDat(state: any, input: string, ctx: any): any {
         return { success: false, error: '% Invalid command at this mode' };
     }
 
+    // Check if this is a confirmation (skipConfirm is passed from useDeviceManager)
+    if (ctx?.skipConfirm) {
+        // Actually delete the VLANs
+        const newPorts: any = {};
+        Object.entries(state.ports || {}).forEach(([portId, port]: [string, any]) => {
+            newPorts[portId] = {
+                ...port,
+                accessVlan: 1,
+                vlan: 1,
+                trunkAllowedVlans: '1-4094',
+                nativeVlan: 1
+            };
+        });
+
+        return {
+            success: true,
+            output: 'Delete filename [vlan.dat]? \nDeleting flash:vlan.dat...\n',
+            newState: {
+                vlans: {},
+                ports: newPorts,
+                runningConfig: undefined // Will be rebuilt
+            }
+        };
+    }
+
     return {
         success: true,
         output: 'Delete filename [vlan.dat]?',

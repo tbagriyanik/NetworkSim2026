@@ -1560,6 +1560,12 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
+  'delete vlan.dat': {
+    pattern: /^delete\s+vlan\.dat$/i,
+    modes: ['privileged'],
+    minArgs: 1,
+    maxArgs: 1
+  },
 
   // Yardım
   'help': {

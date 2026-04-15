@@ -2563,12 +2563,47 @@ ${state.bannerMOTD}
           handleNewProject();
         }
 
-        // Tab shortcuts Ctrl+1 to Ctrl+5
+        // Ctrl+1 - Close CLI and tasks modals if open
+        if (key === '1') {
+          // Check if tasks modal is open by checking the DOM
+          const tasksModal = document.querySelector('[data-modal-header]')?.closest('[role="dialog"]');
+          const isTasksModalOpen = tasksModal && (tasksModal.textContent?.includes('Tasks') || tasksModal.textContent?.includes('Görevler'));
+          // Check if terminal modal is open by checking the DOM
+          const terminalModal = document.querySelector('[role="dialog"]')?.textContent?.includes('CLI Terminal');
+          
+          if (isTasksModalOpen || terminalModal) {
+            e.preventDefault();
+            setShowTasksModal(false);
+            setShowTerminalModal(false);
+          }
+        }
+
+        // Tab shortcuts Ctrl+1 to Ctrl+5 (only if modals are not open)
         if (['1', '2', '3', '4', '5'].includes(key)) {
           const index = parseInt(key) - 1;
           if (tabs[index]) {
+            // Check if any modal is open
+            const tasksModal = document.querySelector('[data-modal-header]')?.closest('[role="dialog"]');
+            const isTasksModalOpen = tasksModal && (tasksModal.textContent?.includes('Tasks') || tasksModal.textContent?.includes('Görevler'));
+            const terminalModal = document.querySelector('[role="dialog"]')?.textContent?.includes('CLI Terminal');
+            
+            // Only switch tabs if no modal is open
+            if (!isTasksModalOpen && !terminalModal) {
+              e.preventDefault();
+              switchTabOrTopology(tabs[index].id);
+            }
+          }
+        }
+
+        // Ctrl+2 when tasks modal is open - switch to CLI terminal
+        if (key === '2') {
+          // Check if tasks modal is currently open by checking the DOM
+          const tasksModal = document.querySelector('[data-modal-header]')?.closest('[role="dialog"]');
+          const isTasksModalOpen = tasksModal && tasksModal.querySelector('[role="dialog"]')?.textContent?.includes('Tasks') || tasksModal?.textContent?.includes('Görevler');
+          if (isTasksModalOpen) {
             e.preventDefault();
-            switchTabOrTopology(tabs[index].id);
+            setShowTasksModal(false);
+            setShowTerminalModal(true);
           }
         }
       }
@@ -3768,14 +3803,28 @@ ${state.bannerMOTD}
                   <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
                     {language === 'tr' ? 'Görevler' : 'Tasks'}
                   </DialogTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setShowTasksModal(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        setShowTasksModal(false);
+                        setShowTerminalModal(true);
+                      }}
+                      title={language === 'tr' ? 'CLI Terminal\'e geç' : 'Switch to CLI Terminal'}
+                    >
+                      <TerminalIcon className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setShowTasksModal(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <DialogDescription className="sr-only">
                   {language === 'tr' ? 'Cihaz görevleri ve yapılandırma görevleri' : 'Device tasks and configuration tasks'}
@@ -3897,14 +3946,28 @@ ${state.bannerMOTD}
                   <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
                     {language === 'tr' ? 'CLI Terminal' : 'CLI Terminal'}
                   </DialogTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setShowTerminalModal(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        setShowTerminalModal(false);
+                        setShowTasksModal(true);
+                      }}
+                      title={language === 'tr' ? 'Görevlere geç' : 'Switch to Tasks'}
+                    >
+                      <ShieldCheck className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setShowTerminalModal(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <DialogDescription className="sr-only">
                   {language === 'tr' ? 'Komut satırı arayüzü' : 'Command line interface'}
