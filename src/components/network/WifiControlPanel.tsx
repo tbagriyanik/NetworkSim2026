@@ -626,6 +626,9 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
                 <span style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:${device.connected ? '#dcfce7' : '#fef3c7'};color:${device.connected ? '#166534' : '#92400e'};">
                   ${device.connected ? '● Connected' : '○ Disconnected'}
                 </span>
+                <button type="button" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:none;border-radius:6px;background:#2563eb;color:white;cursor:pointer;transition:all 0.2s;" onclick="event.stopPropagation();renewIotDevice('${device.id}')" title="IP Renew">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15.5 6.36L3 21"></path><path d="M3 12a9 9 0 0 1 15.5-6.36L21 3"></path><path d="M3 21v-6h6"></path><path d="M21 3v6h-6"></path></svg>
+                </button>
                 <button type="button" style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; padding:0; border:none; border-radius:6px; background:#ef4444; color:white; cursor:pointer; transition:all 0.2s;" onclick="event.stopPropagation();disconnectIotDevice('${device.id}')" title="Bağlantıyı Kes">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 </button>               
@@ -964,6 +967,21 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       } catch (err) {
         console.warn('Could not disconnect IoT device:', err);
         alert('❌ Cihazın bağlantısı kesilemedi: ' + err.message);
+      }
+    };
+
+    window.renewIotDevice = function(deviceId) {
+      try {
+        window.parent.postMessage({
+          type: 'router-admin-renew-iot',
+          deviceId: deviceId,
+          payload: {
+            iotDeviceId: deviceId
+          }
+        }, '*');
+      } catch (err) {
+        console.warn('Could not renew IoT device IP:', err);
+        alert('❌ Failed to renew IoT device IP');
       }
     };
     

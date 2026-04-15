@@ -4068,6 +4068,7 @@ export function NetworkTopology({
             let wifiSecurity = 'open';
             let wifiMode = 'disabled';
             let wifiChannel = '';
+            const currentWifiIp = wlanState?.ipAddress || device.ip || '';
 
             if (isPC) {
               wifiSsid = pcWifi?.ssid || wlanState?.wifi?.ssid || '';
@@ -4192,6 +4193,12 @@ export function NetworkTopology({
                           <div className="text-xs font-bold">
                             SSID:{' '}
                             <span className="text-cyan-500">{wifiSsid}</span>
+                          </div>
+                        )}
+                        {isPC && currentWifiIp && (
+                          <div className="text-xs font-bold">
+                            IP:{' '}
+                            <span className="text-cyan-500">{currentWifiIp}</span>
                           </div>
                         )}
                         <div className="text-xs font-bold">

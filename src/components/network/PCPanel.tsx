@@ -285,9 +285,6 @@ export function PCPanel({
       const allIotDevices = topologyDevices.filter((d) => d.type === 'iot');
       // Filter IoT devices that are reachable from the PC
       return allIotDevices.filter(device => {
-        // If device is powered off, don't include it
-        if (device.status === 'offline') return false;
-
         // Check if device has an IP and is in the same subnet or reachable via gateway
         if (device.ip && pcIP && pcSubnet && pcGateway) {
           try {
@@ -1095,8 +1092,8 @@ export function PCPanel({
 
         let isWifiConnected = false;
         if (routerSsid) {
-          isWifiConnected = d.wifi?.ssid === routerSsid &&
-            d.wifi?.security === routerSecurity;
+          isWifiConnected = d.wifi?.bssid === routerId ||
+            (d.wifi?.ssid === routerSsid && d.wifi?.security === routerSecurity);
         }
 
         const isWiredConnected = topologyConnections.some(c =>
@@ -1178,7 +1175,7 @@ export function PCPanel({
         if (isWiredConnected) return false;
 
         if (!routerSsid) return true;
-        const isConnectedToThisAp = d.wifi?.ssid === routerSsid && d.wifi?.enabled;
+        const isConnectedToThisAp = d.wifi?.bssid === routerId || d.wifi?.ssid === routerSsid;
         return !isConnectedToThisAp;
       })
       .map(d => ({
@@ -1476,8 +1473,79 @@ export function PCPanel({
       }
 
       // IoT messages are always accepted (deviceId in payload)
-      const isIoTMessage = data.type === 'router-admin-connect-iot' || data.type === 'router-admin-disconnect-iot';
+      const isIoTMessage = data.type === 'router-admin-connect-iot' || data.type === 'router-admin-disconnect-iot' || data.type === 'router-admin-renew-iot';
       console.log('Is IoT message:', isIoTMessage);
+
+      const allocateIotIpConfig = (routerDeviceId: string, excludeDeviceId?: string) => {
+        const routerDevice = topologyDevices.find((d) => d.id === routerDeviceId);
+        const routerState = routerDeviceId ? deviceStates?.get(routerDeviceId) : undefined;
+        let routerIp = routerDevice?.ip || '';
+        let routerSubnet = routerDevice?.subnet || '';
+
+        // Prefer the actual configured interface IP/subnet when the topology card is stale.
+        if (routerState?.ports) {
+          for (const port of Object.values(routerState.ports)) {
+            if (!port.shutdown && port.ipAddress) {
+              routerIp = port.ipAddress;
+              routerSubnet = port.subnetMask || routerSubnet;
+              break;
+            }
+          }
+        }
+
+        if (!routerIp) routerIp = '192.168.1.1';
+        if (!routerSubnet) routerSubnet = '255.255.255.0';
+        const baseIpParts = routerIp.split('.');
+        let newIp = '';
+
+        const usedIps = new Set<string>();
+        topologyDevices.forEach((d) => {
+          if (d.id === excludeDeviceId) return;
+          if (d.ip && d.ip.startsWith(baseIpParts[0] + '.' + baseIpParts[1] + '.' + baseIpParts[2])) {
+            usedIps.add(d.ip);
+          }
+        });
+
+        for (let i = 100; i <= 254; i++) {
+          const testIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.${i}`;
+          if (!usedIps.has(testIp)) {
+            newIp = testIp;
+            break;
+          }
+        }
+
+        if (!newIp) {
+          for (let i = 2; i < 100; i++) {
+            const testIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.${i}`;
+            if (!usedIps.has(testIp) && testIp !== routerIp) {
+              newIp = testIp;
+              break;
+            }
+          }
+        }
+
+        if (!newIp) {
+          const fallbackUsedIps = new Set<string>();
+          topologyDevices.forEach((d) => {
+            if (d.id !== excludeDeviceId && d.ip) fallbackUsedIps.add(d.ip);
+          });
+          return {
+            ip: generateRandomLinkLocalIpv4(fallbackUsedIps),
+            gateway: '0.0.0.0',
+            subnet: '255.255.0.0',
+            dns: '0.0.0.0',
+            source: 'apipa' as const,
+          };
+        }
+
+        return {
+          ip: newIp,
+          gateway: routerIp,
+          subnet: routerSubnet,
+          dns: routerIp,
+          source: 'dhcp' as const,
+        };
+      };
 
       // Handle WiFi settings save
       if (data.type === 'router-admin-save-wifi') {
@@ -1531,48 +1599,7 @@ export function PCPanel({
           return;
         }
 
-        // Find router/AP to get network info
-        const routerDevice = topologyDevices.find((d) => d.id === httpAppDeviceId);
-        const routerIp = routerDevice?.ip || '192.168.1.1';
-        const routerSubnet = routerDevice?.subnet || '255.255.255.0';
-
-        // Generate IP from same subnet as router
-        const baseIpParts = routerIp.split('.');
-        const subnetParts = routerSubnet.split('.');
-        let newIp = '';
-
-        // Get all used IPs in topology
-        const usedIps = new Set<string>();
-        topologyDevices.forEach(d => {
-          if (d.ip && d.ip.startsWith(baseIpParts[0] + '.' + baseIpParts[1] + '.' + baseIpParts[2])) {
-            usedIps.add(d.ip);
-          }
-        });
-
-        // Find available IP in subnet (.100-.254 range for clients)
-        for (let i = 100; i <= 254; i++) {
-          const testIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.${i}`;
-          if (!usedIps.has(testIp)) {
-            newIp = testIp;
-            break;
-          }
-        }
-
-        // If no IP found in client range, try .2-.99
-        if (!newIp) {
-          for (let i = 2; i < 100; i++) {
-            const testIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.${i}`;
-            if (!usedIps.has(testIp) && testIp !== routerIp) {
-              newIp = testIp;
-              break;
-            }
-          }
-        }
-
-        // Default fallback
-        if (!newIp) {
-          newIp = `${baseIpParts[0]}.${baseIpParts[1]}.${baseIpParts[2]}.150`;
-        }
+        const ipConfig = allocateIotIpConfig(httpAppDeviceId || '', iotDeviceId);
 
         // Update the IoT device's WiFi config to connect to this AP
         const updatedWifi = {
@@ -1592,11 +1619,11 @@ export function PCPanel({
             config: {
               wifi: updatedWifi,
               status: 'online',
-              ip: newIp,
+              ip: ipConfig.ip,
               ipConfigMode: 'dhcp' as const,
-              gateway: routerIp,
-              subnet: routerSubnet,
-              dns: routerIp,
+              gateway: ipConfig.gateway,
+              subnet: ipConfig.subnet,
+              dns: ipConfig.dns,
             },
           },
         }));
@@ -1604,9 +1631,52 @@ export function PCPanel({
         addLocalOutput(
           'success',
           language === 'tr'
-            ? `IoT cihaz "${iotDevice.name}" aga baglandi. IP: ${newIp}`
-            : `IoT device "${iotDevice.name}" connected to the network. IP: ${newIp}`
+            ? `IoT cihaz "${iotDevice.name}" aga baglandi. IP: ${ipConfig.ip}`
+            : `IoT device "${iotDevice.name}" connected to the network. IP: ${ipConfig.ip}`
         );
+      }
+
+      if (data.type === 'router-admin-renew-iot') {
+        const payload = data.payload || {};
+        const iotDeviceId = payload.iotDeviceId;
+
+        if (!iotDeviceId) return;
+
+        const iotDevice = topologyDevices.find((d) => d.id === iotDeviceId);
+        if (!iotDevice || iotDevice.type !== 'iot') return;
+
+        const ipConfig = allocateIotIpConfig(httpAppDeviceId || '', iotDeviceId);
+
+        window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+          detail: {
+            deviceId: iotDeviceId,
+            config: {
+              ip: ipConfig.ip,
+              ipConfigMode: 'dhcp' as const,
+              gateway: ipConfig.gateway,
+              subnet: ipConfig.subnet,
+              dns: ipConfig.dns,
+            },
+          },
+        }));
+
+        addLocalOutput(
+          'success',
+          language === 'tr'
+            ? `IoT cihaz "${iotDevice.name}" icin IP yenilendi: ${ipConfig.ip}`
+            : `Renewed IP for IoT device "${iotDevice.name}": ${ipConfig.ip}`
+        );
+
+        if (httpAppDeviceId) {
+          const targetDevice = topologyDevices.find((d) => d.id === httpAppDeviceId);
+          if (targetDevice && isRouterDevice(targetDevice)) {
+            const runtimeState = deviceStates?.get(httpAppDeviceId);
+            const connectedIot = getConnectedIotDevices(httpAppDeviceId);
+            const availableIot = getAvailableIotDevices(httpAppDeviceId);
+            const refreshed = generateRouterAdminPage(targetDevice, runtimeState, connectedIot, availableIot);
+            setHttpAppContent(refreshed);
+          }
+        }
       }
 
       // Handle IoT device delete
