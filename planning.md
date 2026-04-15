@@ -47,3 +47,32 @@ This implementation introduces an enhanced "IoT Web Panel" feature to the PC dev
     *   The button's styling is consistent with the existing navigation tabs.
 
 These changes collectively enable a secure, feature-rich web-based management interface for IoT devices directly from the PC device in the network simulator, with authentication, device control, and improved user experience.
+
+## Recent Maintenance Updates
+
+The IoT and DHCP flows were later extended with several maintenance fixes so the current behavior is slightly broader than the original implementation above.
+
+**3. Network Addressing Updates**
+
+*   **New File: `src/lib/network/linkLocal.ts`**
+    *   Added `generateRandomLinkLocalIpv4()` to generate APIPA addresses in the `169.254.x.x` range.
+    *   Added `isLinkLocalIpv4()` helper for link-local detection.
+*   **Modified File: `src/components/network/PCPanel.tsx`**
+    *   **DHCP Fallback**: When DHCP lease acquisition fails, devices now fall back to APIPA instead of silently staying unconfigured.
+    *   **IoT Renew Support**: Added `router-admin-renew-iot` message handling so IoT devices can renew their IP from the router admin page.
+    *   **Router Subnet Awareness**: IoT connect/renew flows now prefer the router's runtime interface IP/subnet from `deviceStates`, so if a router is on `192.168.10.x`, connected IoT devices receive addresses from that subnet rather than a hardcoded `192.168.1.x` fallback.
+*   **Modified File: `src/components/network/NetworkTopology.tsx`**
+    *   New IoT devices are initialized for DHCP-oriented behavior instead of receiving an immediate static-looking IP on creation.
+
+**4. IoT Panel UX Improvements**
+
+*   **Modified File: `src/components/network/WifiControlPanel.tsx`**
+    *   Added an `IP Renew` button in the `Connected IoT Devices` section.
+    *   The button posts a `router-admin-renew-iot` message to the parent frame.
+*   **Modified File: `src/components/network/PCPanel.tsx`**
+    *   Connected IoT lists in the router admin flow now keep power-off devices visible instead of dropping them from the list.
+    *   PC terminal IoT panel listing also keeps powered-off IoT devices visible.
+*   **Modified File: `src/components/network/NetworkTopology.tsx`**
+    *   The IoT Wi-Fi tooltip now shows the current IP address, preferring the runtime `wlan0` IP when available.
+
+These maintenance updates make the IoT experience more realistic: devices keep their association visibility when powered off, renew IP addresses from the correct router subnet, and fall back to APIPA when DHCP is unavailable.

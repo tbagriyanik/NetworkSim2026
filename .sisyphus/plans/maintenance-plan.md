@@ -16,6 +16,9 @@
 ### Progress
 - 2026-04-15: İlk test dosyaları eklendi (sanitizer, AppErrorBoundary, network link-local/routing). Yerel/CI’da test çalıştırma doğrulaması bekliyor.
 - 2026-04-15: `src/__tests__/sanitizer.test.ts` içindeki `escapeJSON` beklentisi gerçek implementasyona uyacak şekilde düzeltildi; bir failing test giderildi.
+- 2026-04-15: DHCP yoksa APIPA (`169.254.x.x`) ataması eklendi; IoT `connect/renew` akışları router'ın gerçek subnetine göre IP vermek üzere güncellendi.
+- 2026-04-15: Router WiFi admin paneline `IP Renew` düğmesi eklendi; power off IoT cihazların router ve PC terminal listelerinde görünmeye devam etmesi sağlandı.
+- 2026-04-15: IoT WiFi tooltip'ine güncel IP gösterimi eklendi.
 
 ---
 
@@ -52,6 +55,8 @@ Uygulamanın genel bakımını yap, potansiyel hataları gider ve kod kalitesini
 2. Güvenlik kontrolleri (sanitizer)
 3. Error boundary testleri
 4. Performance monitoring kontrolü
+5. DHCP/APIPA davranış iyileştirmeleri
+6. IoT yönetim paneli UX düzeltmeleri
 
 ### Definition of Done
 - [ ] `npm run test` (yerel/CI) çalışır ve testler geçer
@@ -189,6 +194,40 @@ Wave 2 (Bakım):
   **Acceptance Criteria**:
   - [x] Network unit testleri yazıldı (`src/__tests__/network.linkLocal.test.ts`, `src/__tests__/network.routing.test.ts`)
   - [ ] Network testleri (yerel/CI) geçer
+
+- [x] 8. **DHCP ve APIPA Akisi Guncellemesi**
+
+  **What to do**:
+  - DHCP lease alinamazsa `169.254.x.x` APIPA ver
+  - IoT `connect/renew` akislarini router'in gercek subnetine gore IP verecek sekilde guncelle
+  - Yeni IoT cihazlarini varsayilan `dhcp` davranisina hizala
+
+  **References**:
+  - src/lib/network/linkLocal.ts
+  - src/components/network/PCPanel.tsx
+  - src/components/network/NetworkTopology.tsx
+
+  **Acceptance Criteria**:
+  - [x] DHCP fallback olarak APIPA eklendi
+  - [x] IoT cihazlari router subnetinden IP aliyor
+  - [x] IoT `renew` akisi eklendi
+
+- [x] 9. **IoT Panel ve Tooltip UX Duzeltmeleri**
+
+  **What to do**:
+  - `Connected IoT Devices` alanina `IP Renew` dugmesi ekle
+  - Power off IoT cihazlarin router ve PC terminal listelerinden kaybolmasini engelle
+  - IoT WiFi tooltip'inde guncel IP'yi goster
+
+  **References**:
+  - src/components/network/WifiControlPanel.tsx
+  - src/components/network/PCPanel.tsx
+  - src/components/network/NetworkTopology.tsx
+
+  **Acceptance Criteria**:
+  - [x] `IP Renew` dugmesi eklendi
+  - [x] Power off IoT cihazlar listede kalir
+  - [x] Tooltip guncel IP adresini gosterir
 
 - [x] 7. **Sanitizer Test Duzeltmesi**
 
