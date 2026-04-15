@@ -2045,7 +2045,8 @@ export function NetworkTopology({
       type: resolvedType,
       name: generateUniqueHostname(baseName),
       macAddress: generateMacAddress(),
-      ip: type === 'pc' || type === 'iot' ? generateUniqueIp() : '',
+      ip: type === 'pc' ? generateUniqueIp() : (type === 'iot' ? '0.0.0.0' : ''),
+      ipConfigMode: type === 'iot' ? 'dhcp' : undefined,
       // Position near top-left with staggered layout
       x: 100 + offsetX + Math.random() * 30,
       y: 80 + offsetY + Math.random() * 30,

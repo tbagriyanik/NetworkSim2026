@@ -21,6 +21,7 @@ import { useIsMobile, useIsDesktop } from '@/hooks/use-breakpoint';
 import { sanitizeHTTPContent } from '@/lib/security/sanitizer';
 import { generateRouterAdminPage, isRouterDevice } from '@/components/network/WifiControlPanel';
 import { generateIotWebPanelContent, generateIotDevicePageContent } from '@/lib/network/iotWebPanel';
+import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
 import { PCIcon, WifiSignalMeter, IoTSensorDisplay } from './PCPanelWidgets';
 import { expandCommandContext, DESKTOP_COMMANDS } from './pcPanel.utils';
 
@@ -2337,7 +2338,35 @@ export function PCPanel({
 
   const applyDhcpLease = useCallback((force = false) => {
     const lease = getDhcpLease();
-    if (!lease) return null;
+    if (!lease) {
+      const usedIps = new Set(
+        topologyDevices
+          .filter((d) => d.id !== deviceId && validateIP(d.ip || ''))
+          .map((d) => d.ip)
+      );
+      const linkLocalIp = generateRandomLinkLocalIpv4(usedIps);
+      const linkLocalLease = {
+        ip: linkLocalIp,
+        subnetMask: '255.255.0.0',
+        gateway: '0.0.0.0',
+        dns: '0.0.0.0',
+        serverName: 'link-local',
+        poolName: 'APIPA',
+      };
+      if (!force &&
+        linkLocalLease.ip === pcIP &&
+        linkLocalLease.subnetMask === pcSubnet &&
+        linkLocalLease.gateway === pcGateway &&
+        linkLocalLease.dns === pcDNS
+      ) {
+        return linkLocalLease;
+      }
+      setPcIP(linkLocalLease.ip);
+      setPcSubnet(linkLocalLease.subnetMask);
+      setPcGateway(linkLocalLease.gateway);
+      setPcDNS(linkLocalLease.dns);
+      return linkLocalLease;
+    }
     if (!force &&
       lease.ip === pcIP &&
       lease.subnetMask === pcSubnet &&
@@ -2351,7 +2380,7 @@ export function PCPanel({
     setPcGateway(lease.gateway);
     setPcDNS(lease.dns);
     return lease;
-  }, [getDhcpLease, pcDNS, pcGateway, pcIP, pcSubnet]);
+  }, [getDhcpLease, pcDNS, pcGateway, pcIP, pcSubnet, deviceId, topologyDevices, validateIP]);
 
   // When DHCP mode is selected, request a lease immediately and notify the user.
   // Also retry if topology connections change, in case we were waiting for a cable.
@@ -2372,18 +2401,23 @@ export function PCPanel({
     }
 
     const lease = applyDhcpLease(true);
-    if (lease) {
+    if (lease && lease.serverName !== 'link-local') {
       toast({
         title: t.dhcpSuccessTitle,
         description: t.dhcpSuccessDescription.replace('{ip}', lease.ip),
       });
     } else {
-      // Only show failure toast if we actually switched TO dhcp mode
-      // or if we explicitly want to notify about continued failure.
-      if (prevIpConfigModeRef.current !== 'dhcp') {
-        // Check if pools are full or no servers available
+      // DHCP bulunamadıysa otomatik link-local (APIPA) atandı.
+      if (lease && lease.serverName === 'link-local' && prevIpConfigModeRef.current !== 'dhcp') {
+        toast({
+          title: language === 'tr' ? 'DHCP bulunamadı' : 'DHCP not found',
+          description: language === 'tr'
+            ? `Link-local IP atandı: ${lease.ip}`
+            : `Assigned link-local IP: ${lease.ip}`,
+        });
+      } else if (prevIpConfigModeRef.current !== 'dhcp') {
+        // Legacy failure toast (should be rare now; kept for safety)
         const dhcpCheck = checkDhcpAvailabilityRef.current();
-
         let errorMessage = t.dhcpFailureDescription;
         if (dhcpCheck.reason === 'all_pools_full') {
           errorMessage = language === 'tr'
@@ -2394,7 +2428,6 @@ export function PCPanel({
             ? 'Ağda DHCP hizmeti bulunamadı! Lütfen bir DHCP sunucusu yapılandırın.'
             : 'No DHCP service found on the network! Please configure a DHCP server.';
         }
-
         toast({
           title: t.dhcpFailureTitle,
           description: errorMessage,
@@ -2478,15 +2511,13 @@ export function PCPanel({
           addLocalOutput('success', 'IP address released successfully.');
         } else if (args.includes('/renew')) {
           const lease = applyDhcpLease();
-          if (lease) {
+          if (lease && lease.serverName !== 'link-local') {
             addLocalOutput(
               'success',
               `DHCP lease acquired from ${lease.serverName}/${lease.poolName}. New IP: ${lease.ip}`
             );
           } else {
-            const restoredIP = deviceFromTopology?.ip || defaultConfig.ip;
-            setPcIP(restoredIP);
-            addLocalOutput('error', 'No reachable DHCP server/pool found. Using existing IP.');
+            addLocalOutput('success', `No DHCP server/pool found. Assigned link-local IP: ${lease?.ip || '(pending)'}`);
           }
         } else if (args.includes('/all')) {
           await addMultilineOutput('output', `OS IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${internalPcHostname}\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : No\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}`, 80);
