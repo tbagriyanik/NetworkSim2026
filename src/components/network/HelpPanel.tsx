@@ -71,7 +71,7 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
       <button
         onClick={() => setOpen(true)}
         className={cn(
-          'fixed z-50 rounded-full shadow-lg transition-all hover:scale-105 flex items-center justify-center',
+          'fixed z-[10001] rounded-full shadow-lg transition-all hover:scale-105 flex items-center justify-center',
           isDark ? 'bg-slate-800 text-slate-200 border border-slate-600' : 'bg-white text-slate-700 border border-slate-300',
           isMobile ? 'bottom-4 right-4 w-10 h-10' : 'bottom-6 right-6 w-12 h-12'
         )}
@@ -83,7 +83,7 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4 bg-black/50">
       <div
         className={cn(
           'w-full max-w-3xl max-h-[85vh] rounded-lg shadow-xl overflow-hidden flex flex-col',

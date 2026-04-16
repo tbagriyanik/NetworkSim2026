@@ -153,7 +153,7 @@ export default function NetworkTopologyContextMenu({
   return (
     <div
       ref={contextMenuRef}
-      className={`context-menu fixed z-50 py-1 rounded-lg shadow-xl min-w-[140px] max-w-[240px] ${isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-slate-200'}`}
+      className={`context-menu fixed z-[10002] py-1 rounded-lg shadow-xl min-w-[140px] max-w-[240px] ${isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-slate-200'}`}
       style={{
         left: position.x,
         top: position.y,

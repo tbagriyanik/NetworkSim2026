@@ -5097,7 +5097,7 @@ export function PCPanel({
       {/* HTTP content in-tablet viewer */}
       {httpAppContent && (
         <div
-          className="fixed inset-0 z-[999] pointer-events-auto backdrop-blur-sm bg-black/20"
+          className="fixed inset-0 z-[999] pointer-events-auto bg-black/20"
           onClick={() => setHttpAppContent(null)}
         >
           <div

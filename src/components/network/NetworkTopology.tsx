@@ -6436,7 +6436,7 @@ export function NetworkTopology({
       {/* Device Configuration Modal (Name & IP) */}
       {configuringDevice && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={cancelDeviceConfig}>
-          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" />
+          <div className="absolute inset-0 bg-slate-950/40" />
           <div
             className={`relative w-full max-w-md overflow-hidden rounded-[2rem] border transition-all duration-500 hover:shadow-cyan-500/10 ${isDark ? 'bg-slate-900/80 border-slate-800/50 shadow-2xl' : 'bg-white/90 border-slate-200/50 shadow-2xl'
               }`}

@@ -37,7 +37,7 @@ export function NetworkTopologyPortSelectorModal({
 
   return (
     <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-950/40" onClick={onClose} />
       <div className={`relative w-full max-w-2xl rounded-[2.5rem] ${isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200'} border shadow-2xl overflow-hidden flex flex-col transition-all duration-500`}>
         <div className={`px-8 py-6 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/30' : 'border-slate-100 bg-slate-50/50'}`}>
           <div className="flex items-center justify-between gap-6">

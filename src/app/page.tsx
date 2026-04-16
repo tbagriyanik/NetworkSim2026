@@ -669,7 +669,7 @@ export default function Home() {
     tasksModalSize,
     cliModalPosition,
     cliModalSize,
-    handleMouseDown,
+    handlePointerDown,
     handleResizeStart,
   } = useModalDragResize();
   const [deviceSearchQuery, setDeviceSearchQuery] = useState('');
@@ -3842,19 +3842,20 @@ ${state.bannerMOTD}
               className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: 'fixed',
-                left: tasksModalPosition.x,
-                top: tasksModalPosition.y,
-                width: `${tasksModalSize.width}px`,
-                height: `${tasksModalSize.height}px`,
+                left: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.x : 0,
+                top: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.y : 0,
+                width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${tasksModalSize.width}px` : '100vw',
+                height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${tasksModalSize.height}px` : '100vh',
                 maxWidth: 'none',
                 maxHeight: 'none',
+                borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
               }}
             >
               <div className="relative flex flex-col h-full">
               <DialogHeader
-                className={`p-4 border-b cursor-move select-none sticky top-0 z-10 ${isDark ? 'bg-slate-900' : 'bg-white'}`}
+                className={`p-3 sm:p-4 border-b cursor-move select-none sticky top-0 z-10 ${isDark ? 'bg-slate-900' : 'bg-white'}`}
                 data-modal-header
-                onMouseDown={(e) => handleMouseDown(e, 'tasks')}
+                onPointerDown={(e) => handlePointerDown(e, 'tasks')}
               >
                 <div className="flex items-center justify-between">
                   <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
@@ -3887,8 +3888,8 @@ ${state.bannerMOTD}
                   {language === 'tr' ? 'Cihaz görevleri ve yapılandırma görevleri' : 'Device tasks and configuration tasks'}
                 </DialogDescription>
               </DialogHeader>
-              <div className="flex-1 overflow-y-auto p-4">
-                <div className="grid lg:grid-cols-3 gap-4">
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="lg:col-span-2 overflow-y-auto custom-scrollbar">
                     <PortPanel
                       ports={state.ports}
@@ -3939,35 +3940,35 @@ ${state.bannerMOTD}
               <div className="hidden md:block">
                 <div
                   className="absolute top-0 left-0 right-0 h-1 cursor-n-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'n', 'tasks')}
+                  onPointerDown={(e) => handleResizeStart(e, 'n', 'tasks')}
                 />
                 <div
                   className="absolute bottom-0 left-0 right-0 h-1 cursor-s-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 's', 'tasks')}
+                  onPointerDown={(e) => handleResizeStart(e, 's', 'tasks')}
                 />
                 <div
                   className="absolute left-0 top-0 bottom-0 w-1 cursor-w-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'w', 'tasks')}
+                  onPointerDown={(e) => handleResizeStart(e, 'w', 'tasks')}
                 />
                 <div
                   className="absolute right-0 top-0 bottom-0 w-1 cursor-e-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'e', 'tasks')}
+                  onPointerDown={(e) => handleResizeStart(e, 'e', 'tasks')}
                 />
                 <div
                   className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'nw', 'tasks')}
+                  onPointerDown={(e) => handleResizeStart(e, 'nw', 'tasks')}
                 />
                 <div
                   className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'ne', 'tasks')}
+                  onPointerDown={(e) => handleResizeStart(e, 'ne', 'tasks')}
                 />
                 <div
                   className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'sw', 'tasks')}
+                  onPointerDown={(e) => handleResizeStart(e, 'sw', 'tasks')}
                 />
                 <div
                   className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'se', 'tasks')}
+                  onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
                 >
                   <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
@@ -3991,13 +3992,13 @@ ${state.bannerMOTD}
                 height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${cliModalSize.height}px` : '100vh',
                 maxWidth: 'none',
                 maxHeight: 'none',
-                borderRadius: 0,
+                borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
               }}
             >
               <DialogHeader
-                className={`p-4 border-b cursor-move select-none sticky top-0 z-10 ${isDark ? 'bg-slate-900' : 'bg-white'}`}
+                className={`p-3 sm:p-4 border-b cursor-move select-none sticky top-0 z-10 ${isDark ? 'bg-slate-900' : 'bg-white'}`}
                 data-modal-header
-                onMouseDown={(e) => handleMouseDown(e, 'cli')}
+                onPointerDown={(e) => handlePointerDown(e, 'cli')}
               >
                 <div className="flex items-center justify-between">
                   <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
@@ -4077,35 +4078,35 @@ ${state.bannerMOTD}
               <div className="hidden md:block">
                 <div
                   className="absolute top-0 left-0 right-0 h-1 cursor-n-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'n', 'cli')}
+                  onPointerDown={(e) => handleResizeStart(e, 'n', 'cli')}
                 />
                 <div
                   className="absolute bottom-0 left-0 right-0 h-1 cursor-s-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 's', 'cli')}
+                  onPointerDown={(e) => handleResizeStart(e, 's', 'cli')}
                 />
                 <div
                   className="absolute left-0 top-0 bottom-0 w-1 cursor-w-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'w', 'cli')}
+                  onPointerDown={(e) => handleResizeStart(e, 'w', 'cli')}
                 />
                 <div
                   className="absolute right-0 top-0 bottom-0 w-1 cursor-e-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'e', 'cli')}
+                  onPointerDown={(e) => handleResizeStart(e, 'e', 'cli')}
                 />
                 <div
                   className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'nw', 'cli')}
+                  onPointerDown={(e) => handleResizeStart(e, 'nw', 'cli')}
                 />
                 <div
                   className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'ne', 'cli')}
+                  onPointerDown={(e) => handleResizeStart(e, 'ne', 'cli')}
                 />
                 <div
                   className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'sw', 'cli')}
+                  onPointerDown={(e) => handleResizeStart(e, 'sw', 'cli')}
                 />
                 <div
                   className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
-                  onMouseDown={(e) => handleResizeStart(e, 'se', 'cli')}
+                  onPointerDown={(e) => handleResizeStart(e, 'se', 'cli')}
                 >
                   <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
@@ -4478,7 +4479,7 @@ ${state.bannerMOTD}
                     const pc = topologyDevices.find(d => d.id === activeDeviceId);
                     if (!pc) return null;
                     return (
-                      <div className="hidden md:block fixed bottom-24 right-4 z-50 animate-scale-in">
+                      <div className="hidden md:block fixed bottom-24 right-4 z-[10000] animate-scale-in">
                         <div className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[260px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}>
                           <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
                             <div className="flex items-center gap-1.5">
@@ -4612,7 +4613,7 @@ ${state.bannerMOTD}
                       .slice(0, 3);
 
                     return (
-                      <div className="hidden md:block fixed bottom-24 right-4 z-50 animate-scale-in">
+                      <div className="hidden md:block fixed bottom-24 right-4 z-[10000] animate-scale-in">
                         <div className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[280px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}>
                           <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
                             <div className="flex items-center gap-1.5">
@@ -4817,7 +4818,7 @@ ${state.bannerMOTD}
 
                   {/* Task Event Notification - Positioned at top-left of footer */}
                   {lastTaskEvent && Date.now() - lastTaskEvent.timestamp < 5000 && (
-                    <div className={`absolute -top-12 left-4 md:flex items-center gap-2 px-3 py-1.5 rounded-lg border shadow-lg animate-slide-up z-50 ${lastTaskEvent.type === 'completed'
+                    <div className={`absolute -top-12 left-4 md:flex items-center gap-2 px-3 py-1.5 rounded-lg border shadow-lg animate-slide-up z-[10000] ${lastTaskEvent.type === 'completed'
                       ? isDark ? 'bg-green-500/10 border-green-500/30' : 'bg-green-50 border-green-200'
                       : isDark ? 'bg-orange-500/10 border-orange-500/30' : 'bg-orange-50 border-orange-200'
                       }`}>
