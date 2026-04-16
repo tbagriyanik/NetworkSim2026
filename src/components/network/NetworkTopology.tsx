@@ -5787,7 +5787,7 @@ export function NetworkTopology({
                         {/* Note Content - Scrollable */}
                         <div
                           data-note-scroll
-                          className="flex-1 min-h-0 overflow-hidden"
+                          className="flex-1 min-h-0"
                           style={{
                             height: `calc(100% - 24px)`,
                             scrollBehavior: 'smooth',
@@ -5796,15 +5796,16 @@ export function NetworkTopology({
                             // Allow scroll within note without affecting canvas zoom
                             e.stopPropagation();
                           }}
-                          onMouseDown={(e) => {
-                            // Prevent note content interactions from starting a drag on the note shell
-                            e.stopPropagation();
-                          }}
                         >
                           <textarea
                             ref={(el) => { noteTextareaRefs.current[note.id] = el; }}
                             value={note.text}
                             onChange={(e) => updateNoteText(note.id, e.target.value)}
+                            onMouseDown={(e) => {
+                              // Sadece textarea içine tıklandığında olay durdurulsun, 
+                              // böylece canvas sürüklenmez ama scrollbar çalışır
+                              e.stopPropagation();
+                            }}
                             onSelect={(e) => {
                               setNoteTextSelection({
                                 noteId: note.id,

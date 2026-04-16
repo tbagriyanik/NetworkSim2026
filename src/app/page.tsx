@@ -4595,9 +4595,14 @@ ${state.bannerMOTD}
                     const routerState = deviceStates.get(router.id);
 
                     // Get port information
-                    const ports = routerState?.ports ? Object.values(routerState.ports) : [];
-                    const connectedPorts = ports.filter((p: any) => !p.shutdown && p.status === 'connected').length;
-                    const totalPorts = ports.length;
+                    const ports = routerState?.ports ? Object.values(routerState.ports) : (router.ports || []);
+                    // Router always shows 7 ports in this model (Console, 5x Gi, 1x WLAN)
+                    const totalPorts = Math.max(7, ports.length);
+
+                    // Use topology connections for most reliable count
+                    const connectedPorts = topologyConnections?.filter(conn =>
+                      conn.sourceDeviceId === router.id || conn.targetDeviceId === router.id
+                    ).length || 0;
 
                     // Get DHCP pools
                     const dhcpPools = routerState?.dhcpPools ? Object.keys(routerState.dhcpPools).length : 0;

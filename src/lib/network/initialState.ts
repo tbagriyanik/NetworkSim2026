@@ -221,8 +221,21 @@ function createInitialRouterPorts(): Record<string, Port> {
   const ports: Record<string, Port> = {};
   const baseMac = generateUniqueMacAddress(0x005000000000); // Router base MAC range
 
-  // GigabitEthernet 0/0 - 0/3 (Router portları)
-  for (let i = 0; i <= 3; i++) {
+  // Console port
+  ports['console'] = {
+    id: 'console',
+    name: 'Console',
+    status: 'notconnect',
+    vlan: 1,
+    mode: 'access',
+    duplex: 'auto',
+    speed: 'auto',
+    shutdown: false,
+    type: 'fastethernet'
+  };
+
+  // GigabitEthernet 0/0 - 0/4 (Router portları)
+  for (let i = 0; i <= 4; i++) {
     const portId = `gi0/${i}`;
     // Generate per-port MAC address by incrementing from base MAC
     const portMacNumber = parseInt(baseMac.replace(/\./g, ''), 16) + i;
@@ -231,7 +244,7 @@ function createInitialRouterPorts(): Record<string, Port> {
     ports[portId] = {
       id: portId,
       name: i === 0 ? 'WAN' : i === 1 ? 'LAN' : '',
-      status: 'notconnect', // HEPSİ BAŞLANGIÇTA BAĞLI DEĞİL
+      status: 'notconnect',
       vlan: 1,
       mode: 'access',
       voiceVlan: 'none',
@@ -250,13 +263,13 @@ function createInitialRouterPorts(): Record<string, Port> {
   // WLAN interface
   ports['wlan0'] = {
     id: 'wlan0',
-    name: '',
-    status: 'connected',
+    name: 'WLAN',
+    status: 'notconnect',
     vlan: 1,
     mode: 'access',
     duplex: 'auto',
     speed: 'auto',
-    shutdown: false,
+    shutdown: true,
     type: 'fastethernet',
     wifi: {
       ssid: '',

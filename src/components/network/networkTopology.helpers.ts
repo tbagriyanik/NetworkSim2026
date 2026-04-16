@@ -14,7 +14,8 @@ export const generateRouterPorts = () => {
     { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const },
     { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
     { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const },
-    { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const },
+    { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const },    
+    { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, shutdown: true },
   ];
 };
 
