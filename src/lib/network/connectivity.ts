@@ -409,6 +409,7 @@ export function checkConnectivity(
   // 0. Resolve hostname to IP if necessary
   let resolvedTargetIp = targetIp;
   let isExternal = false;
+  let routingRequired = false;
 
   // Check if targetIp is a hostname (not an IP address)
   const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
@@ -651,6 +652,7 @@ export function checkConnectivity(
 
     // Check if source and target are in the same subnet
     const isInSameSubnet = isIpInSubnet(sourceIp, targetIp_check, sourceSubnet);
+    routingRequired = !isInSameSubnet;
 
     if (!isInSameSubnet) {
       // Different subnets - check if there's a Layer-3 routing device in path
@@ -872,6 +874,7 @@ export function checkConnectivity(
 
       // If router with routing is in path, allow different VLANs (router handles inter-VLAN routing)
       if (hasL3RouterInPath) {
+        routingRequired = true; // Different VLANs require routing
         // Continue to section 6 for routing logic
       } else {
         return {
@@ -912,7 +915,7 @@ export function checkConnectivity(
       const state = deviceStates.get(deviceId);
       const device = devices.find(d => d.id === deviceId);
 
-      if (state?.ipRouting && device?.type === 'router') {
+      if (state?.ipRouting && (device?.type === 'router' || device?.type === 'switchL3')) {
         // Router in path - check if it has routes to both source and target networks
         const routes = getRoutingTable(deviceId, deviceStates);
         // Get source IP from device data
@@ -930,6 +933,17 @@ export function checkConnectivity(
           };
         }
       }
+    }
+
+    // If routing was required but no router in the path could handle it
+    if (routingRequired) {
+      return {
+        success: false,
+        hops: hopNames,
+        hopIds: path,
+        targetId: targetDevice.id,
+        error: language === 'tr' ? 'Yönlendirme başarısız: Geçerli bir rota bulunamadı.' : 'Routing failed: No valid route found.'
+      };
     }
   }
 
@@ -1134,10 +1148,23 @@ export function getPingDiagnostics(
     }
   }
 
-  // 9. Check VLAN configuration
+  // 9. Check VLAN configuration - Only if not already routed
   if (sourceDevice.vlan && targetDevice.vlan && sourceDevice.vlan !== targetDevice.vlan) {
-    reasons.push(`VLAN uyumsuzluğu: Kaynak VLAN ${sourceDevice.vlan}, Hedef VLAN ${targetDevice.vlan}`);
-    return { success: false, reasons };
+    // Check if there's a router in path (ROAS)
+    let hasL3RouterInPath = false;
+    for (const pathDeviceId of result.hopIds) {
+      const pathDevice = devices.find(d => d.id === pathDeviceId);
+      const pathState = deviceStates?.get(pathDeviceId);
+      if ((pathDevice?.type === 'router' || pathDevice?.type === 'switchL3') && pathState?.ipRouting) {
+        hasL3RouterInPath = true;
+        break;
+      }
+    }
+
+    if (!hasL3RouterInPath) {
+      reasons.push(`VLAN uyumsuzluğu: Kaynak VLAN ${sourceDevice.vlan}, Hedef VLAN ${targetDevice.vlan}`);
+      return { success: false, reasons };
+    }
   }
 
   // 10. Check routing if needed
