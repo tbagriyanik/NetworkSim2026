@@ -1489,7 +1489,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'roas',
       tag: isTr ? 'ROAS' : 'ROAS',
-      title: isTr ? 'ROAS (Konsept)' : 'ROAS (Concept)',
+      title: isTr ? 'ROAS (Router-on-a-Stick)' : 'ROAS (Router-on-a-Stick)',
       description: isTr ? 'Switch trunk + router (subinterface notlarıyla).' : 'Switch trunk + router with ROAS notes.',
       level: 'intermediate',
       data: baseProjectData(roasDevices, roasConnections, roasNotes, [
