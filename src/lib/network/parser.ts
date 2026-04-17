@@ -363,10 +363,10 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'spanning-tree vlan': {
-    pattern: /^spanning-tree\s+vlan\s+(\d+)(\s+priority\s+(\d+))?$/i,
+    pattern: /^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|root)\s*(.*))?$/i,
     modes: ['config'],
     minArgs: 1,
-    maxArgs: 3
+    maxArgs: 4
   },
   'spanning-tree portfast': {
     pattern: /^spanning-tree\s+portfast(\s+(default|edge|bpduguard\s+(enable|disable)))?$/i,

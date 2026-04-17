@@ -817,7 +817,7 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2011 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 ISR4451/K9 platform with 4096 K bytes of memory
 
 ${syslog}
@@ -834,7 +834,7 @@ Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   0 bytes remaining in flash device` :
       `System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2011 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 ISR4451/K9 platform with 4096 K bytes of memory
 
 ${syslog}
@@ -855,7 +855,7 @@ Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2011 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 C3560 platform with 131072 K bytes of memory
 
 ${syslog}
@@ -872,7 +872,7 @@ Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
   0 bytes remaining in flash device` :
       `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2011 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 C3560 platform with 131072 K bytes of memory
 
 ${syslog}
@@ -893,7 +893,7 @@ Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2010 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 C2960 platform with 65536 K bytes of memory
 
 ${syslog}
@@ -910,7 +910,7 @@ Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
   0 bytes remaining in flash device` :
       `System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2010 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 C2960 platform with 65536 K bytes of memory
 
 ${syslog}
@@ -987,7 +987,7 @@ function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): Command
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2011 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 ISR4451/K9 platform with 4096 K bytes of memory
 
 ${syslog}
@@ -1004,7 +1004,7 @@ Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   0 bytes remaining in flash device` :
       `System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2011 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 ISR4451/K9 platform with 4096 K bytes of memory
 
 ${syslog}
@@ -1025,7 +1025,7 @@ Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2011 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 C3560 platform with 131072 K bytes of memory
 
 ${syslog}
@@ -1042,7 +1042,7 @@ Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
   0 bytes remaining in flash device` :
       `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2011 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 C3560 platform with 131072 K bytes of memory
 
 ${syslog}
@@ -1063,7 +1063,7 @@ Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2010 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 C2960 platform with 65536 K bytes of memory
 
 ${syslog}
@@ -1080,7 +1080,7 @@ Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
   0 bytes remaining in flash device` :
       `System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2010 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 C2960 platform with 65536 K bytes of memory
 
 ${syslog}

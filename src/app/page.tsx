@@ -993,22 +993,40 @@ export default function Home() {
     }
 
     autosaveTimerRef.current = setTimeout(() => {
+      // Get PC and IoT device IDs to filter them out from deviceStates
+      // These device types don't need full SwitchState with 24 ports
+      const excludedDeviceIds = new Set(
+        topologyDevices.filter(d => d.type === 'pc' || d.type === 'iot').map(d => d.id)
+      );
+
       const projectData = {
         version: '1.0',
         timestamp: new Date().toISOString(),
-        devices: Array.from(deviceStates.entries()).map(([id, state]) => ({ id, state })),
-        deviceOutputs: Array.from(deviceOutputs.entries()).map(([id, outputs]) => ({ id, outputs })),
-        pcOutputs: Array.from(pcOutputs.entries()).map(([id, outputs]) => ({ id, outputs })),
-        pcHistories: Array.from(pcHistories.entries()).map(([id, history]) => ({ id, history })),
+        // Filter out PC/IoT device states - they don't need SwitchState with ports
+        devices: Array.from(deviceStates.entries())
+          .filter(([id]) => !excludedDeviceIds.has(id))
+          .map(([id, state]) => ({ id, state })),
+        // Filter out entries with empty/invalid IDs
+        deviceOutputs: Array.from(deviceOutputs.entries())
+          .filter(([id]) => id && id.trim() !== '')
+          .map(([id, outputs]) => ({ id, outputs })),
+        pcOutputs: Array.from(pcOutputs.entries())
+          .filter(([id]) => id && id.trim() !== '')
+          .map(([id, outputs]) => ({ id, outputs })),
+        pcHistories: Array.from(pcHistories.entries())
+          .filter(([id]) => id && id.trim() !== '')
+          .map(([id, history]) => ({ id, history })),
         topology: {
-          devices: topologyDevices,
+          // Filter out devices with empty/invalid IDs
+          devices: topologyDevices.filter(d => d.id && d.id.trim() !== ''),
           connections: topologyConnections,
           notes: topologyNotes,
           zoom,
           pan,
         },
-        cableInfo,
-        activeDeviceId,
+        // Reset cableInfo if no valid devices exist
+        cableInfo: topologyDevices.length > 0 ? cableInfo : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
+        activeDeviceId: topologyDevices.find(d => d.id === activeDeviceId)?.id || '',
         activeDeviceType,
         activeTab
       };
@@ -1033,7 +1051,10 @@ export default function Home() {
       if (projectData.devices && Array.isArray(projectData.devices)) {
         const newDeviceStates = new Map<string, SwitchState>();
         projectData.devices.forEach((item: { id: string; state: SwitchState }) => {
-          newDeviceStates.set(item.id, item.state);
+          // Skip devices with empty/invalid IDs
+          if (item.id && item.id.trim() !== '') {
+            newDeviceStates.set(item.id, item.state);
+          }
         });
         setDeviceStates(newDeviceStates);
       }
@@ -1081,7 +1102,7 @@ export default function Home() {
 
 System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2011 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 ` },
               {
                 id: `boot-2-${suffix}`, type: 'output', content: `ISR4451/K9 platform with 4096 K bytes of memory
@@ -1115,7 +1136,7 @@ ${state.bannerMOTD}
 
 System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2011 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 ` },
               {
                 id: `boot-2-${suffix}`, type: 'output', content: `C3560 platform with 131072 K bytes of memory
@@ -1149,7 +1170,7 @@ ${state.bannerMOTD}
 
 System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
-Copyright (c) 1994-2010 by Network Systems, Inc.
+Copyright (c) 1994-2026 by Network Systems, Inc.
 ` },
               {
                 id: `boot-2-${suffix}`, type: 'output', content: `C2960 platform with 65536 K bytes of memory
@@ -1202,7 +1223,11 @@ ${state.bannerMOTD}
 
       // Load topology
       if (projectData.topology) {
-        const normalizedDevices = applyLinkLocalToUnconfiguredHosts((projectData.topology.devices || []).map((device: CanvasDevice) => ({
+        // Filter out devices with empty/invalid IDs
+        const validDevices = (projectData.topology.devices || []).filter(
+          (device: CanvasDevice) => device.id && device.id.trim() !== ''
+        );
+        const normalizedDevices = applyLinkLocalToUnconfiguredHosts(validDevices.map((device: CanvasDevice) => ({
           ...device,
           type: normalizeDeviceType(device.type),
         })));
@@ -1241,13 +1266,21 @@ ${state.bannerMOTD}
 
       // Reset history with the loaded state
       resetHistory({
-        topologyDevices: applyLinkLocalToUnconfiguredHosts((projectData.topology?.devices || []).map((device: CanvasDevice) => ({
-          ...device,
-          type: normalizeDeviceType(device.type),
-        }))),
+        topologyDevices: applyLinkLocalToUnconfiguredHosts(
+          (projectData.topology?.devices || [])
+            .filter((device: CanvasDevice) => device.id && device.id.trim() !== '')
+            .map((device: CanvasDevice) => ({
+              ...device,
+              type: normalizeDeviceType(device.type),
+            }))
+        ),
         topologyConnections: projectData.topology?.connections || [],
         topologyNotes: projectData.topology?.notes || [],
-        deviceStates: new Map(projectData.devices?.map((item: any) => [item.id, item.state]) || []),
+        deviceStates: new Map(
+          projectData.devices
+            ?.filter((item: any) => item.id && item.id.trim() !== '')
+            ?.map((item: any) => [item.id, item.state]) || []
+        ),
         deviceOutputs: new Map(projectData.deviceOutputs?.map((item: any) => [item.id, item.outputs]) || []),
         pcOutputs: new Map(projectData.pcOutputs?.map((item: any) => [item.id, item.outputs]) || []),
         pcHistories: new Map(projectData.pcHistories?.map((item: any) => [item.id, item.history]) || []),
@@ -1728,20 +1761,38 @@ ${state.bannerMOTD}
 
   // Save project to JSON file
   const handleSaveProjectInternal = useCallback(() => {
+    // Get PC and IoT device IDs to filter them out from deviceStates
+    // These device types don't need full SwitchState with 24 ports
+    const excludedDeviceIds = new Set(
+      topologyDevices.filter(d => d.type === 'pc' || d.type === 'iot').map(d => d.id)
+    );
+
     const projectData = {
       version: '1.0',
       timestamp: new Date().toISOString(),
-      devices: Array.from(deviceStates.entries()).map(([id, state]) => ({ id, state })),
-      deviceOutputs: Array.from(deviceOutputs.entries()).map(([id, outputs]) => ({ id, outputs })),
-      pcOutputs: Array.from(pcOutputs.entries()).map(([id, outputs]) => ({ id, outputs })),
-      pcHistories: Array.from(pcHistories.entries()).map(([id, history]) => ({ id, history })),
+      // Filter out PC/IoT device states - they don't need SwitchState with ports
+      devices: Array.from(deviceStates.entries())
+        .filter(([id]) => !excludedDeviceIds.has(id))
+        .map(([id, state]) => ({ id, state })),
+      // Filter out entries with empty/invalid IDs
+      deviceOutputs: Array.from(deviceOutputs.entries())
+        .filter(([id]) => id && id.trim() !== '')
+        .map(([id, outputs]) => ({ id, outputs })),
+      pcOutputs: Array.from(pcOutputs.entries())
+        .filter(([id]) => id && id.trim() !== '')
+        .map(([id, outputs]) => ({ id, outputs })),
+      pcHistories: Array.from(pcHistories.entries())
+        .filter(([id]) => id && id.trim() !== '')
+        .map(([id, history]) => ({ id, history })),
       topology: {
-        devices: topologyDevices,
+        // Filter out devices with empty/invalid IDs
+        devices: topologyDevices.filter(d => d.id && d.id.trim() !== ''),
         connections: topologyConnections,
         notes: topologyNotes
       },
-      cableInfo,
-      activeDeviceId,
+      // Reset cableInfo if no valid devices exist
+      cableInfo: topologyDevices.length > 0 ? cableInfo : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
+      activeDeviceId: topologyDevices.find(d => d.id === activeDeviceId)?.id || '',
       activeDeviceType
     };
 

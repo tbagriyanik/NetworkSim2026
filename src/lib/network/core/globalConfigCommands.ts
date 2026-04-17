@@ -15,6 +15,7 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'vtp mode': cmdVtpMode,
   'vtp domain': cmdVtpDomain,
   'spanning-tree mode': cmdSpanningTreeMode,
+  'spanning-tree vlan': cmdSpanningTreeVlan,
   'no spanning-tree': cmdNoSpanningTree,
   'service password-encryption': cmdServicePasswordEncryption,
   'no service password-encryption': cmdNoServicePasswordEncryption,
@@ -989,15 +990,45 @@ function cmdNoIpSshTimeOut(state: any, input: string, ctx: any): any {
 }
 
 /**
- * No Spanning-Tree - Disable spanning-tree globally
+ * No Spanning-Tree - Disable spanning-tree globally or per-VLAN
  */
 function cmdNoSpanningTree(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
+  const lang = ctx.language || 'en';
+
+  // Check if it's a per-VLAN disable: no spanning-tree vlan <vlan-id>
+  const vlanMatch = input.match(/^no\s+spanning-tree\s+vlan\s+(\d+)$/i);
+  if (vlanMatch) {
+    const vlanId = parseInt(vlanMatch[1]);
+    const spanningTreeVlans = state.spanningTreeVlans || {};
+
+    // Mark this VLAN as disabled for spanning-tree
+    const updatedVlans = {
+      ...spanningTreeVlans,
+      [vlanId]: {
+        ...spanningTreeVlans[vlanId],
+        enabled: false
+      }
+    };
+
+    return {
+      success: true,
+      output: lang === 'tr' ?
+        `Spanning-tree VLAN ${vlanId} devre disi birakildi` :
+        `Spanning-tree disabled on VLAN ${vlanId}`,
+      newState: { spanningTreeVlans: updatedVlans }
+    };
+  }
+
+  // Global spanning-tree disable
   return {
     success: true,
+    output: lang === 'tr' ?
+      'Spanning-tree global olarak devre disi birakildi' :
+      'Spanning-tree disabled globally',
     newState: { spanningTreeEnabled: false }
   };
 }
@@ -1132,13 +1163,59 @@ function cmdIpArpInspection(state: any, input: string, ctx: any): any {
 }
 
 /**
- * Spanning-Tree VLAN
+ * Spanning-Tree VLAN - Enable STP on VLAN or configure priority/root
  */
 function cmdSpanningTreeVlan(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') return { success: false, error: '% Invalid command at this mode' };
-  const match = input.match(/^spanning-tree\s+vlan\s+(\S+)\s+(priority|root)\s*(.*)$/i);
+
+  const match = input.match(/^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|root)\s*(\d*))?$/i);
   if (!match) return { success: false, error: '% Invalid spanning-tree vlan command' };
-  return { success: true, output: `Spanning-tree VLAN ${match[1]} ${match[2]} configured` };
+
+  const vlanId = parseInt(match[1]);
+  const subCommand = match[2]; // 'priority' or 'root' or undefined
+  const value = match[3]; // priority value or empty
+
+  const lang = ctx.language || 'en';
+
+  // Initialize spanningTreeVlans if not exists
+  const spanningTreeVlans = state.spanningTreeVlans || {};
+
+  // If just enabling STP on VLAN (no priority/root)
+  if (!subCommand) {
+    const updatedVlans = {
+      ...spanningTreeVlans,
+      [vlanId]: {
+        ...spanningTreeVlans[vlanId],
+        enabled: true
+      }
+    };
+
+    return {
+      success: true,
+      output: lang === 'tr' ?
+        `Spanning-tree VLAN ${vlanId} etkinlestirildi` :
+        `Spanning-tree enabled on VLAN ${vlanId}`,
+      newState: { spanningTreeVlans: updatedVlans }
+    };
+  }
+
+  // Handle priority or root configuration
+  const updatedVlans = {
+    ...spanningTreeVlans,
+    [vlanId]: {
+      ...spanningTreeVlans[vlanId],
+      enabled: true,
+      [subCommand]: value || (subCommand === 'root' ? 'primary' : '32768')
+    }
+  };
+
+  return {
+    success: true,
+    output: lang === 'tr' ?
+      `Spanning-tree VLAN ${vlanId} ${subCommand} yapilandirildi` :
+      `Spanning-tree VLAN ${vlanId} ${subCommand} configured`,
+    newState: { spanningTreeVlans: updatedVlans }
+  };
 }
 
 /**
