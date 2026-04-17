@@ -231,6 +231,35 @@ function cmdShutdown(state: any, input: string, ctx: any): any {
 
   const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, shutdown: true }));
 
+  // Recalculate STP states after shutdown with updated state
+  const { calculateSTPState } = require('./showCommands');
+  const updatedState = { ...state, ports: newPorts };
+  const stpState = calculateSTPState(updatedState, ctx);
+  
+  // Update port states based on STP calculation
+  stpState.forEach((stpInfo: any, portId: string) => {
+    if (newPorts[portId]) {
+      const isBlocked = stpInfo.state === 'BLK';
+      const isShutdown = newPorts[portId].shutdown;
+      const stateMap: Record<string, 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled'> = {
+        'FWD': 'forwarding',
+        'BLK': 'blocking',
+        'LIS': 'listening',
+        'LRN': 'learning',
+        'DIS': 'disabled'
+      };
+      newPorts[portId] = {
+        ...newPorts[portId],
+        spanningTree: {
+          role: stpInfo.role,
+          state: stateMap[stpInfo.state] || 'forwarding'
+        },
+        // Update status field for LED color display (only if not shutdown)
+        status: isShutdown ? 'disabled' : (isBlocked ? 'blocked' : 'connected')
+      };
+    }
+  });
+
   return {
     success: true,
     newState: { ports: newPorts }
@@ -259,6 +288,35 @@ function cmdNoShutdown(state: any, input: string, ctx: any): any {
   }
 
   const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, shutdown: false }));
+
+  // Recalculate STP states after no shutdown with updated state
+  const { calculateSTPState } = require('./showCommands');
+  const updatedState = { ...state, ports: newPorts };
+  const stpState = calculateSTPState(updatedState, ctx);
+  
+  // Update port states based on STP calculation
+  stpState.forEach((stpInfo: any, portId: string) => {
+    if (newPorts[portId]) {
+      const isBlocked = stpInfo.state === 'BLK';
+      const isShutdown = newPorts[portId].shutdown;
+      const stateMap: Record<string, 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled'> = {
+        'FWD': 'forwarding',
+        'BLK': 'blocking',
+        'LIS': 'listening',
+        'LRN': 'learning',
+        'DIS': 'disabled'
+      };
+      newPorts[portId] = {
+        ...newPorts[portId],
+        spanningTree: {
+          role: stpInfo.role,
+          state: stateMap[stpInfo.state] || 'forwarding'
+        },
+        // Update status field for LED color display (only if not shutdown)
+        status: isShutdown ? 'disabled' : (isBlocked ? 'blocked' : 'connected')
+      };
+    }
+  });
 
   return {
     success: true,

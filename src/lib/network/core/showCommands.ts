@@ -1060,7 +1060,7 @@ export function calculateSTPState(
   );
 
   // Find connected switches and their MAC addresses for root bridge election
-  // Filter out connections to powered-off devices
+  // Filter out connections to powered-off devices and shutdown ports
   const connectedSwitches: { deviceId: string; macAddress: string; portId: string; isSource: boolean }[] = [];
   deviceConnections.forEach((conn: any) => {
     const isSource = conn.sourceDeviceId === sourceDeviceId;
@@ -1071,6 +1071,12 @@ export function calculateSTPState(
 
     // Skip connections to powered-off devices
     if (connectedDevice && connectedDevice.status === 'offline') {
+      return;
+    }
+
+    // Skip connections where local port is shutdown
+    const localPort = state.ports[localPortId];
+    if (localPort && localPort.shutdown) {
       return;
     }
 
@@ -1236,21 +1242,32 @@ export function calculateSTPState(
 
     let role: string;
     let portState: string;
+    const isPortfast = port.spanningTree?.portfast || false;
+    const previousState = port.spanningTree?.state || 'blocking';
 
     if (port.shutdown) {
       role = 'Desg';
       portState = 'BLK';
     } else if (isRootBridge) {
       role = 'Desg';
+      // Root bridge ports go to forwarding (skip listening/learning if portfast)
       portState = 'FWD';
     } else {
       const { pathCost, nextHopPort } = shortestPathToRoot(sourceDeviceId);
       
       // Check if this port is the root port (next hop towards root)
       if (portId === nextHopPort) {
-        // This is the root port - it forwards
+        // This is the root port - it should forward
         role = 'Root';
-        portState = 'FWD';
+        // If portfast or already forwarding, go directly to FWD
+        // Otherwise, show learning state (simplified - in real STP would go listening→learning→forwarding)
+        if (isPortfast || previousState === 'forwarding') {
+          portState = 'FWD';
+        } else if (previousState === 'blocking') {
+          portState = 'LRN'; // Learning state
+        } else {
+          portState = 'FWD';
+        }
       } else {
         // For non-root ports, check if they should be designated or alternate
         const neighbor = connectedSwitches.find(sw => sw.portId === portId);
@@ -1282,7 +1299,15 @@ export function calculateSTPState(
             } else {
               // No alternative path - this port must be designated
               role = 'Desg';
-              portState = 'FWD';
+              // If portfast or already forwarding, go directly to FWD
+              // Otherwise, show learning state
+              if (isPortfast || previousState === 'forwarding') {
+                portState = 'FWD';
+              } else if (previousState === 'blocking') {
+                portState = 'LRN'; // Learning state
+              } else {
+                portState = 'FWD';
+              }
             }
           }
         } else {
@@ -1299,8 +1324,7 @@ export function calculateSTPState(
   return stpState;
 }
 
-/**
- * Show Spanning Tree
+/** Show Spanning Tree
  */
 function cmdShowSpanningTree(
   state: any,
