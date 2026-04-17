@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, useMemo, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes } from '@/lib/store/appStore';
 import { SwitchState, CableType, CableInfo, isCableCompatible } from '@/lib/network/types';
 import { checkDeviceConnectivity, getPingDiagnostics, getWirelessSignalStrength, getWirelessDistance } from '@/lib/network/connectivity';
@@ -23,6 +23,22 @@ import { EnvironmentSettingsPanel } from './EnvironmentSettingsPanel';
 import { useEnvironment } from '@/lib/store/appStore';
 import { Plus, Power, Trash2, Monitor, Network, Laptop } from "lucide-react";
 import { cn } from '@/lib/utils';
+
+const allocatedMacAddresses = new Set<string>();
+const generateMacAddress = (): string => {
+  const chars = '0123456789ABCDEF';
+  while (true) {
+    let hex = '';
+    for (let i = 0; i < 12; i++) {
+      hex += chars[Math.floor(Math.random() * 16)];
+    }
+    const mac = `${hex.slice(0, 4)}.${hex.slice(4, 8)}.${hex.slice(8, 12)}`;
+    if (!allocatedMacAddresses.has(mac)) {
+      allocatedMacAddresses.add(mac);
+      return mac;
+    }
+  }
+};
 
 interface NetworkTopologyProps {
   cableInfo: CableInfo;
@@ -157,23 +173,6 @@ export function NetworkTopology({
   const isDark = theme === 'dark';
   const isTR = language === 'tr';
 
-  // Helper to generate a random unique Dot-formatted MAC address (xxxx.xxxx.xxxx)
-  const allocatedMacAddressesRef = useRef<Set<string>>(new Set());
-  const generateMacAddress = (): string => {
-    const chars = '0123456789ABCDEF';
-    while (true) {
-      let hex = '';
-      for (let i = 0; i < 12; i++) {
-        hex += chars[Math.floor(Math.random() * 16)];
-      }
-      const mac = `${hex.slice(0, 4)}.${hex.slice(4, 8)}.${hex.slice(8, 12)}`;
-      if (!allocatedMacAddressesRef.current.has(mac)) {
-        allocatedMacAddressesRef.current.add(mac);
-        return mac;
-      }
-    }
-  };
-
   // Default devices for initial state
   const defaultDevices: CanvasDevice[] = [
     {
@@ -236,6 +235,21 @@ export function NetworkTopology({
 
   const [zoom, setZoom] = useState(zoomProp ?? DEFAULT_ZOOM);
   const [pan, setPan] = useState(panProp ?? { x: 0, y: 0 });
+  const [canvasDimensions, setCanvasDimensions] = useState({ width: 0, height: 0 });
+
+  // Update canvas dimensions on resize and mount
+  useLayoutEffect(() => {
+    if (!canvasRef.current) return;
+    const updateDimensions = () => {
+      if (canvasRef.current) {
+        const { width, height } = canvasRef.current.getBoundingClientRect();
+        setCanvasDimensions({ width, height });
+      }
+    };
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
 
   // Sync zoom and pan state from props (parent controls)
   useEffect(() => {
@@ -288,11 +302,11 @@ export function NetworkTopology({
   );
 
   const { visibleDevices, visibleConnections } = useMemo(() => {
-    // If not active, or no canvas, return all items to prevent them from disappearing
+    // If not active, or no dimensions, return all items to prevent them from disappearing
     // when calculating visibility while the container has 0 width/height.
-    if (!isActive || !canvasRef.current) return { visibleDevices: devices, visibleConnections: connections };
+    if (!isActive || canvasDimensions.width === 0) return { visibleDevices: devices, visibleConnections: connections };
 
-    const { width, height } = canvasRef.current.getBoundingClientRect();
+    const { width, height } = canvasDimensions;
 
     // If container has 0 width or height (e.g. hidden by CSS), don't filter out things
     if (width === 0 || height === 0 || !zoom || zoom <= 0) {
@@ -358,7 +372,7 @@ export function NetworkTopology({
     });
 
     return { visibleDevices: vDevices, visibleConnections: vConnections };
-  }, [devices, connections, pan, zoom, isActive, visibleDeviceIds, visibleConnectionIds, updateViewport]);
+  }, [devices, connections, zoom, pan, isActive, canvasDimensions, visibleDeviceIds, visibleConnectionIds, updateViewport]);
 
   const devicesSortedForRender = useMemo(() => {
     return [...visibleDevices].sort((a, b) => {
@@ -558,6 +572,14 @@ export function NetworkTopology({
     return 'pc';
   }, []);
   const pingAnimationRef = useRef<number | null>(null);
+
+  // Added refs moved from below to avoid TDZ and sync issues
+  const noteCounterRef = useRef<number>(0);
+  const noteTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
+  const lastStateRef = useRef<string>('');
+  const topologyChangeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const portTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const deviceTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Start device config (Name and IP)
   const startDeviceConfig = useCallback((deviceId: string) => {
@@ -978,17 +1000,19 @@ export function NetworkTopology({
   }, [openContextMenu, pingMode]);
 
   // Keep refs in sync with state on every render (no cost - just ref assignment)
-  isPanningRef.current = isPanning;
-  panStartRef.current = panStart;
-  zoomRef.current = zoom;
-  panRef.current = pan;
-  draggedDeviceRef.current = draggedDevice;
-  dragStartPosRef.current = dragStartPos;
-  dragStartDevicePositionsRef.current = dragStartDevicePositions;
-  isActuallyDraggingRef.current = isActuallyDragging;
-  selectedDeviceIdsRef.current = selectedDeviceIds;
-  snapToGridRef.current = snapToGrid;
-  isDrawingConnectionRef.current = isDrawingConnection;
+  useLayoutEffect(() => {
+    isPanningRef.current = isPanning;
+    panStartRef.current = panStart;
+    zoomRef.current = zoom;
+    panRef.current = pan;
+    draggedDeviceRef.current = draggedDevice;
+    dragStartPosRef.current = dragStartPos;
+    dragStartDevicePositionsRef.current = dragStartDevicePositions;
+    isActuallyDraggingRef.current = isActuallyDragging;
+    selectedDeviceIdsRef.current = selectedDeviceIds;
+    snapToGridRef.current = snapToGrid;
+    isDrawingConnectionRef.current = isDrawingConnection;
+  });
 
   // Handle mouse move for panning and dragging
   // Registered ONCE (empty deps) - reads all mutable values through refs to avoid stale closures
@@ -2099,8 +2123,6 @@ export function NetworkTopology({
 
   // Note management functions
   const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
-  const noteCounterRef = useRef<number>(0);
-  const noteTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const [noteClipboard, setNoteClipboard] = useState('');
   const [noteTextSelection, setNoteTextSelection] = useState<{ noteId: string; start: number; end: number } | null>(null);
 
@@ -2111,29 +2133,31 @@ export function NetworkTopology({
   const [noteResizeStart, setNoteResizeStart] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   // Sync all refs on every render BEFORE they are used in handlers
-  latestDevicesRef.current = devices;
-  latestConnectionsRef.current = connections;
-  latestNotesRef.current = notes;
-  draggedNoteIdRef.current = draggedNoteId;
-  resizingNoteIdRef.current = resizingNoteId;
-  noteDragStartRef.current = noteDragStart;
-  noteResizeStartRef.current = noteResizeStart;
-  isPanningRef.current = isPanning;
-  panStartRef.current = panStart;
-  zoomRef.current = zoom;
-  panRef.current = pan;
-  draggedDeviceRef.current = draggedDevice;
-  dragStartPosRef.current = dragStartPos;
-  dragStartDevicePositionsRef.current = dragStartDevicePositions;
-  isActuallyDraggingRef.current = isActuallyDragging;
-  selectedDeviceIdsRef.current = selectedDeviceIds;
-  snapToGridRef.current = snapToGrid;
-  isDrawingConnectionRef.current = isDrawingConnection;
+  useLayoutEffect(() => {
+    latestDevicesRef.current = devices;
+    latestConnectionsRef.current = connections;
+    latestNotesRef.current = notes;
+    draggedNoteIdRef.current = draggedNoteId;
+    resizingNoteIdRef.current = resizingNoteId;
+    noteDragStartRef.current = noteDragStart;
+    noteResizeStartRef.current = noteResizeStart;
+    isPanningRef.current = isPanning;
+    panStartRef.current = panStart;
+    zoomRef.current = zoom;
+    panRef.current = pan;
+    draggedDeviceRef.current = draggedDevice;
+    dragStartPosRef.current = dragStartPos;
+    dragStartDevicePositionsRef.current = dragStartDevicePositions;
+    isActuallyDraggingRef.current = isActuallyDragging;
+    selectedDeviceIdsRef.current = selectedDeviceIds;
+    snapToGridRef.current = snapToGrid;
+    isDrawingConnectionRef.current = isDrawingConnection;
 
-  isTouchDraggingRef.current = isTouchDragging;
-  touchDraggedDeviceRef.current = touchDraggedDevice;
-  touchDragStartPosRef.current = touchDragStartPos;
-  touchDragOffsetRef.current = touchDragOffset;
+    isTouchDraggingRef.current = isTouchDragging;
+     touchDraggedDeviceRef.current = touchDraggedDevice;
+     touchDragStartPosRef.current = touchDragStartPos;
+     touchDragOffsetRef.current = touchDragOffset;
+   });
 
   const getNextNoteId = useCallback(() => {
     const existingIds = new Set(latestNotesRef.current.map((n) => n.id));
@@ -2496,8 +2520,6 @@ export function NetworkTopology({
   }, []);
 
   // Notify parent of topology changes — debounced to avoid calling at 60fps during drag
-  const lastStateRef = useRef<string>('');
-  const topologyChangeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!onTopologyChange) return;
     if (topologyChangeTimerRef.current) clearTimeout(topologyChangeTimerRef.current);
@@ -2521,7 +2543,6 @@ export function NetworkTopology({
     y: number;
     visible: boolean;
   } | null>(null);
-  const portTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Device Tooltip state
   const [deviceTooltip, setDeviceTooltip] = useState<{
@@ -2530,7 +2551,6 @@ export function NetworkTopology({
     y: number;
     visible: boolean;
   } | null>(null);
-  const deviceTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const getLivePort = useCallback((deviceId: string, portId: string) => {
     const deviceState = deviceStates?.get(deviceId);
@@ -3442,8 +3462,10 @@ export function NetworkTopology({
     pingAnimationRef.current = requestAnimationFrame(animate);
   }, [connections, deviceStates, devices, findPath]);
 
-  // Keep ref in sync so handleDeviceClick can call it before declaration order
-  startPingAnimationRef.current = startPingAnimation;
+  // Sync ref after declaration to avoid TDZ
+  useLayoutEffect(() => {
+    startPingAnimationRef.current = startPingAnimation;
+  }, [startPingAnimation]);
 
   // Listen for global ping animation trigger
   useEffect(() => {

@@ -15,6 +15,8 @@ const isSwitchDeviceType = (type?: DeviceType | string) => type === 'switchL2' |
 const resolveSwitchBootType = (switchModel?: string): 'switchL2' | 'switchL3' =>
   switchModel === 'WS-C3560-24PS' ? 'switchL3' : 'switchL2';
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 interface PCOutputLine {
   id: string;
   type: 'command' | 'output' | 'error' | 'success';
@@ -333,9 +335,7 @@ export function useDeviceManager() {
     return outputs;
   }, [pcOutputs]);
 
-  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-  const handleCommandForDevice = useCallback(async (
+  const handleCommandForDevice = useCallback(async function execute(
     deviceId: string,
     command: string,
     topologyDevices: CanvasDevice[] | null,
@@ -343,7 +343,7 @@ export function useDeviceManager() {
     setActiveDeviceType: (type: DeviceType) => void,
     topologyConnections: CanvasConnection[] | null = null,
     skipConfirm = false
-  ): Promise<any> => {
+  ): Promise<any> {
     // Handle cancellation token
     if (command === '__CANCEL__') {
       setIsLoading(false);
@@ -368,7 +368,7 @@ export function useDeviceManager() {
 
     if (command.includes('\n')) {
       for (const line of command.split('\n').filter(l => l.trim())) {
-        await handleCommandForDevice(deviceId, line.trim(), topologyDevices, setActiveDeviceId, setActiveDeviceType, topologyConnections, skipConfirm);
+        await execute(deviceId, line.trim(), topologyDevices, setActiveDeviceId, setActiveDeviceType, topologyConnections, skipConfirm);
       }
       return { success: true };
     }
@@ -399,7 +399,7 @@ export function useDeviceManager() {
           action: confirmationAction || command,
           onConfirm: () => {
             setConfirmDialog(null);
-            handleCommandForDevice(deviceId, command, topologyDevices, setActiveDeviceId, setActiveDeviceType, topologyConnections, true);
+            execute(deviceId, command, topologyDevices, setActiveDeviceId, setActiveDeviceType, topologyConnections, true);
           }
         });
 

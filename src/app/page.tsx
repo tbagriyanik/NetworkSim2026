@@ -161,6 +161,63 @@ export default function Home() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, effectiveTheme, setTheme } = useTheme();
 
+  // Refs moved to top to avoid TDZ errors
+  const navigationHistoryRef = useRef<{ tab: TabType; deviceId?: string; program?: string }[]>([{ tab: 'topology' }]);
+  const currentNavIndexRef = useRef(0);
+  const isInternalNavRef = useRef(false);
+  const activeTabRef = useRef<TabType>('topology');
+  const isApplyingHistoryRef = useRef(false);
+  const pendingHistoryActionRef = useRef<'undo' | 'redo' | null>(null);
+  const lastAppliedHistoryStateRef = useRef<ProjectState | null>(null);
+  const lastPushedStateRef = useRef<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const topologyContainerRef = useRef<HTMLDivElement | null>(null);
+  const pendingFocusDeviceRef = useRef<string | null>(null);
+  const prevTaskStatusRef = useRef<Map<string, boolean>>(new Map());
+  const shownToastsRef = useRef<Set<string>>(new Set());
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const modalHistoryPushedRef = useRef(false);
+
+  // State moved to top to avoid TDZ errors
+  const [activeDeviceId, setActiveDeviceId] = useState<string>('switch-1');
+  const [activeDeviceType, setActiveDeviceType] = useState<DeviceType>('switchL2');
+  const [topologyKey, setTopologyKey] = useState(0);
+  const [selectedDevice, setSelectedDevice] = useState<DeviceType | null>(null);
+  const [showPCPanel, setShowPCPanel] = useState(false);
+  const [showPCDeviceId, setShowPCDeviceId] = useState<string>('pc-1');
+  const [showRouterPanel, setShowRouterPanel] = useState(false);
+  const [showRouterDeviceId, setShowRouterDeviceId] = useState<string>('router-1');
+  const [showTasksModal, setShowTasksModal] = useState(false);
+  const [showTerminalModal, setShowTerminalModal] = useState(false);
+  const [deviceSearchQuery, setDeviceSearchQuery] = useState('');
+  const [focusDeviceId, setFocusDeviceId] = useState<string | null>(null);
+  const [isAppLoading, setIsLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(true);
+  const [hasHydrated, setHasHydrated] = useState(false);
+  const [showContent, setShowContent] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSaveTime, setLastSaveTime] = useState<string | null>(null);
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isEnvironmentPanelOpen, setIsEnvironmentPanelOpen] = useState(false);
+  const [showProjectPicker, setShowProjectPicker] = useState(false);
+  const [projectSearchQuery, setProjectSearchQuery] = useState('');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [isTopologyFullscreen, setIsTopologyFullscreen] = useState(false);
+  const [cableInfo, setCableInfo] = useState<CableInfo>({
+    connected: true,
+    cableType: 'straight',
+    sourceDevice: 'pc',
+    targetDevice: 'switchL2',
+  });
+  const [lastTaskEvent, setLastTaskEvent] = useState<{ type: 'completed' | 'failed'; taskName: string; timestamp: number } | null>(null);
+  const [saveDialog, setSaveDialog] = useState<{
+    show: boolean;
+    message: string;
+    onConfirm: (save: boolean) => void;
+  } | null>(null);
+
   const exampleLevelLabels = useMemo(
     () => ({
       basic: t.levelBasic,
@@ -209,14 +266,47 @@ export default function Home() {
     resetAll
   } = useDeviceManager();
 
-  const [isAppLoading, setIsLoading] = useState(true);
-  const [showSkeleton, setShowSkeleton] = useState(true);
-  const [hasHydrated, setHasHydrated] = useState(false);
+  // Zustand store state - using granular selectors to prevent cascading re-renders
+  const topologyDevices = useTopologyDevices();
+  const topologyConnections = useTopologyConnections();
+  const topologyNotes = useTopologyNotes();
+  const zoom = useZoom();
+  const pan = usePan();
+  const activeTab = useActiveTab();
+  const { setDevices, setConnections, setNotes, setZoom, setPan, setActiveTab, graphicsQuality, setGraphicsQuality } = useAppStore();
+
+  const focusDeviceInTopology = useCallback((deviceId?: string, targetZoom?: number) => {
+    if (!deviceId) return;
+    // Pan after any programmatic zoom/pan changes so centering uses fresh layout.
+    requestAnimationFrame(() => {
+      const rect = topologyContainerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const targetDevice = topologyDevices.find((device) => device.id === deviceId);
+      if (!targetDevice) return;
+
+      // Use provided targetZoom or read from store
+      const currentZoom = targetZoom ?? useAppStore.getState().topology.zoom;
+
+      // Calculate device center based on device type
+      const deviceWidth = (targetDevice.type === 'pc' || targetDevice.type === 'iot') ? 90 : targetDevice.type === 'router' ? 90 : 130;
+      const portsPerRow = 8;
+      const numRows = Math.ceil(targetDevice.ports.length / portsPerRow);
+      const deviceHeight = (targetDevice.type === 'pc' || targetDevice.type === 'iot') ? 99 : 80 + numRows * 14 + 5;
+      const deviceCenter = {
+        x: targetDevice.x + deviceWidth / 2,
+        y: targetDevice.y + deviceHeight / 2
+      };
+
+      setPan({
+        x: rect.width / 2 - deviceCenter.x * currentZoom,
+        y: rect.height / 2 - deviceCenter.y * currentZoom,
+      });
+    });
+  }, [topologyDevices, setPan]);
 
   useEffect(() => {
     setHasHydrated(true);
   }, []);
-  const [showContent, setShowContent] = useState(false);
 
   // Bootstrap performance monitoring in development without affecting production UX.
   useEffect(() => {
@@ -234,15 +324,6 @@ export default function Home() {
 
     return () => window.clearInterval(intervalId);
   }, []);
-
-  // Zustand store state - using granular selectors to prevent cascading re-renders
-  const topologyDevices = useTopologyDevices();
-  const topologyConnections = useTopologyConnections();
-  const topologyNotes = useTopologyNotes();
-  const zoom = useZoom();
-  const pan = usePan();
-  const activeTab = useActiveTab();
-  const { setDevices, setConnections, setNotes, setZoom, setPan, setActiveTab, graphicsQuality, setGraphicsQuality } = useAppStore();
 
   // Apply graphics quality class to body
   useEffect(() => {
@@ -263,13 +344,6 @@ export default function Home() {
   const setTopologyNotes = setNotes;
 
   // Currently active device in terminal
-  const [activeDeviceId, setActiveDeviceId] = useState<string>('switch-1');
-  const [activeDeviceType, setActiveDeviceType] = useState<DeviceType>('switchL2');
-
-  // Navigation history for back/forward support
-  const navigationHistoryRef = useRef<{ tab: TabType; deviceId?: string; program?: string }[]>([{ tab: 'topology' }]);
-  const currentNavIndexRef = useRef(0);
-  const isInternalNavRef = useRef(false);
 
   // Custom tab setter with navigation history
   const setActiveTabWithHistory = useCallback((tab: TabType) => {
@@ -540,6 +614,14 @@ export default function Home() {
     }
   }, [setGraphicsQuality]);
 
+  // Reset scroll when topology is reset or project loaded
+  useEffect(() => {
+    if (topologyContainerRef.current) {
+      topologyContainerRef.current.scrollTop = 0;
+      topologyContainerRef.current.scrollLeft = 0;
+    }
+  }, [topologyKey]);
+
   // Initialize defaults on mount to avoid hydration mismatch
   useEffect(() => {
     const savedData = localStorage.getItem('netsim_autosave');
@@ -640,29 +722,6 @@ export default function Home() {
     });
   }, [setTopologyDevices, setTopologyConnections]);
 
-  const [cableInfo, setCableInfo] = useState<CableInfo>({
-    connected: true,
-    cableType: 'straight',
-    sourceDevice: 'pc',
-    targetDevice: 'switchL2',
-  });
-
-  // Initial App Loading State
-  // No longer needed here as it's declared earlier
-
-  // Device manager hook moved to top
-
-  const [topologyKey, setTopologyKey] = useState(0);
-  const [selectedDevice, setSelectedDevice] = useState<DeviceType | null>(null);
-  const [showPCPanel, setShowPCPanel] = useState(false);
-  const [showPCDeviceId, setShowPCDeviceId] = useState<string>('pc-1');
-  const [showRouterPanel, setShowRouterPanel] = useState(false);
-  const [showRouterDeviceId, setShowRouterDeviceId] = useState<string>('router-1');
-  const [showTasksModal, setShowTasksModal] = useState(false);
-  const [showTerminalModal, setShowTerminalModal] = useState(false);
-
-  // Tasks modal state
-  // CLI modal state
   // Modal drag/resize — managed by useModalDragResize hook
   const {
     tasksModalPosition,
@@ -672,8 +731,6 @@ export default function Home() {
     handlePointerDown,
     handleResizeStart,
   } = useModalDragResize();
-  const [deviceSearchQuery, setDeviceSearchQuery] = useState('');
-  const [focusDeviceId, setFocusDeviceId] = useState<string | null>(null);
 
   // Get current state helper
   const getCurrentState = useCallback((): ProjectState => ({
@@ -693,9 +750,6 @@ export default function Home() {
   }), [topologyDevices, topologyConnections, topologyNotes, deviceStates, deviceOutputs, pcOutputs, pcHistories, cableInfo, activeDeviceId, activeDeviceType, zoom, pan, activeTab]);
 
   const { pushState, undo, redo, canUndo, canRedo, resetHistory, currentState } = useHistory(getCurrentState());
-
-  // Undo/redo must only work while topology tab is active.
-  const activeTabRef = useRef<TabType>('topology');
 
   // Handle undo/redo execution
   const applyProjectState = useCallback((state: ProjectState) => {
@@ -718,10 +772,6 @@ export default function Home() {
     }
     // setTopologyKey(prev => prev + 1); // Only for resets
   }, [setTopologyDevices, setTopologyConnections, setTopologyNotes, setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setCableInfo, setActiveDeviceId, setActiveDeviceType, setZoom, setPan, setActiveTab]);
-
-  const isApplyingHistoryRef = useRef(false);
-  const pendingHistoryActionRef = useRef<'undo' | 'redo' | null>(null);
-  const lastAppliedHistoryStateRef = useRef<ProjectState | null>(null);
 
   const handleUndo = useCallback(() => {
     if (activeTabRef.current !== 'topology') return;
@@ -750,7 +800,6 @@ export default function Home() {
 
   // Track changes and push to history
   // We need to debouncing this or use a ref to track if we're in the middle of an undo/redo
-  const lastPushedStateRef = useRef<string>('');
 
   // Initialize lastPushedStateRef with initial state to avoid redundant first push
   useEffect(() => {
@@ -823,9 +872,6 @@ export default function Home() {
       clearTimeout(skeletonTimer);
     };
   }, []);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const topologyContainerRef = useRef<HTMLDivElement | null>(null);
-  const pendingFocusDeviceRef = useRef<string | null>(null);
 
   // Initialize with empty Map if undefined to prevent SSR errors
   const safeDeviceStates = deviceStates || new Map();
@@ -858,10 +904,6 @@ export default function Home() {
   };
 
   // Track task completion changes globally
-  const prevTaskStatusRef = useRef<Map<string, boolean>>(new Map());
-  const shownToastsRef = useRef<Set<string>>(new Set());
-  const [lastTaskEvent, setLastTaskEvent] = useState<{ type: 'completed' | 'failed'; taskName: string; timestamp: number } | null>(null);
-
   useEffect(() => {
     const allTasks = [...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...wirelessTasks];
 
@@ -903,26 +945,6 @@ export default function Home() {
     vlanTasks.filter(task => getTaskStatus(task, state, taskContext)).length +
     securityTasks.filter(task => getTaskStatus(task, state, taskContext)).length +
     wirelessTasks.filter(task => getTaskStatus(task, state, taskContext)).length;
-
-  // Unsaved changes tracking
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [lastSaveTime, setLastSaveTime] = useState<string | null>(null);
-  const [saveDialog, setSaveDialog] = useState<{
-    show: boolean;
-    message: string;
-    onConfirm: (save: boolean) => void;
-  } | null>(null);
-
-  // UI state for dropdowns
-  const [showAboutModal, setShowAboutModal] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [isEnvironmentPanelOpen, setIsEnvironmentPanelOpen] = useState(false);
-  const [showProjectPicker, setShowProjectPicker] = useState(false);
-  const [projectSearchQuery, setProjectSearchQuery] = useState('');
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(0);
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const modalHistoryPushedRef = useRef(false);
 
   const normalizeDeviceType = useCallback((type: string): DeviceType => {
     if (type === 'switch') return 'switchL2';
@@ -1318,35 +1340,6 @@ ${state.bannerMOTD}
     }
     setShowMobileMenu(nextState);
   }, [showMobileMenu, closeLocalMenus, broadcastCloseMenus]);
-
-  const focusDeviceInTopology = useCallback((deviceId?: string, targetZoom?: number) => {
-    if (!deviceId) return;
-    // Pan after any programmatic zoom/pan changes so centering uses fresh layout.
-    requestAnimationFrame(() => {
-      const rect = topologyContainerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const targetDevice = topologyDevices.find((device) => device.id === deviceId);
-      if (!targetDevice) return;
-
-      // Use provided targetZoom or read from store
-      const currentZoom = targetZoom ?? useAppStore.getState().topology.zoom;
-
-      // Calculate device center based on device type
-      const deviceWidth = (targetDevice.type === 'pc' || targetDevice.type === 'iot') ? 90 : targetDevice.type === 'router' ? 90 : 130;
-      const portsPerRow = 8;
-      const numRows = Math.ceil(targetDevice.ports.length / portsPerRow);
-      const deviceHeight = (targetDevice.type === 'pc' || targetDevice.type === 'iot') ? 99 : 80 + numRows * 14 + 5;
-      const deviceCenter = {
-        x: targetDevice.x + deviceWidth / 2,
-        y: targetDevice.y + deviceHeight / 2
-      };
-
-      setPan({
-        x: rect.width / 2 - deviceCenter.x * currentZoom,
-        y: rect.height / 2 - deviceCenter.y * currentZoom,
-      });
-    });
-  }, [topologyDevices, setPan]);
 
   const resetTopologyView = useCallback(() => {
     const nextZoom = 1.0;
@@ -1835,11 +1828,6 @@ ${state.bannerMOTD}
     setZoom(1.0);
     setPan({ x: 0, y: 0 });
 
-    // Scroll to top
-    if (topologyContainerRef.current) {
-      topologyContainerRef.current.scrollTop = 0;
-      topologyContainerRef.current.scrollLeft = 0;
-    }
     window.scrollTo(0, 0);
 
     // Reset active selections
@@ -2089,8 +2077,6 @@ ${state.bannerMOTD}
       modalHistoryPushedRef.current = false;
     }
   }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel, showProjectPicker, showOnboarding]);
-
-  const [isTopologyFullscreen, setIsTopologyFullscreen] = useState(false);
 
   // Helper: tab açıklamaları (tooltip için)
   const getTabDescription = useCallback((tabId: TabType): string => {
@@ -2733,11 +2719,6 @@ ${state.bannerMOTD}
           // Reset zoom and pan to top-left
           setZoom(1.0);
           setPan({ x: 0, y: 0 });
-          // Scroll to top
-          if (topologyContainerRef.current) {
-            topologyContainerRef.current.scrollTop = 0;
-            topologyContainerRef.current.scrollLeft = 0;
-          }
           window.scrollTo(0, 0);
         } else {
           toast({
@@ -2767,11 +2748,6 @@ ${state.bannerMOTD}
     setZoom(1.0);
     setPan({ x: 0, y: 0 });
 
-    // Scroll to top
-    if (topologyContainerRef.current) {
-      topologyContainerRef.current.scrollTop = 0;
-      topologyContainerRef.current.scrollLeft = 0;
-    }
     window.scrollTo(0, 0);
   }, [loadProjectData, setShowProjectPicker, setZoom, setPan]);
 
@@ -4475,251 +4451,36 @@ ${state.bannerMOTD}
                   />
 
                   {/* PC Info Popover - Bottom Right Mini Panel */}
-                  {activeDeviceId && activeDeviceId.startsWith('pc-') && topologyDevices && (() => {
-                    const pc = topologyDevices.find(d => d.id === activeDeviceId);
-                    if (!pc) return null;
-                    return (
-                      <div className="hidden md:block fixed bottom-24 right-4 z-[10000] animate-scale-in">
-                        <div className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[260px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}>
-                          <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
-                            <div className="flex items-center gap-1.5">
-                              <Monitor className="w-3.5 h-3.5 text-blue-500" />
-                              <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{pc.name || pc.id}</span>
-                            </div>
-                            <button
-                              onClick={() => {
-                                setSelectedDevice(null);
-                                setActiveDeviceId('');
-                              }}
-                              className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                          <div className="p-2 space-y-1 text-[10px]">
-                            <div className="flex justify-between items-center">
-                              <span className="opacity-50">IP</span>
-                              <span className="font-mono text-blue-500">{pc.ip || '0.0.0.0'}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="opacity-50">Subnet</span>
-                              <span className="font-mono opacity-80">{pc.subnet || '255.255.255.0'}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="opacity-50">GW</span>
-                              <span className="font-mono opacity-80">{pc.gateway || '0.0.0.0'}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="opacity-50">MAC</span>
-                              <span className="font-mono opacity-30 text-[9px]">{pc.macAddress || 'N/A'}</span>
-                            </div>
-                            {pc.wifi && pc.wifi.enabled && (
-                              <div className="pt-1 border-t border-slate-500/20">
-                                <div className="flex justify-between items-center mb-1">
-                                  <span className="opacity-50">WiFi</span>
-                                  <span className="text-[8px] font-bold text-purple-500">{language === 'tr' ? 'Aktif' : 'Active'}</span>
-                                </div>
-                                <div className="flex gap-2 text-[9px]">
-                                  <span className="opacity-50">SSID:</span>
-                                  <span className="font-mono">{pc.wifi.ssid || '-'}</span>
-                                </div>
-                                <div className="flex gap-2 text-[9px]">
-                                  <span className="opacity-50">{language === 'tr' ? 'Kanal' : 'Ch'}</span>
-                                  <span className="font-mono">{pc.wifi.channel || '-'}</span>
-                                  <span className="opacity-50">|</span>
-                                  <span className="font-mono uppercase">{pc.wifi.security || '-'}</span>
-                                </div>
-                                {(() => {
-                                  const strength = getWirelessSignalStrength(pc, topologyDevices, deviceStates);
-                                  const pctMap: Record<number, string> = { 0: '0%', 1: '1%', 2: '25%', 3: '50%', 4: '75%', 5: '100%' };
-                                  const colorMap: Record<number, string> = { 0: 'text-slate-400', 1: 'text-rose-500', 2: 'text-orange-500', 3: 'text-yellow-500', 4: 'text-emerald-500', 5: 'text-emerald-500' };
-                                  if (strength === 0) return null;
-                                  return (
-                                    <div className="flex justify-between items-center text-[9px] mt-0.5">
-                                      <span className="opacity-50">{language === 'tr' ? 'Sinyal' : 'Signal'}</span>
-                                      <span className={`font-bold ${colorMap[strength]}`}>{pctMap[strength]}</span>
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-                            )}
-                            {pc.services && (
-                              <div className="pt-1 border-t border-slate-500/20">
-                                <div className="flex justify-between items-center mb-0.5">
-                                  <span className="opacity-50">{language === 'tr' ? 'Servisler' : 'Services'}</span>
-                                  <div className="flex flex-wrap gap-0.5">
-                                    {pc.services.http?.enabled && (
-                                      <span className="px-1 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[8px] font-bold border border-amber-500/20">HTTP</span>
-                                    )}
-                                    {pc.services.dns?.enabled && (
-                                      <span className="px-1 py-0.5 rounded bg-blue-500/20 text-blue-500 text-[8px] font-bold border border-blue-500/20">DNS</span>
-                                    )}
-                                    {pc.services.dhcp?.enabled && (
-                                      <span className="px-1 py-0.5 rounded bg-purple-500/20 text-purple-500 text-[8px] font-bold border border-purple-500/20">DHCP</span>
-                                    )}
-                                    {!pc.services.http?.enabled && !pc.services.dns?.enabled && !pc.services.dhcp?.enabled && (
-                                      <span className="text-[8px] opacity-40 italic">{language === 'tr' ? 'Yok' : 'None'}</span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                            <div className="pt-1 border-t border-slate-500/20">
-                              <div className="flex justify-between items-center">
-                                <span className="opacity-50">{language === 'tr' ? 'IP Modu' : 'IP Mode'}</span>
-                                <span className={`text-[8px] font-bold tracking-wider ${pc.ipConfigMode === 'dhcp' ? 'text-green-500' : 'opacity-60'}`}>
-                                  {pc.ipConfigMode === 'dhcp' ? 'DHCP' : (language === 'tr' ? 'STATIK' : 'STATIC')}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
-                            <button
-                              onClick={() => {
-                                handleDeviceDoubleClick(pc.type, pc.id);
-                              }}
-                              className={`w-full py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-                            >
-                              {language === 'tr' ? 'CMD Aç' : 'Open CMD'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  {activeDeviceId && activeDeviceId.startsWith('pc-') && topologyDevices && (
+                    <PCInfoPopover
+                      pc={topologyDevices.find(d => d.id === activeDeviceId)!}
+                      language={language}
+                      isDark={isDark}
+                      onClose={() => {
+                        setSelectedDevice(null);
+                        setActiveDeviceId('');
+                      }}
+                      handleDeviceDoubleClick={handleDeviceDoubleClick}
+                      topologyDevices={topologyDevices}
+                      deviceStates={deviceStates}
+                    />
+                  )}
 
                   {/* Router Info Popover - Bottom Right Mini Panel */}
-                  {activeDeviceId && activeDeviceId.startsWith('router-') && topologyDevices && (() => {
-                    const router = topologyDevices.find(d => d.id === activeDeviceId);
-                    if (!router) return null;
-                    const routerState = deviceStates.get(router.id);
-
-                    // Get port information
-                    const ports = routerState?.ports ? Object.values(routerState.ports) : (router.ports || []);
-                    // Router always shows 7 ports in this model (Console, 5x Gi, 1x WLAN)
-                    const totalPorts = Math.max(7, ports.length);
-
-                    // Use topology connections for most reliable count
-                    const connectedPorts = topologyConnections?.filter(conn =>
-                      conn.sourceDeviceId === router.id || conn.targetDeviceId === router.id
-                    ).length || 0;
-
-                    // Get DHCP pools
-                    const dhcpPools = routerState?.dhcpPools ? Object.keys(routerState.dhcpPools).length : 0;
-
-                    // Get WiFi status
-                    const wifiEnabled = routerState?.ports?.['wlan0']?.wifi?.mode === 'ap' || router?.wifi?.enabled;
-                    const wifiConfig = routerState?.ports?.['wlan0']?.wifi || router?.wifi;
-
-                    // Get IP addresses
-                    const ipAddresses = ports
-                      .filter((p: any) => p.ipAddress && !p.shutdown)
-                      .map((p: any) => `${p.id}: ${p.ipAddress}${p.subnetMask ? `/${p.subnetMask}` : ''}`)
-                      .slice(0, 3);
-
-                    return (
-                      <div className="hidden md:block fixed bottom-24 right-4 z-[10000] animate-scale-in">
-                        <div className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[280px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}>
-                          <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
-                            <div className="flex items-center gap-1.5">
-                              <Server className="w-3.5 h-3.5 text-emerald-500" />
-                              <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
-                            </div>
-                            <button
-                              onClick={() => {
-                                setSelectedDevice(null);
-                                setActiveDeviceId('');
-                              }}
-                              className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                          <div className="p-2 space-y-1 text-[10px]">
-                            <div className="flex justify-between items-center">
-                              <span className="opacity-50">{language === 'tr' ? 'Portlar' : 'Ports'}</span>
-                              <span className="font-mono">
-                                <span className="text-green-500">{connectedPorts}</span>
-                                <span className="opacity-50">/{totalPorts}</span>
-                                <span className="ml-1 opacity-50">{language === 'tr' ? 'bağlı' : 'connected'}</span>
-                              </span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="opacity-50">{language === 'tr' ? 'Yönlendirme' : 'Routing'}</span>
-                              <span className={`text-[8px] font-bold tracking-wider ${routerState?.ipRouting ? 'text-green-500' : 'text-slate-500'}`}>
-                                {routerState?.ipRouting ? (language === 'tr' ? 'Aktif' : 'Enabled') : (language === 'tr' ? 'Pasif' : 'Disabled')}
-                              </span>
-                            </div>
-                            {wifiEnabled && (
-                              <div className="flex justify-between items-center">
-                                <span className="opacity-50 flex items-center gap-1">
-                                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                    <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                                    <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                                    <line x1="12" y1="20" x2="12.01" y2="20" />
-                                  </svg>
-                                  WiFi
-                                </span>
-                                <span className="text-cyan-500">{language === 'tr' ? 'Aktif' : 'Active'}</span>
-                              </div>
-                            )}
-                            {wifiEnabled && wifiConfig?.ssid && (
-                              <div className="pt-1 border-t border-slate-500/20 space-y-1">
-                                <div className="flex gap-2 text-[9px]">
-                                  <span className="opacity-50">SSID:</span>
-                                  <span className="font-mono">{wifiConfig.ssid}</span>
-                                </div>
-                                {wifiConfig.channel && (
-                                  <div className="flex gap-2 text-[9px]">
-                                    <span className="opacity-50">{language === 'tr' ? 'Kanal' : 'Ch'}:</span>
-                                    <span className="font-mono">{wifiConfig.channel}</span>
-                                    {wifiConfig.security && (
-                                      <>
-                                        <span className="opacity-50">|</span>
-                                        <span className="font-mono uppercase">{wifiConfig.security}</span>
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            {dhcpPools > 0 && (
-                              <div className="flex justify-between items-center">
-                                <span className="opacity-50">DHCP</span>
-                                <span className="font-mono">
-                                  <span className="text-orange-500">{dhcpPools}</span>
-                                  <span className="ml-1 opacity-50">{language === 'tr' ? 'havuz' : 'pool(s)'}</span>
-                                </span>
-                              </div>
-                            )}
-                            {ipAddresses.length > 0 && (
-                              <div className="pt-1 border-t border-slate-500/20">
-                                <div className="text-[9px] mb-1 opacity-50">
-                                  {language === 'tr' ? 'IP Adresleri' : 'IP Addresses'}:
-                                </div>
-                                {ipAddresses.map((ip, idx) => (
-                                  <div key={idx} className="font-mono text-[9px] text-blue-500">
-                                    {ip}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
-                            <button
-                              onClick={() => {
-                                handleDeviceDoubleClick(router.type, router.id);
-                              }}
-                              className={`w-full py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
-                            >
-                              {language === 'tr' ? 'CLI Aç' : 'Open CLI'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  {activeDeviceId && activeDeviceId.startsWith('router-') && topologyDevices && (
+                    <RouterInfoPopover
+                      router={topologyDevices.find(d => d.id === activeDeviceId)!}
+                      routerState={deviceStates.get(activeDeviceId)}
+                      language={language}
+                      isDark={isDark}
+                      onClose={() => {
+                        setSelectedDevice(null);
+                        setActiveDeviceId('');
+                      }}
+                      handleDeviceDoubleClick={handleDeviceDoubleClick}
+                      topologyConnections={topologyConnections}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -4884,5 +4645,247 @@ ${state.bannerMOTD}
         </div>
       </div >
     </AppErrorBoundary >
+  );
+}
+
+interface PCInfoPopoverProps {
+  pc: CanvasDevice;
+  language: 'tr' | 'en';
+  isDark: boolean;
+  onClose: () => void;
+  handleDeviceDoubleClick: (type: DeviceType, id: string) => void;
+  topologyDevices: CanvasDevice[];
+  deviceStates: Map<string, SwitchState>;
+}
+
+function PCInfoPopover({ pc, language, isDark, onClose, handleDeviceDoubleClick, topologyDevices, deviceStates }: PCInfoPopoverProps) {
+  return (
+    <div className="hidden md:block fixed bottom-24 right-4 z-[10000] animate-scale-in">
+      <div className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[260px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}>
+        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+          <div className="flex items-center gap-1.5">
+            <Monitor className="w-3.5 h-3.5 text-blue-500" />
+            <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{pc.name || pc.id}</span>
+          </div>
+          <button
+            onClick={onClose}
+            className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+        <div className="p-2 space-y-1 text-[10px]">
+          <div className="flex justify-between items-center">
+            <span className="opacity-50">IP</span>
+            <span className="font-mono text-blue-500">{pc.ip || '0.0.0.0'}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="opacity-50">Subnet</span>
+            <span className="font-mono opacity-80">{pc.subnet || '255.255.255.0'}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="opacity-50">GW</span>
+            <span className="font-mono opacity-80">{pc.gateway || '0.0.0.0'}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="opacity-50">MAC</span>
+            <span className="font-mono opacity-30 text-[9px]">{pc.macAddress || 'N/A'}</span>
+          </div>
+          {pc.wifi && pc.wifi.enabled && (
+            <div className="pt-1 border-t border-slate-500/20">
+              <div className="flex justify-between items-center mb-1">
+                <span className="opacity-50">WiFi</span>
+                <span className="text-[8px] font-bold text-purple-500">{language === 'tr' ? 'Aktif' : 'Active'}</span>
+              </div>
+              <div className="flex gap-2 text-[9px]">
+                <span className="opacity-50">SSID:</span>
+                <span className="font-mono">{pc.wifi.ssid || '-'}</span>
+              </div>
+              <div className="flex gap-2 text-[9px]">
+                <span className="opacity-50">{language === 'tr' ? 'Kanal' : 'Ch'}</span>
+                <span className="font-mono">{pc.wifi.channel || '-'}</span>
+                <span className="opacity-50">|</span>
+                <span className="font-mono uppercase">{pc.wifi.security || '-'}</span>
+              </div>
+              {(() => {
+                const strength = getWirelessSignalStrength(pc, topologyDevices, deviceStates);
+                const pctMap: Record<number, string> = { 0: '0%', 1: '1%', 2: '25%', 3: '50%', 4: '75%', 5: '100%' };
+                const colorMap: Record<number, string> = { 0: 'text-slate-400', 1: 'text-rose-500', 2: 'text-orange-500', 3: 'text-yellow-500', 4: 'text-emerald-500', 5: 'text-emerald-500' };
+                if (strength === 0) return null;
+                return (
+                  <div className="flex justify-between items-center text-[9px] mt-0.5">
+                    <span className="opacity-50">{language === 'tr' ? 'Sinyal' : 'Signal'}</span>
+                    <span className={`font-bold ${colorMap[strength]}`}>{pctMap[strength]}</span>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+          {pc.services && (
+            <div className="pt-1 border-t border-slate-500/20">
+              <div className="flex justify-between items-center mb-0.5">
+                <span className="opacity-50">{language === 'tr' ? 'Servisler' : 'Services'}</span>
+                <div className="flex flex-wrap gap-0.5">
+                  {pc.services.http?.enabled && (
+                    <span className="px-1 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[8px] font-bold border border-amber-500/20">HTTP</span>
+                  )}
+                  {pc.services.dns?.enabled && (
+                    <span className="px-1 py-0.5 rounded bg-blue-500/20 text-blue-500 text-[8px] font-bold border border-blue-500/20">DNS</span>
+                  )}
+                  {pc.services.dhcp?.enabled && (
+                    <span className="px-1 py-0.5 rounded bg-purple-500/20 text-purple-500 text-[8px] font-bold border border-purple-500/20">DHCP</span>
+                  )}
+                  {!pc.services.http?.enabled && !pc.services.dns?.enabled && !pc.services.dhcp?.enabled && (
+                    <span className="text-[8px] opacity-40 italic">{language === 'tr' ? 'Yok' : 'None'}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="pt-1 border-t border-slate-500/20">
+            <div className="flex justify-between items-center">
+              <span className="opacity-50">{language === 'tr' ? 'IP Modu' : 'IP Mode'}</span>
+              <span className={`text-[8px] font-bold tracking-wider ${pc.ipConfigMode === 'dhcp' ? 'text-green-500' : 'opacity-60'}`}>
+                {pc.ipConfigMode === 'dhcp' ? 'DHCP' : (language === 'tr' ? 'STATIK' : 'STATIC')}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+          <button
+            onClick={() => {
+              handleDeviceDoubleClick(pc.type, pc.id);
+            }}
+            className={`w-full py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+          >
+            {language === 'tr' ? 'CMD Aç' : 'Open CMD'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface RouterInfoPopoverProps {
+  router: CanvasDevice;
+  routerState?: SwitchState;
+  language: 'tr' | 'en';
+  isDark: boolean;
+  onClose: () => void;
+  handleDeviceDoubleClick: (type: DeviceType, id: string) => void;
+  topologyConnections: CanvasConnection[];
+}
+
+function RouterInfoPopover({ router, routerState, language, isDark, onClose, handleDeviceDoubleClick, topologyConnections }: RouterInfoPopoverProps) {
+  // Get port information
+  const ports = routerState?.ports ? Object.values(routerState.ports) : (router.ports || []);
+  // Router always shows 7 ports in this model (Console, 5x Gi, 1x WLAN)
+  const totalPorts = Math.max(7, ports.length);
+
+  // Use topology connections for most reliable count
+  const connectedPorts = topologyConnections?.filter(conn =>
+    conn.sourceDeviceId === router.id || conn.targetDeviceId === router.id
+  ).length || 0;
+
+  // Get DHCP pools
+  const dhcpPools = routerState?.dhcpPools ? Object.keys(routerState.dhcpPools).length : 0;
+
+  // Get WiFi status
+  const wifiEnabled = routerState?.ports?.['wlan0']?.wifi?.mode === 'ap' || router?.wifi?.enabled;
+  const wifiConfig = routerState?.ports?.['wlan0']?.wifi || router?.wifi;
+
+  // Get IP addresses
+  const ipAddresses = ports
+    .filter((p: any) => p.ipAddress && !p.shutdown)
+    .map((p: any) => `${p.id}: ${p.ipAddress}${p.subnetMask ? `/${p.subnetMask}` : ''}`)
+    .slice(0, 3);
+
+  return (
+    <div className="hidden md:block fixed bottom-24 right-4 z-[10000] animate-scale-in">
+      <div className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[280px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}>
+        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+          <div className="flex items-center gap-1.5">
+            <Server className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
+          </div>
+          <button
+            onClick={onClose}
+            className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+        <div className="p-2 space-y-1 text-[10px]">
+          <div className="flex justify-between items-center">
+            <span className="opacity-50">{language === 'tr' ? 'Portlar' : 'Ports'}</span>
+            <span className="font-mono">
+              <span className="text-green-500">{connectedPorts}</span>
+              <span className="opacity-50">/{totalPorts}</span>
+              <span className="ml-1 opacity-50">{language === 'tr' ? 'bağlı' : 'connected'}</span>
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="opacity-50">{language === 'tr' ? 'Yönlendirme' : 'Routing'}</span>
+            <span className={`text-[8px] font-bold tracking-wider ${routerState?.ipRouting ? 'text-green-500' : 'text-slate-500'}`}>
+              {routerState?.ipRouting ? (language === 'tr' ? 'Aktif' : 'Enabled') : (language === 'tr' ? 'Pasif' : 'Disabled')}
+            </span>
+          </div>
+          {wifiEnabled && (
+            <div className="flex justify-between items-center">
+              <span className="opacity-50 flex items-center gap-1">
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                  <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                  <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                  <line x1="12" y1="20" x2="12.01" y2="20" />
+                </svg>
+                WiFi
+              </span>
+              <span className="text-cyan-500">{language === 'tr' ? 'Aktif' : 'Active'}</span>
+            </div>
+          )}
+          {wifiEnabled && wifiConfig?.ssid && (
+            <div className="pt-1 border-t border-slate-500/20 space-y-1">
+              <div className="flex gap-2 text-[9px]">
+                <span className="opacity-50">SSID:</span>
+                <span className="font-mono font-bold text-cyan-500">{wifiConfig.ssid}</span>
+              </div>
+              <div className="flex gap-2 text-[9px]">
+                <span className="opacity-50">{language === 'tr' ? 'Kanal' : 'Ch'}:</span>
+                <span className="font-mono">{wifiConfig.channel || '2.4GHz'}</span>
+                <span className="opacity-50">|</span>
+                <span className="font-mono uppercase">{wifiConfig.security || 'open'}</span>
+              </div>
+            </div>
+          )}
+          {dhcpPools > 0 && (
+            <div className="flex justify-between items-center">
+              <span className="opacity-50">DHCP</span>
+              <span className="font-bold text-purple-500">{dhcpPools} {language === 'tr' ? 'Havuz' : 'Pools'}</span>
+            </div>
+          )}
+          {ipAddresses.length > 0 && (
+            <div className="pt-1 border-t border-slate-500/20">
+              <div className="opacity-30 text-[8px] mb-0.5 uppercase font-bold tracking-tighter">IP Addresses</div>
+              {ipAddresses.map((addr: string, i: number) => (
+                <div key={i} className="font-mono text-[9px] opacity-70 truncate">
+                  {addr}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+          <button
+            onClick={() => {
+              handleDeviceDoubleClick(router.type, router.id);
+            }}
+            className={`w-full py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+          >
+            {language === 'tr' ? 'CLI Aç' : 'Open CLI'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
