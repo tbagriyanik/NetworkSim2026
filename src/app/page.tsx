@@ -2534,6 +2534,32 @@ ${state.bannerMOTD}
       // Apply STP updates to device states
       setDeviceStates(stpUpdatedStates);
 
+      // 8.5. Sync STP state from deviceStates to topologyDevices ports
+      const stpSyncedDevices = refreshedDevices.map((device) => {
+        const deviceState = stpUpdatedStates.get(device.id);
+        if (!deviceState || !deviceState.ports) return device;
+
+        // Update ports with spanningTree state from deviceState
+        const updatedPorts = device.ports.map((port) => {
+          const statePort = deviceState.ports[port.id];
+          if (statePort && statePort.spanningTree) {
+            return {
+              ...port,
+              spanningTree: statePort.spanningTree
+            };
+          }
+          return port;
+        });
+
+        return {
+          ...device,
+          ports: updatedPorts
+        };
+      });
+
+      // Update topology devices with STP-synced ports
+      setTopologyDevices(stpSyncedDevices);
+
       // 9. Show detailed notification
       const totalDevices = connectedPCs.length + activeAPs.length + disconnectedPCs.length + disconnectedAPs.length;
       const stpMessage = stpUpdatedCount > 0

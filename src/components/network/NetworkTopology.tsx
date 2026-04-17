@@ -3598,16 +3598,23 @@ export function NetworkTopology({
     const isCompatible = conn.cableType === 'console'
       ? isCableCompatible(cableInfoForConnection)
       : true;
-    const color = isCompatible ? CABLE_COLORS[conn.cableType].primary : CABLE_COLORS.error.primary;
-
+    
     // Check if either port is in STP blocking state
     const sourceState = deviceStates?.get(conn.sourceDeviceId);
     const targetState = deviceStates?.get(conn.targetDeviceId);
-    const sourcePort = sourceState?.ports?.[conn.sourcePort];
-    const targetPort = targetState?.ports?.[conn.targetPort];
+    
+    // Try to find port with case-insensitive matching
+    const sourcePort = sourceState?.ports?.[conn.sourcePort] || 
+                      Object.values(sourceState?.ports || {}).find(p => p.id.toLowerCase() === conn.sourcePort.toLowerCase());
+    const targetPort = targetState?.ports?.[conn.targetPort] || 
+                      Object.values(targetState?.ports || {}).find(p => p.id.toLowerCase() === conn.targetPort.toLowerCase());
+    
     const isSourcePortBlocked = sourcePort?.spanningTree?.state === 'blocking' || sourcePort?.spanningTree?.role === 'alternate';
     const isTargetPortBlocked = targetPort?.spanningTree?.state === 'blocking' || targetPort?.spanningTree?.role === 'alternate';
     const isSTPBlocked = isSourcePortBlocked || isTargetPortBlocked;
+    
+    // Use gray color for STP blocked cables
+    const color = isSTPBlocked ? '#9ca3af' : (isCompatible ? CABLE_COLORS[conn.cableType].primary : CABLE_COLORS.error.primary);
 
     // Calculate parallel offset for multiple connections between same devices
     const sameDeviceConnections = connections.filter(

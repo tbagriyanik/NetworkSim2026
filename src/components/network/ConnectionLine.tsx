@@ -59,10 +59,13 @@ export const ConnectionLine = memo(function ConnectionLine({
   const targetPort = targetDevice.ports.find(p => p.id === connection.targetPort);
   const isShutdown = sourcePort?.shutdown || targetPort?.shutdown;
 
+  // Check if either port is in STP blocking state
+  const isSTPBlocking = sourcePort?.spanningTree?.state === 'blocking' || targetPort?.spanningTree?.state === 'blocking';
+
   const isPoweredOff = sourceDevice.status === 'offline' || targetDevice.status === 'offline';
-  const isEffectivelyActive = connection.active && isCompatible && !isShutdown && !isPoweredOff;
+  const isEffectivelyActive = connection.active && isCompatible && !isShutdown && !isPoweredOff && !isSTPBlocking;
   const color = !isCompatible ? CABLE_COLORS.error.primary :
-    isShutdown ? (isDark ? '#475569' : '#94a3b8') : // Gray if shutdown
+    isShutdown || isSTPBlocking ? (isDark ? '#475569' : '#94a3b8') : // Gray if shutdown or STP blocking
       isPoweredOff ? (isDark ? '#374151' : '#9ca3af') : // Gray if device offline
         CABLE_COLORS[connection.cableType].primary;
 
@@ -252,6 +255,10 @@ export const ConnectionLine = memo(function ConnectionLine({
     nextProps.sourceDevice.ports.find(p => p.id === nextProps.connection.sourcePort)?.shutdown &&
     prevProps.targetDevice.ports.find(p => p.id === prevProps.connection.targetPort)?.shutdown ===
     nextProps.targetDevice.ports.find(p => p.id === nextProps.connection.targetPort)?.shutdown &&
+    prevProps.sourceDevice.ports.find(p => p.id === prevProps.connection.sourcePort)?.spanningTree?.state ===
+    nextProps.sourceDevice.ports.find(p => p.id === nextProps.connection.sourcePort)?.spanningTree?.state &&
+    prevProps.targetDevice.ports.find(p => p.id === prevProps.connection.targetPort)?.spanningTree?.state ===
+    nextProps.targetDevice.ports.find(p => p.id === nextProps.connection.targetPort)?.spanningTree?.state &&
     prevProps.sourceDevice.status === nextProps.sourceDevice.status &&
     prevProps.targetDevice.status === nextProps.targetDevice.status &&
     prevProps.totalSameConns === nextProps.totalSameConns &&
