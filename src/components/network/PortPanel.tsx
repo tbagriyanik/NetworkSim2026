@@ -184,7 +184,14 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
     }
 
     // Router/Switch ports should only be green if physically connected in topology AND the peer device is powered on.
-    if (isConnectedInTopology) {
+    // STP blocked check takes priority over connected status
+    if (port.status === 'blocked' || port.spanningTree?.state === 'blocking' || port.spanningTree?.role === 'alternate') {
+      ledColor = 'orange';
+      statusLabel = t.blocked;
+    } else if (port.shutdown) {
+      ledColor = 'gray';
+      statusLabel = t.closed;
+    } else if (isConnectedInTopology) {
       if (isPeerPoweredOff) {
         ledColor = 'gray';
         statusLabel = t.closed;
@@ -192,12 +199,6 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
         ledColor = 'green';
         statusLabel = t.connected;
       }
-    } else if (port.shutdown) {
-      ledColor = 'gray';
-      statusLabel = t.closed;
-    } else if (port.status === 'blocked' || port.spanningTree?.state === 'blocking' || port.spanningTree?.role === 'alternate') {
-      ledColor = 'orange';
-      statusLabel = t.blocked;
     } else if (port.status === 'connected' && !topologyConnections) {
       // Fallback for when topology isn't provided (standalone view)
       ledColor = 'green';

@@ -187,8 +187,10 @@ export interface SwitchState {
     http?: {
       enabled: boolean;
       content?: string;
+      fontSize: number;
     };
   };
+  spanningTreePriority?: number;
 }
 
 export interface StartupConfig {

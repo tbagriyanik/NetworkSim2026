@@ -3183,7 +3183,16 @@ export function NetworkTopology({
             const tPort = targetDevice.ports.find(p => p.id === targetPortId);
             const isUp = sPort && !sPort.shutdown && tPort && !tPort.shutdown;
 
-            if (isCompatible && isUp) {
+            // Check if either port is STP blocked
+            const sourceState = deviceStates?.get(current.deviceId);
+            const targetState = deviceStates?.get(nextDeviceId);
+            const sourceSimPort = sourceState?.ports?.[sourcePortId];
+            const targetSimPort = targetState?.ports?.[targetPortId];
+            const isSourceSTPBlocked = sourceSimPort?.spanningTree?.state === 'blocking' || sourceSimPort?.spanningTree?.role === 'alternate';
+            const isTargetSTPBlocked = targetSimPort?.spanningTree?.state === 'blocking' || targetSimPort?.spanningTree?.role === 'alternate';
+            const isSTPBlocked = isSourceSTPBlocked || isTargetSTPBlocked;
+
+            if (isCompatible && isUp && !isSTPBlocked) {
               const newPath = [...current.path, nextDeviceId!];
 
               if (nextDeviceId === targetId) {
@@ -4557,8 +4566,14 @@ export function NetworkTopology({
               const portNum = port.label.replace(/\D/g, '');
               const displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
 
+              // Check STP state for router ports from deviceStates
+              const deviceState = deviceStates?.get(device.id);
+              const simulatorPort = deviceState?.ports?.[port.id];
+              const isSTPBlocked = simulatorPort?.spanningTree?.state === 'blocking' || simulatorPort?.spanningTree?.role === 'alternate';
+
               // Port colors:
               // Console: Turquoise, Fa: Blue, Gi: Orange
+              // STP Blocked: Pink
               // Shutdown or device offline: Red
               // Not connected: Gray
               let portFill: string;
@@ -4568,6 +4583,10 @@ export function NetworkTopology({
                 // Güç kapalı - içi kırmızı, çerçeve gri
                 portFill = '#ef4444';
                 portStroke = '#4b5563';
+              } else if (isSTPBlocked) {
+                // STP Bloke - Pembe renk
+                portFill = '#ec4899';  // Pink-500
+                portStroke = '#f472b6';  // Pink-400
               } else if (isConnected) {
                 // Güç açık ve bağlı - içi mavi, çerçeve açık mavi
                 if (isConsole) {
@@ -4659,8 +4678,10 @@ export function NetworkTopology({
               const portNum = port.label.replace(/\D/g, '');
               const displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
 
-              // Check STP state for switch ports
-              const isSTPBlocked = port.spanningTree?.state === 'blocking' || port.spanningTree?.role === 'alternate';
+              // Check STP state for switch ports from deviceStates
+              const deviceState = deviceStates?.get(device.id);
+              const simulatorPort = deviceState?.ports?.[port.id];
+              const isSTPBlocked = simulatorPort?.spanningTree?.state === 'blocking' || simulatorPort?.spanningTree?.role === 'alternate';
 
               // Port colors:
               // Console: Turquoise, Fa: Blue, Gi: Orange
@@ -4675,9 +4696,9 @@ export function NetworkTopology({
                 portFill = '#ef4444';
                 portStroke = '#4b5563';
               } else if (isSTPBlocked) {
-                // STP Bloke - Amber (sarı/turuncu) renk
-                portFill = '#f59e0b';  // Amber-500
-                portStroke = '#fbbf24';  // Amber-400
+                // STP Bloke - Pembe renk
+                portFill = '#ec4899';  // Pink-500
+                portStroke = '#f472b6';  // Pink-400
               } else if (isConnected) {
                 // Güç açık ve bağlı - içi mavi, çerçeve açık mavi
                 if (isConsole) {
@@ -6768,6 +6789,10 @@ export function NetworkTopology({
                 <div className={`w-2 h-2 rounded-full ${(() => {
                   const dev = devices.find(d => d.id === portTooltip.deviceId);
                   const prt = dev?.ports.find(p => p.id === portTooltip.portId);
+                  const devState = deviceStates?.get(portTooltip.deviceId);
+                  const simPort = devState?.ports?.[portTooltip.portId];
+                  const isSTPBlocked = simPort?.spanningTree?.state === 'blocking' || simPort?.spanningTree?.role === 'alternate';
+                  if (isSTPBlocked) return 'bg-pink-500';
                   return dev?.status === 'offline' || prt?.shutdown ? 'bg-red-500' : prt?.status === 'connected' ? 'bg-green-500' : 'bg-slate-400';
                 })()
                   }`} />
@@ -6804,14 +6829,31 @@ export function NetworkTopology({
                     (() => {
                       const dev = devices.find(d => d.id === portTooltip.deviceId);
                       const prt = dev?.ports.find(p => p.id === portTooltip.portId);
+                      const devState = deviceStates?.get(portTooltip.deviceId);
+                      const simPort = devState?.ports?.[portTooltip.portId];
+                      const isSTPBlocked = simPort?.spanningTree?.state === 'blocking' || simPort?.spanningTree?.role === 'alternate';
+                      if (isSTPBlocked) return 'text-pink-500';
                       return dev?.status === 'offline' || prt?.shutdown ? 'text-red-500' : prt?.status === 'connected' ? 'text-green-500' : 'text-slate-400';
                     })()
                   }>
                     {(() => {
                       const dev = devices.find(d => d.id === portTooltip.deviceId);
                       const prt = dev?.ports.find(p => p.id === portTooltip.portId);
+                      const devState = deviceStates?.get(portTooltip.deviceId);
+                      const simPort = devState?.ports?.[portTooltip.portId];
+                      const isSTPBlocked = simPort?.spanningTree?.state === 'blocking' || simPort?.spanningTree?.role === 'alternate';
+                      
                       if (dev?.status === 'offline') {
                         return language === 'tr' ? 'Cihaz Kapalı' : 'Device Off';
+                      }
+                      if (isSTPBlocked) {
+                        const role = simPort?.spanningTree?.role || '';
+                        const state = simPort?.spanningTree?.state || '';
+                        const roleMap: Record<string, string> = { 'root': 'Root', 'designated': 'Desg', 'alternate': 'Altn', 'backup': 'Back' };
+                        const stateMap: Record<string, string> = { 'forwarding': 'FWD', 'blocking': 'BLK', 'listening': 'LIS', 'learning': 'LRN' };
+                        const roleText = roleMap[role] || role;
+                        const stateText = stateMap[state] || state;
+                        return language === 'tr' ? `STP Bloke (${roleText} ${stateText})` : `STP Blocked (${roleText} ${stateText})`;
                       }
                       if (prt?.shutdown) {
                         return language === 'tr' ? 'Kapalı (Shutdown)' : 'Shutdown';

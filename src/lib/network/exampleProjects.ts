@@ -1292,33 +1292,71 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'stp-note',
       text: isTr
-        ? 'STP Redundant Links:\nSW1: spanning-tree mode rapid-pvst\nSW1: spanning-tree priority 28672 (root bridge)\nSW2: spanning-tree priority 32768\nGi0/1 ve Gi0/2 redundant link.\nshow spanning-tree ile root bridge ve port durumlarını kontrol et\nBir link düşse diğeri devreye girer.'
-        : 'STP Redundant Links:\nSW1: spanning-tree mode rapid-pvst\nSW1: spanning-tree priority 28672 (root bridge)\nSW2: spanning-tree priority 32768\nGi0/1 and Gi0/2 are redundant links.\nVerify root bridge and port states with show spanning-tree\nIf one link fails, the other takes over.',
+        ? '🔄 STP Redundant Links (Yedekli Bağlantılar):\n\nSW1: spanning-tree priority 28672 (ROOT BRIDGE)\nSW2: spanning-tree priority 32768\n\nGi0/1 ve Gi0/2 arasındaki redundant link:\n- SW1 Gi0/1: Desg FWD (Aktif)\n- SW1 Gi0/2: Altn BLK (Bloke - Amber renk)\n- SW2 Gi0/1: Root FWD (Aktif)\n- SW2 Gi0/2: Altn BLK (Bloke - Amber renk)\n\nGörevler:\n1) show spanning-tree ile STP durumunu kontrol et\n2) Bloke portlar (Gi0/2) amber renkte görünür\n3) Bloke kabloların animasyonu yok\n4) Gi0/1 kablo kesilirse Gi0/2 otomatik aktif olur'
+        : '🔄 STP Redundant Links:\n\nSW1: spanning-tree priority 28672 (ROOT BRIDGE)\nSW2: spanning-tree priority 32768\n\nRedundant link between Gi0/1 and Gi0/2:\n- SW1 Gi0/1: Desg FWD (Active)\n- SW1 Gi0/2: Altn BLK (Blocked - Amber color)\n- SW2 Gi0/1: Root FWD (Active)\n- SW2 Gi0/2: Altn BLK (Blocked - Amber color)\n\nTasks:\n1) Verify STP state with show spanning-tree\n2) Blocked ports (Gi0/2) appear in amber color\n3) Blocked cables have no animation\n4) If Gi0/1 fails, Gi0/2 automatically becomes active',
       x: 600,
       y: 40,
-      width: 420,
-      height: 200,
-      color: '#8b5cf6',
+      width: 480,
+      height: 240,
+      color: '#f59e0b',
       font: 'verdana',
-      fontSize: 16,
+      fontSize: 12,
       opacity: 0.75
     }
   ];
   const stpSw1 = createInitialState();
   stpSw1.hostname = 'SW1';
   stpSw1.spanningTreeMode = 'rapid-pvst';
+  stpSw1.spanningTreePriority = 28672; // Lower priority = Root Bridge
   stpSw1.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: [] };
-  stpSw1.ports['fa0/1'] = { ...stpSw1.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
-  stpSw1.ports['gi0/1'] = { ...stpSw1.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
-  stpSw1.ports['gi0/2'] = { ...stpSw1.ports['gi0/2'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  stpSw1.ports['fa0/1'] = { 
+    ...stpSw1.ports['fa0/1'], 
+    vlan: 10, 
+    mode: 'access', 
+    status: 'connected',
+    spanningTree: { role: 'designated', state: 'forwarding' }
+  };
+  stpSw1.ports['gi0/1'] = { 
+    ...stpSw1.ports['gi0/1'], 
+    mode: 'trunk', 
+    allowedVlans: 'all', 
+    status: 'connected',
+    spanningTree: { role: 'designated', state: 'forwarding' }
+  };
+  stpSw1.ports['gi0/2'] = { 
+    ...stpSw1.ports['gi0/2'], 
+    mode: 'trunk', 
+    allowedVlans: 'all', 
+    status: 'connected',
+    spanningTree: { role: 'alternate', state: 'blocking' } // Blocked port
+  };
 
   const stpSw2 = createInitialState();
   stpSw2.hostname = 'SW2';
   stpSw2.spanningTreeMode = 'rapid-pvst';
+  stpSw2.spanningTreePriority = 32768; // Default priority
   stpSw2.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: [] };
-  stpSw2.ports['fa0/1'] = { ...stpSw2.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
-  stpSw2.ports['gi0/1'] = { ...stpSw2.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
-  stpSw2.ports['gi0/2'] = { ...stpSw2.ports['gi0/2'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  stpSw2.ports['fa0/1'] = { 
+    ...stpSw2.ports['fa0/1'], 
+    vlan: 10, 
+    mode: 'access', 
+    status: 'connected',
+    spanningTree: { role: 'designated', state: 'forwarding' }
+  };
+  stpSw2.ports['gi0/1'] = { 
+    ...stpSw2.ports['gi0/1'], 
+    mode: 'trunk', 
+    allowedVlans: 'all', 
+    status: 'connected',
+    spanningTree: { role: 'root', state: 'forwarding' } // Root Port
+  };
+  stpSw2.ports['gi0/2'] = { 
+    ...stpSw2.ports['gi0/2'], 
+    mode: 'trunk', 
+    allowedVlans: 'all', 
+    status: 'connected',
+    spanningTree: { role: 'alternate', state: 'blocking' } // Blocked port
+  };
 
   // Example 10: Campus Network (Simplified)
   const campusDevices = [

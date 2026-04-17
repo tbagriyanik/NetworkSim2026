@@ -2475,8 +2475,71 @@ ${state.bannerMOTD}
       //    so NetworkTopology's WiFi signal useMemo re-evaluates for every device
       setTopologyDevices(refreshedDevices);
 
-      // 8. Show detailed notification
+      // 8. Update STP (Spanning Tree Protocol) states for all switches
+      const stpUpdatedStates = new Map(updatedDeviceStates);
+      let stpUpdatedCount = 0;
+
+      refreshedDevices.forEach((device) => {
+        if (device.type !== 'switchL2' && device.type !== 'switchL3') return;
+
+        const state = stpUpdatedStates.get(device.id);
+        if (!state) return;
+
+        // Create context for STP calculation
+        const ctx = {
+          connections: topologyConnections,
+          sourceDeviceId: device.id,
+          devices: refreshedDevices,
+          deviceStates: stpUpdatedStates
+        };
+
+        // Calculate STP state
+        const stpState = calculateSTPState(state, ctx);
+
+        // Update port spanningTree properties
+        const updatedPorts = { ...state.ports };
+        stpState.forEach((stpInfo, portId) => {
+          const port = updatedPorts[portId];
+          if (port) {
+            const roleMap: Record<string, 'root' | 'designated' | 'alternate' | 'backup' | 'disabled'> = {
+              'Root': 'root',
+              'Desg': 'designated',
+              'Altn': 'alternate',
+              'Back': 'backup',
+              'Disa': 'disabled'
+            };
+            const stateMap: Record<string, 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled'> = {
+              'FWD': 'forwarding',
+              'BLK': 'blocking',
+              'LIS': 'listening',
+              'LRN': 'learning',
+              'DIS': 'disabled'
+            };
+
+            updatedPorts[portId] = {
+              ...port,
+              spanningTree: {
+                ...(port.spanningTree || {}),
+                role: roleMap[stpInfo.role] || 'designated',
+                state: stateMap[stpInfo.state] || 'forwarding'
+              }
+            };
+          }
+        });
+
+        stpUpdatedStates.set(device.id, { ...state, ports: updatedPorts });
+        stpUpdatedCount++;
+      });
+
+      // Apply STP updates to device states
+      setDeviceStates(stpUpdatedStates);
+
+      // 9. Show detailed notification
       const totalDevices = connectedPCs.length + activeAPs.length + disconnectedPCs.length + disconnectedAPs.length;
+      const stpMessage = stpUpdatedCount > 0
+        ? (language === 'tr' ? `✓ STP: ${stpUpdatedCount} switch güncellendi` : `✓ STP: ${stpUpdatedCount} switches updated`)
+        : '';
+
       if (totalDevices > 0) {
         const wifiMessages = [];
         if (connectedPCs.length > 0) {
@@ -2519,11 +2582,12 @@ ${state.bannerMOTD}
         }
 
         toast({
-          title: language === 'tr' ? '🔄 WiFi + DHCP Durumu Güncellendi' : '🔄 WiFi + DHCP Status Updated',
+          title: language === 'tr' ? '🔄 Ağ Durumu Tamamen Güncellendi' : '🔄 Network Status Fully Updated',
           description: (
             <div className="space-y-1">
               {wifiMessages.length > 0 && <div>{wifiMessages.join(' • ')}</div>}
               <div>{dhcpMessages.join(' • ')}</div>
+              {stpMessage && <div className="text-pink-500">{stpMessage}</div>}
             </div>
           ),
           variant: 'default'
@@ -2537,73 +2601,14 @@ ${state.bannerMOTD}
             : `DHCP: ${dhcpServerActiveCount} active servers, ${dhcpClientWithLeaseCount} leases`);
         toast({
           title: language === 'tr' ? '🔄 Ağ Yenilendi' : '🔄 Network Refreshed',
-          description: isDhcpMissing
-            ? dhcpSummary
-            : `${language === 'tr' ? 'WiFi cihazı bulunamadı' : 'No WiFi devices found'} • ${dhcpSummary}`,
+          description: stpMessage
+            ? `${dhcpSummary} • ${stpMessage}`
+            : (isDhcpMissing
+              ? dhcpSummary
+              : `${language === 'tr' ? 'WiFi cihazı bulunamadı' : 'No WiFi devices found'} • ${dhcpSummary}`),
           variant: 'default'
         });
       }
-
-    // Update STP (Spanning Tree Protocol) states for all switches
-    const updatedStates = new Map(deviceStates);
-    let stpUpdatedCount = 0;
-
-    topologyDevices.forEach((device) => {
-      if (device.type !== 'switchL2' && device.type !== 'switchL3') return;
-
-      const state = updatedStates.get(device.id);
-      if (!state) return;
-
-      // Create context for STP calculation
-      const ctx = {
-        connections: topologyConnections,
-        sourceDeviceId: device.id,
-        devices: topologyDevices,
-        deviceStates: updatedStates
-      };
-
-      // Calculate STP state
-      const stpState = calculateSTPState(state, ctx);
-
-      // Update port spanningTree properties
-      const updatedPorts = { ...state.ports };
-      stpState.forEach((stpInfo, portId) => {
-        const port = updatedPorts[portId];
-        if (port) {
-          const roleMap: Record<string, 'root' | 'designated' | 'alternate' | 'backup' | 'disabled'> = {
-            'Root': 'root',
-            'Desg': 'designated',
-            'Altn': 'alternate',
-            'Back': 'backup',
-            'Disa': 'disabled'
-          };
-          const stateMap: Record<string, 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled'> = {
-            'FWD': 'forwarding',
-            'BLK': 'blocking',
-            'LIS': 'listening',
-            'LRN': 'learning',
-            'DIS': 'disabled'
-          };
-
-          updatedPorts[portId] = {
-            ...port,
-            spanningTree: {
-              ...(port.spanningTree || {}),
-              role: roleMap[stpInfo.role] || 'designated',
-              state: stateMap[stpInfo.state] || 'forwarding'
-            }
-          };
-        }
-      });
-
-      updatedStates.set(device.id, { ...state, ports: updatedPorts });
-      stpUpdatedCount++;
-    });
-
-    // Apply STP updates if any switches were processed
-    if (stpUpdatedCount > 0) {
-      setDeviceStates(updatedStates);
-    }
     }
   }, [topologyDevices, deviceStates, setDeviceStates, setTopologyDevices, toast, language, topologyConnections]);
 

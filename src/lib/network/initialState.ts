@@ -176,7 +176,8 @@ export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' 
     services: {
       http: {
         enabled: true,
-        content: ''
+        content: '',
+        fontSize: 16
       }
     },
     runningConfig: [
@@ -304,7 +305,8 @@ export function createInitialRouterState(mac?: string): SwitchState {
     services: {
       http: {
         enabled: true,
-        content: ''
+        content: '',
+        fontSize: 16
       }
     },
     runningConfig: [
