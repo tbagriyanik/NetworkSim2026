@@ -81,6 +81,7 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
 
     // Refs to always hold latest values for drag handlers
     const dragStateRef = useRef<DragState | null>(null);
+    const pendingMoveRef = useRef<{ x: number; y: number } | null>(null);
     const tasksModalPositionRef = useRef(tasksModalPosition);
     const tasksModalSizeRef = useRef(tasksModalSize);
     const cliModalPositionRef = useRef(cliModalPosition);
@@ -139,23 +140,27 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
         const handlePointerMove = (e: PointerEvent) => {
             const ds = dragStateRef.current;
             if (!ds?.active) return;
-            
-            if (ds.raf) cancelAnimationFrame(ds.raf);
+
+            pendingMoveRef.current = { x: e.clientX, y: e.clientY };
+            if (ds.raf) return;
+
             ds.raf = requestAnimationFrame(() => {
                 const ds2 = dragStateRef.current;
                 if (!ds2?.active) return;
+                const move = pendingMoveRef.current;
+                if (!move) return;
                 
                 const setPosition = ds2.modal === 'tasks' ? setTasksModalPosition : setCliModalPosition;
                 const setSize = ds2.modal === 'tasks' ? setTasksModalSize : setCliModalSize;
 
                 if (ds2.type === 'drag') {
                     setPosition({
-                        x: ds2.startPosX + (e.clientX - ds2.startX),
-                        y: ds2.startPosY + (e.clientY - ds2.startY),
+                        x: ds2.startPosX + (move.x - ds2.startX),
+                        y: ds2.startPosY + (move.y - ds2.startY),
                     });
                 } else if (ds2.type === 'resize' && ds2.direction) {
-                    const dx = e.clientX - ds2.startX;
-                    const dy = e.clientY - ds2.startY;
+                    const dx = move.x - ds2.startX;
+                    const dy = move.y - ds2.startY;
                     let newW = ds2.startW, newH = ds2.startH, newX = ds2.startPosX, newY = ds2.startPosY;
                     
                     if (ds2.direction.includes('e')) newW = Math.max(400, ds2.startW + dx);
@@ -172,6 +177,8 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
                     setSize({ width: newW, height: newH });
                     setPosition({ x: newX, y: newY });
                 }
+
+                ds2.raf = null;
             });
         };
 
@@ -180,6 +187,7 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
             if (!ds) return;
 
             if (ds.raf) cancelAnimationFrame(ds.raf);
+            pendingMoveRef.current = null;
             
             // Persist the final position/size to localStorage
             const finalPos = ds.modal === 'tasks' ? tasksModalPositionRef.current : cliModalPositionRef.current;

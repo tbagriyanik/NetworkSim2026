@@ -4074,6 +4074,7 @@ ${state.bannerMOTD}
                 maxWidth: 'none',
                 maxHeight: 'none',
                 borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
+                willChange: 'left, top, width, height',
               }}
             >
               <div className="relative flex flex-col h-full">
@@ -4218,6 +4219,7 @@ ${state.bannerMOTD}
                 maxWidth: 'none',
                 maxHeight: 'none',
                 borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
+                willChange: 'left, top, width, height',
               }}
             >
               <DialogHeader
