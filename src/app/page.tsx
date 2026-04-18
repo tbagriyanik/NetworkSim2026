@@ -55,6 +55,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal } from "lucide-react";
+import { RouterIcon } from '@/components/network/PCPanelWidgets';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -5183,7 +5184,7 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
           <div className="flex items-center gap-1.5">
             <GripHorizontal className="w-3 h-3 opacity-30 cursor-grab" />
-            <Server className="w-3.5 h-3.5 text-emerald-500" />
+            <RouterIcon className="w-3.5 h-3.5 text-purple-500" />
             <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
           </div>
           <div className="flex items-center gap-1">

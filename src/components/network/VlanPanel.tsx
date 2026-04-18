@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Translations } from '@/contexts/LanguageContext';
 import { Layers, Trash2 } from 'lucide-react';
+import { RouterIcon } from './PCPanelWidgets';
 import { vlanTasks, getTaskStatus } from '@/lib/network/taskDefinitions';
 import type { DeviceType } from './networkTopology.types';
 
@@ -138,8 +139,12 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
     <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
       <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-purple-400 text-base sm:text-lg flex items-center gap-2">
-            <Layers className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
+          <CardTitle className={deviceModel === 'NETWORK-1941' ? "text-purple-400 text-base sm:text-lg flex items-center gap-2" : "text-purple-400 text-base sm:text-lg flex items-center gap-2"}>
+            {deviceModel === 'NETWORK-1941' ? (
+              <RouterIcon className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
+            ) : (
+              <Layers className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
+            )}
             {deviceName || t.vlanStatus}
             <span className={`text-[12px] font-mono px-2 py-0.5 rounded ${isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'} ml-2`}>
               {deviceModel}

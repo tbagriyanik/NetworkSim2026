@@ -10,6 +10,14 @@ export const PCIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
     </svg>
 );
 
+/** Router icon with arrows in circle */
+export const RouterIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <circle cx={12} cy={12} r={9} strokeWidth={1.5} />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
+    </svg>
+);
+
 /** WiFi signal strength meter (1-5 bars) */
 export const WifiSignalMeter = ({ strength }: { strength: number }) => {
     const activeColor = '#22c55e';

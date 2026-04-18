@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Translations } from '@/contexts/LanguageContext';
 import { Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { RouterIcon } from './PCPanelWidgets';
 
 const getPortVlan = (port: Port): number => Number(port.accessVlan || port.vlan || 1);
 
@@ -288,8 +289,12 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
       <Card className={`${cardBg}`}>
         <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-cyan-400 text-base sm:text-lg flex items-center gap-2">
-              <Database className="w-4 h-4 sm:w-5 sm:h-5" />
+            <CardTitle className={deviceModel === 'NETWORK-1941' ? "text-purple-400 text-base sm:text-lg flex items-center gap-2" : "text-cyan-400 text-base sm:text-lg flex items-center gap-2"}>
+              {deviceModel === 'NETWORK-1941' ? (
+                <RouterIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              ) : (
+                <Database className="w-4 h-4 sm:w-5 sm:h-5" />
+              )}
               {deviceName || t.switchTitle}
               <span className={`text-xs font-mono px-2 py-0.5 rounded ${isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'} ml-2`}>
                 {deviceModel}

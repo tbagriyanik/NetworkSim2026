@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CanvasDevice } from './networkTopology.types';
+import { RouterIcon } from './PCPanelWidgets';
 
 interface RouterPanelProps {
   deviceId: string;
@@ -175,7 +176,7 @@ export function RouterPanel({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                <Network className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <RouterIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
                 <DialogTitle className="text-lg font-semibold">

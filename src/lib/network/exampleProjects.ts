@@ -146,10 +146,30 @@ const createSwitchDevice = (id: string, name: string, x: number, y: number): Can
   status: 'online',
   switchModel: 'WS-C2960-24TT-L',
   ports: [
-    { id: 'console', label: 'Console', status: 'disconnected' as const },
     ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' as const })),
+    { id: 'console', label: 'Console', status: 'disconnected' as const },
     { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
     { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const }
+  ]
+});
+
+const createL3SwitchDevice = (id: string, name: string, x: number, y: number): CanvasDevice => ({
+  id,
+  type: 'switchL3',
+  name,
+  x,
+  y,
+  ip: '',
+  macAddress: nextExampleMac(),
+  status: 'online',
+  switchModel: 'WS-C3560-24PS',
+  ports: [
+    ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' as const })),
+    { id: 'console', label: 'Console', status: 'disconnected' as const },
+    { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
+    { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const },
+    { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const },
+    { id: 'gi0/4', label: 'Gi0/4', status: 'disconnected' as const }
   ]
 });
 
@@ -1135,7 +1155,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     createPcDevice('pc-2', 'PC-2', 40, 260, '192.168.20.10', 20),
     createPcDevice('pc-3', 'PC-3', 40, 400, '192.168.30.10', 30),
     createPcDevice('pc-4', 'PC-4', 40, 540, '192.168.40.10', 40),
-    createSwitchDevice('switch-1', 'L3SW1', 260, 330)
+    createL3SwitchDevice('switch-1', 'L3SW1', 260, 330)
   ];
   const l3RoutingConnections: CanvasConnection[] = [];
   connectPorts(l3RoutingDevices, l3RoutingConnections, 'pc-1', 'eth0', 'switch-1', 'fa0/1');
@@ -1179,10 +1199,10 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   const staticRoutingDevices = [
     createPcDevice('pc-1', 'PC-1', 40, 120, '192.168.10.10', 1),
     createPcDevice('pc-2', 'PC-2', 40, 260, '192.168.20.10', 1),
-    createSwitchDevice('switch-1', 'SW1', 240, 190),
+    createL3SwitchDevice('switch-1', 'SW1', 240, 190),
     createRouterDevice('router-1', 'R1', 440, 120),
     createRouterDevice('router-2', 'R2', 440, 260),
-    createSwitchDevice('switch-2', 'SW2', 640, 190)
+    createL3SwitchDevice('switch-2', 'SW2', 640, 190)
   ];
   const staticRoutingConnections: CanvasConnection[] = [];
   connectPorts(staticRoutingDevices, staticRoutingConnections, 'pc-1', 'eth0', 'switch-1', 'fa0/1');
