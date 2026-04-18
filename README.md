@@ -6,12 +6,15 @@ A modern, interactive, browser-based network simulator for students and networki
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Commits](https://img.shields.io/badge/commits-640+-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-56249-blueviolet)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-56951-blueviolet)
 
 Network learning app: [Test Address](https://network2026.vercel.app)
 
 ## Recent Updates
 
+- Fixed `no ip domain-lookup` command to properly disable DNS lookup (key mismatch resolved)
+- Added support for `ip domain-lookup` (with hyphen) to re-enable domain lookup
+- Removed debug console.log statements from production code for cleaner output
 - DNS records now support readable chains such as `www.a10.com -> a10.com -> 192.168.1.10`.
 - DNS record lists show record types clearly: `A Record` and `CNAME Record` with TR/EN localization.
 - The Help modal tabs and PC Services tabs now use a unified Tab-style layout.
@@ -335,7 +338,7 @@ Theme selection is done from the theme selector in the top right corner.
 
 - Scope: `src/`
 - Source files: `175+`
-- Total lines: `56586`
+- Total lines: `56951`
 - TS/TSX files: `165+`
 - Network components: `55+`
 - Example projects: `24`

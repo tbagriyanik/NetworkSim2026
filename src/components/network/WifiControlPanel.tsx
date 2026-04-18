@@ -753,8 +753,6 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
   </div>
   
   <script>
-    console.log('Router WiFi admin panel script loaded');
-    
     // Hide tooltips on mobile devices
     function hideTooltipsOnMobile() {
       if (window.innerWidth <= 600) {

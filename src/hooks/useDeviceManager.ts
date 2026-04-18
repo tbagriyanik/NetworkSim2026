@@ -385,7 +385,6 @@ export function useDeviceManager() {
     try {
       // Use deviceStatesRef to get fresh state
       const deviceState = deviceStatesRef.current.get(deviceId) || (deviceId.includes('router') ? createInitialRouterState() : createInitialState());
-      console.log('[DEBUG] handleCommandForDevice - domainLookup:', deviceState?.domainLookup, 'hostname:', deviceState?.hostname);
       const devicePrompt = getPrompt(deviceState);
       const result = executeCommand(
         deviceState,
@@ -465,7 +464,6 @@ export function useDeviceManager() {
             // Use deviceStatesRef to get fresh state
             const currentState = deviceStatesRef.current.get(deviceId) || deviceState;
             const mergedState = { ...currentState, ...newState, runningConfig: buildRunningConfig({ ...currentState, ...newState }) };
-            console.log('[DEBUG] setDeviceStates - domainLookup in newState:', newState?.domainLookup, 'in mergedState:', mergedState?.domainLookup);
             next.set(deviceId, mergedState);
             // Update ref immediately
             deviceStatesRef.current = next;

@@ -1560,27 +1560,19 @@ export function PCPanel({
   useEffect(() => {
     const handleRouterAdminMessage = (event: MessageEvent) => {
       const data = event.data;
-      console.log('=== MESSAGE RECEIVED ===');
-      console.log('Message type:', data?.type);
-      console.log('Full message data:', data);
-      console.log('httpAppDeviceId:', httpAppDeviceId);
-      console.log('========================');
 
       if (!data) {
-        console.log('⚠️ No data in message, ignoring');
         return;
       }
 
       // For WiFi save operations, require httpAppDeviceId match
       const isRouterSpecificMessage = data.type === 'router-admin-save-wifi';
       if (isRouterSpecificMessage && httpAppDeviceId && data.deviceId && data.deviceId !== httpAppDeviceId) {
-        console.log('⚠️ Ignoring message - deviceId mismatch for router-specific operation');
         return;
       }
 
       // IoT messages are always accepted (deviceId in payload)
       const isIoTMessage = data.type === 'router-admin-connect-iot' || data.type === 'router-admin-disconnect-iot' || data.type === 'router-admin-renew-iot';
-      console.log('Is IoT message:', isIoTMessage);
 
       const allocateIotIpConfig = (routerDeviceId: string, excludeDeviceId?: string) => {
         const routerDevice = topologyDevices.find((d) => d.id === routerDeviceId);
@@ -1688,7 +1680,6 @@ export function PCPanel({
 
       // Handle IoT device connect (existing device)
       if (data.type === 'router-admin-connect-iot') {
-        console.log('Handling connect-iot, payload:', data.payload);
         const payload = data.payload || {};
         const iotDeviceId = payload.iotDeviceId;
 
@@ -1699,7 +1690,6 @@ export function PCPanel({
 
         // Find the existing IoT device in topology
         const iotDevice = topologyDevices.find((d) => d.id === iotDeviceId);
-        console.log('Found IoT device:', iotDevice);
         if (!iotDevice || iotDevice.type !== 'iot') {
           console.warn('IoT device not found or wrong type:', iotDeviceId);
           return;
@@ -1799,7 +1789,6 @@ export function PCPanel({
 
       // Handle IoT device disconnect
       if (data.type === 'router-admin-disconnect-iot') {
-        console.log('Handling disconnect-iot, payload:', data.payload);
         const payload = data.payload || {};
         const iotDeviceId = payload.iotDeviceId;
 
@@ -1810,7 +1799,6 @@ export function PCPanel({
 
         // Find the existing IoT device in topology
         const iotDevice = topologyDevices.find((d) => d.id === iotDeviceId);
-        console.log('Found IoT device for disconnect:', iotDevice);
         if (!iotDevice || iotDevice.type !== 'iot') {
           console.warn('IoT device not found or wrong type for disconnect:', iotDeviceId);
           return;
@@ -1835,7 +1823,6 @@ export function PCPanel({
         );
 
         // Dispatch event to update the IoT device
-        console.log('Dispatching update-topology-device-config for disconnect:', iotDeviceId);
         window.dispatchEvent(new CustomEvent('update-topology-device-config', {
           detail: {
             deviceId: iotDeviceId,
@@ -1860,15 +1847,12 @@ export function PCPanel({
             }
           });
         }
-
-        console.log('Calling addLocalOutput for disconnect');
         addLocalOutput(
           'success',
           language === 'tr'
             ? `IoT cihaz "${iotDevice.name}" agdan cikarildi.`
             : `IoT device "${iotDevice.name}" disconnected from the network.`
         );
-        console.log('addLocalOutput called for disconnect');
 
         // Refresh router admin page to update device list
         if (httpAppDeviceId) {
