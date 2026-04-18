@@ -326,7 +326,7 @@ function resolveHostname(
   }
 
   // 5. External DNS lookup for unknown domains
-  // This handles external domain names like a10.com, google.com, etc.
+  // This handles external domain names like a10.com, etc.
   const externalIp = simulateDnsLookup(cleanHostname);
   if (externalIp) {
     return externalIp;

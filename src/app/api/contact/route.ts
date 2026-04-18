@@ -29,17 +29,17 @@ export async function POST(req: NextRequest) {
         timestamp,
         userAgent
       }),
-      redirect: 'follow' // Google Apps Script uses redirects
+      redirect: 'follow' // Apps Script uses redirects
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Google Sheets Error Response:', {
+      console.error('Sheets Error Response:', {
         status: response.status,
         statusText: response.statusText,
         body: errorText
       });
-      throw new Error(`Failed to send to Google Sheets: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to send to Sheets: ${response.status} ${response.statusText}`);
     }
 
     return NextResponse.json({ success: true });

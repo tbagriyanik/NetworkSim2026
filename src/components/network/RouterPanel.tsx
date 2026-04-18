@@ -182,7 +182,7 @@ export function RouterPanel({
                   {routerDevice.name || deviceId}
                 </DialogTitle>
                 <p className="text-sm text-muted-foreground">
-                  {language === 'tr' ? 'Router Bilgi Paneli' : 'Router Information Panel'}
+                  {t.routerInfoPanel}
                 </p>
               </div>
             </div>
@@ -191,7 +191,7 @@ export function RouterPanel({
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setIsMinimized(!isMinimized)}
-                title={isMinimized ? (language === 'tr' ? 'Genişlet' : 'Expand') : (language === 'tr' ? 'Küçült' : 'Minimize')}
+                title={isMinimized ? t.expand : t.minimize}
               >
                 {isMinimized ? (
                   <ChevronUp className="w-4 h-4" />
@@ -216,7 +216,7 @@ export function RouterPanel({
             onClick={() => setActiveTab('overview')}
           >
             <Activity className="w-4 h-4 mr-2" />
-            {language === 'tr' ? 'Genel Bakış' : 'Overview'}
+            {t.overview}
           </Button>
           <Button
             variant="ghost"
@@ -229,7 +229,7 @@ export function RouterPanel({
             onClick={() => setActiveTab('ports')}
           >
             <Network className="w-4 h-4 mr-2" />
-            {language === 'tr' ? 'Portlar' : 'Ports'}
+            {t.ports}
           </Button>
           <Button
             variant="ghost"
@@ -271,19 +271,19 @@ export function RouterPanel({
                 )}>
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
                     <Globe className="w-4 h-4" />
-                    {language === 'tr' ? 'Cihaz Bilgileri' : 'Device Information'}
+                    {t.deviceInformation}
                   </h3>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-muted-foreground">{language === 'tr' ? 'Cihaz Adı:' : 'Device Name:'}</span>
+                      <span className="text-muted-foreground">{t.deviceNameLabel}:</span>
                       <p className="font-medium">{routerDevice.name || deviceId}</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{language === 'tr' ? 'MAC Adresi:' : 'MAC Address:'}</span>
+                      <span className="text-muted-foreground">{t.macAddress}:</span>
                       <p className="font-medium">{routerDevice.macAddress || routerState?.macAddress || '-'}</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{language === 'tr' ? 'Durum:' : 'Status:'}</span>
+                      <span className="text-muted-foreground">{t.status}:</span>
                       <p className="font-medium flex items-center gap-1">
                         {routerDevice.status === 'online' ? (
                           <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -294,11 +294,11 @@ export function RouterPanel({
                       </p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{language === 'tr' ? 'IP Yönlendirme:' : 'IP Routing:'}</span>
+                      <span className="text-muted-foreground">{t.ipRouting}:</span>
                       <p className="font-medium">{routerState?.ipRouting ? (
-                        <span className="text-green-500">{language === 'tr' ? 'Aktif' : 'Enabled'}</span>
+                        <span className="text-green-500">{t.active}</span>
                       ) : (
-                        <span className="text-red-500">{language === 'tr' ? 'Pasif' : 'Disabled'}</span>
+                        <span className="text-red-500">{t.suspended}</span>
                       )}</p>
                     </div>
                   </div>
@@ -311,7 +311,7 @@ export function RouterPanel({
                 )}>
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
                     <Network className="w-4 h-4" />
-                    {language === 'tr' ? 'IP Arayüzleri' : 'IP Interfaces'}
+                    {t.ipInterfaces}
                   </h3>
                   {interfacesWithIP.length > 0 ? (
                     <div className="space-y-2">
@@ -336,7 +336,7 @@ export function RouterPanel({
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      {language === 'tr' ? 'IP adresi yapılandırılmış arayüz yok.' : 'No interfaces with IP configured.'}
+                      {t.noIpInterfaces}
                     </p>
                   )}
                 </div>
@@ -348,26 +348,26 @@ export function RouterPanel({
                 )}>
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
                     <Activity className="w-4 h-4" />
-                    {language === 'tr' ? 'Port Özeti' : 'Port Summary'}
+                    {t.portSummary}
                   </h3>
                   <div className="grid grid-cols-3 gap-3 text-sm">
                     <div className="text-center p-3 rounded bg-green-100 dark:bg-green-900/30">
                       <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                         {ports.filter(p => p.id !== 'wlan0' && !p.shutdown && p.status === 'connected').length}
                       </p>
-                      <p className="text-muted-foreground">{language === 'tr' ? 'Bağlı' : 'Connected'}</p>
+                      <p className="text-muted-foreground">{t.connectedStatus}</p>
                     </div>
                     <div className="text-center p-3 rounded bg-gray-100 dark:bg-gray-900/30">
                       <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
                         {ports.filter(p => p.id !== 'wlan0' && !p.shutdown && p.status === 'notconnect').length}
                       </p>
-                      <p className="text-muted-foreground">{language === 'tr' ? 'Bağlı Değil' : 'Not Connected'}</p>
+                      <p className="text-muted-foreground">{t.disconnectedStatus}</p>
                     </div>
                     <div className="text-center p-3 rounded bg-red-100 dark:bg-red-900/30">
                       <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                         {ports.filter(p => p.shutdown).length}
                       </p>
-                      <p className="text-muted-foreground">{language === 'tr' ? 'Kapalı' : 'Shutdown'}</p>
+                      <p className="text-muted-foreground">{t.shutdownStatus}</p>
                     </div>
                   </div>
                 </div>
@@ -409,7 +409,7 @@ export function RouterPanel({
                       </div>
                       {port.shutdown && (
                         <span className="text-xs text-red-500 font-medium">
-                          {language === 'tr' ? 'KAPALI' : 'DOWN'}
+                          {t.shutdownStatus.toUpperCase()}
                         </span>
                       )}
                     </div>
@@ -433,7 +433,7 @@ export function RouterPanel({
                           ) : (
                             <WifiOff className="w-4 h-4 text-gray-500" />
                           )}
-                          {language === 'tr' ? 'WiFi Durumu' : 'WiFi Status'}
+                          {t.wifiStatus}
                         </h3>
                         <span className={cn(
                           "px-2 py-1 rounded text-xs font-medium",
@@ -442,27 +442,27 @@ export function RouterPanel({
                             : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
                         )}>
                           {(wifiConfig as any).enabled || wifiConfig.mode === 'ap'
-                            ? (language === 'tr' ? 'Aktif' : 'Enabled')
-                            : (language === 'tr' ? 'Pasif' : 'Disabled')
+                            ? t.active
+                            : t.suspended
                           }
                         </span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
-                          <span className="text-muted-foreground">{language === 'tr' ? 'SSID:' : 'SSID:'}</span>
+                          <span className="text-muted-foreground">{t.wifiSsid}:</span>
                           <p className="font-medium">{wifiConfig.ssid || '-'}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">{language === 'tr' ? 'Mod:' : 'Mode:'}</span>
+                          <span className="text-muted-foreground">{t.modeLabel}</span>
                           <p className="font-medium capitalize">{wifiConfig.mode || '-'}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">{language === 'tr' ? 'Kanal:' : 'Channel:'}</span>
+                          <span className="text-muted-foreground">{t.wifiChannel}:</span>
                           <p className="font-medium">{wifiConfig.channel || '-'}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">{language === 'tr' ? 'Güvenlik:' : 'Security:'}</span>
+                          <span className="text-muted-foreground">{t.wifiSecurity}:</span>
                           <p className="font-medium flex items-center gap-1">
                             {wifiConfig.security !== 'open' ? (
                               <Lock className="w-3 h-3" />
@@ -482,7 +482,7 @@ export function RouterPanel({
                       )}>
                         <h3 className="font-semibold mb-2 flex items-center gap-2">
                           <ShieldCheck className="w-4 h-4" />
-                          {language === 'tr' ? 'WiFi Şifresi' : 'WiFi Password'}
+                          {t.wifiPassword}
                         </h3>
                         <p className="font-mono text-sm">••••••••</p>
                       </div>
@@ -495,7 +495,7 @@ export function RouterPanel({
                   )}>
                     <WifiOff className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
                     <p className="text-muted-foreground">
-                      {language === 'tr' ? 'WiFi yapılandırması bulunmuyor.' : 'No WiFi configuration found.'}
+                      {t.noWifiConfig}
                     </p>
                   </div>
                 )}
@@ -526,19 +526,19 @@ export function RouterPanel({
                         )}
                         {pool.subnetMask && (
                           <div>
-                            <span className="text-muted-foreground">{language === 'tr' ? 'Subnet Mask:' : 'Subnet Mask:'}</span>
+                            <span className="text-muted-foreground">{t.subnetMask}:</span>
                             <p className="font-mono font-medium">{pool.subnetMask}</p>
                           </div>
                         )}
                         {pool.defaultRouter && (
                           <div>
-                            <span className="text-muted-foreground">{language === 'tr' ? 'Varsayılan Ağ Geçidi:' : 'Default Gateway:'}</span>
+                            <span className="text-muted-foreground">{t.gateway}:</span>
                             <p className="font-mono font-medium">{pool.defaultRouter}</p>
                           </div>
                         )}
                         {pool.dnsServer && (
                           <div>
-                            <span className="text-muted-foreground">{language === 'tr' ? 'DNS Sunucusu:' : 'DNS Server:'}</span>
+                            <span className="text-muted-foreground">{t.dnsServer}:</span>
                             <p className="font-mono font-medium">{pool.dnsServer}</p>
                           </div>
                         )}
@@ -564,10 +564,10 @@ export function RouterPanel({
                   )}>
                     <Server className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
                     <p className="text-muted-foreground">
-                      {language === 'tr' ? 'DHCP havuzu yapılandırması bulunmuyor.' : 'No DHCP pool configuration found.'}
+                      {t.dhcpPoolConfig}
                     </p>
                     <p className="text-xs text-muted-foreground mt-2">
-                      {language === 'tr' ? 'DHCP havuzları CLI üzerinden yapılandırılabilir.' : 'DHCP pools can be configured via CLI.'}
+                      {t.dhcpCliConfig}
                     </p>
                   </div>
                 )}

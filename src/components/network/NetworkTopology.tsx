@@ -1676,14 +1676,14 @@ export function NetworkTopology({
     }
 
     if (e.touches.length === 1) {
-      const t = e.touches[0];
-      setTouchStart({ x: t.clientX, y: t.clientY });
+      const touch = e.touches[0];
+      setTouchStart({ x: touch.clientX, y: touch.clientY });
       setIsPanning(true);
-      setPanStart({ x: t.clientX - pan.x, y: t.clientY - pan.y });
+      setPanStart({ x: touch.clientX - pan.x, y: touch.clientY - pan.y });
 
       // Start long-press to open context menu
       const timer = setTimeout(() => {
-        openContextMenu(t.clientX, t.clientY, null);
+        openContextMenu(touch.clientX, touch.clientY, null);
         setLongPressTimer(null);
         setIsPanning(false);
       }, LONG_PRESS_DURATION);
@@ -1712,8 +1712,8 @@ export function NetworkTopology({
     }
 
     if (e.touches.length === 1 && isPanning) {
-      const t = e.touches[0];
-      setPan({ x: t.clientX - panStart.x, y: t.clientY - panStart.y });
+      const touch = e.touches[0];
+      setPan({ x: touch.clientX - panStart.x, y: touch.clientY - panStart.y });
     } else if (e.touches.length === 2 && lastTouchDistance !== null && lastTouchCenter !== null) {
       const a = e.touches[0];
       const b = e.touches[1];
@@ -1772,9 +1772,9 @@ export function NetworkTopology({
       setIsPanning(false);
     } else if (touchesLength === 1) {
       // Revert to panning with one finger if the other is lifted
-      const t = (e as ReactTouchEvent).touches[0];
+      const touch = (e as ReactTouchEvent).touches[0];
       setIsPanning(true);
-      setPanStart({ x: t.clientX - pan.x, y: t.clientY - pan.y });
+      setPanStart({ x: touch.clientX - pan.x, y: touch.clientY - pan.y });
       setLastTouchDistance(null);
       setLastTouchCenter(null);
     }
@@ -5788,7 +5788,7 @@ export function NetworkTopology({
                                   style={{ backgroundColor: note.color }}
                                 />
                               </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Renk' : 'Color'}</TooltipContent>
+                              <TooltipContent>{t.colorLabel}</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -5802,7 +5802,7 @@ export function NetworkTopology({
                                   F
                                 </button>
                               </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Yazı Tipi' : 'Font'}</TooltipContent>
+                              <TooltipContent>{t.fontLabel}</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -5816,7 +5816,7 @@ export function NetworkTopology({
                                   {note.fontSize}
                                 </button>
                               </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Boyut' : 'Size'}</TooltipContent>
+                              <TooltipContent>{t.sizeLabel}</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -5830,7 +5830,7 @@ export function NetworkTopology({
                                   {Math.round(note.opacity * 100)}
                                 </button>
                               </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Saydamlık' : 'Opacity'}</TooltipContent>
+                              <TooltipContent>{t.opacityLabel}</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -5844,7 +5844,7 @@ export function NetworkTopology({
                                   D
                                 </button>
                               </TooltipTrigger>
-                              <TooltipContent>{language === 'tr' ? 'Çoğalt' : 'Duplicate'}</TooltipContent>
+                              <TooltipContent>{t.duplicateLabel}</TooltipContent>
                             </Tooltip>
                           </div>
                           <Tooltip>
@@ -5861,7 +5861,7 @@ export function NetworkTopology({
                                 </svg>
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent>{language === 'tr' ? 'Sil' : 'Delete'}</TooltipContent>
+                            <TooltipContent>{t.delete}</TooltipContent>
                           </Tooltip>
                         </div>
 
@@ -5932,7 +5932,7 @@ export function NetworkTopology({
                             handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id);
                           }}
                           className="absolute right-1 bottom-1 z-10 w-4 h-4 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity"
-                          title={language === 'tr' ? 'Yeniden Boyutlandır' : 'Resize'}
+                          title={t.resizeLabel}
                         >
                           <svg viewBox="0 0 12 12" className="w-full h-full text-black">
                             <path d="M4 12 L12 4" stroke="currentColor" strokeWidth="1" />
@@ -5955,7 +5955,7 @@ export function NetworkTopology({
                           <foreignObject x="20" y="20" width="300" height="auto">
                             <div className={`p-3 rounded-lg shadow-lg border ${isDark ? 'bg-red-500/20 border-red-500/50' : 'bg-red-50 border-red-200'}`}>
                               <div className={`text-sm font-bold ${isDark ? 'text-red-300' : 'text-red-700'}`}>
-                                Ping başarısız
+                                {t.pingFailed}
                               </div>
                               <div className={`text-xs mt-1 ${isDark ? 'text-red-200' : 'text-red-600'}`}>
                                 {error}
@@ -5973,7 +5973,7 @@ export function NetworkTopology({
                           <foreignObject x="20" y="20" width="300" height="auto">
                             <div className={`p-3 rounded-lg shadow-lg border ${isDark ? 'bg-emerald-500/20 border-emerald-500/50' : 'bg-emerald-50 border-emerald-200'}`}>
                               <div className={`text-sm font-bold ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>
-                                Ping başarılı
+                                {t.pingSuccess}
                               </div>
                             </div>
                           </foreignObject>
@@ -6024,15 +6024,15 @@ export function NetworkTopology({
                     const controlPoint1 = { x: midX + perpX, y: source.y + perpY + Math.abs(offset) * 0.5 };
                     const controlPoint2 = { x: midX + perpX, y: target.y + perpY - Math.abs(offset) * 0.5 };
 
-                    const t = progress;
-                    const t2 = t * t; const t3 = t2 * t;
-                    const mt = 1 - t; const mt2 = mt * mt; const mt3 = mt2 * mt;
+                    const progressVal = progress;
+                    const p2 = progressVal * progressVal; const p3 = p2 * progressVal;
+                    const mt = 1 - progressVal; const mt2 = mt * mt; const mt3 = mt2 * mt;
 
-                    const bezierX = mt3 * source.x + 3 * mt2 * t * controlPoint1.x + 3 * mt * t2 * controlPoint2.x + t3 * target.x;
-                    const bezierY = mt3 * source.y + 3 * mt2 * t * controlPoint1.y + 3 * mt * t2 * controlPoint2.y + t3 * target.y;
+                    const bezierX = mt3 * source.x + 3 * mt2 * progressVal * controlPoint1.x + 3 * mt * p2 * controlPoint2.x + p3 * target.x;
+                    const bezierY = mt3 * source.y + 3 * mt2 * progressVal * controlPoint1.y + 3 * mt * p2 * controlPoint2.y + p3 * target.y;
 
-                    const tangentDx = -3 * mt2 * source.x + 3 * (mt2 - 2 * mt * t) * controlPoint1.x + 3 * (2 * mt * t - t2) * controlPoint2.x + 3 * t2 * target.x;
-                    const tangentDy = -3 * mt2 * source.y + 3 * (mt2 - 2 * mt * t) * controlPoint1.y + 3 * (2 * mt * t - t2) * controlPoint2.y + 3 * t2 * target.y;
+                    const tangentDx = -3 * mt2 * source.x + 3 * (mt2 - 2 * mt * progressVal) * controlPoint1.x + 3 * (2 * mt * progressVal - p2) * controlPoint2.x + 3 * p2 * target.x;
+                    const tangentDy = -3 * mt2 * source.y + 3 * (mt2 - 2 * mt * progressVal) * controlPoint1.y + 3 * (2 * mt * progressVal - p2) * controlPoint2.y + 3 * p2 * target.y;
                     const tangentLen = Math.sqrt(tangentDx * tangentDx + tangentDy * tangentDy) || 1;
 
                     const envelopeX = bezierX + (tangentDy / tangentLen * 20);
@@ -7003,7 +7003,7 @@ export function NetworkTopology({
                         <div className="flex justify-between items-center gap-4 mt-1 pt-1 border-t border-white/5">
                           <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.dhcpEnabled}</span>
                           <span className={`text-[10px] font-black tracking-widest ${dev.ipConfigMode === 'dhcp' ? 'text-green-500' : 'opacity-40'}`}>
-                            {dev.ipConfigMode === 'dhcp' ? (t.language === 'tr' ? 'EVET' : 'YES') : (t.language === 'tr' ? 'HAYIR' : 'NO')}
+                            {dev.ipConfigMode === 'dhcp' ? (isTR ? 'EVET' : 'YES') : (isTR ? 'HAYIR' : 'NO')}
                           </span>
                         </div>
                       )}
@@ -7022,13 +7022,13 @@ export function NetworkTopology({
                               <span className="px-1.5 py-0.5 rounded-md bg-purple-500/20 text-purple-500 text-[9px] font-black tracking-widest border border-purple-500/20">DHCP</span>
                             )}
                             {(!dev.services.http?.enabled && !dev.services.dns?.enabled && !dev.services.dhcp?.enabled) && (
-                              <span className="text-[9px] opacity-40 italic">{t.language === 'tr' ? 'Servis yok' : 'No services'}</span>
+                              <span className="text-[9px] opacity-40 italic">{isTR ? 'Servis yok' : 'No services'}</span>
                             )}
                           </div>
 
                           {dev.services.dhcp?.enabled && dev.services.dhcp.pools && dev.services.dhcp.pools.length > 0 && (
                             <div className="space-y-1 mt-2 pt-2 border-t border-white/5">
-                              <div className="text-[9px] font-bold opacity-30 uppercase tracking-wider">{t.language === 'tr' ? 'DHCP Pool' : 'DHCP Pool'}</div>
+                              <div className="text-[9px] font-bold opacity-30 uppercase tracking-wider">{isTR ? 'DHCP Pool' : 'DHCP Pool'}</div>
                               {dev.services.dhcp.pools.map((pool, idx) => (
                                 <div key={idx} className="text-[9px] space-y-0.5 bg-purple-500/10 rounded p-1.5">
                                   <div className="flex justify-between"><span className="opacity-50">Pool:</span><span className="font-mono">{pool.poolName}</span></div>
@@ -7043,7 +7043,7 @@ export function NetworkTopology({
 
                           {dev.services.dns?.enabled && dev.services.dns.records && dev.services.dns.records.length > 0 && (
                             <div className="space-y-1 mt-2 pt-2 border-t border-white/5">
-                              <div className="text-[9px] font-bold opacity-30 uppercase tracking-wider">{t.language === 'tr' ? 'DNS Kayıtları' : 'DNS Records'}</div>
+                              <div className="text-[9px] font-bold opacity-30 uppercase tracking-wider">{isTR ? 'DNS Kayıtları' : 'DNS Records'}</div>
                               {dev.services.dns.records.map((record, idx) => (
                                 <div key={idx} className="text-[9px] flex justify-between items-center gap-2 bg-blue-500/10 rounded px-1.5 py-0.5">
                                   <span className="font-mono text-blue-400 truncate max-w-[80px]">{record.domain}</span>
@@ -7057,8 +7057,8 @@ export function NetworkTopology({
                           {dev.services.http?.enabled && (
                             <div className="mt-2 pt-2 border-t border-white/5">
                               <div className="text-[9px] flex justify-between items-center">
-                                <span className="opacity-60 uppercase tracking-wider">{t.language === 'tr' ? 'HTTP Sunucu' : 'HTTP Server'}</span>
-                                <span className="text-green-500 text-[9px] font-bold">✓ {t.language === 'tr' ? 'Aktif' : 'Active'}</span>
+                                <span className="opacity-60 uppercase tracking-wider">{isTR ? 'HTTP Sunucu' : 'HTTP Server'}</span>
+                                <span className="text-green-500 text-[9px] font-bold">✓ {isTR ? 'Aktif' : 'Active'}</span>
                               </div>
                               {dev.services.http.content && (
                                 <div className="text-[8px] opacity-50 mt-1 truncate">{dev.services.http.content.substring(0, 50)}...</div>

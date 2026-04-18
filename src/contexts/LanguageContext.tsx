@@ -5,6 +5,29 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 export type Language = 'tr' | 'en';
 
 export interface Translations {
+  pcConnected: string;
+  undo: string;
+  redo: string;
+  load: string;
+  help: string;
+  addRouter: string;
+  addNote: string;
+  resetView: string;
+  exit: string;
+  tips: string;
+  addDeviceOrCable: string;
+  colorLabel: string;
+  fontLabel: string;
+  opacityLabel: string;
+  duplicateLabel: string;
+  paste: string;
+  selectAll: string;
+  cut: string;
+  copy: string;
+  power: string;
+  active: string;
+  connectDevices: string;
+  refreshNetwork: string;
   // Header
   title: string;
   subtitle: string;
@@ -34,7 +57,6 @@ export interface Translations {
   vlanId: string;
   vlanName: string;
   create: string;
-  active: string;
   suspended: string;
   ports: string;
 
@@ -69,7 +91,6 @@ export interface Translations {
   noCommandsAvailable: string;
   tabComplete: string;
   commandHistory: string;
-  help: string;
 
   // Footer
   nosVersion: string;
@@ -78,7 +99,6 @@ export interface Translations {
   activePorts: string;
 
   // Tips
-  tips: string;
   levelBasic: string;
   levelIntermediate: string;
   levelAdvanced: string;
@@ -101,7 +121,6 @@ export interface Translations {
   // UI text for global controls in About modal / tour
   close: string;
   pcTerminal: string;
-  pcConnected: string;
   pcNotConnected: string;
   pcCableError: string;
   pcIncompatibleCable: string;
@@ -163,7 +182,6 @@ export interface Translations {
   confirmResetTitle: string;
   confirmResetDescription: string;
   confirmReset: string;
-  load: string;
   saveLabel: string;
   languageLabel: string;
   themeLabel: string;
@@ -190,7 +208,6 @@ export interface Translations {
   add: string;
   annotations: string;
   align: string;
-  addDeviceOrCable: string;
   selectCable: string;
   deviceInfoShort: string;
   addPcShort: string;
@@ -207,8 +224,6 @@ export interface Translations {
   newProjectConfirm: string;
   invalidProjectFile: string;
   failedLoadProject: string;
-  undo: string;
-  redo: string;
   newProject: string;
   saveProject: string;
   loadProject: string;
@@ -288,12 +303,9 @@ export interface Translations {
   startTour: string;
 
   // Network Topology
-  connectDevices: string;
   addDevice: string;
   addPc: string;
   addSwitch: string;
-  addRouter: string;
-  addNote: string;
   cableType: string;
   straight: string;
   crossover: string;
@@ -310,8 +322,6 @@ export interface Translations {
   delete: string;
   resize: string;
   search: string;
-  copy: string;
-  power: string;
   tasks: string;
   basicHint: string;
   intermediateHint: string;
@@ -355,9 +365,6 @@ export interface Translations {
   saveError: string;
   copySuccess: string;
   copyError: string;
-  selectAll: string;
-  cut: string;
-  paste: string;
   rename: string;
   powerOn: string;
   powerOff: string;
@@ -375,7 +382,6 @@ export interface Translations {
   securityLabel: string;
   channelLabel: string;
   connectedLabel: string;
-  refreshNetwork: string;
   exitPingMode: string;
   selectSource: string;
   selectTarget: string;
@@ -383,11 +389,7 @@ export interface Translations {
   alignTop: string;
   togglePower: string;
   topologyAriaLabel: string;
-  colorLabel: string;
-  fontLabel: string;
   fontSizeLabel: string;
-  opacityLabel: string;
-  duplicateLabel: string;
   noIp: string;
   deviceNameLabel: string;
   measurementLabel: string;
@@ -459,14 +461,117 @@ export interface Translations {
   bugReport: string;
   suggestion: string;
   other: string;
+  tabDescTopology: string;
+  tabDescCmd: string;
+  tabDescTerminal: string;
+  tabDescTasks: string;
+  networkStatusUpdated: string;
+  networkRefreshed: string;
+  noWifiDevices: string;
+  importSuccess: string;
+  pcDisconnected: string;
+  apNoClients: string;
+  dhcpNoPool: string;
+  dhcpNoLease: string;
+  newMessage: string;
+  sending: string;
+  savedViaSheets: string;
+  dhcpNotFound: string;
+  congrats: string;
   contactSuccessTitle: string;
   contactSuccessDesc: string;
   contactErrorTitle: string;
   contactErrorDesc: string;
+  sizeLabel: string;
+  resizeLabel: string;
+  pingFailed: string;
+  pingSuccess: string;
+  completeWithTab: string;
+  cmdSuggestions: string;
+  noteStyle: string;
+  open: string;
+  ping: string;
+  addIoT: string;
+  addPC: string;
+  addL2Switch: string;
+  addL3Switch: string;
+  devicesCount: string;
+  none: string;
+  openNewProject: string;
+  openNewProjectDesc: string;
+  searchProjects: string;
+  emptyProject: string;
+  emptyProjectDesc: string;
+  skip: string;
+  back: string;
+  finish: string;
+  next: string;
+  switchTerminal: string;
+  switchTasks: string;
+  deviceTasksAndConfig: string;
+  cliInterface: string;
+  connectionError: string;
+  lightMode: string;
+  darkMode: string;
+  highRes: string;
+  lowRes: string;
+  quickActions: string;
+  new: string;
+  tour: string;
+  searchShort: string;
+  straightCable: string;
+  crossoverCable: string;
+  consoleCable: string;
+  straightShort: string;
+  crossoverShort: string;
+  consoleShort: string;
+  fullScreenMode: string;
+  unsaved: string;
+  saved: string;
+  lastSavedAt: string;
+  pan: string;
+  boxSelect: string;
+  menu: string;
+  clickIconsToRun: string;
+  tabsShort: string;
+  taskCompleted: string;
+  taskFailed: string;
+  channelShort: string;
+  signal: string;
+  services: string;
+  openCMD: string;
+  openCLI: string;
+  ipMode: string;
+  static: string;
+  portsShort: string;
+  connectedShort: string;
+  routing: string;
+  enabled: string;
+  disabled: string;
+  pools: string;
+  routerInfoPanel: string;
+  expand: string;
+  minimize: string;
+  overview: string;
+  deviceInformation: string;
+  ipRouting: string;
+  ipInterfaces: string;
+  noIpInterfaces: string;
+  portSummary: string;
+  notConnected: string;
+  shutdownStatus: string;
+  noWifiConfig: string;
+  dhcpPoolConfig: string;
+  dhcpCliConfig: string;
+  wifiStatus: string;
+  connectedStatus: string;
+  disconnectedStatus: string;
 }
 
 const translations: Record<Language, Translations> = {
   tr: {
+    resetView: 'resetView',
+    exit: 'exit',
     title: 'Network Simulator 2026',
     subtitle: 'Ağ Becerilerini Geliştir',
     mode: 'Kip',
@@ -538,7 +643,7 @@ const translations: Record<Language, Translations> = {
     switchMode: 'Switch Modu',
     newVlanLabel: 'Yeni VLAN',
     pcTerminal: 'PC Terminali',
-    pcConnected: 'Bağlandı.',
+    pcConnected: 'PC bağlı',
     pcNotConnected: 'Herhangi bir switch veya router\'a bağlı değilsiniz.',
     pcCableError: 'Ağ kablosu bağlı değil.',
     pcIncompatibleCable: 'Kablo tipi uyumsuz. PC-Switch için Düz Kablo gerekli.',
@@ -878,7 +983,7 @@ const translations: Record<Language, Translations> = {
     livingRoom: 'Salon',
     kitchen: 'Mutfak',
     bathroom: 'Banyo',
-    contactTitle: 'İletişim / Hata Raporu',
+    contactTitle: 'Bize Ulaşın / Hata Bildir',
     contactName: 'Adınız',
     contactEmail: 'E-posta Adresiniz',
     contactType: 'Konu',
@@ -887,12 +992,115 @@ const translations: Record<Language, Translations> = {
     bugReport: 'Böcek / Hata Raporu',
     suggestion: 'Öneri / İstek',
     other: 'Diğer',
+    tabDescTopology: 'Cihazları sürükleyip bırakarak ağ topolojisini tasarla.',
+    tabDescCmd: 'PC komut satırı ile ping, ipconfig vb. komutları çalıştır.',
+    tabDescTerminal: 'Switch / router CLI üzerinden yapılandırma komutlarını çalıştır.',
+    tabDescTasks: 'Port, VLAN ve güvenlik görevlerini tamamlayarak puan kazan.',
+    networkStatusUpdated: 'Ağ Durumu Tamamen Güncellendi',
+    networkRefreshed: 'Ağ Yenilendi',
+    noWifiDevices: 'WiFi cihazı bulunamadı',
+    importSuccess: 'Dosya başarıyla içe aktarıldı.',
+    pcDisconnected: 'PC bağlantısız',
+    apNoClients: 'AP istemcisiz',
+    dhcpNoPool: 'sunucuda havuz yok',
+    dhcpNoLease: 'istemci lease alamadı',
+    newMessage: 'Yeni Mesaj',
+    sending: 'Gönderiliyor...',
+    savedViaSheets: 'Sheets entegrasyonu ile saklanır',
+    dhcpNotFound: 'DHCP bulunamadı',
+    congrats: 'Tebrikler!',
     contactSuccessTitle: 'Mesaj Gönderildi',
-    contactSuccessDesc: 'Geri bildiriminiz için teşekkürler! Google Sheets üzerine kaydedildi.',
+    contactSuccessDesc: 'Mesajınız başarıyla gönderildi. Geri bildiriminiz için teşekkürler!',
     contactErrorTitle: 'Gönderilemedi',
     contactErrorDesc: 'Bir ağ hatası oluştu. Lütfen sonra tekrar deneyin.',
+    sizeLabel: 'Boyut',
+    resizeLabel: 'Yeniden Boyutlandır',
+    pingFailed: 'Ping başarısız',
+    pingSuccess: 'Ping başarılı',
+    completeWithTab: 'ile tamamla',
+    cmdSuggestions: 'Komut önerileri',
+    noteStyle: 'Not Biçimi',
+    open: 'Aç',
+    ping: 'Ping',
+    addIoT: 'IoT Ekle',
+    addPC: 'PC Ekle',
+    addL2Switch: 'L2 Switch Ekle',
+    addL3Switch: 'L3 Switch Ekle',
+    devicesCount: 'cihaz',
+    none: 'Yok',
+    openNewProject: 'Yeni Proje Aç',
+    openNewProjectDesc: 'Topolojinizi tasarlamaya başlamak için hazır bir senaryo seçin veya boş bir proje ile başlayın.',
+    searchProjects: 'Proje ara...',
+    emptyProject: 'Boş Proje',
+    emptyProjectDesc: 'Sıfırdan temiz bir topoloji ile başla',
+    skip: 'Geç',
+    back: 'Geri',
+    finish: 'Bitir',
+    next: 'İleri',
+    switchTerminal: "CLI Terminal'e geç",
+    switchTasks: 'Görevlere geç',
+    deviceTasksAndConfig: 'Cihaz görevleri ve yapılandırma görevleri',
+    cliInterface: 'Komut satırı arayüzü',
+    connectionError: 'Bağlantı hatası',
+    lightMode: 'Açık Tema',
+    darkMode: 'Koyu Tema',
+    highRes: 'Yüksek Çözünürlük',
+    lowRes: 'Düşük Çözünürlük',
+    quickActions: 'Hızlı işlemler',
+    new: 'Yeni',
+    tour: 'Tur',
+    searchShort: 'Ara...',
+    straightCable: 'Düz Kablo',
+    crossoverCable: 'Çapraz Kablo',
+    consoleCable: 'Konsol Kablosu',
+    straightShort: 'Düz',
+    crossoverShort: 'Çapraz',
+    consoleShort: 'Konsol',
+    fullScreenMode: 'Tam Ekran (Ctrl+F)',
+    unsaved: 'Kaydedilmedi',
+    saved: 'Kaydedildi',
+    lastSavedAt: 'Son kaydedilme: ',
+    pan: 'Kaydır',
+    boxSelect: 'Kutu',
+    menu: 'Menü',
+    clickIconsToRun: 'Program çalıştırmak için simgeleri tıklayınız',
+    tabsShort: 'Sekmeler',
+    taskCompleted: '✓ Görev Tamamlandı',
+    taskFailed: '⚠ Görev Başarısız',
+    channelShort: 'Kanal',
+    signal: 'Sinyal',
+    services: 'Servisler',
+    openCMD: 'CMD Aç',
+    openCLI: 'CLI Aç',
+    ipMode: 'IP Modu',
+    static: 'STATIK',
+    portsShort: 'Portlar',
+    connectedShort: 'bağlı',
+    routing: 'Yönlendirme',
+    enabled: 'Aktif',
+    disabled: 'Pasif',
+    pools: 'Havuz',
+    routerInfoPanel: 'Router Bilgi Paneli',
+    expand: 'Genişlet',
+    minimize: 'Küçült',
+    overview: 'Genel Bakış',
+    deviceInformation: 'Cihaz Bilgileri',
+    ipRouting: 'IP Yönlendirme',
+    ipInterfaces: 'IP Arayüzleri',
+    noIpInterfaces: 'IP adresi yapılandırılmış arayüz yok.',
+    portSummary: 'Port Özeti',
+    notConnected: 'Bağlı Değil',
+    shutdownStatus: 'Kapalı',
+    noWifiConfig: 'WiFi yapılandırması bulunmuyor.',
+    dhcpPoolConfig: 'DHCP havuzu yapılandırması bulunmuyor.',
+    dhcpCliConfig: 'DHCP havuzları CLI üzerinden yapılandırılabilir.',
+    wifiStatus: 'WiFi Durumu',
+    connectedStatus: 'Bağlı',
+    disconnectedStatus: 'Bağlı Değil',
   },
   en: {
+    resetView: 'resetView',
+    exit: 'exit',
     title: 'Network Simulator 2026',
     subtitle: 'Develop Your Networking Skills',
     mode: 'Mode',
@@ -964,7 +1172,7 @@ const translations: Record<Language, Translations> = {
     switchMode: 'Switch Mode',
     newVlanLabel: 'New VLAN',
     pcTerminal: 'PC Terminal',
-    pcConnected: 'Connected.',
+    pcConnected: 'PC connected',
     pcNotConnected: 'You are not connected to any switch or router.',
     pcCableError: 'Network cable not connected.',
     pcIncompatibleCable: 'Incompatible cable type. Straight-through required for PC-Switch.',
@@ -1313,10 +1521,111 @@ const translations: Record<Language, Translations> = {
     bugReport: 'Bug Report',
     suggestion: 'Suggestion / Request',
     other: 'Other',
+    tabDescTopology: 'Design the network topology by dragging and dropping devices.',
+    tabDescCmd: 'Run commands like ping, ipconfig, etc. via PC command line.',
+    tabDescTerminal: 'Run configuration commands via Switch / router CLI.',
+    tabDescTasks: 'Earn points by completing port, VLAN and security tasks.',
+    networkStatusUpdated: 'Network Status Fully Updated',
+    networkRefreshed: 'Network Refreshed',
+    noWifiDevices: 'No WiFi device found',
+    importSuccess: 'File imported successfully.',
+    pcDisconnected: 'PC disconnected',
+    apNoClients: 'AP has no clients',
+    dhcpNoPool: 'no pool on server',
+    dhcpNoLease: 'client could not get lease',
+    newMessage: 'New Message',
+    sending: 'Sending...',
+    savedViaSheets: 'Saved via Sheets integration',
+    dhcpNotFound: 'No DHCP found',
+    congrats: 'Congratulations!',
     contactSuccessTitle: 'Message Sent',
-    contactSuccessDesc: 'Thank you for your feedback! It has been saved to Google Sheets.',
+    contactSuccessDesc: 'Thank you for your feedback!',
     contactErrorTitle: 'Send Failed',
     contactErrorDesc: 'A network error occurred. Please try again later.',
+    sizeLabel: 'Size',
+    resizeLabel: 'Resize',
+    pingFailed: 'Ping failed',
+    pingSuccess: 'Ping successful',
+    completeWithTab: 'to complete',
+    cmdSuggestions: 'Command suggestions',
+    noteStyle: 'Note Style',
+    open: 'Open',
+    ping: 'Ping',
+    addIoT: 'Add IoT',
+    addPC: 'Add PC',
+    addL2Switch: 'Add L2 Switch',
+    addL3Switch: 'Add L3 Switch',
+    devicesCount: 'devices',
+    none: 'None',
+    openNewProject: 'Open a New Project',
+    openNewProjectDesc: 'Choose a ready scenario to start designing your topology or start with an empty project.',
+    searchProjects: 'Search projects...',
+    emptyProject: 'Empty Project',
+    emptyProjectDesc: 'Start with a clean topology from scratch',
+    skip: 'Skip',
+    back: 'Back',
+    finish: 'Finish',
+    next: 'Next',
+    switchTerminal: "Switch to CLI Terminal",
+    switchTasks: 'Switch to Tasks',
+    deviceTasksAndConfig: 'Device tasks and configuration tasks',
+    cliInterface: 'Command line interface',
+    connectionError: 'Connection error',
+    lightMode: 'Light Mode',
+    darkMode: 'Dark Mode',
+    highRes: 'High Resolution',
+    lowRes: 'Low Resolution',
+    quickActions: 'Quick actions',
+    new: 'New',
+    tour: 'Tour',
+    searchShort: 'Search...',
+    straightCable: 'Straight Cable',
+    crossoverCable: 'Crossover Cable',
+    consoleCable: 'Console Cable',
+    straightShort: 'Straight',
+    crossoverShort: 'Crossover',
+    consoleShort: 'Console',
+    fullScreenMode: 'Full Screen (Ctrl+F)',
+    unsaved: 'Unsaved',
+    saved: 'Saved',
+    lastSavedAt: 'Last saved: ',
+    pan: 'Pan',
+    boxSelect: 'Box',
+    menu: 'Menu',
+    clickIconsToRun: 'Click icons to run programs',
+    tabsShort: 'Tabs',
+    taskCompleted: '✓ Task Completed',
+    taskFailed: '⚠ Task Failed',
+    channelShort: 'Ch',
+    signal: 'Signal',
+    services: 'Services',
+    openCMD: 'Open CMD',
+    openCLI: 'Open CLI',
+    ipMode: 'IP Mode',
+    static: 'STATIC',
+    portsShort: 'Ports',
+    connectedShort: 'connected',
+    routing: 'Routing',
+    enabled: 'Enabled',
+    disabled: 'Disabled',
+    pools: 'Pools',
+    routerInfoPanel: 'Router Information Panel',
+    expand: 'Expand',
+    minimize: 'Minimize',
+    overview: 'Overview',
+    deviceInformation: 'Device Information',
+    ipRouting: 'IP Routing',
+    ipInterfaces: 'IP Interfaces',
+    noIpInterfaces: 'No interfaces with IP configured.',
+    portSummary: 'Port Summary',
+    notConnected: 'Not Connected',
+    shutdownStatus: 'Shutdown',
+    noWifiConfig: 'No WiFi configuration found.',
+    dhcpPoolConfig: 'No DHCP pool configuration found.',
+    dhcpCliConfig: 'DHCP pools can be configured via CLI.',
+    wifiStatus: 'WiFi Status',
+    connectedStatus: 'Connected',
+    disconnectedStatus: 'Disconnected',
   },
 };
 

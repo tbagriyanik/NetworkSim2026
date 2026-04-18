@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { TaskDefinition, TaskContext, getTaskStatus } from '@/lib/network/taskDefinitions';
 import { SwitchState } from '@/lib/network/types';
 import { useRef, useEffect, useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TaskCardProps {
   tasks: TaskDefinition[];
@@ -14,6 +15,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ tasks, state, context, color, isDark }: TaskCardProps) {
+  const { t } = useLanguage();
   // Use ref to track previous completed tasks (avoids infinite loop)
   const prevCompletedRef = useRef<Set<string>>(new Set());
   const [animatingTask, setAnimatingTask] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export function TaskCard({ tasks, state, context, color, isDark }: TaskCardProps
           <div className="celebration-pop bg-white dark:bg-slate-900 px-4 py-2 rounded-full shadow-2xl border border-green-500/50 flex items-center gap-2">
             <span className="text-xl">🎉</span>
             <span className="text-sm font-bold text-green-500 tracking-wider">
-              {context.language === 'tr' ? 'Tebrikler!' : 'Completed!'}
+              {t.congrats}
             </span>
           </div>
 
@@ -100,7 +102,7 @@ export function TaskCard({ tasks, state, context, color, isDark }: TaskCardProps
           <svg className={`w-4 h-4 ${isCategoryComplete ? 'text-green-400 animate-bounce' : 'text-cyan-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 00-2 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
           </svg>
-          {context.language === 'tr' ? 'Görevler' : 'Tasks'}
+          {t.tasks}
         </h3>
         <Badge className={`bg-gradient-to-r ${isCategoryComplete ? 'from-green-500 to-emerald-600' : color} text-white border-0 transition-all duration-500 ${isCategoryComplete ? 'scale-110 shadow-lg shadow-green-500/20' : 'hover:scale-105'}`}>
           {score}/{maxScore}

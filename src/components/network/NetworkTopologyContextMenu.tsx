@@ -1,6 +1,5 @@
-'use client';
-
 import { useState, useEffect, type RefObject } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Trash2, Undo2, Redo2, Scissors, Copy, ClipboardPaste,
   MousePointer2, ExternalLink, Mail, Shield, Layers,
@@ -86,6 +85,7 @@ export default function NetworkTopologyContextMenu({
   onOpenTasks,
   note
 }: NetworkTopologyContextMenuProps) {
+  const { t } = useLanguage();
   const [position, setPosition] = useState({ x: contextMenu?.x || 0, y: contextMenu?.y || 0 });
 
   const renderIcon = (iconName: string) => {
@@ -169,7 +169,7 @@ export default function NetworkTopologyContextMenu({
       {contextMenu.noteId && contextMenu.mode === 'note-style' && (
         <div className="px-2 py-2 space-y-2">
           <div className="text-[10px]  tracking-widest text-slate-500">
-            {language === 'tr' ? 'Not Biçimi' : 'Note Style'}
+            {t.noteStyle}
           </div>
 
           <div className="grid grid-cols-5 gap-1">
@@ -186,7 +186,7 @@ export default function NetworkTopologyContextMenu({
 
           <div className="space-y-1">
             <div className="text-[10px]  tracking-widest text-slate-500">
-              {language === 'tr' ? 'Yazı Tipi' : 'Font'}
+              {t.fontLabel}
             </div>
             <div className="grid grid-cols-1 gap-1">
               {noteFonts.map((f) => (
@@ -207,7 +207,7 @@ export default function NetworkTopologyContextMenu({
 
           <div className="space-y-1">
             <div className="text-[10px] tracking-widest text-slate-500">
-              {language === 'tr' ? 'Boyut' : 'Size'}
+              {t.sizeLabel}
             </div>
             <div className="flex gap-1">
               {NOTE_FONT_SIZES.map((s) => (
@@ -227,7 +227,7 @@ export default function NetworkTopologyContextMenu({
 
           <div className="space-y-1">
             <div className="text-[10px] tracking-widest text-slate-500">
-              {language === 'tr' ? 'Saydamlık' : 'Opacity'}
+              {t.opacityLabel}
             </div>
             <div className="flex gap-1">
               {NOTE_OPACITY.map((o) => (
@@ -246,7 +246,7 @@ export default function NetworkTopologyContextMenu({
           </div>
           <div className="pt-1 border-t border-slate-700/30">
             {renderMenuItem({
-              label: language === 'tr' ? 'Çoğalt' : 'Duplicate',
+              label: t.duplicateLabel,
               icon: 'copy',
               onClick: () => { onDuplicateNote(contextMenu.noteId!); onClose(); }
             })}
@@ -257,7 +257,7 @@ export default function NetworkTopologyContextMenu({
       {contextMenu.mode === 'canvas' && (
         <div className="px-2 py-2 space-y-1">
           {renderMenuItem({
-            label: language === 'tr' ? 'Yapıştır' : 'Paste',
+            label: t.paste,
             icon: 'paste',
             shortcut: 'Ctrl+V',
             disabled: (noteClipboardLength === 0) && (!onPasteDevice || clipboardLength === 0),
@@ -271,21 +271,21 @@ export default function NetworkTopologyContextMenu({
             }
           })}
           {renderMenuItem({
-            label: language === 'tr' ? 'Geri Al' : 'Undo',
+            label: t.undo,
             icon: 'undo',
             shortcut: 'Ctrl+Z',
             disabled: !canUndo,
             onClick: () => { onUndo(); onClose(); }
           })}
           {renderMenuItem({
-            label: language === 'tr' ? 'Yinele' : 'Redo',
+            label: t.redo,
             icon: 'redo',
             shortcut: 'Ctrl+Y',
             disabled: !canRedo,
             onClick: () => { onRedo(); onClose(); }
           })}
           {renderMenuItem({
-            label: language === 'tr' ? 'Tümünü Seç' : 'Select All',
+            label: t.selectAll,
             icon: 'select',
             shortcut: 'Ctrl+A',
             disabled: devices.length === 0 && notes.length === 0,
@@ -305,41 +305,41 @@ export default function NetworkTopologyContextMenu({
             return (
               <>
                 {renderMenuItem({
-                  label: language === 'tr' ? 'Aç' : 'Open',
+                  label: t.open,
                   shortcut: 'Enter',
                   icon: 'open',
                   onClick: () => { if (device && device.type !== 'iot') onOpenDevice(device); onClose(); },
                   disabled: !device || device.type === 'iot'
                 })}
                 {isRouterOrSwitch && onOpenTasks && renderMenuItem({
-                  label: language === 'tr' ? 'Görevler' : 'Tasks',
+                  label: t.tasks,
                   icon: 'tasks',
                   onClick: () => { onOpenTasks(contextMenu.deviceId!); onClose(); },
                   disabled: !device
                 })}
                 {renderMenuItem({
-                  label: language === 'tr' ? 'Kes' : 'Cut',
+                  label: t.cut,
                   icon: 'cut',
                   shortcut: 'Ctrl+X',
                   disabled: !device,
                   onClick: () => { onSaveToHistory(); onCutDevices(targets); onClose(); }
                 })}
                 {renderMenuItem({
-                  label: language === 'tr' ? 'Kopyala' : 'Copy',
+                  label: t.copy,
                   icon: 'copy',
                   shortcut: 'Ctrl+C',
                   disabled: !device,
                   onClick: () => { onCopyDevices(targets); onClose(); }
                 })}
                 {renderMenuItem({
-                  label: language === 'tr' ? 'Yapıştır' : 'Paste',
+                  label: t.paste,
                   icon: 'paste',
                   shortcut: 'Ctrl+V',
                   disabled: !canPaste,
                   onClick: () => { if (onPasteDevice) onPasteDevice(); onClose(); }
                 })}
                 {renderMenuItem({
-                  label: language === 'tr' ? 'Sil' : 'Delete',
+                  label: t.delete,
                   icon: 'delete',
                   shortcut: 'Del',
                   disabled: !device,
@@ -351,20 +351,20 @@ export default function NetworkTopologyContextMenu({
                   }
                 })}
                 {renderMenuItem({
-                  label: language === 'tr' ? 'Tümünü Seç' : 'Select All',
+                  label: t.selectAll,
                   icon: 'select',
                   shortcut: 'Ctrl+A',
                   disabled: devices.length === 0,
                   onClick: () => { onSelectAll(); onClose(); }
                 })}
                 {renderMenuItem({
-                  label: language === 'tr' ? 'Ping' : 'Ping',
+                  label: t.ping,
                   icon: 'ping',
                   onClick: () => { onStartPing(contextMenu.deviceId!); onClose(); },
                   disabled: !device
                 })}
                 {renderMenuItem({
-                  label: language === 'tr' ? 'Güç' : 'Power',
+                  label: t.power,
                   icon: 'power',
                   onClick: () => { onSaveToHistory(); onTogglePowerDevices(targets); onClose(); },
                   disabled: !device

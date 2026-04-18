@@ -1477,7 +1477,7 @@ export function PCPanel({
       setHttpAppContent(`
         <main style="padding:32px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;">
           <h1 style="margin:0 0 8px;font-size:28px;">404</h1>
-          <p style="margin:0 0 12px;font-size:16px;">Sayfa bulunamadi / Page not found</p>
+          <p style="margin:0 0 12px;font-size:16px;">${language === 'tr' ? 'Sayfa bulunamadı' : 'Page not found'}</p>
           <code style="display:inline-block;padding:6px 10px;border-radius:8px;background:#f1f5f9;color:#0f172a;">${displayUrl}</code>
         </main>
       `);
@@ -1486,7 +1486,7 @@ export function PCPanel({
       const runtimeState = deviceStates?.get(httpServer.id);
       const connectedIot = getConnectedIotDevices(httpServer.id);
       const availableIot = getAvailableIotDevices(httpServer.id);
-      const adminPage = generateRouterAdminPage(httpServer, runtimeState, connectedIot, availableIot);
+      const adminPage = generateRouterAdminPage(httpServer, language, runtimeState, connectedIot, availableIot);
       setHttpAppDeviceId(httpServer.id);
       setHttpAppContent(adminPage);
       setHttpAppTitle(language === 'tr' ? 'Yönlendirici Yönetimi' : 'Router Management');
@@ -1721,7 +1721,7 @@ export function PCPanel({
             const runtimeState = deviceStates?.get(httpAppDeviceId);
             const connectedIot = getConnectedIotDevices(httpAppDeviceId);
             const availableIot = getAvailableIotDevices(httpAppDeviceId);
-            const refreshed = generateRouterAdminPage(targetDevice, runtimeState, connectedIot, availableIot);
+            const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot);
             setHttpAppContent(refreshed);
           }
         }
@@ -1819,7 +1819,7 @@ export function PCPanel({
             const runtimeState = deviceStates?.get(httpAppDeviceId);
             const connectedIot = getConnectedIotDevices(httpAppDeviceId);
             const availableIot = getAvailableIotDevices(httpAppDeviceId);
-            const refreshed = generateRouterAdminPage(targetDevice, runtimeState, connectedIot, availableIot);
+            const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot);
             setHttpAppContent(refreshed);
           }
         }
@@ -1833,7 +1833,7 @@ export function PCPanel({
             const runtimeState = deviceStates?.get(httpAppDeviceId);
             const connectedIot = getConnectedIotDevices(httpAppDeviceId);
             const availableIot = getAvailableIotDevices(httpAppDeviceId);
-            const refreshed = generateRouterAdminPage(targetDevice, runtimeState, connectedIot, availableIot);
+            const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot);
             setHttpAppContent(refreshed);
           }
         }
@@ -1920,7 +1920,7 @@ export function PCPanel({
     const runtimeState = deviceStates?.get(httpAppDeviceId);
     const connectedIot = getConnectedIotDevices(httpAppDeviceId);
     const availableIot = getAvailableIotDevices(httpAppDeviceId);
-    const refreshed = generateRouterAdminPage(targetDevice, runtimeState, connectedIot, availableIot);
+    const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot);
     setHttpAppContent(refreshed);
   }, [httpAppDeviceId, topologyDevices, deviceStates, getConnectedIotDevices, getAvailableIotDevices]);
 
@@ -5030,9 +5030,9 @@ export function PCPanel({
                               isDark ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
                             )}>
                               <div className={`flex items-center justify-between px-3 py-2 text-[11px] font-semibold ${isDark ? 'text-slate-200 bg-slate-900/60' : 'text-slate-700 bg-slate-50'}`}>
-                                <span>{language === 'tr' ? 'Komut önerileri' : 'Command suggestions'}</span>
+                                <span>{t.cmdSuggestions}</span>
                                 <span className={`text-[10px] font-bold ${isDark ? 'text-cyan-300' : 'text-cyan-700'}`}>
-                                  Tab ↹ {language === 'tr' ? 'ile tamamla' : 'to complete'}
+                                  Tab ↹ {t.completeWithTab}
                                 </span>
                               </div>
                               <div className="max-h-40 overflow-y-auto mobile-scroll">

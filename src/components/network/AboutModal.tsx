@@ -60,7 +60,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
     setSubmitStatus('idle');
 
     try {
-      // Theoretically sending to a Google Apps Script Web App
+      // Theoretically sending to a Apps Script Web App
       // Or a Next.js API route
       const response = await fetch('/api/contact', {
         method: 'POST',
@@ -89,12 +89,12 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
   // Filter categories based on search query
   const filteredHelpCategories = useMemo(() => {
     if (!searchQuery.trim()) return helpCategories;
-    
+
     const query = searchQuery.toLowerCase();
     return helpCategories.map(cat => ({
       ...cat,
-      cmds: cat.cmds.filter(([cmd, desc]) => 
-        cmd.toLowerCase().includes(query) || 
+      cmds: cat.cmds.filter(([cmd, desc]) =>
+        cmd.toLowerCase().includes(query) ||
         desc.toLowerCase().includes(query)
       )
     })).filter(cat => cat.cmds.length > 0);
@@ -187,8 +187,8 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                   autoFocus
                   className={cn(
                     'w-full pl-9 pr-9 py-2.5 rounded-lg text-sm border outline-none transition-all',
-                    isDark 
-                      ? 'bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 focus:border-emerald-500/50' 
+                    isDark
+                      ? 'bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 focus:border-emerald-500/50'
                       : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500'
                   )}
                 />
@@ -235,10 +235,10 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                 <p className="text-sm">{t.termsText}</p>
                 <div className="p-3 bg-cyan-500/5 rounded-lg border border-cyan-500/20">
                   <p className="text-sm font-bold text-cyan-600 dark:text-cyan-400 mb-1">{t.gitAddressLabel}:</p>
-                  <a 
-                    href="https://github.com/tbagriyanik/ciscosim" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    href="https://github.com/tbagriyanik/ciscosim"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-blue-500 hover:underline break-all"
                   >
                     https://github.com/tbagriyanik/ciscosim
@@ -246,10 +246,10 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.openSourceInfo}</p>
                 </div>
                 <div>
-                  <a 
-                    href="https://tuzlamtal.meb.k12.tr" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    href="https://tuzlamtal.meb.k12.tr"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 hover:underline"
                   >
                     {t.licenseInfo}
@@ -265,7 +265,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                   </div>
                   <div>
                     <h4 className="text-lg font-bold">{t.contactTitle}</h4>
-                    <p className="text-xs opacity-60">Google Sheets entegrasyonu ile saklanır</p>
+                    <p className="text-xs opacity-60">{t.savedViaSheets}</p>
                   </div>
                 </div>
 
@@ -276,12 +276,12 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                     </div>
                     <h5 className="font-bold text-lg mb-2">{t.contactSuccessTitle}</h5>
                     <p className="text-sm opacity-80">{t.contactSuccessDesc}</p>
-                    <Button 
-                      variant="ghost" 
-                      className="mt-6" 
+                    <Button
+                      variant="ghost"
+                      className="mt-6"
                       onClick={() => setSubmitStatus('idle')}
                     >
-                      Yeni Mesaj
+                      {t.newMessage}
                     </Button>
                   </div>
                 ) : (
@@ -360,15 +360,15 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                       <p className="text-xs text-red-500 font-bold px-1">{t.contactErrorDesc}</p>
                     )}
 
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       disabled={isSubmitting}
                       className={cn("w-full py-6 rounded-xl transition-all", isDark ? "bg-amber-600 hover:bg-amber-700" : "bg-amber-600 hover:bg-amber-700")}
                     >
                       {isSubmitting ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                          Gönderiliyor...
+                          {t.sending}
                         </>
                       ) : (
                         <>
@@ -426,8 +426,8 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
         </div>
 
         <div className="flex justify-end p-6 pt-2 shrink-0 gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={onStartTour}
             className="gap-2"
           >

@@ -2187,34 +2187,19 @@ ${state.bannerMOTD}
 
   // Helper: tab açıklamaları (tooltip için)
   const getTabDescription = useCallback((tabId: TabType): string => {
-    if (language === 'tr') {
-      switch (tabId) {
-        case 'topology':
-          return 'Cihazları sürükleyip bırakarak ağ topolojisini tasarla.';
-        case 'cmd':
-          return 'PC komut satırı ile ping, ipconfig vb. komutları çalıştır.';
-        case 'terminal':
-          return 'Switch / router CLI üzerinden yapılandırma komutlarını çalıştır.';
-        case 'tasks':
-          return 'Port, VLAN ve güvenlik görevlerini tamamlayarak puan kazan.';
-        default:
-          return '';
-      }
-    } else {
-      switch (tabId) {
-        case 'topology':
-          return 'Design your network by dragging and connecting devices.';
-        case 'cmd':
-          return 'Use the PC command line to run ping, ipconfig and more.';
-        case 'terminal':
-          return 'Configure switches/routers using the CLI terminal.';
-        case 'tasks':
-          return 'Complete port, VLAN, and security tasks to earn points.';
-        default:
-          return '';
-      }
+    switch (tabId) {
+      case 'topology':
+        return t.tabDescTopology;
+      case 'cmd':
+        return t.tabDescCmd;
+      case 'terminal':
+        return t.tabDescTerminal;
+      case 'tasks':
+        return t.tabDescTasks;
+      default:
+        return '';
     }
-  }, [language]);
+  }, [t]);
 
   // Onboarding content + controls
   const onboardingSteps = [
@@ -2614,8 +2599,8 @@ ${state.bannerMOTD}
         const wifiMessages = [];
         if (connectedPCs.length > 0) {
           wifiMessages.push(language === 'tr'
-            ? `✓ ${connectedPCs.length} PC bağlı`
-            : `✓ ${connectedPCs.length} PC connected`);
+            ? `✓ ${connectedPCs.length} ${t.connected}`
+            : `✓ ${connectedPCs.length} ${t.connected}`);
         }
         if (activeAPs.length > 0) {
           wifiMessages.push(language === 'tr'
@@ -2624,13 +2609,13 @@ ${state.bannerMOTD}
         }
         if (disconnectedPCs.length > 0) {
           wifiMessages.push(language === 'tr'
-            ? `⚠ ${disconnectedPCs.length} PC bağlantısız`
-            : `⚠ ${disconnectedPCs.length} PC disconnected`);
+            ? `⚠ ${disconnectedPCs.length} ${t.pcDisconnected}`
+            : `⚠ ${disconnectedPCs.length} ${t.pcDisconnected}`);
         }
         if (disconnectedAPs.length > 0) {
           wifiMessages.push(language === 'tr'
-            ? `⚠ ${disconnectedAPs.length} AP istemcisiz`
-            : `⚠ ${disconnectedAPs.length} AP no clients`);
+            ? `⚠ ${disconnectedAPs.length} ${t.apNoClients}`
+            : `⚠ ${disconnectedAPs.length} ${t.apNoClients}`);
         }
         const dhcpMessages = [
           language === 'tr'
@@ -2642,17 +2627,17 @@ ${state.bannerMOTD}
         ];
         if (dhcpServerNoPoolCount > 0) {
           dhcpMessages.push(language === 'tr'
-            ? `⚠ ${dhcpServerNoPoolCount} sunucuda havuz yok`
-            : `⚠ ${dhcpServerNoPoolCount} servers no pool`);
+            ? `⚠ ${dhcpServerNoPoolCount} ${t.dhcpNoPool}`
+            : `⚠ ${dhcpServerNoPoolCount} ${t.dhcpNoPool}`);
         }
         if (dhcpClientNoLeaseCount > 0) {
           dhcpMessages.push(language === 'tr'
-            ? `⚠ ${dhcpClientNoLeaseCount} istemci lease alamadı`
-            : `⚠ ${dhcpClientNoLeaseCount} clients no lease`);
+            ? `⚠ ${dhcpClientNoLeaseCount} ${t.dhcpNoLease}`
+            : `⚠ ${dhcpClientNoLeaseCount} ${t.dhcpNoLease}`);
         }
 
         toast({
-          title: language === 'tr' ? '🔄 Ağ Durumu Tamamen Güncellendi' : '🔄 Network Status Fully Updated',
+          title: `🔄 ${t.networkStatusUpdated}`,
           description: (
             <div className="space-y-1">
               {wifiMessages.length > 0 && <div>{wifiMessages.join(' • ')}</div>}
@@ -2665,23 +2650,22 @@ ${state.bannerMOTD}
       } else {
         const isDhcpMissing = dhcpServerActiveCount === 0 && dhcpClientWithLeaseCount === 0;
         const dhcpSummary = isDhcpMissing
-          ? (language === 'tr' ? 'DHCP bulunamadı' : 'No DHCP found')
+          ? t.dhcpNotFound
           : (language === 'tr'
             ? `DHCP: ${dhcpServerActiveCount} sunucu aktif, ${dhcpClientWithLeaseCount} lease`
             : `DHCP: ${dhcpServerActiveCount} active servers, ${dhcpClientWithLeaseCount} leases`);
         toast({
-          title: language === 'tr' ? '🔄 Ağ Yenilendi' : '🔄 Network Refreshed',
+          title: `🔄 ${t.networkRefreshed}`,
           description: stpMessage
             ? `${dhcpSummary} • ${stpMessage}`
             : (isDhcpMissing
               ? dhcpSummary
-              : `${language === 'tr' ? 'WiFi cihazı bulunamadı' : 'No WiFi devices found'} • ${dhcpSummary}`),
+              : `${t.noWifiDevices} • ${dhcpSummary}`),
           variant: 'default'
         });
       }
     }
-  }, [topologyDevices, deviceStates, setDeviceStates, setTopologyDevices, toast, language, topologyConnections]);
-
+  }, [topologyDevices, topologyConnections, deviceStates, setDeviceStates, language, t]);
 
   // Handle key events: ESC to close, ENTER to confirm
   useEffect(() => {
@@ -3230,7 +3214,7 @@ ${state.bannerMOTD}
                           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent>{isDark ? (language === 'tr' ? 'Açık Tema' : 'Light Mode') : (language === 'tr' ? 'Koyu Tema' : 'Dark Mode')}</TooltipContent>
+                      <TooltipContent>{isDark ? t.lightMode : t.darkMode}</TooltipContent>
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -3241,7 +3225,7 @@ ${state.bannerMOTD}
                           {graphicsQuality === 'high' ? <Sparkles className="w-4 h-4" /> : <Cloud className="w-4 h-4" />}
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent>{graphicsQuality !== 'high' ? (language === 'tr' ? 'Yüksek Çözünürlük' : 'High Resolution') : (language === 'tr' ? 'Düşük Çözünürlük' : 'Low Resolution')}</TooltipContent>
+                      <TooltipContent>{graphicsQuality !== 'high' ? t.highRes : t.lowRes}</TooltipContent>
                     </Tooltip>
                   </div>
                 </div>
@@ -3270,7 +3254,7 @@ ${state.bannerMOTD}
                         {/* Quick actions (primary) */}
                         <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200'}`}>
                           <p className="text-xs font-bold tracking-widest text-slate-500 mb-2 px-1">
-                            {language === 'tr' ? 'Hızlı işlemler' : 'Quick actions'}
+                            {t.quickActions}
                           </p>
                           <div className="grid grid-cols-2 gap-2">
                             <Button
@@ -3278,28 +3262,28 @@ ${state.bannerMOTD}
                               className="justify-start gap-2 h-9 text-xs font-bold"
                               onClick={() => { setShowProjectPicker(true); setShowMobileMenu(false); }}
                             >
-                              <File className="w-3.5 h-3.5" /> {language === 'tr' ? 'Yeni' : 'New'}
+                              <File className="w-3.5 h-3.5" /> {t.new}
                             </Button>
                             <Button
                               variant="secondary"
                               className="justify-start gap-2 h-9 text-xs font-bold"
                               onClick={() => { handleSaveProject(); setShowMobileMenu(false); }}
                             >
-                              <Save className="w-3.5 h-3.5" /> {language === 'tr' ? 'Kaydet' : 'Save'}
+                              <Save className="w-3.5 h-3.5" /> {t.saveLabel}
                             </Button>
                             <Button
                               variant="secondary"
                               className="justify-start gap-2 h-9 text-xs font-bold"
                               onClick={() => { fileInputRef.current?.click(); setShowMobileMenu(false); }}
                             >
-                              <FolderOpen className="w-3.5 h-3.5" /> {language === 'tr' ? 'Yükle' : 'Load'}
+                              <FolderOpen className="w-3.5 h-3.5" /> {t.load}
                             </Button>
                             <Button
                               variant="secondary"
                               className="justify-start gap-2 h-9 text-xs font-bold"
                               onClick={() => { setShowOnboarding(true); setOnboardingStep(0); setShowMobileMenu(false); }}
                             >
-                              <Compass className="w-3.5 h-3.5" /> {language === 'tr' ? 'Tur' : 'Tour'}
+                              <Compass className="w-3.5 h-3.5" /> {t.tour}
                             </Button>
                           </div>
                         </div>
@@ -3352,7 +3336,7 @@ ${state.bannerMOTD}
                             onClick={() => setTheme(isDark ? 'light' : 'dark')}
                           >
                             {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-                            {isDark ? (language === 'tr' ? 'Açık Tema' : 'Light') : (language === 'tr' ? 'Koyu Tema' : 'Dark')}
+                            {isDark ? t.lightMode : t.darkMode}
                           </Button>
                         </div>
 
@@ -3365,7 +3349,7 @@ ${state.bannerMOTD}
                           onClick={() => { setShowAboutModal(true); setShowMobileMenu(false); }}
                         >
                           <Info className="w-3.5 h-3.5" />
-                          {language === 'tr' ? 'Yardım' : 'Help'}
+                          {t.help}
                         </Button>
 
                         <Separator className="bg-slate-800/30" />
@@ -3470,7 +3454,7 @@ ${state.bannerMOTD}
                           <Leaf className="w-5 h-5" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Çevresel Ayarlar' : 'Environment Settings'}</TooltipContent>
+                      <TooltipContent>{t.environmentSettings}</TooltipContent>
                     </Tooltip>
                   </div>
                 )}
@@ -3620,7 +3604,7 @@ ${state.bannerMOTD}
                         <Input
                           value={deviceSearchQuery}
                           onChange={e => setDeviceSearchQuery(e.target.value)}
-                          placeholder={language === 'tr' ? 'Ara...' : 'Search...'}
+                          placeholder={t.searchShort}
                           className="h-7 pl-6 pr-7 text-xs"
                           autoFocus
                           onKeyDown={e => e.stopPropagation()}
@@ -3795,7 +3779,7 @@ ${state.bannerMOTD}
               <div className='flex flex-col flex-1 overflow-hidden h-full max-w-full'>
                 <div className='p-4 md:p-8 pb-2 md:pb-4 space-y-4'>
                   <div className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r  p-4 md:p-6 '>
-                    <DialogTitle className='text-xl bg-gradient-to-br from-white to-slate-900 bg-clip-text text-transparent break-words'>{language === 'tr' ? 'Yeni Proje Aç' : 'Open a New Project'}</DialogTitle>
+                    <DialogTitle className='text-xl bg-gradient-to-br from-white to-slate-900 bg-clip-text text-transparent break-words'>{t.openNewProject}</DialogTitle>
                     <DialogDescription className="sr-only">
                       {language === 'tr'
                         ? 'Yeni proje penceresi: boş projeyle başlayın veya hazır örneklerden birini seçin.'
@@ -3811,7 +3795,7 @@ ${state.bannerMOTD}
                     <input
                       type="text"
                       value={projectSearchQuery}
-                      placeholder={language === 'tr' ? 'Proje ara...' : 'Search projects...'}
+                      placeholder={t.searchProjects}
                       onChange={(e) => setProjectSearchQuery(e.target.value)}
                       autoFocus
                       className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`}
@@ -3871,7 +3855,7 @@ ${state.bannerMOTD}
                               <Plus className="w-6 h-6 md:w-10 md:h-10" />
                             </div>
                             <div className="text-center md:text-left">
-                              <p className='text-xl md:text-3xl font-black mb-1 md:mb-3 tracking-tighter'>{language === 'tr' ? 'Boş Proje' : 'Empty Project'}</p>
+                              <p className='text-xl md:text-3xl font-black mb-1 md:mb-3 tracking-tighter'>{t.emptyProject}</p>
                               <p className={`text-[11px] md:text-sm ${isDark ? 'text-slate-300/80' : 'text-white/80'} break-words`}>
                                 {language === 'tr'
                                   ? 'Topolojini kur, senaryonu tasarla.'
@@ -3982,7 +3966,7 @@ ${state.bannerMOTD}
 
               <div className="flex items-center justify-between gap-4 px-8 py-6 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-200 dark:border-slate-800 mt-4">
                 <Button variant="ghost" onClick={closeOnboardingForever} className="text-xs font-semibold">
-                  {language === 'tr' ? 'Geç' : 'Skip'}
+                  {t.skip}
                 </Button>
                 <div className="flex items-center gap-2">
                   <Button
@@ -3991,12 +3975,12 @@ ${state.bannerMOTD}
                     disabled={onboardingStep === 0}
                     className="text-xs font-semibold"
                   >
-                    {language === 'tr' ? 'Geri' : 'Back'}
+                    {t.back}
                   </Button>
                   <Button onClick={nextOnboarding} className="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold">
                     {onboardingStep >= onboardingSteps.length - 1
-                      ? (language === 'tr' ? 'Bitir' : 'Finish')
-                      : (language === 'tr' ? 'İleri' : 'Next')}
+                      ? t.finish
+                      : t.next}
                   </Button>
                 </div>
               </div>
@@ -4046,7 +4030,7 @@ ${state.bannerMOTD}
             <AlertDialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
               <AlertDialogHeader>
                 <AlertDialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
-                  {language === 'tr' ? 'Projeyi Kaydet' : 'Save Project'}
+                  {t.saveProject}
                 </AlertDialogTitle>
                 <AlertDialogDescription className={isDark ? 'text-slate-400' : 'text-slate-500'}>
                   {saveDialog?.message}
@@ -4099,7 +4083,7 @@ ${state.bannerMOTD}
                 >
                   <div className="flex items-center justify-between">
                     <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
-                      {language === 'tr' ? 'Görevler' : 'Tasks'}
+                      {t.tasks}
                     </DialogTitle>
                     <div className="flex items-center gap-1">
                       <Button
@@ -4110,7 +4094,7 @@ ${state.bannerMOTD}
                           setShowTasksModal(false);
                           setShowTerminalModal(true);
                         }}
-                        title={language === 'tr' ? 'CLI Terminal\'e geç' : 'Switch to CLI Terminal'}
+                        title={t.switchTerminal}
                       >
                         <TerminalIcon className="h-4 w-4" />
                       </Button>
@@ -4125,7 +4109,7 @@ ${state.bannerMOTD}
                     </div>
                   </div>
                   <DialogDescription className="sr-only">
-                    {language === 'tr' ? 'Cihaz görevleri ve yapılandırma görevleri' : 'Device tasks and configuration tasks'}
+                    {t.deviceTasksAndConfig}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto p-3 sm:p-4">
@@ -4242,7 +4226,7 @@ ${state.bannerMOTD}
               >
                 <div className="flex items-center justify-between">
                   <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
-                    {language === 'tr' ? 'CLI Terminal' : 'CLI Terminal'}
+                    {t.cliInterface}
                   </DialogTitle>
                   <div className="flex items-center gap-1">
                     <Button
@@ -4253,7 +4237,7 @@ ${state.bannerMOTD}
                         setShowTerminalModal(false);
                         setShowTasksModal(true);
                       }}
-                      title={language === 'tr' ? 'Görevlere geç' : 'Switch to Tasks'}
+                      title={t.switchTasks}
                     >
                       <ShieldCheck className="h-4 w-4" />
                     </Button>
@@ -4268,7 +4252,7 @@ ${state.bannerMOTD}
                   </div>
                 </div>
                 <DialogDescription className="sr-only">
-                  {language === 'tr' ? 'Komut satırı arayüzü' : 'Command line interface'}
+                  {t.cliInterface}
                 </DialogDescription>
               </DialogHeader>
               <div className="flex-1 overflow-hidden">
@@ -4289,7 +4273,7 @@ ${state.bannerMOTD}
                   output={output}
                   isLoading={isExecutingCommand}
                   isConnectionError={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                  connectionErrorMessage={language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
+                  connectionErrorMessage={t.connectionError}
                   isPoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
                   onTogglePower={toggleDevicePower}
                   onClose={() => setShowTerminalModal(false)}
@@ -4384,7 +4368,7 @@ ${state.bannerMOTD}
                             </svg>
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{language === 'tr' ? 'PC Ekle' : 'Add PC'}</TooltipContent>
+                        <TooltipContent>{t.addPC}</TooltipContent>
                       </Tooltip>
                       {/* L2 Switch Button */}
                       <Tooltip>
@@ -4403,7 +4387,7 @@ ${state.bannerMOTD}
                             </svg>
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{language === 'tr' ? 'L2 Switch Ekle' : 'Add L2 Switch'}</TooltipContent>
+                        <TooltipContent>{t.addL2Switch}</TooltipContent>
                       </Tooltip>
                       {/* L3 Switch Button */}
                       <Tooltip>
@@ -4422,7 +4406,7 @@ ${state.bannerMOTD}
                             </svg>
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{language === 'tr' ? 'L3 Switch Ekle' : 'Add L3 Switch'}</TooltipContent>
+                        <TooltipContent>{t.addL3Switch}</TooltipContent>
                       </Tooltip>
                       {/* Router Button */}
                       <Tooltip>
@@ -4442,7 +4426,7 @@ ${state.bannerMOTD}
                             </svg>
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{language === 'tr' ? 'Router Ekle' : 'Add Router'}</TooltipContent>
+                        <TooltipContent>{t.addRouter}</TooltipContent>
                       </Tooltip>
                       {/* IoT Button */}
                       <Tooltip>
@@ -4465,7 +4449,7 @@ ${state.bannerMOTD}
                             </svg>
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{language === 'tr' ? 'IoT Ekle' : 'Add IoT'}</TooltipContent>
+                        <TooltipContent>{t.addIoT}</TooltipContent>
                       </Tooltip>
                     </div>
 
@@ -4493,15 +4477,15 @@ ${state.bannerMOTD}
                               onClick={() => setCableInfo({ ...cableInfo, cableType: type })}
                             >
                               <div className={`w-2 h-2 rounded-full ${type === 'straight' ? 'bg-blue-500' : type === 'crossover' ? 'bg-orange-500' : 'bg-cyan-500'}`} />
-                              {type === 'straight' ? (language === 'tr' ? 'Düz' : 'Straight') : type === 'crossover' ? (language === 'tr' ? 'Çapraz' : 'Crossover') : (language === 'tr' ? 'Konsol' : 'Console')}
+                              {type === 'straight' ? t.straightShort : type === 'crossover' ? t.crossoverShort : t.consoleShort}
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
                             {type === 'straight'
-                              ? (language === 'tr' ? 'Düz Kablo' : 'Straight Cable')
+                              ? t.straightCable
                               : type === 'crossover'
-                                ? (language === 'tr' ? 'Çapraz Kablo' : 'Crossover Cable')
-                                : (language === 'tr' ? 'Konsol Kablosu' : 'Console Cable')}
+                                ? t.crossoverCable
+                                : t.consoleCable}
                           </TooltipContent>
                         </Tooltip>
                       ))}
@@ -4546,7 +4530,7 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Ping' : 'Ping'}</TooltipContent>
+                      <TooltipContent>{t.ping}</TooltipContent>
                     </Tooltip>
 
                     {/* Add Note Button */}
@@ -4566,7 +4550,7 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Not Ekle' : 'Add Note'}</TooltipContent>
+                      <TooltipContent>{t.addNote}</TooltipContent>
                     </Tooltip>
 
                     {/* Refresh Network Button */}
@@ -4598,7 +4582,7 @@ ${state.bannerMOTD}
                           <Leaf className="w-4 h-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Çevresel Ayarlar' : 'Environment Settings'}</TooltipContent>
+                      <TooltipContent>{t.environmentSettings}</TooltipContent>
                     </Tooltip>
 
                     <div className={`w-px h-4 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
@@ -4654,7 +4638,7 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Görünümü Sıfırla' : 'Reset View'}</TooltipContent>
+                      <TooltipContent>{t.resetView}</TooltipContent>
                     </Tooltip>
 
                     {/* Fullscreen Toggle Button */}
@@ -4671,7 +4655,7 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{isTopologyFullscreen ? (language === 'tr' ? 'Küçült' : 'Exit') : (language === 'tr' ? 'Tam Ekran (Ctrl+F)' : 'Full Screen (Ctrl+F)')}</TooltipContent>
+                      <TooltipContent>{isTopologyFullscreen ? (t.exit) : (t.fullScreenMode)}</TooltipContent>
                     </Tooltip>
                   </div>
                 )}
@@ -4718,6 +4702,7 @@ ${state.bannerMOTD}
                   {activeDeviceId && activeDeviceId.startsWith('pc-') && topologyDevices && (
                     <PCInfoPopover
                       pc={topologyDevices.find(d => d.id === activeDeviceId)!}
+                      t={t}
                       language={language}
                       isDark={isDark}
                       onClose={() => {
@@ -4735,6 +4720,7 @@ ${state.bannerMOTD}
                     <RouterInfoPopover
                       router={topologyDevices.find(d => d.id === activeDeviceId)!}
                       routerState={deviceStates.get(activeDeviceId)}
+                      t={t}
                       language={language}
                       isDark={isDark}
                       onClose={() => {
@@ -4792,12 +4778,12 @@ ${state.bannerMOTD}
                       <span className={`w-2 h-2 rounded-full ${hasUnsavedChanges ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'
                         }`} />
                       {hasUnsavedChanges
-                        ? (language === 'tr' ? 'Kaydedilmedi' : 'Unsaved')
-                        : (language === 'tr' ? 'Kaydedildi' : 'Saved')}
+                        ? t.unsaved
+                        : t.saved}
                     </span>
                     {lastSaveTime && (
                       <span className={`text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                        {(language === 'tr' ? 'Son kaydedilme: ' : 'Last saved: ') + lastSaveTime}
+                        {t.lastSavedAt + lastSaveTime}
                       </span>
                     )}
                   </div>
@@ -4805,42 +4791,42 @@ ${state.bannerMOTD}
                   {/* Quick Hints */}
                   <div className={`hidden md:flex items-center gap-2 whitespace-nowrap`}>
                     <span className={`text-[11px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                      {language === 'tr' ? 'İpuçları:' : 'Tips:'}
+                      {t.tips}
                     </span>
                     <span className={`text-[11px] ${isDark ? 'text-slate-300' : 'text-slate-700'} whitespace-nowrap`}>
                       {activeTab === 'topology' && (
                         <>
                           <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
                             }`}>Ctrl+F</kbd>
-                          <span className="mx-1">{language === 'tr' ? 'Tam Ekran' : 'Fullscreen'}</span>
+                          <span className="mx-1">{t.fullScreenMode}</span>
                           <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
                             }`}>Ctrl+S</kbd>
-                          <span className="mx-1">{language === 'tr' ? 'Kaydet' : 'Save'}</span>
+                          <span className="mx-1">{t.saveLabel}</span>
                           <span className={`mx-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>|</span>
                           <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                            {topologyDevices?.length || 0} {language === 'tr' ? 'cihaz' : 'devices'}
+                            {topologyDevices?.length || 0} {t.devicesCount}
                           </span>
                           <span className={`mx-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>|</span>
                           {/* Interaction Shortcuts Legend */}
                           <div className={`flex items-center gap-1 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            <span className="font-semibold">LMB</span>:{language === 'tr' ? 'Kaydır' : 'Pan'}
+                            <span className="font-semibold">LMB</span>:{t.pan}
                             <span className="mx-1">·</span>
-                            <span className="font-semibold">Mid</span>:{language === 'tr' ? 'Kutu' : 'Box'}
+                            <span className="font-semibold">Mid</span>:{t.boxSelect}
                             <span className="mx-1">·</span>
-                            <span className="font-semibold">RMB</span>:{language === 'tr' ? 'Menü' : 'Menu'}
+                            <span className="font-semibold">RMB</span>:{t.menu}
                             <span className="mx-1">·</span>
                             <span className="font-semibold">Scr</span>:Zoom
                           </div>
                         </>
                       )}
                       {(activeTab === 'cmd' || activeTab === 'terminal') && (
-                        <span className="text-[11px] italic">{language === 'tr' ? 'Program çalıştırmak için simgeleri tıklayınız' : 'Click icons to run programs'}</span>
+                        <span className="text-[11px] italic">{t.clickIconsToRun}</span>
                       )}
                       {activeTab !== 'topology' && activeTab !== 'cmd' && activeTab !== 'terminal' && (
                         <>
                           <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
                             }`}>Ctrl+1-3</kbd>
-                          <span className="mx-1">{language === 'tr' ? 'Sekmeler' : 'Tabs'}</span>
+                          <span className="mx-1">{t.tabsShort}</span>
                         </>
                       )}
                     </span>
@@ -4861,8 +4847,8 @@ ${state.bannerMOTD}
                           : 'bg-orange-500'
                           }`} />
                         {lastTaskEvent.type === 'completed'
-                          ? (language === 'tr' ? '✓ Görev Tamamlandı' : '✓ Task Completed')
-                          : (language === 'tr' ? '⚠ Görev Başarısız' : '⚠ Task Failed')}
+                          ? t.taskCompleted
+                          : t.taskFailed}
                       </span>
                       <span className={`text-[11px] font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                         {lastTaskEvent.taskName}
@@ -4914,6 +4900,7 @@ ${state.bannerMOTD}
 
 interface PCInfoPopoverProps {
   pc: CanvasDevice;
+  t: Translations;
   language: 'tr' | 'en';
   isDark: boolean;
   onClose: () => void;
@@ -4922,7 +4909,7 @@ interface PCInfoPopoverProps {
   deviceStates: Map<string, SwitchState>;
 }
 
-function PCInfoPopover({ pc, language, isDark, onClose, handleDeviceDoubleClick, topologyDevices, deviceStates }: PCInfoPopoverProps) {
+function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleClick, topologyDevices, deviceStates }: PCInfoPopoverProps) {
   const [isMinimized, setIsMinimized] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('pc-info-minimized') === 'true';
@@ -4977,14 +4964,14 @@ function PCInfoPopover({ pc, language, isDark, onClose, handleDeviceDoubleClick,
             <div className="pt-1 border-t border-slate-500/20">
               <div className="flex justify-between items-center mb-1">
                 <span className="opacity-50">WiFi</span>
-                <span className="text-[8px] font-bold text-purple-500">{language === 'tr' ? 'Aktif' : 'Active'}</span>
+                <span className="text-[8px] font-bold text-purple-500">{t.active}</span>
               </div>
               <div className="flex gap-2 text-[9px]">
                 <span className="opacity-50">SSID:</span>
                 <span className="font-mono">{pc.wifi.ssid || '-'}</span>
               </div>
               <div className="flex gap-2 text-[9px]">
-                <span className="opacity-50">{language === 'tr' ? 'Kanal' : 'Ch'}</span>
+                <span className="opacity-50">{t.channelShort}</span>
                 <span className="font-mono">{pc.wifi.channel || '-'}</span>
                 <span className="opacity-50">|</span>
                 <span className="font-mono uppercase">{pc.wifi.security || '-'}</span>
@@ -4996,7 +4983,7 @@ function PCInfoPopover({ pc, language, isDark, onClose, handleDeviceDoubleClick,
                 if (strength === 0) return null;
                 return (
                   <div className="flex justify-between items-center text-[9px] mt-0.5">
-                    <span className="opacity-50">{language === 'tr' ? 'Sinyal' : 'Signal'}</span>
+                    <span className="opacity-50">{t.signal}</span>
                     <span className={`font-bold ${colorMap[strength]}`}>{pctMap[strength]}</span>
                   </div>
                 );
@@ -5006,7 +4993,7 @@ function PCInfoPopover({ pc, language, isDark, onClose, handleDeviceDoubleClick,
           {pc.services && (
             <div className="pt-1 border-t border-slate-500/20">
               <div className="flex justify-between items-center mb-0.5">
-                <span className="opacity-50">{language === 'tr' ? 'Servisler' : 'Services'}</span>
+                <span className="opacity-50">{t.services}</span>
                 <div className="flex flex-wrap gap-0.5">
                   {pc.services.http?.enabled && (
                     <span className="px-1 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[8px] font-bold border border-amber-500/20">HTTP</span>
@@ -5018,7 +5005,7 @@ function PCInfoPopover({ pc, language, isDark, onClose, handleDeviceDoubleClick,
                     <span className="px-1 py-0.5 rounded bg-purple-500/20 text-purple-500 text-[8px] font-bold border border-purple-500/20">DHCP</span>
                   )}
                   {!pc.services.http?.enabled && !pc.services.dns?.enabled && !pc.services.dhcp?.enabled && (
-                    <span className="text-[8px] opacity-40 italic">{language === 'tr' ? 'Yok' : 'None'}</span>
+                    <span className="text-[8px] opacity-40 italic">{t.none}</span>
                   )}
                 </div>
               </div>
@@ -5026,9 +5013,9 @@ function PCInfoPopover({ pc, language, isDark, onClose, handleDeviceDoubleClick,
           )}
           <div className="pt-1 border-t border-slate-500/20">
             <div className="flex justify-between items-center">
-              <span className="opacity-50">{language === 'tr' ? 'IP Modu' : 'IP Mode'}</span>
+              <span className="opacity-50">{t.ipMode}</span>
               <span className={`text-[8px] font-bold tracking-wider ${pc.ipConfigMode === 'dhcp' ? 'text-green-500' : 'opacity-60'}`}>
-                {pc.ipConfigMode === 'dhcp' ? 'DHCP' : (language === 'tr' ? 'STATIK' : 'STATIC')}
+                {pc.ipConfigMode === 'dhcp' ? 'DHCP' : t.static}
               </span>
             </div>
           </div>
@@ -5040,7 +5027,7 @@ function PCInfoPopover({ pc, language, isDark, onClose, handleDeviceDoubleClick,
             }}
             className={`w-full py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
           >
-            {language === 'tr' ? 'CMD Aç' : 'Open CMD'}
+            {t.openCMD}
           </button>
         </div>
       </div>
@@ -5052,6 +5039,7 @@ function PCInfoPopover({ pc, language, isDark, onClose, handleDeviceDoubleClick,
 interface RouterInfoPopoverProps {
   router: CanvasDevice;
   routerState?: SwitchState;
+  t: Translations;
   language: 'tr' | 'en';
   isDark: boolean;
   onClose: () => void;
@@ -5059,7 +5047,7 @@ interface RouterInfoPopoverProps {
   topologyConnections: CanvasConnection[];
 }
 
-function RouterInfoPopover({ router, routerState, language, isDark, onClose, handleDeviceDoubleClick, topologyConnections }: RouterInfoPopoverProps) {
+function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, handleDeviceDoubleClick, topologyConnections }: RouterInfoPopoverProps) {
   const [isMinimized, setIsMinimized] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('router-info-minimized') === 'true';
@@ -5118,17 +5106,17 @@ function RouterInfoPopover({ router, routerState, language, isDark, onClose, han
         <div className={cn("overflow-hidden transition-all duration-300", isMinimized ? "max-h-0 opacity-0" : "max-h-[800px] opacity-100")}>
           <div className="p-2 space-y-1 text-[10px]">
           <div className="flex justify-between items-center">
-            <span className="opacity-50">{language === 'tr' ? 'Portlar' : 'Ports'}</span>
+            <span className="opacity-50">{t.portsShort}</span>
             <span className="font-mono">
               <span className="text-green-500">{connectedPorts}</span>
               <span className="opacity-50">/{totalPorts}</span>
-              <span className="ml-1 opacity-50">{language === 'tr' ? 'bağlı' : 'connected'}</span>
+              <span className="ml-1 opacity-50">{t.connectedShort}</span>
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="opacity-50">{language === 'tr' ? 'Yönlendirme' : 'Routing'}</span>
+            <span className="opacity-50">{t.routing}</span>
             <span className={`text-[8px] font-bold tracking-wider ${routerState?.ipRouting ? 'text-green-500' : 'text-slate-500'}`}>
-              {routerState?.ipRouting ? (language === 'tr' ? 'Aktif' : 'Enabled') : (language === 'tr' ? 'Pasif' : 'Disabled')}
+              {routerState?.ipRouting ? t.enabled : t.disabled}
             </span>
           </div>
           {wifiEnabled && (
@@ -5142,7 +5130,7 @@ function RouterInfoPopover({ router, routerState, language, isDark, onClose, han
                 </svg>
                 WiFi
               </span>
-              <span className="text-cyan-500">{language === 'tr' ? 'Aktif' : 'Active'}</span>
+              <span className="text-cyan-500">{t.active}</span>
             </div>
           )}
           {wifiEnabled && wifiConfig?.ssid && (
@@ -5152,7 +5140,7 @@ function RouterInfoPopover({ router, routerState, language, isDark, onClose, han
                 <span className="font-mono font-bold text-cyan-500">{wifiConfig.ssid}</span>
               </div>
               <div className="flex gap-2 text-[9px]">
-                <span className="opacity-50">{language === 'tr' ? 'Kanal' : 'Ch'}:</span>
+                <span className="opacity-50">{t.channelShort}:</span>
                 <span className="font-mono">{wifiConfig.channel || '2.4GHz'}</span>
                 <span className="opacity-50">|</span>
                 <span className="font-mono uppercase">{wifiConfig.security || 'open'}</span>
@@ -5162,7 +5150,7 @@ function RouterInfoPopover({ router, routerState, language, isDark, onClose, han
           {dhcpPools > 0 && (
             <div className="flex justify-between items-center">
               <span className="opacity-50">DHCP</span>
-              <span className="font-bold text-purple-500">{dhcpPools} {language === 'tr' ? 'Havuz' : 'Pools'}</span>
+              <span className="font-bold text-purple-500">{dhcpPools} {t.pools}</span>
             </div>
           )}
           {ipAddresses.length > 0 && (
@@ -5183,7 +5171,7 @@ function RouterInfoPopover({ router, routerState, language, isDark, onClose, han
             }}
             className={`w-full py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
           >
-            {language === 'tr' ? 'CLI Aç' : 'Open CLI'}
+            {t.openCLI}
           </button>
         </div>
       </div>
