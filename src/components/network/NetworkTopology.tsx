@@ -363,9 +363,13 @@ export function NetworkTopology({
   // Sync internal selection with prop from parent
   useEffect(() => {
     if (activeDeviceId !== undefined) {
-      setSelectedDeviceIds(activeDeviceId ? [activeDeviceId] : []);
+      // Only sync if the prop device is not already part of our selection
+      setSelectedDeviceIds(prev => {
+        if (activeDeviceId && prev.includes(activeDeviceId)) return prev;
+        return activeDeviceId ? [activeDeviceId] : [];
+      });
     }
-  }, [activeDeviceId, isActive]);
+  }, [activeDeviceId]);
 
   // Handle external focus device request (e.g., from WiFi admin panel) - selection only
   useEffect(() => {
@@ -931,9 +935,8 @@ export function NetworkTopology({
     const isOnNote = !!targetEl.closest('[data-note-id]');
     const isOnEditable = targetEl.tagName === 'TEXTAREA' || targetEl.tagName === 'INPUT' || (targetEl as any).isContentEditable;
 
-    if ((e.button === 0 || (e.button === 1 && !e.shiftKey)) && !isOnDevice && !isOnEditable) {
+    if (e.button === 0 && !isOnDevice && !isOnEditable) {
       // Left click on empty canvas - PAN
-      // Middle click also pans (common UX). Hold Shift + middle click for rectangle selection.
       e.preventDefault();
       const currentPan = panRef.current;
       const ps = { x: e.clientX - currentPan.x, y: e.clientY - currentPan.y };
@@ -945,9 +948,11 @@ export function NetworkTopology({
       // Clicking on a note (but not editing text) should still allow canvas panning.
       // Note content stops propagation when actively editing.
       return;
-    } else if (e.button === 1 && e.shiftKey && !isOnNote) {
-      // Middle click on canvas - RECTANGLE SELECTION
+    } else if (e.button === 1 && !isOnEditable) {
+      // Middle click on canvas - RECTANGLE SELECTION (no Shift required)
       e.preventDefault();
+      // Prevent default browser auto-scroll behavior
+      e.stopPropagation();
       // Cancel ping mode on middle click
       if (pingMode) {
         setPingMode(false);
@@ -1040,7 +1045,7 @@ export function NetworkTopology({
           const x2 = Math.max(newBox.start.x, newBox.current.x);
           const y2 = Math.max(newBox.start.y, newBox.current.y);
 
-          // Detect devices inside selection box (Containment check - device must be fully inside)
+          // Detect devices intersecting selection box (any overlap counts)
           const selectedIds = latestDevicesRef.current.filter(d => {
             const deviceWidth = getDeviceWidth(d.type);
             const deviceHeight = 100;
@@ -1051,9 +1056,8 @@ export function NetworkTopology({
             const dX2 = d.x + deviceWidth;
             const dY2 = d.y + deviceHeight;
 
-            // Box bounds (x1, y1, x2, y2 already calculated)
-            // Containment: device is fully inside the selection box
-            return dX1 >= x1 && dX2 <= x2 && dY1 >= y1 && dY2 <= y2;
+            // Intersection check: device overlaps with selection box
+            return dX1 < x2 && dX2 > x1 && dY1 < y2 && dY2 > y1;
           }).map(d => d.id);
 
           // Update selection instantly for visual feedback
@@ -1198,7 +1202,7 @@ export function NetworkTopology({
         const x2 = Math.max(box.start.x, box.current.x);
         const y2 = Math.max(box.start.y, box.current.y);
 
-        // Detect devices inside selection box (Containment check - device must be fully inside)
+        // Detect devices intersecting selection box (any overlap counts)
         const selectedIds = latestDevicesRef.current.filter(d => {
           const deviceWidth = getDeviceWidth(d.type);
           const deviceHeight = 100;
@@ -1209,23 +1213,30 @@ export function NetworkTopology({
           const dX2 = d.x + deviceWidth;
           const dY2 = d.y + deviceHeight;
 
-          // Containment: device is fully inside the selection box
-          return dX1 >= x1 && dX2 <= x2 && dY1 >= y1 && dY2 <= y2;
+          // Intersection check: device overlaps with selection box
+          return dX1 < x2 && dX2 > x1 && dY1 < y2 && dY2 > y1;
         }).map(d => d.id);
 
         if (selectedIds.length > 0) {
           setSelectedDeviceIds(selectedIds);
           selectedDeviceIdsRef.current = selectedIds;
 
-          // Select first device of selection to update parent state
+          // Select first device of selection to update parent state (for panel sync)
           const firstDevice = latestDevicesRef.current.find(d => d.id === selectedIds[0]);
           if (firstDevice) {
             onDeviceSelect(firstDevice.type, firstDevice.id, isSwitchDeviceType(firstDevice.type) ? firstDevice.switchModel : undefined, firstDevice.name);
           }
-        } else if (Math.abs(box.start.x - box.current.x) > 5 || Math.abs(box.start.y - box.current.y) > 5) {
-          // Clear selection if mouse was dragged enough but no devices found
-          setSelectedDeviceIds([]);
-          selectedDeviceIdsRef.current = [];
+        } else {
+          // Only clear selection if we actually dragged a box of significant size
+          const dragDistance = Math.sqrt(
+            Math.pow(box.current.x - box.start.x, 2) + 
+            Math.pow(box.current.y - box.start.y, 2)
+          );
+          
+          if (dragDistance > 10) {
+            setSelectedDeviceIds([]);
+            selectedDeviceIdsRef.current = [];
+          }
         }
 
         setIsSelecting(false);
@@ -5324,6 +5335,7 @@ export function NetworkTopology({
             aria-label={t.topologyAriaLabel}
             tabIndex={0}
             onMouseDown={handleCanvasMouseDown}
+            onAuxClick={(e) => { if (e.button === 1) e.preventDefault(); }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}

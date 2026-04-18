@@ -1501,7 +1501,7 @@ ${state.bannerMOTD}
   // Topology canvas click: selects device only (no zoom/pan).
   const handleDeviceSelectFromCanvas = useCallback((device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string, isNew?: boolean, deviceData?: CanvasDevice) => {
     applyDeviceSelection(device, deviceId, switchModel, deviceName);
-    
+
     // If it's a newly added device, focus on it
     if (isNew && deviceId) {
       if (activeTab === 'topology' && topologyContainerRef.current) {
@@ -2756,7 +2756,7 @@ ${state.bannerMOTD}
           const isTasksModalOpen = tasksModal && (tasksModal.textContent?.includes('Tasks') || tasksModal.textContent?.includes('Görevler'));
           // Check if terminal modal is open by checking the DOM
           const terminalModal = document.querySelector('[role="dialog"]')?.textContent?.includes('CLI Terminal');
-          
+
           if (isTasksModalOpen || terminalModal) {
             e.preventDefault();
             setShowTasksModal(false);
@@ -2772,7 +2772,7 @@ ${state.bannerMOTD}
             const tasksModal = document.querySelector('[data-modal-header]')?.closest('[role="dialog"]');
             const isTasksModalOpen = tasksModal && (tasksModal.textContent?.includes('Tasks') || tasksModal.textContent?.includes('Görevler'));
             const terminalModal = document.querySelector('[role="dialog"]')?.textContent?.includes('CLI Terminal');
-            
+
             // Only switch tabs if no modal is open
             if (!isTasksModalOpen && !terminalModal) {
               e.preventDefault();
@@ -2839,9 +2839,9 @@ ${state.bannerMOTD}
         deviceStates: Map<string, SwitchState>;
       }>;
       const { topologyDevices: eventDevices, topologyConnections: eventConnections, deviceStates: eventStates } = customEvent.detail;
-      
+
       if (!eventDevices || !eventConnections || !eventStates) return;
-      
+
       // Run VTP propagation logic
       const isSwitchDeviceType = (type: string) => type === 'switchL2' || type === 'switchL3';
       const byId = new Map(eventDevices.map((d: CanvasDevice) => [d.id, d]));
@@ -4092,130 +4092,130 @@ ${state.bannerMOTD}
               }}
             >
               <div className="relative flex flex-col h-full">
-              <DialogHeader
-                className={`p-3 sm:p-4 border-b cursor-move select-none sticky top-0 z-10 ${isDark ? 'bg-slate-900' : 'bg-white'}`}
-                data-modal-header
-                onPointerDown={(e) => handlePointerDown(e, 'tasks')}
-              >
-                <div className="flex items-center justify-between">
-                  <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
-                    {language === 'tr' ? 'Görevler' : 'Tasks'}
-                  </DialogTitle>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => {
-                        setShowTasksModal(false);
-                        setShowTerminalModal(true);
-                      }}
-                      title={language === 'tr' ? 'CLI Terminal\'e geç' : 'Switch to CLI Terminal'}
-                    >
-                      <TerminalIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setShowTasksModal(false)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <DialogDescription className="sr-only">
-                  {language === 'tr' ? 'Cihaz görevleri ve yapılandırma görevleri' : 'Device tasks and configuration tasks'}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  <div className="lg:col-span-2 overflow-y-auto custom-scrollbar">
-                    <PortPanel
-                      ports={state.ports}
-                      t={t}
-                      theme={theme}
-                      deviceName={state.hostname}
-                      deviceModel={activeDeviceType === 'router' ? 'NETWORK-1941' : (state.switchModel || 'WS-C2960-24TT-L')}
-                      activeDeviceId={activeDeviceId}
-                      isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                      topologyDevices={topologyDevices}
-                      onTogglePower={toggleDevicePower}
-                      topologyConnections={topologyConnections || undefined}
-                    />
-                    <VlanPanel
-                      vlans={state.vlans}
-                      ports={state.ports}
-                      deviceName={state.hostname}
-                      deviceModel={activeDeviceType === 'router' ? 'NETWORK-1941' : (state.switchModel || 'WS-C2960-24TT-L')}
-                      deviceId={activeDeviceId}
-                      onTogglePower={toggleDevicePower}
-                      onExecuteCommand={handleCommand}
-                      t={t}
-                      theme={theme}
-                      activeDeviceType={activeDeviceType}
-                      isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                    />
-                    <SecurityPanel
-                      security={state.security}
-                      t={t}
-                      theme={theme}
-                      deviceId={activeDeviceId}
-                      isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                      onTogglePower={toggleDevicePower}
-                    />
-                  </div>
-                  <div className="overflow-y-auto custom-scrollbar">
-                    <TaskCard
-                      tasks={[...portTasks, ...vlanTasks, ...securityTasks, ...wirelessTasks]}
-                      state={state}
-                      context={taskContext}
-                      color="from-red-500 to-rose-500"
-                      isDark={isDark}
-                    />
-                  </div>
-                </div>
-              </div>
-              {/* Resize handles - hidden on mobile */}
-              <div className="hidden md:block">
-                <div
-                  className="absolute top-0 left-0 right-0 h-1 cursor-n-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'n', 'tasks')}
-                />
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-1 cursor-s-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 's', 'tasks')}
-                />
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-1 cursor-w-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'w', 'tasks')}
-                />
-                <div
-                  className="absolute right-0 top-0 bottom-0 w-1 cursor-e-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'e', 'tasks')}
-                />
-                <div
-                  className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'nw', 'tasks')}
-                />
-                <div
-                  className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'ne', 'tasks')}
-                />
-                <div
-                  className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'sw', 'tasks')}
-                />
-                <div
-                  className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
+                <DialogHeader
+                  className={`p-3 sm:p-4 border-b cursor-move select-none sticky top-0 z-10 ${isDark ? 'bg-slate-900' : 'bg-white'}`}
+                  data-modal-header
+                  onPointerDown={(e) => handlePointerDown(e, 'tasks')}
                 >
-                  <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M12 4v16" />
-                  </svg>
+                  <div className="flex items-center justify-between">
+                    <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
+                      {language === 'tr' ? 'Görevler' : 'Tasks'}
+                    </DialogTitle>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => {
+                          setShowTasksModal(false);
+                          setShowTerminalModal(true);
+                        }}
+                        title={language === 'tr' ? 'CLI Terminal\'e geç' : 'Switch to CLI Terminal'}
+                      >
+                        <TerminalIcon className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setShowTasksModal(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <DialogDescription className="sr-only">
+                    {language === 'tr' ? 'Cihaz görevleri ve yapılandırma görevleri' : 'Device tasks and configuration tasks'}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 overflow-y-auto p-3 sm:p-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-2 overflow-y-auto custom-scrollbar">
+                      <PortPanel
+                        ports={state.ports}
+                        t={t}
+                        theme={theme}
+                        deviceName={state.hostname}
+                        deviceModel={activeDeviceType === 'router' ? 'NETWORK-1941' : (state.switchModel || 'WS-C2960-24TT-L')}
+                        activeDeviceId={activeDeviceId}
+                        isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                        topologyDevices={topologyDevices}
+                        onTogglePower={toggleDevicePower}
+                        topologyConnections={topologyConnections || undefined}
+                      />
+                      <VlanPanel
+                        vlans={state.vlans}
+                        ports={state.ports}
+                        deviceName={state.hostname}
+                        deviceModel={activeDeviceType === 'router' ? 'NETWORK-1941' : (state.switchModel || 'WS-C2960-24TT-L')}
+                        deviceId={activeDeviceId}
+                        onTogglePower={toggleDevicePower}
+                        onExecuteCommand={handleCommand}
+                        t={t}
+                        theme={theme}
+                        activeDeviceType={activeDeviceType}
+                        isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                      />
+                      <SecurityPanel
+                        security={state.security}
+                        t={t}
+                        theme={theme}
+                        deviceId={activeDeviceId}
+                        isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                        onTogglePower={toggleDevicePower}
+                      />
+                    </div>
+                    <div className="overflow-y-auto custom-scrollbar">
+                      <TaskCard
+                        tasks={[...portTasks, ...vlanTasks, ...securityTasks, ...wirelessTasks]}
+                        state={state}
+                        context={taskContext}
+                        color="from-red-500 to-rose-500"
+                        isDark={isDark}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
+                {/* Resize handles - hidden on mobile */}
+                <div className="hidden md:block">
+                  <div
+                    className="absolute top-0 left-0 right-0 h-1 cursor-n-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
+                    onPointerDown={(e) => handleResizeStart(e, 'n', 'tasks')}
+                  />
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-1 cursor-s-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
+                    onPointerDown={(e) => handleResizeStart(e, 's', 'tasks')}
+                  />
+                  <div
+                    className="absolute left-0 top-0 bottom-0 w-1 cursor-w-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
+                    onPointerDown={(e) => handleResizeStart(e, 'w', 'tasks')}
+                  />
+                  <div
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-e-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
+                    onPointerDown={(e) => handleResizeStart(e, 'e', 'tasks')}
+                  />
+                  <div
+                    className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
+                    onPointerDown={(e) => handleResizeStart(e, 'nw', 'tasks')}
+                  />
+                  <div
+                    className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
+                    onPointerDown={(e) => handleResizeStart(e, 'ne', 'tasks')}
+                  />
+                  <div
+                    className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
+                    onPointerDown={(e) => handleResizeStart(e, 'sw', 'tasks')}
+                  />
+                  <div
+                    className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
+                    onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
+                  >
+                    <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M12 4v16" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
@@ -4613,7 +4613,7 @@ ${state.bannerMOTD}
                           onClick={handleUndo}
                           disabled={hasHydrated && !canUndo}
                         >
-                          <Undo2 className={`w-4 h-4 ${!canUndo ? 'opacity-30' : ''}`} />
+                          <Undo2 className={`w-4 h-4 ${!canUndo ? 'opacity-100' : ''}`} />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>{t.undo} (Ctrl+Z)</TooltipContent>
@@ -4629,7 +4629,7 @@ ${state.bannerMOTD}
                           onClick={handleRedo}
                           disabled={hasHydrated && !canRedo}
                         >
-                          <Redo2 className={`w-4 h-4 ${!canRedo ? 'opacity-30' : ''}`} />
+                          <Redo2 className={`w-4 h-4 ${!canRedo ? 'opacity-100' : ''}`} />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>{t.redo} (Ctrl+Y)</TooltipContent>
@@ -4671,7 +4671,7 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{isTopologyFullscreen ? (language === 'tr' ? 'Küçült' : 'Exit') : (language === 'tr' ? 'Tam Ekran' : 'Full Screen')}</TooltipContent>
+                      <TooltipContent>{isTopologyFullscreen ? (language === 'tr' ? 'Küçült' : 'Exit') : (language === 'tr' ? 'Tam Ekran (Ctrl+F)' : 'Full Screen (Ctrl+F)')}</TooltipContent>
                     </Tooltip>
                   </div>
                 )}

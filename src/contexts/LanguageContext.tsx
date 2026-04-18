@@ -99,7 +99,7 @@ export interface Translations {
   switchMode: string;
   newVlanLabel: string;
   // UI text for global controls in About modal / tour
-  close: string;  
+  close: string;
   pcTerminal: string;
   pcConnected: string;
   pcNotConnected: string;
@@ -851,7 +851,7 @@ const translations: Record<Language, Translations> = {
     environmentBackground: 'Arka Plan',
     backgroundNone: 'Yok',
     backgroundHouse: 'Ev Krokisi',
-    backgroundTwoStoryGarage: '2 Katlı Bina (Garaj)',
+    backgroundTwoStoryGarage: '2 Katlı Bina',
     backgroundGreenhouse: 'Sera Krokisi',
     temperature: 'Sıcaklık',
     humidity: 'Nem',
@@ -1264,7 +1264,7 @@ const translations: Record<Language, Translations> = {
     environmentBackground: 'Background',
     backgroundNone: 'None',
     backgroundHouse: 'House Sketch',
-    backgroundTwoStoryGarage: '2-Story Building (Garage)',
+    backgroundTwoStoryGarage: '2-Story Building',
     backgroundGreenhouse: 'Greenhouse Sketch',
     temperature: 'Temperature',
     humidity: 'Humidity',
