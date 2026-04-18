@@ -1130,7 +1130,7 @@ export function Terminal({
       )}
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)} className="h-8 w-8 rounded-lg">
+          <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)} className="h-8 w-8 rounded-lg" aria-controls="search-dialog">
             <Search className="w-4 h-4" aria-hidden="true" />
           </Button>
         </TooltipTrigger>
@@ -1431,7 +1431,7 @@ export function Terminal({
 
       {/* Dialogs */}
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent>
+        <DialogContent aria-modal="true">
           <DialogHeader>
             <DialogTitle>{t.search}</DialogTitle>
             <DialogDescription>

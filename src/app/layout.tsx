@@ -69,7 +69,7 @@ export default function RootLayout({
           Ana içeriğe atla
         </a>
         <Providers>
-          <div id="main-content">
+          <div id="main-content" className="w-full h-screen flex flex-col overflow-hidden">
             {children}
           </div>
         </Providers>

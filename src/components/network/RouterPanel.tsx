@@ -173,7 +173,7 @@ export function RouterPanel({
     <Dialog open={isVisible} onOpenChange={(open) => {
       if (!open) onClose();
     }}>
-      <DialogContent className="max-w-4xl max-h-[80vh] p-0" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent className="max-w-4xl max-h-[80vh] p-0" onPointerDownOutside={(e) => e.preventDefault()} aria-modal="true">
         <DialogHeader className="p-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -222,6 +222,7 @@ export function RouterPanel({
             role="tab"
             aria-selected={activeTab === 'overview'}
             aria-controls="overview-panel"
+            aria-current={activeTab === 'overview' ? 'page' : undefined}
           >
             <Activity className="w-4 h-4 mr-2" />
             {t.overview}
@@ -238,6 +239,7 @@ export function RouterPanel({
             role="tab"
             aria-selected={activeTab === 'ports'}
             aria-controls="ports-panel"
+            aria-current={activeTab === 'ports' ? 'page' : undefined}
           >
             <Network className="w-4 h-4 mr-2" />
             {t.ports}
@@ -254,6 +256,7 @@ export function RouterPanel({
             role="tab"
             aria-selected={activeTab === 'wifi'}
             aria-controls="wifi-panel"
+            aria-current={activeTab === 'wifi' ? 'page' : undefined}
           >
             <Wifi className="w-4 h-4 mr-2" />
             WiFi
@@ -270,6 +273,7 @@ export function RouterPanel({
             role="tab"
             aria-selected={activeTab === 'dhcp'}
             aria-controls="dhcp-panel"
+            aria-current={activeTab === 'dhcp' ? 'page' : undefined}
           >
             <Server className="w-4 h-4 mr-2" />
             DHCP

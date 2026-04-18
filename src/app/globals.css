@@ -148,6 +148,21 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Improved focus styles for accessibility */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
   /* Minimum font size for accessibility - 12px */
   html {
     font-size: 16px;

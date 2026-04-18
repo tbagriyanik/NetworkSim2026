@@ -5131,14 +5131,14 @@ export function NetworkTopology({
   return (
     <div
       onContextMenu={(e) => e.preventDefault()}
-      className={`${isFullscreen ? 'fixed inset-[20px] z-[9999] rounded-2xl shadow-2xl overflow-hidden' : 'relative m-2.5 rounded-2xl border overflow-hidden h-[calc(100%-2rem)]'} flex flex-col transition-all duration-300 ${isDark
-        ? 'bg-gradient-to-br from-slate-800/90 via-slate-700/80 to-slate-800/90 border-slate-700/50'
-        : 'bg-gradient-to-br from-blue-50/50 via-white to-slate-50/80 border-slate-200'
+      className={`${isFullscreen ? 'fixed inset-0 z-[9999] overflow-hidden' : 'relative w-full h-full'} flex flex-col ${isDark
+        ? 'bg-gradient-to-br from-slate-800/90 via-slate-700/80 to-slate-800/90'
+        : 'bg-gradient-to-br from-blue-50/50 via-white to-slate-50/80'
         }`}
     >
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas Area */}
-        <div className={`flex-1 relative flex flex-col`}>
+        <div className="flex-1 relative flex flex-col">
           {/* Palette Sheet (Triggered from Top Toolbar) */}
           <Sheet open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
             <SheetContent side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} rounded-t-[2rem] p-0`}>

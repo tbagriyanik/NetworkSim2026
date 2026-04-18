@@ -85,10 +85,10 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     <div class="form-group">
       <label for="wifi-password">${isTurkish ? 'WiFi Parolası / Güvenlik Anahtarı' : 'WiFi Password / Security Key'}</label>
       <div style="position:relative;display:flex;align-items:center;">
-        <input type="password" id="wifi-password" name="password" value="${wifi.password || ''}" placeholder="${isTurkish ? 'Parola girin (en az 8 karakter)' : 'Enter password (min 8 characters)'}" minlength="8" style="padding-right:2.2rem;width:100%;">
+        <input type="password" id="wifi-password" name="password" value="${wifi.password || ''}" placeholder="${isTurkish ? 'Parola girin (en az 8 karakter)' : 'Enter password (min 8 characters)'}" minlength="8" aria-describedby="wifi-password-hint" style="padding-right:2.2rem;width:100%;">
         <button type="button" onclick="(function(btn){var inp=document.getElementById('wifi-password');if(inp.type==='password'){inp.type='text';btn.innerHTML='&#128065;&#65039;';}else{inp.type='password';btn.innerHTML='&#128065;';}})(this)" tabindex="-1" style="position:absolute;right:0.5rem;background:none;border:none;cursor:pointer;font-size:1rem;color:#888;padding:0;line-height:1;" title="${isTurkish ? 'Parolayı Göster/Gizle' : 'Show/Hide password'}">&#128065;</button>
       </div>
-      <span class="hint">${isTurkish ? 'En az 8 karakter gereklidir' : 'Minimum 8 characters required'}</span>
+      <span class="hint" id="wifi-password-hint">${isTurkish ? 'En az 8 karakter gereklidir' : 'Minimum 8 characters required'}</span>
     </div>
   `;
 
@@ -552,8 +552,8 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       <form id="wifi-form">
         <div class="form-group">
           <label for="wifi-ssid">${isTurkish ? 'Ağ Adı (SSID)' : 'Network Name (SSID)'}</label>
-          <input type="text" id="wifi-ssid" name="ssid" value="${wifi.ssid || ''}" placeholder="${isTurkish ? 'WiFi ağ adınızı girin' : 'Enter your WiFi network name'}" maxlength="32">
-          <span class="hint">${isTurkish ? 'Bu ad kablosuz istemciler tarafından görülecektir (gizlenmediği sürece)' : 'This name will be visible to wireless clients (unless hidden)'}</span>
+          <input type="text" id="wifi-ssid" name="ssid" value="${wifi.ssid || ''}" placeholder="${isTurkish ? 'WiFi ağ adınızı girin' : 'Enter your WiFi network name'}" maxlength="32" aria-describedby="wifi-ssid-hint">
+          <span class="hint" id="wifi-ssid-hint">${isTurkish ? 'Bu ad kablosuz istemciler tarafından görülecektir (gizlenmediği sürece)' : 'This name will be visible to wireless clients (unless hidden)'}</span>
         </div>
         
         <div class="grid-2">
@@ -629,11 +629,11 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
                 <span style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:${device.connected ? '#dcfce7' : '#fef3c7'};color:${device.connected ? '#166534' : '#92400e'};">
                   ${device.connected ? (isTurkish ? '● Bağlı' : '● Connected') : (isTurkish ? '○ Bağlı Değil' : '○ Disconnected')}
                 </span>
-                <button type="button" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:none;border-radius:6px;background:#2563eb;color:white;cursor:pointer;transition:all 0.2s;" onclick="event.stopPropagation();renewIotDevice('${device.id}')" title="${isTurkish ? 'IP Yenile' : 'IP Renew'}">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15.5 6.36L3 21"></path><path d="M3 12a9 9 0 0 1 15.5-6.36L21 3"></path><path d="M3 21v-6h6"></path><path d="M21 3v6h-6"></path></svg>
+                <button type="button" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:none;border-radius:6px;background:#2563eb;color:white;cursor:pointer;transition:all 0.2s;" onclick="event.stopPropagation();renewIotDevice('${device.id}')" title="${isTurkish ? 'IP Yenile' : 'IP Renew'}" aria-label="${isTurkish ? 'IP Yenile' : 'IP Renew'}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.36L3 21"></path><path d="M3 12a9 9 0 0 1 15.5-6.36L21 3"></path><path d="M3 21v-6h6"></path><path d="M21 3v6h-6"></path></svg>
                 </button>
-                <button type="button" style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; padding:0; border:none; border-radius:6px; background:#ef4444; color:white; cursor:pointer; transition:all 0.2s;" onclick="event.stopPropagation();disconnectIotDevice('${device.id}')" title="${isTurkish ? 'Bağlantıyı Kes' : 'Disconnect'}">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                <button type="button" style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; padding:0; border:none; border-radius:6px; background:#ef4444; color:white; cursor:pointer; transition:all 0.2s;" onclick="event.stopPropagation();disconnectIotDevice('${device.id}')" title="${isTurkish ? 'Bağlantıyı Kes' : 'Disconnect'}" aria-label="${isTurkish ? 'Bağlantıyı Kes' : 'Disconnect'}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 </button>               
               </div>
             </div>

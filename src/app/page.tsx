@@ -3030,7 +3030,7 @@ ${state.bannerMOTD}
 
   return (
     <AppErrorBoundary fallbackTitle={language === 'tr' ? 'Uygulama hatası' : 'Application error'}>
-      <div className={`h-screen w-full flex flex-col relative transition-colors duration-700 overflow-hidden ${isAppLoading ? 'bg-slate-950' : (isDark ? 'bg-slate-950' : 'bg-slate-50')}`}>
+      <div className={`h-dvh w-full flex flex-col relative transition-colors duration-700 overflow-x-hidden ${isAppLoading ? 'bg-slate-950' : (isDark ? 'bg-slate-950' : 'bg-slate-50')}`}>
         {!isAppLoading && (
           <div className="fixed inset-0 pointer-events-none z-0 opacity-40 dark:opacity-20 transition-opacity duration-1000">
             <div className="absolute inset-0 mesh-gradient animate-liquid blur-[100px] scale-150 rotate-12" />
@@ -3050,12 +3050,12 @@ ${state.bannerMOTD}
                 <div className="absolute inset-0 p-4 rounded-2xl bg-blue-500/30 animate-glitch mix-blend-screen" style={{ animationDelay: '0.1s' }} />
               </div>
 
-              <h2
+              <h1
                 className="text-3xl font-black tracking-tighter text-white glitch-text mb-2 text-center"
                 data-text="NETWORK SIMULATOR 2026"
               >
                 NETWORK SIMULATOR 2026
-              </h2>
+              </h1>
 
               <div className="flex items-center gap-2 mt-4">
                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
@@ -3078,7 +3078,7 @@ ${state.bannerMOTD}
         )}
 
         {/* Main Content with transition */}
-        <div className="flex flex-col flex-1 animate-fade-in">
+        <div className="flex flex-col flex-1 animate-fade-in w-full max-w-[1920px] mx-auto">
           {/* Header */}
           <header className={`liquid-glass sticky top-0 z-50 border-b px-5 py-3 pb-0`}>
             <div className="w-full">
@@ -3094,9 +3094,9 @@ ${state.bannerMOTD}
                     <img src="/favicon.png" alt="Logo" className="w-7 h-7 object-contain" />
                   </div>
                   <div className="hidden md:flex flex-col">
-                    <h1 className="text-lg font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent leading-none">
+                    <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent leading-none">
                       {t.title}
-                    </h1>
+                    </h2>
                     <p className={`text-xs font-medium mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.subtitle}</p>
                   </div>
                 </Button>
@@ -4343,10 +4343,10 @@ ${state.bannerMOTD}
           </Dialog>
 
           {/* Main Content - Fits between header and footer with scroll */}
-          <main className="flex-1 overflow-hidden flex flex-col min-h-0 md:pb-[44px]">
-            <div className={`${activeTab === 'topology' ? 'p-0 pb-0 sm:pb-0' : 'p-0'} w-full flex-1 flex flex-col min-h-0 ${activeTab === 'topology' ? 'overflow-hidden' : 'overflow-auto'}`}>
+          <main className="flex-1 overflow-hidden flex flex-col min-h-0">
+            <div className="w-full flex-1 flex flex-col min-h-0 overflow-hidden">
               {/* Tab Content - Always render but hide non-active */}
-              <div className={`flex-1 flex flex-col min-h-0 h-full ${activeTab === 'topology' ? 'block' : 'hidden'} print:block`}>
+              <div className={`flex-1 flex flex-col min-h-0 ${activeTab === 'topology' ? 'flex' : 'hidden'} print:flex`}>
                 {/* Topology Toolbar - Fixed at top */}
                 {activeTab === 'topology' && (
                   <div className="sticky top-0 z-30 px-4 py-2 border-b backdrop-blur-md bg-background/95 hidden md:flex items-center gap-3">
@@ -4661,7 +4661,7 @@ ${state.bannerMOTD}
                   </div>
                 )}
                 {/* Network Topology fills remaining space */}
-                <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0 print:hidden">
+                <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0">
                   <NetworkTopology
                     key={topologyKey}
                     cableInfo={cableInfo}

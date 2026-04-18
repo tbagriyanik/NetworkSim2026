@@ -3494,7 +3494,7 @@ export function PCPanel({
       `}>
         {/* External Toolbar - Above Tablet Frame */}
         <div className={`
-        w-full max-w-full md:max-w-4xl mx-auto mb-2 px-3 py-1.5 flex items-center justify-between sticky top-2 z-[30]
+        w-full max-w-full mx-auto mb-2 px-3 py-1.5 flex items-center justify-between sticky top-2 z-[30]
         rounded-lg border
         ${isDark
             ? 'bg-slate-800/90 border-slate-700 shadow-md'
