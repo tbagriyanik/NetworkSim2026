@@ -108,11 +108,11 @@ export function useDeviceManager() {
     };
   }, []);
 
-  const ensureSwitchModelConsistency = useCallback((state: SwitchState, model?: string, macAddress?: string): SwitchState => {
+  const ensureSwitchModelConsistency = useCallback((state: SwitchState, model?: string, macAddress?: string, isRouter?: boolean): SwitchState => {
     if (!model) return state;
 
     const normalizedModel = model as any;
-    const baseState = createInitialState(macAddress || state.macAddress, normalizedModel);
+    const baseState = isRouter ? createInitialRouterState(macAddress || state.macAddress) : createInitialState(macAddress || state.macAddress, normalizedModel);
     const mergedPorts = { ...baseState.ports, ...state.ports };
 
     return {
@@ -258,20 +258,20 @@ export function useDeviceManager() {
     } else {
       // Update existing device state if switchModel is provided and differs
       if (switchModel && deviceState.switchModel !== switchModel) {
-        const updatedState = ensureSwitchModelConsistency(deviceState, switchModel, initialMac);
+        const updatedState = ensureSwitchModelConsistency(deviceState, switchModel, initialMac, deviceType === 'router');
         setDeviceStates(prev => new Map(prev).set(deviceId, updatedState));
         deviceState = updatedState;
       }
 
       if (!deviceState.switchModel) {
         const fallbackModel = switchModel || (deviceType === 'router' ? 'WS-C3560-24PS' : deviceType === 'switchL3' ? 'WS-C3560-24PS' : 'WS-C2960-24TT-L');
-        const updatedState = ensureSwitchModelConsistency(deviceState, fallbackModel, initialMac);
+        const updatedState = ensureSwitchModelConsistency(deviceState, fallbackModel, initialMac, deviceType === 'router');
         setDeviceStates(prev => new Map(prev).set(deviceId, updatedState));
         deviceState = updatedState;
       }
 
       if (isSwitchDeviceType(deviceType) && deviceState.switchModel === 'WS-C3560-24PS' && (!deviceState.ports['gi0/3'] || !deviceState.ports['gi0/4'])) {
-        const healedState = ensureSwitchModelConsistency(deviceState, deviceState.switchModel, initialMac);
+        const healedState = ensureSwitchModelConsistency(deviceState, deviceState.switchModel, initialMac, false);
         setDeviceStates(prev => new Map(prev).set(deviceId, healedState));
         deviceState = healedState;
       }

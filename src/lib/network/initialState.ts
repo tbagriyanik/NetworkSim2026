@@ -235,8 +235,8 @@ function createInitialRouterPorts(): Record<string, Port> {
     type: 'fastethernet'
   };
 
-  // GigabitEthernet 0/0 - 0/4 (Router portları)
-  for (let i = 0; i <= 4; i++) {
+  // GigabitEthernet 0/0 - 0/3 (Router portları)
+  for (let i = 0; i <= 3; i++) {
     const portId = `gi0/${i}`;
     // Generate per-port MAC address by incrementing from base MAC
     const portMacNumber = parseInt(baseMac.replace(/\./g, ''), 16) + i;

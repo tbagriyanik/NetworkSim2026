@@ -18,9 +18,16 @@ export function TaskPortList({ state, t, theme, isDevicePoweredOff = false }: Ta
   const ports = Object.values(state.ports || {})
     .filter((port: Port) => {
       const id = port.id.toLowerCase();
-      return !id.startsWith('vlan') && id !== 'wlan0' && id !== 'console';
+      return !id.startsWith('vlan') && id !== 'wlan0';
     })
     .sort((a: Port, b: Port) => {
+      // Console port always first
+      const aIsConsole = a.id.toLowerCase() === 'console';
+      const bIsConsole = b.id.toLowerCase() === 'console';
+      
+      if (aIsConsole && !bIsConsole) return -1;
+      if (!aIsConsole && bIsConsole) return 1;
+      
       // Sort by port type then by number
       const aIsGigabit = a.id.toLowerCase().startsWith('gi');
       const bIsGigabit = b.id.toLowerCase().startsWith('gi');

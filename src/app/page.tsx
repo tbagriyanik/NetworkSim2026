@@ -3783,8 +3783,17 @@ ${state.bannerMOTD}
             <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl`}>
               <div className='flex flex-col flex-1 overflow-hidden h-full max-w-full'>
                 <div className='p-4 md:p-8 pb-2 md:pb-4 space-y-4'>
-                  <div className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r  p-4 md:p-6 '>
+                  <div className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r  p-4 md:p-6 flex items-center justify-between'>
                     <DialogTitle className='text-xl bg-gradient-to-br from-white to-slate-900 bg-clip-text text-transparent break-words'>{t.openNewProject}</DialogTitle>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      className={`flex items-center gap-2 text-xs px-3 py-1.5 h-8 ${isDark ? 'text-slate-200 border-slate-700 hover:bg-slate-800 hover:text-cyan-400' : 'text-slate-700 border-slate-300 hover:bg-slate-100 hover:text-cyan-600'}`}
+                      onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => { resetToEmptyProject(); }); }}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      {t.emptyProject}
+                    </Button>
                     <DialogDescription className="sr-only">
                       {language === 'tr'
                         ? 'Yeni proje penceresi: boş projeyle başlayın veya hazır örneklerden birini seçin.'
@@ -3847,26 +3856,6 @@ ${state.bannerMOTD}
 
                 <div className='flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-12 pb-12 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent'>
                   <div className='flex flex-col gap-12 max-w-full'>
-                    {/* Top Section: Start from Scratch */}
-                    <div className='w-full'>
-                      <div className='rounded-xl border border-slate-200/70 bg-white/70 dark:border-slate-800/60 dark:bg-slate-900/60'>
-                        <Button
-                          variant='outline'
-                          className={`group relative flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition-all hover:bg-slate-100 dark:hover:bg-slate-800 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}
-                          onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => { resetToEmptyProject(); }); }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-slate-200/50 dark:bg-slate-700/50 flex items-center justify-center shrink-0">
-                              <Plus className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <p className='text-sm font-bold'>{t.emptyProject}</p>
-                            </div>
-                          </div>
-                        </Button>
-                      </div>
-                    </div>
-
                     {/* Bottom Section: Examples organized in levels */}
                     <div className='flex flex-col gap-16'>
                       {exampleLevelOrder.map((level) => {
@@ -5157,8 +5146,8 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
   }, [isMinimized]);
   // Get port information
   const ports = routerState?.ports ? Object.values(routerState.ports) : (router.ports || []);
-  // Router always shows 7 ports in this model (Console, 5x Gi, 1x WLAN)
-  const totalPorts = Math.max(7, ports.length);
+  // Router has 6 ports: 1 console + 4 GigabitEthernet (gi0/0-gi0/3) + 1 WLAN0
+  const totalPorts = Math.max(6, ports.length);
 
   // Use topology connections for most reliable count
   const connectedPorts = topologyConnections?.filter(conn =>
