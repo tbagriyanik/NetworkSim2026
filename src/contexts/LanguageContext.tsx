@@ -460,6 +460,12 @@ export interface Translations {
   contactType: string;
   contactMessage: string;
   contactSend: string;
+  contactPlaceholderName: string;
+  contactPlaceholderEmail: string;
+  contactPlaceholderMessage: string;
+  contactValidationName: string;
+  contactValidationEmail: string;
+  contactValidationMessage: string;
   bugReport: string;
   suggestion: string;
   other: string;
@@ -572,7 +578,7 @@ export interface Translations {
 
 const translations: Record<Language, Translations> = {
   tr: {
-    resetView: 'resetView',
+    resetView: 'Sıfırla',
     exit: 'exit',
     title: 'Network Simulator 2026',
     subtitle: 'Ağ Becerilerini Geliştir',
@@ -993,6 +999,12 @@ const translations: Record<Language, Translations> = {
     contactType: 'Konu',
     contactMessage: 'Mesajınız',
     contactSend: 'Gönder',
+    contactPlaceholderName: 'Adınızı girin',
+    contactPlaceholderEmail: 'E-posta adresinizi girin',
+    contactPlaceholderMessage: 'Mesajınızı yazın...',
+    contactValidationName: 'Lütfen adınızı girin',
+    contactValidationEmail: 'Geçerli bir e-posta adresi girin',
+    contactValidationMessage: 'Lütfen mesajınızı yazın',
     bugReport: 'Hata Raporu',
     suggestion: 'Öneri',
     other: 'Diğer',
@@ -1103,7 +1115,7 @@ const translations: Record<Language, Translations> = {
     disconnectedStatus: 'Bağlı Değil',
   },
   en: {
-    resetView: 'resetView',
+    resetView: 'Reset View',
     exit: 'exit',
     title: 'Network Simulator 2026',
     subtitle: 'Develop Your Networking Skills',
@@ -1524,6 +1536,12 @@ const translations: Record<Language, Translations> = {
     contactType: 'Topic',
     contactMessage: 'Your Message',
     contactSend: 'Send Now',
+    contactPlaceholderName: 'Enter your name',
+    contactPlaceholderEmail: 'Enter your email',
+    contactPlaceholderMessage: 'Write your message...',
+    contactValidationName: 'Please enter your name',
+    contactValidationEmail: 'Please enter a valid email',
+    contactValidationMessage: 'Please write your message',
     bugReport: 'Bug Report',
     suggestion: 'Suggestion',
     other: 'Other',

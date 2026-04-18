@@ -201,7 +201,7 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
                             <td className="p-2 w-1/2">
                               <code className={cn('font-mono text-[11px]', isDark ? 'text-emerald-400' : 'text-emerald-600')}>{cmd}</code>
                             </td>
-                            <td className={cn('p-2', isDark ? 'text-slate-400' : 'text-slate-600')}>{desc}</td>
+                            <td className={cn('p-2', isDark ? 'text-slate-200' : 'text-slate-600')}>{desc}</td>
                           </tr>
                         ))}
                       </tbody>

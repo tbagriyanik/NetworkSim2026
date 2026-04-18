@@ -51,11 +51,31 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
     type: 'bug' as 'bug' | 'suggestion' | 'other',
     message: ''
   });
+  const [validationErrors, setValidationErrors] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate fields
+    const errors = {
+      name: contactData.name.trim() ? '' : t.contactValidationName,
+      email: contactData.email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactData.email) ? '' : t.contactValidationEmail,
+      message: contactData.message.trim() ? '' : t.contactValidationMessage
+    };
+    
+    setValidationErrors(errors);
+    
+    // If any errors, don't submit
+    if (errors.name || errors.email || errors.message) {
+      return;
+    }
+    
     setIsSubmitting(true);
     setSubmitStatus('idle');
 
@@ -274,28 +294,34 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold opacity-50 px-1">{t.contactName}</label>
                         <input
-                          required
                           type="text"
                           value={contactData.name}
-                          onChange={e => setContactData(prev => ({ ...prev, name: e.target.value }))}
+                          onChange={e => { setContactData(prev => ({ ...prev, name: e.target.value })); setValidationErrors(prev => ({ ...prev, name: '' })); }}
                           className={cn(
                             "w-full px-4 py-2.5 rounded-xl border outline-none transition-all",
-                            isDark ? "bg-slate-900 border-slate-700 focus:border-amber-500/50" : "bg-white border-slate-200 focus:border-amber-600"
+                            validationErrors.name 
+                              ? isDark ? "border-red-500/70 bg-red-900/20" : "border-red-500 bg-red-50"
+                              : isDark ? "bg-slate-900 border-slate-700 focus:border-amber-500/50" : "bg-white border-slate-200 focus:border-amber-600"
                           )}
+                          placeholder={t.contactPlaceholderName}
                         />
+                        {validationErrors.name && <p className="text-[10px] text-red-500 px-1">{validationErrors.name}</p>}
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold opacity-50 px-1">{t.contactEmail}</label>
                         <input
-                          required
                           type="email"
                           value={contactData.email}
-                          onChange={e => setContactData(prev => ({ ...prev, email: e.target.value }))}
+                          onChange={e => { setContactData(prev => ({ ...prev, email: e.target.value })); setValidationErrors(prev => ({ ...prev, email: '' })); }}
                           className={cn(
                             "w-full px-4 py-2.5 rounded-xl border outline-none transition-all",
-                            isDark ? "bg-slate-900 border-slate-700 focus:border-amber-500/50" : "bg-white border-slate-200 focus:border-amber-600"
+                            validationErrors.email 
+                              ? isDark ? "border-red-500/70 bg-red-900/20" : "border-red-500 bg-red-50"
+                              : isDark ? "bg-slate-900 border-slate-700 focus:border-amber-500/50" : "bg-white border-slate-200 focus:border-amber-600"
                           )}
+                          placeholder={t.contactPlaceholderEmail}
                         />
+                        {validationErrors.email && <p className="text-[10px] text-red-500 px-1">{validationErrors.email}</p>}
                       </div>
                     </div>
 
@@ -328,16 +354,18 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold opacity-50 px-1">{t.contactMessage}</label>
                       <textarea
-                        required
                         rows={5}
                         value={contactData.message}
-                        onChange={e => setContactData(prev => ({ ...prev, message: e.target.value }))}
+                        onChange={e => { setContactData(prev => ({ ...prev, message: e.target.value })); setValidationErrors(prev => ({ ...prev, message: '' })); }}
                         className={cn(
                           "w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none",
-                          isDark ? "bg-slate-900 border-slate-700 focus:border-amber-500/50" : "bg-white border-slate-200 focus:border-amber-600"
+                          validationErrors.message 
+                            ? isDark ? "border-red-500/70 bg-red-900/20" : "border-red-500 bg-red-50"
+                            : isDark ? "bg-slate-900 border-slate-700 focus:border-amber-500/50" : "bg-white border-slate-200 focus:border-amber-600"
                         )}
-                        placeholder="..."
+                        placeholder={t.contactPlaceholderMessage}
                       />
+                      {validationErrors.message && <p className="text-[10px] text-red-500 px-1">{validationErrors.message}</p>}
                     </div>
 
                     {submitStatus === 'error' && (
@@ -377,7 +405,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                                   <td className="p-2 w-1/2">
                                     <code className={cn('font-mono text-[11px]', isDark ? 'text-emerald-400' : 'text-emerald-600')}>{cmd}</code>
                                   </td>
-                                  <td className={cn('p-2', isDark ? 'text-slate-400' : 'text-slate-600')}>{desc}</td>
+                                  <td className={cn('p-2', isDark ? 'text-slate-200' : 'text-slate-600')}>{desc}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -412,11 +440,11 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                 </>
               )}
             </Button>
-          )}
+)}
           <Button
             variant="outline"
             onClick={onStartTour}
-            className="gap-2"
+            className={cn("gap-2", isDark ? "hover:text-cyan-400 dark:hover:border-cyan-500/50" : "")}
           >
             <Compass className="w-4 h-4" />
             {t.startTour}

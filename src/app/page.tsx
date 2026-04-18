@@ -54,7 +54,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal } from "lucide-react";
 
 import { Button } from '@/components/ui/button';
 import {
@@ -2790,6 +2790,10 @@ ${state.bannerMOTD}
         }
       }
       if (e.key === 'Enter') {
+        // Don't handle Enter when any modal/panel is open
+        if (showTasksModal || showTerminalModal || showAboutModal || showPCPanel || showRouterPanel || showProjectPicker || showOnboarding || !!confirmDialog?.show || !!saveDialog?.show) {
+          return;
+        }
         if (confirmDialog?.show) {
           e.preventDefault();
           confirmDialog.onConfirm();
@@ -3152,7 +3156,7 @@ ${state.bannerMOTD}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-slate-100 hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')}
+                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-white hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')}
                               onClick={handleNewProject}
                             >
                               <File className="w-4 h-4" />
@@ -3164,7 +3168,7 @@ ${state.bannerMOTD}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-slate-100 hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')}
+                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-white hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')}
                               onClick={() => fileInputRef.current?.click()}
                             >
                               <FolderOpen className="w-4 h-4" />
@@ -3176,7 +3180,7 @@ ${state.bannerMOTD}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-slate-100 hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')}
+                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-white hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')}
                               onClick={handleSaveProject}
                             >
                               <Save className="w-4 h-4" />
@@ -3187,11 +3191,11 @@ ${state.bannerMOTD}
                         <div className={cn("w-px h-4", isDark ? 'bg-slate-700' : 'bg-slate-200')} />
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <button className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-slate-100 hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')} onClick={() => setShowAboutModal(true)}>
-                              <Info className="w-4 h-4" />
+                            <button className={cn("h-7 w-7 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-white hover:bg-slate-700/50' : 'text-slate-500 hover:text-slate-900')} onClick={() => setShowAboutModal(true)}>
+                              <Info className="w-3.5 h-3.5" />
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.about}</TooltipContent>
+                          <TooltipContent>{t.contactTitle}</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
@@ -3201,18 +3205,18 @@ ${state.bannerMOTD}
                     <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'} hidden md:block`} />
                     <button
                       onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
-                      className={cn("text-xs font-black tracking-widest h-8 px-2 flex items-center gap-1 rounded-lg transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-purple-400' : 'text-slate-600 hover:text-purple-600')}
+                      className={cn("text-[10px] font-bold h-7 px-1.5 flex items-center gap-1 rounded transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-purple-300' : 'text-slate-500 hover:text-purple-600')}
                     >
-                      <Languages className="w-4 h-4" />
+                      <Languages className="w-3.5 h-3.5" />
                       {language.toUpperCase()}
                     </button>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
-                          className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-yellow-400' : 'text-slate-600 hover:text-yellow-600')}
+                          className={cn("h-7 w-7 rounded flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-yellow-300' : 'text-slate-500 hover:text-yellow-600')}
                           onClick={() => setTheme(isDark ? 'light' : 'dark')}
                         >
-                          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                          {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>{isDark ? t.lightMode : t.darkMode}</TooltipContent>
@@ -3220,7 +3224,7 @@ ${state.bannerMOTD}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
-                          className={cn("h-8 w-8 rounded-lg flex items-center justify-center transition-all ui-hover-surface", graphicsQuality === 'high' ? (isDark ? 'text-slate-300 hover:text-green-400' : 'text-slate-600 hover:text-green-600') : (isDark ? 'text-slate-300 hover:text-orange-400' : 'text-slate-600 hover:text-orange-600'))}
+                          className={cn("h-7 w-7 rounded flex items-center justify-center transition-all ui-hover-surface", graphicsQuality === 'high' ? (isDark ? 'text-slate-300 hover:text-green-300' : 'text-slate-500 hover:text-green-600') : (isDark ? 'text-slate-300 hover:text-orange-300' : 'text-slate-500 hover:text-orange-600'))}
                           onClick={() => setGraphicsQuality(graphicsQuality === 'high' ? 'low' : 'high')}
                         >
                           {graphicsQuality === 'high' ? <Sparkles className="w-4 h-4" /> : <Cloud className="w-4 h-4" />}
@@ -3281,7 +3285,7 @@ ${state.bannerMOTD}
                             </Button>
                             <Button
                               variant="secondary"
-                              className="justify-start gap-2 h-9 text-xs font-bold"
+                              className={cn("justify-start gap-2 h-9 text-xs font-bold", isDark ? "hover:text-cyan-400" : "")}
                               onClick={() => { setShowOnboarding(true); setOnboardingStep(0); setShowMobileMenu(false); }}
                             >
                               <Compass className="w-3.5 h-3.5" /> {t.tour}
@@ -3802,30 +3806,30 @@ ${state.bannerMOTD}
                       className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          if (!projectSearchQuery.trim()) {
+                          // Find the first filtered project across all levels
+                          let firstProject: any = null;
+                          for (const level of exampleLevelOrder) {
+                            const projects = groupedExampleProjects[level] || [];
+                            const filtered = projects.filter(project =>
+                              project.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                              project.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                              project.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                              (project.detail && project.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
+                            );
+                            if (filtered.length > 0) {
+                              firstProject = filtered[0];
+                              break;
+                            }
+                          }
+
+                          if (firstProject) {
+                            // If found, open that project
+                            setShowProjectPicker(false);
+                            runWithSaveGuard(() => applyExampleProject(firstProject.data));
+                          } else {
+                            // If not found or empty, open empty project
                             setShowProjectPicker(false);
                             runWithSaveGuard(() => { resetToEmptyProject(); });
-                          } else {
-                            // Find the first filtered project across all levels
-                            let firstProject: any = null;
-                            for (const level of exampleLevelOrder) {
-                              const projects = groupedExampleProjects[level] || [];
-                              const filtered = projects.filter(project =>
-                                project.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                                project.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                                project.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                                (project.detail && project.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
-                              );
-                              if (filtered.length > 0) {
-                                firstProject = filtered[0];
-                                break;
-                              }
-                            }
-
-                            if (firstProject) {
-                              setShowProjectPicker(false);
-                              runWithSaveGuard(() => applyExampleProject(firstProject.data));
-                            }
                           }
                         }
                       }}
@@ -3845,28 +3849,19 @@ ${state.bannerMOTD}
                   <div className='flex flex-col gap-12 max-w-full'>
                     {/* Top Section: Start from Scratch */}
                     <div className='w-full'>
-                      <div className='rounded-[2.5rem] border border-slate-200/70 bg-white/70 p-1 shadow-xl shadow-slate-900/5 dark:border-slate-800/60 dark:bg-slate-900/60'>
+                      <div className='rounded-xl border border-slate-200/70 bg-white/70 dark:border-slate-800/60 dark:bg-slate-900/60'>
                         <Button
                           variant='outline'
-                          className={`group relative flex h-auto min-h-[110px] md:h-[160px] w-full flex-col md:flex-row items-center justify-between gap-4 md:gap-8 rounded-[2.2rem] border-0 px-6 md:px-10 py-6 text-left transition-all hover:scale-[1.005] active:scale-95 duration-500 ${isDark ? 'bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-2xl' : 'bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-xl shadow-blue-500/20'}`}
+                          className={`group relative flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition-all hover:bg-slate-100 dark:hover:bg-slate-800 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}
                           onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => { resetToEmptyProject(); }); }}
                         >
-                          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 flex-1">
-                            <div className="w-12 h-12 md:w-20 md:h-20 rounded-3xl bg-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform duration-700 backdrop-blur-md shrink-0">
-                              <Plus className="w-6 h-6 md:w-10 md:h-10" />
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-slate-200/50 dark:bg-slate-700/50 flex items-center justify-center shrink-0">
+                              <Plus className="w-4 h-4" />
                             </div>
-                            <div className="text-center md:text-left">
-                              <p className='text-xl md:text-3xl font-black mb-1 md:mb-3 tracking-tighter'>{t.emptyProject}</p>
-                              <p className={`text-[11px] md:text-sm ${isDark ? 'text-slate-300/80' : 'text-white/80'} break-words`}>
-                                {language === 'tr'
-                                  ? 'Topolojini kur, senaryonu tasarla.'
-                                  : 'Build your topology, design a scenario.'}
-                              </p>
+                            <div>
+                              <p className='text-sm font-bold'>{t.emptyProject}</p>
                             </div>
-                          </div>
-
-                          <div className="absolute bottom-0 left-10 right-10 h-1.5 bg-white/5 rounded-t-full overflow-hidden">
-                            <div className="w-0 group-hover:w-full h-full bg-gradient-to-r from-cyan-400 to-blue-400 transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(34,211,238,0.6)]" />
                           </div>
                         </Button>
                       </div>
@@ -4920,14 +4915,69 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
     return false;
   });
 
+  // Draggable position state
+  const [position, setPosition] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pc-info-position');
+      if (saved) {
+        try { return JSON.parse(saved); } catch { }
+      }
+    }
+    return { x: 16, y: 96 }; // default: bottom-24 right-4 = 16px from right, 96px from bottom
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+
+  const handleDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartRef.current = { x: e.clientX, y: e.clientY, posX: position.x, posY: position.y };
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = dragStartRef.current.y - e.clientY;
+      // X uses 'right' CSS, so moving mouse right should decrease right value (move panel right)
+      setPosition({ x: dragStartRef.current.posX - dx, y: dragStartRef.current.posY + dy });
+    };
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      // Clamp position to safe area (screen bounds)
+      const panelWidth = 280;
+      const panelHeight = 400;
+      const margin = 16;
+      const safeX = Math.max(margin, Math.min(position.x, window.innerWidth - panelWidth - margin));
+      const safeY = Math.max(margin, Math.min(position.y, window.innerHeight - panelHeight - margin));
+      const clampedPos = { x: safeX, y: safeY };
+      setPosition(clampedPos);
+      localStorage.setItem('pc-info-position', JSON.stringify(clampedPos));
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
+  }, [isDragging, position]);
+
   useEffect(() => {
     localStorage.setItem('pc-info-minimized', isMinimized.toString());
   }, [isMinimized]);
   return (
-    <div className="hidden md:block fixed bottom-24 right-4 z-[10000] animate-scale-in">
-      <div className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[260px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}>
+    <div 
+      className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDragging ? "cursor-grabbing" : "cursor-grab")}
+      style={{ 
+        bottom: `${position.y}px`, 
+        right: `${position.x}px`,
+        transition: isDragging ? 'none' : 'bottom 0.2s, right 0.2s'
+      }}
+    >
+      <div 
+        onMouseDown={handleDragStart}
+        className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[260px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}
+      >
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
           <div className="flex items-center gap-1.5">
+            <GripHorizontal className="w-3 h-3 opacity-30 cursor-grab" />
             <Monitor className="w-3.5 h-3.5 text-blue-500" />
             <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{pc.name || pc.id}</span>
           </div>
@@ -5058,6 +5108,50 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
     return false;
   });
 
+  // Draggable position state
+  const [position, setPosition] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('router-info-position');
+      if (saved) {
+        try { return JSON.parse(saved); } catch { }
+      }
+    }
+    return { x: 16, y: 96 }; // default: bottom-24 right-4
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+
+  const handleDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartRef.current = { x: e.clientX, y: e.clientY, posX: position.x, posY: position.y };
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = dragStartRef.current.y - e.clientY;
+      // X uses 'right' CSS, so moving mouse right should decrease right value (move panel right)
+      setPosition({ x: dragStartRef.current.posX - dx, y: dragStartRef.current.posY + dy });
+    };
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      // Clamp position to safe area (screen bounds)
+      const panelWidth = 300;
+      const panelHeight = 500;
+      const margin = 16;
+      const safeX = Math.max(margin, Math.min(position.x, window.innerWidth - panelWidth - margin));
+      const safeY = Math.max(margin, Math.min(position.y, window.innerHeight - panelHeight - margin));
+      const clampedPos = { x: safeX, y: safeY };
+      setPosition(clampedPos);
+      localStorage.setItem('router-info-position', JSON.stringify(clampedPos));
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
+  }, [isDragging, position]);
+
   useEffect(() => {
     localStorage.setItem('router-info-minimized', isMinimized.toString());
   }, [isMinimized]);
@@ -5085,10 +5179,21 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
     .slice(0, 3);
 
   return (
-    <div className="hidden md:block fixed bottom-24 right-4 z-[10000] animate-scale-in">
-      <div className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[280px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}>
+    <div 
+      className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDragging ? "cursor-grabbing" : "cursor-grab")}
+      style={{ 
+        bottom: `${position.y}px`, 
+        right: `${position.x}px`,
+        transition: isDragging ? 'none' : 'bottom 0.2s, right 0.2s'
+      }}
+    >
+      <div 
+        onMouseDown={handleDragStart}
+        className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[280px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}
+      >
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
           <div className="flex items-center gap-1.5">
+            <GripHorizontal className="w-3 h-3 opacity-30 cursor-grab" />
             <Server className="w-3.5 h-3.5 text-emerald-500" />
             <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
           </div>
