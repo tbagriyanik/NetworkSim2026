@@ -66,18 +66,37 @@ const getVlanSpecificSTPBlocking = (
 
   // First try to read the per-VLAN spanning tree instance (PVST)
   const vlanStp = port.spanningTree?.instances?.[vlanId];
-  if (vlanStp) {
-    return vlanStp.state === 'blocking';
-  }
+  const isBlocking = vlanStp ? vlanStp.state === 'blocking' :
+    (vlanId === 1 && port.spanningTree?.state ? port.spanningTree.state === 'blocking' : false);
 
-  // If no VLAN-specific instance is defined, check if this is a trunk port
-  // For trunk ports without VLAN-specific STP data, assume no blocking (let the frame pass)
-  if (port.mode === 'trunk') {
+  // If port is not blocking, return false
+  if (!isBlocking) return false;
+
+  // If port is blocking, check if the connection is active
+  const connection = connections.find(c =>
+    (c.sourceDeviceId === deviceId && c.sourcePort === portId) ||
+    (c.targetDeviceId === deviceId && c.targetPort === portId)
+  );
+
+  // If connection is down, STP would reconverge and this port would not block
+  if (connection && connection.active === false) {
     return false;
   }
 
-  // No VLAN-specific STP instance - do NOT fall back to VLAN 1 (would cause wrong path selection)
-  // Return false to allow pathfinding to continue without blocking
+  // If connection is up, check if there are other active connections from this device
+  // If this is the only active connection from this device, ignore STP blocking
+  // This simulates STP reconvergence when all other links fail
+  if (connection) {
+    const activeConnectionsFromDevice = connections.filter(c =>
+      c.active !== false &&
+      (c.sourceDeviceId === deviceId || c.targetDeviceId === deviceId)
+    );
+
+    // If this is the only active connection from this device, ignore STP blocking
+    // When the connection is restored, there will be multiple connections again
+    return activeConnectionsFromDevice.length > 1;
+  }
+
   return false;
 };
 
@@ -589,15 +608,22 @@ export function checkConnectivity(
     return 1;
   };
 
+  const getFallbackVlanFromPath = (deviceId: string): number => {
+    const device = devices.find(d => d.id === deviceId);
+    const state = deviceStates?.get(deviceId);
+    if (!device) return 1;
+    const vlan = getDeviceVlan(device, state);
+    if (vlan && vlan > 0) return vlan;
+    return 1;
+  };
+
   // 2. Simple Pathfinding (BFS) to check physical connectivity
   const queue: string[] = [sourceId];
   const visited = new Set<string>([sourceId]);
   const parent = new Map<string, string>();
 
   // Determine source device VLAN for STP calculation
-  const sourceDeviceForVlan = devices.find(d => d.id === sourceId);
-  const sourceState = deviceStates?.get(sourceId);
-  const sourceVlan = getDeviceVlan(sourceDeviceForVlan!, sourceState) || 1;
+  const sourceVlan = getFallbackVlanFromPath(sourceId);
 
   while (queue.length > 0) {
     const currentId = queue.shift()!;

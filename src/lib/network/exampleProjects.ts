@@ -1572,8 +1572,32 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw1.ports['fa0/3'] = { ...stpPvstSw1.ports['fa0/3'], vlan: 1, mode: 'access', status: 'connected' };
   stpPvstSw1.ports['fa0/4'] = { ...stpPvstSw1.ports['fa0/4'], vlan: 10, mode: 'access', status: 'connected' };
   stpPvstSw1.ports['fa0/5'] = { ...stpPvstSw1.ports['fa0/5'], vlan: 20, mode: 'access', status: 'connected' };
-  stpPvstSw1.ports['gi0/1'] = { ...stpPvstSw1.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
-  stpPvstSw1.ports['gi0/2'] = { ...stpPvstSw1.ports['gi0/2'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  stpPvstSw1.ports['gi0/1'] = {
+    ...stpPvstSw1.ports['gi0/1'],
+    mode: 'trunk',
+    allowedVlans: 'all',
+    status: 'connected',
+    spanningTree: {
+      instances: {
+        1: { role: 'designated', state: 'forwarding' },
+        10: { role: 'root', state: 'forwarding' },
+        20: { role: 'alternate', state: 'blocking' }
+      }
+    }
+  };
+  stpPvstSw1.ports['gi0/2'] = {
+    ...stpPvstSw1.ports['gi0/2'],
+    mode: 'trunk',
+    allowedVlans: 'all',
+    status: 'connected',
+    spanningTree: {
+      instances: {
+        1: { role: 'designated', state: 'forwarding' },
+        10: { role: 'alternate', state: 'blocking' },
+        20: { role: 'root', state: 'forwarding' }
+      }
+    }
+  };
   stpPvstSw1.runningConfig = [
     '!',
     'hostname SW1',
@@ -1624,8 +1648,32 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw2.ports['fa0/3'] = { ...stpPvstSw2.ports['fa0/3'], vlan: 1, mode: 'access', status: 'connected' };
   stpPvstSw2.ports['fa0/4'] = { ...stpPvstSw2.ports['fa0/4'], vlan: 10, mode: 'access', status: 'connected' };
   stpPvstSw2.ports['fa0/5'] = { ...stpPvstSw2.ports['fa0/5'], vlan: 20, mode: 'access', status: 'connected' };
-  stpPvstSw2.ports['gi0/1'] = { ...stpPvstSw2.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
-  stpPvstSw2.ports['gi0/2'] = { ...stpPvstSw2.ports['gi0/2'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  stpPvstSw2.ports['gi0/1'] = {
+    ...stpPvstSw2.ports['gi0/1'],
+    mode: 'trunk',
+    allowedVlans: 'all',
+    status: 'connected',
+    spanningTree: {
+      instances: {
+        1: { role: 'root', state: 'forwarding' },
+        10: { role: 'designated', state: 'forwarding' },
+        20: { role: 'alternate', state: 'blocking' }
+      }
+    }
+  };
+  stpPvstSw2.ports['gi0/2'] = {
+    ...stpPvstSw2.ports['gi0/2'],
+    mode: 'trunk',
+    allowedVlans: 'all',
+    status: 'connected',
+    spanningTree: {
+      instances: {
+        1: { role: 'alternate', state: 'blocking' },
+        10: { role: 'designated', state: 'forwarding' },
+        20: { role: 'root', state: 'forwarding' }
+      }
+    }
+  };
   stpPvstSw2.runningConfig = [
     '!',
     'hostname SW2',
@@ -1676,8 +1724,32 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw3.ports['fa0/3'] = { ...stpPvstSw3.ports['fa0/3'], vlan: 1, mode: 'access', status: 'connected' };
   stpPvstSw3.ports['fa0/4'] = { ...stpPvstSw3.ports['fa0/4'], vlan: 10, mode: 'access', status: 'connected' };
   stpPvstSw3.ports['fa0/5'] = { ...stpPvstSw3.ports['fa0/5'], vlan: 20, mode: 'access', status: 'connected' };
-  stpPvstSw3.ports['gi0/1'] = { ...stpPvstSw3.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
-  stpPvstSw3.ports['gi0/2'] = { ...stpPvstSw3.ports['gi0/2'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  stpPvstSw3.ports['gi0/1'] = {
+    ...stpPvstSw3.ports['gi0/1'],
+    mode: 'trunk',
+    allowedVlans: 'all',
+    status: 'connected',
+    spanningTree: {
+      instances: {
+        1: { role: 'root', state: 'forwarding' },
+        10: { role: 'alternate', state: 'blocking' },
+        20: { role: 'designated', state: 'forwarding' }
+      }
+    }
+  };
+  stpPvstSw3.ports['gi0/2'] = {
+    ...stpPvstSw3.ports['gi0/2'],
+    mode: 'trunk',
+    allowedVlans: 'all',
+    status: 'connected',
+    spanningTree: {
+      instances: {
+        1: { role: 'alternate', state: 'blocking' },
+        10: { role: 'root', state: 'forwarding' },
+        20: { role: 'designated', state: 'forwarding' }
+      }
+    }
+  };
   stpPvstSw3.runningConfig = [
     '!',
     'hostname SW3',
