@@ -494,13 +494,77 @@ function cmdShowInterface(
   }
 
   let requestedInterface = match[1].trim().toLowerCase();
+  const originalInterface = match[1].trim();
+  
+  // Handle VLAN interfaces (SVI)
+  if (/^vlan\s+\d+$/i.test(requestedInterface)) {
+    const vlanId = parseInt(requestedInterface.replace(/\D/g, ''));
+    const vlan = (state.vlans || {})[vlanId];
+    
+    if (!vlan) {
+      return { success: false, error: `% Interface ${originalInterface} not found` };
+    }
+
+    // Extract IP address from running config if available
+    let ipAddress = '';
+    let subnetMask = '';
+    const runningConfig = state.runningConfig || [];
+    let inVlanInterface = false;
+    
+    for (const line of runningConfig) {
+      if (line.toLowerCase().startsWith('interface vlan')) {
+        const configVlanId = parseInt(line.replace(/\D/g, ''));
+        inVlanInterface = (configVlanId === vlanId);
+      } else if (inVlanInterface) {
+        if (line.toLowerCase().startsWith('ip address')) {
+          const parts = line.split(/\s+/);
+          if (parts.length >= 4) {
+            ipAddress = parts[2];
+            subnetMask = parts[3];
+          }
+        } else if (line === '!') {
+          inVlanInterface = false;
+        }
+      }
+    }
+
+    let output = '';
+    const isUp = vlan.status === 'active' && ipAddress;
+    output += `Vlan${vlanId} is ${isUp ? 'up' : 'administratively down'}, line protocol is ${isUp ? 'up' : 'down'}\n`;
+    output += `  Hardware is EtherSVI, address is ${state.macAddress || '0000.0000.0000'}\n`;
+    if (ipAddress && subnetMask) {
+      output += `  Internet address is ${ipAddress}/${subnetMask}\n`;
+    }
+    output += `  Description: ${vlan.name}\n`;
+    output += `  MTU 1500 bytes, BW 1000000 Kbit/sec\n`;
+    output += `  ARP type: ARPA, ARP Timeout 04:00:00\n`;
+    output += `  Last input never, last output never, output hang never\n`;
+    output += `  Queueing strategy: fifo\n`;
+    output += `  Output queue 0/40, 0 drops; input queue 0/75, 0 drops\n`;
+    output += `  5 minute input rate 0 bits/sec, 0 packets/sec\n`;
+    output += `  5 minute output rate 0 bits/sec, 0 packets/sec\n`;
+    output += `     0 packets input, 0 bytes, 0 no buffer\n`;
+    output += `     Received 0 broadcasts, 0 runts, 0 giants, 0 throttles\n`;
+    output += `     0 input errors, 0 CRC, 0 frame, 0 overrun, 0 ignored\n`;
+    output += `     0 watchdog, 0 multicast, 0 pause input\n`;
+    output += `     0 packets output, 0 bytes, 0 underruns\n`;
+    output += `     0 output errors, 0 collisions, 1 interface resets\n`;
+    output += `     0 unknown protocol, 0 dropped\n`;
+    output += `     0 babbles, 0 late collision, 0 deferred\n`;
+    output += `     0 lost carrier, 0 no carrier, 0 PAUSE output\n`;
+    output += '!\n\n';
+
+    return { success: true, output };
+  }
+
+  // Handle physical interfaces
   if (/^vlan\s+\d+$/i.test(requestedInterface)) {
     requestedInterface = requestedInterface.replace(/\s+/g, '');
   }
 
   const port = (state.ports || {})[requestedInterface];
   if (!port) {
-    return { success: false, error: `% Interface ${match[1].trim()} not found` };
+    return { success: false, error: `% Interface ${originalInterface} not found` };
   }
 
   const description = port.description || port.name || '';
@@ -1488,24 +1552,49 @@ function cmdShowSpanningTree(
   // Get VLAN-based spanning tree configuration
   const spanningTreeVlans = state.spanningTreeVlans || {};
 
-  // Calculate lowest priority across all switches for root bridge display
-  const myPriority = (spanningTreeVlans['1']?.priority ? parseInt(spanningTreeVlans['1'].priority) : state.spanningTreePriority) || 32768;
-  let lowestPriority = myPriority;
-
-  devices.forEach((d: any) => {
-    if (d.type === 'switchL2' || d.type === 'switchL3') {
-      const swState = deviceStates.get?.(d.id);
-      const swVlan1Priority = swState?.spanningTreeVlans?.['1']?.priority ? parseInt(swState.spanningTreeVlans['1'].priority) : null;
-      const swPriority = swVlan1Priority || swState?.spanningTreePriority || 32768;
-      if (swPriority < lowestPriority) {
-        lowestPriority = swPriority;
-      }
-    }
-  });
-
   vlans.forEach((vlanId: string) => {
     const vlan = state.vlans?.[vlanId];
     const vlanName = vlan?.name || `VLAN${vlanId}`;
+
+    // Get VLAN-based priority for this switch
+    const myVlanPriority = (spanningTreeVlans[vlanId]?.priority ? parseInt(spanningTreeVlans[vlanId].priority) : state.spanningTreePriority) || 32768;
+    
+    // Calculate lowest priority across all switches for this specific VLAN
+    let lowestPriority = myVlanPriority;
+    let lowestMac = myMac;
+    let rootBridgeId = sourceDeviceId;
+
+    devices.forEach((d: any) => {
+      if (d.type === 'switchL2' || d.type === 'switchL3') {
+        const swState = deviceStates.get?.(d.id);
+        const swVlanPriority = swState?.spanningTreeVlans?.[vlanId]?.priority ? parseInt(swState.spanningTreeVlans[vlanId].priority) : null;
+        const swPriority = swVlanPriority || swState?.spanningTreePriority || 32768;
+        const swMac = swState?.macAddress || d.macAddress || 'FFFF.FFFF.FFFF';
+        
+        if (swPriority < lowestPriority || (swPriority === lowestPriority && swMac.localeCompare(lowestMac) < 0)) {
+          lowestPriority = swPriority;
+          lowestMac = swMac;
+          rootBridgeId = d.id;
+        }
+      }
+    });
+
+    const isRootBridge = rootBridgeId === sourceDeviceId;
+    let rootPortId: string | null = null;
+
+    if (!isRootBridge) {
+      const connectionsToRoot = connectedSwitches.filter(sw => sw.deviceId === rootBridgeId);
+      if (connectionsToRoot.length > 0) {
+        let minPortNum = Infinity;
+        connectionsToRoot.forEach(conn => {
+          const portNum = getPortNumber(conn.portId);
+          if (portNum < minPortNum) {
+            minPortNum = portNum;
+            rootPortId = conn.portId;
+          }
+        });
+      }
+    }
 
     // Sort ports by their number
     const portEntries = Object.entries(state.ports || {})
@@ -1534,7 +1623,7 @@ function cmdShowSpanningTree(
       output += `             Address     ${state.macAddress || '0000.0000.0000'}\n`;
       output += `             This bridge is the root\n`;
     } else {
-      output += `  Root ID    Priority    ${lowestPriority}\n`;
+      output += `  Root ID    Priority    ${lowestPriority + parseInt(vlanId)}\n`;
       output += `             Address     ${lowestMac}\n`;
       if (rootPortId) {
         const rootPortNum = getPortNumber(rootPortId);

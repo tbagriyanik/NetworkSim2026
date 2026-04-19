@@ -12,6 +12,22 @@ Network learning app: [Test Address](https://network2026.vercel.app)
 
 ## Recent Updates
 
+- **NEW: STP 3-Switch PVST Example**: Advanced spanning-tree example with 3 L3 switches demonstrating Per-VLAN STP (PVST+)
+  - Different STP priorities per VLAN for load balancing
+  - SW1: VLAN 10 root primary (24576), VLAN 20 priority 32768
+  - SW2: VLAN 10 priority 32768, VLAN 20 root primary (24576)
+  - SW3: VLAN 10/20 priority 28672 (secondary)
+  - Trunk connections via GigabitEthernet ports
+  - VLAN IP addresses on SVIs (VLAN 1, 10, 20)
+  - Programmatically created example with proper switch objects
+- **NEW: VLAN Interface Support**: Added support for `show interface vlan X` command to display VLAN interfaces (SVI)
+  - Shows interface status, IP address, and VLAN information
+  - Extracts IP configuration from running config
+  - Proper EtherSVI hardware description
+- **FIXED: Per-VLAN STP Priority**: Fixed `show spanning-tree` to use per-VLAN priorities from `spanningTreeVlans`
+  - Previously always used VLAN 1 priority for all VLANs
+  - Now correctly calculates root bridge per VLAN using VLAN-specific priorities
+  - Supports `spanning-tree vlan X root primary/secondary` commands
 - Enhanced `do` command to support all privileged commands from config mode (show, ping, write, traceroute, ssh, telnet, copy, erase, debug, etc.)
 - Added `write`, `wr`, `wri`, `writ` command aliases as shortcuts for `write memory`
 - Fixed circular dependency in routing.ts by creating basicConnectivity.ts utility

@@ -1457,6 +1457,204 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   };
 
   const stpTriangleSw3 = createInitialState('00:1A:2B:3C:4D:60');
+
+  // STP 3-Switch PVST Example (Per-VLAN Spanning Tree)
+  const stpPvstDevices = [
+    createL3SwitchDevice('sw1', 'SW1', 300, 200),
+    createL3SwitchDevice('sw2', 'SW2', 600, 100),
+    createL3SwitchDevice('sw3', 'SW3', 600, 300)
+  ];
+
+  const stpPvstConnections: CanvasConnection[] = [];
+  connectPorts(stpPvstDevices, stpPvstConnections, 'sw1', 'gi0/1', 'sw2', 'gi0/1');
+  connectPorts(stpPvstDevices, stpPvstConnections, 'sw1', 'gi0/2', 'sw3', 'gi0/1');
+  connectPorts(stpPvstDevices, stpPvstConnections, 'sw2', 'gi0/2', 'sw3', 'gi0/2');
+
+  const stpPvstNotes: CanvasNote[] = [
+    {
+      id: 'note-stp-vlan10',
+      text: isTr
+        ? 'VLAN 10 STP:\n• SW1: Priority 24576 (Root Primary)\n• SW2: Priority 32768\n• SW3: Priority 28672 (Secondary)\n\nSW1 is the root bridge for VLAN 10'
+        : 'VLAN 10 STP:\n• SW1: Priority 24576 (Root Primary)\n• SW2: Priority 32768\n• SW3: Priority 28672 (Secondary)\n\nSW1 is the root bridge for VLAN 10',
+      x: 100,
+      y: 50,
+      width: 280,
+      height: 100,
+      color: '#e3f2fd',
+      font: 'Arial',
+      fontSize: 12,
+      opacity: 1
+    },
+    {
+      id: 'note-stp-vlan20',
+      text: isTr
+        ? 'VLAN 20 STP:\n• SW1: Priority 32768\n• SW2: Priority 24576 (Root Primary)\n• SW3: Priority 28672 (Secondary)\n\nSW2 is the root bridge for VLAN 20'
+        : 'VLAN 20 STP:\n• SW1: Priority 32768\n• SW2: Priority 24576 (Root Primary)\n• SW3: Priority 28672 (Secondary)\n\nSW2 is the root bridge for VLAN 20',
+      x: 100,
+      y: 350,
+      width: 280,
+      height: 100,
+      color: '#fff3e0',
+      font: 'Arial',
+      fontSize: 12,
+      opacity: 1
+    },
+    {
+      id: 'note-pvst',
+      text: isTr
+        ? 'PVST (Per-VLAN STP)\n\nHer VLAN kendi STP örneğine sahiptir:\n• STP instance\n• Root bridge\n• Port states\n\nLoad balancing farklı\nroot bridge\'ler ile sağlanır'
+        : 'PVST (Per-VLAN STP)\n\nEach VLAN has its own:\n• STP instance\n• Root bridge\n• Port states\n\nLoad balancing achieved\nby having different root\nbridges per VLAN',
+      x: 750,
+      y: 200,
+      width: 250,
+      height: 120,
+      color: '#f3e5f5',
+      font: 'Arial',
+      fontSize: 12,
+      opacity: 1
+    }
+  ];
+
+  const stpPvstSw1 = createInitialState('00:11:00:00:01:00', 'WS-C3560-24PS');
+  stpPvstSw1.hostname = 'SW1';
+  stpPvstSw1.switchModel = 'WS-C3560-24PS';
+  stpPvstSw1.switchLayer = 'L3';
+  stpPvstSw1.vlans[1] = { id: 1, name: 'default', status: 'active', ports: [] };
+  stpPvstSw1.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['FA0/1', 'GI0/1', 'GI0/2'] };
+  stpPvstSw1.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2', 'GI0/1', 'GI0/2'] };
+  (stpPvstSw1 as any).spanningTreeVlans = {
+    '1': { priority: '32768' },
+    '10': { priority: '24576' },
+    '20': { priority: '32768' }
+  };
+  stpPvstSw1.ports['fa0/1'] = { ...stpPvstSw1.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
+  stpPvstSw1.ports['fa0/2'] = { ...stpPvstSw1.ports['fa0/2'], vlan: 20, mode: 'access', status: 'connected' };
+  stpPvstSw1.ports['gi0/1'] = { ...stpPvstSw1.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  stpPvstSw1.ports['gi0/2'] = { ...stpPvstSw1.ports['gi0/2'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  stpPvstSw1.runningConfig = [
+    '!',
+    'hostname SW1',
+    '!',
+    'vlan 10',
+    ' name VLAN10',
+    '!',
+    'vlan 20',
+    ' name VLAN20',
+    '!',
+    'interface vlan 1',
+    ' ip address 192.168.1.1 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface vlan 10',
+    ' ip address 192.168.10.1 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface vlan 20',
+    ' ip address 192.168.20.1 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface range gi0/1 - 2',
+    ' switchport mode trunk',
+    '!',
+    'spanning-tree mode pvst',
+    'spanning-tree vlan 10 root primary',
+    'spanning-tree vlan 20 priority 32768',
+    '!'
+  ];
+
+  const stpPvstSw2 = createInitialState('00:11:00:00:02:00', 'WS-C3560-24PS');
+  stpPvstSw2.hostname = 'SW2';
+  stpPvstSw2.switchModel = 'WS-C3560-24PS';
+  stpPvstSw2.switchLayer = 'L3';
+  stpPvstSw2.vlans[1] = { id: 1, name: 'default', status: 'active', ports: [] };
+  stpPvstSw2.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['FA0/1', 'GI0/1', 'GI0/2'] };
+  stpPvstSw2.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2', 'GI0/1', 'GI0/2'] };
+  (stpPvstSw2 as any).spanningTreeVlans = {
+    '1': { priority: '32768' },
+    '10': { priority: '32768' },
+    '20': { priority: '24576' }
+  };
+  stpPvstSw2.ports['fa0/1'] = { ...stpPvstSw2.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
+  stpPvstSw2.ports['fa0/2'] = { ...stpPvstSw2.ports['fa0/2'], vlan: 20, mode: 'access', status: 'connected' };
+  stpPvstSw2.ports['gi0/1'] = { ...stpPvstSw2.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  stpPvstSw2.ports['gi0/2'] = { ...stpPvstSw2.ports['gi0/2'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  stpPvstSw2.runningConfig = [
+    '!',
+    'hostname SW2',
+    '!',
+    'vlan 10',
+    ' name VLAN10',
+    '!',
+    'vlan 20',
+    ' name VLAN20',
+    '!',
+    'interface vlan 1',
+    ' ip address 192.168.1.2 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface vlan 10',
+    ' ip address 192.168.10.2 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface vlan 20',
+    ' ip address 192.168.20.2 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface range gi0/1 - 2',
+    ' switchport mode trunk',
+    '!',
+    'spanning-tree mode pvst',
+    'spanning-tree vlan 10 priority 32768',
+    'spanning-tree vlan 20 root primary',
+    '!'
+  ];
+
+  const stpPvstSw3 = createInitialState('00:11:00:00:03:00', 'WS-C3560-24PS');
+  stpPvstSw3.hostname = 'SW3';
+  stpPvstSw3.switchModel = 'WS-C3560-24PS';
+  stpPvstSw3.switchLayer = 'L3';
+  stpPvstSw3.vlans[1] = { id: 1, name: 'default', status: 'active', ports: [] };
+  stpPvstSw3.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['FA0/1', 'GI0/1', 'GI0/2'] };
+  stpPvstSw3.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2', 'GI0/1', 'GI0/2'] };
+  (stpPvstSw3 as any).spanningTreeVlans = {
+    '1': { priority: '32768' },
+    '10': { priority: '28672' },
+    '20': { priority: '28672' }
+  };
+  stpPvstSw3.ports['fa0/1'] = { ...stpPvstSw3.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
+  stpPvstSw3.ports['fa0/2'] = { ...stpPvstSw3.ports['fa0/2'], vlan: 20, mode: 'access', status: 'connected' };
+  stpPvstSw3.ports['gi0/1'] = { ...stpPvstSw3.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  stpPvstSw3.ports['gi0/2'] = { ...stpPvstSw3.ports['gi0/2'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  stpPvstSw3.runningConfig = [
+    '!',
+    'hostname SW3',
+    '!',
+    'vlan 10',
+    ' name VLAN10',
+    '!',
+    'vlan 20',
+    ' name VLAN20',
+    '!',
+    'interface vlan 1',
+    ' ip address 192.168.1.3 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface vlan 10',
+    ' ip address 192.168.10.3 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface vlan 20',
+    ' ip address 192.168.20.3 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface range gi0/1 - 2',
+    ' switchport mode trunk',
+    '!',
+    'spanning-tree mode pvst',
+    'spanning-tree vlan 10 priority 28672',
+    'spanning-tree vlan 20 priority 28672',
+    '!'
+  ];
   stpTriangleSw3.hostname = 'SW3';
   stpTriangleSw3.spanningTreeMode = 'rapid-pvst';
   stpTriangleSw3.spanningTreePriority = 32768; // Default priority
@@ -1876,6 +2074,23 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         : 'SW-1: Fa0/1=VLAN100, Fa0/11=VLAN200, Gi0/1=trunk | SW-2: Fa0/1=VLAN100, Fa0/11=VLAN200, Gi0/1=trunk',
       level: 'intermediate',
       data: trunk2SwitchData
+    },
+    {
+      id: 'stp-3switch-pvst',
+      tag: isTr ? 'STP' : 'STP',
+      title: isTr ? 'STP 3 Switch PVST' : 'STP 3 Switch PVST',
+      description: isTr
+        ? '3 switch, 2 VLAN, farklı STP öncelikleri, trunk bağlantılar.'
+        : '3 switches, 2 VLANs, different STP priorities, trunk connections.',
+      detail: isTr
+        ? 'SW1: VLAN10 root primary (24576), SW2: VLAN20 root primary (24576), SW3: secondary (28672)'
+        : 'SW1: VLAN10 root primary (24576), SW2: VLAN20 root primary (24576), SW3: secondary (28672)',
+      level: 'advanced',
+      data: baseProjectData(stpPvstDevices, stpPvstConnections, stpPvstNotes, [
+        { id: 'sw1', state: stpPvstSw1 },
+        { id: 'sw2', state: stpPvstSw2 },
+        { id: 'sw3', state: stpPvstSw3 }
+      ])
     }
   ];
 };

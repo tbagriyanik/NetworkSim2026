@@ -1,10 +1,78 @@
-# Recent Network CLI, Maintenance, and Accessibility Updates
+# Recent Network CLI, STP, and Interface Updates
 
-This note summarizes the recent CLI command fixes, code cleanup improvements, and accessibility enhancements in the simulator.
+This note summarizes the recent STP PVST example, VLAN interface support, per-VLAN spanning tree priority fixes, and accessibility enhancements in the simulator.
 
 ## Overview
 
-Fixed domain lookup command handling, removed debug logging from production code, and added comprehensive ARIA labels to improve accessibility for screen readers.
+Created STP 3-Switch PVST example programmatically, added VLAN interface support for show interface command, fixed per-VLAN spanning tree priority calculation, and added comprehensive ARIA labels to improve accessibility for screen readers.
+
+## STP 3-Switch PVST Example
+
+### Overview
+Created an advanced spanning-tree example with 3 L3 switches demonstrating Per-VLAN STP (PVST+) with different STP priorities per VLAN for load balancing.
+
+### Configuration
+- **SW1**: VLAN 10 root primary (priority 24576), VLAN 20 priority 32768
+- **SW2**: VLAN 10 priority 32768, VLAN 20 root primary (priority 24576)
+- **SW3**: VLAN 10/20 priority 28672 (secondary)
+- **Connections**: Trunk connections via GigabitEthernet ports (Gi0/1, Gi0/2)
+- **VLANs**: VLAN 1, 10, 20 with IP addresses on SVIs
+- **Topology**: Triangle topology with all switches interconnected
+
+### Implementation
+- Programmatically created in `exampleProjects.ts` using `createL3SwitchDevice` helper
+- Added `spanningTreeVlans` property to switch states for per-VLAN priority configuration
+- Running config includes `spanning-tree vlan X root primary/secondary` commands
+- Notes explaining PVST configuration and load balancing
+
+### Files Modified
+- `src/lib/network/exampleProjects.ts` - Added stpPvstDevices, stpPvstConnections, stpPvstNotes, stpPvstSw1/2/3
+- `src/lib/network/examples/stp-3switch-pvst.json` - Deleted (replaced with programmatic creation)
+
+## VLAN Interface Support
+
+### Overview
+Added support for displaying VLAN interfaces (SVI - Switched Virtual Interfaces) via `show interface vlan X` command.
+
+### Implementation
+- Modified `cmdShowInterface` to detect VLAN interface requests (e.g., "show interface vlan 10")
+- Extracts VLAN ID from input and looks up VLAN in `state.vlans`
+- Parses running config to extract IP address and subnet mask for VLAN interfaces
+- Displays proper EtherSVI hardware description and interface status
+- Interface shows as "up" if VLAN is active and has IP address configured
+
+### Output Format
+```
+Vlan10 is up, line protocol is up
+  Hardware is EtherSVI, address is 0011.0000.0100
+  Internet address is 192.168.10.1/255.255.255.0
+  Description: VLAN10
+  MTU 1500 bytes, BW 1000000 Kbit/sec
+  ...
+```
+
+### Files Modified
+- `src/lib/network/core/showCommands.ts` - Added VLAN interface detection and display logic in cmdShowInterface
+
+## Per-VLAN STP Priority Fix
+
+### Issue
+The `show spanning-tree` command was always using VLAN 1's priority for root bridge calculation, regardless of which VLAN was being displayed. This caused incorrect root bridge display for VLANs with different priorities.
+
+### Resolution
+- Moved priority calculation inside the VLAN loop in `cmdShowSpanningTree`
+- Changed from using `spanningTreeVlans['1']` to `spanningTreeVlans[vlanId]` for each VLAN
+- Updated root bridge selection to use per-VLAN priority for each VLAN iteration
+- Added MAC address comparison for tie-breaking when priorities are equal
+
+### Impact
+- Correct root bridge display per VLAN based on VLAN-specific priorities
+- SW2 now correctly shows as root bridge for VLAN 20 (priority 24576)
+- SW1 correctly shows as root bridge for VLAN 10 (priority 24576)
+- Proper load balancing demonstration in PVST scenarios
+
+### Files Modified
+- `src/lib/network/core/showCommands.ts` - Fixed cmdShowSpanningTree to use per-VLAN priorities
 
 ## Domain Lookup Command Fixes
 
