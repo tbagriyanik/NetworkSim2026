@@ -21,7 +21,7 @@ import LazyNetworkTopologyContextMenu from './LazyNetworkTopologyContextMenu';
 import { LazyNetworkTopologyPortSelectorModal } from './LazyNetworkTopologyPortSelectorModal';
 import { EnvironmentSettingsPanel } from './EnvironmentSettingsPanel';
 import { useEnvironment } from '@/lib/store/appStore';
-import { Plus, Power, Trash2, Monitor, Network, Laptop } from "lucide-react";
+import { Plus, Power, Trash2, Monitor, Network, Laptop, X } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { getDeviceWidth, getDeviceHeight, isPcLike, isSwitchDevice, isRouterDevice } from './networkTopology.helpers';
 import { CABLE_COLORS, DRAG_THRESHOLD, LONG_PRESS_DURATION, VIRTUAL_CANVAS_WIDTH_MOBILE, VIRTUAL_CANVAS_HEIGHT_MOBILE, VIRTUAL_CANVAS_WIDTH_DESKTOP, VIRTUAL_CANVAS_HEIGHT_DESKTOP, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM, NOTE_COLORS, NOTE_FONTS_DESKTOP as NOTE_FONTS, NOTE_FONT_SIZES, NOTE_OPACITY as NOTE_OPACITY_OPTIONS, PC_PORT_SPACING, PORT_SPACING, PORT_START_X, PORT_START_Y, PORT_COLORS, STATUS_COLORS, STROKE_COLORS } from './networkTopology.constants';
@@ -677,45 +677,64 @@ export function NetworkTopology({
 
   // Handle alignment for multiple selected devices
   const handleAlign = useCallback((type: 'top' | 'bottom' | 'left' | 'right' | 'h-center' | 'v-center') => {
-    if (selectedDeviceIds.length < 2) return;
+    console.log('[handleAlign] called with type:', type, 'selectedDeviceIds:', selectedDeviceIds);
+    if (selectedDeviceIds.length < 2) {
+      console.log('[handleAlign] early return - less than 2 devices selected');
+      return;
+    }
     saveToHistory();
 
     setDevices(prev => {
       const selectedDevices = prev.filter(d => selectedDeviceIds.includes(d.id));
-      if (selectedDevices.length < 2) return prev;
+      console.log('[handleAlign] selectedDevices:', selectedDevices.map(d => ({ id: d.id, x: d.x, y: d.y })));
+      if (selectedDevices.length < 2) {
+        console.log('[handleAlign] early return from setDevices - less than 2 devices found');
+        return prev;
+      }
 
-      let targetValue = 0;
+      let targetX = 0;
+      let targetY = 0;
+
       switch (type) {
         case 'top':
-          targetValue = Math.min(...selectedDevices.map(sd => sd.y));
+          targetY = Math.min(...selectedDevices.map(sd => sd.y));
+          console.log('[handleAlign] top alignment - targetY:', targetY);
           break;
         case 'bottom':
-          targetValue = Math.max(...selectedDevices.map(sd => sd.y));
+          targetY = Math.max(...selectedDevices.map(sd => sd.y));
           break;
         case 'left':
-          targetValue = Math.min(...selectedDevices.map(sd => sd.x));
+          targetX = Math.min(...selectedDevices.map(sd => sd.x));
+          console.log('[handleAlign] left alignment - targetX:', targetX);
           break;
         case 'right':
-          targetValue = Math.max(...selectedDevices.map(sd => sd.x));
+          targetX = Math.max(...selectedDevices.map(sd => sd.x));
           break;
         case 'h-center':
-          targetValue = selectedDevices.reduce((sum, sd) => sum + sd.y, 0) / selectedDevices.length;
+          targetX = selectedDevices.reduce((sum, sd) => sum + sd.x, 0) / selectedDevices.length;
           break;
         case 'v-center':
-          targetValue = selectedDevices.reduce((sum, sd) => sum + sd.x, 0) / selectedDevices.length;
+          targetY = selectedDevices.reduce((sum, sd) => sum + sd.y, 0) / selectedDevices.length;
           break;
       }
 
-      return prev.map(d => {
+      const result = prev.map(d => {
         if (!selectedDeviceIds.includes(d.id)) return d;
-        if (type === 'top' || type === 'bottom' || type === 'h-center') {
-          return { ...d, y: targetValue };
+        
+        const updatedDevice = { ...d };
+        
+        if (type === 'top' || type === 'bottom' || type === 'v-center') {
+          updatedDevice.y = targetY;
         }
-        if (type === 'left' || type === 'right' || type === 'v-center') {
-          return { ...d, x: targetValue };
+        if (type === 'left' || type === 'right' || type === 'h-center') {
+          updatedDevice.x = targetX;
         }
-        return d;
+        
+        return updatedDevice;
       });
+      
+      console.log('[handleAlign] result:', result.filter(d => selectedDeviceIds.includes(d.id)).map(d => ({ id: d.id, x: d.x, y: d.y })));
+      return result;
     });
   }, [selectedDeviceIds, saveToHistory]);
 
@@ -1249,7 +1268,7 @@ export function NetworkTopology({
         const targetEl = e.target as HTMLElement;
         const isOnDevice = !!targetEl.closest?.('[data-device-id]');
         const isOnNote = !!targetEl.closest?.('[data-note-id]');
-        const isOnMenu = !!targetEl.closest?.('.context-menu') || !!targetEl.closest?.('.palette') || !!targetEl.closest?.('.modal');
+        const isOnMenu = !!targetEl.closest?.('.context-menu') || !!targetEl.closest?.('.palette') || !!targetEl.closest?.('.modal') || !!targetEl.closest?.('.selection-toolbar');
         
         if (!isOnDevice && !isOnNote && !isOnMenu) {
           setSelectedDeviceIds([]);
@@ -5141,7 +5160,7 @@ export function NetworkTopology({
         <div className="flex-1 relative flex flex-col">
           {/* Palette Sheet (Triggered from Top Toolbar) */}
           <Sheet open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
-            <SheetContent side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} rounded-t-[2rem] p-0`}>
+            <SheetContent side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} rounded-t-[2rem] p-0 palette`}>
               <SheetHeader className="p-6 border-b border-slate-800/50">
                 <SheetTitle className="text-lg font-bold flex items-center gap-2">
                   <Plus className="w-5 h-5 text-cyan-500" />
@@ -5272,78 +5291,109 @@ export function NetworkTopology({
               </div>
             </div>
           )}
-          {selectedDeviceIds.length > 1 && (
-            <div className={`absolute top-2 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-xl shadow-2xl flex items-center gap-4 ${isDark ? 'bg-slate-800/95 text-white border border-slate-700' : 'bg-white text-slate-900 border border-slate-200'
-              } backdrop-blur-md`}>
-              <div className="flex items-center gap-2 border-r pr-4 border-slate-700/30">
-                <span className="text-xs font-bold tracking-wider opacity-30">
-                  {isTR ? 'Hizala' : 'Align'}
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleAlign('left')}
-                    className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
-                    title={t.alignLeft}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 2v20M8 5h10M8 11h7M8 17h12" />
-                    </svg>
-                  </button>
-                  <div className="w-px h-4 bg-slate-700/30 mx-1" />
-                  <button
-                    onClick={() => handleAlign('top')}
-                    className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
-                    title={t.alignTop}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 4h20M5 8v10M11 8v7M17 8v12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold whitespace-nowrap">
-                  {isTR ? `${selectedDeviceIds.length} Cihaz` : `${selectedDeviceIds.length} Devices`}
-                </span>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => {
-                      saveToHistory();
-                      togglePowerDevices(selectedDeviceIds);
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border flex items-center gap-2 ${isDark
-                      ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/20'
-                      : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200'
-                      }`}
-                    title={t.togglePower}
-                  >
-                    <Power className="w-4 h-4" />
-                    {isTR ? 'Güç' : 'Power'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      const firstId = selectedDeviceIds[0];
-                      const firstDevice = devices.find(d => d.id === firstId);
-                      setSelectedDeviceIds(firstId ? [firstId] : []);
-                      if (firstDevice) onDeviceSelect(firstDevice.type === 'router' ? 'router' : firstDevice.type, firstId, undefined, firstDevice.name);
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
-                  >
-                    {t.cancel}
-                  </button>
-                  <button
-                    onClick={() => {
-                      saveToHistory();
-                      selectedDeviceIds.forEach(id => deleteDevice(id));
-                      setSelectedDeviceIds([]);
-                    }}
-                    className="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-xs font-bold transition-all border border-red-500/20"
-                  >
-                    {t.delete}
-                  </button>
-                </div>
-              </div>
+          {/* Selection Toolbar */}
+          {selectedDeviceIds.length > 1 && (
+            <div 
+              style={{
+                position: 'absolute',
+                top: '8px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 1000,
+                pointerEvents: 'auto'
+              }}
+              className={`px-3 py-1.5 rounded-xl shadow-2xl flex items-center gap-2 selection-toolbar ${isDark ? 'bg-slate-800/95 text-white border border-slate-700' : 'bg-white text-slate-900 border border-slate-200'
+              } backdrop-blur-md`}
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('[Toolbar] Container clicked');
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                // preventDefault removed to ensure button clicks fire correctly
+              }}
+              onMouseUp={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  console.log('[Toolbar] Align left clicked');
+                  handleAlign('left');
+                }}
+                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
+                title={t.alignLeft}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 2v20M8 5h10M8 11h7M8 17h12" />
+                </svg>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  console.log('[Toolbar] Align top clicked');
+                  handleAlign('top');
+                }}
+                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
+                title={t.alignTop}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 4h20M5 8v10M11 8v7M17 8v12" />
+                </svg>
+              </button>
+              <div className="w-px h-4 bg-slate-700/30 mx-1" />
+              <span className="text-xs font-semibold whitespace-nowrap bg-slate-700/30 px-2 py-0.5 rounded">
+                {selectedDeviceIds.length}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  console.log('[Toolbar] Power toggle clicked');
+                  saveToHistory();
+                  togglePowerDevices(selectedDeviceIds);
+                }}
+                className={`p-1.5 rounded-lg transition-colors ${isDark
+                  ? 'hover:bg-amber-500/20 text-amber-300'
+                  : 'hover:bg-amber-100 text-amber-700'
+                  }`}
+                title={t.togglePower}
+              >
+                <Power className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  console.log('[Toolbar] Cancel clicked');
+                  const firstId = selectedDeviceIds[0];
+                  const firstDevice = devices.find(d => d.id === firstId);
+                  setSelectedDeviceIds(firstId ? [firstId] : []);
+                  if (firstDevice) onDeviceSelect(firstDevice.type === 'router' ? 'router' : firstDevice.type, firstId, undefined, firstDevice.name);
+                }}
+                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-600'}`}
+                title={t.cancel}
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  console.log('[Toolbar] Delete clicked');
+                  saveToHistory();
+                  selectedDeviceIds.forEach(id => deleteDevice(id));
+                  setSelectedDeviceIds([]);
+                }}
+                className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-500 transition-colors"
+                title={t.delete}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           )}
 
@@ -6524,7 +6574,7 @@ export function NetworkTopology({
       />
       {/* Device Configuration Modal (Name & IP) */}
       {configuringDevice && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={cancelDeviceConfig}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal" onClick={cancelDeviceConfig}>
           <div className="absolute inset-0 bg-slate-950/40" />
           <div
             className={`relative w-full max-w-md overflow-hidden rounded-[2rem] border transition-all duration-500 hover:shadow-cyan-500/10 ${isDark ? 'bg-slate-900/80 border-slate-800/50 shadow-2xl' : 'bg-white/90 border-slate-200/50 shadow-2xl'

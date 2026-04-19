@@ -1523,8 +1523,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw1.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['FA0/1', 'GI0/1', 'GI0/2'] };
   stpPvstSw1.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2', 'GI0/1', 'GI0/2'] };
   (stpPvstSw1 as any).spanningTreeVlans = {
-    '1': { priority: '32768' },
-    '10': { priority: '24576' },
+    '1': { priority: '24576' },
+    '10': { priority: '32768' },
     '20': { priority: '32768' }
   };
   stpPvstSw1.ports['fa0/1'] = { ...stpPvstSw1.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
@@ -1557,7 +1557,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
-    'spanning-tree vlan 10 root primary',
+    'spanning-tree vlan 1 root primary',
+    'spanning-tree vlan 10 priority 32768',
     'spanning-tree vlan 20 priority 32768',
     '!'
   ];
@@ -1571,8 +1572,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw2.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2', 'GI0/1', 'GI0/2'] };
   (stpPvstSw2 as any).spanningTreeVlans = {
     '1': { priority: '32768' },
-    '10': { priority: '32768' },
-    '20': { priority: '24576' }
+    '10': { priority: '24576' },
+    '20': { priority: '32768' }
   };
   stpPvstSw2.ports['fa0/1'] = { ...stpPvstSw2.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
   stpPvstSw2.ports['fa0/2'] = { ...stpPvstSw2.ports['fa0/2'], vlan: 20, mode: 'access', status: 'connected' };
@@ -1604,8 +1605,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
-    'spanning-tree vlan 10 priority 32768',
-    'spanning-tree vlan 20 root primary',
+    'spanning-tree vlan 10 root primary',
+    'spanning-tree vlan 20 priority 32768',
     '!'
   ];
 
@@ -1618,8 +1619,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw3.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2', 'GI0/1', 'GI0/2'] };
   (stpPvstSw3 as any).spanningTreeVlans = {
     '1': { priority: '32768' },
-    '10': { priority: '28672' },
-    '20': { priority: '28672' }
+    '10': { priority: '32768' },
+    '20': { priority: '24576' }
   };
   stpPvstSw3.ports['fa0/1'] = { ...stpPvstSw3.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
   stpPvstSw3.ports['fa0/2'] = { ...stpPvstSw3.ports['fa0/2'], vlan: 20, mode: 'access', status: 'connected' };
@@ -1651,8 +1652,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
-    'spanning-tree vlan 10 priority 28672',
-    'spanning-tree vlan 20 priority 28672',
+    'spanning-tree vlan 20 root primary',
     '!'
   ];
   stpTriangleSw3.hostname = 'SW3';
@@ -2080,11 +2080,11 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       tag: isTr ? 'STP' : 'STP',
       title: isTr ? 'STP 3 Switch PVST' : 'STP 3 Switch PVST',
       description: isTr
-        ? '3 switch, 2 VLAN, farklı STP öncelikleri, trunk bağlantılar.'
-        : '3 switches, 2 VLANs, different STP priorities, trunk connections.',
+        ? '3 switch, 3 VLAN, her VLAN için farklı root bridge, trunk bağlantılar.'
+        : '3 switches, 3 VLANs, different root bridge per VLAN, trunk connections.',
       detail: isTr
-        ? 'SW1: VLAN10 root primary (24576), SW2: VLAN20 root primary (24576), SW3: secondary (28672)'
-        : 'SW1: VLAN10 root primary (24576), SW2: VLAN20 root primary (24576), SW3: secondary (28672)',
+        ? 'VLAN1 root SW1 (24576), VLAN10 root SW2 (24576), VLAN20 root SW3 (24576)'
+        : 'VLAN1 root SW1 (24576), VLAN10 root SW2 (24576), VLAN20 root SW3 (24576)',
       level: 'advanced',
       data: baseProjectData(stpPvstDevices, stpPvstConnections, stpPvstNotes, [
         { id: 'sw1', state: stpPvstSw1 },
