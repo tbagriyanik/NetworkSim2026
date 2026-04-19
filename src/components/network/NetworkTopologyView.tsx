@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { X } from 'lucide-react';
 import { ConnectionLine } from './ConnectionLine';
 import { DeviceNode } from './DeviceNode';
 import { PingAnimationOverlay } from './PingAnimationOverlay';

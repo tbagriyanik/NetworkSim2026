@@ -5189,6 +5189,18 @@ export function NetworkTopology({
         : 'bg-gradient-to-br from-blue-50/50 via-white to-slate-50/80'
         }`}
     >
+      {isFullscreen && (
+        <button
+          onClick={toggleFullscreen}
+          className={`fixed top-4 right-4 z-[10000] flex items-center justify-center w-8 h-8 rounded-full shadow-lg transition-colors ${isDark
+            ? 'bg-slate-800/90 hover:bg-red-500/30 text-slate-300 hover:text-red-400 border border-slate-600'
+            : 'bg-white/90 hover:bg-red-500/30 text-slate-600 hover:text-red-600 border border-slate-300'
+            }`}
+          title={language === 'tr' ? 'Çık' : 'Exit'}
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas Area */}
         <div className="flex-1 relative flex flex-col">
