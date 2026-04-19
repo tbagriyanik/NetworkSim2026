@@ -1677,25 +1677,27 @@ function cmdDoShow(
 
   // Route to appropriate show handler
   if (cmd === 'show') {
-    if (subCmd.startsWith('running-config')) {
+    if (subCmd.startsWith('running-config') || subCmd.startsWith('run')) {
       return cmdShowRunningConfig(state, showCommand, ctx);
-    } else if (subCmd.startsWith('startup-config')) {
+    } else if (subCmd.startsWith('startup-config') || subCmd.startsWith('start')) {
       return cmdShowStartupConfig(state, showCommand, ctx);
-    } else if (subCmd.startsWith('version')) {
+    } else if (subCmd.startsWith('version') || subCmd.startsWith('ver')) {
       return cmdShowVersion(state, showCommand, ctx);
-    } else if (subCmd.startsWith('interfaces')) {
+    } else if (subCmd.startsWith('interfaces') || subCmd.startsWith('int')) {
       return cmdShowInterfaces(state, showCommand, ctx);
     } else if (subCmd.startsWith('interface')) {
       return cmdShowInterface(state, showCommand, ctx);
-    } else if (subCmd.startsWith('ip interface brief')) {
+    } else if (subCmd.startsWith('ip interface brief') || subCmd.startsWith('ip int br')) {
       return cmdShowIpInterfaceBrief(state, showCommand, ctx);
-    } else if (subCmd.startsWith('vlan')) {
+    } else if (subCmd.startsWith('ip interface') || subCmd.startsWith('ip int')) {
+      return cmdShowIpInterfaceBrief(state, showCommand, ctx);
+    } else if (subCmd.startsWith('vlan') || subCmd.startsWith('vl')) {
       return cmdShowVlan(state, showCommand, ctx);
-    } else if (subCmd.startsWith('mac address-table')) {
+    } else if (subCmd.startsWith('mac address-table') || subCmd.startsWith('mac')) {
       return cmdShowMacAddressTable(state, showCommand, ctx);
-    } else if (subCmd.startsWith('cdp neighbors')) {
+    } else if (subCmd.startsWith('cdp neighbors') || subCmd.startsWith('cdp')) {
       return cmdShowCdpNeighbors(state, showCommand, ctx);
-    } else if (subCmd.startsWith('ip route')) {
+    } else if (subCmd.startsWith('ip route') || subCmd.startsWith('ip ro')) {
       return cmdShowIpRoute(state, showCommand, ctx);
     } else if (subCmd.startsWith('clock')) {
       return cmdShowClock(state, showCommand, ctx);
@@ -1703,16 +1705,16 @@ function cmdDoShow(
       return cmdShowFlash(state, showCommand, ctx);
     } else if (subCmd.startsWith('boot')) {
       return cmdShowBoot(state, showCommand, ctx);
-    } else if (subCmd.startsWith('spanning-tree')) {
+    } else if (subCmd.startsWith('spanning-tree') || subCmd.startsWith('sp')) {
       return cmdShowSpanningTree(state, showCommand, ctx);
-    } else if (subCmd.startsWith('port-security')) {
+    } else if (subCmd.startsWith('port-security') || subCmd.startsWith('port')) {
       return cmdShowPortSecurity(state, showCommand, ctx);
     } else if (subCmd.startsWith('wireless')) {
       return cmdShowWireless(state, showCommand, ctx);
     } else if (subCmd.startsWith('ssh')) {
       return cmdShowSsh(state, showCommand, ctx);
     } else {
-      return cmdShow(state, showCommand, ctx);
+      return { success: false, error: '% Invalid show command' };
     }
   }
 

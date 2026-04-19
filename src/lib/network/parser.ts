@@ -1584,27 +1584,15 @@ export const commandPatterns: Record<string, CommandPattern> = {
   // Do komutları (config moddan show çalıştırma)
   'do show': {
     pattern: /^do\s+(sh(?:ow)?\s+.+)$/i,
-    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'do write': {
-    pattern: /^do\s+(?:wr[ite]*(\s+me[mory]*)?)$/i,
-    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan'],
-    minArgs: 0,
-    maxArgs: 1
-  },
-  'do ping': {
-    pattern: /^do\s+ping\s+([0-9.]+|[\w.-]+)$/i,
-    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan'],
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config', 'dhcp-config'],
     minArgs: 1,
     maxArgs: 1
   },
   'do': {
-    pattern: /^do\s+(.+)$/i,
-    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan'],
-    minArgs: 1,
-    maxArgs: 1
+    pattern: /^do\s*(.*)$/i,
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config', 'dhcp-config'],
+    minArgs: 0,
+    maxArgs: 10
   },
 
   // Ping

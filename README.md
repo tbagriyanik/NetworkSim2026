@@ -12,6 +12,8 @@ Network learning app: [Test Address](https://network2026.vercel.app)
 
 ## Recent Updates
 
+- Enhanced `do` command to support all privileged commands from config mode (show, ping, write, traceroute, ssh, telnet, copy, erase, debug, etc.)
+- Added `write`, `wr`, `wri`, `writ` command aliases as shortcuts for `write memory`
 - Fixed circular dependency in routing.ts by creating basicConnectivity.ts utility
 - Added ARIA labels to NetworkTopology device palette buttons for screen reader support
 - Added ARIA labels to cable type selector buttons with role="group" and aria-pressed
@@ -342,7 +344,7 @@ Theme selection is done from the theme selector in the top right corner.
 
 - Scope: `src/`
 - Source files: `175+`
-- Total lines: `56951`
+- Total lines: `57263`
 - TS/TSX files: `165+`
 - Network components: `55+`
 - Example projects: `24`
@@ -369,8 +371,8 @@ Contributions are welcome. Please:
 
 ---
 
-**Sürüm**: 1.5.2
-**Son Güncelleme**: 2026-04-18
+**Sürüm**: 1.5.3
+**Son Güncelleme**: 2026-04-19
 **Durum**: Production Ready
 
 GitHub: [github.com/tbagriyanik/ciscosim](https://github.com/tbagriyanik/ciscosim)

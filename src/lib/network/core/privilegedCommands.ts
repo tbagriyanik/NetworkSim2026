@@ -13,6 +13,10 @@ export const privilegedHandlers: Record<string, CommandHandler> = {
     'ssh': cmdSsh,
     'traceroute': cmdTraceroute,
     'tracert': cmdTracert,
+    'write': cmdWriteMemory,
+    'wr': cmdWriteMemory,
+    'wri': cmdWriteMemory,
+    'writ': cmdWriteMemory,
     'write memory': cmdWriteMemory,
     'copy running-config startup-config': cmdCopyRunningStartup,
     'copy running-config flash': cmdCopyRunningFlash,
@@ -24,8 +28,6 @@ export const privilegedHandlers: Record<string, CommandHandler> = {
     'no ip route': cmdNoIpRoute,
     'debug': cmdDebug,
     'undebug all': cmdUndebugAll,
-    'do write': cmdDoWrite,
-    'do ping': cmdDoPing,
     'delete flash:vlan.dat': cmdDeleteVlanDat,
 };
 
@@ -503,36 +505,6 @@ function cmdUndebugAll(state: any, input: string, ctx: any): any {
     };
 }
 
-
-/**
- * Do Write - Execute write command from config mode
- */
-function cmdDoWrite(state: any, input: string, ctx: any): any {
-    // Extract the write command from "do write ..."
-    const match = input.match(/^do\s+(wr[ite]*(?:\s+me[mory]*)?)$/i);
-    if (!match) {
-        return { success: false, error: '% Invalid command' };
-    }
-
-    // Execute write memory
-    return cmdWriteMemory(state, 'write memory', ctx);
-}
-
-/**
- * Do Ping - Execute ping command from config mode
- */
-function cmdDoPing(state: any, input: string, ctx: any): any {
-    // Extract the ping command from "do ping ..."
-    const match = input.match(/^do\s+(ping\s+.+)$/i);
-    if (!match) {
-        return { success: false, error: '% Invalid command' };
-    }
-
-    const pingCommand = match[1];
-
-    // Execute ping
-    return cmdPing(state, pingCommand, ctx);
-}
 
 /**
  * Traceroute - Trace route to destination (Unix/Linux style)

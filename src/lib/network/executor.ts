@@ -1341,7 +1341,7 @@ const commandHandlers: Record<string, CommandHandler> = {
   // Line commands
   ...lineHandlers,
 
-  // Privileged EXEC commands
+  // Privileged commands (for "do" commands in config mode)
   ...privilegedHandlers,
 
   // DHCP pool sub-commands
