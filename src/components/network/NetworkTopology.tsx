@@ -81,12 +81,12 @@ interface DragItem {
 
 const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
   pc: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#3b82f6" viewBox="0 0 24 24">
+    <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="#3b82f6" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
     </svg>
   ),
   iot: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#16cbf9" viewBox="0 -2 27 27">
+    <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="#16cbf9" viewBox="0 -2 27 27">
       <path d="M16.247 7.761a6 6 0 0 1 0 8.478" />
       <path d="M19.075 4.933a10 10 0 0 1 0 14.134" />
       <path d="M4.925 19.067a10 10 0 0 1 0-14.134" />
@@ -95,22 +95,22 @@ const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
     </svg>
   ),
   switch: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+    <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
     </svg>
   ),
   switchL2: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+    <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
     </svg>
   ),
   switchL3: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+    <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
     </svg>
   ),
   router: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#a855f7" viewBox="0 0 24 24">
+    <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="#a855f7" viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
     </svg>

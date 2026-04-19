@@ -2777,6 +2777,20 @@ ${state.bannerMOTD}
           }
         }
       }
+      if (e.key === 'Tab') {
+        // Tab key navigation in topology view
+        if (activeTab === 'topology' && topologyDevices.length > 0) {
+          e.preventDefault();
+          const currentIndex = topologyDevices.findIndex(d => d.id === activeDeviceId);
+          const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % topologyDevices.length;
+          const nextDevice = topologyDevices[nextIndex];
+          if (nextDevice) {
+            setActiveDeviceId(nextDevice.id);
+            setActiveDeviceType(nextDevice.type);
+          }
+        }
+      }
+
       if (e.key === 'Enter') {
         // Don't handle Enter when any modal/panel is open
         if (showTasksModal || showTerminalModal || showAboutModal || showPCPanel || showRouterPanel || showProjectPicker || showOnboarding || !!confirmDialog?.show || !!saveDialog?.show) {
@@ -3356,7 +3370,7 @@ ${state.bannerMOTD}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="px-2.5 py-1.5 h-auto text-emerald-500 hover:bg-emerald-500/10"
+                          className="px-2.5 py-1.5 h-auto text-red-500 hover:bg-red-500/10"
                           onClick={() => {
                             if (typeof window !== 'undefined') {
                               const event = new CustomEvent('trigger-topology-palette');
@@ -3421,7 +3435,7 @@ ${state.bannerMOTD}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 text-emerald-500 hover:bg-emerald-500/10"
+                          className="h-9 w-9 text-pink-500 hover:bg-pink-500/10"
                           onClick={() => setIsEnvironmentPanelOpen(true)}
                         >
                           <Leaf className="w-5 h-5" />
@@ -4506,22 +4520,7 @@ ${state.bannerMOTD}
                       <TooltipContent>{t.addNote}</TooltipContent>
                     </Tooltip>
 
-                    {/* Refresh Network Button */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-emerald-500 hover:bg-emerald-500/10"
-                          onClick={handleRefreshNetwork}
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh Network (F5)'}</TooltipContent>
-                    </Tooltip>
+ 
 
                     {/* Environment Settings Button */}
                     <Tooltip>
@@ -4529,7 +4528,7 @@ ${state.bannerMOTD}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-emerald-500 hover:bg-emerald-500/10"
+                          className="h-8 w-8 text-pink-500 hover:bg-pink-500/10"
                           onClick={() => setIsEnvironmentPanelOpen(true)}
                         >
                           <Leaf className="w-4 h-4" />
@@ -4573,7 +4572,22 @@ ${state.bannerMOTD}
                     </Tooltip>
 
                     <div className={`w-px h-4 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
-
+                   {/* Refresh Network Button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-emerald-500 hover:bg-emerald-500/10"
+                          onClick={handleRefreshNetwork}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh Network (F5)'}</TooltipContent>
+                    </Tooltip>
                     {/* Reset View Button */}
                     <Tooltip>
                       <TooltipTrigger asChild>
