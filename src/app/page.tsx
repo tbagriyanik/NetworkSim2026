@@ -54,7 +54,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal, Square, Minus, Strikethrough, Cable } from "lucide-react";
 import { RouterIcon, SwitchIcon } from '@/components/network/PCPanelWidgets';
 
 import { Button } from '@/components/ui/button';
@@ -128,30 +128,6 @@ const ALL_TABS: TabDefinition[] = [
     tasks: topologyTasks,
     color: 'from-cyan-500 to-blue-500',
     showFor: ['pc', 'iot', ...SWITCH_DEVICE_TYPES, 'router']
-  },
-  {
-    id: 'cmd',
-    labelKey: 'pcTerminal',
-    icon: <TerminalIcon className="w-4 h-4" />,
-    tasks: [],
-    color: 'from-blue-500 to-indigo-500',
-    showFor: ['pc']
-  },
-  {
-    id: 'terminal',
-    labelKey: 'cliTerminal',
-    icon: <TerminalIcon className="w-4 h-4" />,
-    tasks: [],
-    color: 'from-emerald-500 to-teal-500',
-    showFor: [...SWITCH_DEVICE_TYPES, 'router']
-  },
-  {
-    id: 'tasks',
-    labelKey: 'tasks',
-    icon: <ShieldCheck className="w-4 h-4" />,
-    tasks: [...portTasks, ...vlanTasks, ...securityTasks, ...routingTasks],
-    color: 'from-red-500 to-rose-500',
-    showFor: [...SWITCH_DEVICE_TYPES, 'router']
   },
 ];
 
@@ -299,10 +275,22 @@ export default function Home() {
         y: targetDevice.y + deviceHeight / 2
       };
 
-      setPan({
-        x: rect.width / 2 - deviceCenter.x * currentZoom,
-        y: rect.height / 2 - deviceCenter.y * currentZoom,
-      });
+      // If device is very close to (0,0), keep (0,0) at top-left and only scroll enough to show the device
+      const isNearOrigin = deviceCenter.x < 100 && deviceCenter.y < 100;
+      if (isNearOrigin) {
+        // Keep (0,0) at top-left, just scroll enough to show the device
+        const padding = 20;
+        setPan({
+          x: padding,
+          y: padding,
+        });
+      } else {
+        // Normal centering behavior
+        setPan({
+          x: rect.width / 2 - deviceCenter.x * currentZoom,
+          y: rect.height / 2 - deviceCenter.y * currentZoom,
+        });
+      }
     });
   }, [topologyDevices, setPan]);
 
@@ -735,10 +723,23 @@ export default function Home() {
     tasksModalSize,
     cliModalPosition,
     cliModalSize,
+    pcModalPosition,
+    pcModalSize,
+    setTasksModalPosition,
+    setTasksModalSize,
+    setCliModalPosition,
+    setCliModalSize,
+    setPcModalPosition,
+    setPcModalSize,
     handlePointerDown,
     handleResizeStart,
   } = useModalDragResize();
   const isTasksNarrow = tasksModalSize.width < 1100;
+
+  // Local state for maximize/restore
+  const [isTasksMaximized, setIsTasksMaximized] = useState(false);
+  const [isCliMaximized, setIsCliMaximized] = useState(false);
+  const [isPcMaximized, setIsPcMaximized] = useState(false);
 
   // Get current state helper
   const getCurrentState = useCallback((): ProjectState => ({
@@ -862,7 +863,7 @@ export default function Home() {
 
   useEffect(() => {
     // Initial loading sequence: short splash, then skeleton, then content.
-    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     const splashMs = prefersReducedMotion ? 300 : 700;
     const skeletonMs = splashMs + 400;
 
@@ -1456,6 +1457,17 @@ ${state.bannerMOTD}
       return;
     }
 
+    // Handle cmd tab as modal
+    if (tabId === 'cmd') {
+      const deviceObj = topologyDevices?.find(d => d.id === activeDeviceId);
+      if (deviceObj && deviceObj.type === 'pc') {
+        setShowPCDeviceId(activeDeviceId);
+        getOrCreatePCOutputs(activeDeviceId, topologyDevices);
+        setShowPCPanel(true);
+      }
+      return;
+    }
+
     // Handle terminal tab as modal
     if (tabId === 'terminal') {
       // Ensure boot messages are generated before showing terminal
@@ -1472,7 +1484,7 @@ ${state.bannerMOTD}
     const isCompatible = tabId === 'topology' || (deviceVisible && targetTab.showFor.includes(activeDeviceType));
 
     setActiveTab(isCompatible ? tabId : 'topology');
-  }, [activeDeviceId, activeDeviceType, topologyDevices, setActiveTab]);
+  }, [activeDeviceId, activeDeviceType, topologyDevices, setActiveTab, getOrCreatePCOutputs]);
 
   const pendingDeviceSelectionRef = useRef<{ device: DeviceType; deviceId: string; switchModel?: string; deviceName?: string } | null>(null);
 
@@ -1587,7 +1599,9 @@ ${state.bannerMOTD}
       onConfirm: () => {
         setConfirmDialog(null);
         resetAll(topologyDevices);
-        window.location.reload();
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
       }
     });
   };
@@ -1614,9 +1628,10 @@ ${state.bannerMOTD}
   // Handle device double click (Open terminal or PC panel)
   const handleDeviceDoubleClick = useCallback((device: DeviceType, deviceId: string) => {
     if (device === 'pc') {
-      // PC - open CMD tab directly
-      setDeviceTabWithHistory('cmd', deviceId, 'pc');
+      // PC - open CMD modal
       setShowPCDeviceId(deviceId);
+      getOrCreatePCOutputs(deviceId, topologyDevices);
+      setShowPCPanel(true);
     } else if (device === 'router' || device === 'switchL2' || device === 'switchL3') {
       // Switch or Router - set as CLI device and open CLI modal
       const deviceObj = topologyDevices?.find(d => d.id === deviceId);
@@ -1948,7 +1963,9 @@ ${state.bannerMOTD}
     setZoom(1.0);
     setPan({ x: 0, y: 0 });
 
-    window.scrollTo(0, 0);
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
 
     // Reset active selections
     setActiveDeviceId('switch-1');
@@ -2279,6 +2296,9 @@ ${state.bannerMOTD}
   const tabs = ALL_TABS.filter(tab => {
     // Topology tab always visible
     if (tab.id === 'topology') return true;
+
+    // cmd tab is now a modal, not a tab
+    if (tab.id === 'cmd') return false;
 
     // Show other tabs only if a device is active and compatible
     return activeDeviceId && (topologyDevices.some(d => d.id === activeDeviceId)) && tab.showFor.includes(activeDeviceType);
@@ -2745,50 +2765,6 @@ ${state.bannerMOTD}
           e.preventDefault();
           handleNewProject();
         }
-
-        // Ctrl+1 - Close CLI and tasks modals if open
-        if (key === '1') {
-          // Check if tasks modal is open by checking the DOM
-          const tasksModal = document.querySelector('[data-modal-header]')?.closest('[role="dialog"]');
-          const isTasksModalOpen = tasksModal && (tasksModal.textContent?.includes('Tasks') || tasksModal.textContent?.includes('Görevler'));
-          // Check if terminal modal is open by checking the DOM
-          const terminalModal = document.querySelector('[role="dialog"]')?.textContent?.includes('CLI Terminal');
-
-          if (isTasksModalOpen || terminalModal) {
-            e.preventDefault();
-            setShowTasksModal(false);
-            setShowTerminalModal(false);
-          }
-        }
-
-        // Tab shortcuts Ctrl+1 to Ctrl+5 (only if modals are not open)
-        if (['1', '2', '3', '4', '5'].includes(key)) {
-          const index = parseInt(key) - 1;
-          if (tabs[index]) {
-            // Check if any modal is open
-            const tasksModal = document.querySelector('[data-modal-header]')?.closest('[role="dialog"]');
-            const isTasksModalOpen = tasksModal && (tasksModal.textContent?.includes('Tasks') || tasksModal.textContent?.includes('Görevler'));
-            const terminalModal = document.querySelector('[role="dialog"]')?.textContent?.includes('CLI Terminal');
-
-            // Only switch tabs if no modal is open
-            if (!isTasksModalOpen && !terminalModal) {
-              e.preventDefault();
-              switchTabOrTopology(tabs[index].id);
-            }
-          }
-        }
-
-        // Ctrl+2 when tasks modal is open - switch to CLI terminal
-        if (key === '2') {
-          // Check if tasks modal is currently open by checking the DOM
-          const tasksModal = document.querySelector('[data-modal-header]')?.closest('[role="dialog"]');
-          const isTasksModalOpen = tasksModal && tasksModal.querySelector('[role="dialog"]')?.textContent?.includes('Tasks') || tasksModal?.textContent?.includes('Görevler');
-          if (isTasksModalOpen) {
-            e.preventDefault();
-            setShowTasksModal(false);
-            setShowTerminalModal(true);
-          }
-        }
       }
 
       // Shift Shortcuts
@@ -2949,7 +2925,9 @@ ${state.bannerMOTD}
           // Reset zoom and pan to top-left
           setZoom(1.0);
           setPan({ x: 0, y: 0 });
-          window.scrollTo(0, 0);
+          if (typeof window !== 'undefined') {
+            window.scrollTo(0, 0);
+          }
         } else {
           toast({
             title: language === 'tr' ? 'Geçersiz proje dosyası' : 'Invalid project file',
@@ -2978,7 +2956,9 @@ ${state.bannerMOTD}
     setZoom(1.0);
     setPan({ x: 0, y: 0 });
 
-    window.scrollTo(0, 0);
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
   }, [loadProjectData, setShowProjectPicker, setZoom, setPan]);
 
   const isDark = (effectiveTheme ?? theme) === 'dark';
@@ -2993,11 +2973,11 @@ ${state.bannerMOTD}
 
   return (
     <AppErrorBoundary fallbackTitle={language === 'tr' ? 'Uygulama hatası' : 'Application error'}>
-      <div className={`h-dvh w-full flex flex-col relative transition-colors duration-700 overflow-x-hidden ${isAppLoading ? 'bg-slate-950' : (isDark ? 'bg-slate-950' : 'bg-slate-50')}`}>
+      <div className={cn("h-dvh w-full flex flex-col relative transition-colors duration-700 overflow-x-hidden", isAppLoading ? 'bg-slate-950' : (isDark ? 'bg-slate-950' : 'bg-slate-50'))}>
         {!isAppLoading && (
           <div className="fixed inset-0 pointer-events-none z-0 opacity-40 dark:opacity-20 transition-opacity duration-1000">
             <div className="absolute inset-0 mesh-gradient animate-liquid blur-[100px] scale-150 rotate-12" />
-            <div className={`absolute inset-0 ${isDark ? 'bg-slate-950/40' : 'bg-white/40'}`} />
+            <div className="absolute inset-0 bg-white/40 dark:bg-slate-950/40" />
           </div>
         )}
         {/* App Loading Screen */}
@@ -3049,7 +3029,11 @@ ${state.bannerMOTD}
                 {/* Logo & Title */}
                 <Button
                   variant="ghost"
-                  onClick={() => window.location.reload()}
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.location.reload();
+                    }
+                  }}
                   className="flex items-center gap-3 p-2"
                   title={t.reloadPage}
                 >
@@ -3060,7 +3044,7 @@ ${state.bannerMOTD}
                     <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent leading-none">
                       {t.title}
                     </h2>
-                    <p className={`text-xs font-medium mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.subtitle}</p>
+                    <p className="text-xs font-medium mt-1 text-slate-400 dark:text-slate-500">{t.subtitle}</p>
                   </div>
                 </Button>
 
@@ -3068,7 +3052,7 @@ ${state.bannerMOTD}
                 <div className="hidden md:flex items-center gap-4">
                   <div className="flex flex-col items-end gap-1">
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-black tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <span className="text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500">
                         {t.labProgress}
                       </span>
                       <span
@@ -3082,17 +3066,17 @@ ${state.bannerMOTD}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`h-1.5 w-24 rounded-full overflow-hidden p-[px] ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
+                      <div className="h-1.5 w-24 rounded-full overflow-hidden p-[px] bg-slate-200 dark:bg-slate-800">
                         <div
                           className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full progress-fill"
                           style={{ '--progress-width': `${(totalScore / maxScore) * 100}%` } as React.CSSProperties}
                         />
                       </div>
                       <div className="flex items-baseline gap-0.5">
-                        <span className={`text-xs font-black tabular-nums ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                        <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white">
                           {totalScore}
                         </span>
-                        <span className={`text-[10px] font-bold opacity-30 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        <span className="text-[10px] font-bold opacity-30 text-slate-500 dark:text-slate-400">
                           /{maxScore}
                         </span>
                       </div>
@@ -3103,13 +3087,13 @@ ${state.bannerMOTD}
                 {/* Right Controls - Integrated Toolbar */}
                 <div className="flex items-center gap-2 sticky top-0 z-10">
                   {/* Unified Toolbar */}
-                  <div className={`flex items-center gap-1 px-2 py-1.5 rounded-xl border ${isDark ? 'bg-slate-800/40 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
+                  <div className="flex items-center gap-1 px-2 py-1.5 rounded-xl border bg-slate-100 border-slate-200 dark:bg-slate-800/40 dark:border-slate-800">
                     {/* Undo/Redo Group */}
                     {activeTab === 'topology' && (
                       <div className="hidden items-center gap-1 sm:hidden">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-slate-300 hover:text-blue-400' : 'text-slate-600 hover:text-blue-600'}`} onClick={handleUndo} disabled={hasHydrated && !canUndo}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 ui-hover-surface text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400" onClick={handleUndo} disabled={hasHydrated && !canUndo}>
                               <Undo2 className={`w-4 h-4 ${!canUndo ? 'opacity-30' : ''}`} />
                             </Button>
                           </TooltipTrigger>
@@ -3123,17 +3107,17 @@ ${state.bannerMOTD}
                           </TooltipTrigger>
                           <TooltipContent>{t.redo}</TooltipContent>
                         </Tooltip>
-                        <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'} hidden md:block`} />
+                        <div className="w-px h-4 mx-1 bg-slate-300 hidden md:block dark:bg-slate-700" />
                       </div>
                     )}
 
                     {/* Project Controls - Desktop only */}
                     <div className="hidden md:flex items-center">
-                      <div className={cn("flex items-center rounded-lg border overflow-hidden", isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200')}>
+                      <div className="flex items-center rounded-lg border overflow-hidden bg-white border-slate-200 dark:bg-slate-800/50 dark:border-slate-700">
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-white hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')}
+                              className="h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-700/50"
                               onClick={handleNewProject}
                             >
                               <File className="w-4 h-4" />
@@ -3141,7 +3125,7 @@ ${state.bannerMOTD}
                           </TooltipTrigger>
                           <TooltipContent>{t.newProject} (Alt+N)</TooltipContent>
                         </Tooltip>
-                        <div className={cn("w-px h-4", isDark ? 'bg-slate-700' : 'bg-slate-200')} />
+                        <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
@@ -3153,7 +3137,7 @@ ${state.bannerMOTD}
                           </TooltipTrigger>
                           <TooltipContent>{t.loadProject} (Ctrl+O)</TooltipContent>
                         </Tooltip>
-                        <div className={cn("w-px h-4", isDark ? 'bg-slate-700' : 'bg-slate-200')} />
+                        <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
@@ -3165,7 +3149,7 @@ ${state.bannerMOTD}
                           </TooltipTrigger>
                           <TooltipContent>{t.saveProject} (Ctrl+S)</TooltipContent>
                         </Tooltip>
-                        <div className={cn("w-px h-4", isDark ? 'bg-slate-700' : 'bg-slate-200')} />
+                        <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button className={cn("h-7 w-7 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-white hover:bg-slate-700/50' : 'text-slate-500 hover:text-slate-900')} onClick={() => setShowAboutModal(true)}>
@@ -3275,6 +3259,9 @@ ${state.bannerMOTD}
                           <p className="text-xs font-bold  tracking-widest text-slate-500 px-2 mb-1">{t.navigation}</p>
                           <div className="grid gap-0.5">
                             {ALL_TABS.map((tab) => {
+                              // cmd tab is now a modal, not a tab
+                              if (tab.id === 'cmd') return null;
+
                               const isTabVisible = tab.id === 'topology' || (activeDeviceId && tab.showFor.includes(activeDeviceType));
                               if (!isTabVisible) return null;
 
@@ -3362,7 +3349,7 @@ ${state.bannerMOTD}
               {/* Mobile-only Quick Action Tools (Add, Zoom & Connect) */}
               <div className="flex md:hidden items-center gap-1.5 mr-auto">
                 {activeTab === 'topology' && (
-                  <div className={`flex items-center gap-1 p-1 rounded-xl border ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                  <div className="flex items-center gap-1 p-1 rounded-xl border bg-white border-slate-200 shadow-sm dark:bg-slate-900/40 dark:border-slate-800">
                     {/* Add Button (Device, Cable, Note) */}
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -3371,17 +3358,43 @@ ${state.bannerMOTD}
                           size="icon"
                           className="px-2.5 py-1.5 h-auto text-emerald-500 hover:bg-emerald-500/10"
                           onClick={() => {
-                            const event = new CustomEvent('trigger-topology-palette');
-                            window.dispatchEvent(event);
+                            if (typeof window !== 'undefined') {
+                              const event = new CustomEvent('trigger-topology-palette');
+                              window.dispatchEvent(event);
+                            }
                           }}
                         >
-                          <Plus className="w-5 h-5" />
+                          <Plus className="w-7 h-7" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>{language === 'tr' ? 'Cihaz veya Kablo Ekle' : 'Add Device or Cable'}</TooltipContent>
                     </Tooltip>
 
-                    <div className={`w-px h-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} mx-0.5`} />
+                    <div className="w-px h-4 bg-slate-200 mx-0.5 dark:bg-slate-800" />
+
+                    {/* Connect Button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-cyan-500 hover:bg-cyan-500/10"
+                          onClick={() => {
+                            if (typeof window !== 'undefined') {
+                              const event = new CustomEvent('trigger-topology-connect');
+                              window.dispatchEvent(event);
+                            }
+                          }}
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 0 0 -5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0 -5.656-5.656l-1.1 1.1" />
+                          </svg>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{language === 'tr' ? 'Cihazları Bagla' : 'Connect Devices'}</TooltipContent>
+                    </Tooltip>
+
+                    <div className="w-px h-4 bg-slate-200 mx-0.5 dark:bg-slate-800" />
 
                     {/* Refresh Network Button */}
                     <Tooltip>
@@ -3400,29 +3413,7 @@ ${state.bannerMOTD}
                       <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh Network (F5)'}</TooltipContent>
                     </Tooltip>
 
-                    <div className={`w-px h-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} mx-0.5`} />
-
-                    {/* Connect Button */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 text-cyan-500 hover:bg-cyan-500/10"
-                          onClick={() => {
-                            const event = new CustomEvent('trigger-topology-connect');
-                            window.dispatchEvent(event);
-                          }}
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 0 0 -5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0 -5.656-5.656l-1.1 1.1" />
-                          </svg>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Cihazları Bagla' : 'Connect Devices'}</TooltipContent>
-                    </Tooltip>
-
-                    <div className={`w-px h-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} mx-0.5`} />
+                    <div className="w-px h-4 bg-slate-200 mx-0.5 dark:bg-slate-800" />
 
                     {/* Environment Settings Button */}
                     <Tooltip>
@@ -3441,320 +3432,8 @@ ${state.bannerMOTD}
                   </div>
                 )}
               </div>
-
-              {/* Desktop-only Quick Action Tools (Add, Refresh & Connect) */}
-              <div className="hidden items-center gap-1.5 ml-auto">
-                {activeTab === 'topology' && (
-                  <div className={`flex items-center gap-1 p-1 rounded-xl border ${isDark ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    {/* Add Button (Device, Cable, Note) */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="px-2.5 py-1.5 h-auto text-emerald-500 hover:bg-emerald-500/10"
-                          onClick={() => {
-                            const event = new CustomEvent('trigger-topology-palette');
-                            window.dispatchEvent(event);
-                          }}
-                        >
-                          <Plus className="w-5 h-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Cihaz veya Kablo Ekle' : 'Add Device or Cable'}</TooltipContent>
-                    </Tooltip>
-
-                    <div className={`w-px h-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} mx-0.5`} />
-
-                    {/* Refresh Network Button */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 text-emerald-500 hover:bg-emerald-500/10"
-                          onClick={handleRefreshNetwork}
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh Network (F5)'}</TooltipContent>
-                    </Tooltip>
-
-                    <div className={`w-px h-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'} mx-0.5`} />
-
-                    {/* Connect Button */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 text-cyan-500 hover:bg-cyan-500/10"
-                          onClick={() => {
-                            const event = new CustomEvent('trigger-topology-connect');
-                            window.dispatchEvent(event);
-                          }}
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 0 0 -5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0 -5.656-5.656l-1.1 1.1" />
-                          </svg>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Cihazları Bagla' : 'Connect Devices'}</TooltipContent>
-                    </Tooltip>
-                  </div>
-                )}
-              </div>
-
-              {/* Active Device Dropdown - Always show if component is rendered */}
-              <DropdownMenu onOpenChange={(open) => { if (!open) setDeviceSearchQuery(''); }}>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition-all ${isDark
-                      ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-600'
-                      : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-400'
-                      }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {activeDeviceId && (topologyDevices.some(d => d.id === activeDeviceId)) ? (
-                        <>
-                          {(() => {
-                            const activeTopologyDevice = topologyDevices.find(d => d.id === activeDeviceId);
-                            const status = activeTopologyDevice?.status || 'online';
-                            const statusColor =
-                              status === 'offline'
-                                ? 'bg-rose-500'
-                                : status === 'online'
-                                  ? 'bg-emerald-400'
-                                  : 'bg-amber-400';
-                            const statusLabel =
-                              language === 'tr'
-                                ? status === 'offline'
-                                  ? 'Kapalı'
-                                  : status === 'online'
-                                    ? 'Çevrimiçi'
-                                    : 'Bilinmeyen'
-                                : status === 'offline'
-                                  ? 'Offline'
-                                  : status === 'online'
-                                    ? 'Online'
-                                    : 'Unknown';
-                            return (
-                              <>
-                                <span
-                                  className="w-2 h-2 rounded-full mr-0.5"
-                                  title={statusLabel}
-                                >
-                                  <span className={`block w-2 h-2 rounded-full ${statusColor} shadow-[0_0_6px_rgba(45,212,191,0.8)]`} />
-                                </span>
-                                <DeviceIcon
-                                  type={activeDeviceType}
-                                  switchModel={activeTopologyDevice?.switchModel}
-                                  className="w-5 h-5"
-                                />
-                                <span className="text-xs font-bold">
-                                  {truncateWithEllipsis(deviceStates.get(activeDeviceId)?.hostname || activeDeviceId, 15)}
-                                </span>
-                              </>
-                            );
-                          })()}
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-4 h-4 text-slate-500" />
-                          <span className="text-sm font-bold text-slate-500">
-                            {t.selectDeviceDropdown}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    <ChevronDown className="w-3 h-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} w-48`}>
-                  <DropdownMenuLabel className="text-[11px] font-bold  tracking-widest text-slate-500 py-2">
-                    {topologyDevices.length > 0 ? t.selectDevice : t.addDevicesFirst}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {topologyDevices.length > 0 && (
-                    <div className="px-2 pb-1.5">
-                      <div className="relative">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
-                        <Input
-                          value={deviceSearchQuery}
-                          onChange={e => setDeviceSearchQuery(e.target.value)}
-                          placeholder={t.searchShort}
-                          className="h-7 pl-6 pr-7 text-xs"
-                          autoFocus
-                          onKeyDown={e => e.stopPropagation()}
-                        />
-                        {deviceSearchQuery && (
-                          <button
-                            onClick={() => setDeviceSearchQuery('')}
-                            className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  <ScrollArea className={topologyDevices.length > 0 ? "h-56" : "h-auto"}>
-                    {topologyDevices.length > 0 ? (
-                      topologyDevices
-                        .filter(device => {
-                          if (!deviceSearchQuery.trim()) return true;
-                          const q = deviceSearchQuery.toLowerCase();
-                          const name = (deviceStates.get(device.id)?.hostname || device.name).toLowerCase();
-                          return name.includes(q) || device.type.toLowerCase().includes(q);
-                        })
-                        .map((device) => {
-                          const currentDeviceState = deviceStates.get(device.id);
-                          const displayName = currentDeviceState?.hostname || device.name;
-                          const status = device.status || 'online';
-                          const statusColor =
-                            status === 'offline'
-                              ? 'bg-rose-500'
-                              : status === 'online'
-                                ? 'bg-emerald-400'
-                                : 'bg-amber-400';
-
-                          return (
-                            <DropdownMenuItem
-                              key={device.id}
-                              className={`flex items-center gap-2 py-1.5 cursor-pointer ${activeDeviceId === device.id ? 'bg-violet-500/10 text-violet-400' : ''}`}
-                              onClick={() => { handleDeviceSelectFromMenu(device.type, device.id, device.switchModel, device.name); setDeviceSearchQuery(''); }}
-                            >
-                              <div className="flex items-center gap-2 cursor-pointer">
-                                <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} />
-                                <DeviceIcon
-                                  type={device.type}
-                                  switchModel={device.switchModel}
-                                  className="w-5 h-5"
-                                />
-                                <div className="flex flex-col">
-                                  <span className="text-xs font-bold leading-none">{truncateWithEllipsis(displayName, 12)}</span>
-                                  <span className="text-[10px] opacity-50 capitalize">{device.type}</span>
-                                </div>
-                              </div>
-                            </DropdownMenuItem>
-                          );
-                        })
-                    ) : (
-                      <div className="p-3 text-center text-[11px] text-slate-500 italic">
-                        {t.noDevicesInTopology}
-                      </div>
-                    )}
-                  </ScrollArea>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* Main Tabs (Adaptive: Icons on small, Icon+Text on large) */}
-              <div className="hidden md:flex items-end gap-1">
-                {tabs.map((tab, index) => {
-                  const isActive = activeTab === tab.id;
-                  // Unified Color Mapping
-                  const tabColors: Record<string, string> = {
-                    topology: 'text-blue-500 hover:text-blue-400',
-                    cmd: 'text-emerald-500 hover:text-emerald-400',
-                    terminal: 'text-emerald-500 hover:text-emerald-400',
-                    tasks: 'text-red-500 hover:text-red-400',
-                  }; const colorClass = tabColors[tab.id] || 'text-slate-500 hover:text-slate-400';
-
-                  return (
-                    <Tooltip key={tab.id}>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => switchTabOrTopology(tab.id)}
-                          onMouseMove={handleTabHoverGlow}
-                          style={{ ['--mx' as any]: '50%', ['--my' as any]: '50%' }}
-                          className={`group relative overflow-hidden flex items-center gap-2 px-3 lg:px-5 py-3 rounded-t-xl text-sm font-semibold transition-all border-x border-t min-w-[50px] lg:min-w-[120px] justify-center ui-hover-surface ${isActive
-                            ? `${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-300'} ${colorClass.split(' ')[0]} shadow-[0_-4px_0_0_currentColor]`
-                            : `${isDark ? 'bg-slate-900/50 border-transparent' : 'bg-slate-200/50 border-transparent'} ${colorClass}`
-                            }`}
-                        >
-                          <span
-                            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                            style={{
-                              background: `radial-gradient(130px circle at var(--mx) var(--my), ${isDark ? 'rgba(34,211,238,0.2)' : 'rgba(14,165,233,0.18)'}, transparent 65%)`
-                            }}
-                          />
-                          <span className={`transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
-                            {tab.id === 'topology' ? <Network className="w-4 h-4" /> :
-                              (tab.id === 'cmd' || tab.id === 'terminal') ? <TerminalIcon className="w-4 h-4" /> :
-                                <ShieldCheck className="w-4 h-4" />}
-                          </span>
-                          <span className="hidden md:inline-flex items-center gap-1.5">
-                            {tab.label}
-                            {tab.id === 'tasks' && (
-                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-300">
-                                {completedTasks}/{ALL_TABS.find(t => t.id === 'tasks')?.tasks.length}
-                              </span>
-                            )}
-                          </span>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="flex flex-col gap-1">
-                        <span>{tab.label} (Ctrl+{index + 1})</span>
-                        <span className="font-normal text-xs opacity-75">{getTabDescription(tab.id)}</span>
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-              </div>
             </div>
           </header>
-          {/* Mobile Bottom Tab Bar (Icons Only) */}
-          <div className={`md:hidden fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-xl flex items-center justify-around px-2 py-1 mobile-top-nav ${isDark ? 'bg-slate-900/95 border-slate-800 text-slate-400' : 'bg-white/95 border-slate-200 text-slate-500'
-            } ${showProjectPicker || showOnboarding ? 'hidden' : ''}`}>
-            {tabs.map((tab, index) => {
-              const isActive = activeTab === tab.id;
-
-              const tabColors: Record<string, string> = {
-                topology: 'text-blue-500 hover:text-blue-500',
-                cmd: 'text-blue-500 hover:text-blue-500',
-                terminal: 'text-emerald-500 hover:text-emerald-600',
-                tasks: 'text-red-500 hover:text-red-600',
-              };
-              const colorClass = tabColors[tab.id] || 'text-slate-500 hover:text-slate-600';
-
-              return (
-                <Tooltip key={tab.id}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => switchTabOrTopology(tab.id)}
-                      onMouseMove={handleTabHoverGlow}
-                      style={{ ['--mx' as any]: '50%', ['--my' as any]: '50%' }}
-                      className={`group flex flex-col items-center justify-center min-h-[40px] flex-1 px-3 py-1.5 rounded-xl transition-all relative overflow-hidden ui-hover-surface ${isActive ? 'text-blue-500' : `${colorClass} active:scale-95`
-                        }`}
-                    >
-                      <span
-                        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                        style={{
-                          background: `radial-gradient(90px circle at var(--mx) var(--my), ${isDark ? 'rgba(34,211,238,0.24)' : 'rgba(14,165,233,0.2)'}, transparent 68%)`
-                        }}
-                      />
-                      {isActive && (
-                        <div className="absolute inset-0 bg-blue-500/10 rounded-xl animate-scale-in" />
-                      )}
-                      <div className={`relative z-10 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`}>
-                        {tab.id === 'topology' ? <Network className="w-4 h-4" /> :
-                          (tab.id === 'cmd' || tab.id === 'terminal') ? <TerminalIcon className="w-4 h-4" /> :
-                            <ShieldCheck className="w-4 h-4" />}
-                      </div>
-                      <span className="mt-0.5 text-[9px] font-semibold leading-tight relative z-10 md:inline">
-                        {tab.label}
-                      </span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{tab.label}</TooltipContent>
-                </Tooltip>
-              );
-            })}
-          </div>
 
           <Dialog open={showProjectPicker} onOpenChange={(open) => { setShowProjectPicker(open); if (!open) setProjectSearchQuery(''); }}>
             <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl`}>
@@ -4036,38 +3715,61 @@ ${state.bannerMOTD}
                 maxHeight: 'none',
                 borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
                 willChange: 'left, top, width, height',
+                borderWidth: 3,
               }}
             >
-              <div className="relative flex flex-col h-full">
+              <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden">
                 <DialogHeader
-                  className={`p-3 sm:p-4 border-b cursor-move select-none sticky top-0 z-10 ${isDark ? 'bg-slate-900' : 'bg-white'}`}
+                  className={`p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10 ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100'}`}
                   data-modal-header
                   onPointerDown={(e) => handlePointerDown(e, 'tasks')}
                 >
                   <div className="flex items-center justify-between">
-                    <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
-                      {t.tasks}
-                    </DialogTitle>
+                    <div className="flex items-center gap-3 flex-1">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      <DialogTitle className={isDark ? 'text-white font-semibold' : 'text-slate-900 font-semibold'}>
+                        {t.tasks}
+                      </DialogTitle>
+                    </div>
                     <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
                         onClick={() => {
                           setShowTasksModal(false);
                           setShowTerminalModal(true);
                         }}
                         title={t.switchTerminal}
                       >
-                        <TerminalIcon className="h-4 w-4" />
+                        <TerminalIcon className="h-5 w-5" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
+                        onClick={() => {
+                          // Toggle maximize
+                          if (typeof window === 'undefined') return;
+                          const isMaximized = tasksModalSize.width >= window.innerWidth - 40;
+                          if (isMaximized) {
+                            setTasksModalSize({ width: 1200, height: 700 });
+                            setTasksModalPosition({ x: (window.innerWidth - 1200) / 2, y: (window.innerHeight - 700) / 2 });
+                          } else {
+                            setTasksModalSize({ width: window.innerWidth - 40, height: window.innerHeight - 40 });
+                            setTasksModalPosition({ x: 20, y: 20 });
+                          }
+                        }}
+                      >
+                        <Square className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-red-500 hover:text-white dark:hover:bg-red-600"
                         onClick={() => setShowTasksModal(false)}
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
@@ -4124,45 +3826,158 @@ ${state.bannerMOTD}
                   </div>
                 </div>
                 {/* Resize handles - hidden on mobile */}
-                <div className="hidden md:block">
-                  <div
-                    className="absolute top-0 left-0 right-0 h-1 cursor-n-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                    onPointerDown={(e) => handleResizeStart(e, 'n', 'tasks')}
-                  />
-                  <div
-                    className="absolute bottom-0 left-0 right-0 h-1 cursor-s-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                    onPointerDown={(e) => handleResizeStart(e, 's', 'tasks')}
-                  />
-                  <div
-                    className="absolute left-0 top-0 bottom-0 w-1 cursor-w-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                    onPointerDown={(e) => handleResizeStart(e, 'w', 'tasks')}
-                  />
-                  <div
-                    className="absolute right-0 top-0 bottom-0 w-1 cursor-e-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                    onPointerDown={(e) => handleResizeStart(e, 'e', 'tasks')}
-                  />
-                  <div
-                    className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                    onPointerDown={(e) => handleResizeStart(e, 'nw', 'tasks')}
-                  />
-                  <div
-                    className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                    onPointerDown={(e) => handleResizeStart(e, 'ne', 'tasks')}
-                  />
-                  <div
-                    className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                    onPointerDown={(e) => handleResizeStart(e, 'sw', 'tasks')}
-                  />
-                  <div
-                    className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
-                    onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
-                  >
-                    <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M12 4v16" />
-                    </svg>
+                {typeof window !== 'undefined' && window.innerWidth >= 768 && (
+                  <>
+                    <div
+                      className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                      onPointerDown={(e) => handleResizeStart(e, 'w', 'tasks')}
+                    />
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                      onPointerDown={(e) => handleResizeStart(e, 'e', 'tasks')}
+                    />
+                    <div
+                      className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize select-none touch-none"
+                      onPointerDown={(e) => handleResizeStart(e, 's', 'tasks')}
+                    />
+                    <div
+                      className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
+                      onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
+                    >
+                      <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M12 4v16" />
+                      </svg>
+                    </div>
+                  </>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* PC Terminal Modal */}
+          <Dialog open={showPCPanel} onOpenChange={setShowPCPanel}>
+            <DialogContent
+              className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              style={{
+                position: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'fixed' : 'fixed',
+                left: typeof window !== 'undefined' && window.innerWidth >= 768 ? pcModalPosition.x : 0,
+                top: typeof window !== 'undefined' && window.innerWidth >= 768 ? pcModalPosition.y : 0,
+                width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${pcModalSize.width}px` : '100vw',
+                height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${pcModalSize.height}px` : '100vh',
+                maxWidth: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'none' : '100vw',
+                maxHeight: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'none' : '100vh',
+                borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
+                willChange: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'left, top, width, height' : 'auto',
+                borderWidth: 3,
+              }}
+              onPointerDown={(e) => {
+                if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                  handlePointerDown(e, 'pc');
+                }
+              }}
+            >
+              <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden">
+                {/* Window Control Bar - Browser Style */}
+                <div
+                  className={`flex items-center justify-between px-4 py-2 border-b cursor-move select-none touch-none ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100'}`}
+                  onPointerDown={(e) => {
+                    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                      handlePointerDown(e, 'pc');
+                    }
+                  }}
+                  data-modal-header="pc"
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <DialogTitle className="text-sm font-semibold cursor-move truncate">
+                      {t.pcTerminal} - {topologyDevices?.find((d: any) => d.id === showPCDeviceId)?.name || showPCDeviceId}
+                    </DialogTitle>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
+                      onClick={() => setShowPCPanel(false)}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
+                      onClick={() => {
+                        // Toggle maximize
+                        if (typeof window === 'undefined') return;
+                        const isMaximized = pcModalSize.width >= window.innerWidth - 40;
+                        if (isMaximized) {
+                          setPcModalSize({ width: 800, height: 600 });
+                          setPcModalPosition({ x: (window.innerWidth - 800) / 2, y: (window.innerHeight - 600) / 2 });
+                        } else {
+                          setPcModalSize({ width: window.innerWidth - 40, height: window.innerHeight - 40 });
+                          setPcModalPosition({ x: 20, y: 20 });
+                        }
+                      }}
+                    >
+                      <Square className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:bg-red-500 hover:text-white dark:hover:bg-red-600"
+                      onClick={() => setShowPCPanel(false)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
+                <div className="flex-1 overflow-hidden">
+                  <PCPanel
+                    key={`pc-panel-${showPCDeviceId}`}
+                    deviceId={showPCDeviceId}
+                    cableInfo={cableInfo}
+                    isVisible={true}
+                    onClose={() => setShowPCPanel(false)}
+                    onTogglePower={toggleDevicePower}
+                    topologyDevices={topologyDevices || undefined}
+                    topologyConnections={topologyConnections || undefined}
+                    deviceStates={deviceStates}
+                    deviceOutputs={deviceOutputs}
+                    pcOutputs={pcOutputs}
+                    pcHistories={pcHistories}
+                    onUpdatePCHistory={handleUpdatePCHistory}
+                    onExecuteDeviceCommand={handleExecuteCommand}
+                    onNavigate={handlePCPanelNavigate}
+                    onDeleteDevice={handleDeviceDelete}
+                  />
+                </div>
+                {/* Resize handles - hidden on mobile */}
+                {typeof window !== 'undefined' && window.innerWidth >= 768 && (
+                  <>
+                    <div
+                      className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                      onPointerDown={(e) => handleResizeStart(e, 'w', 'pc')}
+                    />
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                      onPointerDown={(e) => handleResizeStart(e, 'e', 'pc')}
+                    />
+                    <div
+                      className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize select-none touch-none"
+                      onPointerDown={(e) => handleResizeStart(e, 's', 'pc')}
+                    />
+                    <div
+                      className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
+                      onPointerDown={(e) => handleResizeStart(e, 'se', 'pc')}
+                    >
+                      <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M12 4v16" />
+                      </svg>
+                    </div>
+                  </>
+                )}
               </div>
             </DialogContent>
           </Dialog>
@@ -4181,44 +3996,68 @@ ${state.bannerMOTD}
                 maxHeight: 'none',
                 borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
                 willChange: 'left, top, width, height',
+                borderWidth: 3,
               }}
             >
-              <DialogHeader
-                className={`p-3 sm:p-4 border-b cursor-move select-none sticky top-0 z-10 ${isDark ? 'bg-slate-900' : 'bg-white'}`}
-                data-modal-header
-                onPointerDown={(e) => handlePointerDown(e, 'cli')}
-              >
-                <div className="flex items-center justify-between">
-                  <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
-                    {t.cliInterface}
-                  </DialogTitle>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => {
-                        setShowTerminalModal(false);
-                        setShowTasksModal(true);
-                      }}
-                      title={t.switchTasks}
-                    >
-                      <ShieldCheck className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setShowTerminalModal(false)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+              <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden">
+                <DialogHeader
+                  className={`p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10 ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100'}`}
+                  data-modal-header
+                  onPointerDown={(e) => handlePointerDown(e, 'cli')}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      <DialogTitle className={isDark ? 'text-white font-semibold' : 'text-slate-900 font-semibold'}>
+                        {t.cliInterface}
+                      </DialogTitle>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
+                        onClick={() => {
+                          setShowTerminalModal(false);
+                          setShowTasksModal(true);
+                        }}
+                        title={t.switchTasks}
+                      >
+                        <ShieldCheck className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
+                        onClick={() => {
+                          // Toggle maximize
+                          if (typeof window === 'undefined') return;
+                          const isMaximized = cliModalSize.width >= window.innerWidth - 40;
+                          if (isMaximized) {
+                            setCliModalSize({ width: 1200, height: 700 });
+                            setCliModalPosition({ x: (window.innerWidth - 1200) / 2, y: (window.innerHeight - 700) / 2 });
+                          } else {
+                            setCliModalSize({ width: window.innerWidth - 40, height: window.innerHeight - 40 });
+                            setCliModalPosition({ x: 20, y: 20 });
+                          }
+                        }}
+                      >
+                        <Square className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-red-500 hover:text-white dark:hover:bg-red-600"
+                        onClick={() => setShowTerminalModal(false)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <DialogDescription className="sr-only">
-                  {t.cliInterface}
-                </DialogDescription>
-              </DialogHeader>
+                  <DialogDescription className="sr-only">
+                    {t.cliInterface}
+                  </DialogDescription>
+                </DialogHeader>
               <div className="flex-1 overflow-hidden">
                 <Terminal
                   key="cli-terminal"
@@ -4263,44 +4102,31 @@ ${state.bannerMOTD}
                 />
               </div>
               {/* Resize handles - hidden on mobile */}
-              <div className="hidden md:block">
-                <div
-                  className="absolute top-0 left-0 right-0 h-1 cursor-n-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'n', 'cli')}
-                />
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-1 cursor-s-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 's', 'cli')}
-                />
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-1 cursor-w-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'w', 'cli')}
-                />
-                <div
-                  className="absolute right-0 top-0 bottom-0 w-1 cursor-e-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'e', 'cli')}
-                />
-                <div
-                  className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'nw', 'cli')}
-                />
-                <div
-                  className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'ne', 'cli')}
-                />
-                <div
-                  className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize bg-slate-400/20 hover:bg-slate-400/40 transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'sw', 'cli')}
-                />
-                <div
-                  className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
-                  onPointerDown={(e) => handleResizeStart(e, 'se', 'cli')}
-                >
-                  <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M12 4v16" />
-                  </svg>
-                </div>
+              {typeof window !== 'undefined' && window.innerWidth >= 768 && (
+                <>
+                  <div
+                    className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                    onPointerDown={(e) => handleResizeStart(e, 'w', 'cli')}
+                  />
+                  <div
+                    className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                    onPointerDown={(e) => handleResizeStart(e, 'e', 'cli')}
+                  />
+                  <div
+                    className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize select-none touch-none"
+                    onPointerDown={(e) => handleResizeStart(e, 's', 'cli')}
+                  />
+                  <div
+                    className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
+                    onPointerDown={(e) => handleResizeStart(e, 'se', 'cli')}
+                  >
+                    <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M12 4v16" />
+                    </svg>
+                  </div>
+                </>
+              )}
               </div>
             </DialogContent>
           </Dialog>
@@ -4313,6 +4139,150 @@ ${state.bannerMOTD}
                 {/* Topology Toolbar - Fixed at top */}
                 {activeTab === 'topology' && (
                   <div className="sticky top-0 z-30 px-4 py-2 border-b backdrop-blur-md bg-background/95 hidden md:flex items-center gap-3">
+                    {/* Active Device Dropdown */}
+                    <DropdownMenu onOpenChange={(open) => { if (!open) setDeviceSearchQuery(''); }}>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition-all ${isDark
+                            ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-600'
+                            : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-400'
+                            }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            {activeDeviceId && (topologyDevices.some(d => d.id === activeDeviceId)) ? (
+                              <>
+                                {(() => {
+                                  const activeTopologyDevice = topologyDevices.find(d => d.id === activeDeviceId);
+                                  const status = activeTopologyDevice?.status || 'online';
+                                  const statusColor =
+                                    status === 'offline'
+                                      ? 'bg-rose-500'
+                                      : status === 'online'
+                                        ? 'bg-emerald-400'
+                                        : 'bg-amber-400';
+                                  const statusLabel =
+                                    language === 'tr'
+                                      ? status === 'offline'
+                                        ? 'Kapalı'
+                                        : status === 'online'
+                                          ? 'Çevrimiçi'
+                                          : 'Bilinmeyen'
+                                      : status === 'offline'
+                                        ? 'Offline'
+                                        : status === 'online'
+                                          ? 'Online'
+                                          : 'Unknown';
+                                  return (
+                                    <>
+                                      <span
+                                        className="w-2 h-2 rounded-full mr-0.5"
+                                        title={statusLabel}
+                                      >
+                                        <span className={`block w-2 h-2 rounded-full ${statusColor} shadow-[0_0_6px_rgba(45,212,191,0.8)]`} />
+                                      </span>
+                                      <DeviceIcon
+                                        type={activeDeviceType}
+                                        switchModel={activeTopologyDevice?.switchModel}
+                                        className="w-5 h-5"
+                                      />
+                                      <span className="text-xs font-bold">
+                                        {truncateWithEllipsis(deviceStates.get(activeDeviceId)?.hostname || activeDeviceId, 15)}
+                                      </span>
+                                    </>
+                                  );
+                                })()}
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-4 h-4 text-slate-500" />
+                                <span className="text-sm font-bold text-slate-500">
+                                  {t.selectDeviceDropdown}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                          <ChevronDown className="w-3 h-3 opacity-50" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} w-48`}>
+                        <DropdownMenuLabel className="text-[11px] font-bold  tracking-widest text-slate-500 py-2">
+                          {topologyDevices.length > 0 ? t.selectDevice : t.addDevicesFirst}
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {topologyDevices.length > 0 && (
+                          <div className="px-2 pb-1.5">
+                            <div className="relative">
+                              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+                              <Input
+                                value={deviceSearchQuery}
+                                onChange={e => setDeviceSearchQuery(e.target.value)}
+                                placeholder={t.searchShort}
+                                className="h-7 pl-6 pr-7 text-xs"
+                                autoFocus
+                                onKeyDown={e => e.stopPropagation()}
+                              />
+                              {deviceSearchQuery && (
+                                <button
+                                  onClick={() => setDeviceSearchQuery('')}
+                                  className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        <ScrollArea className={topologyDevices.length > 0 ? "h-56" : "h-auto"}>
+                          {topologyDevices.length > 0 ? (
+                            topologyDevices
+                              .filter(device => {
+                                if (!deviceSearchQuery.trim()) return true;
+                                const q = deviceSearchQuery.toLowerCase();
+                                const name = (deviceStates.get(device.id)?.hostname || device.name).toLowerCase();
+                                return name.includes(q) || device.type.toLowerCase().includes(q);
+                              })
+                              .map((device) => {
+                                const currentDeviceState = deviceStates.get(device.id);
+                                const displayName = currentDeviceState?.hostname || device.name;
+                                const status = device.status || 'online';
+                                const statusColor =
+                                  status === 'offline'
+                                    ? 'bg-rose-500'
+                                    : status === 'online'
+                                      ? 'bg-emerald-400'
+                                      : 'bg-amber-400';
+
+                                return (
+                                  <DropdownMenuItem
+                                    key={device.id}
+                                    className={`flex items-center gap-2 py-1.5 cursor-pointer ${activeDeviceId === device.id ? 'bg-violet-500/10 text-violet-400' : ''}`}
+                                    onClick={() => { handleDeviceSelectFromMenu(device.type, device.id, device.switchModel, device.name); setDeviceSearchQuery(''); }}
+                                  >
+                                    <div className="flex items-center gap-2 cursor-pointer">
+                                      <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} />
+                                      <DeviceIcon
+                                        type={device.type}
+                                        switchModel={device.switchModel}
+                                        className="w-5 h-5"
+                                      />
+                                      <div className="flex flex-col">
+                                        <span className="text-xs font-bold leading-none">{truncateWithEllipsis(displayName, 12)}</span>
+                                        <span className="text-[10px] opacity-50 capitalize">{device.type}</span>
+                                      </div>
+                                    </div>
+                                  </DropdownMenuItem>
+                                );
+                              })
+                          ) : (
+                            <div className="p-3 text-center text-[11px] text-slate-500 italic">
+                              {t.noDevicesInTopology}
+                            </div>
+                          )}
+                        </ScrollArea>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
                     {/* Device Buttons */}
                     <div className={`flex items-center gap-1 p-1 rounded-xl border ${isDark ? 'bg-slate-900/40 border-slate-700/30' : 'bg-blue-50/50 border-blue-100/50'}`}>
                       {/* PC Button */}
@@ -4323,8 +4293,10 @@ ${state.bannerMOTD}
                             size="icon"
                             className="h-8 w-8 text-blue-500 hover:bg-blue-500/10"
                             onClick={() => {
-                              const event = new CustomEvent('add-device', { detail: 'pc' });
-                              window.dispatchEvent(event);
+                              if (typeof window !== 'undefined') {
+                                const event = new CustomEvent('add-device', { detail: 'pc' });
+                                window.dispatchEvent(event);
+                              }
                             }}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4342,8 +4314,10 @@ ${state.bannerMOTD}
                             size="icon"
                             className="h-8 w-8 text-green-500 hover:bg-green-500/10"
                             onClick={() => {
-                              const event = new CustomEvent('add-device', { detail: 'switchL2' });
-                              window.dispatchEvent(event);
+                              if (typeof window !== 'undefined') {
+                                const event = new CustomEvent('add-device', { detail: 'switchL2' });
+                                window.dispatchEvent(event);
+                              }
                             }}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4361,8 +4335,10 @@ ${state.bannerMOTD}
                             size="icon"
                             className="h-8 w-8 text-purple-500 hover:bg-purple-500/10"
                             onClick={() => {
-                              const event = new CustomEvent('add-device', { detail: 'switchL3' });
-                              window.dispatchEvent(event);
+                              if (typeof window !== 'undefined') {
+                                const event = new CustomEvent('add-device', { detail: 'switchL3' });
+                                window.dispatchEvent(event);
+                              }
                             }}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4380,8 +4356,10 @@ ${state.bannerMOTD}
                             size="icon"
                             className="h-8 w-8 text-purple-500 hover:bg-purple-500/10"
                             onClick={() => {
-                              const event = new CustomEvent('add-device', { detail: 'router' });
-                              window.dispatchEvent(event);
+                              if (typeof window !== 'undefined') {
+                                const event = new CustomEvent('add-device', { detail: 'router' });
+                                window.dispatchEvent(event);
+                              }
                             }}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4400,8 +4378,10 @@ ${state.bannerMOTD}
                             size="icon"
                             className="h-8 w-8 text-cyan-500 hover:bg-cyan-500/10"
                             onClick={() => {
-                              const event = new CustomEvent('add-device', { detail: 'iot' });
-                              window.dispatchEvent(event);
+                              if (typeof window !== 'undefined') {
+                                const event = new CustomEvent('add-device', { detail: 'iot' });
+                                window.dispatchEvent(event);
+                              }
                             }}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4425,7 +4405,7 @@ ${state.bannerMOTD}
                             <Button
                               variant="ghost"
                               size="sm"
-                              className={`h-8 px-3 flex items-center gap-1.5 text-xs font-bold
+                              className={`h-8 px-2 flex items-center gap-1 text-xs font-bold
                                 ${cableInfo.cableType === type
                                   ? isDark
                                     ? 'bg-slate-700/80'
@@ -4440,8 +4420,15 @@ ${state.bannerMOTD}
                                 }`}
                               onClick={() => setCableInfo({ ...cableInfo, cableType: type })}
                             >
-                              <div className={`w-2 h-2 rounded-full ${type === 'straight' ? 'bg-blue-500' : type === 'crossover' ? 'bg-orange-500' : 'bg-cyan-500'}`} />
-                              {type === 'straight' ? t.straightShort : type === 'crossover' ? t.crossoverShort : t.consoleShort}
+                              {type === 'straight' ? (
+                                <Cable className="w-4 h-4" />
+                              ) : type === 'crossover' ? (
+                                <Strikethrough className="w-4 h-4" />
+                              ) : (
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                                </svg>
+                              )}
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -4465,8 +4452,10 @@ ${state.bannerMOTD}
                           size="icon"
                           className="h-8 w-8 text-cyan-500 hover:bg-cyan-500/10"
                           onClick={() => {
-                            const event = new CustomEvent('trigger-topology-connect');
-                            window.dispatchEvent(event);
+                            if (typeof window !== 'undefined') {
+                              const event = new CustomEvent('trigger-topology-connect');
+                              window.dispatchEvent(event);
+                            }
                           }}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4698,28 +4687,6 @@ ${state.bannerMOTD}
                 </div>
               </div>
 
-              {/* CMD Terminal Sekmesi */}
-              {/* CMD Terminal Sekmesi - Always mounted, hidden via CSS */}
-              <div className={`flex-1 min-h-0 flex flex-col overflow-y-auto custom-scrollbar animate-fade-in ${activeTab === 'cmd' ? 'flex' : 'hidden'}`}>
-                <PCPanel
-                  key={`pc-panel-${activeDeviceId}`}
-                  deviceId={activeDeviceId}
-                  cableInfo={cableInfo}
-                  isVisible={activeTab === 'cmd'}
-                  onClose={() => setActiveTab('topology')}
-                  onTogglePower={toggleDevicePower}
-                  topologyDevices={topologyDevices || undefined}
-                  topologyConnections={topologyConnections || undefined}
-                  deviceStates={deviceStates}
-                  deviceOutputs={deviceOutputs}
-                  pcOutputs={pcOutputs}
-                  pcHistories={pcHistories}
-                  onUpdatePCHistory={handleUpdatePCHistory}
-                  onExecuteDeviceCommand={handleExecuteCommand}
-                  onNavigate={handlePCPanelNavigate}
-                  onDeleteDevice={handleDeviceDelete}
-                />
-              </div>
 
               {/* Terminal Sekmesi - Removed from inline, now shown as full-screen modal */}
 
@@ -4786,13 +4753,6 @@ ${state.bannerMOTD}
                       {(activeTab === 'cmd' || activeTab === 'terminal') && (
                         <span className="text-[11px] italic">{t.clickIconsToRun}</span>
                       )}
-                      {activeTab !== 'topology' && activeTab !== 'cmd' && activeTab !== 'terminal' && (
-                        <>
-                          <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
-                            }`}>Ctrl+1-3</kbd>
-                          <span className="mx-1">{t.tabsShort}</span>
-                        </>
-                      )}
                     </span>
                   </div>
 
@@ -4838,6 +4798,39 @@ ${state.bannerMOTD}
                     </span>
                   </div>
                 )}
+              </div>
+            </div>
+          </footer>
+
+          {/* Mobile Footer - Hints */}
+          <footer className={`md:hidden fixed bottom-0 inset-x-0 z-40 border-t backdrop-blur-xl transition-all h-[36px] ${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'
+            } ${showProjectPicker || showOnboarding || activeTab === 'terminal' ? 'hidden' : ''}`}>
+            <div className="w-full px-3 py-1.5">
+              <div className="flex items-center justify-between gap-2">
+                {/* Mobile Hints */}
+                <div className="flex items-center gap-2">
+                  {activeTab === 'topology' && (
+                    <>
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        {language === 'tr' ? 'Çift tık: Terminal' : 'Double tap: Terminal'}
+                      </span>
+                      <span className="text-slate-300">·</span>
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        {language === 'tr' ? 'Uzun bas: Menü' : 'Long press: Menu'}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {/* Save Status - Mobile */}
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-1.5 h-1.5 rounded-full ${hasUnsavedChanges ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'
+                    }`} />
+                  <span className={`text-[10px] font-semibold ${hasUnsavedChanges ? 'text-amber-400' : 'text-emerald-400'
+                    }`}>
+                    {hasUnsavedChanges ? (language === 'tr' ? 'Kaydedilmedi' : 'Unsaved') : (language === 'tr' ? 'Kaydedildi' : 'Saved')}
+                  </span>
+                </div>
               </div>
             </div>
           </footer>

@@ -6,7 +6,7 @@ export interface ModalSize { width: number; height: number }
 interface DragState {
     active: boolean;
     type: 'drag' | 'resize';
-    modal: 'tasks' | 'cli';
+    modal: 'tasks' | 'cli' | 'pc';
     direction?: string;
     startX: number;
     startY: number;
@@ -20,9 +20,10 @@ interface DragState {
 const STORAGE_KEYS = {
     tasks: { position: 'tasks-modal-position', size: 'tasks-modal-size' },
     cli: { position: 'cli-modal-position', size: 'cli-modal-size' },
+    pc: { position: 'pc-modal-position', size: 'pc-modal-size' },
 } as const;
 
-function loadModalLayout(modal: 'tasks' | 'cli', defaultSize: ModalSize) {
+function loadModalLayout(modal: 'tasks' | 'cli' | 'pc', defaultSize: ModalSize) {
     if (typeof window === 'undefined') return { position: null, size: defaultSize };
     const maxW = window.innerWidth - 40;
     const maxH = window.innerHeight - 40;
@@ -60,6 +61,8 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
     const [tasksModalSize, setTasksModalSize] = useState<ModalSize>(defaultSize);
     const [cliModalPosition, setCliModalPosition] = useState<ModalPosition>({ x: 20, y: 20 });
     const [cliModalSize, setCliModalSize] = useState<ModalSize>(defaultSize);
+    const [pcModalPosition, setPcModalPosition] = useState<ModalPosition>({ x: 20, y: 20 });
+    const [pcModalSize, setPcModalSize] = useState<ModalSize>({ width: 800, height: 600 });
 
     // Load persisted layout after hydration
     useEffect(() => {
@@ -70,11 +73,15 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
         const cli = loadModalLayout('cli', defaultSize);
         if (cli.position) setCliModalPosition(cli.position);
         setCliModalSize(cli.size);
+
+        const pc = loadModalLayout('pc', { width: 800, height: 600 });
+        if (pc.position) setPcModalPosition(pc.position);
+        setPcModalSize(pc.size);
     }, []);
 
     // Persist on change - Optimized to only save occasionally or on mouse up
     // We'll move the actual saving to handlePointerUp to avoid synchronous localStorage hits during drag
-    const persistLayout = useCallback((modal: 'tasks' | 'cli', pos: ModalPosition, size: ModalSize) => {
+    const persistLayout = useCallback((modal: 'tasks' | 'cli' | 'pc', pos: ModalPosition, size: ModalSize) => {
         localStorage.setItem(STORAGE_KEYS[modal].position, JSON.stringify(pos));
         localStorage.setItem(STORAGE_KEYS[modal].size, JSON.stringify(size));
     }, []);
@@ -86,13 +93,17 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
     const tasksModalSizeRef = useRef(tasksModalSize);
     const cliModalPositionRef = useRef(cliModalPosition);
     const cliModalSizeRef = useRef(cliModalSize);
+    const pcModalPositionRef = useRef(pcModalPosition);
+    const pcModalSizeRef = useRef(pcModalSize);
 
     useEffect(() => { tasksModalPositionRef.current = tasksModalPosition; }, [tasksModalPosition]);
     useEffect(() => { tasksModalSizeRef.current = tasksModalSize; }, [tasksModalSize]);
     useEffect(() => { cliModalPositionRef.current = cliModalPosition; }, [cliModalPosition]);
     useEffect(() => { cliModalSizeRef.current = cliModalSize; }, [cliModalSize]);
+    useEffect(() => { pcModalPositionRef.current = pcModalPosition; }, [pcModalPosition]);
+    useEffect(() => { pcModalSizeRef.current = pcModalSize; }, [pcModalSize]);
 
-    const handlePointerDown = useCallback((e: React.PointerEvent, modalType: 'tasks' | 'cli') => {
+    const handlePointerDown = useCallback((e: React.PointerEvent, modalType: 'tasks' | 'cli' | 'pc') => {
         const header = (e.target as HTMLElement).closest('[data-modal-header]');
         if (!header) return;
         if ((e.target as HTMLElement).closest('button, input, select, textarea, a')) return;
@@ -103,8 +114,8 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
         // Capture pointer for smoother dragging across the whole screen
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 
-        const pos = modalType === 'tasks' ? tasksModalPositionRef.current : cliModalPositionRef.current;
-        const size = modalType === 'tasks' ? tasksModalSizeRef.current : cliModalSizeRef.current;
+        const pos = modalType === 'tasks' ? tasksModalPositionRef.current : modalType === 'cli' ? cliModalPositionRef.current : pcModalPositionRef.current;
+        const size = modalType === 'tasks' ? tasksModalSizeRef.current : modalType === 'cli' ? cliModalSizeRef.current : pcModalSizeRef.current;
         
         dragStateRef.current = {
             active: true, type: 'drag', modal: modalType,
@@ -117,7 +128,7 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
     const handleResizeStart = useCallback((
         e: React.PointerEvent,
         direction: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw',
-        modalType: 'tasks' | 'cli',
+        modalType: 'tasks' | 'cli' | 'pc',
     ) => {
         e.preventDefault();
         e.stopPropagation();
@@ -125,8 +136,8 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
         // Capture pointer
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 
-        const pos = modalType === 'tasks' ? tasksModalPositionRef.current : cliModalPositionRef.current;
-        const size = modalType === 'tasks' ? tasksModalSizeRef.current : cliModalSizeRef.current;
+        const pos = modalType === 'tasks' ? tasksModalPositionRef.current : modalType === 'cli' ? cliModalPositionRef.current : pcModalPositionRef.current;
+        const size = modalType === 'tasks' ? tasksModalSizeRef.current : modalType === 'cli' ? cliModalSizeRef.current : pcModalSizeRef.current;
         
         dragStateRef.current = {
             active: true, type: 'resize', modal: modalType, direction,
@@ -150,8 +161,8 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
                 const move = pendingMoveRef.current;
                 if (!move) return;
                 
-                const setPosition = ds2.modal === 'tasks' ? setTasksModalPosition : setCliModalPosition;
-                const setSize = ds2.modal === 'tasks' ? setTasksModalSize : setCliModalSize;
+                const setPosition = ds2.modal === 'tasks' ? setTasksModalPosition : ds2.modal === 'cli' ? setCliModalPosition : setPcModalPosition;
+                const setSize = ds2.modal === 'tasks' ? setTasksModalSize : ds2.modal === 'cli' ? setCliModalSize : setPcModalSize;
 
                 if (ds2.type === 'drag') {
                     setPosition({
@@ -190,8 +201,8 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
             pendingMoveRef.current = null;
             
             // Persist the final position/size to localStorage
-            const finalPos = ds.modal === 'tasks' ? tasksModalPositionRef.current : cliModalPositionRef.current;
-            const finalSize = ds.modal === 'tasks' ? tasksModalSizeRef.current : cliModalSizeRef.current;
+            const finalPos = ds.modal === 'tasks' ? tasksModalPositionRef.current : ds.modal === 'cli' ? cliModalPositionRef.current : pcModalPositionRef.current;
+            const finalSize = ds.modal === 'tasks' ? tasksModalSizeRef.current : ds.modal === 'cli' ? cliModalSizeRef.current : pcModalSizeRef.current;
             persistLayout(ds.modal, finalPos, finalSize);
 
             dragStateRef.current = null;
@@ -213,6 +224,14 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
         tasksModalSize,
         cliModalPosition,
         cliModalSize,
+        pcModalPosition,
+        pcModalSize,
+        setTasksModalPosition,
+        setTasksModalSize,
+        setCliModalPosition,
+        setCliModalSize,
+        setPcModalPosition,
+        setPcModalSize,
         handlePointerDown,
         handleResizeStart,
     };
