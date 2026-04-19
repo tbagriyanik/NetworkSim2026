@@ -533,7 +533,7 @@ export interface Translations {
   straightShort: string;
   crossoverShort: string;
   consoleShort: string;
-  fullScreenMode: string;
+  tabToNext: string;
   unsaved: string;
   saved: string;
   lastSavedAt: string;
@@ -1071,7 +1071,7 @@ const translations: Record<Language, Translations> = {
     straightShort: 'Düz',
     crossoverShort: 'Çapraz',
     consoleShort: 'Konsol',
-    fullScreenMode: 'Tam Ekran (Ctrl+F)',
+    tabToNext: 'TAB ile sonraki cihaz',
     unsaved: 'Kaydedilmedi',
     saved: 'Kaydedildi',
     lastSavedAt: 'Son kaydedilme: ',
@@ -1607,7 +1607,7 @@ const translations: Record<Language, Translations> = {
     straightShort: 'Straight',
     crossoverShort: 'Crossover',
     consoleShort: 'Console',
-    fullScreenMode: 'Full Screen (Ctrl+F)',
+    tabToNext: 'TAB for next device',
     unsaved: 'Unsaved',
     saved: 'Saved',
     lastSavedAt: 'Last saved: ',

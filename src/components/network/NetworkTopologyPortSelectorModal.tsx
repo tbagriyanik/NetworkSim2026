@@ -1,7 +1,7 @@
 'use client';
 
 import { CableType } from '@/lib/network/types';
-import { X, Cable, Strikethrough } from 'lucide-react';
+import { X, Cable, Strikethrough, Usb } from 'lucide-react';
 import { DEVICE_ICONS } from './networkTopology.constants';
 import { CanvasDevice, SelectedPortRef } from './networkTopology.types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -94,9 +94,7 @@ export function NetworkTopologyPortSelectorModal({
                     ) : type === 'crossover' ? (
                       <Strikethrough className="w-4 h-4" />
                     ) : (
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                      </svg>
+                      <Usb className="w-4 h-4" />
                     )}
                     {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : t.console}
                   </button>

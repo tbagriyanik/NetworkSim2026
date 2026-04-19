@@ -54,7 +54,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal, Square, Minus, Strikethrough, Cable } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal, Square, Minus, Strikethrough, Cable, Usb } from "lucide-react";
 import { RouterIcon, SwitchIcon } from '@/components/network/PCPanelWidgets';
 
 import { Button } from '@/components/ui/button';
@@ -3123,7 +3123,7 @@ ${state.bannerMOTD}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className="h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-700/50"
+                              className="h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50 text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 dark:hover:bg-slate-700/50"
                               onClick={handleNewProject}
                             >
                               <File className="w-4 h-4" />
@@ -3131,11 +3131,10 @@ ${state.bannerMOTD}
                           </TooltipTrigger>
                           <TooltipContent>{t.newProject} (Alt+N)</TooltipContent>
                         </Tooltip>
-                        <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-white hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')}
+                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-blue-400 hover:bg-slate-700/50' : 'text-slate-600 hover:text-blue-600')}
                               onClick={() => fileInputRef.current?.click()}
                             >
                               <FolderOpen className="w-4 h-4" />
@@ -3143,11 +3142,11 @@ ${state.bannerMOTD}
                           </TooltipTrigger>
                           <TooltipContent>{t.loadProject} (Ctrl+O)</TooltipContent>
                         </Tooltip>
-                        <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
+
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-white hover:bg-slate-700/50' : 'text-slate-600 hover:text-slate-900')}
+                              className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-blue-400 hover:bg-slate-700/50' : 'text-slate-600 hover:text-blue-600')}
                               onClick={handleSaveProject}
                             >
                               <Save className="w-4 h-4" />
@@ -3155,10 +3154,10 @@ ${state.bannerMOTD}
                           </TooltipTrigger>
                           <TooltipContent>{t.saveProject} (Ctrl+S)</TooltipContent>
                         </Tooltip>
-                        <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
+
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <button className={cn("h-7 w-7 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-white hover:bg-slate-700/50' : 'text-slate-500 hover:text-slate-900')} onClick={() => setShowAboutModal(true)}>
+                            <button className={cn("h-7 w-7 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-blue-400 hover:bg-slate-700/50' : 'text-slate-500 hover:text-blue-600')} onClick={() => setShowAboutModal(true)}>
                               <Info className="w-3.5 h-3.5" />
                             </button>
                           </TooltipTrigger>
@@ -3408,7 +3407,7 @@ ${state.bannerMOTD}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 text-emerald-500 hover:bg-emerald-500/10"
+                          className="h-9 w-9 text-pink-500 hover:bg-pink-500/10"
                           onClick={handleRefreshNetwork}
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3750,7 +3749,7 @@ ${state.bannerMOTD}
                       >
                         <TerminalIcon className="h-5 w-5" />
                       </Button>
-                     
+
                       <Button
                         variant="ghost"
                         size="icon"
@@ -3891,7 +3890,7 @@ ${state.bannerMOTD}
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
-              
+
                     <Button
                       variant="ghost"
                       size="icon"
@@ -3995,7 +3994,7 @@ ${state.bannerMOTD}
                       >
                         <ShieldCheck className="h-3 w-3" />
                       </Button>
-                     
+
                       <Button
                         variant="ghost"
                         size="icon"
@@ -4010,75 +4009,75 @@ ${state.bannerMOTD}
                     {t.cliInterface}
                   </DialogDescription>
                 </DialogHeader>
-              <div className="flex-1 overflow-hidden">
-                <Terminal
-                  key="cli-terminal"
-                  className="h-full"
-                  deviceId={activeDeviceId}
-                  deviceName={
-                    (() => {
-                      const deviceState = deviceStates.get(activeDeviceId);
-                      return deviceState?.hostname || activeDeviceId;
-                    })()
-                  }
-                  prompt={prompt}
-                  state={state}
-                  onCommand={handleCommand}
-                  onClear={handleClearTerminal}
-                  output={output}
-                  isLoading={isExecutingCommand}
-                  isConnectionError={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                  connectionErrorMessage={t.connectionError}
-                  isPoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
-                  onTogglePower={toggleDevicePower}
-                  onClose={() => setShowTerminalModal(false)}
-                  t={t}
-                  theme={theme}
-                  language={language}
-                  onUpdateHistory={handleUpdateHistory}
-                  confirmDialog={confirmDialog}
-                  setConfirmDialog={setConfirmDialog}
-                  device={topologyDevices.find(d => d.id === activeDeviceId)}
-                  devices={topologyDevices}
-                  deviceStates={deviceStates}
-                  onRequestFocus={() => {
-                    requestAnimationFrame(() => {
-                      const el = document.querySelector('[data-terminal-input]') as HTMLInputElement | null;
-                      const terminal = document.querySelector('[data-terminal-scroll]') as HTMLDivElement | null;
-                      if (terminal) {
-                        terminal.scrollTop = terminal.scrollHeight;
-                      }
-                      el?.focus();
-                    });
-                  }}
-                />
-              </div>
-              {/* Resize handles - hidden on mobile */}
-              {typeof window !== 'undefined' && window.innerWidth >= 768 && (
-                <>
-                  <div
-                    className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
-                    onPointerDown={(e) => handleResizeStart(e, 'w', 'cli')}
+                <div className="flex-1 overflow-hidden">
+                  <Terminal
+                    key="cli-terminal"
+                    className="h-full"
+                    deviceId={activeDeviceId}
+                    deviceName={
+                      (() => {
+                        const deviceState = deviceStates.get(activeDeviceId);
+                        return deviceState?.hostname || activeDeviceId;
+                      })()
+                    }
+                    prompt={prompt}
+                    state={state}
+                    onCommand={handleCommand}
+                    onClear={handleClearTerminal}
+                    output={output}
+                    isLoading={isExecutingCommand}
+                    isConnectionError={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                    connectionErrorMessage={t.connectionError}
+                    isPoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
+                    onTogglePower={toggleDevicePower}
+                    onClose={() => setShowTerminalModal(false)}
+                    t={t}
+                    theme={theme}
+                    language={language}
+                    onUpdateHistory={handleUpdateHistory}
+                    confirmDialog={confirmDialog}
+                    setConfirmDialog={setConfirmDialog}
+                    device={topologyDevices.find(d => d.id === activeDeviceId)}
+                    devices={topologyDevices}
+                    deviceStates={deviceStates}
+                    onRequestFocus={() => {
+                      requestAnimationFrame(() => {
+                        const el = document.querySelector('[data-terminal-input]') as HTMLInputElement | null;
+                        const terminal = document.querySelector('[data-terminal-scroll]') as HTMLDivElement | null;
+                        if (terminal) {
+                          terminal.scrollTop = terminal.scrollHeight;
+                        }
+                        el?.focus();
+                      });
+                    }}
                   />
-                  <div
-                    className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
-                    onPointerDown={(e) => handleResizeStart(e, 'e', 'cli')}
-                  />
-                  <div
-                    className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize select-none touch-none"
-                    onPointerDown={(e) => handleResizeStart(e, 's', 'cli')}
-                  />
-                  <div
-                    className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
-                    onPointerDown={(e) => handleResizeStart(e, 'se', 'cli')}
-                  >
-                    <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M12 4v16" />
-                    </svg>
-                  </div>
-                </>
-              )}
+                </div>
+                {/* Resize handles - hidden on mobile */}
+                {typeof window !== 'undefined' && window.innerWidth >= 768 && (
+                  <>
+                    <div
+                      className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                      onPointerDown={(e) => handleResizeStart(e, 'w', 'cli')}
+                    />
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                      onPointerDown={(e) => handleResizeStart(e, 'e', 'cli')}
+                    />
+                    <div
+                      className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize select-none touch-none"
+                      onPointerDown={(e) => handleResizeStart(e, 's', 'cli')}
+                    />
+                    <div
+                      className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
+                      onPointerDown={(e) => handleResizeStart(e, 'se', 'cli')}
+                    >
+                      <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M12 4v16" />
+                      </svg>
+                    </div>
+                  </>
+                )}
               </div>
             </DialogContent>
           </Dialog>
@@ -4377,9 +4376,7 @@ ${state.bannerMOTD}
                               ) : type === 'crossover' ? (
                                 <Strikethrough className="w-4 h-4" />
                               ) : (
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                                </svg>
+                                <Usb className="w-4 h-4" />
                               )}
                             </Button>
                           </TooltipTrigger>
@@ -4458,7 +4455,7 @@ ${state.bannerMOTD}
                       <TooltipContent>{t.addNote}</TooltipContent>
                     </Tooltip>
 
- 
+
 
                     {/* Environment Settings Button */}
                     <Tooltip>
@@ -4510,13 +4507,13 @@ ${state.bannerMOTD}
                     </Tooltip>
 
                     <div className={`w-px h-4 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
-                   {/* Refresh Network Button */}
+                    {/* Refresh Network Button */}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-emerald-500 hover:bg-emerald-500/10"
+                          className="h-8 w-8 text-pink-500 hover:bg-pink-500/10"
                           onClick={handleRefreshNetwork}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4661,8 +4658,8 @@ ${state.bannerMOTD}
                       {activeTab === 'topology' && (
                         <>
                           <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
-                            }`}>Ctrl+F</kbd>
-                          <span className="mx-1">{t.fullScreenMode}</span>
+                            }`}>TAB</kbd>
+                          <span className="mx-1">{t.tabToNext}</span>
                           <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
                             }`}>Ctrl+S</kbd>
                           <span className="mx-1">{t.saveLabel}</span>
@@ -4845,15 +4842,15 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
   }, [isDragging, position]);
 
   return (
-    <div 
+    <div
       className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDragging ? "cursor-grabbing" : "cursor-grab")}
-      style={{ 
-        bottom: `${position.y}px`, 
+      style={{
+        bottom: `${position.y}px`,
         right: `${position.x}px`,
         transition: isDragging ? 'none' : 'bottom 0.2s, right 0.2s'
       }}
     >
-      <div 
+      <div
         onMouseDown={handleDragStart}
         className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[260px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}
       >
@@ -4873,93 +4870,93 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
         </div>
         <div className="overflow-hidden">
           <div className="p-2 space-y-1 text-[10px]">
-          <div className="flex justify-between items-center">
-            <span className="opacity-50">IP</span>
-            <span className="font-mono text-blue-500">{pc.ip || '0.0.0.0'}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="opacity-50">Subnet</span>
-            <span className="font-mono opacity-80">{pc.subnet || '255.255.255.0'}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="opacity-50">GW</span>
-            <span className="font-mono opacity-80">{pc.gateway || '0.0.0.0'}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="opacity-50">MAC</span>
-            <span className="font-mono opacity-30 text-[9px]">{pc.macAddress || 'N/A'}</span>
-          </div>
-          {pc.wifi && pc.wifi.enabled && (
-            <div className="pt-1 border-t border-slate-500/20">
-              <div className="flex justify-between items-center mb-1">
-                <span className="opacity-50">WiFi</span>
-                <span className="text-[8px] font-bold text-purple-500">{t.active}</span>
-              </div>
-              <div className="flex gap-2 text-[9px]">
-                <span className="opacity-50">SSID:</span>
-                <span className="font-mono">{pc.wifi.ssid || '-'}</span>
-              </div>
-              <div className="flex gap-2 text-[9px]">
-                <span className="opacity-50">{t.channelShort}</span>
-                <span className="font-mono">{pc.wifi.channel || '-'}</span>
-                <span className="opacity-50">|</span>
-                <span className="font-mono uppercase">{pc.wifi.security || '-'}</span>
-              </div>
-              {(() => {
-                const strength = getWirelessSignalStrength(pc, topologyDevices, deviceStates);
-                const pctMap: Record<number, string> = { 0: '0%', 1: '1%', 2: '25%', 3: '50%', 4: '75%', 5: '100%' };
-                const colorMap: Record<number, string> = { 0: 'text-slate-400', 1: 'text-rose-500', 2: 'text-orange-500', 3: 'text-yellow-500', 4: 'text-emerald-500', 5: 'text-emerald-500' };
-                if (strength === 0) return null;
-                return (
-                  <div className="flex justify-between items-center text-[9px] mt-0.5">
-                    <span className="opacity-50">{t.signal}</span>
-                    <span className={`font-bold ${colorMap[strength]}`}>{pctMap[strength]}</span>
-                  </div>
-                );
-              })()}
+            <div className="flex justify-between items-center">
+              <span className="opacity-50">IP</span>
+              <span className="font-mono text-blue-500">{pc.ip || '0.0.0.0'}</span>
             </div>
-          )}
-          {pc.services && (
-            <div className="pt-1 border-t border-slate-500/20">
-              <div className="flex justify-between items-center mb-0.5">
-                <span className="opacity-50">{t.services}</span>
-                <div className="flex flex-wrap gap-0.5">
-                  {pc.services.http?.enabled && (
-                    <span className="px-1 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[8px] font-bold border border-amber-500/20">HTTP</span>
-                  )}
-                  {pc.services.dns?.enabled && (
-                    <span className="px-1 py-0.5 rounded bg-blue-500/20 text-blue-500 text-[8px] font-bold border border-blue-500/20">DNS</span>
-                  )}
-                  {pc.services.dhcp?.enabled && (
-                    <span className="px-1 py-0.5 rounded bg-purple-500/20 text-purple-500 text-[8px] font-bold border border-purple-500/20">DHCP</span>
-                  )}
-                  {!pc.services.http?.enabled && !pc.services.dns?.enabled && !pc.services.dhcp?.enabled && (
-                    <span className="text-[8px] opacity-40 italic">{t.none}</span>
-                  )}
+            <div className="flex justify-between items-center">
+              <span className="opacity-50">Subnet</span>
+              <span className="font-mono opacity-80">{pc.subnet || '255.255.255.0'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="opacity-50">GW</span>
+              <span className="font-mono opacity-80">{pc.gateway || '0.0.0.0'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="opacity-50">MAC</span>
+              <span className="font-mono opacity-30 text-[9px]">{pc.macAddress || 'N/A'}</span>
+            </div>
+            {pc.wifi && pc.wifi.enabled && (
+              <div className="pt-1 border-t border-slate-500/20">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="opacity-50">WiFi</span>
+                  <span className="text-[8px] font-bold text-purple-500">{t.active}</span>
+                </div>
+                <div className="flex gap-2 text-[9px]">
+                  <span className="opacity-50">SSID:</span>
+                  <span className="font-mono">{pc.wifi.ssid || '-'}</span>
+                </div>
+                <div className="flex gap-2 text-[9px]">
+                  <span className="opacity-50">{t.channelShort}</span>
+                  <span className="font-mono">{pc.wifi.channel || '-'}</span>
+                  <span className="opacity-50">|</span>
+                  <span className="font-mono uppercase">{pc.wifi.security || '-'}</span>
+                </div>
+                {(() => {
+                  const strength = getWirelessSignalStrength(pc, topologyDevices, deviceStates);
+                  const pctMap: Record<number, string> = { 0: '0%', 1: '1%', 2: '25%', 3: '50%', 4: '75%', 5: '100%' };
+                  const colorMap: Record<number, string> = { 0: 'text-slate-400', 1: 'text-rose-500', 2: 'text-orange-500', 3: 'text-yellow-500', 4: 'text-emerald-500', 5: 'text-emerald-500' };
+                  if (strength === 0) return null;
+                  return (
+                    <div className="flex justify-between items-center text-[9px] mt-0.5">
+                      <span className="opacity-50">{t.signal}</span>
+                      <span className={`font-bold ${colorMap[strength]}`}>{pctMap[strength]}</span>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+            {pc.services && (
+              <div className="pt-1 border-t border-slate-500/20">
+                <div className="flex justify-between items-center mb-0.5">
+                  <span className="opacity-50">{t.services}</span>
+                  <div className="flex flex-wrap gap-0.5">
+                    {pc.services.http?.enabled && (
+                      <span className="px-1 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[8px] font-bold border border-amber-500/20">HTTP</span>
+                    )}
+                    {pc.services.dns?.enabled && (
+                      <span className="px-1 py-0.5 rounded bg-blue-500/20 text-blue-500 text-[8px] font-bold border border-blue-500/20">DNS</span>
+                    )}
+                    {pc.services.dhcp?.enabled && (
+                      <span className="px-1 py-0.5 rounded bg-purple-500/20 text-purple-500 text-[8px] font-bold border border-purple-500/20">DHCP</span>
+                    )}
+                    {!pc.services.http?.enabled && !pc.services.dns?.enabled && !pc.services.dhcp?.enabled && (
+                      <span className="text-[8px] opacity-40 italic">{t.none}</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-          <div className="pt-1 border-t border-slate-500/20">
-            <div className="flex justify-between items-center">
-              <span className="opacity-50">{t.ipMode}</span>
-              <span className={`text-[8px] font-bold tracking-wider ${pc.ipConfigMode === 'dhcp' ? 'text-green-500' : 'opacity-60'}`}>
-                {pc.ipConfigMode === 'dhcp' ? 'DHCP' : t.static}
-              </span>
+            )}
+            <div className="pt-1 border-t border-slate-500/20">
+              <div className="flex justify-between items-center">
+                <span className="opacity-50">{t.ipMode}</span>
+                <span className={`text-[8px] font-bold tracking-wider ${pc.ipConfigMode === 'dhcp' ? 'text-green-500' : 'opacity-60'}`}>
+                  {pc.ipConfigMode === 'dhcp' ? 'DHCP' : t.static}
+                </span>
+              </div>
             </div>
           </div>
+          <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+            <button
+              onClick={() => {
+                handleDeviceDoubleClick(pc.type, pc.id);
+              }}
+              className={`w-full py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+            >
+              {t.openCMD}
+            </button>
+          </div>
         </div>
-        <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
-          <button
-            onClick={() => {
-              handleDeviceDoubleClick(pc.type, pc.id);
-            }}
-            className={`w-full py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-          >
-            {t.openCMD}
-          </button>
-        </div>
-      </div>
       </div>
     </div>
   );
@@ -5045,15 +5042,15 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
     .slice(0, 3);
 
   return (
-    <div 
+    <div
       className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDragging ? "cursor-grabbing" : "cursor-grab")}
-      style={{ 
-        bottom: `${position.y}px`, 
+      style={{
+        bottom: `${position.y}px`,
         right: `${position.x}px`,
         transition: isDragging ? 'none' : 'bottom 0.2s, right 0.2s'
       }}
     >
-      <div 
+      <div
         onMouseDown={handleDragStart}
         className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[280px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}
       >
@@ -5073,77 +5070,77 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
         </div>
         <div className="overflow-hidden">
           <div className="p-2 space-y-1 text-[10px]">
-          <div className="flex justify-between items-center">
-            <span className="opacity-50">{t.portsShort}</span>
-            <span className="font-mono">
-              <span className="text-green-500">{connectedPorts}</span>
-              <span className="opacity-50">/{totalPorts}</span>
-              <span className="ml-1 opacity-50">{t.connectedShort}</span>
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="opacity-50">{t.routing}</span>
-            <span className={`text-[8px] font-bold tracking-wider ${routerState?.ipRouting ? 'text-green-500' : 'text-slate-500'}`}>
-              {routerState?.ipRouting ? t.enabled : t.disabled}
-            </span>
-          </div>
-          {wifiEnabled && (
             <div className="flex justify-between items-center">
-              <span className="opacity-50 flex items-center gap-1">
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                  <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                  <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                  <line x1="12" y1="20" x2="12.01" y2="20" />
-                </svg>
-                WiFi
+              <span className="opacity-50">{t.portsShort}</span>
+              <span className="font-mono">
+                <span className="text-green-500">{connectedPorts}</span>
+                <span className="opacity-50">/{totalPorts}</span>
+                <span className="ml-1 opacity-50">{t.connectedShort}</span>
               </span>
-              <span className="text-cyan-500">{t.active}</span>
             </div>
-          )}
-          {wifiEnabled && wifiConfig?.ssid && (
-            <div className="pt-1 border-t border-slate-500/20 space-y-1">
-              <div className="flex gap-2 text-[9px]">
-                <span className="opacity-50">SSID:</span>
-                <span className="font-mono font-bold text-cyan-500">{wifiConfig.ssid}</span>
-              </div>
-              <div className="flex gap-2 text-[9px]">
-                <span className="opacity-50">{t.channelShort}:</span>
-                <span className="font-mono">{wifiConfig.channel || '2.4GHz'}</span>
-                <span className="opacity-50">|</span>
-                <span className="font-mono uppercase">{wifiConfig.security || 'open'}</span>
-              </div>
-            </div>
-          )}
-          {dhcpPools > 0 && (
             <div className="flex justify-between items-center">
-              <span className="opacity-50">DHCP</span>
-              <span className="font-bold text-purple-500">{dhcpPools} {t.pools}</span>
+              <span className="opacity-50">{t.routing}</span>
+              <span className={`text-[8px] font-bold tracking-wider ${routerState?.ipRouting ? 'text-green-500' : 'text-slate-500'}`}>
+                {routerState?.ipRouting ? t.enabled : t.disabled}
+              </span>
             </div>
-          )}
-          {ipAddresses.length > 0 && (
-            <div className="pt-1 border-t border-slate-500/20">
-              <div className="opacity-30 text-[8px] mb-0.5 uppercase font-bold tracking-tighter">IP Addresses</div>
-              {ipAddresses.map((addr: string, i: number) => (
-                <div key={i} className="font-mono text-[9px] opacity-70 truncate">
-                  {addr}
+            {wifiEnabled && (
+              <div className="flex justify-between items-center">
+                <span className="opacity-50 flex items-center gap-1">
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                    <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                    <line x1="12" y1="20" x2="12.01" y2="20" />
+                  </svg>
+                  WiFi
+                </span>
+                <span className="text-cyan-500">{t.active}</span>
+              </div>
+            )}
+            {wifiEnabled && wifiConfig?.ssid && (
+              <div className="pt-1 border-t border-slate-500/20 space-y-1">
+                <div className="flex gap-2 text-[9px]">
+                  <span className="opacity-50">SSID:</span>
+                  <span className="font-mono font-bold text-cyan-500">{wifiConfig.ssid}</span>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
-          <button
-            onClick={() => {
-              handleDeviceDoubleClick(router.type, router.id);
-            }}
-            className={`w-full py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
-          >
-            {t.openCLI}
-          </button>
+                <div className="flex gap-2 text-[9px]">
+                  <span className="opacity-50">{t.channelShort}:</span>
+                  <span className="font-mono">{wifiConfig.channel || '2.4GHz'}</span>
+                  <span className="opacity-50">|</span>
+                  <span className="font-mono uppercase">{wifiConfig.security || 'open'}</span>
+                </div>
+              </div>
+            )}
+            {dhcpPools > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="opacity-50">DHCP</span>
+                <span className="font-bold text-purple-500">{dhcpPools} {t.pools}</span>
+              </div>
+            )}
+            {ipAddresses.length > 0 && (
+              <div className="pt-1 border-t border-slate-500/20">
+                <div className="opacity-30 text-[8px] mb-0.5 uppercase font-bold tracking-tighter">IP Addresses</div>
+                {ipAddresses.map((addr: string, i: number) => (
+                  <div key={i} className="font-mono text-[9px] opacity-70 truncate">
+                    {addr}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+            <button
+              onClick={() => {
+                handleDeviceDoubleClick(router.type, router.id);
+              }}
+              className={`w-full py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+            >
+              {t.openCLI}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 }
