@@ -3,6 +3,7 @@
 import type { CommandHandler } from './commandTypes';
 import { buildRunningConfig } from './configBuilder';
 import { canAssignIPToPhysicalPort } from '../switchModels';
+import { calculatePVST } from './showCommands';
 
 // Global config (hostname, vlan, vtp, spanning-tree, security, ip domain-name, etc.)
 
@@ -1015,12 +1016,21 @@ function cmdNoSpanningTree(state: any, input: string, ctx: any): any {
       }
     };
 
+    const updatedCurrentState = {
+      ...state,
+      spanningTreeVlans: updatedVlans
+    };
+
+    const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId);
+    const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId);
+
     return {
       success: true,
       output: lang === 'tr' ?
         `Spanning-tree VLAN ${vlanId} devre disi birakildi` :
         `Spanning-tree disabled on VLAN ${vlanId}`,
-      newState: { spanningTreeVlans: updatedVlans }
+      newState: myUpdatedState || { spanningTreeVlans: updatedVlans },
+      updatedDeviceStates: allUpdatedStates
     };
   }
 
@@ -1242,12 +1252,21 @@ function cmdSpanningTreeVlan(state: any, input: string, ctx: any): any {
     }
   };
 
+  const updatedCurrentState = {
+    ...state,
+    spanningTreeVlans: updatedVlans
+  };
+
+  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId);
+  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId);
+
   return {
     success: true,
     output: lang === 'tr' ?
       `Spanning-tree VLAN ${vlanId} ${subCommand} yapılandırıldı` :
       `Spanning-tree VLAN ${vlanId} ${subCommand} configured`,
-    newState: { spanningTreeVlans: updatedVlans }
+    newState: myUpdatedState || { spanningTreeVlans: updatedVlans },
+    updatedDeviceStates: allUpdatedStates
   };
 }
 

@@ -65,6 +65,10 @@ export interface Port {
     state?: 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled';
     portfast?: boolean;
     bpduguard?: boolean;
+    instances?: Record<number, {
+      role?: 'root' | 'designated' | 'alternate' | 'backup' | 'disabled';
+      state?: 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled';
+    }>;
   };
 }
 

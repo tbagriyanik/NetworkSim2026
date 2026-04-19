@@ -1107,7 +1107,8 @@ function getPortNumber(portId: string): number {
  */
 export function calculateSTPState(
   state: any,
-  ctx: any
+  ctx: any,
+  vlanId: number = 1
 ): Map<string, { role: string; state: string }> {
   const stpState = new Map<string, { role: string; state: string }>();
 
@@ -1157,9 +1158,10 @@ export function calculateSTPState(
   // Consider ALL switches in topology (not just directly connected) - simulates BPDU propagation
   const myMac = state.macAddress || 'FFFF.FFFF.FFFF';
   // Use VLAN-based priority if available, otherwise use global priority
+  const vlanStr = String(vlanId);
   const spanningTreeVlans = state.spanningTreeVlans || {};
-  const vlan1Priority = spanningTreeVlans['1']?.priority ? parseInt(spanningTreeVlans['1'].priority) : null;
-  const myPriority = vlan1Priority || state.spanningTreePriority || 32768;
+  const vlanPriority = spanningTreeVlans[vlanStr]?.priority ? parseInt(spanningTreeVlans[vlanStr].priority) : (state.spanningTreePriority || 32768);
+  const myPriority = vlanPriority;
   let lowestPriority = myPriority;
   let lowestMac = myMac;
   let rootBridgeId = sourceDeviceId;
@@ -1171,11 +1173,12 @@ export function calculateSTPState(
   devices.forEach((d: any) => {
     if (d.type === 'switchL2' || d.type === 'switchL3') {
       const swState = deviceStates.get?.(d.id);
-      const swVlan1Priority = swState?.spanningTreeVlans?.['1']?.priority ? parseInt(swState.spanningTreeVlans['1'].priority) : null;
+      const swSpanningTreeVlans = swState?.spanningTreeVlans || {};
+      const swVlanPriority = swSpanningTreeVlans[vlanStr]?.priority ? parseInt(swSpanningTreeVlans[vlanStr].priority) : (swState?.spanningTreePriority || 32768);
       allSwitches.push({
         deviceId: d.id,
         macAddress: swState?.macAddress || d.macAddress || 'FFFF.FFFF.FFFF',
-        priority: swVlan1Priority || swState?.spanningTreePriority || 32768
+        priority: swVlanPriority
       });
     }
   });
@@ -1354,6 +1357,15 @@ export function calculateSTPState(
       return;
     }
 
+    // PVST: Only process ports that are members of this VLAN
+    const isTrunk = port.mode === 'trunk';
+    const isAccess = port.mode === 'access' || !port.mode;
+    const isVlanMember = isTrunk || (isAccess && Number(port.accessVlan || port.vlan || 1) === Number(vlanId));
+    
+    if (!isVlanMember) {
+      return;
+    }
+
     let role: string;
     let portState: string;
     const isPortfast = port.spanningTree?.portfast || false;
@@ -1453,6 +1465,104 @@ export function calculateSTPState(
   });
 
   return stpState;
+}
+
+/**
+ * Perform PVST (Per-VLAN Spanning Tree) calculation for all devices in topology.
+ * Returns a map of updated device states.
+ */
+export function calculatePVST(
+  updatedCurrentState: any,
+  ctx: any,
+  sourceDeviceId: string
+): Map<string, any> {
+  const deviceStates = ctx.deviceStates || new Map();
+  const allUpdatedStates = new Map<string, any>();
+  const devices = ctx.devices || [];
+
+  // Update current device state in our working set
+  const workingDeviceStates = new Map(deviceStates);
+  workingDeviceStates.set(sourceDeviceId, updatedCurrentState);
+
+  // We need to calculate STP for all switch devices
+  workingDeviceStates.forEach((deviceState: any, deviceId: string) => {
+    const device = devices.find((d: any) => d.id === deviceId);
+    if (!device || (device.type !== 'switchL2' && device.type !== 'switchL3')) {
+      allUpdatedStates.set(deviceId, deviceState);
+      return;
+    }
+
+    const updatedPorts = { ...deviceState.ports };
+    
+    // Clear/Initialize STP instances for each port
+    Object.keys(updatedPorts).forEach(portId => {
+      const port = updatedPorts[portId];
+      // Skip VLAN and Console interfaces
+      if (portId.toLowerCase().startsWith('vlan') || portId.toLowerCase().startsWith('console')) {
+        return;
+      }
+      
+      if (port.spanningTree) {
+        updatedPorts[portId] = {
+          ...port,
+          spanningTree: {
+            ...port.spanningTree,
+            instances: {} // Reset instances
+          }
+        };
+      } else {
+        updatedPorts[portId] = {
+          ...port,
+          spanningTree: {
+            instances: {}
+          }
+        };
+      }
+    });
+
+    // Each switch calculates STP for all VLANs it has in its database
+    const vlanIds = Object.keys(deviceState.vlans || {}).map(Number);
+    if (vlanIds.length === 0) vlanIds.push(1); // Always at least VLAN 1
+
+    vlanIds.forEach(vlanId => {
+      // Calculate STP for this device for this specific VLAN
+      const stpResult = calculateSTPState(deviceState, { ...ctx, deviceStates: workingDeviceStates, sourceDeviceId: deviceId }, vlanId);
+      
+      stpResult.forEach((stpInfo: any, portId: string) => {
+        if (updatedPorts[portId]) {
+          const stateMap: Record<string, 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled'> = {
+            'FWD': 'forwarding',
+            'BLK': 'blocking',
+            'LIS': 'listening',
+            'LRN': 'learning',
+            'DIS': 'disabled'
+          };
+          
+          const portStpState = stateMap[stpInfo.state] || 'forwarding';
+          
+          if (!updatedPorts[portId].spanningTree.instances) {
+             updatedPorts[portId].spanningTree.instances = {};
+          }
+          
+          updatedPorts[portId].spanningTree.instances[vlanId] = {
+            role: stpInfo.role,
+            state: portStpState
+          };
+          
+          // For backward compatibility (especially for UI port indicators), use VLAN 1
+          if (vlanId === 1) {
+            updatedPorts[portId].spanningTree.role = stpInfo.role;
+            updatedPorts[portId].spanningTree.state = portStpState;
+            updatedPorts[portId].status = updatedPorts[portId].shutdown ? 'disabled' : (stpInfo.state === 'BLK' ? 'blocked' : 'connected');
+          }
+        }
+      });
+    });
+
+    allUpdatedStates.set(deviceId, { ...deviceState, ports: updatedPorts });
+  });
+
+  return allUpdatedStates;
 }
 
 /** Show Spanning Tree

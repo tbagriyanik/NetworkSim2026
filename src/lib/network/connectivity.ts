@@ -64,7 +64,13 @@ const getVlanSpecificSTPBlocking = (
   // If port is shutdown, it's not blocking (it's just down)
   if (port.shutdown) return false;
 
-  // Read the officially calculated STP state from the port
+  // First try to read the per-VLAN spanning tree instance (PVST)
+  const vlanStp = port.spanningTree?.instances?.[vlanId];
+  if (vlanStp) {
+    return vlanStp.state === 'blocking';
+  }
+
+  // Fallback to the default (typically VLAN 1) calculated state
   return port.spanningTree?.state === 'blocking';
 };
 

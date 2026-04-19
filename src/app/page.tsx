@@ -15,7 +15,7 @@ import { getPrompt } from '@/lib/network/executor';
 import { formatErrorForUser } from '@/lib/errors/errorHandler';
 import { checkDeviceConnectivity, getWirelessSignalStrength } from '@/lib/network/connectivity';
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
-import { calculateSTPState } from '@/lib/network/core/showCommands';
+import { calculateSTPState, calculatePVST } from '@/lib/network/core/showCommands';
 import type { TerminalOutput } from '@/components/network/Terminal';
 import { BOOT_PROGRESS_MARKER } from '@/components/network/Terminal';
 import {
@@ -2893,61 +2893,24 @@ ${state.bannerMOTD}
     const handleSTPRecalculation = (event: Event) => {
       const { topologyDevices: updatedDevices, topologyConnections: updatedConnections } = (event as CustomEvent).detail;
       if (updatedDevices && updatedConnections) {
-        // Update STP for all switches
-        const stpUpdatedStates = new Map(deviceStates);
-        updatedDevices.forEach((device: any) => {
-          if (device.type !== 'switchL2' && device.type !== 'switchL3') return;
+        // Create context for STP calculation
+        const ctx = {
+          connections: updatedConnections,
+          devices: updatedDevices,
+          deviceStates: deviceStates
+        };
 
-          const state = stpUpdatedStates.get(device.id);
-          if (!state) return;
+        // Perform PVST calculation for all devices
+        // We pick an arbitrary device as source for the calculation context, 
+        // calculatePVST handles the global update.
+        const firstSwitch = updatedDevices.find((d: any) => d.type === 'switchL2' || d.type === 'switchL3');
+        if (!firstSwitch) return;
 
-          // Create context for STP calculation
-          const ctx = {
-            connections: updatedConnections,
-            sourceDeviceId: device.id,
-            devices: updatedDevices,
-            deviceStates: stpUpdatedStates
-          };
+        const firstSwitchState = deviceStates.get(firstSwitch.id);
+        if (!firstSwitchState) return;
 
-          // Calculate STP state
-          const stpState = calculateSTPState(state, ctx);
-
-          // Update port spanningTree properties
-          const updatedPorts = { ...state.ports };
-          stpState.forEach((stpInfo: any, portId: string) => {
-            const port = updatedPorts[portId];
-            if (port) {
-              const roleMap: Record<string, 'root' | 'designated' | 'alternate' | 'backup' | 'disabled'> = {
-                'Root': 'root',
-                'Desg': 'designated',
-                'Altn': 'alternate',
-                'Back': 'backup',
-                'Disa': 'disabled'
-              };
-              const stateMap: Record<string, 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled'> = {
-                'FWD': 'forwarding',
-                'BLK': 'blocking',
-                'LIS': 'listening',
-                'LRN': 'learning',
-                'DIS': 'disabled'
-              };
-
-              updatedPorts[portId] = {
-                ...port,
-                spanningTree: {
-                  ...(port.spanningTree || {}),
-                  role: roleMap[stpInfo.role] || 'designated',
-                  state: stateMap[stpInfo.state] || 'forwarding'
-                },
-                status: port.shutdown ? 'disabled' : (stpInfo.state === 'BLK' ? 'blocked' : 'connected')
-              };
-            }
-          });
-
-          stpUpdatedStates.set(device.id, { ...state, ports: updatedPorts });
-        });
-
-        setDeviceStates(stpUpdatedStates);
+        const allUpdatedStates = calculatePVST(firstSwitchState, ctx, firstSwitch.id);
+        setDeviceStates(allUpdatedStates);
       }
     };
     window.addEventListener('stp-recalculation-needed', handleSTPRecalculation as EventListener);

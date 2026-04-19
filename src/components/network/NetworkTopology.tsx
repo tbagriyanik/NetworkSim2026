@@ -3265,6 +3265,10 @@ export function NetworkTopology({
       cancelAnimationFrame(pingAnimationRef.current);
     }
 
+    // Clear previous ping state to avoid conflicts
+    setPingAnimation(null);
+    setErrorToast(null);
+
     const getDevicePrimaryIp = (deviceId: string): string => {
       const topologyIp = devices.find(d => d.id === deviceId)?.ip;
       if (topologyIp) return topologyIp;
