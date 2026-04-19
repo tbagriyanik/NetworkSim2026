@@ -1169,12 +1169,12 @@ function cmdIpArpInspection(state: any, input: string, ctx: any): any {
 function cmdSpanningTreeVlan(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') return { success: false, error: '% Invalid command at this mode' };
 
-  const match = input.match(/^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|priorty|root)\s*(\d*))?$/i);
+  const match = input.match(/^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|priorty|root)(?:\s+(primary|secondary|\d+))?)?$/i);
   if (!match) return { success: false, error: '% Invalid spanning-tree vlan command' };
 
   const vlanId = parseInt(match[1]);
   let subCommand = match[2]; // 'priority', 'priorty' (typo), or 'root' or undefined
-  const value = match[3]; // priority value or empty
+  const value = match[3]; // priority value, 'primary', 'secondary', or undefined
 
   // Fix typo: treat 'priorty' as 'priority'
   if (subCommand === 'priorty') {
@@ -1219,12 +1219,26 @@ function cmdSpanningTreeVlan(state: any, input: string, ctx: any): any {
     }
   }
 
+  // Convert root primary/secondary to priority values
+  let finalValue = value;
+  if (subCommand === 'root') {
+    if (value === 'primary') {
+      finalValue = '24576';
+    } else if (value === 'secondary') {
+      finalValue = '28672';
+    } else if (!value) {
+      finalValue = '24576'; // Default to primary if no value specified
+    }
+  } else if (subCommand === 'priority' && !value) {
+    finalValue = '32768'; // Default priority
+  }
+
   const updatedVlans = {
     ...spanningTreeVlans,
     [vlanId]: {
       ...spanningTreeVlans[vlanId],
       enabled: true,
-      [subCommand]: value || (subCommand === 'root' ? 'primary' : '32768')
+      priority: subCommand === 'root' || subCommand === 'priority' ? finalValue : value
     }
   };
 

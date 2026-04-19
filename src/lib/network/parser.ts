@@ -369,7 +369,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'spanning-tree vlan': {
-    pattern: /^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|priorty|root)\s*(.*))?$/i,
+    pattern: /^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|priorty|root)(?:\s+(primary|secondary|\d+))?)?$/i,
     modes: ['config'],
     minArgs: 1,
     maxArgs: 4
