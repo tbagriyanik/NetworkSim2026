@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Cable, Strikethrough } from 'lucide-react';
 import { CableType, CableInfo, getCableTypeLabel } from '@/lib/network/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -109,13 +109,26 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
                   <button
                     key={type}
                     onClick={() => setSelectedCableType(type)}
-                    className={`relative px-3 py-1.5 text-[10px] font-bold tracking-wide transition-all duration-200 ${selectedCableType === type
+                    className={`relative flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold tracking-wide transition-all duration-200 ${selectedCableType === type
                       ? `${CABLE_COLORS[type].bg} text-white shadow-md -translate-y-0.5`
                       : isDark
                         ? 'text-slate-400 hover:text-white hover:bg-slate-700 rounded-md'
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-md'
                       } ${index === 0 ? 'rounded-l-md' : index === 3 ? 'rounded-r-md' : 'rounded-none'}`}
                   >
+                    {type === 'straight' ? (
+                      <Cable className="w-4 h-4" />
+                    ) : type === 'crossover' ? (
+                      <Strikethrough className="w-4 h-4" />
+                    ) : type === 'console' ? (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                      </svg>
+                    ) : (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                      </svg>
+                    )}
                     {typeLabel}
                   </button>
                 );

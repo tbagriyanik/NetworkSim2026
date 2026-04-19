@@ -161,18 +161,6 @@ export function ModernPanel({
                                 {isCollapsed ? '▼' : '▲'}
                             </button>
                         )}
-                        {onClose && (
-                            <button
-                                onClick={onClose}
-                                className={cn(
-                                    "p-1 hover:bg-accent rounded",
-                                    isMobile && "p-2 min-w-[36px] min-h-[36px]"
-                                )}
-                                aria-label="Close"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        )}
                     </div>
                 </div>
             )}

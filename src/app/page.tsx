@@ -182,7 +182,6 @@ export default function Home() {
   const [projectSearchQuery, setProjectSearchQuery] = useState('');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
-  const [isTopologyFullscreen, setIsTopologyFullscreen] = useState(false);
   const [cableInfo, setCableInfo] = useState<CableInfo>({
     connected: true,
     cableType: 'straight',
@@ -735,11 +734,6 @@ export default function Home() {
     handleResizeStart,
   } = useModalDragResize();
   const isTasksNarrow = tasksModalSize.width < 1100;
-
-  // Local state for maximize/restore
-  const [isTasksMaximized, setIsTasksMaximized] = useState(false);
-  const [isCliMaximized, setIsCliMaximized] = useState(false);
-  const [isPcMaximized, setIsPcMaximized] = useState(false);
 
   // Get current state helper
   const getCurrentState = useCallback((): ProjectState => ({
@@ -2061,7 +2055,6 @@ ${state.bannerMOTD}
   }, [hasUnsavedChanges, handleSaveProject, setSaveDialog, setConfirmDialog, t.unsavedChangesConfirm, t.newProjectConfirm]);
 
   function handleNewProject() {
-    if (isTopologyFullscreen) return; // Prevent new project in fullscreen
     setProjectSearchQuery(''); // Reset search when opening new project dialog
     setShowProjectPicker(true);
   }
@@ -2772,14 +2765,13 @@ ${state.bannerMOTD}
         const key = e.key.toLowerCase();
         if (key === 'n') {
           e.preventDefault();
-          if (!isTopologyFullscreen) {
-            handleNewProject();
-          }
+          handleNewProject();
         }
       }
       if (e.key === 'Tab') {
-        // Tab key navigation in topology view
-        if (activeTab === 'topology' && topologyDevices.length > 0) {
+        // Tab key navigation - only cycle devices in topology if no panel is open
+        // If a panel is open (PC panel, Router panel, etc.), let the panel handle Tab navigation
+        if (activeTab === 'topology' && topologyDevices.length > 0 && !showPCPanel && !showRouterPanel && !showTerminalModal) {
           e.preventDefault();
           const currentIndex = topologyDevices.findIndex(d => d.id === activeDeviceId);
           const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % topologyDevices.length;
@@ -2919,7 +2911,7 @@ ${state.bannerMOTD}
       window.removeEventListener('stp-recalculation-needed', handleSTPRecalculation);
       window.removeEventListener('beforeprint', handleBeforePrint);
     };
-  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel, showProjectPicker, handleSaveProject, handleNewProject, handleUndo, handleRedo, tabs, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowProjectPicker, isTopologyFullscreen, setActiveTab, activeTab, topologyDevices, topologyConnections, deviceStates, setDeviceStates, handleDeviceDoubleClick, handleRefreshNetwork]);
+  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel, showProjectPicker, handleSaveProject, handleNewProject, handleUndo, handleRedo, tabs, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowProjectPicker, setActiveTab, activeTab, topologyDevices, topologyConnections, deviceStates, setDeviceStates, handleDeviceDoubleClick, handleRefreshNetwork]);
 
   // Load project from JSON file
   const handleLoadProject = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -3758,25 +3750,7 @@ ${state.bannerMOTD}
                       >
                         <TerminalIcon className="h-5 w-5" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
-                        onClick={() => {
-                          // Toggle maximize
-                          if (typeof window === 'undefined') return;
-                          const isMaximized = tasksModalSize.width >= window.innerWidth - 40;
-                          if (isMaximized) {
-                            setTasksModalSize({ width: 1200, height: 700 });
-                            setTasksModalPosition({ x: (window.innerWidth - 1200) / 2, y: (window.innerHeight - 700) / 2 });
-                          } else {
-                            setTasksModalSize({ width: window.innerWidth - 40, height: window.innerHeight - 40 });
-                            setTasksModalPosition({ x: 20, y: 20 });
-                          }
-                        }}
-                      >
-                        <Square className="h-3 w-3" />
-                      </Button>
+                     
                       <Button
                         variant="ghost"
                         size="icon"
@@ -3917,25 +3891,7 @@ ${state.bannerMOTD}
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
-                      onClick={() => {
-                        // Toggle maximize
-                        if (typeof window === 'undefined') return;
-                        const isMaximized = pcModalSize.width >= window.innerWidth - 40;
-                        if (isMaximized) {
-                          setPcModalSize({ width: 800, height: 600 });
-                          setPcModalPosition({ x: (window.innerWidth - 800) / 2, y: (window.innerHeight - 600) / 2 });
-                        } else {
-                          setPcModalSize({ width: window.innerWidth - 40, height: window.innerHeight - 40 });
-                          setPcModalPosition({ x: 20, y: 20 });
-                        }
-                      }}
-                    >
-                      <Square className="h-3 w-3" />
-                    </Button>
+              
                     <Button
                       variant="ghost"
                       size="icon"
@@ -4039,25 +3995,7 @@ ${state.bannerMOTD}
                       >
                         <ShieldCheck className="h-3 w-3" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
-                        onClick={() => {
-                          // Toggle maximize
-                          if (typeof window === 'undefined') return;
-                          const isMaximized = cliModalSize.width >= window.innerWidth - 40;
-                          if (isMaximized) {
-                            setCliModalSize({ width: 1200, height: 700 });
-                            setCliModalPosition({ x: (window.innerWidth - 1200) / 2, y: (window.innerHeight - 700) / 2 });
-                          } else {
-                            setCliModalSize({ width: window.innerWidth - 40, height: window.innerHeight - 40 });
-                            setCliModalPosition({ x: 20, y: 20 });
-                          }
-                        }}
-                      >
-                        <Square className="h-3 w-3" />
-                      </Button>
+                     
                       <Button
                         variant="ghost"
                         size="icon"
@@ -4313,7 +4251,7 @@ ${state.bannerMOTD}
                               }
                             }}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
                             </svg>
                           </Button>
@@ -4607,23 +4545,6 @@ ${state.bannerMOTD}
                       </TooltipTrigger>
                       <TooltipContent>{t.resetView}</TooltipContent>
                     </Tooltip>
-
-                    {/* Fullscreen Toggle Button */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-slate-500 hover:bg-slate-500/10"
-                          onClick={() => setIsTopologyFullscreen(!isTopologyFullscreen)}
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                          </svg>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{isTopologyFullscreen ? (t.exit) : (t.fullScreenMode)}</TooltipContent>
-                    </Tooltip>
                   </div>
                 )}
                 {/* Network Topology fills remaining space */}
@@ -4643,8 +4564,6 @@ ${state.bannerMOTD}
                     isActive={activeTab === 'topology'}
                     activeDeviceId={activeDeviceId}
                     deviceStates={deviceStates}
-                    isFullscreen={isTopologyFullscreen}
-                    onFullscreenChange={setIsTopologyFullscreen}
                     zoom={zoom}
                     onZoomChange={setZoom}
                     pan={pan}
@@ -4881,13 +4800,6 @@ interface PCInfoPopoverProps {
 }
 
 function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleClick, topologyDevices, deviceStates }: PCInfoPopoverProps) {
-  const [isMinimized, setIsMinimized] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('pc-info-minimized') === 'true';
-    }
-    return false;
-  });
-
   // Draggable position state
   const [position, setPosition] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -4932,9 +4844,6 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
   }, [isDragging, position]);
 
-  useEffect(() => {
-    localStorage.setItem('pc-info-minimized', isMinimized.toString());
-  }, [isMinimized]);
   return (
     <div 
       className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDragging ? "cursor-grabbing" : "cursor-grab")}
@@ -4954,21 +4863,15 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
             <Monitor className="w-3.5 h-3.5 text-blue-500" />
             <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{pc.name || pc.id}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setIsMinimized(!isMinimized)}
-              className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
-              title={isMinimized ? (language === 'tr' ? 'Genişlet' : 'Expand') : (language === 'tr' ? 'Küçült' : 'Minimize')}
-            >
-              {isMinimized ? (
-                <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronDown className="w-3 h-3" />
-              )}
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+            title={language === 'tr' ? 'Kapat' : 'Close'}
+          >
+            <X className="w-3 h-3" />
+          </button>
         </div>
-        <div className={cn("overflow-hidden transition-all duration-300", isMinimized ? "max-h-0 opacity-0" : "max-h-[800px] opacity-100")}>
+        <div className="overflow-hidden">
           <div className="p-2 space-y-1 text-[10px]">
           <div className="flex justify-between items-center">
             <span className="opacity-50">IP</span>
@@ -5074,13 +4977,6 @@ interface RouterInfoPopoverProps {
 }
 
 function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, handleDeviceDoubleClick, topologyConnections }: RouterInfoPopoverProps) {
-  const [isMinimized, setIsMinimized] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('router-info-minimized') === 'true';
-    }
-    return false;
-  });
-
   // Draggable position state
   const [position, setPosition] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -5125,9 +5021,6 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
   }, [isDragging, position]);
 
-  useEffect(() => {
-    localStorage.setItem('router-info-minimized', isMinimized.toString());
-  }, [isMinimized]);
   // Get port information
   const ports = routerState?.ports ? Object.values(routerState.ports) : (router.ports || []);
   // Router has 6 ports: 1 console + 4 GigabitEthernet (gi0/0-gi0/3) + 1 WLAN0
@@ -5170,21 +5063,15 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
             <RouterIcon className="w-3.5 h-3.5 text-purple-500" />
             <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setIsMinimized(!isMinimized)}
-              className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
-              title={isMinimized ? (language === 'tr' ? 'Genişlet' : 'Expand') : (language === 'tr' ? 'Küçült' : 'Minimize')}
-            >
-              {isMinimized ? (
-                <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronDown className="w-3 h-3" />
-              )}
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+            title={language === 'tr' ? 'Kapat' : 'Close'}
+          >
+            <X className="w-3 h-3" />
+          </button>
         </div>
-        <div className={cn("overflow-hidden transition-all duration-300", isMinimized ? "max-h-0 opacity-0" : "max-h-[800px] opacity-100")}>
+        <div className="overflow-hidden">
           <div className="p-2 space-y-1 text-[10px]">
           <div className="flex justify-between items-center">
             <span className="opacity-50">{t.portsShort}</span>

@@ -3220,6 +3220,14 @@ export function PCPanel({
 
     // Escape cancels password/confirm and returns to normal input
     if (e.key === 'Escape') {
+      // First check if HTTP window is open and close it
+      if (httpAppContent) {
+        e.preventDefault();
+        goHome();
+        setHttpAppContent(null);
+        setHttpAppDeviceId(null);
+        return;
+      }
       if (showAutocomplete) {
         e.preventDefault();
         setShowAutocomplete(false);
@@ -3641,20 +3649,6 @@ export function PCPanel({
             <div className={`hidden sm:block ml-2 text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
               {formatTime(currentTime)}
             </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onClose}
-                  className={`ml-2 h-6 w-6 rounded-md ui-hover-surface ${isDark ? 'text-slate-300 hover:text-rose-400' : 'text-slate-600 hover:text-rose-600'}`}
-                  aria-label={language === 'tr' ? 'Kapat' : 'Close'}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{language === 'tr' ? 'Kapat' : 'Close'}</TooltipContent>
-            </Tooltip>
           </div>
         </div>
 

@@ -558,8 +558,7 @@ export interface Translations {
   disabled: string;
   pools: string;
   routerInfoPanel: string;
-  expand: string;
-  minimize: string;
+  expand: string; 
   overview: string;
   deviceInformation: string;
   ipRouting: string;
@@ -1098,7 +1097,6 @@ const translations: Record<Language, Translations> = {
     pools: 'Havuz',
     routerInfoPanel: 'Router Bilgi Paneli',
     expand: 'Genişlet',
-    minimize: 'Küçült',
     overview: 'Genel Bakış',
     deviceInformation: 'Cihaz Bilgileri',
     ipRouting: 'IP Yönlendirme',
@@ -1635,7 +1633,6 @@ const translations: Record<Language, Translations> = {
     pools: 'Pools',
     routerInfoPanel: 'Router Information Panel',
     expand: 'Expand',
-    minimize: 'Minimize',
     overview: 'Overview',
     deviceInformation: 'Device Information',
     ipRouting: 'IP Routing',
