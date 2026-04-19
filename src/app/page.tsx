@@ -383,7 +383,7 @@ export default function Home() {
   const setDeviceTabWithHistory = useCallback((tab: TabType, deviceId: string, deviceType: DeviceType) => {
     // Ensure PC outputs are generated before showing terminal
     if (deviceType === 'pc' && tab === 'cmd') {
-      getOrCreatePCOutputs(deviceId);
+      getOrCreatePCOutputs(deviceId, topologyDevices);
     }
 
     if (isInternalNavRef.current) {
@@ -1586,7 +1586,7 @@ ${state.bannerMOTD}
       action: 'reset',
       onConfirm: () => {
         setConfirmDialog(null);
-        resetAll();
+        resetAll(topologyDevices);
         window.location.reload();
       }
     });

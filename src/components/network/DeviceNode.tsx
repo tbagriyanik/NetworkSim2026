@@ -60,15 +60,17 @@ export const DeviceNode = memo(function DeviceNode({
       onTouchEnd={onTouchEnd}
       style={{ cursor: 'move', touchAction: 'none', outline: 'none' }}
     >
-      {/* Invisible touch target area for better mobile interaction */}
-      <rect 
-        x={-20} 
-        y={-20} 
-        width={80} 
-        height={80} 
-        fill="transparent" 
-        pointerEvents="all" 
-      />
+      {/* Invisible touch target area for better mobile interaction - only when selected/dragging 
+      {(isSelected || isDragging) && (
+        <rect 
+          x={-20} 
+          y={-20} 
+          width={80} 
+          height={80} 
+          fill="transparent" 
+          pointerEvents="all" 
+        />
+      )}*/}
       {renderDeviceContent(device, isDragging)}
     </g>
   );

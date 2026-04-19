@@ -331,12 +331,13 @@ export function useDeviceManager() {
     return outputs;
   }, [deviceOutputs, deviceStates, getBootMessage]);
 
-  const getOrCreatePCOutputs = useCallback((deviceId: string): PCOutputLine[] => {
+  const getOrCreatePCOutputs = useCallback((deviceId: string, topologyDevices?: CanvasDevice[]): PCOutputLine[] => {
     let outputs = pcOutputs.get(deviceId);
     if (!outputs) {
+      const device = topologyDevices?.find(d => d.id === deviceId);
       outputs = [
         { id: '0', type: 'output', content: 'OS [Version 10.0.26200.8037]\n(c) OS Corporation. All rights reserved.\n' },
-        { id: '1', type: 'output', content: '\nEthernet adapter Ethernet connection:\n' }
+        { id: '1', type: 'output', content: '\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ' + (device?.ip || '0.0.0.0') + '\n   Subnet Mask . . . . . . . . . . : ' + (device?.subnet || '255.255.255.0') + '\n   Default Gateway . . . . . . . . . : ' + (device?.gateway || '0.0.0.0') + '\n' }
       ];
       setPcOutputs(prev => new Map(prev).set(deviceId, outputs!));
     }
@@ -805,12 +806,13 @@ export function useDeviceManager() {
     }
   };
 
-  const resetAll = () => {
+  const resetAll = (topologyDevices?: CanvasDevice[]) => {
+    const pc1Device = topologyDevices?.find(d => d.id === 'pc-1');
     setDeviceStates(new Map([['switch-1', createInitialState()]]));
     setDeviceOutputs(new Map());
     setPcOutputs(new Map([['pc-1', [
       { id: '0', type: 'output', content: 'OS [Version 10.0.26200.8037]\n(c) OS Corporation. All rights reserved.\n' },
-      { id: '1', type: 'output', content: '\nEthernet adapter Ethernet connection:\n' }
+      { id: '1', type: 'output', content: '\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ' + (pc1Device?.ip || '0.0.0.0') + '\n   Subnet Mask . . . . . . . . . . : ' + (pc1Device?.subnet || '255.255.255.0') + '\n   Default Gateway . . . . . . . . . : ' + (pc1Device?.gateway || '0.0.0.0') + '\n' }
     ]]]));
   };
 
