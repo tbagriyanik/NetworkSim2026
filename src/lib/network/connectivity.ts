@@ -70,8 +70,15 @@ const getVlanSpecificSTPBlocking = (
     return vlanStp.state === 'blocking';
   }
 
-  // Fallback to the default (typically VLAN 1) calculated state
-  return port.spanningTree?.state === 'blocking';
+  // If no VLAN-specific instance is defined, check if this is a trunk port
+  // For trunk ports without VLAN-specific STP data, assume no blocking (let the frame pass)
+  if (port.mode === 'trunk') {
+    return false;
+  }
+
+  // No VLAN-specific STP instance - do NOT fall back to VLAN 1 (would cause wrong path selection)
+  // Return false to allow pathfinding to continue without blocking
+  return false;
 };
 
 const getPortNumber = (portId: string): number => {

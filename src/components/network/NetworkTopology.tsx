@@ -554,6 +554,7 @@ export function NetworkTopology({
     return 'pc';
   }, []);
   const pingAnimationRef = useRef<number | null>(null);
+  const pingCleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Added refs moved from below to avoid TDZ and sync issues
   const noteCounterRef = useRef<number>(0);
@@ -3265,6 +3266,12 @@ export function NetworkTopology({
       cancelAnimationFrame(pingAnimationRef.current);
     }
 
+    // Cancel any existing cleanup timeout to prevent it from cancelling the new ping
+    if (pingCleanupTimeoutRef.current) {
+      clearTimeout(pingCleanupTimeoutRef.current);
+      pingCleanupTimeoutRef.current = null;
+    }
+
     // Clear previous ping state to avoid conflicts
     setPingAnimation(null);
     setErrorToast(null);
@@ -3314,7 +3321,7 @@ export function NetworkTopology({
         details: errorMessage
       });
 
-      setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000);
+      pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000);
       return;
     }
 
@@ -3345,7 +3352,7 @@ export function NetworkTopology({
         details: errorMessage
       });
 
-      setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000);
+      pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000);
       return;
     }
 
@@ -3372,7 +3379,7 @@ export function NetworkTopology({
         details: 'Fiziksel bağlantı yok'
       });
 
-      setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000);
+      pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000);
       return;
     }
 
@@ -3499,7 +3506,7 @@ export function NetworkTopology({
               hopCount: prev.hopCount + currentSegmentHopCountIncrement // Update hopCount with increment from last segment
             };
           });
-          setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000); // Clear animation after delay
+          pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000); // Clear animation after delay
         }
       }
     };

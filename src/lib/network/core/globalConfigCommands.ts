@@ -307,14 +307,21 @@ function cmdVlan(state: any, input: string, ctx: any): any {
   const shouldBumpVtp = (state.vtpMode === 'server') && !!state.vtpDomain;
   const nextVtpRevision = shouldBumpVtp ? ((state.vtpRevision || 0) + 1) : state.vtpRevision;
 
+  const updatedCurrentState = {
+    ...state,
+    vlans: newVlans,
+    vtpRevision: nextVtpRevision,
+    currentMode: 'vlan' as const,
+    currentVlan: vlanId
+  };
+
+  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId);
+  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId);
+
   return {
     success: true,
-    newState: {
-      vlans: newVlans,
-      vtpRevision: nextVtpRevision,
-      currentMode: 'vlan',
-      currentVlan: vlanId
-    }
+    newState: myUpdatedState || updatedCurrentState,
+    updatedDeviceStates: allUpdatedStates
   };
 }
 
@@ -343,12 +350,19 @@ function cmdNoVlan(state: any, input: string, ctx: any): any {
   const shouldBumpVtp = (state.vtpMode === 'server') && !!state.vtpDomain;
   const nextVtpRevision = shouldBumpVtp ? ((state.vtpRevision || 0) + 1) : state.vtpRevision;
 
+  const updatedCurrentState = {
+    ...state,
+    vlans: newVlans,
+    vtpRevision: nextVtpRevision,
+  };
+
+  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId);
+  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId);
+
   return {
     success: true,
-    newState: {
-      vlans: newVlans,
-      vtpRevision: nextVtpRevision,
-    }
+    newState: myUpdatedState || updatedCurrentState,
+    updatedDeviceStates: allUpdatedStates
   };
 }
 

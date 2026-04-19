@@ -1329,24 +1329,24 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpSw1.spanningTreeMode = 'rapid-pvst';
   stpSw1.spanningTreePriority = 28672; // Lower priority = Root Bridge
   stpSw1.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: [] };
-  stpSw1.ports['fa0/1'] = { 
-    ...stpSw1.ports['fa0/1'], 
-    vlan: 10, 
-    mode: 'access', 
+  stpSw1.ports['fa0/1'] = {
+    ...stpSw1.ports['fa0/1'],
+    vlan: 10,
+    mode: 'access',
     status: 'connected',
-    spanningTree: { role: 'root', state: 'forwarding' } 
+    spanningTree: { role: 'root', state: 'forwarding' }
   };
-  stpSw1.ports['gi0/1'] = { 
-    ...stpSw1.ports['gi0/1'], 
-    mode: 'trunk', 
-    allowedVlans: 'all', 
+  stpSw1.ports['gi0/1'] = {
+    ...stpSw1.ports['gi0/1'],
+    mode: 'trunk',
+    allowedVlans: 'all',
     status: 'connected',
     spanningTree: { role: 'designated', state: 'forwarding' }
   };
-  stpSw1.ports['gi0/2'] = { 
-    ...stpSw1.ports['gi0/2'], 
-    mode: 'trunk', 
-    allowedVlans: 'all', 
+  stpSw1.ports['gi0/2'] = {
+    ...stpSw1.ports['gi0/2'],
+    mode: 'trunk',
+    allowedVlans: 'all',
     status: 'connected',
     spanningTree: { role: 'alternate', state: 'blocking' } // Blocked port
   };
@@ -1356,24 +1356,24 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpSw2.spanningTreeMode = 'rapid-pvst';
   stpSw2.spanningTreePriority = 32768; // Default priority
   stpSw2.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: [] };
-  stpSw2.ports['fa0/1'] = { 
-    ...stpSw2.ports['fa0/1'], 
-    vlan: 10, 
-    mode: 'access', 
+  stpSw2.ports['fa0/1'] = {
+    ...stpSw2.ports['fa0/1'],
+    vlan: 10,
+    mode: 'access',
     status: 'connected',
-    spanningTree: { role: 'designated', state: 'forwarding' } 
+    spanningTree: { role: 'designated', state: 'forwarding' }
   };
-  stpSw2.ports['gi0/1'] = { 
-    ...stpSw2.ports['gi0/1'], 
-    mode: 'trunk', 
-    allowedVlans: 'all', 
+  stpSw2.ports['gi0/1'] = {
+    ...stpSw2.ports['gi0/1'],
+    mode: 'trunk',
+    allowedVlans: 'all',
     status: 'connected',
     spanningTree: { role: 'root', state: 'forwarding' } // Root Port
   };
-  stpSw2.ports['gi0/2'] = { 
-    ...stpSw2.ports['gi0/2'], 
-    mode: 'trunk', 
-    allowedVlans: 'all', 
+  stpSw2.ports['gi0/2'] = {
+    ...stpSw2.ports['gi0/2'],
+    mode: 'trunk',
+    allowedVlans: 'all',
     status: 'connected',
     spanningTree: { role: 'alternate', state: 'blocking' } // Blocked port
   };
@@ -1541,8 +1541,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'note-pvst',
       text: isTr
-        ? 'PVST (Per-VLAN STP)\n\nHer VLAN kendi STP örneğine sahiptir:\n• STP instance\n• Root bridge\n• Port states\n\nLoad balancing farklı\nroot bridge\'ler ile sağlanır\n\nPing VLAN\'ın root\'una göre gider!\n\nRedundancy:\nEğer SW3 gi0/1 kapanırsa,\ntrafik SW1->SW2->SW3\nüzerinden devam eder.'
-        : 'PVST (Per-VLAN STP)\n\nEach VLAN has its own:\n• STP instance\n• Root bridge\n• Port states\n\nLoad balancing achieved\nby having different root\nbridges per VLAN\n\nPing follows VLAN\'s root bridge!\n\nRedundancy:\nIf SW3 gi0/1 goes down,\ntraffic flows via\nSW1->SW2->SW3.',
+        ? 'PVST (Per-VLAN STP)\n\nHer VLAN kendi STP örneğine sahiptir:\n• VLAN 1 root: SW1\n• VLAN 10 root: SW2\n• VLAN 20 root: SW3\n\nHer VLAN kendi aktif yolunu kullanır:\n• VLAN 1: SW1↔SW2, SW1↔SW3 (SW2-SW3 blok)\n• VLAN 10: SW2↔SW1, SW2↔SW3 (SW1-SW3 blok)\n• VLAN 20: SW3↔SW1, SW3↔SW2 (SW1-SW2 blok)\n\nPing, VLAN\'ın root\'una göre gider.\nBağlantı koparsa yedek yol otomatik açılır.'
+        : 'PVST (Per-VLAN STP)\n\nEach VLAN has its own:\n• STP instance\n• Root bridge\n• Port states\n\nVLAN active paths:\n• VLAN 1 root: SW1\n• VLAN 10 root: SW2\n• VLAN 20 root: SW3\n\nEach VLAN uses its own forwarding path:\n• VLAN 1: SW1↔SW2, SW1↔SW3 (SW2-SW3 blocked)\n• VLAN 10: SW2↔SW1, SW2↔SW3 (SW1-SW3 blocked)\n• VLAN 20: SW3↔SW1, SW3↔SW2 (SW1-SW2 blocked)\n\nPing follows the VLAN root and if one link fails,\nbackup path opens automatically.',
       x: 150,
       y: 320,
       width: 250,
@@ -2137,8 +2137,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         ? '3 switch, 3 VLAN, her VLAN için farklı root bridge, trunk bağlantılar.'
         : '3 switches, 3 VLANs, different root bridge per VLAN, trunk connections.',
       detail: isTr
-        ? 'VLAN1 root SW1 (24576), VLAN10 root SW2 (24576), VLAN20 root SW3 (24576)'
-        : 'VLAN1 root SW1 (24576), VLAN10 root SW2 (24576), VLAN20 root SW3 (24576)',
+        ? 'VLAN1 root SW1, VLAN10 root SW2, VLAN20 root SW3. Her VLAN kendi aktif yolunu kullanır; link koparsa yedek yol açılır.'
+        : 'VLAN1 root SW1, VLAN10 root SW2, VLAN20 root SW3. Each VLAN uses its own path; if a link fails, backup path opens.',
       level: 'advanced',
       data: baseProjectData(stpPvstDevices, stpPvstConnections, stpPvstNotes, [
         { id: 'sw1', state: stpPvstSw1 },
