@@ -1375,13 +1375,7 @@ export function calculateSTPState(
       // Check if this port is the root port
       if (portId === myRootPort) {
         role = 'Root';
-        if (isPortfast || previousState === 'forwarding') {
-          portState = 'FWD';
-        } else if (previousState === 'blocking') {
-          portState = 'LRN';
-        } else {
-          portState = 'FWD';
-        }
+        portState = 'FWD';
       } else {
         // Non-root port: Determine designated vs alternate
         const neighbor = connectedSwitches.find(sw => sw.portId === portId);
@@ -1441,13 +1435,7 @@ export function calculateSTPState(
           
           if (iAmDesignated) {
             role = 'Desg';
-            if (isPortfast || previousState === 'forwarding') {
-              portState = 'FWD';
-            } else if (previousState === 'blocking') {
-              portState = 'LRN';
-            } else {
-              portState = 'FWD';
-            }
+            portState = 'FWD';
           } else {
             // I lost the election - this port is alternate (blocking)
             role = 'Altn';
@@ -1456,13 +1444,7 @@ export function calculateSTPState(
         } else {
           // Port not connected to another switch (edge port) - designated
           role = 'Desg';
-          if (isPortfast || previousState === 'forwarding') {
-            portState = 'FWD';
-          } else if (previousState === 'blocking') {
-            portState = 'LRN';
-          } else {
-            portState = 'FWD';
-          }
+          portState = 'FWD';
         }
       }
     }
@@ -1605,45 +1587,36 @@ function cmdShowSpanningTree(
       }
     }
 
-    // Calculate STP state for this specific VLAN
+    // Use globally calculated STP state for this specific VLAN
     const vlanStpState = new Map<string, { role: string; state: string }>();
-    
-    // If this switch is root for this VLAN, all ports are Designated Forwarding
-    if (isRootBridge) {
-      Object.entries(state.ports || {}).forEach(([portName, port]: [string, any]) => {
-        if (!portName.toLowerCase().startsWith('vlan') && !portName.toLowerCase().startsWith('console') && port.status === 'connected') {
-          const isTrunk = port.mode === 'trunk';
-          const portVlan = port.vlan || port.accessVlan || 1;
-          if (isTrunk || String(portVlan) === String(vlanId)) {
-            vlanStpState.set(portName, { role: 'Desg', state: 'FWD' });
+    Object.entries(state.ports || {}).forEach(([portName, port]: [string, any]) => {
+      if (!portName.toLowerCase().startsWith('vlan') && !portName.toLowerCase().startsWith('console') && port.status === 'connected') {
+        const isTrunk = port.mode === 'trunk';
+        const portVlan = port.vlan || port.accessVlan || 1;
+        if (isTrunk || String(portVlan) === String(vlanId)) {
+          let roleStr = 'Desg';
+          let stateStr = 'FWD';
+          
+          if (port.spanningTree) {
+            const r = port.spanningTree.role;
+            if (r === 'root') roleStr = 'Root';
+            else if (r === 'alternate') roleStr = 'Altn';
+            else if (r === 'designated') roleStr = 'Desg';
+            else if (r === 'backup') roleStr = 'Back';
+            else if (r === 'disabled') roleStr = 'Disa';
+            
+            const s = port.spanningTree.state;
+            if (s === 'forwarding') stateStr = 'FWD';
+            else if (s === 'blocking') stateStr = 'BLK';
+            else if (s === 'listening') stateStr = 'LIS';
+            else if (s === 'learning') stateStr = 'LRN';
+            else if (s === 'disabled') stateStr = 'DIS';
           }
+          
+          vlanStpState.set(portName, { role: roleStr, state: stateStr });
         }
-      });
-    } else {
-      // If not root, calculate root port and other port roles
-      if (rootPortId) {
-        vlanStpState.set(rootPortId, { role: 'Root', state: 'FWD' });
       }
-      
-      // Other ports: access ports are Designated, trunk ports not to root are Alternate/Blocking
-      Object.entries(state.ports || {}).forEach(([portName, port]: [string, any]) => {
-        if (!portName.toLowerCase().startsWith('vlan') && !portName.toLowerCase().startsWith('console') && port.status === 'connected') {
-          const isTrunk = port.mode === 'trunk';
-          const portVlan = port.vlan || port.accessVlan || 1;
-          if (isTrunk || String(portVlan) === String(vlanId)) {
-            if (!vlanStpState.has(portName)) {
-              // Access ports (connected to end devices) are Designated
-              if (!isTrunk) {
-                vlanStpState.set(portName, { role: 'Desg', state: 'FWD' });
-              } else {
-                // Trunk ports not leading to root are Alternate/Blocking
-                vlanStpState.set(portName, { role: 'Altn', state: 'BLK' });
-              }
-            }
-          }
-        }
-      });
-    }
+    });
 
     // Sort ports by their number
     const portEntries = Object.entries(state.ports || {})

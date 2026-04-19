@@ -1463,18 +1463,18 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     createL3SwitchDevice('sw1', 'SW1', 300, 200),
     createL3SwitchDevice('sw2', 'SW2', 600, 100),
     createL3SwitchDevice('sw3', 'SW3', 600, 300),
-    // SW1 PCs
-    createPcDevice('pc1-vlan1', 'PC1-VLAN1', 100, 150, '192.168.1.10', 1),
-    createPcDevice('pc1-vlan10', 'PC1-VLAN10', 100, 200, '192.168.10.10', 10),
-    createPcDevice('pc1-vlan20', 'PC1-VLAN20', 100, 250, '192.168.20.10', 20),
-    // SW2 PCs
-    createPcDevice('pc2-vlan1', 'PC2-VLAN1', 800, 50, '192.168.1.20', 1),
-    createPcDevice('pc2-vlan10', 'PC2-VLAN10', 800, 100, '192.168.10.20', 10),
-    createPcDevice('pc2-vlan20', 'PC2-VLAN20', 800, 150, '192.168.20.20', 20),
-    // SW3 PCs
-    createPcDevice('pc3-vlan1', 'PC3-VLAN1', 800, 250, '192.168.1.30', 1),
-    createPcDevice('pc3-vlan10', 'PC3-VLAN10', 800, 300, '192.168.10.30', 10),
-    createPcDevice('pc3-vlan20', 'PC3-VLAN20', 800, 350, '192.168.20.30', 20)
+    // SW1 PCs (left side)
+    createPcDevice('pc1-vlan1', 'PC1-VLAN1', 80, 180, '192.168.1.10', 1),
+    createPcDevice('pc1-vlan10', 'PC1-VLAN10', 80, 220, '192.168.10.10', 10),
+    createPcDevice('pc1-vlan20', 'PC1-VLAN20', 80, 260, '192.168.20.10', 20),
+    // SW2 PCs (right side)
+    createPcDevice('pc2-vlan1', 'PC2-VLAN1', 750, 80, '192.168.1.20', 1),
+    createPcDevice('pc2-vlan10', 'PC2-VLAN10', 820, 80, '192.168.10.20', 10),
+    createPcDevice('pc2-vlan20', 'PC2-VLAN20', 890, 80, '192.168.20.20', 20),
+    // SW3 PCs (right side)
+    createPcDevice('pc3-vlan1', 'PC3-VLAN1', 750, 320, '192.168.1.30', 1),
+    createPcDevice('pc3-vlan10', 'PC3-VLAN10', 820, 320, '192.168.10.30', 10),
+    createPcDevice('pc3-vlan20', 'PC3-VLAN20', 890, 320, '192.168.20.30', 20)
   ];
 
   const stpPvstConnections: CanvasConnection[] = [];
@@ -1501,7 +1501,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       text: isTr
         ? 'VLAN 1 STP:\n• SW1: Priority 24576 (Root)\n• SW2: Priority 32768\n• SW3: Priority 32768\n\nHer sw\'de VLAN 1 için PC var:\nSW1: PC1-VLAN1 (fa0/3)\nSW2: PC2-VLAN1 (fa0/3)\nSW3: PC3-VLAN1 (fa0/3)'
         : 'VLAN 1 STP:\n• SW1: Priority 24576 (Root)\n• SW2: Priority 32768\n• SW3: Priority 32768\n\nPC for VLAN 1 on each switch:\nSW1: PC1-VLAN1 (fa0/3)\nSW2: PC2-VLAN1 (fa0/3)\nSW3: PC3-VLAN1 (fa0/3)',
-      x: 100,
+      x: 200,
       y: 50,
       width: 280,
       height: 120,
@@ -1515,8 +1515,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       text: isTr
         ? 'VLAN 10 STP:\n• SW1: Priority 32768\n• SW2: Priority 24576 (Root)\n• SW3: Priority 32768\n\nHer sw\'de VLAN 10 için PC var:\nSW1: PC1-VLAN10 (fa0/4)\nSW2: PC2-VLAN10 (fa0/4)\nSW3: PC3-VLAN10 (fa0/4)'
         : 'VLAN 10 STP:\n• SW1: Priority 32768\n• SW2: Priority 24576 (Root)\n• SW3: Priority 32768\n\nPC for VLAN 10 on each switch:\nSW1: PC1-VLAN10 (fa0/4)\nSW2: PC2-VLAN10 (fa0/4)\nSW3: PC3-VLAN10 (fa0/4)',
-      x: 100,
-      y: 200,
+      x: 500,
+      y: 30,
       width: 280,
       height: 120,
       color: '#fff3e0',
@@ -1529,8 +1529,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       text: isTr
         ? 'VLAN 20 STP:\n• SW1: Priority 32768\n• SW2: Priority 32768\n• SW3: Priority 24576 (Root)\n\nHer sw\'de VLAN 20 için PC var:\nSW1: PC1-VLAN20 (fa0/5)\nSW2: PC2-VLAN20 (fa0/5)\nSW3: PC3-VLAN20 (fa0/5)'
         : 'VLAN 20 STP:\n• SW1: Priority 32768\n• SW2: Priority 32768\n• SW3: Priority 24576 (Root)\n\nPC for VLAN 20 on each switch:\nSW1: PC1-VLAN20 (fa0/5)\nSW2: PC2-VLAN20 (fa0/5)\nSW3: PC3-VLAN20 (fa0/5)',
-      x: 100,
-      y: 350,
+      x: 500,
+      y: 380,
       width: 280,
       height: 120,
       color: '#f3e5f5',
@@ -1541,12 +1541,12 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'note-pvst',
       text: isTr
-        ? 'PVST (Per-VLAN STP)\n\nHer VLAN kendi STP örneğine sahiptir:\n• STP instance\n• Root bridge\n• Port states\n\nLoad balancing farklı\nroot bridge\'ler ile sağlanır\n\nPing VLAN\'ın root\'una göre gider!'
-        : 'PVST (Per-VLAN STP)\n\nEach VLAN has its own:\n• STP instance\n• Root bridge\n• Port states\n\nLoad balancing achieved\nby having different root\nbridges per VLAN\n\nPing follows VLAN\'s root bridge!',
-      x: 750,
-      y: 200,
+        ? 'PVST (Per-VLAN STP)\n\nHer VLAN kendi STP örneğine sahiptir:\n• STP instance\n• Root bridge\n• Port states\n\nLoad balancing farklı\nroot bridge\'ler ile sağlanır\n\nPing VLAN\'ın root\'una göre gider!\n\nRedundancy:\nEğer SW3 gi0/1 kapanırsa,\ntrafik SW1->SW2->SW3\nüzerinden devam eder.'
+        : 'PVST (Per-VLAN STP)\n\nEach VLAN has its own:\n• STP instance\n• Root bridge\n• Port states\n\nLoad balancing achieved\nby having different root\nbridges per VLAN\n\nPing follows VLAN\'s root bridge!\n\nRedundancy:\nIf SW3 gi0/1 goes down,\ntraffic flows via\nSW1->SW2->SW3.',
+      x: 150,
+      y: 320,
       width: 250,
-      height: 140,
+      height: 170,
       color: '#e8f5e9',
       font: 'Arial',
       fontSize: 12,
@@ -1558,6 +1558,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw1.hostname = 'SW1';
   stpPvstSw1.switchModel = 'WS-C3560-24PS';
   stpPvstSw1.switchLayer = 'L3';
+  stpPvstSw1.spanningTreeMode = 'pvst';
   stpPvstSw1.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['FA0/3', 'GI0/1', 'GI0/2'] };
   stpPvstSw1.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['FA0/1', 'FA0/4', 'GI0/1', 'GI0/2'] };
   stpPvstSw1.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2', 'FA0/5', 'GI0/1', 'GI0/2'] };
@@ -1609,6 +1610,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw2.hostname = 'SW2';
   stpPvstSw2.switchModel = 'WS-C3560-24PS';
   stpPvstSw2.switchLayer = 'L3';
+  stpPvstSw2.spanningTreeMode = 'pvst';
   stpPvstSw2.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['FA0/3', 'GI0/1', 'GI0/2'] };
   stpPvstSw2.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['FA0/1', 'FA0/4', 'GI0/1', 'GI0/2'] };
   stpPvstSw2.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2', 'FA0/5', 'GI0/1', 'GI0/2'] };
@@ -1650,6 +1652,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
+    'spanning-tree vlan 1 priority 32768',
     'spanning-tree vlan 10 root primary',
     'spanning-tree vlan 20 priority 32768',
     '!'
@@ -1659,6 +1662,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw3.hostname = 'SW3';
   stpPvstSw3.switchModel = 'WS-C3560-24PS';
   stpPvstSw3.switchLayer = 'L3';
+  stpPvstSw3.spanningTreeMode = 'pvst';
   stpPvstSw3.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['FA0/3', 'GI0/1', 'GI0/2'] };
   stpPvstSw3.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['FA0/1', 'FA0/4', 'GI0/1', 'GI0/2'] };
   stpPvstSw3.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2', 'FA0/5', 'GI0/1', 'GI0/2'] };
@@ -1700,6 +1704,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
+    'spanning-tree vlan 1 priority 32768',
+    'spanning-tree vlan 10 priority 32768',
     'spanning-tree vlan 20 root primary',
     '!'
   ];

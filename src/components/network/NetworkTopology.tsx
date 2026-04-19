@@ -4626,9 +4626,13 @@ export function NetworkTopology({
               const simulatorPort = deviceState?.ports?.[port.id];
               const isSTPBlocked = simulatorPort?.spanningTree?.state === 'blocking' || simulatorPort?.spanningTree?.role === 'alternate';
 
+              // Determine device VLAN - only apply STP blocking color for VLAN 1
+              const deviceVlan = device.vlan || simulatorPort?.accessVlan || simulatorPort?.vlan || 1;
+              const isVlan1 = deviceVlan === 1;
+
               // Port colors:
               // Console: Turquoise, Fa: Blue, Gi: Orange
-              // STP Blocked: Pink
+              // STP Blocked (VLAN 1 only): Pink
               // Shutdown or device offline: Red
               // Not connected: Gray
               let portFill: string;
@@ -4638,8 +4642,8 @@ export function NetworkTopology({
                 // Güç kapalı - içi kırmızı, çerçeve gri
                 portFill = '#ef4444';
                 portStroke = '#4b5563';
-              } else if (isSTPBlocked) {
-                // STP Bloke - Pembe renk
+              } else if (isSTPBlocked && isVlan1) {
+                // STP Bloke - Pembe renk (sadece VLAN 1 için)
                 portFill = '#ec4899';  // Pink-500
                 portStroke = '#f472b6';  // Pink-400
               } else if (isConnected) {
@@ -6886,7 +6890,9 @@ export function NetworkTopology({
                   const devState = deviceStates?.get(portTooltip.deviceId);
                   const simPort = devState?.ports?.[portTooltip.portId];
                   const isSTPBlocked = simPort?.spanningTree?.state === 'blocking' || simPort?.spanningTree?.role === 'alternate';
-                  if (isSTPBlocked) return 'bg-pink-500';
+                  const deviceVlan = dev?.vlan || simPort?.accessVlan || simPort?.vlan || 1;
+                  const isVlan1 = deviceVlan === 1;
+                  if (isSTPBlocked && isVlan1) return 'bg-pink-500';
                   return dev?.status === 'offline' || prt?.shutdown ? 'bg-red-500' : prt?.status === 'connected' ? 'bg-green-500' : 'bg-slate-400';
                 })()
                   }`} />
@@ -6926,7 +6932,9 @@ export function NetworkTopology({
                       const devState = deviceStates?.get(portTooltip.deviceId);
                       const simPort = devState?.ports?.[portTooltip.portId];
                       const isSTPBlocked = simPort?.spanningTree?.state === 'blocking' || simPort?.spanningTree?.role === 'alternate';
-                      if (isSTPBlocked) return 'text-pink-500';
+                      const deviceVlan = dev?.vlan || simPort?.accessVlan || simPort?.vlan || 1;
+                      const isVlan1 = deviceVlan === 1;
+                      if (isSTPBlocked && isVlan1) return 'text-pink-500';
                       return dev?.status === 'offline' || prt?.shutdown ? 'text-red-500' : prt?.status === 'connected' ? 'text-green-500' : 'text-slate-400';
                     })()
                   }>

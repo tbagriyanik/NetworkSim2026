@@ -62,10 +62,15 @@ export const ConnectionLine = memo(function ConnectionLine({
   // Check if either port is in STP blocking state
   const isSTPBlocking = sourcePort?.spanningTree?.state === 'blocking' || targetPort?.spanningTree?.state === 'blocking';
 
+  // Determine device VLAN - only apply STP blocking color for VLAN 1
+  const sourceVlan = sourceDevice.vlan || 1;
+  const targetVlan = targetDevice.vlan || 1;
+  const isVlan1 = sourceVlan === 1 && targetVlan === 1;
+
   const isPoweredOff = sourceDevice.status === 'offline' || targetDevice.status === 'offline';
   const isEffectivelyActive = connection.active && isCompatible && !isShutdown && !isPoweredOff && !isSTPBlocking;
   const color = !isCompatible ? CABLE_COLORS.error.primary :
-    isShutdown || isSTPBlocking ? (isDark ? '#475569' : '#94a3b8') : // Gray if shutdown or STP blocking
+    isShutdown || (isSTPBlocking && isVlan1) ? (isDark ? '#475569' : '#94a3b8') : // Gray if shutdown or STP blocking (VLAN 1 only)
       isPoweredOff ? (isDark ? '#374151' : '#9ca3af') : // Gray if device offline
         CABLE_COLORS[connection.cableType].primary;
 
