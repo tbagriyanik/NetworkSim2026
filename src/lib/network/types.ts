@@ -149,6 +149,7 @@ export interface SwitchState {
   ntpServers?: string[];
   ipv6Enabled?: boolean;
   ipRouting: boolean;
+  spanningTreeVlans?: Record<string, { priority?: string; enabled?: boolean }>;
   startupConfig?: StartupConfig;
   flashFiles?: Record<string, string[]>;
   flashStartupConfigs?: Record<string, StartupConfig>;

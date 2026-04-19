@@ -40,6 +40,100 @@ const normalizeChannel = (channel: string | undefined): DeviceWifiConfig['channe
   return '2.4GHz';
 };
 
+/**
+ * Calculate STP blocking state for a specific VLAN on a port
+ * In PVST, each VLAN has its own STP instance with potentially different root bridges
+ */
+const getVlanSpecificSTPBlocking = (
+  deviceId: string,
+  portId: string,
+  vlanId: number,
+  devices: CanvasDevice[],
+  connections: CanvasConnection[],
+  deviceStates?: Map<string, SwitchState>
+): boolean => {
+  if (!deviceStates) return false;
+
+  const state = deviceStates.get(deviceId);
+  if (!state) return false;
+
+  const port = state.ports[portId];
+  if (!port) return false;
+
+  // Get VLAN-specific priority for this switch
+  const spanningTreeVlans = state.spanningTreeVlans || {};
+  const vlanPriorityStr = spanningTreeVlans[String(vlanId)]?.priority;
+  const myVlanPriority = vlanPriorityStr ? parseInt(vlanPriorityStr, 10) : (state.spanningTreePriority || 32768);
+  const myMac = state.macAddress || 'FFFF.FFFF.FFFF';
+
+  // Calculate lowest priority across all switches for this specific VLAN
+  let lowestPriority = myVlanPriority;
+  let lowestMac = myMac;
+  let rootBridgeId = deviceId;
+
+  devices.forEach((d: CanvasDevice) => {
+    if (d.type === 'switchL2' || d.type === 'switchL3') {
+      const swState = deviceStates.get(d.id);
+      const swVlanPriorityStr = swState?.spanningTreeVlans?.[String(vlanId)]?.priority;
+      const swVlanPriority = swVlanPriorityStr ? parseInt(swVlanPriorityStr, 10) : null;
+      const swPriority = swVlanPriority || (swState?.spanningTreePriority || 32768);
+      const swMac = swState?.macAddress || d.macAddress || 'FFFF.FFFF.FFFF';
+
+      if (swPriority < lowestPriority || (swPriority === lowestPriority && swMac.localeCompare(lowestMac) < 0)) {
+        lowestPriority = swPriority;
+        lowestMac = swMac;
+        rootBridgeId = d.id;
+      }
+    }
+  });
+
+  // If this switch is root for this VLAN, no ports are blocking
+  if (rootBridgeId === deviceId) {
+    return false;
+  }
+
+  // Find the root port for this VLAN
+  // Get all connections from this switch to the root bridge
+  const connectionsToRoot = connections.filter(c =>
+    (c.sourceDeviceId === deviceId && c.targetDeviceId === rootBridgeId) ||
+    (c.targetDeviceId === deviceId && c.sourceDeviceId === rootBridgeId)
+  );
+
+  let rootPortId: string | null = null;
+
+  if (connectionsToRoot.length > 0) {
+    // Use the lowest port number as root port (simplified)
+    let minPortNum = Infinity;
+    connectionsToRoot.forEach(conn => {
+      const localPortId = conn.sourceDeviceId === deviceId ? conn.sourcePort : conn.targetPort;
+      const portNum = getPortNumber(localPortId);
+      if (portNum < minPortNum) {
+        minPortNum = portNum;
+        rootPortId = localPortId;
+      }
+    });
+  }
+
+  // Root port is never blocking
+  if (rootPortId === portId) {
+    return false;
+  }
+
+  // Access ports (connected to end devices) are never blocking
+  const isTrunk = port.mode === 'trunk';
+  if (!isTrunk) {
+    return false;
+  }
+
+  // Trunk ports not leading to root are Alternate/Blocking
+  return true;
+};
+
+const getPortNumber = (portId: string): number => {
+  const match = portId.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 0;
+};
+
 export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStates?: Map<string, SwitchState>): DeviceWifiConfig | undefined {
   if (!device) return undefined;
   const state = deviceStates?.get(device.id);
@@ -548,6 +642,11 @@ export function checkConnectivity(
   const visited = new Set<string>([sourceId]);
   const parent = new Map<string, string>();
 
+  // Determine source device VLAN for STP calculation
+  const sourceDeviceForVlan = devices.find(d => d.id === sourceId);
+  const sourceState = deviceStates?.get(sourceId);
+  const sourceVlan = getDeviceVlan(sourceDeviceForVlan!, sourceState) || 1;
+
   while (queue.length > 0) {
     const currentId = queue.shift()!;
     if (currentId === targetDevice.id) break;
@@ -577,13 +676,10 @@ export function checkConnectivity(
           const isSrcPoweredOff = !isDevicePoweredOn(srcDevice);
           const isDstPoweredOff = !isDevicePoweredOn(dstDevice);
 
-          // Check STP blocking state
-          const srcState = deviceStates?.get(currentId);
-          const dstState = deviceStates?.get(neighborId);
-          const srcPort = srcState?.ports?.[srcPortId];
-          const dstPort = dstState?.ports?.[dstPortId];
-          const isSrcSTPBlocking = srcPort?.spanningTree?.state === 'blocking';
-          const isDstSTPBlocking = dstPort?.spanningTree?.state === 'blocking';
+          // Check STP blocking state using VLAN-specific STP calculation
+          // In PVST, each VLAN has its own STP instance with potentially different root bridges
+          const isSrcSTPBlocking = getVlanSpecificSTPBlocking(currentId, srcPortId, sourceVlan, devices, connections, deviceStates);
+          const isDstSTPBlocking = getVlanSpecificSTPBlocking(neighborId, dstPortId, sourceVlan, devices, connections, deviceStates);
 
           // Validate cable type for this physical link (e.g. console vs ethernet, straight vs crossover).
           const isCableOk = isConnectionCableCompatible(conn, srcDevice, dstDevice);
