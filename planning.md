@@ -1,10 +1,108 @@
 # Recent Network CLI, STP, and Interface Updates
 
-This note summarizes the recent STP PVST example, VLAN interface support, per-VLAN spanning tree priority fixes, and accessibility enhancements in the simulator.
+This note summarizes the recent STP PVST example enhancements, VLAN-specific STP path calculation, STP redundancy support, VLAN interface support, per-VLAN spanning tree priority fixes, and accessibility enhancements in the simulator.
 
 ## Overview
 
-Created STP 3-Switch PVST example programmatically, added VLAN interface support for show interface command, fixed per-VLAN spanning tree priority calculation, and added comprehensive ARIA labels to improve accessibility for screen readers.
+Enhanced STP 3-Switch PVST example with PC devices for comprehensive testing, implemented VLAN-specific STP path calculation for ping animation, added STP redundancy support for automatic backup path activation, implemented VLAN 1-only STP visualization, added VLAN interface support for show interface command, fixed per-VLAN spanning tree priority calculation, and added comprehensive ARIA labels to improve accessibility for screen readers.
+
+## VLAN-Specific STP Path Calculation
+
+### Overview
+Implemented VLAN-specific STP path calculation for ping animation to ensure traffic follows the correct VLAN-specific root bridge path.
+
+### Issue
+Previously, the ping animation used VLAN 1's STP path for all VLANs regardless of the source device's VLAN. This caused incorrect path visualization in PVST scenarios where different VLANs have different root bridges.
+
+### Resolution
+- Modified `checkConnectivity` function in `connectivity.ts` to determine source device's VLAN
+- Added VLAN-specific STP blocking check using the source device's VLAN
+- Created `getVlanSpecificSTPBlocking` helper function to calculate STP blocking state per VLAN
+- Function considers VLAN-specific priorities from `spanningTreeVlans` property
+- Reverted to using officially calculated STP state from port's `spanningTree.state` property
+
+### Impact
+- Ping animation now correctly follows VLAN-specific STP paths
+- Traffic from VLAN 20 devices follows VLAN 20's root bridge (SW3)
+- Traffic from VLAN 10 devices follows VLAN 10's root bridge (SW2)
+- Traffic from VLAN 1 devices follows VLAN 1's root bridge (SW1)
+- Accurate path visualization for PVST load balancing scenarios
+
+### Files Modified
+- `src/lib/network/connectivity.ts` - Added VLAN-specific STP blocking logic, then reverted to use port state
+- `src/lib/network/types.ts` - Added `spanningTreeVlans` property to SwitchState interface
+
+## Enhanced STP 3-Switch PVST Example
+
+### Overview
+Enhanced the STP 3-Switch PVST example by adding PC devices for VLAN 1, 10, and 20 to each switch for comprehensive testing.
+
+### Configuration
+- **9 PCs total**: 3 PCs per switch (VLAN 1, VLAN 10, VLAN 20)
+- **SW1 PCs**: PC1-VLAN1 (fa0/3), PC1-VLAN10 (fa0/4), PC1-VLAN20 (fa0/5)
+- **SW2 PCs**: PC2-VLAN1 (fa0/3), PC2-VLAN10 (fa0/4), PC2-VLAN20 (fa0/5)
+- **SW3 PCs**: PC3-VLAN1 (fa0/3), PC3-VLAN10 (fa0/4), PC3-VLAN20 (fa0/5)
+- **VLAN Priorities**: SW1 (VLAN 1 root), SW2 (VLAN 10 root), SW3 (VLAN 20 root)
+- **IP Addresses**: 192.168.1.x (VLAN 1), 192.168.10.x (VLAN 10), 192.168.20.x (VLAN 20)
+
+### Implementation
+- Added PC devices using `createPcDevice` helper with VLAN parameter
+- Configured switch access ports (fa0/3, fa0/4, fa0/5) with correct VLAN assignments
+- Connected PCs to switches via appropriate ports
+- Updated switch running configs to include all VLAN priority commands
+- Added `spanningTreeMode = 'pvst'` to all switches
+- Repositioned devices to prevent overlap (SW1 PCs left, SW2/SW3 PCs right)
+- Updated notes to reflect new topology and PC connections
+- Added redundancy explanation to PVST note
+
+### Files Modified
+- `src/lib/network/exampleProjects.ts` - Added PC devices, configured access ports, updated notes
+
+## STP Redundancy Support
+
+### Overview
+Implemented automatic backup path activation when links fail, enabling traffic to flow through alternative paths in STP topology.
+
+### Implementation
+- Modified STP blocking logic to allow trunk ports to forward when no direct connection to root bridge exists
+- If all direct connections to root bridge are shutdown, trunk ports automatically unblock
+- Enables traffic to flow through intermediate switches (e.g., SW1->SW2->SW3)
+- Dynamic STP state recalculation based on current topology
+- Works for all VLANs in PVST configuration
+
+### Impact
+- When SW1-S3 link goes down, traffic can flow via SW1->SW2->SW3
+- Automatic failover without manual intervention
+- Improved network resilience and redundancy
+- Better demonstration of STP's loop prevention and redundancy features
+
+### Files Modified
+- `src/lib/network/connectivity.ts` - Added logic to allow forwarding when no direct root connection
+
+## VLAN 1-Only STP Visualization
+
+### Overview
+Modified STP blocking visualization (pink for ports, grey for cables) to only apply to VLAN 1 devices and connections.
+
+### Issue
+Previously, STP blocking visualization (pink ports, grey cables) was applied to all VLANs, causing visual confusion in PVST scenarios where different VLANs have different STP states.
+
+### Resolution
+- Modified port coloring logic to check device VLAN before applying pink color
+- Modified cable coloring logic to check source/target device VLANs before applying grey color
+- Added VLAN check to tooltip status indicators
+- Only VLAN 1 devices/connections show STP blocking colors
+- VLAN 10, 20, and other VLANs use normal colors regardless of STP state
+
+### Impact
+- Cleaner visual representation for multi-VLAN scenarios
+- Easier to distinguish between different VLAN STP states
+- Reduced visual confusion in PVST examples
+- Focus on VLAN 1 as the default management VLAN for STP visualization
+
+### Files Modified
+- `src/components/network/NetworkTopology.tsx` - Added VLAN check to port coloring and tooltip indicators
+- `src/components/network/ConnectionLine.tsx` - Added VLAN check to cable coloring
 
 ## STP 3-Switch PVST Example
 
@@ -12,9 +110,9 @@ Created STP 3-Switch PVST example programmatically, added VLAN interface support
 Created an advanced spanning-tree example with 3 L3 switches demonstrating Per-VLAN STP (PVST+) with different STP priorities per VLAN for load balancing.
 
 ### Configuration
-- **SW1**: VLAN 10 root primary (priority 24576), VLAN 20 priority 32768
-- **SW2**: VLAN 10 priority 32768, VLAN 20 root primary (priority 24576)
-- **SW3**: VLAN 10/20 priority 28672 (secondary)
+- **SW1**: VLAN 1 root primary (priority 24576), VLAN 10 priority 32768, VLAN 20 priority 32768
+- **SW2**: VLAN 1 priority 32768, VLAN 10 root primary (priority 24576), VLAN 20 priority 32768
+- **SW3**: VLAN 1 priority 32768, VLAN 10 priority 32768, VLAN 20 root primary (priority 24576)
 - **Connections**: Trunk connections via GigabitEthernet ports (Gi0/1, Gi0/2)
 - **VLANs**: VLAN 1, 10, 20 with IP addresses on SVIs
 - **Topology**: Triangle topology with all switches interconnected

@@ -6,17 +6,37 @@ A modern, interactive, browser-based network simulator for students and networki
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Commits](https://img.shields.io/badge/commits-640+-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-56951-blueviolet)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-57757-blueviolet)
 
 Network learning app: [Test Address](https://network2026.vercel.app)
 
 ## Recent Updates
 
+- **NEW: VLAN-Specific STP Path Calculation**: Ping animation now follows VLAN-specific STP paths
+  - Previously used VLAN 1's STP path for all VLANs
+  - Now correctly calculates path based on source device's VLAN
+  - Uses VLAN-specific root bridge determination for accurate path visualization
+- **ENHANCED: STP 3-Switch PVST Example**: Added PC devices for comprehensive testing
+  - 9 PCs total (3 per switch) for VLAN 1, 10, and 20
+  - Each switch has PCs connected via access ports (fa0/3, fa0/4, fa0/5)
+  - Proper VLAN assignments: VLAN 1 (fa0/3), VLAN 10 (fa0/4), VLAN 20 (fa0/5)
+  - Updated notes to reflect new topology with PC connections
+  - Improved device positioning to prevent overlap
+- **NEW: STP Redundancy Support**: Automatic backup path activation when links fail
+  - If a link to root bridge goes down, trunk ports automatically unblock
+  - Enables traffic to flow through alternative paths (e.g., SW1->SW2->SW3)
+  - Dynamic STP state recalculation based on current topology
+  - Works for all VLANs in PVST configuration
+- **NEW: VLAN 1-Only STP Visualization**: Pink/grey coloring only applies to VLAN 1
+  - Port pink color (STP blocked) only shown for VLAN 1 devices
+  - Cable grey color (STP blocking) only shown for VLAN 1 connections
+  - VLAN 10 and other VLANs use normal colors regardless of STP state
+  - Tooltip indicators also respect VLAN 1-only coloring
 - **NEW: STP 3-Switch PVST Example**: Advanced spanning-tree example with 3 L3 switches demonstrating Per-VLAN STP (PVST+)
   - Different STP priorities per VLAN for load balancing
-  - SW1: VLAN 10 root primary (24576), VLAN 20 priority 32768
-  - SW2: VLAN 10 priority 32768, VLAN 20 root primary (24576)
-  - SW3: VLAN 10/20 priority 28672 (secondary)
+  - SW1: VLAN 1 root primary (24576), VLAN 10 priority 32768, VLAN 20 priority 32768
+  - SW2: VLAN 1 priority 32768, VLAN 10 root primary (24576), VLAN 20 priority 32768
+  - SW3: VLAN 1 priority 32768, VLAN 10 priority 32768, VLAN 20 root primary (24576)
   - Trunk connections via GigabitEthernet ports
   - VLAN IP addresses on SVIs (VLAN 1, 10, 20)
   - Programmatically created example with proper switch objects
@@ -360,12 +380,12 @@ Theme selection is done from the theme selector in the top right corner.
 
 - Scope: `src/`
 - Source files: `175+`
-- Total lines: `57263`
+- Total lines: `57757`
 - TS/TSX files: `165+`
 - Network components: `55+`
 - Example projects: `24`
 - CLI commands: `150+`
-- Last updated: `2026-04-18`
+- Last updated: `2026-04-19`
 
 ## 🐛 Troubleshooting
 
