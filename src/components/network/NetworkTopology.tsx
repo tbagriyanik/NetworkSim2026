@@ -21,7 +21,7 @@ import LazyNetworkTopologyContextMenu from './LazyNetworkTopologyContextMenu';
 import { LazyNetworkTopologyPortSelectorModal } from './LazyNetworkTopologyPortSelectorModal';
 import { EnvironmentSettingsPanel } from './EnvironmentSettingsPanel';
 import { useEnvironment } from '@/lib/store/appStore';
-import { Plus, Power, Trash2, Monitor, Network, Laptop, X } from "lucide-react";
+import { Plus, Power, Trash2, Monitor, Network, Laptop, X, Cable, Strikethrough } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { getDeviceWidth, getDeviceHeight, isPcLike, isSwitchDevice, isRouterDevice } from './networkTopology.helpers';
 import { CABLE_COLORS, DRAG_THRESHOLD, LONG_PRESS_DURATION, VIRTUAL_CANVAS_WIDTH_MOBILE, VIRTUAL_CANVAS_HEIGHT_MOBILE, VIRTUAL_CANVAS_WIDTH_DESKTOP, VIRTUAL_CANVAS_HEIGHT_DESKTOP, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM, NOTE_COLORS, NOTE_FONTS_DESKTOP as NOTE_FONTS, NOTE_FONT_SIZES, NOTE_OPACITY as NOTE_OPACITY_OPTIONS, PC_PORT_SPACING, PORT_SPACING, PORT_START_X, PORT_START_Y, PORT_COLORS, STATUS_COLORS, STROKE_COLORS } from './networkTopology.constants';
@@ -5090,7 +5090,15 @@ export function NetworkTopology({
                 aria-label={type === 'straight' ? (language === 'tr' ? 'Düz kablo' : 'Straight cable') : type === 'crossover' ? (language === 'tr' ? 'Çapraz kablo' : 'Crossover cable') : (language === 'tr' ? 'Konsol kablo' : 'Console cable')}
                 aria-pressed={cableInfo.cableType === type}
               >
-                <div className={`w-2 h-2 rounded-full ${type === 'straight' ? 'bg-blue-500' : type === 'crossover' ? 'bg-orange-500' : 'bg-cyan-500'}`} />
+                {type === 'straight' ? (
+                  <Cable className="w-4 h-4" />
+                ) : type === 'crossover' ? (
+                  <Strikethrough className="w-4 h-4" />
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                  </svg>
+                )}
                 {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : t.console}
               </button>
             ))}
@@ -5209,7 +5217,7 @@ export function NetworkTopology({
             <SheetContent side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} rounded-t-[2rem] p-0 palette`}>
               <SheetHeader className="p-6 border-b border-slate-800/50">
                 <SheetTitle className="text-lg font-bold flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-cyan-500" />
+                  <Plus className="w-5 h-5 text-red-500" />
                   {t.addDeviceOrCable}
                 </SheetTitle>
               </SheetHeader>

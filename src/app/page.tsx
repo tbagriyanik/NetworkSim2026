@@ -3427,7 +3427,7 @@ ${state.bannerMOTD}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 text-pink-500 hover:bg-pink-500/10"
+                          className="h-9 w-9 text-emerald-500 hover:bg-emerald-500/10"
                           onClick={() => setIsEnvironmentPanelOpen(true)}
                         >
                           <Leaf className="w-5 h-5" />
@@ -4466,7 +4466,7 @@ ${state.bannerMOTD}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-pink-500 hover:bg-pink-500/10"
+                          className="h-8 w-8 text-emerald-500 hover:bg-emerald-500/10"
                           onClick={() => setIsEnvironmentPanelOpen(true)}
                         >
                           <Leaf className="w-4 h-4" />
