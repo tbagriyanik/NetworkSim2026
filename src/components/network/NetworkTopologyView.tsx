@@ -478,7 +478,28 @@ export const NetworkTopologyView = React.memo(
                         : 'border-yellow-200 text-slate-800'
                         } ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-emerald-400/70' : ''}`}
                       data-note-id={note.id}
-                      style={{ backgroundColor: note.color, fontFamily: note.font, opacity: note.opacity }}
+                      style={{
+                        background: (() => {
+                          const gradientMap: Record<string, string> = {
+                            '#3b82f6': 'linear-gradient(to bottom, #3b82f6, #1d4ed8)',
+                            '#10b981': 'linear-gradient(to bottom, #10b981, #047857)',
+                            '#8b5cf6': 'linear-gradient(to bottom, #8b5cf6, #6d28d9)',
+                            '#f59e0b': 'linear-gradient(to bottom, #f59e0b, #b45309)',
+                            '#ef4444': 'linear-gradient(to bottom, #ef4444, #b91c1c)',
+                            '#06b6d4': 'linear-gradient(to bottom, #06b6d4, #0e7490)',
+                            '#ec4899': 'linear-gradient(to bottom, #ec4899, #be185d)',
+                            '#f97316': 'linear-gradient(to bottom, #f97316, #c2410c)',
+                            '#84cc16': 'linear-gradient(to bottom, #84cc16, #4d7c0f)',
+                            '#64748b': 'linear-gradient(to bottom, #64748b, #334155)',
+                            '#a78bfa': 'linear-gradient(to bottom, #a78bfa, #7c3aed)',
+                            '#60a5fa': 'linear-gradient(to bottom, #60a5fa, #2563eb)',
+                            '#4ade80': 'linear-gradient(to bottom, #4ade80, #16a34a)',
+                          };
+                          return gradientMap[note.color] || note.color;
+                        })(),
+                        fontFamily: note.font,
+                        opacity: note.opacity
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (e.shiftKey) {

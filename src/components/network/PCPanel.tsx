@@ -3226,6 +3226,7 @@ export function PCPanel({
         goHome();
         setHttpAppContent(null);
         setHttpAppDeviceId(null);
+        inputRef.current?.focus();
         return;
       }
       if (showAutocomplete) {
@@ -5129,7 +5130,10 @@ export function PCPanel({
       {httpAppContent && (
         <div
           className="fixed inset-0 z-[999] pointer-events-auto bg-black/20"
-          onClick={() => setHttpAppContent(null)}
+          onClick={() => {
+            setHttpAppContent(null);
+            inputRef.current?.focus();
+          }}
         >
           <div
             className="absolute"
@@ -5256,6 +5260,7 @@ export function PCPanel({
                     goHome();
                     setHttpAppContent(null);
                     setHttpAppDeviceId(null);
+                    inputRef.current?.focus();
                   }}
                   className="ml-3 shrink-0"
                   aria-label={language === 'tr' ? 'Kapat' : 'Close'}

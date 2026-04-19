@@ -3224,81 +3224,39 @@ ${state.bannerMOTD}
                       <div className="p-3 space-y-4">
                         {/* Quick actions (primary) */}
                         <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200'}`}>
-                          <p className="text-xs font-bold tracking-widest text-slate-500 mb-2 px-1">
-                            {t.quickActions}
-                          </p>
+                         
                           <div className="grid grid-cols-2 gap-2">
                             <Button
                               variant="secondary"
-                              className="justify-start gap-2 h-9 text-xs font-bold"
+                              className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                               onClick={() => { setShowProjectPicker(true); setShowMobileMenu(false); }}
                             >
                               <File className="w-3.5 h-3.5" /> {t.new}
                             </Button>
                             <Button
                               variant="secondary"
-                              className="justify-start gap-2 h-9 text-xs font-bold"
+                              className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                               onClick={() => { handleSaveProject(); setShowMobileMenu(false); }}
                             >
                               <Save className="w-3.5 h-3.5" /> {t.saveLabel}
                             </Button>
                             <Button
                               variant="secondary"
-                              className="justify-start gap-2 h-9 text-xs font-bold"
+                              className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                               onClick={() => { fileInputRef.current?.click(); setShowMobileMenu(false); }}
                             >
                               <FolderOpen className="w-3.5 h-3.5" /> {t.load}
                             </Button>
                             <Button
                               variant="secondary"
-                              className={cn("justify-start gap-2 h-9 text-xs font-bold", isDark ? "hover:text-cyan-400" : "")}
+                              className={cn("justify-start gap-2 h-9 text-xs font-bold", isDark ? "hover:text-cyan-400" : "hover:text-cyan-600")}
                               onClick={() => { setShowOnboarding(true); setOnboardingStep(0); setShowMobileMenu(false); }}
                             >
                               <Compass className="w-3.5 h-3.5" /> {t.tour}
                             </Button>
-                          </div>
-                        </div>
-
-                        {/* Navigation Sections */}
-                        <div className="space-y-1">
-                          <p className="text-xs font-bold  tracking-widest text-slate-500 px-2 mb-1">{t.navigation}</p>
-                          <div className="grid gap-0.5">
-                            {ALL_TABS.map((tab) => {
-                              // cmd tab is now a modal, not a tab
-                              if (tab.id === 'cmd') return null;
-
-                              const isTabVisible = tab.id === 'topology' || (activeDeviceId && tab.showFor.includes(activeDeviceType));
-                              if (!isTabVisible) return null;
-
-                              const isActive = activeTab === tab.id;
-                              const label = t[tab.labelKey as keyof typeof t] as string;
-                              return (
-                                <Button
-                                  key={tab.id}
-                                  variant={isActive ? "secondary" : "ghost"}
-                                  className={`w-full justify-start gap-3 h-9 px-3 text-xs font-bold ui-hover-surface ${isActive ? 'bg-violet-500/10 text-violet-400' : 'text-slate-400'}`}
-                                  onClick={() => {
-                                    switchTabOrTopology(tab.id);
-                                    setShowMobileMenu(false);
-                                  }}
-                                >
-                                  <span className={`w-4 h-4 flex items-center justify-center ${isActive ? 'text-violet-400' : 'text-slate-500'}`}>
-                                    {tab.icon}
-                                  </span>
-                                  {label}
-                                </Button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        <Separator className="bg-slate-800/30" />
-
-                        {/* Language & Theme Controls - Mobile */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
+                             <Button
                             variant="outline"
-                            className="justify-start gap-2 h-9 text-xs font-bold"
+                            className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                             onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
                           >
                             <Languages className="w-3.5 h-3.5" />
@@ -3306,27 +3264,25 @@ ${state.bannerMOTD}
                           </Button>
                           <Button
                             variant="outline"
-                            className="justify-start gap-2 h-9 text-xs font-bold"
+                            className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                             onClick={() => setTheme(isDark ? 'light' : 'dark')}
                           >
                             {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
                             {isDark ? t.lightMode : t.darkMode}
                           </Button>
-                        </div>
-
-                        <Separator className="bg-slate-800/30" />
 
                         {/* Help Button */}
                         <Button
                           variant="outline"
-                          className="w-full justify-start gap-2 h-9 text-xs font-bold"
+                          className={`w-full justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                           onClick={() => { setShowAboutModal(true); setShowMobileMenu(false); }}
                         >
                           <Info className="w-3.5 h-3.5" />
                           {t.help}
                         </Button>
+                          </div>
+                        </div>
 
-                        <Separator className="bg-slate-800/30" />
 
                         {/* Lab Progress Mobile */}
                         <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-800/30' : 'bg-slate-50'} border ${isDark ? 'border-slate-800/50' : 'border-slate-200'}`}>

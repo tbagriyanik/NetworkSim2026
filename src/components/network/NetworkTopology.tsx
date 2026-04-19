@@ -2277,6 +2277,25 @@ export function NetworkTopology({
     updateNoteStyle(noteId, { font: next });
   }, [updateNoteStyle]);
 
+  const getNoteGradientFill = useCallback((color: string) => {
+    const colorToGradientMap: Record<string, string> = {
+      '#3b82f6': isDark ? 'url(#noteBlueDark)' : 'url(#noteBlueLight)',
+      '#10b981': isDark ? 'url(#noteEmeraldDark)' : 'url(#noteEmeraldLight)',
+      '#8b5cf6': isDark ? 'url(#noteVioletDark)' : 'url(#noteVioletLight)',
+      '#f59e0b': isDark ? 'url(#noteAmberDark)' : 'url(#noteAmberLight)',
+      '#ef4444': isDark ? 'url(#noteRedDark)' : 'url(#noteRedLight)',
+      '#06b6d4': isDark ? 'url(#noteCyanDark)' : 'url(#noteCyanLight)',
+      '#ec4899': isDark ? 'url(#notePinkDark)' : 'url(#notePinkLight)',
+      '#f97316': isDark ? 'url(#noteOrangeDark)' : 'url(#noteOrangeLight)',
+      '#84cc16': isDark ? 'url(#noteLimeDark)' : 'url(#noteLimeLight)',
+      '#64748b': isDark ? 'url(#noteSlateDark)' : 'url(#noteSlateLight)',
+      '#a78bfa': isDark ? 'url(#notePurpleDark)' : 'url(#notePurpleLight)',
+      '#60a5fa': isDark ? 'url(#noteLightBlueDark)' : 'url(#noteLightBlueLight)',
+      '#4ade80': isDark ? 'url(#noteLightGreenDark)' : 'url(#noteLightGreenLight)',
+    };
+    return colorToGradientMap[color] || color;
+  }, [isDark]);
+
   const cycleNoteFontSize = useCallback((noteId: string) => {
     const note = latestNotesRef.current.find((n) => n.id === noteId);
     if (!note) return;
@@ -5591,6 +5610,112 @@ export function NetworkTopology({
                     <stop offset="0%" stopColor="#ffedd5" />
                     <stop offset="100%" stopColor="#fed7aa" />
                   </linearGradient>
+                  {/* Note Gradients for Dark Mode */}
+                  <linearGradient id="noteBlueDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="100%" stopColor="#1d4ed8" />
+                  </linearGradient>
+                  <linearGradient id="noteEmeraldDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#10b981" />
+                    <stop offset="100%" stopColor="#047857" />
+                  </linearGradient>
+                  <linearGradient id="noteVioletDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#6d28d9" />
+                  </linearGradient>
+                  <linearGradient id="noteAmberDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#b45309" />
+                  </linearGradient>
+                  <linearGradient id="noteRedDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ef4444" />
+                    <stop offset="100%" stopColor="#b91c1c" />
+                  </linearGradient>
+                  <linearGradient id="noteCyanDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#06b6d4" />
+                    <stop offset="100%" stopColor="#0e7490" />
+                  </linearGradient>
+                  <linearGradient id="notePinkDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ec4899" />
+                    <stop offset="100%" stopColor="#be185d" />
+                  </linearGradient>
+                  <linearGradient id="noteOrangeDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#f97316" />
+                    <stop offset="100%" stopColor="#c2410c" />
+                  </linearGradient>
+                  <linearGradient id="noteLimeDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#84cc16" />
+                    <stop offset="100%" stopColor="#4d7c0f" />
+                  </linearGradient>
+                  <linearGradient id="noteSlateDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#64748b" />
+                    <stop offset="100%" stopColor="#334155" />
+                  </linearGradient>
+                  <linearGradient id="notePurpleDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#a78bfa" />
+                    <stop offset="100%" stopColor="#7c3aed" />
+                  </linearGradient>
+                  <linearGradient id="noteLightBlueDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#60a5fa" />
+                    <stop offset="100%" stopColor="#2563eb" />
+                  </linearGradient>
+                  <linearGradient id="noteLightGreenDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#4ade80" />
+                    <stop offset="100%" stopColor="#16a34a" />
+                  </linearGradient>
+                  {/* Note Gradients for Light Mode */}
+                  <linearGradient id="noteBlueLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#dbeafe" />
+                    <stop offset="100%" stopColor="#bfdbfe" />
+                  </linearGradient>
+                  <linearGradient id="noteEmeraldLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#d1fae5" />
+                    <stop offset="100%" stopColor="#a7f3d0" />
+                  </linearGradient>
+                  <linearGradient id="noteVioletLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ede9fe" />
+                    <stop offset="100%" stopColor="#ddd6fe" />
+                  </linearGradient>
+                  <linearGradient id="noteAmberLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#fef3c7" />
+                    <stop offset="100%" stopColor="#fde68a" />
+                  </linearGradient>
+                  <linearGradient id="noteRedLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#fee2e2" />
+                    <stop offset="100%" stopColor="#fecaca" />
+                  </linearGradient>
+                  <linearGradient id="noteCyanLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#cffafe" />
+                    <stop offset="100%" stopColor="#a5f3fc" />
+                  </linearGradient>
+                  <linearGradient id="notePinkLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#fce7f3" />
+                    <stop offset="100%" stopColor="#fbcfe8" />
+                  </linearGradient>
+                  <linearGradient id="noteOrangeLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ffedd5" />
+                    <stop offset="100%" stopColor="#fed7aa" />
+                  </linearGradient>
+                  <linearGradient id="noteLimeLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ecfccb" />
+                    <stop offset="100%" stopColor="#d9f99d" />
+                  </linearGradient>
+                  <linearGradient id="noteSlateLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#f1f5f9" />
+                    <stop offset="100%" stopColor="#e2e8f0" />
+                  </linearGradient>
+                  <linearGradient id="notePurpleLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#f3e8ff" />
+                    <stop offset="100%" stopColor="#e9d5ff" />
+                  </linearGradient>
+                  <linearGradient id="noteLightBlueLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#dbeafe" />
+                    <stop offset="100%" stopColor="#bfdbfe" />
+                  </linearGradient>
+                  <linearGradient id="noteLightGreenLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#dcfce7" />
+                    <stop offset="100%" stopColor="#bbf7d0" />
+                  </linearGradient>
                 </defs>
 
                 {/* Canvas Background with Grid - clipped to boundaries */}
@@ -6538,7 +6663,7 @@ export function NetworkTopology({
                     y={note.y}
                     width={note.width}
                     height={note.height}
-                    fill={note.color}
+                    fill={getNoteGradientFill(note.color)}
                     opacity={note.opacity}
                     stroke="#999"
                     strokeWidth="1"
