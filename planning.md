@@ -1,10 +1,63 @@
-# Recent Network CLI, STP, and Interface Updates
+# Recent Network CLI, STP, Interface, and UI Updates
 
-This note summarizes the recent STP PVST example enhancements, VLAN-specific STP path calculation, STP redundancy support, VLAN interface support, per-VLAN spanning tree priority fixes, and accessibility enhancements in the simulator.
+This note summarizes the recent STP PVST example enhancements, VLAN-specific STP path calculation, STP redundancy support, VLAN interface support, per-VLAN spanning tree priority fixes, accessibility enhancements, keyboard shortcuts, and STP blocking logic improvements in the simulator.
+
+## Current Code Metrics
+
+- Total lines: 57852
+- Last updated: 2026-04-19
 
 ## Overview
 
-Enhanced STP 3-Switch PVST example with PC devices for comprehensive testing, implemented VLAN-specific STP path calculation for ping animation, added STP redundancy support for automatic backup path activation, implemented VLAN 1-only STP visualization, added VLAN interface support for show interface command, fixed per-VLAN spanning tree priority calculation, and added comprehensive ARIA labels to improve accessibility for screen readers.
+Enhanced STP 3-Switch PVST example with PC devices for comprehensive testing, implemented VLAN-specific STP path calculation for ping animation, added STP redundancy support for automatic backup path activation, implemented VLAN 1-only STP visualization, added VLAN interface support for show interface command, fixed per-VLAN spanning tree priority calculation, added comprehensive ARIA labels to improve accessibility for screen readers, added P keyboard shortcut for ping functionality, improved STP blocking logic for link failure scenarios, and added per-VLAN STP instances to 3-switch PVST example.
+
+## P Keyboard Shortcut for Ping
+
+### Overview
+Added P keyboard shortcut to quickly enter ping mode and select ping source.
+
+### Implementation
+- Press P to enter ping mode
+- If a device is selected, it becomes the ping source automatically
+- If no device is selected, user can select source after entering ping mode
+- Press P again to exit ping mode
+- Added "(P)" shortcut indicator to toolbar tooltip
+- Added "(P)" shortcut indicator to context menu ping item
+
+### Files Modified
+- `src/components/network/NetworkTopology.tsx` - Added P key handler in window keydown listener
+- `src/components/network/NetworkTopologyContextMenu.tsx` - Added shortcut property to ping menu item
+- `src/app/page.tsx` - Updated tooltip to show "(P)" shortcut
+
+### Impact
+- Faster ping workflow with keyboard shortcut
+- Consistent with other keyboard shortcuts (Ctrl+A, Ctrl+Z, etc.)
+- Improved user experience for frequent ping operations
+
+## STP Blocking Logic Improvements
+
+### Overview
+Improved STP blocking logic to properly handle link failure and restoration scenarios in PVST configurations.
+
+### Issue
+Previously, when a link failed and was restored, STP blocking state was not properly recalculated, causing connectivity issues.
+
+### Resolution
+- Modified `getVlanSpecificSTPBlocking` function in connectivity.ts
+- When connection is down (active === false), STP blocking is lifted (simulating STP reconvergence)
+- When connection is up, original STP configuration is used
+- Added per-VLAN STP instances to 3-switch PVST example in exampleProjects.ts
+- SW1, SW2, SW3 trunk ports configured with VLAN-specific STP states (forwarding/blocking per VLAN)
+
+### Impact
+- Each VLAN uses its own path based on VLAN-specific STP
+- When link fails, backup path automatically activates
+- When link is restored, original STP topology is restored
+- Proper PVST behavior demonstration
+
+### Files Modified
+- `src/lib/network/connectivity.ts` - Updated getVlanSpecificSTPBlocking function
+- `src/lib/network/exampleProjects.ts` - Added per-VLAN STP instances to SW1, SW2, SW3 trunk ports
 
 ## VLAN-Specific STP Path Calculation
 
