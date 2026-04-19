@@ -369,7 +369,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'spanning-tree vlan': {
-    pattern: /^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|root)\s*(.*))?$/i,
+    pattern: /^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|priorty|root)\s*(.*))?$/i,
     modes: ['config'],
     minArgs: 1,
     maxArgs: 4
@@ -1583,7 +1583,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
 
   // Do komutları (config moddan show çalıştırma)
   'do show': {
-    pattern: /^do\s+(show\s+.+)$/i,
+    pattern: /^do\s+(sh(?:ow)?\s+.+)$/i,
     modes: ['config', 'interface', 'config-if-range', 'line', 'vlan'],
     minArgs: 1,
     maxArgs: 1

@@ -1169,12 +1169,17 @@ function cmdIpArpInspection(state: any, input: string, ctx: any): any {
 function cmdSpanningTreeVlan(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') return { success: false, error: '% Invalid command at this mode' };
 
-  const match = input.match(/^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|root)\s*(\d*))?$/i);
+  const match = input.match(/^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|priorty|root)\s*(\d*))?$/i);
   if (!match) return { success: false, error: '% Invalid spanning-tree vlan command' };
 
   const vlanId = parseInt(match[1]);
-  const subCommand = match[2]; // 'priority' or 'root' or undefined
+  let subCommand = match[2]; // 'priority', 'priorty' (typo), or 'root' or undefined
   const value = match[3]; // priority value or empty
+
+  // Fix typo: treat 'priorty' as 'priority'
+  if (subCommand === 'priorty') {
+    subCommand = 'priority';
+  }
 
   const lang = ctx.language || 'en';
 
@@ -1201,6 +1206,19 @@ function cmdSpanningTreeVlan(state: any, input: string, ctx: any): any {
   }
 
   // Handle priority or root configuration
+  if (subCommand === 'priority' && value) {
+    const priorityValue = parseInt(value);
+    const allowedPriorities = [0, 4096, 8192, 12288, 16384, 20480, 24576, 28672, 32768, 36864, 40960, 45056, 49152, 53248, 57344, 61440];
+    if (!allowedPriorities.includes(priorityValue)) {
+      const firstLine = allowedPriorities.slice(0, 8).map(v => String(v).padStart(6)).join(' ');
+      const secondLine = allowedPriorities.slice(8).map(v => String(v).padStart(6)).join(' ');
+      return {
+        success: false,
+        error: `% Bridge Priority must be in increments of 4096.\n% Allowed values are:\n  ${firstLine}\n  ${secondLine}`
+      };
+    }
+  }
+
   const updatedVlans = {
     ...spanningTreeVlans,
     [vlanId]: {
@@ -1213,7 +1231,7 @@ function cmdSpanningTreeVlan(state: any, input: string, ctx: any): any {
   return {
     success: true,
     output: lang === 'tr' ?
-      `Spanning-tree VLAN ${vlanId} ${subCommand} yapilandirildi` :
+      `Spanning-tree VLAN ${vlanId} ${subCommand} yapılandırıldı` :
       `Spanning-tree VLAN ${vlanId} ${subCommand} configured`,
     newState: { spanningTreeVlans: updatedVlans }
   };

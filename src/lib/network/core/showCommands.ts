@@ -3,7 +3,6 @@ import type { CommandHandler } from './commandTypes';
 // Show komutları (show running-config, show vlan, show ip route, vs.)
 
 export const showHandlers: Record<string, CommandHandler> = {
-  'show': cmdShow,
   'show running-config': cmdShowRunningConfig,
   'show startup-config': cmdShowStartupConfig,
   'show version': cmdShowVersion,
@@ -1093,7 +1092,10 @@ export function calculateSTPState(
   // Determine root bridge: lowest bridge priority > lowest MAC address
   // Consider ALL switches in topology (not just directly connected) - simulates BPDU propagation
   const myMac = state.macAddress || 'FFFF.FFFF.FFFF';
-  const myPriority = state.spanningTreePriority || 32768;
+  // Use VLAN-based priority if available, otherwise use global priority
+  const spanningTreeVlans = state.spanningTreeVlans || {};
+  const vlan1Priority = spanningTreeVlans['1']?.priority ? parseInt(spanningTreeVlans['1'].priority) : null;
+  const myPriority = vlan1Priority || state.spanningTreePriority || 32768;
   let lowestPriority = myPriority;
   let lowestMac = myMac;
   let rootBridgeId = sourceDeviceId;
@@ -1105,10 +1107,11 @@ export function calculateSTPState(
   devices.forEach((d: any) => {
     if (d.type === 'switchL2' || d.type === 'switchL3') {
       const swState = deviceStates.get?.(d.id);
+      const swVlan1Priority = swState?.spanningTreeVlans?.['1']?.priority ? parseInt(swState.spanningTreeVlans['1'].priority) : null;
       allSwitches.push({
         deviceId: d.id,
         macAddress: swState?.macAddress || d.macAddress || 'FFFF.FFFF.FFFF',
-        priority: swState?.spanningTreePriority || 32768
+        priority: swVlan1Priority || swState?.spanningTreePriority || 32768
       });
     }
   });
@@ -1482,34 +1485,27 @@ function cmdShowSpanningTree(
     }
   }
 
+  // Get VLAN-based spanning tree configuration
+  const spanningTreeVlans = state.spanningTreeVlans || {};
+
+  // Calculate lowest priority across all switches for root bridge display
+  const myPriority = (spanningTreeVlans['1']?.priority ? parseInt(spanningTreeVlans['1'].priority) : state.spanningTreePriority) || 32768;
+  let lowestPriority = myPriority;
+
+  devices.forEach((d: any) => {
+    if (d.type === 'switchL2' || d.type === 'switchL3') {
+      const swState = deviceStates.get?.(d.id);
+      const swVlan1Priority = swState?.spanningTreeVlans?.['1']?.priority ? parseInt(swState.spanningTreeVlans['1'].priority) : null;
+      const swPriority = swVlan1Priority || swState?.spanningTreePriority || 32768;
+      if (swPriority < lowestPriority) {
+        lowestPriority = swPriority;
+      }
+    }
+  });
+
   vlans.forEach((vlanId: string) => {
     const vlan = state.vlans?.[vlanId];
     const vlanName = vlan?.name || `VLAN${vlanId}`;
-
-    output += `\nVLAN${String(vlanId).padStart(4, '0')}\n`;
-    output += `  Spanning tree enabled protocol ${stpMode === 'mst' ? 'mstp' : 'ieee'}\n`;
-
-    if (isRootBridge) {
-      output += `  Root ID    Priority    32769\n`;
-      output += `             Address     ${state.macAddress || '0000.0000.0000'}\n`;
-      output += `             This bridge is the root\n`;
-    } else {
-      output += `  Root ID    Priority    32769\n`;
-      output += `             Address     ${lowestMac}\n`;
-      if (rootPortId) {
-        const rootPortNum = getPortNumber(rootPortId);
-        output += `             Cost        19\n`;
-        output += `             Port        ${rootPortNum} (FastEthernet0/${rootPortNum})\n`;
-      }
-    }
-    output += `             Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec\n\n`;
-    output += `  Bridge ID  Priority    32769  (priority 32768 sys-id-ext ${vlanId})\n`;
-    output += `             Address     ${state.macAddress || '001A.2B3C.4D5E'}\n`;
-    output += `             Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec\n`;
-    output += `             Aging Time  300\n\n`;
-
-    output += `Interface           Role Sts Cost      Prio.Nbr Type\n`;
-    output += `------------------- ---- --- --------- -------- --------------------------------\n`;
 
     // Sort ports by their number
     const portEntries = Object.entries(state.ports || {})
@@ -1520,6 +1516,40 @@ function cmdShowSpanningTree(
       })
       .filter(([_, port]: [string, any]) => port.status === 'connected')
       .sort(([a], [b]) => getPortNumber(a) - getPortNumber(b));
+
+    // Skip entire VLAN block if there are no ports to display
+    if (portEntries.length === 0) {
+      return;
+    }
+
+    output += `\nVLAN${String(vlanId).padStart(4, '0')}\n`;
+    output += `  Spanning tree enabled protocol ${stpMode === 'mst' ? 'mstp' : 'ieee'}\n`;
+
+    // Get VLAN-based priority
+    const vlanPriority = spanningTreeVlans[vlanId]?.priority ? parseInt(spanningTreeVlans[vlanId].priority) : 32768;
+    const bridgePriority = vlanPriority + parseInt(vlanId);
+
+    if (isRootBridge) {
+      output += `  Root ID    Priority    ${bridgePriority}\n`;
+      output += `             Address     ${state.macAddress || '0000.0000.0000'}\n`;
+      output += `             This bridge is the root\n`;
+    } else {
+      output += `  Root ID    Priority    ${lowestPriority}\n`;
+      output += `             Address     ${lowestMac}\n`;
+      if (rootPortId) {
+        const rootPortNum = getPortNumber(rootPortId);
+        output += `             Cost        19\n`;
+        output += `             Port        ${rootPortNum} (FastEthernet0/${rootPortNum})\n`;
+      }
+    }
+    output += `             Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec\n\n`;
+    output += `  Bridge ID  Priority    ${bridgePriority}  (priority ${vlanPriority} sys-id-ext ${vlanId})\n`;
+    output += `             Address     ${state.macAddress || '001A.2B3C.4D5E'}\n`;
+    output += `             Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec\n`;
+    output += `             Aging Time  300\n\n`;
+
+    output += `Interface           Role Sts Cost      Prio.Nbr Type\n`;
+    output += `------------------- ---- --- --------- -------- --------------------------------\n`;
 
     portEntries.forEach(([portName, port]: [string, any]) => {
       const portNum = getPortNumber(portName);
@@ -1628,13 +1658,17 @@ function cmdDoShow(
   input: string,
   ctx: any
 ): any {
-  // Extract the show command from "do show ..."
-  const match = input.match(/^do\s+(show\s+.+)$/i);
+  // Extract the show command from "do show ..." or "do sh ..."
+  const match = input.match(/^do\s+(sh(?:ow)?\s+.+)$/i);
   if (!match) {
     return { success: false, error: '% Invalid command' };
   }
 
-  const showCommand = match[1];
+  let showCommand = match[1];
+  // Normalize "sh" to "show"
+  if (showCommand.startsWith('sh ')) {
+    showCommand = 'show ' + showCommand.substring(3);
+  }
 
   // Parse the show command
   const parts = showCommand.split(/\s+/);
