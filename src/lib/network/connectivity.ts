@@ -64,15 +64,8 @@ const getVlanSpecificSTPBlocking = (
   // If port is shutdown, it's not blocking (it's just down)
   if (port.shutdown) return false;
 
-  // First try to read the per-VLAN spanning tree instance (PVST)
-  const vlanStp = port.spanningTree?.instances?.[vlanId];
-  const isBlocking = vlanStp ? vlanStp.state === 'blocking' :
-    (vlanId === 1 && port.spanningTree?.state ? port.spanningTree.state === 'blocking' : false);
-
-  // If port is not blocking, return false
-  if (!isBlocking) return false;
-
-  // If port is blocking, check if the connection is active
+  // Check if the connection is active - if the link is down, STP should reconverge
+  // and blocked ports should become forwarding (backup path)
   const connection = connections.find(c =>
     (c.sourceDeviceId === deviceId && c.sourcePort === portId) ||
     (c.targetDeviceId === deviceId && c.targetPort === portId)
@@ -83,20 +76,21 @@ const getVlanSpecificSTPBlocking = (
     return false;
   }
 
-  // If connection is up, check if there are other active connections from this device
-  // If this is the only active connection from this device, ignore STP blocking
-  // This simulates STP reconvergence when all other links fail
-  if (connection) {
-    const activeConnectionsFromDevice = connections.filter(c =>
-      c.active !== false &&
-      (c.sourceDeviceId === deviceId || c.targetDeviceId === deviceId)
-    );
-
-    // If this is the only active connection from this device, ignore STP blocking
-    // When the connection is restored, there will be multiple connections again
-    return activeConnectionsFromDevice.length > 1;
+  // If connection is up, use the original STP configuration
+  // First try to read the per-VLAN spanning tree instance (PVST)
+  const vlanStp = port.spanningTree?.instances?.[vlanId];
+  if (vlanStp) {
+    return vlanStp.state === 'blocking';
   }
 
+  // Fall back to the legacy single-instance state for VLAN 1 only.
+  // This keeps classic STP behavior intact while avoiding false VLAN matches in PVST.
+  if (vlanId === 1 && port.spanningTree?.state) {
+    return port.spanningTree.state === 'blocking';
+  }
+
+  // If no VLAN-specific instance is defined, do NOT fall back to VLAN 1.
+  // Returning false allows pathfinding to continue without incorrectly blocking a VLAN path.
   return false;
 };
 

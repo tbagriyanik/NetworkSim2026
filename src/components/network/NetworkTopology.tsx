@@ -3164,6 +3164,25 @@ export function NetworkTopology({
         e.preventDefault();
         resetView();
       }
+
+      // P to enter ping mode
+      if (!isEditable && key === 'p' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+        e.preventDefault();
+        if (!pingMode) {
+          if (selectedDeviceIds.length === 1) {
+            const selectedDevice = devices.find(d => d.id === selectedDeviceIds[0]);
+            setPingSource(selectedDevice || null);
+          } else {
+            setPingSource(null);
+          }
+          setPingMode(true);
+          setPingResult(null);
+        } else {
+          setPingMode(false);
+          setPingSource(null);
+          setPingResult(null);
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);

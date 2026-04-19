@@ -360,6 +360,7 @@ export default function NetworkTopologyContextMenu({
                 {renderMenuItem({
                   label: t.ping,
                   icon: 'ping',
+                  shortcut: 'P',
                   onClick: () => { onStartPing(contextMenu.deviceId!); onClose(); },
                   disabled: !device
                 })}

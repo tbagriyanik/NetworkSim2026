@@ -4494,7 +4494,7 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{t.ping}</TooltipContent>
+                      <TooltipContent>{t.ping} (P)</TooltipContent>
                     </Tooltip>
 
                     {/* Add Note Button */}
