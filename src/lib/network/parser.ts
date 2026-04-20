@@ -1170,7 +1170,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
   },
   'show version': {
     pattern: /^show(\s+version|\s+ver)$/i,
-    modes: ['privileged'],
+    modes: ['user', 'privileged'],
     minArgs: 0,
     maxArgs: 0
   },

@@ -3400,7 +3400,7 @@ ${state.bannerMOTD}
             <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl`}>
               <div className='flex flex-col flex-1 overflow-hidden h-full max-w-full'>
                 <div className='p-4 md:p-8 pb-2 md:pb-4 space-y-4'>
-                  <div className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r  p-4 md:p-6 flex items-center justify-between'>
+                  <DialogHeader className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r p-4 md:p-6 flex items-center justify-between flex-row'>
                     <DialogTitle className='text-xl bg-gradient-to-br from-white to-slate-900 bg-clip-text text-transparent break-words'>{t.openNewProject}</DialogTitle>
                     <Button
                       variant='outline'
@@ -3416,7 +3416,7 @@ ${state.bannerMOTD}
                         ? 'Yeni proje penceresi: boş projeyle başlayın veya hazır örneklerden birini seçin.'
                         : 'New project dialog: start with an empty project or choose one of the ready examples.'}
                     </DialogDescription>
-                  </div>
+                  </DialogHeader>
 
                   {/* Search Box */}
                   <div className={`relative rounded-xl border px-4 py-2.5 flex items-center gap-2 ${isDark ? 'bg-slate-900/40 border-slate-800/60' : 'bg-white/50 border-slate-200/60'}`}>
@@ -3665,6 +3665,7 @@ ${state.bannerMOTD}
           {/* Tasks Modal */}
           <Dialog open={showTasksModal} onOpenChange={setShowTasksModal}>
             <DialogContent
+              showCloseButton={false}
               className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: 'fixed',
@@ -3801,6 +3802,7 @@ ${state.bannerMOTD}
           {/* PC Terminal Modal */}
           <Dialog open={showPCPanel} onOpenChange={setShowPCPanel}>
             <DialogContent
+              showCloseButton={false}
               className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'fixed' : 'fixed',
@@ -3910,6 +3912,7 @@ ${state.bannerMOTD}
           {/* Terminal Full-Screen Modal */}
           <Dialog open={showTerminalModal} onOpenChange={setShowTerminalModal}>
             <DialogContent
+              showCloseButton={false}
               className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: 'fixed',
@@ -4626,13 +4629,13 @@ ${state.bannerMOTD}
                           <span className={`mx-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>|</span>
                           {/* Interaction Shortcuts Legend */}
                           <div className={`flex items-center gap-1 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            <span className="font-semibold">LMB</span>:{t.pan}
+                            <span className="font-semibold">LeftMB</span>:{t.pan}
                             <span className="mx-1">·</span>
-                            <span className="font-semibold">Mid</span>:{t.boxSelect}
+                            <span className="font-semibold">MidMB</span>:{t.boxSelect}
                             <span className="mx-1">·</span>
-                            <span className="font-semibold">RMB</span>:{t.menu}
+                            <span className="font-semibold">RightMB</span>:{t.menu}
                             <span className="mx-1">·</span>
-                            <span className="font-semibold">Scr</span>:Zoom
+                            <span className="font-semibold">Wheel</span>:Zoom
                           </div>
                         </>
                       )}

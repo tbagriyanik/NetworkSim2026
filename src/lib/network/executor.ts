@@ -150,7 +150,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'cl': ['cls'],
     'q': ['quit'],
     'sho': ['show'],
-    'show': ['version', 'wireless', 'ssh'],
+    'show': ['version', 'ssh'],
   },
   privileged: {
     '': ['configure', 'disable', 'show', 'clear', 'debug', 'undebug', 'terminal', 'write', 'ping', 'telnet', 'ssh', 'tracert', 'traceroute', 'reload', 'exit', 'copy', 'erase', 'delete', 'ip', '?', 'help'],
