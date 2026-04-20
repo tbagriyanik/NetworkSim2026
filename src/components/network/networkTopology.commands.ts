@@ -175,11 +175,12 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       icon: Wifi,
       title: isTR ? 'Kablosuz (WiFi)' : 'Wireless (WiFi)',
       cmds: [
-        ['ssid <name>', isTR ? 'Ağ adı (SSID)' : 'Set network name'],
-        ['encryption {open|wpa2|wpa3}', isTR ? 'Güvenlik tipi' : 'Security type'],
-        ['wifi-password <pass>', isTR ? 'WiFi şifresi' : 'WiFi password'],
-        ['wifi-channel {band}', isTR ? 'WiFi bandı' : 'Set WiFi band'],
-        ['wifi-mode {ap|client}', isTR ? 'WiFi modu' : 'WiFi mode'],
+        ['wlan <name> <id> <ssid>', isTR ? 'WLAN oluştur' : 'Create WLAN'],
+        ['security wpa psk set-key ascii 0 <pass>', isTR ? 'WPA şifresi ayarla' : 'Set WPA password'],
+        ['channel <num>', isTR ? 'RF kanalı ayarla' : 'Set RF channel'],
+        ['station-role root', isTR ? 'AP modu ayarla' : 'Set AP mode'],
+        ['show wlan summary', isTR ? 'WLAN özetini göster' : 'Show WLAN summary'],
+        ['show ap summary', isTR ? 'AP özetini göster' : 'Show AP summary'],
       ]
     },
     {

@@ -10,6 +10,8 @@ WiFi bağlantılarında sinyal gücüne göre gerçekçi ping gecikmeleri ve gö
 
 ## Özellikler
 
+> **Important Note**: Wireless CLI commands (wlan, security wpa psk set-key, channel, station-role, show wlan summary, show ap summary) are only valid on Wireless LAN Controllers (WLC) or autonomous Access Points (AP). These commands are NOT supported on switches. If attempted on a switch, you'll receive an error message with the correct WLC/AP command reference.
+
 ### 1. WiFi Sinyal Gücü Göstergesi
 
 #### Terminal Başlığında Gösterge

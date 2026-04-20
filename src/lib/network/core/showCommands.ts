@@ -11,7 +11,6 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show interface trunk': cmdShowInterfaceTrunk,
   'show interfaces trunk': cmdShowInterfaceTrunk,
   'show ip interface brief': cmdShowIpInterfaceBrief,
-  'show ip interface': cmdShowIpInterfaceBrief,
   'show vlan brief': cmdShowVlan,
   'show vlan': cmdShowVlan,
   'show mac address-table': cmdShowMacAddressTable,
@@ -23,13 +22,15 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show spanning-tree': cmdShowSpanningTree,
   'show port-security': cmdShowPortSecurity,
   'show wireless': cmdShowWireless,
+  'show wlan summary': cmdShowWlanSummary,
+  'show ap summary': cmdShowApSummary,
   'show ssh': cmdShowSsh,
+  'show ip ssh': cmdShowSsh,
   'do show': cmdDoShow,
   'show ip dhcp snooping': cmdShowIpDhcpSnooping,
   'show interfaces status': cmdShowInterfacesStatus,
   'show cdp': cmdShowCdp,
   'show vtp status': cmdShowVtpStatus,
-  'show vtp': cmdShowVtpStatus,
   'show etherchannel': cmdShowEtherchannel,
   'show arp': cmdShowArp,
   'show ip arp': cmdShowArp,
@@ -46,6 +47,7 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show udld': cmdShowUdld,
   'show monitor': cmdShowMonitor,
   'show debug': cmdShowDebug,
+  'show debugging': cmdShowDebug,
   'show processes': cmdShowProcesses,
   'show memory': cmdShowMemory,
   'show sdm prefer': cmdShowSdmPrefer,
@@ -101,20 +103,7 @@ function cmdShow(
   input: string,
   ctx: any
 ): any {
-  let output = '\n';
-  output += `Switch Name: ${state.hostname}\n`;
-  output += `MAC Address: ${state.macAddress}\n`;
-  output += `IP Routing: ${state.ipRouting ? 'enabled' : 'disabled'}\n`;
-  output += `Spanning Tree Mode: ${state.spanningTreeMode || 'pvst'}\n`;
-  output += `CDP: ${state.cdpEnabled ? 'enabled' : 'disabled'}\n`;
-  output += `VTP Mode: ${state.vtpMode || 'server'}\n`;
-  if (state.vtpDomain) {
-    output += `VTP Domain: ${state.vtpDomain}\n`;
-  }
-  output += `\nVLANs: ${Object.keys(state.vlans || {}).length}\n`;
-  output += `Ports: ${Object.keys(state.ports || {}).filter((p: string) => !p.toLowerCase().startsWith('vlan')).length}\n`;
-  output += `\n!\n`;
-  return { success: true, output };
+  return { success: false, error: '% Incomplete command. Use "show ?" for available show commands' };
 }
 
 /**
@@ -2037,6 +2026,12 @@ function cmdShowWireless(
   input: string,
   ctx: any
 ): any {
+  // Check if device is a switch - show wireless is not a switch command
+  const device = ctx.devices?.find((d: any) => d.id === ctx.sourceDeviceId);
+  if (device && (device.type === 'switchL2' || device.type === 'switchL3')) {
+    return { success: false, error: '% Invalid command. show wireless is not a switch command.\nWireless summary is only available on Wireless LAN Controllers (WLC).\nWLC commands: show wlan summary, show ap summary' };
+  }
+
   let output = '\nWireless Configuration Status\n';
   output += '-------------------------------------------\n';
   output += 'Interface   Mode     SSID           Security   Channel  Status\n';
@@ -2060,6 +2055,70 @@ function cmdShowWireless(
 
   if (!found) {
     output += 'No wireless interfaces found on this device.\n';
+  }
+
+  output += '!\n';
+  return { success: true, output };
+}
+
+/**
+ * Show WLAN Summary - Display WLAN configuration summary (WLC only)
+ */
+function cmdShowWlanSummary(
+  state: any,
+  input: string,
+  ctx: any
+): any {
+  // Check if device is a switch - show wlan summary is not a switch command
+  const device = ctx.devices?.find((d: any) => d.id === ctx.sourceDeviceId);
+  if (device && (device.type === 'switchL2' || device.type === 'switchL3')) {
+    return { success: false, error: '% Invalid command. show wlan summary is only available on Wireless LAN Controllers (WLC).' };
+  }
+
+  let output = '\nWLAN Summary\n';
+  output += '-----------\n';
+  output += 'WLAN ID  Profile Name  SSID              Status  Security\n';
+  output += '--------  ------------  ----------------  ------  --------\n';
+
+  const wlans = state.wlans || {};
+  Object.keys(wlans).forEach(wlanId => {
+    const wlan = wlans[wlanId];
+    output += `${wlanId.padEnd(8)}  ${wlan.name.padEnd(12)}  ${wlan.ssid.padEnd(16)}  Up      ${state.ports['wlan0']?.wifi?.security || 'open'}\n`;
+  });
+
+  if (Object.keys(wlans).length === 0) {
+    output += 'No WLANs configured.\n';
+  }
+
+  output += '!\n';
+  return { success: true, output };
+}
+
+/**
+ * Show AP Summary - Display AP summary (WLC only)
+ */
+function cmdShowApSummary(
+  state: any,
+  input: string,
+  ctx: any
+): any {
+  // Check if device is a switch - show ap summary is not a switch command
+  const device = ctx.devices?.find((d: any) => d.id === ctx.sourceDeviceId);
+  if (device && (device.type === 'switchL2' || device.type === 'switchL3')) {
+    return { success: false, error: '% Invalid command. show ap summary is only available on Wireless LAN Controllers (WLC).' };
+  }
+
+  let output = '\nAP Summary\n';
+  output += '----------\n';
+  output += 'AP Name  MAC Address  IP Address  Status  WLAN\n';
+  output += '--------  -----------  ----------  ------  ----\n';
+
+  // Display wlan0 interface as AP
+  const wlan = state.ports['wlan0'];
+  if (wlan && !wlan.shutdown && wlan.wifi?.ssid) {
+    output += `${device?.name?.padEnd(8) || 'AP1'.padEnd(8)}  ${state.macAddress || '0000.0000.0000'}  ${wlan.ipAddress || '-'}  ${wlan.shutdown ? 'Down' : 'Up'}  ${wlan.wifi.ssid}\n`;
+  } else {
+    output += 'No APs configured.\n';
   }
 
   output += '!\n';

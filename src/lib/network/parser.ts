@@ -784,35 +784,29 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  'ssid': {
-    pattern: /^ssid\s+(.+)$/i,
-    modes: ['interface', 'config-if-range'],
+  'wlan': {
+    pattern: /^wlan\s+(\S+)\s+(\d+)\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 3,
+    maxArgs: 3
+  },
+  'security wpa psk set-key': {
+    pattern: /^security\s+wpa\s+psk\s+set-key\s+ascii\s+0\s+(.+)$/i,
+    modes: ['config'],
+    minArgs: 5,
+    maxArgs: 5
+  },
+  'channel': {
+    pattern: /^channel\s+(\d+)$/i,
+    modes: ['config'],
     minArgs: 1,
     maxArgs: 1
   },
-  'encryption': {
-    pattern: /^encryption\s+(open|wpa|wpa2|wpa3)$/i,
-    modes: ['interface', 'config-if-range'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'wifi-password': {
-    pattern: /^wifi-password\s+(.+)$/i,
-    modes: ['interface', 'config-if-range'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'wifi-channel': {
-    pattern: /^wifi-channel\s+(2\.4ghz|5ghz)$/i,
-    modes: ['interface', 'config-if-range'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'wifi-mode': {
-    pattern: /^wifi-mode\s+(ap|client|disabled)$/i,
-    modes: ['interface', 'config-if-range'],
-    minArgs: 1,
-    maxArgs: 1
+  'station-role': {
+    pattern: /^station-role\s+root$/i,
+    modes: ['config'],
+    minArgs: 2,
+    maxArgs: 2
   },
   'ip address': {
     pattern: /^ip\s+address\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?:\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|\/(\d|[12]\d|3[0-2]))(\s+secondary)?$/i,
@@ -1199,10 +1193,10 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'show ip interface': {
-    pattern: /^show\s+ip\s+interface(\s+(.+))?$/i,
+    pattern: /^show\s+ip\s+interface\s+(gigabitethernet|fastethernet|gi|fa)(\d+\/\d+)$/i,
     modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 0
+    minArgs: 2,
+    maxArgs: 2
   },
   'show ip route': {
     pattern: /^show\s+ip\s+route(\s+(.+))?$/i,
@@ -1234,6 +1228,12 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 1
   },
+  'show ip ssh': {
+    pattern: /^show\s+ip\s+ssh$/i,
+    modes: ['privileged'],
+    minArgs: 2,
+    maxArgs: 2
+  },
   'show etherchannel': {
     pattern: /^show\s+etherchannel(\s+(summary|detail|port|load-balance)\s*(.+)?)?$/i,
     modes: ['privileged'],
@@ -1244,12 +1244,6 @@ export const commandPatterns: Record<string, CommandPattern> = {
     pattern: /^show\s+vtp\s+(status|password|counters)$/i,
     modes: ['privileged'],
     minArgs: 1,
-    maxArgs: 1
-  },
-  'show vtp': {
-    pattern: /^show\s+vtp(\s+(status|password|counters))?$/i,
-    modes: ['privileged'],
-    minArgs: 0,
     maxArgs: 1
   },
   'show errdisable recovery': {
@@ -1330,8 +1324,26 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 1
   },
-  'show debug': {
-    pattern: /^show\s+debug$/i,
+  'show wireless': {
+    pattern: /^show\s+wireless$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'show wlan summary': {
+    pattern: /^show\s+wlan\s+summary$/i,
+    modes: ['privileged'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'show ap summary': {
+    pattern: /^show\s+ap\s+summary$/i,
+    modes: ['privileged'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'show debugging': {
+    pattern: /^show\s+debugging$/i,
     modes: ['privileged'],
     minArgs: 0,
     maxArgs: 0
@@ -1718,19 +1730,19 @@ export const commandPatterns: Record<string, CommandPattern> = {
     pattern: /^no\s+debug(\s+(.+))?$/i,
     modes: ['privileged'],
     minArgs: 0,
+    maxArgs: 2
+  },
+  'undebug all': {
+    pattern: /^undebug\s+all$/i,
+    modes: ['privileged'],
+    minArgs: 1,
     maxArgs: 1
   },
   'undebug': {
     pattern: /^undebug(\s+(.+))?$/i,
     modes: ['privileged'],
     minArgs: 0,
-    maxArgs: 1
-  },
-  'undebug all': {
-    pattern: /^undebug\s+all$/i,
-    modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 0
+    maxArgs: 2
   },
 
   // Setup
@@ -2213,11 +2225,10 @@ Mevcut komutlar:
   spanning-tree bpduguard enable - BPDU Guard etkinleştir
   storm-control broadcast level <rate> - Storm control
   power inline <auto|static|never> - PoE kontrolü
-  ssid <isim>               - Wireless SSID ayarla
-  encryption <tip>          - Şifreleme (open|wpa|wpa2|wpa3)
-  wifi-password <şifre>     - Wireless parola
-  wifi-channel <2.4|5ghz>   - Kanal/Frekans ayarla
-  wifi-mode <ap|client|disabled> - Wireless çalışma modu
+  wlan <name> <id> <ssid>  - WLAN oluştur (WLC only)
+  security wpa psk set-key ascii 0 <pass> - WPA şifresi ayarla (WLC only)
+  channel <num>             - RF kanalı ayarla (WLC only)
+  station-role root        - AP modu ayarla (AP only)
   exit                      - Config mode'a dön
   end                       - Privileged mode'a dön
 
@@ -2428,11 +2439,10 @@ Available commands:
   spanning-tree bpduguard enable - Enable BPDU Guard
   storm-control broadcast level <rate> - Storm control
   power inline <auto|static|never> - PoE control
-  ssid <name>               - Set Wireless SSID
-  encryption <type>         - Set encryption (open|wpa|wpa2|wpa3)
-  wifi-password <pass>      - Set Wireless password
-  wifi-channel <2.4|5ghz>   - Set Wireless channel
-  wifi-mode <ap|client|disabled> - Set Wireless mode
+  wlan <name> <id> <ssid>  - Create WLAN (WLC only)
+  security wpa psk set-key ascii 0 <pass> - Set WPA password (WLC only)
+  channel <num>             - Set RF channel (WLC only)
+  station-role root        - Set AP mode (AP only)
   exit                      - Return to config mode
   end                       - Return to privileged mode
 

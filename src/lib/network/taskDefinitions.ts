@@ -203,12 +203,13 @@ export const securityTasks: TaskDefinition[] = [
 ];
 
 // Kablosuz görevler - TOPLAM: 100
+// Note: These tasks use WLC/AP CLI commands. For routers/switches, use WiFi Control Panel via HTTP.
 export const wirelessTasks: TaskDefinition[] = [
   {
     id: 'wlan-active',
     name: { tr: 'WLAN Aktif', en: 'WLAN Active' },
-    description: { tr: 'Kablosuz arayüzü (wlan0) aktif edin', en: 'Activate wireless interface (wlan0)' },
-    tip: { tr: 'interface wlan0 altında no shutdown kullanın', en: 'Use no shutdown under interface wlan0' },
+    description: { tr: 'Kablosuz arayüzü aktif edin', en: 'Activate wireless interface' },
+    tip: { tr: 'no shutdown komutunu kullanın', en: 'Use no shutdown command' },
     weight: 20,
     icon: 'wlan0',
     checkFn: (state) => {
@@ -220,7 +221,7 @@ export const wirelessTasks: TaskDefinition[] = [
     id: 'wlan-ssid',
     name: { tr: 'SSID Yapılandır', en: 'Configure SSID' },
     description: { tr: 'Kablosuz ağ adı (SSID) belirleyin', en: 'Set wireless network name (SSID)' },
-    tip: { tr: 'ssid HomeWiFi komutunu kullanın', en: 'Use ssid HomeWiFi command' },
+    tip: { tr: 'wlan MySSID 1 MySSID komutunu kullanın', en: 'Use wlan MySSID 1 MySSID command' },
     weight: 20,
     icon: 'wlan0',
     checkFn: (state) => {
@@ -232,7 +233,7 @@ export const wirelessTasks: TaskDefinition[] = [
     id: 'wlan-security',
     name: { tr: 'WPA2 Güvenliği', en: 'WPA2 Security' },
     description: { tr: 'Kablosuz ağa WPA2 şifreleme ekleyin', en: 'Add WPA2 encryption to wireless' },
-    tip: { tr: 'encryption wpa2 ve wifi-password kullanın', en: 'Use encryption wpa2 and wifi-password' },
+    tip: { tr: 'security wpa psk set-key ascii 0 password komutunu kullanın', en: 'Use security wpa psk set-key ascii 0 password command' },
     weight: 30,
     icon: 'wlan0',
     checkFn: (state) => {
@@ -244,7 +245,7 @@ export const wirelessTasks: TaskDefinition[] = [
     id: 'wlan-connection',
     name: { tr: 'WLAN Bağlantısı', en: 'WLAN Connection' },
     description: { tr: 'Sağlıklı kablosuz bağlantı kurun', en: 'Establish healthy wireless connection' },
-    tip: { tr: 'SSID ve şifrenin PC ile eşleştiğinden emin olun', en: 'Ensure SSID and password match the PC' },
+    tip: { tr: 'station-role root komutunu kullanın', en: 'Use station-role root command' },
     weight: 30,
     icon: 'wlan0',
     checkFn: (state) => {

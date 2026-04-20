@@ -12,10 +12,9 @@ The simulator supports **100+ commands** across multiple configuration modes.
 | `Ctrl+A` | Select all devices |
 | `Escape` | Cancel current operation / Close modal |
 | `Tab` | Auto-complete command in CLI |
-| `Shift+Tab` | Navigate backwards in CLI |
 | `Arrow Up/Down` | Navigate command history in CLI |
 | `Enter` | Execute command / Confirm action |
-| `Delete` / `Backspace` | Delete selected items |
+| `Delete` | Delete selected items |
 
 ### Canvas Navigation
 | Shortcut | Action |
@@ -24,7 +23,6 @@ The simulator supports **100+ commands** across multiple configuration modes.
 | `Middle-click + Drag` | Rectangle selection |
 | `Right-click` | Open context menu |
 | `Mouse Wheel` | Zoom in/out |
-| `Ctrl+Mouse Wheel` | Zoom with center focus |
 
 ### Device Operations
 | Shortcut | Action |
@@ -32,14 +30,7 @@ The simulator supports **100+ commands** across multiple configuration modes.
 | `Ctrl+C` | Copy configuration |
 | `Ctrl+V` | Paste configuration |
 | `Ctrl+S` | Save configuration |
-| `Ctrl+F` | Search in terminal |
 | `Ctrl+L` | Clear terminal |
-
-### Tab Navigation
-| Shortcut | Action |
-|----------|--------|
-| `Alt+Tab` | Switch between open device panels |
-| `Ctrl+Tab` | Switch between tabs in device panel |
 
 ## Command Overview
 
@@ -71,7 +62,7 @@ The simulator supports **100+ commands** across multiple configuration modes.
 | `reload` | Reload the device |
 | `ip route <network> <mask> <next-hop>` | Add static route |
 | `no ip route <network> <mask> <next-hop>` | Remove static route |
-| `debug <type>` | Enable debugging |
+| `debug <type>` | Enable debugging (requires argument, e.g., `debug ip packet`) |
 | `undebug all` | Disable all debugging |
 | `undebug` | Disable all debugging (alias) |
 | `terminal [length\|width\|monitor]` | Set terminal parameters |
@@ -89,6 +80,7 @@ The simulator supports **100+ commands** across multiple configuration modes.
 | `vlan <id>` | Create/enter VLAN configuration |
 | `no vlan <id>` | Delete VLAN |
 | `name <name>` | Set VLAN name (in vlan mode) |
+| `no name` | Remove VLAN name (in vlan mode only) |
 | `state <active\|suspend>` | Set VLAN state |
 | `interface <name>` | Enter interface configuration |
 | `interface range <range>` | Configure interface range |
@@ -225,13 +217,16 @@ The simulator supports **100+ commands** across multiple configuration modes.
 | `mls qos cos <val>` | Set default CoS value |
 
 ### Wireless (WiFi) Commands
-| Command | Description |
-|---------|-------------|
-| `ssid <name>` | Set wireless network name |
-| `encryption {open\|wpa\|wpa2\|wpa3}` | Set security type |
-| `wifi-password <password>` | Set wireless password |
-| `wifi-channel {2.4ghz\|5ghz}` | Set wireless band |
-| `wifi-mode {ap\|client\|disabled}` | Set wireless mode |
+> **Note**: These commands are only valid on Wireless LAN Controllers (WLC) or autonomous Access Points (AP). They are NOT supported on switches.
+
+| Command | Description | Device Type |
+|---------|-------------|-------------|
+| `wlan <name> <id> <ssid>` | Create WLAN configuration | WLC only |
+| `security wpa psk set-key ascii 0 <password>` | Set WPA password | WLC only |
+| `channel <num>` | Set RF channel | WLC only |
+| `station-role root` | Set AP mode | AP only |
+| `show wlan summary` | Display WLAN summary | WLC only |
+| `show ap summary` | Display AP summary | WLC only |
 
 ### Line Configuration Commands
 | Command | Description |
@@ -300,8 +295,9 @@ The simulator supports **100+ commands** across multiple configuration modes.
 | `show boot` | Display boot information |
 | `show spanning-tree` | Display STP information |
 | `show port-security` | Display port security status |
-| `show wireless` | Display wireless status |
+| `show wireless` | Display wireless status | WLC only |
 | `show ssh` | Display SSH status |
+| `show debugging` | Display debugging status |
 | `do show <command>` | Execute show command from config mode |
 | `show ip dhcp snooping` | Display DHCP snooping |
 | `show ip dhcp pool` | Display DHCP pool configuration |
@@ -309,7 +305,7 @@ The simulator supports **100+ commands** across multiple configuration modes.
 | `show interfaces status` | Display interface status |
 | `show cdp` | Display CDP information |
 | `show vtp status` | Display VTP status |
-| `show vtp` | Display VTP status (alias) |
+| `show vtp password` | Display VTP password |
 | `show etherchannel` | Display EtherChannel |
 | `show arp` / `show ip arp` | Display ARP table |
 | `show mls qos` | Display QoS status |

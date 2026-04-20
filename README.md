@@ -79,6 +79,7 @@ Network learning app: [Test Address](https://network2026.vercel.app)
   - **Interaction Legend**: Visual guide for mouse shortcuts in the footer toolbar
   - **Task Notifications**: Context-aware success/failure alerts at the footer top-left
 - **Wireless (WiFi) Simulation**: Wireless network simulation with SSID, WPA2 security, and AP/Client modes
+  - **Note**: Wireless CLI commands (wlan, security wpa psk set-key, channel, station-role, show wlan summary, show ap summary) are only valid on Wireless LAN Controllers (WLC) or autonomous Access Points (AP). These commands are NOT supported on switches.
 - **WiFi Signal Strength Indicator**: Real-time signal strength display (5-bar meter) in PC and CLI terminals
   - Visual signal bars with color coding (green/yellow/orange/red)
   - Signal percentage display (100%, 75%, 50%, 25%, 1%)
@@ -88,6 +89,7 @@ Network learning app: [Test Address](https://network2026.vercel.app)
   - Configure SSID, security (Open/WPA/WPA2/WPA3), channel (2.4GHz/5GHz)
   - Switch between AP and Client modes
   - View connected devices in real-time
+  - **CLI Note**: Wireless commands (wlan, security wpa psk set-key, channel, station-role) are only valid on WLC/AP devices, not switches. Use the web panel for switch WiFi configuration.
   - **IoT Device Management**: Safely connect/disconnect or fully delete IoT devices mapping to topology
   - Bulk operations for gracefully disconnecting or removing multiple IoT devices visually
   - IP address display for connected IoT devices
