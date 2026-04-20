@@ -23,5 +23,10 @@ export {
 
 export { initializePerformanceConsoleAPI } from './monitoring/ConsoleAPI';
 
-// Types
-export * from './types';
+// Performance optimization modules
+export * from './spatial';
+export * from './virtualization';
+export * from './memory';
+export * from './state';
+export * from './rendering';
+export * from './assets';

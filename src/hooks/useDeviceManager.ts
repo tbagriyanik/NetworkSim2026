@@ -135,6 +135,17 @@ export function useDeviceManager() {
       const { deviceId, nextStatus, switchModel: incomingModel, deviceType } = event.detail;
 
       if (nextStatus === 'online') {
+        // PC devices should not get switch boot messages
+        if (deviceType === 'pc' || deviceId.includes('pc-')) {
+          // Initialize PC outputs instead of switch boot sequence
+          const existingOutputs = pcOutputs.get(deviceId);
+          if (!existingOutputs) {
+            // PC outputs will be created when PCPanel is opened
+            setPcOutputs(prev => new Map(prev).set(deviceId, []));
+          }
+          return;
+        }
+
         // Power on: reset device state and show boot sequence
         const existingState = deviceStates.get(deviceId);
         const isRouter = deviceType === 'router' || deviceId.includes('router') || existingState?.switchLayer === 'L3';
@@ -295,6 +306,16 @@ export function useDeviceManager() {
   const getOrCreateDeviceOutputs = useCallback((deviceId: string, deviceStateArg?: SwitchState): TerminalOutput[] => {
     let outputs = deviceOutputs.get(deviceId);
     const hasBootMessages = outputs?.some(o => o.id?.startsWith('boot-'));
+
+    // PC devices should not get switch boot messages
+    if (deviceId.includes('pc-')) {
+      if (!outputs) {
+        const emptyOutputs: TerminalOutput[] = [];
+        setDeviceOutputs(prev => new Map(prev).set(deviceId, emptyOutputs));
+        return emptyOutputs;
+      }
+      return outputs;
+    }
 
     // If no outputs exist OR boot messages are missing, generate them
     if (!outputs || !hasBootMessages) {

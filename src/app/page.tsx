@@ -1092,6 +1092,12 @@ export default function Home() {
           const state = item.state;
           const isRouter = deviceId.includes('router');
           const isL3Switch = state?.switchLayer === 'L3' || state?.switchModel?.includes('3560');
+          const isPC = deviceId.includes('pc-');
+
+          // Skip boot message generation for PC devices
+          if (isPC) {
+            return;
+          }
 
           // Generate boot messages based on device type
           let bootMessages: TerminalOutput[] = [];
@@ -1829,16 +1835,42 @@ ${state.bannerMOTD}
   // Save project to JSON file
   const handleSaveProjectInternal = useCallback(() => {
     // Get PC and IoT device IDs to filter them out from deviceStates
-    // These device types don't need full SwitchState with 24 ports
+    // These device types don't need full SwitchState with ports
     const excludedDeviceIds = new Set(
       topologyDevices.filter(d => d.type === 'pc' || d.type === 'iot').map(d => d.id)
     );
+
+    // Synchronize MAC addresses and port statuses from topology devices to device states
+    const syncedDeviceStates = new Map(deviceStates);
+    topologyDevices.forEach(device => {
+      const state = syncedDeviceStates.get(device.id);
+      if (state) {
+        // Synchronize MAC address
+        if (device.macAddress && state.macAddress !== device.macAddress) {
+          syncedDeviceStates.set(device.id, { ...state, macAddress: device.macAddress });
+        }
+        // Synchronize WLAN0 port status
+        const wlan0Port = device.ports.find(p => p.id === 'wlan0');
+        if (wlan0Port && state.ports?.wlan0) {
+          const targetStatus = wlan0Port.shutdown ? 'notconnect' : (wlan0Port.status === 'connected' ? 'connected' : 'notconnect');
+          if (state.ports.wlan0.status !== targetStatus) {
+            syncedDeviceStates.set(device.id, {
+              ...state,
+              ports: {
+                ...state.ports,
+                wlan0: { ...state.ports.wlan0, status: targetStatus }
+              }
+            });
+          }
+        }
+      }
+    });
 
     const projectData = {
       version: '1.0',
       timestamp: new Date().toISOString(),
       // Filter out PC/IoT device states - they don't need SwitchState with ports
-      devices: Array.from(deviceStates.entries())
+      devices: Array.from(syncedDeviceStates.entries())
         .filter(([id]) => !excludedDeviceIds.has(id))
         .map(([id, state]) => ({ id, state })),
       // Filter out entries with empty/invalid IDs
@@ -1857,8 +1889,8 @@ ${state.bannerMOTD}
         connections: topologyConnections,
         notes: topologyNotes
       },
-      // Reset cableInfo if no valid devices exist
-      cableInfo: topologyDevices.length > 0 ? cableInfo : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
+      // Reset cableInfo if no valid devices exist or no connections
+      cableInfo: topologyDevices.length > 0 && topologyConnections.length > 0 ? cableInfo : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
       activeDeviceId: topologyDevices.find(d => d.id === activeDeviceId)?.id || '',
       activeDeviceType
     };
