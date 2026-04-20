@@ -1093,9 +1093,10 @@ export default function Home() {
           const isRouter = deviceId.includes('router');
           const isL3Switch = state?.switchLayer === 'L3' || state?.switchModel?.includes('3560');
           const isPC = deviceId.includes('pc-');
+          const isIoT = deviceId.includes('iot-');
 
-          // Skip boot message generation for PC devices
-          if (isPC) {
+          // Skip boot message generation for PC and IoT devices
+          if (isPC || isIoT) {
             return;
           }
 
@@ -1840,8 +1841,23 @@ ${state.bannerMOTD}
       topologyDevices.filter(d => d.type === 'pc' || d.type === 'iot').map(d => d.id)
     );
 
+    // Move IoT device outputs from deviceOutputs to pcOutputs
+    const iotDeviceIds = new Set(topologyDevices.filter(d => d.type === 'iot').map(d => d.id));
+    const adjustedDeviceOutputs = new Map(deviceOutputs);
+    const adjustedPcOutputs = new Map(pcOutputs);
+    iotDeviceIds.forEach(iotId => {
+      const iotOutput = deviceOutputs.get(iotId);
+      if (iotOutput) {
+        // Filter out password-prompt type which is not compatible with PCOutputLine
+        const filteredOutput = iotOutput.filter(o => o.type !== 'password-prompt');
+        adjustedPcOutputs.set(iotId, filteredOutput as any);
+        adjustedDeviceOutputs.delete(iotId);
+      }
+    });
+
     // Synchronize MAC addresses and port statuses from topology devices to device states
     const syncedDeviceStates = new Map(deviceStates);
+    const topologyDeviceIds = new Set(topologyDevices.map(d => d.id));
     topologyDevices.forEach(device => {
       const state = syncedDeviceStates.get(device.id);
       if (state) {
@@ -1849,19 +1865,29 @@ ${state.bannerMOTD}
         if (device.macAddress && state.macAddress !== device.macAddress) {
           syncedDeviceStates.set(device.id, { ...state, macAddress: device.macAddress });
         }
-        // Synchronize WLAN0 port status
-        const wlan0Port = device.ports.find(p => p.id === 'wlan0');
-        if (wlan0Port && state.ports?.wlan0) {
-          const targetStatus = wlan0Port.shutdown ? 'notconnect' : (wlan0Port.status === 'connected' ? 'connected' : 'notconnect');
-          if (state.ports.wlan0.status !== targetStatus) {
-            syncedDeviceStates.set(device.id, {
-              ...state,
-              ports: {
-                ...state.ports,
-                wlan0: { ...state.ports.wlan0, status: targetStatus }
+        // Synchronize port MAC addresses and statuses
+        const updatedPorts = { ...state.ports };
+        let portsChanged = false;
+        device.ports.forEach(topoPort => {
+          const statePort = updatedPorts[topoPort.id];
+          if (statePort) {
+            // Synchronize port MAC address
+            if (topoPort.macAddress && statePort.macAddress !== topoPort.macAddress) {
+              updatedPorts[topoPort.id] = { ...statePort, macAddress: topoPort.macAddress };
+              portsChanged = true;
+            }
+            // Synchronize WLAN0 port status specifically
+            if (topoPort.id === 'wlan0') {
+              const targetStatus = topoPort.shutdown ? 'notconnect' : (topoPort.status === 'connected' ? 'connected' : 'notconnect');
+              if (statePort.status !== targetStatus) {
+                updatedPorts[topoPort.id] = { ...updatedPorts[topoPort.id], status: targetStatus };
+                portsChanged = true;
               }
-            });
+            }
           }
+        });
+        if (portsChanged) {
+          syncedDeviceStates.set(device.id, { ...state, ports: updatedPorts });
         }
       }
     });
@@ -1870,15 +1896,16 @@ ${state.bannerMOTD}
       version: '1.0',
       timestamp: new Date().toISOString(),
       // Filter out PC/IoT device states - they don't need SwitchState with ports
+      // Also filter out devices that don't exist in topology
       devices: Array.from(syncedDeviceStates.entries())
-        .filter(([id]) => !excludedDeviceIds.has(id))
+        .filter(([id]) => !excludedDeviceIds.has(id) && topologyDeviceIds.has(id))
         .map(([id, state]) => ({ id, state })),
-      // Filter out entries with empty/invalid IDs
-      deviceOutputs: Array.from(deviceOutputs.entries())
-        .filter(([id]) => id && id.trim() !== '')
+      // Filter out device outputs for devices that don't exist in topology
+      deviceOutputs: Array.from(adjustedDeviceOutputs.entries())
+        .filter(([id]) => id && id.trim() !== '' && topologyDeviceIds.has(id))
         .map(([id, outputs]) => ({ id, outputs })),
-      pcOutputs: Array.from(pcOutputs.entries())
-        .filter(([id]) => id && id.trim() !== '')
+      pcOutputs: Array.from(adjustedPcOutputs.entries())
+        .filter(([id]) => id && id.trim() !== '' && topologyDeviceIds.has(id))
         .map(([id, outputs]) => ({ id, outputs })),
       pcHistories: Array.from(pcHistories.entries())
         .filter(([id]) => id && id.trim() !== '')

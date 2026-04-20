@@ -135,12 +135,12 @@ export function useDeviceManager() {
       const { deviceId, nextStatus, switchModel: incomingModel, deviceType } = event.detail;
 
       if (nextStatus === 'online') {
-        // PC devices should not get switch boot messages
-        if (deviceType === 'pc' || deviceId.includes('pc-')) {
-          // Initialize PC outputs instead of switch boot sequence
+        // PC and IoT devices should not get switch boot messages
+        if (deviceType === 'pc' || deviceId.includes('pc-') || deviceType === 'iot' || deviceId.includes('iot-')) {
+          // Initialize PC/IoT outputs instead of switch boot sequence
           const existingOutputs = pcOutputs.get(deviceId);
           if (!existingOutputs) {
-            // PC outputs will be created when PCPanel is opened
+            // PC/IoT outputs will be created when panel is opened
             setPcOutputs(prev => new Map(prev).set(deviceId, []));
           }
           return;
@@ -307,8 +307,8 @@ export function useDeviceManager() {
     let outputs = deviceOutputs.get(deviceId);
     const hasBootMessages = outputs?.some(o => o.id?.startsWith('boot-'));
 
-    // PC devices should not get switch boot messages
-    if (deviceId.includes('pc-')) {
+    // PC and IoT devices should not get switch boot messages
+    if (deviceId.includes('pc-') || deviceId.includes('iot-')) {
       if (!outputs) {
         const emptyOutputs: TerminalOutput[] = [];
         setDeviceOutputs(prev => new Map(prev).set(deviceId, emptyOutputs));
