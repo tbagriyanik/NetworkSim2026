@@ -7089,7 +7089,7 @@ export function NetworkTopology({
                     if (dev?.type === 'iot') {
                       return (
                         <>
-                          {language === 'tr' ? 'Olcum:' : 'Measurement:'}{' '}
+                          {language === 'tr' ? 'Ölçüm:' : 'Measurement:'}{' '}
                           <span className="text-cyan-500">{getIotMeasuredValue(dev)}</span>
                         </>
                       );

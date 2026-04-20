@@ -594,7 +594,7 @@ export function PCPanel({
     if (showToast) {
       toast({
         title: language === 'tr' ? 'IoT kaydedildi' : 'IoT saved',
-        description: language === 'tr' ? 'Secili IoT nesnesi guncellendi.' : 'Selected IoT object updated.',
+        description: language === 'tr' ? 'Seçili IoT nesnesi güncellendi.' : 'Selected IoT object updated.',
       });
     }
   }, [selectedIotDeviceId, iotSensorType, iotCollaborationEnabled, iotDataStore, language]);
@@ -733,6 +733,27 @@ export function PCPanel({
   const [isConsoleConnected, setIsConsoleConnected] = useState(false);
   const [connectedDeviceId, setConnectedDeviceId] = useState<string | null>(null);
   const [consoleConnectionTime, setConsoleConnectionTime] = useState<number>(0);
+
+  // Disconnect console when PC powers off
+  useEffect(() => {
+    if (isPcPoweredOff && isConsoleConnected) {
+      setIsConsoleConnected(false);
+      setConsoleConnectionTime(0);
+      // Don't clear connectedDeviceId so we can reconnect when power comes back on
+    }
+  }, [isPcPoweredOff, isConsoleConnected]);
+
+  // Reconnect console when PC powers on if it was connected before
+  useEffect(() => {
+    if (!isPcPoweredOff && connectedDeviceId && !isConsoleConnected) {
+      // Auto-reconnect to the same device
+      const device = topologyDevices.find(d => d.id === connectedDeviceId);
+      if (device && device.status !== 'offline') {
+        setConsoleConnectionTime(Date.now());
+        setIsConsoleConnected(true);
+      }
+    }
+  }, [isPcPoweredOff, connectedDeviceId, isConsoleConnected, topologyDevices]);
 
   const outputRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -1471,12 +1492,9 @@ export function PCPanel({
 
     // Handle special IoT Web Panel URL
     if (rawTarget === 'http://iot-panel' || rawTarget === 'iot-panel') {
-      // Global IoT panel always shows all devices (not filtered by router)
-      const iotPanelContent = generateIotWebPanelContent(iotDevices, language, undefined, undefined, topologyConnections);
-      setHttpAppContent(iotPanelContent);
+      setHttpAppContent(generateIotWebPanelContent(iotDevices, language, undefined, undefined, topologyConnections));
       setHttpAppTitle(language === 'tr' ? 'IoT Web Paneli' : 'IoT Web Panel');
       setHttpAppDeviceId(null);
-      addLocalOutput('success', language === 'tr' ? 'IoT Web Paneli açıldı.' : 'IoT Web Panel opened.');
       return;
     }
 
@@ -1491,12 +1509,8 @@ export function PCPanel({
         setHttpAppContent(iotDevicePage);
         setHttpAppTitle(`${targetDevice.name || targetDevice.id} ${language === 'tr' ? 'Yönetimi' : 'Management'}`);
         setHttpAppDeviceId(targetDevice.id);
-        addLocalOutput('success', language === 'tr' ? `IoT cihazı '${targetDevice.name}' yönetim sayfası açıldı.` : `IoT device '${targetDevice.name}' management page opened.`);
-        return;
-      } else {
-        addLocalOutput('error', language === 'tr' ? 'Geçersiz IoT cihazı.' : 'Invalid IoT device.');
-        return;
       }
+      return;
     }
 
     // Browser-style inputs can include protocol/path/query. We only resolve host/IP.
@@ -1673,7 +1687,7 @@ export function PCPanel({
         addLocalOutput(
           'success',
           language === 'tr'
-            ? `${device?.name || 'Cihaz'} WiFi ayarlari uygulandi.`
+            ? `${device?.name || 'Cihaz'} WiFi ayarları uygulandı.`
             : `${device?.name || 'Device'} WiFi settings applied.`
         );
       }
@@ -1727,7 +1741,7 @@ export function PCPanel({
         addLocalOutput(
           'success',
           language === 'tr'
-            ? `IoT cihaz "${iotDevice.name}" aga baglandi. IP: ${ipConfig.ip}`
+            ? `IoT cihaz "${iotDevice.name}" ağa bağlandı. IP: ${ipConfig.ip}`
             : `IoT device "${iotDevice.name}" connected to the network. IP: ${ipConfig.ip}`
         );
       }
@@ -1759,7 +1773,7 @@ export function PCPanel({
         addLocalOutput(
           'success',
           language === 'tr'
-            ? `IoT cihaz "${iotDevice.name}" icin IP yenilendi: ${ipConfig.ip}`
+            ? `IoT cihaz "${iotDevice.name}" için IP yenilendi: ${ipConfig.ip}`
             : `Renewed IP for IoT device "${iotDevice.name}": ${ipConfig.ip}`
         );
 
@@ -1850,7 +1864,7 @@ export function PCPanel({
         addLocalOutput(
           'success',
           language === 'tr'
-            ? `IoT cihaz "${iotDevice.name}" agdan cikarildi.`
+            ? `IoT cihaz "${iotDevice.name}" ağdan çıkarıldı.`
             : `IoT device "${iotDevice.name}" disconnected from the network.`
         );
 
@@ -3686,12 +3700,24 @@ export function PCPanel({
               hideTitle
               hideHeader
               className={cn(
-                "w-full min-w-0 h-full flex flex-col",
+                "w-full min-w-0 h-full flex flex-col relative",
                 isDark
                   ? "bg-slate-900/40 border border-slate-700/40 backdrop-blur-xl"
                   : "bg-white/25 border border-white/40 backdrop-blur-xl shadow-lg shadow-white/10"
               )}
             >
+              {/* Power Off Overlay - Mobile/Desktop ekranını tamamen karartır */}
+              {isPcPoweredOff && (
+                <div className="absolute inset-0 z-40 bg-black flex flex-col items-center justify-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-red-500/20 blur-3xl rounded-full animate-pulse" />
+                    <svg className="w-16 h-16 text-red-600 drop-shadow-xl relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+                    </svg>
+                  </div>
+                </div>
+              )}
               <div className="bg-transparent">
                 <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
                   <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-md`}>
@@ -3811,7 +3837,7 @@ export function PCPanel({
                 </div>
 
                 {/* Content Area */}
-                <div className={`flex-1 min-h-0 h-full max-h-[70vh] sm:max-h-[72vh] lg:max-h-[74vh] flex flex-col ${terminalBg} relative pt-2.5 overflow-hidden overflow-y-auto`}>
+                <div className={`flex-1 min-h-0 h-full max-h-[70vh] sm:max-h-[72vh] lg:max-h-[74vh] flex flex-col ${terminalBg} relative pt-2.5 overflow-hidden`}>
                   {activeTab === 'home' && !isPcPoweredOff && (
                     <div
                       className="flex-1 min-h-0 flex items-center justify-center p-2.5 pt-0"
@@ -5258,7 +5284,6 @@ export function PCPanel({
                   size="icon"
                   variant="outline"
                   onClick={() => {
-                    goHome();
                     setHttpAppContent(null);
                     setHttpAppDeviceId(null);
                     inputRef.current?.focus();
