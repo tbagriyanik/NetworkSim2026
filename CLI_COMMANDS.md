@@ -276,7 +276,7 @@ The simulator supports **100+ commands** across multiple configuration modes.
 ### Show Commands
 | Command | Description |
 |---------|-------------|
-| `show` | Display summary information |
+| `show` | Requires additional keywords (use `show ?`) |
 | `show running-config` | Display running configuration |
 | `show startup-config` | Display startup configuration |
 | `show version` | Display version information |
@@ -321,7 +321,6 @@ The simulator supports **100+ commands** across multiple configuration modes.
 | `show storm-control` | Display storm control |
 | `show udld` | Display UDLD status |
 | `show monitor` | Display SPAN sessions |
-| `show debug` | Display debug status |
 | `show processes` | Display CPU processes |
 | `show memory` | Display memory usage |
 | `show sdm prefer` | Display SDM template |
