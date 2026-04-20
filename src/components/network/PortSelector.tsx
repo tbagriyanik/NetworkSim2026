@@ -66,7 +66,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
   };
 
   return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black">
       <div className={`w-full max-w-md mx-4 rounded-2xl ${isDark ? 'bg-slate-800' : 'bg-white'} shadow-2xl overflow-hidden`}>
         {/* Header */}
         <div className={`px-4 py-3 border-b ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>

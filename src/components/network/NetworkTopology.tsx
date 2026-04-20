@@ -5012,7 +5012,7 @@ export function NetworkTopology({
                 }`}
               aria-label={language === 'tr' ? 'PC cihazı ekle' : 'Add PC device'}
             >
-              <div className="text-blue-500">
+              <div className="text-blue-500 w-5 h-5">
                 {DEVICE_ICONS['pc']}
               </div>
               <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
@@ -5027,7 +5027,7 @@ export function NetworkTopology({
                 }`}
               aria-label={language === 'tr' ? 'L2 Switch ekle' : 'Add L2 Switch'}
             >
-              <div className="text-green-500">
+              <div className="text-green-500 w-5 h-5">
                 {DEVICE_ICONS['switch']}
               </div>
               <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
@@ -5042,8 +5042,8 @@ export function NetworkTopology({
                 }`}
               aria-label={language === 'tr' ? 'L3 Switch ekle' : 'Add L3 Switch'}
             >
-              <div className="text-purple-500">
-                <svg className="w-4 h-4" fill="none" stroke="#a855f7" viewBox="0 0 24 24">
+              <div className="text-purple-500 w-5 h-5">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2M5 12a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2m-2-4h.01M17 16h.01" />
                 </svg>
               </div>
@@ -5059,7 +5059,7 @@ export function NetworkTopology({
                 }`}
               aria-label={language === 'tr' ? 'Router ekle' : 'Add Router'}
             >
-              <div className="text-purple-500">
+              <div className="text-purple-500 w-5 h-5">
                 {DEVICE_ICONS['router']}
               </div>
               <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
@@ -5074,7 +5074,7 @@ export function NetworkTopology({
                 }`}
               aria-label={language === 'tr' ? 'IoT cihazı ekle' : 'Add IoT device'}
             >
-              <div className="text-cyan-500">
+              <div className="text-cyan-500 w-5 h-5">
                 {DEVICE_ICONS['iot']}
               </div>
               <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
@@ -5148,7 +5148,9 @@ export function NetworkTopology({
           onClick={() => setIsPaletteOpen(true)}
           className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg min-h-[48px] min-w-[48px] bg-slate-800 hover:bg-slate-700"
         >
-          <div className={`w-4 h-4 rounded ${CABLE_COLORS[cableInfo.cableType].bg}`} />
+          <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 10-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
+          </svg>
           <span className="text-xs text-slate-300">
             {cableInfo.cableType === 'straight' ? t.straight : cableInfo.cableType === 'crossover' ? t.crossover : t.console}
           </span>
@@ -5329,7 +5331,13 @@ export function NetworkTopology({
                               : (cableInfo.cableType === type ? 'text-cyan-400' : 'text-cyan-500 hover:text-cyan-400')
                           }`}
                       >
-                        <div className={`w-3 h-3 rounded-full ${type === 'straight' ? 'bg-blue-500' : type === 'crossover' ? 'bg-orange-500' : 'bg-cyan-500'}`} />
+                        {type === 'straight' ? (
+                          <Cable className="w-5 h-5" />
+                        ) : type === 'crossover' ? (
+                          <Strikethrough className="w-5 h-5" />
+                        ) : (
+                          <Usb className="w-5 h-5" />
+                        )}
                         <span className="text-[10px] font-bold">
                           {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : t.console}
                         </span>

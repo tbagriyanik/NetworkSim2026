@@ -2168,6 +2168,9 @@ ${state.bannerMOTD}
       setSaveDialog(null);
       setShowPCPanel(false);
       setShowRouterPanel(false);
+      setShowTerminalModal(false);
+      setShowTasksModal(false);
+      setShowAboutModal(false);
       setShowProjectPicker(false);
       setShowOnboarding(false);
       window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'back' } }));
@@ -2194,11 +2197,11 @@ ${state.bannerMOTD}
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowProjectPicker, setShowOnboarding, setActiveTab, setActiveDeviceId, setActiveDeviceType]);
+  }, [setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowTerminalModal, setShowTasksModal, setShowAboutModal, setShowProjectPicker, setShowOnboarding, setActiveTab, setActiveDeviceId, setActiveDeviceType]);
 
   // History pushState for back button tracking
   useEffect(() => {
-    const anyModalOpen = showMobileMenu || !!confirmDialog || !!saveDialog || showPCPanel || showRouterPanel || showProjectPicker || showOnboarding;
+    const anyModalOpen = showMobileMenu || !!confirmDialog || !!saveDialog || showPCPanel || showRouterPanel || showTerminalModal || showTasksModal || showAboutModal || showProjectPicker || showOnboarding;
     if (anyModalOpen && !modalHistoryPushedRef.current) {
       window.history.pushState({ modal: true }, '');
       modalHistoryPushedRef.current = true;
@@ -2206,7 +2209,7 @@ ${state.bannerMOTD}
     if (!anyModalOpen) {
       modalHistoryPushedRef.current = false;
     }
-  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel, showProjectPicker, showOnboarding]);
+  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel, showTerminalModal, showTasksModal, showAboutModal, showProjectPicker, showOnboarding]);
 
   // Helper: tab açıklamaları (tooltip için)
   const getTabDescription = useCallback((tabId: TabType): string => {
@@ -2709,6 +2712,9 @@ ${state.bannerMOTD}
         setSaveDialog(null);
         setShowPCPanel(false);
         setShowRouterPanel(false);
+        setShowTerminalModal(false);
+        setShowTasksModal(false);
+        setShowAboutModal(false);
         setShowProjectPicker(false);
         setShowOnboarding(false);
         window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'escape' } }));
@@ -3157,8 +3163,8 @@ ${state.bannerMOTD}
 
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <button className={cn("h-7 w-7 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-blue-400 hover:bg-slate-700/50' : 'text-slate-500 hover:text-blue-600')} onClick={() => setShowAboutModal(true)}>
-                              <Info className="w-3.5 h-3.5" />
+                            <button className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-blue-400 hover:bg-slate-700/50' : 'text-slate-500 hover:text-blue-600')} onClick={() => setShowAboutModal(true)}>
+                              <Info className="w-4 h-4" />
                             </button>
                           </TooltipTrigger>
                           <TooltipContent>{t.contactTitle}</TooltipContent>
