@@ -78,6 +78,24 @@ function getNativeVlanString(port: any): string {
   return native ? String(native) : '1';
 }
 
+function getSTPCost(port: any): number {
+  // If manual STP cost is set, use it
+  if (port.stpCost !== undefined) {
+    return port.stpCost;
+  }
+
+  // Calculate cost based on actual speed (IEEE 802.1D standard)
+  const speed = port.speed;
+  if (speed === '10000') return 2;
+  if (speed === '1000') return 4;
+  if (speed === '100') return 19;
+  if (speed === '10') return 100;
+
+  // Fallback to port type if speed is auto or unknown
+  if (port.type === 'gigabitethernet') return 4;
+  return 19;
+}
+
 function getSwitchDisplayProfile(state: any) {
   const switchModel = state.switchModel || 'WS-C2960-24TT-L';
   const isL3 = switchModel === 'WS-C3560-24PS';
@@ -1193,7 +1211,7 @@ export function calculateSTPState(
       return;
     }
 
-    const portCost = srcPortObj?.type === 'gigabitethernet' ? 4 : 19;
+    const portCost = getSTPCost(srcPortObj);
     if (!adjacency.has(srcId)) adjacency.set(srcId, []);
     if (!adjacency.has(tgtId)) adjacency.set(tgtId, []);
 
@@ -1263,7 +1281,7 @@ export function calculateSTPState(
 
     connectionsToRoot.forEach(conn => {
       const port = state.ports[conn.portId];
-      const portCost = port?.type === 'gigabitethernet' ? 4 : 19;
+      const portCost = getSTPCost(port);
       const connectedState = deviceStates.get?.(conn.deviceId);
       const neighborPriority = connectedState?.spanningTreePriority || 32768;
       const neighborMac = conn.macAddress;
@@ -1413,11 +1431,11 @@ export function calculateSTPState(
           const neighborPathCost = neighborRootInfo?.pathCost ?? Infinity;
 
           // Get port costs
-          const myPortCost = port?.type === 'gigabitethernet' ? 4 : 19;
+          const myPortCost = getSTPCost(port);
           const neighborDevice = devices.find((d: any) => d.id === neighbor.deviceId);
           const neighborState = deviceStates.get?.(neighbor.deviceId);
           const neighborPortObj = neighborState?.ports?.[neighbor.portId];
-          const neighborPortCost = neighborPortObj?.type === 'gigabitethernet' ? 4 : 19;
+          const neighborPortCost = getSTPCost(neighborPortObj);
 
           // Calculate root path cost if we use this port
           // My advertised cost = my path cost to root
@@ -1703,8 +1721,8 @@ function cmdShowSpanningTree(
       if (sPort?.shutdown || tPort?.shutdown) return;
       if (!adjacency.has(conn.sourceDeviceId)) adjacency.set(conn.sourceDeviceId, []);
       if (!adjacency.has(conn.targetDeviceId)) adjacency.set(conn.targetDeviceId, []);
-      adjacency.get(conn.sourceDeviceId)!.push({ deviceId: conn.targetDeviceId, portId: conn.sourcePort, cost: sPort?.type === 'gigabitethernet' ? 4 : 19 });
-      adjacency.get(conn.targetDeviceId)!.push({ deviceId: conn.sourceDeviceId, portId: conn.targetPort, cost: tPort?.type === 'gigabitethernet' ? 4 : 19 });
+      adjacency.get(conn.sourceDeviceId)!.push({ deviceId: conn.targetDeviceId, portId: conn.sourcePort, cost: getSTPCost(sPort) });
+      adjacency.get(conn.targetDeviceId)!.push({ deviceId: conn.sourceDeviceId, portId: conn.targetPort, cost: getSTPCost(tPort) });
     });
 
     const reachableSwitches = new Set<string>();
@@ -1777,8 +1795,10 @@ function cmdShowSpanningTree(
       output += `             Address     ${lowestMac}\n`;
       if (rootPortId) {
         const rootPortNum = getPortNumber(rootPortId);
-        output += `             Cost        19\n`;
-        output += `             Port        ${rootPortNum} (FastEthernet0/${rootPortNum})\n`;
+        const rootPort = state.ports[rootPortId];
+        const rootPortCost = getSTPCost(rootPort);
+        output += `             Cost        ${rootPortCost}\n`;
+        output += `             Port        ${rootPortNum} (${rootPortId})\n`;
       }
     }
     output += `             Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec\n\n`;
@@ -1795,7 +1815,7 @@ function cmdShowSpanningTree(
       const stpInfo = vlanStpState.get(portName) || { role: 'Desg', state: 'FWD' };
       const role = stpInfo.role;
       const status = stpInfo.state;
-      const cost = port.type === 'gigabitethernet' ? 4 : 19;
+      const cost = getSTPCost(port);
       const prioNbr = `128.${portNum}`;
 
       // Format: Interface, Role, Status, Cost, Prio.Nbr, Type
