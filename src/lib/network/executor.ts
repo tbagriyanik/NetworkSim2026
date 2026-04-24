@@ -168,7 +168,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...pfx('clear', ['arp-cache', 'mac', 'counters', 'ip']),
     ...npfx('clear', 'mac', ['address-table'], 3),
     ...npfx('clear', 'ip', ['route', 'arp'], 2),
-    ...pfx('show', ['running-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'spanning-tree', 'port-security', 'wireless', 'ssh']),
+    ...pfx('show', ['running-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'spanning-tree', 'port-security', 'wireless', 'ssh', 'etherchannel']),
     ...npfx('show', 'running-config', ['running-config'], 14),
     ...multi('show i', ['interfaces', 'ip']),
     ...npfx('show', 'interfaces', ['status', 'trunk'], 10),
@@ -717,6 +717,9 @@ export function executeCommand(
     if (lowerInput.startsWith('sh ip ro')) cmdToProcess = 'show ip route';
     if (lowerInput === 'sh ssh' || lowerInput === 'show ssh') cmdToProcess = 'show ssh';
     if (lowerInput === 'wr') cmdToProcess = 'write memory';
+    if (lowerInput.startsWith('sh eth')) cmdToProcess = 'show etherchannel';
+    if (lowerInput.startsWith('sh etherch')) cmdToProcess = 'show etherchannel';
+    if (lowerInput.startsWith('show etherc')) cmdToProcess = 'show etherchannel';
   } else if (state.currentMode === 'user') {
     if (lowerInput === 'en') cmdToProcess = 'enable';
   } else if (state.currentMode === 'config') {
