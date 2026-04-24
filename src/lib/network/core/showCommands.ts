@@ -700,8 +700,30 @@ function cmdShowIpInterfaceBrief(
 ): any {
   let output = '\nInterface              IP-Address      OK? Method Status                Protocol                 Description\n';
 
+  // Build channel groups map
+  const channelGroups: Record<number, string[]> = {};
   Object.keys(state.ports || {}).forEach(portName => {
     const port = state.ports[portName];
+    if (port.channelGroup) {
+      if (!channelGroups[port.channelGroup]) channelGroups[port.channelGroup] = [];
+      channelGroups[port.channelGroup].push(portName);
+    }
+  });
+
+  // Show port-channel interfaces first
+  Object.entries(channelGroups).forEach(([group, ports]) => {
+    const poName = `Po${group}`;
+    const status = 'up';
+    const protocol = ports.every(p => !state.ports[p]?.shutdown) ? 'up' : 'down';
+    output += `${poName.padEnd(22)} unassigned      YES manual ${status.padEnd(23)} ${protocol.padEnd(23)} Bundled ${ports.join(',')}\n`;
+  });
+
+  // Show regular interfaces
+  Object.keys(state.ports || {}).forEach(portName => {
+    const port = state.ports[portName];
+    // Skip ports that are part of a channel group (show in PoX instead)
+    if (port.channelGroup) return;
+    
     const status = port.shutdown ? 'administratively down' : 'up';
     const protocol = port.shutdown ? 'down' : 'up';
     const description = port.description || port.name || '';
@@ -1582,7 +1604,8 @@ export function calculatePVST(
           };
 
           // For backward compatibility (especially for UI port indicators), use VLAN 1
-          if (vlanId === 1) {
+          // Skip blocking for EtherChannel member ports - they should stay connected
+          if (vlanId === 1 && !port.channelGroup) {
             updatedPorts[portId].spanningTree.role = stpInfo.role;
             updatedPorts[portId].spanningTree.state = portStpState;
             updatedPorts[portId].status = updatedPorts[portId].shutdown ? 'disabled' : (stpInfo.state === 'BLK' ? 'blocked' : 'connected');
@@ -2317,16 +2340,90 @@ function cmdShowVtpStatus(state: any, input: string, ctx: any): any {
  * Show EtherChannel Summary
  */
 function cmdShowEtherchannel(state: any, input: string, ctx: any): any {
-  let output = '\nFlags:  D - down        P - bundled in port-channel\n';
-  output += '        I - stand-alone s - suspended\n';
-  output += '        H - Hot-standby (LACP only)\n';
-  output += '        R - Layer3      S - Layer2\n';
-  output += '        U - in use      f - failed to allocate aggregator\n\n';
-  output += 'Number of channel-groups in use: 0\n';
-  output += 'Number of aggregators:           0\n\n';
-  output += 'Group  Port-channel  Protocol    Ports\n';
-  output += '------+-------------+-----------+-----------------------------------------------\n';
+  const lowerInput = input.toLowerCase();
+  
+  // Parse options: summary, detail, port, load-balance
+  let option = '';
+  let subArg = '';
+  const optMatch = input.match(/^show\s+etherchannel\s+(\w+)\s*(.*)$/i);
+  if (optMatch) {
+    option = optMatch[1].toLowerCase();
+    subArg = optMatch[2].trim();
+  }
 
+  // show etherchannel load-balance
+  if (option === 'load-balance') {
+    const groups: Record<number, string[]> = {};
+    Object.keys(state.ports || {}).forEach(portName => {
+      const port = state.ports[portName];
+      if (port.channelGroup) {
+        if (!groups[port.channelGroup]) groups[port.channelGroup] = [];
+        groups[port.channelGroup].push(portName);
+      }
+    });
+
+    let output = '\nLoad-balanceing: Src-dst-ip-and-4\n';
+    output += 'Hash aritmatic: Rotational\n';
+    output += `Minimum load:  0    %<->100\n`;
+    if (Object.keys(groups).length === 0) {
+      output += 'Members : <empty>\n';
+    } else {
+      output += 'Members : ' + Object.entries(groups).map(([g, ps]) => `Po${g}: ${ps.join(', ')}`).join(', ') + '\n';
+    }
+    return { success: true, output };
+  }
+
+  // show etherchannel port
+  if (option === 'port') {
+    const groups: Record<number, string[]> = {};
+    Object.keys(state.ports || {}).forEach(portName => {
+      const port = state.ports[portName];
+      if (port.channelGroup) {
+        if (!groups[port.channelGroup]) groups[port.channelGroup] = [];
+        groups[port.channelGroup].push(portName);
+      }
+    });
+
+    let output = '\nChannel group listing:\n';
+    output += '--------------------------------------------\n';
+    if (Object.keys(groups).length === 0) {
+      output += '<none>\n';
+    } else {
+      Object.entries(groups).forEach(([group, ports]) => {
+        output += `Group ${group}: Po${group} -> ${ports.join(', ')}\n`;
+      });
+    }
+    return { success: true, output };
+  }
+
+  // show etherchannel detail
+  if (option === 'detail') {
+    const groups: Record<number, string[]> = {};
+    Object.keys(state.ports || {}).forEach(portName => {
+      const port = state.ports[portName];
+      if (port.channelGroup) {
+        if (!groups[port.channelGroup]) groups[port.channelGroup] = [];
+        groups[port.channelGroup].push(portName);
+      }
+    });
+
+    let output = '\nFlags:  D - down        P - bundled in port-channel\n';
+    output += '        I - stand-alone s - suspended\n';
+    output += '        H - Hot-standby (LACP only)\n';
+    output += '        R - Layer3      S - Layer2\n';
+    output += '        U - in use      f - failed to allocate aggregator\n\n';
+    output += `Number of channel-groups in use: ${Object.keys(groups).length}\n`;
+    output += `Number of aggregators:           ${Object.keys(groups).length}\n\n`;
+    output += 'Group Port-channel     Protocol Ports\n';
+    output += '------+---------------+---------+------------------------\n';
+    Object.entries(groups).forEach(([group, ports]) => {
+const mode = state.ports[ports[0]]?.channelMode || 'on';
+    output += `${group.padEnd(7)}Po${group.padEnd(14)}${mode.toUpperCase().padEnd(10)}${ports.join(', ')}\n`;
+    });
+    return { success: true, output };
+  }
+
+  // Default: show etherchannel (or summary)
   const groups: Record<number, string[]> = {};
   Object.keys(state.ports || {}).forEach(portName => {
     const port = state.ports[portName];
@@ -2336,8 +2433,20 @@ function cmdShowEtherchannel(state: any, input: string, ctx: any): any {
     }
   });
 
+  let output = '\nFlags:  D - down        P - bundled in port-channel\n';
+  output += '        I - stand-alone s - suspended\n';
+  output += '        H - Hot-standby (LACP only)\n';
+  output += '        R - Layer3      S - Layer2\n';
+  output += '        U - in use      f - failed to allocate aggregator\n\n';
+  output += `Number of channel-groups in use: ${Object.keys(groups).length}\n`;
+  output += `Number of aggregators:           ${Object.keys(groups).length}\n\n`;
+  output += 'Group  Port-channel  Protocol    Ports\n';
+  output += '------+-------------+-----------+-----------------------------------------------\n';
+
   Object.entries(groups).forEach(([group, ports]) => {
-    output += `${group.padEnd(7)}Po${group.padEnd(13)}${(state.ports[ports[0]]?.channelGroupMode || 'on').toUpperCase().padEnd(12)}${ports.join(' ')}\n`;
+    const mode = state.ports[ports[0]]?.channelMode || 'on';
+    const protocol = state.ports[ports[0]]?.channelProtocol || (mode === 'on' ? '-' : 'LACP');
+    output += `${group.padEnd(7)}Po${group.padEnd(13)}${protocol.toUpperCase().padEnd(12)}${ports.join(', ')}\n`;
   });
 
   return { success: true, output };

@@ -2618,6 +2618,11 @@ ${state.bannerMOTD}
         stpState.forEach((stpInfo, portId) => {
           const port = updatedPorts[portId];
           if (port) {
+            // Skip ports that are part of EtherChannel - they shouldn't be blocked by STP
+            if (port.channelGroup) {
+              return; // Don't update spanningTree for channel member ports
+            }
+            
             const roleMap: Record<string, 'root' | 'designated' | 'alternate' | 'backup' | 'disabled'> = {
               'Root': 'root',
               'Desg': 'designated',

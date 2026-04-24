@@ -1505,7 +1505,7 @@ function cmdChannelGroup(state: any, input: string, ctx: any): any {
   const group = parseInt(match[1]);
   const mode = match[2].toLowerCase();
 
-  const updatePort = (port: any) => ({ ...port, channelGroup: group, channelGroupMode: mode });
+  const updatePort = (port: any) => ({ ...port, channelGroup: group, channelMode: mode });
 
   if (state.selectedInterfaces?.length) {
     return { success: true, newState: applyToSelectedPorts(state, updatePort) };

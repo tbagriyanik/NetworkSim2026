@@ -1263,6 +1263,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   const etherChannelConnections: CanvasConnection[] = [];
   connectPorts(etherChannelDevices, etherChannelConnections, 'pc-1', 'eth0', 'switch-1', 'fa0/1');
   connectPorts(etherChannelDevices, etherChannelConnections, 'pc-2', 'eth0', 'switch-2', 'fa0/1');
+  // EtherChannel bundles (gi0/1 + gi0/2)
   connectPorts(etherChannelDevices, etherChannelConnections, 'switch-1', 'gi0/1', 'switch-2', 'gi0/1', 'crossover');
   connectPorts(etherChannelDevices, etherChannelConnections, 'switch-1', 'gi0/2', 'switch-2', 'gi0/2', 'crossover');
   const etherChannelNotes: CanvasNote[] = [
@@ -1285,6 +1286,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   etherSw1.hostname = 'SW1';
   etherSw1.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: [] };
   etherSw1.ports['fa0/1'] = { ...etherSw1.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
+  // EtherChannel ports bundled (LACP)
   etherSw1.ports['gi0/1'] = { ...etherSw1.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected', channelGroup: 1, channelMode: 'active', channelProtocol: 'lacp' };
   etherSw1.ports['gi0/2'] = { ...etherSw1.ports['gi0/2'], mode: 'trunk', allowedVlans: 'all', status: 'connected', channelGroup: 1, channelMode: 'active', channelProtocol: 'lacp' };
 
@@ -1292,6 +1294,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   etherSw2.hostname = 'SW2';
   etherSw2.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: [] };
   etherSw2.ports['fa0/1'] = { ...etherSw2.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
+  // EtherChannel ports bundled
   etherSw2.ports['gi0/1'] = { ...etherSw2.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected', channelGroup: 1, channelMode: 'active', channelProtocol: 'lacp' };
   etherSw2.ports['gi0/2'] = { ...etherSw2.ports['gi0/2'], mode: 'trunk', allowedVlans: 'all', status: 'connected', channelGroup: 1, channelMode: 'active', channelProtocol: 'lacp' };
 
