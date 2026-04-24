@@ -974,10 +974,10 @@ function cmdEncryption(state: any, input: string, ctx: any): any {
  * Wifi-Password - Set Wireless Key
  */
 function cmdWifiPassword(state: any, input: string, ctx: any): any {
-  // Check if device is a switch - wifi-password is not a valid Cisco IOS command
+  // Check if device is a switch - wifi-password is not a valid command
   const device = ctx.devices?.find((d: any) => d.id === ctx.sourceDeviceId);
   if (device && (device.type === 'switchL2' || device.type === 'switchL3')) {
-    return { success: false, error: '% Invalid command. wifi-password is not a valid Cisco IOS command.\nWireless password configuration is only available on Wireless LAN Controllers (WLC) or autonomous APs.\nWLC command: security wpa psk set-key ascii 0 password' };
+    return { success: false, error: '% Invalid command. wifi-password is not a valid command.\nWireless password configuration is only available on Wireless LAN Controllers (WLC) or autonomous APs.\nWLC command: security wpa psk set-key ascii 0 password' };
   }
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };

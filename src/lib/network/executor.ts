@@ -720,6 +720,7 @@ export function executeCommand(
     if (lowerInput === 'en') cmdToProcess = 'enable';
   } else if (state.currentMode === 'config') {
     if (lowerInput.startsWith('int fa')) cmdToProcess = cmdToProcess.replace(/int fa/i, 'interface fastethernet');
+    if (lowerInput.startsWith('int gig')) cmdToProcess = cmdToProcess.replace(/int gig/i, 'interface gigabitethernet');
     if (lowerInput.startsWith('int gi')) cmdToProcess = cmdToProcess.replace(/int gi/i, 'interface gigabitethernet');
     if (lowerInput.startsWith('int vlan')) cmdToProcess = cmdToProcess.replace(/int vlan/i, 'interface vlan');
     if (lowerInput.startsWith('show ip interfaces br')) cmdToProcess = 'show ip interface brief';

@@ -503,13 +503,13 @@ export const commandPatterns: Record<string, CommandPattern> = {
 
   // Interface komutları - interface ÖNCE gelmeli (daha spesifik)
   'interface': {
-    pattern: /^interface\s+(?!r(?:ange)?\s)(fa|fastethernet|gi|gigabitethernet|e|ethernet|po|port-channel|vlan)?\s*(.+)$/i,
+    pattern: /^interface\s+(?!r(?:ange)?\s)(fa|fastethernet|gi|gig|gigabitethernet|e|ethernet|po|port-channel|vlan)?\s*(.+)$/i,
     modes: ['config'],
     minArgs: 1,
     maxArgs: 1
   },
   'interface range': {
-    pattern: /^interface\s+r(?:ange)?\s+(?:(?:fa|fastethernet|gi|gigabitethernet|e|ethernet|po|port-channel|vlan)\s*)?(.+)$/i,
+    pattern: /^interface\s+r(?:ange)?\s+(?:(?:fa|fastethernet|gi|gig|gigabitethernet|e|ethernet|po|port-channel|vlan)\s*)?(.+)$/i,
     modes: ['config'],
     minArgs: 1,
     maxArgs: 1
