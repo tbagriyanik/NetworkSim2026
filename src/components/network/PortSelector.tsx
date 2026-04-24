@@ -67,22 +67,22 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
 
   return (
     <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black">
-      <div className={`w-full max-w-md mx-4 rounded-2xl ${isDark ? 'bg-slate-800' : 'bg-white'} shadow-2xl overflow-hidden`}>
+      <div className={`w-full max-w-md mx-4 rounded-xl ${isDark ? 'bg-slate-800' : 'bg-white'} shadow-2xl overflow-hidden`}>
         {/* Header */}
-        <div className={`px-4 py-3 border-b ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+        <div className={`px-3 py-2 border-b ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {step === 'target' && (
                 <button
                   onClick={handleBack}
-                  className={`p-1.5 rounded-lg ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'}`}
+                  className={`p-1 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'}`}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 0 0 -5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0 -5.656-5.656l-1.1 1.1" />
                   </svg>
                 </button>
               )}
-              <h3 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+              <h3 className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
                 {step === 'source'
                   ? (language === 'tr' ? 'Başlangıç Portu Seçin' : 'Select Source Port')
                   : (language === 'tr' ? 'Hedef Portu Seçin' : 'Select Target Port')
@@ -91,39 +91,39 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
             </div>
             <button
               onClick={onClose}
-              className={`p-1.5 rounded-lg ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
+              className={`p-1 rounded-md ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
             >
-              <X className="w-4 h-4" />
+              <X className="w-3 h-3" />
             </button>
           </div>
 
           {/* Cable Type Selector - Toolbar Button Group */}
-          <div className="mt-3">
-            <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} mb-2`}>
+          <div className="mt-2">
+            <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'} mb-1.5`}>
               {language === 'tr' ? 'Kablo Tipi' : 'Cable Type'}
             </div>
-            <div className="flex gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 w-fit">
+            <div className="flex gap-1 p-1 rounded-md bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 w-fit">
               {(['straight', 'crossover', 'console', 'wireless'] as CableType[]).map((type, index) => {
                 const typeLabel = getCableTypeLabel(type, language);
                 return (
                   <button
                     key={type}
                     onClick={() => setSelectedCableType(type)}
-                    className={`relative flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold tracking-wide transition-all duration-200 ${selectedCableType === type
+                    className={`relative flex items-center gap-1 px-2 py-1 text-[9px] font-bold tracking-wide transition-all duration-200 ${selectedCableType === type
                       ? `${CABLE_COLORS[type].bg} text-white shadow-md -translate-y-0.5`
                       : isDark
-                        ? 'text-slate-400 hover:text-white hover:bg-slate-700 rounded-md'
-                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-md'
-                      } ${index === 0 ? 'rounded-l-md' : index === 3 ? 'rounded-r-md' : 'rounded-none'}`}
+                        ? 'text-slate-400 hover:text-white hover:bg-slate-700 rounded-sm'
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-sm'
+                      } ${index === 0 ? 'rounded-l-sm' : index === 3 ? 'rounded-r-sm' : 'rounded-none'}`}
                   >
                     {type === 'straight' ? (
-                      <Cable className="w-4 h-4" />
+                      <Cable className="w-3 h-3" />
                     ) : type === 'crossover' ? (
-                      <Strikethrough className="w-4 h-4" />
+                      <Strikethrough className="w-3 h-3" />
                     ) : type === 'console' ? (
-                      <Usb className="w-4 h-4" />
+                      <Usb className="w-3 h-3" />
                     ) : (
-                      <Usb className="w-4 h-4" />
+                      <Usb className="w-3 h-3" />
                     )}
                     {typeLabel}
                   </button>
@@ -134,7 +134,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
         </div>
 
         {/* Device Port List */}
-        <div className="max-h-80 overflow-y-auto p-4 space-y-3">
+        <div className="max-h-72 overflow-y-auto p-3 space-y-2">
           {devices.map((device) => {
             const availablePorts = getAvailablePorts(device.id);
             if (availablePorts.length === 0) return null;
@@ -145,24 +145,24 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
             return (
               <div
                 key={device.id}
-                className={`rounded-xl border ${isDark ? 'border-slate-700 bg-slate-700/30' : 'border-slate-200 bg-slate-50'}`}
+                className={`rounded-lg border ${isDark ? 'border-slate-700 bg-slate-700/30' : 'border-slate-200 bg-slate-50'}`}
               >
                 {/* Device Header */}
-                <div className={`px-3 py-2 flex items-center gap-2 border-b ${isDark ? 'border-slate-600' : 'border-slate-200'}`}>
+                <div className={`px-2.5 py-1.5 flex items-center gap-2 border-b ${isDark ? 'border-slate-600' : 'border-slate-200'}`}>
                   <DeviceIcon
                     type={device.type}
-                    className={`${device.type === 'pc' ? 'text-blue-400' : device.type === 'router' ? 'text-purple-400' : 'text-emerald-400'} w-5 h-5`}
+                    className={`${device.type === 'pc' ? 'text-blue-400' : device.type === 'router' ? 'text-purple-400' : 'text-emerald-400'} w-4 h-4`}
                   />
-                  <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                  <span className={`text-xs font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
                     {device.name}
                   </span>
-                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    ({availablePorts.length} {language === 'tr' ? 'boşta port' : 'available'})
+                  <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    ({availablePorts.length} {language === 'tr' ? 'boşta' : 'avail'})
                   </span>
                 </div>
 
                 {/* Port Grid */}
-                <div className="p-3 flex flex-wrap gap-2">
+                <div className="p-2 flex flex-wrap gap-1.5">
                   {availablePorts.map((port) => (
                     <button
                       key={port.id}
@@ -173,7 +173,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
                           handleTargetSelect(device.id, port.id);
                         }
                       }}
-                      className={`px-3 py-2 rounded-lg text-sm font-mono transition-all ${isDark
+                      className={`px-2 py-1.5 rounded-md text-xs font-mono transition-all ${isDark
                         ? 'bg-slate-600 hover:bg-cyan-600 text-slate-200 hover:text-white'
                         : 'bg-white hover:bg-cyan-500 text-slate-700 hover:text-white border border-slate-200'
                         }`}
@@ -188,8 +188,8 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
         </div>
 
         {/* Footer Hint */}
-        <div className={`px-4 py-3 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'} text-center`}>
-          <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+        <div className={`px-3 py-2 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'} text-center`}>
+          <p className={`text-[9px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             {step === 'source'
               ? (language === 'tr' ? 'Bağlantıyı başlatacak portu seçin' : 'Select the port to start connection from')
               : (language === 'tr' ? 'Bağlantıyı tamamlayacak portu seçin' : 'Select the port to complete connection')

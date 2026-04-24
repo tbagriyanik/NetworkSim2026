@@ -4274,7 +4274,7 @@ ${state.bannerMOTD}
                               }
                             }}
                           >
-                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
                             </svg>
                           </Button>
@@ -4360,11 +4360,11 @@ ${state.bannerMOTD}
                             }}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path d="M16.247 7.761a6 6 0 0 1 0 8.478" />
-                              <path d="M19.075 4.933a10 10 0 0 1 0 14.134" />
-                              <path d="M4.925 19.067a10 10 0 0 1 0-14.134" />
-                              <path d="M7.753 16.239a6 6 0 0 1 0-8.478" />
-                              <circle cx="12" cy="12" r="2" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.247 7.761a6 6 0 0 1 0 8.478" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.075 4.933a10 10 0 0 1 0 14.134" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.925 19.067a10 10 0 0 1 0-14.134" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7.753 16.239a6 6 0 0 1 0-8.478" />
+                              <circle strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} cx="12" cy="12" r="2" />
                             </svg>
                           </Button>
                         </TooltipTrigger>
