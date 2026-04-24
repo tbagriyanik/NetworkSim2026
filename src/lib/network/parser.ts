@@ -1122,43 +1122,43 @@ export const commandPatterns: Record<string, CommandPattern> = {
   },
   'show interfaces status': {
     pattern: /^show\s+interfaces?\s+status$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 0
   },
   'show interface trunk': {
     pattern: /^show\s+interface\s+trunk$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 0
   },
   'show interfaces trunk': {
     pattern: /^show\s+interfaces?\s+trunk$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 0
   },
   'show interfaces': {
     pattern: /^show(\s+interfaces?|\s+int)(\s+(status|description|counter|\S+))?$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 2
   },
   'show interface': {
     pattern: /^show\s+interface\s+(.+)$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 1,
     maxArgs: 1
   },
   'show vlan brief': {
     pattern: /^show(\s+vlan|\s+vl)\s*(brief|br)?$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 1
   },
   'show vlan': {
     pattern: /^show\s+vlan(\s+(id|name)\s+(.+))?$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 3
   },
@@ -1170,25 +1170,25 @@ export const commandPatterns: Record<string, CommandPattern> = {
   },
   'show mac address-table': {
     pattern: /^show\s+mac(?:\s*(?:address\-table|address|addr))?(\s+(.+)?)?$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 2
   },
   'show cdp neighbors': {
     pattern: /^show\s+cdp\s+(neighbors?|nei|ne)(\s+(detail|det))?$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 2
   },
   'show cdp': {
     pattern: /^show\s+cdp(\s+(interface|interfaces|entry)\s*(.+)?)?$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 2
   },
   'show ip interface brief': {
-    pattern: /^show\s+ip\s+interface\s+(brief|br)$/i,
-    modes: ['privileged'],
+    pattern: /^show\s+ip\s+interfaces?\s+(brief|br)$/i,
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 1,
     maxArgs: 1
   },
@@ -1212,7 +1212,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
   },
   'show spanning-tree': {
     pattern: /^show\s+spanning-tree(\s+(vlan|interface|detail|summary)\s*(.+)?)?$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 2
   },
@@ -1236,7 +1236,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
   },
   'show etherchannel': {
     pattern: /^show\s+etherchannel(\s+(summary|detail|port|load-balance)\s*(.+)?)?$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 2
   },
@@ -1374,13 +1374,13 @@ export const commandPatterns: Record<string, CommandPattern> = {
   },
   'show arp': {
     pattern: /^show\s+arp(\s+(.+))?$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 1
   },
   'show ip arp': {
     pattern: /^show\s+ip\s+arp(\s+(.+))?$/i,
-    modes: ['privileged'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 0,
     maxArgs: 1
   },
@@ -2206,7 +2206,7 @@ Hızlı yazım:
 Mevcut komutlar:
   shutdown                  - Portu kapat
   no shutdown               - Portu aç
-  speed <10|100|1000|auto>  - Port hızı
+  speed <10|100|1000|10000|auto>  - Port hızı
   duplex <half|full|auto>   - Duplex ayarı
   description <metin>       - Port açıklaması
   switchport mode <access|trunk|dynamic auto|dynamic desirable> - Port modu
@@ -2249,7 +2249,7 @@ Hızlı yazım:
 Mevcut komutlar (Çoklu Portlar):
   shutdown                  - Seçili portları kapat
   no shutdown               - Seçili portları aç
-  speed <10|100|1000|auto>  - Port hızı
+  speed <10|100|1000|10000|auto>  - Port hızı
   duplex <half|full|auto>   - Duplex ayarı
   description <metin>       - Port açıklaması
   switchport mode <access|trunk|dynamic auto|dynamic desirable> - Port modu
@@ -2420,7 +2420,7 @@ Shortcuts:
 Available commands:
   shutdown                  - Disable port
   no shutdown               - Enable port
-  speed <10|100|1000|auto>  - Port speed
+  speed <10|100|1000|10000|auto>  - Port speed
   duplex <half|full|auto>   - Duplex setting
   description <text>        - Port description
   switchport mode <access|trunk|dynamic auto|dynamic desirable> - Port mode
@@ -2463,7 +2463,7 @@ Shortcuts:
 Available commands (Multiple Ports):
   shutdown                  - Disable selected ports
   no shutdown               - Enable selected ports
-  speed <10|100|1000|auto>  - Port speed
+  speed <10|100|1000|10000|auto>  - Port speed
   duplex <half|full|auto>   - Duplex setting
   description <text>        - Port description
   switchport mode <access|trunk|dynamic auto|dynamic desirable> - Port mode

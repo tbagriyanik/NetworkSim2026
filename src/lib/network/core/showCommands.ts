@@ -1757,11 +1757,6 @@ function cmdShowSpanningTree(
     const isRootBridge = rootBridgeId === sourceDeviceId;
     let rootPortId: string | null = null;
 
-    // Find root port from calculateSTPState results
-    vlanStpState.forEach((info, pId) => {
-      if (info.role === 'Root') rootPortId = pId;
-    });
-
     // Sort ports by their number
     const portEntries = Object.entries(state.ports || {})
       .filter(([portName, _]) => !portName.toLowerCase().startsWith('vlan') && !portName.toLowerCase().startsWith('console'))
@@ -1771,7 +1766,7 @@ function cmdShowSpanningTree(
         const portVlan = port.vlan || port.accessVlan || 1;
         return isTrunk || String(portVlan) === String(vlanId);
       })
-      .filter(([_, port]: [string, any]) => port.status === 'connected')
+      .filter(([_, port]: [string, any]) => !port.shutdown && (port.status === 'connected' || port.status === 'blocked'))
       .sort(([a], [b]) => getPortNumber(a) - getPortNumber(b));
 
     // Skip entire VLAN block if there are no ports to display
@@ -1786,6 +1781,65 @@ function cmdShowSpanningTree(
     const vlanPriority = spanningTreeVlans[vlanId]?.priority ? parseInt(spanningTreeVlans[vlanId].priority) : 32768;
     const bridgePriority = vlanPriority + parseInt(vlanId);
 
+    // Reuse the VLAN adjacency map above to compute dynamic root path cost for display.
+    const shortestRootPath = (() => {
+      if (sourceDeviceId === rootBridgeId) {
+        return { pathCost: 0, rootPortId: null as string | null };
+      }
+
+      const distances = new Map<string, number>();
+      const previous = new Map<string, { deviceId: string; portId: string }>();
+      const visited = new Set<string>();
+
+      devices.forEach((d: any) => distances.set(d.id, Infinity));
+      distances.set(sourceDeviceId, 0);
+
+      while (visited.size < distances.size) {
+        let current: string | null = null;
+        let minDist = Infinity;
+
+        distances.forEach((dist, deviceId) => {
+          if (!visited.has(deviceId) && dist < minDist) {
+            current = deviceId;
+            minDist = dist;
+          }
+        });
+
+        if (current === null || minDist === Infinity) break;
+        visited.add(current);
+        if (current === rootBridgeId) break;
+
+        (adjacency.get(current) || []).forEach(neighbor => {
+          if (visited.has(neighbor.deviceId)) return;
+          const newDist = minDist + neighbor.cost;
+          if (newDist < (distances.get(neighbor.deviceId) ?? Infinity)) {
+            distances.set(neighbor.deviceId, newDist);
+            previous.set(neighbor.deviceId, { deviceId: current!, portId: neighbor.portId });
+          }
+        });
+      }
+
+      const pathCost = distances.get(rootBridgeId) ?? Infinity;
+      if (pathCost === Infinity) {
+        return { pathCost: Infinity, rootPortId: null as string | null };
+      }
+
+      let current: string | null = rootBridgeId;
+      let computedRootPortId: string | null = null;
+      while (current && current !== sourceDeviceId && previous.has(current)) {
+        const prev = previous.get(current)!;
+        if (prev.deviceId === sourceDeviceId) {
+          computedRootPortId = prev.portId;
+          break;
+        }
+        current = prev.deviceId;
+      }
+
+      return { pathCost, rootPortId: computedRootPortId };
+    })();
+
+    rootPortId = shortestRootPath.rootPortId;
+
     if (isRootBridge) {
       output += `  Root ID    Priority    ${bridgePriority}\n`;
       output += `             Address     ${state.macAddress || '0000.0000.0000'}\n`;
@@ -1795,9 +1849,8 @@ function cmdShowSpanningTree(
       output += `             Address     ${lowestMac}\n`;
       if (rootPortId) {
         const rootPortNum = getPortNumber(rootPortId);
-        const rootPort = state.ports[rootPortId];
-        const rootPortCost = getSTPCost(rootPort);
-        output += `             Cost        ${rootPortCost}\n`;
+        const rootPathCost = Number.isFinite(shortestRootPath.pathCost) ? shortestRootPath.pathCost : getSTPCost(state.ports[rootPortId]);
+        output += `             Cost        ${rootPathCost}\n`;
         output += `             Port        ${rootPortNum} (${rootPortId})\n`;
       }
     }
@@ -1816,7 +1869,7 @@ function cmdShowSpanningTree(
       const role = stpInfo.role;
       const status = stpInfo.state;
       const cost = getSTPCost(port);
-      const prioNbr = `128.${portNum}`;
+      const prioNbr = `${port.stpPriority ?? 128}.${portNum}`;
 
       // Format: Interface, Role, Status, Cost, Prio.Nbr, Type
       // Example: Fa0/1            Desg FWD 19        128.1    P2p
@@ -2004,7 +2057,7 @@ function cmdDoShow(
       return cmdShowInterfaces(state, showCommand, ctx);
     } else if (subCmd.startsWith('interface')) {
       return cmdShowInterface(state, showCommand, ctx);
-    } else if (subCmd.startsWith('ip interface brief') || subCmd.startsWith('ip int br')) {
+    } else if (subCmd.startsWith('ip interface brief') || subCmd.startsWith('ip interfaces brief') || subCmd.startsWith('ip int br')) {
       return cmdShowIpInterfaceBrief(state, showCommand, ctx);
     } else if (subCmd.startsWith('ip interface') || subCmd.startsWith('ip int')) {
       return cmdShowIpInterfaceBrief(state, showCommand, ctx);

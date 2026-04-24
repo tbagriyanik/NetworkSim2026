@@ -294,16 +294,20 @@ function cmdSpeed(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  const match = input.match(/^speed\s+(10|100|1000|auto)$/i);
+  const match = input.match(/^speed\s+(10|100|1000|10000|auto)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid speed value (10, 100, 1000, auto)' };
+    return { success: false, error: '% Invalid speed value (10, 100, 1000, 10000, auto)' };
   }
 
   const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, speed: match[1].toLowerCase() }));
+  const updatedCurrentState = { ...state, ports: newPorts };
+  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId);
+  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId);
 
   return {
     success: true,
-    newState: { ports: newPorts }
+    newState: myUpdatedState || { ports: newPorts },
+    updatedDeviceStates: allUpdatedStates
   };
 }
 
@@ -1664,15 +1668,25 @@ function cmdSpanningTreeCost(state: any, input: string, ctx: any): any {
   const cost = parseInt(match[1]);
   const updatePort = (port: any) => ({ ...port, stpCost: cost });
 
+  let newPorts;
   if (state.selectedInterfaces?.length) {
-    return { success: true, newState: applyToSelectedPorts(state, updatePort) };
+    newPorts = applyToSelectedPorts(state, updatePort);
+  } else {
+    if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+    newPorts = { ...state.ports };
+    newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
   }
 
-  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const updatedCurrentState = { ...state, ports: newPorts };
+  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId);
+  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId);
 
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
-  return { success: true, output: `STP cost set to ${cost}`, newState: { ports: newPorts } };
+  return {
+    success: true,
+    output: `STP cost set to ${cost}`,
+    newState: myUpdatedState || { ports: newPorts },
+    updatedDeviceStates: allUpdatedStates
+  };
 }
 
 /**

@@ -710,6 +710,8 @@ export function executeCommand(
   if (state.currentMode === 'privileged') {
     if (lowerInput === 'conf t') cmdToProcess = 'configure terminal';
     if (lowerInput.startsWith('sh ip int br')) cmdToProcess = 'show ip interface brief';
+    if (lowerInput.startsWith('show ip interfaces br')) cmdToProcess = 'show ip interface brief';
+    if (lowerInput.startsWith('show ip interfaces brief')) cmdToProcess = 'show ip interface brief';
     if (lowerInput.startsWith('sh run')) cmdToProcess = 'show running-config';
     if (lowerInput.startsWith('sh ip ro')) cmdToProcess = 'show ip route';
     if (lowerInput === 'sh ssh' || lowerInput === 'show ssh') cmdToProcess = 'show ssh';
@@ -720,6 +722,11 @@ export function executeCommand(
     if (lowerInput.startsWith('int fa')) cmdToProcess = cmdToProcess.replace(/int fa/i, 'interface fastethernet');
     if (lowerInput.startsWith('int gi')) cmdToProcess = cmdToProcess.replace(/int gi/i, 'interface gigabitethernet');
     if (lowerInput.startsWith('int vlan')) cmdToProcess = cmdToProcess.replace(/int vlan/i, 'interface vlan');
+    if (lowerInput.startsWith('show ip interfaces br')) cmdToProcess = 'show ip interface brief';
+    if (lowerInput.startsWith('show ip interfaces brief')) cmdToProcess = 'show ip interface brief';
+    if (lowerInput === 'show interface trunk') cmdToProcess = 'show interfaces trunk';
+    if (lowerInput.startsWith('show cdp neighbor')) cmdToProcess = 'show cdp neighbors';
+    if (lowerInput === 'show mac address') cmdToProcess = 'show mac address-table';
   }
 
   // Special handling for enable command when no password is set

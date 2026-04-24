@@ -608,7 +608,12 @@ export const commandAliases: Record<string, string> = {
   'sh ip int brief': 'show ip interface brief',
   'sh ip interface br': 'show ip interface brief',
   'sh ip interface brief': 'show ip interface brief',
+  'show ip interfaces br': 'show ip interface brief',
+  'show ip interfaces brief': 'show ip interface brief',
   'sh ip int': 'show ip interface brief',
+  'show interface trunk': 'show interfaces trunk',
+  'show cdp neighbor': 'show cdp neighbors',
+  'show mac address': 'show mac address-table',
 
   'sh int sta': 'show interfaces status',
   'sh int stat': 'show interfaces status',

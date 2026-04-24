@@ -117,7 +117,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       cmds: [
         ['shutdown', isTR ? 'Arayüzü kapat' : 'Disable interface'],
         ['no shutdown', isTR ? 'Arayüzü aç' : 'Enable interface'],
-        ['speed {10|100|1000|auto}', isTR ? 'Hız ayarla' : 'Set speed'],
+        ['speed {10|100|1000|10000|auto}', isTR ? 'Hız ayarla' : 'Set speed'],
         ['duplex {half|full|auto}', isTR ? 'Duplex ayarla' : 'Set duplex'],
         ['description <text>', isTR ? 'Arayüz açıklaması' : 'Set description'],
         ['no description', isTR ? 'Açıklamayı sil' : 'Clear description'],

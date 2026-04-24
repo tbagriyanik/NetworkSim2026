@@ -68,6 +68,31 @@ export function buildRunningConfig(state: SwitchState): string[] {
         lines.push('!');
     }
 
+    lines.push(`spanning-tree mode ${state.spanningTreeMode || 'pvst'}`);
+
+    if (state.spanningTreePriority !== undefined) {
+        lines.push(`spanning-tree priority ${state.spanningTreePriority}`);
+    }
+
+    const spanningTreeVlans = state.spanningTreeVlans || {};
+    Object.keys(spanningTreeVlans)
+        .sort((a, b) => Number(a) - Number(b))
+        .forEach(vlanId => {
+            const vlanConfig = spanningTreeVlans[vlanId];
+            if (vlanConfig?.enabled === false) {
+                lines.push(`no spanning-tree vlan ${vlanId}`);
+                return;
+            }
+
+            if (vlanConfig?.priority !== undefined) {
+                lines.push(`spanning-tree vlan ${vlanId} priority ${vlanConfig.priority}`);
+            } else if (vlanConfig?.enabled) {
+                lines.push(`spanning-tree vlan ${vlanId}`);
+            }
+        });
+
+    lines.push('!');
+
     // VLANs (id 2-1001)
     Object.values(state.vlans).forEach(vlan => {
         if (vlan.id >= 2 && vlan.id <= 1001) {
@@ -78,15 +103,21 @@ export function buildRunningConfig(state: SwitchState): string[] {
     });
 
     // Physical interfaces (non-VLAN ports)
-    Object.values(state.ports).forEach(port => {
-        if (port.id.toLowerCase().startsWith('vlan')) {
+    Object.entries(state.ports).forEach(([portKey, port]) => {
+        const portId = (port.id || portKey || '').toString();
+        if (!portId) {
             return;
         }
 
-        const isWlan = port.id.toLowerCase().startsWith('wlan');
+        const normalizedPortId = portId.toLowerCase();
+        if (normalizedPortId.startsWith('vlan')) {
+            return;
+        }
+
+        const isWlan = normalizedPortId.startsWith('wlan');
         const portUpper = isWlan
-            ? port.id.toUpperCase()
-            : port.id.toUpperCase().replace('FA', 'FastEthernet').replace('GI', 'GigabitEthernet');
+            ? portId.toUpperCase()
+            : portId.toUpperCase().replace('FA', 'FastEthernet').replace('GI', 'GigabitEthernet');
 
         lines.push(`interface ${portUpper}`);
 
@@ -129,6 +160,18 @@ export function buildRunningConfig(state: SwitchState): string[] {
             }
             if (port.duplex !== 'auto') {
                 lines.push(` duplex ${port.duplex}`);
+            }
+            if ((port as any).stpCost !== undefined) {
+                lines.push(` spanning-tree cost ${(port as any).stpCost}`);
+            }
+            if ((port as any).stpPriority !== undefined) {
+                lines.push(` spanning-tree priority ${(port as any).stpPriority}`);
+            }
+            if (port.spanningTree?.portfast) {
+                lines.push(' spanning-tree portfast');
+            }
+            if (port.spanningTree?.bpduguard) {
+                lines.push(' spanning-tree bpduguard enable');
             }
             if (port.mode === 'trunk') {
                 lines.push(' switchport mode trunk');

@@ -14,7 +14,7 @@ export interface CanvasPort {
   mode?: CanvasPortMode;
   name?: string;
   description?: string;
-  speed?: '10' | '100' | '1000' | 'auto';
+  speed?: '10' | '100' | '1000' | '10000' | 'auto';
   duplex?: 'half' | 'full' | 'auto';
   ipAddress?: string;
   subnetMask?: string;
