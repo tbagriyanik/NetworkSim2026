@@ -1932,6 +1932,203 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     }
   };
 
+  // Example: 2 L3 Switches with VLANs 10 and 20 (AG1/AG2)
+  const l3Switch2VlanDevices = [
+    // Switch2 (Left) - Multilayer Switch2
+    createL3SwitchDevice('switch2', 'Switch2', 300, 200),
+    // Switch2 PCs
+    createPcDevice('pc4', 'PC4', 50, 100, '192.168.10.10', 10, '192.168.10.1'),
+    createPcDevice('pc5', 'PC5', 50, 180, '192.168.10.15', 10, '192.168.10.1'),
+    createPcDevice('pc6', 'PC6', 50, 260, '192.168.20.10', 20, '192.168.20.1'),
+    createPcDevice('pc7', 'PC7', 50, 340, '192.168.20.15', 20, '192.168.20.1'),
+    // Switch4 (Right) - Multilayer Switch4
+    createL3SwitchDevice('switch4', 'Switch4', 700, 200),
+    // Switch4 PCs
+    createPcDevice('pc8', 'PC8', 950, 100, '192.168.10.20', 10, '192.168.10.1'),
+    createPcDevice('pc9', 'PC9', 950, 180, '192.168.10.30', 10, '192.168.10.1'),
+    createPcDevice('pc10', 'PC10', 950, 260, '192.168.20.20', 20, '192.168.20.1'),
+    createPcDevice('pc11', 'PC11', 950, 340, '192.168.20.30', 20, '192.168.20.1')
+  ];
+
+  const l3Switch2VlanConnections: CanvasConnection[] = [];
+  // Trunk connection between Switch2 and Switch4
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'switch2', 'gi0/1', 'switch4', 'gi0/1', 'crossover');
+  // Switch2 PC connections
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc4', 'eth0', 'switch2', 'fa0/1');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc5', 'eth0', 'switch2', 'fa0/2');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc6', 'eth0', 'switch2', 'fa0/3');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc7', 'eth0', 'switch2', 'fa0/4');
+  // Switch4 PC connections
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc8', 'eth0', 'switch4', 'fa0/1');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc9', 'eth0', 'switch4', 'fa0/2');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc10', 'eth0', 'switch4', 'fa0/3');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc11', 'eth0', 'switch4', 'fa0/4');
+
+  const l3Switch2VlanNotes: CanvasNote[] = [
+    {
+      id: 'l3-switch2-vlan-note',
+      text: isTr
+        ? '2 L3 Switch VLAN Yapılandırması:\n\nVLAN 10 = AG1 (192.168.10.0/24)\nVLAN 20 = AG2 (192.168.20.0/24)\n\nSwitch2 (Sol):\n- VLAN 10 SVI: 192.168.10.1/24\n- VLAN 20 SVI: 192.168.20.1/24\n- PC4, PC5: VLAN 10\n- PC6, PC7: VLAN 20\n\nSwitch4 (Sağ):\n- VLAN 10 SVI: 192.168.10.1/24\n- VLAN 20 SVI: 192.168.20.1/24\n- PC8, PC9: VLAN 10\n- PC10, PC11: VLAN 20\n\nTrunk: Switch2 Gi0/1 ↔ Switch4 Gi0/1\n\nKomutlar:\nconf t\nvlan 10\n name AG1\nvlan 20\n name AG2\nip routing\ninterface vlan 10\n ip address 192.168.10.1 255.255.255.0\n no shutdown\ninterface vlan 20\n ip address 192.168.20.1 255.255.255.0\n no shutdown\ninterface gi0/1\n switchport mode trunk\ninterface fa0/1-2\n switchport access vlan 10\ninterface fa0/3-4\n switchport access vlan 20'
+        : '2 L3 Switch VLAN Configuration:\n\nVLAN 10 = AG1 (192.168.10.0/24)\nVLAN 20 = AG2 (192.168.20.0/24)\n\nSwitch2 (Left):\n- VLAN 10 SVI: 192.168.10.1/24\n- VLAN 20 SVI: 192.168.20.1/24\n- PC4, PC5: VLAN 10\n- PC6, PC7: VLAN 20\n\nSwitch4 (Right):\n- VLAN 10 SVI: 192.168.10.1/24\n- VLAN 20 SVI: 192.168.20.1/24\n- PC8, PC9: VLAN 10\n- PC10, PC11: VLAN 20\n\nTrunk: Switch2 Gi0/1 ↔ Switch4 Gi0/1\n\nCommands:\nconf t\nvlan 10\n name AG1\nvlan 20\n name AG2\nip routing\ninterface vlan 10\n ip address 192.168.10.1 255.255.255.0\n no shutdown\ninterface vlan 20\n ip address 192.168.20.1 255.255.255.0\n no shutdown\ninterface gi0/1\n switchport mode trunk\ninterface fa0/1-2\n switchport access vlan 10\ninterface fa0/3-4\n switchport access vlan 20',
+      x: 400,
+      y: 400,
+      width: 550,
+      height: 320,
+      color: '#8b5cf6',
+      font: 'verdana',
+      fontSize: 12,
+      opacity: 0.75
+    }
+  ];
+
+  // Configure Switch2 state
+  const l3Switch2State = createInitialState('00:1A:2B:3C:4D:70', 'WS-C3560-24PS');
+  l3Switch2State.hostname = 'Switch2';
+  l3Switch2State.switchModel = 'WS-C3560-24PS';
+  l3Switch2State.switchLayer = 'L3';
+  l3Switch2State.ipRouting = true;
+  l3Switch2State.vlans[10] = { id: 10, name: 'AG1', status: 'active', ports: ['FA0/1', 'FA0/2', 'GI0/1'] };
+  l3Switch2State.vlans[20] = { id: 20, name: 'AG2', status: 'active', ports: ['FA0/3', 'FA0/4', 'GI0/1'] };
+  l3Switch2State.ports['vlan10'] = {
+    id: 'vlan10',
+    name: 'VLAN10',
+    status: 'connected',
+    vlan: 10,
+    mode: 'access',
+    duplex: 'auto',
+    speed: 'auto',
+    shutdown: false,
+    type: 'fastethernet',
+    ipAddress: '192.168.10.1',
+    subnetMask: '255.255.255.0'
+  };
+  l3Switch2State.ports['vlan20'] = {
+    id: 'vlan20',
+    name: 'VLAN20',
+    status: 'connected',
+    vlan: 20,
+    mode: 'access',
+    duplex: 'auto',
+    speed: 'auto',
+    shutdown: false,
+    type: 'fastethernet',
+    ipAddress: '192.168.20.1',
+    subnetMask: '255.255.255.0'
+  };
+  l3Switch2State.ports['fa0/1'] = { ...l3Switch2State.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
+  l3Switch2State.ports['fa0/2'] = { ...l3Switch2State.ports['fa0/2'], vlan: 10, mode: 'access', status: 'connected' };
+  l3Switch2State.ports['fa0/3'] = { ...l3Switch2State.ports['fa0/3'], vlan: 20, mode: 'access', status: 'connected' };
+  l3Switch2State.ports['fa0/4'] = { ...l3Switch2State.ports['fa0/4'], vlan: 20, mode: 'access', status: 'connected' };
+  l3Switch2State.ports['gi0/1'] = { ...l3Switch2State.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  l3Switch2State.runningConfig = [
+    '!',
+    'hostname Switch2',
+    '!',
+    'vlan 10',
+    ' name AG1',
+    '!',
+    'vlan 20',
+    ' name AG2',
+    '!',
+    'ip routing',
+    '!',
+    'interface vlan 10',
+    ' ip address 192.168.10.1 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface vlan 20',
+    ' ip address 192.168.20.1 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface range fa0/1 - 2',
+    ' switchport access vlan 10',
+    ' switchport mode access',
+    '!',
+    'interface range fa0/3 - 4',
+    ' switchport access vlan 20',
+    ' switchport mode access',
+    '!',
+    'interface gi0/1',
+    ' switchport mode trunk',
+    ' switchport trunk allowed vlan all',
+    '!',
+    'end'
+  ];
+
+  // Configure Switch4 state
+  const l3Switch4State = createInitialState('00:1A:2B:3C:4D:71', 'WS-C3560-24PS');
+  l3Switch4State.hostname = 'Switch4';
+  l3Switch4State.switchModel = 'WS-C3560-24PS';
+  l3Switch4State.switchLayer = 'L3';
+  l3Switch4State.ipRouting = true;
+  l3Switch4State.vlans[10] = { id: 10, name: 'AG1', status: 'active', ports: ['FA0/1', 'FA0/2', 'GI0/1'] };
+  l3Switch4State.vlans[20] = { id: 20, name: 'AG2', status: 'active', ports: ['FA0/3', 'FA0/4', 'GI0/1'] };
+  l3Switch4State.ports['vlan10'] = {
+    id: 'vlan10',
+    name: 'VLAN10',
+    status: 'connected',
+    vlan: 10,
+    mode: 'access',
+    duplex: 'auto',
+    speed: 'auto',
+    shutdown: false,
+    type: 'fastethernet',
+    ipAddress: '192.168.10.1',
+    subnetMask: '255.255.255.0'
+  };
+  l3Switch4State.ports['vlan20'] = {
+    id: 'vlan20',
+    name: 'VLAN20',
+    status: 'connected',
+    vlan: 20,
+    mode: 'access',
+    duplex: 'auto',
+    speed: 'auto',
+    shutdown: false,
+    type: 'fastethernet',
+    ipAddress: '192.168.20.1',
+    subnetMask: '255.255.255.0'
+  };
+  l3Switch4State.ports['fa0/1'] = { ...l3Switch4State.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
+  l3Switch4State.ports['fa0/2'] = { ...l3Switch4State.ports['fa0/2'], vlan: 10, mode: 'access', status: 'connected' };
+  l3Switch4State.ports['fa0/3'] = { ...l3Switch4State.ports['fa0/3'], vlan: 20, mode: 'access', status: 'connected' };
+  l3Switch4State.ports['fa0/4'] = { ...l3Switch4State.ports['fa0/4'], vlan: 20, mode: 'access', status: 'connected' };
+  l3Switch4State.ports['gi0/1'] = { ...l3Switch4State.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  l3Switch4State.runningConfig = [
+    '!',
+    'hostname Switch4',
+    '!',
+    'vlan 10',
+    ' name AG1',
+    '!',
+    'vlan 20',
+    ' name AG2',
+    '!',
+    'ip routing',
+    '!',
+    'interface vlan 10',
+    ' ip address 192.168.10.1 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface vlan 20',
+    ' ip address 192.168.20.1 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'interface range fa0/1 - 2',
+    ' switchport access vlan 10',
+    ' switchport mode access',
+    '!',
+    'interface range fa0/3 - 4',
+    ' switchport access vlan 20',
+    ' switchport mode access',
+    '!',
+    'interface gi0/1',
+    ' switchport mode trunk',
+    ' switchport trunk allowed vlan all',
+    '!',
+    'end'
+  ];
+
   return [
     {
       id: 'basic-secure',
@@ -2215,6 +2412,22 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         { id: 'sw1', state: stpPvstSw1 },
         { id: 'sw2', state: stpPvstSw2 },
         { id: 'sw3', state: stpPvstSw3 }
+      ])
+    },
+    {
+      id: 'l3-switch-2vlan',
+      tag: isTr ? 'L3 VLAN' : 'L3 VLAN',
+      title: isTr ? '2 L3 Switch VLAN (AG1/AG2)' : '2 L3 Switch VLAN (AG1/AG2)',
+      description: isTr
+        ? '2 L3 switch, VLAN 10 (AG1) ve VLAN 20 (AG2), SVI gateway yapılandırması, trunk bağlantı, 8 PC.'
+        : '2 L3 switches, VLAN 10 (AG1) and VLAN 20 (AG2), SVI gateway configuration, trunk connection, 8 PCs.',
+      detail: isTr
+        ? 'Switch2/Switch4: ip routing, VLAN10 SVI 192.168.10.1, VLAN20 SVI 192.168.20.1, Trunk Gi0/1'
+        : 'Switch2/Switch4: ip routing, VLAN10 SVI 192.168.10.1, VLAN20 SVI 192.168.20.1, Trunk Gi0/1',
+      level: 'advanced',
+      data: baseProjectData(l3Switch2VlanDevices, l3Switch2VlanConnections, l3Switch2VlanNotes, [
+        { id: 'switch2', state: l3Switch2State },
+        { id: 'switch4', state: l3Switch4State }
       ])
     }
   ];
