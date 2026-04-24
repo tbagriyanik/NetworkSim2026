@@ -81,38 +81,38 @@ interface DragItem {
 
 const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
   pc: (
-    <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="#3b82f6" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
+    <svg className="w-8 h-8 sm:w-12 sm:h-12" fill="none" stroke="#3b82f6" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
     </svg>
   ),
   iot: (
-    <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="#16cbf9" viewBox="0 -2 27 27">
-      <path d="M16.247 7.761a6 6 0 0 1 0 8.478" />
-      <path d="M19.075 4.933a10 10 0 0 1 0 14.134" />
-      <path d="M4.925 19.067a10 10 0 0 1 0-14.134" />
-      <path d="M7.753 16.239a6 6 0 0 1 0-8.478" />
-      <circle cx="12" cy="12" r="2" />
+    <svg className="w-8 h-8 sm:w-12 sm:h-12" fill="none" stroke="#16cbf9" viewBox="0 -2 27 27">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16.247 7.761a6 6 0 0 1 0 8.478" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19.075 4.933a10 10 0 0 1 0 14.134" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4.925 19.067a10 10 0 0 1 0-14.134" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7.753 16.239a6 6 0 0 1 0-8.478" />
+      <circle strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} cx="12" cy="12" r="2" />
     </svg>
   ),
   switch: (
-    <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
+    <svg className="w-8 h-8 sm:w-12 sm:h-12" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
     </svg>
   ),
   switchL2: (
-    <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
+    <svg className="w-8 h-8 sm:w-12 sm:h-12" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
     </svg>
   ),
   switchL3: (
-    <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
+    <svg className="w-8 h-8 sm:w-12 sm:h-12" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
     </svg>
   ),
   router: (
-    <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="none" stroke="#a855f7" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
+    <svg className="w-8 h-8 sm:w-12 sm:h-12" fill="none" stroke="#a855f7" viewBox="0 0 24 24">
+      <circle strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
     </svg>
   ),
 };
@@ -5003,81 +5003,81 @@ export function NetworkTopology({
           <div className={`text-[10px] font-bold tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} whitespace-nowrap`}>
             {t.devices}
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex gap-2">
             <button
               onClick={() => { addDevice('pc'); setIsPaletteOpen(false); }}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-all ${isDark
-                ? 'border-slate-700 bg-slate-800'
-                : 'border-slate-300 bg-white'
+              className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border-2 transition-all hover:scale-105 ${isDark
+                ? 'border-blue-600 bg-slate-800 hover:border-blue-400'
+                : 'border-blue-400 bg-white hover:border-blue-600'
                 }`}
               aria-label={language === 'tr' ? 'PC cihazı ekle' : 'Add PC device'}
             >
-              <div className="text-blue-500 w-5 h-5">
+              <div className="text-blue-500 w-7 h-7">
                 {DEVICE_ICONS['pc']}
               </div>
-              <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              <span className={`text-sm font-extrabold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                 PC
               </span>
             </button>
             <button
               onClick={() => { addDevice('switch'); setIsPaletteOpen(false); }}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-all ${isDark
-                ? 'border-slate-700 bg-slate-800'
-                : 'border-slate-300 bg-white'
+              className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border-2 transition-all hover:scale-105 ${isDark
+                ? 'border-green-600 bg-slate-800 hover:border-green-400'
+                : 'border-green-500 bg-white hover:border-green-700'
                 }`}
               aria-label={language === 'tr' ? 'L2 Switch ekle' : 'Add L2 Switch'}
             >
-              <div className="text-green-500 w-5 h-5">
+              <div className="text-green-500 w-7 h-7">
                 {DEVICE_ICONS['switch']}
               </div>
-              <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              <span className={`text-sm font-extrabold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
                 L2
               </span>
             </button>
             <button
               onClick={() => { addDevice('switch', 'L3'); setIsPaletteOpen(false); }}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-all ${isDark
-                ? 'border-slate-700 bg-slate-800'
-                : 'border-slate-300 bg-white'
+              className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border-2 transition-all hover:scale-105 ${isDark
+                ? 'border-purple-600 bg-slate-800 hover:border-purple-400'
+                : 'border-purple-500 bg-white hover:border-purple-700'
                 }`}
               aria-label={language === 'tr' ? 'L3 Switch ekle' : 'Add L3 Switch'}
             >
-              <div className="text-purple-500 w-5 h-5">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="text-purple-500 w-7 h-7">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2M5 12a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2m-2-4h.01M17 16h.01" />
                 </svg>
               </div>
-              <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              <span className={`text-sm font-extrabold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
                 L3
               </span>
             </button>
             <button
               onClick={() => { addDevice('router'); setIsPaletteOpen(false); }}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-all ${isDark
-                ? 'border-slate-700 bg-slate-800'
-                : 'border-slate-300 bg-white'
+              className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border-2 transition-all hover:scale-105 ${isDark
+                ? 'border-orange-600 bg-slate-800 hover:border-orange-400'
+                : 'border-orange-500 bg-white hover:border-orange-700'
                 }`}
               aria-label={language === 'tr' ? 'Router ekle' : 'Add Router'}
             >
-              <div className="text-purple-500 w-5 h-5">
+              <div className="text-orange-500 w-7 h-7">
                 {DEVICE_ICONS['router']}
               </div>
-              <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              <span className={`text-sm font-extrabold ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>
                 Router
               </span>
             </button>
             <button
               onClick={() => { addDevice('iot'); setIsPaletteOpen(false); }}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-all ${isDark
-                ? 'border-slate-700 bg-slate-800'
-                : 'border-slate-300 bg-white'
+              className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border-2 transition-all hover:scale-105 ${isDark
+                ? 'border-cyan-600 bg-slate-800 hover:border-cyan-400'
+                : 'border-cyan-500 bg-white hover:border-cyan-700'
                 }`}
               aria-label={language === 'tr' ? 'IoT cihazı ekle' : 'Add IoT device'}
             >
-              <div className="text-cyan-500 w-5 h-5">
+              <div className="text-cyan-500 w-7 h-7">
                 {DEVICE_ICONS['iot']}
               </div>
-              <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              <span className={`text-sm font-extrabold ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
                 IoT
               </span>
             </button>

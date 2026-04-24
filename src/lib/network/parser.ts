@@ -574,6 +574,12 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 2
   },
+  'no switchport': {
+    pattern: /^no\s+switchport$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'no switchport mode': {
     pattern: /^no\s+switchport\s+mode$/i,
     modes: ['interface', 'config-if-range'],

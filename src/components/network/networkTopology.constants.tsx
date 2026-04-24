@@ -24,38 +24,38 @@ export const DEVICE_ICON_COLORS = {
 
 export const DEVICE_ICONS = {
   pc: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke={DEVICE_ICON_COLORS.pc} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={DEVICE_ICON_PATHS.pc} />
+    <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke={DEVICE_ICON_COLORS.pc} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={DEVICE_ICON_PATHS.pc} />
     </svg>
   ),
   iot: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke={DEVICE_ICON_COLORS.iot} viewBox="0 0 24 24">
-      <path d="M16.247 7.761a6 6 0 0 1 0 8.478" />
-      <path d="M19.075 4.933a10 10 0 0 1 0 14.134" />
-      <path d="M4.925 19.067a10 10 0 0 1 0-14.134" />
-      <path d="M7.753 16.239a6 6 0 0 1 0-8.478" />
-      <circle cx="12" cy="12" r="2" />
+    <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke={DEVICE_ICON_COLORS.iot} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16.247 7.761a6 6 0 0 1 0 8.478" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19.075 4.933a10 10 0 0 1 0 14.134" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4.925 19.067a10 10 0 0 1 0-14.134" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7.753 16.239a6 6 0 0 1 0-8.478" />
+      <circle strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} cx="12" cy="12" r="2" />
     </svg>
   ),
   switch: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke={DEVICE_ICON_COLORS.switch} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={DEVICE_ICON_PATHS.switch} />
+    <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke={DEVICE_ICON_COLORS.switch} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={DEVICE_ICON_PATHS.switch} />
     </svg>
   ),
   switchL2: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke={DEVICE_ICON_COLORS.switch} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={DEVICE_ICON_PATHS.switch} />
+    <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke={DEVICE_ICON_COLORS.switch} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={DEVICE_ICON_PATHS.switch} />
     </svg>
   ),
   switchL3: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke={DEVICE_ICON_COLORS.switch} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={DEVICE_ICON_PATHS.switch} />
+    <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke={DEVICE_ICON_COLORS.switch} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={DEVICE_ICON_PATHS.switch} />
     </svg>
   ),
   router: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke={DEVICE_ICON_COLORS.router} viewBox="0 0 24 24">
-      <circle cx={DEVICE_ICON_PATHS.router.circle.cx} cy={DEVICE_ICON_PATHS.router.circle.cy} r={DEVICE_ICON_PATHS.router.circle.r} strokeWidth={1.5} />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={DEVICE_ICON_PATHS.router.paths} />
+    <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke={DEVICE_ICON_COLORS.router} viewBox="0 0 24 24">
+      <circle strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} cx={DEVICE_ICON_PATHS.router.circle.cx} cy={DEVICE_ICON_PATHS.router.circle.cy} r={DEVICE_ICON_PATHS.router.circle.r} />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={DEVICE_ICON_PATHS.router.paths} />
     </svg>
   ),
 };
