@@ -462,13 +462,15 @@ export function normalizePortId(input: string): string | null {
   }
 
   // Fa0/1, fa0/1, FastEthernet0/1, fastethernet0/1, fast 0/1 formatlarını kabul et
-  const faMatch = lower.match(/^(?:fa|fastethernet|fast)(\d+)\/(\d+)$/);
+  // Daha uzun eşleşmeler önce (fastethernet > fast > fa) - regex backtracking için
+  const faMatch = lower.match(/^(?:fastethernet|fast|fa)(\d+)\/(\d+)$/);
   if (faMatch) {
     return `fa${faMatch[1]}/${faMatch[2]}`;
   }
 
   // Gi0/1, gi0/1, GigabitEthernet0/1, gigabitethernet0/1, gig 0/1 formatlarını kabul et
-  const giMatch = lower.match(/^(?:gi|gig|gigabit|gigabitethernet)(\d+)\/(\d+)$/);
+  // Daha uzun eşleşmeler önce (gigabitethernet > gigabit > gig > gi)
+  const giMatch = lower.match(/^(?:gigabitethernet|gigabit|gig|gi)(\d+)\/(\d+)$/);
   if (giMatch) {
     return `gi${giMatch[1]}/${giMatch[2]}`;
   }

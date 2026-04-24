@@ -47,7 +47,8 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'no cdp run': cmdNoCdpRun,
   'username': cmdUsername,
   'no username': cmdNoUsername,
-  'interface': cmdInterface,
+  // 'interface' command handler is in interfaceCommands.ts for proper port validation
+  // We handle VLAN interfaces here
   'no interface': cmdNoInterface,
   // Routing protocols
   'router rip': cmdRouterRip,
@@ -195,6 +196,8 @@ function normalizeInterfaceName(raw: string): string {
 
 /**
  * Interface - Enter interface configuration
+ * Note: Physical interfaces are handled by interfaceCommands.ts to validate port existence
+ * Only VLAN interface handling is here
  */
 function cmdInterface(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') {
@@ -208,6 +211,7 @@ function cmdInterface(state: any, input: string, ctx: any): any {
 
   const iface = match[1].trim().toLowerCase();
 
+  // Only handle VLAN interfaces here - physical interfaces handled by interfaceCommands.ts
   if (iface.startsWith('vlan')) {
     const vlanMatch = iface.match(/^vlan\s+(\d+)$/i);
     if (!vlanMatch) {
@@ -248,35 +252,9 @@ function cmdInterface(state: any, input: string, ctx: any): any {
     };
   }
 
-  // Normalize port name to match state.ports keys (e.g. "GigabitEthernet0/0" -> "gi0/0")
-  const normalizedIface = normalizeInterfaceName(match[1]);
-
-  // Auto-create port entry if it doesn't exist (router ports entered via CLI)
-  const newPorts = { ...state.ports };
-  if (!newPorts[normalizedIface]) {
-    const isGig = normalizedIface.startsWith('gi');
-    const isFa = normalizedIface.startsWith('fa');
-    newPorts[normalizedIface] = {
-      id: normalizedIface,
-      name: '',
-      status: 'notconnect',
-      vlan: 1,
-      mode: 'routed',
-      duplex: 'auto',
-      speed: 'auto',
-      shutdown: true,
-      type: isGig ? 'gigabitethernet' : isFa ? 'fastethernet' : 'fastethernet',
-    };
-  }
-
-  return {
-    success: true,
-    newState: {
-      ports: newPorts,
-      currentMode: 'interface',
-      currentInterface: normalizedIface
-    }
-  };
+  // Non-VLAN interfaces are handled by interfaceCommands.ts
+  // This should not be reached since 'interface' is in interfaceHandlers
+  return { success: false, error: '% Interface command not found' };
 }
 
 /**

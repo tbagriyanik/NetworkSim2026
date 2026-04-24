@@ -172,8 +172,11 @@ function cmdInterface(state: any, input: string, ctx: any): any {
   // Check if it's a subinterface (contains a dot)
   const isSubinterface = normalized.includes('.');
 
-  if (!isSubinterface && (!state.ports || !state.ports[normalized])) {
-    return { success: false, error: `% Interface ${interfaceName} does not exist` };
+  // For physical interfaces (not subinterfaces), validate the port exists
+  if (!isSubinterface) {
+    if (!state.ports || !state.ports[normalized]) {
+      return { success: false, error: `% Interface ${interfaceName} does not exist` };
+    }
   }
 
   // For subinterfaces, create them if they don't exist
