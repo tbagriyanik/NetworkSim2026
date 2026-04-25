@@ -985,18 +985,26 @@ function cmdShowIpRoute(
     return { success: true, output };
   }
 
-  output += 'Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP\n';
+  output += 'Codes: C - connected, S - static, I - IGRP, R - RIP, M - mobile, B - BGP\n';
   output += '       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area\n';
   output += '       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2\n';
+  output += '       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP\n';
+  output += '       i - IS-IS, L1 - IS-IS level-1, L2 - IS-IS level-2, ia - IS-IS inter area\n';
+  output += '       * - candidate default, U - per-user static route, o - ODR\n';
+  output += '       P - periodic downloaded static route\n';
+  output += '\n';
   output += 'Gateway of last resort is not set\n\n';
 
-  // Connected routes
+  // Connected routes - show network address instead of interface IP
   let hasConnectedRoutes = false;
   Object.keys(state.ports || {}).forEach(portName => {
     const port = state.ports[portName];
     if (port.ipAddress && port.subnetMask && !port.shutdown) {
       hasConnectedRoutes = true;
-      output += `C     ${port.ipAddress}/${getPrefixLength(port.subnetMask)} is directly connected, ${portName}\n`;
+      const prefixLength = getPrefixLength(port.subnetMask);
+      const networkAddress = getNetworkAddress(port.ipAddress, port.subnetMask);
+      const formattedPortName = formatPortName(portName);
+      output += `C     ${networkAddress}/${prefixLength} is directly connected, ${formattedPortName}\n`;
     }
   });
 
@@ -1016,17 +1024,25 @@ function cmdShowIpRoute(
 
         if (connectedDevice?.ip && connectedDevice?.subnet) {
           const prefixLength = getPrefixLength(connectedDevice.subnet);
-          output += `C     ${connectedDevice.ip}/${prefixLength} is directly connected, ${localPort}\n`;
+          const networkAddress = getNetworkAddress(connectedDevice.ip, connectedDevice.subnet);
+          const formattedPortName = formatPortName(localPort);
+          output += `C     ${networkAddress}/${prefixLength} is directly connected, ${formattedPortName}\n`;
           hasConnectedRoutes = true;
         }
       }
     });
   }
 
-  // Static routes
+  // Static routes - convert subnet mask to CIDR notation
+  // Support both 'mask' and 'subnetMask', 'network' and 'destination' property names
   if (state.staticRoutes && state.staticRoutes.length > 0) {
     state.staticRoutes.forEach((route: any) => {
-      output += `S*    ${route.network}/${route.mask} [1/0] via ${route.nextHop}${route.interface ? ` ${route.interface}` : ''}\n`;
+      const mask = route.mask || route.subnetMask;
+      const network = route.network || route.destination;
+      if (mask && network) {
+        const prefixLength = getPrefixLength(mask);
+        output += `S     ${network}/${prefixLength} [1/0] via ${route.nextHop}${route.interface ? ` ${route.interface}` : ''}\n`;
+      }
     });
   }
 
@@ -2024,7 +2040,8 @@ function cmdShowPortSecurity(
 /**
  * Helper function to get prefix length from subnet mask
  */
-function getPrefixLength(subnetMask: string): number {
+function getPrefixLength(subnetMask: string | undefined): number {
+  if (!subnetMask) return 0;
   const parts = subnetMask.split('.').map(Number);
   let count = 0;
 
@@ -2041,6 +2058,35 @@ function getPrefixLength(subnetMask: string): number {
   }
 
   return count;
+}
+
+/**
+ * Helper function to calculate network address from IP and subnet mask
+ */
+function getNetworkAddress(ipAddress: string, subnetMask: string): string {
+  const ipParts = ipAddress.split('.').map(Number);
+  const maskParts = subnetMask.split('.').map(Number);
+
+  const networkParts = ipParts.map((part, index) => part & maskParts[index]);
+
+  return networkParts.join('.');
+}
+
+/**
+ * Helper function to format port name (fa0/1 -> FastEthernet0/1, gi0/1 -> GigabitEthernet0/1)
+ */
+function formatPortName(portName: string): string {
+  const lowerName = portName.toLowerCase();
+
+  if (lowerName.startsWith('fa')) {
+    return 'FastEthernet' + lowerName.slice(2);
+  } else if (lowerName.startsWith('gi')) {
+    return 'GigabitEthernet' + lowerName.slice(2);
+  } else if (lowerName.startsWith('eth')) {
+    return 'Ethernet' + lowerName.slice(4);
+  }
+
+  return portName;
 }
 
 /**
