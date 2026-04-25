@@ -11,7 +11,7 @@ export type CommandMode =
   | 'router-config'  // Router(config-router)#
   | 'dhcp-config';   // Router(dhcp-config)#
 
-export type PortStatus = 'connected' | 'notconnect' | 'disabled' | 'blocked';
+export type PortStatus = 'connected' | 'notconnect' | 'disabled' | 'blocked' | 'err-disabled';
 export type PortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
 export type DuplexMode = 'half' | 'full' | 'auto';
 export type SpeedMode = '10' | '100' | '1000' | '10000' | 'auto';
@@ -42,11 +42,13 @@ export interface Port {
   channelProtocol?: EtherChannelProtocol;
   portSecurity?: {
     enabled: boolean;
-    maxMac: number;
-    violation: 'protect' | 'restrict' | 'shutdown';
-    stickyMac: boolean;
+    maxAddresses?: number;
+    violationAction?: 'protect' | 'restrict' | 'shutdown';
+    sticky?: boolean;
+    violations?: number;
     macAddress?: string;
   };
+  staticMacs?: string[]; // Static MAC addresses for port security
   ipv6Address?: string;         // For CCNA 1 v7 support
   ipv6Prefix?: number;
   isRoutedPort?: boolean;       // For L3 switch routed ports
@@ -226,6 +228,7 @@ export interface CommandResult {
   output?: string;
   error?: string;
   newState?: Partial<SwitchState>;
+  deviceStates?: Map<string, SwitchState>; // Cross-device state updates (e.g., port security violations)
   modeChange?: CommandMode;
   requiresPassword?: boolean;        // Şifre gerekiyor mu?
   passwordPrompt?: string;           // Şifre istemi metni
@@ -347,10 +350,11 @@ export function getCableTypeLabel(type: CableType, primaryLang: 'tr' | 'en'): st
 }
 
 // Port LED renkleri
-export type PortLEDColor = 'green' | 'gray' | 'orange' | 'off' | 'white';
+export type PortLEDColor = 'green' | 'gray' | 'orange' | 'off' | 'white' | 'red';
 
 export function getPortLEDColor(port: Port): PortLEDColor {
   if (port.shutdown) return 'gray';
+  if (port.status === 'err-disabled') return 'red';
   if (port.status === 'blocked') return 'orange';
   if (port.status === 'connected') return 'green';
   if (port.status === 'notconnect') return 'white';

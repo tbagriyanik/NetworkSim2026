@@ -76,6 +76,38 @@ function cmdPing(state: any, input: string, ctx: any): any {
             ctx.language
         );
 
+        // Handle port security violations - update state if needed
+        let updatedDeviceStates: Map<string, SwitchState> | undefined;
+        if (connectivity.portSecurityViolations && connectivity.portSecurityViolations.length > 0) {
+            // Create new deviceStates Map with updated ports
+            updatedDeviceStates = new Map<string, SwitchState>(ctx.deviceStates);
+            
+            connectivity.portSecurityViolations.forEach(violation => {
+                if (violation.action === 'shutdown') {
+                    const deviceState = updatedDeviceStates!.get(violation.deviceId);
+                    if (deviceState) {
+                        const updatedPorts = { ...deviceState.ports };
+                        const port = updatedPorts[violation.portId];
+                        if (port) {
+                            updatedPorts[violation.portId] = {
+                                ...port,
+                                shutdown: true,
+                                status: 'err-disabled',
+                                portSecurity: port.portSecurity ? {
+                                    ...port.portSecurity,
+                                    violations: (port.portSecurity.violations || 0) + 1
+                                } : undefined
+                            };
+                            updatedDeviceStates!.set(violation.deviceId, {
+                                ...deviceState,
+                                ports: updatedPorts
+                            });
+                        }
+                    }
+                }
+            });
+        }
+
         if (connectivity.success) {
             let output = `\nType escape sequence to abort.\n`;
             output += `Sending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n`;
@@ -104,12 +136,13 @@ function cmdPing(state: any, input: string, ctx: any): any {
             const fmtMs = (ms: number) => ms <= 1 ? '<1' : String(ms);
             for (let i = 0; i < successCount; i++) output += '!';
             output += `\n\nSuccess rate is 100 percent (${successCount}/${successCount}), round-trip min/avg/max = ${fmtMs(pingResult.min)}/${fmtMs(pingResult.avg)}/${fmtMs(pingResult.max)} ms\n`;
-            return { success: true, output, triggerPingAnimation: connectivity.targetId };
+            return { success: true, output, triggerPingAnimation: connectivity.targetId, deviceStates: updatedDeviceStates };
         } else {
             return {
                 success: false,
                 output: `\nType escape sequence to abort.\nSending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n.....\n`,
                 error: connectivity.error || `Destination host unreachable.`,
+                deviceStates: updatedDeviceStates
             };
         }
     }

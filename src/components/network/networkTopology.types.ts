@@ -2,7 +2,7 @@ import { CableInfo, CableType, SwitchState } from '@/lib/network/types';
 
 export type DeviceType = 'pc' | 'iot' | 'switchL2' | 'switchL3' | 'router';
 export type CanvasPortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
-export type CanvasPortStatus = 'connected' | 'disconnected' | 'notconnect' | 'blocked' | 'disabled';
+export type CanvasPortStatus = 'connected' | 'disconnected' | 'notconnect' | 'blocked' | 'disabled' | 'err-disabled';
 
 export interface CanvasPort {
   id: string;

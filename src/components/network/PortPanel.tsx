@@ -39,14 +39,16 @@ const ledColorClasses: Record<PortLEDColor, string> = {
   gray: 'bg-gray-500 transition-colors',
   orange: 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)] led-blink',
   white: 'bg-white shadow-[0_0_6px_rgba(255,255,255,0.4)] border border-slate-300 transition-all',
-  off: 'bg-gray-700 transition-colors'
+  off: 'bg-gray-700 transition-colors',
+  red: 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] led-blink'
 };
 
 const statusTextEn: Record<string, string> = {
   connected: 'Connected',
   notconnect: 'Not Connected',
   disabled: 'Disabled',
-  blocked: 'Blocked'
+  blocked: 'Blocked',
+  'err-disabled': 'Err-Disabled'
 };
 
 export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDeviceId, isDevicePoweredOff = false, topologyDevices = [], onTogglePower, topologyConnections }: PortPanelProps) {

@@ -210,11 +210,14 @@ export function PCPanel({
   // Sync with global history if it changes externally
   useEffect(() => {
     const globalHistory = pcHistories?.get(deviceId) || [];
-    if (JSON.stringify(globalHistory) !== JSON.stringify(desktopHistory)) {
-      setDesktopHistory(globalHistory);
-      setDesktopHistoryIndex(-1);
-    }
-  }, [pcHistories, deviceId, desktopHistory]);
+    setDesktopHistory(prevHistory => {
+      if (JSON.stringify(globalHistory) !== JSON.stringify(prevHistory)) {
+        return globalHistory;
+      }
+      return prevHistory;
+    });
+    setDesktopHistoryIndex(-1);
+  }, [pcHistories, deviceId]);
 
   // Reset per-tab command cursor when tab changes.
   useEffect(() => {

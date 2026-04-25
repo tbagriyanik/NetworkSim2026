@@ -3,7 +3,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Trash2, Undo2, Redo2, Scissors, Copy, ClipboardPaste,
   MousePointer2, ExternalLink, Mail, Shield, Layers,
-  Database, Terminal as TerminalIcon, CheckSquare, Power, ListTodo
+  Database, Terminal as TerminalIcon, CheckSquare, Power, ListTodo,
+  RefreshCw
 } from 'lucide-react';
 import { NOTE_COLORS, NOTE_FONT_SIZES, NOTE_OPACITY } from './networkTopology.constants';
 import { CanvasDevice, CanvasNote, ContextMenuState } from './networkTopology.types';
@@ -45,6 +46,7 @@ interface NetworkTopologyContextMenuProps {
   onSaveToHistory: () => void;
   onClearDeviceSelection: () => void;
   onOpenTasks?: (deviceId: string) => void;
+  onRefreshNetwork?: () => void;
 }
 
 export default function NetworkTopologyContextMenu({
@@ -83,6 +85,7 @@ export default function NetworkTopologyContextMenu({
   onSaveToHistory,
   onClearDeviceSelection,
   onOpenTasks,
+  onRefreshNetwork,
   note
 }: NetworkTopologyContextMenuProps) {
   const { t } = useLanguage();
@@ -100,6 +103,7 @@ export default function NetworkTopologyContextMenu({
       case 'select': return <CheckSquare className="w-4 h-4" />;
       case 'open': return <ExternalLink className="w-4 h-4" />;
       case 'ping': return <Mail className="w-4 h-4" />;
+      case 'refresh': return <RefreshCw className="w-4 h-4" />;
       case 'power': return <Power className="w-4 h-4" />;
       case 'tasks': return <ListTodo className="w-4 h-4" />;
       default: return null;
@@ -308,6 +312,16 @@ export default function NetworkTopologyContextMenu({
             disabled: devices.length === 0 && notes.length === 0,
             onClick: () => { onSelectAll(); onClose(); }
           })}
+          <div className="my-1 border-t border-slate-200/20" />
+          {renderMenuItem({
+            label: t.refreshNetwork,
+            icon: 'refresh',
+            shortcut: 'F5',
+            onClick: () => {
+              window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F5' }));
+              onClose();
+            }
+          })}
         </div>
       )}
 
@@ -386,6 +400,16 @@ export default function NetworkTopologyContextMenu({
                   icon: 'power',
                   onClick: () => { onSaveToHistory(); onTogglePowerDevices(targets); onClose(); },
                   disabled: !device
+                })}
+                <div className="my-1 border-t border-slate-200/20" />
+                {renderMenuItem({
+                  label: t.refreshNetwork,
+                  icon: 'refresh',
+                  shortcut: 'F5',
+                  onClick: () => {
+                    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F5' }));
+                    onClose();
+                  }
                 })}
               </>
             );

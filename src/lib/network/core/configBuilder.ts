@@ -188,6 +188,25 @@ export function buildRunningConfig(state: SwitchState): string[] {
                     lines.push(` switchport access vlan ${vlanId}`);
                 }
             }
+            // Port Security
+            if (port.portSecurity?.enabled) {
+                lines.push(' switchport port-security');
+                if (port.portSecurity.maxAddresses) {
+                    lines.push(` switchport port-security maximum ${port.portSecurity.maxAddresses}`);
+                }
+                if (port.portSecurity.violationAction) {
+                    lines.push(` switchport port-security violation ${port.portSecurity.violationAction}`);
+                }
+                if (port.portSecurity.sticky) {
+                    lines.push(' switchport port-security mac-address sticky');
+                }
+                if (port.staticMacs && port.staticMacs.length > 0) {
+                    port.staticMacs.forEach((mac: string) => {
+                        lines.push(` switchport port-security mac-address ${mac}`);
+                    });
+                }
+            }
+
             if (port.ipAddress && port.subnetMask) {
                 lines.push(` ip address ${port.ipAddress} ${port.subnetMask}`);
             }

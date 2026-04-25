@@ -900,8 +900,8 @@ function cmdShowMacAddressTable(
 // Helper function to format MAC address: xxxx.xxxx.xxxx
 function formatMacAddressSimple(mac: string): string {
   if (!mac) return '0000.0000.0000';
-  // Keep only the dots, remove any dashes or colons
-  const cleanMac = mac.replace(/[-:]/g, '').toUpperCase();
+  // Remove all separators (dots, dashes, colons)
+  const cleanMac = mac.replace(/[-:.]/g, '').toUpperCase();
   // Pad with zeros to ensure 12 characters
   const padded = cleanMac.padStart(12, '0').slice(0, 12);
   // Add dots every 4 characters for format
@@ -2043,7 +2043,11 @@ function cmdShowPortSecurity(
   Object.keys(state.ports || {}).forEach(portName => {
     const port = state.ports[portName];
     if (port.portSecurity?.enabled) {
-      output += `${portName.padEnd(12)}${String(port.portSecurity.maxAddresses).padEnd(15)}${String(port.portSecurity.currentAddresses).padEnd(13)}${String(port.portSecurity.violations).padEnd(20)}${port.portSecurity.violationAction || 'Shutdown'}\n`;
+      const maxAddr = port.portSecurity.maxAddresses || 1;
+      const currentAddr = (port.staticMacs?.length || 0) + (port.portSecurity.sticky ? 1 : 0);
+      const violations = port.portSecurity.violations || 0;
+      const action = port.portSecurity.violationAction || 'Shutdown';
+      output += `${portName.padEnd(12)}${String(maxAddr).padEnd(15)}${String(currentAddr).padEnd(13)}${String(violations).padEnd(20)}${action}\n`;
     }
   });
 

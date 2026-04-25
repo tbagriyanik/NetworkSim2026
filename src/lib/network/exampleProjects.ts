@@ -1174,6 +1174,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     createPcDevice('pc-1', 'PC-1', 40, 180, '192.168.1.10', 1),
     createSwitchDevice('switch-1', 'SW1', 240, 180)
   ];
+  // Set PC1 MAC to match the port security static MAC
+  psDevices[0].macAddress = '00-e0-f7-01-a1-24';
   const psConnections: CanvasConnection[] = [];
   connectPorts(psDevices, psConnections, 'pc-1', 'eth0', 'switch-1', 'fa0/3');
   const psNotes: CanvasNote[] = [
@@ -1182,13 +1184,13 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       text: isTr
         ? 'Amaç: Port-security temel örnek.\nFa0/3 üzerinde enabled + sticky + max 1.\nshow port-security ile kontrol et.\nFarklı MAC görürse ihlal oluşur (shutdown).'
         : 'Goal: Basic port-security.\nFa0/3 enabled + sticky + max 1.\nVerify with show port-security.\nDifferent MAC triggers violation (shutdown).',
-      x: 600,
-      y: 40,
-      width: 420,
-      height: 170,
-      color: '#f87171',
+      x: 400,
+      y: 80,
+      width: 300,
+      height: 100,
+      color: '#ef4444',
       font: 'verdana',
-      fontSize: 16,
+      fontSize: 12,
       opacity: 0.75
     }
   ];
@@ -1197,7 +1199,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   psState.ports['fa0/3'] = {
     ...psState.ports['fa0/3'],
     status: 'connected',
-    portSecurity: { enabled: true, maxMac: 1, violation: 'shutdown', stickyMac: true }
+    portSecurity: { enabled: true, maxAddresses: 1, violationAction: 'shutdown', sticky: true },
+    staticMacs: ['00-e0-f7-01-a1-24']
   };
 
   // Example 6: Inter-VLAN Routing (L3 Switch)

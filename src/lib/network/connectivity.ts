@@ -99,6 +99,44 @@ const getPortNumber = (portId: string): number => {
   return match ? parseInt(match[1], 10) : 0;
 };
 
+/**
+ * Check port security for a switch port
+ * Returns violation result if MAC is not allowed, null if allowed
+ */
+function checkPortSecurityViolation(
+  switchId: string,
+  portId: string,
+  sourceMac: string,
+  deviceStates?: Map<string, SwitchState>
+): { violation: boolean; action: 'shutdown' | 'restrict' | 'protect'; reason: string } | null {
+  if (!deviceStates) return null;
+
+  const switchState = deviceStates.get(switchId);
+  if (!switchState) return null;
+
+  const port = switchState.ports[portId];
+  if (!port?.portSecurity?.enabled) return null;
+
+  // Normalize MAC address for comparison
+  const normalizedSourceMac = sourceMac.toLowerCase().replace(/[-:.]/g, '');
+  const staticMacs = port.staticMacs || [];
+  const normalizedStaticMacs = staticMacs.map(m => m.toLowerCase().replace(/[-:.]/g, ''));
+
+  // Check if source MAC is in the allowed list
+  const isAllowed = normalizedStaticMacs.includes(normalizedSourceMac);
+
+  if (!isAllowed) {
+    const action = port.portSecurity.violationAction || 'shutdown';
+    return {
+      violation: true,
+      action,
+      reason: `Port security violation on ${switchId} ${portId}: MAC ${sourceMac} not in secure MAC list`
+    };
+  }
+
+  return null;
+}
+
 export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStates?: Map<string, SwitchState>): DeviceWifiConfig | undefined {
   if (!device) return undefined;
   const state = deviceStates?.get(device.id);
@@ -407,8 +445,11 @@ export function checkConnectivity(
   _connections: CanvasConnection[],
   deviceStates?: Map<string, SwitchState>,
   language: 'tr' | 'en' = 'tr'
-): { success: boolean; hops: string[]; hopIds: string[]; targetId?: string; error?: string } {
+): { success: boolean; hops: string[]; hopIds: string[]; targetId?: string; error?: string; portSecurityViolations?: Array<{ deviceId: string; portId: string; action: string; mac: string }> } {
   const isSwitchDeviceType = (type: DeviceType) => type === 'switchL2' || type === 'switchL3';
+
+  // Track port security violations for React state updates
+  const portSecurityViolations: Array<{ deviceId: string; portId: string; action: string; mac: string }> = [];
 
   // 1.5. Implicit Wireless Connections
   const connections = [..._connections];
@@ -501,7 +542,8 @@ export function checkConnectivity(
         hops,
         hopIds,
         targetId: 'external-domain',
-        error: undefined
+        error: undefined,
+        portSecurityViolations
       };
     }
   }
@@ -818,6 +860,52 @@ export function checkConnectivity(
             error: `VLAN mismatch: ${pc.name} is in VLAN ${pcVlan}, but ${sw.name} port ${swPortId} is VLAN ${swVlan}.`,
           };
         }
+
+        // Check port security on switch port
+        if (swPort?.portSecurity?.enabled && pc.macAddress) {
+          const violation = checkPortSecurityViolation(sw.id, swPortId, pc.macAddress, deviceStates);
+          if (violation) {
+            // Track violation for React state update
+            portSecurityViolations.push({
+              deviceId: sw.id,
+              portId: swPortId,
+              action: violation.action,
+              mac: pc.macAddress
+            });
+
+            // Handle violation action
+            if (violation.action === 'shutdown') {
+              return {
+                success: false,
+                hops: hopNames.slice(0, i + 2),
+                hopIds: path.slice(0, i + 2),
+                targetId: targetDevice.id,
+                error: `Port security violation: ${sw.name} port ${swPortId} has been shut down due to unauthorized MAC ${pc.macAddress}.`,
+                portSecurityViolations
+              };
+            } else if (violation.action === 'restrict') {
+              // Allow traffic but log violation
+              return {
+                success: false,
+                hops: hopNames.slice(0, i + 2),
+                hopIds: path.slice(0, i + 2),
+                targetId: targetDevice.id,
+                error: `Port security violation: ${sw.name} port ${swPortId} - unauthorized MAC ${pc.macAddress}. Traffic restricted.`,
+                portSecurityViolations
+              };
+            } else if (violation.action === 'protect') {
+              // Drop traffic silently (no error message, just drop)
+              return {
+                success: false,
+                hops: hopNames.slice(0, i + 2),
+                hopIds: path.slice(0, i + 2),
+                targetId: targetDevice.id,
+                error: `Request timed out.`,
+                portSecurityViolations
+              };
+            }
+          }
+        }
       }
     }
   }
@@ -932,7 +1020,8 @@ export function checkConnectivity(
           success: true,
           hops: hopNames,
           hopIds: path,
-          targetId: targetDevice.id
+          targetId: targetDevice.id,
+          portSecurityViolations
         };
       }
       // Different VLANs: check if router with ipRouting is in path
@@ -979,7 +1068,8 @@ export function checkConnectivity(
           hops: hopNames,
           hopIds: path,
           targetId: targetDevice.id,
-          error: undefined
+          error: undefined,
+          portSecurityViolations
         };
       }
     }
@@ -1003,7 +1093,8 @@ export function checkConnectivity(
             hops: hopNames,
             hopIds: path,
             targetId: targetDevice.id,
-            error: undefined
+            error: undefined,
+            portSecurityViolations
           };
         }
       }
@@ -1035,7 +1126,8 @@ export function checkConnectivity(
     success: true,
     hops: hopNames,
     hopIds: path,
-    targetId: targetDevice.id
+    targetId: targetDevice.id,
+    portSecurityViolations
   };
 }
 

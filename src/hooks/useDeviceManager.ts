@@ -418,9 +418,14 @@ export function useDeviceManager() {
         deviceId
       );
 
-      const { requiresConfirmation, confirmationMessage, confirmationAction, success, newState, error, triggerPingAnimation, updatedDeviceStates } = result as any;
+      const { requiresConfirmation, confirmationMessage, confirmationAction, success, newState, error, triggerPingAnimation, deviceStates: resultDeviceStates, updatedDeviceStates } = result as any;
       const trimmedCommand = command.trim().toLowerCase();
       const isInternalCommand = command === '__CONSOLE_CONNECT__';
+
+      // Handle cross-device state updates (e.g., port security violations)
+      if (resultDeviceStates && resultDeviceStates instanceof Map && resultDeviceStates !== deviceStatesRef.current) {
+        setDeviceStates(resultDeviceStates);
+      }
 
       if (requiresConfirmation && !skipConfirm) {
         setIsLoading(false);

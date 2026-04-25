@@ -10,7 +10,7 @@ import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNot
 // Duplicate removed
 import { NetworkTopology } from '@/components/network/NetworkTopology';
 import { cn } from '@/lib/utils';
-import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from '@/components/network/networkTopology.types';
+import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, CanvasPortStatus } from '@/components/network/networkTopology.types';
 import { getPrompt } from '@/lib/network/executor';
 import { formatErrorForUser } from '@/lib/errors/errorHandler';
 import { checkDeviceConnectivity, getWirelessSignalStrength } from '@/lib/network/connectivity';
@@ -2721,18 +2721,103 @@ ${state.bannerMOTD}
       // Apply STP updates to device states
       setDeviceStates(stpUpdatedStates);
 
-      // 8.5. Sync STP state from deviceStates to topologyDevices ports
+      // 8.5. Port Security Check - Check all switch ports for MAC violations
+      const portSecurityUpdatedStates = new Map(stpUpdatedStates);
+      let portSecurityViolationCount = 0;
+      let portSecurityRecoveredCount = 0;
+
+      topologyConnections.forEach(conn => {
+        if (!conn.active) return;
+
+        // Find switch device and connected device
+        const switchDevice = refreshedDevices.find(d =>
+          (d.type === 'switchL2' || d.type === 'switchL3') &&
+          (d.id === conn.sourceDeviceId || d.id === conn.targetDeviceId)
+        );
+        const connectedDevice = refreshedDevices.find(d =>
+          d.type === 'pc' &&
+          (d.id === conn.sourceDeviceId || d.id === conn.targetDeviceId)
+        );
+
+        if (!switchDevice || !connectedDevice) return;
+
+        // Determine which port on the switch
+        const switchPortId = switchDevice.id === conn.sourceDeviceId ? conn.sourcePort : conn.targetPort;
+        const switchState = portSecurityUpdatedStates.get(switchDevice.id);
+        if (!switchState) return;
+
+        const switchPort = switchState.ports[switchPortId];
+        if (!switchPort?.portSecurity?.enabled) return;
+
+        // Get the connected device's MAC address
+        const deviceMac = connectedDevice.macAddress;
+        if (!deviceMac) return;
+
+        // Normalize MAC for comparison
+        const normalizedDeviceMac = deviceMac.toLowerCase().replace(/[-:.]/g, '');
+        const staticMacs = switchPort.staticMacs || [];
+        const normalizedStaticMacs = staticMacs.map(m => m.toLowerCase().replace(/[-:.]/g, ''));
+
+        // Check if MAC is in the allowed list
+        const isAllowed = normalizedStaticMacs.includes(normalizedDeviceMac);
+
+        const updatedPorts = { ...switchState.ports };
+
+        if (!isAllowed) {
+          // Port security violation - block the port
+          if (!switchPort.shutdown || switchPort.status !== 'err-disabled') {
+            updatedPorts[switchPortId] = {
+              ...switchPort,
+              shutdown: true,
+              status: 'err-disabled',
+              portSecurity: switchPort.portSecurity ? {
+                ...switchPort.portSecurity,
+                violations: (switchPort.portSecurity.violations || 0) + 1
+              } : undefined
+            };
+            portSecurityUpdatedStates.set(switchDevice.id, {
+              ...switchState,
+              ports: updatedPorts
+            });
+            portSecurityViolationCount++;
+          }
+        } else {
+          // MAC matches - recover the port if it was err-disabled
+          if (switchPort.shutdown && switchPort.status === 'err-disabled') {
+            updatedPorts[switchPortId] = {
+              ...switchPort,
+              shutdown: false,
+              status: 'connected',
+              portSecurity: switchPort.portSecurity ? {
+                ...switchPort.portSecurity
+              } : undefined
+            };
+            portSecurityUpdatedStates.set(switchDevice.id, {
+              ...switchState,
+              ports: updatedPorts
+            });
+            portSecurityRecoveredCount++;
+          }
+        }
+      });
+
+      setDeviceStates(portSecurityUpdatedStates);
+
+      // 8.6. Sync STP state and Port Security state from deviceStates to topologyDevices ports
       const stpSyncedDevices = refreshedDevices.map((device) => {
-        const deviceState = stpUpdatedStates.get(device.id);
+        const deviceState = portSecurityUpdatedStates.get(device.id);
         if (!deviceState || !deviceState.ports) return device;
 
-        // Update ports with spanningTree state from deviceState
+        // Update ports with spanningTree state and port security state from deviceState
         const updatedPorts = device.ports.map((port) => {
           const statePort = deviceState.ports[port.id];
-          if (statePort && statePort.spanningTree) {
+          if (statePort) {
             return {
               ...port,
-              spanningTree: statePort.spanningTree
+              spanningTree: statePort.spanningTree,
+              shutdown: statePort.shutdown,
+              status: statePort.status as CanvasPortStatus,
+              portSecurity: statePort.portSecurity
             };
           }
           return port;
@@ -2751,6 +2836,11 @@ ${state.bannerMOTD}
       const totalDevices = connectedPCs.length + activeAPs.length + disconnectedPCs.length + disconnectedAPs.length;
       const stpMessage = stpUpdatedCount > 0
         ? (language === 'tr' ? `✓ STP: ${stpUpdatedCount} switch güncellendi` : `✓ STP: ${stpUpdatedCount} switches updated`)
+        : '';
+      const portSecurityMessage = (portSecurityViolationCount > 0 || portSecurityRecoveredCount > 0)
+        ? (language === 'tr'
+          ? `🔒 Port Security: ${portSecurityViolationCount} bloklandı, ${portSecurityRecoveredCount} açıldı`
+          : `🔒 Port Security: ${portSecurityViolationCount} blocked, ${portSecurityRecoveredCount} recovered`)
         : '';
 
       if (totalDevices > 0) {
@@ -2801,6 +2891,7 @@ ${state.bannerMOTD}
               {wifiMessages.length > 0 && <div>{wifiMessages.join(' • ')}</div>}
               <div>{dhcpMessages.join(' • ')}</div>
               {stpMessage && <div className="text-pink-500">{stpMessage}</div>}
+              {portSecurityMessage && <div className="text-red-500">{portSecurityMessage}</div>}
             </div>
           ),
           variant: 'default'
@@ -4190,7 +4281,10 @@ ${state.bannerMOTD}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-slate-500 hover:bg-slate-500/10"
+                          className={`h-8 w-8 ${isDark
+                            ? 'text-teal-400 hover:text-slate-300 hover:bg-teal-400/10'
+                            : 'text-teal-600 hover:text-slate-600 hover:bg-teal-600/10'
+                            }`}
                           onClick={() => {
                             setZoom(1.0);
                             setPan({ x: 0, y: 0 });

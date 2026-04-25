@@ -48,6 +48,8 @@ const arePropsEqual = (prevProps: NetworkTopologyViewProps, nextProps: NetworkTo
 
   // Compare context menu state
   if (prevProps.contextMenu !== nextProps.contextMenu) return false;
+  if (prevProps.onRefreshNetwork !== nextProps.onRefreshNetwork) return false;
+  if (prevProps.onOpenTasks !== nextProps.onOpenTasks) return false;
 
   // Compare note state
   if (prevProps.noteFonts !== nextProps.noteFonts) return false;
@@ -768,6 +770,8 @@ export const NetworkTopologyView = React.memo(
           onStartPing={(id: string) => setPingSource(id)}
           onSaveToHistory={() => { }}
           onClearDeviceSelection={() => props.setSelectedDeviceIds([])}
+          onRefreshNetwork={props.onRefreshNetwork}
+          onOpenTasks={props.onOpenTasks}
         />
       </div>
     );
