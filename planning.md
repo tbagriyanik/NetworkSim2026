@@ -1,15 +1,16 @@
 # Recent Network CLI, STP, Interface, and UI Updates
 
-This note summarizes the recent STP PVST example enhancements, VLAN-specific STP path calculation, STP redundancy support, VLAN interface support, per-VLAN spanning tree priority fixes, accessibility enhancements, keyboard shortcuts, STP blocking logic improvements, and L3 Switch Static Routing example addition in the simulator.
+This note summarizes the recent STP PVST example enhancements, VLAN-specific STP path calculation, STP redundancy support, VLAN interface support, per-VLAN spanning tree priority fixes, accessibility enhancements, keyboard shortcuts, STP blocking logic improvements, L3 Switch Static Routing example addition, RIP Dynamic Routing example, show ip route RIP support, and router-config mode fixes in the simulator.
 
 ## Current Code Metrics
 
-- Total lines: 59546
+- Total lines: 59754
 - Last updated: 2026-04-25
+- Example projects: 27
 
 ## Overview
 
-Enhanced STP 3-Switch PVST example with PC devices for comprehensive testing, implemented VLAN-specific STP path calculation for ping animation, added STP redundancy support for automatic backup path activation, implemented VLAN 1-only STP visualization, added VLAN interface support for show interface command, fixed per-VLAN spanning tree priority calculation, added comprehensive ARIA labels to improve accessibility for screen readers, added P keyboard shortcut for ping functionality, improved STP blocking logic for link failure scenarios, added per-VLAN STP instances to 3-switch PVST example, and added new L3 Switch Static Routing example (Figure 9.15) with 2 Multilayer Switches, 1 Router, 2 L2 Switches, and 2 PCs for inter-network communication via static routes.
+Enhanced STP 3-Switch PVST example with PC devices for comprehensive testing, implemented VLAN-specific STP path calculation for ping animation, added STP redundancy support for automatic backup path activation, implemented VLAN 1-only STP visualization, added VLAN interface support for show interface command, fixed per-VLAN spanning tree priority calculation, added comprehensive ARIA labels to improve accessibility for screen readers, added P keyboard shortcut for ping functionality, improved STP blocking logic for link failure scenarios, added per-VLAN STP instances to 3-switch PVST example, added new L3 Switch Static Routing example (Figure 9.15) with 2 Multilayer Switches, 1 Router, 2 L2 Switches, and 2 PCs for inter-network communication via static routes, added RIP Dynamic Routing example (Figure 9.19) with 2 Multilayer Switches and 4 PCs across 3 networks, enhanced show ip route command with RIP route display support, and fixed network/exit/end command issues in router-config mode.
 
 ## P Keyboard Shortcut for Ping
 
@@ -305,6 +306,64 @@ Added a new advanced example project demonstrating static routing between two ne
 
 ### Files Modified
 - `src/lib/network/exampleProjects.ts` - Added staticL3RoutingDevices, staticL3RoutingConnections, staticL3RoutingNotes, mlSwitch1State, router3State, mlSwitch2State, switch0State, switch1State
+
+## RIP Dynamic Routing Example (Figure 9.19)
+
+### Overview
+Added a new example project demonstrating RIP (Routing Information Protocol) dynamic routing between two L3 switches with automatic route exchange.
+
+### Configuration
+- **PC0**: 192.168.1.10/24, **PC1**: 192.168.1.11/24 (Left network)
+- **PC2**: 192.168.3.10/24, **PC3**: 192.168.3.20/24 (Right network)
+- **MultilayerSwitch0**:
+  - Fa0/23: 192.168.1.1/24 (local)
+  - Fa0/24: 192.168.2.1/24 (trunk)
+  - `router rip`, `network 192.168.1.0`, `network 192.168.2.0`
+- **MultilayerSwitch1**:
+  - Fa0/24: 192.168.2.2/24 (trunk)
+  - Fa0/23: 192.168.3.1/24 (local)
+  - `router rip`, `network 192.168.2.0`, `network 192.168.3.0`
+
+### Testing
+- **From PC0**: `ping 192.168.3.10` (PC2) to test inter-network communication
+- Path: PC0 → Switch0-L2 → MultilayerSwitch0 → MultilayerSwitch1 → Switch3-L2 → PC2
+
+### Files Modified
+- `src/lib/network/exampleProjects.ts` - Added ripRoutingDevices, ripRoutingConnections, ripRoutingNotes, ripMlswitch0State, ripMlswitch1State, switch0L2State, switch3L2State
+
+## Show IP Route RIP Support
+
+### Overview
+Enhanced `show ip route` command to display RIP (R) routes with proper formatting matching Cisco IOS output.
+
+### Changes
+- Added **R** code for RIP routes in routing table codes section
+- Format: `R     192.168.3.0/24 [120/1] via 192.168.2.2, 00:00:11, FastEthernet0/24`
+- RIP administrative distance: 120
+- Shows metric, next hop, timer, and outgoing interface
+
+### Files Modified
+- `src/lib/network/core/showCommands.ts` - Added dynamic routes display in cmdShowIpRoute function
+
+## Router Config Mode Fixes
+
+### Issues Fixed
+1. **Network Command**: `network` command was failing in router-config mode due to handler conflict between router and DHCP config handlers
+2. **Exit Command**: `exit` was not working to exit router-config mode
+3. **End Command**: `end` was not working to return to privileged mode from router-config
+
+### Resolution
+- Created mode-aware `network` command wrapper in executor that routes to appropriate handler:
+  - `router-config` mode → `cmdRouterNetwork` (RIP/OSPF)
+  - `dhcp-config` mode → `cmdDhcpNetwork`
+- Added `'router-config'` to `exit` and `end` command modes in parser
+- Exported `cmdRouterNetwork` and `cmdDhcpNetwork` functions for external use
+
+### Files Modified
+- `src/lib/network/parser.ts` - Added 'router-config' to exit/end command modes
+- `src/lib/network/executor.ts` - Added network command wrapper with mode routing
+- `src/lib/network/core/routerConfigCommands.ts` - Exported cmdRouterNetwork function
+- `src/lib/network/core/dhcpConfigCommands.ts` - Exported cmdDhcpNetwork function
 
 ## Previous Updates
 
