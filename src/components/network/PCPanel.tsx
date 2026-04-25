@@ -3869,7 +3869,7 @@ export function PCPanel({
                     size="sm"
                     onClick={() => {
                       if (!httpAppDeviceId) {
-                        openHttpTarget('http://iot-panel');
+                        openWebPage('http://iot-panel');
                       }
                       setActiveTab('desktop'); // Ensure desktop tab is active when IoT panel is opened
                     }}
@@ -5301,7 +5301,7 @@ export function PCPanel({
                     onSubmit={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      openHttpTarget(httpAppUrl);
+                      openWebPage(httpAppUrl);
                     }}
                     onKeyDown={(e) => {
                       // Prevent browser keys from bubbling into underlying CMD handlers.
@@ -5342,10 +5342,10 @@ export function PCPanel({
                             if (selectedSuggestionIndex >= 0 && suggestions[selectedSuggestionIndex]) {
                               setHttpAppUrl(suggestions[selectedSuggestionIndex]);
                               setShowUrlSuggestions(false);
-                              openHttpTarget(suggestions[selectedSuggestionIndex]);
+                              openWebPage(suggestions[selectedSuggestionIndex]);
                             } else {
                               setShowUrlSuggestions(false);
-                              openHttpTarget(httpAppUrl);
+                              openWebPage(httpAppUrl);
                             }
                           }
                         }}
@@ -5361,7 +5361,7 @@ export function PCPanel({
                                 e.preventDefault();
                                 setHttpAppUrl(suggestion);
                                 setShowUrlSuggestions(false);
-                                openHttpTarget(suggestion);
+                                openWebPage(suggestion);
                               }}
                               className={`px-2 py-1.5 text-xs cursor-pointer ${index === selectedSuggestionIndex ? (isDark ? 'bg-slate-700' : 'bg-slate-200') : 'hover:bg-slate-100 dark:hover:bg-slate-800'} ${isDark ? 'text-slate-200' : 'text-slate-700'}`}
                             >
