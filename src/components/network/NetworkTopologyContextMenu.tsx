@@ -318,8 +318,10 @@ export default function NetworkTopologyContextMenu({
             icon: 'refresh',
             shortcut: 'F5',
             onClick: () => {
-              window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F5' }));
               onClose();
+              setTimeout(() => {
+                window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F5' }));
+              }, 0);
             }
           })}
         </div>
@@ -407,8 +409,10 @@ export default function NetworkTopologyContextMenu({
                   icon: 'refresh',
                   shortcut: 'F5',
                   onClick: () => {
-                    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F5' }));
                     onClose();
+                    setTimeout(() => {
+                      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F5' }));
+                    }, 0);
                   }
                 })}
               </>

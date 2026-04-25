@@ -3,6 +3,7 @@ import { CableInfo, SwitchState, isCableCompatible } from './types';
 import { findRoute, ipToNumber, getRoutingTable } from './routing';
 import { performArpResolution, getMacFromArpCache } from './arp';
 import { processFrameMacLearning } from './macLearning';
+import { ensureDeviceStatesMap } from './networkUtils';
 
 export type WifiMode = 'ap' | 'client' | 'disabled' | 'sta';
 
@@ -139,7 +140,8 @@ function checkPortSecurityViolation(
 
 export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStates?: Map<string, SwitchState>): DeviceWifiConfig | undefined {
   if (!device) return undefined;
-  const state = deviceStates?.get(device.id);
+  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+  const state = safeDeviceStates?.get(device.id);
   const wlanState = state?.ports['wlan0'];
   const defaultMode: WifiMode = device.type === 'pc' ? 'client' : 'ap';
 
@@ -190,7 +192,8 @@ export function getWirelessSignalStrength(
   deviceStates?: Map<string, SwitchState>
 ): number {
   if (!device) return 0;
-  const pcWifi = getDeviceWifiConfig(device, deviceStates);
+  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+  const pcWifi = getDeviceWifiConfig(device, safeDeviceStates);
   if (!pcWifi || !pcWifi.enabled || !pcWifi.ssid) return 0;
   if (pcWifi.mode !== 'client' && pcWifi.mode !== 'sta') return 0;
 
@@ -227,7 +230,8 @@ export function getWirelessDistance(
   deviceStates?: Map<string, SwitchState>
 ): number {
   if (!device) return Infinity;
-  const pcWifi = getDeviceWifiConfig(device, deviceStates);
+  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+  const pcWifi = getDeviceWifiConfig(device, safeDeviceStates);
   if (!pcWifi || !pcWifi.enabled || !pcWifi.ssid) return Infinity;
   if (pcWifi.mode !== 'client' && pcWifi.mode !== 'sta') return Infinity;
 
@@ -271,7 +275,8 @@ function isExternalDomain(hostname: string, devices: CanvasDevice[], deviceState
 
   // Check if it matches any configured hostname
   if (deviceStates) {
-    for (const [deviceId, state] of deviceStates.entries()) {
+    const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+    for (const [deviceId, state] of safeDeviceStates.entries()) {
       const deviceHostname = state.hostname?.toLowerCase();
       if (deviceHostname === cleanHostname) {
         return false;
@@ -366,7 +371,8 @@ function resolveHostname(
 
   // 2. Check against device hostnames in device states
   if (deviceStates) {
-    for (const [deviceId, state] of deviceStates.entries()) {
+    const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+    for (const [deviceId, state] of safeDeviceStates.entries()) {
       const deviceHostname = state.hostname?.toLowerCase();
       if (deviceHostname === cleanHostname) {
         // Find the device and get its IP
@@ -392,7 +398,8 @@ function resolveHostname(
 
     // Check devices with matching domain
     if (deviceStates) {
-      for (const [deviceId, state] of deviceStates.entries()) {
+      const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+      for (const [deviceId, state] of safeDeviceStates.entries()) {
         const deviceDomain = state.domainName?.toLowerCase();
         const deviceHostname = state.hostname?.toLowerCase();
 
@@ -446,6 +453,7 @@ export function checkConnectivity(
   deviceStates?: Map<string, SwitchState>,
   language: 'tr' | 'en' = 'tr'
 ): { success: boolean; hops: string[]; hopIds: string[]; targetId?: string; error?: string; portSecurityViolations?: Array<{ deviceId: string; portId: string; action: string; mac: string }> } {
+  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const isSwitchDeviceType = (type: DeviceType) => type === 'switchL2' || type === 'switchL3';
 
   // Track port security violations for React state updates
@@ -554,7 +562,8 @@ export function checkConnectivity(
 
   // Then check Switch/Router management/interface IPs if not found
   if (!targetDevice && deviceStates) {
-    for (const [id, state] of deviceStates.entries()) {
+    const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+    for (const [id, state] of safeDeviceStates.entries()) {
       // Check management IP (SVI)
       if (state.ports['vlan1']?.ipAddress === resolvedTargetIp) {
         targetDevice = devices.find(d => d.id === id);
@@ -1138,6 +1147,7 @@ export function checkDeviceConnectivity(
   connections: CanvasConnection[],
   deviceStates?: Map<string, SwitchState>
 ): { success: boolean; hops: string[]; hopIds: string[]; targetId?: string; error?: string } {
+  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const sourceDevice = devices.find(d => d.id === sourceId);
   const targetDevice = devices.find(d => d.id === targetId);
 
@@ -1202,7 +1212,8 @@ export function getPingDiagnostics(
 
   // Resolve target for routers/switches if not found in topology IPs
   if (!targetDevice && deviceStates) {
-    for (const [id, state] of deviceStates.entries()) {
+    const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+    for (const [id, state] of safeDeviceStates.entries()) {
       for (const pId in state.ports) {
         if (state.ports[pId].ipAddress === resolvedTargetIp) {
           targetDevice = devices.find(d => d.id === id);
@@ -1370,10 +1381,11 @@ function getPrimaryDeviceIp(
   devices: CanvasDevice[],
   deviceStates?: Map<string, SwitchState>
 ): string {
+  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const topologyIp = devices.find(d => d.id === deviceId)?.ip;
   if (topologyIp) return topologyIp;
 
-  const state = deviceStates?.get(deviceId);
+  const state = safeDeviceStates.get(deviceId);
   if (!state) return '';
 
   for (const port of Object.values(state.ports)) {
@@ -1405,8 +1417,9 @@ function getSubnetForDeviceIp(
 
 function isPortShutdown(deviceId: string, portId: string, devices: CanvasDevice[], deviceStates?: Map<string, SwitchState>): boolean {
   // Check deviceStates (Switch/Router)
-  if (deviceStates) {
-    const state = deviceStates.get(deviceId);
+  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+  if (safeDeviceStates) {
+    const state = safeDeviceStates.get(deviceId);
     if (state && state.ports[portId]) {
       return state.ports[portId].shutdown;
     }
@@ -1426,8 +1439,8 @@ function isPortShutdown(deviceId: string, portId: string, devices: CanvasDevice[
 }
 
 function isManagementIpSet(deviceId: string, deviceStates?: Map<string, SwitchState>): boolean {
-  if (!deviceStates) return false;
-  const state = deviceStates.get(deviceId);
+  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+  const state = safeDeviceStates.get(deviceId);
   if (!state) return false;
   return Object.values(state.ports).some(port => !!port.ipAddress);
 }

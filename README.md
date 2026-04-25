@@ -2,16 +2,30 @@
 
 A modern, interactive, browser-based network simulator for students and networking enthusiasts.
 
-![Version](https://img.shields.io/badge/version-1.5.4-blue)
+![Version](https://img.shields.io/badge/version-1.5.5-blue)
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Commits](https://img.shields.io/badge/commits-640+-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-59754-blueviolet)
+![Commits](https://img.shields.io/badge/commits-720+-orange)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-60182-blueviolet)
 
 Network learning app: [Test Address](https://network2026.vercel.app)
 
 ## Recent Updates
 
+- **NEW: Port Security Enhancement**: Added aging configuration support for port security
+  - `switchport port-security aging time <minutes>` - Configure MAC address aging time
+  - `switchport port-security aging type <absolute|inactivity>` - Set aging type
+  - Integrated with `show port-security` command output
+  - Configurations preserved in running-config and saved to topology
+- **NEW: Unified F5 Refresh System**: Right-click context menu F5 now triggers same refresh as toolbar
+  - Context menu and toolbar F5 actions are unified
+  - Added `err-disabled` port status for port security violations
+  - Ports automatically recover when correct MAC address reconnects
+  - Visual feedback with red port indicators for blocked ports
+- **FIXED: Infinite Loop Issues**: Resolved React maximum update depth errors
+  - Fixed circular dependencies in PCPanel sync effects
+  - Added proper error handling for DHCP operations without network connection
+  - Improved PC power-on navigation with ref-based state tracking
 - **NEW: L3 Switch Static Routing Example (Figure 9.15)**: Advanced static routing lab with 2 Multilayer Switches, 1 Router, and 2 L2 Switches
   - PC0 (192.168.1.0/24) to PC4 (192.168.2.0/24) inter-network communication
   - Configured static routes on all L3 devices
@@ -152,15 +166,14 @@ Network learning app: [Test Address](https://network2026.vercel.app)
 - Accessibility (WCAG 2.1 AA compliance)
 - Turkish/English localization
 - **27 Example Projects**: Complete lab scenarios - [View Details](examples.md)
-- **150+ CLI Commands**: Full command reference in Help Panel
+- **160+ CLI Commands**: Full command reference in Help Panel
 - DHCP/DNS/HTTP system enhancements
 - IoT WiFi Lab with sensor simulation
+- **Port Security with Aging**: MAC address learning with configurable aging
 
 ### 🚧 In Progress (v1.6.0)
 - Advanced routing protocols (BGP, EIGRP)
 - Network security simulation (ACLs, NAT, Firewall)
-- VLAN trunking and inter-VLAN routing
-- DHCP server simulation
 - Enhanced IoT protocols (MQTT, CoAP)
 
 ### 📋 Planned (v1.7.0 - v2.0.0)

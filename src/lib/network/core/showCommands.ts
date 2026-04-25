@@ -1,4 +1,5 @@
 import type { CommandHandler } from './commandTypes';
+import { ensureDeviceStatesMap } from '../networkUtils';
 
 // Show komutları (show running-config, show vlan, show ip route, vs.)
 
@@ -54,6 +55,8 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show system mtu': cmdShowSystemMtu,
   'show ip dhcp pool': cmdShowIpDhcpPool,
   'show ip dhcp binding': cmdShowIpDhcpBinding,
+  'show ip source binding': cmdShowIpSourceBinding,
+  'show ip verify source': cmdShowIpVerifySource,
 };
 
 function isPhysicalEthernetPort(portId: string): boolean {
@@ -1559,7 +1562,7 @@ export function calculatePVST(
   ctx: any,
   sourceDeviceId: string
 ): Map<string, any> {
-  const deviceStates = ctx.deviceStates || new Map();
+  const deviceStates = ensureDeviceStatesMap(ctx.deviceStates);
   const allUpdatedStates = new Map<string, any>();
   const devices = ctx.devices || [];
 
@@ -2052,6 +2055,25 @@ function cmdShowPortSecurity(
   });
 
   output += '!\n';
+
+  // Show aging information if configured
+  let hasAging = false;
+  let agingOutput = '\nAging Configuration:\n';
+  agingOutput += '--------------------\n';
+  Object.keys(state.ports || {}).forEach(portName => {
+    const port = state.ports[portName];
+    if (port.portSecurity?.enabled && port.portSecurity.aging?.enabled) {
+      hasAging = true;
+      const agingTime = port.portSecurity.aging.time || 0;
+      const agingType = port.portSecurity.aging.type || 'absolute';
+      agingOutput += `${portName.padEnd(12)}Time: ${agingTime} min, Type: ${agingType}\n`;
+    }
+  });
+
+  if (hasAging) {
+    output += agingOutput;
+  }
+
   return { success: true, output };
 }
 
@@ -2791,4 +2813,72 @@ function cmdShowIpDhcpBinding(state: any, input: string, ctx: any): any {
       '                 Hardware address\n' +
       '% No bindings found\n'
   };
+}
+
+/**
+ * Show IP Source Binding
+ */
+function cmdShowIpSourceBinding(state: any, input: string, ctx: any): any {
+  // Parse optional filter (vlan or interface)
+  const match = input.match(/show\s+ip\s+source\s+binding(?:\s+(vlan\s+\d+|interface\s+\S+))?/i);
+  const filter = match?.[1];
+
+  let output = '\nMacAddress          IpAddress       Lease(sec)  Type           VLAN  Interface\n';
+  output += '------------------  --------------  ----------  -------------  ----  --------------------\n';
+
+  // Check if DHCP snooping is enabled
+  if (!state.dhcpSnoopingEnabled) {
+    output += '% DHCP snooping not enabled\n';
+    return { success: true, output };
+  }
+
+  // Build bindings from port data
+  const bindings: any[] = [];
+  Object.keys(state.ports || {}).forEach(portName => {
+    const port = state.ports[portName];
+    if (port.dhcpSnoopingTrust && port.ipAddress) {
+      bindings.push({
+        mac: port.macAddress || '0000.0000.0000',
+        ip: port.ipAddress,
+        vlan: port.vlan || 1,
+        interface: portName,
+        type: 'dhcp-snooping'
+      });
+    }
+  });
+
+  if (bindings.length === 0) {
+    output += '% No bindings found\n';
+  } else {
+    bindings.forEach(b => {
+      output += `${b.mac.padEnd(18)}  ${b.ip.padEnd(14)}  0           ${b.type.padEnd(13)}  ${String(b.vlan).padEnd(4)}  ${b.interface}\n`;
+    });
+  }
+
+  return { success: true, output };
+}
+
+/**
+ * Show IP Verify Source
+ */
+function cmdShowIpVerifySource(state: any, input: string, ctx: any): any {
+  let output = '\nInterface        Filter Type    Filter Mode    IP Address      MacAddress       Vlan\n';
+  output += '---------------  -------------  -------------  --------------  ---------------  ----\n';
+
+  let hasEntries = false;
+  Object.keys(state.ports || {}).forEach(portName => {
+    const port = state.ports[portName];
+    if (port.ipVerifySource) {
+      hasEntries = true;
+      const filterType = port.ipVerifySourcePortSecurity ? 'ip+mac' : 'ip';
+      const filterMode = 'active';
+      output += `${portName.padEnd(15)}  ${filterType.padEnd(13)}  ${filterMode.padEnd(13)}  ${(port.ipAddress || 'N/A').padEnd(14)}  ${(port.macAddress || 'N/A').padEnd(15)}  ${port.vlan || 1}\n`;
+    }
+  });
+
+  if (!hasEntries) {
+    output += '% No interfaces configured with IP verify source\n';
+  }
+
+  return { success: true, output };
 }

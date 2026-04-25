@@ -5,6 +5,7 @@ import { addStaticRoute, removeStaticRoute, getRoutingTable } from './routing';
 import { parseCommand, validateCommand, getHelpContent, commandPatterns } from './parser';
 import { getModePrompt } from './initialState';
 import { isValidMAC, normalizeMAC } from '../utils';
+import { ensureDeviceStatesMap } from './networkUtils';
 
 /**
  * Generate CLI prompt string based on current switch state
@@ -168,7 +169,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...pfx('clear', ['arp-cache', 'mac', 'counters', 'ip']),
     ...npfx('clear', 'mac', ['address-table'], 3),
     ...npfx('clear', 'ip', ['route', 'arp'], 2),
-    ...pfx('show', ['running-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'spanning-tree', 'port-security', 'wireless', 'ssh', 'etherchannel']),
+    ...pfx('show', ['running-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'spanning-tree', 'port-security', 'wireless', 'ssh', 'etherchannel', 'monitor', 'udld', 'storm-control', 'sdm', 'system', 'mls', 'environment', 'inventory', 'errdisable', 'users', 'history', 'debug', 'access-lists']),
     ...npfx('show', 'running-config', ['running-config'], 14),
     ...multi('show i', ['interfaces', 'ip']),
     ...npfx('show', 'interfaces', ['status', 'trunk'], 10),
@@ -176,13 +177,23 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...multi('show v', ['vlan', 'version']),
     ...npfx('show', 'vlan', ['brief'], 4),
     ...npfx('show', 'mac', ['address-table'], 3),
-    ...multi('show c', ['cdp', 'clock']),
+    ...multi('show c', ['cdp', 'clock', 'clear']),
     ...npfx('show', 'cdp', ['neighbors'], 3),
-    ...multi('show ip', ['interface', 'route']),
+    ...multi('show ip', ['interface', 'route', 'dhcp', 'verify', 'source', 'arp']),
     ...npfx('show ip', 'interface', ['brief'], 9),
     ...npfx('show ip', 'route', ['route'], 5),
-    'ip': ['route', 'default-gateway', 'domain-name', 'ssh'],
+    ...npfx('show ip', 'dhcp', ['snooping', 'pool', 'binding']),
+    ...npfx('show ip', 'verify', ['source']),
+    ...npfx('show ip', 'source', ['binding']),
+    ...npfx('show ip', 'arp', ['inspection']),
+    'ip': ['route', 'default-gateway', 'domain-name', 'ssh', 'dhcp', 'verify', 'source', 'arp'],
     ...npfx('ip', 'route', ['route']),
+    ...npfx('ip', 'dhcp', ['pool', 'excluded-address', 'snooping']),
+    ...npfx('ip dhcp', 'snooping', ['vlan']),
+    ...npfx('ip', 'verify', ['source']),
+    ...npfx('ip', 'source', ['binding']),
+    ...npfx('ip', 'arp', ['inspection']),
+    ...npfx('ip arp', 'inspection', ['vlan']),
 
     'w': ['write'],
     'wr': ['write'],
@@ -409,25 +420,34 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
 
     // Banner completions removed - handled by config section above
 
-    'ip': ['default-gateway', 'domain-name', 'ssh', 'http', 'dhcp', 'routing'],
-    ...multi('ip d', ['default-gateway', 'domain-name', 'dhcp']),
+    'ip': ['default-gateway', 'domain-name', 'domain-lookup', 'ssh', 'http', 'dhcp', 'routing', 'verify', 'source', 'arp', 'route', 'name-server', 'ipv6'],
+    ...multi('ip d', ['default-gateway', 'domain-name', 'domain-lookup', 'dhcp']),
     ...npfx('ip', 'dhcp', ['pool', 'excluded-address', 'snooping']),
     ...npfx('ip dhcp', 'pool', ['<pool-name>']),
     ...npfx('ip dhcp', 'excluded-address', ['<low-ip>', '<high-ip>']),
+    ...npfx('ip dhcp', 'snooping', ['vlan']),
     ...npfx('ip', 'default-gateway', ['default-gateway']),
     ...npfx('ip', 'domain-name', ['domain-name']),
+    ...npfx('ip', 'domain-lookup', ['']),
     ...npfx('ip', 'http', ['server']),
     ...npfx('ip http', 'server', ['']),
     ...npfx('ip', 'ssh', ['version']),
     ...npfx('ip ssh', 'version', ['version']),
     ...npfx('ip', 'route', ['<destination>']),
     ...npfx('ip route', '<destination>', ['<next-hop>']),
+    ...npfx('ip', 'verify', ['source']),
+    ...npfx('ip', 'source', ['binding']),
+    ...npfx('ip', 'arp', ['inspection']),
+    ...npfx('ip arp', 'inspection', ['vlan']),
+    ...npfx('ip', 'name-server', ['<ip-address>']),
 
     ...single('n', ['no']),
     ...pfx('no', ['shutdown', 'vlan', 'cdp', 'service', 'spanning-tree', 'ip']),
 
-    ...pfx('spanning-tree', ['mode', 'portfast']),
+    ...pfx('spanning-tree', ['mode', 'portfast', 'vlan']),
     ...npfx('spanning-tree', 'mode', ['pvst', 'rapid-pvst', 'mst']),
+    ...npfx('spanning-tree', 'vlan', ['<vlan-id>']),
+    ...npfx('spanning-tree vlan', '<vlan-id>', ['priority', 'root']),
 
     ...pfx('vtp', ['mode', 'domain']),
     ...npfx('vtp', 'mode', ['server', 'client', 'transparent']),
@@ -454,7 +474,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'do write': ['memory'],
   },
   interface: {
-    '': ['shutdown', 'no', 'speed', 'duplex', 'description', 'switchport', 'cdp', 'spanning-tree', 'channel-group', 'ip', 'ssid', 'encryption', 'wifi-password', 'channel', 'wifi-mode', 'exit', 'end', 'do', '?', 'help'],
+    '': ['shutdown', 'no', 'speed', 'duplex', 'description', 'switchport', 'cdp', 'spanning-tree', 'channel-group', 'ip', 'ssid', 'encryption', 'wifi-password', 'channel', 'wifi-mode', 'storm-control', 'udld', 'monitor', 'power', 'exit', 'end', 'do', '?', 'help'],
     ...multi('s', ['shutdown', 'speed', 'spanning-tree', 'ssid']),
     ...pfx('ssid', ['<SSID>']),
     ...pfx('encryption', ['open', 'wpa', 'wpa2', 'wpa3']),
@@ -470,9 +490,14 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
 
 
     ...single('i', ['ip']),
-    'ip': ['address', 'helper-address', 'default-gateway'],
+    'ip': ['address', 'helper-address', 'default-gateway', 'dhcp', 'verify', 'arp'],
     ...npfx('ip', 'address', []),
     ...npfx('ip', 'default-gateway', ['']),
+    ...npfx('ip', 'dhcp', ['snooping']),
+    ...npfx('ip dhcp', 'snooping', ['trust']),
+    ...npfx('ip', 'verify', ['source']),
+    ...npfx('ip', 'arp', ['inspection']),
+    ...npfx('ip arp', 'inspection', ['trust']),
 
     ...single('n', ['no']),
     ...pfx('no', ['shutdown', 'switchport', 'cdp', 'description', 'speed', 'duplex', 'spanning-tree', 'ip']),
@@ -490,7 +515,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...npfx('no ip', 'address', []),
     ...npfx('no ip', 'default-gateway', ['']),
 
-    ...pfx('switchport', ['mode', 'access', 'trunk', 'port-security', 'voice', 'nonegotiate']),
+    ...pfx('switchport', ['mode', 'access', 'trunk', 'port-security', 'voice', 'nonegotiate', 'protected', 'block']),
     ...npfx('switchport', 'mode', ['access', 'trunk', 'dynamic', 'dot1q-tunnel']),
     ...multi('switchport mode d', ['dynamic', 'dot1q-tunnel']),
     ...npfx('switchport mode', 'dynamic', ['auto', 'desirable']),
@@ -499,11 +524,16 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...npfx('switchport', 'trunk', ['allowed', 'native', 'encapsulation']),
     ...npfx('switchport trunk', 'allowed', ['vlan']),
     ...npfx('switchport trunk allowed', 'vlan', ['all', 'add', 'remove', '1,2,10,20']),
-    ...npfx('switchport', 'port-security', ['maximum', 'violation', 'mac-address']),
+    ...npfx('switchport trunk', 'encapsulation', ['dot1q', 'isl']),
+    ...npfx('switchport', 'port-security', ['maximum', 'violation', 'mac-address', 'aging']),
     ...npfx('switchport port-security', 'maximum', ['1', '2', '3', '5', '10']),
     ...npfx('switchport port-security', 'violation', ['protect', 'restrict', 'shutdown']),
     ...npfx('switchport port-security', 'mac-address', ['sticky', '<MAC>']),
-    ...npfx('switchport port-security mac-address', 'sticky', ['']),
+    ...npfx('switchport port-security', 'aging', ['time', 'type']),
+    ...npfx('switchport port-security aging', 'time', ['<minutes>']),
+    ...npfx('switchport port-security aging', 'type', ['absolute', 'inactivity']),
+    ...npfx('switchport', 'block', ['unicast', 'multicast']),
+    ...npfx('switchport', 'protected', ['']),
 
     ...pfx('cdp', ['enable']),
     ...npfx('cdp', 'enable', ['enable']),
@@ -799,7 +829,7 @@ export function executeCommand(
     language,
     devices,
     connections,
-    deviceStates: deviceStates || new Map(),
+    deviceStates: ensureDeviceStatesMap(deviceStates),
     sourceDeviceId,
   };
 

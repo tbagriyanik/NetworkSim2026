@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect, useMemo, useLayoutEffect } fr
 import dynamic from 'next/dynamic';
 
 import { SwitchState, CableInfo } from '@/lib/network/types';
+import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { useDeviceManager } from '@/hooks/useDeviceManager';
 import { useModalDragResize } from '@/hooks/useModalDragResize';
 import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes, useZoom, usePan, useActiveTab } from '@/lib/store/appStore';
@@ -1401,7 +1402,8 @@ ${state.bannerMOTD}
     // Simple DHCP IP assignment logic
     const assignDhcpIp = (pcDevice: CanvasDevice): string | null => {
       // Find router/switch DHCP servers
-      for (const [deviceId_, state] of deviceStates.entries()) {
+      const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+      for (const [deviceId_, state] of safeDeviceStates.entries()) {
         if (deviceId_ === pcDevice.id) continue;
         const serverDevice = topologyDevices.find(d => d.id === deviceId_);
         if (!serverDevice || (serverDevice.type !== 'router' && serverDevice.type !== 'switchL2' && serverDevice.type !== 'switchL3')) continue;

@@ -8,6 +8,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import type { TerminalOutput } from './Terminal';
 import type { CanvasDevice } from './networkTopology.types';
 import { checkConnectivity, getWirelessSignalStrength, getWirelessDistance, getDeviceWifiConfig } from '@/lib/network/connectivity';
+import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -393,7 +394,7 @@ export function PCPanel({
 
     // First check deviceStates (router/switch runtime state) - only AP mode
     if (deviceStates) {
-      deviceStates.forEach((state, stateId) => {
+      ensureDeviceStatesMap(deviceStates).forEach((state, stateId) => {
         if (stateId === deviceId) return; // skip self
         const stateDevice = topologyDevices.find(d => d.id === stateId);
         // Only router/switch can be AP, not PC
@@ -501,13 +502,18 @@ export function PCPanel({
     setIotDataStore(selectedIotDevice.iot?.dataStore || '');
   }, [selectedIotDevice]);
 
-  // When tablet powers on, navigate to CMD screen
+  // When tablet powers on, navigate to CMD screen (only once per power-on)
+  const initialNavDoneRef = useRef(false);
   useEffect(() => {
-    if (!isPcPoweredOff) {
+    if (!isPcPoweredOff && !initialNavDoneRef.current) {
+      initialNavDoneRef.current = true;
       setActiveTab('desktop');
       tabletHistoryRef.current = ['desktop'];
       tabletHistoryIndexRef.current = 0;
       onNavigate?.('desktop');
+    } else if (isPcPoweredOff) {
+      // Reset the ref when PC is powered off so navigation happens on next power-on
+      initialNavDoneRef.current = false;
     }
   }, [isPcPoweredOff, onNavigate]);
 
@@ -602,22 +608,34 @@ export function PCPanel({
     }
   }, [selectedIotDeviceId, iotSensorType, iotCollaborationEnabled, iotDataStore, language]);
 
-  // Auto-save IoT config on change (debounced)
+  // Keep saveIotConfig in a ref to avoid circular dependency
+  const saveIotConfigRef = useRef(saveIotConfig);
+  useEffect(() => {
+    saveIotConfigRef.current = saveIotConfig;
+  }, [saveIotConfig]);
+
+  // Auto-save IoT config on change (debounced) - uses ref to avoid circular dependency
   useEffect(() => {
     if (!selectedIotDeviceId) return;
     const handler = setTimeout(() => {
-      saveIotConfig(false);
+      saveIotConfigRef.current(false);
     }, 500);
     return () => clearTimeout(handler);
-  }, [selectedIotDeviceId, iotSensorType, iotCollaborationEnabled, iotDataStore, saveIotConfig]);
+  }, [selectedIotDeviceId, iotSensorType, iotCollaborationEnabled, iotDataStore]);
 
-  // Trigger sync on change (debounced)
+  // Keep syncToGlobal in a ref to avoid circular dependency with topology updates
+  const syncToGlobalRef = useRef(syncToGlobal);
+  useEffect(() => {
+    syncToGlobalRef.current = syncToGlobal;
+  }, [syncToGlobal]);
+
+  // Trigger sync on change (debounced) - uses ref to avoid circular dependency
   useEffect(() => {
     const handler = setTimeout(() => {
-      syncToGlobal();
+      syncToGlobalRef.current();
     }, 500);
     return () => clearTimeout(handler);
-  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, internalPcHostname, ipConfigMode, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, syncToGlobal]);
+  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, internalPcHostname, ipConfigMode, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel]);
 
   // Local output for Desktop (Local) - initialize from prop if available
   const getInitialPcOutput = (): OutputLine[] => {
@@ -2297,8 +2315,10 @@ export function PCPanel({
     }
 
     // 2. Check Router/Switch DHCP servers from deviceStates (CLI-configured pools)
-    if (deviceStates) {
-      for (const [deviceId_, state] of deviceStates.entries()) {
+    const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+
+    if (safeDeviceStates) {
+      for (const [deviceId_, state] of safeDeviceStates.entries()) {
         if (deviceId_ === deviceId) continue;
         const device = topologyDevices.find(d => d.id === deviceId_);
         if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3')) continue;
@@ -2412,8 +2432,11 @@ export function PCPanel({
     // Check Router/Switch DHCP servers availability
     let hasAnyDhcpService = pcServers.length > 0;
 
-    if (!hasAnyDhcpService && deviceStates) {
-      for (const [deviceId_, state] of deviceStates.entries()) {
+    // Safety check: ensure deviceStates is iterable
+    const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+
+    if (!hasAnyDhcpService && safeDeviceStates) {
+      for (const [deviceId_, state] of safeDeviceStates.entries()) {
         if (deviceId_ === deviceId) continue;
         const device = topologyDevices.find(d => d.id === deviceId_);
         if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3')) continue;
@@ -2458,7 +2481,7 @@ export function PCPanel({
 
     // Check Router/Switch DHCP servers
     if (deviceStates) {
-      for (const [deviceId_, state] of deviceStates.entries()) {
+      for (const [deviceId_, state] of ensureDeviceStatesMap(deviceStates).entries()) {
         if (deviceId_ === deviceId) continue;
         const device = topologyDevices.find(d => d.id === deviceId_);
         if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3')) continue;
@@ -2598,7 +2621,12 @@ export function PCPanel({
       return;
     }
 
-    const lease = applyDhcpLease(true);
+    let lease;
+    try {
+      lease = applyDhcpLease(true);
+    } catch (err) {
+      console.warn('DHCP lease error:', err);
+    }
     if (lease && lease.serverName !== 'link-local') {
       toast({
         title: t.dhcpSuccessTitle,
@@ -2615,22 +2643,31 @@ export function PCPanel({
         });
       } else if (prevIpConfigModeRef.current !== 'dhcp') {
         // Legacy failure toast (should be rare now; kept for safety)
-        const dhcpCheck = checkDhcpAvailabilityRef.current();
-        let errorMessage = t.dhcpFailureDescription;
-        if (dhcpCheck.reason === 'all_pools_full') {
-          errorMessage = language === 'tr'
-            ? 'DHCP havuzları dolu! Maksimum IP sayısına ulaşıldı.'
-            : 'All DHCP pools are full! Maximum number of IP addresses reached.';
-        } else if (dhcpCheck.reason === 'no_dhcp_service') {
-          errorMessage = language === 'tr'
-            ? 'Ağda DHCP hizmeti bulunamadı! Lütfen bir DHCP sunucusu yapılandırın.'
-            : 'No DHCP service found on the network! Please configure a DHCP server.';
+        try {
+          const dhcpCheck = checkDhcpAvailabilityRef.current();
+          let errorMessage = t.dhcpFailureDescription;
+          if (dhcpCheck.reason === 'all_pools_full') {
+            errorMessage = language === 'tr'
+              ? 'DHCP havuzları dolu! Maksimum IP sayısına ulaşıldı.'
+              : 'All DHCP pools are full! Maximum number of IP addresses reached.';
+          } else if (dhcpCheck.reason === 'no_dhcp_service') {
+            errorMessage = language === 'tr'
+              ? 'Ağda DHCP hizmeti bulunamadı! Lütfen bir DHCP sunucusu yapılandırın.'
+              : 'No DHCP service found on the network! Please configure a DHCP server.';
+          }
+          toast({
+            title: t.dhcpFailureTitle,
+            description: errorMessage,
+            variant: 'destructive',
+          });
+        } catch (checkErr) {
+          console.warn('DHCP availability check error:', checkErr);
+          toast({
+            title: t.dhcpFailureTitle,
+            description: t.dhcpFailureDescription,
+            variant: 'destructive',
+          });
         }
-        toast({
-          title: t.dhcpFailureTitle,
-          description: errorMessage,
-          variant: 'destructive',
-        });
       }
     }
 
@@ -2646,9 +2683,13 @@ export function PCPanel({
       if (customEvent.detail && customEvent.detail.deviceId === deviceId) {
         // Only trigger if this PC is in DHCP mode and has no valid IP (0.0.0.0 or 169.254.x.x)
         if (ipConfigMode === 'dhcp' && (!pcIP || pcIP === '0.0.0.0' || pcIP.startsWith('169.254.'))) {
-          const lease = applyDhcpLease(true);
-          if (lease && lease.serverName !== 'link-local') {
-            addLocalOutput('success', `DHCP lease renewed. New IP: ${lease.ip}`);
+          try {
+            const lease = applyDhcpLease(true);
+            if (lease && lease.serverName !== 'link-local') {
+              addLocalOutput('success', `DHCP lease renewed. New IP: ${lease.ip}`);
+            }
+          } catch (err) {
+            console.warn('DHCP auto-renew error:', err);
           }
         }
       }
@@ -2729,14 +2770,19 @@ export function PCPanel({
           setPcIP('0.0.0.0');
           addLocalOutput('success', 'IP address released successfully.');
         } else if (args.includes('/renew')) {
-          const lease = applyDhcpLease();
-          if (lease && lease.serverName !== 'link-local') {
-            addLocalOutput(
-              'success',
-              `DHCP lease acquired from ${lease.serverName}/${lease.poolName}. New IP: ${lease.ip}`
-            );
-          } else {
-            addLocalOutput('success', `No DHCP server/pool found. Assigned link-local IP: ${lease?.ip || '(pending)'}`);
+          try {
+            const lease = applyDhcpLease();
+            if (lease && lease.serverName !== 'link-local') {
+              addLocalOutput(
+                'success',
+                `DHCP lease acquired from ${lease.serverName}/${lease.poolName}. New IP: ${lease.ip}`
+              );
+            } else {
+              addLocalOutput('success', `No DHCP server/pool found. Assigned link-local IP: ${lease?.ip || '(pending)'}`);
+            }
+          } catch (err) {
+            addLocalOutput('error', 'DHCP renew failed. Please check network connection.');
+            console.warn('DHCP renew error:', err);
           }
         } else if (args.includes('/all')) {
           const ipConfigModeText = ipConfigMode === 'dhcp' ? 'Yes' : 'No';
@@ -3213,6 +3259,18 @@ export function PCPanel({
   }, [input, undoStack, redoStack]);
 
   const handleInputChange = useCallback((newValue: string) => {
+    // Intercept '?' for immediate help in terminal mode (IOS style)
+    if (activeTab === 'terminal' && isConsoleConnected && newValue.endsWith('?') && !consoleNeedsPassword && !consoleConfirmDialog?.show) {
+      const partialCommand = newValue.slice(0, -1);
+      setUndoStack([...undoStack, input]);
+      setRedoStack([]);
+      setInput(partialCommand); // Keep part before ?
+      
+      // Trigger help command immediately
+      void executeCommand(newValue);
+      return;
+    }
+
     setUndoStack([...undoStack, input]);
     setRedoStack([]);
     setInput(newValue);
@@ -3971,7 +4029,12 @@ export function PCPanel({
                               aria-checked={ipConfigMode === 'dhcp'}
                               onClick={() => {
                                 setIpConfigMode('dhcp');
-                                applyDhcpLease(true);
+                                try {
+                                  applyDhcpLease(true);
+                                } catch (err) {
+                                  // Silently ignore errors when DHCP is not available
+                                  console.warn('DHCP lease error:', err);
+                                }
                               }}
                               className={`px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all ${ipConfigMode === 'dhcp'
                                 ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30'
@@ -4761,7 +4824,7 @@ export function PCPanel({
                           if (!wifiEnabled) return 'text-slate-500 bg-slate-500/5';
                           if (!wifiSSID) return 'text-amber-500 bg-amber-500/10';
                           // Check if connected: SSID matches an active AP
-                          const isConnected = !!deviceStates && Array.from(deviceStates.entries()).some(([id, state]) => {
+                          const isConnected = !!deviceStates && Array.from(ensureDeviceStatesMap(deviceStates).entries()).some(([id, state]) => {
                             const wlan = state.ports['wlan0'];
                             if (!wlan || wlan.shutdown || wlan.wifi?.mode !== 'ap') return false;
                             if (wifiBSSID && wifiBSSID !== id) return false;
@@ -4777,7 +4840,7 @@ export function PCPanel({
                           <div className={`p-2 rounded-lg ${(() => {
                             if (!wifiEnabled) return 'bg-slate-500/10';
                             if (!wifiSSID) return 'bg-amber-500/20';
-                            const isConnected = !!deviceStates && Array.from(deviceStates.entries()).some(([id, state]) => {
+                            const isConnected = !!deviceStates && Array.from(ensureDeviceStatesMap(deviceStates).entries()).some(([id, state]) => {
                               const wlan = state.ports['wlan0'];
                               if (!wlan || wlan.shutdown || wlan.wifi?.mode !== 'ap') return false;
                               if (wifiBSSID && wifiBSSID !== id) return false;
@@ -4804,7 +4867,7 @@ export function PCPanel({
                                   if (!wifiSSID) return language === 'tr' ? 'WLAN0 aktif, ağ seçilmedi' : 'WLAN0 active, no network selected';
 
                                   // First check deviceStates (router/switch runtime state)
-                                  const foundInStates = !!deviceStates && Array.from(deviceStates.entries()).find(([id, state]) => {
+                                  const foundInStates = !!deviceStates && Array.from(ensureDeviceStatesMap(deviceStates).entries()).find(([id, state]) => {
                                     const wlan = state.ports['wlan0'];
                                     if (!wlan || wlan.shutdown || wlan.wifi?.mode !== 'ap') return false;
                                     if (wifiBSSID && wifiBSSID !== id) return false;
@@ -5051,7 +5114,7 @@ export function PCPanel({
                             {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : (() => {
                               if (consoleNeedsPassword) return 'Password:';
                               if (!connectedDeviceId || !deviceStates) return '>';
-                              const state = deviceStates.get(connectedDeviceId);
+                              const state = ensureDeviceStatesMap(deviceStates).get(connectedDeviceId);
                               const hostname = state?.hostname || 'Device';
                               const mode = state?.currentMode || 'user';
                               // Map CommandMode to prompt suffix

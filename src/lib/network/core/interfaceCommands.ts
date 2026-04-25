@@ -1953,7 +1953,12 @@ function cmdIpProxyArp(state: any, input: string, ctx: any): any {
  */
 function cmdIpVerifySource(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
-  const updatePort = (port: any) => ({ ...port, ipVerifySource: true });
+  const hasPortSecurity = input.includes('port-security');
+  const updatePort = (port: any) => ({
+    ...port,
+    ipVerifySource: true,
+    ipVerifySourcePortSecurity: hasPortSecurity || port.ipVerifySourcePortSecurity
+  });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -1974,6 +1979,64 @@ function cmdUdldEnable(state: any, input: string, ctx: any): any {
   return { success: true, output: 'UDLD enabled', newState: { ports: newPorts } };
 }
 
+/**
+ * Switchport Port-Security Aging Time
+ */
+function cmdSwitchportPortSecurityAgingTime(state: any, input: string, ctx: any): any {
+  if (!isInInterfaceMode(state) || !state.currentInterface) {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  const match = input.match(/^switchport\s+port-security\s+aging\s+time\s+(\d+)$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid aging time value' };
+  }
+
+  const newPorts = { ...state.ports };
+  if (!newPorts[state.currentInterface].portSecurity) {
+    newPorts[state.currentInterface].portSecurity = {};
+  }
+  if (!newPorts[state.currentInterface].portSecurity.aging) {
+    newPorts[state.currentInterface].portSecurity.aging = {};
+  }
+  newPorts[state.currentInterface].portSecurity.aging.time = parseInt(match[1]);
+  newPorts[state.currentInterface].portSecurity.aging.enabled = true;
+
+  return {
+    success: true,
+    newState: { ports: newPorts }
+  };
+}
+
+/**
+ * Switchport Port-Security Aging Type
+ */
+function cmdSwitchportPortSecurityAgingType(state: any, input: string, ctx: any): any {
+  if (!isInInterfaceMode(state) || !state.currentInterface) {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  const match = input.match(/^switchport\s+port-security\s+aging\s+type\s+(absolute|inactivity)$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid aging type (absolute, inactivity)' };
+  }
+
+  const newPorts = { ...state.ports };
+  if (!newPorts[state.currentInterface].portSecurity) {
+    newPorts[state.currentInterface].portSecurity = {};
+  }
+  if (!newPorts[state.currentInterface].portSecurity.aging) {
+    newPorts[state.currentInterface].portSecurity.aging = {};
+  }
+  newPorts[state.currentInterface].portSecurity.aging.type = match[1].toLowerCase() as 'absolute' | 'inactivity';
+  newPorts[state.currentInterface].portSecurity.aging.enabled = true;
+
+  return {
+    success: true,
+    newState: { ports: newPorts }
+  };
+}
+
 // Register new interface handlers
 Object.assign(interfaceHandlers, {
   'switchport trunk encapsulation': cmdSwitchportTrunkEncapsulation,
@@ -1981,6 +2044,8 @@ Object.assign(interfaceHandlers, {
   'switchport protected': cmdSwitchportProtected,
   'switchport block': cmdSwitchportBlock,
   'switchport port-security mac-address': cmdSwitchportPortSecurityMacAddress,
+  'switchport port-security aging time': cmdSwitchportPortSecurityAgingTime,
+  'switchport port-security aging type': cmdSwitchportPortSecurityAgingType,
   'storm-control': cmdStormControl,
   'storm-control action': cmdStormControlAction,
   'mls qos trust': cmdMlsQosTrust,

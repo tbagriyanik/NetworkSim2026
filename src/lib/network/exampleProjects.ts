@@ -1074,6 +1074,56 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   vtpSw2.ports['gi0/1'] = { ...vtpSw2.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
   vtpSw2.ports['fa0/1'] = { ...vtpSw2.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
 
+  // Example 3.5: Native VLAN Configuration (Basic)
+  const nativeVlanDevices = [
+    createPcDevice('pc-1', 'PC-1', 40, 180, '192.168.99.10', 99),
+    createPcDevice('pc-2', 'PC-2', 40, 320, '192.168.99.11', 99),
+    createSwitchDevice('switch-1', 'SW1', 240, 180),
+    createSwitchDevice('switch-2', 'SW2', 440, 320)
+  ];
+  const nativeVlanConnections: CanvasConnection[] = [];
+  connectPorts(nativeVlanDevices, nativeVlanConnections, 'pc-1', 'eth0', 'switch-1', 'fa0/1');
+  connectPorts(nativeVlanDevices, nativeVlanConnections, 'pc-2', 'eth0', 'switch-2', 'fa0/1');
+  connectPorts(nativeVlanDevices, nativeVlanConnections, 'switch-1', 'fa0/24', 'switch-2', 'fa0/24', 'crossover');
+  const nativeVlanSw1 = createInitialState();
+  nativeVlanSw1.hostname = 'SW1';
+  nativeVlanSw1.vlans[99] = { id: 99, name: 'NativeVLAN', status: 'active', ports: [] };
+  nativeVlanSw1.ports['fa0/1'] = { ...nativeVlanSw1.ports['fa0/1'], vlan: 99, mode: 'access', status: 'connected' };
+  nativeVlanSw1.ports['fa0/24'] = { ...nativeVlanSw1.ports['fa0/24'], mode: 'trunk', nativeVlan: 99, allowedVlans: [99], status: 'connected' };
+  const nativeVlanSw2 = createInitialState('00:1A:2B:3C:4D:65');
+  nativeVlanSw2.hostname = 'SW2';
+  nativeVlanSw2.vlans[99] = { id: 99, name: 'NativeVLAN', status: 'active', ports: [] };
+  nativeVlanSw2.ports['fa0/1'] = { ...nativeVlanSw2.ports['fa0/1'], vlan: 99, mode: 'access', status: 'connected' };
+  nativeVlanSw2.ports['fa0/24'] = { ...nativeVlanSw2.ports['fa0/24'], mode: 'trunk', nativeVlan: 99, allowedVlans: [99], status: 'connected' };
+  const nativeVlanNotes: CanvasNote[] = [
+    {
+      id: 'native-vlan-note',
+      text: isTr
+        ? `Temel Native VLAN Yapılandırması:
+1. SW1: vlan 99
+2. SW1: int fa0/24 -> switchport mode trunk
+3. SW1: int fa0/24 -> switchport trunk native vlan 99
+4. SW2: Aynı yapılandırma
+
+PC-1 ve PC-2 VLAN 99 üzerinde haberleşir.`
+        : `Basic Native VLAN Configuration:
+1. SW1: vlan 99
+2. SW1: int fa0/24 -> switchport mode trunk
+3. SW1: int fa0/24 -> switchport trunk native vlan 99
+4. SW2: Same configuration
+
+PC-1 and PC-2 communicate over VLAN 99.`,
+      x: 500,
+      y: 80,
+      width: 380,
+      height: 140,
+      color: '#a78bfa',
+      font: 'verdana',
+      fontSize: 12,
+      opacity: 0.75
+    }
+  ];
+
   // Example 4: ROAS (conceptual)
   const roasDevices = [
     createPcDevice('pc-1', 'PC-1', 40, 120, '192.168.10.10', 10),
@@ -2739,6 +2789,22 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         : 'SW-1: Fa0/1=VLAN100, Fa0/11=VLAN200, Gi0/1=trunk | SW-2: Fa0/1=VLAN100, Fa0/11=VLAN200, Gi0/1=trunk',
       level: 'intermediate',
       data: trunk2SwitchData
+    },
+    {
+      id: 'native-vlan-basic',
+      tag: isTr ? 'NATIVE' : 'NATIVE',
+      title: isTr ? 'Native VLAN Yapılandırması' : 'Native VLAN Configuration',
+      description: isTr
+        ? 'Temel native VLAN yapılandırması. 2 switch arasında trunk bağlantı ve native VLAN 99.'
+        : 'Basic native VLAN configuration. Trunk connection between 2 switches with native VLAN 99.',
+      detail: isTr
+        ? 'SW1/SW2: vlan 99, int fa0/24 -> switchport mode trunk, switchport trunk native vlan 99. PC-1 ve PC-2 VLAN 99 üzerinde haberleşir.'
+        : 'SW1/SW2: vlan 99, int fa0/24 -> switchport mode trunk, switchport trunk native vlan 99. PC-1 and PC-2 communicate over VLAN 99.',
+      level: 'basic',
+      data: baseProjectData(nativeVlanDevices, nativeVlanConnections, nativeVlanNotes, [
+        { id: 'switch-1', state: nativeVlanSw1 },
+        { id: 'switch-2', state: nativeVlanSw2 }
+      ])
     },
     {
       id: 'stp-3switch-pvst',

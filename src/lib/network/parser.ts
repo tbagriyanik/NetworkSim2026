@@ -688,6 +688,18 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'switchport port-security aging time': {
+    pattern: /^switchport\s+port-security\s+aging\s+time\s+(\d+)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'switchport port-security aging type': {
+    pattern: /^switchport\s+port-security\s+aging\s+type\s+(absolute|inactivity)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 1
+  },
   'switchport voice vlan': {
     pattern: /^switchport\s+voice\s+vlan\s+(\d+|dot1p|none|untagged)$/i,
     modes: ['interface', 'config-if-range'],
@@ -863,7 +875,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 0
   },
   'ip verify source': {
-    pattern: /^ip\s+verify\s+source(\s+vlan\s+dhcp-snooping)?$/i,
+    pattern: /^ip\s+verify\s+source(\s+(vlan\s+dhcp-snooping|port-security))?$/i,
     modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 2
@@ -1404,6 +1416,18 @@ export const commandPatterns: Record<string, CommandPattern> = {
   },
   'show ip dhcp snooping': {
     pattern: /^show\s+ip\s+dhcp\s+snooping(\s+(binding|database|statistics))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'show ip source binding': {
+    pattern: /^show\s+ip\s+source\s+binding(\s+(vlan\s+\d+|interface\s+\S+))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 2
+  },
+  'show ip verify source': {
+    pattern: /^show\s+ip\s+verify\s+source$/i,
     modes: ['privileged'],
     minArgs: 0,
     maxArgs: 1
@@ -2144,6 +2168,8 @@ Mevcut komutlar:
     show vlan brief       - VLAN özetini göster
     show version          - Sistem versiyonunu göster
     show mac address-table - MAC adres tablosunu göster
+    show ip source binding - IP source binding'leri göster
+    show ip verify source - IP verify source yapılandırmasını göster
     show cdp neighbors    - CDP komşularını göster
     show spanning-tree    - Spanning-tree durumunu göster
     show port-security    - Port güvenlik durumunu göster
@@ -2193,6 +2219,9 @@ Mevcut komutlar:
   banner motd #<mesaj>#     - MOTD banner ayarla
   ip default-gateway <ip>   - Varsayılan ağ geçidi
   ip domain-name <name>     - Domain adı
+  ip dhcp snooping          - DHCP snooping etkinleştir
+  ip dhcp snooping vlan <vlan> - DHCP snooping VLAN ayarla
+  ip arp inspection vlan <vlan> - ARP inspection VLAN ayarla
   spanning-tree mode <mode> - STP modu ayarla
   vtp mode <mode>           - VTP modu ayarla
   vtp domain <name>         - VTP domain ayarla
@@ -2235,7 +2264,13 @@ Mevcut komutlar:
   switchport port-security maximum <n> - Max MAC adresi
   switchport port-security violation <mode> - İhlal modu
   switchport port-security mac-address <mac> - Statik MAC
+  switchport port-security aging time <min> - Aging süresi (dakika)
+  switchport port-security aging type <type> - Aging tipi (absolute/inactivity)
   switchport voice vlan <id>       - Voice VLAN
+  ip dhcp snooping trust   - DHCP snooping trust port
+  ip arp inspection trust  - ARP inspection trust port
+  ip verify source         - IP source guard etkinleştir
+  ip verify source port-security - IP source guard + port security
   cdp enable               - CDP'yi etkinleştir (port)
   no cdp enable            - CDP'yi devre dışı bırak (port)
   channel-group <id> mode <mode>   - EtherChannel
@@ -2277,6 +2312,12 @@ Mevcut komutlar (Çoklu Portlar):
   switchport port-security        - Port güvenliği etkinleştir
   switchport port-security maximum <n> - Max MAC adresi
   switchport port-security violation <mode> - İhlal modu
+  switchport port-security aging time <min> - Aging süresi (dakika)
+  switchport port-security aging type <type> - Aging tipi (absolute/inactivity)
+  ip dhcp snooping trust   - DHCP snooping trust port
+  ip arp inspection trust  - ARP inspection trust port
+  ip verify source         - IP source guard etkinleştir
+  ip verify source port-security - IP source guard + port security
   spanning-tree portfast   - PortFast etkinleştir
   spanning-tree bpduguard enable - BPDU Guard etkinleştir
   exit                      - Config mode'a dön
@@ -2367,6 +2408,8 @@ Available commands:
     show vlan brief       - Show VLAN summary
     show version          - Show system version
     show mac address-table - Show MAC address table
+    show ip source binding - Show IP source bindings
+    show ip verify source - Show IP verify source configuration
     show cdp neighbors    - Show CDP neighbors
     show spanning-tree    - Show spanning-tree status
     show port-security    - Show port security status
@@ -2416,6 +2459,9 @@ Shortcuts:
     banner motd #<message>#   - Set MOTD banner
     ip default-gateway <ip>   - Default gateway
     ip domain-name <name>     - Domain name
+    ip dhcp snooping          - Enable DHCP snooping
+    ip dhcp snooping vlan <vlan> - DHCP snooping on VLAN
+    ip arp inspection vlan <vlan> - ARP inspection on VLAN
     spanning-tree mode <mode> - Set STP mode
     vtp mode <mode>           - Set VTP mode
     vtp domain <name>         - Set VTP domain
@@ -2449,7 +2495,13 @@ Available commands:
   switchport port-security maximum <n> - Max MAC addresses
   switchport port-security violation <mode> - Violation mode
   switchport port-security mac-address <mac> - Static MAC
+  switchport port-security aging time <min> - Aging time (minutes)
+  switchport port-security aging type <type> - Aging type (absolute/inactivity)
   switchport voice vlan <id>       - Voice VLAN
+  ip dhcp snooping trust   - DHCP snooping trust port
+  ip arp inspection trust  - ARP inspection trust port
+  ip verify source         - Enable IP source guard
+  ip verify source port-security - IP source guard + port security
   cdp enable               - Enable CDP (port)
   no cdp enable            - Disable CDP (port)
   channel-group <id> mode <mode>   - EtherChannel
@@ -2491,6 +2543,12 @@ Available commands (Multiple Ports):
   switchport port-security        - Enable port security
   switchport port-security maximum <n> - Max MAC addresses
   switchport port-security violation <mode> - Violation mode
+  switchport port-security aging time <min> - Aging time (minutes)
+  switchport port-security aging type <type> - Aging type (absolute/inactivity)
+  ip dhcp snooping trust   - DHCP snooping trust port
+  ip arp inspection trust  - ARP inspection trust port
+  ip verify source         - Enable IP source guard
+  ip verify source port-security - IP source guard + port security
   spanning-tree portfast   - Enable PortFast
   spanning-tree bpduguard enable - Enable BPDU Guard
   exit                      - Return to config mode

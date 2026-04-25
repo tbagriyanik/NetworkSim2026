@@ -200,6 +200,14 @@ export function buildRunningConfig(state: SwitchState): string[] {
                 if (port.portSecurity.sticky) {
                     lines.push(' switchport port-security mac-address sticky');
                 }
+                if (port.portSecurity.aging?.enabled) {
+                    if (port.portSecurity.aging.time) {
+                        lines.push(` switchport port-security aging time ${port.portSecurity.aging.time}`);
+                    }
+                    if (port.portSecurity.aging.type) {
+                        lines.push(` switchport port-security aging type ${port.portSecurity.aging.type}`);
+                    }
+                }
                 if (port.staticMacs && port.staticMacs.length > 0) {
                     port.staticMacs.forEach((mac: string) => {
                         lines.push(` switchport port-security mac-address ${mac}`);

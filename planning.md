@@ -1,16 +1,84 @@
-# Recent Network CLI, STP, Interface, and UI Updates
-
-This note summarizes the recent STP PVST example enhancements, VLAN-specific STP path calculation, STP redundancy support, VLAN interface support, per-VLAN spanning tree priority fixes, accessibility enhancements, keyboard shortcuts, STP blocking logic improvements, L3 Switch Static Routing example addition, RIP Dynamic Routing example, show ip route RIP support, and router-config mode fixes in the simulator.
+# Network Simulator 2026 - Development Planning & Updates
 
 ## Current Code Metrics
 
-- Total lines: 59754
-- Last updated: 2026-04-25
-- Example projects: 27
+- **Total lines**: 60,182
+- **Last updated**: 2026-04-25
+- **Example projects**: 27
+- **CLI Commands**: 160+
+- **Version**: 1.5.5
 
-## Overview
+## Latest Updates
 
-Enhanced STP 3-Switch PVST example with PC devices for comprehensive testing, implemented VLAN-specific STP path calculation for ping animation, added STP redundancy support for automatic backup path activation, implemented VLAN 1-only STP visualization, added VLAN interface support for show interface command, fixed per-VLAN spanning tree priority calculation, added comprehensive ARIA labels to improve accessibility for screen readers, added P keyboard shortcut for ping functionality, improved STP blocking logic for link failure scenarios, added per-VLAN STP instances to 3-switch PVST example, added new L3 Switch Static Routing example (Figure 9.15) with 2 Multilayer Switches, 1 Router, 2 L2 Switches, and 2 PCs for inter-network communication via static routes, added RIP Dynamic Routing example (Figure 9.19) with 2 Multilayer Switches and 4 PCs across 3 networks, enhanced show ip route command with RIP route display support, and fixed network/exit/end command issues in router-config mode.
+### Port Security Enhancement with Aging Support
+
+Implemented comprehensive port security aging configuration support.
+
+**New Commands:**
+- `switchport port-security aging time <minutes>` - Configure MAC address aging time
+- `switchport port-security aging type <absolute|inactivity>` - Set aging behavior type
+
+**Implementation Details:**
+- Added `aging` property to `portSecurity` type with `enabled`, `time`, and `type` fields
+- Parser patterns for both aging time and aging type commands
+- Command handlers in `interfaceCommands.ts`
+- Config builder integration for running-config generation
+- `show port-security` output enhancement with aging configuration section
+- Autocomplete aliases for all aging commands (`sw p a`, `switchport port-security aging`, etc.)
+- Help text updates in Turkish and English
+
+**Files Modified:**
+- `src/lib/network/types.ts` - Added aging property to portSecurity
+- `src/lib/network/parser.ts` - Added command patterns and help text
+- `src/lib/network/core/interfaceCommands.ts` - Added command handlers
+- `src/lib/network/core/configBuilder.ts` - Running config integration
+- `src/lib/network/core/showCommands.ts` - Show command output
+- `src/lib/network/initialState.ts` - Autocomplete aliases
+
+### Unified F5 Refresh & Port Security Integration
+
+Unified the F5 refresh functionality between context menu and toolbar.
+
+**Features:**
+- Right-click context menu F5 now triggers the same `handleRefreshNetwork` as toolbar
+- Port security checks integrated into F5 refresh cycle
+- `err-disabled` port status added for security violations
+- Automatic port recovery when correct MAC address reconnects
+- Visual red port indicators for blocked/err-disabled ports
+- Toast notifications showing blocked and recovered port counts
+
+**Implementation Details:**
+- `CanvasPortStatus` type extended with `'err-disabled'`
+- Port security check logic in `handleRefreshNetwork`:
+  - Iterates through active connections
+  - Identifies switch-PC connections
+  - Compares device MAC against `staticMacs` list
+  - Blocks ports with `shutdown: true` and `status: 'err-disabled'` for violations
+  - Recovers ports when correct MAC reconnects
+- Deferred event dispatch to prevent infinite loops
+
+**Files Modified:**
+- `src/app/page.tsx` - Port security check in `handleRefreshNetwork`
+- `src/components/network/NetworkTopologyContextMenu.tsx` - F5 event dispatch
+- `src/components/network/networkTopology.types.ts` - Added `err-disabled` status
+
+### Stability Fixes
+
+**Fixed Infinite Loop Issues:**
+- Circular dependencies in PCPanel sync effects resolved using refs
+- DHCP error handling when no network connection available
+- PC power-on navigation improved with `initialNavDoneRef`
+
+**Files Modified:**
+- `src/components/network/PCPanel.tsx` - Added `syncToGlobalRef` and `saveIotConfigRef`
+
+---
+
+## Previous Updates
+
+### STP PVST Example Enhancements
+
+Enhanced STP 3-Switch PVST example with PC devices for comprehensive testing, implemented VLAN-specific STP path calculation for ping animation, added STP redundancy support for automatic backup path activation, implemented VLAN 1-only STP visualization, added VLAN interface support for show interface command, fixed per-VLAN spanning tree priority calculation, added comprehensive ARIA labels to improve accessibility for screen readers, added P keyboard shortcut for ping functionality, improved STP blocking logic for link failure scenarios, added per-VLAN STP instances to 3-switch PVST example.
 
 ## P Keyboard Shortcut for Ping
 

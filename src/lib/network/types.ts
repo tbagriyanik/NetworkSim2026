@@ -26,6 +26,7 @@ export interface Port {
   status: PortStatus;
   vlan: number;
   accessVlan?: number | string;
+  nativeVlan?: number;       // Native VLAN for trunk ports
   mode: PortMode;
   voiceVlan?: VoiceVlanMode;
   duplex: DuplexMode;
@@ -47,6 +48,11 @@ export interface Port {
     sticky?: boolean;
     violations?: number;
     macAddress?: string;
+    aging?: {
+      enabled?: boolean;
+      time?: number; // minutes
+      type?: 'absolute' | 'inactivity';
+    };
   };
   staticMacs?: string[]; // Static MAC addresses for port security
   ipv6Address?: string;         // For CCNA 1 v7 support

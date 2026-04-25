@@ -819,6 +819,18 @@ export function Terminal({
   );
 
   const handleInputChange = useCallback((newValue: string) => {
+    // Detect ? for real-time help (Cisco style)
+    if (newValue.endsWith('?') && !state.awaitingPassword && !confirmDialog?.show) {
+      const partialCommand = newValue.slice(0, -1);
+      setUndoStack([...undoStack, input]);
+      setRedoStack([]);
+      setInput(partialCommand); // Keep part before ?
+      
+      // Trigger help command immediately
+      void onCommand(newValue);
+      return;
+    }
+
     setUndoStack([...undoStack, input]);
     setRedoStack([]);
     setInput(newValue);
@@ -836,7 +848,7 @@ export function Terminal({
     } else {
       setShowAutocomplete(false);
     }
-  }, [input, undoStack, getAutocompleteSuggestions]);
+  }, [input, undoStack, getAutocompleteSuggestions, onCommand, state.awaitingPassword, confirmDialog?.show]);
 
   const buildCompletedInput = useCallback((selected: string) => {
     const { contextTokens } = getAutocompleteContext(input);
