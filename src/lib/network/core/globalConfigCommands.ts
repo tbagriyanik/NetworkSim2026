@@ -37,6 +37,8 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'no ip domain-lookup': cmdNoIpDomainLookup,
   'ip routing': cmdIpRouting,
   'no ip routing': cmdNoIpRouting,
+  'ip route': cmdIpRoute,
+  'no ip route': cmdNoIpRoute,
   'ip ssh time-out': cmdIpSshTimeOut,
   'no ip ssh time-out': cmdNoIpSshTimeOut,
   'ip dhcp snooping': cmdIpDhcpSnooping,
@@ -89,9 +91,94 @@ function cmdIpRouting(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
+  // Check if device supports routing (L3 switch only)
+  if (!canAssignIPToPhysicalPort(state.switchModel)) {
+    return {
+      success: false,
+      error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support IP routing.\nIP routing is only supported on Layer 3 switches.`
+    };
+  }
+
   return {
     success: true,
     newState: { ipRouting: true }
+  };
+}
+
+/**
+ * IP Route - Add static route
+ */
+function cmdIpRoute(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  // Check if device supports routing (L3 switch only)
+  if (!canAssignIPToPhysicalPort(state.switchModel)) {
+    return {
+      success: false,
+      error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support static routing.\nStatic routing is only supported on Layer 3 switches.`
+    };
+  }
+
+  const match = input.match(/^ip\s+route\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+|\w+)$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid ip route command. Use: ip route <network> <mask> <next-hop|interface>' };
+  }
+
+  const [, network, mask, nextHop] = match;
+
+  const newStaticRoutes = [...(state.staticRoutes || [])];
+  newStaticRoutes.push({ network, mask, nextHop });
+
+  return {
+    success: true,
+    newState: {
+      staticRoutes: newStaticRoutes,
+      ipRouting: true
+    }
+  };
+}
+
+/**
+ * No IP Route - Remove static route
+ */
+function cmdNoIpRoute(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  // Check if device supports routing (L3 switch only)
+  if (!canAssignIPToPhysicalPort(state.switchModel)) {
+    return {
+      success: false,
+      error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support static routing.\nStatic routing is only supported on Layer 3 switches.`
+    };
+  }
+
+  const match = input.match(/^no\s+ip\s+route\s+([0-9.]+)\s+([0-9.]+)(?:\s+([0-9.]+|\w+))?$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid no ip route command' };
+  }
+
+  const [, network, mask, nextHop] = match;
+
+  let newStaticRoutes;
+  if (nextHop) {
+    // Remove specific route
+    newStaticRoutes = (state.staticRoutes || []).filter(
+      (route: any) => !(route.network === network && route.mask === mask && route.nextHop === nextHop)
+    );
+  } else {
+    // Remove all routes for this network/mask
+    newStaticRoutes = (state.staticRoutes || []).filter(
+      (route: any) => !(route.network === network && route.mask === mask)
+    );
+  }
+
+  return {
+    success: true,
+    newState: { staticRoutes: newStaticRoutes }
   };
 }
 

@@ -2373,6 +2373,63 @@ function cmdShowEtherchannel(state: any, input: string, ctx: any): any {
     return { success: true, output };
   }
 
+  // show etherchannel port-channel
+  if (option === 'port-channel') {
+    const groups: Record<number, string[]> = {};
+    Object.keys(state.ports || {}).forEach(portName => {
+      const port = state.ports[portName];
+      if (port.channelGroup) {
+        if (!groups[port.channelGroup]) groups[port.channelGroup] = [];
+        groups[port.channelGroup].push(portName);
+      }
+    });
+
+    let output = '\nPort-channels in the switch:\n\n';
+    if (Object.keys(groups).length === 0) {
+      output += 'No port-channels configured\n';
+    } else {
+      Object.entries(groups).forEach(([group, ports]) => {
+        const mode = state.ports[ports[0]]?.channelMode || 'on';
+        const protocol = state.ports[ports[0]]?.channelProtocol || (mode === 'on' ? '-' : 'LACP');
+        output += `Port-channel ${group}\n`;
+        output += `  Protocol: ${protocol.toUpperCase()}\n`;
+        output += `  Mode: ${mode.toUpperCase()}\n`;
+        output += `  Member ports: ${ports.join(', ')}\n\n`;
+      });
+    }
+    return { success: true, output };
+  }
+
+  // show etherchannel summary
+  if (option === 'summary') {
+    const groups: Record<number, string[]> = {};
+    Object.keys(state.ports || {}).forEach(portName => {
+      const port = state.ports[portName];
+      if (port.channelGroup) {
+        if (!groups[port.channelGroup]) groups[port.channelGroup] = [];
+        groups[port.channelGroup].push(portName);
+      }
+    });
+
+    let output = '\nFlags:  D - down        P - bundled in port-channel\n';
+    output += '        I - stand-alone s - suspended\n';
+    output += '        H - Hot-standby (LACP only)\n';
+    output += '        R - Layer3      S - Layer2\n';
+    output += '        U - in use      f - failed to allocate aggregator\n\n';
+    output += `Number of channel-groups in use: ${Object.keys(groups).length}\n`;
+    output += `Number of aggregators:           ${Object.keys(groups).length}\n\n`;
+    output += 'Group  Port-channel  Protocol    Ports\n';
+    output += '------+-------------+-----------+-----------------------------------------------\n';
+
+    Object.entries(groups).forEach(([group, ports]) => {
+      const mode = state.ports[ports[0]]?.channelMode || 'on';
+      const protocol = state.ports[ports[0]]?.channelProtocol || (mode === 'on' ? '-' : 'LACP');
+      output += `${group.padEnd(7)}Po${group.padEnd(13)}${protocol.toUpperCase().padEnd(12)}${ports.join(', ')}\n`;
+    });
+
+    return { success: true, output };
+  }
+
   // show etherchannel port
   if (option === 'port') {
     const groups: Record<number, string[]> = {};

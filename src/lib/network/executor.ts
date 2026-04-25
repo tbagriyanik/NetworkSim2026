@@ -420,6 +420,8 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...npfx('ip http', 'server', ['']),
     ...npfx('ip', 'ssh', ['version']),
     ...npfx('ip ssh', 'version', ['version']),
+    ...npfx('ip', 'route', ['<destination>']),
+    ...npfx('ip route', '<destination>', ['<next-hop>']),
 
     ...single('n', ['no']),
     ...pfx('no', ['shutdown', 'vlan', 'cdp', 'service', 'spanning-tree', 'ip']),
