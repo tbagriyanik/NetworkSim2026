@@ -4264,14 +4264,14 @@ ${state.bannerMOTD}
                     </DropdownMenu>
 
                     {/* Device Buttons */}
-                    <div className={`flex items-center gap-1 p-1 rounded-xl border ${isDark ? 'bg-slate-900/40 border-slate-700/30' : 'bg-blue-50/50 border-blue-100/50'}`}>
+                    <div className={`flex items-center gap-0 p-1 rounded-xl border ${isDark ? 'bg-slate-900/40 border-slate-700/30' : 'bg-blue-50/50 border-blue-100/50'}`}>
                       {/* PC Button */}
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-blue-500 hover:bg-blue-500/10"
+                            className="h-8 w-8 p-0 text-blue-500 hover:bg-blue-500/10"
                             onClick={() => {
                               if (typeof window !== 'undefined') {
                                 const event = new CustomEvent('add-device', { detail: 'pc' });
@@ -4279,8 +4279,8 @@ ${state.bannerMOTD}
                               }
                             }}
                           >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
                             </svg>
                           </Button>
                         </TooltipTrigger>
@@ -4292,7 +4292,7 @@ ${state.bannerMOTD}
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-green-500 hover:bg-green-500/10"
+                            className="h-8 w-8 p-0 text-green-500 hover:bg-green-500/10"
                             onClick={() => {
                               if (typeof window !== 'undefined') {
                                 const event = new CustomEvent('add-device', { detail: 'switchL2' });
@@ -4300,8 +4300,8 @@ ${state.bannerMOTD}
                               }
                             }}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
                             </svg>
                           </Button>
                         </TooltipTrigger>
@@ -4313,7 +4313,7 @@ ${state.bannerMOTD}
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-purple-500 hover:bg-purple-500/10"
+                            className="h-8 w-8 p-0 text-purple-500 hover:bg-purple-500/10"
                             onClick={() => {
                               if (typeof window !== 'undefined') {
                                 const event = new CustomEvent('add-device', { detail: 'switchL3' });
@@ -4321,8 +4321,8 @@ ${state.bannerMOTD}
                               }
                             }}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
                             </svg>
                           </Button>
                         </TooltipTrigger>
@@ -4334,7 +4334,7 @@ ${state.bannerMOTD}
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-purple-500 hover:bg-purple-500/10"
+                            className="h-8 w-8 p-0 text-purple-500 hover:bg-purple-500/10"
                             onClick={() => {
                               if (typeof window !== 'undefined') {
                                 const event = new CustomEvent('add-device', { detail: 'router' });
@@ -4342,9 +4342,9 @@ ${state.bannerMOTD}
                               }
                             }}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <circle cx="12" cy="12" r="9" strokeWidth={2} />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
                             </svg>
                           </Button>
                         </TooltipTrigger>
@@ -4356,7 +4356,7 @@ ${state.bannerMOTD}
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-cyan-500 hover:bg-cyan-500/10"
+                            className="h-8 w-8 p-0 text-cyan-500 hover:bg-cyan-500/10"
                             onClick={() => {
                               if (typeof window !== 'undefined') {
                                 const event = new CustomEvent('add-device', { detail: 'iot' });
@@ -4364,12 +4364,12 @@ ${state.bannerMOTD}
                               }
                             }}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.247 7.761a6 6 0 0 1 0 8.478" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.075 4.933a10 10 0 0 1 0 14.134" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.925 19.067a10 10 0 0 1 0-14.134" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7.753 16.239a6 6 0 0 1 0-8.478" />
-                              <circle strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} cx="12" cy="12" r="2" />
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.247 7.761a6 6 0 0 1 0 8.478" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.075 4.933a10 10 0 0 1 0 14.134" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.925 19.067a10 10 0 0 1 0-14.134" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.753 16.239a6 6 0 0 1 0-8.478" />
+                              <circle strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} cx="12" cy="12" r="2" />
                             </svg>
                           </Button>
                         </TooltipTrigger>

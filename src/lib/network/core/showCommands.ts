@@ -1605,7 +1605,7 @@ export function calculatePVST(
 
           // For backward compatibility (especially for UI port indicators), use VLAN 1
           // Skip blocking for EtherChannel member ports - they should stay connected
-          if (vlanId === 1 && !port.channelGroup) {
+          if (vlanId === 1 && !updatedPorts[portId].channelGroup) {
             updatedPorts[portId].spanningTree.role = stpInfo.role;
             updatedPorts[portId].spanningTree.state = portStpState;
             updatedPorts[portId].status = updatedPorts[portId].shutdown ? 'disabled' : (stpInfo.state === 'BLK' ? 'blocked' : 'connected');

@@ -5012,7 +5012,7 @@ export function NetworkTopology({
                 }`}
               aria-label={language === 'tr' ? 'PC cihazı ekle' : 'Add PC device'}
             >
-              <div className="text-blue-500 w-6 h-6">
+              <div className="text-blue-500 w-8 h-8">
                 {DEVICE_ICONS['pc']}
               </div>
               <span className={`text-xs font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
@@ -5027,7 +5027,7 @@ export function NetworkTopology({
                 }`}
               aria-label={language === 'tr' ? 'L2 Switch ekle' : 'Add L2 Switch'}
             >
-              <div className="text-green-500 w-6 h-6">
+              <div className="text-green-500 w-8 h-8">
                 {DEVICE_ICONS['switch']}
               </div>
               <span className={`text-xs font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
@@ -5042,8 +5042,8 @@ export function NetworkTopology({
                 }`}
               aria-label={language === 'tr' ? 'L3 Switch ekle' : 'Add L3 Switch'}
             >
-              <div className="text-purple-500 w-6 h-6">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="text-purple-500 w-8 h-8">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2M5 12a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2m-2-4h.01M17 16h.01" />
                 </svg>
               </div>
@@ -5074,7 +5074,7 @@ export function NetworkTopology({
                 }`}
               aria-label={language === 'tr' ? 'IoT cihazı ekle' : 'Add IoT device'}
             >
-              <div className="text-cyan-500 w-6 h-6">
+              <div className="text-cyan-500 w-8 h-8">
                 {DEVICE_ICONS['iot']}
               </div>
               <span className={`text-xs font-bold ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
