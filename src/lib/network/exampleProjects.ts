@@ -2132,6 +2132,156 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     'end'
   ];
 
+  // Üçüncü Katman Anahtarlama Cihazında Statik Yönlendirme
+  // 2 Multilayer Switch + 1 Router + 2 L2 Switch + 2 PC
+  const staticL3RoutingDevices = [
+    // PC0 - Sol taraftaki PC
+    createPcDevice('pc0', 'PC0', 50, 350, '192.168.1.10', 1, '192.168.1.1'),
+    // Switch0 - Sol L2 switch
+    createSwitchDevice('switch0', 'Switch0', 200, 350),
+    // Multilayer Switch1 - Sol L3 switch
+    createL3SwitchDevice('mlswitch1', 'MultilayerSwitch1', 350, 200),
+    // Router3 - Ortadaki router
+    createRouterDevice('router3', 'Router3', 550, 200),
+    // Multilayer Switch2 - Sağ L3 switch
+    createL3SwitchDevice('mlswitch2', 'MultilayerSwitch2', 750, 200),
+    // Switch1 - Sağ L2 switch
+    createSwitchDevice('switch1', 'Switch1', 900, 350),
+    // PC4 - Sağ taraftaki PC
+    createPcDevice('pc4', 'PC4', 1050, 350, '192.168.2.10', 1, '192.168.2.1')
+  ];
+
+  const staticL3RoutingConnections: CanvasConnection[] = [];
+  // PC0 -> Switch0
+  connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'pc0', 'eth0', 'switch0', 'fa0/1');
+  // Switch0 -> MultilayerSwitch1 (Fa0/2)
+  connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'switch0', 'fa0/2', 'mlswitch1', 'fa0/2');
+  // MultilayerSwitch1 (Fa0/1) -> Router3 (Fa0/0)
+  connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'mlswitch1', 'fa0/1', 'router3', 'gi0/0', 'crossover');
+  // Router3 (Fa1/0) -> MultilayerSwitch2 (Fa0/1)
+  connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'router3', 'gi0/1', 'mlswitch2', 'fa0/1', 'crossover');
+  // MultilayerSwitch2 (Fa0/2) -> Switch1
+  connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'mlswitch2', 'fa0/2', 'switch1', 'fa0/1');
+  // Switch1 -> PC4
+  connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'switch1', 'fa0/2', 'pc4', 'eth0');
+
+  const staticL3RoutingNotes: CanvasNote[] = [
+    {
+      id: 'static-l3-routing-note',
+      text: isTr
+        ? 'L3 Switch Statik Yönlendirme\n\nAğ Topolojisi:\n- PC0: 192.168.1.10/24, Gateway: 192.168.1.1\n- PC4: 192.168.2.10/24, Gateway: 192.168.2.1\n\nYapılandırma:\nMultilayerSwitch1:\n- Fa0/2: 192.168.1.1/24\n- Fa0/1: 10.0.0.1/8\n- ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\nRouter3:\n- Fa0/0: 10.0.0.2/8\n- Fa1/0: 20.0.0.1/8\n- ip route 192.168.1.0 255.255.255.0 10.0.0.1\n- ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\nMultilayerSwitch2:\n- Fa0/1: 20.0.0.2/8\n- Fa0/2: 192.168.2.1/24\n- ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\nTest: PC0> ping 192.168.2.10'
+        : 'L3 Switch Static Routing\n\nNetwork Topology:\n- PC0: 192.168.1.10/24, Gateway: 192.168.1.1\n- PC4: 192.168.2.10/24, Gateway: 192.168.2.1\n\nConfiguration:\nMultilayerSwitch1:\n- Fa0/2: 192.168.1.1/24\n- Fa0/1: 10.0.0.1/8\n- ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\nRouter3:\n- Fa0/0: 10.0.0.2/8\n- Fa1/0: 20.0.0.1/8\n- ip route 192.168.1.0 255.255.255.0 10.0.0.1\n- ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\nMultilayerSwitch2:\n- Fa0/1: 20.0.0.2/8\n- Fa0/2: 192.168.2.1/24\n- ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\nTest: PC0> ping 192.168.2.10',
+      x: 400,
+      y: 450,
+      width: 500,
+      height: 350,
+      color: '#3b82f6',
+      font: 'verdana',
+      fontSize: 12,
+      opacity: 0.75
+    }
+  ];
+
+  // MultilayerSwitch1 State (Sol L3 Switch)
+  const mlSwitch1State = createInitialState('00:1A:2B:3C:4D:80', 'WS-C3560-24PS');
+  mlSwitch1State.hostname = 'MultilayerSwitch1';
+  mlSwitch1State.switchModel = 'WS-C3560-24PS';
+  mlSwitch1State.switchLayer = 'L3';
+  mlSwitch1State.ipRouting = true;
+  mlSwitch1State.ports['fa0/1'] = { ...mlSwitch1State.ports['fa0/1'], mode: 'routed', ipAddress: '10.0.0.1', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
+  mlSwitch1State.ports['fa0/2'] = { ...mlSwitch1State.ports['fa0/2'], mode: 'routed', ipAddress: '192.168.1.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  mlSwitch1State.staticRoutes = [
+    { destination: '192.168.2.0', subnetMask: '255.255.255.0', nextHop: '10.0.0.2', metric: 1, type: 'static' }
+  ];
+  mlSwitch1State.runningConfig = [
+    '!',
+    'hostname MultilayerSwitch1',
+    '!',
+    'ip routing',
+    '!',
+    'interface FastEthernet0/1',
+    ' ip address 10.0.0.1 255.0.0.0',
+    ' no shutdown',
+    '!',
+    'interface FastEthernet0/2',
+    ' ip address 192.168.1.1 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'ip route 192.168.2.0 255.255.255.0 10.0.0.2',
+    '!',
+    'end'
+  ];
+
+  // Router3 State (Ortadaki Router)
+  const router3State = createInitialRouterState('00:50:00:00:00:10');
+  router3State.hostname = 'Router3';
+  router3State.ipRouting = true;
+  router3State.ports['gi0/0'] = { ...router3State.ports['gi0/0'], ipAddress: '10.0.0.2', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
+  router3State.ports['gi0/1'] = { ...router3State.ports['gi0/1'], ipAddress: '20.0.0.1', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
+  router3State.staticRoutes = [
+    { destination: '192.168.1.0', subnetMask: '255.255.255.0', nextHop: '10.0.0.1', metric: 1, type: 'static' },
+    { destination: '192.168.2.0', subnetMask: '255.255.255.0', nextHop: '20.0.0.2', metric: 1, type: 'static' }
+  ];
+  router3State.runningConfig = [
+    '!',
+    'hostname Router3',
+    '!',
+    'interface GigabitEthernet0/0',
+    ' ip address 10.0.0.2 255.0.0.0',
+    ' no shutdown',
+    '!',
+    'interface GigabitEthernet0/1',
+    ' ip address 20.0.0.1 255.0.0.0',
+    ' no shutdown',
+    '!',
+    'ip route 192.168.1.0 255.255.255.0 10.0.0.1',
+    'ip route 192.168.2.0 255.255.255.0 20.0.0.2',
+    '!',
+    'end'
+  ];
+
+  // MultilayerSwitch2 State (Sağ L3 Switch)
+  const mlSwitch2State = createInitialState('00:1A:2B:3C:4D:81', 'WS-C3560-24PS');
+  mlSwitch2State.hostname = 'MultilayerSwitch2';
+  mlSwitch2State.switchModel = 'WS-C3560-24PS';
+  mlSwitch2State.switchLayer = 'L3';
+  mlSwitch2State.ipRouting = true;
+  mlSwitch2State.ports['fa0/1'] = { ...mlSwitch2State.ports['fa0/1'], mode: 'routed', ipAddress: '20.0.0.2', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
+  mlSwitch2State.ports['fa0/2'] = { ...mlSwitch2State.ports['fa0/2'], mode: 'routed', ipAddress: '192.168.2.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  mlSwitch2State.staticRoutes = [
+    { destination: '192.168.1.0', subnetMask: '255.255.255.0', nextHop: '20.0.0.1', metric: 1, type: 'static' }
+  ];
+  mlSwitch2State.runningConfig = [
+    '!',
+    'hostname MultilayerSwitch2',
+    '!',
+    'ip routing',
+    '!',
+    'interface FastEthernet0/1',
+    ' ip address 20.0.0.2 255.0.0.0',
+    ' no shutdown',
+    '!',
+    'interface FastEthernet0/2',
+    ' ip address 192.168.2.1 255.255.255.0',
+    ' no shutdown',
+    '!',
+    'ip route 192.168.1.0 255.255.255.0 20.0.0.1',
+    '!',
+    'end'
+  ];
+
+  // Switch0 State (Sol L2 Switch)
+  const switch0State = createInitialState('00:1A:2B:3C:4D:82', 'WS-C2960-24TT-L');
+  switch0State.hostname = 'Switch0';
+  switch0State.ports['fa0/1'] = { ...switch0State.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  switch0State.ports['fa0/2'] = { ...switch0State.ports['fa0/2'], vlan: 1, mode: 'access', status: 'connected' };
+
+  // Switch1 State (Sağ L2 Switch)
+  const switch1State = createInitialState('00:1A:2B:3C:4D:83', 'WS-C2960-24TT-L');
+  switch1State.hostname = 'Switch1';
+  switch1State.ports['fa0/1'] = { ...switch1State.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  switch1State.ports['fa0/2'] = { ...switch1State.ports['fa0/2'], vlan: 1, mode: 'access', status: 'connected' };
+
   return [
     {
       id: 'basic-secure',
@@ -2431,6 +2581,25 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       data: baseProjectData(l3Switch2VlanDevices, l3Switch2VlanConnections, l3Switch2VlanNotes, [
         { id: 'switch2', state: l3Switch2State },
         { id: 'switch4', state: l3Switch4State }
+      ])
+    },
+    {
+      id: 'static-l3-routing',
+      tag: isTr ? 'STATIK ROUTING' : 'STATIC ROUTING',
+      title: isTr ? 'L3 Switch Statik Yönlendirme' : 'L3 Switch Static Routing',
+      description: isTr
+        ? '2 Multilayer Switch + 1 Router + 2 L2 Switch + 2 PC. PC0\'dan PC4\'e iletişim.'
+        : '2 Multilayer Switches + 1 Router + 2 L2 Switches + 2 PCs. Communication from PC0 to PC4.',
+      detail: isTr
+        ? 'MultilayerSwitch1: ip route 192.168.2.0 255.255.255.0 10.0.0.2 | Router3: ip route 192.168.1.0 255.255.255.0 10.0.0.1, ip route 192.168.2.0 255.255.255.0 20.0.0.2 | MultilayerSwitch2: ip route 192.168.1.0 255.255.255.0 20.0.0.1'
+        : 'MultilayerSwitch1: ip route 192.168.2.0 255.255.255.0 10.0.0.2 | Router3: ip route 192.168.1.0 255.255.255.0 10.0.0.1, ip route 192.168.2.0 255.255.255.0 20.0.0.2 | MultilayerSwitch2: ip route 192.168.1.0 255.255.255.0 20.0.0.1',
+      level: 'advanced',
+      data: baseProjectData(staticL3RoutingDevices, staticL3RoutingConnections, staticL3RoutingNotes, [
+        { id: 'switch0', state: switch0State },
+        { id: 'mlswitch1', state: mlSwitch1State },
+        { id: 'router3', state: router3State },
+        { id: 'mlswitch2', state: mlSwitch2State },
+        { id: 'switch1', state: switch1State }
       ])
     }
   ];

@@ -1,15 +1,15 @@
 # Recent Network CLI, STP, Interface, and UI Updates
 
-This note summarizes the recent STP PVST example enhancements, VLAN-specific STP path calculation, STP redundancy support, VLAN interface support, per-VLAN spanning tree priority fixes, accessibility enhancements, keyboard shortcuts, and STP blocking logic improvements in the simulator.
+This note summarizes the recent STP PVST example enhancements, VLAN-specific STP path calculation, STP redundancy support, VLAN interface support, per-VLAN spanning tree priority fixes, accessibility enhancements, keyboard shortcuts, STP blocking logic improvements, and L3 Switch Static Routing example addition in the simulator.
 
 ## Current Code Metrics
 
-- Total lines: 57852
-- Last updated: 2026-04-19
+- Total lines: 59546
+- Last updated: 2026-04-25
 
 ## Overview
 
-Enhanced STP 3-Switch PVST example with PC devices for comprehensive testing, implemented VLAN-specific STP path calculation for ping animation, added STP redundancy support for automatic backup path activation, implemented VLAN 1-only STP visualization, added VLAN interface support for show interface command, fixed per-VLAN spanning tree priority calculation, added comprehensive ARIA labels to improve accessibility for screen readers, added P keyboard shortcut for ping functionality, improved STP blocking logic for link failure scenarios, and added per-VLAN STP instances to 3-switch PVST example.
+Enhanced STP 3-Switch PVST example with PC devices for comprehensive testing, implemented VLAN-specific STP path calculation for ping animation, added STP redundancy support for automatic backup path activation, implemented VLAN 1-only STP visualization, added VLAN interface support for show interface command, fixed per-VLAN spanning tree priority calculation, added comprehensive ARIA labels to improve accessibility for screen readers, added P keyboard shortcut for ping functionality, improved STP blocking logic for link failure scenarios, added per-VLAN STP instances to 3-switch PVST example, and added new L3 Switch Static Routing example (Figure 9.15) with 2 Multilayer Switches, 1 Router, 2 L2 Switches, and 2 PCs for inter-network communication via static routes.
 
 ## P Keyboard Shortcut for Ping
 
@@ -267,6 +267,44 @@ Added comprehensive ARIA labels and role attributes to improve screen reader sup
 - Proper tab pattern implementation for RouterPanel tabs (overview, ports, wifi, dhcp)
 - Better keyboard navigation support
 - WCAG 2.1 AA compliance improvements
+
+## L3 Switch Static Routing Example (Figure 9.15)
+
+### Overview
+Added a new advanced example project demonstrating static routing between two networks using L3 switches and a central router, matching the topology from Figure 9.15 in networking curriculum.
+
+### Configuration
+- **PC0**: 192.168.1.10/24, Gateway: 192.168.1.1 (Connected to MultilayerSwitch1 via Switch0)
+- **PC4**: 192.168.2.10/24, Gateway: 192.168.2.1 (Connected to MultilayerSwitch2 via Switch1)
+- **MultilayerSwitch1 (Left)**:
+  - Fa0/2: 192.168.1.1/24 (local network)
+  - Fa0/1: 10.0.0.1/8 (uplink to Router3)
+  - Static route: `ip route 192.168.2.0 255.255.255.0 10.0.0.2`
+- **Router3 (Center)**:
+  - Fa0/0: 10.0.0.2/8 (downlink to MultilayerSwitch1)
+  - Fa1/0: 20.0.0.1/8 (downlink to MultilayerSwitch2)
+  - Static routes:
+    - `ip route 192.168.1.0 255.255.255.0 10.0.0.1`
+    - `ip route 192.168.2.0 255.255.255.0 20.0.0.2`
+- **MultilayerSwitch2 (Right)**:
+  - Fa0/1: 20.0.0.2/8 (uplink to Router3)
+  - Fa0/2: 192.168.2.1/24 (local network)
+  - Static route: `ip route 192.168.1.0 255.255.255.0 20.0.0.1`
+- **Switch0 & Switch1**: L2 switches for PC connections
+
+### Implementation
+- Created using `createL3SwitchDevice`, `createRouterDevice`, `createSwitchDevice`, and `createPcDevice` helpers
+- Configured routed ports on L3 switches with `mode: 'routed'`
+- Added static routes to routing tables for inter-network communication
+- Full running configs with IP routing enabled on all L3 devices
+- Notes explaining topology and configuration commands in both TR/EN
+
+### Testing
+- **From PC0**: `ping 192.168.2.10` to test connectivity to PC4
+- Path: PC0 → Switch0 → MultilayerSwitch1 → Router3 → MultilayerSwitch2 → Switch1 → PC4
+
+### Files Modified
+- `src/lib/network/exampleProjects.ts` - Added staticL3RoutingDevices, staticL3RoutingConnections, staticL3RoutingNotes, mlSwitch1State, router3State, mlSwitch2State, switch0State, switch1State
 
 ## Previous Updates
 
