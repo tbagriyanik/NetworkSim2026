@@ -6,7 +6,7 @@ A modern, interactive, browser-based network simulator for students and networki
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Commits](https://img.shields.io/badge/commits-720+-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-60588-blueviolet)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-60379-blueviolet)
 
 Network learning app: [Test Address](https://network2026.vercel.app)
 
@@ -165,7 +165,7 @@ Network learning app: [Test Address](https://network2026.vercel.app)
 - Performance optimization (spatial partitioning, viewport culling)
 - Accessibility (WCAG 2.1 AA compliance)
 - Turkish/English localization
-- **27 Example Projects**: Complete lab scenarios - [View Details](examples.md)
+- **28 Example Projects**: Complete lab scenarios - [View Details](examples.md)
 - **160+ CLI Commands**: Full command reference in Help Panel
 - DHCP/DNS/HTTP system enhancements
 - IoT WiFi Lab with sensor simulation
@@ -414,7 +414,7 @@ Theme selection is done from the theme selector in the top right corner.
 - Total lines: `60588`
 - TS/TSX files: `165+`
 - Network components: `55+`
-- Example projects: `27`
+- Example projects: `28`
 - CLI commands: `150+`
 - Last updated: `2026-04-25`
 

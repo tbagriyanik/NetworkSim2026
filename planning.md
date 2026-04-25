@@ -2,9 +2,9 @@
 
 ## Current Code Metrics
 
-- **Total lines**: 60588
+- **Total lines**: 60379
 - **Last updated**: 2026-04-25
-- **Example projects**: 27
+- **Example projects**: 28
 - **CLI Commands**: 160+
 - **Version**: 1.5.5
 
