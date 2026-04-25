@@ -173,7 +173,7 @@ This document provides detailed descriptions of all 28 example projects availabl
 **ID:** `dns-http`  
 **Tag:** DNS/HTTP  
 **Description:** Send HTTP requests and use nslookup to verify server services.  
-**Details:** http 192.168.1.10 / http a10.com / nslookup a10.com.  
+**Details:** curl / wget 192.168.1.10 / curl / wget a10.com / nslookup a10.com.  
 **Tasks:**
 - Configure DNS server with A records.
 - Set up an HTTP server.

@@ -418,8 +418,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'iot-wifi-note',
       text: isTr
-        ? 'IoT WiFi Laboratuvarı:\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: IoT-Network (Open) yayınlar.\n2) PC-1 kablosuz ağa (WiFi Client) bağlıdır.\n3) 3 IoT cihazı (Sıcaklık, Nem, Hareket) WiFi üzerinden bağlıdır.\n4) PC-1 üzerinde http 192.168.1.1 ile WiFi panelinden IoT cihazlarını yönetin.\n5) PC-1 > ping 192.168.1.1 ile bağlantıyı test edin.\n6) PC-1 > http http://iot-panel ile cihaz kontrol paneline ulaşınız.'
-        : 'IoT WiFi Lab:\n1) R1 (Router) broadcasts SSID: IoT-Network (Open) on wlan0 in AP mode.\n2) PC-1 is connected wirelessly (WiFi Client).\n3) 3 IoT devices (Temperature, Humidity, Motion) connected via WiFi.\n4) Manage IoT devices from PC-1 WiFi panel via http 192.168.1.1.\n5) Test connectivity with PC-1 > ping 192.168.1.1.\n6) Access device control panel via PC-1 > http http://iot-panel',
+        ? 'IoT WiFi Laboratuvarı:\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: IoT-Network (Open) yayınlar.\n2) PC-1 kablosuz ağa (WiFi Client) bağlıdır.\n3) 3 IoT cihazı (Sıcaklık, Nem, Hareket) WiFi üzerinden bağlıdır.\n4) PC-1 üzerinde wget 192.168.1.1 ile WiFi panelinden IoT cihazlarını yönetin.\n5) PC-1 > ping 192.168.1.1 ile bağlantıyı test edin.\n6) PC-1 > wget http://iot-panel ile cihaz kontrol paneline ulaşınız.'
+        : 'IoT WiFi Lab:\n1) R1 (Router) broadcasts SSID: IoT-Network (Open) on wlan0 in AP mode.\n2) PC-1 is connected wirelessly (WiFi Client).\n3) 3 IoT devices (Temperature, Humidity, Motion) connected via WiFi.\n4) Manage IoT devices from PC-1 WiFi panel via wget 192.168.1.1.\n5) Test connectivity with PC-1 > ping 192.168.1.1.\n6) Access device control panel via PC-1 > wget http://iot-panel',
       x: 500,
       y: 80,
       width: 450,
@@ -639,8 +639,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'greenhouse-note',
       text: isTr
-        ? '🌱 AKILLI SERA KROKİSİ:\n1) R1 (Router) WPA2 korumalı WiFi ağı: GreenHouse-Network (şifre: sera2026)\n2) 4 IoT Sensör: Sıcaklık (2.101), Nem (2.102), Işık (2.103), Kapı/Hareket (2.104)\n3) PC-1 ile WiFi panelinden (http 192.168.2.1) sensörleri izleyin\n4) IoT Panel: http://iot-panel (admin/admin) ile cihazları yönetin\n5) Görev: ping 192.168.2.101 ile sensör erişimini test edin'
-        : '🌱 SMART GREENHOUSE SKETCH:\n1) R1 (Router) WPA2 secured WiFi: GreenHouse-Network (password: sera2026)\n2) 4 IoT Sensors: Temperature (.101), Humidity (.102), Light (.103), Door/Motion (.104)\n3) Monitor sensors from PC-1 via WiFi panel (http 192.168.2.1)\n4) IoT Panel: http://iot-panel (admin/admin) to manage devices\n5) Task: Test sensor access with ping 192.168.2.101',
+        ? '🌱 AKILLI SERA KROKİSİ:\n1) R1 (Router) WPA2 korumalı WiFi ağı: GreenHouse-Network (şifre: sera2026)\n2) 4 IoT Sensör: Sıcaklık (2.101), Nem (2.102), Işık (2.103), Kapı/Hareket (2.104)\n3) PC-1 ile WiFi panelinden (wget 192.168.2.1) sensörleri izleyin\n4) IoT Panel: wget http://iot-panel (admin/admin) ile cihazları yönetin\n5) Görev: ping 192.168.2.101 ile sensör erişimini test edin'
+        : '🌱 SMART GREENHOUSE SKETCH:\n1) R1 (Router) WPA2 secured WiFi: GreenHouse-Network (password: sera2026)\n2) 4 IoT Sensors: Temperature (.101), Humidity (.102), Light (.103), Door/Motion (.104)\n3) Monitor sensors from PC-1 via WiFi panel (wget 192.168.2.1)\n4) IoT Panel: wget http://iot-panel (admin/admin) to manage devices\n5) Task: Test sensor access with ping 192.168.2.101',
       x: 500,
       y: 60,
       width: 480,
@@ -758,8 +758,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'wifi-note',
       text: isTr
-        ? 'WiFi Laboratuvarı (Orta Seviye):\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: HomeWiFi yayınlar.\n2) PC-1 ve PC-2 kablosuz ağa (SSID match) bağlıdır.\n3) Tüm cihazlar aynı subnet (192.168.1.x) içindedir.\n4) PC-1 > ping 192.168.1.11 ile kablosuz iletişimi test edin.\n5) PC-1 > http 192.168.1.1 ile Wifi kontrol panelini görün.'
-        : 'WiFi Lab (Intermediate):\n1) R1 (Router) broadcasts SSID: HomeWiFi on wlan0 in AP mode.\n2) PC-1 and PC-2 are connected wirelessly (SSID match).\n3) All devices are on the same subnet (192.168.1.x).\n4) Test wireless connectivity with PC-1 > ping 192.168.1.11.\n5) PC-1 > http 192.168.1.1 for Wifi control panel.',
+        ? 'WiFi Laboratuvarı (Orta Seviye):\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: HomeWiFi yayınlar.\n2) PC-1 ve PC-2 kablosuz ağa (SSID match) bağlıdır.\n3) Tüm cihazlar aynı subnet (192.168.1.x) içindedir.\n4) PC-1 > ping 192.168.1.11 ile kablosuz iletişimi test edin.\n5) PC-1 > wget 192.168.1.1 ile Wifi kontrol panelini görün.'
+        : 'WiFi Lab (Intermediate):\n1) R1 (Router) broadcasts SSID: HomeWiFi on wlan0 in AP mode.\n2) PC-1 and PC-2 are connected wirelessly (SSID match).\n3) All devices are on the same subnet (192.168.1.x).\n4) Test wireless connectivity with PC-1 > ping 192.168.1.11.\n5) PC-1 > wget 192.168.1.1 for Wifi control panel.',
       x: 300,
       y: 400,
       width: 450,
@@ -2732,7 +2732,7 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       description: isTr
         ? 'PC-1 üzerinden HTTP istekleri gönderip nslookup yaparak sunucu hizmetlerini doğrulayın.'
         : 'From PC-1 send HTTP requests and use nslookup to verify server services.',
-      detail: 'http 192.168.1.10 / http a10.com / nslookup a10.com',
+      detail: 'wget 192.168.1.10 / wget a10.com / nslookup a10.com',
       level: 'intermediate',
       data: dnsHttpExampleData
     },

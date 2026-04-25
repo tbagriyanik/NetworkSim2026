@@ -448,7 +448,7 @@ Enhanced `show ip route` command to display RIP (R) routes with proper formattin
 - Record type labels are localized:
   - Turkish: `A Kaydı (Address Record)` and `CNAME Kaydı (Canonical Name Record)`
   - English: `A Record (Address Record)` and `CNAME Record (Canonical Name Record)`
-- `http www.a10.com` should resolve correctly when the DNS chain ends in a valid IP address.
+- `curl / wget www.a10.com` should resolve correctly when the DNS chain ends in a valid IP address.
 
 ### UI Refinements
 - Help modal tabs now use a unified tab-style layout.

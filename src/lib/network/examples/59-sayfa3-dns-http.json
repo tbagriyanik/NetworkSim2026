@@ -1200,9 +1200,9 @@
       "history": [
         "ping 192.168.1.10",
         "ping  192.168.1.10",
-        "http a10.com",
-        "http 192.168.1.10",
-        "http",
+        "wget a10.com",
+        "wget 192.168.1.10",
+        "wget",
         "ipconfig /all"
       ]
     }
@@ -1638,7 +1638,7 @@
         "y": 214.43373733192178,
         "width": 659,
         "height": 157,
-        "text": "Server içindeki DNS ve HTTP hizmetlerini PC-1 üzerinden test etme:\n\nDNS zinciri: www.a10.com -> a10.com -> 192.168.1.10\n\nhttp 192.168.1.10\nhttp a10.com\nhttp www.a10.com\nnslookup a10.com\nnslookup www.a10.com\n\nBeklenen: http www.a10.com çalışmalı.",
+        "text": "Server içindeki DNS ve HTTP hizmetlerini PC-1 üzerinden test etme:\n\nDNS zinciri: www.a10.com -> a10.com -> 192.168.1.10\n\nwget 192.168.1.10\nwget a10.com\nwget www.a10.com\nnslookup a10.com\nnslookup www.a10.com\n\nBeklenen: wget www.a10.com çalışmalı.",
         "color": "#f5d0fe",
         "font": "Courier New",
         "fontSize": 16,

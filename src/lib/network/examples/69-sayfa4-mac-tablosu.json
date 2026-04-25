@@ -1238,15 +1238,16 @@
     {
       "id": "pc-2",
       "history": [
-        "http a10.com",
-        "http 10a.com",
-        "http 192.168.1.101",
-        "http 192.168.1.10",
+        "wget a10.com",
+        "wget 10a.com",
+        "wget 192.168.1.101",
+        "wget 192.168.1.10",
         "help",
         "?",
+        "ipconfig /all",
         "ping 192.168.1.10",
-        "http 192.168.1.10",
-        "http",
+        "curl 192.168.1.10",
+        "curl",
         "ipconfig /all"
       ]
     },

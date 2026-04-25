@@ -4031,6 +4031,7 @@ ${state.bannerMOTD}
           <Dialog open={showPCPanel} onOpenChange={setShowPCPanel}>
             <DialogContent
               showCloseButton={false}
+              onEscapeKeyDown={(e) => e.preventDefault()}
               className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'fixed' : 'fixed',
@@ -4141,6 +4142,7 @@ ${state.bannerMOTD}
           <Dialog open={showTerminalModal} onOpenChange={setShowTerminalModal}>
             <DialogContent
               showCloseButton={false}
+              onEscapeKeyDown={(e) => e.preventDefault()}
               className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: 'fixed',

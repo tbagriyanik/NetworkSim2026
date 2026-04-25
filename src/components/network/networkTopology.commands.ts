@@ -28,8 +28,8 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       title: isTR ? 'Privileged EXEC' : 'Privileged EXEC',
       cmds: [
         ['ping <host> [s] [c]', isTR ? 'Bağlantı testi (ICMP)' : 'Ping host (ICMP)'],
-        ['traceroute <host>', isTR ? 'Rota izleme (Unix)' : 'Trace route (Unix)'],
-        ['tracert <host>', isTR ? 'Rota izleme (Windows)' : 'Trace route (Windows)'],
+        ['traceroute <host>', isTR ? 'Rota izleme (Cisco)' : 'Trace route (Cisco)'],
+        ['tracert <host>', isTR ? 'Rota izleme (Alias)' : 'Trace route (Alias)'],
         ['telnet <host> [port]', isTR ? 'Telnet bağlantısı' : 'Telnet connection'],
         ['ssh [-l user] <host>', isTR ? 'SSH bağlantısı' : 'SSH connection'],
         ['write memory', isTR ? 'Yapılandırmayı kaydet' : 'Save configuration'],
@@ -322,13 +322,14 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['nslookup <domain>', isTR ? 'DNS sorgusu' : 'DNS lookup'],
         ['telnet <host> [port]', isTR ? 'Telnet bağlantısı' : 'Telnet connection'],
         ['ssh [-l user] <host>', isTR ? 'SSH bağlantısı' : 'SSH connection'],
-        ['http <url>', isTR ? 'Web sayfası görüntüle' : 'View web page'],
+        ['curl / wget <url>', isTR ? 'Web sayfası görüntüle' : 'View web page'],
         ['arp -a', isTR ? 'ARP tablosu' : 'ARP table'],
         ['hostname', isTR ? 'Bilgisayar adı' : 'Computer name'],
         ['dir', isTR ? 'Dosya listesi' : 'Directory listing'],
         ['ver', isTR ? 'Versiyon bilgisi' : 'Version info'],
         ['cls', isTR ? 'Ekranı temizle' : 'Clear screen'],
-        ['help', isTR ? 'PC komut yardımı' : 'Desktop command help'],
+        ['snake / yilan', isTR ? 'Yılan Oyunu (Eğlence)' : 'Snake Game (Fun)'],
+        ['help / ?', isTR ? 'PC komut yardımı' : 'Desktop command help'],
       ]
     },
   ];

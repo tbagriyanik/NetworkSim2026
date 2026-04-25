@@ -1498,7 +1498,7 @@ export function PCPanel({
     return null;
   }, [canReachTargetIp, resolveDomainWithDnsServices, topologyDevices, deviceStates, deviceId]);
 
-  const openHttpTarget = useCallback((rawTarget?: string, rawUrl?: string) => {
+  const openWebPage = useCallback((rawTarget?: string, rawUrl?: string) => {
     const rawInput = (rawTarget || '').trim();
     const normalizedInput = rawInput || '192.168.1.10';
     let lookupTarget = normalizeLookupTarget(normalizedInput);
@@ -1919,7 +1919,7 @@ export function PCPanel({
       // Handle messages from IoT Web Panel
       if (data.type === 'open-iot-device') {
         const { deviceId } = data;
-        openHttpTarget(`iot://iot-device/${deviceId}`);
+        openWebPage(`iot://iot-device/${deviceId}`);
       }
 
       // Handle back to IoT list message
@@ -1927,7 +1927,7 @@ export function PCPanel({
         setHttpAppDeviceId(null);
         setHttpAppContent(null); // Clear content to force regeneration
         setTimeout(() => {
-          openHttpTarget('http://iot-panel');
+          openWebPage('http://iot-panel');
         }, 50); // Small delay to ensure state updates
       }
 
@@ -1959,7 +1959,7 @@ export function PCPanel({
 
     window.addEventListener('message', handleRouterAdminMessage);
     return () => window.removeEventListener('message', handleRouterAdminMessage);
-  }, [addLocalOutput, httpAppDeviceId, language, topologyDevices, topologyConnections, getConnectedIotDevices, getAvailableIotDevices, openHttpTarget]);
+  }, [addLocalOutput, httpAppDeviceId, language, topologyDevices, topologyConnections, getConnectedIotDevices, getAvailableIotDevices, openWebPage]);
 
   useEffect(() => {
     if (!httpAppContent || !isMobile || typeof window === 'undefined') return;
@@ -2895,7 +2895,7 @@ export function PCPanel({
           addLocalOutput('output', `Usage: ${cmd} <url>`);
         } else {
           // Always open in the built-in browser modal instead of new tab
-          openHttpTarget(url, args[1]);
+          openWebPage(url, args[1]);
         }
       } else if (cmd === 'telnet' || cmd === 'ssh') {
         const isSsh = cmd === 'ssh';

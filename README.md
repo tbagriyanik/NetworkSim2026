@@ -115,7 +115,7 @@ Network learning app: [Test Address](https://network2026.vercel.app)
   - Signal percentage display (100%, 75%, 50%, 25%, 1%)
   - Distance-based signal calculation between AP and client devices
 - **WiFi Control Panel**: Web-based WiFi management interface for routers/switches
-  - Access via HTTP (e.g., `http 192.168.1.1` from PC terminal)
+  - Access via HTTP (e.g., `wget 192.168.1.1` from PC terminal)
   - Configure SSID, security (Open/WPA/WPA2/WPA3), channel (2.4GHz/5GHz)
   - Switch between AP and Client modes
   - View connected devices in real-time
@@ -364,7 +364,7 @@ Detailed documentation lives in the `kiro/` and `docs/` folders:
 3. Connection is automatically created
 
 ### Configuring WiFi
-1. Access router via HTTP: `http 192.168.1.1` from PC terminal
+1. Access router via HTTP: `wget 192.168.1.1` from PC terminal
 2. Configure SSID, security, and channel in WiFi Control Panel
 3. Enable AP mode on router
 4. Connect PC as WiFi client with matching SSID
