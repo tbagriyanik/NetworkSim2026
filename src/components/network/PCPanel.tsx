@@ -1021,8 +1021,8 @@ export function PCPanel({
     const trimmed = value.trim();
     const tokens = trimmed.split(/\s+/).filter(Boolean);
     const currentWord = value.endsWith(' ') ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
-    const expectsIpArg = /^(?:telnet|ssh|ping|http|ip\s+default-gateway|default-router|dns-server)\s+\S*$/i.test(trimmed)
-      || /^(?:telnet|ssh|ping|http|ip\s+default-gateway|default-router|dns-server)\s*$/i.test(trimmed);
+    const expectsIpArg = /^(?:telnet|ssh|ping|curl|wget|ip\s+default-gateway|default-router|dns-server)\s+\S*$/i.test(trimmed)
+      || /^(?:telnet|ssh|ping|curl|wget|ip\s+default-gateway|default-router|dns-server)\s*$/i.test(trimmed);
 
     if (activeTab === 'desktop') {
       const base = DESKTOP_COMMANDS
@@ -2889,8 +2889,35 @@ export function PCPanel({
             );
           }
         }
-      } else if (cmd === 'http') {
-        openHttpTarget(args[0], args[1]);
+      } else if (cmd === 'curl' || cmd === 'wget') {
+        const url = args[0];
+        if (!url) {
+          addLocalOutput('output', `Usage: ${cmd} <url>`);
+        } else {
+          // For simulator-internal services (iot-panel, device IPs), use openHttpTarget
+          // For external URLs, open browser directly
+          const isInternalService = url === 'iot-panel' ||
+            url.startsWith('http://iot-panel') ||
+            url.startsWith('iot://') ||
+            url.startsWith('http://192.168.') ||
+            url.startsWith('http://10.') ||
+            url.startsWith('https://192.168.') ||
+            url.startsWith('https://10.');
+
+          if (isInternalService) {
+            openHttpTarget(url, args[1]);
+          } else {
+            // External URL - open browser like real curl/wget
+            let fullUrl = url;
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+              fullUrl = `http://${url}`;
+            }
+            window.open(fullUrl, '_blank', 'noopener,noreferrer');
+            addLocalOutput('success', language === 'tr'
+              ? `Tarayıcıda açılıyor: ${fullUrl}`
+              : `Opening in browser: ${fullUrl}`);
+          }
+        }
       } else if (cmd === 'telnet' || cmd === 'ssh') {
         const isSsh = cmd === 'ssh';
         const targetSpec = args[0];
@@ -3070,7 +3097,7 @@ export function PCPanel({
           60
         );
       } else if (cmd === 'help' || cmd === '?') {
-        addLocalOutput('output', `Available commands: ipconfig, ping, tracert, telnet, ssh, netstat, nbtstat, getmac, nslookup, http, arp, hostname, dir, ver, cls, exit, quit, snake`);
+        addLocalOutput('output', `Available commands: ipconfig, ping, tracert, telnet, ssh, netstat, nbtstat, getmac, nslookup, curl, wget, arp, hostname, dir, ver, cls, exit, quit, snake`);
       } else if (cmd === 'cls') {
         setPcOutput([]);
       } else if (cmd === 'exit' || cmd === 'quit') {
@@ -4442,8 +4469,8 @@ export function PCPanel({
                             onClick={() => {
                               navigateToProgram('desktop');
                               setTimeout(() => {
-                                setInput('http http://iot-panel');
-                                void executeCommand('http http://iot-panel');
+                                setInput('curl http://iot-panel');
+                                void executeCommand('curl http://iot-panel');
                               }, 300);
                             }}
                           >
