@@ -2894,29 +2894,8 @@ export function PCPanel({
         if (!url) {
           addLocalOutput('output', `Usage: ${cmd} <url>`);
         } else {
-          // For simulator-internal services (iot-panel, device IPs), use openHttpTarget
-          // For external URLs, open browser directly
-          const isInternalService = url === 'iot-panel' ||
-            url.startsWith('http://iot-panel') ||
-            url.startsWith('iot://') ||
-            url.startsWith('http://192.168.') ||
-            url.startsWith('http://10.') ||
-            url.startsWith('https://192.168.') ||
-            url.startsWith('https://10.');
-
-          if (isInternalService) {
-            openHttpTarget(url, args[1]);
-          } else {
-            // External URL - open browser like real curl/wget
-            let fullUrl = url;
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
-              fullUrl = `http://${url}`;
-            }
-            window.open(fullUrl, '_blank', 'noopener,noreferrer');
-            addLocalOutput('success', language === 'tr'
-              ? `Tarayıcıda açılıyor: ${fullUrl}`
-              : `Opening in browser: ${fullUrl}`);
-          }
+          // Always open in the built-in browser modal instead of new tab
+          openHttpTarget(url, args[1]);
         }
       } else if (cmd === 'telnet' || cmd === 'ssh') {
         const isSsh = cmd === 'ssh';
