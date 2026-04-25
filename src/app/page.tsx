@@ -1384,6 +1384,32 @@ ${state.bannerMOTD}
     }
   }, [loadProjectData]);
 
+  // Auto-renew DHCP for devices with link-local IPs (169.254.x.x) on page load
+  useEffect(() => {
+    if (!topologyDevices || topologyDevices.length === 0) return;
+
+    // Find all PC devices with DHCP mode and link-local IPs
+    const devicesNeedingDhcpRenewal = topologyDevices.filter(
+      (device) =>
+        device.type === 'pc' &&
+        device.ipConfigMode === 'dhcp' &&
+        device.ip &&
+        device.ip.startsWith('169.254.')
+    );
+
+    if (devicesNeedingDhcpRenewal.length === 0) return;
+
+    // Dispatch event to trigger DHCP renewal for each device
+    // PCPanel will listen for this event and call applyDhcpLease
+    devicesNeedingDhcpRenewal.forEach((device) => {
+      window.dispatchEvent(
+        new CustomEvent('auto-renew-dhcp', {
+          detail: { deviceId: device.id }
+        })
+      );
+    });
+  }, [topologyDevices]);
+
   // Onboarding: show once per browser
   useEffect(() => {
     try {
@@ -2001,11 +2027,11 @@ ${state.bannerMOTD}
         ip: '',
         status: 'online',
         switchModel: 'WS-C2960-24TT-L',
-        ports: [
-          { id: 'console', label: 'Console', status: 'disconnected' as const },
+        ports: [                    
           ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' as const })),
           { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
-          { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const }
+          { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const },
+          { id: 'console', label: 'Console', status: 'disconnected' as const }
         ]
       }
     ]);

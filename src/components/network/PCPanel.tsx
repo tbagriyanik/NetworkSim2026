@@ -2576,19 +2576,22 @@ export function PCPanel({
 
   // When DHCP mode is selected, request a lease immediately and notify the user.
   // Also retry if topology connections change, in case we were waiting for a cable.
+  // Also retry on page load if device has link-local IP (169.254.x.x) and is in DHCP mode.
   useEffect(() => {
-    // If we already have a non-zero IP and we didn't just switch to DHCP mode,
+    // Check if IP is link-local (APIPA) - 169.254.x.x range
+    const isLinkLocal = pcIP && pcIP.startsWith('169.254.');
+    // If we already have a valid non-link-local IP and we didn't just switch to DHCP mode,
     // don't try to get a new lease automatically on every connection change.
-    const hasValidIp = pcIP && pcIP !== '0.0.0.0' && pcIP !== '169.254.0.0'; // basic check
+    const hasValidIp = pcIP && pcIP !== '0.0.0.0' && !isLinkLocal;
 
     if (ipConfigMode !== 'dhcp') {
       prevIpConfigModeRef.current = ipConfigMode;
       return;
     }
 
-    // If mode hasn't changed AND we already have an IP, don't re-trigger on connection changes
-    // to avoid spamming the user with success toasts.
-    if (prevIpConfigModeRef.current === 'dhcp' && hasValidIp) {
+    // If mode hasn't changed AND we already have a valid IP (not link-local), don't re-trigger
+    // However, if we have a link-local IP, always try to get a proper DHCP lease
+    if (prevIpConfigModeRef.current === 'dhcp' && hasValidIp && !isLinkLocal) {
       return;
     }
 
@@ -2630,6 +2633,27 @@ export function PCPanel({
 
     prevIpConfigModeRef.current = ipConfigMode;
   }, [applyDhcpLease, ipConfigMode, t, topologyConnections, pcIP, language]);
+
+  // Listen for auto-renew-dhcp event from page.tsx
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleAutoRenewDhcp = (event: Event) => {
+      const customEvent = event as CustomEvent<{ deviceId: string }>;
+      if (customEvent.detail && customEvent.detail.deviceId === deviceId) {
+        // Only trigger if this PC is in DHCP mode and has link-local IP
+        if (ipConfigMode === 'dhcp' && pcIP && pcIP.startsWith('169.254.')) {
+          const lease = applyDhcpLease(true);
+          if (lease && lease.serverName !== 'link-local') {
+            addLocalOutput('success', `DHCP lease renewed. New IP: ${lease.ip}`);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('auto-renew-dhcp', handleAutoRenewDhcp);
+    return () => window.removeEventListener('auto-renew-dhcp', handleAutoRenewDhcp);
+  }, [deviceId, ipConfigMode, pcIP, applyDhcpLease, addLocalOutput]);
 
   const handleConnect = async () => {
     if (!consoleDevice) return;
