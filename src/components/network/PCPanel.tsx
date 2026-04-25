@@ -2641,8 +2641,8 @@ export function PCPanel({
     const handleAutoRenewDhcp = (event: Event) => {
       const customEvent = event as CustomEvent<{ deviceId: string }>;
       if (customEvent.detail && customEvent.detail.deviceId === deviceId) {
-        // Only trigger if this PC is in DHCP mode and has link-local IP
-        if (ipConfigMode === 'dhcp' && pcIP && pcIP.startsWith('169.254.')) {
+        // Only trigger if this PC is in DHCP mode and has no valid IP (0.0.0.0 or 169.254.x.x)
+        if (ipConfigMode === 'dhcp' && (!pcIP || pcIP === '0.0.0.0' || pcIP.startsWith('169.254.'))) {
           const lease = applyDhcpLease(true);
           if (lease && lease.serverName !== 'link-local') {
             addLocalOutput('success', `DHCP lease renewed. New IP: ${lease.ip}`);

@@ -1384,31 +1384,70 @@ ${state.bannerMOTD}
     }
   }, [loadProjectData]);
 
-  // Auto-renew DHCP for devices with link-local IPs (169.254.x.x) on page load
+  // Auto-renew DHCP for devices with link-local IPs (169.254.x.x) or 0.0.0.0 on page load
   useEffect(() => {
-    if (!topologyDevices || topologyDevices.length === 0) return;
+    if (!topologyDevices || topologyDevices.length === 0 || !deviceStates) return;
 
-    // Find all PC devices with DHCP mode and link-local IPs
+    // Find all PC devices with DHCP mode and no valid IP (0.0.0.0 or 169.254.x.x)
     const devicesNeedingDhcpRenewal = topologyDevices.filter(
       (device) =>
         device.type === 'pc' &&
         device.ipConfigMode === 'dhcp' &&
-        device.ip &&
-        device.ip.startsWith('169.254.')
+        (!device.ip || device.ip === '0.0.0.0' || device.ip.startsWith('169.254.'))
     );
 
     if (devicesNeedingDhcpRenewal.length === 0) return;
 
-    // Dispatch event to trigger DHCP renewal for each device
-    // PCPanel will listen for this event and call applyDhcpLease
-    devicesNeedingDhcpRenewal.forEach((device) => {
-      window.dispatchEvent(
-        new CustomEvent('auto-renew-dhcp', {
-          detail: { deviceId: device.id }
-        })
-      );
+    // Simple DHCP IP assignment logic
+    const assignDhcpIp = (pcDevice: CanvasDevice): string | null => {
+      // Find router/switch DHCP servers
+      for (const [deviceId_, state] of deviceStates.entries()) {
+        if (deviceId_ === pcDevice.id) continue;
+        const serverDevice = topologyDevices.find(d => d.id === deviceId_);
+        if (!serverDevice || (serverDevice.type !== 'router' && serverDevice.type !== 'switchL2' && serverDevice.type !== 'switchL3')) continue;
+
+        // Check for DHCP pools in services
+        const pools = state.services?.dhcp?.pools || [];
+        for (const pool of pools) {
+          if (!pool.startIp || !pool.subnetMask || !pool.defaultGateway) continue;
+
+          // Parse start IP
+          const startParts = pool.startIp.split('.').map(Number);
+          if (startParts.length !== 4) continue;
+
+          // Find available IP
+          const usedIps = new Set(topologyDevices.filter(d => d.id !== pcDevice.id && d.ip).map(d => d.ip));
+          for (let i = 0; i < (pool.maxUsers || 50); i++) {
+            const candidate = `${startParts[0]}.${startParts[1]}.${startParts[2]}.${startParts[3] + i}`;
+            if (!usedIps.has(candidate)) {
+              return candidate;
+            }
+          }
+        }
+      }
+      return null;
+    };
+
+    // Update devices with DHCP IPs
+    const updatedDevices = topologyDevices.map(device => {
+      const needsDhcp = devicesNeedingDhcpRenewal.find(d => d.id === device.id);
+      if (!needsDhcp) return device;
+
+      const newIp = assignDhcpIp(device);
+      if (newIp) {
+        return {
+          ...device,
+          ip: newIp,
+          subnet: '255.255.255.0',
+          gateway: '192.168.10.1',
+          dns: '8.8.8.8'
+        };
+      }
+      return device;
     });
-  }, [topologyDevices]);
+
+    setTopologyDevices(updatedDevices);
+  }, [topologyDevices, deviceStates, setTopologyDevices]);
 
   // Onboarding: show once per browser
   useEffect(() => {
@@ -4145,6 +4184,25 @@ ${state.bannerMOTD}
                 {/* Topology Toolbar - Fixed at top */}
                 {activeTab === 'topology' && (
                   <div className="sticky top-0 z-30 px-4 py-2 border-b backdrop-blur-md bg-background/95 hidden md:flex items-center gap-3">
+                    {/* Reset View Button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:bg-slate-500/10"
+                          onClick={() => {
+                            setZoom(1.0);
+                            setPan({ x: 0, y: 0 });
+                          }}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                          </svg>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t.resetView}</TooltipContent>
+                    </Tooltip>
                     {/* Active Device Dropdown */}
                     <DropdownMenu onOpenChange={(open) => { if (!open) setDeviceSearchQuery(''); }}>
                       <DropdownMenuTrigger asChild>
@@ -4578,25 +4636,7 @@ ${state.bannerMOTD}
                       </TooltipTrigger>
                       <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh Network (F5)'}</TooltipContent>
                     </Tooltip>
-                    {/* Reset View Button */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-slate-500 hover:bg-slate-500/10"
-                          onClick={() => {
-                            setZoom(1.0);
-                            setPan({ x: 0, y: 0 });
-                          }}
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                          </svg>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{t.resetView}</TooltipContent>
-                    </Tooltip>
+                    
                   </div>
                 )}
                 {/* Network Topology fills remaining space */}

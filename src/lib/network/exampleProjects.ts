@@ -64,6 +64,9 @@ const applyLinkLocalToUnconfiguredHosts = (devices: CanvasDevice[]): CanvasDevic
     if (device.type !== 'pc' && device.type !== 'iot') return device;
     if (isValidIpv4(device.ip) && device.ip !== '0.0.0.0') return device;
 
+    // Don't assign link-local IP to DHCP mode devices - they should get IP from DHCP server
+    if (device.ipConfigMode === 'dhcp') return device;
+
     const linkLocalIp = generateRandomLinkLocalIpv4(usedIps);
     usedIps.add(linkLocalIp);
     return {
