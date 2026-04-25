@@ -15,12 +15,9 @@ export const routerConfigHandlers: Record<string, CommandHandler> = {
 
 /**
  * network - Add network to routing process
+ * Note: This command is only available in router-config mode via routerConfigHandlers
  */
-function cmdRouterNetwork(state: any, input: string, ctx: any): any {
-    if (state.currentMode !== 'router-config') {
-        return { success: false, error: '% Invalid command at this mode' };
-    }
-
+export function cmdRouterNetwork(state: any, input: string, ctx: any): any {
     const match = input.match(/^network\s+([0-9.]+)\s+([0-9.]+)\s+area\s+(\d+)$/i);
     if (!match) {
         // Try without area (RIP)
@@ -36,7 +33,7 @@ function cmdRouterNetwork(state: any, input: string, ctx: any): any {
             newState: {
                 dynamicRoutes: [
                     ...(state.dynamicRoutes || []),
-                    { network: ripMatch[1], mask: '255.255.255.0', nextHop: 'directly connected', metric: 1, protocol: 'RIP' }
+                    { destination: ripMatch[1], subnetMask: '255.255.255.0', nextHop: 'directly connected', metric: 1, type: 'dynamic' }
                 ]
             }
         };
@@ -50,7 +47,7 @@ function cmdRouterNetwork(state: any, input: string, ctx: any): any {
         newState: {
             dynamicRoutes: [
                 ...(state.dynamicRoutes || []),
-                { network, mask: wildcard, area: parseInt(area), protocol: 'OSPF' }
+                { destination: network, subnetMask: wildcard, nextHop: 'directly connected', metric: 1, type: 'dynamic', area: parseInt(area) }
             ]
         }
     };

@@ -1334,6 +1334,10 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
   };
 }
 
+// Import router and DHCP network handlers
+import { cmdRouterNetwork } from './core/routerConfigCommands';
+import { cmdDhcpNetwork } from './core/dhcpConfigCommands';
+
 // --- Placeholder command handlers map ---
 // Combine all handler maps into one unified command registry
 const commandHandlers: Record<string, CommandHandler> = {
@@ -1349,8 +1353,8 @@ const commandHandlers: Record<string, CommandHandler> = {
   // Global configuration commands
   ...globalConfigHandlers,
 
-  // Router configuration commands (OSPF/RIP)
-  ...routerConfigHandlers,
+  // Router configuration commands (OSPF/RIP) - without network (will be added below)
+  ...Object.fromEntries(Object.entries(routerConfigHandlers).filter(([k]) => k !== 'network')),
 
   // Line commands
   ...lineHandlers,
@@ -1358,8 +1362,18 @@ const commandHandlers: Record<string, CommandHandler> = {
   // Privileged commands (for "do" commands in config mode)
   ...privilegedHandlers,
 
-  // DHCP pool sub-commands
-  ...dhcpConfigHandlers,
+  // DHCP pool sub-commands - without network (will be added below)
+  ...Object.fromEntries(Object.entries(dhcpConfigHandlers).filter(([k]) => k !== 'network')),
+
+  // Network command wrapper that routes to appropriate handler based on mode
+  'network': (state, input, ctx) => {
+    if (state.currentMode === 'router-config') {
+      return cmdRouterNetwork(state, input, ctx);
+    } else if (state.currentMode === 'dhcp-config') {
+      return cmdDhcpNetwork(state, input, ctx);
+    }
+    return { success: false, error: '% Invalid command at this mode' };
+  }
 };
 
 

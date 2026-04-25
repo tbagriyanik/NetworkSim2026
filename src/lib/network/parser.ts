@@ -33,13 +33,13 @@ export const commandPatterns: Record<string, CommandPattern> = {
   },
   'exit': {
     pattern: /^(exit|quit)$/i,
-    modes: ['privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config', 'router-config'],
     minArgs: 0,
     maxArgs: 0
   },
   'end': {
     pattern: /^end$/i,
-    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config'],
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config', 'router-config'],
     minArgs: 0,
     maxArgs: 0
   },

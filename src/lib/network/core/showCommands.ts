@@ -1046,7 +1046,21 @@ function cmdShowIpRoute(
     });
   }
 
-  if (!hasConnectedRoutes && (!state.staticRoutes || state.staticRoutes.length === 0)) {
+  // Dynamic routes (RIP, OSPF, etc.) - R for RIP
+  if (state.dynamicRoutes && state.dynamicRoutes.length > 0) {
+    state.dynamicRoutes.forEach((route: any) => {
+      const mask = route.mask || route.subnetMask;
+      const network = route.network || route.destination;
+      if (mask && network) {
+        const prefixLength = getPrefixLength(mask);
+        // RIP uses [120/metric] where 120 is administrative distance
+        const metric = route.metric || 1;
+        output += `R     ${network}/${prefixLength} [120/${metric}] via ${route.nextHop}, 00:00:11, ${route.interface || ''}\n`;
+      }
+    });
+  }
+
+  if (!hasConnectedRoutes && (!state.staticRoutes || state.staticRoutes.length === 0) && (!state.dynamicRoutes || state.dynamicRoutes.length === 0)) {
     output += 'No routes in routing table\n';
   }
 

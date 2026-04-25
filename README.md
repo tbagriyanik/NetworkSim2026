@@ -2,7 +2,7 @@
 
 A modern, interactive, browser-based network simulator for students and networking enthusiasts.
 
-![Version](https://img.shields.io/badge/version-1.5.3-blue)
+![Version](https://img.shields.io/badge/version-1.5.4-blue)
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Commits](https://img.shields.io/badge/commits-640+-orange)
@@ -12,6 +12,22 @@ Network learning app: [Test Address](https://network2026.vercel.app)
 
 ## Recent Updates
 
+- **NEW: L3 Switch Static Routing Example (Figure 9.15)**: Advanced static routing lab with 2 Multilayer Switches, 1 Router, and 2 L2 Switches
+  - PC0 (192.168.1.0/24) to PC4 (192.168.2.0/24) inter-network communication
+  - Configured static routes on all L3 devices
+  - Full running configs with IP routing enabled
+- **NEW: RIP Dynamic Routing Example (Figure 9.19)**: Complete RIP routing protocol lab
+  - 2 Multilayer Switches with RIP routing protocol
+  - 2 L2 Switches and 4 PCs across 3 networks (192.168.1.0/24, 192.168.2.0/24, 192.168.3.0/24)
+  - `router rip` and `network` commands supported
+  - Dynamic route exchange between switches
+- **ENHANCED: Show IP Route with RIP Support**: Added R (RIP) code to routing table display
+  - Format: `R     192.168.3.0/24 [120/1] via 192.168.2.2, 00:00:11, FastEthernet0/24`
+  - RIP administrative distance: 120
+  - Timer and interface information displayed
+- **FIXED: Network Command in Router Config Mode**: `network` command now works in router-config mode
+  - Supports RIP: `network 192.168.1.0`
+  - Supports OSPF: `network 192.168.1.0 0.0.0.255 area 0`
 - **NEW: VLAN-Specific STP Path Calculation**: Ping animation now follows VLAN-specific STP paths
   - Previously used VLAN 1's STP path for all VLANs
   - Now correctly calculates path based on source device's VLAN
@@ -135,7 +151,7 @@ Network learning app: [Test Address](https://network2026.vercel.app)
 - Performance optimization (spatial partitioning, viewport culling)
 - Accessibility (WCAG 2.1 AA compliance)
 - Turkish/English localization
-- **26 Example Projects**: Complete lab scenarios
+- **27 Example Projects**: Complete lab scenarios
 - **150+ CLI Commands**: Full command reference in Help Panel
 - DHCP/DNS/HTTP system enhancements
 - IoT WiFi Lab with sensor simulation
@@ -385,7 +401,7 @@ Theme selection is done from the theme selector in the top right corner.
 - Total lines: `59546`
 - TS/TSX files: `165+`
 - Network components: `55+`
-- Example projects: `26`
+- Example projects: `27`
 - CLI commands: `150+`
 - Last updated: `2026-04-25`
 
@@ -409,7 +425,7 @@ Contributions are welcome. Please:
 
 ---
 
-**Sürüm**: 1.5.4
+**Sürüm**: 1.5.5
 **Son Güncelleme**: 2026-04-25
 **Durum**: Production Ready
 
