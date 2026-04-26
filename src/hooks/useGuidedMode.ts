@@ -101,7 +101,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
       if (!prev) return null;
       
       const updatedSteps = prev.steps.map(s => 
-        s.id === stepId ? { ...s, completed: true } : s
+        s.id === stepId ? { ...s, completed: true, completedAt: new Date() } : s
       );
       
       return {

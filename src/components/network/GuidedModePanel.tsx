@@ -54,6 +54,7 @@ const translations = {
     instructions: 'Detaylı Talimatlar',
     complete: 'Tamamlandı',
     completed: 'Tamamla',
+    completedAt: 'Tamamlanma',
     uncomplete: 'Geri Al',
     progress: 'İlerleme',
     estimatedTime: 'Tahmini Süre',
@@ -79,6 +80,7 @@ const translations = {
     instructions: 'Detailed Instructions',
     complete: 'Complete',
     completed: 'Mark Complete',
+    completedAt: 'Completed',
     uncomplete: 'Undo',
     progress: 'Progress',
     estimatedTime: 'Estimated Time',
@@ -429,9 +431,10 @@ export function GuidedModePanel({
                 size="sm"
                 className="flex-1 bg-green-500 hover:bg-green-600 text-white"
                 onClick={() => onStepComplete(currentStep.id)}
+                disabled={currentStep.completed}
               >
                 <CheckCircle2 className="w-4 h-4 mr-1" />
-                {t.completed}
+                {currentStep.completed ? t.complete : t.completed}
               </Button>
             </div>
           </div>
@@ -482,6 +485,13 @@ export function GuidedModePanel({
                     {isActive && (
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
                         {step.description[language]}
+                      </p>
+                    )}
+                    
+                    {/* Completion Time */}
+                    {isCompleted && step.completedAt && (
+                      <p className="text-[10px] text-green-500 dark:text-green-400 mt-0.5">
+                        {t.completedAt}: {new Date(step.completedAt).toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                       </p>
                     )}
                   </div>

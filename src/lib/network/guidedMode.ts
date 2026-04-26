@@ -16,6 +16,7 @@ export interface GuidedStep {
     configValue?: any;
   };
   completed: boolean;
+  completedAt?: Date;
 }
 
 export interface GuidedProject extends ExampleProject {
