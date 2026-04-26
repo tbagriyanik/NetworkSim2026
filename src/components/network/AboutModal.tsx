@@ -240,12 +240,12 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                 <div className="p-3 bg-cyan-500/5 rounded-lg border border-cyan-500/20">
                   <p className="text-sm font-bold text-cyan-600 dark:text-cyan-400 mb-1">{t.gitAddressLabel}:</p>
                   <a
-                    href="https://github.com/tbagriyanik/ciscosim"
+                    href="https://github.com/tbagriyanik/networksim2026"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-blue-500 hover:underline break-all"
                   >
-                    https://github.com/tbagriyanik/ciscosim
+                    https://github.com/tbagriyanik/networksim2026
                   </a>
                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.openSourceInfo}</p>
                 </div>
