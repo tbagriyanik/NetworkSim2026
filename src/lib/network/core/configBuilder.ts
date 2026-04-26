@@ -35,11 +35,11 @@ export function buildRunningConfig(state: SwitchState): string[] {
     }
 
     if (state.security.enableSecret) {
-        lines.push('enable secret 5 $1$xxxx$xxxxxxxxxxxxxxxx');
+        lines.push(`enable secret ${state.security.enableSecret}`);
     }
     if (state.security.enablePassword) {
         if (state.security.servicePasswordEncryption) {
-            lines.push(`enable password 7 ********`);
+            lines.push(`enable password 7 ${state.security.enablePassword}`);
         } else {
             lines.push(`enable password ${state.security.enablePassword}`);
         }

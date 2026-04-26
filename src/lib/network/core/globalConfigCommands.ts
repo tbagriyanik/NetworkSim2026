@@ -3,6 +3,7 @@
 import type { CommandHandler } from './commandTypes';
 import { buildRunningConfig } from './configBuilder';
 import { canAssignIPToPhysicalPort } from '../switchModels';
+import { encryptMd5Password, encryptType7Password } from '../crypto';
 import { calculatePVST } from './showCommands';
 
 // Global config (hostname, vlan, vtp, spanning-tree, security, ip domain-name, etc.)
@@ -618,12 +619,16 @@ function cmdEnableSecret(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid enable secret command' };
   }
 
+  const password = match[1];
+  const encryptedPassword = encryptMd5Password(password);
+
   return {
     success: true,
     newState: {
       security: {
         ...state.security,
-        enableSecret: match[1]
+        enableSecret: encryptedPassword,
+        enableSecretEncrypted: true
       }
     }
   };
@@ -642,12 +647,18 @@ function cmdEnablePassword(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid enable password command' };
   }
 
+  const password = match[1];
+  // Encrypt with Type 7 if service password encryption is enabled
+  const encryptedPassword = state.security?.servicePasswordEncryption 
+    ? encryptType7Password(password) 
+    : password;
+
   return {
     success: true,
     newState: {
       security: {
         ...state.security,
-        enablePassword: match[1]
+        enablePassword: encryptedPassword
       }
     }
   };

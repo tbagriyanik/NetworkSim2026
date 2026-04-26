@@ -4093,7 +4093,7 @@ ${state.bannerMOTD}
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
-              className={`bg-white border-slate-200 p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              className={`bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: 'fixed',
                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.x : 0,
@@ -4109,7 +4109,7 @@ ${state.bannerMOTD}
             >
               <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden">
                 <DialogHeader
-                  className={`p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10 border-slate-100 bg-white`}
+                  className={`p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900`}
                   data-modal-header
                   onPointerDown={(e) => handlePointerDown(e, 'tasks')}
                 >

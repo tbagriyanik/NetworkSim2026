@@ -436,6 +436,9 @@ Theme selection is done from the theme selector in the top right corner.
 - Scope: `src/`
 - Source files: `175+`
 - Total lines: `63194`
+- Lines without examples: `59980`
+  - exampleProjects.ts: `2880` lines
+  - examples/ directory: `334` lines (server.ts: 138, frontend.tsx: 196)
 - TS/TSX files: `165+`
 - Network components: `55+`
 - Example projects: `30`

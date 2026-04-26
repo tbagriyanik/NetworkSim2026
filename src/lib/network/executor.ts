@@ -6,6 +6,7 @@ import { parseCommand, validateCommand, getHelpContent, commandPatterns } from '
 import { getModePrompt } from './initialState';
 import { isValidMAC, normalizeMAC } from '../utils';
 import { ensureDeviceStatesMap } from './networkUtils';
+import { encryptMd5Password, decryptType7Password } from './crypto';
 
 /**
  * Generate CLI prompt string based on current switch state
@@ -1198,11 +1199,36 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
       };
     }
     
-    const validPassword = state.security.enableSecret
-      ? password === state.security.enableSecret
-      : state.security.enablePassword
-        ? password === state.security.enablePassword
-        : false;
+    let validPassword = false;
+    
+    // Check enable secret (MD5 encrypted)
+    if (state.security.enableSecret) {
+      const storedSecret = state.security.enableSecret;
+      // If stored secret is already encrypted (starts with $1$), compare with encrypted input
+      if (storedSecret.startsWith('$1$')) {
+        const encryptedInput = encryptMd5Password(password);
+        validPassword = encryptedInput === storedSecret;
+      } else {
+        // Legacy: plain text comparison
+        validPassword = password === storedSecret;
+      }
+    }
+    // Check enable password (Type 7 encrypted or plain text)
+    else if (state.security.enablePassword) {
+      const storedPassword = state.security.enablePassword;
+      // If service password encryption is enabled, decrypt and compare
+      if (state.security.servicePasswordEncryption) {
+        try {
+          const decryptedStored = decryptType7Password(storedPassword);
+          validPassword = password === decryptedStored;
+        } catch {
+          // Fallback to plain text comparison if decryption fails
+          validPassword = password === storedPassword;
+        }
+      } else {
+        validPassword = password === storedPassword;
+      }
+    }
 
     if (validPassword) {
       let output = '';

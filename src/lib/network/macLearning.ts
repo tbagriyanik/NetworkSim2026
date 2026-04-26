@@ -116,6 +116,16 @@ export function clearDynamicMacEntries(deviceId: string, deviceStates: Map<strin
 }
 
 /**
+ * Clear static MAC entries only (keep dynamic entries)
+ */
+export function clearStaticMacEntries(deviceId: string, deviceStates: Map<string, SwitchState>): void {
+  const state = deviceStates.get(deviceId);
+  if (!state || !state.macAddressTable) return;
+
+  state.macAddressTable = state.macAddressTable.filter(entry => entry.type === 'DYNAMIC');
+}
+
+/**
  * Add static MAC address entry
  */
 export function addStaticMacEntry(

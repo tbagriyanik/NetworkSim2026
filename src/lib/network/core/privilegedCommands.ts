@@ -3,7 +3,7 @@ import { checkConnectivity, getWirelessSignalStrength, getWirelessDistance } fro
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
 import { SwitchState } from '../types';
 import { clearArpCache } from '../arp';
-import { clearMacTable, clearDynamicMacEntries } from '../macLearning';
+import { clearMacTable, clearDynamicMacEntries, clearStaticMacEntries } from '../macLearning';
 
 // Privileged EXEC komutları (ping, telnet, write, copy, erase, reload, debug, vs.)
 
@@ -768,8 +768,10 @@ function cmdClearMacAddressTable(state: any, input: string, ctx: any): any {
         } else if (args[0] === 'dynamic') {
             // Clear only dynamic entries
             clearDynamicMacEntries(deviceId, deviceStates);
+        } else if (args[0] === 'static') {
+            // Clear only static entries
+            clearStaticMacEntries(deviceId, deviceStates);
         }
-        // Note: 'static' clearing is not implemented in this version
     }
     
     return { success: true, output: '' };

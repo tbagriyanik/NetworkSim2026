@@ -236,10 +236,10 @@ function cmdShowRunningConfig(
 
     // Enable secret
     if (state.security?.enableSecret) {
-      output += `enable secret 5 $1$xxxx$xxxxxxxxxxxxxxxx\n`;
+      output += `enable secret ${state.security.enableSecret}\n`;
     } else if (state.security?.enablePassword) {
       if (state.security?.servicePasswordEncryption) {
-        output += `enable password 7 ********\n`;
+        output += `enable password 7 ${state.security.enablePassword}\n`;
       } else {
         output += `enable password ${state.security.enablePassword}\n`;
       }
@@ -397,14 +397,10 @@ function cmdShowStartupConfig(
 
   // Enable secret from startup config
   if (state.startupConfig.security?.enableSecret) {
-    if (state.startupConfig.security.enableSecretEncrypted) {
-      output += `enable secret 5 ********\n`;
-    } else {
-      output += `enable secret ${state.startupConfig.security.enableSecret}\n`;
-    }
+    output += `enable secret ${state.startupConfig.security.enableSecret}\n`;
   } else if (state.startupConfig.security?.enablePassword) {
     if (state.startupConfig.security.servicePasswordEncryption) {
-      output += `enable password 7 ********\n`;
+      output += `enable password 7 ${state.startupConfig.security.enablePassword}\n`;
     } else {
       output += `enable password ${state.startupConfig.security.enablePassword}\n`;
     }
