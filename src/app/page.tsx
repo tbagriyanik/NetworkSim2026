@@ -3817,13 +3817,7 @@ ${state.bannerMOTD}
                                   }); 
                                 }}
                               >
-                                {/* Guided Mode Badge */}
-                                <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold">
-                                  <GraduationCap className="w-3 h-3" />
-                                  {language === 'tr' ? 'REHBERLİ' : 'GUIDED'}
-                                </div>
-
-                                <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap pr-20'>
+                                <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
                                   <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-emerald-400 text-emerald-100' : 'group-hover:text-emerald-600 text-emerald-900'}`}>
                                     {guidedProject.title}
                                   </span>

@@ -14,6 +14,12 @@ export interface GuidedStep {
     commandPattern?: string;
     configKey?: string;
     configValue?: any;
+    cableType?: 'straight' | 'crossover' | 'console';
+    sourceDevice?: string;
+    sourcePort?: string;
+    targetDevice?: string;
+    targetPort?: string;
+    connections?: Array<{ sourceDevice: string; sourcePort: string; targetDevice: string; targetPort: string }>;
   };
   completed: boolean;
   completedAt?: Date;
@@ -58,6 +64,13 @@ export const basicSwitchGuidedSteps: GuidedStep[] = [
       ]
     },
     checkType: 'connection',
+    checkParams: {
+      cableType: 'straight',
+      sourceDevice: 'pc-1',
+      sourcePort: 'eth0',
+      targetDevice: 'switch-1',
+      targetPort: 'fa0/1'
+    },
     completed: false
   },
   {
@@ -427,7 +440,13 @@ export const basicLanGuidedSteps: GuidedStep[] = [
       ]
     },
     checkType: 'connection',
-    checkParams: {},
+    checkParams: {
+      cableType: 'straight',
+      connections: [
+        { sourceDevice: 'pc-1', sourcePort: 'eth0', targetDevice: 'switch-1', targetPort: 'fa0/1' },
+        { sourceDevice: 'pc-2', sourcePort: 'eth0', targetDevice: 'switch-1', targetPort: 'fa0/2' }
+      ]
+    },
     completed: false
   },
   {
@@ -803,83 +822,6 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
       difficulty: 'beginner'
     },
     {
-      id: 'guided-vlan-lab',
-      tag: isTr ? 'VLAN' : 'VLAN',
-      title: isTr ? 'VLAN Yapılandırma' : 'VLAN Configuration',
-      description: isTr 
-        ? 'VLAN oluşturma, isimlendirme ve port atama işlemleri' 
-        : 'Creating VLANs, naming them, and assigning ports',
-      detail: isTr
-        ? 'Bu laboratuvarda VLAN 10 (SALES) ve VLAN 20 (IT) oluşturulur, portlar VLANlara atanır ve doğrulama yapılır.'
-        : 'In this lab, VLAN 10 (SALES) and VLAN 20 (IT) are created, ports assigned to VLANs, and verification performed.',
-      data: {
-        version: '1.0',
-        timestamp: new Date().toISOString(),
-        devices: [],
-        deviceOutputs: [],
-        pcOutputs: [],
-        pcHistories: [],
-        topology: {
-          devices: [
-            {
-              id: 'switch-1',
-              type: 'switchL2',
-              name: 'Switch-1',
-              x: 300,
-              y: 200,
-              ip: '',
-              macAddress: '00:1A:2B:3C:4D:60',
-              status: 'online',
-              switchModel: 'WS-C2960-24TT-L',
-              ports: [
-                ...Array.from({ length: 24 }, (_, i) => ({ 
-                  id: `fa0/${i + 1}`, 
-                  label: `Fa0/${i + 1}`, 
-                  status: 'disconnected' as const 
-                })),
-                { id: 'console', label: 'Console', status: 'disconnected' as const },
-                { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
-                { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const }
-              ]
-            }
-          ],
-          connections: [],
-          notes: [
-            {
-              id: 'vlan-guided-intro',
-              text: isTr
-                ? '📚 VLAN REHBERLİ DERSİ\n\nAdım 1: VLAN 10 (SALES) oluşturun\nAdım 2: VLAN 20 (IT) oluşturun\nAdım 3: Portları VLAN\'lara atayın\nAdım 4: show vlan brief ile doğrulayın'
-                : '📚 VLAN GUIDED LESSON\n\nStep 1: Create VLAN 10 (SALES)\nStep 2: Create VLAN 20 (IT)\nStep 3: Assign ports to VLANs\nStep 4: Verify with show vlan brief',
-              x: 450,
-              y: 100,
-              width: 400,
-              height: 150,
-              color: '#10b981',
-              font: 'verdana',
-              fontSize: 12,
-              opacity: 0.75
-            }
-          ]
-        },
-        cableInfo: {
-          connected: true,
-          cableType: 'straight',
-          sourceDevice: 'pc',
-          targetDevice: 'switchL2'
-        },
-        activeDeviceId: 'switch-1',
-        activeDeviceType: 'switchL2',
-        activeTab: 'topology',
-        zoom: 1,
-        pan: { x: 0, y: 0 }
-      },
-      level: 'intermediate',
-      isGuided: true,
-      steps: vlanGuidedSteps,
-      estimatedTimeMinutes: 15,
-      difficulty: 'intermediate'
-    },
-    {
       id: 'guided-basic-lan',
       tag: isTr ? 'LAN' : 'LAN',
       title: isTr ? 'Temel LAN Kurulumu' : 'Basic LAN Setup',
@@ -987,6 +929,83 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
       steps: basicLanGuidedSteps,
       estimatedTimeMinutes: 20,
       difficulty: 'beginner'
+    },
+    {
+      id: 'guided-vlan-lab',
+      tag: isTr ? 'VLAN' : 'VLAN',
+      title: isTr ? 'VLAN Yapılandırma' : 'VLAN Configuration',
+      description: isTr 
+        ? 'VLAN oluşturma, isimlendirme ve port atama işlemleri' 
+        : 'Creating VLANs, naming them, and assigning ports',
+      detail: isTr
+        ? 'Bu laboratuvarda VLAN 10 (SALES) ve VLAN 20 (IT) oluşturulur, portlar VLANlara atanır ve doğrulama yapılır.'
+        : 'In this lab, VLAN 10 (SALES) and VLAN 20 (IT) are created, ports assigned to VLANs, and verification performed.',
+      data: {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        devices: [],
+        deviceOutputs: [],
+        pcOutputs: [],
+        pcHistories: [],
+        topology: {
+          devices: [
+            {
+              id: 'switch-1',
+              type: 'switchL2',
+              name: 'Switch-1',
+              x: 300,
+              y: 200,
+              ip: '',
+              macAddress: '00:1A:2B:3C:4D:60',
+              status: 'online',
+              switchModel: 'WS-C2960-24TT-L',
+              ports: [
+                ...Array.from({ length: 24 }, (_, i) => ({ 
+                  id: `fa0/${i + 1}`, 
+                  label: `Fa0/${i + 1}`, 
+                  status: 'disconnected' as const 
+                })),
+                { id: 'console', label: 'Console', status: 'disconnected' as const },
+                { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
+                { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const }
+              ]
+            }
+          ],
+          connections: [],
+          notes: [
+            {
+              id: 'vlan-guided-intro',
+              text: isTr
+                ? '📚 VLAN REHBERLİ DERSİ\n\nAdım 1: VLAN 10 (SALES) oluşturun\nAdım 2: VLAN 20 (IT) oluşturun\nAdım 3: Portları VLAN\'lara atayın\nAdım 4: show vlan brief ile doğrulayın'
+                : '📚 VLAN GUIDED LESSON\n\nStep 1: Create VLAN 10 (SALES)\nStep 2: Create VLAN 20 (IT)\nStep 3: Assign ports to VLANs\nStep 4: Verify with show vlan brief',
+              x: 450,
+              y: 100,
+              width: 400,
+              height: 150,
+              color: '#10b981',
+              font: 'verdana',
+              fontSize: 12,
+              opacity: 0.75
+            }
+          ]
+        },
+        cableInfo: {
+          connected: true,
+          cableType: 'straight',
+          sourceDevice: 'pc',
+          targetDevice: 'switchL2'
+        },
+        activeDeviceId: 'switch-1',
+        activeDeviceType: 'switchL2',
+        activeTab: 'topology',
+        zoom: 1,
+        pan: { x: 0, y: 0 }
+      },
+      level: 'intermediate',
+      isGuided: true,
+      steps: vlanGuidedSteps,
+      estimatedTimeMinutes: 15,
+      difficulty: 'intermediate'
     }
   ];
 };
@@ -1018,9 +1037,55 @@ export const checkStepCompletion = (
       });
     
     case 'connection':
-      // Check if devices are connected
+      // Check if devices are connected with correct cable type and ports
       if (!context.topologyConnections || !context.topologyDevices) return false;
-      // Check for any active connection between devices
+
+      // If multiple connections required (LAN setup)
+      if (step.checkParams?.connections) {
+        const requiredConnections = step.checkParams.connections;
+        const allConnectionsMatch = requiredConnections.every(required => {
+          return context.topologyConnections!.some((conn: any) => {
+            if (!conn.active) return false;
+            // Check cable type
+            if (step.checkParams?.cableType) {
+              const cableTypeMatch = conn.cableType === step.checkParams.cableType ||
+                                    (step.checkParams.cableType === 'straight' && conn.cableType === 'copper-straight-through');
+              if (!cableTypeMatch) return false;
+            }
+            // Check source device and port
+            const sourceMatch = conn.sourceDeviceId === required.sourceDevice &&
+                               conn.sourcePort === required.sourcePort;
+            // Check target device and port
+            const targetMatch = conn.targetDeviceId === required.targetDevice &&
+                               conn.targetPort === required.targetPort;
+            return sourceMatch && targetMatch;
+          });
+        });
+        return allConnectionsMatch;
+      }
+
+      // Single connection check (Basic Switch lesson)
+      if (step.checkParams?.sourceDevice && step.checkParams?.targetDevice) {
+        const params = step.checkParams;
+        return context.topologyConnections.some((conn: any) => {
+          if (!conn.active) return false;
+          // Check cable type
+          if (params.cableType) {
+            const cableTypeMatch = conn.cableType === params.cableType ||
+                                  (params.cableType === 'straight' && conn.cableType === 'copper-straight-through');
+            if (!cableTypeMatch) return false;
+          }
+          // Check source device and port
+          const sourceMatch = conn.sourceDeviceId === params.sourceDevice &&
+                             conn.sourcePort === params.sourcePort;
+          // Check target device and port
+          const targetMatch = conn.targetDeviceId === params.targetDevice &&
+                             conn.targetPort === params.targetPort;
+          return sourceMatch && targetMatch;
+        });
+      }
+
+      // Fallback: check for any active connection
       return context.topologyConnections.some(
         (conn: any) => conn.active === true
       );

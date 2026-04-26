@@ -2,11 +2,11 @@
 
 A modern, interactive, browser-based network simulator for students and networking enthusiasts.
 
-![Version](https://img.shields.io/badge/version-1.5.6-blue)
+![Version](https://img.shields.io/badge/version-1.5.7-blue)
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Commits](https://img.shields.io/badge/commits-720+-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-61842-blueviolet)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-62674-blueviolet)
 
 Network learning app: [Test Address](https://network2026.vercel.app)
 
@@ -18,8 +18,9 @@ Network learning app: [Test Address](https://network2026.vercel.app)
   - Visual progress bar and step indicators
   - Contextual hints and expandable detailed instructions
   - Minimizes to floating button when closed, easily restored
-  - Multiple guided labs: Basic Switch Config (6 steps), VLAN Config (5 steps)
+  - Multiple guided labs: Basic Switch Config (7 steps), Basic LAN Setup (10 steps), VLAN Config (7 steps)
   - Turkish and English localization support
+  - Connection validation: Cable type and port-specific verification for all lessons
 - **NEW: Port Security Enhancement**: Added aging configuration support for port security
   - `switchport port-security aging time <minutes>` - Configure MAC address aging time
   - `switchport port-security aging type <absolute|inactivity>` - Set aging type
@@ -170,7 +171,7 @@ Network learning app: [Test Address](https://network2026.vercel.app)
 
 ## 🗺️ Development Roadmap
 
-### ✅ Completed (v1.5.1)
+### ✅ Completed (v1.5.7)
 - Interactive network topology with drag-and-drop
 - WiFi simulation with signal strength indicators
 - IoT device management and web panel
@@ -187,7 +188,7 @@ Network learning app: [Test Address](https://network2026.vercel.app)
 - Performance optimization (spatial partitioning, viewport culling)
 - Accessibility (WCAG 2.1 AA compliance)
 - Turkish/English localization
-- **30 Example Projects**: Complete lab scenarios including 2 new guided lessons - [View Details](examples.md)
+- **30 Example Projects**: Complete lab scenarios including 3 guided lessons - [View Details](examples.md)
 - **160+ CLI Commands**: Full command reference in Help Panel
 - DHCP/DNS/HTTP system enhancements
 - IoT WiFi Lab with sensor simulation
@@ -434,12 +435,12 @@ Theme selection is done from the theme selector in the top right corner.
 
 - Scope: `src/`
 - Source files: `175+`
-- Total lines: `60588`
+- Total lines: `62674`
 - TS/TSX files: `165+`
 - Network components: `55+`
-- Example projects: `28`
-- CLI commands: `150+`
-- Last updated: `2026-04-25`
+- Example projects: `30`
+- CLI commands: `160+`
+- Last updated: `2026-04-26`
 
 ## 🐛 Troubleshooting
 
@@ -461,8 +462,8 @@ Contributions are welcome. Please:
 
 ---
 
-**Sürüm**: 1.5.5
-**Son Güncelleme**: 2026-04-25
+**Sürüm**: 1.5.7
+**Son Güncelleme**: 2026-04-26
 **Durum**: Production Ready
 
 GitHub: [github.com/tbagriyanik/ciscosim](https://github.com/tbagriyanik/ciscosim)

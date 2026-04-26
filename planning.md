@@ -2,11 +2,11 @@
 
 ## Current Code Metrics
 
-- **Total lines**: 61842
+- **Total lines**: 62674
 - **Last updated**: 2026-04-26
 - **Example projects**: 30
 - **CLI Commands**: 160+
-- **Version**: 1.5.6
+- **Version**: 1.5.7
 
 ## Latest Updates
 
@@ -22,9 +22,10 @@ Implemented comprehensive step-by-step guided learning system for students.
 - **Hint System**: Contextual hints for each step with detailed instructions
 - **Expandable Steps**: Collapsible detailed instructions for each learning objective
 - **Minimize/Restore**: Panel minimizes to a floating button when closed, easily restored
-- **Multiple Guided Labs**: 
-  - Basic Switch Configuration (6 steps): Enable mode, config mode, hostname, port activation, save config
-  - VLAN Configuration (5 steps): VLAN creation, naming, port assignment, verification
+- Multiple Guided Labs: 
+  - Basic Switch Configuration (7 steps): Connection, terminal access, enable mode, config mode, hostname, port activation, save config
+  - Basic LAN Setup (10 steps): Physical connections, IP configuration, switch security, banner, ping test, save config
+  - VLAN Configuration (7 steps): Config mode, VLAN creation, naming, port assignment, verification
 
 **Implementation Details:**
 - `GuidedStep` interface with title, description, hint, and check configuration
@@ -35,9 +36,12 @@ Implemented comprehensive step-by-step guided learning system for students.
   - Device access events (terminal opened)
   - Command patterns entered by user
   - Configuration state changes
+  - Connection validation (cable type, source/target device, source/target port)
 - Auto-advance to next incomplete step when current step completes
 - Progress calculation and visual feedback
 - Turkish and English localization support
+- Lesson reorganization: 2 beginner lessons first, intermediate lesson last
+- Removed redundant "REHBERLİ/GUIDED" badge from lesson cards
 
 **UI/UX Features:**
 - Gradient header with grip handle for dragging
