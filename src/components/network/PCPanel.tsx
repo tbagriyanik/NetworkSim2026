@@ -4224,7 +4224,21 @@ export function PCPanel({
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">Subnet Mask</label>
-                            <Input value={pcSubnet} onChange={(e) => setPcSubnet(e.target.value)} placeholder="255.255.255.0" className={`h-9 ${errors.subnet ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
+                            <Input value={pcSubnet} onChange={(e) => {
+                              setPcSubnet(e.target.value);
+                              // Debounced topology update for static subnet
+                              setTimeout(() => {
+                                window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+                                  detail: {
+                                    deviceId,
+                                    config: {
+                                      subnet: e.target.value,
+                                      ipConfigMode: 'static'
+                                    }
+                                  }
+                                }));
+                              }, 500);
+                            }} placeholder="255.255.255.0" className={`h-9 ${errors.subnet ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">Gateway</label>
