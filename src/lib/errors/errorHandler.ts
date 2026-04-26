@@ -238,3 +238,207 @@ export const COMMON_ERRORS = {
             }
         ),
 };
+
+// Domain-specific error codes for Network Simulator
+export const CLI_ERRORS = {
+    COMMAND_NOT_FOUND: (command: string, context?: Record<string, any>) =>
+        new ApplicationError(
+            'CLI_COMMAND_NOT_FOUND',
+            `Command not found: ${command}`,
+            `The command "${command}" was not recognized. Type '?' for available commands.`,
+            {
+                severity: 'warning',
+                recoverable: true,
+                recoverySteps: ['Check the command spelling', "Type '?' to see available commands"],
+                context: { command, ...context },
+            }
+        ),
+
+    INVALID_MODE: (command: string, currentMode: string, context?: Record<string, any>) =>
+        new ApplicationError(
+            'CLI_INVALID_MODE',
+            `Invalid command for mode: ${currentMode}`,
+            `The command "${command}" cannot be used in ${currentMode} mode.`,
+            {
+                severity: 'warning',
+                recoverable: true,
+                recoverySteps: ['Switch to the appropriate mode', 'Check command availability for current mode'],
+                context: { command, currentMode, ...context },
+            }
+        ),
+
+    INCOMPLETE_COMMAND: (context?: Record<string, any>) =>
+        new ApplicationError(
+            'CLI_INCOMPLETE_COMMAND',
+            'Incomplete command',
+            'The command is incomplete. Please provide all required parameters.',
+            {
+                severity: 'warning',
+                recoverable: true,
+                recoverySteps: ['Check command syntax', 'Provide missing parameters'],
+                context,
+            }
+        ),
+
+    AUTHENTICATION_FAILED: (context?: Record<string, any>) =>
+        new ApplicationError(
+            'CLI_AUTH_FAILED',
+            'Authentication failed',
+            'Invalid password or username. Please check your credentials.',
+            {
+                severity: 'error',
+                recoverable: true,
+                recoverySteps: ['Check your password', 'Verify username is correct', 'Contact administrator if locked out'],
+                context,
+            }
+        ),
+};
+
+export const DEVICE_ERRORS = {
+    DEVICE_OFFLINE: (deviceName: string, context?: Record<string, any>) =>
+        new ApplicationError(
+            'DEVICE_OFFLINE',
+            `Device is offline: ${deviceName}`,
+            `The device "${deviceName}" is powered off. Please turn it on first.`,
+            {
+                severity: 'warning',
+                recoverable: true,
+                recoverySteps: ['Power on the device', 'Wait for boot sequence to complete'],
+                context: { deviceName, ...context },
+            }
+        ),
+
+    DEVICE_NOT_FOUND: (deviceId: string, context?: Record<string, any>) =>
+        new ApplicationError(
+            'DEVICE_NOT_FOUND',
+            `Device not found: ${deviceId}`,
+            'The requested device could not be found in the topology.',
+            {
+                severity: 'error',
+                recoverable: false,
+                context: { deviceId, ...context },
+            }
+        ),
+
+    PORT_UNAVAILABLE: (portName: string, context?: Record<string, any>) =>
+        new ApplicationError(
+            'PORT_UNAVAILABLE',
+            `Port is unavailable: ${portName}`,
+            `The port "${portName}" is already in use or does not exist.`,
+            {
+                severity: 'warning',
+                recoverable: true,
+                recoverySteps: ['Check port status', 'Disconnect existing connection', 'Use a different port'],
+                context: { portName, ...context },
+            }
+        ),
+
+    CONNECTION_FAILED: (source: string, target: string, context?: Record<string, any>) =>
+        new ApplicationError(
+            'CONNECTION_FAILED',
+            `Connection failed: ${source} -> ${target}`,
+            'Unable to establish connection between devices. Please check cable type and port availability.',
+            {
+                severity: 'warning',
+                recoverable: true,
+                recoverySteps: ['Verify cable type is correct', 'Check both ports are available', 'Ensure devices are powered on'],
+                context: { source, target, ...context },
+            }
+        ),
+};
+
+export const STORAGE_ERRORS = {
+    SAVE_FAILED: (context?: Record<string, any>) =>
+        new ApplicationError(
+            'STORAGE_SAVE_FAILED',
+            'Failed to save data',
+            'Unable to save your project. Please try again.',
+            {
+                severity: 'error',
+                recoverable: true,
+                recoverySteps: ['Check available storage space', 'Try exporting as file instead', 'Reload and try again'],
+                context,
+            }
+        ),
+
+    LOAD_FAILED: (context?: Record<string, any>) =>
+        new ApplicationError(
+            'STORAGE_LOAD_FAILED',
+            'Failed to load data',
+            'Unable to load the project file. The file may be corrupted.',
+            {
+                severity: 'error',
+                recoverable: false,
+                context,
+            }
+        ),
+
+    LOCAL_STORAGE_UNAVAILABLE: (context?: Record<string, any>) =>
+        new ApplicationError(
+            'STORAGE_UNAVAILABLE',
+            'Local storage is unavailable',
+            'Your browser storage is not accessible. Settings cannot be saved.',
+            {
+                severity: 'warning',
+                recoverable: true,
+                recoverySteps: ['Check browser permissions', 'Disable private/incognito mode', 'Clear browser data'],
+                context,
+            }
+        ),
+};
+
+export const DHCP_ERRORS = {
+    LEASE_FAILED: (context?: Record<string, any>) =>
+        new ApplicationError(
+            'DHCP_LEASE_FAILED',
+            'DHCP lease acquisition failed',
+            'Unable to obtain an IP address from the DHCP server.',
+            {
+                severity: 'warning',
+                recoverable: true,
+                recoverySteps: ['Check DHCP server is running', 'Verify network connectivity', 'Try static IP configuration'],
+                context,
+            }
+        ),
+
+    POOL_EXHAUSTED: (context?: Record<string, any>) =>
+        new ApplicationError(
+            'DHCP_POOL_EXHAUSTED',
+            'DHCP pool exhausted',
+            'No available IP addresses in the DHCP pool.',
+            {
+                severity: 'warning',
+                recoverable: true,
+                recoverySteps: ['Increase pool size', 'Release unused leases', 'Check for duplicate IPs'],
+                context,
+            }
+        ),
+};
+
+export const CLIPBOARD_ERRORS = {
+    COPY_FAILED: (context?: Record<string, any>) =>
+        new ApplicationError(
+            'CLIPBOARD_COPY_FAILED',
+            'Failed to copy to clipboard',
+            'Unable to copy content to clipboard. Your browser may have blocked the operation.',
+            {
+                severity: 'warning',
+                recoverable: true,
+                recoverySteps: ['Check browser permissions', 'Use keyboard shortcut (Ctrl+C)', 'Try manual selection and copy'],
+                context,
+            }
+        ),
+
+    PASTE_FAILED: (context?: Record<string, any>) =>
+        new ApplicationError(
+            'CLIPBOARD_PASTE_FAILED',
+            'Failed to paste from clipboard',
+            'Unable to read clipboard content. Please check permissions.',
+            {
+                severity: 'warning',
+                recoverable: true,
+                recoverySteps: ['Check browser permissions', 'Use keyboard shortcut (Ctrl+V)', 'Try manual paste'],
+                context,
+            }
+        ),
+};

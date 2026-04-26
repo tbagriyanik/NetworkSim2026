@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { getDeviceWidth, getDeviceHeight, isPcLike, isSwitchDevice, isRouterDevice } from './networkTopology.helpers';
 import { CABLE_COLORS, DRAG_THRESHOLD, LONG_PRESS_DURATION, VIRTUAL_CANVAS_WIDTH_MOBILE, VIRTUAL_CANVAS_HEIGHT_MOBILE, VIRTUAL_CANVAS_WIDTH_DESKTOP, VIRTUAL_CANVAS_HEIGHT_DESKTOP, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM, NOTE_COLORS, NOTE_FONTS_DESKTOP as NOTE_FONTS, NOTE_FONT_SIZES, NOTE_OPACITY as NOTE_OPACITY_OPTIONS, PC_PORT_SPACING, PORT_SPACING, PORT_START_X, PORT_START_Y, PORT_COLORS, STATUS_COLORS, STROKE_COLORS } from './networkTopology.constants';
 import { calculateSTPState } from '@/lib/network/core/showCommands';
+import { errorHandler, CLIPBOARD_ERRORS } from '@/lib/errors/errorHandler';
 
 const allocatedMacAddresses = new Set<string>();
 const generateMacAddress = (): string => {
@@ -2399,8 +2400,8 @@ export function NetworkTopology({
     setNoteClipboard(selection.selectedText);
     try {
       await navigator.clipboard.writeText(selection.selectedText);
-    } catch {
-      // Clipboard may be blocked; keep local fallback.
+    } catch (err) {
+      errorHandler.logError(CLIPBOARD_ERRORS.COPY_FAILED({ noteId, contentLength: selection.selectedText.length, error: String(err) }));
     }
   }, [getNoteSelection]);
 
@@ -2419,8 +2420,8 @@ export function NetworkTopology({
     setNoteClipboard(selection.selectedText);
     try {
       await navigator.clipboard.writeText(selection.selectedText);
-    } catch {
-      // Clipboard may be blocked; keep local fallback.
+    } catch (err) {
+      errorHandler.logError(CLIPBOARD_ERRORS.COPY_FAILED({ noteId, contentLength: selection.selectedText.length, operation: 'cut', error: String(err) }));
     }
     updateNoteTextRange(noteId, selection.start, selection.end, '');
     setNoteTextSelection(null);
@@ -2456,7 +2457,8 @@ export function NetworkTopology({
     let pastedText = '';
     try {
       pastedText = await navigator.clipboard.readText();
-    } catch {
+    } catch (err) {
+      errorHandler.logError(CLIPBOARD_ERRORS.PASTE_FAILED({ noteId, fallbackUsed: true, error: String(err) }));
       pastedText = noteClipboard;
     }
 

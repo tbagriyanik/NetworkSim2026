@@ -2,6 +2,7 @@
 // Provides localStorage-based persistence when database is unavailable
 
 import { createAppSession, isSessionValid, persistAppSession, readAppSession } from '@/lib/security/sessionManager';
+import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
 
 export interface OfflineProject {
   id: string;
@@ -51,7 +52,7 @@ class OfflineStorage {
 
       localStorage.setItem(sanitizeInput(this.PROJECTS_KEY), JSON.stringify(projects));
     } catch (error) {
-      console.warn('Failed to save project to localStorage:', error);
+      errorHandler.logError(STORAGE_ERRORS.SAVE_FAILED({ operation: 'saveProject', projectId: project.id, error: String(error) }));
     }
   }
 
@@ -60,7 +61,7 @@ class OfflineStorage {
       const projects = this.getAllProjects();
       return projects.find(p => p.id === id) || null;
     } catch (error) {
-      console.warn('Failed to get project from localStorage:', error);
+      errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'getProject', projectId: id, error: String(error) }));
       return null;
     }
   }
@@ -70,7 +71,7 @@ class OfflineStorage {
       const data = localStorage.getItem(sanitizeInput(this.PROJECTS_KEY));
       return data ? safeParseJSON(data, []) : [];
     } catch (error) {
-      console.warn('Failed to get projects from localStorage:', error);
+      errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'getAllProjects', error: String(error) }));
       return [];
     }
   }
@@ -81,7 +82,7 @@ class OfflineStorage {
       const filtered = projects.filter(p => p.id !== id);
       localStorage.setItem(sanitizeInput(this.PROJECTS_KEY), JSON.stringify(filtered));
     } catch (error) {
-      console.warn('Failed to delete project from localStorage:', error);
+      errorHandler.logError(STORAGE_ERRORS.SAVE_FAILED({ operation: 'deleteProject', projectId: id, error: String(error) }));
     }
   }
 
@@ -91,7 +92,7 @@ class OfflineStorage {
       localStorage.setItem(sanitizeInput(this.SETTINGS_KEY), JSON.stringify(settings));
       persistAppSession(createAppSession(settings));
     } catch (error) {
-      console.warn('Failed to save settings to localStorage:', error);
+      errorHandler.logError(STORAGE_ERRORS.SAVE_FAILED({ operation: 'saveSettings', error: String(error) }));
     }
   }
 
@@ -117,7 +118,7 @@ class OfflineStorage {
         autoSave: true
       };
     } catch (error) {
-      console.warn('Failed to get settings from localStorage:', error);
+      errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'getSettings', error: String(error) }));
       return {
         language: 'tr',
         theme: 'dark',
@@ -133,7 +134,7 @@ class OfflineStorage {
       histories[deviceId] = history;
       localStorage.setItem(sanitizeInput(this.HISTORIES_KEY), JSON.stringify(histories));
     } catch (error) {
-      console.warn('Failed to save PC history to localStorage:', error);
+      errorHandler.logError(STORAGE_ERRORS.SAVE_FAILED({ operation: 'savePCHistory', deviceId, error: String(error) }));
     }
   }
 
@@ -142,7 +143,7 @@ class OfflineStorage {
       const histories = this.getAllPCHistories();
       return histories[deviceId] || [];
     } catch (error) {
-      console.warn('Failed to get PC history from localStorage:', error);
+      errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'getPCHistory', deviceId, error: String(error) }));
       return [];
     }
   }
@@ -152,7 +153,7 @@ class OfflineStorage {
       const data = localStorage.getItem(sanitizeInput(this.HISTORIES_KEY));
       return data ? safeParseJSON(data, {}) : {};
     } catch (error) {
-      console.warn('Failed to get PC histories from localStorage:', error);
+      errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'getAllPCHistories', error: String(error) }));
       return {};
     }
   }
@@ -165,7 +166,7 @@ class OfflineStorage {
       localStorage.removeItem(sanitizeInput(this.HISTORIES_KEY));
       sessionStorage.removeItem(sanitizeInput(this.SESSION_KEY));
     } catch (error) {
-      console.warn('Failed to clear localStorage:', error);
+      errorHandler.logError(STORAGE_ERRORS.SAVE_FAILED({ operation: 'clearAll', error: String(error) }));
     }
   }
 

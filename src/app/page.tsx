@@ -13,7 +13,7 @@ import { NetworkTopology } from '@/components/network/NetworkTopology';
 import { cn } from '@/lib/utils';
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, CanvasPortStatus } from '@/components/network/networkTopology.types';
 import { getPrompt } from '@/lib/network/executor';
-import { formatErrorForUser } from '@/lib/errors/errorHandler';
+import { formatErrorForUser, errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
 import { checkDeviceConnectivity, getWirelessSignalStrength } from '@/lib/network/connectivity';
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
 import { calculateSTPState, calculatePVST } from '@/lib/network/core/showCommands';
@@ -1379,7 +1379,7 @@ ${state.bannerMOTD}
 
       return true;
     } catch (error) {
-      console.error("Error loading project data", error);
+      errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'loadProjectData', error: String(error) }));
       toast({
         variant: 'destructive',
         title: t.invalidProject,
@@ -1404,7 +1404,7 @@ ${state.bannerMOTD}
           setLastSaveTime(new Date().toLocaleTimeString());
         }
       } catch (e) {
-        console.error("Failed to load autosave", e);
+        errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'autosave', error: String(e) }));
       }
     }
   }, [loadProjectData]);
@@ -1506,8 +1506,8 @@ ${state.bannerMOTD}
         setShowOnboarding(true);
         setOnboardingStep(0);
       }
-    } catch {
-      // ignore storage failures
+    } catch (err) {
+      errorHandler.logError(STORAGE_ERRORS.LOCAL_STORAGE_UNAVAILABLE({ operation: 'getOnboardingStatus', error: String(err) }));
     }
   }, []);
 
@@ -2450,8 +2450,8 @@ ${state.bannerMOTD}
   const closeOnboardingForever = useCallback(() => {
     try {
       localStorage.setItem('netsim_onboarding_seen', '1');
-    } catch {
-      // ignore
+    } catch (err) {
+      errorHandler.logError(STORAGE_ERRORS.LOCAL_STORAGE_UNAVAILABLE({ operation: 'setOnboardingSeen', error: String(err) }));
     }
     setShowOnboarding(false);
   }, [setShowOnboarding]);
@@ -3226,6 +3226,7 @@ ${state.bannerMOTD}
           });
         }
       } catch (error) {
+        errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'fileUpload', error: String(error) }));
         toast({
           title: language === 'tr' ? 'Yükleme başarısız' : 'Load failed',
           description: formatErrorForUser(error as Error, t.failedLoadProject).userMessage,
@@ -5210,7 +5211,11 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pc-info-position');
       if (saved) {
-        try { return JSON.parse(saved); } catch { }
+        try {
+          return JSON.parse(saved);
+        } catch (err) {
+          errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'parsePcInfoPosition', savedValue: saved, error: String(err) }));
+        }
       }
     }
     return { x: 16, y: 96 }; // default: bottom-24 right-4 = 16px from right, 96px from bottom
@@ -5394,7 +5399,11 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('router-info-position');
       if (saved) {
-        try { return JSON.parse(saved); } catch { }
+        try {
+          return JSON.parse(saved);
+        } catch (err) {
+          errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'parseRouterInfoPosition', savedValue: saved, error: String(err) }));
+        }
       }
     }
     return { x: 16, y: 96 }; // default: bottom-24 right-4

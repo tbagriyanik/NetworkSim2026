@@ -25,6 +25,7 @@ import { generateIotWebPanelContent, generateIotDevicePageContent } from '@/lib/
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
 import { PCIcon, WifiSignalMeter, IoTSensorDisplay } from './PCPanelWidgets';
 import { expandCommandContext, DESKTOP_COMMANDS } from './pcPanel.utils';
+import { errorHandler, STORAGE_ERRORS, DHCP_ERRORS, CLIPBOARD_ERRORS, DEVICE_ERRORS } from '@/lib/errors/errorHandler';
 
 
 interface OutputLine {
@@ -169,7 +170,12 @@ export function PCPanel({
   const [showNetworkMenu, setShowNetworkMenu] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [fontSize, setFontSize] = useState<number>(() => {
-    try { return parseInt(localStorage.getItem('terminal-font-size') || '13', 10); } catch { return 13; }
+    try {
+      return parseInt(localStorage.getItem('terminal-font-size') || '13', 10);
+    } catch (err) {
+      errorHandler.logError(STORAGE_ERRORS.LOCAL_STORAGE_UNAVAILABLE({ key: 'terminal-font-size', operation: 'read' }));
+      return 13;
+    }
   });
   const [showCmdSettings, setShowCmdSettings] = useState(false);
 
@@ -180,7 +186,11 @@ export function PCPanel({
 
   const handleFontSizeChange = (val: number) => {
     setFontSize(val);
-    try { localStorage.setItem('terminal-font-size', String(val)); } catch { }
+    try {
+      localStorage.setItem('terminal-font-size', String(val));
+    } catch (err) {
+      errorHandler.logError(STORAGE_ERRORS.LOCAL_STORAGE_UNAVAILABLE({ key: 'terminal-font-size', operation: 'write', value: val }));
+    }
   };
   const [input, setInput] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -323,8 +333,11 @@ export function PCPanel({
               }
               if (sameSubnet) return true;
             }
-          } catch {
-            // Invalid IP format, skip
+          } catch (err) {
+            // Invalid IP format, skip silently - this is expected for malformed IPs
+            if (process.env.NODE_ENV === 'development') {
+              errorHandler.logError(new Error('IP validation failed'), { deviceId: device.id, ip: device.ip, pcIP, pcSubnet });
+            }
           }
 
           // Check if device is reachable via gateway
@@ -368,8 +381,11 @@ export function PCPanel({
                 }
                 if (!routerInSameSubnet) return false;
               }
-            } catch {
-              // Invalid IP format, skip
+            } catch (err) {
+              // Invalid IP format, skip silently - expected for malformed IPs
+              if (process.env.NODE_ENV === 'development') {
+                errorHandler.logError(new Error('Router IP validation failed'), { deviceId: otherDevice.id, ip: otherDevice.ip, pcIP, pcSubnet });
+              }
             }
           } else if (!otherDevice.ip) {
             // Router has no IP, cannot verify network - skip
@@ -660,7 +676,7 @@ export function PCPanel({
       syncToGlobalRef.current();
     }, 500);
     return () => clearTimeout(handler);
-  }, [pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, internalPcHostname, ipConfigMode, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel]);
+  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, internalPcHostname, ipConfigMode, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel]);
   */
 
   // Local output for Desktop (Local) - initialize from prop if available
@@ -728,7 +744,8 @@ export function PCPanel({
           width: typeof parsed.width === 'number' ? parsed.width : 960,
           height: typeof parsed.height === 'number' ? parsed.height : 400,
         };
-      } catch {
+      } catch (err) {
+        errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ key: 'pc-browser-window-state', savedValue: saved, parseError: String(err) }));
         return { x: 40, y: 140, width: 960, height: 400 };
       }
     }
@@ -969,7 +986,8 @@ export function PCPanel({
         title: t.copyToastSuccessTitle,
         description: t.copyToastSuccessDescription,
       });
-    } catch {
+    } catch (err) {
+      errorHandler.logError(CLIPBOARD_ERRORS.COPY_FAILED({ contentLength: pcOutput.length, activeTab }));
       toast({
         title: t.copyToastFailureTitle,
         description: t.copyToastFailureDescription,
@@ -1315,7 +1333,11 @@ export function PCPanel({
         if ((a[i] & m[i]) !== (b[i] & m[i])) return false;
       }
       return true;
-    } catch {
+    } catch (err) {
+      // IP subnet comparison failed - expected for malformed IPs
+      if (process.env.NODE_ENV === 'development') {
+        errorHandler.logError(new Error('Subnet comparison failed'), { sourceIp, targetIp, subnetMask, error: String(err) });
+      }
       return false;
     }
   }, []);
@@ -1337,7 +1359,11 @@ export function PCPanel({
         : `http://${value}`;
       const parsed = new URL(withScheme);
       return parsed.hostname || value;
-    } catch {
+    } catch (err) {
+      // URL parsing failed - using fallback extraction
+      if (process.env.NODE_ENV === 'development') {
+        errorHandler.logError(new Error('URL parsing failed'), { raw, error: String(err) });
+      }
       return value.split('/')[0].split('?')[0].trim();
     }
   }, []);
@@ -1565,8 +1591,11 @@ export function PCPanel({
       const parsed = new URL(displayUrl);
       lookupTarget = parsed.hostname || lookupTarget;
       displayUrl = parsed.toString();
-    } catch {
-      // Keep raw fallback and continue with existing validation flow.
+    } catch (err) {
+      // URL parsing failed - using raw input as fallback
+      if (process.env.NODE_ENV === 'development') {
+        errorHandler.logError(new Error('Browser URL parsing failed'), { displayUrl, error: String(err) });
+      }
     }
 
     const target = lookupTarget.trim() || '192.168.1.10';
@@ -2436,7 +2465,7 @@ export function PCPanel({
 
     return null;
     } catch (err) {
-      console.warn('getDhcpLease error:', err);
+      errorHandler.logError(DHCP_ERRORS.LEASE_FAILED({ deviceId, source: 'getDhcpLease', error: String(err) }));
       return null;
     }
   }, [canReachTargetIp, deviceId, deviceStates, hasPhysicalPathToDevice, ipToNumber, numberToIp, topologyDevices, validateIP]);
@@ -2620,6 +2649,19 @@ export function PCPanel({
       setPcSubnet(linkLocalLease.subnetMask);
       setPcGateway(linkLocalLease.gateway);
       setPcDNS(linkLocalLease.dns);
+      // Update topology to persist the link-local IP
+      window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+        detail: {
+          deviceId,
+          config: {
+            ip: linkLocalLease.ip,
+            subnet: linkLocalLease.subnetMask,
+            gateway: linkLocalLease.gateway,
+            dns: linkLocalLease.dns,
+            ipConfigMode: 'dhcp'
+          }
+        }
+      }));
       return linkLocalLease;
     }
     if (!force &&
@@ -2634,6 +2676,19 @@ export function PCPanel({
     setPcSubnet(lease.subnetMask);
     setPcGateway(lease.gateway);
     setPcDNS(lease.dns);
+    // Update topology to persist the DHCP lease IP
+    window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+      detail: {
+        deviceId,
+        config: {
+          ip: lease.ip,
+          subnet: lease.subnetMask,
+          gateway: lease.gateway,
+          dns: lease.dns,
+          ipConfigMode: 'dhcp'
+        }
+      }
+    }));
     return lease;
   }, [getDhcpLease, deviceId, topologyDevices, validateIP]); // Removed pcIP, pcSubnet, pcGateway, pcDNS - using refs instead
 
@@ -2671,9 +2726,9 @@ export function PCPanel({
 
     let lease;
     try {
-      lease = applyDhcpLeaseRef.current(true);
+      lease = applyDhcpLeaseRef.current?.(true);
     } catch (err) {
-      console.warn('DHCP lease error:', err);
+      errorHandler.logError(DHCP_ERRORS.LEASE_FAILED({ deviceId, source: 'applyDhcpLease', error: String(err) }));
     }
     if (lease && lease.serverName !== 'link-local') {
       toast({
@@ -2709,7 +2764,7 @@ export function PCPanel({
             variant: 'destructive',
           });
         } catch (checkErr) {
-          console.warn('DHCP availability check error:', checkErr);
+          errorHandler.logError(DHCP_ERRORS.LEASE_FAILED({ deviceId, source: 'checkDhcpAvailability', error: String(checkErr) }));
           toast({
             title: t.dhcpFailureTitle,
             description: t.dhcpFailureDescription,
@@ -2732,12 +2787,12 @@ export function PCPanel({
         // Only trigger if this PC is in DHCP mode and has no valid IP (0.0.0.0 or 169.254.x.x)
         if (ipConfigMode === 'dhcp' && (!pcIP || pcIP === '0.0.0.0' || pcIP.startsWith('169.254.'))) {
           try {
-            const lease = applyDhcpLeaseRef.current(true);
+            const lease = applyDhcpLeaseRef.current?.(true);
             if (lease && lease.serverName !== 'link-local') {
               addLocalOutput('success', `DHCP lease renewed. New IP: ${lease.ip}`);
             }
           } catch (err) {
-            console.warn('DHCP auto-renew error:', err);
+            errorHandler.logError(DHCP_ERRORS.LEASE_FAILED({ deviceId, source: 'autoRenewDhcp', error: String(err) }));
           }
         }
       }
@@ -2830,7 +2885,7 @@ export function PCPanel({
             }
           } catch (err) {
             addLocalOutput('error', 'DHCP renew failed. Please check network connection.');
-            console.warn('DHCP renew error:', err);
+            errorHandler.logError(DHCP_ERRORS.LEASE_FAILED({ deviceId, source: 'ipconfigRenew', error: String(err) }));
           }
         } else if (args.includes('/all')) {
           const ipConfigModeText = ipConfigMode === 'dhcp' ? 'Yes' : 'No';
@@ -3160,7 +3215,11 @@ export function PCPanel({
       // Handle password input
       if (consoleNeedsPassword) {
         if (onExecuteDeviceCommand && connectedDeviceId) {
-          try { await onExecuteDeviceCommand(connectedDeviceId, input); } catch (err) { }
+          try {
+            await onExecuteDeviceCommand(connectedDeviceId, input);
+          } catch (err) {
+            errorHandler.logError(DEVICE_ERRORS.DEVICE_OFFLINE(connectedDeviceId, { operation: 'passwordInput', error: String(err) }));
+          }
         }
         setInput('');
         return;
@@ -3173,7 +3232,11 @@ export function PCPanel({
         if (!command) {
           // Empty input = confirm
           if (onExecuteDeviceCommand && connectedDeviceId) {
-            try { await onExecuteDeviceCommand(connectedDeviceId, 'confirm'); } catch (err) { }
+            try {
+              await onExecuteDeviceCommand(connectedDeviceId, 'confirm');
+            } catch (err) {
+              errorHandler.logError(DEVICE_ERRORS.DEVICE_OFFLINE(connectedDeviceId, { operation: 'confirmDialog', error: String(err) }));
+            }
           }
           setInput('');
           return;
@@ -3183,7 +3246,11 @@ export function PCPanel({
         if (lowerCmd === 'confirm' || lowerCmd === 'y' || lowerCmd === 'yes') {
           // These are valid confirm responses
           if (onExecuteDeviceCommand && connectedDeviceId) {
-            try { await onExecuteDeviceCommand(connectedDeviceId, 'confirm'); } catch (err) { }
+            try {
+              await onExecuteDeviceCommand(connectedDeviceId, 'confirm');
+            } catch (err) {
+              errorHandler.logError(DEVICE_ERRORS.DEVICE_OFFLINE(connectedDeviceId, { operation: 'confirmResponse', error: String(err) }));
+            }
           }
           setInput('');
           return;
@@ -3196,7 +3263,11 @@ export function PCPanel({
 
       // Console tab: do not mirror remote commands into local PC CMD output.
       if (onExecuteDeviceCommand && connectedDeviceId) {
-        try { await onExecuteDeviceCommand(connectedDeviceId, command); } catch (err) { }
+        try {
+          await onExecuteDeviceCommand(connectedDeviceId, command);
+        } catch (err) {
+          errorHandler.logError(DEVICE_ERRORS.DEVICE_OFFLINE(connectedDeviceId, { operation: 'executeCommand', command, error: String(err) }));
+        }
       }
     }
   };
@@ -4086,7 +4157,7 @@ export function PCPanel({
                                 manualDhcpClickRef.current = true;
                                 setIpConfigMode('dhcp');
                                 try {
-                                  const lease = applyDhcpLeaseRef.current(true);
+                                  const lease = applyDhcpLeaseRef.current?.(true);
                                   if (lease && lease.serverName === 'link-local') {
                                     toast({
                                       title: language === 'tr' ? 'DHCP bulunamadı' : 'DHCP not found',
@@ -4096,6 +4167,7 @@ export function PCPanel({
                                     });
                                   }
                                 } catch (err) {
+                                  errorHandler.logError(DHCP_ERRORS.LEASE_FAILED({ deviceId, source: 'manualDhcp', error: String(err) }));
                                   toast({
                                     title: language === 'tr' ? 'DHCP hatası' : 'DHCP error',
                                     description: language === 'tr'
@@ -4103,7 +4175,6 @@ export function PCPanel({
                                       : 'DHCP service not found. Link-local IP assigned.',
                                     variant: 'destructive',
                                   });
-                                  console.warn('DHCP lease error:', err);
                                 }
                                 // Reset the ref after a short delay
                                 setTimeout(() => {
@@ -4135,7 +4206,21 @@ export function PCPanel({
                         <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">IP Address</label>
-                            <Input value={pcIP} onChange={(e) => setPcIP(e.target.value)} placeholder="192.168.1.100" className={`h-9 ${errors.ip ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
+                            <Input value={pcIP} onChange={(e) => {
+                              setPcIP(e.target.value);
+                              // Debounced topology update for static IP
+                              setTimeout(() => {
+                                window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+                                  detail: {
+                                    deviceId,
+                                    config: {
+                                      ip: e.target.value,
+                                      ipConfigMode: 'static'
+                                    }
+                                  }
+                                }));
+                              }, 500);
+                            }} placeholder="192.168.1.100" className={`h-9 ${errors.ip ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">Subnet Mask</label>
