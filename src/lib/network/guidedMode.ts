@@ -21,6 +21,8 @@ export interface GuidedStep {
     targetPort?: string;
     connections?: Array<{ sourceDevice: string; sourcePort: string; targetDevice: string; targetPort: string }>;
     subnetMask?: string;
+    pc1Ip?: string;
+    pc2Ip?: string;
   };
   completed: boolean;
   completedAt?: Date;
@@ -608,8 +610,8 @@ export const basicLanGuidedSteps: GuidedStep[] = [
         'Exit with exit command'
       ]
     },
-    checkType: 'command',
-    checkParams: { commandPattern: 'line console|password 4321' },
+    checkType: 'config',
+    checkParams: { configKey: 'security.consoleLine.password', configValue: '4321' },
     completed: false
   },
   {
@@ -641,46 +643,16 @@ export const basicLanGuidedSteps: GuidedStep[] = [
     completed: false
   },
   {
-    id: 'lan-ping-test',
-    order: 8,
-    title: { tr: 'Ping Testi', en: 'Ping Test' },
-    description: { 
-      tr: 'PC0\'dan PC1\'e ping atın', 
-      en: 'Ping from PC0 to PC1' 
-    },
-    hint: { 
-      tr: 'PC0\'da Command Prompt açın ve ping 192.168.1.20 yazın.', 
-      en: 'Open Command Prompt on PC0 and type ping 192.168.1.20.' 
-    },
-    detailedInstructions: {
-      tr: [
-        'PC0 üzerine çift tıklayın',
-        'Desktop > Command Prompt açın',
-        'ping 192.168.1.20 yazın',
-        'Reply from mesajlarını görün'
-      ],
-      en: [
-        'Double-click on PC0',
-        'Open Desktop > Command Prompt',
-        'Type ping 192.168.1.20',
-        'See Reply from messages'
-      ]
-    },
-    checkType: 'command',
-    checkParams: { commandPattern: 'ping 192.168.1.20' },
-    completed: false
-  },
-  {
     id: 'lan-save-config',
-    order: 9,
+    order: 8,
     title: { tr: 'Yapılandırmayı Kaydet', en: 'Save Configuration' },
-    description: { 
-      tr: 'Ayarları kalıcı hafızaya kaydedin', 
-      en: 'Save settings to persistent memory' 
+    description: {
+      tr: 'Ayarları kalıcı hafızaya kaydedin',
+      en: 'Save settings to persistent memory'
     },
-    hint: { 
-      tr: 'exit ile enable moduna dönün, copy running-config startup-config yazın.', 
-      en: 'Return to enable mode with exit, type copy running-config startup-config.' 
+    hint: {
+      tr: 'exit ile enable moduna dönün, copy running-config startup-config yazın.',
+      en: 'Return to enable mode with exit, type copy running-config startup-config.'
     },
     detailedInstructions: {
       tr: [
@@ -702,15 +674,15 @@ export const basicLanGuidedSteps: GuidedStep[] = [
   },
   {
     id: 'lan-verify-config',
-    order: 10,
+    order: 9,
     title: { tr: 'Yapılandırmayı Doğrula', en: 'Verify Configuration' },
-    description: { 
-      tr: 'show running-config ile ayarları görüntüleyin', 
-      en: 'View settings with show running-config' 
+    description: {
+      tr: 'show running-config ile ayarları görüntüleyin',
+      en: 'View settings with show running-config'
     },
-    hint: { 
-      tr: 'show running-config yazarak hostname, şifre ve banner ayarlarını kontrol edin.', 
-      en: 'Type show running-config to check hostname, password and banner settings.' 
+    hint: {
+      tr: 'show running-config yazarak hostname, şifre ve banner ayarlarını kontrol edin.',
+      en: 'Type show running-config to check hostname, password and banner settings.'
     },
     detailedInstructions: {
       tr: [
@@ -728,6 +700,44 @@ export const basicLanGuidedSteps: GuidedStep[] = [
     },
     checkType: 'command',
     checkParams: { commandPattern: 'show run' },
+    completed: false
+  },
+  {
+    id: 'lan-ping-test',
+    order: 10,
+    title: { tr: 'Ping Testi', en: 'Ping Test' },
+    description: {
+      tr: 'PC0\'dan PC1\'e ping atın',
+      en: 'Ping from PC0 to PC1'
+    },
+    hint: {
+      tr: 'PC0\'da Command Prompt açın ve ping 192.168.1.20 yazın.',
+      en: 'Open Command Prompt on PC0 and type ping 192.168.1.20.'
+    },
+    detailedInstructions: {
+      tr: [
+        'PC0 üzerine çift tıklayın',
+        'Desktop > Command Prompt açın',
+        'ping 192.168.1.20 yazın',
+        'Reply from mesajlarını görün'
+      ],
+      en: [
+        'Double-click on PC0',
+        'Open Desktop > Command Prompt',
+        'Type ping 192.168.1.20',
+        'See Reply from messages'
+      ]
+    },
+    checkType: 'connection',
+    checkParams: {
+      cableType: 'straight',
+      connections: [
+        { sourceDevice: 'pc-1', sourcePort: 'eth0', targetDevice: 'switch-1', targetPort: 'fa0/1' },
+        { sourceDevice: 'pc-2', sourcePort: 'eth0', targetDevice: 'switch-1', targetPort: 'fa0/2' }
+      ],
+      pc1Ip: '192.168.1.10',
+      pc2Ip: '192.168.1.20'
+    },
     completed: false
   }
 ];
@@ -1061,15 +1071,24 @@ export const checkStepCompletion = (
                                     (step.checkParams.cableType === 'straight' && conn.cableType === 'copper-straight-through');
               if (!cableTypeMatch) return false;
             }
-            // Check source device and port
+            // Check source device (port is optional)
             const sourceMatch = conn.sourceDeviceId === required.sourceDevice &&
-                               conn.sourcePort === required.sourcePort;
-            // Check target device and port
+                               (!required.sourcePort || conn.sourcePort === required.sourcePort);
+            // Check target device (port is optional)
             const targetMatch = conn.targetDeviceId === required.targetDevice &&
-                               conn.targetPort === required.targetPort;
+                               (!required.targetPort || conn.targetPort === required.targetPort);
             return sourceMatch && targetMatch;
           });
         });
+        // For ping test, also check if both PCs have correct IPs
+        if (step.checkParams?.pc1Ip && step.checkParams?.pc2Ip) {
+          const pc1Device = context.topologyDevices?.find((d: any) => d.id === 'pc-1');
+          const pc2Device = context.topologyDevices?.find((d: any) => d.id === 'pc-2');
+          const pc1IpMatch = pc1Device?.ip === step.checkParams.pc1Ip;
+          const pc2IpMatch = pc2Device?.ip === step.checkParams.pc2Ip;
+          return allConnectionsMatch && pc1IpMatch && pc2IpMatch;
+        }
+
         return allConnectionsMatch;
       }
 
@@ -1127,6 +1146,14 @@ export const checkStepCompletion = (
         const port = context.deviceState.ports?.['fa0/1'] || context.deviceState.ports?.['Fa0/1'];
         if (port) {
           return port.vlan === step.checkParams.configValue || port.accessVlan === step.checkParams.configValue;
+        }
+      }
+
+      // Check console password
+      if (step.checkParams.configKey === 'security.consoleLine.password') {
+        const consoleLine = context.deviceState.security?.consoleLine;
+        if (consoleLine) {
+          return consoleLine.password === step.checkParams.configValue && consoleLine.login === true;
         }
       }
       

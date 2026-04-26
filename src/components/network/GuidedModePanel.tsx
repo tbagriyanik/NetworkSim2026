@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { toast } from "@/hooks/use-toast";
 import { 
   CheckCircle2, 
   Circle, 
@@ -193,6 +194,19 @@ export function GuidedModePanel({
   // Celebration effects
   const triggerStepCelebration = useCallback(() => {
     if (typeof window === 'undefined') return;
+
+    // Check if graphics effects are disabled
+    const isGraphicsLow = document.body.classList.contains('graphics-low');
+
+    if (isGraphicsLow) {
+      // Show simple toast message
+      toast({
+        title: language === 'tr' ? 'Adım Tamamlandı! 🎉' : 'Step Completed! 🎉',
+        description: language === 'tr' ? 'Harika iş!' : 'Great job!',
+      });
+      return;
+    }
+
     // Create emoji particles
     const emojis = ['🎉', '✨', '🌟', '⭐'];
     for (let i = 0; i < 20; i++) {
@@ -210,10 +224,23 @@ export function GuidedModePanel({
       document.body.appendChild(emoji);
       setTimeout(() => emoji.remove(), 2000);
     }
-  }, []);
+  }, [language]);
 
   const triggerLessonCompleteCelebration = useCallback(() => {
     if (typeof window === 'undefined') return;
+
+    // Check if graphics effects are disabled
+    const isGraphicsLow = document.body.classList.contains('graphics-low');
+
+    if (isGraphicsLow) {
+      // Show simple toast message
+      toast({
+        title: language === 'tr' ? 'Ders Tamamlandı! 🏆' : 'Lesson Completed! 🏆',
+        description: language === 'tr' ? 'Tebrikler, tüm adımları tamamladınız!' : 'Congratulations, you completed all steps!',
+      });
+      return;
+    }
+
     // Create more emoji particles for lesson completion
     const emojis = ['🎉', '🎊', '✨', '🌟', '⭐', '🏆', '👏'];
     for (let i = 0; i < 50; i++) {
@@ -233,7 +260,7 @@ export function GuidedModePanel({
         setTimeout(() => emoji.remove(), 3000);
       }, i * 50);
     }
-  }, []);
+  }, [language]);
 
 
   // Drag handlers
@@ -575,114 +602,88 @@ export function GuidedModePanel({
                 </CollapsibleContent>
               </Collapsible>
             )}
-
-            {/* Complete Button */}
-            <div className="mt-3 flex gap-2">
-              <Button
-                size="sm"
-                className={cn(
-                  "flex-1 text-white transition-all",
-                  isCurrentStepReady
-                    ? "bg-green-500 hover:bg-green-600"
-                    : "bg-slate-400 hover:bg-slate-400 cursor-not-allowed opacity-60"
-                )}
-                onClick={() => {
-                  triggerStepCelebration();
-                  onStepComplete(currentStep.id);
-                }}
-                disabled={currentStep.completed || !isCurrentStepReady}
-                title={!isCurrentStepReady && !currentStep.completed
-                  ? (language === 'tr'
-                    ? 'Bu adımı tamamlamak için gerekli işlemi yapmalısınız'
-                    : 'You must complete the required action to finish this step')
-                  : undefined}
-              >
-                <CheckCircle2 className="w-4 h-4 mr-1" />
-                {currentStep.completed ? t.complete : t.completed}
-              </Button>
-            </div>
           </div>
         )}
 
-        {/* Steps List */}
-        <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="p-2 space-y-1">
-            {project.steps.map((step, index) => {
-              const isActive = index === currentStepIndex;
-              const isCompleted = step.completed;
-              const isFuture = index > currentStepIndex;
+      {/* Steps List */}
+      <ScrollArea className="flex-1 overflow-y-auto">
+        <div className="p-2 space-y-1">
+          {project.steps.map((step, index) => {
+            const isActive = index === currentStepIndex;
+            const isCompleted = step.completed;
+            const isFuture = index > currentStepIndex;
 
-              return (
-                <div
-                  key={step.id}
-                  ref={isActive ? activeStepRef : undefined}
-                  className={cn(
-                    "flex items-start gap-2 p-2 rounded-lg transition-all",
-                    isActive && "bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800",
-                    isCompleted && !isActive && "bg-slate-100 dark:bg-slate-800 opacity-60",
-                    !isActive && !isCompleted && "hover:bg-slate-50 dark:hover:bg-slate-700/50"
+            return (
+              <div
+                key={step.id}
+                ref={isActive ? activeStepRef : undefined}
+                className={cn(
+                  "flex items-start gap-2 p-2 rounded-lg transition-all",
+                  isActive && "bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800",
+                  isCompleted && !isActive && "bg-slate-100 dark:bg-slate-800 opacity-60",
+                  !isActive && !isCompleted && "hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                )}
+              >
+                {/* Status Icon */}
+                <div className="mt-0.5">
+                  {isCompleted ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  ) : isActive ? (
+                    <Circle className="w-5 h-5 text-blue-500 animate-pulse" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600" />
                   )}
-                >
-                  {/* Status Icon */}
-                  <div className="mt-0.5">
-                    {isCompleted ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    ) : isActive ? (
-                      <Circle className="w-5 h-5 text-blue-500 animate-pulse" />
-                    ) : (
-                      <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600" />
-                    )}
-                  </div>
-
-                  {/* Undo button for completed steps - moved here */}
-                  {isCompleted && (
-                    <button
-                      onClick={() => onStepUncomplete(step.id)}
-                      className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors flex-shrink-0"
-                    >
-                      {t.uncomplete}
-                    </button>
-                  )}
-
-                  {/* Step Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={cn(
-                        "text-xs font-medium",
-                        isActive && "text-blue-600 dark:text-blue-400",
-                        isCompleted && "text-slate-600 dark:text-white line-through",
-                        !isActive && !isCompleted && "text-slate-500 dark:text-slate-400"
-                      )}>
-                        {step.order}. {step.title[language]}
-                      </span>
-                    </div>
-                    
-                    {isActive && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
-                        {step.description[language]}
-                      </p>
-                    )}
-                    
-                    {/* Completion Time */}
-                    {isCompleted && step.completedAt && project.startedAt && (
-                      <p className="text-[10px] text-slate-400 dark:text-slate-300 mt-0.5">
-                        {t.completedAt}: {new Date(step.completedAt).toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                        <span className="ml-1 text-slate-400">
-                          ({(() => {
-                            const duration = Math.round((new Date(step.completedAt).getTime() - new Date(project.startedAt).getTime()) / 1000);
-                            const minutes = Math.floor(duration / 60);
-                            const seconds = duration % 60;
-                            return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-                          })()})
-                        </span>
-                      </p>
-                    )}
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
+
+                {/* Undo button for completed steps */}
+                {isCompleted && (
+                  <button
+                    onClick={() => onStepUncomplete(step.id)}
+                    className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors flex-shrink-0"
+                  >
+                    {t.uncomplete}
+                  </button>
+                )}
+
+                {/* Step Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "text-xs font-medium",
+                      isActive && "text-blue-600 dark:text-blue-400",
+                      isCompleted && "text-slate-600 dark:text-white line-through",
+                      !isActive && !isCompleted && "text-slate-500 dark:text-slate-400"
+                    )}>
+                      {step.order}. {step.title[language]}
+                    </span>
+                  </div>
+
+                  {isActive && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
+                      {step.description[language]}
+                    </p>
+                  )}
+
+                  {/* Completion Time */}
+                  {isCompleted && step.completedAt && project.startedAt && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-300 mt-0.5">
+                      {t.completedAt}: {new Date(step.completedAt).toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      <span className="ml-1 text-slate-400">
+                        ({(() => {
+                          const duration = Math.round((new Date(step.completedAt).getTime() - new Date(project.startedAt).getTime()) / 1000);
+                          const minutes = Math.floor(duration / 60);
+                          const seconds = duration % 60;
+                          return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+                        })()})
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
 
         {/* Footer Info */}
         <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
