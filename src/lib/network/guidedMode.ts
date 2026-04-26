@@ -398,6 +398,312 @@ export const vlanGuidedSteps: GuidedStep[] = [
   }
 ];
 
+// Temel LAN Kurulumu ve Switch Yapılandırma Laboratuvarı - Adımlar
+export const basicLanGuidedSteps: GuidedStep[] = [
+  {
+    id: 'lan-connect-devices',
+    order: 1,
+    title: { tr: 'Fiziksel Bağlantıyı Kurma', en: 'Establish Physical Connection' },
+    description: { 
+      tr: 'İki bilgisayarı switch\'e bağlayın', 
+      en: 'Connect two PCs to the switch' 
+    },
+    hint: { 
+      tr: 'PC0\'ı Fa0/1 ve PC1\'i Fa0/2 portlarına düz (straight-through) kablo ile bağlayın.', 
+      en: 'Connect PC0 to Fa0/1 and PC1 to Fa0/2 using straight-through cables.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'Kablo çekme aracını seçin',
+        'PC0 üzerine tıklayıp Switch Fa0/1 portuna sürükleyin',
+        'Düz (Copper Straight-Through) kablo tipini seçin',
+        'PC1 için aynı işlemi Fa0/2 portuna yapın'
+      ],
+      en: [
+        'Select the cable tool',
+        'Click on PC0 and drag to Switch Fa0/1 port',
+        'Choose Copper Straight-Through cable type',
+        'Do the same for PC1 to Fa0/2 port'
+      ]
+    },
+    checkType: 'connection',
+    checkParams: {},
+    completed: false
+  },
+  {
+    id: 'lan-pc0-ip',
+    order: 2,
+    title: { tr: 'PC0 IP Yapılandırması', en: 'PC0 IP Configuration' },
+    description: { 
+      tr: 'PC0\'a IP adresi atayın', 
+      en: 'Assign IP address to PC0' 
+    },
+    hint: { 
+      tr: 'PC0\'a çift tıklayıp IP Configuration sekmesine gidin. IP: 192.168.1.10, Mask: 255.255.255.0', 
+      en: 'Double-click PC0 and go to IP Configuration tab. IP: 192.168.1.10, Mask: 255.255.255.0' 
+    },
+    detailedInstructions: {
+      tr: [
+        'PC0 üzerine çift tıklayın',
+        'Desktop sekmesine gidin',
+        'IP Configuration\'ı açın',
+        'Static seçeneğini seçin',
+        'IP Address: 192.168.1.10',
+        'Subnet Mask: 255.255.255.0'
+      ],
+      en: [
+        'Double-click on PC0',
+        'Go to Desktop tab',
+        'Open IP Configuration',
+        'Select Static option',
+        'IP Address: 192.168.1.10',
+        'Subnet Mask: 255.255.255.0'
+      ]
+    },
+    checkType: 'config',
+    checkParams: { configKey: 'pc.pc-1.ip', configValue: '192.168.1.10' },
+    completed: false
+  },
+  {
+    id: 'lan-pc1-ip',
+    order: 3,
+    title: { tr: 'PC1 IP Yapılandırması', en: 'PC1 IP Configuration' },
+    description: { 
+      tr: 'PC1\'e IP adresi atayın', 
+      en: 'Assign IP address to PC1' 
+    },
+    hint: { 
+      tr: 'PC1\'e IP: 192.168.1.20, Mask: 255.255.255.0 atayın.', 
+      en: 'Assign IP: 192.168.1.20, Mask: 255.255.255.0 to PC1.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'PC1 üzerine çift tıklayın',
+        'IP Configuration\'ı açın',
+        'Static seçeneğini seçin',
+        'IP Address: 192.168.1.20',
+        'Subnet Mask: 255.255.255.0'
+      ],
+      en: [
+        'Double-click on PC1',
+        'Open IP Configuration',
+        'Select Static option',
+        'IP Address: 192.168.1.20',
+        'Subnet Mask: 255.255.255.0'
+      ]
+    },
+    checkType: 'config',
+    checkParams: { configKey: 'pc.pc-2.ip', configValue: '192.168.1.20' },
+    completed: false
+  },
+  {
+    id: 'lan-switch-hostname',
+    order: 4,
+    title: { tr: 'Switch Hostname Değiştirme', en: 'Change Switch Hostname' },
+    description: { 
+      tr: 'Switch\'e Lab_Switch ismini verin', 
+      en: 'Name the switch as Lab_Switch' 
+    },
+    hint: { 
+      tr: 'enable, configure terminal, sonra hostname Lab_Switch yazın.', 
+      en: 'Type enable, configure terminal, then hostname Lab_Switch.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'Switch terminalini açın',
+        'enable yazın',
+        'configure terminal yazın',
+        'hostname Lab_Switch yazın'
+      ],
+      en: [
+        'Open switch terminal',
+        'Type enable',
+        'Type configure terminal',
+        'Type hostname Lab_Switch'
+      ]
+    },
+    checkType: 'command',
+    checkParams: { commandPattern: 'hostname' },
+    completed: false
+  },
+  {
+    id: 'lan-switch-enable-secret',
+    order: 5,
+    title: { tr: 'Enable Secret Şifre', en: 'Enable Secret Password' },
+    description: { 
+      tr: 'Ayrıcalıklı mod şifresi belirleyin', 
+      en: 'Set privileged mode password' 
+    },
+    hint: { 
+      tr: 'enable secret 1234 komutunu kullanın.', 
+      en: 'Use enable secret 1234 command.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'Config modunda olun',
+        'enable secret 1234 yazın',
+        'Şifrelenmiş parola oluşturulacaktır'
+      ],
+      en: [
+        'Be in config mode',
+        'Type enable secret 1234',
+        'Encrypted password will be created'
+      ]
+    },
+    checkType: 'command',
+    checkParams: { commandPattern: 'enable secret' },
+    completed: false
+  },
+  {
+    id: 'lan-switch-console-pass',
+    order: 6,
+    title: { tr: 'Konsol Şifresi', en: 'Console Password' },
+    description: { 
+      tr: 'Konsol portu şifresi koyun', 
+      en: 'Set console port password' 
+    },
+    hint: { 
+      tr: 'line console 0, password 4321, login komutlarını kullanın.', 
+      en: 'Use line console 0, password 4321, login commands.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'Config modundayken: line console 0 yazın',
+        'password 4321 yazın',
+        'login yazın',
+        'exit ile çıkın'
+      ],
+      en: [
+        'In config mode: type line console 0',
+        'Type password 4321',
+        'Type login',
+        'Exit with exit command'
+      ]
+    },
+    checkType: 'command',
+    checkParams: { commandPattern: 'line console|password 4321' },
+    completed: false
+  },
+  {
+    id: 'lan-switch-banner',
+    order: 7,
+    title: { tr: 'Karşılama Mesajı (MOTD)', en: 'Welcome Message (MOTD)' },
+    description: { 
+      tr: 'Banner mesajı ekleyin', 
+      en: 'Add banner message' 
+    },
+    hint: { 
+      tr: 'banner motd #YETKISIZ GIRIS YASAKTIR# yazın.', 
+      en: 'Type banner motd #Unauthorized Access Prohibited#.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'Config modunda: banner motd #YETKISIZ GIRIS YASAKTIR#',
+        'veya kendi mesajınızı yazın',
+        'Sonlandırıcı karakter (#) ile kapatın'
+      ],
+      en: [
+        'In config mode: banner motd #Unauthorized Access Prohibited#',
+        'Or use your own message',
+        'Close with terminator character (#)'
+      ]
+    },
+    checkType: 'command',
+    checkParams: { commandPattern: 'banner motd' },
+    completed: false
+  },
+  {
+    id: 'lan-ping-test',
+    order: 8,
+    title: { tr: 'Ping Testi', en: 'Ping Test' },
+    description: { 
+      tr: 'PC0\'dan PC1\'e ping atın', 
+      en: 'Ping from PC0 to PC1' 
+    },
+    hint: { 
+      tr: 'PC0\'da Command Prompt açın ve ping 192.168.1.20 yazın.', 
+      en: 'Open Command Prompt on PC0 and type ping 192.168.1.20.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'PC0 üzerine çift tıklayın',
+        'Desktop > Command Prompt açın',
+        'ping 192.168.1.20 yazın',
+        'Reply from mesajlarını görün'
+      ],
+      en: [
+        'Double-click on PC0',
+        'Open Desktop > Command Prompt',
+        'Type ping 192.168.1.20',
+        'See Reply from messages'
+      ]
+    },
+    checkType: 'command',
+    checkParams: { commandPattern: 'ping 192.168.1.20' },
+    completed: false
+  },
+  {
+    id: 'lan-save-config',
+    order: 9,
+    title: { tr: 'Yapılandırmayı Kaydet', en: 'Save Configuration' },
+    description: { 
+      tr: 'Ayarları kalıcı hafızaya kaydedin', 
+      en: 'Save settings to persistent memory' 
+    },
+    hint: { 
+      tr: 'exit ile enable moduna dönün, copy running-config startup-config yazın.', 
+      en: 'Return to enable mode with exit, type copy running-config startup-config.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'Config modundan exit ile çıkın',
+        'Privileged modda (Switch#) olduğunuzdan emin olun',
+        'copy running-config startup-config yazın',
+        'Enter onaylayın'
+      ],
+      en: [
+        'Exit config mode with exit',
+        'Make sure you are in privileged mode (Switch#)',
+        'Type copy running-config startup-config',
+        'Press Enter to confirm'
+      ]
+    },
+    checkType: 'command',
+    checkParams: { commandPattern: 'copy running-config|wr' },
+    completed: false
+  },
+  {
+    id: 'lan-verify-config',
+    order: 10,
+    title: { tr: 'Yapılandırmayı Doğrula', en: 'Verify Configuration' },
+    description: { 
+      tr: 'show running-config ile ayarları görüntüleyin', 
+      en: 'View settings with show running-config' 
+    },
+    hint: { 
+      tr: 'show running-config yazarak hostname, şifre ve banner ayarlarını kontrol edin.', 
+      en: 'Type show running-config to check hostname, password and banner settings.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'Switch terminalinde olun',
+        'show running-config yazın',
+        'Hostname: Lab_Switch kontrol edin',
+        'Banner ve şifre ayarlarını doğrulayın'
+      ],
+      en: [
+        'Be in switch terminal',
+        'Type show running-config',
+        'Check Hostname: Lab_Switch',
+        'Verify banner and password settings'
+      ]
+    },
+    checkType: 'command',
+    checkParams: { commandPattern: 'show run' },
+    completed: false
+  }
+];
+
 // Rehberli projeleri oluştur
 export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
   const isTr = language === 'tr';
@@ -572,6 +878,115 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
       steps: vlanGuidedSteps,
       estimatedTimeMinutes: 15,
       difficulty: 'intermediate'
+    },
+    {
+      id: 'guided-basic-lan',
+      tag: isTr ? 'LAN' : 'LAN',
+      title: isTr ? 'Temel LAN Kurulumu' : 'Basic LAN Setup',
+      description: isTr 
+        ? 'İki bilgisayarlı ağ kurma ve switch güvenlik yapılandırması' 
+        : 'Two-computer network setup and switch security configuration',
+      detail: isTr
+        ? 'PC bağlantısı, IP atama, hostname, şifre, banner, ping testi ve yapılandırma kaydetme işlemleri.'
+        : 'PC connections, IP assignment, hostname, passwords, banner, ping test, and saving configuration.',
+      data: {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        devices: [],
+        deviceOutputs: [],
+        pcOutputs: [],
+        pcHistories: [],
+        topology: {
+          devices: [
+            {
+              id: 'switch-1',
+              type: 'switchL2',
+              name: 'Switch',
+              x: 400,
+              y: 200,
+              ip: '',
+              macAddress: '00:1A:2B:3C:4D:70',
+              status: 'online',
+              switchModel: 'WS-C2960-24TT-L',
+              ports: [
+                ...Array.from({ length: 24 }, (_, i) => ({ 
+                  id: `fa0/${i + 1}`, 
+                  label: `Fa0/${i + 1}`, 
+                  status: 'disconnected' as const 
+                })),
+                { id: 'console', label: 'Console', status: 'disconnected' as const },
+                { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
+                { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const }
+              ]
+            },
+            {
+              id: 'pc-1',
+              type: 'pc',
+              name: 'PC0',
+              x: 150,
+              y: 100,
+              ip: '',
+              subnet: '',
+              gateway: '',
+              macAddress: '00:50:79:66:68:10',
+              status: 'online',
+              ports: [
+                { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
+                { id: 'com1', label: 'COM1', status: 'disconnected' as const }
+              ]
+            },
+            {
+              id: 'pc-2',
+              type: 'pc',
+              name: 'PC1',
+              x: 150,
+              y: 300,
+              ip: '',
+              subnet: '',
+              gateway: '',
+              macAddress: '00:50:79:66:68:20',
+              status: 'online',
+              ports: [
+                { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
+                { id: 'com1', label: 'COM1', status: 'disconnected' as const }
+              ]
+            }
+          ],
+          connections: [],
+          notes: [
+            {
+              id: 'lan-guided-intro',
+              text: isTr
+                ? '📚 TEMEL LAN KURULUMU\n\nAdım 1: PC0 ve PC1\'i Switch\'e bağlayın\nAdım 2: IP adreslerini atayın (192.168.1.10/20)\nAdım 3: Switch hostname: Lab_Switch\nAdım 4: Güvenlik: enable secret, console şifresi\nAdım 5: Banner MOTD ekle\nAdım 6: Ping testi ve kaydetme'
+                : '📚 BASIC LAN SETUP\n\nStep 1: Connect PC0 and PC1 to Switch\nStep 2: Assign IPs (192.168.1.10/20)\nStep 3: Switch hostname: Lab_Switch\nStep 4: Security: enable secret, console password\nStep 5: Add Banner MOTD\nStep 6: Ping test and save',
+              x: 500,
+              y: 50,
+              width: 450,
+              height: 200,
+              color: '#8b5cf6',
+              font: 'verdana',
+              fontSize: 12,
+              opacity: 0.75
+            }
+          ]
+        },
+        cableInfo: {
+          connected: true,
+          cableType: 'straight',
+          sourceDevice: 'pc',
+          targetDevice: 'switchL2'
+        },
+        activeDeviceId: 'switch-1',
+        activeDeviceType: 'switchL2',
+        activeTab: 'topology',
+        zoom: 1,
+        pan: { x: 0, y: 0 }
+      },
+      level: 'basic',
+      isGuided: true,
+      steps: basicLanGuidedSteps,
+      estimatedTimeMinutes: 20,
+      difficulty: 'beginner'
     }
   ];
 };
@@ -639,6 +1054,17 @@ export const checkStepCompletion = (
         if (port) {
           return port.vlan === step.checkParams.configValue || port.accessVlan === step.checkParams.configValue;
         }
+      }
+      
+      // Check PC IP configuration (for LAN setup)
+      if (step.checkParams.configKey === 'pc.pc-1.ip') {
+        // PC IP is stored in deviceState, check if IP matches
+        return context.deviceState.ip === step.checkParams.configValue;
+      }
+      if (step.checkParams.configKey === 'pc.pc-2.ip') {
+        // For second PC, we need to check via topology context
+        // This will be handled by the deviceStates map in page.tsx
+        return false; // Will rely on manual check or auto-complete via context
       }
       return false;
     
