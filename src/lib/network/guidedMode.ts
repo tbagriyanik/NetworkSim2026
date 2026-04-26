@@ -20,6 +20,7 @@ export interface GuidedStep {
     targetDevice?: string;
     targetPort?: string;
     connections?: Array<{ sourceDevice: string; sourcePort: string; targetDevice: string; targetPort: string }>;
+    subnetMask?: string;
   };
   completed: boolean;
   completedAt?: Date;
@@ -480,7 +481,11 @@ export const basicLanGuidedSteps: GuidedStep[] = [
       ]
     },
     checkType: 'config',
-    checkParams: { configKey: 'pc.pc-1.ip', configValue: '192.168.1.10' },
+    checkParams: { 
+      configKey: 'pc.pc-1.ip', 
+      configValue: '192.168.1.10',
+      subnetMask: '255.255.255.0'
+    },
     completed: false
   },
   {
@@ -512,7 +517,11 @@ export const basicLanGuidedSteps: GuidedStep[] = [
       ]
     },
     checkType: 'config',
-    checkParams: { configKey: 'pc.pc-2.ip', configValue: '192.168.1.20' },
+    checkParams: { 
+      configKey: 'pc.pc-2.ip', 
+      configValue: '192.168.1.20',
+      subnetMask: '255.255.255.0'
+    },
     completed: false
   },
   {
@@ -1123,13 +1132,26 @@ export const checkStepCompletion = (
       
       // Check PC IP configuration (for LAN setup)
       if (step.checkParams.configKey === 'pc.pc-1.ip') {
-        // PC IP is stored in deviceState, check if IP matches
-        return context.deviceState.ip === step.checkParams.configValue;
+        // PC IP is stored in topology devices, not deviceState
+        const pcDevice = context.topologyDevices?.find((d: any) => d.id === 'pc-1');
+        const ipMatch = pcDevice?.ip === step.checkParams.configValue;
+        // Also check subnet mask if specified
+        if (step.checkParams.subnetMask) {
+          const maskMatch = pcDevice?.subnet === step.checkParams.subnetMask;
+          return ipMatch && maskMatch;
+        }
+        return ipMatch;
       }
       if (step.checkParams.configKey === 'pc.pc-2.ip') {
-        // For second PC, we need to check via topology context
-        // This will be handled by the deviceStates map in page.tsx
-        return false; // Will rely on manual check or auto-complete via context
+        // PC IP is stored in topology devices, not deviceState
+        const pcDevice = context.topologyDevices?.find((d: any) => d.id === 'pc-2');
+        const ipMatch = pcDevice?.ip === step.checkParams.configValue;
+        // Also check subnet mask if specified
+        if (step.checkParams.subnetMask) {
+          const maskMatch = pcDevice?.subnet === step.checkParams.subnetMask;
+          return ipMatch && maskMatch;
+        }
+        return ipMatch;
       }
       return false;
     

@@ -573,6 +573,23 @@
   animation: rotate 1s linear infinite;
 }
 
+/* Float up animation for celebration effects */
+@keyframes float-up {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.animate-float-up {
+  animation: float-up 1s linear infinite;
+}
+
 /* Low Graphics Mode - Disable animations and effects */
 body.graphics-low *,
 body.graphics-low *::before,

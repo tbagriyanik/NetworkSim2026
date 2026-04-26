@@ -125,8 +125,33 @@ export function GuidedModePanel({
   onCheckAutoComplete
 }: GuidedModePanelProps) {
   const t = translations[language];
-  const [showHint, setShowHint] = React.useState(false);
-  const [expandedSteps, setExpandedSteps] = React.useState<string[]>([]);
+  
+  // Load hint and expanded states from localStorage
+  const [showHint, setShowHint] = React.useState(() => {
+    if (typeof window === 'undefined') return false;
+    const saved = localStorage.getItem('guided_show_hint');
+    return saved === 'true';
+  });
+  
+  const [expandedSteps, setExpandedSteps] = React.useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem('guided_expanded_steps');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Save hint state to localStorage when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('guided_show_hint', String(showHint));
+    }
+  }, [showHint]);
+
+  // Save expanded steps to localStorage when they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('guided_expanded_steps', JSON.stringify(expandedSteps));
+    }
+  }, [expandedSteps]);
   
   // Dragging state
   const [position, setPosition] = useState({ x: 0, y: 80 }); // right-4 top-20 (x set in useEffect)
@@ -164,6 +189,52 @@ export function GuidedModePanel({
       }
     }
   }, [lastCommand, deviceAccessed, deviceState, topologyConnections, topologyDevices, onCheckAutoComplete, project, currentStepIndex]);
+
+  // Celebration effects
+  const triggerStepCelebration = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    // Create emoji particles
+    const emojis = ['🎉', '✨', '🌟', '⭐'];
+    for (let i = 0; i < 20; i++) {
+      const emoji = document.createElement('div');
+      emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      emoji.style.cssText = `
+        position: fixed;
+        left: ${Math.random() * 100}vw;
+        top: 100vh;
+        font-size: 24px;
+        pointer-events: none;
+        z-index: 9999;
+        animation: float-up 2s ease-out forwards;
+      `;
+      document.body.appendChild(emoji);
+      setTimeout(() => emoji.remove(), 2000);
+    }
+  }, []);
+
+  const triggerLessonCompleteCelebration = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    // Create more emoji particles for lesson completion
+    const emojis = ['🎉', '🎊', '✨', '🌟', '⭐', '🏆', '👏'];
+    for (let i = 0; i < 50; i++) {
+      setTimeout(() => {
+        const emoji = document.createElement('div');
+        emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        emoji.style.cssText = `
+          position: fixed;
+          left: ${Math.random() * 100}vw;
+          top: 100vh;
+          font-size: ${20 + Math.random() * 20}px;
+          pointer-events: none;
+          z-index: 9999;
+          animation: float-up 3s ease-out forwards;
+        `;
+        document.body.appendChild(emoji);
+        setTimeout(() => emoji.remove(), 3000);
+      }, i * 50);
+    }
+  }, []);
+
 
   // Drag handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -261,12 +332,30 @@ export function GuidedModePanel({
     }
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
+  // Trigger celebration when all steps are completed
+  const completedCount = project?.steps.filter(s => s.completed).length || 0;
+  const isAllCompleted = project ? completedCount === project.steps.length : false;
+
+  useEffect(() => {
+    if (project && isAllCompleted) {
+      triggerLessonCompleteCelebration();
+    }
+  }, [isAllCompleted, project, triggerLessonCompleteCelebration]);
+
+  // Listen for step completion event from useGuidedMode
+  useEffect(() => {
+    const handleStepCompleted = () => {
+      triggerStepCelebration();
+    };
+
+    window.addEventListener('guided-step-completed', handleStepCompleted);
+    return () => window.removeEventListener('guided-step-completed', handleStepCompleted);
+  }, [triggerStepCelebration]);
+
   if (!project) return null;
 
   const progress = getProgressPercentage(project.steps);
   const currentStep = project.steps[currentStepIndex];
-  const completedCount = project.steps.filter(s => s.completed).length;
-  const isAllCompleted = completedCount === project.steps.length;
 
   const toggleStepExpand = (stepId: string) => {
     setExpandedSteps(prev => 
@@ -497,7 +586,10 @@ export function GuidedModePanel({
                     ? "bg-green-500 hover:bg-green-600"
                     : "bg-slate-400 hover:bg-slate-400 cursor-not-allowed opacity-60"
                 )}
-                onClick={() => onStepComplete(currentStep.id)}
+                onClick={() => {
+                  triggerStepCelebration();
+                  onStepComplete(currentStep.id);
+                }}
                 disabled={currentStep.completed || !isCurrentStepReady}
                 title={!isCurrentStepReady && !currentStep.completed
                   ? (language === 'tr'

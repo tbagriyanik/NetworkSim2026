@@ -273,6 +273,7 @@ export function PCPanel({
   const isDhcpEditingRef = useRef(false); // Track if user is actively editing DHCP pools
   const isDnsEditingRef = useRef(false); // Track if user is actively editing DNS records
   const checkDhcpAvailabilityRef = useRef<() => { available: boolean; reason: string }>(() => ({ available: true, reason: '' }));
+  const manualDhcpClickRef = useRef(false); // Track if DHCP button was manually clicked to prevent infinite loop
   const [dhcpForm, setDhcpForm] = useState<DhcpPoolConfig>({
     poolName: '',
     defaultGateway: '',
@@ -2604,6 +2605,12 @@ export function PCPanel({
   // Also retry if topology connections change, in case we were waiting for a cable.
   // Also retry on page load if device has link-local IP (169.254.x.x) and is in DHCP mode.
   useEffect(() => {
+    // Skip if DHCP button was manually clicked (toast already shown by button handler)
+    if (manualDhcpClickRef.current) {
+      prevIpConfigModeRef.current = ipConfigMode;
+      return;
+    }
+
     // Check if IP is link-local (APIPA) - 169.254.x.x range
     const isLinkLocal = pcIP && pcIP.startsWith('169.254.');
     // If we already have a valid non-link-local IP and we didn't just switch to DHCP mode,
@@ -4034,13 +4041,32 @@ export function PCPanel({
                               role="radio"
                               aria-checked={ipConfigMode === 'dhcp'}
                               onClick={() => {
+                                manualDhcpClickRef.current = true;
                                 setIpConfigMode('dhcp');
                                 try {
-                                  applyDhcpLease(true);
+                                  const lease = applyDhcpLease(true);
+                                  if (lease && lease.serverName === 'link-local') {
+                                    toast({
+                                      title: language === 'tr' ? 'DHCP bulunamadı' : 'DHCP not found',
+                                      description: language === 'tr'
+                                        ? `Link-local IP atandı: ${lease.ip}`
+                                        : `Assigned link-local IP: ${lease.ip}`,
+                                    });
+                                  }
                                 } catch (err) {
-                                  // Silently ignore errors when DHCP is not available
+                                  toast({
+                                    title: language === 'tr' ? 'DHCP hatası' : 'DHCP error',
+                                    description: language === 'tr'
+                                      ? 'DHCP hizmeti bulunamadı. Link-local IP atandı.'
+                                      : 'DHCP service not found. Link-local IP assigned.',
+                                    variant: 'destructive',
+                                  });
                                   console.warn('DHCP lease error:', err);
                                 }
+                                // Reset the ref after a short delay
+                                setTimeout(() => {
+                                  manualDhcpClickRef.current = false;
+                                }, 100);
                               }}
                               className={`px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all ${ipConfigMode === 'dhcp'
                                 ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30'

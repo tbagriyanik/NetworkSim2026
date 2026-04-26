@@ -174,11 +174,11 @@ export function useGuidedMode(): UseGuidedModeReturn {
 
     setActiveProject(prev => {
       if (!prev) return null;
-      
-      const updatedSteps = prev.steps.map(s => 
+
+      const updatedSteps = prev.steps.map(s =>
         s.id === stepId ? { ...s, completed: true, completedAt: new Date() } : s
       );
-      
+
       return {
         ...prev,
         steps: updatedSteps
@@ -186,9 +186,14 @@ export function useGuidedMode(): UseGuidedModeReturn {
     });
 
     setLastCompletedStep(stepId);
-    
+
     // Auto-expand panel when step completes
     setIsPanelMinimized(false);
+
+    // Dispatch celebration event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('guided-step-completed'));
+    }
   }, [activeProject]);
 
   const uncompleteStep = useCallback((stepId: string) => {
