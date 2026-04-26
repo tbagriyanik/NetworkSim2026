@@ -47,7 +47,7 @@ interface GuidedModePanelProps {
 
 const translations = {
   tr: {
-    guidedMode: 'Rehberli Mod',
+    guidedMode: 'Rehberli Ders',
     step: 'Adım',
     of: '/',
     hint: 'İpucu',
@@ -72,7 +72,7 @@ const translations = {
     advanced: 'İleri'
   },
   en: {
-    guidedMode: 'Guided Mode',
+    guidedMode: 'Guided Lesson',
     step: 'Step',
     of: 'of',
     hint: 'Hint',
@@ -265,7 +265,7 @@ export function GuidedModePanel({
           <GripHorizontal className="w-4 h-4 opacity-60" />
           <BookOpen className="w-5 h-5" />
           <span className="text-sm font-semibold">
-            {language === 'tr' ? 'Rehberli Modu Aç' : 'Open Guided Mode'}
+            {language === 'tr' ? 'Rehberli Dersi Aç' : 'Open Guided Lesson'}
           </span>
           <div className="w-12 h-1.5 bg-white/30 rounded-full overflow-hidden ml-2">
             <div 

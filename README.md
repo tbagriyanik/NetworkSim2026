@@ -2,16 +2,24 @@
 
 A modern, interactive, browser-based network simulator for students and networking enthusiasts.
 
-![Version](https://img.shields.io/badge/version-1.5.5-blue)
+![Version](https://img.shields.io/badge/version-1.5.6-blue)
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Commits](https://img.shields.io/badge/commits-720+-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-60379-blueviolet)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-61842-blueviolet)
 
 Network learning app: [Test Address](https://network2026.vercel.app)
 
 ## Recent Updates
 
+- **NEW: Guided Lesson Mode**: Step-by-step interactive learning system for students
+  - Draggable floating panel with progress tracking
+  - Auto-completion detection based on user actions (commands, device access)
+  - Visual progress bar and step indicators
+  - Contextual hints and expandable detailed instructions
+  - Minimizes to floating button when closed, easily restored
+  - Multiple guided labs: Basic Switch Config (6 steps), VLAN Config (5 steps)
+  - Turkish and English localization support
 - **NEW: Port Security Enhancement**: Added aging configuration support for port security
   - `switchport port-security aging time <minutes>` - Configure MAC address aging time
   - `switchport port-security aging type <absolute|inactivity>` - Set aging type
@@ -138,6 +146,20 @@ Network learning app: [Test Address](https://network2026.vercel.app)
   - Pre-configured example project with WiFi connectivity
   - Static IP assignment support for IoT devices
 
+### 📚 Guided Lesson Mode
+- **Step-by-Step Learning**: Interactive guided labs for students to learn networking concepts progressively
+  - Basic Switch Configuration Lab (6 steps): Enable mode → Config mode → Hostname → Port activation → Save config
+  - VLAN Configuration Lab (5 steps): VLAN creation → Naming → Port assignment → Verification
+- **Draggable Floating Panel**: Move the guided panel anywhere on screen with mouse/touch drag
+- **Auto-Completion Detection**: System automatically detects when student completes a step
+  - Monitors terminal commands entered by user
+  - Tracks device access events (opening PC/Switch/Router terminals)
+  - Observes configuration state changes
+- **Progress Tracking**: Visual progress bar with percentage completion and step counter
+- **Hint System**: Contextual hints and expandable detailed instructions for each step
+- **Smart Minimize**: Panel minimizes to a floating button when closed; click to restore
+- **Bilingual Support**: Full Turkish and English localization for all instructions
+
 ### ⚡ Performance Optimization (Phase 2)
 - **Spatial Partitioning**: Grid-based 256x256px partitioning for efficient rendering of 500+ nodes
 - **Viewport Culling**: Only visible nodes and connections are rendered to maintain 60 FPS
@@ -165,11 +187,12 @@ Network learning app: [Test Address](https://network2026.vercel.app)
 - Performance optimization (spatial partitioning, viewport culling)
 - Accessibility (WCAG 2.1 AA compliance)
 - Turkish/English localization
-- **28 Example Projects**: Complete lab scenarios - [View Details](examples.md)
+- **30 Example Projects**: Complete lab scenarios including 2 new guided lessons - [View Details](examples.md)
 - **160+ CLI Commands**: Full command reference in Help Panel
 - DHCP/DNS/HTTP system enhancements
 - IoT WiFi Lab with sensor simulation
 - **Port Security with Aging**: MAC address learning with configurable aging
+- **Guided Lesson Mode**: Step-by-step interactive learning system with auto-completion detection
 
 ### 🚧 In Progress (v1.6.0)
 - Advanced routing protocols (BGP, EIGRP)

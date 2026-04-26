@@ -2115,6 +2115,9 @@ ${state.bannerMOTD}
     setShowPCPanel(false);
     setShowRouterPanel(false);
 
+    // Close guided mode panel if open
+    closeGuidedMode();
+
     // Force return to topology
     setActiveTab('topology');
     setHasUnsavedChanges(false);
@@ -2173,7 +2176,7 @@ ${state.bannerMOTD}
       pan: { x: 0, y: 0 },
       activeTab: 'topology'
     });
-  }, [resetHistory, setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setActiveDeviceId, setActiveDeviceType, setSelectedDevice, setShowPCPanel, setShowRouterPanel, setActiveTab, setHasUnsavedChanges, setTopologyKey, setZoom, setPan]);
+  }, [resetHistory, setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setActiveDeviceId, setActiveDeviceType, setSelectedDevice, setShowPCPanel, setShowRouterPanel, setActiveTab, setHasUnsavedChanges, setTopologyKey, setZoom, setPan, closeGuidedMode]);
 
   const runWithSaveGuard = useCallback((action: () => void) => {
     if (hasUnsavedChanges) {
@@ -3173,6 +3176,8 @@ ${state.bannerMOTD}
         const projectData = JSON.parse(e.target?.result as string);
         if (loadProjectData(projectData)) {
           setHasUnsavedChanges(false);
+          // Close guided mode panel if open
+          closeGuidedMode();
           toast({
             title: language === 'tr' ? 'Proje yüklendi' : 'Project loaded',
             description: language === 'tr' ? 'Dosya başarıyla içe aktarıldı.' : 'File imported successfully.',
@@ -3201,11 +3206,13 @@ ${state.bannerMOTD}
     reader.readAsText(file);
     // Reset input
     event.target.value = '';
-  }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan]);
+  }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode]);
 
   const applyExampleProject = useCallback((projectData: any) => {
     loadProjectData(projectData);
     setShowProjectPicker(false);
+    // Close guided mode panel if open (unless it's a guided project itself)
+    closeGuidedMode();
 
     // Reset zoom and pan to top-left
     setZoom(1.0);
@@ -3214,7 +3221,7 @@ ${state.bannerMOTD}
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
     }
-  }, [loadProjectData, setShowProjectPicker, setZoom, setPan]);
+  }, [loadProjectData, setShowProjectPicker, setZoom, setPan, closeGuidedMode]);
 
   const isDark = (effectiveTheme ?? theme) === 'dark';
 
@@ -3655,7 +3662,7 @@ ${state.bannerMOTD}
                               <BookOpen className="w-5 h-5" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>{language === 'tr' ? 'Rehberli Modu Aç' : 'Open Guided Mode'}</TooltipContent>
+                          <TooltipContent>{language === 'tr' ? 'Rehberli Dersi Aç' : 'Open Guided Lesson'}</TooltipContent>
                         </Tooltip>
                       </>
                     )}
@@ -3708,7 +3715,7 @@ ${state.bannerMOTD}
                       }`}
                     >
                       <BookOpen className="w-4 h-4" />
-                      {language === 'tr' ? 'Rehberli Mod' : 'Guided Mode'}
+                      {language === 'tr' ? 'Rehberli Ders' : 'Guided Lesson'}
                     </button>
                   </div>
 
@@ -3773,7 +3780,7 @@ ${state.bannerMOTD}
                         <section className='space-y-4 md:space-y-6 w-full'>
                           <div className='flex items-center gap-3 md:gap-4 px-1 md:px-2'>
                             <p className='text-[10px] md:text-xs font-black tracking-[0.3em] md:tracking-[0.4em] text-emerald-500 dark:text-emerald-400 whitespace-nowrap'>
-                              {language === 'tr' ? 'REHBERLİ LABORATUVARLAR' : 'GUIDED LABS'}
+                              {language === 'tr' ? 'REHBERLİ DERSLER' : 'GUIDED LESSONS'}
                             </p>
                             <p className={`text-[10px] md:text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} truncate`}>
                               {language === 'tr' ? 'Adım adım öğrenme deneyimi' : 'Step-by-step learning experience'}
@@ -5125,7 +5132,7 @@ ${state.bannerMOTD}
             currentStepIndex={guidedStepIndex}
             onStepComplete={completeStep}
             onStepUncomplete={uncompleteStep}
-            onClose={closeGuidedMode}
+            onClose={togglePanelMinimize}
             onMinimize={togglePanelMinimize}
             isMinimized={isPanelMinimized}
             language={language}

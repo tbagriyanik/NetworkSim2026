@@ -1,4 +1,4 @@
-// Rehberli Mod (Guided Mode) - Adım adım öğrenme sistemi
+// Rehberli Ders (Guided Lesson) - Adım adım öğrenme sistemi
 import { ExampleProject } from './exampleProjects';
 
 export interface GuidedStep {
@@ -372,8 +372,8 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
             {
               id: 'guided-intro',
               text: isTr
-                ? '📚 REHBERLİ MOD AKTİF\n\nSoldaki panelden adımları takip edin.\nHer adım tamamlandığında bir sonrakine geçilir.'
-                : '📚 GUIDED MODE ACTIVE\n\nFollow the steps in the left panel.\nNext step unlocks when each is completed.',
+                ? '📚 REHBERLİ DERS AKTİF\n\nSoldaki panelden adımları takip edin.\nHer adım tamamlandığında bir sonrakine geçilir.'
+                : '📚 GUIDED LESSON ACTIVE\n\nFollow the steps in the left panel.\nNext step unlocks when each is completed.',
               x: 450,
               y: 100,
               width: 350,
@@ -449,8 +449,8 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
             {
               id: 'vlan-guided-intro',
               text: isTr
-                ? '📚 VLAN REHBERLİ MODU\n\nAdım 1: VLAN 10 (SALES) oluşturun\nAdım 2: VLAN 20 (IT) oluşturun\nAdım 3: Portları VLAN\'lara atayın\nAdım 4: show vlan brief ile doğrulayın'
-                : '📚 VLAN GUIDED MODE\n\nStep 1: Create VLAN 10 (SALES)\nStep 2: Create VLAN 20 (IT)\nStep 3: Assign ports to VLANs\nStep 4: Verify with show vlan brief',
+                ? '📚 VLAN REHBERLİ DERSİ\n\nAdım 1: VLAN 10 (SALES) oluşturun\nAdım 2: VLAN 20 (IT) oluşturun\nAdım 3: Portları VLAN\'lara atayın\nAdım 4: show vlan brief ile doğrulayın'
+                : '📚 VLAN GUIDED LESSON\n\nStep 1: Create VLAN 10 (SALES)\nStep 2: Create VLAN 20 (IT)\nStep 3: Assign ports to VLANs\nStep 4: Verify with show vlan brief',
               x: 450,
               y: 100,
               width: 400,
@@ -483,7 +483,7 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
   ];
 };
 
-// Rehberli mod hook için yardımcı fonksiyonlar
+// Rehberli ders hook için yardımcı fonksiyonlar
 export const checkStepCompletion = (
   step: GuidedStep,
   context: {

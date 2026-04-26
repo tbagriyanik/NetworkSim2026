@@ -2,13 +2,60 @@
 
 ## Current Code Metrics
 
-- **Total lines**: 60379
-- **Last updated**: 2026-04-25
-- **Example projects**: 28
+- **Total lines**: 61842
+- **Last updated**: 2026-04-26
+- **Example projects**: 30
 - **CLI Commands**: 160+
-- **Version**: 1.5.5
+- **Version**: 1.5.6
 
 ## Latest Updates
+
+### NEW: Guided Lesson Mode
+
+Implemented comprehensive step-by-step guided learning system for students.
+
+**Features:**
+- **Interactive Step-by-Step Learning**: Students follow guided instructions with progress tracking
+- **Draggable Panel**: Floating panel that can be moved anywhere on screen
+- **Auto-Completion Detection**: Automatically detects when a step is completed based on user actions
+- **Progress Visualization**: Visual progress bar showing completion percentage
+- **Hint System**: Contextual hints for each step with detailed instructions
+- **Expandable Steps**: Collapsible detailed instructions for each learning objective
+- **Minimize/Restore**: Panel minimizes to a floating button when closed, easily restored
+- **Multiple Guided Labs**: 
+  - Basic Switch Configuration (6 steps): Enable mode, config mode, hostname, port activation, save config
+  - VLAN Configuration (5 steps): VLAN creation, naming, port assignment, verification
+
+**Implementation Details:**
+- `GuidedStep` interface with title, description, hint, and check configuration
+- `GuidedProject` type extending ExampleProject with steps and metadata
+- `useGuidedMode` hook managing guided session state and auto-completion
+- `GuidedModePanel` component with drag-and-drop functionality
+- Step completion detection based on:
+  - Device access events (terminal opened)
+  - Command patterns entered by user
+  - Configuration state changes
+- Auto-advance to next incomplete step when current step completes
+- Progress calculation and visual feedback
+- Turkish and English localization support
+
+**UI/UX Features:**
+- Gradient header with grip handle for dragging
+- Pulse animation on minimized floating button
+- Progress bar with percentage indicator
+- Status icons for completed, active, and future steps
+- Expandable hint and instruction sections
+- Smooth scrollable step list
+
+**Files Added:**
+- `src/lib/network/guidedMode.ts` - Core guided mode types and step definitions
+- `src/hooks/useGuidedMode.ts` - Guided mode state management hook
+- `src/components/network/GuidedModePanel.tsx` - Guided mode UI panel
+- `src/components/ui/collapsible.tsx` - Collapsible sections component
+
+**Files Modified:**
+- `src/app/page.tsx` - Integrated GuidedModePanel and toolbar button
+- `src/lib/network/exampleProjects.ts` - Extended to support guided projects
 
 ### Port Security Enhancement with Aging Support
 
