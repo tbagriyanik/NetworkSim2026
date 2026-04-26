@@ -55,7 +55,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal, Square, Minus, Strikethrough, Cable, Usb } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal, Square, Minus, Strikethrough, Cable, Usb, BookOpen, Target, Clock, GraduationCap } from "lucide-react";
 import { RouterIcon, SwitchIcon } from '@/components/network/PCPanelWidgets';
 
 import { Button } from '@/components/ui/button';
@@ -80,10 +80,13 @@ import {
   getTaskStatus
 } from '@/lib/network/taskDefinitions';
 import { exampleProjects, type ExampleProject, type ExampleProjectLevel } from '@/lib/network/exampleProjects';
+import { getGuidedProjects, type GuidedProject } from '@/lib/network/guidedMode';
 import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import { performanceMonitor } from '@/lib/performance/monitoring';
+import { useGuidedMode } from '@/hooks/useGuidedMode';
 
 import { DeviceIcon } from '@/components/network/DeviceIcon';
+import { GuidedModePanel } from '@/components/network/GuidedModePanel';
 import { AppSkeleton } from '@/components/ui/AppSkeleton';
 import { AppErrorBoundary } from '@/components/ui/AppErrorBoundary';
 import { SwitchModel } from '@/lib/network/switchModels';
@@ -180,7 +183,25 @@ export default function Home() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isEnvironmentPanelOpen, setIsEnvironmentPanelOpen] = useState(false);
   const [showProjectPicker, setShowProjectPicker] = useState(false);
+  const [projectPickerTab, setProjectPickerTab] = useState<'all' | 'guided'>('all');
   const [projectSearchQuery, setProjectSearchQuery] = useState('');
+  
+  // Guided Mode hook
+  const {
+    activeProject: activeGuidedProject,
+    currentStepIndex: guidedStepIndex,
+    isGuidedModeActive,
+    isPanelMinimized,
+    lastCompletedStep,
+    startGuidedProject,
+    completeStep,
+    uncompleteStep,
+    closeGuidedMode,
+    togglePanelMinimize,
+    expandPanel,
+    checkStepCompletionWithContext,
+    getAvailableProjects
+  } = useGuidedMode();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [cableInfo, setCableInfo] = useState<CableInfo>({
@@ -3618,6 +3639,26 @@ ${state.bannerMOTD}
                       </TooltipTrigger>
                       <TooltipContent>{t.environmentSettings}</TooltipContent>
                     </Tooltip>
+
+                    {/* Guided Mode Button - Show only when active but minimized */}
+                    {isGuidedModeActive && isPanelMinimized && (
+                      <>
+                        <div className="w-px h-4 bg-slate-200 mx-0.5 dark:bg-slate-800" />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 text-blue-500 hover:bg-blue-500/10 animate-pulse"
+                              onClick={expandPanel}
+                            >
+                              <BookOpen className="w-5 h-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{language === 'tr' ? 'Rehberli Modu Aç' : 'Open Guided Mode'}</TooltipContent>
+                        </Tooltip>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -3645,6 +3686,31 @@ ${state.bannerMOTD}
                         : 'New project dialog: start with an empty project or choose one of the ready examples.'}
                     </DialogDescription>
                   </DialogHeader>
+
+                  {/* Tab Buttons */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <button
+                      onClick={() => setProjectPickerTab('all')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        projectPickerTab === 'all'
+                          ? (isDark ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white')
+                          : (isDark ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100')
+                      }`}
+                    >
+                      {language === 'tr' ? 'Tüm Projeler' : 'All Projects'}
+                    </button>
+                    <button
+                      onClick={() => setProjectPickerTab('guided')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                        projectPickerTab === 'guided'
+                          ? (isDark ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-white')
+                          : (isDark ? 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50')
+                      }`}
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      {language === 'tr' ? 'Rehberli Mod' : 'Guided Mode'}
+                    </button>
+                  </div>
 
                   {/* Search Box */}
                   <div className={`relative rounded-xl border px-4 py-2.5 flex items-center gap-2 ${isDark ? 'bg-slate-900/40 border-slate-800/60' : 'bg-white/50 border-slate-200/60'}`}>
@@ -3701,44 +3767,122 @@ ${state.bannerMOTD}
 
                 <div className='flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-12 pb-12 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent'>
                   <div className='flex flex-col gap-12 max-w-full'>
+                    {/* Guided Mode Projects Section */}
+                    {projectPickerTab === 'guided' && (
+                      <div className='flex flex-col gap-8'>
+                        <section className='space-y-4 md:space-y-6 w-full'>
+                          <div className='flex items-center gap-3 md:gap-4 px-1 md:px-2'>
+                            <p className='text-[10px] md:text-xs font-black tracking-[0.3em] md:tracking-[0.4em] text-emerald-500 dark:text-emerald-400 whitespace-nowrap'>
+                              {language === 'tr' ? 'REHBERLİ LABORATUVARLAR' : 'GUIDED LABS'}
+                            </p>
+                            <p className={`text-[10px] md:text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} truncate`}>
+                              {language === 'tr' ? 'Adım adım öğrenme deneyimi' : 'Step-by-step learning experience'}
+                            </p>
+                            <div className={`h-px flex-1 ${isDark ? 'bg-emerald-800/60' : 'bg-emerald-200'}`} />
+                          </div>
+
+                          <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
+                            {getAvailableProjects(language).map((guidedProject) => (
+                              <Button
+                                key={guidedProject.id}
+                                variant='ghost'
+                                className={`group h-auto min-h-[140px] md:min-h-[180px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-emerald-800/40 bg-emerald-900/10 hover:bg-emerald-900/30 hover:border-emerald-500/50' : 'border-emerald-200/50 bg-emerald-50/30 hover:bg-emerald-50 hover:border-emerald-500/40'} w-full overflow-hidden shadow-sm hover:shadow-2xl relative`}
+                                onClick={() => { 
+                                  setShowProjectPicker(false); 
+                                  runWithSaveGuard(() => {
+                                    startGuidedProject(guidedProject);
+                                    loadProjectData(guidedProject.data);
+                                  }); 
+                                }}
+                              >
+                                {/* Guided Mode Badge */}
+                                <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold">
+                                  <GraduationCap className="w-3 h-3" />
+                                  {language === 'tr' ? 'REHBERLİ' : 'GUIDED'}
+                                </div>
+
+                                <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap pr-20'>
+                                  <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-emerald-400 text-emerald-100' : 'group-hover:text-emerald-600 text-emerald-900'}`}>
+                                    {guidedProject.title}
+                                  </span>
+                                  <span className={`text-[8px] md:text-[10px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-emerald-100 text-emerald-600 border-emerald-200'}`}>
+                                    {guidedProject.tag}
+                                  </span>
+                                </div>
+                                <p className={`text-[11px] md:text-sm leading-relaxed font-medium italic transition-colors whitespace-normal break-words w-full ${isDark ? 'text-slate-300/80 group-hover:text-slate-200' : 'text-slate-600 group-hover:text-slate-800'}`}>
+                                  {guidedProject.description}
+                                </p>
+                                
+                                {/* Info Bar */}
+                                <div className='mt-auto pt-3 flex items-center gap-4 w-full border-t border-slate-800/10 dark:border-slate-700/50'>
+                                  <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
+                                    <Clock className="w-3 h-3" />
+                                    {guidedProject.estimatedTimeMinutes} {language === 'tr' ? 'dk' : 'min'}
+                                  </div>
+                                  <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
+                                    <Target className="w-3 h-3" />
+                                    {guidedProject.steps.length} {language === 'tr' ? 'adım' : 'steps'}
+                                  </div>
+                                  <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 capitalize">
+                                    <BookOpen className="w-3 h-3" />
+                                    {guidedProject.difficulty}
+                                  </div>
+                                </div>
+
+                                {guidedProject.detail && (
+                                  <div className='pt-2 flex items-center gap-2 w-full'>
+                                    <div className='w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.5)]' />
+                                    <span className={`text-[8px] md:text-[11px] font-bold tracking-wide whitespace-normal break-words w-full ${isDark ? 'text-amber-400/80' : 'text-amber-700/80'}`}>
+                                      {guidedProject.detail}
+                                    </span>
+                                  </div>
+                                )}
+                              </Button>
+                            ))}
+                          </div>
+                        </section>
+                      </div>
+                    )}
+
                     {/* Bottom Section: Examples organized in levels */}
-                    <div className='flex flex-col gap-16'>
-                      {exampleLevelOrder.map((level) => {
-                        const projects = groupedExampleProjects[level];
-                        if (!projects || projects.length === 0) return null;
+                    {projectPickerTab === 'all' && (
+                      <div className='flex flex-col gap-16'>
+                        {exampleLevelOrder.map((level) => {
+                          const projects = groupedExampleProjects[level];
+                          if (!projects || projects.length === 0) return null;
 
-                        // Filter projects based on search query
-                        const filteredProjects = projectSearchQuery.trim() === ''
-                          ? projects
-                          : projects.filter(project =>
-                            project.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                            project.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                            project.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                            (project.detail && project.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
-                          );
+                          // Filter projects based on search query
+                          const filteredProjects = projectSearchQuery.trim() === ''
+                            ? projects
+                            : projects.filter(project =>
+                              project.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                              project.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                              project.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                              (project.detail && project.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
+                            );
 
-                        if (filteredProjects.length === 0) return null;
+                          if (filteredProjects.length === 0) return null;
 
-                        return (
-                          <section key={level} className='space-y-4 md:space-y-6 w-full'>
-                            <div className='flex items-center gap-3 md:gap-4 px-1 md:px-2'>
-                              <p className='text-[10px] md:text-xs font-black  tracking-[0.3em] md:tracking-[0.4em] text-slate-500 dark:text-slate-400 whitespace-nowrap'>
-                                {exampleLevelLabels[level]}
-                              </p>
-                              <p className={`text-[10px] md:text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} truncate`}>
-                                {exampleLevelHints[level]}
-                              </p>
-                              <div className={`h-px flex-1 ${isDark ? 'bg-slate-800/60' : 'bg-slate-200'}`} />
-                            </div>
+                          return (
+                            <section key={level} className='space-y-4 md:space-y-6 w-full'>
+                              <div className='flex items-center gap-3 md:gap-4 px-1 md:px-2'>
+                                <p className='text-[10px] md:text-xs font-black  tracking-[0.3em] md:tracking-[0.4em] text-slate-500 dark:text-slate-400 whitespace-nowrap'>
+                                  {exampleLevelLabels[level]}
+                                </p>
+                                <p className={`text-[10px] md:text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} truncate`}>
+                                  {exampleLevelHints[level]}
+                                </p>
+                                <div className={`h-px flex-1 ${isDark ? 'bg-slate-800/60' : 'bg-slate-200'}`} />
+                              </div>
 
-                            <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
-                              {filteredProjects.map((example) => (
-                                <Button
-                                  key={example.id}
-                                  variant='ghost'
-                                  className={`group h-auto min-h-[120px] md:min-h-[160px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/80 hover:border-cyan-500/30' : 'border-slate-200/50 bg-white hover:bg-slate-50 hover:border-blue-500/20'} w-full overflow-hidden shadow-sm hover:shadow-2xl`}
-                                  onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => applyExampleProject(example.data)); }}
-                                >
+                              <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
+                                {filteredProjects.map((example) => (
+                                  <Button
+                                    key={example.id}
+                                    variant='ghost'
+                                    className={`group h-auto min-h-[120px] md:min-h-[160px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/80 hover:border-cyan-500/30' : 'border-slate-200/50 bg-white hover:bg-slate-50 hover:border-blue-500/20'} w-full overflow-hidden shadow-sm hover:shadow-2xl`}
+                                    onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => applyExampleProject(example.data)); }}
+                                  >
                                   <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
                                     <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-cyan-400' : 'group-hover:text-blue-600'}`}>{example.title}</span>
                                     <span className={`text-[8px] md:text-[10px] font-black  tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>{example.tag}</span>
@@ -3757,6 +3901,7 @@ ${state.bannerMOTD}
                         );
                       })}
                     </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -3894,7 +4039,8 @@ ${state.bannerMOTD}
           <Dialog open={showTasksModal} onOpenChange={setShowTasksModal}>
             <DialogContent
               showCloseButton={false}
-              className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              onEscapeKeyDown={(e) => e.preventDefault()}
+              className={`bg-white border-slate-200 p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: 'fixed',
                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.x : 0,
@@ -3910,7 +4056,7 @@ ${state.bannerMOTD}
             >
               <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden">
                 <DialogHeader
-                  className={`p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10 ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100'}`}
+                  className={`p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10 border-slate-100 bg-white`}
                   data-modal-header
                   onPointerDown={(e) => handlePointerDown(e, 'tasks')}
                 >
@@ -4032,7 +4178,7 @@ ${state.bannerMOTD}
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
-              className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              className={`bg-white border-slate-200 p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'fixed' : 'fixed',
                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? pcModalPosition.x : 0,
@@ -4054,7 +4200,7 @@ ${state.bannerMOTD}
               <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden">
                 {/* Window Control Bar - Browser Style */}
                 <div
-                  className={`flex items-center justify-between px-4 py-2 border-b cursor-move select-none touch-none ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100'}`}
+                  className={`flex items-center justify-between px-4 py-2 border-b cursor-move select-none touch-none border-slate-100 bg-white`}
                   onPointerDown={(e) => {
                     if (typeof window !== 'undefined' && window.innerWidth >= 768) {
                       handlePointerDown(e, 'pc');
@@ -4143,7 +4289,7 @@ ${state.bannerMOTD}
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
-              className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              className={`bg-white border-slate-200 p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: 'fixed',
                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? cliModalPosition.x : 0,
@@ -4159,7 +4305,7 @@ ${state.bannerMOTD}
             >
               <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden">
                 <DialogHeader
-                  className={`p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10 ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100'}`}
+                  className={`p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10 border-slate-100 bg-white`}
                   data-modal-header
                   onPointerDown={(e) => handlePointerDown(e, 'cli')}
                 >
@@ -4971,6 +5117,20 @@ ${state.bannerMOTD}
           <EnvironmentSettingsPanel
             isOpen={isEnvironmentPanelOpen}
             onOpenChange={setIsEnvironmentPanelOpen}
+          />
+
+          {/* Guided Mode Panel */}
+          <GuidedModePanel
+            project={activeGuidedProject}
+            currentStepIndex={guidedStepIndex}
+            onStepComplete={completeStep}
+            onStepUncomplete={uncompleteStep}
+            onClose={closeGuidedMode}
+            onMinimize={togglePanelMinimize}
+            isMinimized={isPanelMinimized}
+            language={language}
+            lastCompletedStep={lastCompletedStep}
+            onCheckAutoComplete={checkStepCompletionWithContext}
           />
         </div>
       </div >
