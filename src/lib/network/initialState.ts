@@ -40,7 +40,21 @@ function createInitialPorts(gigabitPortCount: number = 2, baseMac?: string): Rec
   const ports: Record<string, Port> = {};
   const switchBaseMac = baseMac || generateUniqueMacAddress(0x001100000000); // Switch base MAC range
 
+  // Console port
+  ports['console'] = {
+    id: 'console',
+    name: 'Console',
+    status: 'notconnect',
+    vlan: 1,
+    mode: 'access',
+    duplex: 'auto',
+    speed: 'auto',
+    shutdown: false,
+    type: 'fastethernet'
+  };
+
   // FastEthernet 0/1 - 0/24 - HEPSİ AÇIK (no shutdown) BAŞLANGIÇTA
+
   for (let i = 1; i <= 24; i++) {
     const portId = `fa0/${i}`;
     const portMac = formatMacFromNumber(parseInt(switchBaseMac.replace(/\./g, ''), 16) + i);

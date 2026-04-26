@@ -111,6 +111,8 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
       return aNum - bNum;
     });
 
+  const consolePort = Object.values(ports).find(p => p.id.toLowerCase() === 'console');
+
   const systemLedColor: PortLEDColor = isDevicePoweredOff
     ? 'gray'
     : Object.values(ports).some((port) => port.status === 'blocked')
@@ -369,14 +371,25 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
               </div>
             )}
 
-            {giPorts.length > 0 && (
+            {(giPorts.length > 0 || consolePort) && (
               <div className={`pt-2 ${faPorts.length > 0 ? 'border-t' : ''} ${isDark ? 'border-slate-700' : 'border-slate-300'}`}>
-                <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} mb-2`}>{t.gigabitPorts}</div>
-                <div className="flex gap-2 justify-center flex-wrap">
+                <div className="flex justify-between items-center mb-2">
+                  <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{t.gigabitPorts}</div>
+                  {consolePort && (
+                    <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} pr-4`}>Console</div>
+                  )}
+                </div>
+                <div className="flex gap-2 justify-center items-start flex-wrap">
                   {giPorts.map(renderPort)}
+                  {consolePort && (
+                    <div className="flex items-center ml-2 pl-4 border-l border-slate-700/30">
+                      {renderPort(consolePort)}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
+
           </div>
 
           <div className="mt-3 sm:mt-4 flex flex-wrap gap-3 sm:gap-4 justify-center text-xs">
