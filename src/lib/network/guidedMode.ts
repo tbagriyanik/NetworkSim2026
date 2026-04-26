@@ -253,48 +253,108 @@ export const vlanGuidedSteps: GuidedStep[] = [
     order: 2,
     title: { tr: 'VLAN 10 Oluştur', en: 'Create VLAN 10' },
     description: { 
-      tr: 'VLAN 10\'u oluşturun ve isim verin', 
-      en: 'Create VLAN 10 and name it' 
+      tr: 'VLAN 10\'u oluşturun', 
+      en: 'Create VLAN 10' 
     },
     hint: { 
-      tr: 'vlan 10 yazın, sonra name SALES yazın.', 
-      en: 'Type vlan 10, then name SALES.' 
+      tr: 'vlan 10 yazın ve Enter\'a basın.', 
+      en: 'Type vlan 10 and press Enter.' 
     },
     detailedInstructions: {
       tr: [
         'vlan 10 yazıp Enter\'a basın',
-        'name SALES yazın',
-        'exit ile VLAN modundan çıkın'
+        'VLAN 10 oluşturulacaktır'
       ],
       en: [
         'Type vlan 10 and press Enter',
-        'Type name SALES',
+        'VLAN 10 will be created'
+      ]
+    },
+    checkType: 'command',
+    checkParams: { commandPattern: 'vlan 10' },
+    completed: false
+  },
+  {
+    id: 'vlan-name-vlan10',
+    order: 3,
+    title: { tr: 'VLAN 10\'a İsim Ver', en: 'Name VLAN 10' },
+    description: { 
+      tr: 'VLAN 10\'a SALES ismini verin', 
+      en: 'Name VLAN 10 as SALES' 
+    },
+    hint: { 
+      tr: 'name SALES yazın ve Enter\'a basın.', 
+      en: 'Type name SALES and press Enter.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'name SALES yazıp Enter\'a basın',
+        'exit ile VLAN modundan çıkın'
+      ],
+      en: [
+        'Type name SALES and press Enter',
         'Exit VLAN mode with exit'
       ]
     },
-    checkType: 'config',
-    checkParams: { configKey: 'vlans.10', configValue: { id: 10 } },
+    checkType: 'command',
+    checkParams: { commandPattern: 'name' },
     completed: false
   },
   {
     id: 'vlan-create-vlan20',
-    order: 3,
+    order: 4,
     title: { tr: 'VLAN 20 Oluştur', en: 'Create VLAN 20' },
     description: { 
-      tr: 'VLAN 20\'yi oluşturun ve IT ismini verin', 
-      en: 'Create VLAN 20 and name it IT' 
+      tr: 'VLAN 20\'yi oluşturun', 
+      en: 'Create VLAN 20' 
     },
     hint: { 
-      tr: 'vlan 20 ve name IT komutlarını kullanın.', 
-      en: 'Use vlan 20 and name IT commands.' 
+      tr: 'vlan 20 yazın ve Enter\'a basın.', 
+      en: 'Type vlan 20 and press Enter.' 
     },
-    checkType: 'config',
-    checkParams: { configKey: 'vlans.20', configValue: { id: 20 } },
+    detailedInstructions: {
+      tr: [
+        'vlan 20 yazıp Enter\'a basın',
+        'VLAN 20 oluşturulacaktır'
+      ],
+      en: [
+        'Type vlan 20 and press Enter',
+        'VLAN 20 will be created'
+      ]
+    },
+    checkType: 'command',
+    checkParams: { commandPattern: 'vlan 20' },
+    completed: false
+  },
+  {
+    id: 'vlan-name-vlan20',
+    order: 5,
+    title: { tr: 'VLAN 20\'ye İsim Ver', en: 'Name VLAN 20' },
+    description: { 
+      tr: 'VLAN 20\'ye IT ismini verin', 
+      en: 'Name VLAN 20 as IT' 
+    },
+    hint: { 
+      tr: 'name IT yazın ve Enter\'a basın.', 
+      en: 'Type name IT and press Enter.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'name IT yazıp Enter\'a basın',
+        'exit ile VLAN modundan çıkın'
+      ],
+      en: [
+        'Type name IT and press Enter',
+        'Exit VLAN mode with exit'
+      ]
+    },
+    checkType: 'command',
+    checkParams: { commandPattern: 'name' },
     completed: false
   },
   {
     id: 'vlan-assign-port',
-    order: 4,
+    order: 6,
     title: { tr: 'Port VLAN Atama', en: 'Assign Port to VLAN' },
     description: { 
       tr: 'Fa0/1 portunu VLAN 10\'a atayın', 
@@ -322,7 +382,7 @@ export const vlanGuidedSteps: GuidedStep[] = [
   },
   {
     id: 'vlan-verify',
-    order: 5,
+    order: 7,
     title: { tr: 'VLAN\'ları Doğrula', en: 'Verify VLANs' },
     description: { 
       tr: 'show vlan brief komutu ile VLAN\'ları görüntüleyin', 
@@ -534,9 +594,13 @@ export const checkStepCompletion = (
     case 'command':
       if (!step.checkParams?.commandPattern || !context.lastCommand) return false;
       const patterns = step.checkParams.commandPattern.split('|');
-      return patterns.some(pattern => 
-        context.lastCommand!.toLowerCase().includes(pattern.toLowerCase())
-      );
+      const lastCmd = context.lastCommand!.toLowerCase().trim();
+      return patterns.some(pattern => {
+        const pat = pattern.toLowerCase().trim();
+        // Check if command starts with pattern (prefix match)
+        // or if pattern is contained within command
+        return lastCmd.startsWith(pat) || lastCmd.includes(pat);
+      });
     
     case 'connection':
       // Check if devices are connected
