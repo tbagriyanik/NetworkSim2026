@@ -56,7 +56,7 @@ function loadModalLayout(modal: 'tasks' | 'cli' | 'pc', defaultSize: ModalSize) 
     return { position, size };
 }
 
-export function useModalDragResize(defaultSize: ModalSize = { width: 1200, height: 700 }) {
+export function useModalDragResize(defaultSize: ModalSize = { width: 1200, height: 700 }, graphicsQuality: 'high' | 'low' = 'high') {
     const [tasksModalPosition, setTasksModalPosition] = useState<ModalPosition>({ x: 20, y: 20 });
     const [tasksModalSize, setTasksModalSize] = useState<ModalSize>(defaultSize);
     const [cliModalPosition, setCliModalPosition] = useState<ModalPosition>({ x: 20, y: 20 });
@@ -152,7 +152,10 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
             const ds = dragStateRef.current;
             if (!ds?.active) return;
 
+            // Store latest position for both modes
             pendingMoveRef.current = { x: e.clientX, y: e.clientY };
+
+            // Use RAF for smooth animation in both modes
             if (ds.raf) return;
 
             ds.raf = requestAnimationFrame(() => {

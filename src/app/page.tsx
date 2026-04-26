@@ -757,7 +757,7 @@ export default function Home() {
     setPcModalSize,
     handlePointerDown,
     handleResizeStart,
-  } = useModalDragResize();
+  } = useModalDragResize({ width: 1200, height: 700 }, graphicsQuality);
   const isTasksNarrow = tasksModalSize.width < 1100;
 
   // Get current state helper
@@ -3811,7 +3811,7 @@ ${state.bannerMOTD}
                         <section className='space-y-4 md:space-y-6 w-full'>
                           <div className='flex items-center gap-3 md:gap-4 px-1 md:px-2'>
                             <p className='text-[10px] md:text-xs font-black tracking-[0.3em] md:tracking-[0.4em] text-emerald-500 dark:text-emerald-400 whitespace-nowrap'>
-                              {language === 'tr' ? 'REHBERLİ DERSLER' : 'GUIDED LESSONS'}
+                              {language === 'tr' ? 'Rehberli Dersler' : 'Guided Lessons'}
                             </p>
                             <p className={`text-[10px] md:text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} truncate`}>
                               {language === 'tr' ? 'Adım adım öğrenme deneyimi' : 'Step-by-step learning experience'}

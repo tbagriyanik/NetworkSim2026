@@ -311,7 +311,10 @@ export function useDeviceManager() {
     if (deviceId.includes('pc-') || deviceId.includes('iot-')) {
       if (!outputs) {
         const emptyOutputs: TerminalOutput[] = [];
-        setDeviceOutputs(prev => new Map(prev).set(deviceId, emptyOutputs));
+        // Defer state update to avoid setState during render
+        queueMicrotask(() => {
+          setDeviceOutputs(prev => new Map(prev).set(deviceId, emptyOutputs));
+        });
         return emptyOutputs;
       }
       return outputs;
@@ -347,7 +350,10 @@ export function useDeviceManager() {
         outputs = newBootMessages;
       }
 
-      setDeviceOutputs(prev => new Map(prev).set(deviceId, outputs!));
+      // Defer state update to avoid setState during render
+      queueMicrotask(() => {
+        setDeviceOutputs(prev => new Map(prev).set(deviceId, outputs!));
+      });
     }
     return outputs;
   }, [deviceOutputs, deviceStates, getBootMessage]);
@@ -360,7 +366,10 @@ export function useDeviceManager() {
         { id: '0', type: 'output', content: 'OS [Version 10.0.26200.8037]\n(c) OS Corporation. All rights reserved.\n' },
         { id: '1', type: 'output', content: '\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ' + (device?.ip || '0.0.0.0') + '\n   Subnet Mask . . . . . . . . . . : ' + (device?.subnet || '255.255.255.0') + '\n   Default Gateway . . . . . . . . . : ' + (device?.gateway || '0.0.0.0') + '\n' }
       ];
-      setPcOutputs(prev => new Map(prev).set(deviceId, outputs!));
+      // Defer state update to avoid setState during render
+      queueMicrotask(() => {
+        setPcOutputs(prev => new Map(prev).set(deviceId, outputs!));
+      });
     }
     return outputs;
   }, [pcOutputs]);
