@@ -30,36 +30,8 @@ export interface GuidedProject extends ExampleProject {
 // Adım tanımları - Temel Switch Yapılandırma Laboratuvarı
 export const basicSwitchGuidedSteps: GuidedStep[] = [
   {
-    id: 'open-switch-terminal',
-    order: 1,
-    title: { tr: 'Switch Terminalini Aç', en: 'Open Switch Terminal' },
-    description: { 
-      tr: 'Switch cihazına çift tıklayarak terminalini açın', 
-      en: 'Double-click the Switch device to open its terminal' 
-    },
-    hint: { 
-      tr: 'Topolojideki Switch-1\'in üzerine çift tıklayın. Terminal penceresi açılacaktır.', 
-      en: 'Double-click on Switch-1 in the topology. The terminal window will open.' 
-    },
-    detailedInstructions: {
-      tr: [
-        'Topoloji görünümünde Switch-1 cihazını bulun',
-        'Cihazın üzerine çift tıklayın',
-        'Terminal penceresinin açıldığını doğrulayın'
-      ],
-      en: [
-        'Find Switch-1 device in the topology view',
-        'Double-click on the device',
-        'Verify the terminal window opens'
-      ]
-    },
-    checkType: 'deviceAccess',
-    checkParams: { deviceType: 'switch' },
-    completed: false
-  },
-  {
     id: 'connect-pc-to-switch',
-    order: 2,
+    order: 1,
     title: { tr: 'PC\'yi Switch\'e Bağla', en: 'Connect PC to Switch' },
     description: { 
       tr: 'PC-1 cihazını Switch-1\'e kablo ile bağlayın', 
@@ -86,6 +58,34 @@ export const basicSwitchGuidedSteps: GuidedStep[] = [
       ]
     },
     checkType: 'connection',
+    completed: false
+  },
+  {
+    id: 'open-switch-terminal',
+    order: 2,
+    title: { tr: 'Switch Terminalini Aç', en: 'Open Switch Terminal' },
+    description: { 
+      tr: 'Switch cihazına çift tıklayarak terminalini açın', 
+      en: 'Double-click the Switch device to open its terminal' 
+    },
+    hint: { 
+      tr: 'Topolojideki Switch-1\'in üzerine çift tıklayın. Terminal penceresi açılacaktır.', 
+      en: 'Double-click on Switch-1 in the topology. The terminal window will open.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'Topoloji görünümünde Switch-1 cihazını bulun',
+        'Cihazın üzerine çift tıklayın',
+        'Terminal penceresinin açıldığını doğrulayın'
+      ],
+      en: [
+        'Find Switch-1 device in the topology view',
+        'Double-click on the device',
+        'Verify the terminal window opens'
+      ]
+    },
+    checkType: 'deviceAccess',
+    checkParams: { deviceType: 'switch' },
     completed: false
   },
   {

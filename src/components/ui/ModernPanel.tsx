@@ -4,6 +4,7 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { X, GripHorizontal } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export interface ModernPanelProps {
     id: string;
@@ -49,6 +50,8 @@ export function ModernPanel({
     hideHeader = false,
 }: ModernPanelProps) {
     const { panelLayout } = useLayout();
+    const { theme } = useTheme();
+    const isDark = theme === 'dark';
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [width, setWidth] = useState(defaultWidth);
     const [height, setHeight] = useState(defaultHeight);
@@ -115,7 +118,8 @@ export function ModernPanel({
     return (
         <div
             className={cn(
-                'flex flex-col bg-background border rounded-lg shadow-lg overflow-hidden',
+                'flex flex-col border rounded-lg shadow-lg overflow-hidden',
+                isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200',
                 isOverlay && 'fixed z-40',
                 isStacked && 'relative',
                 className
@@ -131,19 +135,21 @@ export function ModernPanel({
             {!hideHeader && (
                 <div
                     className={cn(
-                        "flex items-center justify-between gap-2 p-4 border-b bg-muted/50",
+                        "flex items-center justify-between gap-2 p-4 border-b",
+                        isDark ? "bg-slate-800 border-slate-700" : "bg-muted/50",
                         isMobile && "p-3 min-h-[48px] touch-manipulation"
                     )}
                 >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                         {canResize && (
-                            <GripHorizontal className="w-4 h-4 text-muted-foreground cursor-grab" />
+                            <GripHorizontal className={cn("w-4 h-4 cursor-grab", isDark ? "text-slate-400" : "text-muted-foreground")} />
                         )}
                         {headerStart}
                         {!hideTitle && (
                             <h2 className={cn(
                                 "font-semibold flex-1 truncate",
-                                isMobile ? "text-sm" : "text-sm"
+                                isMobile ? "text-sm" : "text-sm",
+                                isDark ? "text-slate-100" : "text-slate-900"
                             )}>{title}</h2>
                         )}
                     </div>

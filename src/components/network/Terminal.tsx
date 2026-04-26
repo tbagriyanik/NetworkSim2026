@@ -1119,11 +1119,11 @@ export function Terminal({
         </Tooltip>
       )}
       {wifiSignalStrength !== null && wifiSignalStrength > 0 && (
-        <div className="w-px h-4 bg-border mx-1" />
+        <div className={cn("w-px h-4 mx-1", isDark ? "bg-slate-600" : "bg-border")} />
       )}
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)} className="h-8 w-8 rounded-lg" aria-controls="search-dialog">
+          <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)} className={cn("h-8 w-8 rounded-lg", isDark ? "text-slate-300 hover:text-slate-100" : "")} aria-controls="search-dialog">
             <Search className="w-4 h-4" aria-hidden="true" />
           </Button>
         </TooltipTrigger>
@@ -1131,7 +1131,7 @@ export function Terminal({
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={handleCopyAll} className="h-8 w-8 rounded-lg">
+          <Button variant="ghost" size="icon" onClick={handleCopyAll} className={cn("h-8 w-8 rounded-lg", isDark ? "text-slate-300 hover:text-slate-100" : "")}>
             <Copy className="w-4 h-4" aria-hidden="true" />
           </Button>
         </TooltipTrigger>
@@ -1139,7 +1139,7 @@ export function Terminal({
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={exportTerminal} className="h-8 w-8 rounded-lg">
+          <Button variant="ghost" size="icon" onClick={exportTerminal} className={cn("h-8 w-8 rounded-lg", isDark ? "text-slate-300 hover:text-slate-100" : "")}>
             <Download className="w-4 h-4" aria-hidden="true" />
           </Button>
         </TooltipTrigger>
@@ -1147,13 +1147,13 @@ export function Terminal({
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={() => setShowSettings(!showSettings)} className={cn("h-8 w-8 rounded-lg", showSettings && "bg-accent")}>
+          <Button variant="ghost" size="icon" onClick={() => setShowSettings(!showSettings)} className={cn("h-8 w-8 rounded-lg", showSettings && "bg-accent", isDark ? "text-slate-300 hover:text-slate-100" : "")}>
             <Settings className="w-4 h-4" aria-hidden="true" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>{t.settings}</TooltipContent>
       </Tooltip>
-      <div className="w-px h-4 bg-border mx-1" />
+      <div className={cn("w-px h-4 mx-1", isDark ? "bg-slate-600" : "bg-border")} />
       <Tooltip>
         <TooltipTrigger asChild>
           <Button variant="ghost" size="icon" onClick={() => onTogglePower?.(deviceId)} className={cn("h-8 w-8 rounded-lg", isPoweredOff ? "text-rose-500" : "text-emerald-500")}>
@@ -1191,7 +1191,7 @@ export function Terminal({
       noPadding
       className={cn("flex flex-col h-full", className)}
     >
-      <div className="flex flex-col h-full overflow-hidden bg-background">
+      <div className={cn("flex flex-col h-full overflow-hidden", isDark ? "bg-black" : "bg-slate-50")}>
         {/* Settings Bar */}
         {showSettings && (
           <div className="px-4 py-2 border-b bg-muted/30 flex items-center gap-4 animate-in slide-in-from-top-2">
@@ -1215,7 +1215,7 @@ export function Terminal({
             className={cn(
               "flex-1 overflow-y-auto font-mono leading-relaxed custom-scrollbar mobile-scroll",
               isMobile ? "p-3 pb-32" : "p-6 pb-32",
-              isPoweredOff ? "bg-black" : (isDark ? "bg-slate-950" : "bg-slate-50")
+              isPoweredOff ? "bg-black" : (isDark ? "bg-black" : "bg-slate-50")
             )}
             style={{ fontSize: `${fontSize}px` }}
           >
