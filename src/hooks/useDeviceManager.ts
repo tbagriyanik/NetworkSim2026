@@ -76,6 +76,14 @@ export function useDeviceManager() {
   const [isLoading, setIsLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ show: boolean; message: string; action: string; onConfirm: () => void; } | null>(null);
 
+  const isMounted = useRef(false);
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   const getBootMessage = useCallback((deviceType: Exclude<DeviceType, 'pc'>, switchModel?: string, language: 'tr' | 'en' = 'en') => {
     const isRouter = deviceType === 'router';
     const isL3Switch = deviceType === 'switchL3' || switchModel?.includes('3560');
@@ -267,25 +275,44 @@ export function useDeviceManager() {
 
       // Rebuild runningConfig from actual state so wlan0 and all ports are reflected correctly
       deviceState = { ...deviceState, runningConfig: buildRunningConfig({ ...deviceState }) } as SwitchState;
-      setDeviceStates(prev => new Map(prev).set(deviceId, deviceState!));
+      
+      // Defer state update to avoid setState during render
+      const finalState = deviceState;
+      setTimeout(() => {
+        if (isMounted.current) {
+          setDeviceStates(prev => new Map(prev).set(deviceId, finalState));
+        }
+      }, 0);
     } else {
       // Update existing device state if switchModel is provided and differs
       if (switchModel && deviceState.switchModel !== switchModel) {
         const updatedState = ensureSwitchModelConsistency(deviceState, switchModel, initialMac, deviceType === 'router');
-        setDeviceStates(prev => new Map(prev).set(deviceId, updatedState));
+        setTimeout(() => {
+          if (isMounted.current) {
+            setDeviceStates(prev => new Map(prev).set(deviceId, updatedState));
+          }
+        }, 0);
         deviceState = updatedState;
       }
 
       if (!deviceState.switchModel) {
         const fallbackModel = switchModel || (deviceType === 'router' ? 'WS-C3560-24PS' : deviceType === 'switchL3' ? 'WS-C3560-24PS' : 'WS-C2960-24TT-L');
         const updatedState = ensureSwitchModelConsistency(deviceState, fallbackModel, initialMac, deviceType === 'router');
-        setDeviceStates(prev => new Map(prev).set(deviceId, updatedState));
+        setTimeout(() => {
+          if (isMounted.current) {
+            setDeviceStates(prev => new Map(prev).set(deviceId, updatedState));
+          }
+        }, 0);
         deviceState = updatedState;
       }
 
       if (isSwitchDeviceType(deviceType) && deviceState.switchModel === 'WS-C3560-24PS' && (!deviceState.ports['gi0/3'] || !deviceState.ports['gi0/4'])) {
         const healedState = ensureSwitchModelConsistency(deviceState, deviceState.switchModel, initialMac, false);
-        setDeviceStates(prev => new Map(prev).set(deviceId, healedState));
+        setTimeout(() => {
+          if (isMounted.current) {
+            setDeviceStates(prev => new Map(prev).set(deviceId, healedState));
+          }
+        }, 0);
         deviceState = healedState;
       }
 
@@ -296,7 +323,11 @@ export function useDeviceManager() {
             line.startsWith('hostname') ? `hostname ${initialHostname}` : line
           );
         }
-        setDeviceStates(prev => new Map(prev).set(deviceId, updatedState));
+        setTimeout(() => {
+          if (isMounted.current) {
+            setDeviceStates(prev => new Map(prev).set(deviceId, updatedState));
+          }
+        }, 0);
         deviceState = updatedState;
       }
     }
@@ -312,9 +343,11 @@ export function useDeviceManager() {
       if (!outputs) {
         const emptyOutputs: TerminalOutput[] = [];
         // Defer state update to avoid setState during render
-        queueMicrotask(() => {
-          setDeviceOutputs(prev => new Map(prev).set(deviceId, emptyOutputs));
-        });
+        setTimeout(() => {
+          if (isMounted.current) {
+            setDeviceOutputs(prev => new Map(prev).set(deviceId, emptyOutputs));
+          }
+        }, 0);
         return emptyOutputs;
       }
       return outputs;
@@ -351,9 +384,12 @@ export function useDeviceManager() {
       }
 
       // Defer state update to avoid setState during render
-      queueMicrotask(() => {
-        setDeviceOutputs(prev => new Map(prev).set(deviceId, outputs!));
-      });
+      const finalOutputs = outputs;
+      setTimeout(() => {
+        if (isMounted.current) {
+          setDeviceOutputs(prev => new Map(prev).set(deviceId, finalOutputs!));
+        }
+      }, 0);
     }
     return outputs;
   }, [deviceOutputs, deviceStates, getBootMessage]);
@@ -367,9 +403,12 @@ export function useDeviceManager() {
         { id: '1', type: 'output', content: '\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ' + (device?.ip || '0.0.0.0') + '\n   Subnet Mask . . . . . . . . . . : ' + (device?.subnet || '255.255.255.0') + '\n   Default Gateway . . . . . . . . . : ' + (device?.gateway || '0.0.0.0') + '\n' }
       ];
       // Defer state update to avoid setState during render
-      queueMicrotask(() => {
-        setPcOutputs(prev => new Map(prev).set(deviceId, outputs!));
-      });
+      const finalOutputs = outputs;
+      setTimeout(() => {
+        if (isMounted.current) {
+          setPcOutputs(prev => new Map(prev).set(deviceId, finalOutputs!));
+        }
+      }, 0);
     }
     return outputs;
   }, [pcOutputs]);
