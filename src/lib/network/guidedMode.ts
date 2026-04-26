@@ -58,8 +58,39 @@ export const basicSwitchGuidedSteps: GuidedStep[] = [
     completed: false
   },
   {
-    id: 'enter-enable-mode',
+    id: 'connect-pc-to-switch',
     order: 2,
+    title: { tr: 'PC\'yi Switch\'e Bağla', en: 'Connect PC to Switch' },
+    description: { 
+      tr: 'PC-1 cihazını Switch-1\'e kablo ile bağlayın', 
+      en: 'Connect PC-1 to Switch-1 using a cable' 
+    },
+    hint: { 
+      tr: 'Sol taraftaki kablo simgesine tıklayın, Straight-Through kablo seçin. PC-1\'in Eth0 portuna tıklayın, sonra Switch-1\'in Fa0/1 portuna tıklayın.', 
+      en: 'Click the cable icon on the left, select Straight-Through cable. Click on PC-1\'s Eth0 port, then click on Switch-1\'s Fa0/1 port.' 
+    },
+    detailedInstructions: {
+      tr: [
+        'Sol panelde kablo aracını seçin',
+        'Straight-Through kablo tipini seçin',
+        'PC-1\'in Eth0 portuna tıklayın',
+        'Switch-1\'in Fa0/1 portuna tıklayın',
+        'Bağlantının yeşil renkte olduğunu doğrulayın'
+      ],
+      en: [
+        'Select the cable tool from the left panel',
+        'Choose Straight-Through cable type',
+        'Click on PC-1\'s Eth0 port',
+        'Click on Switch-1\'s Fa0/1 port',
+        'Verify the connection is green'
+      ]
+    },
+    checkType: 'connection',
+    completed: false
+  },
+  {
+    id: 'enter-enable-mode',
+    order: 3,
     title: { tr: 'Enable Moduna Geç', en: 'Enter Enable Mode' },
     description: { 
       tr: 'Ayrıcalıklı moda geçmek için enable komutunu kullanın', 
@@ -87,7 +118,7 @@ export const basicSwitchGuidedSteps: GuidedStep[] = [
   },
   {
     id: 'enter-config-mode',
-    order: 3,
+    order: 4,
     title: { tr: 'Yapılandırma Moduna Geç', en: 'Enter Configuration Mode' },
     description: { 
       tr: 'Global yapılandırma moduna geçmek için conf t komutunu kullanın', 
@@ -115,7 +146,7 @@ export const basicSwitchGuidedSteps: GuidedStep[] = [
   },
   {
     id: 'configure-hostname',
-    order: 4,
+    order: 5,
     title: { tr: 'Hostname Değiştir', en: 'Change Hostname' },
     description: { 
       tr: 'Switch\'e yeni bir isim verin', 
@@ -143,7 +174,7 @@ export const basicSwitchGuidedSteps: GuidedStep[] = [
   },
   {
     id: 'activate-port',
-    order: 5,
+    order: 6,
     title: { tr: 'Port Aktifleştir', en: 'Activate a Port' },
     description: { 
       tr: 'FastEthernet 0/1 portunu aktif hale getirin', 
@@ -171,7 +202,7 @@ export const basicSwitchGuidedSteps: GuidedStep[] = [
   },
   {
     id: 'save-config',
-    order: 6,
+    order: 7,
     title: { tr: 'Yapılandırmayı Kaydet', en: 'Save Configuration' },
     description: { 
       tr: 'Yaptığınız değişiklikleri kaydedin', 
@@ -374,8 +405,8 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
             {
               id: 'guided-intro',
               text: isTr
-                ? '📚 REHBERLİ DERS AKTİF\n\nSoldaki panelden adımları takip edin.\nHer adım tamamlandığında bir sonrakine geçilir.'
-                : '📚 GUIDED LESSON ACTIVE\n\nFollow the steps in the left panel.\nNext step unlocks when each is completed.',
+                ? '📚 REHBERLİ DERS AKTİF\n\nSağdaki panelden adımları takip edin.\nHer adım tamamlandığında bir sonrakine geçilir.'
+                : '📚 GUIDED LESSON ACTIVE\n\nFollow the steps in the right panel.\nNext step unlocks when each is completed.',
               x: 450,
               y: 100,
               width: 350,

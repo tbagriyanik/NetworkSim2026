@@ -43,11 +43,77 @@ interface UseGuidedModeReturn {
   getAvailableProjects: (language: 'tr' | 'en') => GuidedProject[];
 }
 
+// Helper to serialize/deserialize project with dates
+const serializeProject = (project: GuidedProject | null): string => {
+  if (!project) return '';
+  return JSON.stringify(project);
+};
+
+const deserializeProject = (json: string): GuidedProject | null => {
+  if (!json) return null;
+  try {
+    const parsed = JSON.parse(json);
+    // Convert date strings back to Date objects
+    if (parsed.startedAt) parsed.startedAt = new Date(parsed.startedAt);
+    if (parsed.steps) {
+      parsed.steps = parsed.steps.map((step: any) => ({
+        ...step,
+        completedAt: step.completedAt ? new Date(step.completedAt) : undefined
+      }));
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const STORAGE_KEY = 'guidedModeState';
+
 export function useGuidedMode(): UseGuidedModeReturn {
+  // Initialize with default values to avoid hydration mismatch
   const [activeProject, setActiveProject] = useState<GuidedProject | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
   const [lastCompletedStep, setLastCompletedStep] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Load from localStorage after mount (client-side only)
+  useEffect(() => {
+    setIsMounted(true);
+    const savedProject = localStorage.getItem(STORAGE_KEY);
+    const savedStepIndex = localStorage.getItem(`${STORAGE_KEY}_stepIndex`);
+    const savedMinimized = localStorage.getItem(`${STORAGE_KEY}_minimized`);
+
+    if (savedProject) {
+      setActiveProject(deserializeProject(savedProject));
+    }
+    if (savedStepIndex) {
+      setCurrentStepIndex(parseInt(savedStepIndex, 10));
+    }
+    if (savedMinimized) {
+      setIsPanelMinimized(savedMinimized === 'true');
+    }
+  }, []);
+
+  // Save to localStorage whenever state changes (only after mount)
+  useEffect(() => {
+    if (!isMounted) return;
+    if (activeProject) {
+      localStorage.setItem(STORAGE_KEY, serializeProject(activeProject));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, [activeProject, isMounted]);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    localStorage.setItem(`${STORAGE_KEY}_stepIndex`, currentStepIndex.toString());
+  }, [currentStepIndex, isMounted]);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    localStorage.setItem(`${STORAGE_KEY}_minimized`, isPanelMinimized.toString());
+  }, [isPanelMinimized, isMounted]);
 
   const isGuidedModeActive = activeProject !== null;
 

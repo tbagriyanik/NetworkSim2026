@@ -120,8 +120,14 @@ export function GuidedModePanel({
   const [expandedSteps, setExpandedSteps] = React.useState<string[]>([]);
   
   // Dragging state
-  const [position, setPosition] = useState({ x: 16, y: 80 }); // left-4 top-20
+  const [position, setPosition] = useState({ x: 0, y: 80 }); // right-4 top-20 (x set in useEffect)
+  
+  // Set initial position on mount (client-side only)
+  useEffect(() => {
+    setPosition({ x: window.innerWidth - 336, y: 80 });
+  }, []);
   const [isDragging, setIsDragging] = useState(false);
+  const [hasDragged, setHasDragged] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -161,6 +167,11 @@ export function GuidedModePanel({
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
     
+    // Mark as dragged if moved significantly
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      setHasDragged(true);
+    }
+    
     setPosition({
       x: Math.max(0, Math.min(window.innerWidth - 320, dragRef.current.initialX + dx)),
       y: Math.max(0, Math.min(window.innerHeight - 200, dragRef.current.initialY + dy))
@@ -170,6 +181,8 @@ export function GuidedModePanel({
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     dragRef.current = null;
+    // Reset hasDragged after a short delay to allow click to complete
+    setTimeout(() => setHasDragged(false), 100);
   }, []);
 
   // Touch handlers for mobile
@@ -194,6 +207,11 @@ export function GuidedModePanel({
     const dx = touch.clientX - dragRef.current.startX;
     const dy = touch.clientY - dragRef.current.startY;
     
+    // Mark as dragged if moved significantly
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      setHasDragged(true);
+    }
+    
     setPosition({
       x: Math.max(0, Math.min(window.innerWidth - 320, dragRef.current.initialX + dx)),
       y: Math.max(0, Math.min(window.innerHeight - 200, dragRef.current.initialY + dy))
@@ -203,6 +221,8 @@ export function GuidedModePanel({
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
     dragRef.current = null;
+    // Reset hasDragged after a short delay to allow click to complete
+    setTimeout(() => setHasDragged(false), 100);
   }, []);
 
   useEffect(() => {
@@ -260,7 +280,12 @@ export function GuidedModePanel({
             "animate-pulse hover:animate-none",
             isDragging && "cursor-grabbing scale-105"
           )}
-          onClick={onMinimize}
+          onClick={() => {
+            // Only trigger click if not dragged
+            if (!hasDragged) {
+              onMinimize();
+            }
+          }}
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
         >

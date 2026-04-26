@@ -800,7 +800,7 @@ export function Terminal({
   );
 
   const handleInputChange = useCallback((newValue: string) => {
-    // Detect ? for real-time help (Cisco style)
+    // Detect ? for real-time help 
     if (newValue.endsWith('?') && !state.awaitingPassword && !confirmDialog?.show) {
       const partialCommand = newValue.slice(0, -1);
       setUndoStack([...undoStack, input]);

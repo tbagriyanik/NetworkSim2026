@@ -28,8 +28,8 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       title: isTR ? 'Privileged EXEC' : 'Privileged EXEC',
       cmds: [
         ['ping <host> [s] [c]', isTR ? 'Bağlantı testi (ICMP)' : 'Ping host (ICMP)'],
-        ['traceroute <host>', isTR ? 'Rota izleme (Cisco)' : 'Trace route (Cisco)'],
-        ['tracert <host>', isTR ? 'Rota izleme (Alias)' : 'Trace route (Alias)'],
+        ['traceroute <host>', isTR ? 'Rota izleme' : 'Trace route'],
+        ['tracert <host>', isTR ? 'Rota izleme (Takma isim)' : 'Trace route (Alias)'],
         ['telnet <host> [port]', isTR ? 'Telnet bağlantısı' : 'Telnet connection'],
         ['ssh [-l user] <host>', isTR ? 'SSH bağlantısı' : 'SSH connection'],
         ['write memory', isTR ? 'Yapılandırmayı kaydet' : 'Save configuration'],
