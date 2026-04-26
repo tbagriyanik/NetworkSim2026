@@ -4207,7 +4207,10 @@ ${state.bannerMOTD}
               <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden">
                 {/* Window Control Bar - Browser Style */}
                 <div
-                  className={`flex items-center justify-between px-4 py-2 border-b cursor-move select-none touch-none border-slate-100 bg-white`}
+                  className={cn(
+                    "flex items-center justify-between px-4 py-2 border-b cursor-move select-none touch-none",
+                    isDark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-white"
+                  )}
                   onPointerDown={(e) => {
                     if (typeof window !== 'undefined' && window.innerWidth >= 768) {
                       handlePointerDown(e, 'pc');
@@ -4217,20 +4220,11 @@ ${state.bannerMOTD}
                 >
                   <div className="flex items-center gap-3 flex-1">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                    <DialogTitle className="text-sm font-semibold cursor-move truncate">
+                    <DialogTitle className={cn("text-sm font-semibold cursor-move truncate", isDark ? "text-white" : "text-slate-900")}>
                       {t.pcTerminal} - {topologyDevices?.find((d: any) => d.id === showPCDeviceId)?.name || showPCDeviceId}
                     </DialogTitle>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
-                      onClick={() => setShowPCPanel(false)}
-                    >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-
                     <Button
                       variant="ghost"
                       size="icon"
@@ -4312,7 +4306,10 @@ ${state.bannerMOTD}
             >
               <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden">
                 <DialogHeader
-                  className={`p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10 border-slate-100 bg-white`}
+                  className={cn(
+                    "p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10",
+                    isDark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-white"
+                  )}
                   data-modal-header
                   onPointerDown={(e) => handlePointerDown(e, 'cli')}
                 >
