@@ -34,14 +34,20 @@ interface GuidedModePanelProps {
   isMinimized: boolean;
   language: 'tr' | 'en';
   lastCompletedStep?: string | null;
+  // Step readiness - controls if "Complete" button is enabled
+  isCurrentStepReady?: boolean;
   // Auto-completion context
   lastCommand?: string;
   deviceAccessed?: 'switch' | 'router' | 'pc' | null;
   deviceState?: any;
+  topologyConnections?: any[];
+  topologyDevices?: any[];
   onCheckAutoComplete?: (context: {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceState?: any;
+    topologyConnections?: any[];
+    topologyDevices?: any[];
   }) => void;
 }
 
@@ -110,9 +116,12 @@ export function GuidedModePanel({
   isMinimized,
   language,
   lastCompletedStep,
+  isCurrentStepReady = false,
   lastCommand,
   deviceAccessed,
   deviceState,
+  topologyConnections,
+  topologyDevices,
   onCheckAutoComplete
 }: GuidedModePanelProps) {
   const t = translations[language];
@@ -130,6 +139,15 @@ export function GuidedModePanel({
   const [hasDragged, setHasDragged] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to current step when it changes
+  const activeStepRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (activeStepRef.current) {
+      activeStepRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [currentStepIndex, project]);
 
   // Auto-check completion when context changes
   useEffect(() => {
@@ -139,11 +157,13 @@ export function GuidedModePanel({
         onCheckAutoComplete({
           lastCommand,
           deviceAccessed,
-          deviceState
+          deviceState,
+          topologyConnections,
+          topologyDevices
         });
       }
     }
-  }, [lastCommand, deviceAccessed, deviceState, onCheckAutoComplete, project, currentStepIndex]);
+  }, [lastCommand, deviceAccessed, deviceState, topologyConnections, topologyDevices, onCheckAutoComplete, project, currentStepIndex]);
 
   // Drag handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -471,9 +491,19 @@ export function GuidedModePanel({
             <div className="mt-3 flex gap-2">
               <Button
                 size="sm"
-                className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                className={cn(
+                  "flex-1 text-white transition-all",
+                  isCurrentStepReady
+                    ? "bg-green-500 hover:bg-green-600"
+                    : "bg-slate-400 hover:bg-slate-400 cursor-not-allowed opacity-60"
+                )}
                 onClick={() => onStepComplete(currentStep.id)}
-                disabled={currentStep.completed}
+                disabled={currentStep.completed || !isCurrentStepReady}
+                title={!isCurrentStepReady && !currentStep.completed
+                  ? (language === 'tr'
+                    ? 'Bu adımı tamamlamak için gerekli işlemi yapmalısınız'
+                    : 'You must complete the required action to finish this step')
+                  : undefined}
               >
                 <CheckCircle2 className="w-4 h-4 mr-1" />
                 {currentStep.completed ? t.complete : t.completed}
@@ -493,6 +523,7 @@ export function GuidedModePanel({
               return (
                 <div
                   key={step.id}
+                  ref={isActive ? activeStepRef : undefined}
                   className={cn(
                     "flex items-start gap-2 p-2 rounded-lg transition-all",
                     isActive && "bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800",

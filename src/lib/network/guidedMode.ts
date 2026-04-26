@@ -523,6 +523,8 @@ export const checkStepCompletion = (
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceState?: any;
+    topologyConnections?: any[];
+    topologyDevices?: any[];
   }
 ): boolean => {
   switch (step.checkType) {
@@ -536,11 +538,49 @@ export const checkStepCompletion = (
         context.lastCommand!.toLowerCase().includes(pattern.toLowerCase())
       );
     
+    case 'connection':
+      // Check if devices are connected
+      if (!context.topologyConnections || !context.topologyDevices) return false;
+      // Check for any active connection between devices
+      return context.topologyConnections.some(
+        (conn: any) => conn.active === true
+      );
+    
     case 'config':
-      // Basit config kontrolü - deviceState üzerinden
+      // Config kontrolü - deviceState üzerinden
       if (!context.deviceState || !step.checkParams?.configKey) return false;
-      // Burada daha detaylı config kontrolü yapılabilir
-      return false; // Manuel geçiş için
+      
+      // Check port shutdown status (for 'no shutdown' commands)
+      if (step.checkParams.configKey === 'ports.fa0/1.shutdown') {
+        const port = context.deviceState.ports?.['fa0/1'] || context.deviceState.ports?.['Fa0/1'];
+        if (port) {
+          // shutdown: false means port is active (no shutdown applied)
+          return port.shutdown === step.checkParams.configValue;
+        }
+      }
+      
+      // Check VLAN creation (for VLAN 10 and 20)
+      if (step.checkParams.configKey === 'vlans.10') {
+        const vlan10 = context.deviceState.vlans?.['10'] || context.deviceState.vlans?.[10];
+        return !!vlan10;
+      }
+      if (step.checkParams.configKey === 'vlans.20') {
+        const vlan20 = context.deviceState.vlans?.['20'] || context.deviceState.vlans?.[20];
+        return !!vlan20;
+      }
+      
+      // Check port VLAN assignment
+      if (step.checkParams.configKey === 'ports.fa0/1.vlan') {
+        const port = context.deviceState.ports?.['fa0/1'] || context.deviceState.ports?.['Fa0/1'];
+        if (port) {
+          return port.vlan === step.checkParams.configValue || port.accessVlan === step.checkParams.configValue;
+        }
+      }
+      return false;
+    
+    case 'manual':
+      // Manual steps always allow completion
+      return true;
     
     default:
       return false;

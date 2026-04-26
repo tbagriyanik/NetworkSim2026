@@ -165,6 +165,8 @@ export default function Home() {
   const [activeDeviceType, setActiveDeviceType] = useState<DeviceType>('switchL2');
   const [topologyKey, setTopologyKey] = useState(0);
   const [selectedDevice, setSelectedDevice] = useState<DeviceType | null>(null);
+  // Track last executed command for guided mode
+  const [lastCommand, setLastCommand] = useState<string>('');
   const [showPCPanel, setShowPCPanel] = useState(false);
   const [showPCDeviceId, setShowPCDeviceId] = useState<string>('pc-1');
   const [showRouterPanel, setShowRouterPanel] = useState(false);
@@ -200,6 +202,7 @@ export default function Home() {
     togglePanelMinimize,
     expandPanel,
     checkStepCompletionWithContext,
+    isCurrentStepReady,
     getAvailableProjects
   } = useGuidedMode();
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -1654,6 +1657,9 @@ ${state.bannerMOTD}
 
   // Handle command using active device
   const handleCommand = useCallback(async (command: string) => {
+    // Track command for guided mode completion checking
+    setLastCommand(command);
+    
     const result = await handleCommandForDevice(
       activeDeviceId,
       command,
@@ -1662,10 +1668,11 @@ ${state.bannerMOTD}
       setActiveDeviceType,
       topologyConnections
     );
+
     if (result?.exitSession) {
       setActiveTab('topology');
     }
-  }, [activeDeviceId, handleCommandForDevice, topologyDevices, topologyConnections, setActiveDeviceId, setActiveDeviceType, setActiveTab]);
+  }, [activeDeviceId, handleCommandForDevice, topologyDevices, topologyConnections, setActiveDeviceId, setActiveDeviceType, setActiveTab, setLastCommand]);
 
   const prompt = getPrompt(state);
 
@@ -5134,6 +5141,12 @@ ${state.bannerMOTD}
             isMinimized={isPanelMinimized}
             language={language}
             lastCompletedStep={lastCompletedStep}
+            isCurrentStepReady={isCurrentStepReady}
+            lastCommand={lastCommand}
+            deviceAccessed={showTerminalModal ? (activeDeviceType === 'switchL2' || activeDeviceType === 'switchL3' ? 'switch' : activeDeviceType === 'router' ? 'router' : 'pc') : null}
+            deviceState={state}
+            topologyConnections={topologyConnections}
+            topologyDevices={topologyDevices}
             onCheckAutoComplete={checkStepCompletionWithContext}
           />
         </div>

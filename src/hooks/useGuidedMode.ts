@@ -33,7 +33,12 @@ interface UseGuidedModeReturn {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceState?: any;
+    topologyConnections?: any[];
+    topologyDevices?: any[];
   }) => void;
+  
+  // Step readiness check
+  isCurrentStepReady: boolean;
   
   // Helpers
   progress: number;
@@ -75,6 +80,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
   const [lastCompletedStep, setLastCompletedStep] = useState<string | null>(null);
+  const [isCurrentStepReady, setIsCurrentStepReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   // Load from localStorage after mount (client-side only)
@@ -145,6 +151,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
     const nextIndex = activeProject.steps.findIndex(s => !s.completed);
     if (nextIndex !== -1 && nextIndex !== currentStepIndex) {
       setCurrentStepIndex(nextIndex);
+      setIsCurrentStepReady(false); // Reset readiness when moving to new step
     }
   }, [activeProject?.steps, activeProject, currentStepIndex]);
 
@@ -159,6 +166,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
     setCurrentStepIndex(0);
     setIsPanelMinimized(false);
     setLastCompletedStep(null);
+    setIsCurrentStepReady(false);
   }, []);
 
   const completeStep = useCallback((stepId: string) => {
@@ -208,6 +216,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
     });
 
     setLastCompletedStep(null);
+    setIsCurrentStepReady(false);
   }, [activeProject]);
 
   const skipStep = useCallback(() => {
@@ -245,18 +254,27 @@ export function useGuidedMode(): UseGuidedModeReturn {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceState?: any;
+    topologyConnections?: any[];
+    topologyDevices?: any[];
   }) => {
-    if (!activeProject) return;
+    if (!activeProject) {
+      setIsCurrentStepReady(false);
+      return;
+    }
 
     const currentStep = activeProject.steps[currentStepIndex];
-    if (!currentStep || currentStep.completed) return;
+    if (!currentStep || currentStep.completed) {
+      setIsCurrentStepReady(false);
+      return;
+    }
 
     const shouldComplete = checkStepCompletion(currentStep, context);
+    setIsCurrentStepReady(shouldComplete);
     
     if (shouldComplete) {
       completeStep(currentStep.id);
     }
-  }, [activeProject, currentStepIndex, completeStep]);
+  }, [activeProject, currentStepIndex, completeStep, setIsCurrentStepReady]);
 
   const getAvailableProjects = useCallback((language: 'tr' | 'en') => {
     return getGuidedProjects(language);
@@ -277,6 +295,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
     togglePanelMinimize,
     expandPanel,
     checkStepCompletionWithContext,
+    isCurrentStepReady,
     progress,
     completedCount,
     totalSteps,
