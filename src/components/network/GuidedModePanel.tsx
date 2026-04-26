@@ -308,7 +308,8 @@ export function GuidedModePanel({
         className={cn(
           "flex flex-col rounded-xl shadow-2xl border overflow-hidden",
           "bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm",
-          "border-slate-200 dark:border-slate-700"
+          "border-slate-200 dark:border-slate-700",
+          "max-h-full"
         )}
       >
         {/* Header - Draggable */}
@@ -364,6 +365,22 @@ export function GuidedModePanel({
           {isAllCompleted && (
             <div className="mt-2 text-xs text-green-600 dark:text-green-400 font-medium text-center animate-pulse">
               {t.allStepsCompleted}
+              {project.startedAt && (() => {
+                const lastCompletedStep = project.steps.filter(s => s.completed).sort((a, b) => 
+                  (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0)
+                )[0];
+                if (lastCompletedStep?.completedAt) {
+                  const duration = Math.round((new Date(lastCompletedStep.completedAt).getTime() - new Date(project.startedAt).getTime()) / 1000);
+                  const minutes = Math.floor(duration / 60);
+                  const seconds = duration % 60;
+                  return (
+                    <span className="ml-2 text-slate-500 dark:text-slate-400">
+                      ({minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`})
+                    </span>
+                  );
+                }
+                return null;
+              })()}
             </div>
           )}
         </div>
@@ -441,7 +458,7 @@ export function GuidedModePanel({
         )}
 
         {/* Steps List */}
-        <ScrollArea className="flex-1" style={{ maxHeight: '300px' }}>
+        <ScrollArea className="flex-1 overflow-y-auto">
           <div className="p-2 space-y-1">
             {project.steps.map((step, index) => {
               const isActive = index === currentStepIndex;
@@ -454,7 +471,7 @@ export function GuidedModePanel({
                   className={cn(
                     "flex items-start gap-2 p-2 rounded-lg transition-all",
                     isActive && "bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800",
-                    isCompleted && !isActive && "bg-green-50 dark:bg-green-900/20 opacity-70",
+                    isCompleted && !isActive && "bg-slate-100 dark:bg-slate-800 opacity-60",
                     !isActive && !isCompleted && "hover:bg-slate-50 dark:hover:bg-slate-700/50"
                   )}
                 >
@@ -469,13 +486,23 @@ export function GuidedModePanel({
                     )}
                   </div>
 
+                  {/* Undo button for completed steps - moved here */}
+                  {isCompleted && (
+                    <button
+                      onClick={() => onStepUncomplete(step.id)}
+                      className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors flex-shrink-0"
+                    >
+                      {t.uncomplete}
+                    </button>
+                  )}
+
                   {/* Step Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className={cn(
                         "text-xs font-medium",
                         isActive && "text-blue-600 dark:text-blue-400",
-                        isCompleted && "text-green-600 dark:text-green-400 line-through",
+                        isCompleted && "text-slate-600 dark:text-white line-through",
                         !isActive && !isCompleted && "text-slate-500 dark:text-slate-400"
                       )}>
                         {step.order}. {step.title[language]}
@@ -489,22 +516,20 @@ export function GuidedModePanel({
                     )}
                     
                     {/* Completion Time */}
-                    {isCompleted && step.completedAt && (
-                      <p className="text-[10px] text-green-500 dark:text-green-400 mt-0.5">
+                    {isCompleted && step.completedAt && project.startedAt && (
+                      <p className="text-[10px] text-slate-400 dark:text-slate-300 mt-0.5">
                         {t.completedAt}: {new Date(step.completedAt).toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        <span className="ml-1 text-slate-400">
+                          ({(() => {
+                            const duration = Math.round((new Date(step.completedAt).getTime() - new Date(project.startedAt).getTime()) / 1000);
+                            const minutes = Math.floor(duration / 60);
+                            const seconds = duration % 60;
+                            return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+                          })()})
+                        </span>
                       </p>
                     )}
                   </div>
-
-                  {/* Undo button for completed steps */}
-                  {isCompleted && (
-                    <button
-                      onClick={() => onStepUncomplete(step.id)}
-                      className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                    >
-                      {t.uncomplete}
-                    </button>
-                  )}
                 </div>
               );
             })}

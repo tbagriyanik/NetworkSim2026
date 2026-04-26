@@ -24,6 +24,7 @@ export interface GuidedProject extends ExampleProject {
   steps: GuidedStep[];
   estimatedTimeMinutes: number;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
+  startedAt?: Date;
 }
 
 // Adım tanımları - Temel Switch Yapılandırma Laboratuvarı

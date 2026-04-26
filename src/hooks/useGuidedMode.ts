@@ -86,7 +86,8 @@ export function useGuidedMode(): UseGuidedModeReturn {
     // Reset all steps to incomplete
     const freshProject: GuidedProject = {
       ...project,
-      steps: project.steps.map(s => ({ ...s, completed: false }))
+      steps: project.steps.map(s => ({ ...s, completed: false, completedAt: undefined })),
+      startedAt: new Date()
     };
     setActiveProject(freshProject);
     setCurrentStepIndex(0);
