@@ -313,7 +313,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
     {
       id: 'desktop',
       icon: Terminal,
-      title: isTR ? 'Masaüstü (PC)' : 'Desktop (PC)',
+      title: isTR ? 'Masaüstü Bilgisayar' : 'Desktop Computer',
       cmds: [
         ['ipconfig [/all] [/release] [/renew]', isTR ? 'IP yapılandırması' : 'IP configuration'],
         ['ping <host>', isTR ? 'Bağlantı testi' : 'Test connectivity'],
@@ -328,7 +328,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['dir', isTR ? 'Dosya listesi' : 'Directory listing'],
         ['ver', isTR ? 'Versiyon bilgisi' : 'Version info'],
         ['cls', isTR ? 'Ekranı temizle' : 'Clear screen'],
-        ['snake / yilan', isTR ? 'Yılan Oyunu (Eğlence)' : 'Snake Game (Fun)'],
+        ['snake / yilan', isTR ? 'Yılan Oyunu' : 'Snake Game'],
         ['help / ?', isTR ? 'PC komut yardımı' : 'Desktop command help'],
       ]
     },

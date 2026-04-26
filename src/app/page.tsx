@@ -3796,7 +3796,15 @@ ${state.bannerMOTD}
                           </div>
 
                           <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
-                            {getAvailableProjects(language).map((guidedProject) => (
+                            {getAvailableProjects(language)
+                              .filter(guidedProject => 
+                                projectSearchQuery.trim() === '' ||
+                                guidedProject.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                                guidedProject.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                                guidedProject.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                                (guidedProject.detail && guidedProject.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
+                              )
+                              .map((guidedProject) => (
                               <Button
                                 key={guidedProject.id}
                                 variant='ghost'
@@ -3853,6 +3861,19 @@ ${state.bannerMOTD}
                                 )}
                               </Button>
                             ))}
+                            {getAvailableProjects(language).filter(guidedProject => 
+                              projectSearchQuery.trim() === '' ||
+                              guidedProject.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                              guidedProject.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                              guidedProject.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+                              (guidedProject.detail && guidedProject.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
+                            ).length === 0 && (
+                              <div className={`text-center py-12 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                                <p className="text-sm">
+                                  {language === 'tr' ? 'Aramanızla eşleşen rehberli ders bulunamadı.' : 'No guided lessons found matching your search.'}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </section>
                       </div>
