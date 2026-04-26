@@ -274,6 +274,17 @@ export function PCPanel({
   const isDnsEditingRef = useRef(false); // Track if user is actively editing DNS records
   const checkDhcpAvailabilityRef = useRef<() => { available: boolean; reason: string }>(() => ({ available: true, reason: '' }));
   const manualDhcpClickRef = useRef(false); // Track if DHCP button was manually clicked to prevent infinite loop
+  const pcIpRef = useRef(''); // Track pcIP to detect changes
+  const pcSubnetRef = useRef(pcSubnet);
+  const pcGatewayRef = useRef(pcGateway);
+  const pcDNSRef = useRef(pcDNS);
+  const applyDhcpLeaseRef = useRef<((force?: boolean) => ReturnType<typeof applyDhcpLease> | null) | undefined>(undefined);
+
+  // Keep refs in sync with state
+  useEffect(() => { pcIpRef.current = pcIP; }, [pcIP]);
+  useEffect(() => { pcSubnetRef.current = pcSubnet; }, [pcSubnet]);
+  useEffect(() => { pcGatewayRef.current = pcGateway; }, [pcGateway]);
+  useEffect(() => { pcDNSRef.current = pcDNS; }, [pcDNS]);
   const [dhcpForm, setDhcpForm] = useState<DhcpPoolConfig>({
     poolName: '',
     defaultGateway: '',
@@ -630,13 +641,27 @@ export function PCPanel({
     syncToGlobalRef.current = syncToGlobal;
   }, [syncToGlobal]);
 
-  // Trigger sync on change (debounced) - uses ref to avoid circular dependency
+  // Update pcIpRef when pcIP changes
   useEffect(() => {
+    pcIpRef.current = pcIP;
+  }, [pcIP]);
+
+  // Trigger sync on change (debounced) - uses ref to avoid circular dependency
+  // DISABLED: This effect was causing infinite loop with topology updates
+  // Manual sync is now triggered by specific user actions instead
+  /*
+  const syncTriggerRef = useRef(false);
+  useEffect(() => {
+    if (!syncTriggerRef.current) {
+      syncTriggerRef.current = true;
+      return;
+    }
     const handler = setTimeout(() => {
       syncToGlobalRef.current();
     }, 500);
     return () => clearTimeout(handler);
-  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, internalPcHostname, ipConfigMode, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel]);
+  }, [pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, internalPcHostname, ipConfigMode, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel]);
+  */
 
   // Local output for Desktop (Local) - initialize from prop if available
   const getInitialPcOutput = (): OutputLine[] => {
@@ -2258,22 +2283,23 @@ export function PCPanel({
   }, []);
 
   const getDhcpLease = useCallback((): { ip: string; subnetMask: string; gateway: string; dns: string; serverName: string; poolName: string } | null => {
-    const usedIps = new Set(
-      topologyDevices
-        .filter((d) => d.id !== deviceId && validateIP(d.ip || ''))
-        .map((d) => d.ip)
-    );
+    try {
+      const usedIps = new Set(
+        topologyDevices
+          .filter((d) => d.id !== deviceId && validateIP(d.ip || ''))
+          .map((d) => d.ip)
+      );
 
-    // 1. Check PC DHCP servers from topology
-    const pcServers = topologyDevices.filter(
-      (d) =>
-        d.id !== deviceId &&
-        d.type === 'pc' &&
-        d.services?.dhcp?.enabled &&
-        (d.services?.dhcp?.pools?.length || 0) > 0 &&
+      // 1. Check PC DHCP servers from topology
+      const pcServers = topologyDevices.filter(
+        (d) =>
+          d.id !== deviceId &&
+          d.type === 'pc' &&
+          d.services?.dhcp?.enabled &&
+          (d.services?.dhcp?.pools?.length || 0) > 0 &&
         !!d.ip &&
         (hasPhysicalPathToDevice(d.id) || canReachTargetIp(d.ip))
-    );
+      );
 
     for (const server of pcServers) {
       const pools = server.services?.dhcp?.pools || [];
@@ -2409,6 +2435,10 @@ export function PCPanel({
     }
 
     return null;
+    } catch (err) {
+      console.warn('getDhcpLease error:', err);
+      return null;
+    }
   }, [canReachTargetIp, deviceId, deviceStates, hasPhysicalPathToDevice, ipToNumber, numberToIp, topologyDevices, validateIP]);
 
   // Check if DHCP pools are available and get failure reason
@@ -2557,6 +2587,12 @@ export function PCPanel({
 
   const applyDhcpLease = useCallback((force = false) => {
     const lease = getDhcpLease();
+    // Use refs for comparison to avoid dependency issues
+    const currentPcIP = pcIpRef.current;
+    const currentPcSubnet = pcSubnetRef.current;
+    const currentPcGateway = pcGatewayRef.current;
+    const currentPcDNS = pcDNSRef.current;
+
     if (!lease) {
       const usedIps = new Set(
         topologyDevices
@@ -2573,10 +2609,10 @@ export function PCPanel({
         poolName: 'APIPA',
       };
       if (!force &&
-        linkLocalLease.ip === pcIP &&
-        linkLocalLease.subnetMask === pcSubnet &&
-        linkLocalLease.gateway === pcGateway &&
-        linkLocalLease.dns === pcDNS
+        linkLocalLease.ip === currentPcIP &&
+        linkLocalLease.subnetMask === currentPcSubnet &&
+        linkLocalLease.gateway === currentPcGateway &&
+        linkLocalLease.dns === currentPcDNS
       ) {
         return linkLocalLease;
       }
@@ -2587,10 +2623,10 @@ export function PCPanel({
       return linkLocalLease;
     }
     if (!force &&
-      lease.ip === pcIP &&
-      lease.subnetMask === pcSubnet &&
-      lease.gateway === pcGateway &&
-      lease.dns === pcDNS
+      lease.ip === currentPcIP &&
+      lease.subnetMask === currentPcSubnet &&
+      lease.gateway === currentPcGateway &&
+      lease.dns === currentPcDNS
     ) {
       return lease;
     }
@@ -2599,7 +2635,12 @@ export function PCPanel({
     setPcGateway(lease.gateway);
     setPcDNS(lease.dns);
     return lease;
-  }, [getDhcpLease, pcDNS, pcGateway, pcIP, pcSubnet, deviceId, topologyDevices, validateIP]);
+  }, [getDhcpLease, deviceId, topologyDevices, validateIP]); // Removed pcIP, pcSubnet, pcGateway, pcDNS - using refs instead
+
+  // Keep ref in sync with callback to avoid dependency issues in useEffect
+  useEffect(() => {
+    applyDhcpLeaseRef.current = applyDhcpLease;
+  }, [applyDhcpLease]);
 
   // When DHCP mode is selected, request a lease immediately and notify the user.
   // Also retry if topology connections change, in case we were waiting for a cable.
@@ -2630,7 +2671,7 @@ export function PCPanel({
 
     let lease;
     try {
-      lease = applyDhcpLease(true);
+      lease = applyDhcpLeaseRef.current(true);
     } catch (err) {
       console.warn('DHCP lease error:', err);
     }
@@ -2679,7 +2720,7 @@ export function PCPanel({
     }
 
     prevIpConfigModeRef.current = ipConfigMode;
-  }, [applyDhcpLease, ipConfigMode, t, topologyConnections, pcIP, language]);
+  }, [ipConfigMode, t, topologyConnections, language]); // Removed applyDhcpLease - using ref instead
 
   // Listen for auto-renew-dhcp event from page.tsx
   useEffect(() => {
@@ -2691,7 +2732,7 @@ export function PCPanel({
         // Only trigger if this PC is in DHCP mode and has no valid IP (0.0.0.0 or 169.254.x.x)
         if (ipConfigMode === 'dhcp' && (!pcIP || pcIP === '0.0.0.0' || pcIP.startsWith('169.254.'))) {
           try {
-            const lease = applyDhcpLease(true);
+            const lease = applyDhcpLeaseRef.current(true);
             if (lease && lease.serverName !== 'link-local') {
               addLocalOutput('success', `DHCP lease renewed. New IP: ${lease.ip}`);
             }
@@ -2704,7 +2745,7 @@ export function PCPanel({
 
     window.addEventListener('auto-renew-dhcp', handleAutoRenewDhcp);
     return () => window.removeEventListener('auto-renew-dhcp', handleAutoRenewDhcp);
-  }, [deviceId, ipConfigMode, pcIP, applyDhcpLease, addLocalOutput]);
+  }, [deviceId, ipConfigMode, pcIP, addLocalOutput]); // Removed applyDhcpLease - using ref instead
 
   const handleConnect = async () => {
     if (!consoleDevice) return;
@@ -2778,7 +2819,7 @@ export function PCPanel({
           addLocalOutput('success', 'IP address released successfully.');
         } else if (args.includes('/renew')) {
           try {
-            const lease = applyDhcpLease();
+            const lease = applyDhcpLeaseRef.current?.() ?? null;
             if (lease && lease.serverName !== 'link-local') {
               addLocalOutput(
                 'success',
@@ -4041,10 +4082,11 @@ export function PCPanel({
                               role="radio"
                               aria-checked={ipConfigMode === 'dhcp'}
                               onClick={() => {
+                                if (manualDhcpClickRef.current) return;
                                 manualDhcpClickRef.current = true;
                                 setIpConfigMode('dhcp');
                                 try {
-                                  const lease = applyDhcpLease(true);
+                                  const lease = applyDhcpLeaseRef.current(true);
                                   if (lease && lease.serverName === 'link-local') {
                                     toast({
                                       title: language === 'tr' ? 'DHCP bulunamadı' : 'DHCP not found',

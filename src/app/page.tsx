@@ -1410,8 +1410,13 @@ ${state.bannerMOTD}
   }, [loadProjectData]);
 
   // Auto-renew DHCP for devices with link-local IPs (169.254.x.x) or 0.0.0.0 on page load
+  const dhcpRenewalDoneRef = useRef(false);
+  const isInitialLoadRef = useRef(true);
+
   useEffect(() => {
+    if (dhcpRenewalDoneRef.current) return;
     if (!topologyDevices || topologyDevices.length === 0 || !deviceStates) return;
+    if (!isInitialLoadRef.current) return; // Only run on initial load
 
     // Find all PC devices with DHCP mode and no valid IP (0.0.0.0 or 169.254.x.x)
     const devicesNeedingDhcpRenewal = topologyDevices.filter(
@@ -1421,7 +1426,11 @@ ${state.bannerMOTD}
         (!device.ip || device.ip === '0.0.0.0' || device.ip.startsWith('169.254.'))
     );
 
-    if (devicesNeedingDhcpRenewal.length === 0) return;
+    if (devicesNeedingDhcpRenewal.length === 0) {
+      dhcpRenewalDoneRef.current = true;
+      isInitialLoadRef.current = false;
+      return;
+    }
 
     // Simple DHCP IP assignment logic
     const assignDhcpIp = (pcDevice: CanvasDevice): string | null => {
@@ -1472,7 +1481,21 @@ ${state.bannerMOTD}
       return device;
     });
 
-    setTopologyDevices(updatedDevices);
+    // Only update if something actually changed
+    const hasChanges = updatedDevices.some((device, index) => {
+      const original = topologyDevices[index];
+      return device.ip !== original.ip ||
+             device.subnet !== original.subnet ||
+             device.gateway !== original.gateway ||
+             device.dns !== original.dns;
+    });
+
+    if (hasChanges) {
+      setTopologyDevices(updatedDevices);
+    }
+
+    dhcpRenewalDoneRef.current = true;
+    isInitialLoadRef.current = false;
   }, [topologyDevices, deviceStates, setTopologyDevices]);
 
   // Onboarding: show once per browser
@@ -5194,11 +5217,17 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
   });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+  const positionRef = useRef(position);
+
+  // Keep ref in sync with state to avoid dependency issues
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
   const handleDragStart = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
-    dragStartRef.current = { x: e.clientX, y: e.clientY, posX: position.x, posY: position.y };
+    dragStartRef.current = { x: e.clientX, y: e.clientY, posX: positionRef.current.x, posY: positionRef.current.y };
   };
 
   useEffect(() => {
@@ -5215,8 +5244,9 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
       const panelWidth = 280;
       const panelHeight = 400;
       const margin = 16;
-      const safeX = Math.max(margin, Math.min(position.x, window.innerWidth - panelWidth - margin));
-      const safeY = Math.max(margin, Math.min(position.y, window.innerHeight - panelHeight - margin));
+      const currentPos = positionRef.current;
+      const safeX = Math.max(margin, Math.min(currentPos.x, window.innerWidth - panelWidth - margin));
+      const safeY = Math.max(margin, Math.min(currentPos.y, window.innerHeight - panelHeight - margin));
       const clampedPos = { x: safeX, y: safeY };
       setPosition(clampedPos);
       localStorage.setItem('pc-info-position', JSON.stringify(clampedPos));
@@ -5224,7 +5254,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-  }, [isDragging, position]);
+  }, [isDragging]); // Only depend on isDragging, not position
 
   return (
     <div
@@ -5371,11 +5401,17 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
   });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+  const positionRef = useRef(position);
+
+  // Keep ref in sync with state to avoid dependency issues
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
   const handleDragStart = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
-    dragStartRef.current = { x: e.clientX, y: e.clientY, posX: position.x, posY: position.y };
+    dragStartRef.current = { x: e.clientX, y: e.clientY, posX: positionRef.current.x, posY: positionRef.current.y };
   };
 
   useEffect(() => {
@@ -5392,8 +5428,9 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
       const panelWidth = 300;
       const panelHeight = 500;
       const margin = 16;
-      const safeX = Math.max(margin, Math.min(position.x, window.innerWidth - panelWidth - margin));
-      const safeY = Math.max(margin, Math.min(position.y, window.innerHeight - panelHeight - margin));
+      const currentPos = positionRef.current;
+      const safeX = Math.max(margin, Math.min(currentPos.x, window.innerWidth - panelWidth - margin));
+      const safeY = Math.max(margin, Math.min(currentPos.y, window.innerHeight - panelHeight - margin));
       const clampedPos = { x: safeX, y: safeY };
       setPosition(clampedPos);
       localStorage.setItem('router-info-position', JSON.stringify(clampedPos));
@@ -5401,7 +5438,7 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-  }, [isDragging, position]);
+  }, [isDragging]); // Only depend on isDragging, not position
 
   // Get port information
   const ports = routerState?.ports ? Object.values(routerState.ports) : (router.ports || []);
