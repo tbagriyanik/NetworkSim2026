@@ -7,6 +7,7 @@ import { CableInfo, SwitchState, Port, getPortLEDColor, PortLEDColor } from '@/l
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import {
   X,
@@ -167,6 +168,19 @@ export function RouterPanel({
         <DialogHeader className="p-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div 
+                    className={`w-4 h-4 rounded-full cursor-pointer transition-all duration-200 hover:scale-125 group flex items-center justify-center ${routerDevice.status === 'online' ? 'bg-green-500 animate-pulse hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
+                    onClick={onClose}
+                  >
+                    <X className="w-4 h-4 opacity-0 group-hover:opacity-100 text-white" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {language === 'tr' ? 'Kapat' : 'Close'}
+                </TooltipContent>
+              </Tooltip>
               <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
                 <RouterIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>

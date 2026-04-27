@@ -237,17 +237,14 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
               <div className="space-y-4">
                 <h4 className="text-lg font-bold">{t.termsAndConditions}</h4>
                 <p className="text-sm">{t.termsText}</p>
-                <div className="p-3 bg-cyan-500/5 rounded-lg border border-cyan-500/20">
-                  <p className="text-sm font-bold text-cyan-600 dark:text-cyan-400 mb-1">{t.gitAddressLabel}:</p>
-                  <a
+                <div className="p-3 bg-cyan-500/5 rounded-lg border border-cyan-500/20">                                   
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.openSourceInfo}</p>
+                   <a
                     href="https://github.com/tbagriyanik/networksim2026"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-blue-500 hover:underline break-all"
-                  >
-                    https://github.com/tbagriyanik/networksim2026
-                  </a>
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.openSourceInfo}</p>
+                  >{t.gitAddressLabel}</a>
                 </div>
                 <div>
                   <a

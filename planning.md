@@ -2,13 +2,53 @@
 
 ## Current Code Metrics
 
-- **Total lines**: 63194
-- **Last updated**: 2026-04-27
+- **Total lines**: 63500+
+- **Last updated**: 2026-04-27 (v1.5.8)
 - **Example projects**: 30
 - **CLI Commands**: 160+
-- **Version**: 1.5.7
+- **Version**: 1.5.8
 
 ## Latest Updates
+
+### NEW: Project Example Descriptions Enhanced
+
+All 30 example projects now have improved descriptions and detailed hints for better student learning experience.
+
+**Description Fields:**
+- Rewritten as clear, concise sentences explaining project purpose
+- Turkish and English localization maintained
+- Focus on what the project demonstrates rather than technical snippets
+
+**Detail Fields (Hints & Tips):**
+- Security: Passwords displayed (enable secret: class, console: console, vty: vty123)
+- SSH: Connection command and credentials (ssh admin@192.168.1.150, password: 1234)
+- WiFi: SSID and passwords (GreenHouse-Network / sera2026)
+- VLANs: Specific VLAN IDs and IP addresses
+- Routing: Exact static route commands for each router
+- MAC Tables: Specific MAC addresses for reference
+- Commands: Useful show/debug commands for each lab
+
+**Files Modified:**
+- `src/lib/network/exampleProjects.ts` - All 30 project descriptions and details updated
+
+### NEW: PC IP Auto-Assign Subnet Mask
+
+Automatic subnet mask assignment based on IP address first octet.
+
+**Features:**
+- 10.x.x.x → 255.0.0.0 (Class A networks)
+- 192.x.x.x → 255.255.255.0 (Class C networks)
+- 169.x.x.x → 255.255.0.0 (APIPA/Link-local)
+- Default: 255.255.255.0 for other addresses
+- Manual override: Users can still edit subnet mask field after auto-assignment
+
+**Implementation:**
+- Modified IP input onChange handler in PCPanel.tsx
+- Parses first octet and applies appropriate subnet mask
+- Triggered when typing in IP address field in static configuration mode
+
+**Files Modified:**
+- `src/components/network/PCPanel.tsx` - IP input handler updated
 
 ### NEW: Static Routing Lab Enhancement
 

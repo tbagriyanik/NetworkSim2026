@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Translations } from '@/contexts/LanguageContext';
-import { Database } from 'lucide-react';
+import { Database, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RouterIcon, SwitchIcon } from './PCPanelWidgets';
 
@@ -32,6 +32,7 @@ interface PortPanelProps {
   topologyDevices?: { id: string; status?: string }[];
   onTogglePower?: (deviceId: string) => void;
   topologyConnections?: TopologyConnection[];
+  onClose?: () => void;
 }
 
 const ledColorClasses: Record<PortLEDColor, string> = {
@@ -51,7 +52,7 @@ const statusTextEn: Record<string, string> = {
   'err-disabled': 'Err-Disabled'
 };
 
-export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDeviceId, isDevicePoweredOff = false, topologyDevices = [], onTogglePower, topologyConnections }: PortPanelProps) {
+export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDeviceId, isDevicePoweredOff = false, topologyDevices = [], onTogglePower, topologyConnections, onClose }: PortPanelProps) {
   const isDark = theme === 'dark';
 
   // Count open/closed ports
@@ -341,7 +342,19 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
           <div className={`${innerBg} rounded-lg p-2 sm:p-4 border ${innerBorder}`}>
             <div className={`flex items-center justify-between mb-3 sm:mb-4 pb-2 border-b ${isDark ? 'border-slate-700' : 'border-slate-300'}`}>
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${isDevicePoweredOff ? 'bg-gray-500' : 'bg-green-500 animate-pulse'}`} />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div 
+                      className={`w-3 h-3 rounded-full cursor-pointer transition-all duration-200 hover:scale-125 group flex items-center justify-center ${isDevicePoweredOff ? 'bg-gray-500 hover:bg-gray-600' : 'bg-green-500 animate-pulse hover:bg-green-600'}`}
+                      onClick={onClose}
+                    >
+                      <X className="w-3 h-3 opacity-0 group-hover:opacity-100 text-white" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t.language === 'tr' ? 'Kapat' : 'Close'}
+                  </TooltipContent>
+                </Tooltip>
                 <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{deviceModel || 'WS-C2960-24TT-L'}</span>
               </div>
               <div className="flex gap-2">

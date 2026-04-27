@@ -2,16 +2,26 @@
 
 A modern, interactive, browser-based network simulator for students and networking enthusiasts.
 
-![Version](https://img.shields.io/badge/version-1.5.7-blue)
+![Version](https://img.shields.io/badge/version-1.5.8-blue)
 ![Tech Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Commits](https://img.shields.io/badge/commits-720+-orange)
-![Lines of Code](https://img.shields.io/badge/lines--of--code-63194-blueviolet)
+![Commits](https://img.shields.io/badge/commits-730+-orange)
+![Lines of Code](https://img.shields.io/badge/lines--of--code-63500+-blueviolet)
 
 Network learning app: [Test Address](https://network2026.vercel.app)
 
 ## Recent Updates
 
+- **NEW: Project Example Descriptions Enhanced**: All 30 example projects now have clear, sentence-based descriptions
+  - Description fields rewritten as concise sentences explaining project purpose
+  - Detail fields now include helpful hints: passwords, commands, IP addresses, VLAN configs
+  - Examples: SSH passwords (admin/1234), WiFi credentials (sera2026), static route commands
+  - Improved readability for students learning network concepts
+- **NEW: PC IP Auto-Assign Subnet Mask**: Automatic subnet mask detection based on IP address class
+  - 10.x.x.x → 255.0.0.0 (Class A)
+  - 192.x.x.x → 255.255.255.0 (Class C)
+  - 169.x.x.x → 255.255.0.0 (APIPA)
+  - Users can still manually override the auto-assigned subnet mask
 - **NEW: Static Routing Lab Enhancement**: Complete static routing implementation with proper route verification
   - `ip route` command now supports optional administrative distance parameter: `ip route 192.168.20.0 255.255.255.0 192.168.1.2 150`
   - Interface names as next-hop support: `ip route 192.168.20.0 255.255.255.0 gi0/1`

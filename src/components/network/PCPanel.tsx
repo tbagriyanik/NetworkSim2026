@@ -3736,7 +3736,19 @@ export function PCPanel({
           }
       `}>
           <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isPcPoweredOff ? 'bg-red-500' : 'bg-green-500 animate-pulse'}`} />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div 
+                  className={`w-3 h-3 rounded-full cursor-pointer transition-all duration-200 hover:scale-125 group flex items-center justify-center ${isPcPoweredOff ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 animate-pulse hover:bg-green-600'}`}
+                  onClick={onClose}
+                >
+                  <X className="w-3 h-3 opacity-0 group-hover:opacity-100 text-white" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {language === 'tr' ? 'Kapat' : 'Close'}
+              </TooltipContent>
+            </Tooltip>
             <span className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
               {internalPcHostname}
             </span>
@@ -4210,6 +4222,22 @@ export function PCPanel({
                               const newIp = e.target.value;
                               setPcIP(newIp);
                               
+                              // Check for duplicate IP
+                              if (validateIP(newIp)) {
+                                const duplicateDevice = topologyDevices.find(d => {
+                                  if (d.id === deviceId) return false;
+                                  if (!d.ip) return false;
+                                  // Same IP is always a duplicate (regardless of subnet)
+                                  return d.ip === newIp;
+                                });
+                                
+                                if (duplicateDevice) {
+                                  setErrors(prev => ({ ...prev, ip: language === 'tr' ? `Bu IP adresi zaten ${duplicateDevice.name || duplicateDevice.id} tarafından kullanılıyor` : `This IP address is already used by ${duplicateDevice.name || duplicateDevice.id}` }));
+                                } else {
+                                  setErrors(prev => { const { ip, ...rest } = prev; return rest; });
+                                }
+                              }
+                              
                               // Auto-assign subnet mask based on first octet
                               const firstOctet = newIp.split('.')[0];
                               if (firstOctet) {
@@ -4240,6 +4268,7 @@ export function PCPanel({
                                 }));
                               }, 500);
                             }} placeholder="192.168.1.100" className={`h-9 ${errors.ip ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
+                            {errors.ip && <p className="text-xs text-rose-500 mt-1">{errors.ip}</p>}
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">Subnet Mask</label>
