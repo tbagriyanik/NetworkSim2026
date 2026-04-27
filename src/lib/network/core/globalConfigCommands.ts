@@ -92,11 +92,14 @@ function cmdIpRouting(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  // Check if device supports routing (L3 switch only)
-  if (!canAssignIPToPhysicalPort(state.switchModel)) {
+  // Check if device supports routing (router or L3 switch)
+  const currentDevice = ctx.devices?.find((d: any) => d.id === ctx.sourceDeviceId);
+  const isRouter = currentDevice?.type === 'router';
+  const isL3Switch = canAssignIPToPhysicalPort(state.switchModel);
+  if (!isRouter && !isL3Switch) {
     return {
       success: false,
-      error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support IP routing.\nIP routing is only supported on Layer 3 switches.`
+      error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support IP routing.\nIP routing is only supported on routers and Layer 3 switches.`
     };
   }
 
@@ -114,28 +117,36 @@ function cmdIpRoute(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  // Check if device supports routing (L3 switch only)
-  if (!canAssignIPToPhysicalPort(state.switchModel)) {
+  // Check if device supports routing (router or L3 switch)
+  const currentDevice = ctx.devices?.find((d: any) => d.id === ctx.sourceDeviceId);
+  const isRouter = currentDevice?.type === 'router';
+  const isL3Switch = canAssignIPToPhysicalPort(state.switchModel);
+  if (!isRouter && !isL3Switch) {
     return {
       success: false,
-      error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support static routing.\nStatic routing is only supported on Layer 3 switches.`
+      error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support static routing.\nStatic routing is only supported on routers and Layer 3 switches.`
     };
   }
 
-  const match = input.match(/^ip\s+route\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+|\w+)$/i);
+  const match = input.match(/^ip\s+route\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+|\S+)(?:\s+(\d+))?$/i);
   if (!match) {
-    return { success: false, error: '% Invalid ip route command. Use: ip route <network> <mask> <next-hop|interface>' };
+    return { success: false, error: '% Invalid ip route command. Use: ip route <network> <mask> <next-hop|interface> [administrative-distance]' };
   }
 
-  const [, network, mask, nextHop] = match;
+  const [, network, mask, nextHop, adminDistance] = match;
+  const metric = adminDistance ? parseInt(adminDistance, 10) : 1;
 
   const newStaticRoutes = [...(state.staticRoutes || [])];
-  newStaticRoutes.push({ network, mask, nextHop });
+  // Remove existing route to same destination if exists
+  const filteredRoutes = newStaticRoutes.filter(
+    (route: any) => !(route.network === network && route.mask === mask)
+  );
+  filteredRoutes.push({ network, mask, nextHop, metric });
 
   return {
     success: true,
     newState: {
-      staticRoutes: newStaticRoutes,
+      staticRoutes: filteredRoutes,
       ipRouting: true
     }
   };
@@ -149,15 +160,18 @@ function cmdNoIpRoute(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  // Check if device supports routing (L3 switch only)
-  if (!canAssignIPToPhysicalPort(state.switchModel)) {
+  // Check if device supports routing (router or L3 switch)
+  const currentDevice = ctx.devices?.find((d: any) => d.id === ctx.sourceDeviceId);
+  const isRouter = currentDevice?.type === 'router';
+  const isL3Switch = canAssignIPToPhysicalPort(state.switchModel);
+  if (!isRouter && !isL3Switch) {
     return {
       success: false,
-      error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support static routing.\nStatic routing is only supported on Layer 3 switches.`
+      error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support static routing.\nStatic routing is only supported on routers and Layer 3 switches.`
     };
   }
 
-  const match = input.match(/^no\s+ip\s+route\s+([0-9.]+)\s+([0-9.]+)(?:\s+([0-9.]+|\w+))?$/i);
+  const match = input.match(/^no\s+ip\s+route\s+([0-9.]+)\s+([0-9.]+)(?:\s+([0-9.]+|\S+))?$/i);
   if (!match) {
     return { success: false, error: '% Invalid no ip route command' };
   }

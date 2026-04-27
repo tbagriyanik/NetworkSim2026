@@ -1040,7 +1040,8 @@ function cmdShowIpRoute(
       const network = route.network || route.destination;
       if (mask && network) {
         const prefixLength = getPrefixLength(mask);
-        output += `S     ${network}/${prefixLength} [1/0] via ${route.nextHop}${route.interface ? ` ${route.interface}` : ''}\n`;
+        const metric = route.metric || 1;
+        output += `S     ${network}/${prefixLength} [${metric}/0] via ${route.nextHop}${route.interface ? ` ${route.interface}` : ''}\n`;
       }
     });
   }

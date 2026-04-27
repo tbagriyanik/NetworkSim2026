@@ -1364,7 +1364,10 @@ const commandHandlers: Record<string, CommandHandler> = {
   // Interface commands
   ...interfaceHandlers,
 
-  // Global configuration commands
+  // Privileged commands (for "do" commands in config mode)
+  ...privilegedHandlers,
+
+  // Global configuration commands - AFTER privileged so these take precedence for overlapping commands
   ...globalConfigHandlers,
 
   // Router configuration commands (OSPF/RIP) - without network (will be added below)
@@ -1372,9 +1375,6 @@ const commandHandlers: Record<string, CommandHandler> = {
 
   // Line commands
   ...lineHandlers,
-
-  // Privileged commands (for "do" commands in config mode)
-  ...privilegedHandlers,
 
   // DHCP pool sub-commands - without network (will be added below)
   ...Object.fromEntries(Object.entries(dhcpConfigHandlers).filter(([k]) => k !== 'network')),

@@ -780,7 +780,7 @@ export function checkConnectivity(
     routingRequired = !isInSameSubnet;
 
     if (!isInSameSubnet) {
-      // Different subnets - check if there's a Layer-3 routing device in path
+      // Different subnets - check if there's a Layer-3 routing device in path with proper routes
       let hasL3Gateway = false;
       let routerDeviceId: string | null = null;
 
@@ -788,19 +788,29 @@ export function checkConnectivity(
         const device = devices.find(d => d.id === deviceId);
         const state = deviceStates?.get(deviceId);
         if ((device?.type === 'router' || device?.type === 'switchL3') && state?.ipRouting) {
-          hasL3Gateway = true;
-          routerDeviceId = deviceId;
-          break;
+          // Check if this router has a route to the destination network
+          const routingTable = getRoutingTable(deviceId, safeDeviceStates);
+          const route = findRoute(targetIp_check, routingTable);
+          if (route) {
+            hasL3Gateway = true;
+            routerDeviceId = deviceId;
+            break;
+          }
         }
       }
 
-      // If no router in path, try to find a connected router and add it to path
+      // If no router in path with proper route, try to find a connected router
       if (!hasL3Gateway) {
         // Find all routers in the topology
         const routers = devices.filter(d => (d.type === 'router' || d.type === 'switchL3'));
         for (const router of routers) {
           const routerState = deviceStates?.get(router.id);
           if (routerState?.ipRouting) {
+            // Check if router has a route to destination
+            const routingTable = getRoutingTable(router.id, safeDeviceStates);
+            const route = findRoute(targetIp_check, routingTable);
+            if (!route) continue; // Skip routers without proper route
+
             // Check if router is connected to any device in the path
             for (const pathDeviceId of path) {
               const conn = connections.find(c =>
@@ -830,7 +840,9 @@ export function checkConnectivity(
           hops: hopNames,
           hopIds: path,
           targetId: targetDevice.id,
-          error: `Subnet uyumsuzluğu: Kaynak ${sourceIp}/${sourceSubnet}, Hedef ${targetIp_check}/${targetSubnet}. Layer 3 routing gerekli.`
+          error: language === 'tr'
+            ? `Hedefe rota bulunamadı. Statik rota yapılandırması gerekli.`
+            : `No route to destination. Static route configuration required.`
         };
       }
     }

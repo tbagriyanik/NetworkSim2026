@@ -455,20 +455,25 @@ function cmdIpRoute(state: any, input: string, ctx: any): any {
         return { success: false, error: '% Invalid command at this mode' };
     }
 
-    const match = input.match(/^ip\s+route\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+|\w+)$/i);
+    const match = input.match(/^ip\s+route\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+|\S+)(?:\s+(\d+))?$/i);
     if (!match) {
-        return { success: false, error: '% Invalid ip route command. Use: ip route <network> <mask> <next-hop|interface>' };
+        return { success: false, error: '% Invalid ip route command. Use: ip route <network> <mask> <next-hop|interface> [administrative-distance]' };
     }
 
-    const [, network, mask, nextHop] = match;
+    const [, network, mask, nextHop, adminDistance] = match;
+    const metric = adminDistance ? parseInt(adminDistance, 10) : 1;
 
     const newStaticRoutes = [...(state.staticRoutes || [])];
-    newStaticRoutes.push({ network, mask, nextHop });
+    // Remove existing route to same destination if exists
+    const filteredRoutes = newStaticRoutes.filter(
+        (route: any) => !(route.network === network && route.mask === mask)
+    );
+    filteredRoutes.push({ network, mask, nextHop, metric });
 
     return {
         success: true,
         newState: {
-            staticRoutes: newStaticRoutes,
+            staticRoutes: filteredRoutes,
             ipRouting: true
         }
     };
@@ -482,16 +487,25 @@ function cmdNoIpRoute(state: any, input: string, ctx: any): any {
         return { success: false, error: '% Invalid command at this mode' };
     }
 
-    const match = input.match(/^no\s+ip\s+route\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+|\w+)$/i);
+    const match = input.match(/^no\s+ip\s+route\s+([0-9.]+)\s+([0-9.]+)(?:\s+([0-9.]+|\S+))?$/i);
     if (!match) {
         return { success: false, error: '% Invalid no ip route command' };
     }
 
     const [, network, mask, nextHop] = match;
 
-    const newStaticRoutes = (state.staticRoutes || []).filter(
-        (route: any) => !(route.network === network && route.mask === mask && route.nextHop === nextHop)
-    );
+    let newStaticRoutes;
+    if (nextHop) {
+        // Remove specific route
+        newStaticRoutes = (state.staticRoutes || []).filter(
+            (route: any) => !(route.network === network && route.mask === mask && route.nextHop === nextHop)
+        );
+    } else {
+        // Remove all routes for this network/mask
+        newStaticRoutes = (state.staticRoutes || []).filter(
+            (route: any) => !(route.network === network && route.mask === mask)
+        );
+    }
 
     return {
         success: true,

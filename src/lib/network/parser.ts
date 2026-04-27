@@ -214,16 +214,16 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 0
   },
   'ip route': {
-    pattern: /^ip\s+route\s+([0-9.]+)(?:\s+([0-9.]+)(?:\s+([0-9.]+|\S+))?)?$/i,
+    pattern: /^ip\s+route\s+([0-9.]+)\s+([0-9.]+)\s+(\S+)(?:\s+(\d+))?$/i,
+    modes: ['config', 'privileged'],
+    minArgs: 3,
+    maxArgs: 4
+  },
+  'no ip route': {
+    pattern: /^no\s+ip\s+route\s+([0-9.]+)\s+([0-9.]+)(?:\s+(\S+))?$/i,
     modes: ['config'],
     minArgs: 2,
     maxArgs: 3
-  },
-  'no ip route': {
-    pattern: /^no\s+ip\s+route\s+([0-9.]+)(?:\s+([0-9.]+))?$/i,
-    modes: ['config'],
-    minArgs: 1,
-    maxArgs: 2
   },
   'ip ssh version': {
     pattern: /^ip\s+ssh\s+version\s+(1|2)$/i,
