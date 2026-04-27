@@ -1301,12 +1301,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
 
   // Example 7: Static Routing
   const staticRoutingDevices = [
-    createPcDevice('pc-1', 'PC-1', 40, 120, '192.168.10.10', 1),
-    createPcDevice('pc-2', 'PC-2', 40, 260, '192.168.20.10', 1),
-    createL3SwitchDevice('switch-1', 'SW1', 240, 190),
+    createPcDevice('pc-1', 'PC-1', 40, 120, '192.168.10.10', 1, '192.168.10.1'),
+    createPcDevice('pc-2', 'PC-2', 40, 260, '192.168.20.10', 1, '192.168.20.1'),
+    createSwitchDevice('switch-1', 'SW1', 240, 190),
     createRouterDevice('router-1', 'R1', 440, 120),
     createRouterDevice('router-2', 'R2', 440, 260),
-    createL3SwitchDevice('switch-2', 'SW2', 640, 190)
+    createSwitchDevice('switch-2', 'SW2', 640, 190)
   ];
   const staticRoutingConnections: CanvasConnection[] = [];
   connectPorts(staticRoutingDevices, staticRoutingConnections, 'pc-1', 'eth0', 'switch-1', 'fa0/1');
@@ -1318,8 +1318,8 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'static-routing-note',
       text: isTr
-        ? 'Static Routing Lab:\nR1: ip route 192.168.20.0 255.255.255.0 192.168.1.2\nR2: ip route 192.168.10.0 255.255.255.0 192.168.1.1\nR1 Gi0/0: 192.168.1.1/24, Gi0/1: 192.168.2.1/24\nR2 Gi0/0: 192.168.2.2/24, Gi0/1: 192.168.3.1/24\nSW1 Gi0/1: 192.168.1.2/24\nSW2 Gi0/1: 192.168.3.2/24\nshow ip route ile doğrula.'
-        : 'Static Routing Lab:\nR1: ip route 192.168.20.0 255.255.255.0 192.168.1.2\nR2: ip route 192.168.10.0 255.255.255.0 192.168.1.1\nR1 Gi0/0: 192.168.1.1/24, Gi0/1: 192.168.2.1/24\nR2 Gi0/0: 192.168.2.2/24, Gi0/1: 192.168.3.1/24\nSW1 Gi0/1: 192.168.1.2/24\nSW2 Gi0/1: 192.168.3.2/24\nVerify with show ip route.',
+        ? 'Static Routing Lab:\nR1: ip route 192.168.20.0 255.255.255.0 192.168.1.2\nR2: ip route 192.168.10.0 255.255.255.0 192.168.1.1\nR1 Gi0/1: 192.168.10.1/24 (PC-1 Gateway)\nR1 Gi0/0: 192.168.1.1/24 (R2 bağlantısı)\nR2 Gi0/0: 192.168.1.2/24 (R1 bağlantısı)\nR2 Gi0/1: 192.168.20.1/24 (PC-2 Gateway)\nPC-1: 192.168.10.10/24, GW: 192.168.10.1\nPC-2: 192.168.20.10/24, GW: 192.168.20.1\nshow ip route ile doğrula.'
+        : 'Static Routing Lab:\nR1: ip route 192.168.20.0 255.255.255.0 192.168.1.2\nR2: ip route 192.168.10.0 255.255.255.0 192.168.1.1\nR1 Gi0/1: 192.168.10.1/24 (PC-1 Gateway)\nR1 Gi0/0: 192.168.1.1/24 (R2 link)\nR2 Gi0/0: 192.168.1.2/24 (R1 link)\nR2 Gi0/1: 192.168.20.1/24 (PC-2 Gateway)\nPC-1: 192.168.10.10/24, GW: 192.168.10.1\nPC-2: 192.168.20.10/24, GW: 192.168.20.1\nVerify with show ip route.',
       x: 600,
       y: 40,
       width: 420,
@@ -1330,33 +1330,31 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       opacity: 0.75
     }
   ];
-  const staticSw1 = createInitialState('00:1A:2B:3C:4D:67', 'WS-C3560-24PS');
+  const staticSw1 = createInitialState('00:1A:2B:3C:4D:67', 'WS-C2960-24TT-L');
   staticSw1.hostname = 'SW1';
-  staticSw1.ports['vlan1'] = { ...staticSw1.ports['vlan1'], ipAddress: '192.168.1.2', subnetMask: '255.255.255.0' };
-  staticSw1.ports['gi0/1'] = { ...staticSw1.ports['gi0/1'], mode: 'routed', ipAddress: '192.168.1.2', subnetMask: '255.255.255.0', status: 'connected' };
   staticSw1.ports['fa0/1'] = { ...staticSw1.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  staticSw1.ports['gi0/1'] = { ...staticSw1.ports['gi0/1'], vlan: 1, mode: 'access', status: 'connected' };
 
   const staticR1 = createInitialRouterState('00:50:00:00:00:01');
   staticR1.hostname = 'R1';
   staticR1.ports['gi0/0'] = { ...staticR1.ports['gi0/0'], ipAddress: '192.168.1.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
-  staticR1.ports['gi0/1'] = { ...staticR1.ports['gi0/1'], ipAddress: '192.168.2.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  staticR1.ports['gi0/1'] = { ...staticR1.ports['gi0/1'], ipAddress: '192.168.10.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
   staticR1.staticRoutes = [
-    { destination: '192.168.20.0', subnetMask: '255.255.255.0', nextHop: '192.168.2.2', metric: 1, type: 'static' }
+    { destination: '192.168.20.0', subnetMask: '255.255.255.0', nextHop: '192.168.1.2', metric: 1, type: 'static' }
   ];
 
   const staticR2 = createInitialRouterState('00:50:00:00:00:02');
   staticR2.hostname = 'R2';
-  staticR2.ports['gi0/0'] = { ...staticR2.ports['gi0/0'], ipAddress: '192.168.2.2', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
-  staticR2.ports['gi0/1'] = { ...staticR2.ports['gi0/1'], ipAddress: '192.168.3.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  staticR2.ports['gi0/0'] = { ...staticR2.ports['gi0/0'], ipAddress: '192.168.1.2', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  staticR2.ports['gi0/1'] = { ...staticR2.ports['gi0/1'], ipAddress: '192.168.20.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
   staticR2.staticRoutes = [
-    { destination: '192.168.10.0', subnetMask: '255.255.255.0', nextHop: '192.168.2.1', metric: 1, type: 'static' }
+    { destination: '192.168.10.0', subnetMask: '255.255.255.0', nextHop: '192.168.1.1', metric: 1, type: 'static' }
   ];
 
-  const staticSw2 = createInitialState('00:1A:2B:3C:4D:68', 'WS-C3560-24PS');
+  const staticSw2 = createInitialState('00:1A:2B:3C:4D:68', 'WS-C2960-24TT-L');
   staticSw2.hostname = 'SW2';
-  staticSw2.ports['vlan1'] = { ...staticSw2.ports['vlan1'], ipAddress: '192.168.3.2', subnetMask: '255.255.255.0' };
-  staticSw2.ports['gi0/1'] = { ...staticSw2.ports['gi0/1'], mode: 'routed', ipAddress: '192.168.3.2', subnetMask: '255.255.255.0', status: 'connected' };
   staticSw2.ports['fa0/1'] = { ...staticSw2.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  staticSw2.ports['gi0/1'] = { ...staticSw2.ports['gi0/1'], vlan: 1, mode: 'access', status: 'connected' };
 
   // Example 8: EtherChannel
   const etherChannelDevices = [
@@ -2597,7 +2595,7 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       tag: isTr ? 'ROUTING' : 'ROUTING',
       title: isTr ? 'Static Routing Lab' : 'Static Routing Lab',
       description: isTr ? '2 router, 2 switch, 2 PC, static routes.' : '2 routers, 2 switches, 2 PCs, static routes.',
-      detail: isTr ? 'R1: ip route 192.168.20.0/24 192.168.2.2' : 'R1: ip route 192.168.20.0/24 192.168.2.2',
+      detail: isTr ? 'R1: ip route 192.168.20.0/24 192.168.1.2' : 'R1: ip route 192.168.20.0/24 192.168.1.2',
       level: 'advanced',
       data: baseProjectData(staticRoutingDevices, staticRoutingConnections, staticRoutingNotes, [
         { id: 'switch-1', state: staticSw1 },

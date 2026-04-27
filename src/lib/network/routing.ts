@@ -138,10 +138,16 @@ function buildRoutingTable(
  * Find best route to destination IP
  */
 export function findRoute(destinationIp: string, routingTable: Route[]): Route | null {
+  if (!destinationIp) {
+    return null;
+  }
   let bestRoute: Route | null = null;
   let bestPrefixLength = -1;
 
   for (const route of routingTable) {
+    if (!route.destination || !route.subnetMask) {
+      continue;
+    }
     if (isIpInNetwork(destinationIp, route.destination, route.subnetMask)) {
       const prefixLength = getPrefixLength(route.subnetMask);
       if (prefixLength > bestPrefixLength) {
@@ -158,6 +164,9 @@ export function findRoute(destinationIp: string, routingTable: Route[]): Route |
  * Check if IP is in network
  */
 function isIpInNetwork(ip: string, network: string, subnetMask: string): boolean {
+  if (!ip || !network || !subnetMask) {
+    return false;
+  }
   const ipNum = ipToNumber(ip);
   const networkNum = ipToNumber(network);
   const maskNum = ipToNumber(subnetMask);
@@ -169,6 +178,9 @@ function isIpInNetwork(ip: string, network: string, subnetMask: string): boolean
  * Convert IP string to number
  */
 export function ipToNumber(ip: string): number {
+  if (!ip) {
+    throw new Error('IP address is undefined or empty');
+  }
   return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
 }
 
@@ -176,6 +188,9 @@ export function ipToNumber(ip: string): number {
  * Get network address from IP and subnet mask
  */
 function getNetworkAddress(ip: string, subnetMask: string): string {
+  if (!ip || !subnetMask) {
+    return '0.0.0.0';
+  }
   const ipNum = ipToNumber(ip);
   const maskNum = ipToNumber(subnetMask);
   const networkNum = ipNum & maskNum;
@@ -199,6 +214,9 @@ function numberToIp(num: number): string {
  * Get prefix length from subnet mask
  */
 function getPrefixLength(subnetMask: string): number {
+  if (!subnetMask) {
+    return 0;
+  }
   const maskNum = ipToNumber(subnetMask);
   let count = 0;
   let temp = maskNum;

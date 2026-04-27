@@ -3,12 +3,56 @@
 ## Current Code Metrics
 
 - **Total lines**: 63194
-- **Last updated**: 2026-04-26
+- **Last updated**: 2026-04-27
 - **Example projects**: 30
 - **CLI Commands**: 160+
 - **Version**: 1.5.7
 
 ## Latest Updates
+
+### NEW: Static Routing Lab Enhancement
+
+Complete static routing implementation with proper route verification and administrative distance support.
+
+**Features:**
+- `ip route` command with optional administrative distance: `ip route <network> <mask> <next-hop> [ad]`
+  - Default AD: 1 (when not specified)
+  - Custom AD support: 1-255 range
+  - Display format: `[AD/0]` in show ip route output
+- Interface names as next-hop: `ip route 192.168.20.0 255.255.255.0 gi0/1`
+- `no ip route` command with optional next-hop filtering:
+  - `no ip route 192.168.20.0 255.255.255.0` - removes all routes to network
+  - `no ip route 192.168.20.0 255.255.255.0 192.168.1.2` - removes specific route
+- Proper route verification in ping connectivity check
+  - Ping fails with "No route to destination" if no static/connected route exists
+  - Both config and privileged EXEC modes supported
+
+**Updated Static Routing Lab Topology:**
+```
+PC-1 (192.168.10.10/24) --- SW1 --- R1 (192.168.10.1/24, 192.168.1.1/24)
+                                          |
+PC-2 (192.168.20.10/24) --- SW2 --- R2 (192.168.20.1/24, 192.168.1.2/24)
+
+Static Routes:
+- R1: ip route 192.168.20.0 255.255.255.0 192.168.1.2
+- R2: ip route 192.168.10.0 255.255.255.0 192.168.1.1
+```
+
+**Implementation Details:**
+- Parser patterns updated in `parser.ts` for both `ip route` and `no ip route`
+- Command handlers in `globalConfigCommands.ts` and `privilegedCommands.ts`
+- Router type validation added (not just L3 switches)
+- Command dispatch order fixed in `executor.ts` (config handlers take precedence)
+- Route verification in `connectivity.ts` using `getRoutingTable` and `findRoute`
+
+**Files Modified:**
+- `src/lib/network/parser.ts` - Command patterns updated
+- `src/lib/network/core/globalConfigCommands.ts` - cmdIpRoute, cmdNoIpRoute handlers
+- `src/lib/network/core/privilegedCommands.ts` - cmdIpRoute, cmdNoIpRoute handlers
+- `src/lib/network/core/showCommands.ts` - cmdShowIpRoute metric display
+- `src/lib/network/executor.ts` - Command handler precedence
+- `src/lib/network/connectivity.ts` - Route verification for ping
+- `src/lib/network/exampleProjects.ts` - Updated Static Routing Lab example
 
 ### NEW: Guided Lesson Mode
 

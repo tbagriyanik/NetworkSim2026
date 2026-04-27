@@ -12,6 +12,16 @@ Network learning app: [Test Address](https://network2026.vercel.app)
 
 ## Recent Updates
 
+- **NEW: Static Routing Lab Enhancement**: Complete static routing implementation with proper route verification
+  - `ip route` command now supports optional administrative distance parameter: `ip route 192.168.20.0 255.255.255.0 192.168.1.2 150`
+  - Interface names as next-hop support: `ip route 192.168.20.0 255.255.255.0 gi0/1`
+  - `no ip route` command works in both config and privileged modes with optional next-hop filtering
+  - Ping now properly fails when no route exists: "No route to destination. Static route configuration required."
+  - Updated Static Routing Lab example with correct topology:
+    - R1 Gi0/1: 192.168.10.1/24 (PC-1 Gateway), Gi0/0: 192.168.1.1/24 (R2 link)
+    - R2 Gi0/0: 192.168.1.2/24 (R1 link), Gi0/1: 192.168.20.1/24 (PC-2 Gateway)
+    - PC-1: 192.168.10.10/24, GW: 192.168.10.1 | PC-2: 192.168.20.10/24, GW: 192.168.20.1
+    - Static routes: R1→192.168.20.0/24 via 192.168.1.2, R2→192.168.10.0/24 via 192.168.1.1
 - **NEW: Guided Lesson Mode**: Step-by-step interactive learning system for students
   - Draggable floating panel with progress tracking
   - Auto-completion detection based on user actions (commands, device access)
