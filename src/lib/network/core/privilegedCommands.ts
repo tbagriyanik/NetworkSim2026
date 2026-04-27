@@ -466,9 +466,9 @@ function cmdIpRoute(state: any, input: string, ctx: any): any {
     const newStaticRoutes = [...(state.staticRoutes || [])];
     // Remove existing route to same destination if exists
     const filteredRoutes = newStaticRoutes.filter(
-        (route: any) => !(route.network === network && route.mask === mask)
+        (route: any) => !(route.destination === network && route.subnetMask === mask)
     );
-    filteredRoutes.push({ network, mask, nextHop, metric });
+    filteredRoutes.push({ destination: network, subnetMask: mask, nextHop, metric, type: 'static' });
 
     return {
         success: true,
@@ -498,12 +498,12 @@ function cmdNoIpRoute(state: any, input: string, ctx: any): any {
     if (nextHop) {
         // Remove specific route
         newStaticRoutes = (state.staticRoutes || []).filter(
-            (route: any) => !(route.network === network && route.mask === mask && route.nextHop === nextHop)
+            (route: any) => !(route.destination === network && route.subnetMask === mask && route.nextHop === nextHop)
         );
     } else {
         // Remove all routes for this network/mask
         newStaticRoutes = (state.staticRoutes || []).filter(
-            (route: any) => !(route.network === network && route.mask === mask)
+            (route: any) => !(route.destination === network && route.subnetMask === mask)
         );
     }
 

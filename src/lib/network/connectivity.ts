@@ -784,6 +784,7 @@ export function checkConnectivity(
       let hasL3Gateway = false;
       let routerDeviceId: string | null = null;
 
+      // Find the first L3 device in the path (the one that will actually route the packet)
       for (const deviceId of path) {
         const device = devices.find(d => d.id === deviceId);
         const state = deviceStates?.get(deviceId);
@@ -795,6 +796,17 @@ export function checkConnectivity(
             hasL3Gateway = true;
             routerDeviceId = deviceId;
             break;
+          } else {
+            // First L3 device in path doesn't have a route - packet will be dropped
+            return {
+              success: false,
+              hops: hopNames,
+              hopIds: path,
+              targetId: targetDevice.id,
+              error: language === 'tr'
+                ? `Hedefe rota bulunamadı. Statik rota yapılandırması gerekli.`
+                : `No route to destination. Static route configuration required.`
+            };
           }
         }
       }
