@@ -2524,10 +2524,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'basic-secure',
       tag: isTr ? 'TEMEL' : 'BASIC',
       title: isTr ? 'Basit Ağ + Parolalar' : 'Basic Network + Passwords',
-      description: isTr ? 'Console, VTY ve enable parolaları ayarlı, tek PC + tek switch.' : 'Console, VTY, and enable passwords with 1 PC + 1 switch.',
+      description: isTr
+        ? 'Temel ağ güvenliği için console, VTY ve enable parolaları yapılandırılmıştır.'
+        : 'Basic network security with console, VTY, and enable passwords configured.',
       detail: isTr
-        ? 'enable secret: class, enable password: paswd, console: console, vty: vty123'
-        : 'enable secret: class, enable password: paswd, console: console, vty: vty123',
+        ? 'Şifreler: enable secret: class, enable password: paswd, console: console, vty: vty123'
+        : 'Passwords: enable secret: class, enable password: paswd, console: console, vty: vty123',
       level: 'basic',
       data: baseProjectData(basicDevices, basicConnections, basicNotes, [{ id: 'switch-1', state: basicState }])
     },
@@ -2535,7 +2537,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'single-vlan',
       tag: isTr ? 'VLAN' : 'VLAN',
       title: isTr ? '1 Switch VLAN' : 'Single Switch VLANs',
-      description: isTr ? 'VLAN 10/20 ve iki PC erişim portu.' : 'VLAN 10/20 with two access PCs.',
+      description: isTr
+        ? 'Tek switch üzerinde VLAN 10 ve 20 ile iki PC erişim portu yapılandırması.'
+        : 'Single switch with VLAN 10 and 20 access port configuration for two PCs.',
+      detail: isTr
+        ? 'PC-1: VLAN 10 (192.168.10.10), PC-2: VLAN 20 (192.168.20.10)'
+        : 'PC-1: VLAN 10 (192.168.10.10), PC-2: VLAN 20 (192.168.20.10)',
       level: 'basic',
       data: baseProjectData(vlanDevices, vlanConnections, vlanNotes, [{ id: 'switch-1', state: vlanState }])
     },
@@ -2543,7 +2550,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'trunk-vtp',
       tag: isTr ? 'TRUNK/VTP' : 'TRUNK/VTP',
       title: isTr ? '2 Switch Trunk + VTP' : 'Two Switch Trunk + VTP',
-      description: isTr ? 'Gi0/1 trunk, VTP domain LAB, VLAN 10/20 hazır.' : 'Gi0/1 trunk, VTP domain LAB, VLAN 10/20 ready.',
+      description: isTr
+        ? 'İki switch arası trunk bağlantısı ve VTP domain ile VLAN yayılımı sağlanır.'
+        : 'Trunk connection between two switches with VTP domain for VLAN propagation.',
+      detail: isTr
+        ? 'VTP domain: LAB, Gi0/1 trunk, VLAN 10/20 otomatik yayılır'
+        : 'VTP domain: LAB, Gi0/1 trunk, VLAN 10/20 auto-propagated',
       level: 'intermediate',
       data: baseProjectData(vtpDevices, vtpConnections, vtpNotes, [
         { id: 'switch-1', state: vtpSw1 },
@@ -2554,7 +2566,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'roas',
       tag: isTr ? 'ROAS' : 'ROAS',
       title: isTr ? 'ROAS (Router-on-a-Stick)' : 'ROAS (Router-on-a-Stick)',
-      description: isTr ? 'Switch trunk + router (subinterface notlarıyla).' : 'Switch trunk + router with ROAS notes.',
+      description: isTr
+        ? 'Router-on-a-Stick ile tek trunk interface üzerinden inter-VLAN routing.'
+        : 'Router-on-a-Stick inter-VLAN routing via single trunk interface.',
+      detail: isTr
+        ? 'Router subinterface: Gi0/0.10 (VLAN 10), Gi0/0.20 (VLAN 20)'
+        : 'Router subinterface: Gi0/0.10 (VLAN 10), Gi0/0.20 (VLAN 20)',
       level: 'intermediate',
       data: baseProjectData(roasDevices, roasConnections, roasNotes, [
         { id: 'switch-1', state: roasSw },
@@ -2565,8 +2582,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'legacy-routing',
       tag: isTr ? 'LEGACY ROUTING' : 'LEGACY ROUTING',
       title: isTr ? 'Legacy Inter-VLAN Routing' : 'Legacy Inter-VLAN Routing',
-      description: isTr ? 'Router 2 ayrı fiziksel interface ile VLAN\'lara bağlanır (trunk yok).' : 'Router connects to VLANs with 2 separate physical interfaces (no trunk).',
-      detail: isTr ? '2 router interface, access portlar, ip routing otomatik' : '2 router interfaces, access ports, ip routing auto-enabled',
+      description: isTr
+        ? 'Router iki fiziksel interface ile VLANlara bağlanır, trunk kullanılmaz.'
+        : 'Router connects to VLANs using two physical interfaces without trunk.',
+      detail: isTr
+        ? 'Router Gi0/0: VLAN 10 (192.168.10.1), Gi0/1: VLAN 20 (192.168.20.1)'
+        : 'Router Gi0/0: VLAN 10 (192.168.10.1), Gi0/1: VLAN 20 (192.168.20.1)',
       level: 'intermediate',
       data: baseProjectData(legacyRoutingDevices, legacyRoutingConnections, legacyRoutingNotes, [
         { id: 'switch-1', state: legacyRoutingSw },
@@ -2577,7 +2598,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'port-security',
       tag: isTr ? 'GÜVENLİK' : 'SECURITY',
       title: isTr ? 'Port-Security' : 'Port-Security',
-      description: isTr ? 'Fa0/3 üzerinde port-security hazır.' : 'Port-security enabled on Fa0/3.',
+      description: isTr
+        ? 'Switch portunda MAC adres tabanlı güvenlik kısıtlaması yapılandırılmıştır.'
+        : 'MAC address-based security restriction configured on switch port.',
+      detail: isTr
+        ? 'Fa0/3: max MAC 1, violation shutdown, MAC: 00-11-22-33-44-55'
+        : 'Fa0/3: max MAC 1, violation shutdown, MAC: 00-11-22-33-44-55',
       level: 'intermediate',
       data: baseProjectData(psDevices, psConnections, psNotes, [{ id: 'switch-1', state: psState }])
     },
@@ -2585,8 +2611,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'l3-routing',
       tag: isTr ? 'L3 ROUTING' : 'L3 ROUTING',
       title: isTr ? 'Inter-VLAN Routing (L3 Switch)' : 'Inter-VLAN Routing (L3 Switch)',
-      description: isTr ? '4 VLAN, L3 switch, inter-VLAN routing aktif.' : '4 VLANs, L3 switch, inter-VLAN routing enabled.',
-      detail: isTr ? 'ip routing, VLAN 10/20/30/40 SVI' : 'ip routing, VLAN 10/20/30/40 SVI',
+      description: isTr
+        ? 'L3 switch üzerinde dört VLAN arası routing aktiftir.'
+        : 'Inter-VLAN routing is enabled on L3 switch for four VLANs.',
+      detail: isTr
+        ? 'VLAN 10: 192.168.10.1, VLAN 20: 192.168.20.1, VLAN 30: 192.168.30.1, VLAN 40: 192.168.40.1'
+        : 'VLAN 10: 192.168.10.1, VLAN 20: 192.168.20.1, VLAN 30: 192.168.30.1, VLAN 40: 192.168.40.1',
       level: 'advanced',
       data: baseProjectData(l3RoutingDevices, l3RoutingConnections, l3RoutingNotes, [{ id: 'switch-1', state: l3RoutingState }])
     },
@@ -2594,8 +2624,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'static-routing',
       tag: isTr ? 'ROUTING' : 'ROUTING',
       title: isTr ? 'Static Routing Lab' : 'Static Routing Lab',
-      description: isTr ? '2 router, 2 switch, 2 PC, static routes.' : '2 routers, 2 switches, 2 PCs, static routes.',
-      detail: isTr ? 'R1: ip route 192.168.20.0/24 192.168.1.2' : 'R1: ip route 192.168.20.0/24 192.168.1.2',
+      description: isTr
+        ? 'İki router arası statik yönlendirme ile farklı subnetler arası iletişim.'
+        : 'Static routing between two routers for inter-subnet communication.',
+      detail: isTr
+        ? 'R1: ip route 192.168.20.0 255.255.255.0 192.168.1.2 | R2: ip route 192.168.10.0 255.255.255.0 192.168.1.1'
+        : 'R1: ip route 192.168.20.0 255.255.255.0 192.168.1.2 | R2: ip route 192.168.10.0 255.255.255.0 192.168.1.1',
       level: 'advanced',
       data: baseProjectData(staticRoutingDevices, staticRoutingConnections, staticRoutingNotes, [
         { id: 'switch-1', state: staticSw1 },
@@ -2608,8 +2642,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'etherchannel',
       tag: isTr ? 'ETHERCHANNEL' : 'ETHERCHANNEL',
       title: isTr ? 'EtherChannel Lab' : 'EtherChannel Lab',
-      description: isTr ? '2 switch, LACP, link aggregation.' : '2 switches, LACP, link aggregation.',
-      detail: isTr ? 'channel-group 1 mode active, Po1 trunk' : 'channel-group 1 mode active, Po1 trunk',
+      description: isTr
+        ? 'LACP ile birden fazla link tek bir mantıksal bağlantıda birleştirilir.'
+        : 'Multiple links combined into single logical connection using LACP.',
+      detail: isTr
+        ? 'Fa0/1-2: channel-group 1 mode active, Po1 trunk'
+        : 'Fa0/1-2: channel-group 1 mode active, Po1 trunk',
       level: 'advanced',
       data: baseProjectData(etherChannelDevices, etherChannelConnections, etherChannelNotes, [
         { id: 'switch-1', state: etherSw1 },
@@ -2620,8 +2658,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'stp-redundant',
       tag: isTr ? 'STP' : 'STP',
       title: isTr ? 'STP Redundant Links' : 'STP Redundant Links',
-      description: isTr ? '2 switch, redundant links, Rapid-PVST.' : '2 switches, redundant links, Rapid-PVST.',
-      detail: isTr ? 'spanning-tree priority 28672' : 'spanning-tree priority 28672',
+      description: isTr
+        ? 'Rapid-PVST redundant linklerde loop önlemek için STP kullanır.'
+        : 'Rapid-PVST uses STP to prevent loops on redundant links.',
+      detail: isTr
+        ? 'SW1: spanning-tree priority 28672 (root)'
+        : 'SW1: spanning-tree priority 28672 (root)',
       level: 'advanced',
       data: baseProjectData(stpDevices, stpConnections, stpNotes, [
         { id: 'switch-1', state: stpSw1 },
@@ -2632,8 +2674,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'stp-triangle',
       tag: isTr ? 'STP' : 'STP',
       title: isTr ? 'STP Triangle Topology' : 'STP Triangle Topology',
-      description: isTr ? '3 switch, triangle topology, STP blocking.' : '3 switches, triangle topology, STP blocking.',
-      detail: isTr ? 'SW1: Fa0/1 bloke (turuncu)' : 'SW1: Fa0/1 blocked (orange)',
+      description: isTr
+        ? 'Üç switch triangle topolojisinde STP bir portu bloke eder.'
+        : 'Three switches in triangle topology with STP blocking one port.',
+      detail: isTr
+        ? 'SW1 Fa0/1 bloke (STP), SW2 root'
+        : 'SW1 Fa0/1 blocked (STP), SW2 root',
       level: 'advanced',
       data: baseProjectData(stpTriangleDevices, stpTriangleConnections, stpTriangleNotes, [
         { id: 'switch-1', state: stpTriangleSw1 },
@@ -2645,8 +2691,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'campus-network',
       tag: isTr ? 'CAMPUS' : 'CAMPUS',
       title: isTr ? 'Campus Network' : 'Campus Network',
-      description: isTr ? 'Core router + 2 access switches, routing.' : 'Core router + 2 access switches, routing.',
-      detail: isTr ? 'CORE-R1 ip routing, VLAN 10/20' : 'CORE-R1 ip routing, VLAN 10/20',
+      description: isTr
+        ? 'Core router iki access switch arası routing sağlar.'
+        : 'Core router provides routing between two access switches.',
+      detail: isTr
+        ? 'CORE-R1: Gi0/0 VLAN 10, Gi0/1 VLAN 20, ip routing'
+        : 'CORE-R1: Gi0/0 VLAN 10, Gi0/1 VLAN 20, ip routing',
       level: 'advanced',
       data: baseProjectData(campusDevices, campusConnections, campusNotes, [
         { id: 'switch-1', state: campusAcc1 },
@@ -2658,8 +2708,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'wifi-intermediate',
       tag: isTr ? 'WiFi' : 'WiFi',
       title: isTr ? 'Kablosuz Ağ (WiFi)' : 'Wireless Network (WiFi)',
-      description: isTr ? 'Router AP ve iki PC kablosuz bağlantısı.' : 'Router AP and two PCs wireless connectivity.',
-      detail: isTr ? 'SSID: HomeWiFi, Router AP mode' : 'SSID: HomeWiFi, Router AP mode',
+      description: isTr
+        ? 'Router access point mode ile kablosuz istemci bağlantısı sağlanır.'
+        : 'Router configured as access point for wireless client connectivity.',
+      detail: isTr
+        ? 'SSID: HomeWiFi, Şifre: yok (open), Router AP mode'
+        : 'SSID: HomeWiFi, Password: none (open), Router AP mode',
       level: 'intermediate',
       data: baseProjectData(wifiDevices, wifiConnections, wifiNotes, [
         { id: 'router-1', state: wifiR1State }
@@ -2669,8 +2723,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'iot-wifi-lab',
       tag: 'IoT',
       title: isTr ? 'IoT WiFi Laboratuvarı' : 'IoT WiFi Lab',
-      description: isTr ? '3 IoT cihazı (Sıcaklık, Nem, Hareket), WiFi açık PC ve Router.' : '3 IoT devices (Temp, Humidity, Motion), WiFi open PC and Router.',
-      detail: isTr ? 'SSID: IoT-Network (Open), IoT cihazları WiFi panelinden yönetilebilir' : 'SSID: IoT-Network (Open), IoT devices manageable via WiFi panel',
+      description: isTr
+        ? 'Üç IoT cihazı açık WiFi ağına bağlanır.'
+        : 'Three IoT devices connect to open WiFi network.',
+      detail: isTr
+        ? 'SSID: IoT-Network, Şifre: yok (open), 3 IoT cihazı'
+        : 'SSID: IoT-Network, Password: none (open), 3 IoT devices',
       level: 'intermediate',
       data: baseProjectData(iotWifiDevices, iotWifiConnections, iotWifiNotes, [
         { id: 'router-1', state: iotWifiR1State }
@@ -2680,8 +2738,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'greenhouse-iot-lab',
       tag: isTr ? 'ÇEVRE' : 'ENV',
       title: isTr ? '🌱 Sera Krokisi (Akıllı Tarım)' : '🌱 Greenhouse Sketch (Smart Farm)',
-      description: isTr ? '4 IoT sensör (Sıcaklık/Nem/Işık/Kapı), WPA2 WiFi, çevresel izleme.' : '4 IoT sensors (Temp/Humidity/Light/Door), WPA2 WiFi, environmental monitoring.',
-      detail: isTr ? 'SSID: GreenHouse-Network (WPA2), Şifre: sera2026, IP: 192.168.2.x' : 'SSID: GreenHouse-Network (WPA2), Password: sera2026, IP: 192.168.2.x',
+      description: isTr
+        ? 'Dört çevresel sensör WPA2 güvenli WiFi ile sera izleme yapar.'
+        : 'Four environmental sensors use WPA2 WiFi for greenhouse monitoring.',
+      detail: isTr
+        ? 'SSID: GreenHouse-Network, Şifre: sera2026 (WPA2), 4 sensör'
+        : 'SSID: GreenHouse-Network, Password: sera2026 (WPA2), 4 sensors',
       level: 'intermediate',
       data: baseProjectData(greenhouseDevices, greenhouseConnections, greenhouseNotes, [
         { id: 'router-1', state: greenhouseR1State }
@@ -2691,8 +2753,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'router-ssh-1pc',
       tag: 'SSH',
       title: isTr ? 'Router SSH (1 PC + 1 Router)' : 'Router SSH (1 PC + 1 Router)',
-      description: isTr ? 'PC-1 üzerinden R1 cihazına SSH ile bağlanma senaryosu.' : 'SSH access from PC-1 to router R1.',
-      detail: isTr ? 'Komut: ssh admin@192.168.1.150 | parola: 1234' : 'Command: ssh admin@192.168.1.150 | password: 1234',
+      description: isTr
+        ? 'PC-1 üzerinden router R1 cihazına SSH ile güvenli bağlantı.'
+        : 'Secure SSH connection from PC-1 to router R1.',
+      detail: isTr
+        ? 'Komut: ssh admin@192.168.1.150, Şifre: 1234'
+        : 'Command: ssh admin@192.168.1.150, Password: 1234',
       level: 'basic',
       data: routerSshData
     },
@@ -2700,8 +2766,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       id: 'router-dhcp-2pc',
       tag: 'DHCP',
       title: isTr ? 'Router DHCP (2 PC + 1 Switch + 1 Router)' : 'Router DHCP (2 PCs + 1 Switch + 1 Router)',
-      description: isTr ? 'Router üzerinden DHCP havuzu ile iki PC’ye otomatik IP dağıtımı (Switch aracılığıyla).' : 'Automatic IP assignment to two PCs via router DHCP pool (through switch).',
-      detail: isTr ? 'R1: ip dhcp pool LAN, PC-1/PC-2: ipconfig /renew' : 'R1: ip dhcp pool LAN, PC-1/PC-2: ipconfig /renew',
+      description: isTr
+        ? 'Router DHCP havuzu üzerinden iki PCye otomatik IP dağıtımı.'
+        : 'Automatic IP assignment to two PCs via router DHCP pool.',
+      detail: isTr
+        ? 'R1: ip dhcp pool LAN, network 192.168.1.0 255.255.255.0, default-router 192.168.1.1'
+        : 'R1: ip dhcp pool LAN, network 192.168.1.0 255.255.255.0, default-router 192.168.1.1',
       level: 'basic',
       data: baseProjectData(routerDhcpDevices, routerDhcpConnections, routerDhcpNotes, [
         { id: 'router-1', state: routerDhcpR1 },
@@ -2713,11 +2783,11 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       tag: isTr ? 'MAC' : 'MAC',
       title: isTr ? 'MAC Tablo Öğrenme' : 'MAC Table Lab',
       description: isTr
-        ? 'SW1 üzerinde show mac address-table ile PC1/PC2 ve ROUTER-2 adreslerini karşılaştırın.'
-        : 'Use show mac address-table on SWITCH-1 to compare the MAC entries for PC1, PC2, and ROUTER-2.',
+        ? 'Switch MAC adres tablosu öğrenme özelliği incelenir.'
+        : 'Switch MAC address table learning feature is examined.',
       detail: isTr
-        ? 'PC1: 00-e0-f7-01-a1-b1, PC2: 97-31-e5-97-a7-03, SW1: 042c.802b.9da9, R2: 4145.c35d.e6d1'
-        : 'PC1: 00-e0-f7-01-a1-b1, PC2: 97-31-e5-97-a7-03, SW1: 042c.802b.9da9, R2: 4145.c35d.e6d1',
+        ? 'PC1 MAC: 00-e0-f7-01-a1-b1, PC2 MAC: 97-31-e5-97-a7-03'
+        : 'PC1 MAC: 00-e0-f7-01-a1-b1, PC2 MAC: 97-31-e5-97-a7-03',
       level: 'basic',
       data: macExampleAData
     },
@@ -2728,9 +2798,11 @@ PC-1 and PC-2 communicate over VLAN 99.`,
         ? 'DNS ve HTTP Test (Domain Name System / Hypertext Transfer Protocol - görev: isim çözümleme + web erişimi)'
         : 'DNS + HTTP Test (Domain Name System / Hypertext Transfer Protocol - task: name resolution + web access)',
       description: isTr
-        ? 'PC-1 üzerinden HTTP istekleri gönderip nslookup yaparak sunucu hizmetlerini doğrulayın.'
-        : 'From PC-1 send HTTP requests and use nslookup to verify server services.',
-      detail: 'wget 192.168.1.10 / wget a10.com / nslookup a10.com',
+        ? 'DNS name resolution ve HTTP web erişimi test edilir.'
+        : 'DNS name resolution and HTTP web access are tested.',
+      detail: isTr
+        ? 'Test: wget 192.168.1.10, wget a10.com, nslookup a10.com'
+        : 'Test: wget 192.168.1.10, wget a10.com, nslookup a10.com',
       level: 'intermediate',
       data: dnsHttpExampleData
     },
@@ -2739,11 +2811,11 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       tag: isTr ? 'MAC' : 'MAC',
       title: isTr ? 'ARP ve MAC Tablo Çalışması' : 'ARP vs MAC Table',
       description: isTr
-        ? 'PC terminalinden arp -a ve SWITCH-1 konsolundan show mac ile adresleri eşleştirin.'
-        : 'Match ARP and show mac address-table output between PCs and SWITCH-1.',
+        ? 'ARP ve MAC adres tablosu arasındaki ilişki incelenir.'
+        : 'The relationship between ARP and MAC address table is examined.',
       detail: isTr
-        ? 'PC terminali: arp, arp -a | SWITCH-1#: show mac address-table'
-        : 'PC terminal: arp, arp -a | SWITCH-1#: show mac address-table',
+        ? 'PC: arp -a, Switch: show mac address-table'
+        : 'PC: arp -a, Switch: show mac address-table',
       level: 'basic',
       data: macExampleBData
     },
@@ -2752,11 +2824,11 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       tag: isTr ? 'IP' : 'IP',
       title: isTr ? 'IP Yapılandırma Laboratuvarı' : 'IP Configuration Lab',
       description: isTr
-        ? 'PC1 & PC2 aynı IP/mask ile iletişim kurarken, PC3 farklı ayarlamayla farkı keşfedin.'
-        : 'Discover how identical IP/mask on PC1 & PC2 enables connectivity while PC3 differs.',
+        ? 'IP yapılandırmasının ağ bağlantısı üzerindeki etkisi incelenir.'
+        : 'The effect of IP configuration on network connectivity is examined.',
       detail: isTr
-        ? 'PC1/PC2: 192.168.1.x/255.255.255.0; PC3: farklı yapılandırma, ping başarısız.'
-        : 'PC1/PC2: 192.168.1.x/255.255.255.0; PC3: different config, ping fails.',
+        ? 'PC1/PC2: 192.168.1.x/24, PC3: farklı subnet'
+        : 'PC1/PC2: 192.168.1.x/24, PC3: different subnet',
       level: 'basic',
       data: ipConfigExampleData
     },
@@ -2767,11 +2839,11 @@ PC-1 and PC-2 communicate over VLAN 99.`,
         ? 'DHCP Dağıtım Senaryosu (Dynamic Host Configuration Protocol - görev: otomatik IP dağıtımı)'
         : 'DHCP Distribution Scenario (Dynamic Host Configuration Protocol - task: automatic IP assignment)',
       description: isTr
-        ? 'DHCP sunucusunun PC1 ve PC2’ye IP atamasını izleyin, PC3 ise manuel kalıyor.'
-        : 'Observe the DHCP server handing out IPs to PC1 & PC2 while PC3 stays static.',
+        ? 'DHCP sunucusu otomatik IP dağıtımı yaparken manuel yapılandırma karşılaştırılır.'
+        : 'DHCP automatic IP assignment is compared with manual configuration.',
       detail: isTr
-        ? 'PC1/PC2 DHCP ile, PC3 elle yapılandırılmış; sh ip dhcp binding kontrolü yapın.'
-        : 'PC1/PC2 via DHCP, PC3 manual; verify with sh ip dhcp binding.',
+        ? 'DHCP sunucusu PC1 ve PC2ye IP atarken PC3 manuel yapılandırma ile kalır.'
+        : 'DHCP server assigns IPs to PC1 and PC2 while PC3 remains manually configured.',
       level: 'intermediate',
       data: dhcpExampleData
     },
@@ -2780,11 +2852,11 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       tag: isTr ? 'TRUNK' : 'TRUNK',
       title: isTr ? '2 Switch Trunk Uygulaması' : '2 Switch Trunk Application',
       description: isTr
-        ? '2 switch, trunk bağlantı, VLAN 100/200 erişim portları.'
-        : '2 switches, trunk connection, VLAN 100/200 access ports.',
+        ? 'İki switch trunk bağlantısı ile VLAN trafiğini taşır.'
+        : 'Two switches carry VLAN traffic via trunk connection.',
       detail: isTr
-        ? 'SW-1: Fa0/1=VLAN100, Fa0/11=VLAN200, Gi0/1=trunk | SW-2: Fa0/1=VLAN100, Fa0/11=VLAN200, Gi0/1=trunk'
-        : 'SW-1: Fa0/1=VLAN100, Fa0/11=VLAN200, Gi0/1=trunk | SW-2: Fa0/1=VLAN100, Fa0/11=VLAN200, Gi0/1=trunk',
+        ? 'SW-1/2: Fa0/1 VLAN100, Fa0/11 VLAN200, Gi0/1 trunk'
+        : 'SW-1/2: Fa0/1 VLAN100, Fa0/11 VLAN200, Gi0/1 trunk',
       level: 'intermediate',
       data: trunk2SwitchData
     },
@@ -2793,11 +2865,11 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       tag: isTr ? 'NATIVE' : 'NATIVE',
       title: isTr ? 'Native VLAN Yapılandırması' : 'Native VLAN Configuration',
       description: isTr
-        ? 'Temel native VLAN yapılandırması. 2 switch arasında trunk bağlantı ve native VLAN 99.'
-        : 'Basic native VLAN configuration. Trunk connection between 2 switches with native VLAN 99.',
+        ? 'İki switch arası native VLAN 99 trunk bağlantısı yapılandırılır.'
+        : 'Native VLAN 99 trunk connection is configured between two switches.',
       detail: isTr
-        ? 'SW1/SW2: vlan 99, int fa0/24 -> switchport mode trunk, switchport trunk native vlan 99. PC-1 ve PC-2 VLAN 99 üzerinde haberleşir.'
-        : 'SW1/SW2: vlan 99, int fa0/24 -> switchport mode trunk, switchport trunk native vlan 99. PC-1 and PC-2 communicate over VLAN 99.',
+        ? 'SW1/SW2: vlan 99, Fa0/24 trunk, switchport trunk native vlan 99'
+        : 'SW1/SW2: vlan 99, Fa0/24 trunk, switchport trunk native vlan 99',
       level: 'basic',
       data: baseProjectData(nativeVlanDevices, nativeVlanConnections, nativeVlanNotes, [
         { id: 'switch-1', state: nativeVlanSw1 },
@@ -2809,11 +2881,11 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       tag: isTr ? 'STP' : 'STP',
       title: isTr ? 'STP 3 Switch PVST' : 'STP 3 Switch PVST',
       description: isTr
-        ? '3 switch, 3 VLAN, her VLAN için farklı root bridge, trunk bağlantılar.'
-        : '3 switches, 3 VLANs, different root bridge per VLAN, trunk connections.',
+        ? 'PVST ile her VLAN için farklı root bridge yük dengelemesi sağlanır.'
+        : 'PVST provides load balancing with different root bridge per VLAN.',
       detail: isTr
-        ? 'VLAN1 root SW1, VLAN10 root SW2, VLAN20 root SW3. Her VLAN kendi aktif yolunu kullanır; link koparsa yedek yol açılır.'
-        : 'VLAN1 root SW1, VLAN10 root SW2, VLAN20 root SW3. Each VLAN uses its own path; if a link fails, backup path opens.',
+        ? 'VLAN1 root SW1, VLAN10 root SW2, VLAN20 root SW3'
+        : 'VLAN1 root SW1, VLAN10 root SW2, VLAN20 root SW3',
       level: 'advanced',
       data: baseProjectData(stpPvstDevices, stpPvstConnections, stpPvstNotes, [
         { id: 'sw1', state: stpPvstSw1 },
@@ -2826,11 +2898,11 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       tag: isTr ? 'L3 VLAN' : 'L3 VLAN',
       title: isTr ? '2 L3 Switch VLAN (AG1/AG2)' : '2 L3 Switch VLAN (AG1/AG2)',
       description: isTr
-        ? '2 L3 switch, VLAN 10 (AG1) ve VLAN 20 (AG2), SVI gateway yapılandırması, trunk bağlantı, 8 PC.'
-        : '2 L3 switches, VLAN 10 (AG1) and VLAN 20 (AG2), SVI gateway configuration, trunk connection, 8 PCs.',
+        ? 'İki L3 switch SVI gateway ile VLAN 10 ve 20 arası routing sağlar.'
+        : 'Two L3 switches provide routing between VLAN 10 and 20 via SVI gateways.',
       detail: isTr
-        ? 'Switch2/Switch4: ip routing, VLAN10 SVI 192.168.10.1, VLAN20 SVI 192.168.20.1, Trunk Gi0/1'
-        : 'Switch2/Switch4: ip routing, VLAN10 SVI 192.168.10.1, VLAN20 SVI 192.168.20.1, Trunk Gi0/1',
+        ? 'Switch2/4: ip routing, VLAN10 SVI 192.168.10.1, VLAN20 SVI 192.168.20.1'
+        : 'Switch2/4: ip routing, VLAN10 SVI 192.168.10.1, VLAN20 SVI 192.168.20.1',
       level: 'advanced',
       data: baseProjectData(l3Switch2VlanDevices, l3Switch2VlanConnections, l3Switch2VlanNotes, [
         { id: 'switch2', state: l3Switch2State },
@@ -2842,11 +2914,11 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       tag: isTr ? 'STATIK ROUTING' : 'STATIC ROUTING',
       title: isTr ? 'L3 Switch Statik Yönlendirme' : 'L3 Switch Static Routing',
       description: isTr
-        ? '2 Multilayer Switch + 1 Router + 2 L2 Switch + 2 PC. PC0\'dan PC4\'e iletişim.'
-        : '2 Multilayer Switches + 1 Router + 2 L2 Switches + 2 PCs. Communication from PC0 to PC4.',
+        ? 'Multilayer switchler ve router statik rotalarla ağlar arası iletişim sağlar.'
+        : 'Multilayer switches and router enable inter-network communication via static routes.',
       detail: isTr
-        ? 'MultilayerSwitch1: ip route 192.168.2.0 255.255.255.0 10.0.0.2 | Router3: ip route 192.168.1.0 255.255.255.0 10.0.0.1, ip route 192.168.2.0 255.255.255.0 20.0.0.2 | MultilayerSwitch2: ip route 192.168.1.0 255.255.255.0 20.0.0.1'
-        : 'MultilayerSwitch1: ip route 192.168.2.0 255.255.255.0 10.0.0.2 | Router3: ip route 192.168.1.0 255.255.255.0 10.0.0.1, ip route 192.168.2.0 255.255.255.0 20.0.0.2 | MultilayerSwitch2: ip route 192.168.1.0 255.255.255.0 20.0.0.1',
+        ? 'ML1: ip route 192.168.2.0 255.255.255.0 10.0.0.2 | R3: ip route 192.168.1.0 255.255.255.0 10.0.0.1, ip route 192.168.2.0 255.255.255.0 20.0.0.2 | ML2: ip route 192.168.1.0 255.255.255.0 20.0.0.1'
+        : 'ML1: ip route 192.168.2.0 255.255.255.0 10.0.0.2 | R3: ip route 192.168.1.0 255.255.255.0 10.0.0.1, ip route 192.168.2.0 255.255.255.0 20.0.0.2 | ML2: ip route 192.168.1.0 255.255.255.0 20.0.0.1',
       level: 'advanced',
       data: baseProjectData(staticL3RoutingDevices, staticL3RoutingConnections, staticL3RoutingNotes, [
         { id: 'switch0', state: switch0State },
@@ -2861,11 +2933,11 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       tag: isTr ? 'RIP ROUTING' : 'RIP ROUTING',
       title: isTr ? 'RIP Dinamik Yönlendirme' : 'RIP Dynamic Routing',
       description: isTr
-        ? '2 Multilayer Switch + 2 L2 Switch + 4 PC. RIP dinamik yönlendirme.'
-        : '2 Multilayer Switches + 2 L2 Switches + 4 PCs. RIP dynamic routing.',
+        ? 'RIP dinamik yönlendirme protokolü otomatik route öğrenimi sağlar.'
+        : 'RIP dynamic routing protocol provides automatic route learning.',
       detail: isTr
-        ? 'MultilayerSwitch0: router rip, network 192.168.1.0, network 192.168.2.0 | MultilayerSwitch1: router rip, network 192.168.2.0, network 192.168.3.0'
-        : 'MultilayerSwitch0: router rip, network 192.168.1.0, network 192.168.2.0 | MultilayerSwitch1: router rip, network 192.168.2.0, network 192.168.3.0',
+        ? 'ML0: router rip, network 192.168.1.0, network 192.168.2.0 | ML1: router rip, network 192.168.2.0, network 192.168.3.0'
+        : 'ML0: router rip, network 192.168.1.0, network 192.168.2.0 | ML1: router rip, network 192.168.2.0, network 192.168.3.0',
       level: 'advanced',
       data: baseProjectData(ripRoutingDevices, ripRoutingConnections, ripRoutingNotes, [
         { id: 'switch0-l2', state: switch0L2State },

@@ -4207,14 +4207,33 @@ export function PCPanel({
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">IP Address</label>
                             <Input value={pcIP} onChange={(e) => {
-                              setPcIP(e.target.value);
+                              const newIp = e.target.value;
+                              setPcIP(newIp);
+                              
+                              // Auto-assign subnet mask based on first octet
+                              const firstOctet = newIp.split('.')[0];
+                              if (firstOctet) {
+                                const octetNum = parseInt(firstOctet, 10);
+                                if (!isNaN(octetNum)) {
+                                  let autoSubnet = '255.255.255.0'; // default
+                                  if (octetNum === 10) {
+                                    autoSubnet = '255.0.0.0';
+                                  } else if (octetNum === 192) {
+                                    autoSubnet = '255.255.255.0';
+                                  } else if (octetNum === 169) {
+                                    autoSubnet = '255.255.0.0';
+                                  }
+                                  setPcSubnet(autoSubnet);
+                                }
+                              }
+                              
                               // Debounced topology update for static IP
                               setTimeout(() => {
                                 window.dispatchEvent(new CustomEvent('update-topology-device-config', {
                                   detail: {
                                     deviceId,
                                     config: {
-                                      ip: e.target.value,
+                                      ip: newIp,
                                       ipConfigMode: 'static'
                                     }
                                   }
