@@ -294,21 +294,27 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
       <Card className={`${cardBg}`}>
         <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
           <div className="flex items-center justify-between">
-            <CardTitle className={deviceModel === 'NETWORK-1941' ? "text-purple-400 text-base sm:text-lg flex items-center gap-2" : deviceModel === 'WS-C3560-24PS' ? "text-purple-400 text-base sm:text-lg flex items-center gap-2" : deviceModel === 'WS-C2960-24TT-L' ? "text-green-400 text-base sm:text-lg flex items-center gap-2" : "text-cyan-400 text-base sm:text-lg flex items-center gap-2"}>
-              {deviceModel === 'NETWORK-1941' ? (
-                <RouterIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-              ) : deviceModel === 'WS-C3560-24PS' ? (
-                <SwitchIcon className="w-4 h-4 sm:w-5 sm:h-5" isL3={true} />
-              ) : deviceModel === 'WS-C2960-24TT-L' ? (
-                <SwitchIcon className="w-4 h-4 sm:w-5 sm:h-5" isL3={false} />
-              ) : (
-                <Database className="w-4 h-4 sm:w-5 sm:h-5" />
-              )}
-              {deviceName || t.switchTitle}
-              <span className={`text-xs font-mono px-2 py-0.5 rounded ${isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'} ml-2`}>
-                {deviceModel}
-              </span>
-            </CardTitle>
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${deviceModel === 'NETWORK-1941' ? (isDark ? 'bg-purple-900/30' : 'bg-purple-100') : deviceModel === 'WS-C3560-24PS' ? (isDark ? 'bg-purple-900/30' : 'bg-purple-100') : deviceModel === 'WS-C2960-24TT-L' ? (isDark ? 'bg-green-900/30' : 'bg-green-100') : (isDark ? 'bg-cyan-900/30' : 'bg-cyan-100')}`}>
+                {deviceModel === 'NETWORK-1941' ? (
+                  <RouterIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                ) : deviceModel === 'WS-C3560-24PS' ? (
+                  <SwitchIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" isL3={true} />
+                ) : deviceModel === 'WS-C2960-24TT-L' ? (
+                  <SwitchIcon className="w-5 h-5 text-green-600 dark:text-green-400" isL3={false} />
+                ) : (
+                  <Database className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                )}
+              </div>
+              <div>
+                <CardTitle className={deviceModel === 'NETWORK-1941' ? "text-purple-400 text-base sm:text-lg" : deviceModel === 'WS-C3560-24PS' ? "text-purple-400 text-base sm:text-lg" : deviceModel === 'WS-C2960-24TT-L' ? "text-green-400 text-base sm:text-lg" : "text-cyan-400 text-base sm:text-lg"}>
+                  {deviceName || t.switchTitle}
+                  <span className={`text-xs font-mono px-2 py-0.5 rounded ${isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'} ml-2`}>
+                    {deviceModel}
+                  </span>
+                </CardTitle>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {openPortsCount}/{totalPortsCount} {t.on.toLowerCase()}

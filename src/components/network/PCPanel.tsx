@@ -96,6 +96,30 @@ export function PCPanel({
   const isMobile = useIsMobile();
   const isDesktop = useIsDesktop();
 
+  // Ref for click-outside detection
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Handle click outside to close panel
+  useEffect(() => {
+    if (!isVisible) return;
+    
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    // Add listener with a small delay to avoid immediate trigger
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isVisible, onClose]);
+
   // Use granular selector for device state to prevent cascading re-renders
   const deviceState = useSwitchState(deviceId);
 
@@ -257,10 +281,10 @@ export function PCPanel({
     setInternalPcHostname(processedHostname);
   }, []);
 
-  // Use internalPcHostname for rendering and effects
+  // Hostname initialization only on mount
   useEffect(() => {
-    setPcHostname(deviceFromTopology?.name || deviceId);
-  }, [deviceFromTopology?.name, deviceId, setPcHostname]);
+    setInternalPcHostname(deviceFromTopology?.name || deviceId);
+  }, []);
 
   const [pcMAC, setPcMAC] = useState(deviceFromTopology?.macAddress || defaultConfig.mac);
   const [ipConfigMode, setIpConfigMode] = useState<'static' | 'dhcp'>(deviceFromTopology?.ipConfigMode || 'static');
@@ -3722,10 +3746,13 @@ export function PCPanel({
 
   return (
     <>
-      <div className={`
-        w-full
-        ${isDark ? 'bg-slate-900' : 'bg-slate-100'}
-      `}>
+      <div 
+        ref={panelRef}
+        className={`
+          w-full h-screen
+          ${isDark ? 'bg-slate-900' : 'bg-slate-100'}
+        `}
+      >
         {/* External Toolbar - Above Tablet Frame */}
         <div className={`
         w-full max-w-full mx-auto mb-2 px-3 py-1.5 flex items-center justify-between sticky top-2 z-[30]
@@ -3736,19 +3763,10 @@ export function PCPanel({
           }
       `}>
           <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div 
-                  className={`w-3 h-3 rounded-full cursor-pointer transition-all duration-200 hover:scale-125 group flex items-center justify-center ${isPcPoweredOff ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 animate-pulse hover:bg-green-600'}`}
-                  onClick={onClose}
-                >
-                  <X className="w-3 h-3 opacity-0 group-hover:opacity-100 text-white" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                {language === 'tr' ? 'Kapat' : 'Close'}
-              </TooltipContent>
-            </Tooltip>
+            
+            <div className={`p-1.5 rounded-lg ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+              <Monitor className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            </div>
             <span className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
               {internalPcHostname}
             </span>
@@ -4147,11 +4165,11 @@ export function PCPanel({
                         <div className="flex items-center justify-between gap-4">
                           <div className="space-y-1.5 flex-1">
                             <label className="text-xs font-bold text-slate-500 ml-1">{t.hostname}</label>
-                            <Input value={internalPcHostname} onChange={(e) => setPcHostname(e.target.value)} className="h-9" />
+                            <Input type="text" value={internalPcHostname} onChange={(e) => setPcHostname(e.target.value)} className="h-9" />
                           </div>
                           <div className="space-y-1.5 flex-1">
                             <label className="text-xs font-bold text-slate-500 ml-1">MAC Address</label>
-                            <Input value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} placeholder="00:1A:2B:3C:4D:5E" className={`h-9 ${errors.mac ? 'border-rose-500' : ''}`} />
+                            <Input type="text" value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} placeholder="00:1A:2B:3C:4D:5E" className={`h-9 ${errors.mac ? 'border-rose-500' : ''}`} />
                           </div>
                         </div>
 
@@ -4290,22 +4308,22 @@ export function PCPanel({
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">Gateway</label>
-                            <Input value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} placeholder="192.168.1.1" className={`h-9 ${errors.gateway ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
+                            <Input type="text" value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} placeholder="192.168.1.1" className={`h-9 ${errors.gateway ? 'border-rose-500' : ''}`} />
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">DNS Server</label>
-                            <Input value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} placeholder="8.8.8.8" className={`h-9 ${errors.dns ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
+                            <Input type="text" value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} placeholder="8.8.8.8" className={`h-9 ${errors.dns ? 'border-rose-500' : ''}`} />
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-x-4 pt-2 border-t border-slate-800/10 dark:border-slate-800/50">
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">IPv6 Address</label>
-                            <Input value={pcIPv6} onChange={(e) => setPcIPv6(e.target.value)} placeholder="2001:db8:acad:1::10" className={`h-9 ${errors.ipv6 ? 'border-rose-500' : ''}`} />
+                            <Input type="text" value={pcIPv6} onChange={(e) => setPcIPv6(e.target.value)} placeholder="2001:db8:acad:1::10" className={`h-9 ${errors.ipv6 ? 'border-rose-500' : ''}`} />
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">IPv6 Prefix</label>
-                            <Input value={pcIPv6Prefix} onChange={(e) => setPcIPv6Prefix(e.target.value)} placeholder="64" className="h-9" />
+                            <Input type="text" value={pcIPv6Prefix} onChange={(e) => setPcIPv6Prefix(e.target.value)} placeholder="64" className="h-9" />
                           </div>
                         </div>
                       </div>

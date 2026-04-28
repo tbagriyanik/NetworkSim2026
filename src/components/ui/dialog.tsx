@@ -9,12 +9,14 @@ import { cn } from "@/lib/utils"
 function Dialog({
   open,
   onOpenChange,
+  modal,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root> & {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  modal?: boolean;
 }) {
-  return <DialogPrimitive.Root data-slot="dialog" open={open} onOpenChange={onOpenChange} {...props} />
+  return <DialogPrimitive.Root data-slot="dialog" open={open} onOpenChange={onOpenChange} modal={modal} {...props} />
 }
 
 function DialogTrigger({

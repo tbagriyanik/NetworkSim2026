@@ -4089,7 +4089,7 @@ ${state.bannerMOTD}
           </AlertDialog>
 
           {/* Tasks Modal */}
-          <Dialog open={showTasksModal} onOpenChange={setShowTasksModal}>
+          <Dialog open={showTasksModal} onOpenChange={setShowTasksModal} modal={false}>
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
@@ -4332,7 +4332,7 @@ ${state.bannerMOTD}
           </Dialog>
 
           {/* Terminal Full-Screen Modal */}
-          <Dialog open={showTerminalModal} onOpenChange={setShowTerminalModal}>
+          <Dialog open={showTerminalModal} onOpenChange={setShowTerminalModal} modal={false}>
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
