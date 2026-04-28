@@ -99,27 +99,6 @@ export function PCPanel({
   // Ref for click-outside detection
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Handle click outside to close panel
-  useEffect(() => {
-    if (!isVisible) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    // Add listener with a small delay to avoid immediate trigger
-    const timer = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isVisible, onClose]);
-
   // Use granular selector for device state to prevent cascading re-renders
   const deviceState = useSwitchState(deviceId);
 
@@ -729,6 +708,29 @@ export function PCPanel({
   const [httpAppDeviceId, setHttpAppDeviceId] = useState<string | null>(null);
   const [showUrlSuggestions, setShowUrlSuggestions] = useState<boolean>(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number>(-1);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      // Don't close if web browser is open
+      if (httpAppContent) return;
+
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    // Add listener with a small delay to avoid immediate trigger
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isVisible, onClose, httpAppContent]);
 
   // Collect URL suggestions from existing IPs and predefined links
   const urlSuggestions = useMemo(() => {
@@ -5515,7 +5517,8 @@ export function PCPanel({
       {httpAppContent && (
         <div
           className="fixed inset-0 z-[999] pointer-events-auto bg-black/20"
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation();
             setHttpAppContent(null);
             inputRef.current?.focus();
           }}
