@@ -1,4 +1,4 @@
-import { Terminal, Globe, Wifi, Settings, Eye, Server, Router, Network, LucideIcon } from 'lucide-react';
+import { Terminal, Globe, Wifi, Settings, Eye, Server, Router, Network, Book, Zap, LucideIcon } from 'lucide-react';
 
 export interface CommandDefinition {
   id: string;
@@ -330,6 +330,70 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['cls', isTR ? 'Ekranı temizle' : 'Clear screen'],
         ['snake / yilan', isTR ? 'Yılan Oyunu' : 'Snake Game'],
         ['help / ?', isTR ? 'PC komut yardımı' : 'Desktop command help'],
+      ]
+    },
+    {
+      id: 'network-terms',
+      icon: Book,
+      title: isTR ? 'Ağ Terimleri' : 'Network Terms',
+      cmds: [
+        ['IP Address', isTR ? 'Ağda cihazı tanımlayan benzersiz sayısal adres (örn: 192.168.1.1)' : 'Unique numerical address identifying a device on a network (e.g., 192.168.1.1)'],
+        ['MAC Address', isTR ? 'Ağ kartının fiziksel adresi, 48-bit onaltılı format (örn: 00:1A:2B:3C:4D:5E)' : 'Physical address of network interface, 48-bit hex format (e.g., 00:1A:2B:3C:4D:5E)'],
+        ['Gateway', isTR ? 'Farklı ağlara erişim sağlayan cihaz, genellikle router' : 'Device providing access to other networks, typically a router'],
+        ['Subnet Mask', isTR ? 'IP adresinin ağ ve host kısımlarını ayıran sayı (örn: 255.255.255.0)' : 'Separates network and host portions of IP address (e.g., 255.255.255.0)'],
+        ['Router', isTR ? 'Ağlar arasında veri yönlendiren cihaz' : 'Device that routes data between networks'],
+        ['Switch', isTR ? 'Yerel ağda cihazları birbirine bağlayan cihaz' : 'Device connecting devices within local network'],
+        ['Firewall', isTR ? 'Yetkisiz ağ erişimini engelleyen güvenlik sistemi' : 'Security system blocking unauthorized network access'],
+        ['Port', isTR ? 'Hizmet ve protokolleri tanımlayan sayısal kimlik (SSH: 22, HTTP: 80, HTTPS: 443)' : 'Numerical identifier for services (SSH: 22, HTTP: 80, HTTPS: 443)'],
+        ['Protocol', isTR ? 'Ağ iletişimi için kuralları tanımlayan standart' : 'Standard defining rules for network communication'],
+        ['Bandwidth', isTR ? 'Ağ bağlantısının saniye cinsinden veri aktarım kapasitesi (Mbps, Gbps)' : 'Network link capacity measured in data transfer per second (Mbps, Gbps)'],
+        ['Ping', isTR ? 'Cihazlar arasındaki iletişim hızı, milisaniye cinsinden' : 'Communication speed between devices, measured in milliseconds'],
+        ['Packet', isTR ? 'Ağda iletilen veri biriminin adı' : 'Unit of data transmitted over network'],
+        ['VLAN', isTR ? 'Fiziksel ağı mantıksal gruplara bölen sistem' : 'System partitioning physical network into logical groups'],
+        ['Proxy', isTR ? 'İstemci ile sunucu arasında aracı görev yapan sunucu' : 'Server acting as intermediary between client and server'],
+        ['VPN', isTR ? 'İnternet üzerinden güvenli ve şifreli bağlantı' : 'Secure encrypted connection over the internet'],
+      ]
+    },
+    {
+      id: 'abbreviations',
+      icon: Zap,
+      title: isTR ? 'Ağ Kısaltmaları' : 'Network Abbreviations',
+      cmds: [
+        ['DHCP', isTR ? 'Dynamic Host Configuration Protocol - IP adreslerini otomatik olarak atayan protokol' : 'Dynamic Host Configuration Protocol - automatically assigns IP addresses'],
+        ['DNS', isTR ? 'Domain Name System - Alan adlarını IP adreslerine çeviren sistem' : 'Domain Name System - converts domain names to IP addresses'],
+        ['ARP', isTR ? 'Address Resolution Protocol - IP adresini MAC adresine çeviren protokol' : 'Address Resolution Protocol - converts IP to MAC address'],
+        ['TCP', isTR ? 'Transmission Control Protocol - Güvenilir, bağlantı tabanlı protokol' : 'Transmission Control Protocol - reliable, connection-based protocol'],
+        ['UDP', isTR ? 'User Datagram Protocol - Hızlı, bağlantısız protokol' : 'User Datagram Protocol - fast, connectionless protocol'],
+        ['SSH', isTR ? 'Secure Shell - Güvenli uzak bağlantı protokolü' : 'Secure Shell - secure remote connection protocol'],
+        ['HTTP', isTR ? 'HyperText Transfer Protocol - Web sayfaları için protokol' : 'HyperText Transfer Protocol - protocol for web pages'],
+        ['HTTPS', isTR ? 'HTTP Secure - Şifreli HTTP protokolü' : 'HTTP Secure - encrypted HTTP protocol'],
+        ['FTP', isTR ? 'File Transfer Protocol - Dosya aktarımı protokolü' : 'File Transfer Protocol - file transfer protocol'],
+        ['SFTP', isTR ? 'SSH File Transfer Protocol - Güvenli dosya aktarımı' : 'SSH File Transfer Protocol - secure file transfer'],
+        ['SMTP', isTR ? 'Simple Mail Transfer Protocol - E-posta gönderme protokolü' : 'Simple Mail Transfer Protocol - email sending protocol'],
+        ['POP3', isTR ? 'Post Office Protocol 3 - E-posta alma protokolü' : 'Post Office Protocol 3 - email receiving protocol'],
+        ['IMAP', isTR ? 'Internet Message Access Protocol - E-posta yönetimi protokolü' : 'Internet Message Access Protocol - email management protocol'],
+        ['QoS', isTR ? 'Quality of Service - Hizmet Kalitesi' : 'Quality of Service - network traffic priority'],
+        ['MTU', isTR ? 'Maximum Transmission Unit - Maksimum Aktarım Birimi' : 'Maximum Transmission Unit - maximum packet size'],
+        ['RFC', isTR ? 'Request for Comments - İnternet standartlarını tanımlayan dokümanlardır' : 'Request for Comments - internet standard documentation'],
+        ['CIDR', isTR ? 'Classless Inter-Domain Routing - IP blokları gösterim yöntemi' : 'Classless Inter-Domain Routing - IP notation method'],
+        ['ICMP', isTR ? 'Internet Control Message Protocol - Ağ diagnostik protokolü' : 'Internet Control Message Protocol - network diagnostic protocol'],
+        ['MAC', isTR ? 'Media Access Control - Ağ kartının fiziksel adresi, 48-bit onaltılı format (örn: 00:1A:2B:3C:4D:5E)' : 'Media Access Control - physical address of network interface, 48-bit hex format (e.g., 00:1A:2B:3C:4D:5E)'],
+        ['IP', isTR ? 'Internet Protocol - Ağda cihazı tanımlayan benzersiz sayısal adres (örn: 192.168.1.1)' : 'Internet Protocol - unique numerical address identifying a device on a network (e.g., 192.168.1.1)'],
+        ['NAT', isTR ? 'Network Address Translation - Ağ adresi dönüştürme' : 'Network Address Translation - translates private IPs to public'],
+        ['ACL', isTR ? 'Access Control List - Erişim kontrol listesi' : 'Access Control List - filters network traffic'],
+        ['VPN', isTR ? 'Virtual Private Network - İnternet üzerinden güvenli ve şifreli bağlantı' : 'Virtual Private Network - secure encrypted connection over the internet'],
+        ['WLAN', isTR ? 'Wireless Local Area Network - Kablosuz yerel ağ' : 'Wireless Local Area Network - wireless local network'],
+        ['SSID', isTR ? 'Service Set Identifier - Kablosuz ağ adı' : 'Service Set Identifier - wireless network name'],
+        ['STP', isTR ? 'Spanning Tree Protocol - Ağ halkalarını önleyen protokol' : 'Spanning Tree Protocol - prevents network loops'],
+        ['OSPF', isTR ? 'Open Shortest Path First - Dinamik yönlendirme protokolü' : 'Open Shortest Path First - dynamic routing protocol'],
+        ['RIP', isTR ? 'Routing Information Protocol - Basit yönlendirme protokolü' : 'Routing Information Protocol - basic routing protocol'],
+        ['BGP', isTR ? 'Border Gateway Protocol - InterASA yönlendirme protokolü' : 'Border Gateway Protocol - inter-AS routing protocol'],
+        ['SNMP', isTR ? 'Simple Network Management Protocol - Ağ yönetim protokolü' : 'Simple Network Management Protocol - network management protocol'],
+        ['NTP', isTR ? 'Network Time Protocol - Ağ zaman senkronizasyon' : 'Network Time Protocol - network time synchronization'],
+        ['LDAP', isTR ? 'Lightweight Directory Access Protocol - Kullanıcı dizin hizmeti' : 'Lightweight Directory Access Protocol - directory service protocol'],
+        ['SSL/TLS', isTR ? 'Secure Socket Layer / Transport Layer Security - Şifreleme protokolü' : 'Secure Socket Layer / Transport Layer Security - encryption protocol'],
+        ['L2TP', isTR ? 'Layer 2 Tunneling Protocol - Tünel oluşturma protokolü' : 'Layer 2 Tunneling Protocol - tunneling protocol'],
+        ['GRE', isTR ? 'Generic Routing Encapsulation - Jenerik yönlendirme protokolü' : 'Generic Routing Encapsulation - generic tunneling protocol'],
       ]
     },
   ];

@@ -102,6 +102,7 @@ const ConfigPanel = dynamic(() => import('@/components/network/ConfigPanel').the
 const QuickCommands = dynamic(() => import('@/components/network/QuickCommands').then((m) => m.QuickCommands), { ssr: false });
 const TaskCard = dynamic(() => import('@/components/network/TaskCard').then((m) => m.TaskCard), { ssr: false });
 const LazyAboutModal = dynamic(() => import('@/components/network/LazyAboutModal').then((m) => m.LazyAboutModal), { ssr: false });
+const HelpPanel = dynamic(() => import('@/components/network/HelpPanel').then((m) => m.HelpPanel), { ssr: false });
 
 type TabType = 'topology' | 'cmd' | 'terminal' | 'tasks';
 
@@ -3448,7 +3449,7 @@ ${state.bannerMOTD}
                               <Info className="w-4 h-4" />
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.contactTitle}</TooltipContent>
+                          <TooltipContent>{t.contactTitle} (F1)</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
@@ -5188,6 +5189,9 @@ ${state.bannerMOTD}
             topologyDevices={topologyDevices}
             onCheckAutoComplete={checkStepCompletionWithContext}
           />
+
+          {/* Help Panel - F1 key support */}
+          <HelpPanel t={t} theme={theme} />
         </div>
       </div >
     </AppErrorBoundary >

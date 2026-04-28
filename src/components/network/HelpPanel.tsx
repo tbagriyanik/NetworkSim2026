@@ -27,6 +27,9 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
     router: false,
     dhcp: false,
     show: false,
+    desktop: true,
+    'network-terms': true,
+    abbreviations: false,
   });
 
   const isDark = theme === 'dark';
@@ -44,12 +47,12 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
   // Filter categories based on search query
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;
-    
+
     const query = searchQuery.toLowerCase();
     return categories.map(cat => ({
       ...cat,
-      cmds: cat.cmds.filter(([cmd, desc]) => 
-        cmd.toLowerCase().includes(query) || 
+      cmds: cat.cmds.filter(([cmd, desc]) =>
+        cmd.toLowerCase().includes(query) ||
         desc.toLowerCase().includes(query)
       )
     })).filter(cat => cat.cmds.length > 0);
@@ -65,6 +68,19 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
       setExpanded(prev => ({ ...prev, ...newExpanded }));
     }
   }, [searchQuery, filteredCategories]);
+
+  // F1 key handler to open/close help panel
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'F1' || event.code === 'F1') {
+        event.preventDefault();
+        setOpen(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (!open) {
     return (
@@ -130,8 +146,8 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
               autoFocus
               className={cn(
                 'w-full pl-9 pr-9 py-2.5 rounded-lg text-sm border outline-none transition-all',
-                isDark 
-                  ? 'bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 focus:border-emerald-500/50' 
+                isDark
+                  ? 'bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 focus:border-emerald-500/50'
                   : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500'
               )}
             />
@@ -159,23 +175,24 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
           {/* Command Modes */}
           {!searchQuery.trim() && (
             <div className={cn('p-3 rounded-lg text-xs space-y-1', isDark ? 'bg-slate-900 border border-slate-700' : 'bg-slate-50 border border-slate-200')}>
-            <p className={cn('font-semibold mb-2', isDark ? 'text-slate-200' : 'text-slate-700')}>
-              {isTR ? 'Komut Modları:' : 'Command Modes:'}
-            </p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-              <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>User (&gt;)</span>
-              <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{isTR ? 'Temel komutlar' : 'Basic commands'}</span>
-              <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>Privileged (#)</span>
-              <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{isTR ? 'Tüm komutlar' : 'All commands'}</span>
-              <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>Config (config)#</span>
-              <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{isTR ? 'Global yapılandırma' : 'Global config'}</span>
-              <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>Interface (config-if)#</span>
-              <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{isTR ? 'Arayüz yapılandırması' : 'Interface config'}</span>
+              <p className={cn('font-semibold mb-2', isDark ? 'text-slate-200' : 'text-slate-700')}>
+                {isTR ? 'Komut Modları:' : 'Command Modes:'}
+              </p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>User (&gt;)</span>
+                <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{isTR ? 'Temel komutlar' : 'Basic commands'}</span>
+                <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>Privileged (#)</span>
+                <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{isTR ? 'Tüm komutlar' : 'All commands'}</span>
+                <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>Config (config)#</span>
+                <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{isTR ? 'Global yapılandırma' : 'Global config'}</span>
+                <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>Interface (config-if)#</span>
+                <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>{isTR ? 'Arayüz yapılandırması' : 'Interface config'}</span>
+              </div>
             </div>
-          </div>
           )}
 
-          {/* Categories */}
+
+          {/* Categories (Commands) */}
           {filteredCategories.map((cat) => {
             const Icon = cat.icon;
             const isExp = expanded[cat.id];
@@ -216,142 +233,6 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
           })}
         </div>
 
-        {/* Network Terms Section */}
-        <div className={cn('p-4 border-t shrink-0', isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200')}>
-          <div className={cn('p-3 rounded-lg border', isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-slate-50 border-slate-200')}>
-            <h3 className={cn('text-xs font-semibold mb-2', isDark ? 'text-slate-200' : 'text-slate-700')}>
-              {isTR ? 'Ağ Terimleri:' : 'Network Terms:'}
-            </h3>
-            <div className="grid grid-cols-1 gap-1 text-xs">
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>STP</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Spanning Tree Protocol</span>
-                <span>-</span>
-                <span>{isTR ? 'Döngü önleme protokolü' : 'Loop prevention protocol'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>VLAN</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Virtual Local Area Network</span>
-                <span>-</span>
-                <span>{isTR ? 'Sanal yerel ağ' : 'Virtual local network'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>DHCP</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Dynamic Host Configuration Protocol</span>
-                <span>-</span>
-                <span>{isTR ? 'Otomatik IP atama protokolü' : 'Automatic IP assignment protocol'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>DNS</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Domain Name System</span>
-                <span>-</span>
-                <span>{isTR ? 'Alan adı çözümleme sistemi' : 'Domain name resolution system'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>MAC</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Media Access Control</span>
-                <span>-</span>
-                <span>{isTR ? 'Donanım adresi' : 'Hardware address'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>IP</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Internet Protocol</span>
-                <span>-</span>
-                <span>{isTR ? 'İnternet protokol adresi' : 'Internet protocol address'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>TCP</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Transmission Control Protocol</span>
-                <span>-</span>
-                <span>{isTR ? 'Güvenilir veri iletim protokolü' : 'Reliable data transmission protocol'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>UDP</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>User Datagram Protocol</span>
-                <span>-</span>
-                <span>{isTR ? 'Hızlı veri iletim protokolü' : 'Fast data transmission protocol'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>HTTP</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Hypertext Transfer Protocol</span>
-                <span>-</span>
-                <span>{isTR ? 'Web sayfası iletim protokolü' : 'Web page transfer protocol'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>FTP</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>File Transfer Protocol</span>
-                <span>-</span>
-                <span>{isTR ? 'Dosya transfer protokolü' : 'File transfer protocol'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>SSH</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Secure Shell</span>
-                <span>-</span>
-                <span>{isTR ? 'Güvenli uzaktan erişim protokolü' : 'Secure remote access protocol'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>ARP</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Address Resolution Protocol</span>
-                <span>-</span>
-                <span>{isTR ? 'IP-MAC adresi eşleştirme protokolü' : 'IP to MAC address mapping protocol'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>NAT</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Network Address Translation</span>
-                <span>-</span>
-                <span>{isTR ? 'Ağ adresi dönüştürme' : 'Network address translation'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>ACL</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Access Control List</span>
-                <span>-</span>
-                <span>{isTR ? 'Erişim kontrol listesi' : 'Access control list'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>OSPF</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Open Shortest Path First</span>
-                <span>-</span>
-                <span>{isTR ? 'Açık en kısa yol öncelikli yönlendirme protokolü' : 'Open shortest path first routing protocol'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>RIP</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Routing Information Protocol</span>
-                <span>-</span>
-                <span>{isTR ? 'Mesafe vektör yönlendirme protokolü' : 'Distance vector routing protocol'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>ICMP</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Internet Control Message Protocol</span>
-                <span>-</span>
-                <span>{isTR ? 'Hata ve bilgi mesajlaşma protokolü' : 'Error and informational messaging protocol'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>VPN</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Virtual Private Network</span>
-                <span>-</span>
-                <span>{isTR ? 'Sanal özel ağ' : 'Virtual private network'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>WLAN</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Wireless Local Area Network</span>
-                <span>-</span>
-                <span>{isTR ? 'Kablosuz yerel ağ' : 'Wireless local area network'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>SSID</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Service Set Identifier</span>
-                <span>-</span>
-                <span>{isTR ? 'Kablosuz ağ adı' : 'Wireless network name'}</span>
-              </div>
-              <div className={cn('flex gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                <span className={cn('font-mono font-semibold w-16', isDark ? 'text-emerald-400' : 'text-emerald-600')}>MTU</span>
-                <span className={cn('text-slate-400', isDark ? 'text-slate-500' : 'text-slate-400')}>Maximum Transmission Unit</span>
-                <span>-</span>
-                <span>{isTR ? 'Maksimum paket boyutu' : 'Maximum packet size'}</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Footer stats - Fixed at bottom */}
         <div className={cn('p-4 border-t shrink-0', isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200')}>
