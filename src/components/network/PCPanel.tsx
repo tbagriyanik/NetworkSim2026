@@ -5587,7 +5587,6 @@ export function PCPanel({
                           setShowUrlSuggestions(true);
                           setSelectedSuggestionIndex(-1);
                         }}
-                        onBlur={() => setTimeout(() => setShowUrlSuggestions(false), 200)}
                         onKeyDown={(e) => {
                           e.stopPropagation();
                           const suggestions = filteredSuggestions.slice(0, 10);
@@ -5620,18 +5619,19 @@ export function PCPanel({
                       {showUrlSuggestions && filteredSuggestions.length > 0 && (
                         <div className={`absolute top-full left-0 right-0 mt-1 rounded-md border shadow-lg max-h-48 overflow-y-auto z-50 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}>
                           {filteredSuggestions.slice(0, 10).map((suggestion, index) => (
-                            <div
+                            <button
                               key={index}
-                              onMouseDown={(e) => {
-                                e.preventDefault();
+                              type="button"
+                              onClick={() => {
                                 setHttpAppUrl(suggestion);
                                 setShowUrlSuggestions(false);
                                 openWebPage(suggestion);
                               }}
-                              className={`px-2 py-1.5 text-xs cursor-pointer ${index === selectedSuggestionIndex ? (isDark ? 'bg-slate-700' : 'bg-slate-200') : 'hover:bg-slate-100 dark:hover:bg-slate-800'} ${isDark ? 'text-slate-200' : 'text-slate-700'}`}
+                              onMouseEnter={() => setSelectedSuggestionIndex(index)}
+                              className={`w-full text-left px-2 py-1.5 text-xs cursor-pointer ${index === selectedSuggestionIndex ? (isDark ? 'bg-slate-700' : 'bg-slate-200') : 'hover:bg-slate-100 dark:hover:bg-slate-800'} ${isDark ? 'text-slate-200' : 'text-slate-700'}`}
                             >
                               {suggestion}
-                            </div>
+                            </button>
                           ))}
                         </div>
                       )}
