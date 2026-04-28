@@ -102,7 +102,7 @@ export function PCPanel({
   // Handle click outside to close panel
   useEffect(() => {
     if (!isVisible) return;
-    
+
     const handleClickOutside = (event: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
         onClose();
@@ -637,6 +637,13 @@ export function PCPanel({
       }));
     }
   }, [internalPcHostname, ipConfigMode, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, deviceId, topologyDevices]);
+
+  const dispatchDeviceConfig = useCallback((config: Partial<CanvasDevice>) => {
+    if (!deviceId) return;
+    window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+      detail: { deviceId, config }
+    }));
+  }, [deviceId]);
 
   const saveIotConfig = useCallback((showToast: boolean = true) => {
     if (!selectedIotDeviceId) return;
@@ -2350,111 +2357,19 @@ export function PCPanel({
           d.type === 'pc' &&
           d.services?.dhcp?.enabled &&
           (d.services?.dhcp?.pools?.length || 0) > 0 &&
-        !!d.ip &&
-        (hasPhysicalPathToDevice(d.id) || canReachTargetIp(d.ip))
+          !!d.ip &&
+          (hasPhysicalPathToDevice(d.id) || canReachTargetIp(d.ip))
       );
 
-    for (const server of pcServers) {
-      const pools = server.services?.dhcp?.pools || [];
-      for (const pool of pools) {
-        if (!validateIP(pool.startIp) || !validateIP(pool.subnetMask) || !validateIP(pool.defaultGateway) || !validateIP(pool.dnsServer)) {
-          continue;
-        }
-        const start = ipToNumber(pool.startIp);
-        if (start === null) continue;
-        const maxUsers = Math.max(1, Number(pool.maxUsers || 1));
-
-        // Check if pool is full
-        let availableCount = 0;
-        for (let i = 0; i < maxUsers; i += 1) {
-          const candidate = numberToIp(start + i);
-          if (!usedIps.has(candidate)) {
-            availableCount++;
-          }
-        }
-
-        // Skip full pools
-        if (availableCount === 0) {
-          continue;
-        }
-
-        for (let i = 0; i < maxUsers; i += 1) {
-          const candidate = numberToIp(start + i);
-          if (!usedIps.has(candidate)) {
-            return {
-              ip: candidate,
-              subnetMask: pool.subnetMask,
-              gateway: pool.defaultGateway,
-              dns: pool.dnsServer,
-              serverName: server.name,
-              poolName: pool.poolName,
-            };
-          }
-        }
-      }
-    }
-
-    // 2. Check Router/Switch DHCP servers from deviceStates (CLI-configured pools)
-    const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
-
-    if (safeDeviceStates) {
-      for (const [deviceId_, state] of safeDeviceStates.entries()) {
-        if (deviceId_ === deviceId) continue;
-        const device = topologyDevices.find(d => d.id === deviceId_);
-        if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3')) continue;
-
-        // Check DHCP pools from both runtime services mirror and raw CLI state.
-        // Some flows may have dhcpPools populated while services mirror is stale.
-        const mirroredPools = state.services?.dhcp?.pools || [];
-        const cliPools = Object.entries(state.dhcpPools || {}).map(([poolName, pool]: [string, any]) => {
-          const networkBase = typeof pool?.network === 'string' ? pool.network : '';
-          const networkPrefix = networkBase.split('.').slice(0, 3).join('.');
-          const fallbackStart = networkPrefix ? `${networkPrefix}.100` : '192.168.1.100';
-          const fallbackGateway = networkPrefix ? `${networkPrefix}.1` : '192.168.1.1';
-          return {
-            poolName,
-            subnetMask: pool?.subnetMask || '255.255.255.0',
-            startIp: pool?.startIp || fallbackStart,
-            defaultGateway: pool?.defaultRouter || fallbackGateway,
-            dnsServer: pool?.dnsServer || '8.8.8.8',
-            maxUsers: Number(pool?.maxUsers || 50),
-          };
-        });
-        const dhcpPools = [...mirroredPools];
-        for (const pool of cliPools) {
-          if (!dhcpPools.some((p: any) => p.poolName === pool.poolName)) {
-            dhcpPools.push(pool as any);
-          }
-        }
-        if (dhcpPools.length === 0) continue;
-
-        // DHCP DISCOVER is L2 broadcast; client has no usable IP yet.
-        // In that case, only physical path is required (no server IP prerequisite).
-        let deviceIp = device.ip;
-        if (!deviceIp && state.ports) {
-          for (const portId in state.ports) {
-            const port = state.ports[portId];
-            if (port.ipAddress && !port.shutdown) {
-              deviceIp = port.ipAddress;
-              break;
-            }
-          }
-        }
-
-        // Check if PC can reach this DHCP server:
-        // - no client IP yet => physical path is enough
-        // - client already has IP => normal reachability check by server IP
-        const canReach = hasPhysicalPathToDevice(deviceId_) || (!!deviceIp && canReachTargetIp(deviceIp));
-        if (!canReach) continue;
-
-        // Use this device's DHCP pools
-        for (const pool of dhcpPools) {
+      for (const server of pcServers) {
+        const pools = server.services?.dhcp?.pools || [];
+        for (const pool of pools) {
           if (!validateIP(pool.startIp) || !validateIP(pool.subnetMask) || !validateIP(pool.defaultGateway) || !validateIP(pool.dnsServer)) {
             continue;
           }
           const start = ipToNumber(pool.startIp);
           if (start === null) continue;
-          const maxUsers = Math.max(1, Number(pool.maxUsers || 50));
+          const maxUsers = Math.max(1, Number(pool.maxUsers || 1));
 
           // Check if pool is full
           let availableCount = 0;
@@ -2478,16 +2393,108 @@ export function PCPanel({
                 subnetMask: pool.subnetMask,
                 gateway: pool.defaultGateway,
                 dns: pool.dnsServer,
-                serverName: device.name || state.hostname || deviceId_,
+                serverName: server.name,
                 poolName: pool.poolName,
               };
             }
           }
         }
       }
-    }
 
-    return null;
+      // 2. Check Router/Switch DHCP servers from deviceStates (CLI-configured pools)
+      const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+
+      if (safeDeviceStates) {
+        for (const [deviceId_, state] of safeDeviceStates.entries()) {
+          if (deviceId_ === deviceId) continue;
+          const device = topologyDevices.find(d => d.id === deviceId_);
+          if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3')) continue;
+
+          // Check DHCP pools from both runtime services mirror and raw CLI state.
+          // Some flows may have dhcpPools populated while services mirror is stale.
+          const mirroredPools = state.services?.dhcp?.pools || [];
+          const cliPools = Object.entries(state.dhcpPools || {}).map(([poolName, pool]: [string, any]) => {
+            const networkBase = typeof pool?.network === 'string' ? pool.network : '';
+            const networkPrefix = networkBase.split('.').slice(0, 3).join('.');
+            const fallbackStart = networkPrefix ? `${networkPrefix}.100` : '192.168.1.100';
+            const fallbackGateway = networkPrefix ? `${networkPrefix}.1` : '192.168.1.1';
+            return {
+              poolName,
+              subnetMask: pool?.subnetMask || '255.255.255.0',
+              startIp: pool?.startIp || fallbackStart,
+              defaultGateway: pool?.defaultRouter || fallbackGateway,
+              dnsServer: pool?.dnsServer || '8.8.8.8',
+              maxUsers: Number(pool?.maxUsers || 50),
+            };
+          });
+          const dhcpPools = [...mirroredPools];
+          for (const pool of cliPools) {
+            if (!dhcpPools.some((p: any) => p.poolName === pool.poolName)) {
+              dhcpPools.push(pool as any);
+            }
+          }
+          if (dhcpPools.length === 0) continue;
+
+          // DHCP DISCOVER is L2 broadcast; client has no usable IP yet.
+          // In that case, only physical path is required (no server IP prerequisite).
+          let deviceIp = device.ip;
+          if (!deviceIp && state.ports) {
+            for (const portId in state.ports) {
+              const port = state.ports[portId];
+              if (port.ipAddress && !port.shutdown) {
+                deviceIp = port.ipAddress;
+                break;
+              }
+            }
+          }
+
+          // Check if PC can reach this DHCP server:
+          // - no client IP yet => physical path is enough
+          // - client already has IP => normal reachability check by server IP
+          const canReach = hasPhysicalPathToDevice(deviceId_) || (!!deviceIp && canReachTargetIp(deviceIp));
+          if (!canReach) continue;
+
+          // Use this device's DHCP pools
+          for (const pool of dhcpPools) {
+            if (!validateIP(pool.startIp) || !validateIP(pool.subnetMask) || !validateIP(pool.defaultGateway) || !validateIP(pool.dnsServer)) {
+              continue;
+            }
+            const start = ipToNumber(pool.startIp);
+            if (start === null) continue;
+            const maxUsers = Math.max(1, Number(pool.maxUsers || 50));
+
+            // Check if pool is full
+            let availableCount = 0;
+            for (let i = 0; i < maxUsers; i += 1) {
+              const candidate = numberToIp(start + i);
+              if (!usedIps.has(candidate)) {
+                availableCount++;
+              }
+            }
+
+            // Skip full pools
+            if (availableCount === 0) {
+              continue;
+            }
+
+            for (let i = 0; i < maxUsers; i += 1) {
+              const candidate = numberToIp(start + i);
+              if (!usedIps.has(candidate)) {
+                return {
+                  ip: candidate,
+                  subnetMask: pool.subnetMask,
+                  gateway: pool.defaultGateway,
+                  dns: pool.dnsServer,
+                  serverName: device.name || state.hostname || deviceId_,
+                  poolName: pool.poolName,
+                };
+              }
+            }
+          }
+        }
+      }
+
+      return null;
     } catch (err) {
       errorHandler.logError(DHCP_ERRORS.LEASE_FAILED({ deviceId, source: 'getDhcpLease', error: String(err) }));
       return null;
@@ -3414,7 +3421,7 @@ export function PCPanel({
       setUndoStack([...undoStack, input]);
       setRedoStack([]);
       setInput(partialCommand); // Keep part before ?
-      
+
       // Trigger help command immediately
       void executeCommand(newValue);
       return;
@@ -3746,7 +3753,7 @@ export function PCPanel({
 
   return (
     <>
-      <div 
+      <div
         ref={panelRef}
         className={`
           w-full h-screen
@@ -3763,7 +3770,7 @@ export function PCPanel({
           }
       `}>
           <div className="flex items-center gap-2">
-            
+
             <div className={`p-1.5 rounded-lg ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
               <Monitor className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
@@ -4165,11 +4172,19 @@ export function PCPanel({
                         <div className="flex items-center justify-between gap-4">
                           <div className="space-y-1.5 flex-1">
                             <label className="text-xs font-bold text-slate-500 ml-1">{t.hostname}</label>
-                            <Input type="text" value={internalPcHostname} onChange={(e) => setPcHostname(e.target.value)} className="h-9" />
+                            <Input type="text" value={internalPcHostname} onChange={(e) => {
+                              const newHostname = e.target.value.trim().slice(0, 20);
+                              setPcHostname(e.target.value);
+                              dispatchDeviceConfig({ name: newHostname });
+                            }} className="h-9" />
                           </div>
                           <div className="space-y-1.5 flex-1">
                             <label className="text-xs font-bold text-slate-500 ml-1">MAC Address</label>
-                            <Input type="text" value={pcMAC} onChange={(e) => setPcMAC(e.target.value)} placeholder="00:1A:2B:3C:4D:5E" className={`h-9 ${errors.mac ? 'border-rose-500' : ''}`} />
+                            <Input type="text" value={pcMAC} onChange={(e) => {
+                              const newMac = e.target.value;
+                              setPcMAC(newMac);
+                              dispatchDeviceConfig({ macAddress: isValidMAC(newMac) ? normalizeMAC(newMac) : newMac });
+                            }} placeholder="00:1A:2B:3C:4D:5E" className={`h-9 ${errors.mac ? 'border-rose-500' : ''}`} />
                           </div>
                         </div>
 
@@ -4186,6 +4201,7 @@ export function PCPanel({
                                 if (manualDhcpClickRef.current) return;
                                 manualDhcpClickRef.current = true;
                                 setIpConfigMode('dhcp');
+                                dispatchDeviceConfig({ ipConfigMode: 'dhcp' });
                                 try {
                                   const lease = applyDhcpLeaseRef.current?.(true);
                                   if (lease && lease.serverName === 'link-local') {
@@ -4222,7 +4238,10 @@ export function PCPanel({
                               type="button"
                               role="radio"
                               aria-checked={ipConfigMode === 'static'}
-                              onClick={() => setIpConfigMode('static')}
+                              onClick={() => {
+                                setIpConfigMode('static');
+                                dispatchDeviceConfig({ ipConfigMode: 'static' });
+                              }}
                               className={`px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all ${ipConfigMode === 'static'
                                 ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
                                 : (isDark ? 'text-slate-200 hover:text-white' : 'text-slate-500 hover:text-slate-800')
@@ -4239,7 +4258,7 @@ export function PCPanel({
                             <Input value={pcIP} onChange={(e) => {
                               const newIp = e.target.value;
                               setPcIP(newIp);
-                              
+
                               // Check for duplicate IP
                               if (validateIP(newIp)) {
                                 const duplicateDevice = topologyDevices.find(d => {
@@ -4248,15 +4267,16 @@ export function PCPanel({
                                   // Same IP is always a duplicate (regardless of subnet)
                                   return d.ip === newIp;
                                 });
-                                
+
                                 if (duplicateDevice) {
                                   setErrors(prev => ({ ...prev, ip: language === 'tr' ? `Bu IP adresi zaten ${duplicateDevice.name || duplicateDevice.id} tarafından kullanılıyor` : `This IP address is already used by ${duplicateDevice.name || duplicateDevice.id}` }));
                                 } else {
                                   setErrors(prev => { const { ip, ...rest } = prev; return rest; });
                                 }
                               }
-                              
+
                               // Auto-assign subnet mask based on first octet
+                              let updatedSubnet = pcSubnet;
                               const firstOctet = newIp.split('.')[0];
                               if (firstOctet) {
                                 const octetNum = parseInt(firstOctet, 10);
@@ -4269,21 +4289,18 @@ export function PCPanel({
                                   } else if (octetNum === 169) {
                                     autoSubnet = '255.255.0.0';
                                   }
+                                  updatedSubnet = autoSubnet;
                                   setPcSubnet(autoSubnet);
                                 }
                               }
-                              
-                              // Debounced topology update for static IP
+
+                              // Debounced topology update for static IP and subnet
                               setTimeout(() => {
-                                window.dispatchEvent(new CustomEvent('update-topology-device-config', {
-                                  detail: {
-                                    deviceId,
-                                    config: {
-                                      ip: newIp,
-                                      ipConfigMode: 'static'
-                                    }
-                                  }
-                                }));
+                                dispatchDeviceConfig({
+                                  ip: newIp,
+                                  subnet: updatedSubnet,
+                                  ipConfigMode: 'static'
+                                });
                               }, 500);
                             }} placeholder="192.168.1.100" className={`h-9 ${errors.ip ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
                             {errors.ip && <p className="text-xs text-rose-500 mt-1">{errors.ip}</p>}
@@ -4291,39 +4308,51 @@ export function PCPanel({
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">Subnet Mask</label>
                             <Input value={pcSubnet} onChange={(e) => {
-                              setPcSubnet(e.target.value);
+                              const newSubnet = e.target.value;
+                              setPcSubnet(newSubnet);
                               // Debounced topology update for static subnet
                               setTimeout(() => {
-                                window.dispatchEvent(new CustomEvent('update-topology-device-config', {
-                                  detail: {
-                                    deviceId,
-                                    config: {
-                                      subnet: e.target.value,
-                                      ipConfigMode: 'static'
-                                    }
-                                  }
-                                }));
+                                dispatchDeviceConfig({
+                                  subnet: newSubnet,
+                                  ipConfigMode: 'static'
+                                });
                               }, 500);
                             }} placeholder="255.255.255.0" className={`h-9 ${errors.subnet ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">Gateway</label>
-                            <Input type="text" value={pcGateway} onChange={(e) => setPcGateway(e.target.value)} placeholder="192.168.1.1" className={`h-9 ${errors.gateway ? 'border-rose-500' : ''}`} />
+                            <Input type="text" value={pcGateway} onChange={(e) => {
+                              const newGateway = e.target.value;
+                              setPcGateway(newGateway);
+                              dispatchDeviceConfig({ gateway: newGateway });
+                            }} placeholder="192.168.1.1" className={`h-9 ${errors.gateway ? 'border-rose-500' : ''}`} />
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">DNS Server</label>
-                            <Input type="text" value={pcDNS} onChange={(e) => setPcDNS(e.target.value)} placeholder="8.8.8.8" className={`h-9 ${errors.dns ? 'border-rose-500' : ''}`} />
+                            <Input type="text" value={pcDNS} onChange={(e) => {
+                              const newDNS = e.target.value;
+                              setPcDNS(newDNS);
+                              dispatchDeviceConfig({ dns: newDNS });
+                            }} placeholder="8.8.8.8" className={`h-9 ${errors.dns ? 'border-rose-500' : ''}`} />
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-x-4 pt-2 border-t border-slate-800/10 dark:border-slate-800/50">
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">IPv6 Address</label>
-                            <Input type="text" value={pcIPv6} onChange={(e) => setPcIPv6(e.target.value)} placeholder="2001:db8:acad:1::10" className={`h-9 ${errors.ipv6 ? 'border-rose-500' : ''}`} />
+                            <Input type="text" value={pcIPv6} onChange={(e) => {
+                              const newIPv6 = e.target.value;
+                              setPcIPv6(newIPv6);
+                              dispatchDeviceConfig({ ipv6: newIPv6 });
+                            }} placeholder="2001:db8:acad:1::10" className={`h-9 ${errors.ipv6 ? 'border-rose-500' : ''}`} />
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">IPv6 Prefix</label>
-                            <Input type="text" value={pcIPv6Prefix} onChange={(e) => setPcIPv6Prefix(e.target.value)} placeholder="64" className="h-9" />
+                            <Input type="text" value={pcIPv6Prefix} onChange={(e) => {
+                              const newPrefix = e.target.value;
+                              setPcIPv6Prefix(newPrefix);
+                              dispatchDeviceConfig({ ipv6Prefix: newPrefix });
+                            }} placeholder="64" className="h-9" />
                           </div>
                         </div>
                       </div>
