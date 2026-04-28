@@ -83,20 +83,7 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
   }, []);
 
   if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className={cn(
-          'fixed z-[10001] rounded-full shadow-lg transition-all hover:scale-105 flex items-center justify-center',
-          isDark ? 'bg-slate-800 text-slate-200 border border-slate-600' : 'bg-white text-slate-700 border border-slate-300',
-          isMobile ? 'bottom-4 right-4 w-10 h-10' : 'bottom-6 right-6 w-12 h-12'
-        )}
-        title={isTR ? 'Komut Yardımı' : 'Command Help'}
-        aria-label={isTR ? 'Komut Yardımı' : 'Command Help'}
-      >
-        <HelpCircle className={isMobile ? 'w-5 h-5' : 'w-6 h-6'} />
-      </button>
-    );
+    return null;
   }
 
   return (

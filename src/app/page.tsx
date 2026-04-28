@@ -99,10 +99,8 @@ const PortPanel = dynamic(() => import('@/components/network/PortPanel').then((m
 const VlanPanel = dynamic(() => import('@/components/network/VlanPanel').then((m) => m.VlanPanel), { ssr: false });
 const SecurityPanel = dynamic(() => import('@/components/network/SecurityPanel').then((m) => m.SecurityPanel), { ssr: false });
 const ConfigPanel = dynamic(() => import('@/components/network/ConfigPanel').then((m) => m.ConfigPanel), { ssr: false });
-const QuickCommands = dynamic(() => import('@/components/network/QuickCommands').then((m) => m.QuickCommands), { ssr: false });
 const TaskCard = dynamic(() => import('@/components/network/TaskCard').then((m) => m.TaskCard), { ssr: false });
 const LazyAboutModal = dynamic(() => import('@/components/network/LazyAboutModal').then((m) => m.LazyAboutModal), { ssr: false });
-const HelpPanel = dynamic(() => import('@/components/network/HelpPanel').then((m) => m.HelpPanel), { ssr: false });
 
 type TabType = 'topology' | 'cmd' | 'terminal' | 'tasks';
 
@@ -2976,6 +2974,13 @@ ${state.bannerMOTD}
   // Handle key events: ESC to close, ENTER to confirm
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // F1 - Open About Modal (Help)
+      if (e.key === 'F1' || e.code === 'F1') {
+        e.preventDefault();
+        setShowAboutModal(prev => !prev);
+        return;
+      }
+
       // F5 - Refresh network connections and WiFi status
       if (e.key === 'F5') {
         e.preventDefault();
@@ -5189,9 +5194,6 @@ ${state.bannerMOTD}
             topologyDevices={topologyDevices}
             onCheckAutoComplete={checkStepCompletionWithContext}
           />
-
-          {/* Help Panel - F1 key support */}
-          <HelpPanel t={t} theme={theme} />
         </div>
       </div >
     </AppErrorBoundary >

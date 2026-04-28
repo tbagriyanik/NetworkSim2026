@@ -18,7 +18,6 @@ import { commandPatterns } from '@/lib/network/parser';
 import { ModernPanel } from '@/components/ui/ModernPanel';
 import { cn } from '@/lib/utils';
 import { useIsMobile, useIsTablet, useIsDesktop } from '@/hooks/use-breakpoint';
-import { QuickCommands } from './QuickCommands';
 import type { CanvasDevice } from './networkTopology.types';
 import { RouterIcon, SwitchIcon } from './PCPanelWidgets';
 
