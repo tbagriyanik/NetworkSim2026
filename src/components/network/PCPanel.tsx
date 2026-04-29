@@ -697,7 +697,7 @@ export function PCPanel({
     return [{
       id: '1',
       type: 'output',
-      content: 'OS [Version 10.0.26200.8037]\n(c) OS Corporation. All rights reserved.\n\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ' + (deviceFromTopology?.ip || '0.0.0.0') + '\n   Subnet Mask . . . . . . . . . . : ' + (deviceFromTopology?.subnet || '255.255.255.0') + '\n   Default Gateway . . . . . . . . . : ' + (deviceFromTopology?.gateway || '0.0.0.0') + '\n'
+      content: 'OS [Version 10.0.26200.8037]\n(c) OS Corporation. All rights reserved.\n\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ' + (deviceFromTopology?.ip || '0.0.0.0') + '\n   Subnet Mask . . . . . . . . . . : ' + (deviceFromTopology?.subnet || '255.255.255.0') + '\n   Default Gateway . . . . . . . . . : ' + (deviceFromTopology?.gateway || '0.0.0.0') + '\n   IPv6 Address. . . . . . . . . . : ' + (deviceFromTopology?.ipv6 || '2001:db8:acad:1::10') + '\n'
     }];
   };
 
@@ -2922,9 +2922,9 @@ export function PCPanel({
           }
         } else if (args.includes('/all')) {
           const ipConfigModeText = ipConfigMode === 'dhcp' ? 'Yes' : 'No';
-          await addMultilineOutput('output', `Windows IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${internalPcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet:\n\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) PRO/1000 MT Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : ${ipConfigModeText}\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}\n   NetBIOS over Tcpip. . . . . . . . : Enabled\n\n${wifiEnabled ? `Ethernet adapter Wireless Network Connection:\n\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) Wireless WiFi Link 4965AGN\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : ${ipConfigModeText}\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}\n   NetBIOS over Tcpip. . . . . . . . : Enabled\n\n` : ''}`, 80);
+          await addMultilineOutput('output', `Windows IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${internalPcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet:\n\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) PRO/1000 MT Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : ${ipConfigModeText}\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}(Preferred)\n   NetBIOS over Tcpip. . . . . . . . : Enabled\n\n${wifiEnabled ? `Ethernet adapter Wireless Network Connection:\n\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) Wireless WiFi Link 4965AGN\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : ${ipConfigModeText}\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}(Preferred)\n   NetBIOS over Tcpip. . . . . . . . : Enabled\n\n` : ''}`, 80);
         } else {
-          await addMultilineOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}`, 80);
+          await addMultilineOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}`, 80);
         }
       } else if (cmd === 'ping') {
         const target = args[0];
@@ -5346,7 +5346,86 @@ export function PCPanel({
                                   <span className={cmdColor}>{highlightText(line.content)}</span>
                                 </div>
                               )}
-                              {line.type === 'output' && <span className={`${textColor} whitespace-pre-wrap`}>{highlightText(line.content)}</span>}
+                              {line.type === 'output' && (
+                                <div className={`${textColor} whitespace-pre-wrap`}>
+                                  {(() => {
+                                    // Check if line contains copyable network values (Windows format with dots)
+                                    const ipConfigMatch = line.content.match(/^(\s*(?:IPv4 Address|Default Gateway|IPv6 Address|DNS Servers|Subnet Mask|Physical Address|Host Name).*?:\s*)(.+)$/);
+                                    if (ipConfigMatch) {
+                                      const [, label, value] = ipConfigMatch;
+                                      return (
+                                        <div className="flex items-center gap-2 group">
+                                          <span>{highlightText(label)}</span>
+                                          <span className="font-mono">{highlightText(value)}</span>
+                                          <button
+                                            onClick={() => {
+                                              navigator.clipboard.writeText(value.trim());
+                                              toast({
+                                                title: language === 'tr' ? 'Kopyalandı' : 'Copied',
+                                                description: `${value.trim()} ${language === 'tr' ? 'panoya kopyalandı' : 'copied to clipboard'}`,
+                                              });
+                                            }}
+                                            className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-slate-700/30 ${isDark ? 'text-slate-400 hover:text-emerald-400' : 'text-slate-500 hover:text-emerald-600'}`}
+                                            title={language === 'tr' ? 'Kopyala' : 'Copy'}
+                                          >
+                                            <Copy className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      );
+                                    }
+                                    // OS IP Configuration format (without dots, like "   IPv4 Address . . . . : value")
+                                    const osIpConfigMatch = line.content.match(/^(\s*(?:IPv4 Address|Default Gateway|IPv6 Address|DNS Servers|Subnet Mask|Physical Address)\s+)(.+)$/);
+                                    if (osIpConfigMatch) {
+                                      const [, label, value] = osIpConfigMatch;
+                                      return (
+                                        <div className="flex items-center gap-2 group">
+                                          <span>{highlightText(label)}</span>
+                                          <span className="font-mono">{highlightText(value)}</span>
+                                          <button
+                                            onClick={() => {
+                                              navigator.clipboard.writeText(value.trim());
+                                              toast({
+                                                title: language === 'tr' ? 'Kopyalandı' : 'Copied',
+                                                description: `${value.trim()} ${language === 'tr' ? 'panoya kopyalandı' : 'copied to clipboard'}`,
+                                              });
+                                            }}
+                                            className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-slate-700/30 ${isDark ? 'text-slate-400 hover:text-emerald-400' : 'text-slate-500 hover:text-emerald-600'}`}
+                                            title={language === 'tr' ? 'Kopyala' : 'Copy'}
+                                          >
+                                            <Copy className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      );
+                                    }
+                                    // DHCP renew success message with IP
+                                    const dhcpMatch = line.content.match(/(DHCP lease renewed\. New IP:|IP yenilendi:|Assigned link-local IP:|No DHCP server\/pool found\. Assigned link-local IP:)(.+)/);
+                                    if (dhcpMatch) {
+                                      const [, label, value] = dhcpMatch;
+                                      const ipValue = value.trim();
+                                      return (
+                                        <div className="flex items-center gap-2 group">
+                                          <span>{highlightText(label)}</span>
+                                          <span className="font-mono text-cyan-400">{highlightText(ipValue)}</span>
+                                          <button
+                                            onClick={() => {
+                                              navigator.clipboard.writeText(ipValue);
+                                              toast({
+                                                title: language === 'tr' ? 'Kopyalandı' : 'Copied',
+                                                description: `${ipValue} ${language === 'tr' ? 'panoya kopyalandı' : 'copied to clipboard'}`,
+                                              });
+                                            }}
+                                            className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-slate-700/30 ${isDark ? 'text-slate-400 hover:text-emerald-400' : 'text-slate-500 hover:text-emerald-600'}`}
+                                            title={language === 'tr' ? 'Kopyala' : 'Copy'}
+                                          >
+                                            <Copy className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      );
+                                    }
+                                    return <span>{highlightText(line.content)}</span>;
+                                  })()}
+                                </div>
+                              )}
                               {line.type === 'error' && <span className="text-rose-500 font-bold italic">{highlightText(line.content)}</span>}
                               {line.type === 'success' && <span className="text-cyan-500 font-bold  text-xs tracking-widest opacity-80">{highlightText(line.content)}</span>}
                               {/* HTML çıktıları pop-up içinde gösteriliyor */}

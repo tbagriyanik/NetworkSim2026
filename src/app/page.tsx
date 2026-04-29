@@ -5441,6 +5441,10 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
               <span className="font-mono opacity-80">{pc.gateway || '0.0.0.0'}</span>
             </div>
             <div className="flex justify-between items-center">
+              <span className="opacity-50">IPv6</span>
+              <span className="font-mono opacity-80">{pc.ipv6 || '::'}</span>
+            </div>
+            <div className="flex justify-between items-center">
               <span className="opacity-50">MAC</span>
               <span className="font-mono opacity-30 text-[9px]">{pc.macAddress || 'N/A'}</span>
             </div>

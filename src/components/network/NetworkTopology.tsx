@@ -496,6 +496,7 @@ export function NetworkTopology({
   const [tempNameValue, setTempNameValue] = useState('');
   const [ipValue, setIpValue] = useState('');
   const [subnetValue, setSubnetValue] = useState('');
+  const [ipv6Value, setIpv6Value] = useState('');
   const [gatewayValue, setGatewayValue] = useState('');
   const [dnsValue, setDnsValue] = useState('');
   const configInputRef = useRef<HTMLInputElement>(null);
@@ -587,6 +588,7 @@ export function NetworkTopology({
       setTempNameValue(device.name);
       setIpValue(device.ip || '');
       setSubnetValue(device.subnet || '255.255.255.0');
+      setIpv6Value(device.ipv6 || '');
 
       if (device.gateway) {
         setGatewayValue(device.gateway);
@@ -610,6 +612,7 @@ export function NetworkTopology({
     setTempNameValue('');
     setIpValue('');
     setSubnetValue('');
+    setIpv6Value('');
     setGatewayValue('');
     setDnsValue('');
   }, []);
@@ -635,6 +638,7 @@ export function NetworkTopology({
             name: tempNameValue.trim() || d.name,
             ip: ipValue.trim(),
             subnet: subnetValue.trim(),
+            ipv6: ipv6Value.trim(),
             gateway: gatewayValue.trim(),
             dns: dnsValue.trim()
           }
@@ -645,8 +649,10 @@ export function NetworkTopology({
     setTempNameValue('');
     setIpValue('');
     setSubnetValue('');
+    setIpv6Value('');
     setGatewayValue('');
-  }, [configuringDevice, tempNameValue, ipValue, saveToHistory]);
+    setDnsValue('');
+  }, [configuringDevice, dnsValue, gatewayValue, ipValue, ipv6Value, saveToHistory, subnetValue, tempNameValue]);
 
   // Delete device and its connections
   const deleteDevice = useCallback((deviceId: string) => {
@@ -6882,6 +6888,22 @@ export function NetworkTopology({
 
                     <div className="space-y-1">
                       <label className={`text-[10px] font-bold tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        IPv6
+                      </label>
+                      <input
+                        type="text"
+                        value={ipv6Value}
+                        onChange={(e) => setIpv6Value(e.target.value)}
+                        className={`w-full px-4 ${isMobile ? 'py-2' : 'py-2.5'} rounded-xl border font-mono font-bold transition-all duration-300 ${isDark
+                          ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-700 focus:border-cyan-500/50'
+                          : 'bg-white border-slate-200 text-slate-900 placeholder-slate-300 focus:border-cyan-500/50'
+                          } outline-none`}
+                        placeholder="2001:db8::10"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className={`text-[10px] font-bold tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                         {language === 'tr' ? 'DNS Sunucusu' : 'DNS Server'}
                       </label>
                       <input
@@ -7240,6 +7262,10 @@ export function NetworkTopology({
                       <div className="flex justify-between items-center gap-4">
                         <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.gateway}</span>
                         <span className="text-xs font-mono font-bold opacity-80">{dev.gateway || '0.0.0.0'}</span>
+                      </div>
+                      <div className="flex justify-between items-center gap-4">
+                        <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">IPv6</span>
+                        <span className="text-xs font-mono font-bold opacity-80">{dev.ipv6 || '::'}</span>
                       </div>
                       <div className="flex justify-between items-center gap-4">
                         <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.dnsServer}</span>
