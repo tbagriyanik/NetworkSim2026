@@ -48,6 +48,7 @@ interface PCPanelProps {
   deviceId: string;
   cableInfo: CableInfo;
   isVisible: boolean;
+  className?: string;
   onClose: () => void;
   onTogglePower?: (deviceId: string) => void;
   topologyDevices?: CanvasDevice[];
@@ -74,6 +75,7 @@ export function PCPanel({
   deviceId,
   cableInfo,
   isVisible,
+  className,
   onClose,
   onTogglePower,
   topologyDevices = [],
@@ -362,7 +364,7 @@ export function PCPanel({
 
         // Check if device is connected to the same router/AP as PC
         const connectedToSameRouter = topologyConnections.some(c => {
-          const otherDeviceId = c.sourceDeviceId === deviceId ? c.targetDeviceId : c.sourceDeviceId === deviceId ? c.sourceDeviceId : null;
+          const otherDeviceId = c.sourceDeviceId === deviceId ? c.targetDeviceId : c.targetDeviceId === deviceId ? c.sourceDeviceId : null;
           if (!otherDeviceId) return false;
 
           const otherDevice = topologyDevices.find(d => d.id === otherDeviceId);
@@ -472,21 +474,49 @@ export function PCPanel({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
 
-  // Track previous device ID and services to detect changes
+  // Track previous device data to detect external topology updates.
   const prevDeviceIdRef = useRef<string | null>(null);
-  const prevServicesRef = useRef<any>(null);
+  const prevDeviceSnapshotRef = useRef<string>('');
 
-  // Reset services state only when device changes or first entering services tab
+  // Reset tracking refs when panel becomes visible to ensure fresh sync
+  useEffect(() => {
+    if (isVisible) {
+      prevDeviceIdRef.current = null;
+      prevDeviceSnapshotRef.current = '';
+    }
+  }, [isVisible]);
+
+  // Refresh local form state when switching devices or when topology data changes externally.
   useEffect(() => {
     const deviceChanged = prevDeviceIdRef.current !== deviceId;
-    const servicesChanged = JSON.stringify(deviceFromTopology?.services) !== JSON.stringify(prevServicesRef.current);
+    const nextSnapshot = JSON.stringify({
+      name: deviceFromTopology?.name || deviceId,
+      macAddress: deviceFromTopology?.macAddress || defaultConfig.mac,
+      ipConfigMode: deviceFromTopology?.ipConfigMode || 'static',
+      services: deviceFromTopology?.services || null,
+      wifi: deviceFromTopology?.wifi || null,
+      ip: deviceFromTopology?.ip || defaultConfig.ip,
+      subnet: deviceFromTopology?.subnet || '255.255.255.0',
+      gateway: deviceFromTopology?.gateway || '192.168.1.1',
+      dns: deviceFromTopology?.dns || '8.8.8.8',
+      ipv6: deviceFromTopology?.ipv6 || '2001:db8:acad:1::10',
+      ipv6Prefix: deviceFromTopology?.ipv6Prefix || '64',
+    });
+    const deviceSnapshotChanged = prevDeviceSnapshotRef.current !== nextSnapshot;
 
-    // Reset if device changed (user switched to different PC)
-    // OR if this is first load (prevDeviceIdRef.current is null)
-    if (deviceChanged || prevDeviceIdRef.current === null) {
+    if (deviceChanged || prevDeviceIdRef.current === null || deviceSnapshotChanged) {
       prevDeviceIdRef.current = deviceId;
-      prevServicesRef.current = deviceFromTopology?.services;
+      prevDeviceSnapshotRef.current = nextSnapshot;
 
+      setInternalPcHostname(deviceFromTopology?.name || deviceId);
+      setPcMAC(deviceFromTopology?.macAddress || defaultConfig.mac);
+      setPcIP(deviceFromTopology?.ip || defaultConfig.ip);
+      setPcSubnet(deviceFromTopology?.subnet || '255.255.255.0');
+      setPcGateway(deviceFromTopology?.gateway || '192.168.1.1');
+      setPcDNS(deviceFromTopology?.dns || '8.8.8.8');
+      setPcIPv6(deviceFromTopology?.ipv6 || '2001:db8:acad:1::10');
+      setPcIPv6Prefix(deviceFromTopology?.ipv6Prefix || '64');
+      setIpConfigMode(deviceFromTopology?.ipConfigMode || 'static');
       setServiceDnsEnabled(deviceFromTopology?.services?.dns?.enabled ?? false);
       setServiceDnsRecords(deviceFromTopology?.services?.dns?.records || []);
       setServiceHttpEnabled(deviceFromTopology?.services?.http?.enabled ?? false);
@@ -506,15 +536,14 @@ export function PCPanel({
         maxUsers: 50,
       });
       setEditingDhcpIndex(null);
+      setWifiEnabled(deviceFromTopology?.wifi?.enabled ?? false);
+      setWifiSSID(deviceFromTopology?.wifi?.ssid ?? '');
+      setWifiSecurity(deviceFromTopology?.wifi?.security ?? 'open');
+      setWifiPassword(deviceFromTopology?.wifi?.password ?? '');
+      setWifiChannel(deviceFromTopology?.wifi?.channel ?? '2.4GHz');
+      setWifiBSSID(deviceFromTopology?.wifi?.bssid ?? '');
     }
-
-    setIpConfigMode(deviceFromTopology?.ipConfigMode || 'static');
-    setWifiEnabled(deviceFromTopology?.wifi?.enabled ?? false);
-    setWifiSSID(deviceFromTopology?.wifi?.ssid ?? '');
-    setWifiSecurity(deviceFromTopology?.wifi?.security ?? 'open');
-    setWifiPassword(deviceFromTopology?.wifi?.password ?? '');
-    setWifiChannel(deviceFromTopology?.wifi?.channel ?? '2.4GHz');
-  }, [deviceId]);
+  }, [defaultConfig.ip, defaultConfig.mac, deviceFromTopology, deviceId]);
 
   useEffect(() => {
     if (!iotDevices.length) {
@@ -548,7 +577,10 @@ export function PCPanel({
     }
   }, [isPcPoweredOff, onNavigate]);
 
-  const validateIP = (ip: string) => /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ip);
+  const validateIP = (ip: string) => {
+    const parts = ip.trim().split('.');
+    return parts.length === 4 && parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) >= 0 && Number(part) <= 255);
+  };
 
   const validateIPv6 = (ipv6: string) => {
     // Basic IPv6 validation - allows compressed and full formats
@@ -1354,7 +1386,7 @@ export function PCPanel({
     return result.success;
   }, [deviceId, topologyDevices, topologyConnections, deviceStates, t.language]);
 
-  const isValidIpv4 = useCallback((value: string) => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(value.trim()), []);
+  const isValidIpv4 = useCallback((value: string) => validateIP(value), []);
 
   const isSameSubnet = useCallback((sourceIp: string, targetIp: string, subnetMask: string) => {
     try {
@@ -3757,14 +3789,15 @@ export function PCPanel({
     <>
       <div
         ref={panelRef}
-        className={`
-          w-full h-screen
-          ${isDark ? 'bg-slate-900' : 'bg-slate-100'}
-        `}
+        className={cn(
+          "w-full h-full min-h-0 flex flex-col overflow-hidden",
+          isDark ? 'bg-slate-900' : 'bg-slate-100',
+          className
+        )}
       >
         {/* External Toolbar - Above Tablet Frame */}
         <div className={`
-        w-full max-w-full mx-auto mb-2 px-3 py-1.5 flex items-center justify-between sticky top-2 z-[30]
+        w-full max-w-full mx-auto mb-2 px-3 py-1.5 flex items-center justify-between shrink-0 sticky top-2 z-[30]
         rounded-lg border
         ${isDark
             ? 'bg-slate-800/90 border-slate-700 shadow-md'
@@ -3918,11 +3951,11 @@ export function PCPanel({
         </div>
 
         {/* Tablet Frame - Simple modern tablet design */}
-        <div className={`w-full overflow-hidden ${isDark ? 'bg-slate-900' : 'bg-slate-100'}`}>
+        <div className={`w-full flex-1 min-h-0 flex flex-col overflow-hidden ${isDark ? 'bg-slate-900' : 'bg-slate-100'}`}>
 
           {/* Screen Area - Clean and simple */}
           <div className={`
-          relative
+          relative flex-1 min-h-0 flex flex-col
           
           ${isDark
               ? 'bg-slate-900'
@@ -3948,6 +3981,8 @@ export function PCPanel({
               collapsible={false}
               hideTitle
               hideHeader
+              noPadding
+              style={{ height: '100%' }}
               className={cn(
                 "w-full min-w-0 h-full flex flex-col relative",
                 isDark
@@ -3967,7 +4002,7 @@ export function PCPanel({
                   </div>
                 </div>
               )}
-              <div className="bg-transparent">
+              <div className="bg-transparent flex-1 min-h-0 flex flex-col">
                 <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
                   <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-md`}>
                     <DialogHeader>
@@ -4086,7 +4121,7 @@ export function PCPanel({
                 </div>
 
                 {/* Content Area */}
-                <div className={`flex-1 min-h-0 h-full max-h-[70vh] sm:max-h-[72vh] lg:max-h-[74vh] flex flex-col ${terminalBg} relative pt-2.5 overflow-hidden`}>
+                <div className={`flex-1 min-h-0 h-full flex flex-col ${terminalBg} relative pt-2.5 overflow-hidden`}>
                   {activeTab === 'home' && !isPcPoweredOff && (
                     <div
                       className="flex-1 min-h-0 flex items-center justify-center p-2.5 pt-0"
@@ -5442,7 +5477,7 @@ export function PCPanel({
                   )}
 
                   {(activeTab === 'desktop' || activeTab === 'terminal') && !isPcPoweredOff && (
-                    <div className={`shrink-0 z-10 p-3 sm:p-4 border-t sticky bottom-0 bg-inherit ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                    <div className={`absolute inset-x-0 bottom-0 z-20 p-3 sm:p-4 border-t bg-inherit ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                       <div className={`flex items-center gap-2 sm:gap-3 relative ${isMobile ? 'flex-col' : ''}`}>
                         {/* Context hint for password/confirm in console mode */}
                         {activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (

@@ -170,6 +170,16 @@ function RefreshDeviceListToast({
   const selected = devices.find((device) => device.id === selectedId) || null;
   const isTR = language === 'tr';
 
+  useEffect(() => {
+    if (!devices.length) {
+      setSelectedId(null);
+      return;
+    }
+    if (!selectedId || !devices.some((device) => device.id === selectedId)) {
+      setSelectedId(devices[0].id);
+    }
+  }, [devices, selectedId]);
+
   if (devices.length === 0) {
     return <div>{isTR ? 'Listelenecek cihaz yok.' : 'No devices to list.'}</div>;
   }
@@ -4371,7 +4381,7 @@ ${state.bannerMOTD}
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
-              className={`bg-white border-slate-200 p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col min-h-0 top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'fixed' : 'fixed',
                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? pcModalPosition.x : 0,
@@ -4390,11 +4400,11 @@ ${state.bannerMOTD}
                 }
               }}
             >
-              <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden">
+              <div className="relative flex flex-col h-full min-h-0 rounded-2xl shadow-2xl overflow-visible">
                 {/* Window Control Bar - Browser Style */}
                 <div
                   className={cn(
-                    "flex items-center justify-between px-4 py-2 border-b cursor-move select-none touch-none",
+                    "flex items-center justify-between px-4 py-2 border-b cursor-move select-none touch-none shrink-0",
                     isDark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-white"
                   )}
                   onPointerDown={(e) => {
@@ -4420,9 +4430,10 @@ ${state.bannerMOTD}
                     </Button>
                   </div>
                 </div>
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 min-h-0 overflow-hidden flex flex-col rounded-b-2xl">
                   <PCPanel
                     key={`pc-panel-${showPCDeviceId}`}
+                    className="h-full min-h-0"
                     deviceId={showPCDeviceId}
                     cableInfo={cableInfo}
                     isVisible={true}
@@ -4444,24 +4455,26 @@ ${state.bannerMOTD}
                 {typeof window !== 'undefined' && window.innerWidth >= 768 && (
                   <>
                     <div
-                      className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                      className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10 transition-colors"
                       onPointerDown={(e) => handleResizeStart(e, 'w', 'pc')}
                     />
                     <div
-                      className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                      className="absolute right-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10 transition-colors"
                       onPointerDown={(e) => handleResizeStart(e, 'e', 'pc')}
                     />
                     <div
-                      className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize select-none touch-none"
+                      className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20 transition-colors"
                       onPointerDown={(e) => handleResizeStart(e, 's', 'pc')}
                     />
                     <div
-                      className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
+                      className="absolute bottom-0 right-0 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg border-l border-t border-slate-400/30 bg-slate-500/20 text-slate-100/80 hover:bg-cyan-500/25 hover:text-white flex items-center justify-center transition-colors"
                       onPointerDown={(e) => handleResizeStart(e, 'se', 'pc')}
+                      title={language === 'tr' ? 'Yeniden boyutlandır' : 'Resize'}
                     >
-                      <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M12 4v16" />
+                      <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                        <path d="M6 13L13 6" />
+                        <path d="M9.5 13L13 9.5" />
+                        <path d="M12.5 13L13 12.5" />
                       </svg>
                     </div>
                   </>
@@ -4475,7 +4488,7 @@ ${state.bannerMOTD}
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
-              className={`bg-white border-slate-200 p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
                 position: 'fixed',
                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? cliModalPosition.x : 0,
@@ -4489,7 +4502,7 @@ ${state.bannerMOTD}
                 borderWidth: 3,
               }}
             >
-              <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden">
+              <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-visible">
                 <DialogHeader
                   className={cn(
                     "p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10",
@@ -4532,7 +4545,7 @@ ${state.bannerMOTD}
                     {t.cliInterface}
                   </DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-hidden rounded-b-2xl">
                   <Terminal
                     key="cli-terminal"
                     className="h-full"
@@ -4579,24 +4592,26 @@ ${state.bannerMOTD}
                 {typeof window !== 'undefined' && window.innerWidth >= 768 && (
                   <>
                     <div
-                      className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                      className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10 transition-colors"
                       onPointerDown={(e) => handleResizeStart(e, 'w', 'cli')}
                     />
                     <div
-                      className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
+                      className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20 transition-colors"
                       onPointerDown={(e) => handleResizeStart(e, 'e', 'cli')}
                     />
                     <div
-                      className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize select-none touch-none"
+                      className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20 transition-colors"
                       onPointerDown={(e) => handleResizeStart(e, 's', 'cli')}
                     />
                     <div
-                      className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
+                      className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center transition-colors"
                       onPointerDown={(e) => handleResizeStart(e, 'se', 'cli')}
+                      title={language === 'tr' ? 'Yeniden boyutlandır' : 'Resize'}
                     >
-                      <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M12 4v16" />
+                      <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                        <path d="M6 13L13 6" />
+                        <path d="M9.5 13L13 9.5" />
+                        <path d="M12.5 13L13 12.5" />
                       </svg>
                     </div>
                   </>

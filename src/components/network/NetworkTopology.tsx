@@ -499,6 +499,7 @@ export function NetworkTopology({
   const [ipv6Value, setIpv6Value] = useState('');
   const [gatewayValue, setGatewayValue] = useState('');
   const [dnsValue, setDnsValue] = useState('');
+  const [configError, setConfigError] = useState('');
   const configInputRef = useRef<HTMLInputElement>(null);
 
   // Rename state
@@ -579,6 +580,24 @@ export function NetworkTopology({
   const topologyChangeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const portTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deviceTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const configuringDeviceData = useMemo(
+    () => devices.find((d) => d.id === configuringDevice) || null,
+    [configuringDevice, devices]
+  );
+
+  const isValidIpv4 = useCallback((value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return true;
+    const parts = trimmed.split('.');
+    return parts.length === 4 && parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) >= 0 && Number(part) <= 255);
+  }, []);
+
+  const isValidIpv6 = useCallback((value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return true;
+    const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
+    return ipv6Regex.test(trimmed);
+  }, []);
 
   // Start device config (Name and IP)
   const startDeviceConfig = useCallback((deviceId: string) => {
@@ -599,6 +618,7 @@ export function NetworkTopology({
       }
 
       setDnsValue(device.dns || '8.8.8.8');
+      setConfigError('');
 
       setContextMenu(null);
       // Focus input after render
@@ -615,19 +635,40 @@ export function NetworkTopology({
     setIpv6Value('');
     setGatewayValue('');
     setDnsValue('');
+    setConfigError('');
   }, []);
 
   // Confirm device config
   const confirmDeviceConfig = useCallback(() => {
     if (!configuringDevice) return;
+    const nextIp = ipValue.trim();
+    const nextSubnet = subnetValue.trim();
+    const nextGateway = gatewayValue.trim();
+    const nextDns = dnsValue.trim();
+    const nextIpv6 = ipv6Value.trim();
 
-    // Basic IP validation if IP is provided
-    if (ipValue.trim()) {
-      const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-      if (!ipRegex.test(ipValue)) {
-        return; // Invalid IP format
-      }
+    if (!isValidIpv4(nextIp)) {
+      setConfigError(language === 'tr' ? 'Geçerli bir IPv4 adresi girin.' : 'Enter a valid IPv4 address.');
+      return;
     }
+    if (!isValidIpv4(nextSubnet)) {
+      setConfigError(language === 'tr' ? 'Geçerli bir subnet mask girin.' : 'Enter a valid subnet mask.');
+      return;
+    }
+    if (!isValidIpv4(nextGateway)) {
+      setConfigError(language === 'tr' ? 'Geçerli bir gateway adresi girin.' : 'Enter a valid gateway address.');
+      return;
+    }
+    if (!isValidIpv4(nextDns)) {
+      setConfigError(language === 'tr' ? 'Geçerli bir DNS adresi girin.' : 'Enter a valid DNS address.');
+      return;
+    }
+    if (!isValidIpv6(nextIpv6)) {
+      setConfigError(language === 'tr' ? 'Geçerli bir IPv6 adresi girin.' : 'Enter a valid IPv6 address.');
+      return;
+    }
+
+    setConfigError('');
 
     saveToHistory();
     setDevices((prev) =>
@@ -636,11 +677,11 @@ export function NetworkTopology({
           ? {
             ...d,
             name: tempNameValue.trim() || d.name,
-            ip: ipValue.trim(),
-            subnet: subnetValue.trim(),
-            ipv6: ipv6Value.trim(),
-            gateway: gatewayValue.trim(),
-            dns: dnsValue.trim()
+            ip: nextIp,
+            subnet: nextSubnet,
+            ipv6: nextIpv6,
+            gateway: nextGateway,
+            dns: nextDns
           }
           : d
       )
@@ -652,7 +693,8 @@ export function NetworkTopology({
     setIpv6Value('');
     setGatewayValue('');
     setDnsValue('');
-  }, [configuringDevice, dnsValue, gatewayValue, ipValue, ipv6Value, saveToHistory, subnetValue, tempNameValue]);
+    setConfigError('');
+  }, [configuringDevice, dnsValue, gatewayValue, ipValue, ipv6Value, isValidIpv4, isValidIpv6, language, saveToHistory, subnetValue, tempNameValue]);
 
   // Delete device and its connections
   const deleteDevice = useCallback((deviceId: string) => {
@@ -6745,15 +6787,7 @@ export function NetworkTopology({
         onCopyDevices={(ids) => copyDevice(ids)}
         onPasteDevice={() => pasteDevice()}
         onDeleteDevices={(ids) => { saveToHistory(); ids.forEach(id => deleteDevice(id)); setSelectedDeviceIds([]); }}
-        onStartConfig={(id) => {
-          const device = devices.find(d => d.id === id);
-          if (device) {
-            setConfiguringDevice(id);
-            setTempNameValue(device.name);
-            setDnsValue(device.dns || '8.8.8.8');
-            setTimeout(() => configInputRef.current?.focus(), 0);
-          }
-        }}
+        onStartConfig={startDeviceConfig}
         onStartPing={(id) => {
           const device = devices.find(d => d.id === id);
           if (device) {
@@ -6776,6 +6810,19 @@ export function NetworkTopology({
             className={`relative w-full max-w-md overflow-hidden rounded-[2rem] border transition-all duration-500 hover:shadow-cyan-500/10 ${isDark ? 'bg-slate-900/80 border-slate-800/50 shadow-2xl' : 'bg-white/90 border-slate-200/50 shadow-2xl'
               }`}
             onClick={e => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                cancelDeviceConfig();
+              } else if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                confirmDeviceConfig();
+              }
+            }}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="device-config-title"
           >
             {/* Modal Header */}
             <div className={`${isMobile ? 'px-4 pt-4 pb-3' : 'px-6 pt-6 pb-4'} border-b ${isDark ? 'border-slate-800/50 bg-slate-800/30' : 'border-slate-100 bg-slate-50/50'}`}>
@@ -6787,11 +6834,11 @@ export function NetworkTopology({
                   </svg>
                 </div>
                 <div>
-                  <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  <h3 id="device-config-title" className={`${isMobile ? 'text-lg' : 'text-xl'} font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {language === 'tr' ? 'Yapılandır' : 'Configure'}
                   </h3>
                   <div className={`text-[10px] font-bold tracking-widest opacity-30 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {devices.find(d => d.id === configuringDevice)?.name}
+                    {configuringDeviceData?.name}
                   </div>
                 </div>
               </div>
@@ -6826,13 +6873,13 @@ export function NetworkTopology({
                 <div className="flex items-center justify-between">
                   <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>MAC Address</span>
                   <span className={`text-xs font-mono font-bold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-                    {devices.find(d => d.id === configuringDevice)?.macAddress || 'N/A'}
+                    {configuringDeviceData?.macAddress || 'N/A'}
                   </span>
                 </div>
               </div>
 
               {/* IP Configuration Section - Only for PCs */}
-              {(devices.find(d => d.id === configuringDevice)?.type === 'pc' || devices.find(d => d.id === configuringDevice)?.type === 'iot') && (
+              {(configuringDeviceData?.type === 'pc' || configuringDeviceData?.type === 'iot') && (
                 <div className={`${isMobile ? 'p-3' : 'p-4'} rounded-2xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200/50'}`}>
                   <div className={`text-[10px] font-black tracking-widest ${isMobile ? 'mb-3' : 'mb-4'} opacity-70 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
                     {language === 'tr' ? 'IP Yapılandırması' : 'IP Configuration'}
@@ -6921,23 +6968,31 @@ export function NetworkTopology({
                 </div>
               )}
 
+              {configError && (
+                <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-200' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+                  {configError}
+                </div>
+              )}
+
               {/* Action Buttons */}
-              <div className="flex gap-4 pt-2">
-                <button
-                  onClick={cancelDeviceConfig}
-                  className={`flex-1 py-3.5 rounded-2xl text-xs font-black tracking-widest transition-all duration-300 border ${isDark
-                    ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
-                    : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
-                    }`}
-                >
-                  {language === 'tr' ? 'İptal' : 'Cancel'}
-                </button>
-                <button
-                  onClick={confirmDeviceConfig}
-                  className="flex-1 py-3.5 rounded-2xl text-xs font-black tracking-widest bg-cyan-500 text-white hover:bg-cyan-400 shadow-xl shadow-cyan-500/20 active:scale-95 transition-all duration-300"
-                >
-                  {language === 'tr' ? 'Kaydet' : 'Save'}
-                </button>
+              <div className="pt-2">
+                <div className="flex gap-4">
+                  <button
+                    onClick={cancelDeviceConfig}
+                    className={`flex-1 py-3.5 rounded-2xl text-xs font-black tracking-widest transition-all duration-300 border ${isDark
+                      ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+                      : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
+                      }`}
+                  >
+                    {language === 'tr' ? 'İptal' : 'Cancel'}
+                  </button>
+                  <button
+                    onClick={confirmDeviceConfig}
+                    className="flex-1 py-3.5 rounded-2xl text-xs font-black tracking-widest bg-cyan-500 text-white hover:bg-cyan-400 shadow-xl shadow-cyan-500/20 active:scale-95 transition-all duration-300"
+                  >
+                    {language === 'tr' ? 'Kaydet' : 'Save'}
+                  </button>
+                </div>
               </div>
 
             </div>

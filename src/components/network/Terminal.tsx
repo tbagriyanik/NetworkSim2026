@@ -1189,6 +1189,7 @@ export function Terminal({
       collapsible={false}
       noPadding
       className={cn("flex flex-col h-full", className)}
+      style={{ height: '100%' }}
     >
       <div className={cn("flex flex-col h-full overflow-hidden", isDark ? "bg-black" : "bg-slate-50")}>
         {/* Settings Bar */}
@@ -1213,7 +1214,7 @@ export function Terminal({
             ref={terminalRef}
             className={cn(
               "flex-1 overflow-y-auto font-geist-mono leading-relaxed custom-scrollbar mobile-scroll",
-              isMobile ? "p-3 pb-32" : "p-6 pb-32",
+              isMobile ? "p-3 pb-24" : "p-6 pb-28",
               isPoweredOff ? "bg-black" : (isDark ? "bg-black" : "bg-slate-50")
             )}
             style={{ fontSize: `${fontSize}px` }}
@@ -1271,7 +1272,7 @@ export function Terminal({
 
           {!isPoweredOff && (
             <div className={cn(
-              "shrink-0 z-10 border-t bg-muted/95 backdrop-blur-sm sticky bottom-0",
+              "absolute inset-x-0 bottom-0 z-20 border-t bg-muted/95 backdrop-blur-sm",
               isMobile ? "p-2" : "p-3"
             )}>
               <form onSubmit={handleFormSubmit} className="flex items-center gap-3 relative">
