@@ -4121,7 +4121,7 @@ export function PCPanel({
                 </div>
 
                 {/* Content Area */}
-                <div className={`flex-1 min-h-0 h-full flex flex-col ${terminalBg} relative pt-2.5 overflow-hidden`}>
+                <div className={`flex-1 min-h-0 flex flex-col ${terminalBg} relative pt-2.5 overflow-hidden`}>
                   {activeTab === 'home' && !isPcPoweredOff && (
                     <div
                       className="flex-1 min-h-0 flex items-center justify-center p-2.5 pt-0"
@@ -4221,7 +4221,7 @@ export function PCPanel({
                               const newMac = e.target.value;
                               setPcMAC(newMac);
                               dispatchDeviceConfig({ macAddress: isValidMAC(newMac) ? normalizeMAC(newMac) : newMac });
-                            }} placeholder="00:1A:2B:3C:4D:5E" className={`h-9 ${errors.mac ? 'border-rose-500' : ''}`} />
+                            }} placeholder="00-1a-2b-3c-4d-5e" className={`h-9 ${errors.mac ? 'border-rose-500' : ''}`} />
                           </div>
                         </div>
 
@@ -4892,7 +4892,7 @@ export function PCPanel({
                                     <div className="grid grid-cols-2 gap-3">
                                       <div>
                                         <div className="text-[11px] font-semibold text-slate-500 mb-1">MAC Address</div>
-                                        <div className="text-sm font-mono text-slate-600 dark:text-slate-200">{selectedIotDevice?.macAddress || 'N/A'}</div>
+                                        <div className="text-sm font-mono text-slate-600 dark:text-slate-200">{selectedIotDevice?.macAddress ? normalizeMAC(selectedIotDevice.macAddress) : 'N/A'}</div>
                                       </div>
                                       <div>
                                         <div className="text-[11px] font-semibold text-slate-500 mb-1">Gateway</div>

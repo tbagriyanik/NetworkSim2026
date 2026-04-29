@@ -10,7 +10,7 @@ import { useModalDragResize } from '@/hooks/useModalDragResize';
 import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes, useZoom, usePan, useActiveTab } from '@/lib/store/appStore';
 // Duplicate removed
 import { NetworkTopology } from '@/components/network/NetworkTopology';
-import { cn } from '@/lib/utils';
+import { cn, normalizeMAC } from '@/lib/utils';
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, CanvasPortStatus } from '@/components/network/networkTopology.types';
 import { getPrompt } from '@/lib/network/executor';
 import { formatErrorForUser, errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
@@ -208,7 +208,7 @@ function RefreshDeviceListToast({
               {[
                 [isTR ? 'Cihaz' : 'Device', `${selected.name} (${REFRESH_DEVICE_TYPE_LABELS[selected.type]})`],
                 ['IP', selected.ip],
-                ['MAC', selected.mac],
+                ['MAC', selected.mac ? normalizeMAC(selected.mac) : '-'],
                 ['GW', selected.gateway],
                 ['IPv6', selected.ipv6],
                 [isTR ? 'Açık hizmetler' : 'Open services', selected.services],
@@ -646,7 +646,7 @@ export default function Home() {
           // Create initial IoT device state with minimal required fields
           const iotState: any = {
             hostname: device.name,
-            macAddress: device.macAddress || '00:00:00:00:00:00',
+            macAddress: device.macAddress || '00-00-00-00-00-00',
             switchModel: 'WS-C2960-24TT-L',
             switchLayer: 'L2' as const,
             currentMode: 'user' as const,
@@ -740,7 +740,7 @@ export default function Home() {
           x: 50,
           y: 50,
           ip: '192.168.1.10',
-          macAddress: '00E0.F701.A1B1',
+          macAddress: '00-e0-f7-01-a1-b1',
           status: 'online',
           ports: [
             { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
@@ -754,7 +754,7 @@ export default function Home() {
           x: 50,
           y: 150,
           ip: '192.168.1.20',
-          macAddress: '00E0.F701.A1B2',
+          macAddress: '00-e0-f7-01-a1-b2',
           status: 'online',
           ports: [
             { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
@@ -2177,7 +2177,7 @@ ${state.bannerMOTD}
         subnet: '255.255.0.0',
         gateway: '0.0.0.0',
         dns: '0.0.0.0',
-        macAddress: '00E0.F701.A1B1',
+        macAddress: '00-e0-f7-01-a1-b1',
         status: 'online',
         ports: [
           { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
@@ -2194,7 +2194,7 @@ ${state.bannerMOTD}
         subnet: '255.255.0.0',
         gateway: '0.0.0.0',
         dns: '0.0.0.0',
-        macAddress: '00E0.F701.A1B2',
+        macAddress: '00-e0-f7-01-a1-b2',
         status: 'online',
         ports: [
           { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
@@ -2260,7 +2260,7 @@ ${state.bannerMOTD}
           subnet: '255.255.0.0',
           gateway: '0.0.0.0',
           dns: '0.0.0.0',
-          macAddress: '00E0.F701.A1B1',
+          macAddress: '00-e0-f7-01-a1-b1',
           status: 'online',
           ports: [
             { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
@@ -5461,7 +5461,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
             </div>
             <div className="flex justify-between items-center">
               <span className="opacity-50">MAC</span>
-              <span className="font-mono opacity-30 text-[9px]">{pc.macAddress || 'N/A'}</span>
+              <span className="font-mono opacity-30 text-[9px]">{pc.macAddress ? normalizeMAC(pc.macAddress) : 'N/A'}</span>
             </div>
             {pc.wifi && pc.wifi.enabled && (
               <div className="pt-1 border-t border-slate-500/20">

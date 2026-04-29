@@ -1513,7 +1513,7 @@ PC-1 and PC-2 communicate over VLAN 99.`,
       opacity: 0.75
     }
   ];
-  const stpTriangleSw1 = createInitialState('00:1A:2B:3C:4D:5E');
+  const stpTriangleSw1 = createInitialState('00-1a-2b-3c-4d-5e');
   stpTriangleSw1.hostname = 'SW1';
   stpTriangleSw1.spanningTreeMode = 'rapid-pvst';
   stpTriangleSw1.spanningTreePriority = 32768; // Default priority

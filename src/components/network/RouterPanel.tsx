@@ -27,7 +27,7 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, normalizeMAC } from '@/lib/utils';
 import type { CanvasDevice } from './networkTopology.types';
 import { RouterIcon } from './PCPanelWidgets';
 
@@ -289,7 +289,7 @@ export function RouterPanel({
                     </div>
                     <div>
                       <span className="text-muted-foreground">{t.macAddress}:</span>
-                      <p className="font-medium">{routerDevice.macAddress || routerState?.macAddress || '-'}</p>
+                      <p className="font-medium">{normalizeMAC(routerDevice.macAddress || routerState?.macAddress || '-')}</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">{t.status}:</span>

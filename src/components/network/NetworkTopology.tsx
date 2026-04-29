@@ -22,7 +22,7 @@ import { LazyNetworkTopologyPortSelectorModal } from './LazyNetworkTopologyPortS
 import { EnvironmentSettingsPanel } from './EnvironmentSettingsPanel';
 import { useEnvironment } from '@/lib/store/appStore';
 import { Plus, Power, Trash2, Monitor, Network, Laptop, X, Cable, Strikethrough, Usb } from "lucide-react";
-import { cn } from '@/lib/utils';
+import { cn, normalizeMAC } from '@/lib/utils';
 import { getDeviceWidth, getDeviceHeight, isPcLike, isSwitchDevice, isRouterDevice } from './networkTopology.helpers';
 import { CABLE_COLORS, DRAG_THRESHOLD, LONG_PRESS_DURATION, VIRTUAL_CANVAS_WIDTH_MOBILE, VIRTUAL_CANVAS_HEIGHT_MOBILE, VIRTUAL_CANVAS_WIDTH_DESKTOP, VIRTUAL_CANVAS_HEIGHT_DESKTOP, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM, NOTE_COLORS, NOTE_FONTS_DESKTOP as NOTE_FONTS, NOTE_FONT_SIZES, NOTE_OPACITY as NOTE_OPACITY_OPTIONS, PC_PORT_SPACING, PORT_SPACING, PORT_START_X, PORT_START_Y, PORT_COLORS, STATUS_COLORS, STROKE_COLORS } from './networkTopology.constants';
 import { calculateSTPState } from '@/lib/network/core/showCommands';
@@ -6873,7 +6873,7 @@ export function NetworkTopology({
                 <div className="flex items-center justify-between">
                   <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>MAC Address</span>
                   <span className={`text-xs font-mono font-bold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-                    {configuringDeviceData?.macAddress || 'N/A'}
+                    {configuringDeviceData?.macAddress ? normalizeMAC(configuringDeviceData.macAddress) : 'N/A'}
                   </span>
                 </div>
               </div>
@@ -7328,7 +7328,7 @@ export function NetworkTopology({
                       </div>
                       <div className="flex justify-between items-center gap-4">
                         <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.macAddress}</span>
-                        <span className="text-[10px] font-mono opacity-30">{dev.macAddress || 'N/A'}</span>
+                        <span className="text-[10px] font-mono opacity-30">{dev.macAddress ? normalizeMAC(dev.macAddress) : 'N/A'}</span>
                       </div>
 
                       {(dev.type === 'pc' || dev.type === 'iot') && (

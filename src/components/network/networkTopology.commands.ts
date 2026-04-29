@@ -338,7 +338,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       title: isTR ? 'Ağ Terimleri' : 'Network Terms',
       cmds: [
         ['IP Address', isTR ? 'Ağda cihazı tanımlayan benzersiz sayısal adres (örn: 192.168.1.1)' : 'Unique numerical address identifying a device on a network (e.g., 192.168.1.1)'],
-        ['MAC Address', isTR ? 'Ağ kartının fiziksel adresi, 48-bit onaltılı format (örn: 00:1A:2B:3C:4D:5E)' : 'Physical address of network interface, 48-bit hex format (e.g., 00:1A:2B:3C:4D:5E)'],
+        ['MAC Address', isTR ? 'Ağ kartının fiziksel adresi, 48-bit onaltılı format (örn: 00-1a-2b-3c-4d-5e)' : 'Physical address of network interface, 48-bit hex format (e.g., 00-1a-2b-3c-4d-5e)'],
         ['Gateway', isTR ? 'Farklı ağlara erişim sağlayan cihaz, genellikle router' : 'Device providing access to other networks, typically a router'],
         ['Subnet Mask', isTR ? 'IP adresinin ağ ve host kısımlarını ayıran sayı (örn: 255.255.255.0)' : 'Separates network and host portions of IP address (e.g., 255.255.255.0)'],
         ['Router', isTR ? 'Ağlar arasında veri yönlendiren cihaz' : 'Device that routes data between networks'],
@@ -377,7 +377,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['RFC', isTR ? 'Request for Comments - İnternet standartlarını tanımlayan dokümanlardır' : 'Request for Comments - internet standard documentation'],
         ['CIDR', isTR ? 'Classless Inter-Domain Routing - IP blokları gösterim yöntemi' : 'Classless Inter-Domain Routing - IP notation method'],
         ['ICMP', isTR ? 'Internet Control Message Protocol - Ağ diagnostik protokolü' : 'Internet Control Message Protocol - network diagnostic protocol'],
-        ['MAC', isTR ? 'Media Access Control - Ağ kartının fiziksel adresi, 48-bit onaltılı format (örn: 00:1A:2B:3C:4D:5E)' : 'Media Access Control - physical address of network interface, 48-bit hex format (e.g., 00:1A:2B:3C:4D:5E)'],
+        ['MAC', isTR ? 'Media Access Control - Ağ kartının fiziksel adresi, 48-bit onaltılı format (örn: 00-1a-2b-3c-4d-5e)' : 'Media Access Control - physical address of network interface, 48-bit hex format (e.g., 00-1a-2b-3c-4d-5e)'],
         ['IP', isTR ? 'Internet Protocol - Ağda cihazı tanımlayan benzersiz sayısal adres (örn: 192.168.1.1)' : 'Internet Protocol - unique numerical address identifying a device on a network (e.g., 192.168.1.1)'],
         ['NAT', isTR ? 'Network Address Translation - Ağ adresi dönüştürme' : 'Network Address Translation - translates private IPs to public'],
         ['ACL', isTR ? 'Access Control List - Erişim kontrol listesi' : 'Access Control List - filters network traffic'],

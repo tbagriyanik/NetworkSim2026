@@ -13,11 +13,9 @@ export function isValidMAC(mac: string): boolean {
 }
 
 export function normalizeMAC(mac: string): string {
-  // Normalize to 00-40-96-99-88-77
-  if (/^([0-9A-Fa-f]{4}\.){2}([0-9A-Fa-f]{4})$/.test(mac)) {
-    const parts = mac.split('.');
-    const hex = parts.join('');
-    return hex.match(/.{1,2}/g)?.join('-').toLowerCase() || mac;
-  }
-  return mac.toLowerCase();
+  // Remove all separators and get clean hex
+  const hex = mac.replace(/[^a-fA-F0-9]/g, '');
+  if (hex.length !== 12) return mac.toLowerCase();
+  // Format as 00-40-96-99-88-77
+  return hex.match(/.{1,2}/g)?.join('-').toLowerCase() || mac.toLowerCase();
 }
