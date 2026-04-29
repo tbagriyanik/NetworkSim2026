@@ -514,6 +514,7 @@ export function NetworkTopology({
   // Touch/Mobile state
   const isMobile = useIsMobile();
   const [isTouchDragging, setIsTouchDragging] = useState(false);
+  const isDraggingInteractionDisabled = isActuallyDragging || isTouchDragging;
   const [touchDraggedDevice, setTouchDraggedDevice] = useState<CanvasDevice | null>(null);
   const [touchDragStartPos, setTouchDragStartPos] = useState<{ x: number; y: number } | null>(null);
   const [touchDragOffset, setTouchDragOffset] = useState({ x: 0, y: 0 });
@@ -1099,6 +1100,8 @@ export function NetworkTopology({
             if (!isActuallyDraggingRef.current) {
               setIsActuallyDragging(true);
               isActuallyDraggingRef.current = true;
+              setDeviceTooltip(null);
+              setPortTooltip(null);
             }
             wasDraggingRef.current = true;
           }
@@ -1326,6 +1329,8 @@ export function NetworkTopology({
         if (distance > DRAG_THRESHOLD) {
           setIsTouchDragging(true);
           isTouchDraggingRef.current = true;
+          setDeviceTooltip(null);
+          setPortTooltip(null);
         }
       }
 
@@ -1930,6 +1935,8 @@ export function NetworkTopology({
   // Handle port click for connection
   const handlePortClick = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
     e.stopPropagation();
+    if (isActuallyDraggingRef.current || isTouchDraggingRef.current) return;
+
     const device = devices.find((d) => d.id === deviceId);
     if (!device) return;
 
@@ -2714,9 +2721,9 @@ export function NetworkTopology({
 
   const handlePortHover = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
     // Kablo takarken, ekranı kaydırırken veya seçim yaparken port ipuçlarını gösterme
-    if (isDrawingConnection || isPanning || isSelecting) return;
+    if (isDrawingConnection || isPanning || isSelecting || isActuallyDragging || isTouchDragging) return;
     showPortTooltip(e, deviceId, portId);
-  }, [showPortTooltip, isDrawingConnection, isPanning, isSelecting]);
+  }, [showPortTooltip, isDrawingConnection, isPanning, isSelecting, isActuallyDragging, isTouchDragging]);
 
   const handlePortMouseLeave = useCallback(() => {
     if (portTooltipTimerRef.current) {
@@ -2747,9 +2754,9 @@ export function NetworkTopology({
   }, [devices]);
 
   const handleDeviceHover = useCallback((deviceId: string) => {
-    if (isDrawingConnection || draggedDevice || isPanning || isSelecting || selectedDeviceIds.length > 1) return;
+    if (isDrawingConnection || draggedDevice || isPanning || isSelecting || isActuallyDragging || isTouchDragging || selectedDeviceIds.length > 1) return;
     showDeviceTooltip(deviceId);
-  }, [showDeviceTooltip, isDrawingConnection, draggedDevice, isPanning, isSelecting, selectedDeviceIds]);
+  }, [showDeviceTooltip, isDrawingConnection, draggedDevice, isPanning, isSelecting, isActuallyDragging, isTouchDragging, selectedDeviceIds]);
 
   const handleDeviceMouseLeave = useCallback(() => {
     if (deviceTooltipTimerRef.current) {
@@ -4312,7 +4319,7 @@ export function NetworkTopology({
                     })()}
                   </g>
                 </TooltipTrigger>
-                {!(isPanning || isSelecting || isDrawingConnection) && (
+                {!isDraggingInteractionDisabled && !(isPanning || isSelecting || isDrawingConnection) && (
                   <TooltipContent
                     hideArrow
                     className="p-0 bg-transparent border-none shadow-none"
@@ -4495,7 +4502,7 @@ export function NetworkTopology({
               />
             </g>
           </TooltipTrigger>
-          {!(isPanning || isSelecting || isDrawingConnection) && (
+          {!isDraggingInteractionDisabled && !(isPanning || isSelecting || isDrawingConnection) && (
             <TooltipContent>
               {isPoweredOff ? t.powerOn : t.powerOff}
             </TooltipContent>
@@ -4615,7 +4622,7 @@ export function NetworkTopology({
               <g
                 key={port.id}
                 transform={`translate(${portX}, ${portY})`}
-                style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                style={{ cursor: isDraggingInteractionDisabled ? 'default' : 'pointer', pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all' }}
                 onMouseEnter={(e) => handlePortHover(e, device.id, port.id)}
                 onMouseLeave={handlePortMouseLeave}
               >
@@ -4623,7 +4630,7 @@ export function NetworkTopology({
                 <circle
                   r={12}
                   fill="transparent"
-                  style={{ pointerEvents: 'all', cursor: 'pointer' }}
+                  style={{ pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all', cursor: isDraggingInteractionDisabled ? 'default' : 'pointer' }}
                   onClick={(e) => {
                     e.stopPropagation();
                     handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id);
@@ -4733,7 +4740,7 @@ export function NetworkTopology({
                 <g
                   key={port.id}
                   transform={`translate(${portX}, ${portY})`}
-                  style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                  style={{ cursor: isDraggingInteractionDisabled ? 'default' : 'pointer', pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all' }}
                   onMouseEnter={(e) => handlePortHover(e, device.id, port.id)}
                   onMouseLeave={handlePortMouseLeave}
                 >
@@ -4741,7 +4748,7 @@ export function NetworkTopology({
                   <circle
                     r={10}
                     fill="transparent"
-                    style={{ pointerEvents: 'all', cursor: 'pointer' }}
+                    style={{ pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all', cursor: isDraggingInteractionDisabled ? 'default' : 'pointer' }}
                     onClick={(e) => {
                       e.stopPropagation();
                       handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id);
@@ -4845,7 +4852,7 @@ export function NetworkTopology({
                 <g
                   key={port.id}
                   transform={`translate(${portX}, ${portY})`}
-                  style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                  style={{ cursor: isDraggingInteractionDisabled ? 'default' : 'pointer', pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all' }}
                   onMouseEnter={(e) => handlePortHover(e, device.id, port.id)}
                   onMouseLeave={handlePortMouseLeave}
                 >
@@ -4853,7 +4860,7 @@ export function NetworkTopology({
                   <circle
                     r={10}
                     fill="transparent"
-                    style={{ pointerEvents: 'all', cursor: 'pointer' }}
+                    style={{ pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all', cursor: isDraggingInteractionDisabled ? 'default' : 'pointer' }}
                     onClick={(e) => {
                       e.stopPropagation();
                       handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id);
@@ -7050,7 +7057,7 @@ export function NetworkTopology({
       />
       {/* Port Tooltip */}
       {
-        portTooltip && portTooltip.visible && (
+        !isDraggingInteractionDisabled && portTooltip && portTooltip.visible && (
           <div
             className={`fixed z-[100] pointer-events-none transition-opacity duration-300 ${portTooltip.visible ? 'opacity-100' : 'opacity-0'
               }`}
@@ -7184,7 +7191,7 @@ export function NetworkTopology({
 
       {/* Device Tooltip */}
       {
-        deviceTooltip && deviceTooltip.visible && (
+        !isDraggingInteractionDisabled && deviceTooltip && deviceTooltip.visible && (
           <div
             className={`fixed z-[100] pointer-events-none transition-opacity duration-300 ${deviceTooltip.visible ? 'opacity-100' : 'opacity-0'
               }`}

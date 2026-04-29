@@ -138,6 +138,84 @@ const exampleLevelOrder: ExampleProjectLevel[] = ['basic', 'intermediate', 'adva
 
 import { useHistory, ProjectState } from '@/hooks/useHistory';
 
+type RefreshDeviceSummary = {
+  id: string;
+  name: string;
+  type: DeviceType;
+  ip: string;
+  mac: string;
+  gateway: string;
+  ipv6: string;
+  services: string;
+};
+
+const REFRESH_DEVICE_TYPE_LABELS: Record<DeviceType, string> = {
+  router: 'Router',
+  switchL3: 'L3 SW',
+  switchL2: 'L2 SW',
+  pc: 'PC',
+  iot: 'IoT',
+};
+
+const REFRESH_DEVICE_TYPE_ORDER: DeviceType[] = ['router', 'switchL3', 'switchL2', 'pc', 'iot'];
+
+function RefreshDeviceListToast({
+  devices,
+  language,
+}: {
+  devices: RefreshDeviceSummary[];
+  language: string;
+}) {
+  const [selectedId, setSelectedId] = useState<string | null>(devices[0]?.id ?? null);
+  const selected = devices.find((device) => device.id === selectedId) || null;
+  const isTR = language === 'tr';
+
+  if (devices.length === 0) {
+    return <div>{isTR ? 'Listelenecek cihaz yok.' : 'No devices to list.'}</div>;
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="leading-relaxed">
+        {devices.map((device, index) => (
+          <span key={device.id}>
+            {index > 0 && <span>, </span>}
+            <button
+              type="button"
+              onClick={() => setSelectedId(device.id)}
+              className={`font-semibold underline-offset-2 hover:underline ${selectedId === device.id ? 'text-pink-500' : 'text-blue-500'}`}
+            >
+              {device.name}
+            </button>
+          </span>
+        ))}
+      </div>
+
+      {selected && (
+        <div className="overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
+          <table className="w-full text-[11px]">
+            <tbody>
+              {[
+                [isTR ? 'Cihaz' : 'Device', `${selected.name} (${REFRESH_DEVICE_TYPE_LABELS[selected.type]})`],
+                ['IP', selected.ip],
+                ['MAC', selected.mac],
+                ['GW', selected.gateway],
+                ['IPv6', selected.ipv6],
+                [isTR ? 'Açık hizmetler' : 'Open services', selected.services],
+              ].map(([label, value]) => (
+                <tr key={label} className="border-t first:border-t-0 border-slate-200 dark:border-slate-700">
+                  <td className="w-24 bg-slate-100 px-2 py-1 font-semibold dark:bg-slate-800">{label}</td>
+                  <td className="px-2 py-1 font-mono">{value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, effectiveTheme, setTheme } = useTheme();
@@ -2532,6 +2610,48 @@ ${state.bannerMOTD}
         mode: resolvedMode,
       };
     };
+    const firstValue = (...values: Array<string | undefined | null>) =>
+      values.find((value) => !!value && value !== '0.0.0.0') || '-';
+    const getOpenServices = (device: CanvasDevice, state?: SwitchState) => {
+      const services = new Set<string>();
+      if (device.services?.dhcp?.enabled || state?.services?.dhcp?.enabled) services.add('DHCP');
+      if (device.services?.dns?.enabled || state?.services?.dns?.enabled) services.add('DNS');
+      if (device.services?.http?.enabled || state?.services?.http?.enabled) services.add('HTTP');
+      const effectiveWifi = getEffectiveWifi(device);
+      if (effectiveWifi?.enabled) services.add(effectiveWifi.mode === 'ap' ? 'WiFi AP' : 'WiFi Client');
+      if (state?.security?.vtyLines?.transportInput?.some((input) => input === 'ssh' || input === 'all')) services.add('SSH');
+      if (state?.security?.vtyLines?.transportInput?.some((input) => input === 'telnet' || input === 'all')) services.add('Telnet');
+      return Array.from(services).join(', ') || (language === 'tr' ? 'Yok' : 'None');
+    };
+    const buildRefreshDeviceSummaries = (devices: CanvasDevice[], states: Map<string, SwitchState>): RefreshDeviceSummary[] => {
+      const summaries = devices.map((device) => {
+        const state = states.get(device.id);
+        const statePorts = Object.values(state?.ports || {});
+        const topologyPorts = device.ports || [];
+        const portIp = statePorts.find((port) => hasValidIp(port.ipAddress))?.ipAddress
+          || topologyPorts.find((port) => hasValidIp(port.ipAddress))?.ipAddress;
+        const portMac = statePorts.find((port) => port.macAddress)?.macAddress
+          || topologyPorts.find((port) => port.macAddress)?.macAddress;
+        const portIpv6 = statePorts.find((port) => port.ipv6Address)?.ipv6Address;
+
+        return {
+          id: device.id,
+          name: device.name || device.id,
+          type: device.type,
+          ip: firstValue(device.ip, portIp),
+          mac: firstValue(device.macAddress, state?.macAddress, portMac),
+          gateway: firstValue(device.gateway, state?.defaultGateway),
+          ipv6: firstValue(device.ipv6, portIpv6),
+          services: getOpenServices(device, state),
+        };
+      });
+
+      return summaries.sort((a, b) => {
+        const typeDiff = REFRESH_DEVICE_TYPE_ORDER.indexOf(a.type) - REFRESH_DEVICE_TYPE_ORDER.indexOf(b.type);
+        if (typeDiff !== 0) return typeDiff;
+        return a.name.localeCompare(b.name, language === 'tr' ? 'tr' : 'en');
+      });
+    };
 
     const propagateVtpVlans = (devices: CanvasDevice[], states: Map<string, SwitchState>, connections: CanvasConnection[]) => {
       const byId = new Map(devices.map((d) => [d.id, d]));
@@ -2886,6 +3006,7 @@ ${state.bannerMOTD}
 
       // Update topology devices with STP-synced ports
       setTopologyDevices(stpSyncedDevices);
+      const refreshDeviceSummaries = buildRefreshDeviceSummaries(stpSyncedDevices, portSecurityUpdatedStates);
 
       // 9. Show detailed notification
       const totalDevices = connectedPCs.length + activeAPs.length + disconnectedPCs.length + disconnectedAPs.length;
@@ -2942,11 +3063,12 @@ ${state.bannerMOTD}
         toast({
           title: `🔄 ${t.networkStatusUpdated}`,
           description: (
-            <div className="space-y-1">
+            <div className="space-y-2">
               {wifiMessages.length > 0 && <div>{wifiMessages.join(' • ')}</div>}
               <div>{dhcpMessages.join(' • ')}</div>
               {stpMessage && <div className="text-pink-500">{stpMessage}</div>}
               {portSecurityMessage && <div className="text-red-500">{portSecurityMessage}</div>}
+              <RefreshDeviceListToast devices={refreshDeviceSummaries} language={language} />
             </div>
           ),
           variant: 'default'
@@ -2960,11 +3082,18 @@ ${state.bannerMOTD}
             : `DHCP: ${dhcpServerActiveCount} active servers, ${dhcpClientWithLeaseCount} leases`);
         toast({
           title: `🔄 ${t.networkRefreshed}`,
-          description: stpMessage
-            ? `${dhcpSummary} • ${stpMessage}`
-            : (isDhcpMissing
-              ? dhcpSummary
-              : `${t.noWifiDevices} • ${dhcpSummary}`),
+          description: (
+            <div className="space-y-2">
+              <div>
+                {stpMessage
+                  ? `${dhcpSummary} • ${stpMessage}`
+                  : (isDhcpMissing
+                    ? dhcpSummary
+                    : `${t.noWifiDevices} • ${dhcpSummary}`)}
+              </div>
+              <RefreshDeviceListToast devices={refreshDeviceSummaries} language={language} />
+            </div>
+          ),
           variant: 'default'
         });
       }
@@ -4271,7 +4400,6 @@ ${state.bannerMOTD}
                   data-modal-header="pc"
                 >
                   <div className="flex items-center gap-3 flex-1">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                     <DialogTitle className={cn("text-sm font-semibold cursor-move truncate", isDark ? "text-white" : "text-slate-900")}>
                       {t.pcTerminal} - {topologyDevices?.find((d: any) => d.id === showPCDeviceId)?.name || showPCDeviceId}
                     </DialogTitle>
@@ -4367,7 +4495,6 @@ ${state.bannerMOTD}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                       <DialogTitle className={isDark ? 'text-white font-semibold' : 'text-slate-900 font-semibold'}>
                         {t.cliInterface}
                       </DialogTitle>

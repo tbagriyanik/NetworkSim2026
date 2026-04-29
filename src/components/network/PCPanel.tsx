@@ -5254,7 +5254,7 @@ export function PCPanel({
                       )}
                       <div
                         ref={outputRef}
-                        className={`flex-1 min-h-0 overflow-y-auto scroll-smooth p-2 md:p-3 pb-24 md:pb-28 space-y-2 font-mono ${isPcPoweredOff ? 'bg-red-500' : ''}`}
+                        className={`flex-1 min-h-0 overflow-y-auto scroll-smooth p-2 md:p-3 pb-24 md:pb-28 space-y-2 font-geist-mono ${isPcPoweredOff ? 'bg-red-500' : ''}`}
                         style={{ ...mobileVerticalScrollStyle, fontSize: `${fontSize}px` }}
                       >
                         {isPcPoweredOff ? (
@@ -5377,7 +5377,7 @@ export function PCPanel({
                           ? 'border-amber-500/50 focus-within:ring-1 focus-within:ring-amber-500/50'
                           : inputBorder
                           }`}>
-                          <span className={`font-black text-xs select-none shrink-0 opacity-50 ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                          <span className={`font-geist-mono font-black text-xs select-none shrink-0 opacity-50 ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
                             ? 'text-amber-400'
                             : 'text-emerald-500'
                             }`}>
@@ -5415,7 +5415,7 @@ export function PCPanel({
                                 }, 300);
                               }
                             }}
-                            className="flex-1 bg-transparent border-none outline-none font-mono text-[13px]"
+                            className="flex-1 bg-transparent border-none outline-none font-geist-mono text-[13px]"
                             placeholder={
                               activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
                                 ? (consoleNeedsPassword
@@ -5436,13 +5436,13 @@ export function PCPanel({
                               "rounded-lg border shadow-xl overflow-hidden",
                               isDark ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
                             )}>
-                              <div className={`flex items-center justify-between px-3 py-2 text-[11px] font-semibold ${isDark ? 'text-slate-200 bg-slate-900/60' : 'text-slate-700 bg-slate-50'}`}>
+                              <div className={`flex items-center justify-between px-3 py-2 text-[11px] font-geist-mono font-semibold ${isDark ? 'text-slate-200 bg-slate-900/60' : 'text-slate-700 bg-slate-50'}`}>
                                 <span>{t.cmdSuggestions}</span>
                                 <span className={`text-[10px] font-bold ${isDark ? 'text-cyan-300' : 'text-cyan-700'}`}>
                                   Tab ↹ {t.completeWithTab}
                                 </span>
                               </div>
-                              <div className="max-h-40 overflow-y-auto mobile-scroll">
+                              <div className="max-h-40 overflow-y-auto mobile-scroll font-geist-mono">
                                 {renderAutocompleteSuggestions.map((cmd, idx) => (
                                   <button
                                     key={`${cmd}-${idx}`}
@@ -5452,7 +5452,7 @@ export function PCPanel({
                                       inputRef.current?.focus();
                                     }}
                                     className={cn(
-                                      "w-full text-left px-2.5 py-1 text-[11px] font-mono transition-colors",
+                                      "w-full text-left px-2.5 py-1 text-[11px] font-geist-mono transition-colors",
                                       autocompleteIndex >= 0 && idx === autocompleteIndex
                                         ? (isDark ? "bg-cyan-500/20 text-cyan-200" : "bg-cyan-50 text-cyan-900")
                                         : (isDark ? "text-slate-300 hover:bg-primary/10" : "text-slate-700 hover:bg-primary/10")

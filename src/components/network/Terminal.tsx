@@ -1212,7 +1212,7 @@ export function Terminal({
           <div
             ref={terminalRef}
             className={cn(
-              "flex-1 overflow-y-auto font-mono leading-relaxed custom-scrollbar mobile-scroll",
+              "flex-1 overflow-y-auto font-geist-mono leading-relaxed custom-scrollbar mobile-scroll",
               isMobile ? "p-3 pb-32" : "p-6 pb-32",
               isPoweredOff ? "bg-black" : (isDark ? "bg-black" : "bg-slate-50")
             )}
@@ -1304,7 +1304,7 @@ export function Terminal({
                     </span>
                   )}
                   <span className={cn(
-                    "font-bold text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0",
+                    "font-geist-mono font-bold text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0",
                     state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending
                       ? "text-amber-400"
                       : "text-primary"
@@ -1331,7 +1331,7 @@ export function Terminal({
                       }
                     }}
                     disabled={isInputDisabled}
-                    className="flex-1 bg-transparent border-none outline-none font-mono text-[13px] placeholder:text-muted-foreground/50"
+                    className="flex-1 bg-transparent border-none outline-none font-geist-mono text-[13px] placeholder:text-muted-foreground/50"
                     placeholder={
                       state.awaitingPassword || localPasswordPrompt
                         ? t.enterPassword
@@ -1393,7 +1393,7 @@ export function Terminal({
                     "rounded-lg border shadow-xl overflow-hidden",
                     isDark ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
                   )}>
-                    <div className="max-h-40 overflow-y-auto">
+                    <div className="max-h-40 overflow-y-auto font-geist-mono">
                       {renderAutocompleteSuggestions.map((cmd, idx) => (
                         <button
                           key={idx}
@@ -1403,7 +1403,7 @@ export function Terminal({
                             inputRef.current?.focus();
                           }}
                           className={cn(
-                            "w-full text-left px-2.5 py-1 text-[11px] font-mono transition-colors",
+                            "w-full text-left px-2.5 py-1 text-[11px] font-geist-mono transition-colors",
                             autocompleteIndex >= 0 && idx === autocompleteIndex
                               ? (isDark ? "bg-cyan-500/20 text-cyan-200" : "bg-cyan-50 text-cyan-900")
                               : (isDark ? "text-slate-300 hover:bg-primary/10" : "text-slate-700 hover:bg-primary/10")
