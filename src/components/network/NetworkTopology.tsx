@@ -532,6 +532,19 @@ export function NetworkTopology({
   const [portSelectorStep, setPortSelectorStep] = useState<'source' | 'target'>('source');
   const [selectedSourcePort, setSelectedSourcePort] = useState<{ deviceId: string; portId: string } | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [portTooltip, setPortTooltip] = useState<{
+    deviceId: string;
+    portId: string;
+    x: number;
+    y: number;
+    visible: boolean;
+  } | null>(null);
+  const [deviceTooltip, setDeviceTooltip] = useState<{
+    deviceId: string;
+    x: number;
+    y: number;
+    visible: boolean;
+  } | null>(null);
 
   // Ping animation state
   const [pingAnimation, setPingAnimation] = useState<{
@@ -2591,23 +2604,6 @@ export function NetworkTopology({
       if (topologyChangeTimerRef.current) clearTimeout(topologyChangeTimerRef.current);
     };
   }, [devices, connections, notes, onTopologyChange]);
-  // Port Tooltip state
-  const [portTooltip, setPortTooltip] = useState<{
-    deviceId: string;
-    portId: string;
-    x: number;
-    y: number;
-    visible: boolean;
-  } | null>(null);
-
-  // Device Tooltip state
-  const [deviceTooltip, setDeviceTooltip] = useState<{
-    deviceId: string;
-    x: number;
-    y: number;
-    visible: boolean;
-  } | null>(null);
-
   const getLivePort = useCallback((deviceId: string, portId: string) => {
     const deviceState = deviceStates?.get(deviceId);
     if (deviceState?.ports?.[portId]) {
@@ -2717,7 +2713,7 @@ export function NetworkTopology({
         setPortTooltip(prev => prev ? { ...prev, visible: false } : null);
       }, 2000);
     }, 0);
-  }, [devices, getLivePort]);
+  }, [devices, getLivePort, setPortTooltip]);
 
   const handlePortHover = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
     // Kablo takarken, ekranı kaydırırken veya seçim yaparken port ipuçlarını gösterme
@@ -2730,7 +2726,7 @@ export function NetworkTopology({
       clearTimeout(portTooltipTimerRef.current);
     }
     setPortTooltip(null);
-  }, []);
+  }, [setPortTooltip]);
 
   const showDeviceTooltip = useCallback((deviceId: string) => {
     const device = devices.find(d => d.id === deviceId);
@@ -2751,7 +2747,7 @@ export function NetworkTopology({
       y,
       visible: true,
     });
-  }, [devices]);
+  }, [devices, setDeviceTooltip]);
 
   const handleDeviceHover = useCallback((deviceId: string) => {
     if (isDrawingConnection || draggedDevice || isPanning || isSelecting || isActuallyDragging || isTouchDragging || selectedDeviceIds.length > 1) return;
@@ -2764,7 +2760,7 @@ export function NetworkTopology({
       deviceTooltipTimerRef.current = null;
     }
     setDeviceTooltip(null);
-  }, []);
+  }, [setDeviceTooltip]);
 
   // Sync device counters with current devices to prevent ID collisions
   useEffect(() => {

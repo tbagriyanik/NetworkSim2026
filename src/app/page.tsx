@@ -1150,8 +1150,10 @@ export default function Home() {
   }, [deviceStates, deviceOutputs, pcOutputs, pcHistories, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, activeTab, isAppLoading, zoom, pan]);
 
   // Load project from JSON data
-  const loadProjectData = useCallback((projectData: any) => {
+  const loadProjectData = useCallback((projectData: any, options?: { keepActiveDevice?: boolean }) => {
     try {
+      const shouldKeepActiveDevice = options?.keepActiveDevice === true;
+
       // Load device states
       if (projectData.devices && Array.isArray(projectData.devices)) {
         const newDeviceStates = new Map<string, SwitchState>();
@@ -1403,9 +1405,12 @@ ${state.bannerMOTD}
         });
       }
 
-      // Load active device
-      if (projectData.activeDeviceId) {
+      // Load active device. User-initiated project/file opens should start with info panels closed.
+      if (shouldKeepActiveDevice && projectData.activeDeviceId) {
         setActiveDeviceId(projectData.activeDeviceId);
+      } else {
+        setActiveDeviceId('');
+        setSelectedDevice(null);
       }
       if (projectData.activeDeviceType) {
         setActiveDeviceType(normalizeDeviceType(projectData.activeDeviceType));
@@ -1447,7 +1452,7 @@ ${state.bannerMOTD}
             targetDevice: normalizeDeviceType(projectData.cableInfo.targetDevice),
           }
           : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
-        activeDeviceId: projectData.activeDeviceId || 'switch-1',
+        activeDeviceId: shouldKeepActiveDevice ? (projectData.activeDeviceId || 'switch-1') : '',
         activeDeviceType: normalizeDeviceType(projectData.activeDeviceType || 'switchL2'),
         zoom: projectData.zoom || 1.0,
         pan: projectData.pan || { x: 0, y: 0 },
@@ -1464,7 +1469,7 @@ ${state.bannerMOTD}
       });
       return false;
     }
-  }, [setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setCableInfo, setActiveDeviceId, setActiveDeviceType, setActiveTab, setTopologyKey, setHasUnsavedChanges, resetHistory, toast, setZoom, setPan, language, normalizeDeviceType, applyLinkLocalToUnconfiguredHosts]);
+  }, [setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setCableInfo, setActiveDeviceId, setActiveDeviceType, setSelectedDevice, setActiveTab, setTopologyKey, setHasUnsavedChanges, resetHistory, toast, setZoom, setPan, language, normalizeDeviceType, applyLinkLocalToUnconfiguredHosts]);
 
   // Persistence: Load from localStorage on mount
   useEffect(() => {
@@ -1472,7 +1477,7 @@ ${state.bannerMOTD}
     if (savedData) {
       try {
         const projectData = JSON.parse(savedData);
-        loadProjectData(projectData);
+        loadProjectData(projectData, { keepActiveDevice: true });
         // Load last save time from timestamp
         if (projectData.timestamp) {
           const date = new Date(projectData.timestamp);
@@ -2216,7 +2221,7 @@ ${state.bannerMOTD}
     }
 
     // Reset active selections
-    setActiveDeviceId('switch-1');
+    setActiveDeviceId('');
     setActiveDeviceType('switchL2');
     setSelectedDevice(null);
     setShowPCPanel(false);
@@ -2277,7 +2282,7 @@ ${state.bannerMOTD}
       pcOutputs: new Map(),
       pcHistories: new Map(),
       cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
-      activeDeviceId: 'switch-1',
+      activeDeviceId: '',
       activeDeviceType: 'switchL2',
       zoom: 1.0,
       pan: { x: 0, y: 0 },
