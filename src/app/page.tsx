@@ -4377,60 +4377,55 @@ ${state.bannerMOTD}
           </Dialog>
 
           {/* PC Terminal Modal */}
-          <Dialog open={showPCPanel} onOpenChange={setShowPCPanel}>
+          <Dialog open={showPCPanel} onOpenChange={setShowPCPanel} modal={false}>
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
-              className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col min-h-0 top-auto left-auto translate-x-0 translate-y-0`}
+              className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
               style={{
-                position: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'fixed' : 'fixed',
+                position: 'fixed',
                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? pcModalPosition.x : 0,
                 top: typeof window !== 'undefined' && window.innerWidth >= 768 ? pcModalPosition.y : 0,
                 width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${pcModalSize.width}px` : '100vw',
                 height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${pcModalSize.height}px` : '100vh',
-                maxWidth: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'none' : '100vw',
-                maxHeight: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'none' : '100vh',
+                maxWidth: 'none',
+                maxHeight: 'none',
                 borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
-                willChange: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'left, top, width, height' : 'auto',
+                willChange: 'left, top, width, height',
                 borderWidth: 3,
               }}
-              onPointerDown={(e) => {
-                if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-                  handlePointerDown(e, 'pc');
-                }
-              }}
             >
-              <div className="relative flex flex-col h-full min-h-0 rounded-2xl shadow-2xl overflow-visible">
-                {/* Window Control Bar - Browser Style */}
-                <div
+              <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-visible">
+                <DialogHeader
                   className={cn(
-                    "flex items-center justify-between px-4 py-2 border-b cursor-move select-none touch-none shrink-0",
+                    "p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10",
                     isDark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-white"
                   )}
-                  onPointerDown={(e) => {
-                    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-                      handlePointerDown(e, 'pc');
-                    }
-                  }}
-                  data-modal-header="pc"
+                  data-modal-header
+                  onPointerDown={(e) => handlePointerDown(e, 'pc')}
                 >
-                  <div className="flex items-center gap-3 flex-1">
-                    <DialogTitle className={cn("text-sm font-semibold cursor-move truncate", isDark ? "text-white" : "text-slate-900")}>
-                      {t.pcTerminal} - {topologyDevices?.find((d: any) => d.id === showPCDeviceId)?.name || showPCDeviceId}
-                    </DialogTitle>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1">
+                      <DialogTitle className={isDark ? 'text-white font-semibold' : 'text-slate-900 font-semibold'}>
+                        {t.pcTerminal} - {topologyDevices?.find((d: any) => d.id === showPCDeviceId)?.name || showPCDeviceId}
+                      </DialogTitle>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-red-500 hover:text-white dark:hover:bg-red-600"
+                        onClick={() => setShowPCPanel(false)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 hover:bg-red-500 hover:text-white dark:hover:bg-red-600"
-                      onClick={() => setShowPCPanel(false)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex-1 min-h-0 overflow-hidden flex flex-col rounded-b-2xl">
+                  <DialogDescription className="sr-only">
+                    {t.pcTerminal}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 overflow-hidden rounded-b-2xl">
                   <PCPanel
                     key={`pc-panel-${showPCDeviceId}`}
                     className="h-full min-h-0"
@@ -4459,7 +4454,7 @@ ${state.bannerMOTD}
                       onPointerDown={(e) => handleResizeStart(e, 'w', 'pc')}
                     />
                     <div
-                      className="absolute right-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10 transition-colors"
+                      className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20 transition-colors"
                       onPointerDown={(e) => handleResizeStart(e, 'e', 'pc')}
                     />
                     <div
@@ -4467,7 +4462,7 @@ ${state.bannerMOTD}
                       onPointerDown={(e) => handleResizeStart(e, 's', 'pc')}
                     />
                     <div
-                      className="absolute bottom-0 right-0 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg border-l border-t border-slate-400/30 bg-slate-500/20 text-slate-100/80 hover:bg-cyan-500/25 hover:text-white flex items-center justify-center transition-colors"
+                      className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center transition-colors"
                       onPointerDown={(e) => handleResizeStart(e, 'se', 'pc')}
                       title={language === 'tr' ? 'Yeniden boyutlandır' : 'Resize'}
                     >

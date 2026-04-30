@@ -104,8 +104,8 @@ export function PCPanel({
   // Use granular selector for device state to prevent cascading re-renders
   const deviceState = useSwitchState(deviceId);
 
-  const terminalBg = isDark ? 'bg-black shadow-inner' : 'bg-slate-50 shadow-inner border border-slate-200';
-  const textColor = isDark ? 'text-slate-200' : 'text-slate-600';
+  const terminalBg = isDark ? 'bg-black' : 'bg-slate-50';
+  const textColor = isDark ? 'text-slate-300' : 'text-slate-700';
   const cmdColor = isDark ? 'text-slate-100' : 'text-slate-900';
   const inputBg = isDark ? 'bg-black/50' : 'bg-white';
   const inputBorder = isDark ? 'border-slate-800' : 'border-slate-300';
@@ -3693,7 +3693,7 @@ export function PCPanel({
 
   const headerAction = (
     <div className={`flex items-center gap-1 p-1 rounded-xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-      {activeTab === 'desktop' && (
+      {(activeTab === 'desktop' || activeTab === 'terminal') && (
         <>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -3701,7 +3701,7 @@ export function PCPanel({
                 variant="ghost"
                 size="icon"
                 onClick={() => setSearchOpen(true)}
-                className={`h-8 w-8 rounded-lg ui-hover-surface ${isDark ? 'text-slate-300 hover:text-emerald-400' : 'text-slate-600 hover:text-emerald-600'}`}
+                className={cn("h-8 w-8 rounded-lg", isDark ? "text-slate-300 hover:text-slate-100" : "text-slate-600 hover:text-slate-900")}
                 aria-label={t.search}
               >
                 <Search className="w-4 h-4" />
@@ -3715,7 +3715,7 @@ export function PCPanel({
                 variant="ghost"
                 size="icon"
                 onClick={handleCopyAll}
-                className={`h-8 w-8 rounded-lg ui-hover-surface ${isDark ? 'text-slate-300 hover:text-emerald-400' : 'text-slate-600 hover:text-emerald-600'}`}
+                className={cn("h-8 w-8 rounded-lg", isDark ? "text-slate-300 hover:text-slate-100" : "text-slate-600 hover:text-slate-900")}
                 aria-label={t.copy}
               >
                 <Copy className="w-4 h-4" />
@@ -3723,23 +3723,21 @@ export function PCPanel({
             </TooltipTrigger>
             <TooltipContent>{t.copy}</TooltipContent>
           </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowCmdSettings(v => !v)}
+                className={cn("h-8 w-8 rounded-lg", showCmdSettings && "bg-accent", isDark ? "text-slate-300 hover:text-slate-100" : "text-slate-600 hover:text-slate-900")}
+                aria-label={language === 'tr' ? 'Yazı Boyutu' : 'Font Size'}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{language === 'tr' ? 'Yazı Boyutu' : 'Font Size'}</TooltipContent>
+          </Tooltip>
         </>
-      )}
-      {(activeTab === 'desktop' || activeTab === 'terminal') && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowCmdSettings(v => !v)}
-              className={`h-8 w-8 rounded-lg ui-hover-surface ${showCmdSettings ? 'bg-accent' : ''} ${isDark ? 'text-slate-300 hover:text-amber-400' : 'text-slate-600 hover:text-amber-600'}`}
-              aria-label={language === 'tr' ? 'Yazı Boyutu' : 'Font Size'}
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{language === 'tr' ? 'Yazı Boyutu' : 'Font Size'}</TooltipContent>
-        </Tooltip>
       )}
       {/* Home Button */}
       <Tooltip>
@@ -3748,7 +3746,7 @@ export function PCPanel({
             variant="ghost"
             size="icon"
             onClick={goHome}
-            className={`h-8 w-8 rounded-lg ui-hover-surface ${isDark ? 'text-slate-300 hover:text-cyan-400' : 'text-slate-600 hover:text-cyan-600'}`}
+            className={cn("h-8 w-8 rounded-lg", isDark ? "text-slate-300 hover:text-cyan-400" : "text-slate-600 hover:text-cyan-600")}
             aria-label={language === 'tr' ? 'Ana Ekran' : 'Home'}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -3768,11 +3766,11 @@ export function PCPanel({
               goHome();
               onTogglePower?.(deviceId);
             }}
-            className={`h-8 w-8 rounded-lg ui-hover-surface transition-all ${isPcPoweredOff ? 'text-rose-500 hover:text-rose-400' : 'text-emerald-500 hover:text-emerald-400'}`}
+            className={cn("h-8 w-8 rounded-lg transition-all", isPcPoweredOff ? 'text-rose-500 hover:text-rose-400' : 'text-emerald-500 hover:text-emerald-400')}
             aria-label={t.power}
             disabled={!onTogglePower}
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
             </svg>
@@ -3796,15 +3794,16 @@ export function PCPanel({
         )}
       >
         {/* External Toolbar - Above Tablet Frame */}
-        <div className={`
-        w-full max-w-full mx-auto mb-2 px-3 py-1.5 flex items-center justify-between shrink-0 sticky top-2 z-[30]
+        <div className="shrink-0 h-12 md:h-[52px]">
+          <div className={`
+        w-full max-w-full mx-auto px-3 py-1.5 flex items-center justify-between sticky top-2 z-[30]
         rounded-lg border
         ${isDark
-            ? 'bg-slate-800/90 border-slate-700 shadow-md'
-            : 'bg-white/90 border-slate-200 shadow-md'
-          }
+              ? 'bg-slate-800/90 border-slate-700 shadow-md'
+              : 'bg-white/90 border-slate-200 shadow-md'
+            }
       `}>
-          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
 
             <div className={`p-1.5 rounded-lg ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
               <Monitor className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -3878,8 +3877,8 @@ export function PCPanel({
                 <TooltipContent>IoT</TooltipContent>
               </Tooltip>
             </div>
-          </div>
-          <div className="flex items-center gap-1">
+            </div>
+            <div className="flex items-center gap-1">
             {/* Settings - Left of Power */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -3946,6 +3945,7 @@ export function PCPanel({
             {/* Clock - hidden on mobile */}
             <div className={`hidden sm:block ml-2 text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
               {formatTime(currentTime)}
+            </div>
             </div>
           </div>
         </div>
@@ -4121,7 +4121,7 @@ export function PCPanel({
                 </div>
 
                 {/* Content Area */}
-                <div className={`flex-1 min-h-0 flex flex-col ${terminalBg} relative pt-2.5 overflow-hidden`}>
+                <div className={`flex-1 min-h-0 flex flex-col ${terminalBg} relative overflow-hidden`}>
                   {activeTab === 'home' && !isPcPoweredOff && (
                     <div
                       className="flex-1 min-h-0 flex items-center justify-center p-2.5 pt-0"
@@ -5238,9 +5238,9 @@ export function PCPanel({
                   )}
 
                   {(activeTab === 'desktop' || activeTab === 'terminal') && (
-                    <>
+                    <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden relative">
                       {activeTab === 'terminal' && (
-                        <div className={`px-3 md:px-4 py-2 border-b ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-slate-50'} flex items-center justify-between gap-3`}>
+                        <div className={`px-3 md:px-4 py-2 border-b shrink-0 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-slate-50'} flex items-center justify-between gap-3`}>
                           <div className="flex flex-col gap-1">
                             <div className="text-xs">
                               {isConsoleConnected && connectedDeviceId ? (
@@ -5266,7 +5266,7 @@ export function PCPanel({
                         </div>
                       )}
                       {showCmdSettings && (
-                        <div className="px-4 py-2 border-b bg-muted/30 flex items-center gap-4 animate-in slide-in-from-top-2">
+                        <div className="px-4 py-2 border-b bg-muted/30 flex items-center gap-4 animate-in slide-in-from-top-2 shrink-0">
                           <label className="text-[10px] font-black tracking-widest text-muted-foreground whitespace-nowrap">
                             {language === 'tr' ? 'Yazı Boyutu' : 'Font Size'}: {fontSize}px
                           </label>
@@ -5287,13 +5287,20 @@ export function PCPanel({
                           </Button>
                         </div>
                       )}
-                      <div
-                        ref={outputRef}
-                        className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-smooth p-2 md:p-3 pb-32 md:pb-28 space-y-2 font-geist-mono ${isPcPoweredOff ? 'bg-red-500' : ''}`}
-                        style={{ ...mobileVerticalScrollStyle, fontSize: `${fontSize}px` }}
-                      >
+                        {/* Output Area - Scrollable */}
+                        <div
+                          ref={outputRef}
+                          className={`flex-1 overflow-y-auto overflow-x-hidden scroll-smooth p-3 md:p-6 space-y-1.5 font-geist-mono leading-relaxed custom-scrollbar mobile-scroll ${isPcPoweredOff ? 'bg-black' : terminalBg}`}
+                          style={{ ...mobileVerticalScrollStyle, fontSize: `${fontSize}px`, paddingBottom: isMobile ? '8rem' : '7rem' }}
+                        >
                         {isPcPoweredOff ? (
-                          <div className="flex-1 flex items-center justify-center text-slate-700">OFFLINE</div>
+                          <div className="h-full flex flex-col items-center justify-center gap-3">
+                            <svg className="w-16 h-16 text-red-600 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M18.36 5.64a9 9 0 1 1-12.73 0" />
+                            </svg>
+                          </div>
                         ) : gameActive && activeTab === 'desktop' ? (
                           <div className="flex-1 flex flex-col items-center justify-center gap-3">
                             <div className={`text-xs ${isDark ? 'text-slate-200' : 'text-slate-600'}`}>
@@ -5374,11 +5381,18 @@ export function PCPanel({
                           (activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line) => (
                             <div key={line.id} className="break-all animate-in fade-in slide-in-from-left-1 duration-200">
                               {line.type === 'command' && (
-                                <div className="flex items-start gap-3">
-                                  <span className="text-emerald-500 shrink-0 font-black opacity-50 select-none">
-                                    {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : (line.prompt || '>')}
+                                <div className="flex items-start gap-2 text-cyan-500 font-bold">
+                                  {activeTab === 'desktop' ? (
+                                    <Laptop className="w-4 h-4 shrink-0 text-blue-400" />
+                                  ) : (
+                                    <span className="shrink-0 text-emerald-400">
+                                      <Laptop className="w-4 h-4" />
+                                    </span>
+                                  )}
+                                  <span className="shrink-0 opacity-40 select-none font-geist-mono">
+                                    {activeTab === 'desktop' ? `${internalPcHostname} C:\>` : (line.prompt || '>')}
                                   </span>
-                                  <span className={cmdColor}>{highlightText(line.content)}</span>
+                                  <span className={isDark ? "text-slate-100" : "text-slate-900"}>{highlightText(line.content)}</span>
                                 </div>
                               )}
                               {line.type === 'output' && (
@@ -5473,29 +5487,28 @@ export function PCPanel({
                           </div>
                         )}
                       </div>
-                    </>
-                  )}
+                        {/* Input Area - Fixed at bottom */}
+                        {!isPcPoweredOff && (
+                          <div className={`absolute inset-x-0 bottom-0 z-20 border-t bg-muted/95 backdrop-blur-sm ${isMobile ? 'p-2' : 'p-3'}`}>
+                          <form onSubmit={(e) => { e.preventDefault(); executeCommand(); }} className="flex items-center gap-3 relative">
 
-                  {(activeTab === 'desktop' || activeTab === 'terminal') && !isPcPoweredOff && (
-                    <div className={`absolute inset-x-0 bottom-0 z-20 p-3 sm:p-4 border-t bg-inherit ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                      <div className={`flex items-center gap-2 sm:gap-3 relative ${isMobile ? 'flex-col' : ''}`}>
                         {/* Context hint for password/confirm in console mode */}
                         {activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (
-                          <div className="absolute -top-7 left-0 right-0 text-[10px] font-black tracking-widest text-amber-400 animate-pulse text-center">
+                          <div className="absolute -top-7 left-4 right-4 text-[10px] font-black tracking-widest text-amber-400 animate-pulse">
                             {consoleNeedsPassword
                               ? (language === 'tr' ? 'Parola girin ve Enter\'a basın' : 'Enter password and press Enter')
                               : (language === 'tr' ? 'Onaylamak için Enter\'a basın' : 'Press Enter to confirm')}
                           </div>
                         )}
-                        <div className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 ${inputBg} rounded-xl border flex-1 group ${isMobile ? 'w-full' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
-                          ? 'border-amber-500/50 focus-within:ring-1 focus-within:ring-amber-500/50'
-                          : inputBorder
+                        <div className={`flex items-center gap-3 px-3 py-2 bg-background rounded-lg border flex-1 group focus-within:ring-1 transition-all shadow-inner ${isMobile ? 'px-3 py-2' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                          ? 'border-amber-500/50 focus-within:ring-amber-500/50'
+                          : 'border-input focus-within:ring-primary/50'
                           }`}>
-                          <span className={`font-geist-mono font-black text-xs select-none shrink-0 opacity-50 ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                          <span className={`font-geist-mono font-bold text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0 ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
                             ? 'text-amber-400'
-                            : 'text-emerald-500'
+                            : 'text-primary'
                             }`}>
-                            {activeTab === 'desktop' ? `${internalPcHostname} C:\\>` : (() => {
+                            {activeTab === 'desktop' ? `${internalPcHostname} C:\>` : (() => {
                               if (consoleNeedsPassword) return 'Password:';
                               if (!connectedDeviceId || !deviceStates) return '>';
                               const state = ensureDeviceStatesMap(deviceStates).get(connectedDeviceId);
@@ -5538,13 +5551,14 @@ export function PCPanel({
                                 : t.typeCommand
                             }
                             autoComplete="off"
+                            spellCheck={false}
                             disabled={activeTab === 'desktop' ? isCmdInputDisabled : isConsoleInputDisabled}
                           />
                         </div>
                         {shouldShowAutocomplete && (
                           <div
                             ref={autocompleteRef}
-                            className="absolute bottom-16 left-3 right-3 z-20 sm:left-4 sm:right-4"
+                            className="absolute bottom-20 left-4 z-20 w-[min(420px,calc(100%-2rem))]"
                           >
                             <div className={cn(
                               "rounded-lg border shadow-xl overflow-hidden",
@@ -5606,23 +5620,27 @@ export function PCPanel({
                           </Button>
                         )}
                         <Button
-                          onClick={() => executeCommand()}
+                          type="submit"
                           disabled={activeTab === 'desktop' ? (!input.trim() || isCmdInputDisabled) : isConsoleInputDisabled}
                           size="icon"
-                          className={`shrink-0 h-11 w-11 rounded-xl text-white ${isMobile ? 'w-full' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
-                            ? 'bg-amber-500 hover:bg-amber-600'
-                            : 'bg-blue-600 hover:bg-blue-700'
-                            }`}
+                          className={cn(
+                            "shrink-0 rounded-xl shadow-lg",
+                            isMobile ? "h-9 w-9" : "h-11 w-11",
+                            activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                              ? 'bg-amber-500 hover:bg-amber-600'
+                              : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          )}
                         >
-                          <CornerDownLeft className={cn("w-6 h-6", isMobile && "w-8 h-8")} />
+                          <CornerDownLeft className={cn("w-5 h-5", isMobile && "w-4 h-4")} />
                         </Button>
-                      </div>
-
+                      </form>
                     </div>
                   )}
                 </div>
+              )}
               </div>
-            </ModernPanel>
+            </div>
+              </ModernPanel>
           </div>
         </div>
       </div>
