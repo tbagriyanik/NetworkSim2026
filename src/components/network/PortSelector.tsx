@@ -134,7 +134,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
         </div>
 
         {/* Device Port List */}
-        <div className="max-h-72 overflow-y-auto p-3 space-y-2">
+        <div className="max-h-72 overflow-y-auto overflow-x-hidden p-3 space-y-2">
           {devices.map((device) => {
             const availablePorts = getAvailablePorts(device.id);
             if (availablePorts.length === 0) return null;

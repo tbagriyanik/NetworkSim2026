@@ -1209,12 +1209,12 @@ export function Terminal({
           </div>
         )}
 
-        <div className="flex-1 flex flex-col min-h-0 relative">
+        <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
           <div
             ref={terminalRef}
             className={cn(
-              "flex-1 overflow-y-auto font-geist-mono leading-relaxed custom-scrollbar mobile-scroll",
-              isMobile ? "p-3 pb-24" : "p-6 pb-28",
+              "flex-1 overflow-y-auto overflow-x-hidden font-geist-mono leading-relaxed custom-scrollbar mobile-scroll min-h-0",
+              isMobile ? "p-3 pb-36" : "p-6 pb-32",
               isPoweredOff ? "bg-black" : (isDark ? "bg-black" : "bg-slate-50")
             )}
             style={{ fontSize: `${fontSize}px` }}
@@ -1223,6 +1223,7 @@ export function Terminal({
               <div className="h-full flex flex-col items-center justify-center gap-3">
                 <svg className="w-16 h-16 text-red-600 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M18.36 5.64a9 9 0 1 1-12.73 0" />
                 </svg>
               </div>
@@ -1394,7 +1395,7 @@ export function Terminal({
                     "rounded-lg border shadow-xl overflow-hidden",
                     isDark ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
                   )}>
-                    <div className="max-h-40 overflow-y-auto font-geist-mono">
+                    <div className="max-h-40 overflow-y-auto overflow-x-hidden font-geist-mono">
                       {renderAutocompleteSuggestions.map((cmd, idx) => (
                         <button
                           key={idx}

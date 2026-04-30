@@ -6215,7 +6215,7 @@ export function NetworkTopology({
                                 onTopologyChange(devices, connections, notes);
                               }
                             }}
-                            className="w-full h-full min-h-full px-2 py-1 bg-transparent outline-none resize-none overflow-y-auto whitespace-pre-wrap break-words"
+                            className="w-full h-full min-h-full px-2 py-1 bg-transparent outline-none resize-none overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words"
                             style={{ fontSize: note.fontSize, lineHeight: 1.35, color: '#000000' }}
                           />
                         </div>

@@ -113,7 +113,7 @@ export function NetworkTopologyPortSelectorModal({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8 max-h-[50vh]">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 custom-scrollbar space-y-8 max-h-[50vh]">
           {devices.map((device) => {
             const isSwitch = device.type === 'switchL2' || device.type === 'switchL3';
             // In the "connect cable" panel, we want to show all ports regardless of cable type

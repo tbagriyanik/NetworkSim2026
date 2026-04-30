@@ -14,7 +14,7 @@ export function SkeletonDeviceList() {
                     <Skeleton className="w-20 h-8" />
                 </div>
             </CardHeader>
-            <CardContent className="p-4 flex-1 overflow-y-auto space-y-3">
+            <CardContent className="p-4 flex-1 overflow-y-auto overflow-x-hidden space-y-3">
                 {/* Skeleton list items - matching typical device list layout */}
                 {Array.from({ length: 8 }).map((_, i) => (
                     <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">

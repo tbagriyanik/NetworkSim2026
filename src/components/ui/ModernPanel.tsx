@@ -110,9 +110,12 @@ export function ModernPanel({
     const canCollapse = collapsible && !isMobile;
     const overlayMobileStyle: React.CSSProperties = {};
     if (isOverlay && isMobile) {
-        overlayMobileStyle.width = '100vw';
+        overlayMobileStyle.width = 'calc(100vw - 10px)';
         overlayMobileStyle.left = "5px";
         overlayMobileStyle.right = "5px";
+        overlayMobileStyle.top = "5px";
+        overlayMobileStyle.bottom = "5px";
+        overlayMobileStyle.maxHeight = 'calc(100vh - 10px)';
     }
 
     return (
@@ -125,8 +128,9 @@ export function ModernPanel({
                 className
             )}
             style={{
-                width: isOverlay ? (isMobile ? '100vw' : width) : '100%',
-                height: '550px',
+                width: isOverlay ? (isMobile ? 'calc(100vw - 10px)' : width) : '100%',
+                height: isMobile ? 'calc(100vh - 10px)' : '550px',
+                maxHeight: isMobile ? 'calc(100vh - 10px)' : undefined,
                 ...overlayMobileStyle,
                 ...style
             }}
@@ -175,7 +179,7 @@ export function ModernPanel({
             {!isCollapsed && (
                 <div className={cn(
                     "flex-1 min-h-0",
-                    noPadding ? "overflow-hidden p-0" : "overflow-y-auto p-4"
+                    noPadding ? "overflow-hidden p-0" : "overflow-y-auto overflow-x-hidden p-4"
                 )}>
                     {children}
                     {footer && <div className="mt-4 border-t pt-3">{footer}</div>}
