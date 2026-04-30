@@ -4084,17 +4084,19 @@ ${state.bannerMOTD}
                           return (
                             <section key={level} className='space-y-4 md:space-y-6 w-full'>
                               <div className='flex items-center gap-3 md:gap-4 px-1 md:px-2'>
-                                <p className='text-[10px] md:text-xs font-black  tracking-[0.3em] md:tracking-[0.4em] text-slate-500 dark:text-slate-400 whitespace-nowrap'>
+                                <p className={`text-[10px] md:text-xs font-black tracking-[0.3em] md:tracking-[0.4em] whitespace-nowrap ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                                   {exampleLevelLabels[level]}
                                 </p>
                                 <p className={`text-[10px] md:text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} truncate`}>
                                   {exampleLevelHints[level]}
                                 </p>
-                                <div className={`h-px flex-1 ${isDark ? 'bg-slate-800/60' : 'bg-slate-200'}`} />
+                                <div className={`h-px flex-1 ${isDark ? 'bg-blue-500/60' : 'bg-blue-400/60'}`} />
                               </div>
 
                               <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
-                                {filteredProjects.map((example) => (
+                                {filteredProjects.map((example) => {
+                                  const isBasicLevel = level === 'basic';
+                                  return (
                                   <Button
                                     key={example.id}
                                     variant='ghost'
@@ -4113,7 +4115,8 @@ ${state.bannerMOTD}
                                     </div>
                                   )}
                                 </Button>
-                              ))}
+                              );
+                            })}
                             </div>
                           </section>
                         );
