@@ -809,12 +809,12 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
             {
               id: 'guided-intro',
               text: isTr
-                ? '📚 REHBERLİ DERS AKTİF\n\nSağdaki panelden adımları takip edin.\nHer adım tamamlandığında bir sonrakine geçilir.'
-                : '📚 GUIDED LESSON ACTIVE\n\nFollow the steps in the right panel.\nNext step unlocks when each is completed.',
+                ? '📚 TEMEL SWITCH YAPILANDIRMA\n\nAdım 1: PC\'yi Switch\'e bağla\nAdım 2: Switch terminalini aç\nAdım 3: Enable moduna geç\nAdım 4: Yapılandırma moduna geç\nAdım 5: Hostname değiştir\nAdım 6: Port aktifleştir\nAdım 7: Yapılandırmayı kaydet'
+                : '📚 BASIC SWITCH CONFIGURATION\n\nStep 1: Connect PC to Switch\nStep 2: Open Switch terminal\nStep 3: Enter enable mode\nStep 4: Enter configuration mode\nStep 5: Change hostname\nStep 6: Activate port\nStep 7: Save configuration',
               x: 450,
               y: 100,
               width: 350,
-              height: 120,
+              height: 180,
               color: '#3b82f6',
               font: 'verdana',
               fontSize: 12,
@@ -918,12 +918,12 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
             {
               id: 'lan-guided-intro',
               text: isTr
-                ? '📚 TEMEL LAN KURULUMU\n\nAdım 1: PC0 ve PC1\'i Switch\'e bağlayın\nAdım 2: IP adreslerini atayın (192.168.1.10/20)\nAdım 3: Switch hostname: Lab_Switch\nAdım 4: Güvenlik: enable secret, console şifresi\nAdım 5: Banner MOTD ekle\nAdım 6: Ping testi ve kaydetme'
-                : '📚 BASIC LAN SETUP\n\nStep 1: Connect PC0 and PC1 to Switch\nStep 2: Assign IPs (192.168.1.10/20)\nStep 3: Switch hostname: Lab_Switch\nStep 4: Security: enable secret, console password\nStep 5: Add Banner MOTD\nStep 6: Ping test and save',
+                ? '📚 TEMEL LAN KURULUMU\n\nAdım 1: PC0 ve PC1\'i Switch\'e bağlayın\nAdım 2: PC0 IP yapılandırması (192.168.1.10)\nAdım 3: PC1 IP yapılandırması (192.168.1.20)\nAdım 4: Switch hostname: Lab_Switch\nAdım 5: Enable secret şifre belirle\nAdım 6: Konsol şifresi koy\nAdım 7: Banner MOTD ekle\nAdım 8: Yapılandırmayı kaydet\nAdım 9: Yapılandırmayı doğrula\nAdım 10: Ping testi'
+                : '📚 BASIC LAN SETUP\n\nStep 1: Connect PC0 and PC1 to Switch\nStep 2: PC0 IP configuration (192.168.1.10)\nStep 3: PC1 IP configuration (192.168.1.20)\nStep 4: Switch hostname: Lab_Switch\nStep 5: Set enable secret password\nStep 6: Set console password\nStep 7: Add Banner MOTD\nStep 8: Save configuration\nStep 9: Verify configuration\nStep 10: Ping test',
               x: 500,
               y: 50,
               width: 450,
-              height: 200,
+              height: 220,
               color: '#8b5cf6',
               font: 'verdana',
               fontSize: 12,
@@ -995,12 +995,12 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
             {
               id: 'vlan-guided-intro',
               text: isTr
-                ? '📚 VLAN REHBERLİ DERSİ\n\nAdım 1: VLAN 10 (SALES) oluşturun\nAdım 2: VLAN 20 (IT) oluşturun\nAdım 3: Portları VLAN\'lara atayın\nAdım 4: show vlan brief ile doğrulayın'
-                : '📚 VLAN GUIDED LESSON\n\nStep 1: Create VLAN 10 (SALES)\nStep 2: Create VLAN 20 (IT)\nStep 3: Assign ports to VLANs\nStep 4: Verify with show vlan brief',
+                ? '📚 VLAN REHBERLİ DERSİ\n\nAdım 1: Yapılandırma moduna gir\nAdım 2: VLAN 10 oluşturun\nAdım 3: VLAN 10\'a SALES ismi verin\nAdım 4: VLAN 20 oluşturun\nAdım 5: VLAN 20\'ye IT ismi verin\nAdım 6: Fa0/1 portunu VLAN 10\'a atayın\nAdım 7: show vlan brief ile doğrulayın'
+                : '📚 VLAN GUIDED LESSON\n\nStep 1: Enter config mode\nStep 2: Create VLAN 10\nStep 3: Name VLAN 10 as SALES\nStep 4: Create VLAN 20\nStep 5: Name VLAN 20 as IT\nStep 6: Assign Fa0/1 port to VLAN 10\nStep 7: Verify with show vlan brief',
               x: 450,
               y: 100,
               width: 400,
-              height: 150,
+              height: 180,
               color: '#10b981',
               font: 'verdana',
               fontSize: 12,
