@@ -3,8 +3,8 @@
 ## Güncel Durum
 
 - **Sürüm**: 1.5.8
-- **Tarih**: 2026-04-29
-- **Kod satırı**: 63,793
+- **Tarih**: 2026-04-30
+- **Kod satırı**: 64,521
 - **Kod dosyası**: 166
 - **Hazır topoloji örneği**: 28
 - **Rehberli ders**: 3
@@ -16,6 +16,20 @@
 Not: Örnek JSON dosyaları ve örnek dokümanları kod satırı sayısından ayrı izlenir.
 
 ## Son Yapılanlar
+
+### UI/UX Modernizasyonu (Nisan 2026)
+
+- **Klavye Kısayolları Yardımcısı** (`KeyboardShortcutsHelp`): `?` tuşu ile açılan, kategorilere ayrılmış kısayol rehberi.
+- **Modern Panel Sekmeleri**: PCPanel hizmet sekmeleri (DNS/HTTP/DHCP) ve proje seçici sekmeler için yeni tab-header stili.
+- **Glassmorphism Efektler**: Buton hover glow efektleri, glassmorphism primary/secondary/danger/warning/indigo stilleri.
+- **Shimmer Loading**: Skeleton bileşenlerine shimmer animasyonu eklendi.
+- **Yeni UI Bileşenleri**:
+  - `LoadingSpinner` - Yükleme göstergesi
+  - `EmptyState` / `NetworkEmptyState` - Boş durum şablonları
+  - `KeyboardShortcutsHelp` - Kısayol rehberi
+- **Erişilebilirlik**: `prefers-reduced-motion` medya sorgusu, geliştirilmiş focus visible stilleri, ARIA etiketleri.
+- **HelpPanel Modernizasyonu**: Modern arayüz, arama fonksiyonu, animasyonlu kategoriler.
+- **Proje Seçici Görsel İyileştirmeleri**: Seviye başlıkları (Basit/Orta/İleri) için mavi renk şeması ve çizgiler.
 
 ### README ve Dokümantasyon
 
