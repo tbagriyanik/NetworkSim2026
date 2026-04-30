@@ -383,6 +383,72 @@
   @apply bg-indigo-600/80 hover:bg-indigo-500 hover:border-indigo-400 hover:shadow-indigo-500/30;
 }
 
+/* Enhanced hover glow effects for glass buttons */
+.btn-glass-primary::after,
+.btn-glass-success::after,
+.btn-glass-danger::after,
+.btn-glass-warning::after,
+.btn-glass-indigo::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.4), transparent, rgba(255,255,255,0.2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.btn-glass-primary:hover::after {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(6,182,212,0.5), transparent, rgba(6,182,212,0.3));
+}
+
+.btn-glass-success:hover::after {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(16,185,129,0.5), transparent, rgba(16,185,129,0.3));
+}
+
+.btn-glass-danger:hover::after {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(239,68,68,0.5), transparent, rgba(239,68,68,0.3));
+}
+
+.btn-glass-warning:hover::after {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(245,158,11,0.5), transparent, rgba(245,158,11,0.3));
+}
+
+.btn-glass-indigo:hover::after {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(99,102,241,0.5), transparent, rgba(99,102,241,0.3));
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .btn-glass-primary::after,
+  .btn-glass-success::after,
+  .btn-glass-danger::after,
+  .btn-glass-warning::after,
+  .btn-glass-indigo::after {
+    display: none;
+  }
+}
+
 /* Animations */
 @keyframes scanline {
   0% {
@@ -594,6 +660,44 @@
 
 .animate-float-up {
   animation: float-up 1s linear infinite;
+}
+
+/* Shimmer loading animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Toast progress bar animation */
+@keyframes toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.animate-toast-progress {
+  animation: toast-progress 5s linear forwards;
+}
+
+/* Focus ring animation */
+@keyframes focus-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px hsl(var(--ring) / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 4px hsl(var(--ring) / 0.3);
+  }
+}
+
+.focus-ring-animate:focus-visible {
+  animation: focus-pulse 2s ease-in-out infinite;
 }
 
 /* Low Graphics Mode - Disable animations and effects */

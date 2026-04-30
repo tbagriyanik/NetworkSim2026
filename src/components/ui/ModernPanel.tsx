@@ -1,8 +1,8 @@
 'use client';
 
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { X, GripHorizontal } from 'lucide-react';
+import { X, GripHorizontal, Minimize2, Maximize2 } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -118,13 +118,34 @@ export function ModernPanel({
         overlayMobileStyle.maxHeight = 'calc(100vh - 10px)';
     }
 
+    // Touch handling for mobile
+    const [isDragging, setIsDragging] = useState(false);
+    const dragStartPos = useRef({ x: 0, y: 0 });
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (!isOverlay || isMobile) return;
+        const touch = e.touches[0];
+        dragStartPos.current = { x: touch.clientX, y: touch.clientY };
+        setIsDragging(true);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging || !isOverlay) return;
+        e.preventDefault();
+    };
+
+    const handleTouchEnd = () => {
+        setIsDragging(false);
+    };
+
     return (
         <div
             className={cn(
-                'flex flex-col border rounded-lg shadow-lg overflow-hidden',
-                isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200',
-                isOverlay && 'fixed z-40',
+                'flex flex-col border rounded-lg shadow-lg overflow-hidden transition-all duration-200 ease-out',
+                isDark ? 'bg-slate-900/95 border-slate-700' : 'bg-white/95 border-slate-200',
+                isOverlay && 'fixed z-40 animate-scale-in',
                 isStacked && 'relative',
+                isResizing && 'select-none',
                 className
             )}
             style={{
@@ -134,6 +155,9 @@ export function ModernPanel({
                 ...overlayMobileStyle,
                 ...style
             }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
         >
             {/* Header */}
             {!hideHeader && (
@@ -157,46 +181,86 @@ export function ModernPanel({
                             )}>{title}</h2>
                         )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                         {headerAction}
+                        {onClose && (
+                            <button
+                                onClick={onClose}
+                                className={cn(
+                                    "p-1.5 rounded-lg transition-all duration-200 focus-ring-animate",
+                                    isDark
+                                        ? "hover:bg-rose-900/50 text-slate-400 hover:text-rose-400"
+                                        : "hover:bg-rose-100 text-slate-500 hover:text-rose-600",
+                                    isMobile && "p-2 min-w-[40px] min-h-[40px]"
+                                )}
+                                aria-label="Close panel"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
                         {canCollapse && (
                             <button
                                 onClick={() => setIsCollapsed(!isCollapsed)}
                                 className={cn(
-                                    "p-1 hover:bg-accent rounded",
-                                    isMobile && "p-2 min-w-[36px] min-h-[36px]"
+                                    "p-1.5 rounded-lg transition-all duration-200 focus-ring-animate",
+                                    isDark
+                                        ? "hover:bg-slate-700 text-slate-400 hover:text-slate-200"
+                                        : "hover:bg-slate-200 text-slate-500 hover:text-slate-700",
+                                    isMobile && "p-2 min-w-[40px] min-h-[40px]"
                                 )}
-                                aria-label={isCollapsed ? 'Expand' : 'Collapse'}
+                                aria-label={isCollapsed ? 'Expand panel' : 'Collapse panel'}
+                                aria-expanded={!isCollapsed}
                             >
-                                {isCollapsed ? '▼' : '▲'}
+                                {isCollapsed ? (
+                                    <Maximize2 className="w-4 h-4" />
+                                ) : (
+                                    <Minimize2 className="w-4 h-4" />
+                                )}
                             </button>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* Content */}
-            {!isCollapsed && (
-                <div className={cn(
-                    "flex-1 min-h-0",
+            {/* Content with smooth animation */}
+            <div
+                className={cn(
+                    "flex-1 min-h-0 transition-all duration-300 ease-in-out",
+                    isCollapsed ? "max-h-0 opacity-0" : "max-h-full opacity-100",
                     noPadding ? "overflow-hidden p-0" : "overflow-y-auto overflow-x-hidden p-4"
-                )}>
-                    {children}
-                    {footer && <div className="mt-4 border-t pt-3">{footer}</div>}
-                </div>
-            )}
+                )}
+                aria-hidden={isCollapsed}
+            >
+                {!isCollapsed && (
+                    <>
+                        {children}
+                        {footer && <div className="mt-4 border-t pt-3">{footer}</div>}
+                    </>
+                )}
+            </div>
 
-            {/* Resize Handle */}
+            {/* Resize Handle - Enhanced with visual feedback */}
             {canResize && (
                 <div
                     onMouseDown={handleResizeStart}
                     className={cn(
-                        'absolute bottom-0 right-0 w-4 h-4 cursor-se-resize',
-                        isResizing && 'bg-primary'
+                        'absolute bottom-0 right-0 w-5 h-5 cursor-se-resize transition-all duration-200',
+                        'hover:w-6 hover:h-6',
+                        isResizing && 'w-6 h-6'
                     )}
                     style={{
-                        background: 'linear-gradient(135deg, transparent 50%, currentColor 50%)',
-                        color: 'var(--color-border)',
+                        background: isResizing
+                            ? 'linear-gradient(135deg, transparent 45%, hsl(var(--primary)) 45%, hsl(var(--primary)) 55%, transparent 55%)'
+                            : 'linear-gradient(135deg, transparent 50%, currentColor 50%)',
+                        color: isResizing ? 'transparent' : 'var(--color-border)',
+                    }}
+                    aria-label="Resize panel"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                        }
                     }}
                 />
             )}
