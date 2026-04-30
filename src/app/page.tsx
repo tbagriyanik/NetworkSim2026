@@ -4239,30 +4239,33 @@ ${state.bannerMOTD}
           </AlertDialog>
 
           {/* Tasks Modal */}
-          <Dialog open={showTasksModal} onOpenChange={setShowTasksModal} modal={false}>
-            <DialogContent
-              showCloseButton={false}
-              onEscapeKeyDown={(e) => e.preventDefault()}
-              className={`bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 p-0 overflow-hidden flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
-              style={{
-                position: 'fixed',
-                left: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.x : 0,
-                top: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.y : 0,
-                width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${tasksModalSize.width}px` : '100vw',
-                height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${tasksModalSize.height}px` : '100vh',
-                maxWidth: 'none',
-                maxHeight: 'none',
-                borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
-                willChange: 'left, top, width, height',
-                borderWidth: 3,
-              }}
-            >
-              <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-hidden">
-                <DialogHeader
-                  className={`p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900`}
-                  data-modal-header
-                  onPointerDown={(e) => handlePointerDown(e, 'tasks')}
-                >
+           <Dialog open={showTasksModal} onOpenChange={setShowTasksModal} modal={false}>
+             <DialogContent
+               showCloseButton={false}
+               onEscapeKeyDown={(e) => e.preventDefault()}
+               className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+               style={{
+                 position: 'fixed',
+                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.x : 0,
+                 top: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.y : 0,
+                 width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${tasksModalSize.width}px` : '100vw',
+                 height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${tasksModalSize.height}px` : '100vh',
+                 maxWidth: 'none',
+                 maxHeight: 'none',
+                 borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
+                 willChange: 'left, top, width, height',
+                 borderWidth: 3,
+               }}
+             >
+               <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-visible">
+                 <DialogHeader
+                   className={cn(
+                     "p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10",
+                     isDark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-white"
+                   )}
+                   data-modal-header
+                   onPointerDown={(e) => handlePointerDown(e, 'tasks')}
+                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
@@ -4346,32 +4349,34 @@ ${state.bannerMOTD}
                     </div>
                   </div>
                 </div>
-                {/* Resize handles - hidden on mobile */}
-                {typeof window !== 'undefined' && window.innerWidth >= 768 && (
-                  <>
-                    <div
-                      className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
-                      onPointerDown={(e) => handleResizeStart(e, 'w', 'tasks')}
-                    />
-                    <div
-                      className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
-                      onPointerDown={(e) => handleResizeStart(e, 'e', 'tasks')}
-                    />
-                    <div
-                      className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize select-none touch-none"
-                      onPointerDown={(e) => handleResizeStart(e, 's', 'tasks')}
-                    />
-                    <div
-                      className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-slate-400/30 hover:bg-slate-400/50 flex items-center justify-center transition-colors"
-                      onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
-                    >
-                      <svg className="w-2 h-2 text-white/60 hover:text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16M12 4v16" />
-                      </svg>
-                    </div>
-                  </>
-                )}
+                 {/* Resize handles - hidden on mobile */}
+                 {typeof window !== 'undefined' && window.innerWidth >= 768 && (
+                   <>
+                     <div
+                       className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10 transition-colors"
+                       onPointerDown={(e) => handleResizeStart(e, 'w', 'tasks')}
+                     />
+                     <div
+                       className="absolute right-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20 transition-colors"
+                       onPointerDown={(e) => handleResizeStart(e, 'e', 'tasks')}
+                     />
+                     <div
+                       className="absolute left-[10px] right-8 bottom-0 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20 transition-colors"
+                       onPointerDown={(e) => handleResizeStart(e, 's', 'tasks')}
+                     />
+                     <div
+                       className="absolute bottom-0 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 dark:border-slate-500/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center transition-colors"
+                       onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
+                       title={language === 'tr' ? 'Yeniden boyutlandır' : 'Resize'}
+                     >
+                       <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                         <path d="M6 13L13 6" />
+                         <path d="M9.5 13L13 9.5" />
+                         <path d="M12.5 13L13 12.5" />
+                       </svg>
+                     </div>
+                   </>
+                 )}
               </div>
             </DialogContent>
           </Dialog>
