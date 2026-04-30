@@ -1530,15 +1530,26 @@ export function PCPanel({
   }, [isValidIpv4, language, serviceDnsRecords]);
 
   const serviceTabClass = (tab: 'dns' | 'http' | 'dhcp') => cn(
-    'relative inline-flex items-center rounded-t-xl border border-b-0 px-4 py-2 text-xs font-semibold transition-all',
+    'relative inline-flex items-center gap-2 rounded-t-lg border border-b-0 px-4 py-2.5 text-xs font-semibold transition-all duration-200 ease-out focus-ring-animate',
     activeServiceTab === tab
       ? isDark
-        ? 'bg-slate-900 text-white border-slate-700 shadow-sm'
-        : 'bg-white text-slate-900 border-slate-200 shadow-sm'
+        ? 'bg-slate-900 text-white border-slate-600 shadow-[0_-2px_8px_rgba(0,0,0,0.3)]'
+        : 'bg-white text-slate-900 border-slate-300 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]'
       : isDark
-        ? 'bg-slate-950/40 text-slate-200 border-transparent hover:text-white hover:bg-slate-900/60'
-        : 'bg-slate-100 text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-50'
+        ? 'bg-slate-950/40 text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-900/60'
+        : 'bg-slate-100/80 text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-50'
   );
+
+  const getServiceTabIcon = (tab: 'dns' | 'http' | 'dhcp') => {
+    switch (tab) {
+      case 'dns':
+        return <Globe className="w-3.5 h-3.5" />;
+      case 'http':
+        return <Globe className="w-3.5 h-3.5" />;
+      case 'dhcp':
+        return <Network className="w-3.5 h-3.5" />;
+    }
+  };
 
   const findHttpServerByTarget = useCallback((target: string) => {
     const normalizedTarget = target.trim().toLowerCase();
@@ -4402,32 +4413,29 @@ export function PCPanel({
                       className="flex-1 min-h-0 flex flex-col"
                       style={mobileVerticalScrollStyle}
                     >
-                      {/* Inner Tabs for Services */}
-                      <div className={`flex items-end gap-2 px-3 pt-2 border-b ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-slate-50'}`}>
-                        <Button
-                          variant={activeServiceTab === 'dns' ? 'secondary' : 'ghost'}
-                          size="sm"
-                          onClick={() => setActiveServiceTab('dns')}
-                          className={serviceTabClass('dns')}
-                        >
-                          DNS{serviceDnsEnabled ? ' (Açık)' : ''}
-                        </Button>
-                        <Button
-                          variant={activeServiceTab === 'http' ? 'secondary' : 'ghost'}
-                          size="sm"
-                          onClick={() => setActiveServiceTab('http')}
-                          className={serviceTabClass('http')}
-                        >
-                          HTTP{serviceHttpEnabled ? ' (Açık)' : ''}
-                        </Button>
-                        <Button
-                          variant={activeServiceTab === 'dhcp' ? 'secondary' : 'ghost'}
-                          size="sm"
-                          onClick={() => setActiveServiceTab('dhcp')}
-                          className={serviceTabClass('dhcp')}
-                        >
-                          DHCP{serviceDhcpEnabled ? ' (Açık)' : ''}
-                        </Button>
+                      {/* Inner Tabs for Services - Modern Style */}
+                      <div className={`flex items-end gap-1 px-4 pt-3 border-b ${isDark ? 'border-slate-700/50 bg-gradient-to-b from-slate-900/20 to-transparent' : 'border-slate-200 bg-gradient-to-b from-slate-50/50 to-transparent'}`}>
+                        {(['dns', 'http', 'dhcp'] as const).map((tab) => (
+                          <button
+                            key={tab}
+                            onClick={() => setActiveServiceTab(tab)}
+                            className={serviceTabClass(tab)}
+                            role="tab"
+                            aria-selected={activeServiceTab === tab}
+                            aria-controls={`service-panel-${tab}`}
+                          >
+                            {getServiceTabIcon(tab)}
+                            <span className="uppercase tracking-wide">{tab}</span>
+                            {((tab === 'dns' && serviceDnsEnabled) ||
+                              (tab === 'http' && serviceHttpEnabled) ||
+                              (tab === 'dhcp' && serviceDhcpEnabled)) && (
+                              <span className={cn(
+                                'w-2 h-2 rounded-full animate-pulse',
+                                isDark ? 'bg-emerald-400' : 'bg-emerald-500'
+                              )} />
+                            )}
+                          </button>
+                        ))}
                       </div>
 
                       {/* Service Content */}

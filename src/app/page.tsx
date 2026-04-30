@@ -3875,28 +3875,43 @@ ${state.bannerMOTD}
                     </DialogDescription>
                   </DialogHeader>
 
-                  {/* Tab Buttons */}
-                  <div className="flex items-center gap-2 mb-2">
+                  {/* Tab Buttons - Modern Style */}
+                  <div className={`flex items-end gap-1 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200'}`}>
                     <button
                       onClick={() => setProjectPickerTab('all')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      className={cn(
+                        'relative inline-flex items-center gap-2 rounded-t-lg border border-b-0 px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out focus-ring-animate',
                         projectPickerTab === 'all'
-                          ? (isDark ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white')
-                          : (isDark ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100')
-                      }`}
+                          ? isDark
+                            ? 'bg-slate-900 text-blue-400 border-slate-600 shadow-[0_-2px_8px_rgba(0,0,0,0.3)]'
+                            : 'bg-white text-blue-600 border-slate-300 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]'
+                          : isDark
+                            ? 'bg-slate-950/40 text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-900/60'
+                            : 'bg-slate-100/80 text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-50'
+                      )}
+                      role="tab"
+                      aria-selected={projectPickerTab === 'all'}
                     >
-                      {language === 'tr' ? 'Tüm Projeler' : 'All Projects'}
+                      <FolderOpen className="w-4 h-4" />
+                      <span className="uppercase tracking-wide text-xs">{language === 'tr' ? 'Tüm Projeler' : 'All Projects'}</span>
                     </button>
                     <button
                       onClick={() => setProjectPickerTab('guided')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                      className={cn(
+                        'relative inline-flex items-center gap-2 rounded-t-lg border border-b-0 px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out focus-ring-animate',
                         projectPickerTab === 'guided'
-                          ? (isDark ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-white')
-                          : (isDark ? 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50')
-                      }`}
+                          ? isDark
+                            ? 'bg-slate-900 text-emerald-400 border-slate-600 shadow-[0_-2px_8px_rgba(0,0,0,0.3)]'
+                            : 'bg-white text-emerald-600 border-slate-300 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]'
+                          : isDark
+                            ? 'bg-slate-950/40 text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-900/60'
+                            : 'bg-slate-100/80 text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-50'
+                      )}
+                      role="tab"
+                      aria-selected={projectPickerTab === 'guided'}
                     >
                       <BookOpen className="w-4 h-4" />
-                      {language === 'tr' ? 'Rehberli Ders' : 'Guided Lesson'}
+                      <span className="uppercase tracking-wide text-xs">{language === 'tr' ? 'Rehberli Ders' : 'Guided Lesson'}</span>
                     </button>
                   </div>
 

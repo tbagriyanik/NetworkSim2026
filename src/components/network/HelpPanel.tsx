@@ -87,24 +87,33 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
   }
 
   return (
-    <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div
         className={cn(
-          'w-full max-w-3xl max-h-[85vh] rounded-lg shadow-xl overflow-hidden flex flex-col',
-          isDark ? 'bg-slate-950 border border-slate-800' : 'bg-white border border-slate-200'
+          'w-full max-w-3xl max-h-[85vh] rounded-xl shadow-2xl overflow-hidden flex flex-col animate-scale-in',
+          isDark ? 'bg-slate-950 border border-slate-700' : 'bg-white border border-slate-200'
         )}
+        role="dialog"
+        aria-modal="true"
+        aria-label={isTR ? 'CLI Komut Referansı' : 'CLI Command Reference'}
       >
-        {/* Header */}
-        <div className={cn('flex items-center justify-between p-4 border-b shrink-0', isDark ? 'border-slate-800' : 'border-slate-200')}>
+        {/* Header - Modern Style */}
+        <div className={cn(
+          'flex items-center justify-between p-4 border-b shrink-0',
+          isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-slate-50/50 border-slate-200'
+        )}>
           <div className="flex items-center gap-3">
-            <div className={cn('p-2 rounded-lg', isDark ? 'bg-emerald-500/20' : 'bg-emerald-100')}>
+            <div className={cn(
+              'p-2.5 rounded-xl shadow-sm',
+              isDark ? 'bg-gradient-to-br from-emerald-500/20 to-emerald-600/10' : 'bg-gradient-to-br from-emerald-100 to-emerald-50'
+            )}>
               <Terminal className={cn('w-5 h-5', isDark ? 'text-emerald-400' : 'text-emerald-600')} />
             </div>
             <div>
-              <h2 className={cn('text-lg font-semibold', isDark ? 'text-slate-100' : 'text-slate-900')}>
+              <h2 className={cn('text-lg font-bold tracking-tight', isDark ? 'text-slate-100' : 'text-slate-900')}>
                 {isTR ? 'CLI Komut Referansı' : 'CLI Command Reference'}
               </h2>
-              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>
+              <p className={cn('text-xs font-medium', isDark ? 'text-slate-400' : 'text-slate-500')}>
                 {isTR ? '150+ komut' : '150+ commands'}
               </p>
             </div>
@@ -114,7 +123,12 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
               setOpen(false);
               onClose?.();
             }}
-            className={cn('p-1 rounded-full transition-colors', isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500')}
+            className={cn(
+              'p-2 rounded-lg transition-all duration-200 focus-ring-animate',
+              isDark
+                ? 'hover:bg-rose-900/30 text-slate-400 hover:text-rose-400'
+                : 'hover:bg-rose-100 text-slate-500 hover:text-rose-600'
+            )}
             aria-label={isTR ? 'Kapat' : 'Close'}
           >
             <X className="w-5 h-5" />
@@ -122,9 +136,12 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
         </div>
 
         {/* Search Bar - Fixed at top */}
-        <div className={cn('p-4 space-y-3 border-b shrink-0', isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200')}>
+        <div className={cn(
+          'p-4 space-y-3 border-b shrink-0',
+          isDark ? 'bg-slate-900/30 border-slate-700/50' : 'bg-slate-50/50 border-slate-200'
+        )}>
           <div className="relative">
-            <Search className={cn('absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4', isDark ? 'text-slate-500' : 'text-slate-400')} />
+            <Search className={cn('absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4', isDark ? 'text-slate-500' : 'text-slate-400')} />
             <input
               type="text"
               value={searchQuery}
@@ -132,19 +149,25 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
               placeholder={isTR ? 'Komut ara...' : 'Search commands...'}
               autoFocus
               className={cn(
-                'w-full pl-9 pr-9 py-2.5 rounded-lg text-sm border outline-none transition-all',
+                'w-full pl-10 pr-10 py-2.5 rounded-xl text-sm border outline-none transition-all duration-200',
+                'focus:ring-2 focus:ring-offset-0',
                 isDark
-                  ? 'bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 focus:border-emerald-500/50'
-                  : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500'
+                  ? 'bg-slate-900/80 border-slate-600 text-slate-200 placeholder:text-slate-500 focus:border-emerald-500/50 focus:ring-emerald-500/20'
+                  : 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500/20'
               )}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className={cn('absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors', isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500')}
+                className={cn(
+                  'absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all duration-200',
+                  isDark
+                    ? 'hover:bg-slate-700 text-slate-400 hover:text-slate-200'
+                    : 'hover:bg-slate-200 text-slate-500 hover:text-slate-700'
+                )}
                 aria-label={isTR ? 'Aramayı temizle' : 'Clear search'}
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -179,24 +202,54 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
           )}
 
 
-          {/* Categories (Commands) */}
+          {/* Categories (Commands) - Modern Style */}
           {filteredCategories.map((cat) => {
             const Icon = cat.icon;
             const isExp = expanded[cat.id];
             return (
-              <div key={cat.id} className={cn('rounded-lg border overflow-hidden', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}>
+              <div
+                key={cat.id}
+                className={cn(
+                  'rounded-xl border overflow-hidden transition-all duration-200',
+                  isDark
+                    ? 'bg-slate-900/50 border-slate-700/50 hover:border-slate-600'
+                    : 'bg-white border-slate-200 hover:border-slate-300'
+                )}
+              >
                 <button
                   onClick={() => toggle(cat.id)}
-                  className={cn('w-full flex items-center justify-between p-3 text-left transition-colors', isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}
+                  className={cn(
+                    'w-full flex items-center justify-between p-3.5 text-left transition-all duration-200 focus-ring-animate',
+                    isExp
+                      ? (isDark ? 'bg-slate-800/50' : 'bg-slate-50')
+                      : (isDark ? 'hover:bg-slate-800/30' : 'hover:bg-slate-50/50')
+                  )}
                 >
-                  <div className="flex items-center gap-2">
-                    <Icon className={cn('w-4 h-4', isDark ? 'text-slate-400' : 'text-slate-500')} />
-                    <span className={cn('font-medium text-sm', isDark ? 'text-slate-200' : 'text-slate-700')}>{cat.title}</span>
-                    <span className={cn('text-xs px-2 py-0.5 rounded-full', isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')}>
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      'p-1.5 rounded-lg',
+                      isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500',
+                      isExp && (isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600')
+                    )}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span className={cn('font-semibold text-sm', isDark ? 'text-slate-200' : 'text-slate-700')}>
+                      {cat.title}
+                    </span>
+                    <span className={cn(
+                      'text-xs px-2 py-0.5 rounded-full font-medium',
+                      isDark
+                        ? 'bg-slate-800 text-slate-400'
+                        : 'bg-slate-100 text-slate-500'
+                    )}>
                       {cat.cmds.length}
                     </span>
                   </div>
-                  <ChevronDown className={cn('w-4 h-4 transition-transform', isExp ? 'rotate-180' : '', isDark ? 'text-slate-400' : 'text-slate-500')} />
+                  <ChevronDown className={cn(
+                    'w-4 h-4 transition-transform duration-200',
+                    isExp ? 'rotate-180' : '',
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  )} />
                 </button>
 
                 {isExp && (
@@ -221,11 +274,24 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
         </div>
 
 
-        {/* Footer stats - Fixed at bottom */}
-        <div className={cn('p-4 border-t shrink-0', isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200')}>
-          <div className={cn('flex items-center justify-between p-3 rounded-lg text-xs', isDark ? 'bg-slate-900/50 border border-slate-700 text-slate-400' : 'bg-slate-50 border border-slate-200 text-slate-600')}>
-            <span>{isTR ? 'Toplam komut:' : 'Total commands:'}</span>
-            <span className={cn('font-semibold', isDark ? 'text-emerald-400' : 'text-emerald-600')}>150+</span>
+        {/* Footer stats - Fixed at bottom - Modern Style */}
+        <div className={cn(
+          'p-4 border-t shrink-0',
+          isDark ? 'bg-slate-900/30 border-slate-700/50' : 'bg-slate-50/50 border-slate-200'
+        )}>
+          <div className={cn(
+            'flex items-center justify-between px-4 py-3 rounded-xl text-xs',
+            isDark
+              ? 'bg-gradient-to-r from-slate-800/50 to-slate-900/50 border border-slate-700/50 text-slate-400'
+              : 'bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 text-slate-600'
+          )}>
+            <span className="font-medium">{isTR ? 'Toplam komut:' : 'Total commands:'}</span>
+            <span className={cn(
+              'font-bold text-sm px-2 py-0.5 rounded-full',
+              isDark
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : 'bg-emerald-100 text-emerald-700'
+            )}>150+</span>
           </div>
         </div>
       </div>
