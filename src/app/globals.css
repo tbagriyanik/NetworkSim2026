@@ -700,6 +700,14 @@
   animation: focus-pulse 2s ease-in-out infinite;
 }
 
+/* High Performance Mode - Used during resize/drag operations */
+.performance-mode *,
+.performance-mode *::before,
+.performance-mode *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
 /* Low Graphics Mode - Disable animations and effects */
 body.graphics-low *,
 body.graphics-low *::before,

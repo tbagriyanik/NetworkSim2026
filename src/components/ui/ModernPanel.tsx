@@ -55,7 +55,6 @@ export function ModernPanel({
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [width, setWidth] = useState(defaultWidth);
     const [height, setHeight] = useState(defaultHeight);
-    const [isResizing, setIsResizing] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
@@ -76,6 +75,8 @@ export function ModernPanel({
 
     // Use ref for resize to avoid React re-renders during resize
     const panelRef = useRef<HTMLDivElement>(null);
+    const isResizingRef = useRef(false);
+    const isDraggingRef = useRef(false);
     const resizeStateRef = useRef({
         startX: 0,
         startY: 0,
@@ -86,9 +87,13 @@ export function ModernPanel({
     const handleResizeStart = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        setIsResizing(true);
+        isResizingRef.current = true;
 
         if (!panelRef.current) return;
+
+        // Set cursor immediately via class on body or parent
+        document.body.style.cursor = 'se-resize';
+        document.body.style.userSelect = 'none';
 
         resizeStateRef.current = {
             startX: e.clientX,
@@ -97,11 +102,8 @@ export function ModernPanel({
             startHeight: panelRef.current.offsetHeight,
         };
 
-        // Use CSS custom property for smooth, performant resizing
-        panelRef.current.style.willChange = 'width, height';
-
         const handleMouseMove = (moveEvent: MouseEvent) => {
-            if (!panelRef.current) return;
+            if (!panelRef.current || !isResizingRef.current) return;
 
             const deltaX = moveEvent.clientX - resizeStateRef.current.startX;
             const deltaY = moveEvent.clientY - resizeStateRef.current.startY;
@@ -109,20 +111,21 @@ export function ModernPanel({
             const newWidth = Math.max(minWidth, resizeStateRef.current.startWidth + deltaX);
             const newHeight = Math.max(minHeight, resizeStateRef.current.startHeight + deltaY);
 
-            // Apply directly to DOM for 60fps performance
+            // Direct DOM update - no rAF, no React state
             panelRef.current.style.width = `${newWidth}px`;
             panelRef.current.style.height = `${newHeight}px`;
         };
 
         const handleMouseUp = () => {
-            setIsResizing(false);
+            isResizingRef.current = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+
             if (panelRef.current) {
-                // Sync final values to React state
                 const finalWidth = panelRef.current.offsetWidth;
                 const finalHeight = panelRef.current.offsetHeight;
                 setWidth(finalWidth);
                 setHeight(finalHeight);
-                panelRef.current.style.willChange = 'auto';
             }
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
@@ -146,19 +149,21 @@ export function ModernPanel({
         overlayMobileStyle.maxHeight = 'calc(100vh - 10px)';
     }
 
-    // Drag handling with performance optimization
-    const [isDragging, setIsDragging] = useState(false);
+    // Drag handling with performance optimization - uses top/left instead of transform
     const dragStateRef = useRef({ startX: 0, startY: 0, startLeft: 0, startTop: 0 });
 
     const handleDragStart = (e: React.MouseEvent) => {
         if (!isOverlay || isMobile) return;
-        // Only start drag from header area
         const target = e.target as HTMLElement;
         const isHeader = target.closest('[data-drag-handle]') || target.closest('[data-drag-header]');
         if (!isHeader) return;
 
         e.preventDefault();
-        setIsDragging(true);
+        isDraggingRef.current = true;
+
+        // Set cursor immediately
+        document.body.style.cursor = 'grabbing';
+        document.body.style.userSelect = 'none';
 
         if (!panelRef.current) return;
 
@@ -170,32 +175,24 @@ export function ModernPanel({
             startTop: rect.top,
         };
 
-        panelRef.current.style.willChange = 'transform';
-
         const handleMouseMove = (moveEvent: MouseEvent) => {
-            if (!panelRef.current) return;
+            if (!panelRef.current || !isDraggingRef.current) return;
 
             const deltaX = moveEvent.clientX - dragStateRef.current.startX;
             const deltaY = moveEvent.clientY - dragStateRef.current.startY;
 
-            // Use transform for GPU-accelerated dragging
-            panelRef.current.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            const newLeft = dragStateRef.current.startLeft + deltaX;
+            const newTop = dragStateRef.current.startTop + deltaY;
+
+            // Direct DOM update - no rAF, no React state
+            panelRef.current.style.left = `${newLeft}px`;
+            panelRef.current.style.top = `${newTop}px`;
         };
 
         const handleMouseUp = () => {
-            setIsDragging(false);
-            if (panelRef.current) {
-                // Apply final position and clear transform
-                const transform = panelRef.current.style.transform;
-                const match = transform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
-                if (match) {
-                    const tx = parseFloat(match[1]) || 0;
-                    const ty = parseFloat(match[2]) || 0;
-                    // Update actual position (would need position state management here)
-                }
-                panelRef.current.style.willChange = 'auto';
-                panelRef.current.style.transform = '';
-            }
+            isDraggingRef.current = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };
@@ -225,10 +222,8 @@ export function ModernPanel({
             className={cn(
                 'flex flex-col border rounded-lg shadow-lg overflow-hidden',
                 isDark ? 'bg-slate-900/95 border-slate-700' : 'bg-white/95 border-slate-200',
-                isOverlay && 'fixed z-40 animate-scale-in',
+                isOverlay && 'fixed z-40',
                 isStacked && 'relative',
-                isResizing && 'select-none',
-                isDragging && 'cursor-grabbing',
                 className
             )}
             style={{
@@ -243,16 +238,16 @@ export function ModernPanel({
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
         >
-            {/* Header */}
+            {/* Header - Simple, no effects */}
             {!hideHeader && (
                 <div
                     data-drag-header
                     className={cn(
                         "flex items-center justify-between gap-2 p-4 border-b cursor-grab active:cursor-grabbing",
                         isDark ? "bg-slate-800 border-slate-700" : "bg-muted/50",
-                        isMobile && "p-3 min-h-[48px] touch-manipulation",
-                        isDragging && "cursor-grabbing"
+                        isMobile && "p-3 min-h-[48px] touch-manipulation"
                     )}
+                    style={{ touchAction: 'none' }}
                 >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                         {canResize && (
@@ -273,10 +268,10 @@ export function ModernPanel({
                             <button
                                 onClick={onClose}
                                 className={cn(
-                                    "p-1.5 rounded-lg transition-all duration-200 focus-ring-animate",
+                                    "p-1.5 rounded-lg",
                                     isDark
-                                        ? "hover:bg-rose-900/50 text-slate-400 hover:text-rose-400"
-                                        : "hover:bg-rose-100 text-slate-500 hover:text-rose-600",
+                                        ? "text-slate-400 hover:text-rose-400"
+                                        : "text-slate-500 hover:text-rose-600",
                                     isMobile && "p-2 min-w-[40px] min-h-[40px]"
                                 )}
                                 aria-label="Close panel"
@@ -288,10 +283,10 @@ export function ModernPanel({
                             <button
                                 onClick={() => setIsCollapsed(!isCollapsed)}
                                 className={cn(
-                                    "p-1.5 rounded-lg transition-all duration-200 focus-ring-animate",
+                                    "p-1.5 rounded-lg",
                                     isDark
-                                        ? "hover:bg-slate-700 text-slate-400 hover:text-slate-200"
-                                        : "hover:bg-slate-200 text-slate-500 hover:text-slate-700",
+                                        ? "text-slate-400 hover:text-slate-200"
+                                        : "text-slate-500 hover:text-slate-700",
                                     isMobile && "p-2 min-w-[40px] min-h-[40px]"
                                 )}
                                 aria-label={isCollapsed ? 'Expand panel' : 'Collapse panel'}
@@ -308,10 +303,10 @@ export function ModernPanel({
                 </div>
             )}
 
-            {/* Content with smooth animation */}
+            {/* Content - No animation */}
             <div
                 className={cn(
-                    "flex-1 min-h-0 transition-all duration-300 ease-in-out",
+                    "flex-1 min-h-0",
                     isCollapsed ? "max-h-0 opacity-0" : "max-h-full opacity-100",
                     noPadding ? "overflow-hidden p-0" : "overflow-y-auto overflow-x-hidden p-4"
                 )}
@@ -325,29 +320,16 @@ export function ModernPanel({
                 )}
             </div>
 
-            {/* Resize Handle - Enhanced with visual feedback */}
+            {/* Resize Handle - Simple, no effects */}
             {canResize && (
                 <div
                     onMouseDown={handleResizeStart}
-                    className={cn(
-                        'absolute bottom-0 right-0 w-5 h-5 cursor-se-resize transition-all duration-200',
-                        'hover:w-6 hover:h-6',
-                        isResizing && 'w-6 h-6'
-                    )}
+                    className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
                     style={{
-                        background: isResizing
-                            ? 'linear-gradient(135deg, transparent 45%, hsl(var(--primary)) 45%, hsl(var(--primary)) 55%, transparent 55%)'
-                            : 'linear-gradient(135deg, transparent 50%, currentColor 50%)',
-                        color: isResizing ? 'transparent' : 'var(--color-border)',
+                        background: 'linear-gradient(135deg, transparent 50%, currentColor 50%)',
+                        color: 'var(--color-border)',
                     }}
                     aria-label="Resize panel"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                        }
-                    }}
                 />
             )}
         </div>

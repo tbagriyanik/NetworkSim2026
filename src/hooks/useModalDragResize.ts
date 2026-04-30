@@ -14,7 +14,6 @@ interface DragState {
     startPosY: number;
     startW: number;
     startH: number;
-    raf: number | null;
 }
 
 const STORAGE_KEYS = {
@@ -95,6 +94,7 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
     const cliModalSizeRef = useRef(cliModalSize);
     const pcModalPositionRef = useRef(pcModalPosition);
     const pcModalSizeRef = useRef(pcModalSize);
+    const modalElementRef = useRef<HTMLElement | null>(null);
 
     useEffect(() => { tasksModalPositionRef.current = tasksModalPosition; }, [tasksModalPosition]);
     useEffect(() => { tasksModalSizeRef.current = tasksModalSize; }, [tasksModalSize]);
@@ -107,21 +107,25 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
         const header = (e.target as HTMLElement).closest('[data-modal-header]');
         if (!header) return;
         if ((e.target as HTMLElement).closest('button, input, select, textarea, a')) return;
-        
+
         e.preventDefault();
         e.stopPropagation();
-        
+
         // Capture pointer for smoother dragging across the whole screen
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 
+        // Find the modal element (DialogContent)
+        const modalElement = (e.currentTarget as HTMLElement).closest('[data-modal-content]') as HTMLElement;
+        modalElementRef.current = modalElement;
+
         const pos = modalType === 'tasks' ? tasksModalPositionRef.current : modalType === 'cli' ? cliModalPositionRef.current : pcModalPositionRef.current;
         const size = modalType === 'tasks' ? tasksModalSizeRef.current : modalType === 'cli' ? cliModalSizeRef.current : pcModalSizeRef.current;
-        
+
         dragStateRef.current = {
             active: true, type: 'drag', modal: modalType,
             startX: e.clientX, startY: e.clientY,
             startPosX: pos.x, startPosY: pos.y,
-            startW: size.width, startH: size.height, raf: null,
+            startW: size.width, startH: size.height,
         };
     }, []);
 
@@ -136,14 +140,18 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
         // Capture pointer
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 
+        // Find the modal element (DialogContent)
+        const modalElement = (e.currentTarget as HTMLElement).closest('[data-modal-content]') as HTMLElement;
+        modalElementRef.current = modalElement;
+
         const pos = modalType === 'tasks' ? tasksModalPositionRef.current : modalType === 'cli' ? cliModalPositionRef.current : pcModalPositionRef.current;
         const size = modalType === 'tasks' ? tasksModalSizeRef.current : modalType === 'cli' ? cliModalSizeRef.current : pcModalSizeRef.current;
-        
+
         dragStateRef.current = {
             active: true, type: 'resize', modal: modalType, direction,
             startX: e.clientX, startY: e.clientY,
             startPosX: pos.x, startPosY: pos.y,
-            startW: size.width, startH: size.height, raf: null,
+            startW: size.width, startH: size.height,
         };
     }, []);
 
@@ -152,69 +160,72 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
             const ds = dragStateRef.current;
             if (!ds?.active) return;
 
-            // Store latest position for both modes
-            pendingMoveRef.current = { x: e.clientX, y: e.clientY };
+            const modalElement = modalElementRef.current;
+            if (!modalElement) return;
 
-            // Use RAF for smooth animation in both modes
-            if (ds.raf) return;
+            // Direct DOM manipulation - no React state updates during drag/resize
+            if (ds.type === 'drag') {
+                const newX = ds.startPosX + (e.clientX - ds.startX);
+                const newY = ds.startPosY + (e.clientY - ds.startY);
+                modalElement.style.left = `${newX}px`;
+                modalElement.style.top = `${newY}px`;
+            } else if (ds.type === 'resize' && ds.direction) {
+                const dx = e.clientX - ds.startX;
+                const dy = e.clientY - ds.startY;
+                let newW = ds.startW, newH = ds.startH, newX = ds.startPosX, newY = ds.startPosY;
 
-            ds.raf = requestAnimationFrame(() => {
-                const ds2 = dragStateRef.current;
-                if (!ds2?.active) return;
-                const move = pendingMoveRef.current;
-                if (!move) return;
-                
-                const setPosition = ds2.modal === 'tasks' ? setTasksModalPosition : ds2.modal === 'cli' ? setCliModalPosition : setPcModalPosition;
-                const setSize = ds2.modal === 'tasks' ? setTasksModalSize : ds2.modal === 'cli' ? setCliModalSize : setPcModalSize;
-
-                if (ds2.type === 'drag') {
-                    setPosition({
-                        x: ds2.startPosX + (move.x - ds2.startX),
-                        y: ds2.startPosY + (move.y - ds2.startY),
-                    });
-                } else if (ds2.type === 'resize' && ds2.direction) {
-                    const dx = move.x - ds2.startX;
-                    const dy = move.y - ds2.startY;
-                    let newW = ds2.startW, newH = ds2.startH, newX = ds2.startPosX, newY = ds2.startPosY;
-                    
-                    if (ds2.direction.includes('e')) newW = Math.max(400, ds2.startW + dx);
-                    if (ds2.direction.includes('s')) newH = Math.max(300, ds2.startH + dy);
-                    if (ds2.direction.includes('w')) { 
-                        newW = Math.max(400, ds2.startW - dx); 
-                        newX = ds2.startPosX + (ds2.startW - newW); 
-                    }
-                    if (ds2.direction.includes('n')) { 
-                        newH = Math.max(300, ds2.startH - dy); 
-                        newY = ds2.startPosY + (ds2.startH - newH); 
-                    }
-                    
-                    setSize({ width: newW, height: newH });
-                    setPosition({ x: newX, y: newY });
+                if (ds.direction.includes('e')) newW = Math.max(400, ds.startW + dx);
+                if (ds.direction.includes('s')) newH = Math.max(300, ds.startH + dy);
+                if (ds.direction.includes('w')) {
+                    newW = Math.max(400, ds.startW - dx);
+                    newX = ds.startPosX + (ds.startW - newW);
+                }
+                if (ds.direction.includes('n')) {
+                    newH = Math.max(300, ds.startH - dy);
+                    newY = ds.startPosY + (ds.startH - newH);
                 }
 
-                ds2.raf = null;
-            });
+                modalElement.style.width = `${newW}px`;
+                modalElement.style.height = `${newH}px`;
+                modalElement.style.left = `${newX}px`;
+                modalElement.style.top = `${newY}px`;
+            }
         };
 
         const handlePointerUp = (e: PointerEvent) => {
             const ds = dragStateRef.current;
             if (!ds) return;
 
-            if (ds.raf) cancelAnimationFrame(ds.raf);
-            pendingMoveRef.current = null;
-            
-            // Persist the final position/size to localStorage
-            const finalPos = ds.modal === 'tasks' ? tasksModalPositionRef.current : ds.modal === 'cli' ? cliModalPositionRef.current : pcModalPositionRef.current;
-            const finalSize = ds.modal === 'tasks' ? tasksModalSizeRef.current : ds.modal === 'cli' ? cliModalSizeRef.current : pcModalSizeRef.current;
-            persistLayout(ds.modal, finalPos, finalSize);
+            const modalElement = modalElementRef.current;
+            if (modalElement) {
+                // Read final values from DOM and update React state
+                const finalLeft = parseInt(modalElement.style.left) || ds.startPosX;
+                const finalTop = parseInt(modalElement.style.top) || ds.startPosY;
+                const finalWidth = parseInt(modalElement.style.width) || ds.startW;
+                const finalHeight = parseInt(modalElement.style.height) || ds.startH;
+
+                const finalPos = { x: finalLeft, y: finalTop };
+                const finalSize = { width: finalWidth, height: finalHeight };
+
+                // Update React state only once at the end
+                const setPosition = ds.modal === 'tasks' ? setTasksModalPosition : ds.modal === 'cli' ? setCliModalPosition : setPcModalPosition;
+                const setSize = ds.modal === 'tasks' ? setTasksModalSize : ds.modal === 'cli' ? setCliModalSize : setPcModalSize;
+
+                setPosition(finalPos);
+                setSize(finalSize);
+
+                // Persist to localStorage
+                persistLayout(ds.modal, finalPos, finalSize);
+            }
 
             dragStateRef.current = null;
+            modalElementRef.current = null;
         };
 
         window.addEventListener('pointermove', handlePointerMove, { passive: true });
         window.addEventListener('pointerup', handlePointerUp);
         window.addEventListener('pointercancel', handlePointerUp);
-        
+
         return () => {
             window.removeEventListener('pointermove', handlePointerMove);
             window.removeEventListener('pointerup', handlePointerUp);

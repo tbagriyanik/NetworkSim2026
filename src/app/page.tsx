@@ -4262,6 +4262,7 @@ ${state.bannerMOTD}
                showCloseButton={false}
                onEscapeKeyDown={(e) => e.preventDefault()}
                className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+               data-modal-content
                style={{
                  position: 'fixed',
                  left: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.x : 0,
@@ -4271,7 +4272,6 @@ ${state.bannerMOTD}
                  maxWidth: 'none',
                  maxHeight: 'none',
                  borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
-                 willChange: 'left, top, width, height',
                  borderWidth: 3,
                }}
              >
@@ -4371,19 +4371,19 @@ ${state.bannerMOTD}
                  {typeof window !== 'undefined' && window.innerWidth >= 768 && (
                    <>
                      <div
-                       className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10 transition-colors"
+                       className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10"
                        onPointerDown={(e) => handleResizeStart(e, 'w', 'tasks')}
                      />
                      <div
-                       className="absolute right-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20 transition-colors"
+                       className="absolute right-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20"
                        onPointerDown={(e) => handleResizeStart(e, 'e', 'tasks')}
                      />
                      <div
-                       className="absolute left-[10px] right-8 bottom-0 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20 transition-colors"
+                       className="absolute left-[10px] right-8 bottom-0 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20"
                        onPointerDown={(e) => handleResizeStart(e, 's', 'tasks')}
                      />
                      <div
-                       className="absolute bottom-0 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 dark:border-slate-500/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center transition-colors"
+                       className="absolute bottom-0 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 dark:border-slate-500/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
                        onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
                        title={language === 'tr' ? 'Yeniden boyutlandır' : 'Resize'}
                      >
@@ -4405,6 +4405,7 @@ ${state.bannerMOTD}
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
               className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              data-modal-content
               style={{
                 position: 'fixed',
                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? pcModalPosition.x : 0,
@@ -4414,7 +4415,6 @@ ${state.bannerMOTD}
                 maxWidth: 'none',
                 maxHeight: 'none',
                 borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
-                willChange: 'left, top, width, height',
                 borderWidth: 3,
               }}
             >
@@ -4473,19 +4473,19 @@ ${state.bannerMOTD}
                 {typeof window !== 'undefined' && window.innerWidth >= 768 && (
                   <>
                     <div
-                      className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10 transition-colors"
+                      className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10"
                       onPointerDown={(e) => handleResizeStart(e, 'w', 'pc')}
                     />
                     <div
-                      className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20 transition-colors"
+                      className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20"
                       onPointerDown={(e) => handleResizeStart(e, 'e', 'pc')}
                     />
                     <div
-                      className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20 transition-colors"
+                      className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20"
                       onPointerDown={(e) => handleResizeStart(e, 's', 'pc')}
                     />
                     <div
-                      className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center transition-colors"
+                      className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
                       onPointerDown={(e) => handleResizeStart(e, 'se', 'pc')}
                       title={language === 'tr' ? 'Yeniden boyutlandır' : 'Resize'}
                     >
@@ -4507,6 +4507,7 @@ ${state.bannerMOTD}
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
               className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              data-modal-content
               style={{
                 position: 'fixed',
                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? cliModalPosition.x : 0,
@@ -4516,7 +4517,6 @@ ${state.bannerMOTD}
                 maxWidth: 'none',
                 maxHeight: 'none',
                 borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
-                willChange: 'left, top, width, height',
                 borderWidth: 3,
               }}
             >
@@ -4610,19 +4610,19 @@ ${state.bannerMOTD}
                 {typeof window !== 'undefined' && window.innerWidth >= 768 && (
                   <>
                     <div
-                      className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10 transition-colors"
+                      className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10"
                       onPointerDown={(e) => handleResizeStart(e, 'w', 'cli')}
                     />
                     <div
-                      className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20 transition-colors"
+                      className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20"
                       onPointerDown={(e) => handleResizeStart(e, 'e', 'cli')}
                     />
                     <div
-                      className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20 transition-colors"
+                      className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20"
                       onPointerDown={(e) => handleResizeStart(e, 's', 'cli')}
                     />
                     <div
-                      className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center transition-colors"
+                      className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
                       onPointerDown={(e) => handleResizeStart(e, 'se', 'cli')}
                       title={language === 'tr' ? 'Yeniden boyutlandır' : 'Resize'}
                     >
