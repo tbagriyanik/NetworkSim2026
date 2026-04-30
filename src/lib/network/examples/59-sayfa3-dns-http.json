@@ -1638,7 +1638,7 @@
         "y": 214.43373733192178,
         "width": 659,
         "height": 157,
-        "text": "Server içindeki DNS ve HTTP hizmetlerini PC-1 üzerinden test etme:\n\nDNS zinciri: www.a10.com -> a10.com -> 192.168.1.10\n\nwget 192.168.1.10\nwget a10.com\nwget www.a10.com\nnslookup a10.com\nnslookup www.a10.com\n\nBeklenen: wget www.a10.com çalışmalı.",
+        "text": "Amaç: DNS ve HTTP sunucuları yapılandırarak domain name çözümü ve web erişimi sağlamak.\n\nAdım Adım Proje Yapımı:\n1) Topoloji Oluşturma:\n   - 1 adet Server ekle\n   - 1 adet PC (PC-1) ekle\n   - Cihazları bağla\n\n2) Server DNS Konfigürasyonu:\n   - Server terminaline gir\n   - DNS servisini aktifleştir\n   - ip host a10.com 192.168.1.10\n   - ip host www.a10.com 192.168.1.10\n\n3) HTTP Sunucusu Başlat:\n   - Server'da HTTP servisini aktifleştir\n\n4) PC Konfigürasyonu:\n   - PC-1: IP 192.168.1.10, DNS 192.168.1.10\n\n5) Test:\n   - wget 192.168.1.10\n   - wget a10.com\n   - wget www.a10.com\n   - nslookup a10.com\n   - nslookup www.a10.com\n\nBeklenen: wget www.a10.com çalışmalı.",
         "color": "#f5d0fe",
         "font": "Courier New",
         "fontSize": 16,

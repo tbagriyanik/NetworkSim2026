@@ -2064,7 +2064,7 @@
         "y": 204.72544254085264,
         "width": 382,
         "height": 135,
-        "text": "Server DHCP hizmeti ile IP dağıtır\n\nPC 1 ve 2 DHCP ile IP alırken PC 3 elle yapılandırılmıştır",
+        "text": "Amaç: Server üzerinde DHCP sunucusu yapılandırarak PC'lere otomatik IP ataması yapmak.\n\nAdım Adım Proje Yapımı:\n1) Topoloji Oluşturma:\n   - 1 adet Server ekle\n   - 1 adet Switch ekle\n   - 3 adet PC (PC-1, PC-2, PC-3) ekle\n   - Cihazları bağla\n\n2) Server DHCP Konfigürasyonu:\n   - Server terminaline gir\n   - DHCP servisini aktifleştir\n   - DHCP pool oluştur (network, default-router, dns-server)\n\n3) PC Konfigürasyonu:\n   - PC-1 ve PC-2: DHCP moduna ayarla\n   - PC-3: Statik IP (elle yapılandırılmış)\n\n4) Test:\n   - PC-1 ve PC-2: ipconfig /renew\n   - Server'da show ip dhcp binding\n   - PC-3 statik IP ile çalışmaya devam eder\n\nNot: Server DHCP hizmeti ile IP dağıtır",
         "color": "#fef3c7",
         "font": "Arial",
         "fontSize": 12,

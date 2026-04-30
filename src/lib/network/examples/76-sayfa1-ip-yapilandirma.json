@@ -1647,7 +1647,7 @@
         "y": 237.53714789799528,
         "width": 494,
         "height": 164,
-        "text": "PC'ler eğer aynı yapılandırma sahip olursa bağlantı yapabilir:\n\nPC'lerin IP ve Maskesini düzenleyiniz\n\nPC1 ve 2 birbirine ping atabilirken PC3 yapılandırması farklıdır",
+        "text": "Amaç: PC'lerde IP yapılandırmasını doğru ayarlayarak aynı subnet içinde iletişim sağlamak.\n\nAdım Adım Proje Yapımı:\n1) Topoloji Oluşturma:\n   - 1 adet Switch ekle\n   - 3 adet PC (PC-1, PC-2, PC-3) ekle\n   - Cihazları bağla\n\n2) PC IP Konfigürasyonu:\n   - PC-1: IP 192.168.1.10, Subnet 255.255.255.0\n   - PC-2: IP 192.168.1.20, Subnet 255.255.255.0\n   - PC-3: IP 192.168.2.10, Subnet 255.255.255.0 (farklı subnet)\n\n3) Test:\n   - PC-1 ve PC-2 birbirine ping atabilir (aynı subnet)\n   - PC-3 PC-1 ve PC-2'ye ping atamaz (farklı subnet)\n\nNot: PC'ler eğer aynı yapılandırma sahip olursa bağlantı yapabilir",
         "color": "#dbeafe",
         "font": "Arial",
         "fontSize": 16,

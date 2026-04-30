@@ -1726,7 +1726,7 @@
         "y": 90.08265077008636,
         "width": 403,
         "height": 155,
-        "text": "PC terminalinde: \narp veya arp -a ile MAC tabloları görülebilir\n\nSW1 CLI ile:\nshow mac",
+        "text": "Amaç: PC ve Switch üzerinde MAC tablolarını görüntüleyerek ARP ve MAC adres öğrenimini anlamak.\n\nAdım Adım Proje Yapımı:\n1) Topoloji Oluşturma:\n   - 1 adet Switch (SW1) ekle\n   - 1 adet PC ekle\n   - Cihazları bağla\n\n2) PC ARP Tablosunu Görüntüle:\n   - PC terminalinde: arp veya arp -a\n   - ARP tablosunu gör\n\n3) Switch MAC Tablosunu Görüntüle:\n   - SW1 CLI ile: show mac\n   - MAC adres tablosunu gör\n\n4) Doğrulama:\n   - PC ARP tablosunda gateway MAC adresini gör\n   - Switch MAC tablosunda PC MAC adresini gör",
         "color": "#dcfce7",
         "font": "Trebuchet MS",
         "fontSize": 16,

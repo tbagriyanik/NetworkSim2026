@@ -1829,7 +1829,7 @@
         "y": 260.31146523831353,
         "width": 521,
         "height": 156,
-        "text": "\"sh mac\" ile bağlı cihazların MAC adresleri öğrenilebilir\npc1: 00-00-00-00-00-08\npc2: 00-00-00-00-00-0d\nsw1:  0000.0000.0009\nr2: 0000.0000.0001\n",
+        "text": "Amaç: Switch üzerinde MAC adres tablosunu görüntüleyerek bağlı cihazların MAC adreslerini öğrenmek.\n\nAdım Adım Proje Yapımı:\n1) Topoloji Oluşturma:\n   - 1 adet Switch (SWITCH-1) ekle\n   - 1 adet Router (ROUTER-2) ekle\n   - 2 adet PC (PC-1, PC-2) ekle\n   - Cihazları bağla\n\n2) MAC Tablosunu Görüntüle:\n   - SWITCH-1 terminaline gir: enable\n   - show mac-address-table veya sh mac\n   - Bağlı cihazların MAC adreslerini gör\n\n3) PC MAC Adresleri:\n   - PC-1: 00-00-00-00-00-08\n   - PC-2: 00-00-00-00-00-0d\n   - SW1: 0000.0000.0009\n   - R2: 0000.0000.0001\n\n4) Doğrulama:\n   - show mac komutu ile MAC tablosunu kontrol et\n   - Her cihazın doğru port'ta göründüğünü doğrula",
         "color": "#fee2e2",
         "font": "Arial",
         "fontSize": 16,

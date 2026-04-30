@@ -418,7 +418,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'iot-wifi-note',
       text: isTr
-        ? 'IoT WiFi Laboratuvarı:\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: IoT-Network (Open) yayınlar.\n2) PC-1 kablosuz ağa (WiFi Client) bağlıdır.\n3) 3 IoT cihazı (Sıcaklık, Nem, Hareket) WiFi üzerinden bağlıdır.\n4) PC-1 üzerinde wget 192.168.1.1 ile WiFi panelinden IoT cihazlarını yönetin.\n5) PC-1 > ping 192.168.1.1 ile bağlantıyı test edin.\n6) PC-1 > wget http://iot-panel ile cihaz kontrol paneline ulaşınız.'
+        ? 'Amaç: IoT cihazlarını kablosuz ağa bağlayarak sensör verilerini izlemek.\n\nIoT WiFi Laboratuvarı:\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: IoT-Network (Open) yayınlar.\n2) PC-1 kablosuz ağa (WiFi Client) bağlıdır.\n3) 3 IoT cihazı (Sıcaklık, Nem, Hareket) WiFi üzerinden bağlıdır.\n4) PC-1 üzerinde wget 192.168.1.1 ile WiFi panelinden IoT cihazlarını yönetin.\n5) PC-1 > ping 192.168.1.1 ile bağlantıyı test edin.\n6) PC-1 > wget http://iot-panel ile cihaz kontrol paneline ulaşınız.'
         : 'IoT WiFi Lab:\n1) R1 (Router) broadcasts SSID: IoT-Network (Open) on wlan0 in AP mode.\n2) PC-1 is connected wirelessly (WiFi Client).\n3) 3 IoT devices (Temperature, Humidity, Motion) connected via WiFi.\n4) Manage IoT devices from PC-1 WiFi panel via wget 192.168.1.1.\n5) Test connectivity with PC-1 > ping 192.168.1.1.\n6) Access device control panel via PC-1 > wget http://iot-panel',
       x: 500,
       y: 80,
@@ -639,7 +639,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'greenhouse-note',
       text: isTr
-        ? '🌱 AKILLI SERA KROKİSİ:\n1) R1 (Router) WPA2 korumalı WiFi ağı: GreenHouse-Network (şifre: sera2026)\n2) 4 IoT Sensör: Sıcaklık (2.101), Nem (2.102), Işık (2.103), Kapı/Hareket (2.104)\n3) PC-1 ile WiFi panelinden (wget 192.168.2.1) sensörleri izleyin\n4) IoT Panel: wget http://iot-panel (admin/admin) ile cihazları yönetin\n5) Görev: ping 192.168.2.101 ile sensör erişimini test edin'
+        ? 'Amaç: Güvenli WiFi ağı ile IoT sensörlerini bağlayarak sera ortamını izlemek.\n\n🌱 AKILLI SERA KROKİSİ:\n1) R1 (Router) WPA2 korumalı WiFi ağı: GreenHouse-Network (şifre: sera2026)\n2) 4 IoT Sensör: Sıcaklık (2.101), Nem (2.102), Işık (2.103), Kapı/Hareket (2.104)\n3) PC-1 ile WiFi panelinden (wget 192.168.2.1) sensörleri izleyin\n4) IoT Panel: wget http://iot-panel (admin/admin) ile cihazları yönetin\n5) Görev: ping 192.168.2.101 ile sensör erişimini test edin'
         : '🌱 SMART GREENHOUSE SKETCH:\n1) R1 (Router) WPA2 secured WiFi: GreenHouse-Network (password: sera2026)\n2) 4 IoT Sensors: Temperature (.101), Humidity (.102), Light (.103), Door/Motion (.104)\n3) Monitor sensors from PC-1 via WiFi panel (wget 192.168.2.1)\n4) IoT Panel: wget http://iot-panel (admin/admin) to manage devices\n5) Task: Test sensor access with ping 192.168.2.101',
       x: 500,
       y: 60,
@@ -758,7 +758,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'wifi-note',
       text: isTr
-        ? 'WiFi Laboratuvarı (Orta Seviye):\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: HomeWiFi yayınlar.\n2) PC-1 ve PC-2 kablosuz ağa (SSID match) bağlıdır.\n3) Tüm cihazlar aynı subnet (192.168.1.x) içindedir.\n4) PC-1 > ping 192.168.1.11 ile kablosuz iletişimi test edin.\n5) PC-1 > wget 192.168.1.1 ile Wifi kontrol panelini görün.'
+        ? 'Amaç: Router AP modunda kablosuz ağ oluşturarak PC\'lerin kablosuz bağlanmasını sağlamak.\n\nWiFi Laboratuvarı (Orta Seviye):\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: HomeWiFi yayınlar.\n2) PC-1 ve PC-2 kablosuz ağa (SSID match) bağlıdır.\n3) Tüm cihazlar aynı subnet (192.168.1.x) içindedir.\n4) PC-1 > ping 192.168.1.11 ile kablosuz iletişimi test edin.\n5) PC-1 > wget 192.168.1.1 ile Wifi kontrol panelini görün.'
         : 'WiFi Lab (Intermediate):\n1) R1 (Router) broadcasts SSID: HomeWiFi on wlan0 in AP mode.\n2) PC-1 and PC-2 are connected wirelessly (SSID match).\n3) All devices are on the same subnet (192.168.1.x).\n4) Test wireless connectivity with PC-1 > ping 192.168.1.11.\n5) PC-1 > wget 192.168.1.1 for Wifi control panel.',
       x: 300,
       y: 400,
@@ -825,15 +825,15 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'router-dhcp-note',
       text: isTr
-        ? 'Router DHCP Kurulumu (2 PC + 1 Switch + 1 Router):\n1) R1> en\n2) conf t\n3) int gi0/0 -> ip address 192.168.10.1 255.255.255.0 -> no shut\n4) ip dhcp pool LAN\n5) network 192.168.10.0 255.255.255.0\n6) default-router 192.168.10.1\n7) dns-server 8.8.8.8\n8) PC-1 ve PC-2: IP mode DHCP, ardından ipconfig /renew\nBeklenen: PC’ler 192.168.10.100+ aralığından IP alır.'
-        : 'Router DHCP Setup (2 PCs + 1 Switch + 1 Router):\n1) R1> en\n2) conf t\n3) int gi0/0 -> ip address 192.168.10.1 255.255.255.0 -> no shut\n4) ip dhcp pool LAN\n5) network 192.168.10.0 255.255.255.0\n6) default-router 192.168.10.1\n7) dns-server 8.8.8.8\n8) PC-1 and PC-2: set IP mode DHCP, then run ipconfig /renew\nExpected: PCs receive addresses from 192.168.10.100+ range.',
+        ? 'Amaç: Router üzerinde DHCP sunucusu yapılandırarak PC\'lere otomatik IP ataması yapmak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 1 adet Router (R1) ekle\n   - 1 adet Switch (SW1) ekle\n   - 2 adet PC ekle (PC-1, PC-2)\n   - PC-1 Eth0 -> SW1 Fa0/1 (Straight kablo)\n   - PC-2 Eth0 -> SW1 Fa0/2 (Straight kablo)\n   - SW1 Gi0/1 -> R1 Gi0/0 (Crossover kablo)\n\n2) ROUTER KONFİGÜRASYONU:\n   - R1 terminaline gir: enable, conf t\n   - interface gi0/0\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip dhcp pool LAN\n     network 192.168.10.0 255.255.255.0\n     default-router 192.168.10.1\n     dns-server 8.8.8.8\n   - exit\n\n3) SWITCH KONFİGÜRASYONU:\n   - SW1 terminaline gir: enable, conf t\n   - interface vlan 1\n     ip address 192.168.10.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/1\n     switchport mode access\n   - exit\n   - interface fa0/2\n     switchport mode access\n   - exit\n   - interface gi0/1\n     switchport mode access\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC-1: IP mode DHCP\n   - PC-2: IP mode DHCP\n\n5) TEST:\n   - PC-1 CMD: ipconfig /renew\n   - PC-2 CMD: ipconfig /renew\n   - R1> show ip dhcp binding (DHCP atamalarını gör)\n   - PC-1 ve PC-2 IP almalı (192.168.10.100+ aralığı)'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 1 Router (R1)\n   - Add 1 Switch (SW1)\n   - Add 2 PCs (PC-1, PC-2)\n   - Connect PC-1 Eth0 -> SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> SW1 Fa0/2 (Straight cable)\n   - Connect SW1 Gi0/1 -> R1 Gi0/0 (Crossover cable)\n\n2) ROUTER CONFIGURATION:\n   - Enter R1 terminal: enable, conf t\n   - interface gi0/0\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip dhcp pool LAN\n     network 192.168.10.0 255.255.255.0\n     default-router 192.168.10.1\n     dns-server 8.8.8.8\n   - exit\n\n3) SWITCH CONFIGURATION:\n   - Enter SW1 terminal: enable, conf t\n   - interface vlan 1\n     ip address 192.168.10.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/1\n     switchport mode access\n   - exit\n   - interface fa0/2\n     switchport mode access\n   - exit\n   - interface gi0/1\n     switchport mode access\n   - exit\n\n4) PC CONFIGURATION:\n   - PC-1: IP mode DHCP\n   - PC-2: IP mode DHCP\n\n5) TEST:\n   - PC-1 CMD: ipconfig /renew\n   - PC-2 CMD: ipconfig /renew\n   - R1> show ip dhcp binding (view DHCP assignments)\n   - PC-1 and PC-2 should receive IPs (192.168.10.100+ range)',
       x: 610,
       y: 40,
-      width: 430,
-      height: 220,
+      width: 500,
+      height: 340,
       color: '#0ea5e9',
       font: 'verdana',
-      fontSize: 16,
+      fontSize: 12,
       opacity: 0.75
     }
   ];
@@ -963,15 +963,15 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'basic-note-1',
       text: isTr
-        ? 'Amaç: Konsol, VTY ve enable parolalarını ayarlayıp doğrulamak.\n1) SW1’de: enable, conf t\n2) enable secret class\n3) enable password paswd\n4) line con 0 -> password console, login\n5) line vty 0 4 -> password vty123, login\n6) int vlan 10 -> ip address 192.168.10.150 255.255.255.0\n7) write memory\n8) PC-2 (Console) ile COM1 üzerinden konsol bağlantısı kullan.\n9) PC-1 CMD ekranından "telnet 192.168.10.150" komutu ile bağlanın.'
-        : 'Goal: Configure and verify console, VTY, and enable passwords.\n1) SW1: enable, conf t\n2) enable secret class\n3) enable password paswd\n4) line con 0 -> password console, login\n5) line vty 0 4 -> password vty123, login\n6) int vlan 10 -> ip address 192.168.10.150 255.255.255.0\n7) write memory\n8) Use PC-2 (Console) via COM1 to connect to console.\n9) Connect from PC-1 CMD using "telnet 192.168.10.150" command.',
+        ? 'Amaç: Switch üzerinde konsol, VTY ve enable parolalarını yapılandırmak ve doğrulamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 1 adet Switch (SW1) ekle\n   - 1 adet PC (PC-1) ekle\n   - 1 adet PC (PC-2) ekle (Console için)\n   - PC-1 Eth0 -> SW1 Fa0/1 (Straight kablo)\n   - PC-2 COM1 -> SW1 Console (Console kablo)\n\n2) SWITCH KONFİGÜRASYONU:\n   - SW1 terminaline gir: enable, conf t\n   - enable secret class\n   - enable password paswd\n   - service password-encryption\n   - line con 0\n     password console\n     login\n     logging synchronous\n   - line vty 0 4\n     password vty123\n     login\n     transport input telnet ssh\n   - exit\n\n3) VLAN VE IP AYARLARI:\n   - vlan 10\n     name VLAN10\n   - exit\n   - interface vlan 10\n     ip address 192.168.10.150 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/1\n     switchport access vlan 10\n     switchport mode access\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.10.10, Subnet 255.255.255.0, Gateway 192.168.10.150\n   - PC-2: Console bağlantısı için IP gerekmez\n\n5) TEST:\n   - PC-2 Console terminalinden SW1\'e bağlan\n   - PC-1 CMD: telnet 192.168.10.150\n   - Kullanıcı adı: (yok), Şifre: vty123\n   - Enable şifresi: class veya paswd'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 1 Switch (SW1)\n   - Add 1 PC (PC-1)\n   - Add 1 PC (PC-2) for Console\n   - Connect PC-1 Eth0 -> SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 COM1 -> SW1 Console (Console cable)\n\n2) SWITCH CONFIGURATION:\n   - Enter SW1 terminal: enable, conf t\n   - enable secret class\n   - enable password paswd\n   - service password-encryption\n   - line con 0\n     password console\n     login\n     logging synchronous\n   - line vty 0 4\n     password vty123\n     login\n     transport input telnet ssh\n   - exit\n\n3) VLAN AND IP SETTINGS:\n   - vlan 10\n     name VLAN10\n   - exit\n   - interface vlan 10\n     ip address 192.168.10.150 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/1\n     switchport access vlan 10\n     switchport mode access\n   - exit\n\n4) PC CONFIGURATION:\n   - PC-1: IP 192.168.10.10, Subnet 255.255.255.0, Gateway 192.168.10.150\n   - PC-2: No IP needed for Console connection\n\n5) TEST:\n   - Connect to SW1 from PC-2 Console terminal\n   - PC-1 CMD: telnet 192.168.10.150\n   - Username: (none), Password: vty123\n   - Enable password: class or paswd',
       x: 600,
       y: 40,
-      width: 420,
-      height: 250,
+      width: 500,
+      height: 320,
       color: '#22d3ee',
       font: 'verdana',
-      fontSize: 16,
+      fontSize: 12,
       opacity: 0.75
     }
   ];
@@ -1014,15 +1014,15 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'vlan-note-1',
       text: isTr
-        ? 'Amaç: VLAN 10/20 erişim portları.\n1) conf t\n2) vlan 10, name VLAN10\n3) vlan 20, name VLAN20\n4) int fa0/1 -> switchport access vlan 10\n5) int fa0/2 -> switchport access vlan 20\n6) show vlan brief ile kontrol et.'
-        : 'Goal: Access VLANs 10/20.\n1) conf t\n2) vlan 10, name VLAN10\n3) vlan 20, name VLAN20\n4) int fa0/1 -> switchport access vlan 10\n5) int fa0/2 -> switchport access vlan 20\n6) verify with show vlan brief.',
+        ? 'Amaç: Tek bir switch üzerinde VLAN oluşturarak PC\'leri farklı broadcast domain\'lere ayırmak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 1 adet Switch (SW1) ekle\n   - 2 adet PC ekle (PC-1, PC-2)\n   - PC-1 Eth0 -> SW1 Fa0/1 (Straight kablo)\n   - PC-2 Eth0 -> SW1 Fa0/2 (Straight kablo)\n\n2) SWITCH VLAN KONFİGÜRASYONU:\n   - SW1 terminaline gir: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - vlan 20\n     name VLAN20\n   - exit\n\n3) PORT VLAN ATAMASI:\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface fa0/2\n     switchport mode access\n     switchport access vlan 20\n   - exit\n\n4) PC IP KONFİGÜRASYONU:\n   - PC-1: IP 192.168.10.10, Subnet 255.255.255.0, VLAN 10\n   - PC-2: IP 192.168.20.10, Subnet 255.255.255.0, VLAN 20\n\n5) DOĞRULAMA:\n   - show vlan brief (VLAN 10 ve 20\'yi gör)\n   - show interfaces status (port VLAN atamalarını kontrol et)\n   - PC-1 ve PC-2 birbirine ping atamaz (farklı VLAN)'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 1 Switch (SW1)\n   - Add 2 PCs (PC-1, PC-2)\n   - Connect PC-1 Eth0 -> SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> SW1 Fa0/2 (Straight cable)\n\n2) SWITCH VLAN CONFIGURATION:\n   - Enter SW1 terminal: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - vlan 20\n     name VLAN20\n   - exit\n\n3) PORT VLAN ASSIGNMENT:\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface fa0/2\n     switchport mode access\n     switchport access vlan 20\n   - exit\n\n4) PC IP CONFIGURATION:\n   - PC-1: IP 192.168.10.10, Subnet 255.255.255.0, VLAN 10\n   - PC-2: IP 192.168.20.10, Subnet 255.255.255.0, VLAN 20\n\n5) VERIFICATION:\n   - show vlan brief (see VLAN 10 and 20)\n   - show interfaces status (check port VLAN assignments)\n   - PC-1 and PC-2 cannot ping each other (different VLANs)',
       x: 600,
       y: 40,
-      width: 420,
-      height: 180,
+      width: 480,
+      height: 280,
       color: '#a855f7',
       font: 'verdana',
-      fontSize: 16,
+      fontSize: 12,
       opacity: 0.75
     }
   ];
@@ -1046,8 +1046,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'vtp-note-1',
       text: isTr
-        ? 'Amaç: Trunk + VTP.\nSW1 (server): vtp mode server, vtp domain LAB\nSW2 (client): vtp mode client, vtp domain LAB\nGi0/1 trunk olmalı.\nSW1’de VLAN 10/20 aç -> SW2’ye otomatik gelmeli.\nshow interface trunk ve show vlan brief ile doğrula.'
-        : 'Goal: Trunk + VTP.\nSW1 (server): vtp mode server, vtp domain LAB\nSW2 (client): vtp mode client, vtp domain LAB\nGi0/1 must be trunk.\nCreate VLAN 10/20 on SW1 -> should appear on SW2.\nVerify with show interface trunk and show vlan brief.',
+        ? 'Amaç: İki switch arasında VTP kullanarak VLAN bilgilerinin otomatik yayılımını sağlamak.\n\nTrunk + VTP:\nSW1 (server): vtp mode server, vtp domain LAB\nSW2 (client): vtp mode client, vtp domain LAB\nGi0/1 trunk olmalı.\nSW1\'de VLAN 10/20 aç -> SW2\'ye otomatik gelmeli.\nshow interface trunk ve show vlan brief ile doğrula.'
+        : 'Goal: Automate VLAN propagation between two switches using VTP.\n\nTrunk + VTP:\nSW1 (server): vtp mode server, vtp domain LAB\nSW2 (client): vtp mode client, vtp domain LAB\nGi0/1 must be trunk.\nCreate VLAN 10/20 on SW1 -> should appear on SW2.\nVerify with show interface trunk and show vlan brief.',
       x: 600,
       y: 40,
       width: 420,
@@ -1099,24 +1099,12 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'native-vlan-note',
       text: isTr
-        ? `Temel Native VLAN Yapılandırması:
-1. SW1: vlan 99
-2. SW1: int fa0/24 -> switchport mode trunk
-3. SW1: int fa0/24 -> switchport trunk native vlan 99
-4. SW2: Aynı yapılandırma
-
-PC-1 ve PC-2 VLAN 99 üzerinde haberleşir.`
-        : `Basic Native VLAN Configuration:
-1. SW1: vlan 99
-2. SW1: int fa0/24 -> switchport mode trunk
-3. SW1: int fa0/24 -> switchport trunk native vlan 99
-4. SW2: Same configuration
-
-PC-1 and PC-2 communicate over VLAN 99.`,
+        ? 'Amaç: Trunk bağlantısında native VLAN yapılandırarak etiketsiz trafiğin belirli bir VLAN üzerinden geçmesini sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet Switch ekle (SW1, SW2)\n   - 2 adet PC ekle (PC-1, PC-2)\n   - PC-1 Eth0 -> SW1 Fa0/1 (Straight kablo)\n   - PC-2 Eth0 -> SW2 Fa0/1 (Straight kablo)\n   - SW1 Fa0/24 -> SW2 Fa0/24 (Crossover kablo)\n\n2) SW1 KONFİGÜRASYONU:\n   - SW1 terminaline gir: enable, conf t\n   - vlan 99\n     name NativeVLAN\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 99\n   - exit\n   - interface fa0/24\n     switchport mode trunk\n     switchport trunk native vlan 99\n   - exit\n\n3) SW2 KONFİGÜRASYONU:\n   - SW2 terminaline gir: enable, conf t\n   - vlan 99\n     name NativeVLAN\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 99\n   - exit\n   - interface fa0/24\n     switchport mode trunk\n     switchport trunk native vlan 99\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.99.10, Subnet 255.255.255.0, VLAN 99\n   - PC-2: IP 192.168.99.11, Subnet 255.255.255.0, VLAN 99\n\n5) TEST:\n   - show interfaces trunk (trunk ve native VLAN\'ı gör)\n   - PC-1 ping 192.168.99.11 (PC-2)'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 Switches (SW1, SW2)\n   - Add 2 PCs (PC-1, PC-2)\n   - Connect PC-1 Eth0 -> SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> SW2 Fa0/1 (Straight cable)\n   - Connect SW1 Fa0/24 -> SW2 Fa0/24 (Crossover cable)\n\n2) SW1 CONFIGURATION:\n   - Enter SW1 terminal: enable, conf t\n   - vlan 99\n     name NativeVLAN\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 99\n   - exit\n   - interface fa0/24\n     switchport mode trunk\n     switchport trunk native vlan 99\n   - exit\n\n3) SW2 CONFIGURATION:\n   - Enter SW2 terminal: enable, conf t\n   - vlan 99\n     name NativeVLAN\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 99\n   - exit\n   - interface fa0/24\n     switchport mode trunk\n     switchport trunk native vlan 99\n   - exit\n\n4) PC CONFIGURATION:\n   - PC-1: IP 192.168.99.10, Subnet 255.255.255.0, VLAN 99\n   - PC-2: IP 192.168.99.11, Subnet 255.255.255.0, VLAN 99\n\n5) TEST:\n   - show interfaces trunk (view trunk and native VLAN)\n   - PC-1 ping 192.168.99.11 (PC-2)',
       x: 500,
       y: 80,
-      width: 380,
-      height: 140,
+      width: 480,
+      height: 320,
       color: '#a78bfa',
       font: 'verdana',
       fontSize: 12,
@@ -1164,15 +1152,15 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'roas-note',
       text: isTr
-        ? 'ROAS adımları:\nSW1: int gi0/1 -> switchport mode trunk\nR1: int gi0/0.10 -> encapsulation dot1q 10, ip address 192.168.10.1/24\nR1: int gi0/0.20 -> encapsulation dot1q 20, ip address 192.168.20.1/24\nPC-1 VLAN10, PC-2 VLAN20.\nAynı VLAN ping başarılı; farklı VLAN ping başarısız (L2).'
-        : 'ROAS steps:\nSW1: int gi0/1 -> switchport mode trunk\nR1: int gi0/0.10 -> encapsulation dot1q 10, ip address 192.168.10.1/24\nR1: int gi0/0.20 -> encapsulation dot1q 20, ip address 192.168.20.1/24\nPC-1 VLAN10, PC-2 VLAN20.\nSame-VLAN ping succeeds; different-VLAN ping fails (L2).',
+        ? 'Amaç: Router-on-a-Stick kullanarak tek bir router interface\'i üzerinden farklı VLAN\'lar arası routing sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 1 adet Switch (SW1) ekle\n   - 1 adet Router (R1) ekle\n   - 2 adet PC ekle (PC-1, PC-2)\n   - PC-1 Eth0 -> SW1 Fa0/1 (Straight kablo)\n   - PC-2 Eth0 -> SW1 Fa0/2 (Straight kablo)\n   - SW1 Gi0/1 -> R1 Gi0/0 (Crossover kablo)\n\n2) SWITCH KONFİGÜRASYONU:\n   - SW1 terminaline gir: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - vlan 20\n     name VLAN20\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface fa0/2\n     switchport mode access\n     switchport access vlan 20\n   - exit\n   - interface gi0/1\n     switchport mode trunk\n   - exit\n\n3) ROUTER KONFİGÜRASYONU:\n   - R1 terminaline gir: enable, conf t\n   - interface gi0/0\n     no shutdown\n   - exit\n   - interface gi0/0.10\n     encapsulation dot1q 10\n     ip address 192.168.10.1 255.255.255.0\n   - exit\n   - interface gi0/0.20\n     encapsulation dot1q 20\n     ip address 192.168.20.1 255.255.255.0\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.10.10, Subnet 255.255.255.0, Gateway 192.168.10.1, VLAN 10\n   - PC-2: IP 192.168.20.10, Subnet 255.255.255.0, Gateway 192.168.20.1, VLAN 20\n\n5) TEST:\n   - PC-1 ping 192.168.20.10 (PC-2) - Başarılı (inter-VLAN routing)'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 1 Switch (SW1)\n   - Add 1 Router (R1)\n   - Add 2 PCs (PC-1, PC-2)\n   - Connect PC-1 Eth0 -> SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> SW1 Fa0/2 (Straight cable)\n   - Connect SW1 Gi0/1 -> R1 Gi0/0 (Crossover cable)\n\n2) SWITCH CONFIGURATION:\n   - Enter SW1 terminal: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - vlan 20\n     name VLAN20\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface fa0/2\n     switchport mode access\n     switchport access vlan 20\n   - exit\n   - interface gi0/1\n     switchport mode trunk\n   - exit\n\n3) ROUTER CONFIGURATION:\n   - Enter R1 terminal: enable, conf t\n   - interface gi0/0\n     no shutdown\n   - exit\n   - interface gi0/0.10\n     encapsulation dot1q 10\n     ip address 192.168.10.1 255.255.255.0\n   - exit\n   - interface gi0/0.20\n     encapsulation dot1q 20\n     ip address 192.168.20.1 255.255.255.0\n   - exit\n\n4) PC CONFIGURATION:\n   - PC-1: IP 192.168.10.10, Subnet 255.255.255.0, Gateway 192.168.10.1, VLAN 10\n   - PC-2: IP 192.168.20.10, Subnet 255.255.255.0, Gateway 192.168.20.1, VLAN 20\n\n5) TEST:\n   - PC-1 ping 192.168.20.10 (PC-2) - Success (inter-VLAN routing)',
       x: 600,
       y: 40,
-      width: 420,
-      height: 190,
+      width: 500,
+      height: 340,
       color: '#38bdf8',
       font: 'verdana',
-      fontSize: 16,
+      fontSize: 12,
       opacity: 0.75
     }
   ];
@@ -1206,15 +1194,15 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'legacy-routing-note',
       text: isTr
-        ? 'Legacy Inter-VLAN Routing:\nRouter 2 ayrı fiziksel interface ile VLAN\'lara bağlanır.\nSW1: int fa0/11 -> access vlan 10\nSW1: int fa0/1 -> access vlan 20\nR1: int gi0/1 -> ip address 192.168.0.1/24 (VLAN 10 gateway)\nR1: int gi0/0 -> ip address 192.168.1.1/24 (VLAN 20 gateway)\nPC-1 gateway: 192.168.0.1, PC-2 gateway: 192.168.1.1\nFarklı VLAN\'lar arası ping başarılı (ip routing otomatik).'
-        : 'Legacy Inter-VLAN Routing:\nRouter connects to VLANs with 2 separate physical interfaces.\nSW1: int fa0/11 -> access vlan 10\nSW1: int fa0/1 -> access vlan 20\nR1: int gi0/1 -> ip address 192.168.0.1/24 (VLAN 10 gateway)\nR1: int gi0/0 -> ip address 192.168.1.1/24 (VLAN 20 gateway)\nPC-1 gateway: 192.168.0.1, PC-2 gateway: 192.168.1.1\nDifferent VLAN ping succeeds (ip routing auto-enabled).',
+        ? 'Amaç: Router üzerinde ayrı fiziksel interface\'ler kullanarak VLAN\'lar arası routing sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 1 adet Switch (SW1) ekle\n   - 1 adet Router (R1) ekle\n   - 2 adet PC ekle (PC-1, PC-2)\n   - PC-1 Eth0 -> SW1 Fa0/2 (Straight kablo)\n   - PC-2 Eth0 -> SW1 Fa0/12 (Straight kablo)\n   - R1 Gi0/1 -> SW1 Fa0/11 (Crossover kablo)\n   - R1 Gi0/0 -> SW1 Fa0/1 (Crossover kablo)\n\n2) SWITCH KONFİGÜRASYONU:\n   - SW1 terminaline gir: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - vlan 20\n     name VLAN20\n   - exit\n   - interface fa0/2\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface fa0/12\n     switchport mode access\n     switchport access vlan 20\n   - exit\n   - interface fa0/11\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 20\n   - exit\n\n3) ROUTER KONFİGÜRASYONU:\n   - R1 terminaline gir: enable, conf t\n   - interface gi0/1\n     ip address 192.168.0.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/0\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip routing (otomatik aktiftir)\n\n4) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.0.2, Subnet 255.255.255.0, Gateway 192.168.0.1, VLAN 10\n   - PC-2: IP 192.168.1.2, Subnet 255.255.255.0, Gateway 192.168.1.1, VLAN 20\n\n5) TEST:\n   - PC-1 ping 192.168.1.2 (PC-2) - Başarılı (inter-VLAN routing)'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 1 Switch (SW1)\n   - Add 1 Router (R1)\n   - Add 2 PCs (PC-1, PC-2)\n   - Connect PC-1 Eth0 -> SW1 Fa0/2 (Straight cable)\n   - Connect PC-2 Eth0 -> SW1 Fa0/12 (Straight cable)\n   - Connect R1 Gi0/1 -> SW1 Fa0/11 (Crossover cable)\n   - Connect R1 Gi0/0 -> SW1 Fa0/1 (Crossover cable)\n\n2) SWITCH CONFIGURATION:\n   - Enter SW1 terminal: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - vlan 20\n     name VLAN20\n   - exit\n   - interface fa0/2\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface fa0/12\n     switchport mode access\n     switchport access vlan 20\n   - exit\n   - interface fa0/11\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 20\n   - exit\n\n3) ROUTER CONFIGURATION:\n   - Enter R1 terminal: enable, conf t\n   - interface gi0/1\n     ip address 192.168.0.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/0\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip routing (auto-enabled)\n\n4) PC CONFIGURATION:\n   - PC-1: IP 192.168.0.2, Subnet 255.255.255.0, Gateway 192.168.0.1, VLAN 10\n   - PC-2: IP 192.168.1.2, Subnet 255.255.255.0, Gateway 192.168.1.1, VLAN 20\n\n5) TEST:\n   - PC-1 ping 192.168.1.2 (PC-2) - Success (inter-VLAN routing)',
       x: 600,
       y: 40,
-      width: 440,
-      height: 210,
+      width: 500,
+      height: 340,
       color: '#a855f7',
       font: 'verdana',
-      fontSize: 16,
+      fontSize: 12,
       opacity: 0.75
     }
   ];
@@ -1232,12 +1220,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'ps-note-1',
       text: isTr
-        ? 'Amaç: Port-security temel örnek.\nFa0/3 üzerinde enabled + sticky + max 1.\nshow port-security ile kontrol et.\nFarklı MAC görürse ihlal oluşur (shutdown).'
-        : 'Goal: Basic port-security.\nFa0/3 enabled + sticky + max 1.\nVerify with show port-security.\nDifferent MAC triggers violation (shutdown).',
+        ? 'Amaç: Switch port\'unda port-security yapılandırarak sadece izin verilen MAC adreslerinin bağlanmasına izin vermek.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 1 adet Switch (SW1) ekle\n   - 1 adet PC (PC-1) ekle\n   - PC-1 Eth0 -> SW1 Fa0/3 (Straight kablo)\n\n2) SWITCH KONFİGÜRASYONU:\n   - SW1 terminaline gir: enable, conf t\n   - interface fa0/3\n     switchport mode access\n     switchport port-security\n     switchport port-security maximum 1\n     switchport port-security violation shutdown\n     switchport port-security mac-address sticky\n   - exit\n\n3) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.1.10, Subnet 255.255.255.0\n   - PC-1 MAC adresi otomatik öğrenilir (sticky)\n\n4) DOĞRULAMA:\n   - show port-security interface fa0/3\n   - show port-security address\n\n5) TEST:\n   - PC-1\'den trafik gönder (ping)\n   - Farklı bir MAC adresi bağlanırsa port shutdown olur'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 1 Switch (SW1)\n   - Add 1 PC (PC-1)\n   - Connect PC-1 Eth0 -> SW1 Fa0/3 (Straight cable)\n\n2) SWITCH CONFIGURATION:\n   - Enter SW1 terminal: enable, conf t\n   - interface fa0/3\n     switchport mode access\n     switchport port-security\n     switchport port-security maximum 1\n     switchport port-security violation shutdown\n     switchport port-security mac-address sticky\n   - exit\n\n3) PC CONFIGURATION:\n   - PC-1: IP 192.168.1.10, Subnet 255.255.255.0\n   - PC-1 MAC address is automatically learned (sticky)\n\n4) VERIFICATION:\n   - show port-security interface fa0/3\n   - show port-security address\n\n5) TEST:\n   - Send traffic from PC-1 (ping)\n   - If a different MAC connects, the port will shutdown',
       x: 400,
       y: 80,
-      width: 300,
-      height: 100,
+      width: 480,
+      height: 280,
       color: '#ef4444',
       font: 'verdana',
       fontSize: 12,
@@ -1270,15 +1258,15 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'l3-routing-note',
       text: isTr
-        ? 'L3 Inter-VLAN Routing:\n1) conf t\n2) ip routing\n3) interface vlan 10 -> ip address 192.168.10.1/24\n4) interface vlan 20 -> ip address 192.168.20.1/24\n5) interface vlan 30 -> ip address 192.168.30.1/24\n6) interface vlan 40 -> ip address 192.168.40.1/24\n7) show ip route ile kontrol et\nTüm VLANlar birbirine ping atabilir.'
-        : 'L3 Inter-VLAN Routing:\n1) conf t\n2) ip routing\n3) interface vlan 10 -> ip address 192.168.10.1/24\n4) interface vlan 20 -> ip address 192.168.20.1/24\n5) interface vlan 30 -> ip address 192.168.30.1/24\n6) interface vlan 40 -> ip address 192.168.40.1/24\n7) verify with show ip route\nAll VLANs can ping each other.',
+        ? 'Amaç: L3 Switch üzerinde SVI interface\'leri kullanarak farklı VLAN\'lar arası routing sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 1 adet L3 Switch (L3SW1) ekle\n   - 4 adet PC ekle (PC-1, PC-2, PC-3, PC-4)\n   - PC-1 Eth0 -> L3SW1 Fa0/1 (Straight kablo)\n   - PC-2 Eth0 -> L3SW1 Fa0/2 (Straight kablo)\n   - PC-3 Eth0 -> L3SW1 Fa0/3 (Straight kablo)\n   - PC-4 Eth0 -> L3SW1 Fa0/4 (Straight kablo)\n\n2) L3 SWITCH KONFİGÜRASYONU:\n   - L3SW1 terminaline gir: enable, conf t\n   - ip routing\n   - vlan 10\n     name VLAN10\n   - exit\n   - vlan 20\n     name VLAN20\n   - exit\n   - vlan 30\n     name VLAN30\n   - exit\n   - vlan 40\n     name VLAN40\n   - exit\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 30\n     ip address 192.168.30.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 40\n     ip address 192.168.40.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface fa0/2\n     switchport mode access\n     switchport access vlan 20\n   - exit\n   - interface fa0/3\n     switchport mode access\n     switchport access vlan 30\n   - exit\n   - interface fa0/4\n     switchport mode access\n     switchport access vlan 40\n   - exit\n\n3) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1, VLAN 10\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1, VLAN 20\n   - PC-3: IP 192.168.30.10, GW 192.168.30.1, VLAN 30\n   - PC-4: IP 192.168.40.10, GW 192.168.40.1, VLAN 40\n\n4) TEST:\n   - show ip route (routing tablosunu gör)\n   - Tüm PC\'ler birbirine ping atabilir'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 1 L3 Switch (L3SW1)\n   - Add 4 PCs (PC-1, PC-2, PC-3, PC-4)\n   - Connect PC-1 Eth0 -> L3SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> L3SW1 Fa0/2 (Straight cable)\n   - Connect PC-3 Eth0 -> L3SW1 Fa0/3 (Straight cable)\n   - Connect PC-4 Eth0 -> L3SW1 Fa0/4 (Straight cable)\n\n2) L3 SWITCH CONFIGURATION:\n   - Enter L3SW1 terminal: enable, conf t\n   - ip routing\n   - vlan 10\n     name VLAN10\n   - exit\n   - vlan 20\n     name VLAN20\n   - exit\n   - vlan 30\n     name VLAN30\n   - exit\n   - vlan 40\n     name VLAN40\n   - exit\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 30\n     ip address 192.168.30.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 40\n     ip address 192.168.40.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface fa0/2\n     switchport mode access\n     switchport access vlan 20\n   - exit\n   - interface fa0/3\n     switchport mode access\n     switchport access vlan 30\n   - exit\n   - interface fa0/4\n     switchport mode access\n     switchport access vlan 40\n   - exit\n\n3) PC CONFIGURATION:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1, VLAN 10\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1, VLAN 20\n   - PC-3: IP 192.168.30.10, GW 192.168.30.1, VLAN 30\n   - PC-4: IP 192.168.40.10, GW 192.168.40.1, VLAN 40\n\n4) TEST:\n   - show ip route (view routing table)\n   - All PCs can ping each other',
       x: 600,
       y: 40,
-      width: 420,
-      height: 200,
+      width: 500,
+      height: 400,
       color: '#22c55e',
       font: 'verdana',
-      fontSize: 16,
+      fontSize: 12,
       opacity: 0.75
     }
   ];
@@ -1318,15 +1306,15 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'static-routing-note',
       text: isTr
-        ? 'Static Routing Lab:\nR1: ip route 192.168.20.0 255.255.255.0 192.168.1.2\nR2: ip route 192.168.10.0 255.255.255.0 192.168.1.1\nR1 Gi0/1: 192.168.10.1/24 (PC-1 Gateway)\nR1 Gi0/0: 192.168.1.1/24 (R2 bağlantısı)\nR2 Gi0/0: 192.168.1.2/24 (R1 bağlantısı)\nR2 Gi0/1: 192.168.20.1/24 (PC-2 Gateway)\nPC-1: 192.168.10.10/24, GW: 192.168.10.1\nPC-2: 192.168.20.10/24, GW: 192.168.20.1\nshow ip route ile doğrula.'
-        : 'Static Routing Lab:\nR1: ip route 192.168.20.0 255.255.255.0 192.168.1.2\nR2: ip route 192.168.10.0 255.255.255.0 192.168.1.1\nR1 Gi0/1: 192.168.10.1/24 (PC-1 Gateway)\nR1 Gi0/0: 192.168.1.1/24 (R2 link)\nR2 Gi0/0: 192.168.1.2/24 (R1 link)\nR2 Gi0/1: 192.168.20.1/24 (PC-2 Gateway)\nPC-1: 192.168.10.10/24, GW: 192.168.10.1\nPC-2: 192.168.20.10/24, GW: 192.168.20.1\nVerify with show ip route.',
+        ? 'Amaç: Router\'larda static routing yapılandırarak farklı ağlar arası iletişim sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet Router (R1, R2) ekle\n   - 2 adet Switch (SW1, SW2) ekle\n   - 2 adet PC (PC-1, PC-2) ekle\n   - PC-1 Eth0 -> SW1 Fa0/1 (Straight kablo)\n   - PC-2 Eth0 -> SW2 Fa0/1 (Straight kablo)\n   - SW1 Gi0/1 -> R1 Gi0/0 (Crossover kablo)\n   - R1 Gi0/1 -> R2 Gi0/0 (Crossover kablo)\n   - R2 Gi0/1 -> SW2 Gi0/1 (Crossover kablo)\n\n2) R1 KONFİGÜRASYONU:\n   - R1 terminaline gir: enable, conf t\n   - interface gi0/0\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.20.0 255.255.255.0 192.168.1.2\n   - exit\n\n3) R2 KONFİGÜRASYONU:\n   - R2 terminaline gir: enable, conf t\n   - interface gi0/0\n     ip address 192.168.1.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.10.0 255.255.255.0 192.168.1.1\n   - exit\n\n4) SWITCH KONFİGÜRASYONU:\n   - SW1 ve SW2: interface fa0/1 -> switchport mode access\n   - SW1 ve SW2: interface gi0/1 -> switchport mode access\n\n5) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1\n\n6) TEST:\n   - show ip route (statik rotaları gör)\n   - PC-1 ping 192.168.20.10 (PC-2)'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 Routers (R1, R2)\n   - Add 2 Switches (SW1, SW2)\n   - Add 2 PCs (PC-1, PC-2)\n   - Connect PC-1 Eth0 -> SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> SW2 Fa0/1 (Straight cable)\n   - Connect SW1 Gi0/1 -> R1 Gi0/0 (Crossover cable)\n   - Connect R1 Gi0/1 -> R2 Gi0/0 (Crossover cable)\n   - Connect R2 Gi0/1 -> SW2 Gi0/1 (Crossover cable)\n\n2) R1 CONFIGURATION:\n   - Enter R1 terminal: enable, conf t\n   - interface gi0/0\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.20.0 255.255.255.0 192.168.1.2\n   - exit\n\n3) R2 CONFIGURATION:\n   - Enter R2 terminal: enable, conf t\n   - interface gi0/0\n     ip address 192.168.1.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.10.0 255.255.255.0 192.168.1.1\n   - exit\n\n4) SWITCH CONFIGURATION:\n   - SW1 and SW2: interface fa0/1 -> switchport mode access\n   - SW1 and SW2: interface gi0/1 -> switchport mode access\n\n5) PC CONFIGURATION:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1\n\n6) TEST:\n   - show ip route (view static routes)\n   - PC-1 ping 192.168.20.10 (PC-2)',
       x: 600,
       y: 40,
-      width: 420,
-      height: 210,
+      width: 500,
+      height: 360,
       color: '#3b82f6',
       font: 'verdana',
-      fontSize: 16,
+      fontSize: 12,
       opacity: 0.75
     }
   ];
@@ -1373,15 +1361,15 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'etherchannel-note',
       text: isTr
-        ? 'EtherChannel (Link Aggregation):\nSW1: int range gi0/1-2 -> channel-group 1 mode active\nSW2: int range gi0/1-2 -> channel-group 1 mode active\nSW1: int po1 -> switchport mode trunk\nSW2: int po1 -> switchport mode trunk\nshow etherchannel summary ile doğrula\nRedundancy ve bandwidth artışı.'
-        : 'EtherChannel (Link Aggregation):\nSW1: int range gi0/1-2 -> channel-group 1 mode active\nSW2: int range gi0/1-2 -> channel-group 1 mode active\nSW1: int po1 -> switchport mode trunk\nSW2: int po1 -> switchport mode trunk\nVerify with show etherchannel summary\nRedundancy and bandwidth increase.',
+        ? 'Amaç: İki switch arasında EtherChannel (LACP) kullanarak bant genişliğini artırmak ve redundancy sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet Switch (SW1, SW2) ekle\n   - 2 adet PC (PC-1, PC-2) ekle\n   - PC-1 Eth0 -> SW1 Fa0/1 (Straight kablo)\n   - PC-2 Eth0 -> SW2 Fa0/1 (Straight kablo)\n   - SW1 Gi0/1 -> SW2 Gi0/1 (Crossover kablo)\n   - SW1 Gi0/2 -> SW2 Gi0/2 (Crossover kablo)\n\n2) SW1 KONFİGÜRASYONU:\n   - SW1 terminaline gir: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range gi0/1-2\n     channel-group 1 mode active\n   - exit\n   - interface port-channel 1\n     switchport mode trunk\n   - exit\n\n3) SW2 KONFİGÜRASYONU:\n   - SW2 terminaline gir: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range gi0/1-2\n     channel-group 1 mode active\n   - exit\n   - interface port-channel 1\n     switchport mode trunk\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.10.10, Subnet 255.255.255.0, VLAN 10\n   - PC-2: IP 192.168.10.11, Subnet 255.255.255.0, VLAN 10\n\n5) TEST:\n   - show etherchannel summary (EtherChannel durumunu gör)\n   - show spanning-tree (STP durumunu kontrol et)\n   - PC-1 ping 192.168.10.11 (PC-2)'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 Switches (SW1, SW2)\n   - Add 2 PCs (PC-1, PC-2)\n   - Connect PC-1 Eth0 -> SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> SW2 Fa0/1 (Straight cable)\n   - Connect SW1 Gi0/1 -> SW2 Gi0/1 (Crossover cable)\n   - Connect SW1 Gi0/2 -> SW2 Gi0/2 (Crossover cable)\n\n2) SW1 CONFIGURATION:\n   - Enter SW1 terminal: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range gi0/1-2\n     channel-group 1 mode active\n   - exit\n   - interface port-channel 1\n     switchport mode trunk\n   - exit\n\n3) SW2 CONFIGURATION:\n   - Enter SW2 terminal: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range gi0/1-2\n     channel-group 1 mode active\n   - exit\n   - interface port-channel 1\n     switchport mode trunk\n   - exit\n\n4) PC CONFIGURATION:\n   - PC-1: IP 192.168.10.10, Subnet 255.255.255.0, VLAN 10\n   - PC-2: IP 192.168.10.11, Subnet 255.255.255.0, VLAN 10\n\n5) TEST:\n   - show etherchannel summary (view EtherChannel status)\n   - show spanning-tree (check STP status)\n   - PC-1 ping 192.168.10.11 (PC-2)',
       x: 600,
       y: 40,
-      width: 420,
-      height: 190,
+      width: 500,
+      height: 360,
       color: '#f97316',
       font: 'verdana',
-      fontSize: 16,
+      fontSize: 12,
       opacity: 0.75
     }
   ];
@@ -1417,12 +1405,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'stp-note',
       text: isTr
-        ? '🔄 STP Redundant Links (Yedekli Bağlantılar):\n\nSW1: spanning-tree priority 28672 (ROOT BRIDGE)\nSW2: spanning-tree priority 32768\n\nGi0/1 ve Gi0/2 arasındaki redundant link:\n- SW1 Gi0/1: Desg FWD (Aktif)\n- SW1 Gi0/2: Altn BLK \n- SW2 Gi0/1: Root FWD (Aktif)\n- SW2 Gi0/2: Altn BLK \n\nGörevler:\n1) show spanning-tree ile STP durumunu kontrol et\n2) Bloke portlar (Gi0/2)\n3) Gi0/1 kablo kesilirse Gi0/2 otomatik aktif olur'
-        : '🔄 STP Redundant Links:\n\nSW1: spanning-tree priority 28672 (ROOT BRIDGE)\nSW2: spanning-tree priority 32768\n\nRedundant link between Gi0/1 and Gi0/2:\n- SW1 Gi0/1: Desg FWD (Active)\n- SW1 Gi0/2: Altn BLK\n- SW2 Gi0/1: Root FWD (Active)\n- SW2 Gi0/2: Altn BLK\n\nTasks:\n1) Verify STP state with show spanning-tree\n2) Blocked ports (Gi0/2)\n 3) If Gi0/1 fails, Gi0/2 automatically becomes active',
+        ? 'Amaç: STP kullanarak redundant link\'lerde loop önlemek ve path sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet Switch (SW1, SW2) ekle\n   - 2 adet PC (PC-1, PC-2) ekle\n   - PC-1 Eth0 -> SW1 Fa0/1 (Straight kablo)\n   - PC-2 Eth0 -> SW2 Fa0/1 (Straight kablo)\n   - SW1 Gi0/1 -> SW2 Gi0/1 (Crossover kablo)\n   - SW1 Gi0/2 -> SW2 Gi0/2 (Crossover kablo)\n\n2) SW1 KONFİGÜRASYONU (ROOT BRIDGE):\n   - SW1 terminaline gir: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range gi0/1-2\n     switchport mode trunk\n   - exit\n   - spanning-tree mode rapid-pvst\n   - spanning-tree vlan 10 priority 28672\n   - exit\n\n3) SW2 KONFİGÜRASYONU:\n   - SW2 terminaline gir: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range gi0/1-2\n     switchport mode trunk\n   - exit\n   - spanning-tree mode rapid-pvst\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.10.10, Subnet 255.255.255.0, VLAN 10\n   - PC-2: IP 192.168.10.11, Subnet 255.255.255.0, VLAN 10\n\n5) TEST:\n   - show spanning-tree (STP durumunu gör)\n   - SW1 Gi0/2 bloke olmalı (BLK)\n   - Gi0/1 kablo kesilirse Gi0/2 otomatik aktif olur'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 Switches (SW1, SW2)\n   - Add 2 PCs (PC-1, PC-2)\n   - Connect PC-1 Eth0 -> SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> SW2 Fa0/1 (Straight cable)\n   - Connect SW1 Gi0/1 -> SW2 Gi0/1 (Crossover cable)\n   - Connect SW1 Gi0/2 -> SW2 Gi0/2 (Crossover cable)\n\n2) SW1 CONFIGURATION (ROOT BRIDGE):\n   - Enter SW1 terminal: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range gi0/1-2\n     switchport mode trunk\n   - exit\n   - spanning-tree mode rapid-pvst\n   - spanning-tree vlan 10 priority 28672\n   - exit\n\n3) SW2 CONFIGURATION:\n   - Enter SW2 terminal: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range gi0/1-2\n     switchport mode trunk\n   - exit\n   - spanning-tree mode rapid-pvst\n   - exit\n\n4) PC CONFIGURATION:\n   - PC-1: IP 192.168.10.10, Subnet 255.255.255.0, VLAN 10\n   - PC-2: IP 192.168.10.11, Subnet 255.255.255.0, VLAN 10\n\n5) TEST:\n   - show spanning-tree (view STP status)\n   - SW1 Gi0/2 should be blocked (BLK)\n   - If Gi0/1 fails, Gi0/2 automatically becomes active',
       x: 600,
       y: 40,
-      width: 480,
-      height: 240,
+      width: 500,
+      height: 360,
       color: '#f59e0b',
       font: 'verdana',
       fontSize: 12,
@@ -1501,7 +1489,7 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'stp-triangle-note',
       text: isTr
-        ? '🔄 STP Triangle Topology (3 Switch):\n\nSW1, SW2, SW3 üçgen topolojide bağlı.\n\nÜçgen bağlantı:\n- SW1 Fa0/1 ↔ SW3 Fa0/1: Altn BLK\n- SW1 Fa0/2 ↔ SW2 Fa0/1: Desg FWD\n- SW2 Fa0/2 ↔ SW3 Fa0/2: Desg FWD\n\nGörevler:\n1) show spanning-tree ile STP durumunu kontrol et\n2) Bloke port (SW1 Fa0/1)\n3) SW1 Fa0/1 kablo kesilirse otomatik aktif olur'
+        ? 'Amaç: Üç switch arasında triangle topolojide STP kullanarak loop önlemek ve path sağlamak.\n\n🔄 STP Triangle Topology (3 Switch):\n\nSW1, SW2, SW3 üçgen topolojide bağlı.\n\nÜçgen bağlantı:\n- SW1 Fa0/1 ↔ SW3 Fa0/1: Altn BLK\n- SW1 Fa0/2 ↔ SW2 Fa0/1: Desg FWD\n- SW2 Fa0/2 ↔ SW3 Fa0/2: Desg FWD\n\nGörevler:\n1) show spanning-tree ile STP durumunu kontrol et\n2) Bloke port (SW1 Fa0/1)\n3) SW1 Fa0/1 kablo kesilirse otomatik aktif olur'
         : '🔄 STP Triangle Topology (3 Switches):\n\nSW1, SW2, SW3 connected in triangle topology.\n\nTriangle connections:\n- SW1 Fa0/1 ↔ SW3 Fa0/1: Altn BLK\n- SW1 Fa0/2 ↔ SW2 Fa0/1: Desg FWD\n- SW2 Fa0/2 ↔ SW3 Fa0/2: Desg FWD\n\nTasks:\n1) Verify STP state with show spanning-tree\n2) Blocked port (SW1 Fa0/1) \n3) If SW1 Fa0/1 fails, it automatically becomes active',
       x: 600,
       y: 40,
@@ -1604,12 +1592,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'note-stp-vlan1',
       text: isTr
-        ? 'VLAN 1 STP:\n• SW1: Priority 24576 (Root)\n• SW2: Priority 32768\n• SW3: Priority 32768\n\nHer sw\'de VLAN 1 için PC var:\nSW1: PC1-VLAN1 (fa0/3)\nSW2: PC2-VLAN1 (fa0/3)\nSW3: PC3-VLAN1 (fa0/3)'
-        : 'VLAN 1 STP:\n• SW1: Priority 24576 (Root)\n• SW2: Priority 32768\n• SW3: Priority 32768\n\nPC for VLAN 1 on each switch:\nSW1: PC1-VLAN1 (fa0/3)\nSW2: PC2-VLAN1 (fa0/3)\nSW3: PC3-VLAN1 (fa0/3)',
+        ? '🔧 VLAN 1 KONFİGÜRASYONU:\n\nSW1 (Root):\n- spanning-tree vlan 1 priority 24576\n\nSW2:\n- spanning-tree vlan 1 priority 32768\n\nSW3:\n- spanning-tree vlan 1 priority 32768\n\nPC\'ler:\n- PC1-VLAN1: 192.168.1.10 (SW1 Fa0/3)\n- PC2-VLAN1: 192.168.1.20 (SW2 Fa0/3)\n- PC3-VLAN1: 192.168.1.30 (SW3 Fa0/3)'
+        : '🔧 VLAN 1 CONFIGURATION:\n\nSW1 (Root):\n- spanning-tree vlan 1 priority 24576\n\nSW2:\n- spanning-tree vlan 1 priority 32768\n\nSW3:\n- spanning-tree vlan 1 priority 32768\n\nPCs:\n- PC1-VLAN1: 192.168.1.10 (SW1 Fa0/3)\n- PC2-VLAN1: 192.168.1.20 (SW2 Fa0/3)\n- PC3-VLAN1: 192.168.1.30 (SW3 Fa0/3)',
       x: 200,
       y: 50,
-      width: 280,
-      height: 120,
+      width: 300,
+      height: 160,
       color: '#e3f2fd',
       font: 'Arial',
       fontSize: 12,
@@ -1618,12 +1606,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'note-stp-vlan10',
       text: isTr
-        ? 'VLAN 10 STP:\n• SW1: Priority 32768\n• SW2: Priority 24576 (Root)\n• SW3: Priority 32768\n\nHer sw\'de VLAN 10 için PC var:\nSW1: PC1-VLAN10 (fa0/4)\nSW2: PC2-VLAN10 (fa0/4)\nSW3: PC3-VLAN10 (fa0/4)'
-        : 'VLAN 10 STP:\n• SW1: Priority 32768\n• SW2: Priority 24576 (Root)\n• SW3: Priority 32768\n\nPC for VLAN 10 on each switch:\nSW1: PC1-VLAN10 (fa0/4)\nSW2: PC2-VLAN10 (fa0/4)\nSW3: PC3-VLAN10 (fa0/4)',
+        ? '🔧 VLAN 10 KONFİGÜRASYONU:\n\nSW1:\n- spanning-tree vlan 10 priority 32768\n\nSW2 (Root):\n- spanning-tree vlan 10 priority 24576\n\nSW3:\n- spanning-tree vlan 10 priority 32768\n\nPC\'ler:\n- PC1-VLAN10: 192.168.10.10 (SW1 Fa0/4)\n- PC2-VLAN10: 192.168.10.20 (SW2 Fa0/4)\n- PC3-VLAN10: 192.168.10.30 (SW3 Fa0/4)'
+        : '🔧 VLAN 10 CONFIGURATION:\n\nSW1:\n- spanning-tree vlan 10 priority 32768\n\nSW2 (Root):\n- spanning-tree vlan 10 priority 24576\n\nSW3:\n- spanning-tree vlan 10 priority 32768\n\nPCs:\n- PC1-VLAN10: 192.168.10.10 (SW1 Fa0/4)\n- PC2-VLAN10: 192.168.10.20 (SW2 Fa0/4)\n- PC3-VLAN10: 192.168.10.30 (SW3 Fa0/4)',
       x: 500,
       y: 30,
-      width: 280,
-      height: 120,
+      width: 300,
+      height: 160,
       color: '#fff3e0',
       font: 'Arial',
       fontSize: 12,
@@ -1632,12 +1620,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'note-stp-vlan20',
       text: isTr
-        ? 'VLAN 20 STP:\n• SW1: Priority 32768\n• SW2: Priority 32768\n• SW3: Priority 24576 (Root)\n\nHer sw\'de VLAN 20 için PC var:\nSW1: PC1-VLAN20 (fa0/5)\nSW2: PC2-VLAN20 (fa0/5)\nSW3: PC3-VLAN20 (fa0/5)'
-        : 'VLAN 20 STP:\n• SW1: Priority 32768\n• SW2: Priority 32768\n• SW3: Priority 24576 (Root)\n\nPC for VLAN 20 on each switch:\nSW1: PC1-VLAN20 (fa0/5)\nSW2: PC2-VLAN20 (fa0/5)\nSW3: PC3-VLAN20 (fa0/5)',
+        ? '🔧 VLAN 20 KONFİGÜRASYONU:\n\nSW1:\n- spanning-tree vlan 20 priority 32768\n\nSW2:\n- spanning-tree vlan 20 priority 32768\n\nSW3 (Root):\n- spanning-tree vlan 20 priority 24576\n\nPC\'ler:\n- PC1-VLAN20: 192.168.20.10 (SW1 Fa0/5)\n- PC2-VLAN20: 192.168.20.20 (SW2 Fa0/5)\n- PC3-VLAN20: 192.168.20.30 (SW3 Fa0/5)'
+        : '🔧 VLAN 20 CONFIGURATION:\n\nSW1:\n- spanning-tree vlan 20 priority 32768\n\nSW2:\n- spanning-tree vlan 20 priority 32768\n\nSW3 (Root):\n- spanning-tree vlan 20 priority 24576\n\nPCs:\n- PC1-VLAN20: 192.168.20.10 (SW1 Fa0/5)\n- PC2-VLAN20: 192.168.20.20 (SW2 Fa0/5)\n- PC3-VLAN20: 192.168.20.30 (SW3 Fa0/5)',
       x: 500,
       y: 380,
-      width: 280,
-      height: 120,
+      width: 300,
+      height: 160,
       color: '#f3e5f5',
       font: 'Arial',
       fontSize: 12,
@@ -1646,12 +1634,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'note-pvst',
       text: isTr
-        ? 'PVST (Per-VLAN STP)\n\nHer VLAN kendi STP örneğine sahiptir:\n• VLAN 1 root: SW1\n• VLAN 10 root: SW2\n• VLAN 20 root: SW3\n\nHer VLAN kendi aktif yolunu kullanır:\n• VLAN 1: SW1↔SW2, SW1↔SW3 (SW2-SW3 blok)\n• VLAN 10: SW2↔SW1, SW2↔SW3 (SW1-SW3 blok)\n• VLAN 20: SW3↔SW1, SW3↔SW2 (SW1-SW2 blok)\n\nPing, VLAN\'ın root\'una göre gider.\nBağlantı koparsa yedek yol otomatik açılır.'
-        : 'PVST (Per-VLAN STP)\n\nEach VLAN has its own:\n• STP instance\n• Root bridge\n• Port states\n\nVLAN active paths:\n• VLAN 1 root: SW1\n• VLAN 10 root: SW2\n• VLAN 20 root: SW3\n\nEach VLAN uses its own forwarding path:\n• VLAN 1: SW1↔SW2, SW1↔SW3 (SW2-SW3 blocked)\n• VLAN 10: SW2↔SW1, SW2↔SW3 (SW1-SW3 blocked)\n• VLAN 20: SW3↔SW1, SW3↔SW2 (SW1-SW2 blocked)\n\nPing follows the VLAN root and if one link fails,\nbackup path opens automatically.',
+        ? 'Amaç: PVST kullanarak her VLAN için ayrı STP instance\'ı oluşturarak load balancing sağlamak.\n\n🔧 PVST (Per-VLAN STP) ADIMLARI:\n\n1) VLAN\'LAR OLUŞTUR:\n   - Her switch\'te vlan 1, 10, 20 oluştur\n\n2) ROOT BRIDGE AYARLA:\n   - SW1: spanning-tree vlan 1 priority 24576\n   - SW2: spanning-tree vlan 10 priority 24576\n   - SW3: spanning-tree vlan 20 priority 24576\n\n3) TRUNK BAĞLANTILARI:\n   - Gi0/1 ve Gi0/2 trunk mode\n\n4) TEST:\n   - show spanning-tree vlan 1\n   - show spanning-tree vlan 10\n   - show spanning-tree vlan 20\n   - Her VLAN farklı root kullanır'
+        : '🔧 PVST (Per-VLAN STP) STEPS:\n\n1) CREATE VLANs:\n   - Create vlan 1, 10, 20 on each switch\n\n2) SET ROOT BRIDGE:\n   - SW1: spanning-tree vlan 1 priority 24576\n   - SW2: spanning-tree vlan 10 priority 24576\n   - SW3: spanning-tree vlan 20 priority 24576\n\n3) TRUNK CONNECTIONS:\n   - Gi0/1 and Gi0/2 trunk mode\n\n4) TEST:\n   - show spanning-tree vlan 1\n   - show spanning-tree vlan 10\n   - show spanning-tree vlan 20\n   - Each VLAN uses different root',
       x: 150,
       y: 320,
-      width: 250,
-      height: 170,
+      width: 280,
+      height: 200,
       color: '#e8f5e9',
       font: 'Arial',
       fontSize: 12,
@@ -1920,15 +1908,15 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'campus-note',
       text: isTr
-        ? 'Campus Network (Core + Access):\nCORE-R1: ip routing\nCORE-R1: int gi0/0 -> ip address 192.168.1.1/24\nCORE-R1: int gi0/1 -> ip address 192.168.2.1/24\nACC-SW1: int gi0/1 -> switchport mode trunk\nACC-SW2: int gi0/1 -> switchport mode trunk\nACC-SW1: VLAN 10, ACC-SW2: VLAN 20\nCORE-R1 route tables ile inter-VLAN routing.'
-        : 'Campus Network (Core + Access):\nCORE-R1: ip routing\nCORE-R1: int gi0/0 -> ip address 192.168.1.1/24\nCORE-R1: int gi0/1 -> ip address 192.168.2.1/24\nACC-SW1: int gi0/1 -> switchport mode trunk\nACC-SW2: int gi0/1 -> switchport mode trunk\nACC-SW1: VLAN 10, ACC-SW2: VLAN 20\nCORE-R1 inter-VLAN routing with route tables.',
+        ? 'Amaç: Campus ağ topolojisinde core router ve access switch\'ler kullanarak VLAN\'lar arası routing sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 1 adet Router (CORE-R1) ekle\n   - 2 adet Switch (ACC-SW1, ACC-SW2) ekle\n   - 2 adet PC (PC-1, PC-2) ekle\n   - PC-1 Eth0 -> ACC-SW1 Fa0/1 (Straight kablo)\n   - PC-2 Eth0 -> ACC-SW2 Fa0/1 (Straight kablo)\n   - ACC-SW1 Gi0/1 -> CORE-R1 Gi0/0 (Crossover kablo)\n   - ACC-SW2 Gi0/1 -> CORE-R1 Gi0/1 (Crossover kablo)\n\n2) CORE-R1 KONFİGÜRASYONU:\n   - CORE-R1 terminaline gir: enable, conf t\n   - interface gi0/0\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip routing\n   - exit\n\n3) ACC-SW1 KONFİGÜRASYONU:\n   - ACC-SW1 terminaline gir: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface gi0/1\n     switchport mode access\n   - exit\n\n4) ACC-SW2 KONFİGÜRASYONU:\n   - ACC-SW2 terminaline gir: enable, conf t\n   - vlan 20\n     name VLAN20\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 20\n   - exit\n   - interface gi0/1\n     switchport mode access\n   - exit\n\n5) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1, VLAN 10\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1, VLAN 20\n\n6) TEST:\n   - PC-1 ping 192.168.20.10 (PC-2)'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 1 Router (CORE-R1)\n   - Add 2 Switches (ACC-SW1, ACC-SW2)\n   - Add 2 PCs (PC-1, PC-2)\n   - Connect PC-1 Eth0 -> ACC-SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> ACC-SW2 Fa0/1 (Straight cable)\n   - Connect ACC-SW1 Gi0/1 -> CORE-R1 Gi0/0 (Crossover cable)\n   - Connect ACC-SW2 Gi0/1 -> CORE-R1 Gi0/1 (Crossover cable)\n\n2) CORE-R1 CONFIGURATION:\n   - Enter CORE-R1 terminal: enable, conf t\n   - interface gi0/0\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip routing\n   - exit\n\n3) ACC-SW1 CONFIGURATION:\n   - Enter ACC-SW1 terminal: enable, conf t\n   - vlan 10\n     name VLAN10\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface gi0/1\n     switchport mode access\n   - exit\n\n4) ACC-SW2 CONFIGURATION:\n   - Enter ACC-SW2 terminal: enable, conf t\n   - vlan 20\n     name VLAN20\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 20\n   - exit\n   - interface gi0/1\n     switchport mode access\n   - exit\n\n5) PC CONFIGURATION:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1, VLAN 10\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1, VLAN 20\n\n6) TEST:\n   - PC-1 ping 192.168.20.10 (PC-2)',
       x: 600,
       y: 40,
-      width: 420,
-      height: 200,
-      color: '#06b6d4',
+      width: 500,
+      height: 380,
+      color: '#8b5cf6',
       font: 'verdana',
-      fontSize: 16,
+      fontSize: 12,
       opacity: 0.75
     }
   ];
@@ -1965,15 +1953,15 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'router-ssh-note',
       text: isTr
-        ? 'Router SSH Lab:\nR1 hazır SSH ayarlı.\nPC-1 CMD: ssh admin@192.168.1.150\nŞifre: 1234\nKontrol: show ssh\nEnable şifresi:123'
-        : 'Router SSH Lab:\nR1 is preconfigured for SSH.\nPC-1 CMD: ssh admin@192.168.1.150\nPassword: 1234\nVerify: show ssh\nEnable password:123',
+        ? 'Amaç: Router üzerinde SSH yapılandırarak güvenli uzaktan yönetim erişimi sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 1 adet Router (R1) ekle\n   - 1 adet PC (PC-1) ekle\n   - PC-1 Eth0 -> R1 Gi0/0 (Straight kablo)\n\n2) ROUTER KONFİGÜRASYONU:\n   - R1 terminaline gir: enable, conf t\n   - hostname R1\n   - ip domain-name lab.local\n   - crypto key generate rsa modulus 1024\n   - ip ssh version 2\n   - username admin privilege 15 secret 1234\n   - enable secret 123\n   - line vty 0 4\n     login local\n     transport input ssh\n   - exit\n\n3) INTERFACE AYARLARI:\n   - interface gi0/0\n     ip address 192.168.1.150 255.255.255.0\n     no shutdown\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.1.10, Subnet 255.255.255.0, Gateway 192.168.1.150\n\n5) TEST:\n   - PC-1 CMD: ssh admin@192.168.1.150\n   - Şifre: 1234\n   - R1> show ssh (SSH bağlantılarını gör)\n   - R1> show ip ssh (SSH durumunu kontrol et)'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 1 Router (R1)\n   - Add 1 PC (PC-1)\n   - Connect PC-1 Eth0 -> R1 Gi0/0 (Straight cable)\n\n2) ROUTER CONFIGURATION:\n   - Enter R1 terminal: enable, conf t\n   - hostname R1\n   - ip domain-name lab.local\n   - crypto key generate rsa modulus 1024\n   - ip ssh version 2\n   - username admin privilege 15 secret 1234\n   - enable secret 123\n   - line vty 0 4\n     login local\n     transport input ssh\n   - exit\n\n3) INTERFACE SETTINGS:\n   - interface gi0/0\n     ip address 192.168.1.150 255.255.255.0\n     no shutdown\n   - exit\n\n4) PC CONFIGURATION:\n   - PC-1: IP 192.168.1.10, Subnet 255.255.255.0, Gateway 192.168.1.150\n\n5) TEST:\n   - PC-1 CMD: ssh admin@192.168.1.150\n   - Password: 1234\n   - R1> show ssh (view SSH connections)\n   - R1> show ip ssh (check SSH status)',
       x: 580,
       y: 80,
-      width: 360,
-      height: 170,
+      width: 480,
+      height: 300,
       color: '#22c55e',
       font: 'verdana',
-      fontSize: 16,
+      fontSize: 12,
       opacity: 0.75
     }
   ];
@@ -2074,12 +2062,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'l3-switch2-vlan-note',
       text: isTr
-        ? '2 L3 Switch VLAN Yapılandırması:\n\nVLAN 10 = AG1 (192.168.10.0/24)\nVLAN 20 = AG2 (192.168.20.0/24)\n\nSwitch2 (Sol):\n- VLAN 10 SVI: 192.168.10.1/24\n- VLAN 20 SVI: 192.168.20.1/24\n- PC4, PC5: VLAN 10\n- PC6, PC7: VLAN 20\n\nSwitch4 (Sağ):\n- VLAN 10 SVI: 192.168.10.1/24\n- VLAN 20 SVI: 192.168.20.1/24\n- PC8, PC9: VLAN 10\n- PC10, PC11: VLAN 20\n\nTrunk: Switch2 Gi0/1 ↔ Switch4 Gi0/1\n\nKomutlar:\nconf t\nvlan 10\n name AG1\nvlan 20\n name AG2\nip routing\ninterface vlan 10\n ip address 192.168.10.1 255.255.255.0\n no shutdown\ninterface vlan 20\n ip address 192.168.20.1 255.255.255.0\n no shutdown\ninterface gi0/1\n switchport mode trunk\ninterface fa0/1-2\n switchport access vlan 10\ninterface fa0/3-4\n switchport access vlan 20'
-        : '2 L3 Switch VLAN Configuration:\n\nVLAN 10 = AG1 (192.168.10.0/24)\nVLAN 20 = AG2 (192.168.20.0/24)\n\nSwitch2 (Left):\n- VLAN 10 SVI: 192.168.10.1/24\n- VLAN 20 SVI: 192.168.20.1/24\n- PC4, PC5: VLAN 10\n- PC6, PC7: VLAN 20\n\nSwitch4 (Right):\n- VLAN 10 SVI: 192.168.10.1/24\n- VLAN 20 SVI: 192.168.20.1/24\n- PC8, PC9: VLAN 10\n- PC10, PC11: VLAN 20\n\nTrunk: Switch2 Gi0/1 ↔ Switch4 Gi0/1\n\nCommands:\nconf t\nvlan 10\n name AG1\nvlan 20\n name AG2\nip routing\ninterface vlan 10\n ip address 192.168.10.1 255.255.255.0\n no shutdown\ninterface vlan 20\n ip address 192.168.20.1 255.255.255.0\n no shutdown\ninterface gi0/1\n switchport mode trunk\ninterface fa0/1-2\n switchport access vlan 10\ninterface fa0/3-4\n switchport access vlan 20',
+        ? 'Amaç: İki L3 switch arasında trunk bağlantısı ile VLAN\'lar arası routing sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (Switch2, Switch4) ekle\n   - 8 adet PC ekle (PC4-PC11)\n   - Switch2 Gi0/1 -> Switch4 Gi0/1 (Crossover kablo)\n   - PC4-PC5 -> Switch2 Fa0/1-2 (VLAN 10)\n   - PC6-PC7 -> Switch2 Fa0/3-4 (VLAN 20)\n   - PC8-PC9 -> Switch4 Fa0/1-2 (VLAN 10)\n   - PC10-PC11 -> Switch4 Fa0/3-4 (VLAN 20)\n\n2) SWITCH2 KONFİGÜRASYONU:\n   - Switch2 terminaline gir: enable, conf t\n   - vlan 10\n     name AG1\n   - exit\n   - vlan 20\n     name AG2\n   - exit\n   - ip routing\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     switchport mode trunk\n   - exit\n   - interface range fa0/1-2\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range fa0/3-4\n     switchport mode access\n     switchport access vlan 20\n   - exit\n\n3) SWITCH4 KONFİGÜRASYONU:\n   - Switch4 terminaline gir: enable, conf t\n   - Aynı yapılandırma Switch2 ile aynı\n\n4) PC KONFİGÜRASYONU:\n   - VLAN 10 PC\'ler: IP 192.168.10.x, GW 192.168.10.1\n   - VLAN 20 PC\'ler: IP 192.168.20.x, GW 192.168.20.1\n\n5) TEST:\n   - Tüm PC\'ler birbirine ping atabilir'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (Switch2, Switch4)\n   - Add 8 PCs (PC4-PC11)\n   - Connect Switch2 Gi0/1 -> Switch4 Gi0/1 (Crossover cable)\n   - Connect PC4-PC5 -> Switch2 Fa0/1-2 (VLAN 10)\n   - Connect PC6-PC7 -> Switch2 Fa0/3-4 (VLAN 20)\n   - Connect PC8-PC9 -> Switch4 Fa0/1-2 (VLAN 10)\n   - Connect PC10-PC11 -> Switch4 Fa0/3-4 (VLAN 20)\n\n2) SWITCH2 CONFIGURATION:\n   - Enter Switch2 terminal: enable, conf t\n   - vlan 10\n     name AG1\n   - exit\n   - vlan 20\n     name AG2\n   - exit\n   - ip routing\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     switchport mode trunk\n   - exit\n   - interface range fa0/1-2\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range fa0/3-4\n     switchport mode access\n     switchport access vlan 20\n   - exit\n\n3) SWITCH4 CONFIGURATION:\n   - Enter Switch4 terminal: enable, conf t\n   - Same configuration as Switch2\n\n4) PC CONFIGURATION:\n   - VLAN 10 PCs: IP 192.168.10.x, GW 192.168.10.1\n   - VLAN 20 PCs: IP 192.168.20.x, GW 192.168.20.1\n\n5) TEST:\n   - All PCs can ping each other',
       x: 400,
       y: 400,
-      width: 550,
-      height: 320,
+      width: 520,
+      height: 380,
       color: '#8b5cf6',
       font: 'verdana',
       fontSize: 12,
@@ -2272,12 +2260,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'static-l3-routing-note',
       text: isTr
-        ? 'L3 Switch Statik Yönlendirme\n\nAğ Topolojisi:\n- PC0: 192.168.1.10/24, Gateway: 192.168.1.1\n- PC4: 192.168.2.10/24, Gateway: 192.168.2.1\n\nYapılandırma:\nMultilayerSwitch1:\n- Fa0/2: 192.168.1.1/24\n- Fa0/1: 10.0.0.1/8\n- ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\nRouter3:\n- Fa0/0: 10.0.0.2/8\n- Fa1/0: 20.0.0.1/8\n- ip route 192.168.1.0 255.255.255.0 10.0.0.1\n- ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\nMultilayerSwitch2:\n- Fa0/1: 20.0.0.2/8\n- Fa0/2: 192.168.2.1/24\n- ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\nTest: PC0> ping 192.168.2.10'
-        : 'L3 Switch Static Routing\n\nNetwork Topology:\n- PC0: 192.168.1.10/24, Gateway: 192.168.1.1\n- PC4: 192.168.2.10/24, Gateway: 192.168.2.1\n\nConfiguration:\nMultilayerSwitch1:\n- Fa0/2: 192.168.1.1/24\n- Fa0/1: 10.0.0.1/8\n- ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\nRouter3:\n- Fa0/0: 10.0.0.2/8\n- Fa1/0: 20.0.0.1/8\n- ip route 192.168.1.0 255.255.255.0 10.0.0.1\n- ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\nMultilayerSwitch2:\n- Fa0/1: 20.0.0.2/8\n- Fa0/2: 192.168.2.1/24\n- ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\nTest: PC0> ping 192.168.2.10',
-      x: 400,
-      y: 450,
-      width: 500,
-      height: 350,
+        ? 'Amaç: L3 switch\'ler ve router arasında static routing yapılandırarak farklı ağlar arası iletişim sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (ML1, ML2) ekle\n   - 1 adet Router (R3) ekle\n   - 2 adet L2 Switch (Switch0, Switch1) ekle\n   - 4 adet PC ekle\n   - Bağlantıları yapıştır (topolojiye göre)\n\n2) ML1 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface fa0/1\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/2\n     ip address 10.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\n3) R3 KONFİGÜRASYONU:\n   - enable, conf t\n   - interface gi0/0\n     ip address 10.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 20.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 10.0.0.1\n   - ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\n4) ML2 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface fa0/1\n     ip address 20.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface fa0/2\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\n5) TEST:\n   - show ip route (statik rotaları gör)\n   - PC\'ler arası ping testi'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (ML1, ML2)\n   - Add 1 Router (R3)\n   - Add 2 L2 Switches (Switch0, Switch1)\n   - Add 4 PCs\n   - Connect all devices according to topology\n\n2) ML1 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface fa0/1\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/2\n     ip address 10.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\n3) R3 CONFIGURATION:\n   - enable, conf t\n   - interface gi0/0\n     ip address 10.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 20.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 10.0.0.1\n   - ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\n4) ML2 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface fa0/1\n     ip address 20.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface fa0/2\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\n5) TEST:\n   - show ip route (view static routes)\n   - Ping test between PCs',
+      x: 450,
+      y: 80,
+      width: 520,
+      height: 380,
       color: '#3b82f6',
       font: 'verdana',
       fontSize: 12,
@@ -2426,12 +2414,12 @@ PC-1 and PC-2 communicate over VLAN 99.`,
     {
       id: 'rip-routing-note',
       text: isTr
-        ? 'RIP Dinamik Yönlendirme\n\nAğ Topolojisi:\n- PC0: 192.168.1.10/24, PC1: 192.168.1.11/24\n- PC2: 192.168.3.10/24, PC3: 192.168.3.20/24\n\nYapılandırma:\nMultilayerSwitch0:\n- Fa0/23: 192.168.1.1/24 (local ağ)\n- Fa0/24: 192.168.2.1/24 (trunk)\n- router rip\n- network 192.168.1.0\n- network 192.168.2.0\n\nMultilayerSwitch1:\n- Fa0/24: 192.168.2.2/24 (trunk)\n- Fa0/23: 192.168.3.1/24 (local ağ)\n- router rip\n- network 192.168.2.0\n- network 192.168.3.0\n\nTest: PC0> ping 192.168.3.10 (PC2)'
-        : 'RIP Dynamic Routing\n\nNetwork Topology:\n- PC0: 192.168.1.10/24, PC1: 192.168.1.11/24\n- PC2: 192.168.3.10/24, PC3: 192.168.3.20/24\n\nConfiguration:\nMultilayerSwitch0:\n- Fa0/23: 192.168.1.1/24 (local network)\n- Fa0/24: 192.168.2.1/24 (trunk)\n- router rip\n- network 192.168.1.0\n- network 192.168.2.0\n\nMultilayerSwitch1:\n- Fa0/24: 192.168.2.2/24 (trunk)\n- Fa0/23: 192.168.3.1/24 (local network)\n- router rip\n- network 192.168.2.0\n- network 192.168.3.0\n\nTest: PC0> ping 192.168.3.10 (PC2)',
+        ? 'Amaç: L3 switch\'ler arasında RIP dynamic routing yapılandırarak otomatik route öğrenimi sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (ML0, ML1) ekle\n   - 2 adet L2 Switch (Switch0-L2, Switch3-L2) ekle\n   - 4 adet PC (PC0-PC3) ekle\n   - PC0-PC1 -> Switch0-L2 Fa0/1-2\n   - Switch0-L2 Fa0/24 -> ML0 Fa0/23\n   - ML0 Fa0/24 -> ML1 Fa0/24 (Crossover)\n   - ML1 Fa0/23 -> Switch3-L2 Fa0/24\n   - Switch3-L2 Fa0/1-2 -> PC2-PC3\n\n2) ML0 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface fa0/23\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/24\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.1.0\n     network 192.168.2.0\n   - exit\n\n3) ML1 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface fa0/24\n     ip address 192.168.2.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/23\n     ip address 192.168.3.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.2.0\n     network 192.168.3.0\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC0-PC1: IP 192.168.1.x, GW 192.168.1.1\n   - PC2-PC3: IP 192.168.3.x, GW 192.168.3.1\n\n5) TEST:\n   - show ip route (dinamik rotaları gör)\n   - PC0 ping 192.168.3.10 (PC2)'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (ML0, ML1)\n   - Add 2 L2 Switches (Switch0-L2, Switch3-L2)\n   - Add 4 PCs (PC0-PC3)\n   - Connect PC0-PC1 -> Switch0-L2 Fa0/1-2\n   - Connect Switch0-L2 Fa0/24 -> ML0 Fa0/23\n   - Connect ML0 Fa0/24 -> ML1 Fa0/24 (Crossover)\n   - Connect ML1 Fa0/23 -> Switch3-L2 Fa0/24\n   - Connect Switch3-L2 Fa0/1-2 -> PC2-PC3\n\n2) ML0 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface fa0/23\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/24\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.1.0\n     network 192.168.2.0\n   - exit\n\n3) ML1 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface fa0/24\n     ip address 192.168.2.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/23\n     ip address 192.168.3.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.2.0\n     network 192.168.3.0\n   - exit\n\n4) PC CONFIGURATION:\n   - PC0-PC1: IP 192.168.1.x, GW 192.168.1.1\n   - PC2-PC3: IP 192.168.3.x, GW 192.168.3.1\n\n5) TEST:\n   - show ip route (view dynamic routes)\n   - PC0 ping 192.168.3.10 (PC2)',
       x: 450,
       y: 80,
-      width: 500,
-      height: 320,
+      width: 520,
+      height: 380,
       color: '#22c55e',
       font: 'verdana',
       fontSize: 12,
