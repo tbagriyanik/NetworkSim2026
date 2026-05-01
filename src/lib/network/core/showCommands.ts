@@ -2841,12 +2841,92 @@ function cmdShowIpDhcpPool(state: any, input: string, ctx: any): any {
 }
 
 function cmdShowIpDhcpBinding(state: any, input: string, ctx: any): any {
-  return {
-    success: true,
-    output: '\nIP address       Client-ID/              Lease expiration        Type\n' +
-      '                 Hardware address\n' +
-      '% No bindings found\n'
-  };
+  let output = '\nIP address       Client-ID/              Lease expiration        Type\n' +
+               '                 Hardware address\n';
+
+  const devices = ctx.devices || [];
+  const sourceDeviceId = ctx.sourceDeviceId;
+  const connections = ctx.connections || [];
+  
+  // Find devices that received DHCP from this device
+  // A device is considered a DHCP client if its ipConfigMode is 'dhcp' 
+  // and it's connected (directly or indirectly) to this device.
+  const dhcpClients = devices.filter((d: any) => 
+    d.type === 'pc' && 
+    d.ipConfigMode === 'dhcp' && 
+    d.ip && 
+    d.ip !== '0.0.0.0' && 
+    !d.ip.startsWith('169.254.')
+  );
+
+  if (dhcpClients.length === 0) {
+    output += '% No bindings found\n';
+  } else {
+    dhcpClients.forEach((client: any) => {
+      // Check if this client's IP belongs to one of our pools
+      const cliPools = state.dhcpPools || {};
+      const servicePools = state.services?.dhcp?.pools || [];
+      
+      let belongsToOurPool = false;
+      
+      // Check CLI pools
+      for (const poolName in cliPools) {
+        const pool = cliPools[poolName];
+        if (pool.network && pool.subnetMask) {
+          if (isIpInNetwork(client.ip, pool.network, pool.subnetMask)) {
+            belongsToOurPool = true;
+            break;
+          }
+        }
+      }
+      
+      // Check Service pools
+      if (!belongsToOurPool) {
+        for (const pool of servicePools) {
+          if (pool.startIp && pool.subnetMask) {
+            // Simple check: same subnet
+            if (isIpInNetwork(client.ip, pool.startIp, pool.subnetMask)) {
+              belongsToOurPool = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (belongsToOurPool) {
+        const mac = client.macAddress || '0000.0000.0000';
+        const formattedMac = mac.replace(/[:-]/g, '').toLowerCase();
+        const clientId = `01${formattedMac}`; // Cisco format: 01 + mac
+        output += `${client.ip.padEnd(16)} ${clientId.padEnd(23)} Infinite                Automatic\n`;
+      }
+    });
+    
+    if (output.endsWith('Hardware address\n')) {
+       output += '% No bindings found\n';
+    }
+  }
+
+  return { success: true, output };
+}
+
+// Helper for DHCP check
+function isIpInNetwork(ip: string, network: string, mask: string): boolean {
+  try {
+    const ipParts = ip.split('.').map(Number);
+    const netParts = network.split('.').map(Number);
+    const maskParts = mask.split('.').map(Number);
+    
+    if (ipParts.length !== 4 || netParts.length !== 4 || maskParts.length !== 4) return false;
+    
+    for (let i = 0; i < 4; i++) {
+      if ((ipParts[i] & maskParts[i]) !== (netParts[i] & maskParts[i])) {
+        return false;
+      }
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**

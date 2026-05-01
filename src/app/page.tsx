@@ -256,6 +256,7 @@ export default function Home() {
   // State moved to top to avoid TDZ errors
   const [activeDeviceId, setActiveDeviceId] = useState<string>('switch-1');
   const [activeDeviceType, setActiveDeviceType] = useState<DeviceType>('switchL2');
+  const [loadedExampleId, setLoadedExampleId] = useState<string | null>(null);
   const [topologyKey, setTopologyKey] = useState(0);
   const [selectedDevice, setSelectedDevice] = useState<DeviceType | null>(null);
   // Track last executed command for guided mode
@@ -1531,29 +1532,59 @@ ${state.bannerMOTD}
     }
 
     // Simple DHCP IP assignment logic
-    const assignDhcpIp = (pcDevice: CanvasDevice): string | null => {
+    const assignDhcpIp = (pcDevice: CanvasDevice, currentDevices: CanvasDevice[]): { ip: string; subnet: string; gateway: string; dns: string } | null => {
       // Find router/switch DHCP servers
       const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
       for (const [deviceId_, state] of safeDeviceStates.entries()) {
         if (deviceId_ === pcDevice.id) continue;
-        const serverDevice = topologyDevices.find(d => d.id === deviceId_);
+        const serverDevice = currentDevices.find(d => d.id === deviceId_);
         if (!serverDevice || (serverDevice.type !== 'router' && serverDevice.type !== 'switchL2' && serverDevice.type !== 'switchL3')) continue;
 
-        // Check for DHCP pools in services
+        // Check for DHCP pools in CLI config (dhcpPools) - routers often use this
+        const cliPools = state.dhcpPools || {};
+        for (const poolName in cliPools) {
+          const pool = cliPools[poolName];
+          if (!pool.network || !pool.subnetMask) continue;
+
+          // Parse start IP (usually .100 for simulation if not specified)
+          const networkParts = pool.network.split('.').map(Number);
+          if (networkParts.length !== 4) continue;
+
+          // Find available IP starting from .100
+          const usedIps = new Set(currentDevices.filter(d => d.id !== pcDevice.id && d.ip && d.ip !== '0.0.0.0').map(d => d.ip));
+          for (let i = 100; i < 254; i++) {
+            const candidate = `${networkParts[0]}.${networkParts[1]}.${networkParts[2]}.${i}`;
+            if (!usedIps.has(candidate)) {
+              return {
+                ip: candidate,
+                subnet: pool.subnetMask || '255.255.255.0',
+                gateway: pool.defaultRouter || '0.0.0.0',
+                dns: pool.dnsServer || '8.8.8.8'
+              };
+            }
+          }
+        }
+
+        // Check for DHCP pools in services (GUI config)
         const pools = state.services?.dhcp?.pools || [];
         for (const pool of pools) {
-          if (!pool.startIp || !pool.subnetMask || !pool.defaultGateway) continue;
+          if (!pool.startIp || !pool.subnetMask) continue;
 
           // Parse start IP
           const startParts = pool.startIp.split('.').map(Number);
           if (startParts.length !== 4) continue;
 
           // Find available IP
-          const usedIps = new Set(topologyDevices.filter(d => d.id !== pcDevice.id && d.ip).map(d => d.ip));
+          const usedIps = new Set(currentDevices.filter(d => d.id !== pcDevice.id && d.ip && d.ip !== '0.0.0.0').map(d => d.ip));
           for (let i = 0; i < (pool.maxUsers || 50); i++) {
             const candidate = `${startParts[0]}.${startParts[1]}.${startParts[2]}.${startParts[3] + i}`;
             if (!usedIps.has(candidate)) {
-              return candidate;
+              return {
+                ip: candidate,
+                subnet: pool.subnetMask || '255.255.255.0',
+                gateway: pool.defaultGateway || '0.0.0.0',
+                dns: pool.dnsServer || '8.8.8.8'
+              };
             }
           }
         }
@@ -1561,31 +1592,40 @@ ${state.bannerMOTD}
       return null;
     };
 
-    // Update devices with DHCP IPs
-    const updatedDevices = topologyDevices.map(device => {
-      const needsDhcp = devicesNeedingDhcpRenewal.find(d => d.id === device.id);
-      if (!needsDhcp) return device;
+    // Update devices with DHCP IPs - process sequentially to avoid duplicate IPs
+    const updatedDevices = [...topologyDevices];
+    let hasChanges = false;
 
-      const newIp = assignDhcpIp(device);
-      if (newIp) {
-        return {
-          ...device,
-          ip: newIp,
-          subnet: '255.255.255.0',
-          gateway: '192.168.10.1',
-          dns: '8.8.8.8'
-        };
+    devicesNeedingDhcpRenewal.forEach(deviceToRenew => {
+      const lease = assignDhcpIp(deviceToRenew, updatedDevices);
+      if (lease) {
+        const idx = updatedDevices.findIndex(d => d.id === deviceToRenew.id);
+        if (idx !== -1) {
+          updatedDevices[idx] = {
+            ...updatedDevices[idx],
+            ip: lease.ip,
+            subnet: lease.subnet,
+            gateway: lease.gateway,
+            dns: lease.dns
+          };
+          hasChanges = true;
+
+          // Also update PC terminal output if it exists
+          const pcOut = pcOutputs.get(deviceToRenew.id);
+          if (pcOut) {
+            const updatedOut = pcOut.map(line => {
+              if (line.id === '1' || line.content?.includes('IPv4 Address')) {
+                return {
+                  ...line,
+                  content: `\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ${lease.ip}\n   Subnet Mask . . . . . . . . . . : ${lease.subnet}\n   Default Gateway . . . . . . . . . : ${lease.gateway}\n`
+                };
+              }
+              return line;
+            });
+            setPcOutputs(prev => new Map(prev).set(deviceToRenew.id, updatedOut as any));
+          }
+        }
       }
-      return device;
-    });
-
-    // Only update if something actually changed
-    const hasChanges = updatedDevices.some((device, index) => {
-      const original = topologyDevices[index];
-      return device.ip !== original.ip ||
-        device.subnet !== original.subnet ||
-        device.gateway !== original.gateway ||
-        device.dns !== original.dns;
     });
 
     if (hasChanges) {
@@ -1595,6 +1635,125 @@ ${state.bannerMOTD}
     dhcpRenewalDoneRef.current = true;
     isInitialLoadRef.current = false;
   }, [topologyDevices, deviceStates, setTopologyDevices]);
+
+  // Sequential DHCP toasts for "Router DHCP" example
+  useEffect(() => {
+    if (loadedExampleId === 'router-dhcp-2pc' && topologyDevices.length > 0 && deviceStates.size > 0) {
+      const pcDevices = topologyDevices.filter(d => d.type === 'pc' && d.ipConfigMode === 'dhcp');
+
+      if (pcDevices.length > 0) {
+        // Simple DHCP IP assignment logic (sequential check)
+        const assignDhcpIp = (pcDevice: CanvasDevice, currentDevices: CanvasDevice[]): { ip: string; subnet: string; gateway: string; dns: string } | null => {
+          const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+          for (const [deviceId_, state] of safeDeviceStates.entries()) {
+            if (deviceId_ === pcDevice.id) continue;
+            const serverDevice = currentDevices.find(d => d.id === deviceId_);
+            if (!serverDevice || (serverDevice.type !== 'router' && serverDevice.type !== 'switchL2' && serverDevice.type !== 'switchL3')) continue;
+
+            const cliPools = state.dhcpPools || {};
+            for (const poolName in cliPools) {
+              const pool = cliPools[poolName];
+              if (!pool.network || !pool.subnetMask) continue;
+              const networkParts = pool.network.split('.').map(Number);
+              if (networkParts.length !== 4) continue;
+              const usedIps = new Set(currentDevices.filter(d => d.id !== pcDevice.id && d.ip && d.ip !== '0.0.0.0').map(d => d.ip));
+              for (let i = 100; i < 254; i++) {
+                const candidate = `${networkParts[0]}.${networkParts[1]}.${networkParts[2]}.${i}`;
+                if (!usedIps.has(candidate)) {
+                  return {
+                    ip: candidate,
+                    subnet: pool.subnetMask || '255.255.255.0',
+                    gateway: pool.defaultRouter || '0.0.0.0',
+                    dns: pool.dnsServer || '8.8.8.8'
+                  };
+                }
+              }
+            }
+
+            const pools = state.services?.dhcp?.pools || [];
+            for (const pool of pools) {
+              if (!pool.startIp || !pool.subnetMask) continue;
+              const startParts = pool.startIp.split('.').map(Number);
+              if (startParts.length !== 4) continue;
+              const usedIps = new Set(currentDevices.filter(d => d.id !== pcDevice.id && d.ip && d.ip !== '0.0.0.0').map(d => d.ip));
+              for (let i = 0; i < (pool.maxUsers || 50); i++) {
+                const candidate = `${startParts[0]}.${startParts[1]}.${startParts[2]}.${startParts[3] + i}`;
+                if (!usedIps.has(candidate)) {
+                  return {
+                    ip: candidate,
+                    subnet: pool.subnetMask || '255.255.255.0',
+                    gateway: pool.defaultGateway || '0.0.0.0',
+                    dns: pool.dnsServer || '8.8.8.8'
+                  };
+                }
+              }
+            }
+          }
+          return null;
+        };
+
+        (async () => {
+          // Process each PC one by one with a delay
+          let currentTopology = [...topologyDevices];
+          let hasOverallChanges = false;
+
+          for (let i = 0; i < pcDevices.length; i++) {
+            const pc = pcDevices[i];
+            const lease = assignDhcpIp(pc, currentTopology);
+
+            if (lease) {
+              const { ip: newIp, subnet, gateway, dns } = lease as any;
+              // Show toast
+              setTimeout(() => {
+                toast({
+                  title: `DHCP: ${pc.name}`,
+                  description: language === 'tr'
+                    ? `${newIp} adresi başarıyla alındı.`
+                    : `Address ${newIp} acquired successfully.`,
+                  duration: 3000,
+                });
+              }, i * 1000); // 1 second interval
+
+              // Update device in the working list
+              const idx = currentTopology.findIndex(d => d.id === pc.id);
+              if (idx !== -1) {
+                currentTopology[idx] = {
+                  ...currentTopology[idx],
+                  ip: newIp,
+                  subnet,
+                  gateway,
+                  dns
+                };
+                hasOverallChanges = true;
+
+                // Also update PC terminal output if it exists
+                const pcOut = pcOutputs.get(pc.id);
+                if (pcOut) {
+                  const updatedOut = pcOut.map(line => {
+                    if (line.id === '1' || line.content?.includes('IPv4 Address')) {
+                      return {
+                        ...line,
+                        content: `\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ${newIp}\n   Subnet Mask . . . . . . . . . . : ${subnet}\n   Default Gateway . . . . . . . . . : ${gateway}\n`
+                      };
+                    }
+                    return line;
+                  });
+                  setPcOutputs(prev => new Map(prev).set(pc.id, updatedOut as any));
+                }
+              }
+            }
+          }
+
+          if (hasOverallChanges) {
+            setTopologyDevices(currentTopology);
+          }
+          setLoadedExampleId(null); // Reset after processing
+        })();
+      } else {
+        setLoadedExampleId(null);
+      }
+    }
+  }, [loadedExampleId, topologyDevices, deviceStates, toast, language, setTopologyDevices]);
 
   // Onboarding: show once per browser
   useEffect(() => {
@@ -3048,6 +3207,15 @@ ${state.bannerMOTD}
       setTopologyDevices(stpSyncedDevices);
       const refreshDeviceSummaries = buildRefreshDeviceSummaries(stpSyncedDevices, portSecurityUpdatedStates);
 
+      // Reset DHCP renewal ref to allow fresh leases on refresh
+      dhcpRenewalDoneRef.current = false;
+
+      // Trigger automatic DHCP and AP scanning after refresh
+      const dhcpClients = stpSyncedDevices.filter(d => d.type === 'pc' && d.ipConfigMode === 'dhcp');
+      if (dhcpClients.length > 0) {
+        setLoadedExampleId('router-dhcp-2pc'); // Re-trigger the DHCP sequential logic
+      }
+
       // 9. Show detailed notification
       const totalDevices = connectedPCs.length + activeAPs.length + disconnectedPCs.length + disconnectedAPs.length;
       const stpMessage = stpUpdatedCount > 0
@@ -3063,8 +3231,8 @@ ${state.bannerMOTD}
         const wifiMessages = [];
         if (connectedPCs.length > 0) {
           wifiMessages.push(language === 'tr'
-            ? `✓ ${connectedPCs.length} ${t.connected}`
-            : `✓ ${connectedPCs.length} ${t.connected}`);
+            ? `✓ ${connectedPCs.length} PC kablosuz bağlandı`
+            : `✓ ${connectedPCs.length} PC wireless connected`);
         }
         if (activeAPs.length > 0) {
           wifiMessages.push(language === 'tr'
@@ -3073,14 +3241,24 @@ ${state.bannerMOTD}
         }
         if (disconnectedPCs.length > 0) {
           wifiMessages.push(language === 'tr'
-            ? `⚠ ${disconnectedPCs.length} ${t.pcDisconnected}`
-            : `⚠ ${disconnectedPCs.length} ${t.pcDisconnected}`);
+            ? `⚠ ${disconnectedPCs.length} PC kablosuz bağlantı yok`
+            : `⚠ ${disconnectedPCs.length} PC wireless disconnected`);
         }
         if (disconnectedAPs.length > 0) {
           wifiMessages.push(language === 'tr'
-            ? `⚠ ${disconnectedAPs.length} ${t.apNoClients}`
-            : `⚠ ${disconnectedAPs.length} ${t.apNoClients}`);
+            ? `⚠ ${disconnectedAPs.length} AP istemci yok`
+            : `⚠ ${disconnectedAPs.length} AP no clients`);
         }
+        
+        // Show combined WiFi status as a single toast
+        if (wifiMessages.length > 0) {
+          toast({
+            title: language === 'tr' ? '📶 Kablosuz Ağ Durumu' : '📶 Wireless Status',
+            description: wifiMessages.join('\n'),
+            duration: 4000,
+          });
+        }
+
         const dhcpMessages = [
           language === 'tr'
             ? `DHCP: ${dhcpServerActiveCount} sunucu aktif`
@@ -3104,7 +3282,6 @@ ${state.bannerMOTD}
           title: `🔄 ${t.networkStatusUpdated}`,
           description: (
             <div className="space-y-2">
-              {wifiMessages.length > 0 && <div>{wifiMessages.join(' • ')}</div>}
               <div>{dhcpMessages.join(' • ')}</div>
               {stpMessage && <div className="text-pink-500">{stpMessage}</div>}
               {portSecurityMessage && <div className="text-red-500">{portSecurityMessage}</div>}
@@ -3414,8 +3591,11 @@ ${state.bannerMOTD}
     event.target.value = '';
   }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode]);
 
-  const applyExampleProject = useCallback((projectData: any) => {
+  const applyExampleProject = useCallback((projectData: any, exampleId?: string) => {
     loadProjectData(projectData);
+    if (exampleId) {
+      setLoadedExampleId(exampleId);
+    }
     setShowProjectPicker(false);
     // Close guided mode panel if open (unless it's a guided project itself)
     closeGuidedMode();
@@ -4126,7 +4306,7 @@ ${state.bannerMOTD}
                                       key={example.id}
                                       variant='ghost'
                                       className={`group h-auto min-h-[120px] md:min-h-[160px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/80 hover:border-cyan-500/30' : 'border-slate-200/50 bg-white hover:bg-slate-50 hover:border-blue-500/20'} w-full overflow-hidden shadow-sm hover:shadow-2xl`}
-                                      onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => applyExampleProject(example.data)); }}
+                                      onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => applyExampleProject(example.data, example.id)); }}
                                     >
                                       <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
                                         <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-cyan-400' : 'group-hover:text-blue-600'}`}>{example.title}</span>
