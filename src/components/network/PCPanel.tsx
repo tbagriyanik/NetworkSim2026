@@ -98,6 +98,21 @@ export function PCPanel({
   const isMobile = useIsMobile();
   const isDesktop = useIsDesktop();
 
+  // Helper to render network input fields to avoid repetition
+  const renderNetworkInput = useCallback((label: string, value: string, onChange: (val: string) => void, placeholder: string, error?: string, disabled?: boolean) => (
+    <div className="space-y-1.5 flex-1">
+      <label className="text-xs font-bold text-slate-500 ml-1">{label}</label>
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        disabled={disabled}
+        className={cn("h-9", error && "border-rose-500")}
+      />
+      {error && <p className="text-[10px] text-rose-500 mt-1 ml-1">{error}</p>}
+    </div>
+  ), []);
+
   // Ref for click-outside detection
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -201,6 +216,24 @@ export function PCPanel({
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteIndex, setAutocompleteIndex] = useState(-1);
   const [autocompleteNavigated, setAutocompleteNavigated] = useState(false);
+
+  // Tab cycle state
+  const [tabCycleIndex, setTabCycleIndex] = useState(-1);
+  const [lastTabInput, setLastTabInput] = useState('');
+
+  // Game state
+  const [gameActive, setGameActive] = useState(false);
+  const [snake, setSnake] = useState<{ x: number, y: number }[]>([{ x: 10, y: 10 }]);
+  const [food, setFood] = useState({ x: 15, y: 15 });
+  const [direction, setDirection] = useState({ x: 1, y: 0 });
+  const [gameScore, setGameScore] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
+  const [gameLanguage, setGameLanguage] = useState<'en' | 'tr'>('en');
+
+  // Console connection state
+  const [isConsoleConnected, setIsConsoleConnected] = useState(false);
+  const [connectedDeviceId, setConnectedDeviceId] = useState<string | null>(null);
+  const [consoleConnectionTime, setConsoleConnectionTime] = useState<number>(0);
 
   // Keep desktop CMD and console histories separate.
   const [desktopHistory, setDesktopHistory] = useState<string[]>(() => {
@@ -830,32 +863,6 @@ export function PCPanel({
   } | null>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync pcOutput when deviceId changes or pcOutputs prop updates
-  useEffect(() => {
-    if (pcOutputs?.has(deviceId)) {
-      setPcOutput(pcOutputs.get(deviceId)!);
-    } else {
-      setPcOutput([{
-        id: '1',
-        type: 'output',
-        content: 'OS [Version 10.0.26200.8037]\n(c) OS Corporation. All rights reserved.\n'
-      }]);
-    }
-  }, [deviceId, pcOutputs]);
-
-  // Tab cycle state
-  const [tabCycleIndex, setTabCycleIndex] = useState(-1);
-  const [lastTabInput, setLastTabInput] = useState('');
-
-  // Game state
-  const [gameActive, setGameActive] = useState(false);
-  const [snake, setSnake] = useState<{ x: number, y: number }[]>([{ x: 10, y: 10 }]);
-  const [food, setFood] = useState({ x: 15, y: 15 });
-  const [direction, setDirection] = useState({ x: 1, y: 0 });
-  const [gameScore, setGameScore] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
-  const [gameLanguage, setGameLanguage] = useState<'en' | 'tr'>('en');
-
   // Global Navigation handler (Escape key & Mobile Back Button)
   useEffect(() => {
     if (!isVisible) return;
@@ -918,10 +925,18 @@ export function PCPanel({
     };
   }, [isVisible, activeTab, goHome, onClose, httpAppContent, searchOpen, gameActive, isMobile]);
 
-  // Console connection state
-  const [isConsoleConnected, setIsConsoleConnected] = useState(false);
-  const [connectedDeviceId, setConnectedDeviceId] = useState<string | null>(null);
-  const [consoleConnectionTime, setConsoleConnectionTime] = useState<number>(0);
+  // Sync pcOutput when deviceId changes or pcOutputs prop updates
+  useEffect(() => {
+    if (pcOutputs?.has(deviceId)) {
+      setPcOutput(pcOutputs.get(deviceId)!);
+    } else {
+      setPcOutput([{
+        id: '1',
+        type: 'output',
+        content: 'OS [Version 10.0.26200.8037]\n(c) OS Corporation. All rights reserved.\n'
+      }]);
+    }
+  }, [deviceId, pcOutputs]);
 
   // Disconnect console when PC powers off
   useEffect(() => {
@@ -4243,107 +4258,58 @@ export function PCPanel({
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">IP Address</label>
-                            <Input value={pcIP} onChange={(e) => {
-                              const newIp = e.target.value;
-                              setPcIP(newIp);
-
-                              // Check for duplicate IP
-                              if (validateIP(newIp)) {
-                                const duplicateDevice = topologyDevices.find(d => {
-                                  if (d.id === deviceId) return false;
-                                  if (!d.ip) return false;
-                                  // Same IP is always a duplicate (regardless of subnet)
-                                  return d.ip === newIp;
-                                });
-
-                                if (duplicateDevice) {
-                                  setErrors(prev => ({ ...prev, ip: language === 'tr' ? `Bu IP adresi zaten ${duplicateDevice.name || duplicateDevice.id} tarafından kullanılıyor` : `This IP address is already used by ${duplicateDevice.name || duplicateDevice.id}` }));
-                                } else {
-                                  setErrors(prev => { const { ip, ...rest } = prev; return rest; });
-                                }
+                          {renderNetworkInput("IP Address", pcIP, (newIp) => {
+                            setPcIP(newIp);
+                            if (validateIP(newIp)) {
+                              const duplicateDevice = topologyDevices.find(d => d.id !== deviceId && d.ip === newIp);
+                              if (duplicateDevice) {
+                                setErrors(prev => ({ ...prev, ip: language === 'tr' ? `Bu IP adresi zaten ${duplicateDevice.name || duplicateDevice.id} tarafından kullanılıyor` : `This IP address is already used by ${duplicateDevice.name || duplicateDevice.id}` }));
+                              } else {
+                                setErrors(prev => { const { ip, ...rest } = prev; return rest; });
                               }
-
-                              // Auto-assign subnet mask based on first octet
-                              let updatedSubnet = pcSubnet;
-                              const firstOctet = newIp.split('.')[0];
-                              if (firstOctet) {
-                                const octetNum = parseInt(firstOctet, 10);
-                                if (!isNaN(octetNum)) {
-                                  let autoSubnet = '255.255.255.0'; // default
-                                  if (octetNum === 10) {
-                                    autoSubnet = '255.0.0.0';
-                                  } else if (octetNum === 192) {
-                                    autoSubnet = '255.255.255.0';
-                                  } else if (octetNum === 169) {
-                                    autoSubnet = '255.255.0.0';
-                                  }
-                                  updatedSubnet = autoSubnet;
-                                  setPcSubnet(autoSubnet);
-                                }
+                            }
+                            let updatedSubnet = pcSubnet;
+                            const firstOctet = newIp.split('.')[0];
+                            if (firstOctet) {
+                              const octetNum = parseInt(firstOctet, 10);
+                              if (!isNaN(octetNum)) {
+                                let autoSubnet = '255.255.255.0';
+                                if (octetNum === 10) autoSubnet = '255.0.0.0';
+                                else if (octetNum === 192) autoSubnet = '255.255.255.0';
+                                else if (octetNum === 169) autoSubnet = '255.255.0.0';
+                                updatedSubnet = autoSubnet;
+                                setPcSubnet(autoSubnet);
                               }
+                            }
+                            setTimeout(() => dispatchDeviceConfig({ ip: newIp, subnet: updatedSubnet, ipConfigMode: 'static' }), 500);
+                          }, "192.168.1.100", errors.ip, ipConfigMode === 'dhcp')}
 
-                              // Debounced topology update for static IP and subnet
-                              setTimeout(() => {
-                                dispatchDeviceConfig({
-                                  ip: newIp,
-                                  subnet: updatedSubnet,
-                                  ipConfigMode: 'static'
-                                });
-                              }, 500);
-                            }} placeholder="192.168.1.100" className={`h-9 ${errors.ip ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
-                            {errors.ip && <p className="text-xs text-rose-500 mt-1">{errors.ip}</p>}
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">Subnet Mask</label>
-                            <Input value={pcSubnet} onChange={(e) => {
-                              const newSubnet = e.target.value;
-                              setPcSubnet(newSubnet);
-                              // Debounced topology update for static subnet
-                              setTimeout(() => {
-                                dispatchDeviceConfig({
-                                  subnet: newSubnet,
-                                  ipConfigMode: 'static'
-                                });
-                              }, 500);
-                            }} placeholder="255.255.255.0" className={`h-9 ${errors.subnet ? 'border-rose-500' : ''}`} disabled={ipConfigMode === 'dhcp'} />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">Gateway</label>
-                            <Input type="text" value={pcGateway} onChange={(e) => {
-                              const newGateway = e.target.value;
-                              setPcGateway(newGateway);
-                              dispatchDeviceConfig({ gateway: newGateway });
-                            }} placeholder="192.168.1.1" className={`h-9 ${errors.gateway ? 'border-rose-500' : ''}`} />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">DNS Server</label>
-                            <Input type="text" value={pcDNS} onChange={(e) => {
-                              const newDNS = e.target.value;
-                              setPcDNS(newDNS);
-                              dispatchDeviceConfig({ dns: newDNS });
-                            }} placeholder="8.8.8.8" className={`h-9 ${errors.dns ? 'border-rose-500' : ''}`} />
-                          </div>
+                          {renderNetworkInput("Subnet Mask", pcSubnet, (newSubnet) => {
+                            setPcSubnet(newSubnet);
+                            setTimeout(() => dispatchDeviceConfig({ subnet: newSubnet, ipConfigMode: 'static' }), 500);
+                          }, "255.255.255.0", errors.subnet, ipConfigMode === 'dhcp')}
+
+                          {renderNetworkInput("Gateway", pcGateway, (newGateway) => {
+                            setPcGateway(newGateway);
+                            dispatchDeviceConfig({ gateway: newGateway });
+                          }, "192.168.1.1", errors.gateway)}
+
+                          {renderNetworkInput("DNS Server", pcDNS, (newDNS) => {
+                            setPcDNS(newDNS);
+                            dispatchDeviceConfig({ dns: newDNS });
+                          }, "8.8.8.8", errors.dns)}
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 pt-2 border-t border-slate-800/10 dark:border-slate-800/50">
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">IPv6 Address</label>
-                            <Input type="text" value={pcIPv6} onChange={(e) => {
-                              const newIPv6 = e.target.value;
-                              setPcIPv6(newIPv6);
-                              dispatchDeviceConfig({ ipv6: newIPv6 });
-                            }} placeholder="2001:db8:acad:1::10" className={`h-9 ${errors.ipv6 ? 'border-rose-500' : ''}`} />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 ml-1">IPv6 Prefix</label>
-                            <Input type="text" value={pcIPv6Prefix} onChange={(e) => {
-                              const newPrefix = e.target.value;
-                              setPcIPv6Prefix(newPrefix);
-                              dispatchDeviceConfig({ ipv6Prefix: newPrefix });
-                            }} placeholder="64" className="h-9" />
-                          </div>
+                          {renderNetworkInput("IPv6 Address", pcIPv6, (newIPv6) => {
+                            setPcIPv6(newIPv6);
+                            dispatchDeviceConfig({ ipv6: newIPv6 });
+                          }, "2001:db8:acad:1::10", errors.ipv6)}
+
+                          {renderNetworkInput("IPv6 Prefix", pcIPv6Prefix, (newPrefix) => {
+                            setPcIPv6Prefix(newPrefix);
+                            dispatchDeviceConfig({ ipv6Prefix: newPrefix });
+                          }, "64")}
                         </div>
                       </div>
 
