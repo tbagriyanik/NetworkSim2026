@@ -1213,8 +1213,8 @@ export function Terminal({
           <div
             ref={terminalRef}
             className={cn(
-              "flex-1 overflow-y-auto overflow-x-hidden font-geist-mono leading-relaxed custom-scrollbar mobile-scroll min-h-0",
-              isMobile ? "p-3 pb-36" : "p-6 pb-32",
+              "flex-1 overflow-y-auto overflow-x-hidden font-geist-mono leading-relaxed custom-scrollbar min-h-0",
+              isMobile ? "mobile-scroll p-3 pb-36" : "p-6 pb-32",
               isPoweredOff ? "bg-black" : (isDark ? "bg-black" : "bg-slate-50")
             )}
             style={{ fontSize: `${fontSize}px` }}

@@ -3759,13 +3759,10 @@ export function PCPanel({
         ref={panelRef}
         className={cn(
           "relative w-full h-full min-h-0 flex flex-col overflow-hidden",
-          isDark
-            ? 'bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_35%),linear-gradient(160deg,#020617_0%,#0f172a_40%,#111827_100%)]'
-            : 'bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.18),_transparent_35%),linear-gradient(160deg,#f8fbff_0%,#eef4ff_38%,#dbeafe_100%)]',
           className
         )}
       >
-        <div className="shrink-0 px-2 pt-2 md:px-5 md:pt-5">
+        <div className="shrink-0 px-2 pt-2 md:px-2 md:pt-2">
           <div className={cn(
             "mx-auto flex items-center justify-between gap-2 rounded-xl border px-2 py-1.5 md:px-3 md:py-2 backdrop-blur-2xl shadow-[0_20px_60px_rgba(15,23,42,0.16)]",
             isDark
@@ -3891,18 +3888,18 @@ export function PCPanel({
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 px-2 pb-2 md:px-5 md:pb-5">
+        <div className="flex-1 min-h-0 px-2 pb-2 md:px-2 md:pb-2">
           <div className="mx-auto flex h-full min-h-0 w-full max-w-[1500px] items-center justify-center overflow-hidden">
             <div
               className={cn(
                 "relative flex h-full min-h-0 w-full flex-col overflow-hidden shadow-[0_30px_120px_rgba(15,23,42,0.28)]",
                 isMobile
                   ? (isDark
-                    ? "max-w-[430px] rounded-[2.5rem] border-[10px] border-slate-950 bg-slate-950"
-                    : "max-w-[430px] rounded-[2.5rem] border-[10px] border-slate-200 bg-slate-100")
+                    ? "max-w-[430px] rounded-[2.5rem] border-[10px] border-slate-950 bg-transparent"
+                    : "max-w-[430px] rounded-[2.5rem] border-[10px] border-slate-200 bg-transparent")
                   : (isDark
-                    ? "rounded-[2rem] border border-white/10 bg-slate-950/70 backdrop-blur-2xl"
-                    : "rounded-[2rem] border border-white/70 bg-white/70 backdrop-blur-2xl")
+                    ? "rounded-[2rem] border border-white/10 bg-transparent"
+                    : "rounded-[2rem] border border-white/70 bg-transparent")
               )}
             >
               {isMobile && (
@@ -5220,7 +5217,7 @@ export function PCPanel({
                         {/* Output Area - Scrollable */}
                         <div
                           ref={outputRef}
-                          className={`flex-1 overflow-y-auto overflow-x-hidden scroll-smooth p-3 md:p-6 space-y-1.5 font-geist-mono leading-relaxed custom-scrollbar mobile-scroll ${isPcPoweredOff ? 'bg-black' : terminalBg}`}
+                          className={`flex-1 overflow-y-auto overflow-x-hidden scroll-smooth p-3 md:p-6 space-y-1.5 font-geist-mono leading-relaxed custom-scrollbar ${isMobile ? 'mobile-scroll' : ''} ${isPcPoweredOff ? 'bg-black' : terminalBg}`}
                           style={{ ...mobileVerticalScrollStyle, fontSize: `${fontSize}px`, paddingBottom: isMobile ? '8rem' : '7rem' }}
                         >
                         {isPcPoweredOff ? (
