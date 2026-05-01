@@ -3770,16 +3770,6 @@ export function PCPanel({
               : "border-white/60 bg-white/70 text-slate-900"
           )}>
             <div className="flex min-w-0 items-center gap-2">
-              <div className={cn(
-                "flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-xl md:rounded-2xl border",
-                isDark ? "border-cyan-400/20 bg-cyan-500/10" : "border-cyan-200 bg-cyan-50"
-              )}>
-                {isMobile ? (
-                  <div className={cn("h-4 w-2.5 rounded-[5px] border", isDark ? "border-cyan-300/70" : "border-cyan-700/70")} />
-                ) : (
-                  <Monitor className={cn("h-4 w-4 md:h-5 md:w-5", isDark ? "text-cyan-300" : "text-cyan-700")} />
-                )}
-              </div>
               <div className="min-w-0">
                 <div className={cn("truncate text-xs md:text-sm font-semibold", isDark ? "text-white" : "text-slate-900")}>
                   {internalPcHostname}
@@ -3789,7 +3779,7 @@ export function PCPanel({
                 </div>
               </div>
               <div className={cn(
-                "pointer-events-auto flex items-center gap-1 rounded-full border px-1.5 py-1 md:px-2 md:py-1.5 backdrop-blur-2xl shadow-lg ml-auto",
+                "pointer-events-auto flex items-center gap-1 rounded-full border px-1.5 py-1 md:px-2 md:py-1.5 backdrop-blur-2xl shadow-lg mr-auto",
                 isDark ? "border-white/10 bg-slate-900/70" : "border-white/80 bg-white/85"
               )}>
                 <Tooltip>
@@ -3902,9 +3892,6 @@ export function PCPanel({
                     : "rounded-[2rem] border border-white/70 bg-transparent")
               )}
             >
-              {isMobile && (
-                <div className="pointer-events-none absolute left-1/2 top-0 z-30 h-7 w-36 -translate-x-1/2 rounded-b-[1.25rem] bg-black/80" />
-              )}
               <div className={cn(
                 "relative flex-1 min-h-0 flex flex-col overflow-hidden",
                 isDark

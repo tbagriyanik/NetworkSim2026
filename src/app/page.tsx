@@ -4381,15 +4381,17 @@ ${state.bannerMOTD}
                         onTogglePower={toggleDevicePower}
                       />
                     </div>
-                    <div className="overflow-y-auto custom-scrollbar">
-                      <TaskCard
-                        tasks={[...portTasks, ...vlanTasks, ...securityTasks, ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])]}
-                        state={state}
-                        context={taskContext}
-                        color="from-red-500 to-rose-500"
-                        isDark={isDark}
-                      />
-                    </div>
+                    {activeDeviceType !== 'pc' && (
+                      <div className="overflow-y-auto custom-scrollbar">
+                        <TaskCard
+                          tasks={[...portTasks, ...vlanTasks, ...securityTasks, ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])]}
+                          state={state}
+                          context={taskContext}
+                          color="from-red-500 to-rose-500"
+                          isDark={isDark}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
                  {/* Resize handles - hidden on mobile */}
