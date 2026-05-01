@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio, LayoutGrid } from 'lucide-react';
+import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio, LayoutGrid, ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from "@/hooks/use-toast";
 import { isValidMAC, normalizeMAC, cn } from "@/lib/utils";
@@ -593,15 +593,15 @@ export function PCPanel({
     setIotDataStore(selectedIotDevice.iot?.dataStore || '');
   }, [selectedIotDevice]);
 
-  // When tablet powers on, navigate to CMD screen (only once per power-on)
+  // When tablet powers on, navigate to home screen (only once per power-on)
   const initialNavDoneRef = useRef(false);
   useEffect(() => {
     if (!isPcPoweredOff && !initialNavDoneRef.current) {
       initialNavDoneRef.current = true;
-      setActiveTab('desktop');
-      tabletHistoryRef.current = ['desktop'];
+      setActiveTab('home');
+      tabletHistoryRef.current = ['home'];
       tabletHistoryIndexRef.current = 0;
-      onNavigate?.('desktop');
+      onNavigate?.('home');
     } else if (isPcPoweredOff) {
       // Reset the ref when PC is powered off so navigation happens on next power-on
       initialNavDoneRef.current = false;
@@ -3846,38 +3846,12 @@ export function PCPanel({
                         )}
                         aria-label={language === 'tr' ? 'Geri' : 'Back'}
                       >
-                        <ChevronLeft className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        <ArrowLeft className="w-3.5 h-3.5 md:w-4 md:h-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>{language === 'tr' ? 'Geri' : 'Back'}</TooltipContent>
                   </Tooltip>
                 )}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        goHome();
-                        onTogglePower?.(deviceId);
-                      }}
-                      className={cn(
-                        "h-7 w-7 md:h-9 md:w-9 rounded-full transition-all",
-                        isPcPoweredOff
-                          ? 'text-rose-500 hover:text-rose-400 hover:bg-rose-500/10'
-                          : 'text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10'
-                      )}
-                      aria-label={t.power}
-                      disabled={!onTogglePower}
-                    >
-                      <svg className="w-3.5 h-3.5 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-                      </svg>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t.power}</TooltipContent>
-                </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -3926,6 +3900,32 @@ export function PCPanel({
                 )}>
                   {formatTime(currentTime)}
                 </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        goHome();
+                        onTogglePower?.(deviceId);
+                      }}
+                      className={cn(
+                        "h-7 w-7 md:h-9 md:w-9 rounded-full transition-all",
+                        isPcPoweredOff
+                          ? 'text-rose-500 hover:text-rose-400 hover:bg-rose-500/10'
+                          : 'text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10'
+                      )}
+                      aria-label={t.power}
+                      disabled={!onTogglePower}
+                    >
+                      <svg className="w-3.5 h-3.5 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+                      </svg>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t.power}</TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -3948,16 +3948,10 @@ export function PCPanel({
               <div className={cn(
                 "relative flex-1 min-h-0 flex flex-col overflow-hidden",
                 isDark
-                  ? 'bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_32%),linear-gradient(180deg,#020617_0%,#0f172a_45%,#111827_100%)]'
+                  ? 'bg-[linear-gradient(180deg,#020617_0%,#0f172a_45%,#111827_100%)]'
                   : 'bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_55%,#dbeafe_100%)]'
               )}>
                 <div className="pointer-events-none absolute inset-0">
-                  {isDark && (
-                    <>
-                      <div className="absolute -left-20 top-16 h-56 w-56 rounded-full blur-3xl bg-cyan-500/12" />
-                      <div className="absolute -right-16 bottom-10 h-52 w-52 rounded-full blur-3xl bg-violet-500/12" />
-                    </>
-                  )}
                 </div>
             {/* Power Off Overlay - Tablet ekranını tamamen karartır */}
             {isPcPoweredOff && (
@@ -4116,7 +4110,8 @@ export function PCPanel({
                 {/* Content Area */}
                 <div className={cn(
                   "relative z-10 flex-1 min-h-0 flex flex-col overflow-hidden",
-                  activeTab === 'home' ? "px-2 pb-2 pt-2 md:px-5 md:pb-5 md:pt-5" : "px-2 pb-2 pt-2 md:px-5 md:pb-5 md:pt-5"
+                  activeTab === 'home' ? "px-2 pb-2 pt-2 md:px-5 md:pb-5 md:pt-5" : "px-2 pb-2 pt-2 md:px-5 md:pb-5 md:pt-5",
+                  isMobile ? "mx-[10px]" : "" // Add horizontal margin for mobile
                 )}>
                   {activeTab === 'home' && !isPcPoweredOff && (
                     <div
@@ -4131,12 +4126,12 @@ export function PCPanel({
                           <div className={cn(
                             "absolute inset-0",
                             isDark
-                              ? "bg-[linear-gradient(135deg,rgba(15,23,42,0.92),rgba(15,23,42,0.56)),radial-gradient(circle_at_top_right,rgba(59,130,246,0.22),transparent_30%)]"
+                              ? "bg-[linear-gradient(135deg,rgba(15,23,42,0.92),rgba(15,23,42,0.56))]"
                               : "bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(239,246,255,0.84))]"
                           )} />
                         </div>
-                        <div className="relative flex flex-1 flex-col justify-center overflow-y-auto p-3 md:p-8 custom-scrollbar">
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-5 py-2">
+                        <div className="relative flex flex-1 flex-col overflow-y-auto p-3 md:p-8 custom-scrollbar">
+                          <div className="grid grid-cols-3 gap-2 md:gap-5 py-2">
                             {launcherApps.map((app) => (
                               <button
                                 key={app.tab}
