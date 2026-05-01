@@ -56,7 +56,110 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal, Square, Minus, Strikethrough, Cable, Usb, BookOpen, Target, Clock, GraduationCap, Settings as SettingsIcon } from "lucide-react";
+// Add import for SwitchIcon
 import { RouterIcon, SwitchIcon } from '@/components/network/PCPanelWidgets';
+
+// Existing RouterInfoPopover stays unchanged for routers
+
+// New SwitchInfoPopover component for L2 and L3 switches
+function SwitchInfoPopover({ router, routerState, t, language, isDark, onClose, handleDeviceDoubleClick, onOpenPanel, topologyConnections }: RouterInfoPopoverProps) {
+  // Reuse the same draggable logic as RouterInfoPopover
+  const [position, setPosition] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('switch-info-position');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (err) { errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'parseSwitchInfoPosition', savedValue: saved, error: String(err) })); }
+      }
+    }
+    return { x: 16, y: 96 };
+  });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+  const positionRef = useRef(position);
+  const isDraggingRef = useRef(false);
+  const [isDraggingUI, setIsDraggingUI] = useState(false);
+  useEffect(() => { positionRef.current = position; }, [position]);
+  const handleDragStart = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'BUTTON' || target.closest('button')) return;
+    e.preventDefault();
+    isDraggingRef.current = true; setIsDraggingUI(true);
+    dragStartRef.current = { x: e.clientX, y: e.clientY, posX: positionRef.current.x, posY: positionRef.current.y };
+    if (containerRef.current) { containerRef.current.style.cursor = 'grabbing'; containerRef.current.style.transition = 'none'; containerRef.current.style.willChange = 'bottom, right'; }
+    let animationFrameId: number;
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      animationFrameId = requestAnimationFrame(() => {
+        if (!isDraggingRef.current || !containerRef.current) return;
+        const dx = moveEvent.clientX - dragStartRef.current.x;
+        const dy = dragStartRef.current.y - moveEvent.clientY;
+        const newX = dragStartRef.current.posX - dx;
+        const newY = dragStartRef.current.posY + dy;
+        containerRef.current.style.right = `${newX}px`;
+        containerRef.current.style.bottom = `${newY}px`;
+      });
+    };
+    const handleMouseUp = () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      isDraggingRef.current = false; setIsDraggingUI(false);
+      if (containerRef.current) {
+        containerRef.current.style.cursor = '';
+        containerRef.current.style.transition = '';
+        containerRef.current.style.willChange = '';
+        const finalX = parseInt(containerRef.current.style.right);
+        const finalY = parseInt(containerRef.current.style.bottom);
+        const panelWidth = 300; const panelHeight = 500; const margin = 16;
+        const safeX = Math.max(margin, Math.min(finalX, window.innerWidth - panelWidth - margin));
+        const safeY = Math.max(margin, Math.min(finalY, window.innerHeight - panelHeight - margin));
+        const clampedPos = { x: safeX, y: safeY };
+        setPosition(clampedPos);
+        localStorage.setItem('switch-info-position', JSON.stringify(clampedPos));
+      }
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Port data similar to RouterInfoPopover
+  const ports = routerState?.ports ? Object.values(routerState.ports) : (router.ports || []);
+  const totalPorts = Math.max(6, ports.length);
+  const connectedPorts = topologyConnections?.filter(conn => conn.sourceDeviceId === router.id || conn.targetDeviceId === router.id).length || 0;
+
+  return (
+    <div ref={containerRef} className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDraggingUI ? "cursor-grabbing" : "cursor-grab")}
+      style={{ bottom: `${position.y}px`, right: `${position.x}px` }} onMouseDown={handleDragStart}>
+      <div className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[280px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}>
+        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+          <div className="flex items-center gap-1.5">
+            <GripHorizontal className="w-3 h-3 opacity-30 cursor-grab" />
+            <SwitchIcon className="w-3.5 h-3.5 text-purple-500" />
+            <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
+          </div>
+          <button onClick={onClose} className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`} title={language === 'tr' ? 'Kapat' : 'Close'}>
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+        <div className="overflow-hidden">
+          <div className="p-2 space-y-1 text-[10px]">
+            <div className="flex justify-between items-center">
+              <span className="opacity-50">{t.portsShort}</span>
+              <span className="font-mono"><span className="text-green-500">{connectedPorts}</span><span className="opacity-50">/{totalPorts}</span><span className="ml-1 opacity-50">{t.connectedShort}</span></span>
+            </div>
+            {/* Additional switch‑specific info can be added here */}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Update rendering logic for info popovers (replace RouterInfoPopover usage for switches)
+// Original block at lines 5526‑5545 will be modified accordingly.
+
 
 import { Button } from '@/components/ui/button';
 import {
@@ -169,6 +272,8 @@ function RefreshDeviceListToast({
   const [selectedId, setSelectedId] = useState<string | null>(devices[0]?.id ?? null);
   const selected = devices.find((device) => device.id === selectedId) || null;
   const isTR = language === 'tr';
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     if (!devices.length) {
@@ -185,19 +290,23 @@ function RefreshDeviceListToast({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="leading-relaxed">
-        {devices.map((device, index) => (
-          <span key={device.id}>
-            {index > 0 && <span>, </span>}
-            <button
-              type="button"
-              onClick={() => setSelectedId(device.id)}
-              className={`font-semibold ${selectedId === device.id ? 'text-pink-500' : 'text-blue-500'}`}
-            >
-              {device.name}
-            </button>
-          </span>
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-1.5 pt-1">
+        {devices.map((device) => (
+          <button
+            key={device.id}
+            type="button"
+            onClick={() => setSelectedId(device.id)}
+            className={`px-2 py-0.5 text-[10px] font-bold rounded transition-all border ${
+              selectedId === device.id
+                ? 'bg-blue-600 border-blue-700 text-white shadow-sm scale-105 z-10'
+                : isDark
+                  ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-300'
+                  : 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-800'
+            }`}
+          >
+            {device.name}
+          </button>
         ))}
       </div>
 
@@ -5497,7 +5606,7 @@ ${state.bannerMOTD}
                   />
 
                   {/* PC Info Popover - Bottom Right Mini Panel */}
-                  {activeDeviceId && (activeDeviceId.startsWith('pc-') || activeDeviceId.startsWith('iot-') || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'pc' || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'iot') && topologyDevices && (
+                  {activeDeviceId && (activeDeviceId.startsWith('pc-') || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'pc') && topologyDevices && (
                     <PCInfoPopover
                       pc={topologyDevices.find(d => d.id === activeDeviceId)!}
                       t={t}
@@ -6184,7 +6293,7 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
           <div className="flex items-center gap-1.5">
             <GripHorizontal className="w-3 h-3 opacity-30 cursor-grab" />
-            <RouterIcon className="w-3.5 h-3.5 text-purple-500" />
+                        {router.type.startsWith('switch') ? <SwitchIcon isL3={router.type === 'switchL3'} className="w-3.5 h-3.5 text-purple-500" /> : <RouterIcon className="w-3.5 h-3.5 text-purple-500" />}
             <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
           </div>
           <button
