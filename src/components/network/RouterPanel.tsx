@@ -66,7 +66,7 @@ export function RouterPanel({
 
   // Get router device from topology
   const routerDevice = useMemo(() =>
-    topologyDevices.find(d => d.id === deviceId && d.type === 'router'),
+    topologyDevices.find(d => d.id === deviceId && (d.type === 'router' || d.type === 'switchL3')),
     [deviceId, topologyDevices]
   );
 

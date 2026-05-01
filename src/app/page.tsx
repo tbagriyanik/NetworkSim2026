@@ -55,7 +55,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal, Square, Minus, Strikethrough, Cable, Usb, BookOpen, Target, Clock, GraduationCap } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal, Square, Minus, Strikethrough, Cable, Usb, BookOpen, Target, Clock, GraduationCap, Settings as SettingsIcon } from "lucide-react";
 import { RouterIcon, SwitchIcon } from '@/components/network/PCPanelWidgets';
 
 import { Button } from '@/components/ui/button';
@@ -280,7 +280,7 @@ export default function Home() {
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   const [projectPickerTab, setProjectPickerTab] = useState<'all' | 'guided'>('all');
   const [projectSearchQuery, setProjectSearchQuery] = useState('');
-  
+
   // Guided Mode hook
   const {
     activeProject: activeGuidedProject,
@@ -1583,9 +1583,9 @@ ${state.bannerMOTD}
     const hasChanges = updatedDevices.some((device, index) => {
       const original = topologyDevices[index];
       return device.ip !== original.ip ||
-             device.subnet !== original.subnet ||
-             device.gateway !== original.gateway ||
-             device.dns !== original.dns;
+        device.subnet !== original.subnet ||
+        device.gateway !== original.gateway ||
+        device.dns !== original.dns;
     });
 
     if (hasChanges) {
@@ -1780,7 +1780,7 @@ ${state.bannerMOTD}
   const handleCommand = useCallback(async (command: string) => {
     // Track command for guided mode completion checking
     setLastCommand(command);
-    
+
     const result = await handleCommandForDevice(
       activeDeviceId,
       command,
@@ -2122,8 +2122,8 @@ ${state.bannerMOTD}
       // Also filter out devices that don't exist in topology
       devices: Array.from(syncedDeviceStates.entries())
         .filter(([id]) => !excludedDeviceIds.has(id) && topologyDeviceIds.has(id))
-        .map(([id, state]) => ({ 
-          id, 
+        .map(([id, state]) => ({
+          id,
           state: {
             ...state,
             // Optimization: Limit command history
@@ -2236,7 +2236,7 @@ ${state.bannerMOTD}
         ip: '',
         status: 'online',
         switchModel: 'WS-C2960-24TT-L',
-        ports: [                    
+        ports: [
           ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' as const })),
           { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
           { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const },
@@ -2902,7 +2902,7 @@ ${state.bannerMOTD}
             if (port.channelGroup) {
               return; // Don't update spanningTree for channel member ports
             }
-            
+
             const roleMap: Record<string, 'root' | 'designated' | 'alternate' | 'backup' | 'disabled'> = {
               'Root': 'root',
               'Desg': 'designated',
@@ -3686,7 +3686,7 @@ ${state.bannerMOTD}
                       <div className="p-3 space-y-4">
                         {/* Quick actions (primary) */}
                         <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200'}`}>
-                         
+
                           <div className="grid grid-cols-2 gap-2">
                             <Button
                               variant="secondary"
@@ -3716,32 +3716,32 @@ ${state.bannerMOTD}
                             >
                               <Compass className="w-3.5 h-3.5" /> {t.tour}
                             </Button>
-                             <Button
-                            variant="outline"
-                            className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
-                            onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
-                          >
-                            <Languages className="w-3.5 h-3.5" />
-                            {language === 'tr' ? 'English' : 'Türkçe'}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
-                            onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                          >
-                            {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-                            {isDark ? t.lightMode : t.darkMode}
-                          </Button>
+                            <Button
+                              variant="outline"
+                              className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                              onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
+                            >
+                              <Languages className="w-3.5 h-3.5" />
+                              {language === 'tr' ? 'English' : 'Türkçe'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                              onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                            >
+                              {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+                              {isDark ? t.lightMode : t.darkMode}
+                            </Button>
 
-                        {/* Help Button */}
-                        <Button
-                          variant="outline"
-                          className={`w-full justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
-                          onClick={() => { setShowAboutModal(true); setShowMobileMenu(false); }}
-                        >
-                          <Info className="w-3.5 h-3.5" />
-                          {t.help}
-                        </Button>
+                            {/* Help Button */}
+                            <Button
+                              variant="outline"
+                              className={`w-full justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                              onClick={() => { setShowAboutModal(true); setShowMobileMenu(false); }}
+                            >
+                              <Info className="w-3.5 h-3.5" />
+                              {t.help}
+                            </Button>
                           </div>
                         </div>
 
@@ -4011,7 +4011,7 @@ ${state.bannerMOTD}
 
                           <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
                             {getAvailableProjects(language)
-                              .filter(guidedProject => 
+                              .filter(guidedProject =>
                                 projectSearchQuery.trim() === '' ||
                                 guidedProject.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
                                 guidedProject.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
@@ -4019,69 +4019,69 @@ ${state.bannerMOTD}
                                 (guidedProject.detail && guidedProject.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
                               )
                               .map((guidedProject) => (
-                              <Button
-                                key={guidedProject.id}
-                                variant='ghost'
-                                className={`group h-auto min-h-[140px] md:min-h-[180px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-emerald-800/40 bg-emerald-900/10 hover:bg-emerald-900/30 hover:border-emerald-500/50' : 'border-emerald-200/50 bg-emerald-50/30 hover:bg-emerald-50 hover:border-emerald-500/40'} w-full overflow-hidden shadow-sm hover:shadow-2xl relative`}
-                                onClick={() => { 
-                                  setShowProjectPicker(false); 
-                                  runWithSaveGuard(() => {
-                                    startGuidedProject(guidedProject);
-                                    loadProjectData(guidedProject.data);
-                                  }); 
-                                }}
-                              >
-                                <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
-                                  <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-emerald-400 text-emerald-100' : 'group-hover:text-emerald-600 text-emerald-900'}`}>
-                                    {guidedProject.title}
-                                  </span>
-                                  <span className={`text-[8px] md:text-[10px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-emerald-100 text-emerald-600 border-emerald-200'}`}>
-                                    {guidedProject.tag}
-                                  </span>
-                                </div>
-                                <p className={`text-[11px] md:text-sm leading-relaxed font-medium italic transition-colors whitespace-normal break-words w-full ${isDark ? 'text-slate-300/80 group-hover:text-slate-200' : 'text-slate-600 group-hover:text-slate-800'}`}>
-                                  {guidedProject.description}
-                                </p>
-                                
-                                {/* Info Bar */}
-                                <div className='mt-auto pt-3 flex items-center gap-4 w-full border-t border-slate-800/10 dark:border-slate-700/50'>
-                                  <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-                                    <Clock className="w-3 h-3" />
-                                    {guidedProject.estimatedTimeMinutes} {language === 'tr' ? 'dk' : 'min'}
-                                  </div>
-                                  <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-                                    <Target className="w-3 h-3" />
-                                    {guidedProject.steps.length} {language === 'tr' ? 'adım' : 'steps'}
-                                  </div>
-                                  <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 capitalize">
-                                    <BookOpen className="w-3 h-3" />
-                                    {guidedProject.difficulty}
-                                  </div>
-                                </div>
-
-                                {guidedProject.detail && (
-                                  <div className='pt-2 flex items-center gap-2 w-full'>
-                                    <div className='w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.5)]' />
-                                    <span className={`text-[8px] md:text-[11px] font-bold tracking-wide whitespace-normal break-words w-full ${isDark ? 'text-amber-400/80' : 'text-amber-700/80'}`}>
-                                      {guidedProject.detail}
+                                <Button
+                                  key={guidedProject.id}
+                                  variant='ghost'
+                                  className={`group h-auto min-h-[140px] md:min-h-[180px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-emerald-800/40 bg-emerald-900/10 hover:bg-emerald-900/30 hover:border-emerald-500/50' : 'border-emerald-200/50 bg-emerald-50/30 hover:bg-emerald-50 hover:border-emerald-500/40'} w-full overflow-hidden shadow-sm hover:shadow-2xl relative`}
+                                  onClick={() => {
+                                    setShowProjectPicker(false);
+                                    runWithSaveGuard(() => {
+                                      startGuidedProject(guidedProject);
+                                      loadProjectData(guidedProject.data);
+                                    });
+                                  }}
+                                >
+                                  <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
+                                    <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-emerald-400 text-emerald-100' : 'group-hover:text-emerald-600 text-emerald-900'}`}>
+                                      {guidedProject.title}
+                                    </span>
+                                    <span className={`text-[8px] md:text-[10px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-emerald-100 text-emerald-600 border-emerald-200'}`}>
+                                      {guidedProject.tag}
                                     </span>
                                   </div>
-                                )}
-                              </Button>
-                            ))}
-                            {getAvailableProjects(language).filter(guidedProject => 
+                                  <p className={`text-[11px] md:text-sm leading-relaxed font-medium italic transition-colors whitespace-normal break-words w-full ${isDark ? 'text-slate-300/80 group-hover:text-slate-200' : 'text-slate-600 group-hover:text-slate-800'}`}>
+                                    {guidedProject.description}
+                                  </p>
+
+                                  {/* Info Bar */}
+                                  <div className='mt-auto pt-3 flex items-center gap-4 w-full border-t border-slate-800/10 dark:border-slate-700/50'>
+                                    <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
+                                      <Clock className="w-3 h-3" />
+                                      {guidedProject.estimatedTimeMinutes} {language === 'tr' ? 'dk' : 'min'}
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
+                                      <Target className="w-3 h-3" />
+                                      {guidedProject.steps.length} {language === 'tr' ? 'adım' : 'steps'}
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 capitalize">
+                                      <BookOpen className="w-3 h-3" />
+                                      {guidedProject.difficulty}
+                                    </div>
+                                  </div>
+
+                                  {guidedProject.detail && (
+                                    <div className='pt-2 flex items-center gap-2 w-full'>
+                                      <div className='w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.5)]' />
+                                      <span className={`text-[8px] md:text-[11px] font-bold tracking-wide whitespace-normal break-words w-full ${isDark ? 'text-amber-400/80' : 'text-amber-700/80'}`}>
+                                        {guidedProject.detail}
+                                      </span>
+                                    </div>
+                                  )}
+                                </Button>
+                              ))}
+                            {getAvailableProjects(language).filter(guidedProject =>
                               projectSearchQuery.trim() === '' ||
                               guidedProject.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
                               guidedProject.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
                               guidedProject.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
                               (guidedProject.detail && guidedProject.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
                             ).length === 0 && (
-                              <div className={`text-center py-12 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                                <p className="text-sm">
-                                  {language === 'tr' ? 'Aramanızla eşleşen rehberli ders bulunamadı.' : 'No guided lessons found matching your search.'}
-                                </p>
-                              </div>
-                            )}
+                                <div className={`text-center py-12 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                                  <p className="text-sm">
+                                    {language === 'tr' ? 'Aramanızla eşleşen rehberli ders bulunamadı.' : 'No guided lessons found matching your search.'}
+                                  </p>
+                                </div>
+                              )}
                           </div>
                         </section>
                       </div>
@@ -4122,31 +4122,31 @@ ${state.bannerMOTD}
                                 {filteredProjects.map((example) => {
                                   const isBasicLevel = level === 'basic';
                                   return (
-                                  <Button
-                                    key={example.id}
-                                    variant='ghost'
-                                    className={`group h-auto min-h-[120px] md:min-h-[160px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/80 hover:border-cyan-500/30' : 'border-slate-200/50 bg-white hover:bg-slate-50 hover:border-blue-500/20'} w-full overflow-hidden shadow-sm hover:shadow-2xl`}
-                                    onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => applyExampleProject(example.data)); }}
-                                  >
-                                  <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
-                                    <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-cyan-400' : 'group-hover:text-blue-600'}`}>{example.title}</span>
-                                    <span className={`text-[8px] md:text-[10px] font-black  tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>{example.tag}</span>
-                                  </div>
-                                  <p className={`text-[11px] md:text-sm leading-relaxed font-medium italic transition-colors whitespace-normal break-words break-all w-full ${isDark ? 'text-slate-400/80 group-hover:text-slate-200' : 'text-slate-600 group-hover:text-slate-800'}`}>{example.description}</p>
-                                  {example.detail && (
-                                    <div className='mt-auto pt-2 md:pt-4 flex items-center gap-2 md:gap-3 w-full border-t border-slate-800/10 dark:border-slate-800/50'>
-                                      <div className='w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.5)]' />
-                                      <span className={`text-[8px] md:text-[11px] font-bold tracking-wide whitespace-normal break-words break-all w-full ${isDark ? 'text-amber-400/80' : 'text-amber-700/80'}`}>{example.detail}</span>
-                                    </div>
-                                  )}
-                                </Button>
-                              );
-                            })}
-                            </div>
-                          </section>
-                        );
-                      })}
-                    </div>
+                                    <Button
+                                      key={example.id}
+                                      variant='ghost'
+                                      className={`group h-auto min-h-[120px] md:min-h-[160px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/80 hover:border-cyan-500/30' : 'border-slate-200/50 bg-white hover:bg-slate-50 hover:border-blue-500/20'} w-full overflow-hidden shadow-sm hover:shadow-2xl`}
+                                      onClick={() => { setShowProjectPicker(false); runWithSaveGuard(() => applyExampleProject(example.data)); }}
+                                    >
+                                      <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
+                                        <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-cyan-400' : 'group-hover:text-blue-600'}`}>{example.title}</span>
+                                        <span className={`text-[8px] md:text-[10px] font-black  tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>{example.tag}</span>
+                                      </div>
+                                      <p className={`text-[11px] md:text-sm leading-relaxed font-medium italic transition-colors whitespace-normal break-words break-all w-full ${isDark ? 'text-slate-400/80 group-hover:text-slate-200' : 'text-slate-600 group-hover:text-slate-800'}`}>{example.description}</p>
+                                      {example.detail && (
+                                        <div className='mt-auto pt-2 md:pt-4 flex items-center gap-2 md:gap-3 w-full border-t border-slate-800/10 dark:border-slate-800/50'>
+                                          <div className='w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.5)]' />
+                                          <span className={`text-[8px] md:text-[11px] font-bold tracking-wide whitespace-normal break-words break-all w-full ${isDark ? 'text-amber-400/80' : 'text-amber-700/80'}`}>{example.detail}</span>
+                                        </div>
+                                      )}
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+                            </section>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -4282,33 +4282,33 @@ ${state.bannerMOTD}
           </AlertDialog>
 
           {/* Tasks Modal */}
-           <Dialog open={showTasksModal} onOpenChange={setShowTasksModal} modal={false}>
-             <DialogContent
-               showCloseButton={false}
-               onEscapeKeyDown={(e) => e.preventDefault()}
-               className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
-               data-modal-content
-               style={{
-                 position: 'fixed',
-                 left: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.x : 0,
-                 top: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.y : 0,
-                 width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${tasksModalSize.width}px` : '100vw',
-                 height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${tasksModalSize.height}px` : '100vh',
-                 maxWidth: 'none',
-                 maxHeight: 'none',
-                 borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
-                 borderWidth: 3,
-               }}
-             >
-               <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-visible">
-                 <DialogHeader
-                   className={cn(
-                     "p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10",
-                     isDark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-white"
-                   )}
-                   data-modal-header
-                   onPointerDown={(e) => handlePointerDown(e, 'tasks')}
-                 >
+          <Dialog open={showTasksModal} onOpenChange={setShowTasksModal} modal={false}>
+            <DialogContent
+              showCloseButton={false}
+              onEscapeKeyDown={(e) => e.preventDefault()}
+              className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              data-modal-content
+              style={{
+                position: 'fixed',
+                left: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.x : 0,
+                top: typeof window !== 'undefined' && window.innerWidth >= 768 ? tasksModalPosition.y : 0,
+                width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${tasksModalSize.width}px` : '100vw',
+                height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${tasksModalSize.height}px` : '100vh',
+                maxWidth: 'none',
+                maxHeight: 'none',
+                borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
+                borderWidth: 3,
+              }}
+            >
+              <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-visible">
+                <DialogHeader
+                  className={cn(
+                    "p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10",
+                    isDark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-white"
+                  )}
+                  data-modal-header
+                  onPointerDown={(e) => handlePointerDown(e, 'tasks')}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
@@ -4394,34 +4394,34 @@ ${state.bannerMOTD}
                     )}
                   </div>
                 </div>
-                 {/* Resize handles - hidden on mobile */}
-                 {typeof window !== 'undefined' && window.innerWidth >= 768 && (
-                   <>
-                     <div
-                       className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10"
-                       onPointerDown={(e) => handleResizeStart(e, 'w', 'tasks')}
-                     />
-                     <div
-                       className="absolute right-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20"
-                       onPointerDown={(e) => handleResizeStart(e, 'e', 'tasks')}
-                     />
-                     <div
-                       className="absolute left-[10px] right-8 bottom-0 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20"
-                       onPointerDown={(e) => handleResizeStart(e, 's', 'tasks')}
-                     />
-                     <div
-                       className="absolute bottom-0 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 dark:border-slate-500/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
-                       onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
-                       title={language === 'tr' ? 'Yeniden boyutlandır' : 'Resize'}
-                     >
-                       <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                         <path d="M6 13L13 6" />
-                         <path d="M9.5 13L13 9.5" />
-                         <path d="M12.5 13L13 12.5" />
-                       </svg>
-                     </div>
-                   </>
-                 )}
+                {/* Resize handles - hidden on mobile */}
+                {typeof window !== 'undefined' && window.innerWidth >= 768 && (
+                  <>
+                    <div
+                      className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10"
+                      onPointerDown={(e) => handleResizeStart(e, 'w', 'tasks')}
+                    />
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20"
+                      onPointerDown={(e) => handleResizeStart(e, 'e', 'tasks')}
+                    />
+                    <div
+                      className="absolute left-[10px] right-8 bottom-0 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20"
+                      onPointerDown={(e) => handleResizeStart(e, 's', 'tasks')}
+                    />
+                    <div
+                      className="absolute bottom-0 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 dark:border-slate-500/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
+                      onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
+                      title={language === 'tr' ? 'Yeniden boyutlandır' : 'Resize'}
+                    >
+                      <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                        <path d="M6 13L13 6" />
+                        <path d="M9.5 13L13 9.5" />
+                        <path d="M12.5 13L13 12.5" />
+                      </svg>
+                    </div>
+                  </>
+                )}
               </div>
             </DialogContent>
           </Dialog>
@@ -4672,6 +4672,16 @@ ${state.bannerMOTD}
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* Router Info Panel Modal */}
+          <RouterPanel
+            deviceId={showRouterDeviceId}
+            isVisible={showRouterPanel}
+            onClose={() => setShowRouterPanel(false)}
+            topologyDevices={topologyDevices || undefined}
+            deviceStates={deviceStates}
+            cableInfo={cableInfo}
+          />
 
           {/* Main Content - Fits between header and footer with scroll */}
           <main className="flex-1 overflow-hidden flex flex-col min-h-0">
@@ -5136,7 +5146,7 @@ ${state.bannerMOTD}
                       </TooltipTrigger>
                       <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh Network (F5)'}</TooltipContent>
                     </Tooltip>
-                    
+
                   </div>
                 )}
                 {/* Network Topology fills remaining space */}
@@ -5177,7 +5187,7 @@ ${state.bannerMOTD}
                   />
 
                   {/* PC Info Popover - Bottom Right Mini Panel */}
-                  {activeDeviceId && activeDeviceId.startsWith('pc-') && topologyDevices && (
+                  {activeDeviceId && (activeDeviceId.startsWith('pc-') || activeDeviceId.startsWith('iot-') || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'pc' || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'iot') && topologyDevices && (
                     <PCInfoPopover
                       pc={topologyDevices.find(d => d.id === activeDeviceId)!}
                       t={t}
@@ -5188,13 +5198,17 @@ ${state.bannerMOTD}
                         setActiveDeviceId('');
                       }}
                       handleDeviceDoubleClick={handleDeviceDoubleClick}
+                      onOpenPanel={(id) => {
+                        setShowPCDeviceId(id);
+                        setShowPCPanel(true);
+                      }}
                       topologyDevices={topologyDevices}
                       deviceStates={deviceStates}
                     />
                   )}
 
                   {/* Router Info Popover - Bottom Right Mini Panel */}
-                  {activeDeviceId && activeDeviceId.startsWith('router-') && topologyDevices && (
+                  {activeDeviceId && (activeDeviceId.startsWith('router-') || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'router' || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'switchL3') && topologyDevices && (
                     <RouterInfoPopover
                       router={topologyDevices.find(d => d.id === activeDeviceId)!}
                       routerState={deviceStates.get(activeDeviceId)}
@@ -5206,6 +5220,10 @@ ${state.bannerMOTD}
                         setActiveDeviceId('');
                       }}
                       handleDeviceDoubleClick={handleDeviceDoubleClick}
+                      onOpenPanel={(id) => {
+                        setShowRouterDeviceId(id);
+                        setShowRouterPanel(true);
+                      }}
                       topologyConnections={topologyConnections}
                     />
                   )}
@@ -5407,11 +5425,12 @@ interface PCInfoPopoverProps {
   isDark: boolean;
   onClose: () => void;
   handleDeviceDoubleClick: (type: DeviceType, id: string) => void;
+  onOpenPanel: (id: string) => void;
   topologyDevices: CanvasDevice[];
   deviceStates: Map<string, SwitchState>;
 }
 
-function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleClick, topologyDevices, deviceStates }: PCInfoPopoverProps) {
+function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleClick, onOpenPanel, topologyDevices, deviceStates }: PCInfoPopoverProps) {
   // Draggable position state
   const [position, setPosition] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -5426,7 +5445,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
     }
     return { x: 16, y: 96 }; // default: bottom-24 right-4 = 16px from right, 96px from bottom
   });
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const positionRef = useRef(position);
@@ -5466,16 +5485,16 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
       if (!isDraggingRef.current) return;
 
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      
+
       animationFrameId = requestAnimationFrame(() => {
         if (!isDraggingRef.current || !containerRef.current) return;
-        
+
         const dx = moveEvent.clientX - dragStartRef.current.x;
         const dy = dragStartRef.current.y - moveEvent.clientY;
-        
+
         const newX = dragStartRef.current.posX - dx;
         const newY = dragStartRef.current.posY + dy;
-        
+
         containerRef.current.style.right = `${newX}px`;
         containerRef.current.style.bottom = `${newY}px`;
       });
@@ -5485,22 +5504,22 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       isDraggingRef.current = false;
       setIsDraggingUI(false);
-      
+
       if (containerRef.current) {
         containerRef.current.style.cursor = '';
         containerRef.current.style.transition = '';
         containerRef.current.style.willChange = '';
-        
+
         const finalX = parseInt(containerRef.current.style.right);
         const finalY = parseInt(containerRef.current.style.bottom);
-        
+
         // Clamp position to safe area
         const panelWidth = 280;
         const panelHeight = 400;
         const margin = 16;
         const safeX = Math.max(margin, Math.min(finalX, window.innerWidth - panelWidth - margin));
         const safeY = Math.max(margin, Math.min(finalY, window.innerHeight - panelHeight - margin));
-        
+
         const clampedPos = { x: safeX, y: safeY };
         setPosition(clampedPos);
         localStorage.setItem('pc-info-position', JSON.stringify(clampedPos));
@@ -5623,14 +5642,23 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
               </div>
             </div>
           </div>
-          <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+          <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} flex gap-1.5`}>
             <button
               onClick={() => {
                 handleDeviceDoubleClick(pc.type, pc.id);
               }}
-              className={`w-full py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+              className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
             >
               {t.openCMD}
+            </button>
+            <button
+              onClick={() => {
+                onOpenPanel(pc.id);
+              }}
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
+              title={language === 'tr' ? 'Detaylar' : 'Details'}
+            >
+              <SettingsIcon className="w-3 h-3" />
             </button>
           </div>
         </div>
@@ -5647,10 +5675,11 @@ interface RouterInfoPopoverProps {
   isDark: boolean;
   onClose: () => void;
   handleDeviceDoubleClick: (type: DeviceType, id: string) => void;
+  onOpenPanel: (id: string) => void;
   topologyConnections: CanvasConnection[];
 }
 
-function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, handleDeviceDoubleClick, topologyConnections }: RouterInfoPopoverProps) {
+function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, handleDeviceDoubleClick, onOpenPanel, topologyConnections }: RouterInfoPopoverProps) {
   // Draggable position state
   const [position, setPosition] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -5665,7 +5694,7 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
     }
     return { x: 16, y: 96 }; // default: bottom-24 right-4
   });
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const positionRef = useRef(position);
@@ -5705,16 +5734,16 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
       if (!isDraggingRef.current) return;
 
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      
+
       animationFrameId = requestAnimationFrame(() => {
         if (!isDraggingRef.current || !containerRef.current) return;
-        
+
         const dx = moveEvent.clientX - dragStartRef.current.x;
         const dy = dragStartRef.current.y - moveEvent.clientY;
-        
+
         const newX = dragStartRef.current.posX - dx;
         const newY = dragStartRef.current.posY + dy;
-        
+
         containerRef.current.style.right = `${newX}px`;
         containerRef.current.style.bottom = `${newY}px`;
       });
@@ -5724,22 +5753,22 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       isDraggingRef.current = false;
       setIsDraggingUI(false);
-      
+
       if (containerRef.current) {
         containerRef.current.style.cursor = '';
         containerRef.current.style.transition = '';
         containerRef.current.style.willChange = '';
-        
+
         const finalX = parseInt(containerRef.current.style.right);
         const finalY = parseInt(containerRef.current.style.bottom);
-        
+
         // Clamp position to safe area
         const panelWidth = 300;
         const panelHeight = 500;
         const margin = 16;
         const safeX = Math.max(margin, Math.min(finalX, window.innerWidth - panelWidth - margin));
         const safeY = Math.max(margin, Math.min(finalY, window.innerHeight - panelHeight - margin));
-        
+
         const clampedPos = { x: safeX, y: safeY };
         setPosition(clampedPos);
         localStorage.setItem('router-info-position', JSON.stringify(clampedPos));
@@ -5869,14 +5898,23 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
               </div>
             )}
           </div>
-          <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+          <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} flex gap-1.5`}>
             <button
               onClick={() => {
                 handleDeviceDoubleClick(router.type, router.id);
               }}
-              className={`w-full py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+              className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
             >
               {t.openCLI}
+            </button>
+            <button
+              onClick={() => {
+                onOpenPanel(router.id);
+              }}
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
+              title={language === 'tr' ? 'Detaylar' : 'Details'}
+            >
+              <SettingsIcon className="w-3 h-3" />
             </button>
           </div>
         </div>
