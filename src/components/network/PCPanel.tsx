@@ -48,6 +48,7 @@ interface PCPanelProps {
   deviceId: string;
   cableInfo: CableInfo;
   isVisible: boolean;
+  initialTab?: 'home' | 'desktop' | 'terminal' | 'settings' | 'services' | 'wireless' | 'iot';
   className?: string;
   onClose: () => void;
   onTogglePower?: (deviceId: string) => void;
@@ -75,6 +76,7 @@ export function PCPanel({
   deviceId,
   cableInfo,
   isVisible,
+  initialTab,
   className,
   onClose,
   onTogglePower,
@@ -125,7 +127,7 @@ export function PCPanel({
   const inputBg = isDark ? 'bg-black/50' : 'bg-white';
   const inputBorder = isDark ? 'border-slate-800' : 'border-slate-300';
 
-  const [activeTab, setActiveTab] = useState<PCActiveTab>('home');
+  const [activeTab, setActiveTab] = useState<PCActiveTab>(initialTab || 'home');
   const activeTabRef = useRef<PCActiveTab>(activeTab);
   useEffect(() => {
     activeTabRef.current = activeTab;
@@ -593,20 +595,22 @@ export function PCPanel({
     setIotDataStore(selectedIotDevice.iot?.dataStore || '');
   }, [selectedIotDevice]);
 
-  // When tablet powers on, navigate to home screen (only once per power-on)
+  // When tablet powers on or opens, navigate to initial or home screen
   const initialNavDoneRef = useRef(false);
   useEffect(() => {
-    if (!isPcPoweredOff && !initialNavDoneRef.current) {
-      initialNavDoneRef.current = true;
-      setActiveTab('home');
-      tabletHistoryRef.current = ['home'];
-      tabletHistoryIndexRef.current = 0;
-      onNavigate?.('home');
-    } else if (isPcPoweredOff) {
-      // Reset the ref when PC is powered off so navigation happens on next power-on
+    if (isVisible) {
+      if (!isPcPoweredOff) {
+        const targetTab = initialTab || 'home';
+        setActiveTab(targetTab);
+        tabletHistoryRef.current = [targetTab];
+        tabletHistoryIndexRef.current = 0;
+        onNavigate?.(targetTab);
+        initialNavDoneRef.current = true;
+      }
+    } else {
       initialNavDoneRef.current = false;
     }
-  }, [isPcPoweredOff, onNavigate]);
+  }, [isVisible, isPcPoweredOff, initialTab, onNavigate]);
 
   const validateIP = (ip: string) => {
     const parts = ip.trim().split('.');

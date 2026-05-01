@@ -371,6 +371,7 @@ export default function Home() {
   // Track last executed command for guided mode
   const [lastCommand, setLastCommand] = useState<string>('');
   const [showPCPanel, setShowPCPanel] = useState(false);
+  const [pcPanelInitialTab, setPcPanelInitialTab] = useState<'home' | 'desktop' | 'terminal' | 'settings' | 'services' | 'wireless' | 'iot'>('home');
   const [showPCDeviceId, setShowPCDeviceId] = useState<string>('pc-1');
   const [showRouterPanel, setShowRouterPanel] = useState(false);
   const [showRouterDeviceId, setShowRouterDeviceId] = useState<string>('router-1');
@@ -2138,6 +2139,7 @@ ${state.bannerMOTD}
       // PC - open CMD modal
       setShowPCDeviceId(deviceId);
       getOrCreatePCOutputs(deviceId, topologyDevices);
+      setPcPanelInitialTab('desktop');
       setShowPCPanel(true);
     } else if (device === 'router' || device === 'switchL2' || device === 'switchL3') {
       // Switch or Router - set as CLI device and open CLI modal
@@ -4908,6 +4910,7 @@ ${state.bannerMOTD}
                     className="h-full min-h-0"
                     deviceId={showPCDeviceId}
                     cableInfo={cableInfo}
+                    initialTab={pcPanelInitialTab}
                     isVisible={true}
                     onClose={() => setShowPCPanel(false)}
                     onTogglePower={toggleDevicePower}
@@ -5619,6 +5622,7 @@ ${state.bannerMOTD}
                       handleDeviceDoubleClick={handleDeviceDoubleClick}
                       onOpenPanel={(id) => {
                         setShowPCDeviceId(id);
+                        setPcPanelInitialTab('settings');
                         setShowPCPanel(true);
                       }}
                       topologyDevices={topologyDevices}
