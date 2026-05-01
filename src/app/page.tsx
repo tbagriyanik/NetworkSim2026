@@ -193,7 +193,7 @@ function RefreshDeviceListToast({
             <button
               type="button"
               onClick={() => setSelectedId(device.id)}
-              className={`font-semibold underline-offset-2 hover:underline ${selectedId === device.id ? 'text-pink-500' : 'text-blue-500'}`}
+              className={`font-semibold ${selectedId === device.id ? 'text-pink-500' : 'text-blue-500'}`}
             >
               {device.name}
             </button>
@@ -206,16 +206,22 @@ function RefreshDeviceListToast({
           <table className="w-full text-[11px]">
             <tbody>
               {[
-                [isTR ? 'Cihaz' : 'Device', `${selected.name} (${REFRESH_DEVICE_TYPE_LABELS[selected.type]})`],
-                ['IP', selected.ip],
-                ['MAC', selected.mac ? normalizeMAC(selected.mac) : '-'],
-                ['GW', selected.gateway],
-                ['IPv6', selected.ipv6],
-                [isTR ? 'Açık hizmetler' : 'Open services', selected.services],
-              ].map(([label, value]) => (
+                [isTR ? 'Cihaz' : 'Device', `${selected.name} (${REFRESH_DEVICE_TYPE_LABELS[selected.type]})`, false],
+                ['IP', selected.ip, true],
+                ['MAC', selected.mac ? normalizeMAC(selected.mac) : '-', true],
+                ['GW', selected.gateway, true],
+                ['IPv6', selected.ipv6, true],
+                [isTR ? 'Açık hizmetler' : 'Open services', selected.services, false],
+              ].map(([label, value, copyable]) => (
                 <tr key={label} className="border-t first:border-t-0 border-slate-200 dark:border-slate-700">
                   <td className="w-24 bg-slate-100 px-2 py-1 font-semibold dark:bg-slate-800">{label}</td>
-                  <td className="px-2 py-1 font-mono">{value}</td>
+                  <td
+                    className={`px-2 py-1 font-mono ${copyable ? 'cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 rounded' : ''}`}
+                    onClick={copyable && value !== '-' ? () => navigator.clipboard.writeText(value) : undefined}
+                    title={copyable ? (isTR ? 'Kopyala' : 'Copy') : undefined}
+                  >
+                    {value}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -2065,6 +2071,13 @@ ${state.bannerMOTD}
       }
     });
 
+    // Optimization: Limit terminal outputs to last 100 lines to reduce file size
+    const MAX_SAVED_OUTPUT_LINES = 100;
+    const trimOutputs = (outputs: any[]) => {
+      if (outputs.length <= MAX_SAVED_OUTPUT_LINES) return outputs;
+      return outputs.slice(-MAX_SAVED_OUTPUT_LINES);
+    };
+
     // Synchronize MAC addresses and port statuses from topology devices to device states
     const syncedDeviceStates = new Map(deviceStates);
     const topologyDeviceIds = new Set(topologyDevices.map(d => d.id));
@@ -2103,23 +2116,34 @@ ${state.bannerMOTD}
     });
 
     const projectData = {
-      version: '1.0',
+      version: '1.1', // Incremented version
       timestamp: new Date().toISOString(),
       // Filter out PC/IoT device states - they don't need SwitchState with ports
       // Also filter out devices that don't exist in topology
       devices: Array.from(syncedDeviceStates.entries())
         .filter(([id]) => !excludedDeviceIds.has(id) && topologyDeviceIds.has(id))
-        .map(([id, state]) => ({ id, state })),
+        .map(([id, state]) => ({ 
+          id, 
+          state: {
+            ...state,
+            // Optimization: Limit command history
+            commandHistory: state.commandHistory.slice(-50),
+            // Optimization: Remove temporary UI states if present
+            awaitingPassword: undefined,
+            passwordContext: undefined,
+            awaitingReloadConfirm: undefined
+          }
+        })),
       // Filter out device outputs for devices that don't exist in topology
       deviceOutputs: Array.from(adjustedDeviceOutputs.entries())
         .filter(([id]) => id && id.trim() !== '' && topologyDeviceIds.has(id))
-        .map(([id, outputs]) => ({ id, outputs })),
+        .map(([id, outputs]) => ({ id, outputs: trimOutputs(outputs) })),
       pcOutputs: Array.from(adjustedPcOutputs.entries())
         .filter(([id]) => id && id.trim() !== '' && topologyDeviceIds.has(id))
-        .map(([id, outputs]) => ({ id, outputs })),
+        .map(([id, outputs]) => ({ id, outputs: trimOutputs(outputs) })),
       pcHistories: Array.from(pcHistories.entries())
         .filter(([id]) => id && id.trim() !== '')
-        .map(([id, history]) => ({ id, history })),
+        .map(([id, history]) => ({ id, history: history.slice(-50) })),
       topology: {
         // Filter out devices with empty/invalid IDs
         devices: topologyDevices.filter(d => d.id && d.id.trim() !== ''),
@@ -2132,7 +2156,8 @@ ${state.bannerMOTD}
       activeDeviceType
     };
 
-    const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
+    // Optimization: Use no indentation to reduce file size
+    const blob = new Blob([JSON.stringify(projectData)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -5396,6 +5421,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
   const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const positionRef = useRef(position);
   const isDraggingRef = useRef(false);
+  const [isDraggingUI, setIsDraggingUI] = useState(false);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -5404,16 +5430,18 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
 
   const handleDragStart = (e: React.MouseEvent) => {
     if (e.button !== 0) return; // Only left click
-    const header = (e.target as HTMLElement).closest('[onMouseDown]');
-    if (!header) return;
+    // Don't drag if clicking on buttons
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'BUTTON' || target.closest('button')) return;
 
     e.preventDefault();
     isDraggingRef.current = true;
-    dragStartRef.current = { 
-      x: e.clientX, 
-      y: e.clientY, 
-      posX: positionRef.current.x, 
-      posY: positionRef.current.y 
+    setIsDraggingUI(true);
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      posX: positionRef.current.x,
+      posY: positionRef.current.y
     };
 
     if (containerRef.current) {
@@ -5446,6 +5474,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
     const handleMouseUp = () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       isDraggingRef.current = false;
+      setIsDraggingUI(false);
       
       if (containerRef.current) {
         containerRef.current.style.cursor = '';
@@ -5478,14 +5507,14 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
   return (
     <div
       ref={containerRef}
-      className={cn("hidden md:block fixed z-[10000] animate-scale-in cursor-grab")}
+      className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDraggingUI ? "cursor-grabbing" : "cursor-grab")}
       style={{
         bottom: `${position.y}px`,
         right: `${position.x}px`,
       }}
+      onMouseDown={handleDragStart}
     >
       <div
-        onMouseDown={handleDragStart}
         className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[260px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}
       >
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
@@ -5504,23 +5533,23 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
         </div>
         <div className="overflow-hidden">
           <div className="p-2 space-y-1 text-[10px]">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc.ip || '0.0.0.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
               <span className="opacity-50">IP</span>
               <span className="font-mono text-blue-500">{pc.ip || '0.0.0.0'}</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc.subnet || '255.255.255.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
               <span className="opacity-50">Subnet</span>
               <span className="font-mono opacity-80">{pc.subnet || '255.255.255.0'}</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc.gateway || '0.0.0.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
               <span className="opacity-50">GW</span>
               <span className="font-mono opacity-80">{pc.gateway || '0.0.0.0'}</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc.ipv6 || '::')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
               <span className="opacity-50">IPv6</span>
               <span className="font-mono opacity-80">{pc.ipv6 || '::'}</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc.macAddress ? normalizeMAC(pc.macAddress) : 'N/A')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
               <span className="opacity-50">MAC</span>
               <span className="font-mono opacity-30 text-[9px]">{pc.macAddress ? normalizeMAC(pc.macAddress) : 'N/A'}</span>
             </div>
@@ -5631,6 +5660,7 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
   const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const positionRef = useRef(position);
   const isDraggingRef = useRef(false);
+  const [isDraggingUI, setIsDraggingUI] = useState(false);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -5639,16 +5669,18 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
 
   const handleDragStart = (e: React.MouseEvent) => {
     if (e.button !== 0) return; // Only left click
-    const header = (e.target as HTMLElement).closest('[onMouseDown]');
-    if (!header) return;
+    // Don't drag if clicking on buttons
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'BUTTON' || target.closest('button')) return;
 
     e.preventDefault();
     isDraggingRef.current = true;
-    dragStartRef.current = { 
-      x: e.clientX, 
-      y: e.clientY, 
-      posX: positionRef.current.x, 
-      posY: positionRef.current.y 
+    setIsDraggingUI(true);
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      posX: positionRef.current.x,
+      posY: positionRef.current.y
     };
 
     if (containerRef.current) {
@@ -5681,6 +5713,7 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
     const handleMouseUp = () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       isDraggingRef.current = false;
+      setIsDraggingUI(false);
       
       if (containerRef.current) {
         containerRef.current.style.cursor = '';
@@ -5736,14 +5769,14 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
   return (
     <div
       ref={containerRef}
-      className={cn("hidden md:block fixed z-[10000] animate-scale-in cursor-grab")}
+      className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDraggingUI ? "cursor-grabbing" : "cursor-grab")}
       style={{
         bottom: `${position.y}px`,
         right: `${position.x}px`,
       }}
+      onMouseDown={handleDragStart}
     >
       <div
-        onMouseDown={handleDragStart}
         className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[280px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}
       >
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
@@ -5814,7 +5847,12 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
               <div className="pt-1 border-t border-slate-500/20">
                 <div className="opacity-30 text-[8px] mb-0.5 uppercase font-bold tracking-tighter">IP Addresses</div>
                 {ipAddresses.map((addr: string, i: number) => (
-                  <div key={i} className="font-mono text-[9px] opacity-70 truncate">
+                  <div
+                    key={i}
+                    className="font-mono text-[9px] opacity-70 truncate cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors"
+                    onClick={() => navigator.clipboard.writeText(addr)}
+                    title={language === 'tr' ? 'Kopyala' : 'Copy'}
+                  >
                     {addr}
                   </div>
                 ))}

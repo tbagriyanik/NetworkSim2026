@@ -4068,7 +4068,7 @@ export function NetworkTopology({
       <g
         key={device.id}
         transform={`translate(${device.x}, ${device.y})`}
-        className={`cursor-move ${isDragging ? 'opacity-80' : ''}`}
+        className={`${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isDragging ? 'opacity-80' : ''}`}
         data-device-id={device.id}
       >
         {/* Selection glow effect */}
@@ -5253,6 +5253,18 @@ export function NetworkTopology({
             +
           </button>
         </div>
+
+        {/* Refresh Network */}
+        <button
+          onClick={onRefreshNetwork}
+          className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg min-h-[48px] min-w-[48px] bg-slate-800 hover:bg-slate-700"
+          title={language === 'tr' ? 'Ağı Yenile' : 'Refresh Network'}
+        >
+          <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span className="text-xs text-slate-300">{language === 'tr' ? 'Yenile' : 'Refresh'}</span>
+        </button>
       </div>
     </div>
   );
@@ -6057,8 +6069,8 @@ export function NetworkTopology({
                             e.preventDefault();
                             handleNoteHeaderMouseDown(e as unknown as ReactMouseEvent, note.id);
                           }}
-                          className={`flex items-center gap-2 px-2 text-[10px] font-semibold  tracking-widest cursor-move select-none ${isDark ? 'bg-black/10' : 'bg-black/5'
-                            }`}
+                          className={`flex items-center gap-2 px-2 text-[10px] font-semibold tracking-widest select-none ${isDark ? 'bg-black/10' : 'bg-black/5'
+                            } ${draggedNoteId === note.id ? 'cursor-grabbing' : 'cursor-grab'}`}
                           style={{ height: '24px' }}
                         >
                           <div

@@ -58,7 +58,7 @@ export const DeviceNode = memo(function DeviceNode({
       onTouchStart={(e) => onTouchStart(e, device.id)}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      style={{ cursor: 'move', touchAction: 'none', outline: 'none' }}
+      style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none', outline: 'none' }}
     >
       {/* Invisible touch target area for better mobile interaction - only when selected/dragging 
       {(isSelected || isDragging) && (
