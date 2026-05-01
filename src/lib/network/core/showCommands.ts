@@ -112,7 +112,7 @@ function getSwitchDisplayProfile(state: any) {
     bootldr: isL3 ? 'C3650 Boot Loader (C3650-HBOOT-M) Version 12.2(25)SEE3' : 'C2960 Boot Loader (C2960-HBOOT-M) Version 12.2(25)FX',
     systemImage: isL3 ? 'flash:C3650-ipbase-mz.150-2.SE4.bin' : 'flash:c2960-lanbase-mz.150-2.SE4.bin',
     processor: isL3 ? 'WS-C3650-24PS (PowerPC405) processor (revision 01) with 131072K bytes of memory' : 'WS-C2960-24TT-L (PowerPC405) processor (revision C0) with 65536K bytes of memory',
-    gigabitPortCount: isL3 ? 4 : 2,
+    gigabitPortCount: 4,
   };
 }
 
@@ -421,6 +421,10 @@ function cmdShowVersion(
 ): any {
   const { switchModel, softwareImage, rom, bootldr, systemImage, processor, gigabitPortCount } = getSwitchDisplayProfile(state);
 
+  const fePortCount = Object.values(state.ports || {}).filter((p: any) => p.type === 'fastethernet' && p.id !== 'console' && p.id !== 'wlan0').length;
+  const giPortCount = Object.values(state.ports || {}).filter((p: any) => p.type === 'gigabitethernet').length;
+  const wlanPortCount = Object.values(state.ports || {}).filter((p: any) => p.id.startsWith('wlan')).length;
+
   let output = `\nNetwork NOS Software, ${softwareImage}\n`;
   output += 'Technical Support: http://yunus.sf.net\n';
   output += 'Copyright (c) 1986-2026 by Network Systems, Inc.\n\n';
@@ -431,8 +435,12 @@ function cmdShowVersion(
   output += `${processor}\n`;
   output += 'Processor board ID FOC1234X5YZ\n';
   output += 'Last reload reason: power-on\n\n';
-  output += '24 FastEthernet/IEEE 802.3 interface(s)\n';
-  output += `${gigabitPortCount} Gigabit Ethernet/IEEE 802.3 interface(s)\n\n`;
+  output += `${fePortCount} FastEthernet/IEEE 802.3 interface(s)\n`;
+  output += `${giPortCount} Gigabit Ethernet/IEEE 802.3 interface(s)\n`;
+  if (wlanPortCount > 0) {
+    output += `${wlanPortCount} 802.11 Wireless interface(s)\n`;
+  }
+  output += '\n';
   output += '64K bytes of flash-simulated non-volatile configuration memory.\n';
   output += `Base ethernet MAC Address       : ${state.macAddress}\n`;
   output += 'Motherboard assembly number   : 73-10000-01\n';
@@ -457,13 +465,15 @@ function cmdShowInterfaces(
     const description = port.description || port.name || '';
 
     output += `${portName} is ${port.shutdown ? 'administratively down' : 'up'}, line protocol is ${port.shutdown ? 'down' : 'up'}\n`;
-    output += `  Hardware is Fast Ethernet, address is ${port.macAddress || '0000.0000.0000'}\n`;
+    const hardwareType = port.type === 'gigabitethernet' ? 'Gigabit Ethernet' : 'Fast Ethernet';
+    output += `  Hardware is ${hardwareType}, address is ${port.macAddress || '0000.0000.0000'}\n`;
     if (port.ipAddress && port.subnetMask) {
       output += `  Internet address is ${port.ipAddress}/${port.subnetMask}\n`;
     }
     output += `  Description: ${description}\n`;
-    output += `  MTU 1500 bytes, BW 100000 Kbit/sec\n`;
-    output += `  Full-duplex, ${port.speed || 'auto'}Mb/s\n`;
+    const bw = port.type === 'gigabitethernet' ? '1000000' : '100000';
+    output += `  MTU 1500 bytes, BW ${bw} Kbit/sec\n`;
+    output += `  Full-duplex, ${port.speed === 'auto' ? (port.type === 'gigabitethernet' ? '1000' : '100') : port.speed}Mb/s\n`;
     output += `  input flow-control is off, output flow-control is unsupported\n`;
     output += `  ARP type: ARPA, ARP Timeout ${port.arpTimeout || '04:00:00'}\n`;
     output += `  Last input never, last output never, output hang never\n`;
@@ -576,13 +586,15 @@ function cmdShowInterface(
   const description = port.description || port.name || '';
   let output = '';
   output += `${requestedInterface} is ${port.shutdown ? 'administratively down' : 'up'}, line protocol is ${port.shutdown ? 'down' : 'up'}\n`;
-  output += `  Hardware is Fast Ethernet, address is ${port.macAddress || '0000.0000.0000'}\n`;
+  const hardwareType = port.type === 'gigabitethernet' ? 'Gigabit Ethernet' : 'Fast Ethernet';
+  output += `  Hardware is ${hardwareType}, address is ${port.macAddress || '0000.0000.0000'}\n`;
   if (port.ipAddress && port.subnetMask) {
     output += `  Internet address is ${port.ipAddress}/${port.subnetMask}\n`;
   }
   output += `  Description: ${description}\n`;
-  output += `  MTU 1500 bytes, BW 100000 Kbit/sec\n`;
-  output += `  Full-duplex, ${port.speed || 'auto'}Mb/s\n`;
+  const bw = port.type === 'gigabitethernet' ? '1000000' : '100000';
+  output += `  MTU 1500 bytes, BW ${bw} Kbit/sec\n`;
+  output += `  Full-duplex, ${port.speed === 'auto' ? (port.type === 'gigabitethernet' ? '1000' : '100') : port.speed}Mb/s\n`;
   output += `  input flow-control is off, output flow-control is unsupported\n`;
   output += `  ARP type: ARPA, ARP Timeout ${port.arpTimeout || '04:00:00'}\n`;
   output += `  Last input never, last output never, output hang never\n`;

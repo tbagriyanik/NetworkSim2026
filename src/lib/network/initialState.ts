@@ -36,7 +36,7 @@ function reserveMacAddress(mac?: string): string {
 }
 
 // 24 FastEthernet + configurable GigabitEthernet ports oluştur
-function createInitialPorts(gigabitPortCount: number = 2, baseMac?: string): Record<string, Port> {
+function createInitialPorts(gigabitPortCount: number = 4, baseMac?: string): Record<string, Port> {
   const ports: Record<string, Port> = {};
   const switchBaseMac = baseMac || generateUniqueMacAddress(0x001100000000); // Switch base MAC range
 
@@ -174,7 +174,7 @@ export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' 
   // Switch modeline göre Layer belirle
   const switchLayer = getSwitchLayer(switchModel as any);
   const macAddress = reserveMacAddress(mac);
-  const ports = createInitialPorts(switchLayer === 'L3' ? 4 : 2, macAddress);
+  const ports = createInitialPorts(4, macAddress);
   const vlans = createInitialVlans();
 
   // VLAN'lara portları ata
@@ -257,11 +257,34 @@ function createInitialRouterPorts(baseMac?: string): Record<string, Port> {
     type: 'fastethernet'
   };
 
+  // FastEthernet 0/1 - 0/24 (Router için de ekle)
+  for (let i = 1; i <= 24; i++) {
+    const portId = `fa0/${i}`;
+    const portMac = formatMacFromNumber(parseInt(routerBaseMac.replace(/\./g, ''), 16) + i);
+    ports[portId] = {
+      id: portId,
+      name: '',
+      status: 'notconnect',
+      vlan: 1,
+      mode: 'access',
+      voiceVlan: 'none',
+      duplex: 'auto',
+      speed: 'auto',
+      shutdown: true, // Router portları varsayılan kapalı
+      type: 'fastethernet',
+      allowedVlans: 'all',
+      channelGroup: undefined,
+      channelMode: undefined,
+      channelProtocol: undefined,
+      macAddress: portMac
+    };
+  }
+
   // GigabitEthernet 0/0 - 0/3 (Router portları)
   for (let i = 0; i <= 3; i++) {
     const portId = `gi0/${i}`;
-    // Generate per-port MAC address by incrementing from base MAC
-    const portMacNumber = parseInt(routerBaseMac.replace(/\./g, ''), 16) + i;
+    // Generate per-port MAC address by incrementing from base MAC (after FE ports)
+    const portMacNumber = parseInt(routerBaseMac.replace(/\./g, ''), 16) + 25 + i;
     const portMac = formatMacFromNumber(portMacNumber);
 
     ports[portId] = {
@@ -284,7 +307,7 @@ function createInitialRouterPorts(baseMac?: string): Record<string, Port> {
   }
 
   // WLAN interface
-  const wlanMac = formatMacFromNumber(parseInt(routerBaseMac.replace(/\./g, ''), 16) + 4);
+  const wlanMac = formatMacFromNumber(parseInt(routerBaseMac.replace(/\./g, ''), 16) + 30);
   ports['wlan0'] = {
     id: 'wlan0',
     name: 'WLAN',

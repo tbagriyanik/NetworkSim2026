@@ -806,6 +806,16 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
 
   let output = '';
 
+  // Calculate interface counts for boot message
+  const feCount = Object.values(state.ports || {}).filter((p: any) => p.type === 'fastethernet' && p.id !== 'console' && p.id !== 'wlan0').length;
+  const giCount = Object.values(state.ports || {}).filter((p: any) => p.type === 'gigabitethernet').length;
+  const wlanCount = Object.values(state.ports || {}).filter((p: any) => p.id.startsWith('wlan')).length;
+
+  let ifaceSummary = `${feCount} FastEthernet/IEEE 802.3 interface(s)\n${giCount} Gigabit Ethernet/IEEE 802.3 interface(s)`;
+  if (wlanCount > 0) {
+    ifaceSummary += `\n${wlanCount} 802.11 Wireless interface(s)`;
+  }
+
   // Device type detection for realistic boot messages
   const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900') || state.version.modelName.includes('ISR 4451 X');
   const isL3Switch = state.version.modelName.includes('3650');
@@ -834,7 +844,9 @@ Initializing flash file system
 Booting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!
 Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   ########## [OK]
-  0 bytes remaining in flash device` :
+  0 bytes remaining in flash device
+
+${ifaceSummary}` :
       `System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
 Copyright (c) 1994-2026 by Network Systems, Inc.
@@ -851,7 +863,9 @@ Initializing flash file system
 Booting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!
 Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   ########## [OK]
-  0 bytes remaining in flash device`;
+  0 bytes remaining in flash device
+
+${ifaceSummary}`;
   } else if (isL3Switch) {
     //  3650 L3 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
@@ -872,7 +886,9 @@ Initializing flash file system
 Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
 Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   ########## [OK]
-  0 bytes remaining in flash device` :
+  0 bytes remaining in flash device
+
+${ifaceSummary}` :
       `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
 Copyright (c) 1994-2026 by Network Systems, Inc.
@@ -889,7 +905,9 @@ Initializing flash file system
 Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
 Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   ########## [OK]
-  0 bytes remaining in flash device`;
+  0 bytes remaining in flash device
+
+${ifaceSummary}`;
   } else {
     //  2960 L2 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
@@ -910,7 +928,9 @@ Initializing flash file system
 Booting flash:c2960-lanbase-mz.152-2.E6.bin...OK!
 Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
   ########## [OK]
-  0 bytes remaining in flash device` :
+  0 bytes remaining in flash device
+
+${ifaceSummary}` :
       `System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
 Copyright (c) 1994-2026 by Network Systems, Inc.
@@ -927,7 +947,9 @@ Initializing flash file system
 Booting flash:c2960-lanbase-mz.152-2.E6.bin...OK!
 Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
   ########## [OK]
-  0 bytes remaining in flash device`;
+  0 bytes remaining in flash device
+
+${ifaceSummary}`;
   }
 
   output += `${bootMessages}\n`;
@@ -976,6 +998,16 @@ function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): Command
 
   let output = '';
 
+  // Calculate interface counts for boot message
+  const feCount = Object.values(state.ports || {}).filter((p: any) => p.type === 'fastethernet' && p.id !== 'console' && p.id !== 'wlan0').length;
+  const giCount = Object.values(state.ports || {}).filter((p: any) => p.type === 'gigabitethernet').length;
+  const wlanCount = Object.values(state.ports || {}).filter((p: any) => p.id.startsWith('wlan')).length;
+
+  let ifaceSummary = `${feCount} FastEthernet/IEEE 802.3 interface(s)\n${giCount} Gigabit Ethernet/IEEE 802.3 interface(s)`;
+  if (wlanCount > 0) {
+    ifaceSummary += `\n${wlanCount} 802.11 Wireless interface(s)`;
+  }
+
   // Device type detection for realistic boot messages
   const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900') || state.version.modelName.includes('ISR 4451 X');
   const isL3Switch = state.version.modelName.includes('3650');
@@ -1004,7 +1036,9 @@ Initializing flash file system
 Booting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!
 Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   ########## [OK]
-  0 bytes remaining in flash device` :
+  0 bytes remaining in flash device
+
+${ifaceSummary}` :
       `System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
 Copyright (c) 1994-2026 by Network Systems, Inc.
@@ -1021,7 +1055,9 @@ Initializing flash file system
 Booting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!
 Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   ########## [OK]
-  0 bytes remaining in flash device`;
+  0 bytes remaining in flash device
+
+${ifaceSummary}`;
   } else if (isL3Switch) {
     //  3650 L3 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
@@ -1042,7 +1078,9 @@ Initializing flash file system
 Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
 Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   ########## [OK]
-  0 bytes remaining in flash device` :
+  0 bytes remaining in flash device
+
+${ifaceSummary}` :
       `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
 Copyright (c) 1994-2026 by Network Systems, Inc.
@@ -1059,7 +1097,9 @@ Initializing flash file system
 Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
 Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   ########## [OK]
-  0 bytes remaining in flash device`;
+  0 bytes remaining in flash device
+
+${ifaceSummary}`;
   } else {
     //  2960 L2 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
@@ -1080,7 +1120,9 @@ Initializing flash file system
 Booting flash:c2960-lanbase-mz.152-2.E6.bin...OK!
 Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
   ########## [OK]
-  0 bytes remaining in flash device` :
+  0 bytes remaining in flash device
+
+${ifaceSummary}` :
       `System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
 Copyright (c) 1994-2026 by Network Systems, Inc.
@@ -1097,7 +1139,9 @@ Initializing flash file system
 Booting flash:c2960-lanbase-mz.152-2.E6.bin...OK!
 Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
   ########## [OK]
-  0 bytes remaining in flash device`;
+  0 bytes remaining in flash device
+
+${ifaceSummary}`;
   }
 
   output += `${bootMessages}\n`;
