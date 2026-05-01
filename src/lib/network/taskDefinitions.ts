@@ -212,7 +212,9 @@ export const wirelessTasks: TaskDefinition[] = [
     tip: { tr: 'no shutdown komutunu kullanın', en: 'Use no shutdown command' },
     weight: 20,
     icon: 'wlan0',
-    checkFn: (state) => {
+    checkFn: (state, ctx) => {
+      // L2 switches don't have wireless support (no WLC)
+      if (ctx.selectedDevice === 'switchL2') return false;
       const wlan = state.ports['wlan0'];
       return wlan && !wlan.shutdown;
     },
@@ -224,7 +226,9 @@ export const wirelessTasks: TaskDefinition[] = [
     tip: { tr: 'wlan MySSID 1 MySSID komutunu kullanın', en: 'Use wlan MySSID 1 MySSID command' },
     weight: 20,
     icon: 'wlan0',
-    checkFn: (state) => {
+    checkFn: (state, ctx) => {
+      // L2 switches don't have wireless support (no WLC)
+      if (ctx.selectedDevice === 'switchL2') return false;
       const wlan = state.ports['wlan0'];
       return !!wlan?.wifi?.ssid;
     },
@@ -236,7 +240,9 @@ export const wirelessTasks: TaskDefinition[] = [
     tip: { tr: 'security wpa psk set-key ascii 0 password komutunu kullanın', en: 'Use security wpa psk set-key ascii 0 password command' },
     weight: 30,
     icon: 'wlan0',
-    checkFn: (state) => {
+    checkFn: (state, ctx) => {
+      // L2 switches don't have wireless support (no WLC)
+      if (ctx.selectedDevice === 'switchL2') return false;
       const wlan = state.ports['wlan0'];
       return !!(wlan?.wifi && wlan.wifi.mode !== 'disabled' && wlan.wifi.security === 'wpa2' && wlan.wifi.password);
     },
@@ -248,7 +254,9 @@ export const wirelessTasks: TaskDefinition[] = [
     tip: { tr: 'station-role root komutunu kullanın', en: 'Use station-role root command' },
     weight: 30,
     icon: 'wlan0',
-    checkFn: (state) => {
+    checkFn: (state, ctx) => {
+      // L2 switches don't have wireless support (no WLC)
+      if (ctx.selectedDevice === 'switchL2') return false;
       const wlan = state.ports['wlan0'];
       return !!(wlan && !wlan.shutdown && wlan.wifi?.mode === 'ap' && wlan.wifi.ssid);
     },

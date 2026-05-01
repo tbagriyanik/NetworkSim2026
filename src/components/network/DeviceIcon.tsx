@@ -30,7 +30,7 @@ export function DeviceIcon({
         ? DEVICE_ICON_COLORS.iot  // IoT için varsayılan renk
         : type === 'router'
           ? DEVICE_ICON_COLORS.router
-          : (isSwitch && switchModel === 'WS-C3560-24PS' ? '#a855f7' : DEVICE_ICON_COLORS.switch)
+          : (isSwitch && switchModel === 'WS-C3650-24PS' ? '#a855f7' : DEVICE_ICON_COLORS.switch)
   );
 
   const strokeWidth = active ? 2 : 1.25;
@@ -42,8 +42,8 @@ export function DeviceIcon({
     stroke: defaultColor,
     strokeWidth,
     className: cn(
-      'transition-all duration-300',
-      active && 'filter drop-shadow-[0_0_8px_rgba(var(--color-primary),0.5)]',
+      'transition-all duration-200',
+      active && 'filter drop-shadow-[0_0_4px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_0_4px_rgba(255,255,255,0.1)]',
       className
     )
   };

@@ -807,8 +807,8 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
   let output = '';
 
   // Device type detection for realistic boot messages
-  const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900') || state.version.modelName.includes('1941');
-  const isL3Switch = state.version.modelName.includes('3560');
+  const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900') || state.version.modelName.includes('ISR 4451 X');
+  const isL3Switch = state.version.modelName.includes('3650');
   const isL2Switch = !isRouter && !isL3Switch;
 
   // Generate realistic boot messages based on device type
@@ -853,13 +853,13 @@ Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   ########## [OK]
   0 bytes remaining in flash device`;
   } else if (isL3Switch) {
-    //  3560 L3 Switch boot sequence
+    //  3650 L3 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
 Copyright (c) 1994-2026 by Network Systems, Inc.
-C3560 platform with 131072 K bytes of memory
+C3650 platform with 131072 K bytes of memory
 
 ${syslog}
 Load/bootstrap symbols loaded
@@ -869,14 +869,14 @@ CPU memory test . . . . . . . . . . . . . OK
 Board initialization completed
 Initializing flash file system
 
-Booting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!
-Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
+Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
+Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   ########## [OK]
   0 bytes remaining in flash device` :
       `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
 Copyright (c) 1994-2026 by Network Systems, Inc.
-C3560 platform with 131072 K bytes of memory
+C3650 platform with 131072 K bytes of memory
 
 ${syslog}
 Load/bootstrap symbols loaded
@@ -886,8 +886,8 @@ CPU memory test . . . . . . . . . . . . . OK
 Board initialization completed
 Initializing flash file system
 
-Booting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!
-Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
+Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
+Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   ########## [OK]
   0 bytes remaining in flash device`;
   } else {
@@ -977,8 +977,8 @@ function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): Command
   let output = '';
 
   // Device type detection for realistic boot messages
-  const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900') || state.version.modelName.includes('1941');
-  const isL3Switch = state.version.modelName.includes('3560');
+  const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900') || state.version.modelName.includes('ISR 4451 X');
+  const isL3Switch = state.version.modelName.includes('3650');
   const isL2Switch = !isRouter && !isL3Switch;
 
   // Generate realistic boot messages based on device type
@@ -1023,13 +1023,13 @@ Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   ########## [OK]
   0 bytes remaining in flash device`;
   } else if (isL3Switch) {
-    //  3560 L3 Switch boot sequence
+    //  3650 L3 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
       `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
 Copyright (c) 1994-2026 by Network Systems, Inc.
-C3560 platform with 131072 K bytes of memory
+C3650 platform with 131072 K bytes of memory
 
 ${syslog}
 Load/bootstrap symbols loaded
@@ -1039,14 +1039,14 @@ CPU memory test . . . . . . . . . . . . . OK
 Board initialization completed
 Initializing flash file system
 
-Booting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!
-Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
+Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
+Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   ########## [OK]
   0 bytes remaining in flash device` :
       `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
 Technical Support: http://yunus.sf.net
 Copyright (c) 1994-2026 by Network Systems, Inc.
-C3560 platform with 131072 K bytes of memory
+C3650 platform with 131072 K bytes of memory
 
 ${syslog}
 Load/bootstrap symbols loaded
@@ -1056,8 +1056,8 @@ CPU memory test . . . . . . . . . . . . . OK
 Board initialization completed
 Initializing flash file system
 
-Booting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!
-Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
+Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
+Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   ########## [OK]
   0 bytes remaining in flash device`;
   } else {

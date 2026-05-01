@@ -139,10 +139,10 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
     <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
       <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className={deviceModel === 'NETWORK-1941' ? "text-purple-400 text-base sm:text-lg flex items-center gap-2" : deviceModel === 'WS-C3560-24PS' ? "text-purple-400 text-base sm:text-lg flex items-center gap-2" : deviceModel === 'WS-C2960-24TT-L' ? "text-green-400 text-base sm:text-lg flex items-center gap-2" : "text-purple-400 text-base sm:text-lg flex items-center gap-2"}>
-            {deviceModel === 'NETWORK-1941' ? (
+          <CardTitle className={deviceModel === 'ISR 4451 X' ? "text-purple-400 text-base sm:text-lg flex items-center gap-2" : deviceModel === 'WS-C3650-24PS' ? "text-purple-400 text-base sm:text-lg flex items-center gap-2" : deviceModel === 'WS-C2960-24TT-L' ? "text-green-400 text-base sm:text-lg flex items-center gap-2" : "text-purple-400 text-base sm:text-lg flex items-center gap-2"}>
+            {deviceModel === 'ISR 4451 X' ? (
               <RouterIcon className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
-            ) : deviceModel === 'WS-C3560-24PS' ? (
+            ) : deviceModel === 'WS-C3650-24PS' ? (
               <SwitchIcon className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" isL3={true} />
             ) : deviceModel === 'WS-C2960-24TT-L' ? (
               <SwitchIcon className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" isL3={false} />

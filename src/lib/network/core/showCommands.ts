@@ -101,17 +101,17 @@ function getSTPCost(port: any): number {
 
 function getSwitchDisplayProfile(state: any) {
   const switchModel = state.switchModel || 'WS-C2960-24TT-L';
-  const isL3 = switchModel === 'WS-C3560-24PS';
+  const isL3 = switchModel === 'WS-C3650-24PS';
 
   return {
     switchModel,
     isL3,
-    bootImage: isL3 ? 'c3560-ipbase-mz.150-2.SE4.bin' : 'c2960-lanbase-mz.150-2.SE4.bin',
-    softwareImage: isL3 ? 'C3560 Software (C3560-IPBASE-M), Version 15.0(2)SE4' : 'C2960 Software (C2960-LANBASE-M), Version 15.0(2)SE4',
-    rom: isL3 ? 'C3560 boot loader' : 'C2960 boot loader',
-    bootldr: isL3 ? 'C3560 Boot Loader (C3560-HBOOT-M) Version 12.2(25)SEE3' : 'C2960 Boot Loader (C2960-HBOOT-M) Version 12.2(25)FX',
-    systemImage: isL3 ? 'flash:c3560-ipbase-mz.150-2.SE4.bin' : 'flash:c2960-lanbase-mz.150-2.SE4.bin',
-    processor: isL3 ? 'WS-C3560-24PS (PowerPC405) processor (revision 01) with 131072K bytes of memory' : 'WS-C2960-24TT-L (PowerPC405) processor (revision C0) with 65536K bytes of memory',
+    bootImage: isL3 ? 'C3650-ipbase-mz.150-2.SE4.bin' : 'c2960-lanbase-mz.150-2.SE4.bin',
+    softwareImage: isL3 ? 'C3650 Software (C3650-IPBASE-M), Version 15.0(2)SE4' : 'C2960 Software (C2960-LANBASE-M), Version 15.0(2)SE4',
+    rom: isL3 ? 'C3650 boot loader' : 'C2960 boot loader',
+    bootldr: isL3 ? 'C3650 Boot Loader (C3650-HBOOT-M) Version 12.2(25)SEE3' : 'C2960 Boot Loader (C2960-HBOOT-M) Version 12.2(25)FX',
+    systemImage: isL3 ? 'flash:C3650-ipbase-mz.150-2.SE4.bin' : 'flash:c2960-lanbase-mz.150-2.SE4.bin',
+    processor: isL3 ? 'WS-C3650-24PS (PowerPC405) processor (revision 01) with 131072K bytes of memory' : 'WS-C2960-24TT-L (PowerPC405) processor (revision C0) with 65536K bytes of memory',
     gigabitPortCount: isL3 ? 4 : 2,
   };
 }

@@ -56,6 +56,7 @@ export function ModernPanel({
     const [width, setWidth] = useState(defaultWidth);
     const [height, setHeight] = useState(defaultHeight);
     const [isMobile, setIsMobile] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     useEffect(() => {
         if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -76,7 +77,6 @@ export function ModernPanel({
     // Use ref for resize to avoid React re-renders during resize
     const panelRef = useRef<HTMLDivElement>(null);
     const isResizingRef = useRef(false);
-    const isDraggingRef = useRef(false);
     const resizeStateRef = useRef({
         startX: 0,
         startY: 0,
@@ -159,7 +159,7 @@ export function ModernPanel({
         if (!isHeader) return;
 
         e.preventDefault();
-        isDraggingRef.current = true;
+        setIsDragging(true);
 
         // Set cursor immediately
         document.body.style.cursor = 'grabbing';
@@ -176,7 +176,7 @@ export function ModernPanel({
         };
 
         const handleMouseMove = (moveEvent: MouseEvent) => {
-            if (!panelRef.current || !isDraggingRef.current) return;
+            if (!panelRef.current || !isDragging) return;
 
             const deltaX = moveEvent.clientX - dragStateRef.current.startX;
             const deltaY = moveEvent.clientY - dragStateRef.current.startY;
@@ -190,7 +190,7 @@ export function ModernPanel({
         };
 
         const handleMouseUp = () => {
-            isDraggingRef.current = false;
+            setIsDragging(false);
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
             document.removeEventListener('mousemove', handleMouseMove);
@@ -220,10 +220,11 @@ export function ModernPanel({
         <div
             ref={panelRef}
             className={cn(
-                'flex flex-col border rounded-lg shadow-lg overflow-hidden',
-                isDark ? 'bg-slate-900/95 border-slate-700' : 'bg-white/95 border-slate-200',
+                'flex flex-col border rounded-lg shadow-sm overflow-hidden transition-shadow duration-200',
+                isDark ? 'bg-zinc-950/95 border-zinc-800' : 'bg-white/95 border-zinc-200',
                 isOverlay && 'fixed z-40',
                 isStacked && 'relative',
+                isDragging && 'shadow-xl ring-1 ring-primary/10',
                 className
             )}
             style={{
@@ -238,99 +239,78 @@ export function ModernPanel({
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
         >
-            {/* Header - Simple, no effects */}
+            {/* Header - Simple, clean */}
             {!hideHeader && (
                 <div
                     data-drag-header
                     className={cn(
-                        "flex items-center justify-between gap-2 p-4 border-b cursor-grab active:cursor-grabbing",
-                        isDark ? "bg-slate-800 border-slate-700" : "bg-muted/50",
-                        isMobile && "p-3 min-h-[48px] touch-manipulation"
+                        "flex items-center justify-between gap-2 p-3 border-b cursor-grab active:cursor-grabbing select-none",
+                        isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-50 border-zinc-200",
+                        isMobile && "p-2 min-h-[44px] touch-manipulation"
                     )}
                     style={{ touchAction: 'none' }}
                 >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                        {canResize && (
-                            <GripHorizontal className={cn("w-4 h-4 cursor-grab", isDark ? "text-slate-400" : "text-muted-foreground")} />
-                        )}
+                    <div className="flex items-center gap-2 overflow-hidden flex-1">
                         {headerStart}
                         {!hideTitle && (
-                            <h2 className={cn(
-                                "font-semibold flex-1 truncate",
-                                isMobile ? "text-sm" : "text-sm",
-                                isDark ? "text-slate-100" : "text-slate-900"
-                            )}>{title}</h2>
+                            <h3 className={cn(
+                                "text-sm font-semibold truncate",
+                                isDark ? "text-zinc-200" : "text-zinc-800"
+                            )}>
+                                {title}
+                            </h3>
                         )}
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1 shrink-0">
                         {headerAction}
                         {onClose && (
                             <button
-                                onClick={onClose}
+                                onClick={(e) => { e.stopPropagation(); onClose(); }}
                                 className={cn(
-                                    "p-1.5 rounded-lg",
-                                    isDark
-                                        ? "text-slate-400 hover:text-rose-400"
-                                        : "text-slate-500 hover:text-rose-600",
-                                    isMobile && "p-2 min-w-[40px] min-h-[40px]"
+                                    "p-1.5 rounded-md transition-colors",
+                                    isDark 
+                                        ? "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100" 
+                                        : "hover:bg-zinc-200 text-zinc-500 hover:text-zinc-900"
                                 )}
-                                aria-label="Close panel"
+                                aria-label="Close"
                             >
                                 <X className="w-4 h-4" />
-                            </button>
-                        )}
-                        {canCollapse && (
-                            <button
-                                onClick={() => setIsCollapsed(!isCollapsed)}
-                                className={cn(
-                                    "p-1.5 rounded-lg",
-                                    isDark
-                                        ? "text-slate-400 hover:text-slate-200"
-                                        : "text-slate-500 hover:text-slate-700",
-                                    isMobile && "p-2 min-w-[40px] min-h-[40px]"
-                                )}
-                                aria-label={isCollapsed ? 'Expand panel' : 'Collapse panel'}
-                                aria-expanded={!isCollapsed}
-                            >
-                                {isCollapsed ? (
-                                    <Maximize2 className="w-4 h-4" />
-                                ) : (
-                                    <Minimize2 className="w-4 h-4" />
-                                )}
                             </button>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* Content - No animation */}
-            <div
-                className={cn(
-                    "flex-1 min-h-0",
-                    isCollapsed ? "max-h-0 opacity-0" : "max-h-full opacity-100",
-                    noPadding ? "overflow-hidden p-0" : "overflow-y-auto overflow-x-hidden p-4"
-                )}
-                aria-hidden={isCollapsed}
-            >
-                {!isCollapsed && (
-                    <>
-                        {children}
-                        {footer && <div className="mt-4 border-t pt-3">{footer}</div>}
-                    </>
-                )}
+            {/* Content - No extra effects */}
+            <div className={cn(
+                "flex-1 overflow-auto",
+                !noPadding && "p-4",
+                isMobile && !noPadding && "p-3"
+            )}>
+                {children}
             </div>
 
-            {/* Resize Handle - Simple, no effects */}
+            {/* Footer - Optional */}
+            {footer && (
+                <div className={cn(
+                    "p-3 border-t",
+                    isDark ? "bg-zinc-900/50 border-zinc-800" : "bg-zinc-50/50 border-zinc-200"
+                )}>
+                    {footer}
+                </div>
+            )}
+
+            {/* Resize Handle - Minimal */}
             {canResize && (
                 <div
+                    className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize flex items-end justify-end p-0.5 opacity-30 hover:opacity-100 transition-opacity"
                     onMouseDown={handleResizeStart}
-                    className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
-                    style={{
-                        background: 'linear-gradient(135deg, transparent 50%, currentColor 50%)',
-                        color: 'var(--color-border)',
-                    }}
-                    aria-label="Resize panel"
-                />
+                >
+                    <div className={cn(
+                        "w-1.5 h-1.5 rounded-full",
+                        isDark ? "bg-zinc-600" : "bg-zinc-400"
+                    )} />
+                </div>
             )}
         </div>
     );

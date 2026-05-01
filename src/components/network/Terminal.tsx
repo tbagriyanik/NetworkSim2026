@@ -199,7 +199,7 @@ export function Terminal({
       return { icon: RouterIcon, color: 'text-purple-400' };
     } else if (deviceType === 'switchL2' || switchModel === 'WS-C2960-24TT-L') {
       return { icon: SwitchIcon, color: 'text-green-400', isL3: false };
-    } else if (deviceType === 'switchL3' || switchModel === 'WS-C3560-24PS') {
+    } else if (deviceType === 'switchL3' || switchModel === 'WS-C3650-24PS') {
       return { icon: SwitchIcon, color: 'text-purple-400', isL3: true };
     } else if (deviceType === 'pc') {
       return { icon: Laptop, color: 'text-blue-400' };

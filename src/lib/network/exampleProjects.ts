@@ -165,14 +165,15 @@ const createL3SwitchDevice = (id: string, name: string, x: number, y: number): C
   ip: '',
   macAddress: nextExampleMac(),
   status: 'online',
-  switchModel: 'WS-C3560-24PS',
+  switchModel: 'WS-C3650-24PS',
   ports: [
     ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' as const })),
     { id: 'console', label: 'Console', status: 'disconnected' as const },
     { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
     { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const },
     { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const },
-    { id: 'gi0/4', label: 'Gi0/4', status: 'disconnected' as const }
+    { id: 'gi0/4', label: 'Gi0/4', status: 'disconnected' as const },
+    { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, shutdown: true }
   ]
 });
 
@@ -1270,7 +1271,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       opacity: 0.75
     }
   ];
-  const l3RoutingState = createInitialState(undefined, 'WS-C3560-24PS');
+  const l3RoutingState = createInitialState(undefined, 'WS-C3650-24PS');
   l3RoutingState.hostname = 'L3SW1';
   l3RoutingState.ipRouting = true;
   l3RoutingState.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: [] };
@@ -1647,9 +1648,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     }
   ];
 
-  const stpPvstSw1 = createInitialState('00:11:00:00:01:00', 'WS-C3560-24PS');
+  const stpPvstSw1 = createInitialState('00:11:00:00:01:00', 'WS-C3650-24PS');
   stpPvstSw1.hostname = 'SW1';
-  stpPvstSw1.switchModel = 'WS-C3560-24PS';
+  stpPvstSw1.switchModel = 'WS-C3650-24PS';
   stpPvstSw1.switchLayer = 'L3';
   stpPvstSw1.spanningTreeMode = 'pvst';
   stpPvstSw1.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['FA0/3', 'GI0/1', 'GI0/2'] };
@@ -1723,9 +1724,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     '!'
   ];
 
-  const stpPvstSw2 = createInitialState('00:11:00:00:02:00', 'WS-C3560-24PS');
+  const stpPvstSw2 = createInitialState('00:11:00:00:02:00', 'WS-C3650-24PS');
   stpPvstSw2.hostname = 'SW2';
-  stpPvstSw2.switchModel = 'WS-C3560-24PS';
+  stpPvstSw2.switchModel = 'WS-C3650-24PS';
   stpPvstSw2.switchLayer = 'L3';
   stpPvstSw2.spanningTreeMode = 'pvst';
   stpPvstSw2.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['FA0/3', 'GI0/1', 'GI0/2'] };
@@ -1799,9 +1800,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     '!'
   ];
 
-  const stpPvstSw3 = createInitialState('00:11:00:00:03:00', 'WS-C3560-24PS');
+  const stpPvstSw3 = createInitialState('00:11:00:00:03:00', 'WS-C3650-24PS');
   stpPvstSw3.hostname = 'SW3';
-  stpPvstSw3.switchModel = 'WS-C3560-24PS';
+  stpPvstSw3.switchModel = 'WS-C3650-24PS';
   stpPvstSw3.switchLayer = 'L3';
   stpPvstSw3.spanningTreeMode = 'pvst';
   stpPvstSw3.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['FA0/3', 'GI0/1', 'GI0/2'] };
@@ -2076,9 +2077,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   ];
 
   // Configure Switch2 state
-  const l3Switch2State = createInitialState('00:1A:2B:3C:4D:70', 'WS-C3560-24PS');
+  const l3Switch2State = createInitialState('00:1A:2B:3C:4D:70', 'WS-C3650-24PS');
   l3Switch2State.hostname = 'Switch2';
-  l3Switch2State.switchModel = 'WS-C3560-24PS';
+  l3Switch2State.switchModel = 'WS-C3650-24PS';
   l3Switch2State.switchLayer = 'L3';
   l3Switch2State.ipRouting = true;
   l3Switch2State.vlans[10] = { id: 10, name: 'AG1', status: 'active', ports: ['FA0/1', 'FA0/2', 'GI0/1'] };
@@ -2150,9 +2151,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   ];
 
   // Configure Switch4 state
-  const l3Switch4State = createInitialState('00:1A:2B:3C:4D:71', 'WS-C3560-24PS');
+  const l3Switch4State = createInitialState('00:1A:2B:3C:4D:71', 'WS-C3650-24PS');
   l3Switch4State.hostname = 'Switch4';
-  l3Switch4State.switchModel = 'WS-C3560-24PS';
+  l3Switch4State.switchModel = 'WS-C3650-24PS';
   l3Switch4State.switchLayer = 'L3';
   l3Switch4State.ipRouting = true;
   l3Switch4State.vlans[10] = { id: 10, name: 'AG1', status: 'active', ports: ['FA0/1', 'FA0/2', 'GI0/1'] };
@@ -2274,9 +2275,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   ];
 
   // MultilayerSwitch1 State (Sol L3 Switch)
-  const mlSwitch1State = createInitialState('00:1A:2B:3C:4D:80', 'WS-C3560-24PS');
+  const mlSwitch1State = createInitialState('00:1A:2B:3C:4D:80', 'WS-C3650-24PS');
   mlSwitch1State.hostname = 'MultilayerSwitch1';
-  mlSwitch1State.switchModel = 'WS-C3560-24PS';
+  mlSwitch1State.switchModel = 'WS-C3650-24PS';
   mlSwitch1State.switchLayer = 'L3';
   mlSwitch1State.ipRouting = true;
   mlSwitch1State.ports['fa0/1'] = { ...mlSwitch1State.ports['fa0/1'], mode: 'routed', ipAddress: '10.0.0.1', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
@@ -2332,9 +2333,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   ];
 
   // MultilayerSwitch2 State (Sağ L3 Switch)
-  const mlSwitch2State = createInitialState('00:1A:2B:3C:4D:81', 'WS-C3560-24PS');
+  const mlSwitch2State = createInitialState('00:1A:2B:3C:4D:81', 'WS-C3650-24PS');
   mlSwitch2State.hostname = 'MultilayerSwitch2';
-  mlSwitch2State.switchModel = 'WS-C3560-24PS';
+  mlSwitch2State.switchModel = 'WS-C3650-24PS';
   mlSwitch2State.switchLayer = 'L3';
   mlSwitch2State.ipRouting = true;
   mlSwitch2State.ports['fa0/1'] = { ...mlSwitch2State.ports['fa0/1'], mode: 'routed', ipAddress: '20.0.0.2', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
@@ -2428,9 +2429,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   ];
 
   // MultilayerSwitch0 State (Sol L3 Switch) - RIP
-  const ripMlswitch0State = createInitialState('00:1A:2B:3C:4D:90', 'WS-C3560-24PS');
+  const ripMlswitch0State = createInitialState('00:1A:2B:3C:4D:90', 'WS-C3650-24PS');
   ripMlswitch0State.hostname = 'MultilayerSwitch0';
-  ripMlswitch0State.switchModel = 'WS-C3560-24PS';
+  ripMlswitch0State.switchModel = 'WS-C3650-24PS';
   ripMlswitch0State.switchLayer = 'L3';
   ripMlswitch0State.ipRouting = true;
   ripMlswitch0State.routingProtocol = 'rip';
@@ -2461,9 +2462,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   ];
 
   // MultilayerSwitch1 State (Sağ L3 Switch) - RIP
-  const ripMlswitch1State = createInitialState('00:1A:2B:3C:4D:91', 'WS-C3560-24PS');
+  const ripMlswitch1State = createInitialState('00:1A:2B:3C:4D:91', 'WS-C3650-24PS');
   ripMlswitch1State.hostname = 'MultilayerSwitch1';
-  ripMlswitch1State.switchModel = 'WS-C3560-24PS';
+  ripMlswitch1State.switchModel = 'WS-C3650-24PS';
   ripMlswitch1State.switchLayer = 'L3';
   ripMlswitch1State.ipRouting = true;
   ripMlswitch1State.routingProtocol = 'rip';

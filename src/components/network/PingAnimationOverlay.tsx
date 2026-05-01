@@ -104,13 +104,12 @@ export function PingAnimationOverlay({
     const envelopeOffsetY = -Math.cos(angle) * 20;
 
     // Add smooth scale animation for fluent effect
-    const scale = 1 + Math.sin(progress * Math.PI) * 0.1; // Subtle pulse effect
-    const opacity = 0.8 + Math.sin(progress * Math.PI) * 0.2; // Fade in/out effect
+    const opacity = 0.9; // Stable opacity for cleaner look
 
     return (
       <g key={`ping-${currentHopIndex}-${frame}`}>
         <g
-          transform={`translate(${bezierX + envelopeOffsetX}, ${bezierY + envelopeOffsetY}) scale(${scale})`}
+          transform={`translate(${bezierX + envelopeOffsetX}, ${bezierY + envelopeOffsetY})`}
           opacity={opacity}
         >
           {/* Hop Count Badge */}

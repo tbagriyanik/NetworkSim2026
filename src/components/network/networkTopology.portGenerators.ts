@@ -1,6 +1,6 @@
 import { CanvasPort } from './networkTopology.types';
 
-/** Generates standard L2 switch ports: 24x FastEthernet + 2x GigabitEthernet + WLAN0 */
+/** Generates standard L2 switch ports: 24x FastEthernet + 2x GigabitEthernet (no WLAN0 for L2) */
 export function generateSwitchPorts(): CanvasPort[] {
     const ports: CanvasPort[] = [];
     for (let i = 1; i <= 24; i++) {
@@ -9,7 +9,6 @@ export function generateSwitchPorts(): CanvasPort[] {
     ports.push({ id: 'console', label: 'Console', status: 'disconnected' as const });
     ports.push({ id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const });
     ports.push({ id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const });
-    ports.push({ id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, shutdown: true });
     return ports;
 }
 

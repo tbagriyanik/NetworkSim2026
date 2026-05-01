@@ -2167,7 +2167,7 @@ export function NetworkTopology({
 
     // Determine switch layer (default L2)
     const switchLayer = layer || 'L2';
-    const switchModel = switchLayer === 'L3' ? 'WS-C3560-24PS' : 'WS-C2960-24TT-L';
+    const switchModel = switchLayer === 'L3' ? 'WS-C3650-24PS' : 'WS-C2960-24TT-L';
     const resolvedType = type === 'switch'
       ? (switchLayer === 'L3' ? 'switchL3' : 'switchL2')
       : type;
@@ -2207,7 +2207,7 @@ export function NetworkTopology({
         : undefined,
       wifi: type === 'iot'
         ? { enabled: true, ssid: '', security: 'open', password: '', channel: '2.4GHz', mode: 'client' }
-        : (type === 'router' || type === 'switch')
+        : (type === 'router' || (type === 'switch' && switchLayer === 'L3'))
           ? { enabled: false, ssid: 'Network-AP', security: 'open', password: '', channel: '2.4GHz', mode: 'ap' }
           : undefined,
     };
@@ -4055,13 +4055,13 @@ export function NetworkTopology({
     const iconColor = isPoweredOff
       ? STATUS_COLORS.offline
       : (hasConnection
-        ? (isSwitchDevice(device.type) && device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : STATUS_COLORS.online)
+        ? (isSwitchDevice(device.type) && device.switchModel === 'WS-C3650-24PS' ? '#a855f7' : STATUS_COLORS.online)
         : (device.type === 'pc'
           ? '#3b82f6'
           : device.type === 'iot'
             ? '#f97316'
             : isSwitchDevice(device.type)
-              ? (device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : STATUS_COLORS.online)
+              ? (device.switchModel === 'WS-C3650-24PS' ? '#a855f7' : STATUS_COLORS.online)
               : '#a855f7'));
 
     return (
@@ -4079,8 +4079,7 @@ export function NetworkTopology({
               fill="none"
               stroke="#06b6d4"
               strokeWidth="3"
-              opacity="0.4"
-              className="animate-pulse"
+              opacity="0.5"
             />
           ) : device.type === 'iot' ? (
             <path
@@ -4088,8 +4087,7 @@ export function NetworkTopology({
               fill="none"
               stroke="#06b6d4"
               strokeWidth="3"
-              opacity="0.4"
-              className="animate-pulse"
+              opacity="0.5"
             />
           ) : isSwitchDeviceType(device.type) ? (
             <path
@@ -4097,8 +4095,7 @@ export function NetworkTopology({
               fill="none"
               stroke="#06b6d4"
               strokeWidth="3"
-              opacity="0.4"
-              className="animate-pulse"
+              opacity="0.5"
             />
           ) : (
             <rect
@@ -4110,8 +4107,7 @@ export function NetworkTopology({
               fill="none"
               stroke="#06b6d4"
               strokeWidth="3"
-              opacity="0.4"
-              className="animate-pulse"
+              opacity="0.5"
             />
           )
         )}
@@ -4196,19 +4192,19 @@ export function NetworkTopology({
           const wlanPort = device.ports.find(p => p.id === 'wlan0');
           const pcWifi = device.wifi;
           const isPC = isPcLike;
-          const isSwitch = isSwitchDeviceType(device.type);
+          const isSwitchL3 = device.type === 'switchL3'; // Only L3 switches have WiFi (not L2)
           const isRouter = device.type === 'router';
           const devState = deviceStates?.get(device.id);
           const wlanState = devState?.ports['wlan0'];
 
           let wifiColor = '#94a3b8'; // Grey (Off)
-          const showWifi = isPC || isSwitch || isRouter;
+          const showWifi = isPC || isSwitchL3 || isRouter;
 
           // Check if WiFi is enabled
           let isEnabled = false;
           if (isPC) {
             isEnabled = pcWifi?.enabled || (wlanState ? (normalizeWifiMode(wlanState.wifi?.mode) !== 'disabled') : false);
-          } else if (isSwitch || isRouter) {
+          } else if (isSwitchL3 || isRouter) {
             // Enhanced check for switch/router even if port is not in visual ports list
             const resolvedWifiMode = normalizeWifiMode(wlanState?.wifi?.mode);
             isEnabled = wlanState
@@ -4242,7 +4238,7 @@ export function NetworkTopology({
                     isConnected = true;
                   });
                 }
-              } else if ((isSwitch || isRouter) && deviceStates) {
+              } else if ((isSwitchL3 || isRouter) && deviceStates) {
                 // Switch acting as AP: check if any PC is associated to this device
                 const apSsid = wlanState?.wifi?.ssid || '';
                 const apPass = wlanState?.wifi?.password || '';
@@ -4279,7 +4275,7 @@ export function NetworkTopology({
               wifiSecurity = pcWifi?.security || wlanState?.wifi?.security || 'open';
               wifiMode = normalizeWifiMode(wlanState?.wifi?.mode || (pcWifi?.enabled ? 'client' : 'disabled'));
               wifiChannel = wlanState?.wifi?.channel?.toString() || '';
-            } else if (isSwitch || isRouter) {
+            } else if (isSwitchL3 || isRouter) {
               wifiSsid = wlanState?.wifi?.ssid || '';
               wifiSecurity = wlanState?.wifi?.security || 'open';
               wifiMode = wlanState?.wifi?.mode === 'client'
@@ -4503,7 +4499,7 @@ export function NetworkTopology({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                stroke={isDark ? (device.switchModel === 'WS-C3560-24PS' ? '#c084fc' : '#14b8a6') : (device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#0d9488')}
+                stroke={isDark ? (device.switchModel === 'WS-C3650-24PS' ? '#c084fc' : '#14b8a6') : (device.switchModel === 'WS-C3650-24PS' ? '#a855f7' : '#0d9488')}
                 fill="none"
                 d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01"
                 transform="scale(1.2)"
@@ -6654,7 +6650,7 @@ export function NetworkTopology({
                   : device.type === 'iot'
                     ? '#f97316'
                     : isSwitchDeviceType(device.type)
-                      ? (device.switchModel === 'WS-C3560-24PS' ? '#a855f7' : '#22c55e')
+                      ? (device.switchModel === 'WS-C3650-24PS' ? '#a855f7' : '#22c55e')
                       : '#a855f7';
 
                 return (

@@ -321,24 +321,6 @@
             "type": "gigabitethernet",
             "allowedVlans": "all"
           },
-          "wlan0": {
-            "id": "wlan0",
-            "name": "",
-            "status": "connected",
-            "vlan": 1,
-            "mode": "access",
-            "duplex": "auto",
-            "speed": "auto",
-            "shutdown": false,
-            "type": "fastethernet",
-            "wifi": {
-              "ssid": "",
-              "security": "open",
-              "password": "",
-              "channel": "2.4GHz",
-              "mode": "ap"
-            }
-          },
           "vlan1": {
             "id": "vlan1",
             "name": "",
@@ -1184,24 +1166,6 @@
             "type": "gigabitethernet",
             "allowedVlans": "all"
           },
-          "wlan0": {
-            "id": "wlan0",
-            "name": "",
-            "status": "connected",
-            "vlan": 1,
-            "mode": "access",
-            "duplex": "auto",
-            "speed": "auto",
-            "shutdown": false,
-            "type": "fastethernet",
-            "wifi": {
-              "ssid": "",
-              "security": "open",
-              "password": "",
-              "channel": "2.4GHz",
-              "mode": "ap"
-            }
-          },
           "vlan1": {
             "id": "vlan1",
             "name": "",
@@ -1448,11 +1412,6 @@
           "!",
           "interface GigabitEthernet0/2",
           " switchport mode access",
-          " no shutdown",
-          "!",
-          "interface WLAN0",
-          " wifi-mode ap",
-          " wifi-channel 2.4GHz",
           " no shutdown",
           "!",
           "interface Vlan1",

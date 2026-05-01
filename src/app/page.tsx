@@ -1020,7 +1020,7 @@ export default function Home() {
 
   // Track task completion changes globally
   useEffect(() => {
-    const allTasks = [...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...wirelessTasks];
+    const allTasks = [...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])];
 
     allTasks.forEach(task => {
       const currentStatus = getTaskStatus(task, state, taskContext);
@@ -1050,16 +1050,16 @@ export default function Home() {
   }, [state, taskContext, language]);
 
   // Calculate total score
-  const totalScore = calculateTaskScore([...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...wirelessTasks], state, taskContext);
+  const totalScore = calculateTaskScore([...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])], state, taskContext);
 
   // Calculate max possible score
-  const maxScore = [...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...wirelessTasks].reduce((acc, task) => acc + task.weight, 0);
+  const maxScore = [...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])].reduce((acc, task) => acc + task.weight, 0);
 
   // Per-tab task completion counts for badges
   const completedTasks = portTasks.filter(task => getTaskStatus(task, state, taskContext)).length +
     vlanTasks.filter(task => getTaskStatus(task, state, taskContext)).length +
     securityTasks.filter(task => getTaskStatus(task, state, taskContext)).length +
-    wirelessTasks.filter(task => getTaskStatus(task, state, taskContext)).length;
+    (activeDeviceType !== 'switchL2' ? wirelessTasks.filter(task => getTaskStatus(task, state, taskContext)).length : 0);
 
   const normalizeDeviceType = useCallback((type: string): DeviceType => {
     if (type === 'switch') return 'switchL2';
@@ -1205,7 +1205,7 @@ export default function Home() {
           const deviceId = item.id;
           const state = item.state;
           const isRouter = deviceId.includes('router');
-          const isL3Switch = state?.switchLayer === 'L3' || state?.switchModel?.includes('3560');
+          const isL3Switch = state?.switchLayer === 'L3' || state?.switchModel?.includes('3650');
           const isPC = deviceId.includes('pc-');
           const isIoT = deviceId.includes('iot-');
 
@@ -1263,7 +1263,7 @@ Technical Support: http://yunus.sf.net
 Copyright (c) 1994-2026 by Network Systems, Inc.
 ` },
               {
-                id: `boot-2-${suffix}`, type: 'output', content: `C3560 platform with 131072 K bytes of memory
+                id: `boot-2-${suffix}`, type: 'output', content: `C3650 platform with 131072 K bytes of memory
 
 ${syslog}
 Load/bootstrap symbols loaded
@@ -1275,8 +1275,8 @@ Initializing flash file system
 ` },
               {
                 id: `boot-3-${suffix}`, type: 'output', content: `
-Booting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!
-Extracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...
+Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
+Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   ########## [OK]
   0 bytes remaining in flash device
 ` },
@@ -4327,7 +4327,7 @@ ${state.bannerMOTD}
                         t={t}
                         theme={theme}
                         deviceName={state.hostname}
-                        deviceModel={activeDeviceType === 'router' ? 'NETWORK-1941' : (state.switchModel || 'WS-C2960-24TT-L')}
+                        deviceModel={activeDeviceType === 'router' ? 'ISR 4451 X' : (state.switchModel || 'WS-C2960-24TT-L')}
                         activeDeviceId={activeDeviceId}
                         isDevicePoweredOff={topologyDevices.some(d => d.id === activeDeviceId && d.status === 'offline')}
                         topologyDevices={topologyDevices}
@@ -4338,7 +4338,7 @@ ${state.bannerMOTD}
                         vlans={state.vlans}
                         ports={state.ports}
                         deviceName={state.hostname}
-                        deviceModel={activeDeviceType === 'router' ? 'NETWORK-1941' : (state.switchModel || 'WS-C2960-24TT-L')}
+                        deviceModel={activeDeviceType === 'router' ? 'ISR 4451 X' : (state.switchModel || 'WS-C2960-24TT-L')}
                         deviceId={activeDeviceId}
                         onTogglePower={toggleDevicePower}
                         onExecuteCommand={handleCommand}
@@ -4358,7 +4358,7 @@ ${state.bannerMOTD}
                     </div>
                     <div className="overflow-y-auto custom-scrollbar">
                       <TaskCard
-                        tasks={[...portTasks, ...vlanTasks, ...securityTasks, ...wirelessTasks]}
+                        tasks={[...portTasks, ...vlanTasks, ...securityTasks, ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])]}
                         state={state}
                         context={taskContext}
                         color="from-red-500 to-rose-500"
@@ -5186,17 +5186,17 @@ ${state.bannerMOTD}
           </main>
 
           {/* Footer - Save Status & Hints */}
-          <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-40 border-t backdrop-blur-xl transition-all h-[44px] ${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'
+          <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-40 border-t backdrop-blur-xl transition-all h-[44px] ${isDark ? 'bg-zinc-950/95 border-zinc-900' : 'bg-white/95 border-zinc-200'
             } ${showProjectPicker || showOnboarding || activeTab === 'terminal' ? 'hidden' : ''}`}>
             <div className="w-full px-5 py-2">
               <div className="flex items-center justify-between gap-4">
                 {/* Save Status */}
                 <div className="flex items-center gap-3">
-                  <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'
+                  <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDark ? 'bg-zinc-900/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
                     }`}>
-                    <span className={`flex items-center gap-1.5 text-xs font-semibold ${hasUnsavedChanges ? 'text-amber-400' : 'text-emerald-400'
+                    <span className={`flex items-center gap-1.5 text-xs font-semibold ${hasUnsavedChanges ? 'text-amber-500' : 'text-emerald-500'
                       }`}>
-                      <span className={`w-2 h-2 rounded-full ${hasUnsavedChanges ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'
+                      <span className={`w-2 h-2 rounded-full ${hasUnsavedChanges ? 'bg-amber-500' : 'bg-emerald-500'
                         }`} />
                       {hasUnsavedChanges
                         ? t.unsaved

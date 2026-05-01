@@ -104,7 +104,7 @@ export interface SecurityConfig {
   vtyLines: LineConfig;
 }
 
-export type SwitchModel = 'WS-C2960-24TT-L' | 'WS-C3560-24PS';
+export type SwitchModel = 'WS-C2960-24TT-L' | 'WS-C3650-24PS';
 export type SwitchLayer = 'L2' | 'L3';
 
 export interface SwitchState {

@@ -1,6 +1,6 @@
 // Switch Model Definitions and Utilities
 
-export type SwitchModel = 'WS-C2960-24TT-L' | 'WS-C3560-24PS';
+export type SwitchModel = 'WS-C2960-24TT-L' | 'WS-C3650-24PS';
 export type SwitchLayer = 'L2' | 'L3';
 
 export interface SwitchModelInfo {
@@ -27,9 +27,9 @@ export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
             'Management VLAN (Vlan1) only'
         ]
     },
-    'WS-C3560-24PS': {
-        model: 'WS-C3560-24PS',
-        name: 'Catalyst 3560 24-Port PoE',
+    'WS-C3650-24PS': {
+        model: 'WS-C3650-24PS',
+        name: 'Catalyst 3650 24-Port PoE',
         layer: 'L3',
         ports: 24,
         description: 'Layer 3 Switch - Supports IP addressing on physical ports and VLAN interfaces',

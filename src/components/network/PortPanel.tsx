@@ -36,12 +36,12 @@ interface PortPanelProps {
 }
 
 const ledColorClasses: Record<PortLEDColor, string> = {
-  green: 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse',
-  gray: 'bg-gray-500 transition-colors',
-  orange: 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)] led-blink',
-  white: 'bg-white shadow-[0_0_6px_rgba(255,255,255,0.4)] border border-slate-300 transition-all',
-  off: 'bg-gray-700 transition-colors',
-  red: 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] led-blink'
+  green: 'bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.4)]',
+  gray: 'bg-zinc-500 transition-colors',
+  orange: 'bg-orange-500 shadow-[0_0_4px_rgba(249,115,22,0.4)]',
+  white: 'bg-white shadow-[0_0_4px_rgba(255,255,255,0.3)] border border-zinc-300',
+  off: 'bg-zinc-700 transition-colors',
+  red: 'bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.4)]'
 };
 
 const statusTextEn: Record<string, string> = {
@@ -126,14 +126,11 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
         <div className="flex items-center gap-1.5 cursor-default">
           <div className="relative">
             <div className={`w-2.5 h-2.5 rounded-full ${ledColorClasses[color]} transition-all duration-300`} />
-            {color === 'green' && (
-              <div className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-40" />
-            )}
           </div>
-          <span className={`text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{label}</span>
+          <span className={`text-xs font-mono ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{label}</span>
         </div>
       </TooltipTrigger>
-      <TooltipContent hideArrow side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'} p-2 text-xs rounded-[18px] shadow-2xl`}>
+      <TooltipContent hideArrow side="bottom" className={`${isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-200 text-zinc-900'} p-2 text-xs rounded-lg shadow-xl`}>
         {tooltipText}
       </TooltipContent>
     </Tooltip>
@@ -224,11 +221,8 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
               <div
                 className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${ledColorClasses[ledColor]} transition-all duration-300`}
               />
-              {ledColor === 'green' && (
-                <div className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-50" />
-              )}
             </div>
-            <span className={`text-sm font-mono ${isDark ? 'text-slate-300' : 'text-slate-700'} transition-colors`}>
+            <span className={`text-sm font-mono ${isDark ? 'text-zinc-300' : 'text-zinc-700'} transition-colors`}>
               {port.id}
             </span>
             <Badge
@@ -295,10 +289,10 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
         <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${deviceModel === 'NETWORK-1941' ? (isDark ? 'bg-purple-900/30' : 'bg-purple-100') : deviceModel === 'WS-C3560-24PS' ? (isDark ? 'bg-purple-900/30' : 'bg-purple-100') : deviceModel === 'WS-C2960-24TT-L' ? (isDark ? 'bg-green-900/30' : 'bg-green-100') : (isDark ? 'bg-cyan-900/30' : 'bg-cyan-100')}`}>
-                {deviceModel === 'NETWORK-1941' ? (
+              <div className={`p-2 rounded-lg ${deviceModel === 'ISR 4451 X' ? (isDark ? 'bg-purple-900/30' : 'bg-purple-100') : deviceModel === 'WS-C3650-24PS' ? (isDark ? 'bg-purple-900/30' : 'bg-purple-100') : deviceModel === 'WS-C2960-24TT-L' ? (isDark ? 'bg-green-900/30' : 'bg-green-100') : (isDark ? 'bg-cyan-900/30' : 'bg-cyan-100')}`}>
+                {deviceModel === 'ISR 4451 X' ? (
                   <RouterIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                ) : deviceModel === 'WS-C3560-24PS' ? (
+                ) : deviceModel === 'WS-C3650-24PS' ? (
                   <SwitchIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" isL3={true} />
                 ) : deviceModel === 'WS-C2960-24TT-L' ? (
                   <SwitchIcon className="w-5 h-5 text-green-600 dark:text-green-400" isL3={false} />
@@ -307,7 +301,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
                 )}
               </div>
               <div>
-                <CardTitle className={deviceModel === 'NETWORK-1941' ? "text-purple-400 text-base sm:text-lg" : deviceModel === 'WS-C3560-24PS' ? "text-purple-400 text-base sm:text-lg" : deviceModel === 'WS-C2960-24TT-L' ? "text-green-400 text-base sm:text-lg" : "text-cyan-400 text-base sm:text-lg"}>
+                <CardTitle className={deviceModel === 'ISR 4451 X' ? "text-purple-400 text-base sm:text-lg" : deviceModel === 'WS-C3650-24PS' ? "text-purple-400 text-base sm:text-lg" : deviceModel === 'WS-C2960-24TT-L' ? "text-green-400 text-base sm:text-lg" : "text-cyan-400 text-base sm:text-lg"}>
                   {deviceName || t.switchTitle}
                   <span className={`text-xs font-mono px-2 py-0.5 rounded ${isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'} ml-2`}>
                     {deviceModel}

@@ -13,7 +13,7 @@ import { formatErrorForUser } from '@/lib/errors/errorHandler';
 
 const isSwitchDeviceType = (type?: DeviceType | string) => type === 'switchL2' || type === 'switchL3';
 const resolveSwitchBootType = (switchModel?: string): 'switchL2' | 'switchL3' =>
-  switchModel === 'WS-C3560-24PS' ? 'switchL3' : 'switchL2';
+  switchModel === 'WS-C3650-24PS' ? 'switchL3' : 'switchL2';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -86,7 +86,7 @@ export function useDeviceManager() {
 
   const getBootMessage = useCallback((deviceType: Exclude<DeviceType, 'pc'>, switchModel?: string, language: 'tr' | 'en' = 'en') => {
     const isRouter = deviceType === 'router';
-    const isL3Switch = deviceType === 'switchL3' || switchModel?.includes('3560');
+    const isL3Switch = deviceType === 'switchL3' || switchModel?.includes('3650');
     const isL2Switch = !isRouter && !isL3Switch;
 
     if (isRouter) {
@@ -103,8 +103,8 @@ export function useDeviceManager() {
       const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
       return {
         boot1: `\n\nSystem Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1994-2026 by Network Systems, Inc.\n`,
-        boot2: `C3560 platform with 131072 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded\nReading all bootflash vectors\nPOST: CPU PCIe port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n`,
-        boot3: `\nBooting flash:c3560-ipbase-mz.152-2.SE4.bin...OK!\nExtracting files from flash:c3560-ipbase-mz.152-2.SE4.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n`,
+        boot2: `C3650 platform with 131072 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded\nReading all bootflash vectors\nPOST: CPU PCIe port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n`,
+        boot3: `\nBooting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!\nExtracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n`,
         initMessage: language === 'tr' ? 'Sistem açıldı' : 'System is powered on'
       };
     }
@@ -157,10 +157,10 @@ export function useDeviceManager() {
         // Power on: reset device state and show boot sequence
         const existingState = deviceStates.get(deviceId);
         const isRouter = deviceType === 'router' || deviceId.includes('router') || existingState?.switchLayer === 'L3';
-        const isSwitchL3 = deviceType === 'switchL3' || existingState?.switchLayer === 'L3' || existingState?.switchModel === 'WS-C3560-24PS';
+        const isSwitchL3 = deviceType === 'switchL3' || existingState?.switchLayer === 'L3' || existingState?.switchModel === 'WS-C3650-24PS';
 
-        // Get the switch model from existing state or default. L3 switches should start as 3560.
-        const switchModel = existingState?.switchModel || incomingModel || (isRouter || isSwitchL3 ? 'WS-C3560-24PS' : 'WS-C2960-24TT-L');
+        // Get the switch model from existing state or default. L3 switches should start as 3650.
+        const switchModel = existingState?.switchModel || incomingModel || (isRouter || isSwitchL3 ? 'WS-C3650-24PS' : 'WS-C2960-24TT-L');
         const baseState = isRouter ? createInitialRouterState() : createInitialState(undefined, switchModel as any);
 
         // Get existing state to preserve saved configuration and identity
@@ -247,7 +247,7 @@ export function useDeviceManager() {
 
     if (!deviceState) {
       // Use the provided switchModel, default to L2 for switches, or L3 for routers
-      const model = switchModel || (deviceType === 'router' ? 'WS-C3560-24PS' : deviceType === 'switchL3' ? 'WS-C3560-24PS' : 'WS-C2960-24TT-L');
+      const model = switchModel || (deviceType === 'router' ? 'WS-C3650-24PS' : deviceType === 'switchL3' ? 'WS-C3650-24PS' : 'WS-C2960-24TT-L');
       deviceState = deviceType === 'router' ? createInitialRouterState(initialMac) : createInitialState(initialMac, model as any);
       const hostname = initialHostname || defaultName;
       deviceState = { ...deviceState, hostname };
@@ -296,7 +296,7 @@ export function useDeviceManager() {
       }
 
       if (!deviceState.switchModel) {
-        const fallbackModel = switchModel || (deviceType === 'router' ? 'WS-C3560-24PS' : deviceType === 'switchL3' ? 'WS-C3560-24PS' : 'WS-C2960-24TT-L');
+        const fallbackModel = switchModel || (deviceType === 'router' ? 'WS-C3650-24PS' : deviceType === 'switchL3' ? 'WS-C3650-24PS' : 'WS-C2960-24TT-L');
         const updatedState = ensureSwitchModelConsistency(deviceState, fallbackModel, initialMac, deviceType === 'router');
         setTimeout(() => {
           if (isMounted.current) {
@@ -306,7 +306,7 @@ export function useDeviceManager() {
         deviceState = updatedState;
       }
 
-      if (isSwitchDeviceType(deviceType) && deviceState.switchModel === 'WS-C3560-24PS' && (!deviceState.ports['gi0/3'] || !deviceState.ports['gi0/4'])) {
+      if (isSwitchDeviceType(deviceType) && deviceState.switchModel === 'WS-C3650-24PS' && (!deviceState.ports['gi0/3'] || !deviceState.ports['gi0/4'])) {
         const healedState = ensureSwitchModelConsistency(deviceState, deviceState.switchModel, initialMac, false);
         setTimeout(() => {
           if (isMounted.current) {

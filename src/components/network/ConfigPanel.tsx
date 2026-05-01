@@ -69,7 +69,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     }
 
     // Boot system
-    config += `boot system flash:${state.switchModel === 'WS-C3560-24PS' ? 'c3560-ipbase-mz.150-2.SE4.bin' : 'c2960-lanbase-mz.150-2.SE4.bin'}\\n`;
+    config += `boot system flash:${state.switchModel === 'WS-C3650-24PS' ? 'C3650-ipbase-mz.150-2.SE4.bin' : 'c2960-lanbase-mz.150-2.SE4.bin'}\\n`;
     config += `!\\n`;
 
     // Enable configurations

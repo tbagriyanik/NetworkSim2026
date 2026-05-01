@@ -100,26 +100,28 @@ function createInitialPorts(gigabitPortCount: number = 2, baseMac?: string): Rec
     };
   }
 
-  // WLAN interface
-  ports['wlan0'] = {
-    id: 'wlan0',
-    name: '',
-    status: 'connected',
-    vlan: 1,
-    mode: 'access',
-    duplex: 'auto',
-    speed: 'auto',
-    shutdown: false,
-    type: 'fastethernet',
-    wifi: {
-      ssid: '',
-      security: 'open',
-      password: '',
-      channel: '2.4GHz',
-      mode: 'ap'
-    },
-    macAddress: formatMacFromNumber(parseInt(switchBaseMac.replace(/\./g, ''), 16) + 24 + gigabitPortCount + 1)
-  };
+  // WLAN interface - only for L3 switches (gigabitPortCount >= 4) and routers, not for L2 switches
+  if (gigabitPortCount >= 4) {
+    ports['wlan0'] = {
+      id: 'wlan0',
+      name: '',
+      status: 'connected',
+      vlan: 1,
+      mode: 'access',
+      duplex: 'auto',
+      speed: 'auto',
+      shutdown: false,
+      type: 'fastethernet',
+      wifi: {
+        ssid: '',
+        security: 'open',
+        password: '',
+        channel: '2.4GHz',
+        mode: 'ap'
+      },
+      macAddress: formatMacFromNumber(parseInt(switchBaseMac.replace(/\./g, ''), 16) + 24 + gigabitPortCount + 1)
+    };
+  }
 
   return ports;
 }
@@ -168,7 +170,7 @@ function createInitialMacTable(): { mac: string; vlan: number; port: string; typ
 }
 
 // Ana başlangıç durumu
-export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' | 'WS-C3560-24PS' = 'WS-C2960-24TT-L'): SwitchState {
+export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' | 'WS-C3650-24PS' = 'WS-C2960-24TT-L'): SwitchState {
   // Switch modeline göre Layer belirle
   const switchLayer = getSwitchLayer(switchModel as any);
   const macAddress = reserveMacAddress(mac);
@@ -315,7 +317,7 @@ export function createInitialRouterState(mac?: string): SwitchState {
   return {
     hostname: 'Router',
     macAddress,
-    switchModel: 'WS-C3560-24PS' as any,
+    switchModel: 'WS-C3650-24PS' as any,
     switchLayer: 'L3',
     currentMode: 'user',
     consoleAuthenticated: false,
@@ -350,7 +352,7 @@ export function createInitialRouterState(mac?: string): SwitchState {
     bannerMOTD: 'Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.',
     version: {
       nosVersion: '15.4(3)M4',
-      modelName: 'NETWORK1941/K9',
+      modelName: 'ISR 4451 X',
       serialNumber: 'FTX1234ABCD',
       uptime: '1 week, 2 days, 4 hours'
     },
