@@ -4429,7 +4429,12 @@ ${state.bannerMOTD}
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
-              className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              className={cn(
+                "p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0 shadow-[0_35px_120px_rgba(15,23,42,0.35)]",
+                isDark
+                  ? "bg-slate-950/80 border-white/10 backdrop-blur-2xl"
+                  : "bg-white/70 border-white/70 backdrop-blur-2xl"
+              )}
               data-modal-content
               style={{
                 position: 'fixed',
@@ -4443,11 +4448,14 @@ ${state.bannerMOTD}
                 borderWidth: 3,
               }}
             >
-              <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-visible">
+              <div className={cn(
+                "relative flex flex-col h-full overflow-visible",
+                typeof window !== 'undefined' && window.innerWidth >= 768 ? 'rounded-2xl' : 'rounded-none'
+              )}>
                 <DialogHeader
                   className={cn(
-                    "p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10",
-                    isDark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-white"
+                    "p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10 backdrop-blur-xl",
+                    isDark ? "border-white/10 bg-slate-900/75" : "border-white/70 bg-white/80"
                   )}
                   data-modal-header
                   onPointerDown={(e) => handlePointerDown(e, 'pc')}

@@ -23,7 +23,7 @@ import { sanitizeHTTPContent } from '@/lib/security/sanitizer';
 import { generateRouterAdminPage, isRouterDevice } from '@/components/network/WifiControlPanel';
 import { generateIotWebPanelContent, generateIotDevicePageContent } from '@/lib/network/iotWebPanel';
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
-import { PCIcon, WifiSignalMeter, IoTSensorDisplay } from './PCPanelWidgets';
+import { WifiSignalMeter, IoTSensorDisplay } from './PCPanelWidgets';
 import { expandCommandContext, DESKTOP_COMMANDS } from './pcPanel.utils';
 import { errorHandler, STORAGE_ERRORS, DHCP_ERRORS, CLIPBOARD_ERRORS, DEVICE_ERRORS } from '@/lib/errors/errorHandler';
 
@@ -172,8 +172,6 @@ export function PCPanel({
   }, []);
 
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [showNetworkMenu, setShowNetworkMenu] = useState(false);
-  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [fontSize, setFontSize] = useState<number>(() => {
     try {
       return parseInt(localStorage.getItem('terminal-font-size') || '13', 10);
@@ -3701,96 +3699,57 @@ export function PCPanel({
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
   };
-
-  const headerAction = (
-    <div className={`flex items-center gap-1 p-1 rounded-xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-      {(activeTab === 'desktop' || activeTab === 'terminal') && (
-        <>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSearchOpen(true)}
-                className={cn("h-8 w-8 rounded-lg", isDark ? "text-slate-300 hover:text-slate-100" : "text-slate-600 hover:text-slate-900")}
-                aria-label={t.search}
-              >
-                <Search className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t.search}</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCopyAll}
-                className={cn("h-8 w-8 rounded-lg", isDark ? "text-slate-300 hover:text-slate-100" : "text-slate-600 hover:text-slate-900")}
-                aria-label={t.copy}
-              >
-                <Copy className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t.copy}</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowCmdSettings(v => !v)}
-                className={cn("h-8 w-8 rounded-lg", showCmdSettings && "bg-accent", isDark ? "text-slate-300 hover:text-slate-100" : "text-slate-600 hover:text-slate-900")}
-                aria-label={language === 'tr' ? 'Yazı Boyutu' : 'Font Size'}
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{language === 'tr' ? 'Yazı Boyutu' : 'Font Size'}</TooltipContent>
-          </Tooltip>
-        </>
-      )}
-      {/* Home Button */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={goHome}
-            className={cn("h-8 w-8 rounded-lg", isDark ? "text-slate-300 hover:text-cyan-400" : "text-slate-600 hover:text-cyan-600")}
-            aria-label={language === 'tr' ? 'Ana Ekran' : 'Home'}
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{language === 'tr' ? 'Ana Ekran' : 'Home'}</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              goHome();
-              onTogglePower?.(deviceId);
-            }}
-            className={cn("h-8 w-8 rounded-lg transition-all", isPcPoweredOff ? 'text-rose-500 hover:text-rose-400' : 'text-emerald-500 hover:text-emerald-400')}
-            aria-label={t.power}
-            disabled={!onTogglePower}
-          >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-            </svg>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{t.power}</TooltipContent>
-      </Tooltip>
-    </div>
-  );
+  const launcherApps = useMemo(() => [
+    {
+      tab: 'desktop' as const,
+      label: 'CMD',
+      subtitle: language === 'tr' ? 'Komut İstemi' : 'Command Prompt',
+      icon: TerminalIcon,
+      accent: isDark ? 'from-blue-500 to-cyan-400' : 'from-blue-600 to-cyan-500',
+      buttonClass: isDark ? 'text-blue-300 border-blue-400/20 bg-blue-500/10' : 'text-blue-700 border-blue-200 bg-blue-50/90',
+    },
+    {
+      tab: 'terminal' as const,
+      label: language === 'tr' ? 'Konsol' : 'Console',
+      subtitle: language === 'tr' ? 'Cihaza seri bağlan' : 'Serial device access',
+      icon: Laptop,
+      accent: isDark ? 'from-emerald-500 to-teal-400' : 'from-emerald-600 to-teal-500',
+      buttonClass: isDark ? 'text-emerald-300 border-emerald-400/20 bg-emerald-500/10' : 'text-emerald-700 border-emerald-200 bg-emerald-50/90',
+    },
+    {
+      tab: 'wireless' as const,
+      label: language === 'tr' ? 'Kablosuz' : 'Wireless',
+      subtitle: language === 'tr' ? 'Wi-Fi bilgisi' : 'Wi-Fi overview',
+      icon: Wifi,
+      accent: isDark ? 'from-cyan-500 to-sky-400' : 'from-cyan-600 to-sky-500',
+      buttonClass: isDark ? 'text-cyan-300 border-cyan-400/20 bg-cyan-500/10' : 'text-cyan-700 border-cyan-200 bg-cyan-50/90',
+    },
+    {
+      tab: 'settings' as const,
+      label: language === 'tr' ? 'Ayarlar' : 'Settings',
+      subtitle: language === 'tr' ? 'PC yapılandırması' : 'PC configuration',
+      icon: Settings,
+      accent: isDark ? 'from-violet-500 to-fuchsia-400' : 'from-violet-600 to-fuchsia-500',
+      buttonClass: isDark ? 'text-violet-300 border-violet-400/20 bg-violet-500/10' : 'text-violet-700 border-violet-200 bg-violet-50/90',
+    },
+    {
+      tab: 'services' as const,
+      label: language === 'tr' ? 'Servisler' : 'Services',
+      subtitle: language === 'tr' ? 'HTTP, DNS, DHCP' : 'HTTP, DNS, DHCP',
+      icon: Globe,
+      accent: isDark ? 'from-amber-500 to-orange-400' : 'from-amber-600 to-orange-500',
+      buttonClass: isDark ? 'text-amber-300 border-amber-400/20 bg-amber-500/10' : 'text-amber-700 border-amber-200 bg-amber-50/90',
+    },
+    {
+      tab: 'iot' as const,
+      label: 'IoT',
+      subtitle: language === 'tr' ? 'Sensör ağı' : 'Sensor network',
+      icon: Radio,
+      accent: isDark ? 'from-sky-500 to-indigo-400' : 'from-sky-600 to-indigo-500',
+      buttonClass: isDark ? 'text-sky-300 border-sky-400/20 bg-sky-500/10' : 'text-sky-700 border-sky-200 bg-sky-50/90',
+    },
+  ], [language, isDark]);
+  const activeAppMeta = launcherApps.find((app) => app.tab === activeTab);
 
   if (!isVisible) return null;
 
@@ -3799,180 +3758,172 @@ export function PCPanel({
       <div
         ref={panelRef}
         className={cn(
-          "w-full h-full min-h-0 flex flex-col overflow-hidden",
-          isDark ? 'bg-slate-900' : 'bg-slate-100',
+          "relative w-full h-full min-h-0 flex flex-col overflow-hidden",
+          isDark
+            ? 'bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_35%),linear-gradient(160deg,#020617_0%,#0f172a_40%,#111827_100%)]'
+            : 'bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.18),_transparent_35%),linear-gradient(160deg,#f8fbff_0%,#eef4ff_38%,#dbeafe_100%)]',
           className
         )}
       >
-        {/* External Toolbar - Above Tablet Frame */}
-        <div className="shrink-0 h-12 md:h-[52px]">
-          <div className={`
-        w-full max-w-full mx-auto px-3 py-1.5 flex items-center justify-between sticky top-2 z-[30]
-        rounded-lg border
-        ${isDark
-              ? 'bg-slate-800/90 border-slate-700 shadow-md'
-              : 'bg-white/90 border-slate-200 shadow-md'
-            }
-      `}>
-            <div className="flex items-center gap-2">
-
-            <div className={`p-1.5 rounded-lg ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
-              <Monitor className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            </div>
-            <span className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-              {internalPcHostname}
-            </span>
-            <span className={`text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-              {pcIP}
-            </span>
-            {/* Program Buttons - Left of Power */}
-            <div className="flex items-center gap-1 ml-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigateToProgram('desktop')}
-                    disabled={isPcPoweredOff}
-                    className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'desktop' ? (isDark ? 'bg-blue-500/30 text-blue-300' : 'bg-blue-500/30 text-blue-700') : (isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500')}`}
-                    aria-label="CMD"
-                  >
-                    <TerminalIcon className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>CMD</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigateToProgram('terminal')}
-                    disabled={isPcPoweredOff}
-                    className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'terminal' ? (isDark ? 'bg-emerald-500/30 text-emerald-300' : 'bg-emerald-500/30 text-emerald-700') : (isDark ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-500')}`}
-                    aria-label={language === 'tr' ? 'Konsol' : 'Console'}
-                  >
-                    <Laptop className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{language === 'tr' ? 'Konsol' : 'Console'}</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setActiveTab('services')}
-                    disabled={isPcPoweredOff}
-                    className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'services' ? (isDark ? 'bg-amber-500/30 text-amber-300' : 'bg-amber-500/30 text-amber-700') : (isDark ? 'text-amber-400 hover:text-amber-300' : 'text-amber-600 hover:text-amber-500')}`}
-                    aria-label={language === 'tr' ? 'Servisler' : 'Services'}
-                  >
-                    <Globe className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{language === 'tr' ? 'Servisler' : 'Services'}</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setActiveTab('iot')}
-                    disabled={isPcPoweredOff}
-                    className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'iot' ? (isDark ? 'bg-cyan-500/30 text-cyan-300' : 'bg-cyan-500/30 text-cyan-700') : (isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-500')}`}
-                    aria-label="IoT"
-                  >
-                    <Radio className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>IoT</TooltipContent>
-              </Tooltip>
-            </div>
-            </div>
-            <div className="flex items-center gap-1">
-            {/* Settings - Left of Power */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigateToProgram('settings')}
-                  disabled={isPcPoweredOff}
-                  className={`h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'settings' ? (isDark ? 'bg-purple-500/30 text-purple-300' : 'bg-purple-500/30 text-purple-700') : (isDark ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-500')}`}
-                  aria-label={language === 'tr' ? 'Ayarlar' : 'Settings'}
-                >
-                  <Settings className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{language === 'tr' ? 'Ayarlar' : 'Settings'}</TooltipContent>
-            </Tooltip>
-            {/* WiFi */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setActiveTab('wireless')}
-                  disabled={isPcPoweredOff}
-                  className={`relative h-6 w-6 rounded-md ${isPcPoweredOff ? 'opacity-30' : activeTab === 'wireless' ? (isDark ? 'bg-cyan-500/30 text-cyan-300' : 'bg-cyan-500/30 text-cyan-700') : (isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-500')}`}
-                  aria-label={language === 'tr' ? 'Kablosuz' : 'Wireless'}
-                >
-                  <span className="pointer-events-none w-4 h-4">
-                    <WifiSignalMeter strength={wifiSignalStrength} />
-                  </span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {(() => {
-                  const percentMap: Record<number, number> = { 0: 0, 1: 1, 2: 25, 3: 50, 4: 75, 5: 100 };
-                  const percentage = percentMap[wifiSignalStrength] || 0;
-                  const label = language === 'tr' ? 'Kablosuz' : 'Wireless';
-                  return wifiEnabled && wifiSignalStrength > 0 ? `${label} - ${percentage}%` : label;
-                })()}
-              </TooltipContent>
-            </Tooltip>
-            {/* Power Button - Always visible */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    goHome();
-                    onTogglePower?.(deviceId);
-                  }}
-                  className={`h-6 w-6 rounded-md ui-hover-surface transition-all ${isPcPoweredOff ? 'text-rose-500 hover:text-rose-400' : 'text-emerald-500 hover:text-emerald-400'}`}
-                  aria-label={t.power}
-                  disabled={!onTogglePower}
-                >
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-                  </svg>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t.power}</TooltipContent>
-            </Tooltip>
-            {/* Clock - hidden on mobile */}
-            <div className={`hidden sm:block ml-2 text-xs font-mono ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-              {formatTime(currentTime)}
-            </div>
+        <div className="shrink-0 px-2 pt-2 md:px-5 md:pt-5">
+          <div className={cn(
+            "mx-auto flex items-center justify-between gap-2 rounded-xl border px-2 py-1.5 md:px-3 md:py-2 backdrop-blur-2xl shadow-[0_20px_60px_rgba(15,23,42,0.16)]",
+            isDark
+              ? "border-white/10 bg-slate-900/70 text-slate-100"
+              : "border-white/60 bg-white/70 text-slate-900"
+          )}>
+            <div className="flex min-w-0 items-center gap-2">
+              <div className={cn(
+                "flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-xl md:rounded-2xl border",
+                isDark ? "border-cyan-400/20 bg-cyan-500/10" : "border-cyan-200 bg-cyan-50"
+              )}>
+                {isMobile ? (
+                  <div className={cn("h-4 w-2.5 rounded-[5px] border", isDark ? "border-cyan-300/70" : "border-cyan-700/70")} />
+                ) : (
+                  <Monitor className={cn("h-4 w-4 md:h-5 md:w-5", isDark ? "text-cyan-300" : "text-cyan-700")} />
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className={cn("truncate text-xs md:text-sm font-semibold", isDark ? "text-white" : "text-slate-900")}>
+                  {internalPcHostname}
+                </div>
+                <div className={cn("truncate text-[10px] md:text-xs font-mono", isDark ? "text-cyan-300/85" : "text-cyan-700/80")}>
+                  {pcIP}
+                </div>
+              </div>
+              <div className={cn(
+                "pointer-events-auto flex items-center gap-1 rounded-full border px-1.5 py-1 md:px-2 md:py-1.5 backdrop-blur-2xl shadow-lg ml-auto",
+                isDark ? "border-white/10 bg-slate-900/70" : "border-white/80 bg-white/85"
+              )}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={goHome}
+                      className={cn("h-7 w-7 md:h-9 md:w-9 rounded-full", isDark ? "text-slate-300 hover:text-cyan-300 hover:bg-white/5" : "text-slate-600 hover:text-cyan-700 hover:bg-slate-100")}
+                      aria-label={language === 'tr' ? 'Ana Ekran' : 'Home'}
+                    >
+                      <svg className="w-3.5 h-3.5 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                      </svg>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{language === 'tr' ? 'Ana Ekran' : 'Home'}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        goHome();
+                        onTogglePower?.(deviceId);
+                      }}
+                      className={cn(
+                        "h-7 w-7 md:h-9 md:w-9 rounded-full transition-all",
+                        isPcPoweredOff
+                          ? 'text-rose-500 hover:text-rose-400 hover:bg-rose-500/10'
+                          : 'text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10'
+                      )}
+                      aria-label={t.power}
+                      disabled={!onTogglePower}
+                    >
+                      <svg className="w-3.5 h-3.5 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+                      </svg>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t.power}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => navigateToProgram('wireless')}
+                      disabled={isPcPoweredOff}
+                      className={cn(
+                        "relative h-7 w-7 md:h-9 md:w-9 rounded-full",
+                        activeTab === 'wireless'
+                          ? (isDark ? "bg-cyan-500/20 text-cyan-300" : "bg-cyan-100 text-cyan-700")
+                          : (isDark ? "text-cyan-300 hover:bg-white/5" : "text-cyan-700 hover:bg-slate-100")
+                      )}
+                      aria-label={language === 'tr' ? 'Kablosuz' : 'Wireless'}
+                    >
+                      <span className="pointer-events-none w-3.5 h-3.5 md:w-4 md:h-4">
+                        <WifiSignalMeter strength={wifiSignalStrength} />
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{language === 'tr' ? 'Kablosuz' : 'Wireless'}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => navigateToProgram('settings')}
+                      disabled={isPcPoweredOff}
+                      className={cn(
+                        "h-7 w-7 md:h-9 md:w-9 rounded-full",
+                        activeTab === 'settings'
+                          ? (isDark ? "bg-violet-500/20 text-violet-300" : "bg-violet-100 text-violet-700")
+                          : (isDark ? "text-violet-300 hover:bg-white/5" : "text-violet-700 hover:bg-slate-100")
+                      )}
+                      aria-label={language === 'tr' ? 'Ayarlar' : 'Settings'}
+                    >
+                      <Settings className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{language === 'tr' ? 'Ayarlar' : 'Settings'}</TooltipContent>
+                </Tooltip>
+                <div className={cn(
+                  "rounded-full px-2 py-1 md:px-3 md:py-2 text-[10px] md:text-[11px] font-mono font-semibold tracking-wide",
+                  isDark ? "bg-white/5 text-cyan-200" : "bg-slate-100 text-cyan-800"
+                )}>
+                  {formatTime(currentTime)}
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Tablet Frame - Simple modern tablet design */}
-        <div className={`w-full flex-1 min-h-0 flex flex-col overflow-hidden ${isDark ? 'bg-slate-900' : 'bg-slate-100'}`}>
-
-          {/* Screen Area - Clean and simple */}
-          <div className={`
-          relative flex-1 min-h-0 flex flex-col
-          
-          ${isDark
-              ? 'bg-slate-900'
-              : 'bg-white'
-            }
-        `}>
+        <div className="flex-1 min-h-0 px-2 pb-2 md:px-5 md:pb-5">
+          <div className="mx-auto flex h-full min-h-0 w-full max-w-[1500px] items-center justify-center overflow-hidden">
+            <div
+              className={cn(
+                "relative flex h-full min-h-0 w-full flex-col overflow-hidden shadow-[0_30px_120px_rgba(15,23,42,0.28)]",
+                isMobile
+                  ? (isDark
+                    ? "max-w-[430px] rounded-[2.5rem] border-[10px] border-slate-950 bg-slate-950"
+                    : "max-w-[430px] rounded-[2.5rem] border-[10px] border-slate-200 bg-slate-100")
+                  : (isDark
+                    ? "rounded-[2rem] border border-white/10 bg-slate-950/70 backdrop-blur-2xl"
+                    : "rounded-[2rem] border border-white/70 bg-white/70 backdrop-blur-2xl")
+              )}
+            >
+              {isMobile && (
+                <div className="pointer-events-none absolute left-1/2 top-0 z-30 h-7 w-36 -translate-x-1/2 rounded-b-[1.25rem] bg-black/80" />
+              )}
+              <div className={cn(
+                "relative flex-1 min-h-0 flex flex-col overflow-hidden",
+                isDark
+                  ? 'bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_32%),linear-gradient(180deg,#020617_0%,#0f172a_45%,#111827_100%)]'
+                  : 'bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.2),_transparent_32%),linear-gradient(180deg,#ffffff_0%,#eff6ff_55%,#dbeafe_100%)]'
+              )}>
+                <div className="pointer-events-none absolute inset-0">
+                  <div className={cn(
+                    "absolute -left-20 top-16 h-56 w-56 rounded-full blur-3xl",
+                    isDark ? "bg-cyan-500/12" : "bg-cyan-300/40"
+                  )} />
+                  <div className={cn(
+                    "absolute -right-16 bottom-10 h-52 w-52 rounded-full blur-3xl",
+                    isDark ? "bg-violet-500/12" : "bg-violet-300/35"
+                  )} />
+                </div>
             {/* Power Off Overlay - Tablet ekranını tamamen karartır */}
             {isPcPoweredOff && (
               <div className="absolute inset-0 z-40 bg-black flex flex-col items-center justify-center">
@@ -3994,12 +3945,7 @@ export function PCPanel({
               hideHeader
               noPadding
               style={{ height: '100%' }}
-              className={cn(
-                "w-full min-w-0 h-full flex flex-col relative",
-                isDark
-                  ? "bg-slate-900/40 border border-slate-700/40 backdrop-blur-xl"
-                  : "bg-white/25 border border-white/40 backdrop-blur-xl shadow-lg shadow-white/10"
-              )}
+              className="w-full min-w-0 h-full flex flex-col relative bg-transparent border-none shadow-none"
             >
               {/* Power Off Overlay - Mobile/Desktop ekranını tamamen karartır */}
               {isPcPoweredOff && (
@@ -4014,6 +3960,7 @@ export function PCPanel({
                 </div>
               )}
               <div className="bg-transparent flex-1 min-h-0 flex flex-col">
+                
                 <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
                   <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white'} sm:max-w-md`}>
                     <DialogHeader>
@@ -4132,81 +4079,56 @@ export function PCPanel({
                 </div>
 
                 {/* Content Area */}
-                <div className={`flex-1 min-h-0 flex flex-col ${terminalBg} relative overflow-hidden`}>
+                <div className={cn(
+                  "relative z-10 flex-1 min-h-0 flex flex-col overflow-hidden",
+                  activeTab === 'home' ? "px-2 pb-2 pt-2 md:px-5 md:pb-5 md:pt-5" : "px-2 pb-2 pt-2 md:px-5 md:pb-5 md:pt-5"
+                )}>
                   {activeTab === 'home' && !isPcPoweredOff && (
                     <div
-                      className="flex-1 min-h-0 flex items-center justify-center p-2.5 pt-0"
+                      className="flex-1 min-h-0"
                       style={mobileVerticalScrollStyle}
                     >
-                      <div className="w-full max-w-[700px] flex flex-row overflow-x-auto gap-2 rounded-xl p-2.5 bg-slate-800/30 border border-slate-700/30 shadow-sm md:grid md:grid-cols-5 md:place-items-center scrollbar-hide"
-                        style={{ WebkitOverflowScrolling: 'touch' }}
-                      >
-                        <button
-                          onClick={() => navigateToProgram('desktop')}
-                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10 shrink-0 min-w-[64px]"
-                        >
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-600">
-                            <TerminalIcon className="w-6 h-6 text-white" />
+                      <div className={cn(
+                        "relative flex h-full min-h-0 flex-col overflow-hidden rounded-[2rem] border shadow-[0_24px_80px_rgba(15,23,42,0.22)]",
+                        isDark ? "border-white/10 bg-slate-950/45" : "border-white/80 bg-white/55"
+                      )}>
+                        <div className="pointer-events-none absolute inset-0">
+                          <div className={cn(
+                            "absolute inset-0",
+                            isDark
+                              ? "bg-[linear-gradient(135deg,rgba(15,23,42,0.92),rgba(15,23,42,0.56)),radial-gradient(circle_at_top_right,rgba(59,130,246,0.22),transparent_30%)]"
+                              : "bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(239,246,255,0.84)),radial-gradient(circle_at_top_right,rgba(59,130,246,0.18),transparent_32%)]"
+                          )} />
+                        </div>
+                        <div className="relative flex flex-1 flex-col justify-center p-3 md:p-8">
+                          <div className="grid grid-cols-3 gap-2 md:gap-5">
+                            {launcherApps.map((app) => (
+                              <button
+                                key={app.tab}
+                                onClick={() => navigateToProgram(app.tab)}
+                                disabled={isPcPoweredOff}
+                                className={cn(
+                                  "group flex min-h-[85px] flex-col items-center justify-center gap-2 rounded-[1.25rem] border p-2 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl disabled:opacity-40 md:min-h-[150px] md:p-5 md:gap-3 md:rounded-[1.5rem]",
+                                  app.buttonClass,
+                                  isDark ? "hover:bg-white/10" : "hover:bg-white"
+                                )}
+                              >
+                                <div className={cn(
+                                  "flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg transition-transform duration-300 group-hover:scale-105 md:h-16 md:w-16 md:rounded-[1.25rem]",
+                                  app.accent
+                                )}>
+                                  <app.icon className="h-6 w-6 md:h-8 md:w-8" />
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="text-sm font-semibold md:text-base">{app.label}</div>
+                                  <div className={cn("text-[11px] leading-4 md:text-xs", isDark ? "text-slate-400" : "text-slate-500")}>
+                                    {app.subtitle}
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
                           </div>
-                          <span className="text-xs font-medium text-slate-300">
-                            CMD
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => navigateToProgram('terminal')}
-                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10 shrink-0 min-w-[64px]"
-                        >
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-600">
-                            <Laptop className="w-6 h-6 text-white" />
-                          </div>
-                          <span className="text-xs font-medium text-slate-300">
-                            {language === 'tr' ? 'Konsol' : 'Console'}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => navigateToProgram('settings')}
-                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10 shrink-0 min-w-[64px]"
-                        >
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-purple-600">
-                            <Settings className="w-6 h-6 text-white" />
-                          </div>
-                          <span className="text-xs font-medium text-slate-300">
-                            {language === 'tr' ? 'Ayarlar' : 'Settings'}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('services')}
-                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10 shrink-0 min-w-[64px]"
-                        >
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-600">
-                            <Globe className="w-6 h-6 text-white" />
-                          </div>
-                          <span className="text-xs font-medium text-slate-300">
-                            {language === 'tr' ? 'Servisler' : 'Services'}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('wireless')}
-                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10 shrink-0 min-w-[64px]"
-                        >
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-cyan-600">
-                            <Wifi className="w-6 h-6 text-white" />
-                          </div>
-                          <span className="text-xs font-medium text-slate-300">
-                            {language === 'tr' ? 'Kablosuz' : 'Wireless'}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('iot')}
-                          className="flex flex-col items-center justify-center gap-1 p-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-white/10 shrink-0 min-w-[64px]"
-                        >
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-cyan-700">
-                            <Radio className="w-6 h-6 text-white" />
-                          </div>
-                          <span className="text-xs font-medium text-slate-300">
-                            IoT
-                          </span>
-                        </button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -5649,9 +5571,11 @@ export function PCPanel({
               </div>
             </div>
               </ModernPanel>
-          </div>
+            </div>
         </div>
       </div>
+    </div>
+  </div>
 
       {/* HTTP content in-tablet viewer */}
       {httpAppContent && (
