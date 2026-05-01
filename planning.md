@@ -2,9 +2,9 @@
 
 ## Güncel Durum
 
-- **Sürüm**: 1.5.8
-- **Tarih**: 2026-04-30
-- **Kod satırı**: 64,521
+- **Sürüm**: 1.6.0
+- **Tarih**: 2026-05-01
+- **Kod satırı**: 64,675
 - **Kod dosyası**: 166
 - **Hazır topoloji örneği**: 28
 - **Rehberli ders**: 3
@@ -16,6 +16,16 @@
 Not: Örnek JSON dosyaları ve örnek dokümanları kod satırı sayısından ayrı izlenir.
 
 ## Son Yapılanlar
+
+### Cihaz ve Port Standartizasyonu (Mayıs 2026)
+
+- **Fiziksel Port Düzenlemeleri**:
+  - L2 Switch (2960): 24 FastEthernet + 2 Gigabit Ethernet.
+  - L3 Switch (3650): 24 FastEthernet + 4 Gigabit Ethernet + 1 WLAN.
+  - Router (ISR): 4 Gigabit Ethernet + 1 WLAN.
+- **Dinamik Raporlama (sh ver)**: `show version` çıktısı artık cihazın fiziksel portlarından bağımsız olarak her zaman **24 FE / 4 GE** (ve varsa Wireless) raporlayacak şekilde standardize edildi.
+- **Gerçekçi Boot Sekansı**: Router ve Switch modelleri için donanıma özel POST, CPU/PCIe kontrolleri ve flash dosya sistemi başlatma mesajları eklendi.
+- **Hata Giderme**: Port sayımı ve cihaz tipi tespiti sırasında oluşan TypeScript değişken çakışmaları ve tip hataları giderildi.
 
 ### UI/UX Modernizasyonu (Nisan 2026)
 

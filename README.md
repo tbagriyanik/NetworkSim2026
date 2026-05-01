@@ -2,10 +2,10 @@
 
 A modern browser-based network simulator for learning switching, routing, wireless, IoT, and CLI workflows.
 
-![Version](https://img.shields.io/badge/version-1.5.8-blue)
+![Version](https://img.shields.io/badge/version-1.6.0-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Code Lines](https://img.shields.io/badge/code--lines-64521-blueviolet)
+![Code Lines](https://img.shields.io/badge/code--lines-64675-blueviolet)
 
 Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
@@ -21,9 +21,13 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - Sürükleme UX düzeltmeleri: cihaz taşınırken kablo takma hitboxları ve tooltipler geçici kapanır.
 - Modal UX düzeltmeleri: PC/CMD ve CLI pencerelerindeki gereksiz sol yeşil drag noktaları kaldırıldı.
 - **Yeni UI/UX**: Klavye kısayolları yardımcısı (`?`), modern sekmeler, shimmer loading, glassmorphism efektler, erişilebilirlik iyileştirmeleri.
+- **Port Standartizasyonu**: L2 Switch (24+2), L3 Switch (24+4+1) ve Router (4+1) port yapıları standartlaştırıldı; `show version` çıktısı 24 FE / 4 GE raporlayacak şekilde güncellendi.
 
 ## Son Değişiklikler
 
+- **Cihaz Port Yapılandırması**: Tüm cihaz modelleri için fiziksel port sayıları endüstri standartlarına (2960: 24+2, 3650: 24+4+1, ISR: 4+1) göre düzenlendi.
+- **Raporlama Sistemi**: `show version` ve boot mesajları, donanımdan bağımsız olarak her zaman 24 FastEthernet ve 4 Gigabit Ethernet (L3 için +Wireless) raporlayacak şekilde sabitlendi.
+- **Gelişmiş Boot Sekansı**: Router ve Switch modelleri için gerçekçi donanım POST ve flash yükleme mesajları eklendi.
 - **UI/UX Modernizasyonu**: Klavye kısayolları yardımcısı (`?` tuşu), modern panel sekme stili, shimmer loading animasyonları, glassmorphism buton glow efektleri.
 - **Erişilebilirlik**: `prefers-reduced-motion` desteği, geliştirilmiş focus stilleri, touch target optimizasyonları.
 - **Yeni Bileşenler**: `KeyboardShortcutsHelp`, `LoadingSpinner`, `EmptyState`, `NetworkEmptyState`, iyileştirilmiş `ModernPanel`.
@@ -39,7 +43,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metrik | Değer |
 | --- | ---: |
-| Kod satırı | 64,521 |
+| Kod satırı | 64,675 |
 | Kod dosyası | 166 |
 | Hazır topoloji örneği | 28 |
 | Rehberli ders | 3 |

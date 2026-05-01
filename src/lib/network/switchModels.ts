@@ -17,8 +17,8 @@ export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
         model: 'WS-C2960-24TT-L',
         name: 'Catalyst 2960 24-Port',
         layer: 'L2',
-        ports: 24,
-        description: 'Layer 2 Switch - Fastethernet ports only, no IP addressing on physical ports',
+        ports: 26,
+        description: 'Layer 2 Switch - 24 FastEthernet + 2 GigabitEthernet ports',
         features: [
             'Layer 2 Switching',
             'VLAN Support',
@@ -31,8 +31,8 @@ export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
         model: 'WS-C3650-24PS',
         name: 'Catalyst 3650 24-Port PoE',
         layer: 'L3',
-        ports: 24,
-        description: 'Layer 3 Switch - Supports IP addressing on physical ports and VLAN interfaces',
+        ports: 29,
+        description: 'Layer 3 Switch - 24 FastEthernet + 4 GigabitEthernet + 1 Wireless ports',
         features: [
             'Layer 3 Routing',
             'Layer 2 Switching',
@@ -40,7 +40,8 @@ export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
             'VLAN Interfaces',
             'Routed Ports',
             'Power over Ethernet (PoE)',
-            'Port Security'
+            'Port Security',
+            'Wireless Access Point'
         ]
     }
 };

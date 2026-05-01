@@ -1,5 +1,7 @@
-export const generateSwitchPorts = () => {
-  const ports = [{ id: 'console', label: 'Console', status: 'disconnected' as const }];
+import { CanvasPort } from './networkTopology.types';
+
+export const generateSwitchPorts = (): CanvasPort[] => {
+  const ports: CanvasPort[] = [{ id: 'console', label: 'Console', status: 'disconnected' as const }];
   for (let i = 1; i <= 24; i++) {
     ports.push({ id: `fa0/${i}`, label: `Fa0/${i}`, status: 'disconnected' as const });
   }
@@ -8,7 +10,7 @@ export const generateSwitchPorts = () => {
   return ports;
 };
 
-export const generateRouterPorts = () => {
+export const generateRouterPorts = (): CanvasPort[] => {
   return [
     { id: 'console', label: 'Console', status: 'disconnected' as const },
     { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const },

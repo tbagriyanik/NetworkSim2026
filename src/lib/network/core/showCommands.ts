@@ -101,18 +101,38 @@ function getSTPCost(port: any): number {
 
 function getSwitchDisplayProfile(state: any) {
   const switchModel = state.switchModel || 'WS-C2960-24TT-L';
-  const isL3 = switchModel === 'WS-C3650-24PS';
+  const modelName = state.version?.modelName || '';
+  const isRouter = modelName.includes('ISR') || modelName.includes('4451') || modelName.includes('1900');
+  const isL3 = switchModel === 'WS-C3650-24PS' || (isRouter && !switchModel.includes('2960'));
+
+  if (isRouter) {
+    return {
+      switchModel: modelName,
+      isL3: true,
+      isRouter: true,
+      bootImage: 'c1900-universalk9-mz.SPA.154-3.M.bin',
+      softwareImage: 'C1900 Software (C1900-UNIVERSALK9-M), Version 15.4(3)M4',
+      rom: 'C1900 boot loader',
+      bootldr: 'C1900 Boot Loader (C1900-HBOOT-M) Version 15.1(4)M4',
+      systemImage: 'flash:c1900-universalk9-mz.SPA.154-3.M.bin',
+      processor: `${modelName} (PowerPC405) processor (revision 01) with 4096K bytes of memory`,
+      reportedFeCount: 0,
+      reportedGiCount: 4,
+    };
+  }
 
   return {
     switchModel,
     isL3,
+    isRouter: false,
     bootImage: isL3 ? 'C3650-ipbase-mz.150-2.SE4.bin' : 'c2960-lanbase-mz.150-2.SE4.bin',
     softwareImage: isL3 ? 'C3650 Software (C3650-IPBASE-M), Version 15.0(2)SE4' : 'C2960 Software (C2960-LANBASE-M), Version 15.0(2)SE4',
     rom: isL3 ? 'C3650 boot loader' : 'C2960 boot loader',
     bootldr: isL3 ? 'C3650 Boot Loader (C3650-HBOOT-M) Version 12.2(25)SEE3' : 'C2960 Boot Loader (C2960-HBOOT-M) Version 12.2(25)FX',
     systemImage: isL3 ? 'flash:C3650-ipbase-mz.150-2.SE4.bin' : 'flash:c2960-lanbase-mz.150-2.SE4.bin',
     processor: isL3 ? 'WS-C3650-24PS (PowerPC405) processor (revision 01) with 131072K bytes of memory' : 'WS-C2960-24TT-L (PowerPC405) processor (revision C0) with 65536K bytes of memory',
-    gigabitPortCount: 4,
+    reportedFeCount: 24,
+    reportedGiCount: isL3 ? 4 : 2,
   };
 }
 
@@ -419,10 +439,8 @@ function cmdShowVersion(
   input: string,
   ctx: any
 ): any {
-  const { switchModel, softwareImage, rom, bootldr, systemImage, processor, gigabitPortCount } = getSwitchDisplayProfile(state);
+  const { switchModel, softwareImage, rom, bootldr, systemImage, processor, reportedFeCount, reportedGiCount } = getSwitchDisplayProfile(state);
 
-  const fePortCount = Object.values(state.ports || {}).filter((p: any) => p.type === 'fastethernet' && p.id !== 'console' && p.id !== 'wlan0').length;
-  const giPortCount = Object.values(state.ports || {}).filter((p: any) => p.type === 'gigabitethernet').length;
   const wlanPortCount = Object.values(state.ports || {}).filter((p: any) => p.id.startsWith('wlan')).length;
 
   let output = `\nNetwork NOS Software, ${softwareImage}\n`;
@@ -435,8 +453,15 @@ function cmdShowVersion(
   output += `${processor}\n`;
   output += 'Processor board ID FOC1234X5YZ\n';
   output += 'Last reload reason: power-on\n\n';
-  output += `${fePortCount} FastEthernet/IEEE 802.3 interface(s)\n`;
-  output += `${giPortCount} Gigabit Ethernet/IEEE 802.3 interface(s)\n`;
+  
+  if (reportedFeCount > 0) {
+    output += `${reportedFeCount} FastEthernet/IEEE 802.3 interface(s)\n`;
+  }
+  
+  if (reportedGiCount > 0) {
+    output += `${reportedGiCount} Gigabit Ethernet/IEEE 802.3 interface(s)\n`;
+  }
+
   if (wlanPortCount > 0) {
     output += `${wlanPortCount} 802.11 Wireless interface(s)\n`;
   }

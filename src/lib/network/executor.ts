@@ -806,19 +806,26 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
 
   let output = '';
 
-  // Calculate interface counts for boot message
-  const feCount = Object.values(state.ports || {}).filter((p: any) => p.type === 'fastethernet' && p.id !== 'console' && p.id !== 'wlan0').length;
-  const giCount = Object.values(state.ports || {}).filter((p: any) => p.type === 'gigabitethernet').length;
+  // Calculate interface counts for boot message (Reported counts as per user request)
+  const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900') || state.version.modelName.includes('ISR 4451 X');
+  const isL3Switch = state.version.modelName.includes('3650');
+
+  const reportedFeCount = isRouter ? 0 : 24;
+  const reportedGiCount = (isRouter || isL3Switch) ? 4 : 2;
   const wlanCount = Object.values(state.ports || {}).filter((p: any) => p.id.startsWith('wlan')).length;
 
-  let ifaceSummary = `${feCount} FastEthernet/IEEE 802.3 interface(s)\n${giCount} Gigabit Ethernet/IEEE 802.3 interface(s)`;
+  let ifaceSummary = '';
+  if (reportedFeCount > 0) {
+    ifaceSummary += `${reportedFeCount} FastEthernet/IEEE 802.3 interface(s)\n`;
+  }
+  if (reportedGiCount > 0) {
+    ifaceSummary += `${reportedGiCount} Gigabit Ethernet/IEEE 802.3 interface(s)`;
+  }
   if (wlanCount > 0) {
     ifaceSummary += `\n${wlanCount} 802.11 Wireless interface(s)`;
   }
 
   // Device type detection for realistic boot messages
-  const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900') || state.version.modelName.includes('ISR 4451 X');
-  const isL3Switch = state.version.modelName.includes('3650');
   const isL2Switch = !isRouter && !isL3Switch;
 
   // Generate realistic boot messages based on device type
@@ -998,19 +1005,26 @@ function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): Command
 
   let output = '';
 
-  // Calculate interface counts for boot message
-  const feCount = Object.values(state.ports || {}).filter((p: any) => p.type === 'fastethernet' && p.id !== 'console' && p.id !== 'wlan0').length;
-  const giCount = Object.values(state.ports || {}).filter((p: any) => p.type === 'gigabitethernet').length;
+  // Calculate interface counts for boot message (Reported counts as per user request)
+  const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900') || state.version.modelName.includes('ISR 4451 X');
+  const isL3Switch = state.version.modelName.includes('3650');
+
+  const reportedFeCount = isRouter ? 0 : 24;
+  const reportedGiCount = (isRouter || isL3Switch) ? 4 : 2;
   const wlanCount = Object.values(state.ports || {}).filter((p: any) => p.id.startsWith('wlan')).length;
 
-  let ifaceSummary = `${feCount} FastEthernet/IEEE 802.3 interface(s)\n${giCount} Gigabit Ethernet/IEEE 802.3 interface(s)`;
+  let ifaceSummary = '';
+  if (reportedFeCount > 0) {
+    ifaceSummary += `${reportedFeCount} FastEthernet/IEEE 802.3 interface(s)\n`;
+  }
+  if (reportedGiCount > 0) {
+    ifaceSummary += `${reportedGiCount} Gigabit Ethernet/IEEE 802.3 interface(s)`;
+  }
   if (wlanCount > 0) {
     ifaceSummary += `\n${wlanCount} 802.11 Wireless interface(s)`;
   }
 
   // Device type detection for realistic boot messages
-  const isRouter = state.version.modelName.includes('1900') || state.version.modelName.includes('C1900') || state.version.modelName.includes('ISR 4451 X');
-  const isL3Switch = state.version.modelName.includes('3650');
   const isL2Switch = !isRouter && !isL3Switch;
 
   // Generate realistic boot messages based on device type
@@ -1026,14 +1040,6 @@ Copyright (c) 1994-2026 by Network Systems, Inc.
 ISR4451/K9 platform with 4096 K bytes of memory
 
 ${syslog}
-Load/bootstrap symbols loaded, GOXR initialization
-Reading all bootflash vectors
-POST: CPU PCIe port Check PASS
-CPU memory test . . . . . . . . . . . . . OK
-Board initialization completed
-Initializing flash file system
-
-Booting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!
 Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   ########## [OK]
   0 bytes remaining in flash device
@@ -1045,14 +1051,6 @@ Copyright (c) 1994-2026 by Network Systems, Inc.
 ISR4451/K9 platform with 4096 K bytes of memory
 
 ${syslog}
-Load/bootstrap symbols loaded, GOXR initialization
-Reading all bootflash vectors
-POST: CPU PCIe port Check PASS
-CPU memory test . . . . . . . . . . . . . OK
-Board initialization completed
-Initializing flash file system
-
-Booting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!
 Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   ########## [OK]
   0 bytes remaining in flash device
@@ -1068,14 +1066,6 @@ Copyright (c) 1994-2026 by Network Systems, Inc.
 C3650 platform with 131072 K bytes of memory
 
 ${syslog}
-Load/bootstrap symbols loaded
-Reading all bootflash vectors
-POST: CPU PCIe port Check PASS
-CPU memory test . . . . . . . . . . . . . OK
-Board initialization completed
-Initializing flash file system
-
-Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
 Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   ########## [OK]
   0 bytes remaining in flash device
@@ -1087,14 +1077,6 @@ Copyright (c) 1994-2026 by Network Systems, Inc.
 C3650 platform with 131072 K bytes of memory
 
 ${syslog}
-Load/bootstrap symbols loaded
-Reading all bootflash vectors
-POST: CPU PCIe port Check PASS
-CPU memory test . . . . . . . . . . . . . OK
-Board initialization completed
-Initializing flash file system
-
-Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
 Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   ########## [OK]
   0 bytes remaining in flash device
@@ -1110,14 +1092,6 @@ Copyright (c) 1994-2026 by Network Systems, Inc.
 C2960 platform with 65536 K bytes of memory
 
 ${syslog}
-Load/bootstrap symbols loaded
-Reading all bootflash vectors
-POST: CPU Ethernet port Check PASS
-CPU memory test . . . . . . . . . . . . . OK
-Board initialization completed
-Initializing flash file system
-
-Booting flash:c2960-lanbase-mz.152-2.E6.bin...OK!
 Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
   ########## [OK]
   0 bytes remaining in flash device
@@ -1129,14 +1103,6 @@ Copyright (c) 1994-2026 by Network Systems, Inc.
 C2960 platform with 65536 K bytes of memory
 
 ${syslog}
-Load/bootstrap symbols loaded
-Reading all bootflash vectors
-POST: CPU Ethernet port Check PASS
-CPU memory test . . . . . . . . . . . . . OK
-Board initialization completed
-Initializing flash file system
-
-Booting flash:c2960-lanbase-mz.152-2.E6.bin...OK!
 Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
   ########## [OK]
   0 bytes remaining in flash device
@@ -1231,7 +1197,7 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
   if (state.passwordContext === 'enable') {
     // Check if enable password is configured
     const hasEnablePassword = !!(state.security.enableSecret || state.security.enablePassword);
-    
+
     if (!hasEnablePassword) {
       return {
         success: false,
@@ -1242,9 +1208,9 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
         }
       };
     }
-    
+
     let validPassword = false;
-    
+
     // Check enable secret (MD5 encrypted)
     if (state.security.enableSecret) {
       const storedSecret = state.security.enableSecret;
