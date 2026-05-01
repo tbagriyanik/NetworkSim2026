@@ -856,6 +856,68 @@ export function PCPanel({
   const [gameOver, setGameOver] = useState(false);
   const [gameLanguage, setGameLanguage] = useState<'en' | 'tr'>('en');
 
+  // Global Navigation handler (Escape key & Mobile Back Button)
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const handleNavigation = () => {
+      // If search is open, let it handle itself
+      if (searchOpen) return;
+      // If game is active, let it handle itself
+      if (gameActive) return;
+
+      // If HTTP content is open, close it first
+      if (httpAppContent) {
+        setHttpAppContent(null);
+        setHttpAppDeviceId(null);
+        return true; // Handled
+      }
+
+      // If a program is open, go back to home
+      if (activeTab !== 'home') {
+        goHome();
+        return true; // Handled
+      } else {
+        // If already on home, close the panel
+        onClose();
+        return true; // Handled
+      }
+    };
+
+    const handleGlobalKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (handleNavigation()) {
+          e.preventDefault();
+        }
+      }
+    };
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (handleNavigation()) {
+        // Re-push state to prevent browser from actually going back to previous page
+        // only if we want to stay in the panel
+        if (isVisible) {
+          window.history.pushState({ pcPanel: true }, '', window.location.href);
+        }
+      }
+    };
+
+    // Push initial state for back button tracking on mobile
+    if (isMobile) {
+      window.history.pushState({ pcPanel: true }, '', window.location.href);
+      window.addEventListener('popstate', handlePopState);
+    }
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+      if (isMobile) {
+        window.removeEventListener('popstate', handlePopState);
+      }
+    };
+  }, [isVisible, activeTab, goHome, onClose, httpAppContent, searchOpen, gameActive, isMobile]);
+
   // Console connection state
   const [isConsoleConnected, setIsConsoleConnected] = useState(false);
   const [connectedDeviceId, setConnectedDeviceId] = useState<string | null>(null);
@@ -2099,24 +2161,6 @@ export function PCPanel({
       width: Math.max(280, window.innerWidth - 16),
     }));
   }, [httpAppContent, isMobile]);
-
-  useEffect(() => {
-    if (!httpAppContent || typeof window === 'undefined') return;
-
-    const handlePopState = () => {
-      if (httpAppContent) {
-        setHttpAppContent(null);
-        window.history.pushState(null, '', window.location.href);
-      }
-    };
-
-    window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [httpAppContent]);
 
   useEffect(() => {
     if (!httpAppDeviceId) return;
@@ -3434,7 +3478,7 @@ export function PCPanel({
       // No matches in console mode - trigger help
       executeCommand(value.trim() + ' ?');
     }
-  }, [input, tabCycleIndex, lastTabInput, getCommandMode, executeCommand, isConsoleConnected, activeTab]);
+  }, [input, tabCycleIndex, lastTabInput, getCommandMode, executeCommand, isConsoleConnected, activeTab, setTabCycleIndex, setLastTabInput]);
 
   // Undo/Redo helpers
   const handleUndo = useCallback(() => {
@@ -3519,15 +3563,6 @@ export function PCPanel({
 
     // Escape cancels password/confirm and returns to normal input
     if (e.key === 'Escape') {
-      // First check if HTTP window is open and close it
-      if (httpAppContent) {
-        e.preventDefault();
-        goHome();
-        setHttpAppContent(null);
-        setHttpAppDeviceId(null);
-        inputRef.current?.focus();
-        return;
-      }
       if (showAutocomplete) {
         e.preventDefault();
         setShowAutocomplete(false);
@@ -3782,23 +3817,26 @@ export function PCPanel({
                 "pointer-events-auto flex items-center gap-1 rounded-full border px-1.5 py-1 md:px-2 md:py-1.5 backdrop-blur-2xl shadow-lg mr-auto",
                 isDark ? "border-white/10 bg-slate-900/70" : "border-white/80 bg-white/85"
               )}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={goHome}
-                      className={cn("h-7 w-7 md:h-9 md:w-9 rounded-full", isDark ? "text-slate-300 hover:text-cyan-300 hover:bg-white/5" : "text-slate-600 hover:text-cyan-700 hover:bg-slate-100")}
-                      aria-label={language === 'tr' ? 'Ana Ekran' : 'Home'}
-                    >
-                      <svg className="w-3.5 h-3.5 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                        <polyline points="9 22 9 12 15 12 15 22" />
-                      </svg>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{language === 'tr' ? 'Ana Ekran' : 'Home'}</TooltipContent>
-                </Tooltip>
+                {/* Back Button - Shows when not on home */}
+                {activeTab !== 'home' && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={goHome}
+                        className={cn(
+                          "h-7 w-7 md:h-9 md:w-9 rounded-full",
+                          isDark ? "text-slate-300 hover:text-cyan-300 hover:bg-white/5" : "text-slate-600 hover:text-cyan-700 hover:bg-slate-100"
+                        )}
+                        aria-label={language === 'tr' ? 'Geri' : 'Back'}
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{language === 'tr' ? 'Geri' : 'Back'}</TooltipContent>
+                  </Tooltip>
+                )}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -3896,17 +3934,15 @@ export function PCPanel({
                 "relative flex-1 min-h-0 flex flex-col overflow-hidden",
                 isDark
                   ? 'bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_32%),linear-gradient(180deg,#020617_0%,#0f172a_45%,#111827_100%)]'
-                  : 'bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.2),_transparent_32%),linear-gradient(180deg,#ffffff_0%,#eff6ff_55%,#dbeafe_100%)]'
+                  : 'bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_55%,#dbeafe_100%)]'
               )}>
                 <div className="pointer-events-none absolute inset-0">
-                  <div className={cn(
-                    "absolute -left-20 top-16 h-56 w-56 rounded-full blur-3xl",
-                    isDark ? "bg-cyan-500/12" : "bg-cyan-300/40"
-                  )} />
-                  <div className={cn(
-                    "absolute -right-16 bottom-10 h-52 w-52 rounded-full blur-3xl",
-                    isDark ? "bg-violet-500/12" : "bg-violet-300/35"
-                  )} />
+                  {isDark && (
+                    <>
+                      <div className="absolute -left-20 top-16 h-56 w-56 rounded-full blur-3xl bg-cyan-500/12" />
+                      <div className="absolute -right-16 bottom-10 h-52 w-52 rounded-full blur-3xl bg-violet-500/12" />
+                    </>
+                  )}
                 </div>
             {/* Power Off Overlay - Tablet ekranını tamamen karartır */}
             {isPcPoweredOff && (
@@ -4081,11 +4117,11 @@ export function PCPanel({
                             "absolute inset-0",
                             isDark
                               ? "bg-[linear-gradient(135deg,rgba(15,23,42,0.92),rgba(15,23,42,0.56)),radial-gradient(circle_at_top_right,rgba(59,130,246,0.22),transparent_30%)]"
-                              : "bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(239,246,255,0.84)),radial-gradient(circle_at_top_right,rgba(59,130,246,0.18),transparent_32%)]"
+                              : "bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(239,246,255,0.84))]"
                           )} />
                         </div>
-                        <div className="relative flex flex-1 flex-col justify-center p-3 md:p-8">
-                          <div className="grid grid-cols-3 gap-2 md:gap-5">
+                        <div className="relative flex flex-1 flex-col justify-center overflow-y-auto p-3 md:p-8 custom-scrollbar">
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-5 py-2">
                             {launcherApps.map((app) => (
                               <button
                                 key={app.tab}
@@ -4206,7 +4242,7 @@ export function PCPanel({
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">IP Address</label>
                             <Input value={pcIP} onChange={(e) => {
@@ -4291,7 +4327,7 @@ export function PCPanel({
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-x-4 pt-2 border-t border-slate-800/10 dark:border-slate-800/50">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 pt-2 border-t border-slate-800/10 dark:border-slate-800/50">
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 ml-1">IPv6 Address</label>
                             <Input type="text" value={pcIPv6} onChange={(e) => {
@@ -4803,7 +4839,7 @@ export function PCPanel({
                                         </div>
                                       </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                       <div>
                                         <div className="text-[11px] font-semibold text-slate-500 mb-1">MAC Address</div>
                                         <div className="text-sm font-mono text-slate-600 dark:text-slate-200">{selectedIotDevice?.macAddress ? normalizeMAC(selectedIotDevice.macAddress) : 'N/A'}</div>
