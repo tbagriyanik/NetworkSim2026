@@ -205,14 +205,14 @@ function RefreshDeviceListToast({
         <div className="overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
           <table className="w-full text-[11px]">
             <tbody>
-              {[
+              {([
                 [isTR ? 'Cihaz' : 'Device', `${selected.name} (${REFRESH_DEVICE_TYPE_LABELS[selected.type]})`, false],
                 ['IP', selected.ip, true],
                 ['MAC', selected.mac ? normalizeMAC(selected.mac) : '-', true],
                 ['GW', selected.gateway, true],
                 ['IPv6', selected.ipv6, true],
                 [isTR ? 'Açık hizmetler' : 'Open services', selected.services, false],
-              ].map(([label, value, copyable]) => (
+              ] as Array<[string, string, boolean]>).map(([label, value, copyable]) => (
                 <tr key={label} className="border-t first:border-t-0 border-slate-200 dark:border-slate-700">
                   <td className="w-24 bg-slate-100 px-2 py-1 font-semibold dark:bg-slate-800">{label}</td>
                   <td
