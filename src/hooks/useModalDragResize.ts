@@ -156,6 +156,8 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
     }, []);
 
     useEffect(() => {
+        let animationFrameId: number;
+
         const handlePointerMove = (e: PointerEvent) => {
             const ds = dragStateRef.current;
             if (!ds?.active) return;
@@ -163,36 +165,55 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
             const modalElement = modalElementRef.current;
             if (!modalElement) return;
 
-            // Direct DOM manipulation - no React state updates during drag/resize
-            if (ds.type === 'drag') {
-                const newX = ds.startPosX + (e.clientX - ds.startX);
-                const newY = ds.startPosY + (e.clientY - ds.startY);
-                modalElement.style.left = `${newX}px`;
-                modalElement.style.top = `${newY}px`;
-            } else if (ds.type === 'resize' && ds.direction) {
-                const dx = e.clientX - ds.startX;
-                const dy = e.clientY - ds.startY;
-                let newW = ds.startW, newH = ds.startH, newX = ds.startPosX, newY = ds.startPosY;
+            // Use requestAnimationFrame for smoother updates synchronized with the screen refresh
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            
+            animationFrameId = requestAnimationFrame(() => {
+                if (!dragStateRef.current?.active || !modalElementRef.current) return;
 
-                if (ds.direction.includes('e')) newW = Math.max(400, ds.startW + dx);
-                if (ds.direction.includes('s')) newH = Math.max(300, ds.startH + dy);
-                if (ds.direction.includes('w')) {
-                    newW = Math.max(400, ds.startW - dx);
-                    newX = ds.startPosX + (ds.startW - newW);
-                }
-                if (ds.direction.includes('n')) {
-                    newH = Math.max(300, ds.startH - dy);
-                    newY = ds.startPosY + (ds.startH - newH);
-                }
+                // Direct DOM manipulation - no React state updates during drag/resize
+                if (ds.type === 'drag') {
+                    const newX = ds.startPosX + (e.clientX - ds.startX);
+                    const newY = ds.startPosY + (e.clientY - ds.startY);
+                    
+                    // Optimization: Use will-change to hint the browser
+                    modalElement.style.willChange = 'left, top';
+                    modalElement.style.left = `${newX}px`;
+                    modalElement.style.top = `${newY}px`;
+                    
+                    // Disable transitions during drag
+                    modalElement.style.transition = 'none';
+                } else if (ds.type === 'resize' && ds.direction) {
+                    const dx = e.clientX - ds.startX;
+                    const dy = e.clientY - ds.startY;
+                    let newW = ds.startW, newH = ds.startH, newX = ds.startPosX, newY = ds.startPosY;
 
-                modalElement.style.width = `${newW}px`;
-                modalElement.style.height = `${newH}px`;
-                modalElement.style.left = `${newX}px`;
-                modalElement.style.top = `${newY}px`;
-            }
+                    if (ds.direction.includes('e')) newW = Math.max(400, ds.startW + dx);
+                    if (ds.direction.includes('s')) newH = Math.max(300, ds.startH + dy);
+                    if (ds.direction.includes('w')) {
+                        newW = Math.max(400, ds.startW - dx);
+                        newX = ds.startPosX + (ds.startW - newW);
+                    }
+                    if (ds.direction.includes('n')) {
+                        newH = Math.max(300, ds.startH - dy);
+                        newY = ds.startPosY + (ds.startH - newH);
+                    }
+
+                    modalElement.style.willChange = 'width, height, left, top';
+                    modalElement.style.width = `${newW}px`;
+                    modalElement.style.height = `${newH}px`;
+                    modalElement.style.left = `${newX}px`;
+                    modalElement.style.top = `${newY}px`;
+                    
+                    // Disable transitions during resize
+                    modalElement.style.transition = 'none';
+                }
+            });
         };
 
         const handlePointerUp = (e: PointerEvent) => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            
             const ds = dragStateRef.current;
             if (!ds) return;
 
@@ -206,6 +227,10 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
 
                 const finalPos = { x: finalLeft, y: finalTop };
                 const finalSize = { width: finalWidth, height: finalHeight };
+
+                // Clean up styles
+                modalElement.style.willChange = '';
+                modalElement.style.transition = '';
 
                 // Update React state only once at the end
                 const setPosition = ds.modal === 'tasks' ? setTasksModalPosition : ds.modal === 'cli' ? setCliModalPosition : setPcModalPosition;

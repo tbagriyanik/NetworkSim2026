@@ -102,21 +102,31 @@ export function ModernPanel({
             startHeight: panelRef.current.offsetHeight,
         };
 
+        let animationFrameId: number;
+
         const handleMouseMove = (moveEvent: MouseEvent) => {
             if (!panelRef.current || !isResizingRef.current) return;
 
-            const deltaX = moveEvent.clientX - resizeStateRef.current.startX;
-            const deltaY = moveEvent.clientY - resizeStateRef.current.startY;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-            const newWidth = Math.max(minWidth, resizeStateRef.current.startWidth + deltaX);
-            const newHeight = Math.max(minHeight, resizeStateRef.current.startHeight + deltaY);
+            animationFrameId = requestAnimationFrame(() => {
+                if (!panelRef.current || !isResizingRef.current) return;
 
-            // Direct DOM update - no rAF, no React state
-            panelRef.current.style.width = `${newWidth}px`;
-            panelRef.current.style.height = `${newHeight}px`;
+                const deltaX = moveEvent.clientX - resizeStateRef.current.startX;
+                const deltaY = moveEvent.clientY - resizeStateRef.current.startY;
+
+                const newWidth = Math.max(minWidth, resizeStateRef.current.startWidth + deltaX);
+                const newHeight = Math.max(minHeight, resizeStateRef.current.startHeight + deltaY);
+
+                // Direct DOM update
+                panelRef.current.style.width = `${newWidth}px`;
+                panelRef.current.style.height = `${newHeight}px`;
+                panelRef.current.style.willChange = 'width, height';
+            });
         };
 
         const handleMouseUp = () => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
             isResizingRef.current = false;
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
@@ -126,6 +136,7 @@ export function ModernPanel({
                 const finalHeight = panelRef.current.offsetHeight;
                 setWidth(finalWidth);
                 setHeight(finalHeight);
+                panelRef.current.style.willChange = '';
             }
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
@@ -175,24 +186,37 @@ export function ModernPanel({
             startTop: rect.top,
         };
 
+        let animationFrameId: number;
+
         const handleMouseMove = (moveEvent: MouseEvent) => {
             if (!panelRef.current || !isDragging) return;
 
-            const deltaX = moveEvent.clientX - dragStateRef.current.startX;
-            const deltaY = moveEvent.clientY - dragStateRef.current.startY;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-            const newLeft = dragStateRef.current.startLeft + deltaX;
-            const newTop = dragStateRef.current.startTop + deltaY;
+            animationFrameId = requestAnimationFrame(() => {
+                if (!panelRef.current || !isDragging) return;
 
-            // Direct DOM update - no rAF, no React state
-            panelRef.current.style.left = `${newLeft}px`;
-            panelRef.current.style.top = `${newTop}px`;
+                const deltaX = moveEvent.clientX - dragStateRef.current.startX;
+                const deltaY = moveEvent.clientY - dragStateRef.current.startY;
+
+                const newLeft = dragStateRef.current.startLeft + deltaX;
+                const newTop = dragStateRef.current.startTop + deltaY;
+
+                // Direct DOM update
+                panelRef.current.style.left = `${newLeft}px`;
+                panelRef.current.style.top = `${newTop}px`;
+                panelRef.current.style.willChange = 'left, top';
+            });
         };
 
         const handleMouseUp = () => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
             setIsDragging(false);
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
+            if (panelRef.current) {
+                panelRef.current.style.willChange = '';
+            }
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };

@@ -5391,54 +5391,97 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
     }
     return { x: 16, y: 96 }; // default: bottom-24 right-4 = 16px from right, 96px from bottom
   });
-  const [isDragging, setIsDragging] = useState(false);
+  
+  const containerRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const positionRef = useRef(position);
+  const isDraggingRef = useRef(false);
 
-  // Keep ref in sync with state to avoid dependency issues
+  // Keep ref in sync with state
   useEffect(() => {
     positionRef.current = position;
   }, [position]);
 
   const handleDragStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-    dragStartRef.current = { x: e.clientX, y: e.clientY, posX: positionRef.current.x, posY: positionRef.current.y };
-  };
+    if (e.button !== 0) return; // Only left click
+    const header = (e.target as HTMLElement).closest('[onMouseDown]');
+    if (!header) return;
 
-  useEffect(() => {
-    if (!isDragging) return;
-    const handleMouseMove = (e: MouseEvent) => {
-      const dx = e.clientX - dragStartRef.current.x;
-      const dy = dragStartRef.current.y - e.clientY;
-      // X uses 'right' CSS, so moving mouse right should decrease right value (move panel right)
-      setPosition({ x: dragStartRef.current.posX - dx, y: dragStartRef.current.posY + dy });
+    e.preventDefault();
+    isDraggingRef.current = true;
+    dragStartRef.current = { 
+      x: e.clientX, 
+      y: e.clientY, 
+      posX: positionRef.current.x, 
+      posY: positionRef.current.y 
     };
+
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'grabbing';
+      containerRef.current.style.transition = 'none';
+      containerRef.current.style.willChange = 'bottom, right';
+    }
+
+    let animationFrameId: number;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      
+      animationFrameId = requestAnimationFrame(() => {
+        if (!isDraggingRef.current || !containerRef.current) return;
+        
+        const dx = moveEvent.clientX - dragStartRef.current.x;
+        const dy = dragStartRef.current.y - moveEvent.clientY;
+        
+        const newX = dragStartRef.current.posX - dx;
+        const newY = dragStartRef.current.posY + dy;
+        
+        containerRef.current.style.right = `${newX}px`;
+        containerRef.current.style.bottom = `${newY}px`;
+      });
+    };
+
     const handleMouseUp = () => {
-      setIsDragging(false);
-      // Clamp position to safe area (screen bounds)
-      const panelWidth = 280;
-      const panelHeight = 400;
-      const margin = 16;
-      const currentPos = positionRef.current;
-      const safeX = Math.max(margin, Math.min(currentPos.x, window.innerWidth - panelWidth - margin));
-      const safeY = Math.max(margin, Math.min(currentPos.y, window.innerHeight - panelHeight - margin));
-      const clampedPos = { x: safeX, y: safeY };
-      setPosition(clampedPos);
-      localStorage.setItem('pc-info-position', JSON.stringify(clampedPos));
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      isDraggingRef.current = false;
+      
+      if (containerRef.current) {
+        containerRef.current.style.cursor = '';
+        containerRef.current.style.transition = '';
+        containerRef.current.style.willChange = '';
+        
+        const finalX = parseInt(containerRef.current.style.right);
+        const finalY = parseInt(containerRef.current.style.bottom);
+        
+        // Clamp position to safe area
+        const panelWidth = 280;
+        const panelHeight = 400;
+        const margin = 16;
+        const safeX = Math.max(margin, Math.min(finalX, window.innerWidth - panelWidth - margin));
+        const safeY = Math.max(margin, Math.min(finalY, window.innerHeight - panelHeight - margin));
+        
+        const clampedPos = { x: safeX, y: safeY };
+        setPosition(clampedPos);
+        localStorage.setItem('pc-info-position', JSON.stringify(clampedPos));
+      }
+
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
-    window.addEventListener('mousemove', handleMouseMove);
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('mouseup', handleMouseUp);
-    return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-  }, [isDragging]); // Only depend on isDragging, not position
+  };
 
   return (
     <div
-      className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDragging ? "cursor-grabbing" : "cursor-grab")}
+      ref={containerRef}
+      className={cn("hidden md:block fixed z-[10000] animate-scale-in cursor-grab")}
       style={{
         bottom: `${position.y}px`,
         right: `${position.x}px`,
-        transition: isDragging ? 'none' : 'bottom 0.2s, right 0.2s'
       }}
     >
       <div
@@ -5583,46 +5626,89 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
     }
     return { x: 16, y: 96 }; // default: bottom-24 right-4
   });
-  const [isDragging, setIsDragging] = useState(false);
+  
+  const containerRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const positionRef = useRef(position);
+  const isDraggingRef = useRef(false);
 
-  // Keep ref in sync with state to avoid dependency issues
+  // Keep ref in sync with state
   useEffect(() => {
     positionRef.current = position;
   }, [position]);
 
   const handleDragStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-    dragStartRef.current = { x: e.clientX, y: e.clientY, posX: positionRef.current.x, posY: positionRef.current.y };
-  };
+    if (e.button !== 0) return; // Only left click
+    const header = (e.target as HTMLElement).closest('[onMouseDown]');
+    if (!header) return;
 
-  useEffect(() => {
-    if (!isDragging) return;
-    const handleMouseMove = (e: MouseEvent) => {
-      const dx = e.clientX - dragStartRef.current.x;
-      const dy = dragStartRef.current.y - e.clientY;
-      // X uses 'right' CSS, so moving mouse right should decrease right value (move panel right)
-      setPosition({ x: dragStartRef.current.posX - dx, y: dragStartRef.current.posY + dy });
+    e.preventDefault();
+    isDraggingRef.current = true;
+    dragStartRef.current = { 
+      x: e.clientX, 
+      y: e.clientY, 
+      posX: positionRef.current.x, 
+      posY: positionRef.current.y 
     };
+
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'grabbing';
+      containerRef.current.style.transition = 'none';
+      containerRef.current.style.willChange = 'bottom, right';
+    }
+
+    let animationFrameId: number;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      
+      animationFrameId = requestAnimationFrame(() => {
+        if (!isDraggingRef.current || !containerRef.current) return;
+        
+        const dx = moveEvent.clientX - dragStartRef.current.x;
+        const dy = dragStartRef.current.y - moveEvent.clientY;
+        
+        const newX = dragStartRef.current.posX - dx;
+        const newY = dragStartRef.current.posY + dy;
+        
+        containerRef.current.style.right = `${newX}px`;
+        containerRef.current.style.bottom = `${newY}px`;
+      });
+    };
+
     const handleMouseUp = () => {
-      setIsDragging(false);
-      // Clamp position to safe area (screen bounds)
-      const panelWidth = 300;
-      const panelHeight = 500;
-      const margin = 16;
-      const currentPos = positionRef.current;
-      const safeX = Math.max(margin, Math.min(currentPos.x, window.innerWidth - panelWidth - margin));
-      const safeY = Math.max(margin, Math.min(currentPos.y, window.innerHeight - panelHeight - margin));
-      const clampedPos = { x: safeX, y: safeY };
-      setPosition(clampedPos);
-      localStorage.setItem('router-info-position', JSON.stringify(clampedPos));
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      isDraggingRef.current = false;
+      
+      if (containerRef.current) {
+        containerRef.current.style.cursor = '';
+        containerRef.current.style.transition = '';
+        containerRef.current.style.willChange = '';
+        
+        const finalX = parseInt(containerRef.current.style.right);
+        const finalY = parseInt(containerRef.current.style.bottom);
+        
+        // Clamp position to safe area
+        const panelWidth = 300;
+        const panelHeight = 500;
+        const margin = 16;
+        const safeX = Math.max(margin, Math.min(finalX, window.innerWidth - panelWidth - margin));
+        const safeY = Math.max(margin, Math.min(finalY, window.innerHeight - panelHeight - margin));
+        
+        const clampedPos = { x: safeX, y: safeY };
+        setPosition(clampedPos);
+        localStorage.setItem('router-info-position', JSON.stringify(clampedPos));
+      }
+
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
-    window.addEventListener('mousemove', handleMouseMove);
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('mouseup', handleMouseUp);
-    return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-  }, [isDragging]); // Only depend on isDragging, not position
+  };
 
   // Get port information
   const ports = routerState?.ports ? Object.values(routerState.ports) : (router.ports || []);
@@ -5649,11 +5735,11 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
 
   return (
     <div
-      className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDragging ? "cursor-grabbing" : "cursor-grab")}
+      ref={containerRef}
+      className={cn("hidden md:block fixed z-[10000] animate-scale-in cursor-grab")}
       style={{
         bottom: `${position.y}px`,
         right: `${position.x}px`,
-        transition: isDragging ? 'none' : 'bottom 0.2s, right 0.2s'
       }}
     >
       <div
