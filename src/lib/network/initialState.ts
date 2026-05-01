@@ -36,7 +36,7 @@ function reserveMacAddress(mac?: string): string {
 }
 
 // 24 FastEthernet + configurable GigabitEthernet ports oluştur
-function createInitialPorts(gigabitPortCount: number = 4, baseMac?: string): Record<string, Port> {
+function createInitialPorts(gigabitPortCount: number = 4, baseMac?: string, hasWireless: boolean = false): Record<string, Port> {
   const ports: Record<string, Port> = {};
   const switchBaseMac = baseMac || generateUniqueMacAddress(0x001100000000); // Switch base MAC range
 
@@ -100,8 +100,8 @@ function createInitialPorts(gigabitPortCount: number = 4, baseMac?: string): Rec
     };
   }
 
-  // WLAN interface - only for L3 switches (gigabitPortCount >= 4) and routers, not for L2 switches
-  if (gigabitPortCount >= 4) {
+  // WLAN interface - only if explicitly requested
+  if (hasWireless) {
     ports['wlan0'] = {
       id: 'wlan0',
       name: '',
@@ -174,7 +174,7 @@ export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' 
   // Switch modeline göre Layer belirle
   const switchLayer = getSwitchLayer(switchModel as any);
   const macAddress = reserveMacAddress(mac);
-  const ports = createInitialPorts(4, macAddress);
+  const ports = createInitialPorts(4, macAddress, switchLayer === 'L3');
   const vlans = createInitialVlans();
 
   // VLAN'lara portları ata
