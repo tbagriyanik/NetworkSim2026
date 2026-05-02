@@ -1252,6 +1252,15 @@ export default function Home() {
   }, [deviceStates, getPortAccessVlan, topologyConnections]);
 
   const inferEndpointVlan = useCallback((device: CanvasDevice, devices: CanvasDevice[]) => {
+    // For WiFi clients, find the AP and use its wlan0 VLAN
+    if (device.wifi?.enabled && device.wifi?.mode === 'client' && device.wifi?.bssid) {
+      const ap = devices.find(d => d.id === device.wifi?.bssid);
+      if (ap) {
+        const apWlan = deviceStates?.get(ap.id)?.ports?.['wlan0'];
+        if (apWlan) return getPortAccessVlan(apWlan);
+      }
+    }
+
     const connection = topologyConnections.find((conn) =>
       conn.active !== false &&
       (conn.sourceDeviceId === device.id || conn.targetDeviceId === device.id)
@@ -1330,13 +1339,40 @@ export default function Home() {
     const visited = new Set<string>([sourceDeviceId]);
     const queue = [sourceDeviceId];
 
+    const activeConnections = [...(connectionsOverride ?? topologyConnections)];
+    // Add established wireless connections to the search path
+    devices.forEach(pc => {
+      const pcWifi = getDeviceWifiConfig(pc, activeStates);
+      if (pcWifi?.enabled && (pcWifi.mode === 'client' || pcWifi.mode === 'sta') && pcWifi.ssid) {
+        devices.forEach(ap => {
+          if (ap.id === pc.id) return;
+          const apWifi = getDeviceWifiConfig(ap, activeStates);
+          if (apWifi?.enabled && apWifi.mode === 'ap' && apWifi.ssid === pcWifi.ssid) {
+            // Check password/security match
+            if ((apWifi.security || 'open') === (pcWifi.security || 'open') && 
+                (apWifi.security === 'open' || apWifi.password === pcWifi.password)) {
+              activeConnections.push({
+                id: `wireless-dhcp-${pc.id}-${ap.id}`,
+                sourceDeviceId: pc.id,
+                sourcePort: 'wlan0',
+                targetDeviceId: ap.id,
+                targetPort: 'wlan0',
+                cableType: 'wireless',
+                active: true
+              } as any);
+            }
+          }
+        });
+      }
+    });
+
     while (queue.length > 0) {
       const currentId = queue.shift();
       if (!currentId) continue;
       if (currentId === targetDeviceId) return true;
 
-      for (const connection of connectionsOverride ?? topologyConnections) {
-        if (connection.active === false || connection.cableType === 'wireless') continue;
+      for (const connection of activeConnections) {
+        if (connection.active === false) continue;
 
         const isSourceSide = connection.sourceDeviceId === currentId;
         const isTargetSide = connection.targetDeviceId === currentId;
@@ -1367,14 +1403,6 @@ export default function Home() {
     connectionsOverride?: CanvasConnection[]
   ) => {
     const states = activeStates ?? deviceStates;
-    const clientWifi = getDeviceWifiConfig(pcDevice, states);
-    if (clientWifi?.enabled && clientWifi.mode === 'client' && clientWifi.ssid) {
-      const serverWifi = getDeviceWifiConfig(serverDevice, states);
-      if (!serverWifi?.enabled || serverWifi.mode !== 'ap' || serverWifi.ssid !== clientWifi.ssid) {
-        return false;
-      }
-      return getServerPoolVlan(serverDevice, serverState, poolGateway, poolStartIp, poolSubnetMask, devices) !== null;
-    }
 
     if (!hasActivePathBetweenDevices(pcDevice.id, serverDevice.id, devices, states, connectionsOverride)) {
       return false;
@@ -3112,6 +3140,7 @@ ${state.bannerMOTD}
         ? (device.wifi?.mode || fallbackMode)
         : (normalizedMode === 'client' ? 'client' : 'ap');
       return {
+        ...device.wifi,
         enabled,
         ssid: runtimeWifi.ssid || device.wifi?.ssid || '',
         security: runtimeWifi.security || device.wifi?.security || 'open',
@@ -3409,7 +3438,7 @@ ${state.bannerMOTD}
       });
 
       // 8.5. DHCP Assignment - Do this before showing the refresh panel
-      const dhcpClients = refreshedDevices.filter(d => d.type === 'pc' && d.ipConfigMode === 'dhcp');
+      const dhcpClients = refreshedDevices.filter(d => (d.type === 'pc' || d.type === 'iot') && d.ipConfigMode === 'dhcp');
       const dhcpAssignments: Array<{ name: string, ip: string }> = [];
       let finalDevicesForRefresh = [...refreshedDevices];
 
@@ -3610,7 +3639,7 @@ ${state.bannerMOTD}
       });
 
       stpSyncedDevices.forEach((device) => {
-        if (device.type !== 'pc' || device.ipConfigMode !== 'dhcp') return;
+        if (device.type !== 'pc' && device.type !== 'iot' || device.ipConfigMode !== 'dhcp') return;
         const state = portSecurityUpdatedStates.get(device.id);
         const runtimeIp = state?.ports?.['eth0']?.ipAddress || state?.ports?.['wlan0']?.ipAddress || '';
         const candidateIp = hasValidIp(device.ip) ? device.ip : runtimeIp;
@@ -3737,6 +3766,34 @@ ${state.bannerMOTD}
       }
     }
   }, [assignDhcpLeaseForPc, buildLinkLocalLease, topologyDevices, topologyConnections, deviceStates, setDeviceStates, setTopologyConnections, language, t, pcOutputs]);
+
+  // Automatically trigger DHCP refresh when wireless clients connect
+  useEffect(() => {
+    const dhcpClients = topologyDevices.filter(d => (d.type === 'pc' || d.type === 'iot') && d.ipConfigMode === 'dhcp');
+    if (dhcpClients.length === 0) return;
+
+    // Check if any client has no valid IP but is connected to WiFi or has a cable
+    const needsDhcp = dhcpClients.some(pc => {
+      const hasValidIp = (ip: string | undefined) => !!ip && ip !== '0.0.0.0' && !ip.startsWith('169.254.');
+      if (hasValidIp(pc.ip)) return false;
+
+      // Check if connected via WiFi
+      if (pc.wifi?.enabled && pc.wifi?.ssid && pc.wifi?.bssid) return true;
+
+      // Check if connected via cable
+      const isConnectedViaCable = topologyConnections.some(c => 
+        c.active !== false && (c.sourceDeviceId === pc.id || c.targetDeviceId === pc.id)
+      );
+      return isConnectedViaCable;
+    });
+
+    if (needsDhcp) {
+      const timer = setTimeout(() => {
+        handleRefreshNetwork();
+      }, 2000); // Debounce refresh by 2 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [topologyDevices, topologyConnections, handleRefreshNetwork]);
 
   // Handle key events: ESC to close, ENTER to confirm
   useEffect(() => {

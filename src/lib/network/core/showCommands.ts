@@ -2852,7 +2852,7 @@ function cmdShowIpDhcpBinding(state: any, input: string, ctx: any): any {
   // A device is considered a DHCP client if its ipConfigMode is 'dhcp' 
   // and it's connected (directly or indirectly) to this device.
   const dhcpClients = devices.filter((d: any) => 
-    d.type === 'pc' && 
+    (d.type === 'pc' || d.type === 'iot') && 
     d.ipConfigMode === 'dhcp' && 
     d.ip && 
     d.ip !== '0.0.0.0' && 

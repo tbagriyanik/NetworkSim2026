@@ -638,9 +638,9 @@ export function PCPanel({
     setErrors(newErrors);
 
     if (deviceId) {
-      // Only sync wifi config for PC devices - router/switch wifi is managed via CLI
+      // Sync config for PC and IoT devices
       const deviceType = topologyDevices.find(d => d.id === deviceId)?.type;
-      if (deviceType !== 'pc') return;
+      if (deviceType !== 'pc' && deviceType !== 'iot') return;
 
       window.dispatchEvent(new CustomEvent('update-topology-device-config', {
         detail: {
@@ -5034,7 +5034,21 @@ export function PCPanel({
                             type="button"
                             role="switch"
                             aria-checked={wifiEnabled}
-                            onClick={() => setWifiEnabled(!wifiEnabled)}
+                            onClick={() => {
+                              const enabled = !wifiEnabled;
+                              setWifiEnabled(enabled);
+                              dispatchDeviceConfig({
+                                wifi: {
+                                  enabled: enabled,
+                                  ssid: wifiSSID,
+                                  bssid: wifiBSSID,
+                                  security: wifiSecurity,
+                                  password: wifiPassword,
+                                  channel: wifiChannel,
+                                  mode: 'client'
+                                }
+                              });
+                            }}
                             className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60 ${wifiEnabled
                               ? 'bg-purple-500 border-purple-400'
                               : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
@@ -5060,7 +5074,24 @@ export function PCPanel({
                                     <input
                                       type="text"
                                       value={wifiSSID}
-                                      onChange={e => { setWifiSSID(e.target.value); setWifiBSSID(''); setSsidDropdownOpen(true); }}
+                                      onChange={e => {
+                                        const val = e.target.value;
+                                        setWifiSSID(val);
+                                        setWifiBSSID('');
+                                        setSsidDropdownOpen(true);
+                                        // Sync WiFi change to global
+                                        dispatchDeviceConfig({
+                                          wifi: {
+                                            enabled: wifiEnabled,
+                                            ssid: val,
+                                            bssid: '',
+                                            security: wifiSecurity,
+                                            password: wifiPassword,
+                                            channel: wifiChannel,
+                                            mode: 'client'
+                                          }
+                                        });
+                                      }}
                                       onFocus={() => setSsidDropdownOpen(true)}
                                       onBlur={() => setTimeout(() => setSsidDropdownOpen(false), 150)}
                                       placeholder={language === 'tr' ? 'Ağ seçin veya yazın...' : 'Select or type SSID...'}
@@ -5090,6 +5121,18 @@ export function PCPanel({
                                               setSsidDropdownOpen(false);
                                               setWifiSSID(entry.ssid);
                                               setWifiBSSID(entry.deviceId);
+                                              // Sync WiFi change to global
+                                              dispatchDeviceConfig({
+                                                wifi: {
+                                                  enabled: wifiEnabled,
+                                                  ssid: entry.ssid,
+                                                  bssid: entry.deviceId,
+                                                  security: wifiSecurity,
+                                                  password: wifiPassword,
+                                                  channel: wifiChannel,
+                                                  mode: 'client'
+                                                }
+                                              });
                                               (document.activeElement as HTMLElement | null)?.blur?.();
                                             }}
                                             className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-500/20 ${isDark ? 'text-white' : 'text-slate-900'}`}
@@ -5109,7 +5152,25 @@ export function PCPanel({
                             <label className="text-[10px] font-black tracking-widest  text-slate-500 ml-1">
                               {language === 'tr' ? 'Güvenlik' : 'Security'}
                             </label>
-                            <Select value={wifiSecurity} onValueChange={(val) => setWifiSecurity(val as any)} disabled={!wifiEnabled}>
+                            <Select
+                              value={wifiSecurity}
+                              onValueChange={(val) => {
+                                const security = val as any;
+                                setWifiSecurity(security);
+                                dispatchDeviceConfig({
+                                  wifi: {
+                                    enabled: wifiEnabled,
+                                    ssid: wifiSSID,
+                                    bssid: wifiBSSID,
+                                    security: security,
+                                    password: wifiPassword,
+                                    channel: wifiChannel,
+                                    mode: 'client'
+                                  }
+                                });
+                              }}
+                              disabled={!wifiEnabled}
+                            >
                               <SelectTrigger className={`w-full ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
                                 <SelectValue />
                               </SelectTrigger>
@@ -5131,7 +5192,21 @@ export function PCPanel({
                                 <Input
                                   type={showWifiPassword ? 'text' : 'password'}
                                   value={wifiPassword}
-                                  onChange={(e) => setWifiPassword(e.target.value)}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setWifiPassword(val);
+                                    dispatchDeviceConfig({
+                                      wifi: {
+                                        enabled: wifiEnabled,
+                                        ssid: wifiSSID,
+                                        bssid: wifiBSSID,
+                                        security: wifiSecurity,
+                                        password: val,
+                                        channel: wifiChannel,
+                                        mode: 'client'
+                                      }
+                                    });
+                                  }}
                                   placeholder="Security Key"
                                   disabled={!wifiEnabled}
                                   className="bg-background pr-9"
@@ -5152,7 +5227,25 @@ export function PCPanel({
                             <label className="text-[10px] font-black tracking-widest  text-slate-500 ml-1">
                               {language === 'tr' ? 'Kanal' : 'Channel'}
                             </label>
-                            <Select value={wifiChannel} onValueChange={(val) => setWifiChannel(val as any)} disabled={!wifiEnabled}>
+                            <Select
+                              value={wifiChannel}
+                              onValueChange={(val) => {
+                                const channel = val as any;
+                                setWifiChannel(channel);
+                                dispatchDeviceConfig({
+                                  wifi: {
+                                    enabled: wifiEnabled,
+                                    ssid: wifiSSID,
+                                    bssid: wifiBSSID,
+                                    security: wifiSecurity,
+                                    password: wifiPassword,
+                                    channel: channel,
+                                    mode: 'client'
+                                  }
+                                });
+                              }}
+                              disabled={!wifiEnabled}
+                            >
                               <SelectTrigger className={`w-full ${isDark ? 'bg-background border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
                                 <SelectValue />
                               </SelectTrigger>

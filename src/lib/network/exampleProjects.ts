@@ -163,6 +163,7 @@ const createL3SwitchDevice = (id: string, name: string, x: number, y: number): C
   x,
   y,
   ip: '',
+  ipConfigMode: 'dhcp',
   macAddress: nextExampleMac(),
   status: 'online',
   switchModel: 'WS-C3650-24PS',
