@@ -2896,7 +2896,7 @@ function cmdShowIpDhcpBinding(state: any, input: string, ctx: any): any {
       if (belongsToOurPool) {
         const mac = client.macAddress || '0000.0000.0000';
         const formattedMac = mac.replace(/[:-]/g, '').toLowerCase();
-        const clientId = `01${formattedMac}`; // Cisco format: 01 + mac
+        const clientId = `01${formattedMac}`; // Format: 01 + mac
         output += `${client.ip.padEnd(16)} ${clientId.padEnd(23)} Infinite                Automatic\n`;
       }
     });

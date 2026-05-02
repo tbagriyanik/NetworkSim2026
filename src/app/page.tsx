@@ -2422,6 +2422,12 @@ ${state.bannerMOTD}
       setShowRouterDeviceId('router-1');
     }
 
+    // Close PC info panel if deleted device was the active device
+    if (activeDeviceId === deviceId) {
+      setSelectedDevice(null);
+      setActiveDeviceId('');
+    }
+
     // Reset selected device if deleted
     if (selectedDevice) {
       setSelectedDevice(null);
@@ -4175,8 +4181,8 @@ ${state.bannerMOTD}
                   </div>
                 </Button>
 
-                {/* Total Score - Desktop - Hidden for PC devices */}
-                {activeDeviceType !== 'pc' && (
+                {/* Total Score - Desktop - Hidden for PC devices or when no devices exist */}
+                {activeDeviceType !== 'pc' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && (
                   <div className="hidden md:flex items-center gap-4">
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-2">
@@ -4407,8 +4413,9 @@ ${state.bannerMOTD}
                         </div>
 
 
-                        {/* Lab Progress Mobile */}
-                        <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-800/30' : 'bg-slate-50'} border ${isDark ? 'border-slate-800/50' : 'border-slate-200'}`}>
+                        {/* Lab Progress Mobile - Hidden for PC devices or when no devices exist */}
+                        {activeDeviceType !== 'pc' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && (
+                          <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-800/30' : 'bg-slate-50'} border ${isDark ? 'border-slate-800/50' : 'border-slate-200'}`}>
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-xs font-bold tracking-[0.15em] text-slate-500">{t.labProgress}</span>
                             <span className="text-xs font-bold text-cyan-400">{Math.round((totalScore / maxScore) * 100)}%</span>
@@ -4421,6 +4428,7 @@ ${state.bannerMOTD}
                           </div>
                           <p className={`text-center text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{totalScore} / {maxScore} {t.pts}</p>
                         </div>
+                        )}
                       </div>
                     </ScrollArea>
                   </SheetContent>
@@ -6050,8 +6058,8 @@ ${state.bannerMOTD}
                   )}
                 </div>
 
-                {/* Lab Progress */}
-                {totalScore > 0 && (
+                {/* Lab Progress - Hidden for PC devices or when no devices exist */}
+                {activeDeviceType !== 'pc' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && totalScore > 0 && (
                   <div className={`hidden md:flex items-center gap-2`}>
                     <span className={`text-[11px] font-bold  tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
                       {t.labProgress}
@@ -6276,7 +6284,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
           <div className="flex items-center gap-1.5">
             <GripHorizontal className="w-3 h-3 opacity-30 cursor-grab" />
             <Monitor className="w-3.5 h-3.5 text-blue-500" />
-            <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{pc.name || pc.id}</span>
+            <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{pc?.name || pc?.id || 'Unknown'}</span>
           </div>
           <button
             onClick={onClose}
@@ -6288,27 +6296,27 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
         </div>
         <div className="overflow-hidden">
           <div className="p-2 space-y-1 text-[10px]">
-            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc.ip || '0.0.0.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.ip || '0.0.0.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
               <span className="opacity-50">IP</span>
-              <span className="font-mono text-blue-500">{pc.ip || '0.0.0.0'}</span>
+              <span className="font-mono text-blue-500">{pc?.ip || '0.0.0.0'}</span>
             </div>
-            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc.subnet || '255.255.255.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.subnet || '255.255.255.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
               <span className="opacity-50">Subnet</span>
-              <span className="font-mono opacity-80">{pc.subnet || '255.255.255.0'}</span>
+              <span className="font-mono opacity-80">{pc?.subnet || '255.255.255.0'}</span>
             </div>
-            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc.gateway || '0.0.0.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.gateway || '0.0.0.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
               <span className="opacity-50">GW</span>
-              <span className="font-mono opacity-80">{pc.gateway || '0.0.0.0'}</span>
+              <span className="font-mono opacity-80">{pc?.gateway || '0.0.0.0'}</span>
             </div>
-            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc.ipv6 || '::')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.ipv6 || '::')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
               <span className="opacity-50">IPv6</span>
-              <span className="font-mono opacity-80">{pc.ipv6 || '::'}</span>
+              <span className="font-mono opacity-80">{pc?.ipv6 || '::'}</span>
             </div>
-            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc.macAddress ? normalizeMAC(pc.macAddress) : 'N/A')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.macAddress ? normalizeMAC(pc.macAddress) : 'N/A')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
               <span className="opacity-50">MAC</span>
-              <span className="font-mono opacity-30 text-[9px]">{pc.macAddress ? normalizeMAC(pc.macAddress) : 'N/A'}</span>
+              <span className="font-mono opacity-30 text-[9px]">{pc?.macAddress ? normalizeMAC(pc.macAddress) : 'N/A'}</span>
             </div>
-            {pc.wifi && pc.wifi.enabled && (
+            {pc?.wifi && pc.wifi.enabled && (
               <div className="pt-1 border-t border-slate-500/20">
                 <div className="flex justify-between items-center mb-1">
                   <span className="opacity-50">WiFi</span>
@@ -6316,13 +6324,13 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
                 </div>
                 <div className="flex gap-2 text-[9px]">
                   <span className="opacity-50">SSID:</span>
-                  <span className="font-mono">{pc.wifi.ssid || '-'}</span>
+                  <span className="font-mono">{pc?.wifi?.ssid || '-'}</span>
                 </div>
                 <div className="flex gap-2 text-[9px]">
                   <span className="opacity-50">{t.channelShort}</span>
-                  <span className="font-mono">{pc.wifi.channel || '-'}</span>
+                  <span className="font-mono">{pc?.wifi?.channel || '-'}</span>
                   <span className="opacity-50">|</span>
-                  <span className="font-mono uppercase">{pc.wifi.security || '-'}</span>
+                  <span className="font-mono uppercase">{pc?.wifi?.security || '-'}</span>
                 </div>
                 {(() => {
                   const strength = getWirelessSignalStrength(pc, topologyDevices, deviceStates);
@@ -6338,21 +6346,21 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
                 })()}
               </div>
             )}
-            {pc.services && (
+            {pc?.services && (
               <div className="pt-1 border-t border-slate-500/20">
                 <div className="flex justify-between items-center mb-0.5">
                   <span className="opacity-50">{t.services}</span>
                   <div className="flex flex-wrap gap-0.5">
-                    {pc.services.http?.enabled && (
+                    {pc?.services?.http?.enabled && (
                       <span className="px-1 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[8px] font-bold border border-amber-500/20">HTTP</span>
                     )}
-                    {pc.services.dns?.enabled && (
+                    {pc?.services?.dns?.enabled && (
                       <span className="px-1 py-0.5 rounded bg-blue-500/20 text-blue-500 text-[8px] font-bold border border-blue-500/20">DNS</span>
                     )}
-                    {pc.services.dhcp?.enabled && (
+                    {pc?.services?.dhcp?.enabled && (
                       <span className="px-1 py-0.5 rounded bg-purple-500/20 text-purple-500 text-[8px] font-bold border border-purple-500/20">DHCP</span>
                     )}
-                    {!pc.services.http?.enabled && !pc.services.dns?.enabled && !pc.services.dhcp?.enabled && (
+                    {!pc?.services?.http?.enabled && !pc?.services?.dns?.enabled && !pc?.services?.dhcp?.enabled && (
                       <span className="text-[8px] opacity-40 italic">{t.none}</span>
                     )}
                   </div>
@@ -6362,8 +6370,8 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
             <div className="pt-1 border-t border-slate-500/20">
               <div className="flex justify-between items-center">
                 <span className="opacity-50">{t.ipMode}</span>
-                <span className={`text-[8px] font-bold tracking-wider ${pc.ipConfigMode === 'dhcp' ? 'text-green-500' : 'opacity-60'}`}>
-                  {pc.ipConfigMode === 'dhcp' ? 'DHCP' : t.static}
+                <span className={`text-[8px] font-bold tracking-wider ${pc?.ipConfigMode === 'dhcp' ? 'text-green-500' : 'opacity-60'}`}>
+                  {pc?.ipConfigMode === 'dhcp' ? 'DHCP' : t.static}
                 </span>
               </div>
             </div>
@@ -6371,7 +6379,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
           <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} flex gap-1.5`}>
             <button
               onClick={() => {
-                handleDeviceDoubleClick(pc.type, pc.id);
+                handleDeviceDoubleClick(pc?.type, pc?.id);
               }}
               className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
             >
@@ -6379,7 +6387,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
             </button>
             <button
               onClick={() => {
-                onOpenPanel(pc.id);
+                onOpenPanel(pc?.id);
               }}
               className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
               title={language === 'tr' ? 'Detaylar' : 'Details'}
