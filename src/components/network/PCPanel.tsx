@@ -3193,11 +3193,6 @@ export function PCPanel({
 
           const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en');
           if (result.success) {
-            if (result.targetId) {
-              window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
-                detail: { sourceId: deviceId, targetId: result.targetId }
-              }));
-            }
             const pingTargetDisplay = dnsResolved ? `${target} [${targetIp}]` : targetIp;
 
             // Calculate ping latency from both source and target WiFi distances

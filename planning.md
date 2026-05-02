@@ -2,22 +2,45 @@
 
 ## Güncel Durum
 
-- **Sürüm**: 1.6.0
+- **Sürüm**: 1.7.0
 - **Tarih**: 2026-05-02
-- **Kod satırı**: 65,195
-- **Kod dosyası**: 166
-- **Hazır topoloji örneği**: 28
-- **Rehberli ders**: 3
-- **Harici JSON örnek**: 6
-- **Örnek JSON satırı**: 12,216
-- **Örnek/doküman satırı**: 622
-- **CLI komut ailesi**: 160+
+- **Uygulama kodu**: 50,853
+- **Örnek JSON satırı**: 14,400
+- **Örnek/doküman satırı**: 850
+- **Toplam satır**: 66,103
+- **Kod dosyası**: 182
+- **Hazır topoloji örneği**: 32
+- **Rehberli ders**: 4
+- **Harici JSON örnek**: 8
+- **CLI komut ailesi**: 180+
 
-Not: Örnek JSON dosyaları ve örnek dokümanları kod satırı sayısından ayrı izlenir.
+Not: Toplam satır sayısı uygulama kodu ve örnek verilerin birleşimidir.
 
 ## Son Yapılanlar
 
+### UI/UX Performans Optimizasyonları (Faz 1 & 2)
+
+- **Zustand Seçiciler**: Bileşenlerin sadece ilgili veri değiştiğinde render edilmesini sağlayan granüler seçici yapısı kuruldu.
+- **NetworkTopologyView Memoizasyonu**: Gereksiz re-render'ları önlemek için `React.memo` ve özel karşılaştırma fonksiyonları eklendi.
+- **CSS Animasyonları**: Framer Motion animasyonları, performans artışı için saf CSS transition ve keyframe yapılarıyla değiştirildi.
+- **Bileşen Temizliği**: Kullanılmayan Radix UI bağımlılıkları temizlendi, bundle boyutu optimize edildi.
+- **Virtual Device List**: Büyük cihaz listeleri için `react-window` tabanlı sanallaştırma (virtualization) uygulandı.
+- **Spatial Partitioning**: Büyük topolojilerde render performansını artırmak için "Spatial Partitioning" ve "Viewport Culling" algoritmaları eklendi.
+- **Kod Bölümleme (Code Splitting)**: Terminal, Config Panel ve Security Panel gibi büyük modüller dinamik import (`next/dynamic`) ile ayrıştırıldı.
+- **Progressive Loading**: Skeleton ekranlar ve shimmer animasyonları ile içerik yükleme deneyimi iyileştirildi.
+- **Performans İzleme**: FPS takibi, boyama (paint) ve yerleşim (layout) metrikleri ile Web Vitals takibi entegre edildi.
+
+### CLI ve Topoloji Senkronizasyon Düzeltmeleri
+
+- **Konfigürasyon Yönetimi**: `saveConfig` ve `eraseConfig` bayrakları ile `startup-config` ve `running-config` senkronizasyonu CLI üzerinden tam çalışır hale getirildi.
+- **Canlı Config Paneli**: ConfigPanel artık statik bir üretici yerine doğrudan cihazın canlı `runningConfig` dizisini gösteriyor.
+- **Topoloji Geneli Görev Kontrolü**: Görev tamamlama kontrolleri sadece aktif cihazı değil, tüm topolojiyi ve bağlantıları tarayacak şekilde genişletildi.
+- **Hostname Yayılımı**: Topoloji üzerinde yapılan isim değişiklikleri anında CLI prompt'una ve konfigürasyon dosyalarına yansıtılıyor.
+- **Sekme Senkronizasyonu**: Topoloji, CLI ve Görev sekmeleri arasında cihaz seçimi ve görsel vurgulama tam uyumlu hale getirildi.
+- **Autosave Kararlılığı**: `useOptimizedAutosave` içindeki hoisting ve import hataları giderilerek çalışma zamanı çökmeleri engellendi.
+
 ### DHCP Tarama ve Lease Akışı (Mayıs 2026)
+... (önceki maddeler devam eder) ...
 
 - **Refresh sırasında DHCP taraması**: Ağ yenileme akışına DHCP sunucu/istemci taraması, aktif havuz kontrolü ve deterministic lease özeti eklendi.
 - **Toplu atama bildirimi**: Refresh sonrası lease alan istemciler için toplu DHCP atama toast'ı ve sunucu/lease sayımı gösteriliyor.

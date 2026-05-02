@@ -69,17 +69,23 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 - Skeleton ekranlar ve dinamik bileşen yükleme.
 - Klavye kısayolları, ARIA etiketleri ve ekran okuyucu iyileştirmeleri.
 
-## Örnekler Ayrı Sayılır
+## Proje Metrikleri (v1.7.0)
 
-Kod metriklerinde uygulama kodu ile örnek veri ayrı raporlanır.
+Kod metriklerinde uygulama kodu ile örnek veri ve dokümanlar ayrı raporlanır.
 
-| Grup | Sayı |
+| Grup | Satır Sayısı |
 | --- | ---: |
-| Hazır topoloji örneği | 28 |
-| Rehberli ders | 3 |
-| Harici JSON örnek | 6 |
-| Örnek JSON satırı | 12,216 |
-| `examples.md` + `CLI_COMMANDS.md` satırı | 622 |
+| Uygulama Kodu (TS/TSX/CSS) | 50,853 |
+| Örnek JSON Topolojileri | 14,400 |
+| Örnekler & Dokümantasyon | 850 |
+| **Toplam** | **66,103** |
+
+| Diğer Metrikler | Sayı |
+| --- | ---: |
+| Hazır topoloji örneği | 32 |
+| Rehberli ders | 4 |
+| Harici JSON örnek | 8 |
+| CLI komut ailesi | 180+ |
 
 Örneklerin ayrıntılı listesi için [examples.md](examples.md) dosyasına bakın.
 
@@ -96,6 +102,8 @@ Kod metriklerinde uygulama kodu ile örnek veri ayrı raporlanır.
 - WiFi ve IoT yönetim panelleri.
 - Rehberli ders modu.
 - Refresh sonrası cihaz özet tablosu.
+- **UI/UX Performans Optimizasyonları (Faz 1 & 2)**.
+- **CLI ve Topoloji Senkronizasyon Düzeltmeleri**.
 
 ### Kısa Vadeli Plan
 
@@ -103,6 +111,7 @@ Kod metriklerinde uygulama kodu ile örnek veri ayrı raporlanır.
 - Paket yakalama/izleme ekranı.
 - Rehberli ders sayısını artırma.
 - Otomatik lab değerlendirme.
+- IPv6 kapsamını genişletme.
 
 ### Uzun Vadeli Plan
 
