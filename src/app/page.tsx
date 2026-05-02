@@ -14,9 +14,9 @@ import { cn, normalizeMAC } from '@/lib/utils';
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, CanvasPortStatus } from '@/components/network/networkTopology.types';
 import { getPrompt } from '@/lib/network/executor';
 import { formatErrorForUser, errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
-import { checkDeviceConnectivity, getWirelessSignalStrength } from '@/lib/network/connectivity';
+import { checkDeviceConnectivity, getDeviceWifiConfig, getWirelessSignalStrength } from '@/lib/network/connectivity';
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
-import { calculateSTPState, calculatePVST } from '@/lib/network/core/showCommands';
+import { calculatePVST } from '@/lib/network/core/showCommands';
 import type { TerminalOutput } from '@/components/network/Terminal';
 import { BOOT_PROGRESS_MARKER } from '@/components/network/Terminal';
 import {
@@ -1202,6 +1202,212 @@ export default function Home() {
     });
   }, []);
 
+  const isSameSubnetByMask = useCallback((left?: string, right?: string, mask?: string) => {
+    if (!isValidIpv4(left) || !isValidIpv4(right) || !isValidIpv4(mask)) return false;
+    const safeLeft = left as string;
+    const safeRight = right as string;
+    const safeMask = mask as string;
+    const leftParts = safeLeft.split('.').map(Number);
+    const rightParts = safeRight.split('.').map(Number);
+    const maskParts = safeMask.split('.').map(Number);
+    return leftParts.every((part, index) => (part & maskParts[index]) === (rightParts[index] & maskParts[index]));
+  }, [isValidIpv4]);
+
+  const getPortAccessVlan = useCallback((port: any) => Number(port?.accessVlan || port?.vlan || 1), []);
+
+  const getPeerPortVlan = useCallback((ownerDeviceId: string, ownerPortId: string, devices: CanvasDevice[]) => {
+    const connection = topologyConnections.find((conn) =>
+      conn.active !== false &&
+      (
+        (conn.sourceDeviceId === ownerDeviceId && conn.sourcePort === ownerPortId) ||
+        (conn.targetDeviceId === ownerDeviceId && conn.targetPort === ownerPortId)
+      )
+    );
+    if (!connection) return null;
+
+    const peerDeviceId = connection.sourceDeviceId === ownerDeviceId ? connection.targetDeviceId : connection.sourceDeviceId;
+    const peerPortId = connection.sourceDeviceId === ownerDeviceId ? connection.targetPort : connection.sourcePort;
+    const peerPort = deviceStates?.get(peerDeviceId)?.ports?.[peerPortId];
+    if (!peerPort) return null;
+    if (peerPort.mode === 'trunk') return 1;
+    return getPortAccessVlan(peerPort);
+  }, [deviceStates, getPortAccessVlan, topologyConnections]);
+
+  const inferEndpointVlan = useCallback((device: CanvasDevice, devices: CanvasDevice[]) => {
+    const connection = topologyConnections.find((conn) =>
+      conn.active !== false &&
+      (conn.sourceDeviceId === device.id || conn.targetDeviceId === device.id)
+    );
+    if (!connection) return Number(device.vlan || 1);
+
+    const peerDeviceId = connection.sourceDeviceId === device.id ? connection.targetDeviceId : connection.sourceDeviceId;
+    const peerPortId = connection.sourceDeviceId === device.id ? connection.targetPort : connection.sourcePort;
+    const peerPort = deviceStates?.get(peerDeviceId)?.ports?.[peerPortId];
+    if (!peerPort) return Number(device.vlan || 1);
+    if (peerPort.mode === 'trunk') return 1;
+    return getPortAccessVlan(peerPort);
+  }, [deviceStates, getPortAccessVlan, topologyConnections]);
+
+  const getServerPoolVlan = useCallback((
+    serverDevice: CanvasDevice,
+    serverState: SwitchState | undefined,
+    poolGateway: string,
+    poolStartIp: string,
+    poolSubnetMask: string,
+    devices: CanvasDevice[]
+  ) => {
+    if (!isValidIpv4(poolSubnetMask)) return null;
+    const anchorIp = isValidIpv4(poolGateway) ? poolGateway : poolStartIp;
+    if (!isValidIpv4(anchorIp)) return null;
+
+    const ports = serverState?.ports || {};
+    for (const [portId, port] of Object.entries(ports)) {
+      if (!port?.ipAddress || port.shutdown) continue;
+      const effectiveMask = port.subnetMask || poolSubnetMask;
+      if (!isValidIpv4(effectiveMask) || !isSameSubnetByMask(port.ipAddress, anchorIp, effectiveMask)) continue;
+
+      const sviMatch = portId.match(/^vlan(\d+)$/i);
+      if (sviMatch) return parseInt(sviMatch[1], 10) || 1;
+      if (port.mode === 'trunk') return 1;
+      if (port.accessVlan || port.vlan) return getPortAccessVlan(port);
+
+      const peerVlan = getPeerPortVlan(serverDevice.id, portId, devices);
+      return peerVlan ?? 1;
+    }
+
+    if (isSameSubnetByMask(serverDevice.ip, anchorIp, poolSubnetMask)) {
+      return inferEndpointVlan(serverDevice, devices);
+    }
+
+    return null;
+  }, [getPeerPortVlan, getPortAccessVlan, inferEndpointVlan, isSameSubnetByMask, isValidIpv4]);
+
+  const isDhcpPoolCompatibleForClient = useCallback((
+    pcDevice: CanvasDevice,
+    serverDevice: CanvasDevice,
+    serverState: SwitchState | undefined,
+    poolGateway: string,
+    poolStartIp: string,
+    poolSubnetMask: string,
+    devices: CanvasDevice[]
+  ) => {
+    const clientWifi = getDeviceWifiConfig(pcDevice, deviceStates);
+    if (clientWifi?.enabled && clientWifi.mode === 'client' && clientWifi.ssid) {
+      const serverWifi = getDeviceWifiConfig(serverDevice, deviceStates);
+      if (!serverWifi?.enabled || serverWifi.mode !== 'ap' || serverWifi.ssid !== clientWifi.ssid) {
+        return false;
+      }
+      return getServerPoolVlan(serverDevice, serverState, poolGateway, poolStartIp, poolSubnetMask, devices) !== null;
+    }
+
+    const clientVlan = inferEndpointVlan(pcDevice, devices);
+    const serverVlan = getServerPoolVlan(serverDevice, serverState, poolGateway, poolStartIp, poolSubnetMask, devices);
+    return serverVlan !== null && clientVlan === serverVlan;
+  }, [deviceStates, getServerPoolVlan, inferEndpointVlan]);
+
+  const buildLinkLocalLease = useCallback((pcDevice: CanvasDevice, devices: CanvasDevice[]) => {
+    const usedIps = new Set(
+      devices
+        .filter((d) => d.id !== pcDevice.id && isValidIpv4(d.ip) && d.ip !== '0.0.0.0')
+        .map((d) => d.ip as string)
+    );
+    return {
+      ip: generateRandomLinkLocalIpv4(usedIps),
+      subnet: '255.255.0.0',
+      gateway: '0.0.0.0',
+      dns: '0.0.0.0',
+    };
+  }, [isValidIpv4]);
+
+  const assignDhcpLeaseForPc = useCallback((pcDevice: CanvasDevice, currentDevices: CanvasDevice[], currentStates?: Map<string, SwitchState>) => {
+    const safeDeviceStates = ensureDeviceStatesMap(currentStates ?? deviceStates);
+    const usedIps = () => new Set(currentDevices.filter((d) => d.id !== pcDevice.id && d.ip && d.ip !== '0.0.0.0').map((d) => d.ip));
+
+    for (const serverDevice of currentDevices) {
+      if (serverDevice.id === pcDevice.id || serverDevice.type !== 'pc') continue;
+      const pools = serverDevice.services?.dhcp?.enabled ? (serverDevice.services?.dhcp?.pools || []) : [];
+
+      for (const pool of pools) {
+        if (!pool.startIp || !pool.subnetMask) continue;
+        if (!isDhcpPoolCompatibleForClient(pcDevice, serverDevice, undefined, pool.defaultGateway || '', pool.startIp, pool.subnetMask, currentDevices)) {
+          continue;
+        }
+
+        const startParts = pool.startIp.split('.').map(Number);
+        if (startParts.length !== 4) continue;
+        const assignedIps = usedIps();
+        for (let i = 0; i < (pool.maxUsers || 50); i++) {
+          const candidate = `${startParts[0]}.${startParts[1]}.${startParts[2]}.${startParts[3] + i}`;
+          if (!assignedIps.has(candidate)) {
+            return {
+              ip: candidate,
+              subnet: pool.subnetMask || '255.255.255.0',
+              gateway: pool.defaultGateway || '0.0.0.0',
+              dns: pool.dnsServer || '8.8.8.8'
+            };
+          }
+        }
+      }
+    }
+
+    for (const [deviceId_, state] of safeDeviceStates.entries()) {
+      if (deviceId_ === pcDevice.id) continue;
+      const serverDevice = currentDevices.find((d) => d.id === deviceId_);
+      if (!serverDevice || (serverDevice.type !== 'router' && serverDevice.type !== 'switchL2' && serverDevice.type !== 'switchL3')) continue;
+
+      const cliPools = state.dhcpPools || {};
+      for (const poolName in cliPools) {
+        const pool = cliPools[poolName];
+        if (!pool.network || !pool.subnetMask) continue;
+        const networkParts = pool.network.split('.').map(Number);
+        if (networkParts.length !== 4) continue;
+        const poolGateway = pool.defaultRouter || `${networkParts[0]}.${networkParts[1]}.${networkParts[2]}.1`;
+        const poolStartIp = `${networkParts[0]}.${networkParts[1]}.${networkParts[2]}.100`;
+        if (!isDhcpPoolCompatibleForClient(pcDevice, serverDevice, state, poolGateway, poolStartIp, pool.subnetMask, currentDevices)) {
+          continue;
+        }
+
+        const assignedIps = usedIps();
+        for (let i = 100; i < 254; i++) {
+          const candidate = `${networkParts[0]}.${networkParts[1]}.${networkParts[2]}.${i}`;
+          if (!assignedIps.has(candidate)) {
+            return {
+              ip: candidate,
+              subnet: pool.subnetMask || '255.255.255.0',
+              gateway: poolGateway,
+              dns: pool.dnsServer || '8.8.8.8'
+            };
+          }
+        }
+      }
+
+      const pools = state.services?.dhcp?.pools || [];
+      for (const pool of pools) {
+        if (!pool.startIp || !pool.subnetMask) continue;
+        if (!isDhcpPoolCompatibleForClient(pcDevice, serverDevice, state, pool.defaultGateway || '', pool.startIp, pool.subnetMask, currentDevices)) {
+          continue;
+        }
+
+        const startParts = pool.startIp.split('.').map(Number);
+        if (startParts.length !== 4) continue;
+        const assignedIps = usedIps();
+        for (let i = 0; i < (pool.maxUsers || 50); i++) {
+          const candidate = `${startParts[0]}.${startParts[1]}.${startParts[2]}.${startParts[3] + i}`;
+          if (!assignedIps.has(candidate)) {
+            return {
+              ip: candidate,
+              subnet: pool.subnetMask || '255.255.255.0',
+              gateway: pool.defaultGateway || '0.0.0.0',
+              dns: pool.dnsServer || '8.8.8.8'
+            };
+          }
+        }
+      }
+    }
+
+    return null;
+  }, [deviceStates, isDhcpPoolCompatibleForClient]);
+
   const applyLinkLocalToUnconfiguredHosts = useCallback((devices: CanvasDevice[]) => {
     const usedIps = new Set<string>();
     devices.forEach((device) => {
@@ -1649,73 +1855,12 @@ ${state.bannerMOTD}
       return;
     }
 
-    // Simple DHCP IP assignment logic
-    const assignDhcpIp = (pcDevice: CanvasDevice, currentDevices: CanvasDevice[]): { ip: string; subnet: string; gateway: string; dns: string } | null => {
-      // Find router/switch DHCP servers
-      const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
-      for (const [deviceId_, state] of safeDeviceStates.entries()) {
-        if (deviceId_ === pcDevice.id) continue;
-        const serverDevice = currentDevices.find(d => d.id === deviceId_);
-        if (!serverDevice || (serverDevice.type !== 'router' && serverDevice.type !== 'switchL2' && serverDevice.type !== 'switchL3')) continue;
-
-        // Check for DHCP pools in CLI config (dhcpPools) - routers often use this
-        const cliPools = state.dhcpPools || {};
-        for (const poolName in cliPools) {
-          const pool = cliPools[poolName];
-          if (!pool.network || !pool.subnetMask) continue;
-
-          // Parse start IP (usually .100 for simulation if not specified)
-          const networkParts = pool.network.split('.').map(Number);
-          if (networkParts.length !== 4) continue;
-
-          // Find available IP starting from .100
-          const usedIps = new Set(currentDevices.filter(d => d.id !== pcDevice.id && d.ip && d.ip !== '0.0.0.0').map(d => d.ip));
-          for (let i = 100; i < 254; i++) {
-            const candidate = `${networkParts[0]}.${networkParts[1]}.${networkParts[2]}.${i}`;
-            if (!usedIps.has(candidate)) {
-              return {
-                ip: candidate,
-                subnet: pool.subnetMask || '255.255.255.0',
-                gateway: pool.defaultRouter || '0.0.0.0',
-                dns: pool.dnsServer || '8.8.8.8'
-              };
-            }
-          }
-        }
-
-        // Check for DHCP pools in services (GUI config)
-        const pools = state.services?.dhcp?.pools || [];
-        for (const pool of pools) {
-          if (!pool.startIp || !pool.subnetMask) continue;
-
-          // Parse start IP
-          const startParts = pool.startIp.split('.').map(Number);
-          if (startParts.length !== 4) continue;
-
-          // Find available IP
-          const usedIps = new Set(currentDevices.filter(d => d.id !== pcDevice.id && d.ip && d.ip !== '0.0.0.0').map(d => d.ip));
-          for (let i = 0; i < (pool.maxUsers || 50); i++) {
-            const candidate = `${startParts[0]}.${startParts[1]}.${startParts[2]}.${startParts[3] + i}`;
-            if (!usedIps.has(candidate)) {
-              return {
-                ip: candidate,
-                subnet: pool.subnetMask || '255.255.255.0',
-                gateway: pool.defaultGateway || '0.0.0.0',
-                dns: pool.dnsServer || '8.8.8.8'
-              };
-            }
-          }
-        }
-      }
-      return null;
-    };
-
     // Update devices with DHCP IPs - process sequentially to avoid duplicate IPs
     const updatedDevices = [...topologyDevices];
     let hasChanges = false;
 
     devicesNeedingDhcpRenewal.forEach(deviceToRenew => {
-      const lease = assignDhcpIp(deviceToRenew, updatedDevices);
+      const lease = assignDhcpLeaseForPc(deviceToRenew, updatedDevices) || buildLinkLocalLease(deviceToRenew, updatedDevices);
       if (lease) {
         const idx = updatedDevices.findIndex(d => d.id === deviceToRenew.id);
         if (idx !== -1) {
@@ -1752,7 +1897,7 @@ ${state.bannerMOTD}
 
     dhcpRenewalDoneRef.current = true;
     isInitialLoadRef.current = false;
-  }, [topologyDevices, deviceStates, setTopologyDevices]);
+  }, [assignDhcpLeaseForPc, buildLinkLocalLease, topologyDevices, deviceStates, setTopologyDevices]);
 
   // Sequential DHCP toasts for "Router DHCP" example
   useEffect(() => {
@@ -1760,56 +1905,6 @@ ${state.bannerMOTD}
       const pcDevices = topologyDevices.filter(d => d.type === 'pc' && d.ipConfigMode === 'dhcp');
 
       if (pcDevices.length > 0) {
-        // Simple DHCP IP assignment logic (sequential check)
-        const assignDhcpIp = (pcDevice: CanvasDevice, currentDevices: CanvasDevice[]): { ip: string; subnet: string; gateway: string; dns: string } | null => {
-          const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
-          for (const [deviceId_, state] of safeDeviceStates.entries()) {
-            if (deviceId_ === pcDevice.id) continue;
-            const serverDevice = currentDevices.find(d => d.id === deviceId_);
-            if (!serverDevice || (serverDevice.type !== 'router' && serverDevice.type !== 'switchL2' && serverDevice.type !== 'switchL3')) continue;
-
-            const cliPools = state.dhcpPools || {};
-            for (const poolName in cliPools) {
-              const pool = cliPools[poolName];
-              if (!pool.network || !pool.subnetMask) continue;
-              const networkParts = pool.network.split('.').map(Number);
-              if (networkParts.length !== 4) continue;
-              const usedIps = new Set(currentDevices.filter(d => d.id !== pcDevice.id && d.ip && d.ip !== '0.0.0.0').map(d => d.ip));
-              for (let i = 100; i < 254; i++) {
-                const candidate = `${networkParts[0]}.${networkParts[1]}.${networkParts[2]}.${i}`;
-                if (!usedIps.has(candidate)) {
-                  return {
-                    ip: candidate,
-                    subnet: pool.subnetMask || '255.255.255.0',
-                    gateway: pool.defaultRouter || '0.0.0.0',
-                    dns: pool.dnsServer || '8.8.8.8'
-                  };
-                }
-              }
-            }
-
-            const pools = state.services?.dhcp?.pools || [];
-            for (const pool of pools) {
-              if (!pool.startIp || !pool.subnetMask) continue;
-              const startParts = pool.startIp.split('.').map(Number);
-              if (startParts.length !== 4) continue;
-              const usedIps = new Set(currentDevices.filter(d => d.id !== pcDevice.id && d.ip && d.ip !== '0.0.0.0').map(d => d.ip));
-              for (let i = 0; i < (pool.maxUsers || 50); i++) {
-                const candidate = `${startParts[0]}.${startParts[1]}.${startParts[2]}.${startParts[3] + i}`;
-                if (!usedIps.has(candidate)) {
-                  return {
-                    ip: candidate,
-                    subnet: pool.subnetMask || '255.255.255.0',
-                    gateway: pool.defaultGateway || '0.0.0.0',
-                    dns: pool.dnsServer || '8.8.8.8'
-                  };
-                }
-              }
-            }
-          }
-          return null;
-        };
-
         (async () => {
           // Process all PCs and show a single combined toast
           let currentTopology = [...topologyDevices];
@@ -1818,11 +1913,13 @@ ${state.bannerMOTD}
 
           for (let i = 0; i < pcDevices.length; i++) {
             const pc = pcDevices[i];
-            const lease = assignDhcpIp(pc, currentTopology);
+            const lease = assignDhcpLeaseForPc(pc, currentTopology) || buildLinkLocalLease(pc, currentTopology);
 
             if (lease) {
               const { ip: newIp, subnet, gateway, dns } = lease as any;
-              assignments.push({ name: pc.name || pc.id, ip: newIp });
+              if (!newIp.startsWith('169.254.')) {
+                assignments.push({ name: pc.name || pc.id, ip: newIp });
+              }
 
               // Update device in the working list
               const idx = currentTopology.findIndex(d => d.id === pc.id);
@@ -1885,7 +1982,7 @@ ${state.bannerMOTD}
         setLoadedExampleId(null);
       }
     }
-  }, [loadedExampleId, topologyDevices, deviceStates, toast, language, setTopologyDevices]);
+  }, [assignDhcpLeaseForPc, buildLinkLocalLease, loadedExampleId, topologyDevices, deviceStates, toast, language, setTopologyDevices]);
 
   // Onboarding: show once per browser
   useEffect(() => {
@@ -3030,7 +3127,7 @@ ${state.bannerMOTD}
     let refreshCount = 0;
     let disconnectedPCs: string[] = [];
     let disconnectedAPs: string[] = [];
-    let connectedPCs: string[] = [];
+    let connectedWirelessClients: string[] = [];
     let activeAPs: string[] = [];
     let dhcpServerActiveCount = 0;
     let dhcpServerNoPoolCount = 0;
@@ -3038,41 +3135,57 @@ ${state.bannerMOTD}
     let dhcpClientNoLeaseCount = 0;
 
     if (topologyDevices && deviceStates) {
-      const refreshedDevices = topologyDevices.map((device) => ({
+      let refreshedDevices = topologyDevices.map((device) => ({
         ...device,
         wifi: getEffectiveWifi(device),
       }));
 
-      // 1. Check and update PC connections to APs
-      refreshedDevices.filter(d => d.type === 'pc').forEach(pc => {
-        const pcWifi = pc.wifi;
-        if (!pcWifi?.enabled || !pcWifi.ssid) return;
+      const isWirelessMatch = (client: CanvasDevice, ap: CanvasDevice) => {
+        const clientWifi = client.wifi;
+        const apWifi = ap.wifi;
+        if (!clientWifi?.enabled || clientWifi.mode !== 'client' || !clientWifi.ssid) return false;
+        if (!apWifi?.enabled || apWifi.mode !== 'ap' || !apWifi.ssid) return false;
+        if (apWifi.ssid !== clientWifi.ssid) return false;
+        if (clientWifi.bssid && clientWifi.bssid !== ap.id) return false;
 
-        let isConnected = false;
+        const apSecurity = apWifi.security || 'open';
+        const clientSecurity = clientWifi.security || 'open';
+        if (apSecurity !== clientSecurity) return false;
+        return apSecurity === 'open' || apWifi.password === clientWifi.password;
+      };
 
-        // Check router/switch APs
-        refreshedDevices.forEach(ap => {
-          if (ap.id === pc.id) return;
-          if (ap.type !== 'router' && !isSwitchDeviceType(ap.type)) return;
+      // 1. Recalculate wireless associations and persist the effective BSSID.
+      refreshedDevices = refreshedDevices.map((device) => {
+        if (device.type !== 'pc' && device.type !== 'iot') return device;
+        const clientWifi = device.wifi;
+        if (!clientWifi?.enabled || clientWifi.mode !== 'client' || !clientWifi.ssid) return device;
 
-          const apWifi = ap.wifi;
-          if (!apWifi || apWifi.mode !== 'ap' || !apWifi.ssid) return;
-          if (apWifi.ssid !== pcWifi.ssid) return;
+        const matchedAp = refreshedDevices.find((ap) =>
+          ap.id !== device.id &&
+          (ap.type === 'router' || isSwitchDeviceType(ap.type)) &&
+          isWirelessMatch(device, ap)
+        );
 
-          const apSecurity = apWifi.security || 'open';
-          const pcSecurity = pcWifi.security || 'open';
-          if (apSecurity !== pcSecurity) return;
-          if (apSecurity !== 'open' && apWifi.password !== pcWifi.password) return;
-
-          isConnected = true;
-        });
-
-        if (isConnected) {
-          connectedPCs.push(pc.name || pc.id);
-        } else {
-          disconnectedPCs.push(pc.name || pc.id);
-        }
         refreshCount++;
+        if (matchedAp) {
+          connectedWirelessClients.push(device.name || device.id);
+          return {
+            ...device,
+            wifi: {
+              ...clientWifi,
+              bssid: matchedAp.id,
+            },
+          };
+        }
+
+        disconnectedPCs.push(device.name || device.id);
+        return {
+          ...device,
+          wifi: {
+            ...clientWifi,
+            bssid: undefined,
+          },
+        };
       });
 
       // 2. Check and update AP connections (router/switch)
@@ -3082,17 +3195,12 @@ ${state.bannerMOTD}
 
         let hasClient = false;
 
-        // Check if any PC is connected to this AP
+        // Check if any wireless client is associated with this AP
         refreshedDevices.forEach(pc => {
-          if (pc.type !== 'pc') return;
+          if (pc.type !== 'pc' && pc.type !== 'iot') return;
           const pcWifi = pc.wifi;
-          if (!pcWifi?.enabled || !pcWifi.ssid) return;
-          if (pcWifi.ssid !== apWifi.ssid) return;
-
-          const apSecurity = apWifi.security || 'open';
-          const pcSecurity = pcWifi.security || 'open';
-          if (apSecurity !== pcSecurity) return;
-          if (apSecurity !== 'open' && apWifi.password !== pcWifi.password) return;
+          if (!pcWifi?.enabled || pcWifi.mode !== 'client') return;
+          if (pcWifi.bssid !== ap.id) return;
 
           hasClient = true;
         });
@@ -3105,123 +3213,21 @@ ${state.bannerMOTD}
         refreshCount++;
       });
 
-      // 3. Build deterministic DHCP pool table across topology + runtime states
-      const allDhcpPools: Array<{ startIp: string; maxUsers: number }> = [];
-      refreshedDevices.forEach((device) => {
-        const state = deviceStates.get(device.id);
-        const topologyPools = device.services?.dhcp?.pools || [];
-        const runtimePools = state?.services?.dhcp?.pools || [];
-        const cliPools = Object.values(state?.dhcpPools || {}).map((pool: any) => {
-          const networkPrefix = (pool?.network || '').split('.').slice(0, 3).join('.');
-          return {
-            startIp: pool?.startIp || (networkPrefix ? `${networkPrefix}.100` : ''),
-            maxUsers: Number(pool?.maxUsers || 50),
-          };
-        }).filter((p: any) => p.startIp);
-
-        topologyPools.forEach((p) => allDhcpPools.push({ startIp: p.startIp, maxUsers: Number(p.maxUsers || 50) }));
-        runtimePools.forEach((p) => allDhcpPools.push({ startIp: p.startIp, maxUsers: Number(p.maxUsers || 50) }));
-        cliPools.forEach((p: any) => allDhcpPools.push({ startIp: p.startIp, maxUsers: Number(p.maxUsers || 50) }));
-      });
-
-      // 4. Scan DHCP status across all devices
-      refreshedDevices.forEach((device) => {
-        const state = deviceStates.get(device.id);
-        const topologyPools = device.services?.dhcp?.pools || [];
-        const runtimePools = state?.services?.dhcp?.pools || [];
-        const cliPools = state?.dhcpPools ? Object.keys(state.dhcpPools).length : 0;
-        const dhcpEnabled = !!(device.services?.dhcp?.enabled || state?.services?.dhcp?.enabled);
-        const poolCount = Math.max(topologyPools.length, runtimePools.length, cliPools);
-
-        if (dhcpEnabled) {
-          if (poolCount > 0) dhcpServerActiveCount++;
-          else dhcpServerNoPoolCount++;
-        }
-
-        if (device.type === 'pc' && device.ipConfigMode === 'dhcp') {
-          const runtimeIp = state?.ports?.['eth0']?.ipAddress || state?.ports?.['wlan0']?.ipAddress || '';
-          const candidateIp = hasValidIp(device.ip) ? device.ip : runtimeIp;
-          const hasDeterministicLease = hasValidIp(candidateIp) && allDhcpPools.some((pool) => isIpInPoolRange(candidateIp, pool));
-          if (hasDeterministicLease) dhcpClientWithLeaseCount++;
-          else dhcpClientNoLeaseCount++;
-        }
-      });
-
-      // 5. VTP propagation (server -> client over trunk)
+      // 3. VTP propagation (server -> client over trunk)
       const vtpUpdatedStates = propagateVtpVlans(refreshedDevices, deviceStates, topologyConnections);
-
-      // 6. Force update deviceStates to trigger re-render of all terminals and WiFi indicators
-      const updatedDeviceStates = new Map(vtpUpdatedStates);
-      refreshedDevices.forEach(device => {
-        const deviceState = updatedDeviceStates.get(device.id);
-        if (deviceState) {
-          updatedDeviceStates.set(device.id, { ...deviceState });
-        }
-      });
-      setDeviceStates(updatedDeviceStates);
-
-      // 7. Force update topology devices — each device gets a new object reference
-      //    so NetworkTopology's WiFi signal useMemo re-evaluates for every device
-      setTopologyDevices(refreshedDevices);
-
-      // 8. Update STP (Spanning Tree Protocol) states for all switches
-      const stpUpdatedStates = new Map(updatedDeviceStates);
+      let stpUpdatedStates = new Map(vtpUpdatedStates);
       let stpUpdatedCount = 0;
 
       refreshedDevices.forEach((device) => {
         if (device.type !== 'switchL2' && device.type !== 'switchL3') return;
-
         const state = stpUpdatedStates.get(device.id);
         if (!state) return;
 
-        // Create context for STP calculation
-        const ctx = {
+        stpUpdatedStates = calculatePVST(state, {
           connections: topologyConnections,
-          sourceDeviceId: device.id,
           devices: refreshedDevices,
-          deviceStates: stpUpdatedStates
-        };
-
-        // Calculate STP state
-        const stpState = calculateSTPState(state, ctx);
-
-        // Update port spanningTree properties
-        const updatedPorts = { ...state.ports };
-        stpState.forEach((stpInfo, portId) => {
-          const port = updatedPorts[portId];
-          if (port) {
-            // Skip ports that are part of EtherChannel - they shouldn't be blocked by STP
-            if (port.channelGroup) {
-              return; // Don't update spanningTree for channel member ports
-            }
-
-            const roleMap: Record<string, 'root' | 'designated' | 'alternate' | 'backup' | 'disabled'> = {
-              'Root': 'root',
-              'Desg': 'designated',
-              'Altn': 'alternate',
-              'Back': 'backup',
-              'Disa': 'disabled'
-            };
-            const stateMap: Record<string, 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled'> = {
-              'FWD': 'forwarding',
-              'BLK': 'blocking',
-              'LIS': 'listening',
-              'LRN': 'learning',
-              'DIS': 'disabled'
-            };
-
-            updatedPorts[portId] = {
-              ...port,
-              spanningTree: {
-                ...(port.spanningTree || {}),
-                role: roleMap[stpInfo.role] || 'designated',
-                state: stateMap[stpInfo.state] || 'forwarding'
-              }
-            };
-          }
-        });
-
-        stpUpdatedStates.set(device.id, { ...state, ports: updatedPorts });
+          deviceStates: stpUpdatedStates,
+        }, device.id) as Map<string, SwitchState>;
         stpUpdatedCount++;
       });
 
@@ -3231,58 +3237,8 @@ ${state.bannerMOTD}
       let finalDevicesForRefresh = [...refreshedDevices];
 
       if (dhcpClients.length > 0) {
-        // Use a working copy to avoid assigning the same IP to multiple PCs
-        const assignDhcpIpInternal = (pcDevice: CanvasDevice, currentDevices: CanvasDevice[]): { ip: string; subnet: string; gateway: string; dns: string } | null => {
-          const safeDeviceStates = ensureDeviceStatesMap(stpUpdatedStates);
-          for (const [deviceId_, state] of safeDeviceStates.entries()) {
-            if (deviceId_ === pcDevice.id) continue;
-            const serverDevice = currentDevices.find(d => d.id === deviceId_);
-            if (!serverDevice || (serverDevice.type !== 'router' && serverDevice.type !== 'switchL2' && serverDevice.type !== 'switchL3')) continue;
-
-            const cliPools = state.dhcpPools || {};
-            for (const poolName in cliPools) {
-              const pool = cliPools[poolName];
-              if (!pool.network || !pool.subnetMask) continue;
-              const networkParts = pool.network.split('.').map(Number);
-              if (networkParts.length !== 4) continue;
-              const usedIps = new Set(currentDevices.filter(d => d.id !== pcDevice.id && d.ip && d.ip !== '0.0.0.0').map(d => d.ip));
-              for (let i = 100; i < 254; i++) {
-                const candidate = `${networkParts[0]}.${networkParts[1]}.${networkParts[2]}.${i}`;
-                if (!usedIps.has(candidate)) {
-                  return {
-                    ip: candidate,
-                    subnet: pool.subnetMask || '255.255.255.0',
-                    gateway: pool.defaultRouter || '0.0.0.0',
-                    dns: pool.dnsServer || '8.8.8.8'
-                  };
-                }
-              }
-            }
-
-            const pools = state.services?.dhcp?.pools || [];
-            for (const pool of pools) {
-              if (!pool.startIp || !pool.subnetMask) continue;
-              const startParts = pool.startIp.split('.').map(Number);
-              if (startParts.length !== 4) continue;
-              const usedIps = new Set(currentDevices.filter(d => d.id !== pcDevice.id && d.ip && d.ip !== '0.0.0.0').map(d => d.ip));
-              for (let i = 0; i < (pool.maxUsers || 50); i++) {
-                const candidate = `${startParts[0]}.${startParts[1]}.${startParts[2]}.${startParts[3] + i}`;
-                if (!usedIps.has(candidate)) {
-                  return {
-                    ip: candidate,
-                    subnet: pool.subnetMask || '255.255.255.0',
-                    gateway: pool.defaultGateway || '0.0.0.0',
-                    dns: pool.dnsServer || '8.8.8.8'
-                  };
-                }
-              }
-            }
-          }
-          return null;
-        };
-
         dhcpClients.forEach(pc => {
-          const lease = assignDhcpIpInternal(pc, finalDevicesForRefresh);
+          const lease = assignDhcpLeaseForPc(pc, finalDevicesForRefresh, stpUpdatedStates) || buildLinkLocalLease(pc, finalDevicesForRefresh);
           if (lease) {
             const idx = finalDevicesForRefresh.findIndex(d => d.id === pc.id);
             if (idx !== -1) {
@@ -3293,8 +3249,9 @@ ${state.bannerMOTD}
                 gateway: lease.gateway,
                 dns: lease.dns
               };
-              dhcpAssignments.push({ name: pc.name || pc.id, ip: lease.ip });
-              dhcpClientWithLeaseCount++;
+              if (!lease.ip.startsWith('169.254.')) {
+                dhcpAssignments.push({ name: pc.name || pc.id, ip: lease.ip });
+              }
               
               // Update PC terminal output
               const pcOut = pcOutputs.get(pc.id);
@@ -3311,8 +3268,6 @@ ${state.bannerMOTD}
                 setPcOutputs(prev => new Map(prev).set(pc.id, updatedOut as any));
               }
             }
-          } else {
-            dhcpClientNoLeaseCount++;
           }
         });
 
@@ -3334,9 +3289,6 @@ ${state.bannerMOTD}
           });
         }
       }
-
-      // Apply STP updates to device states
-      setDeviceStates(stpUpdatedStates);
 
       // 8.6. Port Security Check - Check all switch ports for MAC violations
       const portSecurityUpdatedStates = new Map(stpUpdatedStates);
@@ -3448,6 +3400,51 @@ ${state.bannerMOTD}
 
       // Update topology devices with STP-synced ports
       setTopologyDevices(stpSyncedDevices);
+
+      const allDhcpPools: Array<{ startIp: string; maxUsers: number }> = [];
+      dhcpServerActiveCount = 0;
+      dhcpServerNoPoolCount = 0;
+      dhcpClientWithLeaseCount = 0;
+      dhcpClientNoLeaseCount = 0;
+
+      stpSyncedDevices.forEach((device) => {
+        const state = portSecurityUpdatedStates.get(device.id);
+        const topologyPools = device.services?.dhcp?.pools || [];
+        const runtimePools = state?.services?.dhcp?.pools || [];
+        const cliPoolEntries = Object.values(state?.dhcpPools || {});
+        const cliPools = cliPoolEntries.map((pool: any) => {
+          const networkPrefix = (pool?.network || '').split('.').slice(0, 3).join('.');
+          return {
+            startIp: pool?.startIp || (networkPrefix ? `${networkPrefix}.100` : ''),
+            maxUsers: Number(pool?.maxUsers || 50),
+          };
+        }).filter((p: any) => p.startIp);
+        const poolCount = topologyPools.length + runtimePools.length + cliPools.length;
+        const dhcpEnabled = !!(device.services?.dhcp?.enabled || state?.services?.dhcp?.enabled || cliPoolEntries.length > 0);
+
+        if (dhcpEnabled) {
+          if (poolCount > 0) dhcpServerActiveCount++;
+          else dhcpServerNoPoolCount++;
+        }
+
+        topologyPools.forEach((p) => allDhcpPools.push({ startIp: p.startIp, maxUsers: Number(p.maxUsers || 50) }));
+        runtimePools.forEach((p) => allDhcpPools.push({ startIp: p.startIp, maxUsers: Number(p.maxUsers || 50) }));
+        cliPools.forEach((p: any) => allDhcpPools.push({ startIp: p.startIp, maxUsers: Number(p.maxUsers || 50) }));
+      });
+
+      stpSyncedDevices.forEach((device) => {
+        if (device.type !== 'pc' || device.ipConfigMode !== 'dhcp') return;
+        const state = portSecurityUpdatedStates.get(device.id);
+        const runtimeIp = state?.ports?.['eth0']?.ipAddress || state?.ports?.['wlan0']?.ipAddress || '';
+        const candidateIp = hasValidIp(device.ip) ? device.ip : runtimeIp;
+        const hasLease = !!candidateIp &&
+          !candidateIp.startsWith('169.254.') &&
+          allDhcpPools.some((pool) => isIpInPoolRange(candidateIp, pool));
+
+        if (hasLease) dhcpClientWithLeaseCount++;
+        else dhcpClientNoLeaseCount++;
+      });
+
       const refreshDeviceSummaries = buildRefreshDeviceSummaries(stpSyncedDevices, portSecurityUpdatedStates);
 
       // Reset DHCP renewal ref to allow fresh leases on refresh
@@ -3455,7 +3452,7 @@ ${state.bannerMOTD}
 
       // 9. Show detailed notification (delayed if DHCP assignments were made)
       const showRefreshPanel = () => {
-        const totalDevices = connectedPCs.length + activeAPs.length + disconnectedPCs.length + disconnectedAPs.length;
+        const totalDevices = connectedWirelessClients.length + activeAPs.length + disconnectedPCs.length + disconnectedAPs.length;
         const stpMessage = stpUpdatedCount > 0
           ? (language === 'tr' ? `✓ STP: ${stpUpdatedCount} switch güncellendi` : `✓ STP: ${stpUpdatedCount} switches updated`)
           : '';
@@ -3467,10 +3464,10 @@ ${state.bannerMOTD}
 
         if (totalDevices > 0 || dhcpClients.length > 0) {
           const wifiMessages = [];
-          if (connectedPCs.length > 0) {
+          if (connectedWirelessClients.length > 0) {
             wifiMessages.push(language === 'tr'
-              ? `✓ ${connectedPCs.length} PC kablosuz bağlandı`
-              : `✓ ${connectedPCs.length} PC wireless connected`);
+              ? `✓ ${connectedWirelessClients.length} kablosuz istemci bağlandı`
+              : `✓ ${connectedWirelessClients.length} wireless clients connected`);
           }
           if (activeAPs.length > 0) {
             wifiMessages.push(language === 'tr'
@@ -3479,8 +3476,8 @@ ${state.bannerMOTD}
           }
           if (disconnectedPCs.length > 0) {
             wifiMessages.push(language === 'tr'
-              ? `⚠ ${disconnectedPCs.length} PC kablosuz bağlantı yok`
-              : `⚠ ${disconnectedPCs.length} PC wireless disconnected`);
+              ? `⚠ ${disconnectedPCs.length} kablosuz istemci bağlantı yok`
+              : `⚠ ${disconnectedPCs.length} wireless clients disconnected`);
           }
           if (disconnectedAPs.length > 0) {
             wifiMessages.push(language === 'tr'
@@ -3555,7 +3552,7 @@ ${state.bannerMOTD}
         showRefreshPanel();
       }
     }
-  }, [topologyDevices, topologyConnections, deviceStates, setDeviceStates, language, t, pcOutputs]);
+  }, [assignDhcpLeaseForPc, buildLinkLocalLease, topologyDevices, topologyConnections, deviceStates, setDeviceStates, language, t, pcOutputs]);
 
   // Handle key events: ESC to close, ENTER to confirm
   useEffect(() => {

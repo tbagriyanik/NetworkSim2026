@@ -1492,6 +1492,112 @@ export function PCPanel({
     return isValidIpv4(pcGateway);
   }, [pcGateway, pcIP, pcSubnet]);
 
+  const getPortAccessVlan = useCallback((port: any) => Number(port?.accessVlan || port?.vlan || 1), []);
+
+  const getPeerPortVlan = useCallback((ownerDeviceId: string, ownerPortId: string) => {
+    const connection = topologyConnections.find((conn) =>
+      conn.active !== false &&
+      (
+        (conn.sourceDeviceId === ownerDeviceId && conn.sourcePort === ownerPortId) ||
+        (conn.targetDeviceId === ownerDeviceId && conn.targetPort === ownerPortId)
+      )
+    );
+    if (!connection) return null;
+
+    const peerDeviceId = connection.sourceDeviceId === ownerDeviceId ? connection.targetDeviceId : connection.sourceDeviceId;
+    const peerPortId = connection.sourceDeviceId === ownerDeviceId ? connection.targetPort : connection.sourcePort;
+    const peerPort = deviceStates?.get(peerDeviceId)?.ports?.[peerPortId];
+    if (!peerPort) return null;
+    if (peerPort.mode === 'trunk') return 1;
+    return getPortAccessVlan(peerPort);
+  }, [deviceStates, getPortAccessVlan, topologyConnections]);
+
+  const inferEndpointVlan = useCallback((endpoint: CanvasDevice | undefined) => {
+    if (!endpoint) return 1;
+
+    const connection = topologyConnections.find((conn) =>
+      conn.active !== false &&
+      (conn.sourceDeviceId === endpoint.id || conn.targetDeviceId === endpoint.id)
+    );
+    if (!connection) {
+      return Number(endpoint.vlan || 1);
+    }
+
+    const peerDeviceId = connection.sourceDeviceId === endpoint.id ? connection.targetDeviceId : connection.sourceDeviceId;
+    const peerPortId = connection.sourceDeviceId === endpoint.id ? connection.targetPort : connection.sourcePort;
+    const peerPort = deviceStates?.get(peerDeviceId)?.ports?.[peerPortId];
+    if (!peerPort) {
+      return Number(endpoint.vlan || 1);
+    }
+    if (peerPort.mode === 'trunk') return 1;
+    return getPortAccessVlan(peerPort);
+  }, [deviceStates, getPortAccessVlan, topologyConnections]);
+
+  const getServerPoolVlan = useCallback((
+    serverDevice: CanvasDevice | undefined,
+    serverState: SwitchState | undefined,
+    poolGateway: string,
+    poolStartIp: string,
+    poolSubnetMask: string
+  ) => {
+    if (!serverDevice || !isValidIpv4(poolSubnetMask)) return null;
+
+    const anchorIp = isValidIpv4(poolGateway) ? poolGateway : poolStartIp;
+    if (!isValidIpv4(anchorIp)) return null;
+
+    if (serverDevice.type === 'pc') {
+      if (isValidIpv4(serverDevice.ip || '') && isSameSubnet(serverDevice.ip || '', anchorIp, poolSubnetMask)) {
+        return inferEndpointVlan(serverDevice);
+      }
+      return null;
+    }
+
+    const ports = serverState?.ports || {};
+    for (const [portId, port] of Object.entries(ports)) {
+      if (!port?.ipAddress || port.shutdown) continue;
+      const effectiveMask = port.subnetMask || poolSubnetMask;
+      if (!isValidIpv4(effectiveMask) || !isSameSubnet(port.ipAddress, anchorIp, effectiveMask)) continue;
+
+      const sviMatch = portId.match(/^vlan(\d+)$/i);
+      if (sviMatch) return parseInt(sviMatch[1], 10) || 1;
+      if (port.mode === 'trunk') return 1;
+      if (port.accessVlan || port.vlan) return getPortAccessVlan(port);
+
+      const peerVlan = getPeerPortVlan(serverDevice.id, portId);
+      return peerVlan ?? 1;
+    }
+
+    if (isValidIpv4(serverDevice.ip || '') && isSameSubnet(serverDevice.ip || '', anchorIp, poolSubnetMask)) {
+      return inferEndpointVlan(serverDevice);
+    }
+
+    return null;
+  }, [getPeerPortVlan, getPortAccessVlan, inferEndpointVlan, isSameSubnet, isValidIpv4]);
+
+  const isDhcpPoolCompatibleForClient = useCallback((
+    poolGateway: string,
+    poolStartIp: string,
+    poolSubnetMask: string,
+    serverDevice: CanvasDevice | undefined,
+    serverState?: SwitchState
+  ) => {
+    const clientDevice = deviceFromTopology;
+    if (!clientDevice) return false;
+
+    const clientWifi = getDeviceWifiConfig(clientDevice, deviceStates);
+    if (clientWifi?.enabled && clientWifi.mode === 'client' && clientWifi.ssid) {
+      const serverWifi = getDeviceWifiConfig(serverDevice, deviceStates);
+      if (!serverWifi?.enabled || serverWifi.mode !== 'ap' || serverWifi.ssid !== clientWifi.ssid) {
+        return false;
+      }
+      return getServerPoolVlan(serverDevice, serverState, poolGateway, poolStartIp, poolSubnetMask) !== null;
+    }
+
+    const clientVlan = inferEndpointVlan(clientDevice);
+    const serverVlan = getServerPoolVlan(serverDevice, serverState, poolGateway, poolStartIp, poolSubnetMask);
+    return serverVlan !== null && clientVlan === serverVlan;
+  }, [deviceFromTopology, deviceStates, getServerPoolVlan, inferEndpointVlan]);
+
   const isLoopbackTarget = useCallback((target: string) => target.trim() === '127.0.0.1', []);
 
   const normalizeLookupTarget = useCallback((raw: string) => {
@@ -2473,6 +2579,9 @@ export function PCPanel({
           if (!validateIP(pool.startIp) || !validateIP(pool.subnetMask) || !validateIP(pool.defaultGateway) || !validateIP(pool.dnsServer)) {
             continue;
           }
+          if (!isDhcpPoolCompatibleForClient(pool.defaultGateway, pool.startIp, pool.subnetMask, server)) {
+            continue;
+          }
           const start = ipToNumber(pool.startIp);
           if (start === null) continue;
           const maxUsers = Math.max(1, Number(pool.maxUsers || 1));
@@ -2565,6 +2674,9 @@ export function PCPanel({
             if (!validateIP(pool.startIp) || !validateIP(pool.subnetMask) || !validateIP(pool.defaultGateway) || !validateIP(pool.dnsServer)) {
               continue;
             }
+            if (!isDhcpPoolCompatibleForClient(pool.defaultGateway, pool.startIp, pool.subnetMask, device, state)) {
+              continue;
+            }
             const start = ipToNumber(pool.startIp);
             if (start === null) continue;
             const maxUsers = Math.max(1, Number(pool.maxUsers || 50));
@@ -2605,7 +2717,7 @@ export function PCPanel({
       errorHandler.logError(DHCP_ERRORS.LEASE_FAILED({ deviceId, source: 'getDhcpLease', error: String(err) }));
       return null;
     }
-  }, [canReachTargetIp, deviceId, deviceStates, hasPhysicalPathToDevice, ipToNumber, numberToIp, topologyDevices, validateIP]);
+  }, [canReachTargetIp, deviceId, deviceStates, hasPhysicalPathToDevice, ipToNumber, isDhcpPoolCompatibleForClient, numberToIp, topologyDevices, validateIP]);
 
   // Check if DHCP pools are available and get failure reason
   const checkDhcpAvailability = useCallback((): { available: boolean; reason: string } => {
@@ -2656,6 +2768,9 @@ export function PCPanel({
       const pools = server.services?.dhcp?.pools || [];
       for (const pool of pools) {
         if (!validateIP(pool.startIp) || !validateIP(pool.subnetMask) || !validateIP(pool.defaultGateway) || !validateIP(pool.dnsServer)) {
+          continue;
+        }
+        if (!isDhcpPoolCompatibleForClient(pool.defaultGateway, pool.startIp, pool.subnetMask, server)) {
           continue;
         }
         const start = ipToNumber(pool.startIp);
@@ -2724,6 +2839,9 @@ export function PCPanel({
           if (!validateIP(pool.startIp) || !validateIP(pool.subnetMask) || !validateIP(pool.defaultGateway) || !validateIP(pool.dnsServer)) {
             continue;
           }
+          if (!isDhcpPoolCompatibleForClient(pool.defaultGateway, pool.startIp, pool.subnetMask, device, state)) {
+            continue;
+          }
           const start = ipToNumber(pool.startIp);
           if (start === null) continue;
           const maxUsers = Math.max(1, Number(pool.maxUsers || 50));
@@ -2744,7 +2862,7 @@ export function PCPanel({
     }
 
     return { available: false, reason: 'all_pools_full' };
-  }, [canReachTargetIp, deviceId, deviceStates, hasPhysicalPathToDevice, ipToNumber, numberToIp, topologyDevices, validateIP]);
+  }, [canReachTargetIp, deviceId, deviceStates, hasPhysicalPathToDevice, ipToNumber, isDhcpPoolCompatibleForClient, numberToIp, topologyDevices, validateIP]);
 
   // Keep ref in sync with callback
   useEffect(() => {

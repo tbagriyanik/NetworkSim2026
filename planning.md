@@ -3,8 +3,8 @@
 ## Güncel Durum
 
 - **Sürüm**: 1.6.0
-- **Tarih**: 2026-05-01
-- **Kod satırı**: 64,675
+- **Tarih**: 2026-05-02
+- **Kod satırı**: 65,195
 - **Kod dosyası**: 166
 - **Hazır topoloji örneği**: 28
 - **Rehberli ders**: 3
@@ -16,6 +16,19 @@
 Not: Örnek JSON dosyaları ve örnek dokümanları kod satırı sayısından ayrı izlenir.
 
 ## Son Yapılanlar
+
+### DHCP Tarama ve Lease Akışı (Mayıs 2026)
+
+- **Refresh sırasında DHCP taraması**: Ağ yenileme akışına DHCP sunucu/istemci taraması, aktif havuz kontrolü ve deterministic lease özeti eklendi.
+- **Toplu atama bildirimi**: Refresh sonrası lease alan istemciler için toplu DHCP atama toast'ı ve sunucu/lease sayımı gösteriliyor.
+- **Otomatik yenileme**: DHCP modundaki ve geçerli IP alamamış PC'ler için sayfa açılışında ve yenileme sonrasında otomatik lease denemesi güçlendirildi.
+- **Havuz kaynakları birleşimi**: Router/switch CLI havuzları ile servis paneli havuzları birlikte değerlendirilerek DHCP görünürlüğü tutarlı hale getirildi.
+
+### PC/CMD ve Bilgi Paneli Düzeltmeleri (Mayıs 2026)
+
+- **PC bilgi kartları**: Servis rozetleri, DHCP/Static durumu ve cihaz özetleri daha net ve tutarlı gösteriliyor.
+- **CMD modal akışı**: PC CMD görünümü ve ilgili modal davranışlarında düzenleme yapıldı; bilgi panelleri ile etkileşim sadeleştirildi.
+- **Info panel düzenlemeleri**: Cihaz detay alanları ve yönetim görünümleri son UI düzenlemeleriyle hizalandı.
 
 ### Cihaz ve Port Standartizasyonu (Mayıs 2026)
 
