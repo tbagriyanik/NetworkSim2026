@@ -250,7 +250,10 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     }
     
     .status-card {
-      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       color: white;
       padding: 20px;
       border-radius: 10px;
@@ -258,10 +261,15 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
     }
     
     .status-card.disabled {
-      background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
     }
     
     .status-info h3 {

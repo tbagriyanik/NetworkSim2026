@@ -132,7 +132,7 @@ function SwitchInfoPopover({ router, routerState, t, language, isDark, onClose, 
   return (
     <div ref={containerRef} className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDraggingUI ? "cursor-grabbing" : "cursor-grab")}
       style={{ bottom: `${position.y}px`, right: `${position.x}px` }} onMouseDown={handleDragStart}>
-      <div className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[280px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}>
+      <div className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[280px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}>
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
           <div className="flex items-center gap-1.5">
             <GripHorizontal className="w-3 h-3 opacity-30 cursor-grab" />
@@ -4175,41 +4175,43 @@ ${state.bannerMOTD}
                   </div>
                 </Button>
 
-                {/* Total Score - Desktop */}
-                <div className="hidden md:flex items-center gap-4">
-                  <div className="flex flex-col items-end gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500">
-                        {t.labProgress}
-                      </span>
-                      <span
-                        key={totalScore}
-                        className={`text-[10px] font-black tabular-nums px-1.5 py-0.5 rounded-full animate-scale-in ${totalScore >= maxScore * 0.7 ? 'bg-emerald-500/10 text-emerald-400' :
-                          totalScore >= maxScore * 0.4 ? 'bg-amber-500/10 text-amber-400' :
-                            'bg-rose-500/10 text-rose-400'
-                          }`}
-                      >
-                        {Math.round((totalScore / maxScore) * 100)}%
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-24 rounded-full overflow-hidden p-[px] bg-slate-200 dark:bg-slate-800">
-                        <div
-                          className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full progress-fill"
-                          style={{ '--progress-width': `${(totalScore / maxScore) * 100}%` } as React.CSSProperties}
-                        />
+                {/* Total Score - Desktop - Hidden for PC devices */}
+                {activeDeviceType !== 'pc' && (
+                  <div className="hidden md:flex items-center gap-4">
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500">
+                          {t.labProgress}
+                        </span>
+                        <span
+                          key={totalScore}
+                          className={`text-[10px] font-black tabular-nums px-1.5 py-0.5 rounded-full animate-scale-in ${totalScore >= maxScore * 0.7 ? 'bg-emerald-500/10 text-emerald-400' :
+                            totalScore >= maxScore * 0.4 ? 'bg-amber-500/10 text-amber-400' :
+                              'bg-rose-500/10 text-rose-400'
+                            }`}
+                        >
+                          {Math.round((totalScore / maxScore) * 100)}%
+                        </span>
                       </div>
-                      <div className="flex items-baseline gap-0.5">
-                        <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white">
-                          {totalScore}
-                        </span>
-                        <span className="text-[10px] font-bold opacity-30 text-slate-500 dark:text-slate-400">
-                          /{maxScore}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-24 rounded-full overflow-hidden p-[px] bg-slate-200 dark:bg-slate-800">
+                          <div
+                            className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full progress-fill"
+                            style={{ '--progress-width': `${(totalScore / maxScore) * 100}%` } as React.CSSProperties}
+                          />
+                        </div>
+                        <div className="flex items-baseline gap-0.5">
+                          <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white">
+                            {totalScore}
+                          </span>
+                          <span className="text-[10px] font-bold opacity-30 text-slate-500 dark:text-slate-400">
+                            /{maxScore}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Right Controls - Integrated Toolbar */}
                 <div className="flex items-center gap-2 sticky top-0 z-10">
@@ -4685,6 +4687,9 @@ ${state.bannerMOTD}
                                   onClick={() => {
                                     setShowProjectPicker(false);
                                     runWithSaveGuard(() => {
+                                      // Reset zoom and pan first
+                                      setZoom(1.0);
+                                      setPan({ x: 0, y: 0 });
                                       startGuidedProject(guidedProject);
                                       loadProjectData(guidedProject.data);
                                     });
@@ -5902,9 +5907,9 @@ ${state.bannerMOTD}
 
           {/* Network Refresh Report - Bottom Left */}
           {refreshNetworkReport?.show && (
-            <div className={`fixed bottom-16 left-6 z-[100] w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 ${isDark
-                ? 'bg-zinc-950/95 border-zinc-800 text-zinc-100 shadow-black/40'
-                : 'bg-white/95 border-zinc-200 text-zinc-900 shadow-zinc-200/50'
+            <div className={`fixed bottom-16 left-6 z-[100] w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md ${isDark
+                ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
+                : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
               }`}>
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -6265,7 +6270,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
       onMouseDown={handleDragStart}
     >
       <div
-        className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[260px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}
+        className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[260px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}
       >
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
           <div className="flex items-center gap-1.5">
@@ -6537,7 +6542,7 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
       onMouseDown={handleDragStart}
     >
       <div
-        className={`rounded-2xl border shadow-2xl backdrop-blur-xl min-w-[200px] max-w-[280px] liquid-glass-strong ${isDark ? 'border-slate-700/50 text-white shadow-cyan-500/10' : 'border-slate-200/50 text-slate-900 shadow-slate-200/50'}`}
+        className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[280px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}
       >
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
           <div className="flex items-center gap-1.5">

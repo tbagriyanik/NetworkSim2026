@@ -657,6 +657,28 @@ body.graphics-low .liquid-glass-strong {
   border: 1px solid var(--border) !important;
 }
 
+/* Network report and info panel glass effects */
+body.graphics-low .backdrop-blur-md,
+body.graphics-low [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.graphics-low [class*="bg-white/"],
+body.graphics-low [class*="bg-zinc-950/"] {
+  background-color: var(--background) !important;
+}
+
+body.graphics-low [class*="border-zinc-200/"],
+body.graphics-low [class*="border-zinc-800/"] {
+  border-color: var(--border) !important;
+}
+
+body.graphics-low [class*="shadow-black/"],
+body.graphics-low [class*="shadow-zinc-200/"] {
+  box-shadow: none !important;
+}
+
 body.graphics-low.dark .liquid-glass,
 body.graphics-low.dark .liquid-glass-strong {
   background-color: var(--background) !important;

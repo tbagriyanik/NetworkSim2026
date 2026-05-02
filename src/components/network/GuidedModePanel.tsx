@@ -195,15 +195,16 @@ export function GuidedModePanel({
   const triggerStepCelebration = useCallback(() => {
     if (typeof window === 'undefined') return;
 
+    // Always show toast message
+    toast({
+      title: language === 'tr' ? `${currentStepIndex + 1}. Adım Tamamlandı! 🎉` : `Step ${currentStepIndex + 1} Completed! 🎉`,
+      description: language === 'tr' ? 'Harika iş!' : 'Great job!',
+    });
+
     // Check if graphics effects are disabled
     const isGraphicsLow = document.body.classList.contains('graphics-low');
 
     if (isGraphicsLow) {
-      // Show simple toast message
-      toast({
-        title: language === 'tr' ? 'Adım Tamamlandı! 🎉' : 'Step Completed! 🎉',
-        description: language === 'tr' ? 'Harika iş!' : 'Great job!',
-      });
       return;
     }
 
@@ -224,20 +225,21 @@ export function GuidedModePanel({
       document.body.appendChild(emoji);
       setTimeout(() => emoji.remove(), 2000);
     }
-  }, [language]);
+  }, [language, currentStepIndex]);
 
   const triggerLessonCompleteCelebration = useCallback(() => {
     if (typeof window === 'undefined') return;
+
+    // Always show toast message
+    toast({
+      title: language === 'tr' ? 'Ders Tamamlandı! 🏆' : 'Lesson Completed! 🏆',
+      description: language === 'tr' ? 'Tebrikler, tüm adımları tamamladınız!' : 'Congratulations, you completed all steps!',
+    });
 
     // Check if graphics effects are disabled
     const isGraphicsLow = document.body.classList.contains('graphics-low');
 
     if (isGraphicsLow) {
-      // Show simple toast message
-      toast({
-        title: language === 'tr' ? 'Ders Tamamlandı! 🏆' : 'Lesson Completed! 🏆',
-        description: language === 'tr' ? 'Tebrikler, tüm adımları tamamladınız!' : 'Congratulations, you completed all steps!',
-      });
       return;
     }
 
