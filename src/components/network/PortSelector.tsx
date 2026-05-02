@@ -91,7 +91,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
             </div>
             <button
               onClick={onClose}
-              className={`p-1 rounded-md ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
+              className={`p-1.5 rounded-md transition-colors ${isDark ? 'hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100' : 'hover:bg-zinc-200 text-zinc-500 hover:text-zinc-900'}`}
             >
               <X className="w-3 h-3" />
             </button>

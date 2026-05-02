@@ -124,10 +124,10 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
               onClose?.();
             }}
             className={cn(
-              'p-2 rounded-lg transition-all duration-200 focus-ring-animate',
+              'p-1.5 rounded-md transition-colors',
               isDark
-                ? 'hover:bg-rose-900/30 text-slate-400 hover:text-rose-400'
-                : 'hover:bg-rose-100 text-slate-500 hover:text-rose-600'
+                ? 'hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100'
+                : 'hover:bg-zinc-200 text-zinc-500 hover:text-zinc-900'
             )}
             aria-label={isTR ? 'Kapat' : 'Close'}
           >

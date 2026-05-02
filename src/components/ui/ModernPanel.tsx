@@ -26,6 +26,7 @@ export interface ModernPanelProps {
     mobileAutoHeight?: boolean;
     hideTitle?: boolean;
     hideHeader?: boolean;
+    mobileOnlyClose?: boolean;
 }
 
 export function ModernPanel({
@@ -48,6 +49,7 @@ export function ModernPanel({
     noPadding = false,
     hideTitle = false,
     hideHeader = false,
+    mobileOnlyClose = false,
 }: ModernPanelProps) {
     const { panelLayout } = useLayout();
     const { theme } = useTheme();
@@ -276,7 +278,7 @@ export function ModernPanel({
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                         {headerAction}
-                        {onClose && (
+                        {onClose && (!mobileOnlyClose || isMobile) && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onClose(); }}
                                 className={cn(

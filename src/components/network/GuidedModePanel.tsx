@@ -2,12 +2,12 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
-import { 
-  CheckCircle2, 
-  Circle, 
+import {
+  CheckCircle2,
+  Circle,
   GripHorizontal,
-  Lightbulb, 
-  Clock, 
+  Lightbulb,
+  Clock,
   Target,
   ChevronDown,
   ChevronUp,
@@ -18,10 +18,10 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Collapsible, 
-  CollapsibleContent, 
-  CollapsibleTrigger 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
 } from '@/components/ui/collapsible';
 import { GuidedStep, GuidedProject, getProgressPercentage } from '@/lib/network/guidedMode';
 
@@ -126,14 +126,14 @@ export function GuidedModePanel({
   onCheckAutoComplete
 }: GuidedModePanelProps) {
   const t = translations[language];
-  
+
   // Load hint and expanded states from localStorage
   const [showHint, setShowHint] = React.useState(() => {
     if (typeof window === 'undefined') return false;
     const saved = localStorage.getItem('guided_show_hint');
     return saved === 'true';
   });
-  
+
   const [expandedSteps, setExpandedSteps] = React.useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
     const saved = localStorage.getItem('guided_expanded_steps');
@@ -153,10 +153,10 @@ export function GuidedModePanel({
       localStorage.setItem('guided_expanded_steps', JSON.stringify(expandedSteps));
     }
   }, [expandedSteps]);
-  
+
   // Dragging state
   const [position, setPosition] = useState({ x: 0, y: 80 }); // right-4 top-20 (x set in useEffect)
-  
+
   // Set initial position on mount (client-side only)
   useEffect(() => {
     setPosition({ x: window.innerWidth - 336, y: 80 });
@@ -270,7 +270,7 @@ export function GuidedModePanel({
     // Only drag from header
     const target = e.target as HTMLElement;
     if (!target.closest('[data-drag-handle]')) return;
-    
+
     e.preventDefault();
     setIsDragging(true);
     dragRef.current = {
@@ -283,15 +283,15 @@ export function GuidedModePanel({
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging || !dragRef.current) return;
-    
+
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
-    
+
     // Mark as dragged if moved significantly
     if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
       setHasDragged(true);
     }
-    
+
     setPosition({
       x: Math.max(0, Math.min(window.innerWidth - 320, dragRef.current.initialX + dx)),
       y: Math.max(0, Math.min(window.innerHeight - 200, dragRef.current.initialY + dy))
@@ -309,7 +309,7 @@ export function GuidedModePanel({
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const target = e.target as HTMLElement;
     if (!target.closest('[data-drag-handle]')) return;
-    
+
     const touch = e.touches[0];
     setIsDragging(true);
     dragRef.current = {
@@ -322,16 +322,16 @@ export function GuidedModePanel({
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || !dragRef.current) return;
-    
+
     const touch = e.touches[0];
     const dx = touch.clientX - dragRef.current.startX;
     const dy = touch.clientY - dragRef.current.startY;
-    
+
     // Mark as dragged if moved significantly
     if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
       setHasDragged(true);
     }
-    
+
     setPosition({
       x: Math.max(0, Math.min(window.innerWidth - 320, dragRef.current.initialX + dx)),
       y: Math.max(0, Math.min(window.innerHeight - 200, dragRef.current.initialY + dy))
@@ -351,7 +351,7 @@ export function GuidedModePanel({
       window.addEventListener('mouseup', handleMouseUp);
       window.addEventListener('touchmove', handleTouchMove);
       window.addEventListener('touchend', handleTouchEnd);
-      
+
       return () => {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
@@ -387,8 +387,8 @@ export function GuidedModePanel({
   const currentStep = project.steps[currentStepIndex];
 
   const toggleStepExpand = (stepId: string) => {
-    setExpandedSteps(prev => 
-      prev.includes(stepId) 
+    setExpandedSteps(prev =>
+      prev.includes(stepId)
         ? prev.filter(id => id !== stepId)
         : [...prev, stepId]
     );
@@ -405,12 +405,12 @@ export function GuidedModePanel({
 
   if (isMinimized) {
     return (
-      <div 
+      <div
         className="fixed z-50 flex flex-col gap-2"
         style={{ left: position.x, top: position.y }}
       >
         {/* Main Floating Button */}
-        <div 
+        <div
           data-drag-handle
           className={cn(
             "flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl border-2 cursor-grab transition-all hover:scale-105",
@@ -433,7 +433,7 @@ export function GuidedModePanel({
             {language === 'tr' ? 'Rehberli Dersi Aç' : 'Open Guided Lesson'}
           </span>
           <div className="w-12 h-1.5 bg-white/30 rounded-full overflow-hidden ml-2">
-            <div 
+            <div
               className="h-full bg-white transition-all"
               style={{ width: `${progress}%` }}
             />
@@ -455,19 +455,19 @@ export function GuidedModePanel({
   }
 
   return (
-    <div 
+    <div
       ref={panelRef}
       className={cn(
         "fixed z-50 w-80 flex flex-col",
         isDragging && "cursor-grabbing"
       )}
-      style={{ 
-        left: position.x, 
+      style={{
+        left: position.x,
         top: position.y,
         maxHeight: 'calc(100vh - 100px)'
       }}
     >
-      <div 
+      <div
         className={cn(
           "flex flex-col rounded-xl shadow-2xl border overflow-hidden",
           "bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm",
@@ -476,7 +476,7 @@ export function GuidedModePanel({
         )}
       >
         {/* Header - Draggable */}
-        <div 
+        <div
           data-drag-handle
           className={cn(
             "flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white",
@@ -496,14 +496,14 @@ export function GuidedModePanel({
           <div className="flex items-center gap-1">
             <button
               onClick={onMinimize}
-              className="p-1 hover:bg-white/20 rounded transition-colors"
+              className="p-1.5 rounded-md transition-colors hover:bg-black/10 dark:hover:bg-white/20 text-black dark:text-white"
               title={t.minimize}
             >
               <ChevronDown className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-white/20 rounded transition-colors"
+              className="p-1.5 rounded-md transition-colors hover:bg-black/10 dark:hover:bg-white/20 text-black dark:text-white"
               title={t.close}
             >
               <X className="w-4 h-4" />
@@ -520,7 +520,7 @@ export function GuidedModePanel({
             </span>
           </div>
           <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-gradient-to-r from-blue-500 via-blue-400 to-green-500 transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
@@ -529,7 +529,7 @@ export function GuidedModePanel({
             <div className="mt-2 text-xs text-green-600 dark:text-green-400 font-medium text-center animate-pulse">
               {t.allStepsCompleted}
               {project.startedAt && (() => {
-                const lastCompletedStep = project.steps.filter(s => s.completed).sort((a, b) => 
+                const lastCompletedStep = project.steps.filter(s => s.completed).sort((a, b) =>
                   (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0)
                 )[0];
                 if (lastCompletedStep?.completedAt) {
@@ -563,7 +563,7 @@ export function GuidedModePanel({
             <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
               {currentStep.description[language]}
             </p>
-            
+
             {/* Hint Section */}
             <Collapsible open={showHint} onOpenChange={setShowHint}>
               <CollapsibleTrigger asChild>
@@ -583,7 +583,7 @@ export function GuidedModePanel({
 
             {/* Detailed Instructions */}
             {currentStep.detailedInstructions && (
-              <Collapsible 
+              <Collapsible
                 open={expandedSteps.includes(currentStep.id)}
                 onOpenChange={() => toggleStepExpand(currentStep.id)}
               >
@@ -607,85 +607,85 @@ export function GuidedModePanel({
           </div>
         )}
 
-      {/* Steps List */}
-      <ScrollArea className="flex-1 overflow-y-auto">
-        <div className="p-2 space-y-1">
-          {project.steps.map((step, index) => {
-            const isActive = index === currentStepIndex;
-            const isCompleted = step.completed;
-            const isFuture = index > currentStepIndex;
+        {/* Steps List */}
+        <ScrollArea className="flex-1 overflow-y-auto">
+          <div className="p-2 space-y-1">
+            {project.steps.map((step, index) => {
+              const isActive = index === currentStepIndex;
+              const isCompleted = step.completed;
+              const isFuture = index > currentStepIndex;
 
-            return (
-              <div
-                key={step.id}
-                ref={isActive ? activeStepRef : undefined}
-                className={cn(
-                  "flex items-start gap-2 p-2 rounded-lg transition-all",
-                  isActive && "bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800",
-                  isCompleted && !isActive && "bg-slate-100 dark:bg-slate-800 opacity-60",
-                  !isActive && !isCompleted && "hover:bg-slate-50 dark:hover:bg-slate-700/50"
-                )}
-              >
-                {/* Status Icon */}
-                <div className="mt-0.5">
-                  {isCompleted ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                  ) : isActive ? (
-                    <Circle className="w-5 h-5 text-blue-500 animate-pulse" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+              return (
+                <div
+                  key={step.id}
+                  ref={isActive ? activeStepRef : undefined}
+                  className={cn(
+                    "flex items-start gap-2 p-2 rounded-lg transition-all",
+                    isActive && "bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800",
+                    isCompleted && !isActive && "bg-slate-100 dark:bg-slate-800 opacity-60",
+                    !isActive && !isCompleted && "hover:bg-slate-50 dark:hover:bg-slate-700/50"
                   )}
-                </div>
-
-                {/* Undo button for completed steps */}
-                {isCompleted && (
-                  <button
-                    onClick={() => onStepUncomplete(step.id)}
-                    className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors flex-shrink-0"
-                  >
-                    {t.uncomplete}
-                  </button>
-                )}
-
-                {/* Step Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className={cn(
-                      "text-xs font-medium",
-                      isActive && "text-blue-600 dark:text-blue-400",
-                      isCompleted && "text-slate-600 dark:text-white line-through",
-                      !isActive && !isCompleted && "text-slate-500 dark:text-slate-400"
-                    )}>
-                      {step.order}. {step.title[language]}
-                    </span>
+                >
+                  {/* Status Icon */}
+                  <div className="mt-0.5">
+                    {isCompleted ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    ) : isActive ? (
+                      <Circle className="w-5 h-5 text-blue-500 animate-pulse" />
+                    ) : (
+                      <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                    )}
                   </div>
 
-                  {isActive && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
-                      {step.description[language]}
-                    </p>
+                  {/* Undo button for completed steps */}
+                  {isCompleted && (
+                    <button
+                      onClick={() => onStepUncomplete(step.id)}
+                      className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors flex-shrink-0"
+                    >
+                      {t.uncomplete}
+                    </button>
                   )}
 
-                  {/* Completion Time */}
-                  {isCompleted && step.completedAt && project.startedAt && (
-                    <p className="text-[10px] text-slate-400 dark:text-slate-300 mt-0.5">
-                      {t.completedAt}: {new Date(step.completedAt).toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                      <span className="ml-1 text-slate-400">
-                        ({(() => {
-                          const duration = Math.round((new Date(step.completedAt).getTime() - new Date(project.startedAt).getTime()) / 1000);
-                          const minutes = Math.floor(duration / 60);
-                          const seconds = duration % 60;
-                          return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-                        })()})
+                  {/* Step Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "text-xs font-medium",
+                        isActive && "text-blue-600 dark:text-blue-400",
+                        isCompleted && "text-slate-600 dark:text-white line-through",
+                        !isActive && !isCompleted && "text-slate-500 dark:text-slate-400"
+                      )}>
+                        {step.order}. {step.title[language]}
                       </span>
-                    </p>
-                  )}
+                    </div>
+
+                    {isActive && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
+                        {step.description[language]}
+                      </p>
+                    )}
+
+                    {/* Completion Time */}
+                    {isCompleted && step.completedAt && project.startedAt && (
+                      <p className="text-[10px] text-slate-400 dark:text-slate-300 mt-0.5">
+                        {t.completedAt}: {new Date(step.completedAt).toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        <span className="ml-1 text-slate-400">
+                          ({(() => {
+                            const duration = Math.round((new Date(step.completedAt).getTime() - new Date(project.startedAt).getTime()) / 1000);
+                            const minutes = Math.floor(duration / 60);
+                            const seconds = duration % 60;
+                            return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+                          })()})
+                        </span>
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </ScrollArea>
+              );
+            })}
+          </div>
+        </ScrollArea>
 
         {/* Footer Info */}
         <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">

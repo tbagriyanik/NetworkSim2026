@@ -1187,6 +1187,7 @@ export function Terminal({
       headerAction={headerAction}
       collapsible={false}
       noPadding
+      mobileOnlyClose
       className={cn("flex flex-col h-full", className)}
       style={{ height: '100%' }}
     >

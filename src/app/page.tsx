@@ -137,8 +137,8 @@ function SwitchInfoPopover({ router, routerState, t, language, isDark, onClose, 
             <SwitchIcon className="w-3.5 h-3.5 text-purple-500" />
             <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
           </div>
-          <button onClick={onClose} className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`} title={t.close}>
-            <X className="w-3 h-3" />
+          <button onClick={onClose} className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0" title={t.close}>
+            <X className="w-3 h-3 text-white pointer-events-none" />
           </button>
         </div>
         <div className="overflow-hidden cursor-default">
@@ -5940,11 +5940,10 @@ ${state.bannerMOTD}
                   </h3>
                   <button
                     onClick={() => setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null)}
-                    className={`p-1 rounded-md transition-colors ${isDark ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-500'}`}
+                    className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
+                    title="Close"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <X className="w-3 h-3 text-white pointer-events-none" />
                   </button>
                 </div>
 
@@ -6301,10 +6300,10 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
           </div>
           <button
             onClick={onClose}
-            className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+            className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
             title={t.close}
           >
-            <X className="w-3 h-3" />
+            <X className="w-3 h-3 text-white pointer-events-none" />
           </button>
         </div>
         <div className="overflow-hidden cursor-default">
@@ -6579,10 +6578,10 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); onClose(); }}
-            className={`p-0.5 rounded hover:bg-slate-500/20 cursor-pointer ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+            className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
             title={t.close}
           >
-            <X className="w-3 h-3" />
+            <X className="w-3 h-3 text-white pointer-events-none" />
           </button>
         </div>
         <div className="overflow-hidden cursor-default">
