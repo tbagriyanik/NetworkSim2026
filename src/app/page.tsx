@@ -368,6 +368,7 @@ export default function Home() {
   const [loadedExampleId, setLoadedExampleId] = useState<string | null>(null);
   const [topologyKey, setTopologyKey] = useState(0);
   const [selectedDevice, setSelectedDevice] = useState<DeviceType | null>(null);
+  const [clearSelectionTrigger, setClearSelectionTrigger] = useState<number>(0);
   // Track last executed command for guided mode
   const [lastCommand, setLastCommand] = useState<string>('');
   const [showPCPanel, setShowPCPanel] = useState(false);
@@ -3891,6 +3892,13 @@ ${state.bannerMOTD}
         // If a panel is open (PC panel, Router panel, etc.), let the panel handle Tab navigation
         if (activeTab === 'topology' && topologyDevices.length > 0 && !showPCPanel && !showRouterPanel && !showTerminalModal) {
           e.preventDefault();
+          
+          // Cancel current selection if multiple devices are selected or all devices are selected
+          if (selectedDevice) {
+            setSelectedDevice(null);
+            setClearSelectionTrigger(prev => prev + 1);
+          }
+          
           const currentIndex = topologyDevices.findIndex(d => d.id === activeDeviceId);
           const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % topologyDevices.length;
           const nextDevice = topologyDevices[nextIndex];
@@ -5858,10 +5866,11 @@ ${state.bannerMOTD}
                       }
                       setShowTasksModal(true);
                     }}
+                    clearSelectionTrigger={clearSelectionTrigger}
                   />
 
                   {/* PC Info Popover - Bottom Right Mini Panel */}
-                  {activeDeviceId && (activeDeviceId.startsWith('pc-') || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'pc') && topologyDevices && (
+                  {activeDeviceId && (activeDeviceId.startsWith('pc-') || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'pc') && topologyDevices && topologyDevices.find(d => d.id === activeDeviceId) && (
                     <PCInfoPopover
                       pc={topologyDevices.find(d => d.id === activeDeviceId)!}
                       t={t}
@@ -6379,17 +6388,23 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
           <div className={`px-2 py-1.5 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} flex gap-1.5`}>
             <button
               onClick={() => {
-                handleDeviceDoubleClick(pc?.type, pc?.id);
+                if (pc?.type && pc?.id) {
+                  handleDeviceDoubleClick(pc.type, pc.id);
+                }
               }}
-              className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+              disabled={!pc?.type || !pc?.id}
+              className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-cyan-600 hover:bg-cyan-700 text-white disabled:bg-slate-700 disabled:text-slate-500' : 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-slate-300 disabled:text-slate-500'}`}
             >
               {t.open}
             </button>
             <button
               onClick={() => {
-                onOpenPanel(pc?.id);
+                if (pc?.id) {
+                  onOpenPanel(pc.id);
+                }
               }}
-              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
+              disabled={!pc?.id}
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:bg-slate-800 disabled:text-slate-500' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:bg-slate-200 disabled:text-slate-400'}`}
               title={language === 'tr' ? 'Detaylar' : 'Details'}
             >
               <SettingsIcon className="w-3 h-3" />

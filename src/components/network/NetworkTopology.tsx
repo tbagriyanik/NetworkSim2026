@@ -72,6 +72,7 @@ interface NetworkTopologyProps {
   onRefreshNetwork?: () => void;
   focusDeviceId?: string | null;
   onOpenTasks?: (deviceId: string) => void;
+  clearSelectionTrigger?: number;
 }
 
 // Drag item from palette
@@ -144,6 +145,7 @@ export function NetworkTopology({
   isFullscreen = false,
   onFullscreenChange,
   onOpenTasks,
+  clearSelectionTrigger,
 }: NetworkTopologyProps) {
   const { language, t } = useLanguage();
   const { theme } = useTheme();
@@ -383,6 +385,15 @@ export function NetworkTopology({
 
   // Select all state
   const [selectAllMode, setSelectAllMode] = useState(false);
+
+  // Handle external clear selection trigger (e.g., from Tab key)
+  useEffect(() => {
+    if (clearSelectionTrigger !== undefined) {
+      setSelectedDeviceIds([]);
+      selectedDeviceIdsRef.current = [];
+      setSelectAllMode(false);
+    }
+  }, [clearSelectionTrigger]);
 
   // Selection box state
   const [selectionBox, setSelectionBox] = useState<{ start: { x: number; y: number }; current: { x: number; y: number } } | null>(null);
@@ -737,7 +748,7 @@ export function NetworkTopology({
     setSelectedDeviceIds(allIds);
     setSelectAllMode(true);
     setContextMenu(null);
-  }, [devices]);
+  }, [devices, setSelectAllMode]);
 
   // Handle alignment for multiple selected devices
   const handleAlign = useCallback((type: 'top' | 'bottom' | 'left' | 'right' | 'h-center' | 'v-center') => {
@@ -1074,7 +1085,6 @@ export function NetworkTopology({
     dragStartPosRef.current = dragStartPos;
     dragStartDevicePositionsRef.current = dragStartDevicePositions;
     isActuallyDraggingRef.current = isActuallyDragging;
-    selectedDeviceIdsRef.current = selectedDeviceIds;
     snapToGridRef.current = snapToGrid;
     isDrawingConnectionRef.current = isDrawingConnection;
   });
@@ -1542,11 +1552,9 @@ export function NetworkTopology({
       if (!selectedDeviceIds.includes(deviceId)) {
         newSelectedIds = [deviceId];
         setSelectedDeviceIds(newSelectedIds);
-        selectedDeviceIdsRef.current = newSelectedIds;
         onDeviceSelect(device.type, deviceId, isSwitchDeviceType(device.type) ? device.switchModel : undefined, device.name);
       } else {
         newSelectedIds = selectedDeviceIds;
-        selectedDeviceIdsRef.current = selectedDeviceIds;
       }
 
       // Store starting positions of all selected devices for group dragging
@@ -1607,7 +1615,6 @@ export function NetworkTopology({
 
     // Only handle selection if Shift was NOT pressed during mousedown
     setSelectedDeviceIds([device.id]);
-    selectedDeviceIdsRef.current = [device.id];
     // Notify parent component - select device, don't open terminal
     onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined, device.name);
     // Focus canvas for keyboard navigation
@@ -2246,7 +2253,6 @@ export function NetworkTopology({
     dragStartPosRef.current = dragStartPos;
     dragStartDevicePositionsRef.current = dragStartDevicePositions;
     isActuallyDraggingRef.current = isActuallyDragging;
-    selectedDeviceIdsRef.current = selectedDeviceIds;
     snapToGridRef.current = snapToGrid;
     isDrawingConnectionRef.current = isDrawingConnection;
 
