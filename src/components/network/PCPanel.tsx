@@ -783,6 +783,17 @@ export function PCPanel({
       // Don't close if web browser is open
       if (httpAppContent) return;
 
+      const target = event.target as HTMLElement;
+      // Don't close if clicking a portal (like Select dropdown, tooltips, etc.)
+      if (
+        target?.closest('[data-radix-portal]') ||
+        target?.closest('[role="listbox"]') ||
+        target?.closest('.radix-select-content') ||
+        target?.closest('.radix-popper-content')
+      ) {
+        return;
+      }
+
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
         onClose();
       }
