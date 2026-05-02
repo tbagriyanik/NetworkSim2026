@@ -2342,10 +2342,10 @@ ${state.bannerMOTD}
   // Handle device double click (Open terminal or PC panel)
   const handleDeviceDoubleClick = useCallback((device: DeviceType, deviceId: string) => {
     if (device === 'pc') {
-      // PC - open CMD modal
+      // PC - open Home modal
       setShowPCDeviceId(deviceId);
       getOrCreatePCOutputs(deviceId, topologyDevices);
-      setPcPanelInitialTab('desktop');
+      setPcPanelInitialTab('home');
       setShowPCPanel(true);
     } else if (device === 'router' || device === 'switchL2' || device === 'switchL3') {
       // Switch or Router - set as CLI device and open CLI modal
@@ -6370,7 +6370,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
               }}
               className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-colors ${isDark ? 'bg-cyan-600 hover:bg-cyan-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
             >
-              {t.openCMD}
+              {t.open}
             </button>
             <button
               onClick={() => {
