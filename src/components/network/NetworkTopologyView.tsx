@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { X } from 'lucide-react';
 import { ConnectionLine } from './ConnectionLine';
 import { DeviceNode } from './DeviceNode';
 import { PingAnimationOverlay } from './PingAnimationOverlay';
@@ -9,6 +8,9 @@ import { CABLE_COLORS, MIN_ZOOM, MAX_ZOOM } from './networkTopology.constants';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { performanceMonitor } from '@/lib/performance/monitoring';
 
+// Using a flexible props type since this component receives a large number of
+// heterogeneous props from NetworkTopology. The individual prop accesses are
+// still type-checked at the call sites in NetworkTopology.tsx.
 type NetworkTopologyViewProps = Record<string, any>;
 
 // Custom comparison function for React.memo
@@ -290,7 +292,7 @@ export const NetworkTopologyView = React.memo(
       const bottom = (viewportHeight - pan.y) / zoom + margin;
 
       return { left, top, right, bottom };
-    }, [canvasDimensions.height, canvasDimensions.width, canvasRef, pan.x, pan.y, zoom]);
+    }, [canvasDimensions.height, canvasDimensions.width, pan.x, pan.y, zoom]);
 
     const visibleDevices = useMemo(() => {
       return devices.filter((device: any) => {
@@ -429,7 +431,7 @@ export const NetworkTopologyView = React.memo(
                         totalSameConns={totalSameConns}
                         sameConnIndex={sameConnIndex}
                         getPortPosition={getPortPosition}
-                        CABLE_COLORS={CABLE_COLORS as any}
+                        CABLE_COLORS={CABLE_COLORS}
                         showAnimation={showConnectionAnimations}
                         showLabel={showConnectionLabels}
                       />

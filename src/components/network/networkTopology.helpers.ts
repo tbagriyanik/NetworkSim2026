@@ -1,36 +1,3 @@
-import { CanvasPort } from './networkTopology.types';
-
-export const generateSwitchPorts = (): CanvasPort[] => {
-  const ports: CanvasPort[] = [{ id: 'console', label: 'Console', status: 'disconnected' as const }];
-  for (let i = 1; i <= 24; i++) {
-    ports.push({ id: `fa0/${i}`, label: `Fa0/${i}`, status: 'disconnected' as const });
-  }
-  ports.push({ id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const });
-  ports.push({ id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const });
-  return ports;
-};
-
-export const generateRouterPorts = (): CanvasPort[] => {
-  return [
-    { id: 'console', label: 'Console', status: 'disconnected' as const },
-    { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const },
-    { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
-    { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const },
-    { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const },    
-    { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, shutdown: true },
-  ];
-};
-
-export const generateMacAddress = (): string => {
-  const chars = '0123456789ABCDEF';
-  let mac = '';
-  for (let i = 0; i < 12; i++) {
-    mac += chars[Math.floor(Math.random() * 16)];
-    if (i === 3 || i === 7) mac += '.';
-  }
-  return mac;
-};
-
 // Device dimension constants
 export const DEVICE_DIMENSIONS = {
   pc: { width: 90, height: 99 },
@@ -58,7 +25,8 @@ export const getDeviceHeight = (deviceType: string, portCount: number): number =
 
 // Device type checks
 export const isPcLike = (type: string): boolean => type === 'pc' || type === 'iot';
-export const isSwitchDevice = (type: string): boolean => type === 'switchL2' || type === 'switchL3' || type === 'switch';
+export const isSwitchDevice = (type: string): boolean =>
+  type === 'switchL2' || type === 'switchL3' || type === 'switch';
 export const isRouterDevice = (type: string): boolean => type === 'router';
 
 // Port type detection

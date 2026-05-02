@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useEnvironment } from '@/lib/store/appStore';
 import useAppStore, { EnvironmentBackground } from '@/lib/store/appStore';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Leaf, Sun, Droplets, Thermometer, Home, Building2, X, Sprout } from 'lucide-react';
 import { cn } from '@/lib/utils';

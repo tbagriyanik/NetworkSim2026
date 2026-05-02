@@ -38,7 +38,7 @@ export interface NetworkTopologyProps {
   cableInfo: CableInfo;
   onCableChange: (cableInfo: CableInfo) => void;
   selectedDevice: DeviceType | null;
-  onDeviceSelect: (device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string) => void;
+  onDeviceSelect: (device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string, isNew?: boolean, deviceData?: CanvasDevice) => void;
   onDeviceDoubleClick?: (device: DeviceType, deviceId: string) => void;
   onTopologyChange?: (devices: CanvasDevice[], connections: CanvasConnection[], notes: CanvasNote[]) => void;
   onDeviceDelete?: (deviceId: string) => void;
@@ -58,6 +58,11 @@ export interface NetworkTopologyProps {
   canRedo?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
+  onDeviceRename?: (deviceId: string, newName: string) => void;
+  onRefreshNetwork?: () => void;
+  focusDeviceId?: string | null;
+  onOpenTasks?: (deviceId: string) => void;
+  clearSelectionTrigger?: number;
 }
 
 export interface CanvasDevice {

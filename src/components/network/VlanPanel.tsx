@@ -11,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { Translations } from '@/contexts/LanguageContext';
 import { Layers, Trash2 } from 'lucide-react';
 import { RouterIcon, SwitchIcon } from './PCPanelWidgets';
-import { vlanTasks, getTaskStatus } from '@/lib/network/taskDefinitions';
 import type { DeviceType } from './networkTopology.types';
 
 interface VlanPanelProps {
@@ -28,9 +27,7 @@ interface VlanPanelProps {
   isDevicePoweredOff?: boolean;
 }
 
-
-
-export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onTogglePower, onExecuteCommand, t, theme, activeDeviceType, isDevicePoweredOff = false }: VlanPanelProps) {
+export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteCommand, t, theme, activeDeviceType, isDevicePoweredOff = false }: VlanPanelProps) {
   const [newVlanId, setNewVlanId] = useState('');
   const [newVlanName, setNewVlanName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -39,7 +36,6 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
 
   const cardBg = isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
   const innerBg = isDark ? 'bg-slate-900' : 'bg-slate-100';
-  const itemBg = isDark ? 'bg-slate-900' : 'bg-slate-50';
   const textPrimary = isDark ? 'text-white' : 'text-slate-900';
   const textSecondary = isDark ? 'text-slate-400' : 'text-slate-600';
   const textMuted = isDark ? 'text-slate-500' : 'text-slate-400';
@@ -50,7 +46,8 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
         <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
           <CardTitle className="text-purple-400 text-base sm:text-lg flex items-center gap-2">
             <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
-            {deviceName || t.vlanStatus}          </CardTitle>
+            {deviceName || t.vlanStatus}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center h-48 sm:h-64 text-center text-slate-500">
@@ -69,28 +66,6 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
     return Object.values(ports)
       .filter(p => Number(p.accessVlan || p.vlan || 1) === vlanId && !p.shutdown)
       .map(p => p.id.toUpperCase());
-  };
-
-  const localState = {
-    vlans,
-    ports,
-  } as SwitchState;
-  const taskContext = { language: t.language as 'tr' | 'en', cableInfo: null as any, showPCPanel: false, showRouterPanel: false, selectedDevice: null };
-  const completedCount = vlanTasks.filter(task => getTaskStatus(task, localState, taskContext)).length;
-  const totalScore = vlanTasks.reduce((acc, task) => acc + (getTaskStatus(task, localState, taskContext) ? task.weight : 0), 0);
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return isDark ? 'text-green-400' : 'text-green-600';
-    if (score >= 60) return isDark ? 'text-yellow-400' : 'text-yellow-600';
-    if (score >= 40) return isDark ? 'text-orange-400' : 'text-orange-600';
-    return isDark ? 'text-red-400' : 'text-red-600';
-  };
-
-  const getScoreText = (score: number) => {
-    if (score >= 80) return t.vlanExcellent;
-    if (score >= 60) return t.vlanGood;
-    if (score >= 40) return t.vlanInProgress;
-    return t.vlanNeeded;
   };
 
   const handleCreateVlan = async () => {
@@ -139,7 +114,13 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
     <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
       <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className={deviceModel === 'ISR 4451 X' ? "text-purple-400 text-base sm:text-lg flex items-center gap-2" : deviceModel === 'WS-C3650-24PS' ? "text-purple-400 text-base sm:text-lg flex items-center gap-2" : deviceModel === 'WS-C2960-24TT-L' ? "text-green-400 text-base sm:text-lg flex items-center gap-2" : "text-purple-400 text-base sm:text-lg flex items-center gap-2"}>
+          <CardTitle className={
+            deviceModel === 'ISR 4451 X' || deviceModel === 'WS-C3650-24PS'
+              ? "text-purple-400 text-base sm:text-lg flex items-center gap-2"
+              : deviceModel === 'WS-C2960-24TT-L'
+                ? "text-green-400 text-base sm:text-lg flex items-center gap-2"
+                : "text-purple-400 text-base sm:text-lg flex items-center gap-2"
+          }>
             {deviceModel === 'ISR 4451 X' ? (
               <RouterIcon className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
             ) : deviceModel === 'WS-C3650-24PS' ? (
@@ -222,7 +203,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, deviceId, onT
               return (
                 <div
                   key={`${vlan.id}-${vlan.name}`}
-                  className={`grid grid-cols-12 gap-1 sm:gap-2 px-2 py-1.5 sm:py-2 text-[12px] rounded hover:${isDark ? 'bg-slate-700/50' : 'bg-slate-100'} ${isDefault ? 'opacity-75' : ''}`}
+                  className={`grid grid-cols-12 gap-1 sm:gap-2 px-2 py-1.5 sm:py-2 text-[12px] rounded ${isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-100'} ${isDefault ? 'opacity-75' : ''}`}
                 >
                   <div className="col-span-1 font-mono text-yellow-400">
                     {vlan.id}

@@ -82,7 +82,7 @@ export function initializePerformanceConsoleAPI(): void {
     Object.assign(window.performance, customPerformance);
 
     // Also expose via window.__PERFORMANCE__ for easier access
-    (window as any).__PERFORMANCE__ = customPerformance;
+    window.__PERFORMANCE__ = customPerformance;
 
     console.log(
         '[PerformanceMonitor] Console API initialized. Use window.performance.getMetrics() or window.__PERFORMANCE__.getMetrics()'

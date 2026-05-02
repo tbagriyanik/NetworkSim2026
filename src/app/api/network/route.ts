@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeCommand, getPrompt } from '@/lib/network/executor';
-import { SwitchState, CommandMode } from '@/lib/network/types';
+import { SwitchState } from '@/lib/network/types';
 import { createInitialState } from '@/lib/network/initialState';
 
-// Global state storage (in-memory, per session would be better but this is a demo)
+// NOTE: This in-memory state is intentional for the demo API endpoint.
+// In a serverless environment each cold start resets the state.
+// The primary simulation runs client-side; this API is a secondary interface.
 let switchState: SwitchState = createInitialState();
 
 export async function POST(request: NextRequest) {
@@ -17,8 +19,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (!command) {
-      return NextResponse.json({ 
-        error: 'Komut gerekli' 
+      return NextResponse.json({
+        error: 'Komut gerekli'
       }, { status: 400 });
     }
 
@@ -51,8 +53,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Network API Error:', error);
-    return NextResponse.json({ 
-      error: 'Sunucu hatası oluştu' 
+    return NextResponse.json({
+      error: 'Sunucu hatası oluştu'
     }, { status: 500 });
   }
 }

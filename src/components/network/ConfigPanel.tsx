@@ -8,7 +8,7 @@ import { ModernPanel } from '@/components/ui/ModernPanel';
 import { Save, FileText } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useIsMobile, useIsTablet, useIsDesktop } from '@/hooks/use-breakpoint';
+import { useIsMobile } from '@/hooks/use-breakpoint';
 
 interface ConfigPanelProps {
   state: SwitchState;
@@ -30,8 +30,6 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
 
   // Responsive hooks
   const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
-  const isDesktop = useIsDesktop();
 
   const generateConfig = (): string => {
     let config = '!\\n';

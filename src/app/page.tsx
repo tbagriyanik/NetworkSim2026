@@ -8,7 +8,6 @@ import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { useDeviceManager } from '@/hooks/useDeviceManager';
 import { useModalDragResize } from '@/hooks/useModalDragResize';
 import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes, useZoom, usePan, useActiveTab } from '@/lib/store/appStore';
-// Duplicate removed
 import { NetworkTopology } from '@/components/network/NetworkTopology';
 import { cn, normalizeMAC } from '@/lib/utils';
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, CanvasPortStatus } from '@/components/network/networkTopology.types';
@@ -56,7 +55,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal, Square, Minus, Strikethrough, Cable, Usb, BookOpen, Target, Clock, GraduationCap, Settings as SettingsIcon } from "lucide-react";
-// Add import for SwitchIcon
 import { RouterIcon, SwitchIcon } from '@/components/network/PCPanelWidgets';
 
 // Existing RouterInfoPopover stays unchanged for routers
@@ -297,13 +295,12 @@ function RefreshDeviceListToast({
             key={device.id}
             type="button"
             onClick={() => setSelectedId(device.id)}
-            className={`px-2 py-0.5 text-[10px] font-bold rounded transition-all border ${
-              selectedId === device.id
-                ? 'bg-blue-600 border-blue-700 text-white shadow-sm scale-105 z-10'
-                : isDark
-                  ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-300'
-                  : 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-800'
-            }`}
+            className={`px-2 py-0.5 text-[10px] font-bold rounded transition-all border ${selectedId === device.id
+              ? 'bg-blue-600 border-blue-700 text-white shadow-sm scale-105 z-10'
+              : isDark
+                ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-300'
+                : 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-800'
+              }`}
           >
             {device.name}
           </button>
@@ -1350,8 +1347,8 @@ export default function Home() {
           const apWifi = getDeviceWifiConfig(ap, activeStates);
           if (apWifi?.enabled && apWifi.mode === 'ap' && apWifi.ssid === pcWifi.ssid) {
             // Check password/security match
-            if ((apWifi.security || 'open') === (pcWifi.security || 'open') && 
-                (apWifi.security === 'open' || apWifi.password === pcWifi.password)) {
+            if ((apWifi.security || 'open') === (pcWifi.security || 'open') &&
+              (apWifi.security === 'open' || apWifi.password === pcWifi.password)) {
               activeConnections.push({
                 id: `wireless-dhcp-${pc.id}-${ap.id}`,
                 sourceDeviceId: pc.id,
@@ -3465,7 +3462,7 @@ ${state.bannerMOTD}
               if (!lease.ip.startsWith('169.254.')) {
                 dhcpAssignments.push({ name: pc.name || pc.id, ip: lease.ip });
               }
-              
+
               // Update PC terminal output
               const pcOut = pcOutputs.get(pc.id);
               if (pcOut) {
@@ -3702,7 +3699,7 @@ ${state.bannerMOTD}
               ? `⚠ ${disconnectedAPs.length} AP istemci yok`
               : `⚠ ${disconnectedAPs.length} AP no clients`);
           }
-          
+
           // Show combined WiFi status as a single toast
           if (wifiMessages.length > 0) {
             toast({
@@ -3747,7 +3744,7 @@ ${state.bannerMOTD}
             : (language === 'tr'
               ? `DHCP: ${dhcpServerActiveCount} sunucu aktif, ${dhcpClientWithLeaseCount} lease`
               : `DHCP: ${dhcpServerActiveCount} active servers, ${dhcpClientWithLeaseCount} leases`);
-          
+
           setRefreshNetworkReport({
             show: true,
             title: t.networkRefreshed,
@@ -3788,7 +3785,7 @@ ${state.bannerMOTD}
       if (pc.wifi?.enabled && pc.wifi?.ssid && pc.wifi?.bssid) return true;
 
       // Check if connected via cable
-      const isConnectedViaCable = topologyConnections.some(c => 
+      const isConnectedViaCable = topologyConnections.some(c =>
         c.active !== false && (c.sourceDeviceId === pc.id || c.targetDeviceId === pc.id)
       );
       return isConnectedViaCable;
@@ -3892,13 +3889,13 @@ ${state.bannerMOTD}
         // If a panel is open (PC panel, Router panel, etc.), let the panel handle Tab navigation
         if (activeTab === 'topology' && topologyDevices.length > 0 && !showPCPanel && !showRouterPanel && !showTerminalModal) {
           e.preventDefault();
-          
+
           // Cancel current selection if multiple devices are selected or all devices are selected
           if (selectedDevice) {
             setSelectedDevice(null);
             setClearSelectionTrigger(prev => prev + 1);
           }
-          
+
           const currentIndex = topologyDevices.findIndex(d => d.id === activeDeviceId);
           const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % topologyDevices.length;
           const nextDevice = topologyDevices[nextIndex];
@@ -4424,18 +4421,18 @@ ${state.bannerMOTD}
                         {/* Lab Progress Mobile - Hidden for PC devices or when no devices exist */}
                         {activeDeviceType !== 'pc' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && (
                           <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-800/30' : 'bg-slate-50'} border ${isDark ? 'border-slate-800/50' : 'border-slate-200'}`}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-bold tracking-[0.15em] text-slate-500">{t.labProgress}</span>
-                            <span className="text-xs font-bold text-cyan-400">{Math.round((totalScore / maxScore) * 100)}%</span>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-bold tracking-[0.15em] text-slate-500">{t.labProgress}</span>
+                              <span className="text-xs font-bold text-cyan-400">{Math.round((totalScore / maxScore) * 100)}%</span>
+                            </div>
+                            <div className={`h-1.5 w-full rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-200'} overflow-hidden mb-1.5`}>
+                              <div
+                                className="h-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)] transition-all duration-500"
+                                style={{ width: `${(totalScore / maxScore) * 100}%` }}
+                              />
+                            </div>
+                            <p className={`text-center text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{totalScore} / {maxScore} {t.pts}</p>
                           </div>
-                          <div className={`h-1.5 w-full rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-200'} overflow-hidden mb-1.5`}>
-                            <div
-                              className="h-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)] transition-all duration-500"
-                              style={{ width: `${(totalScore / maxScore) * 100}%` }}
-                            />
-                          </div>
-                          <p className={`text-center text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{totalScore} / {maxScore} {t.pts}</p>
-                        </div>
                         )}
                       </div>
                     </ScrollArea>
@@ -5925,8 +5922,8 @@ ${state.bannerMOTD}
           {/* Network Refresh Report - Bottom Left */}
           {refreshNetworkReport?.show && (
             <div className={`fixed bottom-16 left-6 z-[100] w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md ${isDark
-                ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
-                : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
+              ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
+              : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
               }`}>
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -6570,7 +6567,7 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
           <div className="flex items-center gap-1.5">
             <GripHorizontal className="w-3 h-3 opacity-30 cursor-grab" />
-                        {router.type.startsWith('switch') ? <SwitchIcon isL3={router.type === 'switchL3'} className="w-3.5 h-3.5 text-purple-500" /> : <RouterIcon className="w-3.5 h-3.5 text-purple-500" />}
+            {router.type.startsWith('switch') ? <SwitchIcon isL3={router.type === 'switchL3'} className="w-3.5 h-3.5 text-purple-500" /> : <RouterIcon className="w-3.5 h-3.5 text-purple-500" />}
             <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
           </div>
           <button

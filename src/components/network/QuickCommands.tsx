@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Translations } from '@/contexts/LanguageContext';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { useIsMobile, useIsTablet, useIsDesktop } from '@/hooks/use-breakpoint';
+import { useIsMobile } from '@/hooks/use-breakpoint';
 import { ModernPanel } from '@/components/ui/ModernPanel';
 import { cn } from '@/lib/utils';
 
@@ -46,8 +46,6 @@ export function QuickCommands({ currentMode, onExecuteCommand, t, theme, languag
 
   // Responsive hooks
   const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
-  const isDesktop = useIsDesktop();
 
   const availableCommands = quickCommands.filter(cmd =>
     cmd.modes.includes(currentMode)

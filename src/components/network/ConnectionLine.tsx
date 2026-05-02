@@ -87,9 +87,7 @@ export const ConnectionLine = memo(function ConnectionLine({
   // Apply perpendicular offset for parallel lines
   const dx = target.x - source.x;
   const dy = target.y - source.y;
-  // const len = Math.sqrt(dx * dx + dy * dy) || 1; // Unused
-  const len = Math.sqrt(dx * dx + dy * dy) || 1;
-  const perpX = -dy / len * offset;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1; const perpX = -dy / len * offset;
   const perpY = dx / len * offset;
 
   const controlPoint1 = {
@@ -118,7 +116,6 @@ export const ConnectionLine = memo(function ConnectionLine({
     const points: string[] = [`M ${sx} ${sy}`];
 
     for (let i = 0; i < waveCount; i++) {
-      const t0 = i / waveCount;
       const t1 = (i + 0.5) / waveCount;
       const t2 = (i + 1) / waveCount;
 

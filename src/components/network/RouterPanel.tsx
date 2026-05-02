@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { CableInfo, SwitchState, Port, getPortLEDColor, PortLEDColor } from '@/lib/network/types';
+import { CableInfo, SwitchState, Port } from '@/lib/network/types';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,7 +14,6 @@ import {
   Wifi,
   WifiOff,
   Network,
-  Settings,
   Server,
   ShieldCheck,
   Activity,
@@ -24,8 +23,6 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
-  ChevronDown,
-  ChevronUp
 } from 'lucide-react';
 import { cn, normalizeMAC } from '@/lib/utils';
 import type { CanvasDevice } from './networkTopology.types';
@@ -79,7 +76,7 @@ export function RouterPanel({
   // Get ports from router state or topology
   const ports = useMemo(() => {
     if (routerState?.ports) {
-      return Object.entries(routerState.ports).map(([id, port]) => port);
+      return Object.values(routerState.ports);
     }
     return routerDevice?.ports || [];
   }, [routerState, routerDevice]);
@@ -170,7 +167,7 @@ export function RouterPanel({
             <div className="flex items-center gap-3">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div 
+                  <div
                     className={`w-4 h-4 rounded-full cursor-pointer transition-all duration-200 hover:scale-125 group flex items-center justify-center ${routerDevice.status === 'online' ? 'bg-green-500 animate-pulse hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
                     onClick={onClose}
                   >

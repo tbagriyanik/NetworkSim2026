@@ -1,6 +1,6 @@
 'use client';
 
-import { Port, getPortLEDColor, PortLEDColor } from '@/lib/network/types';
+import { Port, PortLEDColor } from '@/lib/network/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
@@ -42,14 +42,6 @@ const ledColorClasses: Record<PortLEDColor, string> = {
   white: 'bg-white shadow-[0_0_4px_rgba(255,255,255,0.3)] border border-zinc-300',
   off: 'bg-zinc-700 transition-colors',
   red: 'bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.4)]'
-};
-
-const statusTextEn: Record<string, string> = {
-  connected: 'Connected',
-  notconnect: 'Not Connected',
-  disabled: 'Disabled',
-  blocked: 'Blocked',
-  'err-disabled': 'Err-Disabled'
 };
 
 export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDeviceId, isDevicePoweredOff = false, topologyDevices = [], onTogglePower, topologyConnections, onClose }: PortPanelProps) {
@@ -344,7 +336,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
               <div className="flex items-center gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div 
+                    <div
                       className={`w-3 h-3 rounded-full cursor-pointer transition-all duration-200 hover:scale-125 group flex items-center justify-center ${isDevicePoweredOff ? 'bg-gray-500 hover:bg-gray-600' : 'bg-green-500 animate-pulse hover:bg-green-600'}`}
                       onClick={onClose}
                     >

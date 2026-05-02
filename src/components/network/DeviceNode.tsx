@@ -46,7 +46,10 @@ export const DeviceNode = memo(function DeviceNode({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onClick(e as any, device);
+          // Simulate a click via the element itself for keyboard activation
+          (e.currentTarget as SVGGElement).dispatchEvent(
+            new MouseEvent('click', { bubbles: true, cancelable: true })
+          );
         }
       }}
       onMouseDown={(e) => onMouseDown(e, device.id)}

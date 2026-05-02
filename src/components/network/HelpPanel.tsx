@@ -34,7 +34,7 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
 
   const isDark = theme === 'dark';
   const isMobile = useIsMobile();
-  const lang = (t as any).language || 'en';
+  const lang = t.language || 'en';
   const isTR = lang === 'tr';
 
   const toggle = (id: string) => {

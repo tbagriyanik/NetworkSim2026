@@ -1,8 +1,8 @@
 'use client';
 
-import React, { ReactNode, useEffect, useState, useRef, useCallback } from 'react';
+import React, { ReactNode, useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { X, GripHorizontal, Minimize2, Maximize2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -225,19 +225,10 @@ export function ModernPanel({
         document.addEventListener('mouseup', handleMouseUp, { once: true });
     };
 
-    // Touch handling for mobile (simplified, no drag on mobile)
-    const handleTouchStart = (e: React.TouchEvent) => {
-        if (!isOverlay || isMobile) return;
-        // Mobile doesn't support drag, just handle resize
-    };
-
+    // Touch handling for mobile - drag not supported on mobile
     const handleTouchMove = (e: React.TouchEvent) => {
         if (!isOverlay) return;
         e.preventDefault();
-    };
-
-    const handleTouchEnd = () => {
-        // No-op
     };
 
     return (
@@ -259,9 +250,7 @@ export function ModernPanel({
                 ...style
             }}
             onMouseDown={handleDragStart}
-            onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
         >
             {/* Header - Simple, clean */}
             {!hideHeader && (
@@ -293,8 +282,8 @@ export function ModernPanel({
                                 onClick={(e) => { e.stopPropagation(); onClose(); }}
                                 className={cn(
                                     "p-1.5 rounded-md transition-colors",
-                                    isDark 
-                                        ? "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100" 
+                                    isDark
+                                        ? "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100"
                                         : "hover:bg-zinc-200 text-zinc-500 hover:text-zinc-900"
                                 )}
                                 aria-label="Close"

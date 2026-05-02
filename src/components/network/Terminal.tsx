@@ -5,7 +5,6 @@ import { useSwitchState } from '@/lib/store/appStore';
 import { SwitchState } from '@/lib/network/types';
 import { useLanguage, Translations } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import type { TerminalOutput as TerminalOutputType } from './Terminal';
 import { checkConnectivity, getWirelessSignalStrength, getDeviceWifiConfig } from '@/lib/network/connectivity';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -38,6 +37,9 @@ function BootProgressBar({ id, isDark, onDone }: { id: string; isDark: boolean; 
   const [filled, setFilled] = useState(0);
   const [done, setDone] = useState(false);
   const total = 9;
+  // Stable ref to avoid re-triggering the effect when parent re-renders
+  const onDoneRef = useRef(onDone);
+  useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
 
   useEffect(() => {
     if (filled < total) {
@@ -46,11 +48,11 @@ function BootProgressBar({ id, isDark, onDone }: { id: string; isDark: boolean; 
     } else {
       const t = setTimeout(() => {
         setDone(true);
-        onDone(id);
+        onDoneRef.current(id);
       }, 300);
       return () => clearTimeout(t);
     }
-  }, [filled]);
+  }, [filled, id]);
 
   return (
     <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>
@@ -70,7 +72,7 @@ interface TerminalProps {
   state: SwitchState;
   onCommand: (command: string) => Promise<void>;
   onClear: () => void;
-  output: TerminalOutputType[];
+  output: TerminalOutput[];
   isLoading: boolean;
   isConnectionError?: boolean;
   connectionErrorMessage?: string;

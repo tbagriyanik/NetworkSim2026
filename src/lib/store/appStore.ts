@@ -195,7 +195,7 @@ export function migrateAndValidatePersistedState(persistedState: any, persistedV
 }
 
 // Helper to create actions
-const createActions = (set: any, get: any) => ({
+const createActions = (set: (partial: Partial<AppState> | ((state: AppState) => Partial<AppState>)) => void, get: () => AppState) => ({
     // Topology actions
     setDevices: (devices: CanvasDevice[] | ((prev: CanvasDevice[]) => CanvasDevice[])) => {
         const nextDevices = typeof devices === 'function' ? devices(get().topology.devices) : devices;
@@ -333,9 +333,9 @@ const createActions = (set: any, get: any) => ({
 // Create the store with persistence
 export const useAppStore = create<AppState>()(
     persist(
-        (set: any, get: any) => ({
+        (set, get) => ({
             ...initialState,
-            ...createActions(set, get),
+            ...createActions(set as Parameters<typeof createActions>[0], get),
         }),
         {
             name: STORE_KEY,
@@ -349,13 +349,13 @@ export const useAppStore = create<AppState>()(
                 sidebarOpen: state.sidebarOpen,
                 graphicsQuality: state.graphicsQuality,
             }),
-            migrate: (persistedState: any, version: number) => {
+            migrate: (persistedState: unknown, version: number) => {
                 try {
                     return migrateAndValidatePersistedState(persistedState, version) as AppState;
                 } catch {
                     return {
                         ...initialState,
-                        ...createActions(() => { }, () => initialState),
+                        ...createActions(() => { }, () => initialState as AppState),
                     } as AppState;
                 }
             },

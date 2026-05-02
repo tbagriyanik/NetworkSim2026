@@ -9,6 +9,7 @@ export interface ProjectState {
   topologyNotes: CanvasNote[];
   deviceStates: Map<string, SwitchState>;
   deviceOutputs: Map<string, TerminalOutput[]>;
+  // pcOutputs uses any[] because PCOutputLine is defined in page.tsx and not shared
   pcOutputs: Map<string, any[]>;
   pcHistories: Map<string, string[]>;
   cableInfo: CableInfo;

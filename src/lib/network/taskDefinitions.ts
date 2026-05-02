@@ -263,6 +263,61 @@ export const wirelessTasks: TaskDefinition[] = [
   },
 ];
 
+// DHCP görevleri - TOPLAM: 100 (Router üzerinde DHCP sunucusu)
+export const dhcpTasks: TaskDefinition[] = [
+  {
+    id: 'dhcp-pool-created',
+    name: { tr: 'DHCP Havuzu Oluştur', en: 'Create DHCP Pool' },
+    description: { tr: 'Router üzerinde bir DHCP havuzu oluşturun', en: 'Create a DHCP pool on the router' },
+    tip: { tr: 'ip dhcp pool LAN komutu ile havuz oluşturun', en: 'Create pool with ip dhcp pool LAN command' },
+    weight: 25,
+    checkFn: (state) => Object.keys(state.dhcpPools || {}).length > 0 || (state.services?.dhcp?.pools?.length || 0) > 0,
+  },
+  {
+    id: 'dhcp-network-config',
+    name: { tr: 'DHCP Network Tanımla', en: 'Define DHCP Network' },
+    description: { tr: 'DHCP havuzuna ağ ve subnet mask tanımlayın', en: 'Define network and subnet mask for DHCP pool' },
+    tip: { tr: 'network 192.168.1.0 255.255.255.0 komutunu kullanın', en: 'Use network 192.168.1.0 255.255.255.0 command' },
+    weight: 25,
+    checkFn: (state) => {
+      const pools = Object.values(state.dhcpPools || {});
+      return pools.some(p => p.network && p.subnetMask);
+    },
+  },
+  {
+    id: 'dhcp-default-router',
+    name: { tr: 'DHCP Gateway Ayarla', en: 'Set DHCP Gateway' },
+    description: { tr: 'DHCP havuzuna varsayılan gateway tanımlayın', en: 'Define default gateway for DHCP pool' },
+    tip: { tr: 'default-router 192.168.1.1 komutunu kullanın', en: 'Use default-router 192.168.1.1 command' },
+    weight: 25,
+    checkFn: (state) => {
+      const pools = Object.values(state.dhcpPools || {});
+      const servicePools = state.services?.dhcp?.pools || [];
+      return pools.some(p => p.defaultRouter) || servicePools.some((p: any) => p.defaultGateway);
+    },
+  },
+  {
+    id: 'dhcp-dns-server',
+    name: { tr: 'DHCP DNS Ayarla', en: 'Set DHCP DNS' },
+    description: { tr: 'DHCP havuzuna DNS sunucu tanımlayın', en: 'Define DNS server for DHCP pool' },
+    tip: { tr: 'dns-server 8.8.8.8 komutunu kullanın', en: 'Use dns-server 8.8.8.8 command' },
+    weight: 15,
+    checkFn: (state) => {
+      const pools = Object.values(state.dhcpPools || {});
+      const servicePools = state.services?.dhcp?.pools || [];
+      return pools.some(p => p.dnsServer) || servicePools.some((p: any) => p.dnsServer);
+    },
+  },
+  {
+    id: 'dhcp-enabled',
+    name: { tr: 'DHCP Aktif', en: 'DHCP Enabled' },
+    description: { tr: 'DHCP servisini aktif hale getirin', en: 'Enable DHCP service' },
+    tip: { tr: 'service dhcp komutu ile servisi aktif edin', en: 'Enable service with service dhcp command' },
+    weight: 10,
+    checkFn: (state) => state.services?.dhcp?.enabled === true || Object.keys(state.dhcpPools || {}).length > 0,
+  },
+];
+
 // Routing görevleri - TOPLAM: 100 (L3 Switch only)
 export const routingTasks: TaskDefinition[] = [
   {
@@ -320,6 +375,7 @@ export const allTaskGroups = {
   security: securityTasks,
   wireless: wirelessTasks,
   routing: routingTasks,
+  dhcp: dhcpTasks,
 };
 
 // Görev hesaplama yardımcı fonksiyonu

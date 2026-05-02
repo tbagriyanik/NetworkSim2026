@@ -11,7 +11,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useSpatialPartitioning } from '@/lib/performance/spatial';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, CanvasPort } from './networkTopology.types';
+import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, CanvasPort, NetworkTopologyProps } from './networkTopology.types';
 import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts } from './networkTopology.portGenerators';
 import { useCanvasHistory } from '@/hooks/useCanvasHistory';
 import { DeviceIcon } from './DeviceIcon';
@@ -43,37 +43,6 @@ const generateMacAddress = (): string => {
     }
   }
 };
-
-interface NetworkTopologyProps {
-  cableInfo: CableInfo;
-  onCableChange: (cableInfo: CableInfo) => void;
-  selectedDevice: DeviceType | null;
-  onDeviceSelect: (device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string, isNew?: boolean, deviceData?: CanvasDevice) => void;
-  onDeviceDoubleClick?: (device: DeviceType, deviceId: string) => void;
-  onTopologyChange?: (devices: CanvasDevice[], connections: CanvasConnection[], notes: CanvasNote[]) => void;
-  onDeviceDelete?: (deviceId: string) => void;
-  initialDevices?: CanvasDevice[];
-  initialConnections?: CanvasConnection[];
-  initialNotes?: CanvasNote[];
-  isActive?: boolean;
-  activeDeviceId?: string | null;
-  deviceStates?: Map<string, SwitchState>;
-  isFullscreen?: boolean;
-  onFullscreenChange?: (isFullscreen: boolean) => void;
-  zoom?: number;
-  onZoomChange?: (zoom: number) => void;
-  pan?: { x: number; y: number };
-  onPanChange?: (pan: { x: number; y: number }) => void;
-  canUndo?: boolean;
-  canRedo?: boolean;
-  onUndo?: () => void;
-  onRedo?: () => void;
-  onDeviceRename?: (deviceId: string, newName: string) => void;
-  onRefreshNetwork?: () => void;
-  focusDeviceId?: string | null;
-  onOpenTasks?: (deviceId: string) => void;
-  clearSelectionTrigger?: number;
-}
 
 // Drag item from palette
 interface DragItem {
@@ -795,19 +764,19 @@ export function NetworkTopology({
 
       const result = prev.map(d => {
         if (!selectedDeviceIds.includes(d.id)) return d;
-        
+
         const updatedDevice = { ...d };
-        
+
         if (type === 'top' || type === 'bottom' || type === 'v-center') {
           updatedDevice.y = targetY;
         }
         if (type === 'left' || type === 'right' || type === 'h-center') {
           updatedDevice.x = targetX;
         }
-        
+
         return updatedDevice;
       });
-      
+
       console.log('[handleAlign] result:', result.filter(d => selectedDeviceIds.includes(d.id)).map(d => ({ id: d.id, x: d.x, y: d.y })));
       return result;
     });
@@ -1034,7 +1003,7 @@ export function NetworkTopology({
     if (e.button === 0 && !isOnDevice && !isOnNote && !isOnEditable) {
       // Left click on empty canvas - PAN start
       e.preventDefault();
-      
+
       const currentPan = panRef.current;
       const ps = { x: e.clientX - currentPan.x, y: e.clientY - currentPan.y };
       setPanStart(ps);
@@ -1325,10 +1294,10 @@ export function NetworkTopology({
         } else {
           // Only clear selection if we actually dragged a box of significant size
           const dragDistance = Math.sqrt(
-            Math.pow(box.current.x - box.start.x, 2) + 
+            Math.pow(box.current.x - box.start.x, 2) +
             Math.pow(box.current.y - box.start.y, 2)
           );
-          
+
           if (dragDistance > 10) {
             setSelectedDeviceIds([]);
             selectedDeviceIdsRef.current = [];
@@ -1345,7 +1314,7 @@ export function NetworkTopology({
         const isOnDevice = !!targetEl.closest?.('[data-device-id]');
         const isOnNote = !!targetEl.closest?.('[data-note-id]');
         const isOnMenu = !!targetEl.closest?.('.context-menu') || !!targetEl.closest?.('.palette') || !!targetEl.closest?.('.modal') || !!targetEl.closest?.('.selection-toolbar');
-        
+
         if (!isOnDevice && !isOnNote && !isOnMenu) {
           setSelectedDeviceIds([]);
           selectedDeviceIdsRef.current = [];
@@ -1580,7 +1549,7 @@ export function NetworkTopology({
         y: (e.clientY - rect.top - pan.y) - device.y * zoom,
       });
     }
-  }, [devices, pan, zoom, selectedDeviceIds, onDeviceSelect, isSwitchDeviceType]);
+  }, [devices, pan, zoom, selectedDeviceIds, onDeviceSelect]);
 
   // Handle device click (single click - select only)
   const handleDeviceClick = useCallback((e: ReactMouseEvent, device: CanvasDevice) => {
@@ -1619,7 +1588,7 @@ export function NetworkTopology({
     onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined, device.name);
     // Focus canvas for keyboard navigation
     canvasRef.current?.focus();
-  }, [onDeviceSelect, pingMode, pingSource, devices, connections, deviceStates, isSwitchDeviceType]);
+  }, [onDeviceSelect, pingMode, pingSource, devices, connections, deviceStates]);
 
   // Handle device double click - open terminal
   const handleDeviceDoubleClick = useCallback((device: CanvasDevice) => {
@@ -2257,10 +2226,10 @@ export function NetworkTopology({
     isDrawingConnectionRef.current = isDrawingConnection;
 
     isTouchDraggingRef.current = isTouchDragging;
-     touchDraggedDeviceRef.current = touchDraggedDevice;
-     touchDragStartPosRef.current = touchDragStartPos;
-     touchDragOffsetRef.current = touchDragOffset;
-   });
+    touchDraggedDeviceRef.current = touchDraggedDevice;
+    touchDragStartPosRef.current = touchDragStartPos;
+    touchDragOffsetRef.current = touchDragOffset;
+  });
 
   const getNextNoteId = useCallback(() => {
     const existingIds = new Set(latestNotesRef.current.map((n) => n.id));
@@ -2980,7 +2949,7 @@ export function NetworkTopology({
       );
       // Bağlantıyı sil
       setConnections((prev) => prev.filter((c) => c.id !== connectionId));
-      
+
       // Trigger STP recalculation for all switches
       window.dispatchEvent(new CustomEvent('stp-recalculation-needed', {
         detail: { topologyDevices: devices, topologyConnections: connections.filter(c => c.id !== connectionId) }
@@ -3754,21 +3723,21 @@ export function NetworkTopology({
     const isCompatible = conn.cableType === 'console'
       ? isCableCompatible(cableInfoForConnection)
       : true;
-    
+
     // Check if either port is in STP blocking state
     const sourceState = deviceStates?.get(conn.sourceDeviceId);
     const targetState = deviceStates?.get(conn.targetDeviceId);
-    
+
     // Try to find port with case-insensitive matching
-    const sourcePort = sourceState?.ports?.[conn.sourcePort] || 
-                      Object.values(sourceState?.ports || {}).find(p => p.id.toLowerCase() === conn.sourcePort.toLowerCase());
-    const targetPort = targetState?.ports?.[conn.targetPort] || 
-                      Object.values(targetState?.ports || {}).find(p => p.id.toLowerCase() === conn.targetPort.toLowerCase());
-    
+    const sourcePort = sourceState?.ports?.[conn.sourcePort] ||
+      Object.values(sourceState?.ports || {}).find(p => p.id.toLowerCase() === conn.sourcePort.toLowerCase());
+    const targetPort = targetState?.ports?.[conn.targetPort] ||
+      Object.values(targetState?.ports || {}).find(p => p.id.toLowerCase() === conn.targetPort.toLowerCase());
+
     const isSourcePortBlocked = sourcePort?.spanningTree?.state === 'blocking' || sourcePort?.spanningTree?.role === 'alternate';
     const isTargetPortBlocked = targetPort?.spanningTree?.state === 'blocking' || targetPort?.spanningTree?.role === 'alternate';
     const isSTPBlocked = isSourcePortBlocked || isTargetPortBlocked;
-    
+
     // Use gray color for STP blocked cables
     const color = isSTPBlocked ? '#9ca3af' : (isCompatible ? CABLE_COLORS[conn.cableType].primary : CABLE_COLORS.error.primary);
 
@@ -5440,7 +5409,7 @@ export function NetworkTopology({
 
           {/* Selection Toolbar */}
           {selectedDeviceIds.length > 1 && (
-            <div 
+            <div
               style={{
                 position: 'absolute',
                 top: '8px',
@@ -5450,7 +5419,7 @@ export function NetworkTopology({
                 pointerEvents: 'auto'
               }}
               className={`px-3 py-1.5 rounded-xl shadow-2xl flex items-center gap-2 selection-toolbar ${isDark ? 'bg-slate-800/95 text-white border border-slate-700' : 'bg-white text-slate-900 border border-slate-200'
-              } backdrop-blur-md`}
+                } backdrop-blur-md`}
               onClick={(e) => {
                 e.stopPropagation();
                 console.log('[Toolbar] Container clicked');
@@ -6004,7 +5973,7 @@ export function NetworkTopology({
                         totalSameConns={totalSameConns}
                         sameConnIndex={sameConnIndex}
                         getPortPosition={getPortPosition}
-                        CABLE_COLORS={CABLE_COLORS as any}
+                        CABLE_COLORS={CABLE_COLORS}
                         zoom={zoom}
                       />
                     );
@@ -7221,7 +7190,7 @@ export function NetworkTopology({
                       const devState = deviceStates?.get(portTooltip.deviceId);
                       const simPort = devState?.ports?.[portTooltip.portId];
                       const isSTPBlocked = simPort?.spanningTree?.state === 'blocking' || simPort?.spanningTree?.role === 'alternate';
-                      
+
                       if (dev?.status === 'offline') {
                         return language === 'tr' ? 'Cihaz Kapalı' : 'Device Off';
                       }

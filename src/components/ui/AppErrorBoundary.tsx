@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 
@@ -25,7 +25,7 @@ export class AppErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     this.props.onError?.(error, info);
-    
+
     // Show red toast notification instead of full-screen error
     toast({
       title: this.props.fallbackTitle ?? 'Something went wrong',

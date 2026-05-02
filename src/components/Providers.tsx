@@ -10,15 +10,15 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-        <LanguageProvider>
-          <LayoutProvider>
-            <FeatureFlagProvider>
-              <TooltipProvider delayDuration={0}>
-                <SidebarProvider>
-                  {children}
-                </SidebarProvider>
-              </TooltipProvider>
-            </FeatureFlagProvider>
+      <LanguageProvider>
+        <LayoutProvider>
+          <FeatureFlagProvider>
+            <TooltipProvider delayDuration={0}>
+              <SidebarProvider>
+                {children}
+              </SidebarProvider>
+            </TooltipProvider>
+          </FeatureFlagProvider>
         </LayoutProvider>
       </LanguageProvider>
     </ThemeProvider>
