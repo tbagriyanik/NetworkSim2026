@@ -326,10 +326,8 @@ export const routingTasks: TaskDefinition[] = [
     description: { tr: 'IP routing özelliğini aktifleştirin', en: 'Enable IP routing feature' },
     tip: { tr: 'L3 switch üzerinde routing komutlarını kullanın', en: 'Use routing commands on L3 switch' },
     weight: 25,
-    checkFn: (state, ctx) => {
-      // Only check for L3 switches
-      const device = ctx.deviceStates?.get(ctx.selectedDevice || '');
-      return device?.ipRouting === true;
+    checkFn: (state) => {
+      return state.ipRouting === true;
     },
   },
   {
@@ -338,9 +336,8 @@ export const routingTasks: TaskDefinition[] = [
     description: { tr: 'RIP routing protokolünü yapılandırın', en: 'Configure RIP routing protocol' },
     tip: { tr: 'router rip komutu ile RIP etkinleştirin', en: 'Enable RIP with router rip command' },
     weight: 30,
-    checkFn: (state, ctx) => {
-      const device = ctx.deviceStates?.get(ctx.selectedDevice || '');
-      return device?.routingProtocol === 'rip';
+    checkFn: (state) => {
+      return state.routingProtocol === 'rip';
     },
   },
   {
@@ -349,9 +346,8 @@ export const routingTasks: TaskDefinition[] = [
     description: { tr: 'OSPF routing protokolünü yapılandırın', en: 'Configure OSPF routing protocol' },
     tip: { tr: 'router ospf komutu ile OSPF etkinleştirin', en: 'Enable OSPF with router ospf command' },
     weight: 30,
-    checkFn: (state, ctx) => {
-      const device = ctx.deviceStates?.get(ctx.selectedDevice || '');
-      return device?.routingProtocol === 'ospf';
+    checkFn: (state) => {
+      return state.routingProtocol === 'ospf';
     },
   },
   {
@@ -360,9 +356,8 @@ export const routingTasks: TaskDefinition[] = [
     description: { tr: 'Fiziksel portu routed moduna alın', en: 'Configure physical port as routed port' },
     tip: { tr: 'no switchport komutu ile L3 port yapın', en: 'Make L3 port with no switchport command' },
     weight: 15,
-    checkFn: (state, ctx) => {
-      const device = ctx.deviceStates?.get(ctx.selectedDevice || '');
-      return Object.values(device?.ports || {}).some(port => port.mode === 'routed' && !port.id.startsWith('vlan'));
+    checkFn: (state) => {
+      return Object.values(state.ports || {}).some(port => port.mode === 'routed' && !port.id.startsWith('vlan'));
     },
   },
 ];

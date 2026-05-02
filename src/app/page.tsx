@@ -176,6 +176,7 @@ import {
   securityTasks,
   wirelessTasks,
   routingTasks,
+  dhcpTasks,
   calculateTaskScore,
   TaskContext,
   getTaskStatus
@@ -1134,7 +1135,7 @@ export default function Home() {
   const isTaskSystemEnabled = activeDeviceType !== 'pc';
   const activeDeviceTasks = useMemo(
     () => isTaskSystemEnabled
-      ? [...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])]
+      ? [...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...dhcpTasks, ...(activeDeviceType === 'router' || activeDeviceType === 'switchL3' ? routingTasks : []), ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])]
       : [],
     [activeDeviceType, isTaskSystemEnabled]
   );
@@ -5061,7 +5062,7 @@ ${state.bannerMOTD}
                     {activeDeviceType !== 'pc' && (
                       <div className="overflow-y-auto custom-scrollbar">
                         <TaskCard
-                          tasks={[...portTasks, ...vlanTasks, ...securityTasks, ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])]}
+                          tasks={activeDeviceTasks}
                           state={state}
                           context={taskContext}
                           color="from-red-500 to-rose-500"

@@ -902,29 +902,13 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
 
   const routerDhcpSw1 = createInitialState('00:1A:2B:3C:4D:70');
   routerDhcpSw1.hostname = 'SW1';
-  routerDhcpSw1.ports['vlan1'] = { ...routerDhcpSw1.ports['vlan1'], ipAddress: '192.168.10.2', subnetMask: '255.255.255.0' };
-  routerDhcpSw1.ports['fa0/1'] = { ...routerDhcpSw1.ports['fa0/1'], status: 'connected', vlan: 1, mode: 'access' };
-  routerDhcpSw1.ports['fa0/2'] = { ...routerDhcpSw1.ports['fa0/2'], status: 'connected', vlan: 1, mode: 'access' };
-  routerDhcpSw1.ports['gi0/1'] = { ...routerDhcpSw1.ports['gi0/1'], status: 'connected', vlan: 1, mode: 'access' };
+  // Varsayılan L2 switch ayarlarına eşitle (IP'siz, tüm portlar dinamik)
+  routerDhcpSw1.ports['fa0/1'] = { ...routerDhcpSw1.ports['fa0/1'], status: 'connected' };
+  routerDhcpSw1.ports['fa0/2'] = { ...routerDhcpSw1.ports['fa0/2'], status: 'connected' };
+  routerDhcpSw1.ports['gi0/1'] = { ...routerDhcpSw1.ports['gi0/1'], status: 'connected' };
   routerDhcpSw1.runningConfig = [
     '!',
     'hostname SW1',
-    '!',
-    'interface vlan 1',
-    ' ip address 192.168.10.2 255.255.255.0',
-    ' no shutdown',
-    '!',
-    'interface fa0/1',
-    ' switchport mode access',
-    ' switchport access vlan 1',
-    '!',
-    'interface fa0/2',
-    ' switchport mode access',
-    ' switchport access vlan 1',
-    '!',
-    'interface gi0/1',
-    ' switchport mode access',
-    ' switchport access vlan 1',
     '!',
     'line con 0',
     'line vty 0 4',
