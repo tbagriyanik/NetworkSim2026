@@ -27,6 +27,7 @@ import { getDeviceWidth, getDeviceHeight, isPcLike, isSwitchDevice, isRouterDevi
 import { CABLE_COLORS, DRAG_THRESHOLD, LONG_PRESS_DURATION, VIRTUAL_CANVAS_WIDTH_MOBILE, VIRTUAL_CANVAS_HEIGHT_MOBILE, VIRTUAL_CANVAS_WIDTH_DESKTOP, VIRTUAL_CANVAS_HEIGHT_DESKTOP, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM, NOTE_COLORS, NOTE_FONTS_DESKTOP as NOTE_FONTS, NOTE_FONT_SIZES, NOTE_OPACITY as NOTE_OPACITY_OPTIONS, PC_PORT_SPACING, PORT_SPACING, PORT_START_X, PORT_START_Y, PORT_COLORS, STATUS_COLORS, STROKE_COLORS } from './networkTopology.constants';
 import { calculateSTPState } from '@/lib/network/core/showCommands';
 import { errorHandler, CLIPBOARD_ERRORS } from '@/lib/errors/errorHandler';
+import { PingPacketInfoPanel, buildHopPacketInfos } from './PingPacketInfoPanel';
 
 const allocatedMacAddresses = new Set<string>();
 const generateMacAddress = (): string => {
@@ -536,11 +537,17 @@ export function NetworkTopology({
     currentHopIndex: number;
     progress: number;
     success: boolean | null;
-    frame: number; // Frame counter for smooth animations
-    error?: string; // Error message if ping failed
-    hopCount: number; // Current hop number
+    frame: number;
+    error?: string;
+    hopCount: number;
+    isPaused?: boolean;
+    showPacketPanel?: boolean;
+    isReturn?: boolean;       // true = paket geri dönüyor (Echo Reply)
+    failedAtHop?: number;     // başarısız olduğu hop index
   } | null>(null);
   const [errorToast, setErrorToast] = useState<{ message: string; details?: string } | null>(null);
+  // Hop packet infos for the packet analysis panel
+  const [hopPacketInfos, setHopPacketInfos] = useState<import('./PingPacketInfoPanel').HopPacketInfo[]>([]);
 
   // Refs
   const deviceCounterRef = useRef<{ pc: number; iot: number; switch: number; router: number }>({ pc: 0, iot: 0, switch: 0, router: 0 });
@@ -552,6 +559,9 @@ export function NetworkTopology({
   }, []);
   const pingAnimationRef = useRef<number | null>(null);
   const pingCleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pingIsPausedRef = useRef<boolean>(false);
+  const pingResumeCallbackRef = useRef<(() => void) | null>(null);
+  const pingStepModeRef = useRef<boolean>(false); // When true, pause at each hop boundary
 
   // Added refs moved from below to avoid TDZ and sync issues
   const noteCounterRef = useRef<number>(0);
@@ -3398,27 +3408,92 @@ export function NetworkTopology({
     if (!connectivity.success) {
       const errorMessage = diagnostics.reasons.length > 0
         ? diagnostics.reasons[0]
-        : 'Ping başarısız';
+        : (isTR ? 'Ping başarısız' : 'Ping failed');
 
+      // Use partial path if available (animate to where it fails), else just source
+      const partialPath = (connectivity.hopIds && connectivity.hopIds.length >= 1)
+        ? connectivity.hopIds
+        : [sourceId];
+
+      const packetInfos = buildHopPacketInfos(partialPath, devices, connections);
+      setHopPacketInfos(packetInfos);
+
+      pingIsPausedRef.current = true;
+      pingStepModeRef.current = false;
       setPingAnimation({
         sourceId,
         targetId,
-        path: [sourceId, targetId],
+        path: partialPath,
         currentHopIndex: 0,
-        progress: 1,
+        progress: 0,
         success: false,
         frame: 0,
         error: errorMessage,
-        hopCount: 0
+        hopCount: 0,
+        isPaused: true,
+        showPacketPanel: true,
+        failedAtHop: partialPath.length - 1,
       });
 
-      // Show persistent error toast
-      setErrorToast({
-        message: isTR ? 'Ping başarısız!' : 'Ping failed!',
-        details: errorMessage
-      });
+      // Store resume callback — animation will run to the last reachable hop then stop with error
+      const runFailedAnimation = () => {
+        let startTime = Date.now();
+        let currentHop = 0;
+        let frameCount = 0;
 
-      pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000);
+        const hopDuration = 800;
+        const easeInOutCubic = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+        const animateFailed = () => {
+          if (pingIsPausedRef.current) return;
+          const fromId = partialPath[currentHop];
+          const toId = partialPath[currentHop + 1];
+          if (!toId) {
+            // Reached end of partial path — show error
+            setPingAnimation(prev => prev ? { ...prev, success: false, isPaused: false } : null);
+            setErrorToast({ message: isTR ? 'Ping başarısız!' : 'Ping failed!', details: errorMessage });
+            pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setHopPacketInfos([]); setPingMode(false); setErrorToast(null); }, 4000);
+            return;
+          }
+          const fromDev = devices.find(d => d.id === fromId);
+          const toDev = devices.find(d => d.id === toId);
+          const dx = (toDev?.x ?? 0) - (fromDev?.x ?? 0);
+          const dy = (toDev?.y ?? 0) - (fromDev?.y ?? 0);
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const dur = Math.min(hopDuration * Math.max(1, dist / 200), 2000);
+
+          const elapsed = Date.now() - startTime;
+          const rawProgress = Math.min(elapsed / dur, 1);
+          const progress = easeInOutCubic(rawProgress);
+          frameCount++;
+
+          if (progress < 1) {
+            setPingAnimation(prev => prev ? { ...prev, currentHopIndex: currentHop, progress, frame: frameCount } : null);
+            pingAnimationRef.current = requestAnimationFrame(animateFailed);
+          } else {
+            if (currentHop < partialPath.length - 2) {
+              currentHop++;
+              startTime = Date.now();
+              const shouldPause = pingIsPausedRef.current || pingStepModeRef.current;
+              setPingAnimation(prev => prev ? { ...prev, currentHopIndex: currentHop, progress: 0, frame: frameCount, isPaused: shouldPause } : null);
+              if (!shouldPause) {
+                pingAnimationRef.current = requestAnimationFrame(animateFailed);
+              } else {
+                pingIsPausedRef.current = true;
+                pingResumeCallbackRef.current = () => { startTime = Date.now(); pingAnimationRef.current = requestAnimationFrame(animateFailed); };
+              }
+            } else {
+              // Last reachable hop — show failure
+              setPingAnimation(prev => prev ? { ...prev, currentHopIndex: currentHop, progress: 1, frame: frameCount, success: false, isPaused: false } : null);
+              setErrorToast({ message: isTR ? 'Ping başarısız!' : 'Ping failed!', details: errorMessage });
+              pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setHopPacketInfos([]); setPingMode(false); setErrorToast(null); }, 4000);
+            }
+          }
+        };
+        pingAnimationRef.current = requestAnimationFrame(animateFailed);
+      };
+
+      pingResumeCallbackRef.current = runFailedAnimation;
       return;
     }
 
@@ -3426,30 +3501,33 @@ export function NetworkTopology({
     const path = connectivity.hopIds;
 
     if (!path || path.length < 2) {
-      // No path found - show error
+      const errorMessage = isTR ? 'Fiziksel bağlantı yok' : 'No physical connection';
+      setHopPacketInfos([]);
       setPingAnimation({
         sourceId,
         targetId,
-        path: [sourceId, targetId],
+        path: [sourceId],
         currentHopIndex: 0,
-        progress: 1,
+        progress: 0,
         success: false,
         frame: 0,
-        error: 'Fiziksel bağlantı yok',
-        hopCount: 0
+        error: errorMessage,
+        hopCount: 0,
+        isPaused: false,
+        showPacketPanel: false,
       });
-
-      // Show persistent error toast
-      setErrorToast({
-        message: isTR ? 'Ping başarısız!' : 'Ping failed!',
-        details: 'Fiziksel bağlantı yok'
-      });
-
-      pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000);
+      setErrorToast({ message: isTR ? 'Ping başarısız!' : 'Ping failed!', details: errorMessage });
+      pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setPingMode(false); setErrorToast(null); }, 3000);
       return;
     }
 
-    // Start ping animation
+    // Build packet infos for all hops upfront
+    const packetInfos = buildHopPacketInfos(path, devices, connections);
+    setHopPacketInfos(packetInfos);
+
+    // Start ping animation — begin PAUSED so the packet panel is visible immediately
+    pingIsPausedRef.current = true;
+    pingStepModeRef.current = false;
     setPingAnimation({
       sourceId,
       targetId,
@@ -3458,7 +3536,9 @@ export function NetworkTopology({
       progress: 0,
       success: null,
       frame: 0,
-      hopCount: 0
+      hopCount: 0,
+      isPaused: true,
+      showPacketPanel: true,
     });
 
     // Clear any previous error toast
@@ -3513,15 +3593,132 @@ export function NetworkTopology({
       return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     };
 
+    const advanceToNextHop = (hopCountIncrement: number) => {
+      if (currentHop < path.length - 1) {
+        currentHop++;
+        startTime = Date.now();
+        // Pause at hop boundary if: explicitly paused OR in step mode
+        const shouldPause = pingIsPausedRef.current || pingStepModeRef.current;
+        setPingAnimation(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            currentHopIndex: currentHop,
+            progress: 0,
+            frame: frameCount,
+            hopCount: prev.hopCount + hopCountIncrement,
+            isPaused: shouldPause,
+          };
+        });
+        if (!shouldPause) {
+          pingAnimationRef.current = requestAnimationFrame(animate);
+        } else {
+          pingIsPausedRef.current = true;
+          // Store resume callback so play/next button can continue
+          pingResumeCallbackRef.current = () => {
+            startTime = Date.now();
+            pingAnimationRef.current = requestAnimationFrame(animate);
+          };
+        }
+      } else {
+        // Last forward segment done — start return animation (Echo Reply)
+        const returnPath = [...path].reverse();
+        const returnPacketInfos = buildHopPacketInfos(returnPath, devices, connections);
+
+        pingStepModeRef.current = false;
+        pingIsPausedRef.current = false;
+
+        // Brief pause at destination before returning
+        setTimeout(() => {
+          let returnHop = 0;
+          let returnStartTime = Date.now();
+          let returnFrameCount = frameCount;
+
+          setPingAnimation(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              path: returnPath,
+              currentHopIndex: 0,
+              progress: 0,
+              hopCount: prev.hopCount + hopCountIncrement,
+              isPaused: false,
+              isReturn: true,
+            };
+          });
+          setHopPacketInfos(returnPacketInfos);
+
+          const finishSuccess = () => {
+            setPingAnimation(prev => prev ? { ...prev, success: true, isPaused: false } : null);
+            pingCleanupTimeoutRef.current = setTimeout(() => {
+              setPingAnimation(null);
+              setHopPacketInfos([]);
+              setPingMode(false);
+            }, 3000);
+          };
+
+          const animateReturn = () => {
+            if (pingIsPausedRef.current) return;
+
+            const fromId = returnPath[returnHop];
+            const toId = returnPath[returnHop + 1];
+
+            // No more hops — done
+            if (!toId) {
+              finishSuccess();
+              return;
+            }
+
+            const dur = calculateHopDuration(fromId, toId);
+            const elapsed = Date.now() - returnStartTime;
+            const rawP = Math.min(elapsed / dur, 1);
+            const prog = easeInOutCubic(rawP);
+            returnFrameCount++;
+
+            if (prog < 1) {
+              setPingAnimation(prev => prev ? { ...prev, currentHopIndex: returnHop, progress: prog, frame: returnFrameCount } : null);
+              pingAnimationRef.current = requestAnimationFrame(animateReturn);
+            } else {
+              // Snap to end
+              setPingAnimation(prev => prev ? { ...prev, currentHopIndex: returnHop, progress: 1, frame: returnFrameCount } : null);
+
+              if (returnHop < returnPath.length - 2) {
+                // More return hops
+                returnHop++;
+                returnStartTime = Date.now();
+                const shouldPause = pingIsPausedRef.current || pingStepModeRef.current;
+                setPingAnimation(prev => prev ? { ...prev, currentHopIndex: returnHop, progress: 0, frame: returnFrameCount, isPaused: shouldPause } : null);
+                if (!shouldPause) {
+                  pingAnimationRef.current = requestAnimationFrame(animateReturn);
+                } else {
+                  pingIsPausedRef.current = true;
+                  pingResumeCallbackRef.current = () => {
+                    returnStartTime = Date.now();
+                    pingAnimationRef.current = requestAnimationFrame(animateReturn);
+                  };
+                }
+              } else {
+                // Last return hop done
+                finishSuccess();
+              }
+            }
+          };
+          pingAnimationRef.current = requestAnimationFrame(animateReturn);
+        }, 300);
+      }
+    };
+
     const animate = () => {
-      // Get current hop duration dynamically
+      // If paused, don't advance
+      if (pingIsPausedRef.current) return;
+
       const fromId = path[currentHop];
       const toId = path[currentHop + 1];
       const currentHopDuration = calculateHopDuration(fromId, toId);
 
       const elapsed = Date.now() - startTime;
       const rawProgress = Math.min(elapsed / currentHopDuration, 1);
-      const progress = easeInOutCubic(rawProgress); // Apply smooth easing
+      const progress = easeInOutCubic(rawProgress);
       frameCount++;
 
       if (progress < 1) {
@@ -3531,7 +3728,6 @@ export function NetworkTopology({
         });
         pingAnimationRef.current = requestAnimationFrame(animate);
       } else {
-        // Check if this segment was a hop before moving to next
         const fromId = path[currentHop];
         const toId = path[currentHop + 1];
 
@@ -3542,48 +3738,83 @@ export function NetworkTopology({
         const toDevice = devices.find(d => d.id === toId);
         const isWifi = conn?.cableType === 'wireless';
         const isRouter = toDevice?.type === 'router';
-
-        // Calculate currentSegmentHopCountIncrement for the segment that just finished
         const currentSegmentHopCountIncrement = (isWifi || isRouter) ? 1 : 0;
 
-        if (currentHop < path.length - 1) { // If there are more segments to animate
-          // Prepare for the NEXT segment
-          currentHop++; // Increment hop index
-          startTime = Date.now(); // Reset timer for the NEW segment
+        // Snap to end of this segment
+        setPingAnimation(prev => {
+          if (!prev) return null;
+          return { ...prev, currentHopIndex: currentHop, progress: 1, frame: frameCount };
+        });
 
-          setPingAnimation(prev => {
-            if (!prev) return null;
-            return {
-              ...prev,
-              currentHopIndex: currentHop,
-              progress: 0, // Start progress for the NEW segment
-              frame: frameCount,
-              hopCount: prev.hopCount + currentSegmentHopCountIncrement // Update hopCount with increment from previous segment
-            };
-          });
-          pingAnimationRef.current = requestAnimationFrame(animate); // Schedule next frame for the NEW segment
-
-        } else { // This was the LAST segment. Animation complete.
-          setPingAnimation(prev => {
-            if (!prev) return null;
-            return {
-              ...prev,
-              success: true, // Mark as successful
-              hopCount: prev.hopCount + currentSegmentHopCountIncrement // Update hopCount with increment from last segment
-            };
-          });
-          pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setPingMode(false); }, 3000); // Clear animation after delay
-        }
+        advanceToNextHop(currentSegmentHopCountIncrement);
       }
     };
 
-    pingAnimationRef.current = requestAnimationFrame(animate);
+    // Store the first hop's start callback so Play/Next can kick it off
+    // (animation starts paused, so we don't call requestAnimationFrame directly)
+    pingResumeCallbackRef.current = () => {
+      startTime = Date.now();
+      pingAnimationRef.current = requestAnimationFrame(animate);
+    };
   }, [connections, deviceStates, devices, findPath]);
 
   // Sync ref after declaration to avoid TDZ
   useLayoutEffect(() => {
     startPingAnimationRef.current = startPingAnimation;
   }, [startPingAnimation]);
+
+  // Ping pause/play/next handlers
+  const handlePingPause = useCallback(() => {
+    pingIsPausedRef.current = true;
+    pingStepModeRef.current = false;
+    if (pingAnimationRef.current) {
+      cancelAnimationFrame(pingAnimationRef.current);
+      pingAnimationRef.current = null;
+    }
+    setPingAnimation(prev => prev ? { ...prev, isPaused: true } : null);
+  }, []);
+
+  const handlePingPlay = useCallback(() => {
+    // If already playing, do nothing
+    if (!pingIsPausedRef.current) return;
+    pingIsPausedRef.current = false;
+    pingStepModeRef.current = false;
+    setPingAnimation(prev => prev ? { ...prev, isPaused: false } : null);
+    if (pingResumeCallbackRef.current) {
+      const resume = pingResumeCallbackRef.current;
+      pingResumeCallbackRef.current = null;
+      resume();
+    }
+  }, []);
+
+  const handlePingNext = useCallback(() => {
+    // Only works when paused and there is a resume callback
+    if (!pingIsPausedRef.current) return;
+    if (!pingResumeCallbackRef.current) return;
+    const resume = pingResumeCallbackRef.current;
+    pingResumeCallbackRef.current = null;
+    // Step mode: advanceToNextHop will pause again at the next hop boundary
+    pingStepModeRef.current = true;
+    pingIsPausedRef.current = false;
+    setPingAnimation(prev => prev ? { ...prev, isPaused: false } : null);
+    resume();
+  }, []);
+
+  const handlePingClose = useCallback(() => {
+    pingIsPausedRef.current = false;
+    pingStepModeRef.current = false;
+    if (pingAnimationRef.current) {
+      cancelAnimationFrame(pingAnimationRef.current);
+      pingAnimationRef.current = null;
+    }
+    if (pingCleanupTimeoutRef.current) {
+      clearTimeout(pingCleanupTimeoutRef.current);
+      pingCleanupTimeoutRef.current = null;
+    }
+    setPingAnimation(null);
+    setHopPacketInfos([]);
+    setPingMode(false);
+  }, []);
 
   // Listen for global ping animation trigger
   useEffect(() => {
@@ -6983,20 +7214,30 @@ export function NetworkTopology({
         </div>
       )}
 
-      {/* Success Toast - ping başarılı olduğunda göster, otomatik kapanır */}
-      {pingAnimation && pingAnimation.success === true && (
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="px-4 py-3 rounded-lg shadow-2xl shadow-black/25 flex items-center gap-2 bg-green-600 text-white">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <span className="text-sm font-medium">
-              {language === 'tr'
-                ? `${devices.find(d => d.id === pingAnimation?.sourceId)?.name} → ${devices.find(d => d.id === pingAnimation?.targetId)?.name} Ping Başarılı! (${pingAnimation?.path?.length - 1} hop)`
-                : `${devices.find(d => d.id === pingAnimation?.sourceId)?.name} → ${devices.find(d => d.id === pingAnimation?.targetId)?.name} Ping Successful! (${pingAnimation?.path?.length - 1} hop${pingAnimation?.path?.length > 2 ? 's' : ''})`}
-            </span>
-          </div>
-        </div>
+      {/* Success/failure result is shown inside PingPacketInfoPanel */}
+
+      {/* Ping Packet Info Panel - shows during animation AND on success/failure result */}
+      {pingAnimation && hopPacketInfos.length > 0 && (
+        <PingPacketInfoPanel
+          isVisible={true}
+          isPaused={!!pingAnimation.isPaused}
+          hopPacketInfos={hopPacketInfos}
+          currentHopIndex={pingAnimation.currentHopIndex}
+          totalHops={pingAnimation.path.length - 1}
+          onPlay={handlePingPlay}
+          onPause={handlePingPause}
+          onNext={handlePingNext}
+          onClose={handlePingClose}
+          language={language}
+          isDark={isDark}
+          success={pingAnimation.success}
+          isReturn={!!pingAnimation.isReturn}
+          errorMessage={pingAnimation.error}
+          sourceName={devices.find(d => d.id === pingAnimation.sourceId)?.name ?? pingAnimation.sourceId}
+          targetName={devices.find(d => d.id === pingAnimation.targetId)?.name ?? pingAnimation.targetId}
+          sourceIp={devices.find(d => d.id === pingAnimation.sourceId)?.ip ?? ''}
+          targetIp={devices.find(d => d.id === pingAnimation.targetId)?.ip ?? ''}
+        />
       )}
 
       {/* Persistent Error Toast - ping başarısız olduğunda göster, kullanıcı kapatana kadar açık kalır */}
