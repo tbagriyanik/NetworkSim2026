@@ -570,11 +570,11 @@ Router AP modunda kablosuz ağ oluşturarak PC'lerin kablosuz bağlanmasını ö
 ### 14. IoT WiFi Lab
 **ID:** `iot-wifi-lab`  
 **Tag:** IoT  
-**Description:** 3 IoT devices (Temp, Humidity, Motion), WiFi open PC and Router.  
-**Details:** SSID: IoT-Network (Open).  
+**Description:** 3 IoT devices (Temp, Humidity, Motion), WiFi open PC and Router with DHCP.  
+**Details:** SSID: IoT-Network (Open), DHCP enabled.  
 
 **Kısa Tanıtım:**
-IoT cihazlarını kablosuz ağa bağlayarak sensör verilerini izlemeyi öğreneceksiniz.
+IoT cihazlarını kablosuz ağa bağlayarak ve DHCP üzerinden otomatik IP alarak sensör verilerini izlemeyi öğreneceksiniz.
 
 **Adım Adım Proje Yapımı:**
 1. **Topoloji Oluşturma:**
@@ -582,25 +582,30 @@ IoT cihazlarını kablosuz ağa bağlayarak sensör verilerini izlemeyi öğrene
    - 1 adet PC (PC-1) ekle
    - 3 adet IoT cihazı (Temp, Humidity, Motion) ekle
 
-2. **Router WiFi Konfigürasyonu:**
+2. **Router WiFi ve DHCP Konfigürasyonu:**
    - R1 terminaline gir: enable, conf t
    - interface wlan0
      ip address 192.168.1.1 255.255.255.0
      no shutdown
    - exit
    - wlan IoT-Network 0 IoT-Network
+   - ip dhcp pool iot-pool
+     network 192.168.1.0 255.255.255.0
+     default-router 192.168.1.1
    - exit
 
 3. **IoT Cihazlarını Bağla:**
    - Her IoT cihazını IoT-Network WiFi'na bağla
+   - IP yapılandırmasını DHCP olarak ayarla
 
 4. **PC Konfigürasyonu:**
    - PC-1: IoT-Network WiFi'na bağla
-   - IP: 192.168.1.10, GW 192.168.1.1
+   - IP yapılandırmasını DHCP olarak ayarla (Otomatik IP alır)
 
 5. **Test:**
    - http://iot-panel üzerinden IoT cihazlarını yönet
    - Sensör verilerini izle
+   - Cihazların DHCP üzerinden IP aldığını doğrula (192.168.1.100+)
 
 ### 15. Greenhouse Sketch (Smart Farm)
 **ID:** `greenhouse-iot-lab`  

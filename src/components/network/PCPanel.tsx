@@ -5067,7 +5067,7 @@ export function PCPanel({
                                       className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder:text-slate-500' : 'text-slate-900 placeholder:text-slate-400'}`}
                                     />
                                     {wifiSSID && (
-                                      <button type="button" onClick={() => { setWifiSSID(''); setWifiBSSID(''); }} className="text-slate-200 hover:text-white text-xs">✕</button>
+                                      <button type="button" onClick={() => { setWifiSSID(''); setWifiBSSID(''); setSsidDropdownOpen(false); }} className="text-slate-200 hover:text-white text-xs">✕</button>
                                     )}
                                     <button type="button" onClick={() => setSsidDropdownOpen(o => !o)} className="text-slate-200 hover:text-white text-xs">▾</button>
                                   </div>
@@ -5085,7 +5085,13 @@ export function PCPanel({
                                           <button
                                             key={`${entry.deviceId}-${entry.ssid}`}
                                             type="button"
-                                            onMouseDown={() => { setWifiSSID(entry.ssid); setWifiBSSID(entry.deviceId); setSsidDropdownOpen(false); }}
+                                            onPointerDown={(event) => {
+                                              event.preventDefault();
+                                              setSsidDropdownOpen(false);
+                                              setWifiSSID(entry.ssid);
+                                              setWifiBSSID(entry.deviceId);
+                                              (document.activeElement as HTMLElement | null)?.blur?.();
+                                            }}
                                             className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-500/20 ${isDark ? 'text-white' : 'text-slate-900'}`}
                                           >
                                             📶 {label}

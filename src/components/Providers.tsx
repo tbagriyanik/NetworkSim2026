@@ -6,7 +6,6 @@ import { LayoutProvider } from '@/contexts/LayoutContext';
 import { FeatureFlagProvider } from '@/contexts/FeatureFlagContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { KeyboardShortcutsHelp } from '@/components/ui/KeyboardShortcutsHelp';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -17,7 +16,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <TooltipProvider delayDuration={0}>
                 <SidebarProvider>
                   {children}
-                  <KeyboardShortcutsHelp />
                 </SidebarProvider>
               </TooltipProvider>
             </FeatureFlagProvider>

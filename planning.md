@@ -42,14 +42,13 @@ Not: Örnek JSON dosyaları ve örnek dokümanları kod satırı sayısından ay
 
 ### UI/UX Modernizasyonu (Nisan 2026)
 
-- **Klavye Kısayolları Yardımcısı** (`KeyboardShortcutsHelp`): `?` tuşu ile açılan, kategorilere ayrılmış kısayol rehberi.
+- **Yükleme ve Boş Durum Göstergeleri**: Uygulama genelinde tutarlı yükleme ve boş durum mesajları.
 - **Modern Panel Sekmeleri**: PCPanel hizmet sekmeleri (DNS/HTTP/DHCP) ve proje seçici sekmeler için yeni tab-header stili.
 - **Glassmorphism Efektler**: Buton hover glow efektleri, glassmorphism primary/secondary/danger/warning/indigo stilleri.
 - **Shimmer Loading**: Skeleton bileşenlerine shimmer animasyonu eklendi.
 - **Yeni UI Bileşenleri**:
   - `LoadingSpinner` - Yükleme göstergesi
   - `EmptyState` / `NetworkEmptyState` - Boş durum şablonları
-  - `KeyboardShortcutsHelp` - Kısayol rehberi
 - **Erişilebilirlik**: `prefers-reduced-motion` medya sorgusu, geliştirilmiş focus visible stilleri, ARIA etiketleri.
 - **HelpPanel Modernizasyonu**: Modern arayüz, arama fonksiyonu, animasyonlu kategoriler.
 - **Proje Seçici Görsel İyileştirmeleri**: Seviye başlıkları (Basit/Orta/İleri) için mavi renk şeması ve çizgiler.

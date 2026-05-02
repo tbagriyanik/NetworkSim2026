@@ -397,6 +397,7 @@ export default function Home() {
     dhcpMessages: string[];
     stpMessage: string;
     portSecurityMessage: string;
+    topologyMessage: string;
     devices: RefreshDeviceSummary[];
   } | null>(null);
 
@@ -426,6 +427,12 @@ export default function Home() {
     targetDevice: 'switchL2',
   });
   const [lastTaskEvent, setLastTaskEvent] = useState<{ type: 'completed' | 'failed'; taskName: string; timestamp: number } | null>(null);
+
+  useEffect(() => {
+    if (activeDeviceType === 'pc') {
+      setShowTasksModal(false);
+    }
+  }, [activeDeviceType]);
   const [saveDialog, setSaveDialog] = useState<{
     show: boolean;
     message: string;
@@ -1126,6 +1133,13 @@ export default function Home() {
     return getOrCreateDeviceState(activeDeviceId, resolvedType, activeDevice?.name, activeDevice?.macAddress, activeDevice?.switchModel);
   }, [activeDeviceId, activeDeviceType, topologyDevices, deviceStates, getOrCreateDeviceState]);
   const output = getOrCreateDeviceOutputs(activeDeviceId, state);
+  const isTaskSystemEnabled = activeDeviceType !== 'pc';
+  const activeDeviceTasks = useMemo(
+    () => isTaskSystemEnabled
+      ? [...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])]
+      : [],
+    [activeDeviceType, isTaskSystemEnabled]
+  );
 
   // Redundant declaration of activeTab removed (moved higher)
   useEffect(() => {
@@ -1145,9 +1159,13 @@ export default function Home() {
 
   // Track task completion changes globally
   useEffect(() => {
-    const allTasks = [...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])];
+    if (!isTaskSystemEnabled) {
+      prevTaskStatusRef.current.clear();
+      setLastTaskEvent(null);
+      return;
+    }
 
-    allTasks.forEach(task => {
+    activeDeviceTasks.forEach(task => {
       const currentStatus = getTaskStatus(task, state, taskContext);
       const previousStatus = prevTaskStatusRef.current.get(task.id) ?? false;
       const toastKey = `${task.id}-${currentStatus}`;
@@ -1172,19 +1190,19 @@ export default function Home() {
       // Update previous status
       prevTaskStatusRef.current.set(task.id, currentStatus);
     });
-  }, [state, taskContext, language]);
+  }, [activeDeviceTasks, isTaskSystemEnabled, state, taskContext, language]);
 
   // Calculate total score
-  const totalScore = calculateTaskScore([...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])], state, taskContext);
+  const totalScore = isTaskSystemEnabled ? calculateTaskScore(activeDeviceTasks, state, taskContext) : 0;
 
   // Calculate max possible score
-  const maxScore = [...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])].reduce((acc, task) => acc + task.weight, 0);
+  const maxScore = activeDeviceTasks.reduce((acc, task) => acc + task.weight, 0);
 
   // Per-tab task completion counts for badges
-  const completedTasks = portTasks.filter(task => getTaskStatus(task, state, taskContext)).length +
+  const completedTasks = isTaskSystemEnabled ? portTasks.filter(task => getTaskStatus(task, state, taskContext)).length +
     vlanTasks.filter(task => getTaskStatus(task, state, taskContext)).length +
     securityTasks.filter(task => getTaskStatus(task, state, taskContext)).length +
-    (activeDeviceType !== 'switchL2' ? wirelessTasks.filter(task => getTaskStatus(task, state, taskContext)).length : 0);
+    (activeDeviceType !== 'switchL2' ? wirelessTasks.filter(task => getTaskStatus(task, state, taskContext)).length : 0) : 0;
 
   const normalizeDeviceType = useCallback((type: string): DeviceType => {
     if (type === 'switch') return 'switchL2';
@@ -1282,6 +1300,61 @@ export default function Home() {
     return null;
   }, [getPeerPortVlan, getPortAccessVlan, inferEndpointVlan, isSameSubnetByMask, isValidIpv4]);
 
+  const hasActivePathBetweenDevices = useCallback((
+    sourceDeviceId: string,
+    targetDeviceId: string,
+    devices: CanvasDevice[],
+    states?: Map<string, SwitchState>,
+    connectionsOverride?: CanvasConnection[]
+  ) => {
+    if (sourceDeviceId === targetDeviceId) return true;
+
+    const byId = new Map(devices.map((device) => [device.id, device]));
+    const activeStates = states ?? deviceStates;
+    const isDeviceUsable = (deviceId: string) => {
+      const device = byId.get(deviceId);
+      return !!device && device.status !== 'offline';
+    };
+    const isPortUsable = (deviceId: string, portId: string) => {
+      const statePort = activeStates?.get(deviceId)?.ports?.[portId];
+      if (statePort?.shutdown || statePort?.status === 'err-disabled' || statePort?.status === 'disabled') {
+        return false;
+      }
+
+      const devicePort = byId.get(deviceId)?.ports?.find((port) => port.id === portId);
+      return !(devicePort?.shutdown || devicePort?.status === 'err-disabled' || devicePort?.status === 'disabled');
+    };
+
+    if (!isDeviceUsable(sourceDeviceId) || !isDeviceUsable(targetDeviceId)) return false;
+
+    const visited = new Set<string>([sourceDeviceId]);
+    const queue = [sourceDeviceId];
+
+    while (queue.length > 0) {
+      const currentId = queue.shift();
+      if (!currentId) continue;
+      if (currentId === targetDeviceId) return true;
+
+      for (const connection of connectionsOverride ?? topologyConnections) {
+        if (connection.active === false || connection.cableType === 'wireless') continue;
+
+        const isSourceSide = connection.sourceDeviceId === currentId;
+        const isTargetSide = connection.targetDeviceId === currentId;
+        if (!isSourceSide && !isTargetSide) continue;
+
+        const neighborId = isSourceSide ? connection.targetDeviceId : connection.sourceDeviceId;
+        if (visited.has(neighborId) || !isDeviceUsable(neighborId)) continue;
+        if (!isPortUsable(connection.sourceDeviceId, connection.sourcePort)) continue;
+        if (!isPortUsable(connection.targetDeviceId, connection.targetPort)) continue;
+
+        visited.add(neighborId);
+        queue.push(neighborId);
+      }
+    }
+
+    return false;
+  }, [deviceStates, topologyConnections]);
+
   const isDhcpPoolCompatibleForClient = useCallback((
     pcDevice: CanvasDevice,
     serverDevice: CanvasDevice,
@@ -1289,21 +1362,28 @@ export default function Home() {
     poolGateway: string,
     poolStartIp: string,
     poolSubnetMask: string,
-    devices: CanvasDevice[]
+    devices: CanvasDevice[],
+    activeStates?: Map<string, SwitchState>,
+    connectionsOverride?: CanvasConnection[]
   ) => {
-    const clientWifi = getDeviceWifiConfig(pcDevice, deviceStates);
+    const states = activeStates ?? deviceStates;
+    const clientWifi = getDeviceWifiConfig(pcDevice, states);
     if (clientWifi?.enabled && clientWifi.mode === 'client' && clientWifi.ssid) {
-      const serverWifi = getDeviceWifiConfig(serverDevice, deviceStates);
+      const serverWifi = getDeviceWifiConfig(serverDevice, states);
       if (!serverWifi?.enabled || serverWifi.mode !== 'ap' || serverWifi.ssid !== clientWifi.ssid) {
         return false;
       }
       return getServerPoolVlan(serverDevice, serverState, poolGateway, poolStartIp, poolSubnetMask, devices) !== null;
     }
 
+    if (!hasActivePathBetweenDevices(pcDevice.id, serverDevice.id, devices, states, connectionsOverride)) {
+      return false;
+    }
+
     const clientVlan = inferEndpointVlan(pcDevice, devices);
     const serverVlan = getServerPoolVlan(serverDevice, serverState, poolGateway, poolStartIp, poolSubnetMask, devices);
     return serverVlan !== null && clientVlan === serverVlan;
-  }, [deviceStates, getServerPoolVlan, inferEndpointVlan]);
+  }, [deviceStates, getServerPoolVlan, hasActivePathBetweenDevices, inferEndpointVlan]);
 
   const buildLinkLocalLease = useCallback((pcDevice: CanvasDevice, devices: CanvasDevice[]) => {
     const usedIps = new Set(
@@ -1319,7 +1399,7 @@ export default function Home() {
     };
   }, [isValidIpv4]);
 
-  const assignDhcpLeaseForPc = useCallback((pcDevice: CanvasDevice, currentDevices: CanvasDevice[], currentStates?: Map<string, SwitchState>) => {
+  const assignDhcpLeaseForPc = useCallback((pcDevice: CanvasDevice, currentDevices: CanvasDevice[], currentStates?: Map<string, SwitchState>, currentConnections?: CanvasConnection[]) => {
     const safeDeviceStates = ensureDeviceStatesMap(currentStates ?? deviceStates);
     const usedIps = () => new Set(currentDevices.filter((d) => d.id !== pcDevice.id && d.ip && d.ip !== '0.0.0.0').map((d) => d.ip));
 
@@ -1329,7 +1409,7 @@ export default function Home() {
 
       for (const pool of pools) {
         if (!pool.startIp || !pool.subnetMask) continue;
-        if (!isDhcpPoolCompatibleForClient(pcDevice, serverDevice, undefined, pool.defaultGateway || '', pool.startIp, pool.subnetMask, currentDevices)) {
+        if (!isDhcpPoolCompatibleForClient(pcDevice, serverDevice, undefined, pool.defaultGateway || '', pool.startIp, pool.subnetMask, currentDevices, safeDeviceStates, currentConnections)) {
           continue;
         }
 
@@ -1363,7 +1443,7 @@ export default function Home() {
         if (networkParts.length !== 4) continue;
         const poolGateway = pool.defaultRouter || `${networkParts[0]}.${networkParts[1]}.${networkParts[2]}.1`;
         const poolStartIp = `${networkParts[0]}.${networkParts[1]}.${networkParts[2]}.100`;
-        if (!isDhcpPoolCompatibleForClient(pcDevice, serverDevice, state, poolGateway, poolStartIp, pool.subnetMask, currentDevices)) {
+        if (!isDhcpPoolCompatibleForClient(pcDevice, serverDevice, state, poolGateway, poolStartIp, pool.subnetMask, currentDevices, safeDeviceStates, currentConnections)) {
           continue;
         }
 
@@ -1384,7 +1464,7 @@ export default function Home() {
       const pools = state.services?.dhcp?.pools || [];
       for (const pool of pools) {
         if (!pool.startIp || !pool.subnetMask) continue;
-        if (!isDhcpPoolCompatibleForClient(pcDevice, serverDevice, state, pool.defaultGateway || '', pool.startIp, pool.subnetMask, currentDevices)) {
+        if (!isDhcpPoolCompatibleForClient(pcDevice, serverDevice, state, pool.defaultGateway || '', pool.startIp, pool.subnetMask, currentDevices, safeDeviceStates, currentConnections)) {
           continue;
         }
 
@@ -2054,6 +2134,7 @@ ${state.bannerMOTD}
 
     // Handle tasks tab as modal
     if (tabId === 'tasks') {
+      if (activeDeviceType === 'pc') return;
       setShowTasksModal(true);
       return;
     }
@@ -3124,6 +3205,94 @@ ${state.bannerMOTD}
       return nextStates;
     };
 
+    const validateTopologyConnections = (devices: CanvasDevice[], connections: CanvasConnection[]) => {
+      const byId = new Map(devices.map((device) => [device.id, device]));
+      const usedPorts = new Set<string>();
+      let invalidCount = 0;
+
+      const sanitizedConnections = connections.map((connection) => {
+        const sourceDevice = byId.get(connection.sourceDeviceId);
+        const targetDevice = byId.get(connection.targetDeviceId);
+        const sourcePortExists = !!sourceDevice?.ports?.some((port) => port.id === connection.sourcePort);
+        const targetPortExists = !!targetDevice?.ports?.some((port) => port.id === connection.targetPort);
+        const sourceKey = `${connection.sourceDeviceId}:${connection.sourcePort}`;
+        const targetKey = `${connection.targetDeviceId}:${connection.targetPort}`;
+        const duplicatePort = usedPorts.has(sourceKey) || usedPorts.has(targetKey);
+        const invalid = !sourceDevice ||
+          !targetDevice ||
+          !sourcePortExists ||
+          !targetPortExists ||
+          connection.sourceDeviceId === connection.targetDeviceId ||
+          duplicatePort;
+
+        if (connection.active !== false) {
+          if (invalid) {
+            invalidCount++;
+          } else {
+            usedPorts.add(sourceKey);
+            usedPorts.add(targetKey);
+          }
+        }
+
+        return invalid ? { ...connection, active: false } : connection;
+      });
+
+      return { sanitizedConnections, invalidCount };
+    };
+
+    const releaseDisconnectedPorts = (devices: CanvasDevice[], states: Map<string, SwitchState>, connections: CanvasConnection[]) => {
+      const activePortKeys = new Set<string>();
+      connections.forEach((connection) => {
+        if (connection.active === false) return;
+        activePortKeys.add(`${connection.sourceDeviceId}:${connection.sourcePort}`);
+        activePortKeys.add(`${connection.targetDeviceId}:${connection.targetPort}`);
+      });
+
+      const nextDevices = devices.map((device) => ({
+        ...device,
+        ports: device.ports.map((port) => {
+          const key = `${device.id}:${port.id}`;
+          if (port.shutdown || port.status === 'disabled' || port.status === 'err-disabled') return port;
+          if (activePortKeys.has(key)) return { ...port, status: 'connected' as const };
+          return { ...port, status: 'disconnected' as const };
+        }),
+      }));
+
+      const nextStates = new Map(states);
+      devices.forEach((device) => {
+        const state = nextStates.get(device.id);
+        if (!state?.ports) return;
+        const nextPorts = { ...state.ports };
+        let changed = false;
+
+        Object.entries(nextPorts).forEach(([portId, port]) => {
+          const key = `${device.id}:${portId}`;
+          if (port.shutdown || port.status === 'disabled' || port.status === 'err-disabled') return;
+          if (activePortKeys.has(key)) {
+            if (port.status !== 'connected') {
+              nextPorts[portId] = { ...port, status: 'connected' };
+              changed = true;
+            }
+            return;
+          }
+          nextPorts[portId] = {
+            ...port,
+            status: 'notconnect',
+            spanningTree: port.spanningTree
+              ? { ...port.spanningTree, state: 'disabled', role: 'disabled' }
+              : port.spanningTree,
+          };
+          changed = true;
+        });
+
+        if (changed) {
+          nextStates.set(device.id, { ...state, ports: nextPorts });
+        }
+      });
+
+      return { devices: nextDevices, states: nextStates };
+    };
+
     let refreshCount = 0;
     let disconnectedPCs: string[] = [];
     let disconnectedAPs: string[] = [];
@@ -3135,10 +3304,18 @@ ${state.bannerMOTD}
     let dhcpClientNoLeaseCount = 0;
 
     if (topologyDevices && deviceStates) {
-      let refreshedDevices = topologyDevices.map((device) => ({
+      const { sanitizedConnections, invalidCount } = validateTopologyConnections(topologyDevices, topologyConnections);
+      const connectionsChanged = sanitizedConnections.some((connection, index) => connection !== topologyConnections[index]);
+      if (connectionsChanged) {
+        setTopologyConnections(sanitizedConnections);
+      }
+
+      const releasedTopology = releaseDisconnectedPorts(topologyDevices, deviceStates, sanitizedConnections);
+      let refreshedDevices = releasedTopology.devices.map((device) => ({
         ...device,
         wifi: getEffectiveWifi(device),
       }));
+      const releasedDeviceStates = releasedTopology.states;
 
       const isWirelessMatch = (client: CanvasDevice, ap: CanvasDevice) => {
         const clientWifi = client.wifi;
@@ -3214,7 +3391,7 @@ ${state.bannerMOTD}
       });
 
       // 3. VTP propagation (server -> client over trunk)
-      const vtpUpdatedStates = propagateVtpVlans(refreshedDevices, deviceStates, topologyConnections);
+      const vtpUpdatedStates = propagateVtpVlans(refreshedDevices, releasedDeviceStates, sanitizedConnections);
       let stpUpdatedStates = new Map(vtpUpdatedStates);
       let stpUpdatedCount = 0;
 
@@ -3224,7 +3401,7 @@ ${state.bannerMOTD}
         if (!state) return;
 
         stpUpdatedStates = calculatePVST(state, {
-          connections: topologyConnections,
+          connections: sanitizedConnections,
           devices: refreshedDevices,
           deviceStates: stpUpdatedStates,
         }, device.id) as Map<string, SwitchState>;
@@ -3238,7 +3415,7 @@ ${state.bannerMOTD}
 
       if (dhcpClients.length > 0) {
         dhcpClients.forEach(pc => {
-          const lease = assignDhcpLeaseForPc(pc, finalDevicesForRefresh, stpUpdatedStates) || buildLinkLocalLease(pc, finalDevicesForRefresh);
+          const lease = assignDhcpLeaseForPc(pc, finalDevicesForRefresh, stpUpdatedStates, sanitizedConnections) || buildLinkLocalLease(pc, finalDevicesForRefresh);
           if (lease) {
             const idx = finalDevicesForRefresh.findIndex(d => d.id === pc.id);
             if (idx !== -1) {
@@ -3295,7 +3472,7 @@ ${state.bannerMOTD}
       let portSecurityViolationCount = 0;
       let portSecurityRecoveredCount = 0;
 
-      topologyConnections.forEach(conn => {
+      sanitizedConnections.forEach(conn => {
         if (!conn.active) return;
 
         // Find switch device and connected device
@@ -3461,6 +3638,11 @@ ${state.bannerMOTD}
             ? `🔒 Port Security: ${portSecurityViolationCount} bloklandı, ${portSecurityRecoveredCount} açıldı`
             : `🔒 Port Security: ${portSecurityViolationCount} blocked, ${portSecurityRecoveredCount} recovered`)
           : '';
+        const topologyMessage = invalidCount > 0
+          ? (language === 'tr'
+            ? `Topoloji: ${invalidCount} hatalı bağlantı pasifleştirildi`
+            : `Topology: ${invalidCount} invalid connections disabled`)
+          : '';
 
         if (totalDevices > 0 || dhcpClients.length > 0) {
           const wifiMessages = [];
@@ -3519,6 +3701,7 @@ ${state.bannerMOTD}
             dhcpMessages,
             stpMessage,
             portSecurityMessage,
+            topologyMessage,
             devices: refreshDeviceSummaries
           });
         } else {
@@ -3541,6 +3724,7 @@ ${state.bannerMOTD}
             ],
             stpMessage: '',
             portSecurityMessage: '',
+            topologyMessage,
             devices: refreshDeviceSummaries
           });
         }
@@ -3552,7 +3736,7 @@ ${state.bannerMOTD}
         showRefreshPanel();
       }
     }
-  }, [assignDhcpLeaseForPc, buildLinkLocalLease, topologyDevices, topologyConnections, deviceStates, setDeviceStates, language, t, pcOutputs]);
+  }, [assignDhcpLeaseForPc, buildLinkLocalLease, topologyDevices, topologyConnections, deviceStates, setDeviceStates, setTopologyConnections, language, t, pcOutputs]);
 
   // Handle key events: ESC to close, ENTER to confirm
   useEffect(() => {
@@ -4700,7 +4884,7 @@ ${state.bannerMOTD}
           </AlertDialog>
 
           {/* Tasks Modal */}
-          <Dialog open={showTasksModal} onOpenChange={setShowTasksModal} modal={false}>
+          <Dialog open={showTasksModal && activeDeviceType !== 'pc'} onOpenChange={(open) => setShowTasksModal(open && activeDeviceType !== 'pc')} modal={false}>
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
@@ -4996,7 +5180,7 @@ ${state.bannerMOTD}
                         className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
                         onClick={() => {
                           setShowTerminalModal(false);
-                          setShowTasksModal(true);
+                          if (activeDeviceType !== 'pc') setShowTasksModal(true);
                         }}
                         title={t.switchTasks}
                       >
@@ -5598,6 +5782,7 @@ ${state.bannerMOTD}
                     onOpenTasks={(deviceId: string) => {
                       setActiveDeviceId(deviceId);
                       const device = topologyDevices?.find(d => d.id === deviceId);
+                      if (!device || device.type === 'pc') return;
                       if (device) {
                         setActiveDeviceType(device.type);
                       }
@@ -5700,6 +5885,12 @@ ${state.bannerMOTD}
                   {refreshNetworkReport.portSecurityMessage && (
                     <div className="text-red-500 font-medium py-0.5 px-2 bg-red-500/10 rounded-lg w-fit">
                       {refreshNetworkReport.portSecurityMessage}
+                    </div>
+                  )}
+
+                  {refreshNetworkReport.topologyMessage && (
+                    <div className="text-amber-500 font-medium py-0.5 px-2 bg-amber-500/10 rounded-lg w-fit">
+                      {refreshNetworkReport.topologyMessage}
                     </div>
                   )}
 

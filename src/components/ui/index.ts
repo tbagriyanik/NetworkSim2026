@@ -3,7 +3,6 @@ export { AppSkeleton } from './AppSkeleton';
 export { Skeleton, SkeletonCard } from './skeleton';
 export { AppErrorBoundary } from './AppErrorBoundary';
 export { ModernPanel, PanelContainer } from './ModernPanel';
-export { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
 export { LoadingSpinner, EmptyState, NetworkEmptyState } from './LoadingStates';
 export { Input } from './input';
 export { Textarea } from './textarea';

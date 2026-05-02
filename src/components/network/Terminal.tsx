@@ -799,18 +799,6 @@ export function Terminal({
   );
 
   const handleInputChange = useCallback((newValue: string) => {
-    // Detect ? for real-time help 
-    if (newValue.endsWith('?') && !state.awaitingPassword && !confirmDialog?.show) {
-      const partialCommand = newValue.slice(0, -1);
-      setUndoStack([...undoStack, input]);
-      setRedoStack([]);
-      setInput(partialCommand); // Keep part before ?
-      
-      // Trigger help command immediately
-      void onCommand(newValue);
-      return;
-    }
-
     setUndoStack([...undoStack, input]);
     setRedoStack([]);
     setInput(newValue);
@@ -857,6 +845,15 @@ export function Terminal({
       setAutocompleteIndex(-1);
       setAutocompleteNavigated(false);
       clearTerminalView();
+      return;
+    }
+
+    // Handle ? for inline help
+    if (e.key === '?' && !state.awaitingPassword && !confirmDialog?.show) {
+      e.preventDefault();
+      const currentInput = input;
+      // Execute the command with ? suffix
+      void onCommand(currentInput + '?');
       return;
     }
 

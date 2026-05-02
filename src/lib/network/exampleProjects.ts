@@ -353,7 +353,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ...iotWifiDevices[1].ports
   ];
 
-  // Configure PC-1 for WiFi (Client mode, open)
+  // Configure PC-1 for WiFi (Client mode, open) with DHCP
   iotWifiDevices[0].wifi = {
     enabled: true,
     ssid: 'IoT-Network',
@@ -362,11 +362,12 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     channel: '2.4GHz',
     mode: 'client'
   };
-  iotWifiDevices[0].ip = '192.168.1.10';
+  iotWifiDevices[0].ipConfigMode = 'dhcp';
+  iotWifiDevices[0].ip = '0.0.0.0';
   iotWifiDevices[0].subnet = '255.255.255.0';
   iotWifiDevices[0].gateway = '192.168.1.1';
 
-  // Configure IoT devices to connect to the router's WiFi with IP addresses
+  // Configure IoT devices to connect to the router's WiFi via DHCP
   iotWifiDevices[2].wifi = {
     enabled: true,
     ssid: 'IoT-Network',
@@ -375,11 +376,12 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     channel: '2.4GHz',
     mode: 'client'
   };
-  iotWifiDevices[2].ip = '192.168.1.101';
+  iotWifiDevices[2].ipConfigMode = 'dhcp';
+  iotWifiDevices[2].ip = '0.0.0.0';
   iotWifiDevices[2].subnet = '255.255.255.0';
   iotWifiDevices[2].gateway = '192.168.1.1';
   iotWifiDevices[2].ports[0].status = 'connected';
-  iotWifiDevices[2].ports[0].ipAddress = '192.168.1.101';
+  iotWifiDevices[2].ports[0].ipAddress = '0.0.0.0';
   iotWifiDevices[2].ports[0].subnetMask = '255.255.255.0';
   iotWifiDevices[2].ports[0].wifi = { ssid: 'IoT-Network', security: 'open', channel: '2.4GHz', mode: 'client' };
 
@@ -391,11 +393,12 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     channel: '2.4GHz',
     mode: 'client'
   };
-  iotWifiDevices[3].ip = '192.168.1.102';
+  iotWifiDevices[3].ipConfigMode = 'dhcp';
+  iotWifiDevices[3].ip = '0.0.0.0';
   iotWifiDevices[3].subnet = '255.255.255.0';
   iotWifiDevices[3].gateway = '192.168.1.1';
   iotWifiDevices[3].ports[0].status = 'connected';
-  iotWifiDevices[3].ports[0].ipAddress = '192.168.1.102';
+  iotWifiDevices[3].ports[0].ipAddress = '0.0.0.0';
   iotWifiDevices[3].ports[0].subnetMask = '255.255.255.0';
   iotWifiDevices[3].ports[0].wifi = { ssid: 'IoT-Network', security: 'open', channel: '2.4GHz', mode: 'client' };
 
@@ -407,11 +410,12 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     channel: '2.4GHz',
     mode: 'client'
   };
-  iotWifiDevices[4].ip = '192.168.1.103';
+  iotWifiDevices[4].ipConfigMode = 'dhcp';
+  iotWifiDevices[4].ip = '0.0.0.0';
   iotWifiDevices[4].subnet = '255.255.255.0';
   iotWifiDevices[4].gateway = '192.168.1.1';
   iotWifiDevices[4].ports[0].status = 'connected';
-  iotWifiDevices[4].ports[0].ipAddress = '192.168.1.103';
+  iotWifiDevices[4].ports[0].ipAddress = '0.0.0.0';
   iotWifiDevices[4].ports[0].subnetMask = '255.255.255.0';
   iotWifiDevices[4].ports[0].wifi = { ssid: 'IoT-Network', security: 'open', channel: '2.4GHz', mode: 'client' };
 
@@ -420,12 +424,12 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'iot-wifi-note',
       text: isTr
-        ? 'Amaç: IoT cihazlarını kablosuz ağa bağlayarak sensör verilerini izlemek.\n\nIoT WiFi Laboratuvarı:\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: IoT-Network (Open) yayınlar.\n2) PC-1 kablosuz ağa (WiFi Client) bağlıdır.\n3) 3 IoT cihazı (Sıcaklık, Nem, Hareket) WiFi üzerinden bağlıdır.\n4) PC-1 üzerinde wget 192.168.1.1 ile WiFi panelinden IoT cihazlarını yönetin.\n5) PC-1 > ping 192.168.1.1 ile bağlantıyı test edin.\n6) PC-1 > wget http://iot-panel ile cihaz kontrol paneline ulaşınız.'
-        : 'IoT WiFi Lab:\n1) R1 (Router) broadcasts SSID: IoT-Network (Open) on wlan0 in AP mode.\n2) PC-1 is connected wirelessly (WiFi Client).\n3) 3 IoT devices (Temperature, Humidity, Motion) connected via WiFi.\n4) Manage IoT devices from PC-1 WiFi panel via wget 192.168.1.1.\n5) Test connectivity with PC-1 > ping 192.168.1.1.\n6) Access device control panel via PC-1 > wget http://iot-panel',
+        ? 'Amaç: IoT cihazlarını kablosuz ağa bağlayarak sensör verilerini izlemek.\n\nIoT WiFi Laboratuvarı:\n1) R1 (Router) wlan0 üzerinde AP modunda SSID: IoT-Network (Open) yayınlar.\n2) R1 üzerinde DHCP havuzu yapılandırılmıştır (192.168.1.100-150).\n3) PC-1 ve 3 IoT cihazı kablosuz ağa (DHCP) bağlıdır.\n4) PC-1 üzerinde wget 192.168.1.1 ile WiFi panelinden IoT cihazlarını yönetin.\n5) PC-1 > ping 192.168.1.1 ile bağlantıyı test edin.\n6) PC-1 > wget http://iot-panel ile cihaz kontrol paneline ulaşınız.'
+        : 'IoT WiFi Lab:\n1) R1 (Router) broadcasts SSID: IoT-Network (Open) on wlan0 in AP mode.\n2) DHCP pool is configured on R1 (192.168.1.100-150).\n3) PC-1 and 3 IoT devices are connected via WiFi (DHCP).\n4) Manage IoT devices from PC-1 WiFi panel via wget 192.168.1.1.\n5) Test connectivity with PC-1 > ping 192.168.1.1.\n6) Access device control panel via PC-1 > wget http://iot-panel',
       x: 500,
       y: 80,
       width: 450,
-      height: 200,
+      height: 220,
       color: '#10b981',
       font: 'verdana',
       fontSize: 16,
@@ -2714,11 +2718,11 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       tag: 'IoT',
       title: isTr ? 'IoT WiFi Laboratuvarı' : 'IoT WiFi Lab',
       description: isTr
-        ? 'Üç IoT cihazı açık WiFi ağına bağlanır.'
-        : 'Three IoT devices connect to open WiFi network.',
+        ? 'Üç IoT cihazı ve PC DHCP üzerinden açık WiFi ağına bağlanır.'
+        : 'Three IoT devices and PC connect to open WiFi network via DHCP.',
       detail: isTr
-        ? 'SSID: IoT-Network, Şifre: yok (open), 3 IoT cihazı'
-        : 'SSID: IoT-Network, Password: none (open), 3 IoT devices',
+        ? 'SSID: IoT-Network, DHCP IP desteği, 3 IoT cihazı'
+        : 'SSID: IoT-Network, DHCP IP support, 3 IoT devices',
       level: 'intermediate',
       data: baseProjectData(iotWifiDevices, iotWifiConnections, iotWifiNotes, [
         { id: 'router-1', state: iotWifiR1State }
