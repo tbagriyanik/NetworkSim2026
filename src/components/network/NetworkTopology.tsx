@@ -3452,7 +3452,8 @@ export function NetworkTopology({
             // Reached end of partial path — show error
             setPingAnimation(prev => prev ? { ...prev, success: false, isPaused: false } : null);
             setErrorToast({ message: isTR ? 'Ping başarısız!' : 'Ping failed!', details: errorMessage });
-            pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setHopPacketInfos([]); setPingMode(false); setErrorToast(null); }, 4000);
+            // Panel stays open — user closes it manually
+            setPingMode(false);
             return;
           }
           const fromDev = devices.find(d => d.id === fromId);
@@ -3486,7 +3487,8 @@ export function NetworkTopology({
               // Last reachable hop — show failure
               setPingAnimation(prev => prev ? { ...prev, currentHopIndex: currentHop, progress: 1, frame: frameCount, success: false, isPaused: false } : null);
               setErrorToast({ message: isTR ? 'Ping başarısız!' : 'Ping failed!', details: errorMessage });
-              pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setHopPacketInfos([]); setPingMode(false); setErrorToast(null); }, 4000);
+              // Panel stays open — user closes it manually
+              setPingMode(false);
             }
           }
         };
@@ -3650,11 +3652,8 @@ export function NetworkTopology({
 
           const finishSuccess = () => {
             setPingAnimation(prev => prev ? { ...prev, success: true, isPaused: false } : null);
-            pingCleanupTimeoutRef.current = setTimeout(() => {
-              setPingAnimation(null);
-              setHopPacketInfos([]);
-              setPingMode(false);
-            }, 3000);
+            // Panel stays open — user closes it manually via the X button
+            setPingMode(false);
           };
 
           const animateReturn = () => {

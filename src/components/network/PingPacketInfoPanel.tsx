@@ -249,7 +249,6 @@ export function PingPacketInfoPanel({
 
     if (!isVisible) return null;
 
-    // Ground-truth hop count from actual data
     const totalHopCount = hopPacketInfos.length;
     const safeIdx = Math.min(Math.max(0, currentHopIndex), Math.max(0, totalHopCount - 1));
     const currentInfo = totalHopCount > 0 ? hopPacketInfos[safeIdx] : null;
@@ -270,97 +269,66 @@ export function PingPacketInfoPanel({
     return (
         <div
             ref={panelRef}
-            className={`z-[9999] rounded-2xl shadow-2xl border overflow-hidden select-none
-                ${isDark ? 'bg-slate-900/97 border-slate-700/80' : 'bg-white/98 border-slate-200'}
-            `}
+            className={`z-[9999] rounded-2xl shadow-2xl border overflow-hidden select-none ${isDark ? 'bg-slate-900/97 border-slate-700/80' : 'bg-white/98 border-slate-200'}`}
             style={{ ...posStyle, width: 780, backdropFilter: 'blur(16px)' }}
         >
             {/* Header — drag handle */}
             <div
-                className={`flex items-center justify-between px-4 py-2.5 border-b cursor-grab active:cursor-grabbing
-                    ${isDark ? 'bg-slate-800/70 border-slate-700/60' : 'bg-slate-50 border-slate-200'}
-                `}
+                className={`flex items-center justify-between px-4 py-2.5 border-b cursor-grab active:cursor-grabbing ${isDark ? 'bg-slate-800/70 border-slate-700/60' : 'bg-slate-50 border-slate-200'}`}
                 onMouseDown={onHeaderMouseDown}
             >
-                {/* Left side */}
+                {/* Left: icon + title + badges */}
                 <div className="flex items-center gap-2.5">
-                    {/* macOS close button */}
-                    <button
-                        onClick={onClose}
-                        title={t.close}
-                        className="group w-3.5 h-3.5 rounded-full bg-red-500 hover:bg-red-400 flex items-center justify-center flex-shrink-0 transition-colors"
-                    >
-                        <svg width="6" height="6" viewBox="0 0 10 10" className="opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="white" strokeWidth="2.5">
-                            <line x1="2" y1="2" x2="8" y2="8" /><line x1="8" y1="2" x2="2" y2="8" />
-                        </svg>
-                    </button>
-
-                    {/* Envelope icon */}
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                         className={`flex-shrink-0 ${isSuccess ? 'text-emerald-500' : isFailure ? 'text-red-500' : isReturn ? 'text-amber-400' : 'text-cyan-500'}`}>
                         <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
                         <path d="M2 7l10 7 10-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                     </svg>
+                    <span className={`text-sm font-bold tracking-tight ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{t.title}</span>
 
-                    <span className={`text-sm font-bold tracking-tight ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
-                        {t.title}
-                    </span>
-
-                    {/* Direction badge */}
                     {isReturn ? (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold
-                            ${isDark ? 'bg-amber-900/50 text-amber-300 border border-amber-800/40' : 'bg-amber-50 text-amber-700 border border-amber-200'}
-                        `}>↩ {t.returnLabel}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${isDark ? 'bg-amber-900/50 text-amber-300 border border-amber-800/40' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                            ↩ {t.returnLabel}
+                        </span>
                     ) : (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold
-                            ${isDark ? 'bg-cyan-900/50 text-cyan-300 border border-cyan-800/40' : 'bg-cyan-50 text-cyan-700 border border-cyan-200'}
-                        `}>→ {t.forwardLabel}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${isDark ? 'bg-cyan-900/50 text-cyan-300 border border-cyan-800/40' : 'bg-cyan-50 text-cyan-700 border border-cyan-200'}`}>
+                            → {t.forwardLabel}
+                        </span>
                     )}
 
-                    {/* Hop dots — only while animating */}
                     {!isDone && totalHopCount > 0 && (
                         <div className="flex items-center gap-1">
                             {Array.from({ length: totalHopCount }).map((_, i) => (
-                                <div key={i} className={`rounded-full transition-all duration-300 ${
-                                    i === safeIdx ? 'w-4 h-2 bg-cyan-500'
-                                    : i < safeIdx ? (isDark ? 'w-2 h-2 bg-slate-500' : 'w-2 h-2 bg-slate-400')
-                                    : (isDark ? 'w-2 h-2 bg-slate-700' : 'w-2 h-2 bg-slate-200')
-                                }`} title={`${t.hop} ${i + 1}`} />
+                                <div key={i} className={`rounded-full transition-all duration-300 ${i === safeIdx ? 'w-4 h-2 bg-cyan-500' : i < safeIdx ? (isDark ? 'w-2 h-2 bg-slate-500' : 'w-2 h-2 bg-slate-400') : (isDark ? 'w-2 h-2 bg-slate-700' : 'w-2 h-2 bg-slate-200')}`} title={`${t.hop} ${i + 1}`} />
                             ))}
                         </div>
                     )}
 
-                    {/* Hop counter */}
                     {!isDone && totalHopCount > 0 && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-semibold
-                            ${isDark ? 'bg-slate-700/60 text-slate-300' : 'bg-slate-100 text-slate-600'}
-                        `}>{t.hop} {safeIdx + 1}/{totalHopCount}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-semibold ${isDark ? 'bg-slate-700/60 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                            {t.hop} {safeIdx + 1}/{totalHopCount}
+                        </span>
                     )}
 
-                    {/* Paused badge */}
                     {isPaused && !isDone && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold
-                            ${isDark ? 'bg-amber-900/50 text-amber-300 border border-amber-800/40' : 'bg-amber-50 text-amber-700 border border-amber-200'}
-                        `}>⏸ {t.paused}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${isDark ? 'bg-amber-900/50 text-amber-300 border border-amber-800/40' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                            ⏸ {t.paused}
+                        </span>
                     )}
                 </div>
 
-                {/* Right: controls — hidden when done */}
-                {!isDone && (
-                    <div className="flex items-center gap-2" onMouseDown={e => e.stopPropagation()}>
+                {/* Right: play/pause/next + always-visible close button */}
+                <div className="flex items-center gap-2" onMouseDown={e => e.stopPropagation()}>
+                    {!isDone && (<>
                         {isPaused ? (
                             <button onClick={onPlay} title={t.play}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all
-                                    ${isDark ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}
-                                `}>
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isDark ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}>
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
                                 {t.play}
                             </button>
                         ) : (
                             <button onClick={onPause} title={t.pause}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all
-                                    ${isDark ? 'bg-amber-600 hover:bg-amber-500 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'}
-                                `}>
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isDark ? 'bg-amber-600 hover:bg-amber-500 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'}`}>
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                                     <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
                                 </svg>
@@ -368,29 +336,32 @@ export function PingPacketInfoPanel({
                             </button>
                         )}
                         <button onClick={onNext} title={t.next} disabled={!isPaused}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all
-                                ${isPaused
-                                    ? (isDark ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white')
-                                    : (isDark ? 'bg-slate-700/40 text-slate-600 cursor-not-allowed' : 'bg-slate-100 text-slate-400 cursor-not-allowed')
-                                }
-                            `}>
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isPaused ? (isDark ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white') : (isDark ? 'bg-slate-700/40 text-slate-600 cursor-not-allowed' : 'bg-slate-100 text-slate-400 cursor-not-allowed')}`}>
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                                 <polygon points="5,3 14,12 5,21" /><rect x="16" y="3" width="3" height="18" />
                             </svg>
                             {t.next}
                         </button>
-                    </div>
-                )}
+                        <div className={`w-px h-5 mx-0.5 ${isDark ? 'bg-slate-600' : 'bg-slate-300'}`} />
+                    </>)}
+
+                    {/* Close — always visible, rounded square, X always shown */}
+                    <button
+                        onClick={onClose}
+                        title={t.close}
+                        className={`flex items-center justify-center w-7 h-7 rounded-lg font-bold transition-all flex-shrink-0 ${isDark ? 'bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white border border-slate-600 hover:border-red-500' : 'bg-slate-100 hover:bg-red-500 text-slate-500 hover:text-white border border-slate-200 hover:border-red-400'}`}
+                    >
+                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                            <line x1="2" y1="2" x2="12" y2="12" />
+                            <line x1="12" y1="2" x2="2" y2="12" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             {/* Result banner */}
             {isDone && (
-                <div className={`px-5 py-3 flex items-start gap-3 border-b
-                    ${isSuccess
-                        ? (isDark ? 'bg-emerald-900/30 border-emerald-800/40' : 'bg-emerald-50 border-emerald-100')
-                        : (isDark ? 'bg-red-900/30 border-red-800/40' : 'bg-red-50 border-red-100')
-                    }
-                `}>
+                <div className={`px-5 py-3 flex items-start gap-3 border-b ${isSuccess ? (isDark ? 'bg-emerald-900/30 border-emerald-800/40' : 'bg-emerald-50 border-emerald-100') : (isDark ? 'bg-red-900/30 border-red-800/40' : 'bg-red-50 border-red-100')}`}>
                     {isSuccess ? (
                         <svg className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -405,27 +376,17 @@ export function PingPacketInfoPanel({
                             <>
                                 <div className={`text-sm font-bold ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>{t.successTitle}</div>
                                 <div className={`text-xs mt-0.5 font-mono ${isDark ? 'text-emerald-400/80' : 'text-emerald-600'}`}>
-                                    {language === 'tr'
-                                        ? `${targetIp || targetName}: bayt=32 TTL=${currentInfo?.ttl ?? 64}`
-                                        : `Reply from ${targetIp || targetName}: bytes=32 TTL=${currentInfo?.ttl ?? 64}`}
+                                    {language === 'tr' ? `${targetIp || targetName}: bayt=32 TTL=${currentInfo?.ttl ?? 64}` : `Reply from ${targetIp || targetName}: bytes=32 TTL=${currentInfo?.ttl ?? 64}`}
                                 </div>
-                                <div className={`text-xs mt-0.5 ${isDark ? 'text-emerald-500/70' : 'text-emerald-600/70'}`}>
-                                    {sourceName} → {targetName} → {sourceName}
-                                </div>
+                                <div className={`text-xs mt-0.5 ${isDark ? 'text-emerald-500/70' : 'text-emerald-600/70'}`}>{sourceName} → {targetName} → {sourceName}</div>
                             </>
                         ) : (
                             <>
                                 <div className={`text-sm font-bold ${isDark ? 'text-red-300' : 'text-red-700'}`}>{t.failTitle}</div>
-                                {errorMessage && (
-                                    <div className={`text-xs mt-0.5 ${isDark ? 'text-red-400/80' : 'text-red-600'}`}>
-                                        {t.failReason}: {errorMessage}
-                                    </div>
-                                )}
+                                {errorMessage && <div className={`text-xs mt-0.5 ${isDark ? 'text-red-400/80' : 'text-red-600'}`}>{t.failReason}: {errorMessage}</div>}
                                 {currentInfo && (
                                     <div className={`text-xs mt-0.5 font-mono ${isDark ? 'text-red-500/70' : 'text-red-500/70'}`}>
-                                        {language === 'tr'
-                                            ? `${currentInfo.fromDevice.name} → ${currentInfo.toDevice.name} adımında başarısız`
-                                            : `Failed at ${currentInfo.fromDevice.name} → ${currentInfo.toDevice.name}`}
+                                        {language === 'tr' ? `${currentInfo.fromDevice.name} → ${currentInfo.toDevice.name} adımında başarısız` : `Failed at ${currentInfo.fromDevice.name} → ${currentInfo.toDevice.name}`}
                                     </div>
                                 )}
                             </>
@@ -438,83 +399,53 @@ export function PingPacketInfoPanel({
             {currentInfo ? (
                 <div className="px-5 py-4 space-y-3">
                     {/* Route bar */}
-                    <div className={`flex items-center gap-3 rounded-xl px-4 py-2.5
-                        ${isDark ? 'bg-slate-800/50 border border-slate-700/40' : 'bg-slate-50 border border-slate-200'}
-                    `}>
+                    <div className={`flex items-center gap-3 rounded-xl px-4 py-2.5 ${isDark ? 'bg-slate-800/50 border border-slate-700/40' : 'bg-slate-50 border border-slate-200'}`}>
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                currentInfo.fromDevice.type === 'router' ? 'bg-purple-500' :
-                                currentInfo.fromDevice.type.startsWith('switch') ? 'bg-teal-500' : 'bg-blue-500'
-                            }`} />
+                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${currentInfo.fromDevice.type === 'router' ? 'bg-purple-500' : currentInfo.fromDevice.type.startsWith('switch') ? 'bg-teal-500' : 'bg-blue-500'}`} />
                             <span className={`text-sm font-semibold truncate ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{currentInfo.fromDevice.name}</span>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500'}`}>
-                                {currentInfo.fromDevice.type}
-                            </span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500'}`}>{currentInfo.fromDevice.type}</span>
                         </div>
                         <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
                             <svg width="56" height="12" viewBox="0 0 56 12" fill="none">
-                                <line x1="0" y1="6" x2="48" y2="6" stroke={getCableColor(currentInfo.cableType)} strokeWidth="2"
-                                    strokeDasharray={currentInfo.cableType === 'wireless' ? '4,3' : 'none'} />
+                                <line x1="0" y1="6" x2="48" y2="6" stroke={getCableColor(currentInfo.cableType)} strokeWidth="2" strokeDasharray={currentInfo.cableType === 'wireless' ? '4,3' : 'none'} />
                                 <polygon points="48,2 56,6 48,10" fill={getCableColor(currentInfo.cableType)} />
                             </svg>
-                            <span className="text-[10px] font-medium" style={{ color: getCableColor(currentInfo.cableType) }}>
-                                {getCableLabel(currentInfo.cableType, t)}
-                            </span>
+                            <span className="text-[10px] font-medium" style={{ color: getCableColor(currentInfo.cableType) }}>{getCableLabel(currentInfo.cableType, t)}</span>
                         </div>
                         <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500'}`}>
-                                {currentInfo.toDevice.type}
-                            </span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500'}`}>{currentInfo.toDevice.type}</span>
                             <span className={`text-sm font-semibold truncate ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{currentInfo.toDevice.name}</span>
-                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                currentInfo.toDevice.type === 'router' ? 'bg-purple-500' :
-                                currentInfo.toDevice.type.startsWith('switch') ? 'bg-teal-500' : 'bg-blue-500'
-                            }`} />
+                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${currentInfo.toDevice.type === 'router' ? 'bg-purple-500' : currentInfo.toDevice.type.startsWith('switch') ? 'bg-teal-500' : 'bg-blue-500'}`} />
                         </div>
                         {macChanged && (
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0
-                                ${isDark ? 'bg-amber-900/60 text-amber-300 border border-amber-800/40' : 'bg-amber-100 text-amber-700 border border-amber-200'}
-                            `}>⚡ {t.macChanged}</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${isDark ? 'bg-amber-900/60 text-amber-300 border border-amber-800/40' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>⚡ {t.macChanged}</span>
                         )}
                         {ipSame && prevInfo && (
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0
-                                ${isDark ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-800/40' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}
-                            `}>✓ {t.ipSame}</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${isDark ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-800/40' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}`}>✓ {t.ipSame}</span>
                         )}
                     </div>
 
                     {/* 3-column packet tables */}
                     <div className="grid grid-cols-3 gap-3">
                         <div className={`rounded-xl overflow-hidden border ${isDark ? 'border-blue-900/50 bg-blue-950/30' : 'border-blue-100 bg-blue-50/60'}`}>
-                            <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b
-                                ${isDark ? 'bg-blue-900/30 border-blue-900/40 text-blue-400' : 'bg-blue-100/80 border-blue-100 text-blue-700'}
-                            `}>{t.layer2}</div>
+                            <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isDark ? 'bg-blue-900/30 border-blue-900/40 text-blue-400' : 'bg-blue-100/80 border-blue-100 text-blue-700'}`}>{t.layer2}</div>
                             <table className="w-full"><tbody>
-                                <FieldRow label={t.srcMac} value={currentInfo.srcMac} prevValue={prevInfo?.srcMac}
-                                    highlight={macChanged ? 'changed' : 'none'} isDark={isDark}
-                                    badge={macChanged ? t.changed : undefined} badgeColor="#d97706" />
-                                <FieldRow label={t.dstMac} value={currentInfo.dstMac} prevValue={prevInfo?.dstMac}
-                                    highlight={macChanged ? 'changed' : 'none'} isDark={isDark} />
+                                <FieldRow label={t.srcMac} value={currentInfo.srcMac} prevValue={prevInfo?.srcMac} highlight={macChanged ? 'changed' : 'none'} isDark={isDark} badge={macChanged ? t.changed : undefined} badgeColor="#d97706" />
+                                <FieldRow label={t.dstMac} value={currentInfo.dstMac} prevValue={prevInfo?.dstMac} highlight={macChanged ? 'changed' : 'none'} isDark={isDark} />
                                 <FieldRow label={t.etherType} value={currentInfo.etherType} isDark={isDark} />
                             </tbody></table>
                         </div>
                         <div className={`rounded-xl overflow-hidden border ${isDark ? 'border-emerald-900/50 bg-emerald-950/30' : 'border-emerald-100 bg-emerald-50/60'}`}>
-                            <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b
-                                ${isDark ? 'bg-emerald-900/30 border-emerald-900/40 text-emerald-400' : 'bg-emerald-100/80 border-emerald-100 text-emerald-700'}
-                            `}>{t.layer3}</div>
+                            <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isDark ? 'bg-emerald-900/30 border-emerald-900/40 text-emerald-400' : 'bg-emerald-100/80 border-emerald-100 text-emerald-700'}`}>{t.layer3}</div>
                             <table className="w-full"><tbody>
                                 <FieldRow label={t.srcIp} value={currentInfo.srcIp} highlight="same" isDark={isDark} />
                                 <FieldRow label={t.dstIp} value={currentInfo.dstIp} highlight="same" isDark={isDark} />
-                                <FieldRow label={t.ttl} value={String(currentInfo.ttl)} prevValue={prevInfo ? String(prevInfo.ttl) : undefined}
-                                    highlight={ttlChanged ? 'changed' : 'none'} isDark={isDark}
-                                    badge={ttlChanged ? t.ttlDec : undefined} badgeColor="#d97706" />
+                                <FieldRow label={t.ttl} value={String(currentInfo.ttl)} prevValue={prevInfo ? String(prevInfo.ttl) : undefined} highlight={ttlChanged ? 'changed' : 'none'} isDark={isDark} badge={ttlChanged ? t.ttlDec : undefined} badgeColor="#d97706" />
                                 <FieldRow label={t.protocol} value={currentInfo.protocol} isDark={isDark} />
                             </tbody></table>
                         </div>
                         <div className={`rounded-xl overflow-hidden border ${isDark ? 'border-purple-900/50 bg-purple-950/30' : 'border-purple-100 bg-purple-50/60'}`}>
-                            <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b
-                                ${isDark ? 'bg-purple-900/30 border-purple-900/40 text-purple-400' : 'bg-purple-100/80 border-purple-100 text-purple-700'}
-                            `}>{t.layer4}</div>
+                            <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isDark ? 'bg-purple-900/30 border-purple-900/40 text-purple-400' : 'bg-purple-100/80 border-purple-100 text-purple-700'}`}>{t.layer4}</div>
                             <table className="w-full"><tbody>
                                 <FieldRow label={t.icmpType} value={currentInfo.icmpType} isDark={isDark} />
                                 <FieldRow label={t.icmpCode} value={String(currentInfo.icmpCode)} isDark={isDark} />
@@ -524,20 +455,12 @@ export function PingPacketInfoPanel({
                     </div>
                 </div>
             ) : (
-                <div className={`px-5 py-8 text-center text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                    {t.noHops}
-                </div>
+                <div className={`px-5 py-8 text-center text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.noHops}</div>
             )}
         </div>
     );
 }
 
-
-/**
- * Build packet info for each hop in the path.
- * Simulates how Ethernet frames change at each hop (MAC rewrite at routers)
- * while IP addresses stay the same end-to-end.
- */
 export function buildHopPacketInfos(
     path: string[],
     devices: CanvasDevice[],
