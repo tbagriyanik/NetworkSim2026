@@ -128,20 +128,20 @@ function SwitchInfoPopover({ router, routerState, t, language, isDark, onClose, 
   const connectedPorts = topologyConnections?.filter(conn => conn.sourceDeviceId === router.id || conn.targetDeviceId === router.id).length || 0;
 
   return (
-    <div ref={containerRef} className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDraggingUI ? "cursor-grabbing" : "cursor-grab")}
+    <div ref={containerRef} className={cn("hidden md:block fixed z-[10000] animate-scale-in")}
       style={{ bottom: `${position.y}px`, right: `${position.x}px` }} onMouseDown={handleDragStart}>
       <div className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[280px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}>
-        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDraggingUI ? 'cursor-grabbing' : 'cursor-grab'}`}>
           <div className="flex items-center gap-1.5">
-            <GripHorizontal className="w-3 h-3 opacity-30 cursor-grab" />
+            <GripHorizontal className="w-3 h-3 opacity-30" />
             <SwitchIcon className="w-3.5 h-3.5 text-purple-500" />
             <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
           </div>
-          <button onClick={onClose} className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`} title={language === 'tr' ? 'Kapat' : 'Close'}>
+          <button onClick={onClose} className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`} title={t.close}>
             <X className="w-3 h-3" />
           </button>
         </div>
-        <div className="overflow-hidden">
+        <div className="overflow-hidden cursor-default">
           <div className="p-2 space-y-1 text-[10px]">
             <div className="flex justify-between items-center">
               <span className="opacity-50">{t.portsShort}</span>
@@ -4489,7 +4489,7 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Cihazları Bagla' : 'Connect Devices'}</TooltipContent>
+                      <TooltipContent>{t.connectDevices}</TooltipContent>
                     </Tooltip>
 
                     <div className="w-px h-4 bg-slate-200 mx-0.5 dark:bg-slate-800" />
@@ -4710,7 +4710,7 @@ ${state.bannerMOTD}
                                   }}
                                 >
                                   <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
-                                    <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-emerald-400 text-emerald-100' : 'group-hover:text-emerald-600 text-emerald-900'}`}>
+                                    <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-emerald-400 text-emerald-100' : 'group-hover:text-emerald-600 text-black'}`}>
                                       {guidedProject.title}
                                     </span>
                                     <span className={`text-[8px] md:text-[10px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-emerald-100 text-emerald-600 border-emerald-200'}`}>
@@ -4733,7 +4733,13 @@ ${state.bannerMOTD}
                                     </div>
                                     <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 capitalize">
                                       <BookOpen className="w-3 h-3" />
-                                      {guidedProject.difficulty}
+                                      {guidedProject.difficulty === 'beginner'
+                                        ? (language === 'tr' ? 'Başlangıç' : 'Beginner')
+                                        : guidedProject.difficulty === 'intermediate'
+                                          ? (language === 'tr' ? 'Orta' : 'Intermediate')
+                                          : guidedProject.difficulty === 'advanced'
+                                            ? (language === 'tr' ? 'İleri' : 'Advanced')
+                                            : guidedProject.difficulty}
                                     </div>
                                   </div>
 
@@ -4981,7 +4987,7 @@ ${state.bannerMOTD}
               <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-visible">
                 <DialogHeader
                   className={cn(
-                    "p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10",
+                    "p-3 sm:p-4 border-b cursor-grab active:cursor-grabbing select-none touch-none sticky top-0 z-10",
                     isDark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-white"
                   )}
                   data-modal-header
@@ -5134,7 +5140,7 @@ ${state.bannerMOTD}
               )}>
                 <DialogHeader
                   className={cn(
-                    "p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10 backdrop-blur-xl",
+                    "p-3 sm:p-4 border-b cursor-grab active:cursor-grabbing select-none touch-none sticky top-0 z-10 backdrop-blur-xl",
                     isDark ? "border-white/10 bg-slate-900/75" : "border-white/70 bg-white/80"
                   )}
                   data-modal-header
@@ -5237,7 +5243,7 @@ ${state.bannerMOTD}
               <div className="relative flex flex-col h-full rounded-2xl shadow-2xl overflow-visible">
                 <DialogHeader
                   className={cn(
-                    "p-3 sm:p-4 border-b cursor-move select-none touch-none sticky top-0 z-10",
+                    "p-3 sm:p-4 border-b cursor-grab active:cursor-grabbing select-none touch-none sticky top-0 z-10",
                     isDark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-white"
                   )}
                   data-modal-header
@@ -5714,7 +5720,7 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Cihazları Bagla' : 'Connect Devices'}</TooltipContent>
+                      <TooltipContent>{t.connectDevices}</TooltipContent>
                     </Tooltip>
 
                     {/* Ping Button */}
@@ -6277,7 +6283,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
   return (
     <div
       ref={containerRef}
-      className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDraggingUI ? "cursor-grabbing" : "cursor-grab")}
+      className={cn("hidden md:block fixed z-[10000] animate-scale-in")}
       style={{
         bottom: `${position.y}px`,
         right: `${position.x}px`,
@@ -6287,21 +6293,21 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
       <div
         className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[260px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}
       >
-        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDraggingUI ? 'cursor-grabbing' : 'cursor-grab'}`}>
           <div className="flex items-center gap-1.5">
-            <GripHorizontal className="w-3 h-3 opacity-30 cursor-grab" />
+            <GripHorizontal className="w-3 h-3 opacity-30" />
             <Monitor className="w-3.5 h-3.5 text-blue-500" />
             <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{pc?.name || pc?.id || 'Unknown'}</span>
           </div>
           <button
             onClick={onClose}
             className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
-            title={language === 'tr' ? 'Kapat' : 'Close'}
+            title={t.close}
           >
             <X className="w-3 h-3" />
           </button>
         </div>
-        <div className="overflow-hidden">
+        <div className="overflow-hidden cursor-default">
           <div className="p-2 space-y-1 text-[10px]">
             <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.ip || '0.0.0.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
               <span className="opacity-50">IP</span>
@@ -6555,7 +6561,7 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
   return (
     <div
       ref={containerRef}
-      className={cn("hidden md:block fixed z-[10000] animate-scale-in", isDraggingUI ? "cursor-grabbing" : "cursor-grab")}
+      className={cn("hidden md:block fixed z-[10000] animate-scale-in")}
       style={{
         bottom: `${position.y}px`,
         right: `${position.x}px`,
@@ -6565,21 +6571,21 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
       <div
         className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[280px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}
       >
-        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDraggingUI ? 'cursor-grabbing' : 'cursor-grab'}`}>
           <div className="flex items-center gap-1.5">
-            <GripHorizontal className="w-3 h-3 opacity-30 cursor-grab" />
+            <GripHorizontal className="w-3 h-3 opacity-30" />
             {router.type.startsWith('switch') ? <SwitchIcon isL3={router.type === 'switchL3'} className="w-3.5 h-3.5 text-purple-500" /> : <RouterIcon className="w-3.5 h-3.5 text-purple-500" />}
             <span className="text-[10px] font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
           </div>
           <button
-            onClick={onClose}
-            className={`p-0.5 rounded hover:bg-slate-500/20 ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
-            title={language === 'tr' ? 'Kapat' : 'Close'}
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            className={`p-0.5 rounded hover:bg-slate-500/20 cursor-pointer ${isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+            title={t.close}
           >
             <X className="w-3 h-3" />
           </button>
         </div>
-        <div className="overflow-hidden">
+        <div className="overflow-hidden cursor-default">
           <div className="p-2 space-y-1 text-[10px]">
             <div className="flex justify-between items-center">
               <span className="opacity-50">{t.portsShort}</span>

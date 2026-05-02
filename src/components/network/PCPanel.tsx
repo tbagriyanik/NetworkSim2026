@@ -5823,7 +5823,7 @@ export function PCPanel({
               style={{ borderWidth: 3 }}
             >
               <div
-                className={`flex items-center justify-between px-4 py-2 border-b cursor-move select-none touch-none ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100'}`}
+                className={`flex items-center justify-between px-4 py-2 border-b cursor-grab active:cursor-grabbing select-none touch-none ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100'}`}
                 onPointerDown={(e) => {
                   const target = e.target as HTMLElement;
                   if (target.closest('input, textarea, select, button')) return;

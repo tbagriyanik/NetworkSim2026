@@ -140,7 +140,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
       <CardContent>
         {isDevicePoweredOff && (
           <div className="mb-4 px-3 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 text-xs font-bold tracking-wider text-center">
-            {t.language === 'tr' ? 'Bağlantı hatası' : 'Connection error'}
+            {t.connectionError}
           </div>
         )}
 

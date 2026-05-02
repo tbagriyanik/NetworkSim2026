@@ -5259,7 +5259,7 @@ export function NetworkTopology({
             ? 'bg-slate-800/90 hover:bg-red-500/30 text-slate-300 hover:text-red-400 border border-slate-600'
             : 'bg-white/90 hover:bg-red-500/30 text-slate-600 hover:text-red-600 border border-slate-300'
             }`}
-          title={language === 'tr' ? 'Çık' : 'Exit'}
+          title={t.exit}
         >
           <X className="w-4 h-4" />
         </button>
@@ -7015,7 +7015,7 @@ export function NetworkTopology({
             <button
               onClick={() => setErrorToast(null)}
               className="flex-shrink-0 ml-2 hover:bg-red-700 rounded p-1 transition-colors"
-              title={language === 'tr' ? 'Kapat' : 'Close'}
+              title={t.close}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

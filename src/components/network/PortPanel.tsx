@@ -323,8 +323,8 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
                 </TooltipTrigger>
                 <TooltipContent hideArrow side="bottom" className={`${isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'} p-2 text-xs rounded-[25px] shadow-2xl`}>
                   {t.language === 'tr'
-                    ? `Güç: ${isDevicePoweredOff ? 'Kapalı' : 'Açık'}`
-                    : `Power: ${isDevicePoweredOff ? 'Off' : 'On'}`}
+                    ? `Güç: ${isDevicePoweredOff ? t.off : t.on}`
+                    : `Power: ${isDevicePoweredOff ? t.off : t.on}`}
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -344,7 +344,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {t.language === 'tr' ? 'Kapat' : 'Close'}
+                    {t.close}
                   </TooltipContent>
                 </Tooltip>
                 <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{deviceModel || 'WS-C2960-24TT-L'}</span>
@@ -354,15 +354,15 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
                   'PWR',
                   isDevicePoweredOff ? 'gray' : 'green',
                   t.language === 'tr'
-                    ? `Güç durumu: ${isDevicePoweredOff ? 'Kapalı' : 'Açık'}`
-                    : `Power status: ${isDevicePoweredOff ? 'Off' : 'On'}`
+                    ? `${t.power}: ${isDevicePoweredOff ? t.off : t.on}`
+                    : `Power: ${isDevicePoweredOff ? t.off : t.on}`
                 )}
                 {renderStatusLed(
                   'SYST',
                   systemLedColor,
                   t.language === 'tr'
-                    ? `Sistem durumu: ${isDevicePoweredOff ? 'Kapalı' : systemLedColor === 'orange' ? 'Uyarı' : 'Çalışıyor'}`
-                    : `System status: ${isDevicePoweredOff ? 'Off' : systemLedColor === 'orange' ? 'Warning' : 'Operational'}`
+                    ? `Sistem durumu: ${isDevicePoweredOff ? t.off : systemLedColor === 'orange' ? 'Uyarı' : 'Çalışıyor'}`
+                    : `System status: ${isDevicePoweredOff ? t.off : systemLedColor === 'orange' ? 'Warning' : 'Operational'}`
                 )}
               </div>
             </div>

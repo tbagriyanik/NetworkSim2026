@@ -175,7 +175,7 @@ export function RouterPanel({
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {language === 'tr' ? 'Kapat' : 'Close'}
+                  {t.close}
                 </TooltipContent>
               </Tooltip>
               <div className={`p-2 rounded-lg ${isDark ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
