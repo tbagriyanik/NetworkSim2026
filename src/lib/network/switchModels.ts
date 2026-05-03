@@ -46,12 +46,19 @@ export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
     }
 };
 
-export function getSwitchLayer(model: SwitchModel): SwitchLayer {
-    return SWITCH_MODELS[model].layer;
+export function getSwitchLayer(model: SwitchModel | string | undefined): SwitchLayer {
+    if (!model || !SWITCH_MODELS[model as SwitchModel]) {
+        // Default to L2 for unknown models
+        return 'L2';
+    }
+    return SWITCH_MODELS[model as SwitchModel].layer;
 }
 
-export function getSwitchInfo(model: SwitchModel): SwitchModelInfo {
-    return SWITCH_MODELS[model];
+export function getSwitchInfo(model: SwitchModel | string | undefined): SwitchModelInfo | undefined {
+    if (!model || !SWITCH_MODELS[model as SwitchModel]) {
+        return undefined;
+    }
+    return SWITCH_MODELS[model as SwitchModel];
 }
 
 export function isLayer2Switch(model: SwitchModel | string | undefined): boolean {
