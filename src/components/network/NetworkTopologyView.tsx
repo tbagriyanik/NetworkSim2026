@@ -387,8 +387,8 @@ export const NetworkTopologyView = React.memo(
                 <clipPath id="canvasClip">
                   <rect x="0" y="0" width={canvasDimensions.width} height={canvasDimensions.height} />
                 </clipPath>
-                <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
-                  <circle cx="10" cy="10" r="1" fill={isDark ? '#334155' : '#94a3b8'} />
+                <pattern id="gridPattern" width="16" height="16" patternUnits="userSpaceOnUse">
+                  <circle cx="8" cy="8" r="0.5" fill={isDark ? '#334155' : '#94a3b8'} />
                 </pattern>
               </defs>
 

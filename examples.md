@@ -1349,3 +1349,118 @@ To add a new example:
 4. Add notes explaining the topology and configuration.
 5. Add the example to the `exampleProjects` array.
 6. Update this documentation.
+
+
+---
+
+## Grid ve Snap Ayarları
+
+### Grid Noktaları
+- **Grid Boyutu:** 16px (küçültülmüş)
+- **Grid Noktası Yarıçapı:** 0.5px (daha ince görünüm)
+
+### Snap-to-Grid Özelliği
+- **Varsayılan:** Etkin
+- **Ctrl + Drag:** Cihazları tam grid'e yapıştırır (16px grid)
+- **Kullanım:** Cihazları düzenli bir şekilde hizalamak için Ctrl tuşunu basılı tutarak sürükleyin
+
+---
+
+## Kısayol Güncellemeleri
+
+### Yeni Kısayollar
+| Kısayol | İşlem |
+|---------|-------|
+| `F5` | Ağ topolojisini yenile |
+| `Ctrl + Drag` | Cihazı grid'e yapıştır (16px) |
+| `Ctrl+X` | Konfigürasyonu kes |
+| `Double-click` | Cihaz yapılandırma panelini aç |
+
+---
+
+## DHCP Sunucusu Yapılandırması Örneği
+
+**Amaç:** Router üzerinde DHCP sunucusu yapılandırarak PC'lere otomatik IP ataması yapmak.
+
+### Topoloji Oluşturma
+1. **Cihazlar:**
+   - 1 adet Router (R1)
+   - 1 adet Switch (SW1)
+   - 2 adet PC (PC-1, PC-2)
+
+2. **Bağlantılar:**
+   - R1 Gi0/0 -> SW1 Gi0/1 (Crossover kablo)
+   - PC-1 Eth0 -> SW1 Fa0/1 (Straight kablo)
+   - PC-2 Eth0 -> SW1 Fa0/2 (Straight kablo)
+
+### Router DHCP Yapılandırması
+
+```
+R1# enable
+R1# configure terminal
+R1(config)# interface gi0/0
+R1(config-if)# ip address 192.168.10.1 255.255.255.0
+R1(config-if)# no shutdown
+R1(config-if)# exit
+R1(config)# ip dhcp pool LAN
+R1(dhcp-config)# network 192.168.10.0 255.255.255.0
+R1(dhcp-config)# default-router 192.168.10.1
+R1(dhcp-config)# dns-server 8.8.8.8
+R1(dhcp-config)# lease 1
+R1(dhcp-config)# exit
+R1(config)# exit
+R1# write memory
+```
+
+### Switch Yapılandırması
+
+```
+SW1# enable
+SW1# configure terminal
+SW1(config)# interface vlan 1
+SW1(config-if)# ip address 192.168.10.2 255.255.255.0
+SW1(config-if)# no shutdown
+SW1(config-if)# exit
+SW1(config)# interface range fa0/1-2
+SW1(config-if-range)# switchport mode access
+SW1(config-if-range)# exit
+SW1(config)# exit
+SW1# write memory
+```
+
+### PC Yapılandırması
+
+1. **PC-1 ve PC-2:**
+   - IP Yapılandırması: DHCP
+   - Terminal'de: `ipconfig /renew` (Windows) veya `dhclient` (Linux)
+
+### Doğrulama
+
+```
+R1# show ip dhcp binding
+R1# show ip dhcp pool
+PC-1# ipconfig (Windows) veya ifconfig (Linux)
+PC-2# ipconfig (Windows) veya ifconfig (Linux)
+```
+
+### Beklenen Sonuç
+
+- PC-1: 192.168.10.3 (DHCP tarafından atanmış)
+- PC-2: 192.168.10.4 (DHCP tarafından atanmış)
+- Her PC'nin Gateway: 192.168.10.1
+- Her PC'nin DNS: 8.8.8.8
+
+### Sorun Giderme
+
+**Sorun:** İlk otomatik ağ yenilemesinde portlar takılı görünüyor
+- **Çözüm:** Elle ağ yenileme (F5) yapın. Sistem portların durumunu doğru şekilde güncelleyecektir.
+
+**Sorun:** PC'ler DHCP IP alamıyor
+- Kontrol edin: `show ip dhcp pool` (Router'da pool tanımlı mı?)
+- Kontrol edin: `show ip dhcp binding` (Lease atanmış mı?)
+- Kontrol edin: Bağlantılar aktif mi? (show interfaces)
+
+**Sorun:** PC'ler birbirine ping atamıyor
+- Kontrol edin: Aynı subnet'te mi? (192.168.10.x)
+- Kontrol edin: Gateway doğru mu? (192.168.10.1)
+- Kontrol edin: Switch port'ları aktif mi? (show interfaces status)

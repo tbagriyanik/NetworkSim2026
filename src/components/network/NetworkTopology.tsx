@@ -1078,7 +1078,9 @@ export function NetworkTopology({
     isActuallyDraggingRef.current = isActuallyDragging;
     snapToGridRef.current = snapToGrid;
     isDrawingConnectionRef.current = isDrawingConnection;
-  });
+    // eslint-disable-next-line react-hooks/immutability
+    selectedDeviceIdsRef.current = selectedDeviceIds;
+  }, [isPanning, panStart, zoom, pan, draggedDevice, dragStartPos, dragStartDevicePositions, isActuallyDragging, snapToGrid, isDrawingConnection, selectedDeviceIds]);
 
   // Handle mouse move for panning and dragging
   // Registered ONCE (empty deps) - reads all mutable values through refs to avoid stale closures
@@ -1222,8 +1224,8 @@ export function NetworkTopology({
                 let newY = initialPos.y + dy;
 
                 if (currentSnapToGrid && ctrlKey) {
-                  newX = Math.round(newX / 20) * 20;
-                  newY = Math.round(newY / 20) * 20;
+                  newX = Math.round(newX / 16) * 16;
+                  newY = Math.round(newY / 16) * 16;
                 }
 
                 const clampedX = Math.max(20, Math.min(newX, canvasW - 100));
@@ -5940,12 +5942,12 @@ export function NetworkTopology({
                     )}
                   </radialGradient>
                   {/* Grid pattern with improved visibility */}
-                  <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <circle cx="10" cy="10" r="1.5" fill={isDark ? '#475569' : '#64748b'} opacity="0.6" />
+                  <pattern id="gridPattern" width="16" height="16" patternUnits="userSpaceOnUse">
+                    <circle cx="8" cy="8" r="1" fill={isDark ? '#475569' : '#64748b'} opacity="0.6" />
                   </pattern>
                   {/* Major grid lines pattern */}
-                  <pattern id="majorGridPattern" width="100" height="100" patternUnits="userSpaceOnUse">
-                    <rect width="100" height="100" fill="none" stroke={isDark ? '#334155' : '#cbd5e1'} strokeWidth="0.5" opacity="0.3" />
+                  <pattern id="majorGridPattern" width="80" height="80" patternUnits="userSpaceOnUse">
+                    <rect width="80" height="80" fill="none" stroke={isDark ? '#334155' : '#cbd5e1'} strokeWidth="0.5" opacity="0.3" />
                   </pattern>
                   {/* Device 3D Gradients for Dark Mode */}
                   <linearGradient id="pcGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">

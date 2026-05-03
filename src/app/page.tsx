@@ -3295,7 +3295,11 @@ ${state.bannerMOTD}
           const key = `${device.id}:${port.id}`;
           if (port.shutdown || port.status === 'disabled' || port.status === 'err-disabled') return port;
           if (activePortKeys.has(key)) return { ...port, status: 'connected' as const };
-          return { ...port, status: 'disconnected' as const };
+          // Only change to disconnected if it was previously connected
+          if (port.status === 'connected') {
+            return { ...port, status: 'disconnected' as const };
+          }
+          return port;
         }),
       }));
 
@@ -3316,14 +3320,17 @@ ${state.bannerMOTD}
             }
             return;
           }
-          nextPorts[portId] = {
-            ...port,
-            status: 'notconnect',
-            spanningTree: port.spanningTree
-              ? { ...port.spanningTree, state: 'disabled', role: 'disabled' }
-              : port.spanningTree,
-          };
-          changed = true;
+          // Only change to notconnect if it was previously connected
+          if (port.status === 'connected') {
+            nextPorts[portId] = {
+              ...port,
+              status: 'notconnect',
+              spanningTree: port.spanningTree
+                ? { ...port.spanningTree, state: 'disabled', role: 'disabled' }
+                : port.spanningTree,
+            };
+            changed = true;
+          }
         });
 
         if (changed) {
@@ -5940,14 +5947,12 @@ ${state.bannerMOTD}
           {
             refreshNetworkReport?.show && (
               <div
-                className={`fixed bottom-16 left-6 w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md cursor-grab active:cursor-grabbing select-none ${isDark
+                className={`fixed bottom-16 left-6 w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md select-none ${isDark
                   ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
                   : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
                   }`}
                 style={{ zIndex: focusedOverlay === 'refresh' ? 200 : 100 }}
                 onMouseDown={() => setFocusedOverlay('refresh')}
-                data-draggable-id="refresh-report"
-                data-drag-handle
               >
                 <div className="p-4 space-y-3">
                   <div className="flex items-center justify-between">

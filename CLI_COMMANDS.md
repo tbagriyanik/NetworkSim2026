@@ -15,6 +15,7 @@ The simulator supports **100+ commands** across multiple configuration modes.
 | `Arrow Up/Down` | Navigate command history in CLI |
 | `Enter` | Execute command / Confirm action |
 | `Delete` | Delete selected items |
+| `F5` | Refresh network topology |
 
 ### Canvas Navigation
 | Shortcut | Action |
@@ -23,14 +24,17 @@ The simulator supports **100+ commands** across multiple configuration modes.
 | `Middle-click + Drag` | Rectangle selection |
 | `Right-click` | Open context menu |
 | `Mouse Wheel` | Zoom in/out |
+| `Ctrl + Drag Device` | Snap device to grid (16px grid) |
 
 ### Device Operations
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl+C` | Copy configuration |
 | `Ctrl+V` | Paste configuration |
+| `Ctrl+X` | Cut configuration |
 | `Ctrl+S` | Save configuration |
 | `Ctrl+L` | Clear terminal |
+| `Double-click Device` | Open device configuration panel |
 
 ## Command Overview
 

@@ -5,1842 +5,1771 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 export type Language = 'tr' | 'en';
 
 export interface Translations {
-  pcConnected: string;
-  undo: string;
-  redo: string;
-  load: string;
-  help: string;
-  addRouter: string;
-  addNote: string;
-  resetView: string;
-  exit: string;
-  tips: string;
-  addDeviceOrCable: string;
-  colorLabel: string;
-  fontLabel: string;
-  opacityLabel: string;
-  duplicateLabel: string;
-  paste: string;
-  selectAll: string;
-  cut: string;
-  copy: string;
-  power: string;
+  about: string;
+  aboutIntro: string;
+  aboutTitle: string;
+  accessDenied: string;
+  accessibility: string;
   active: string;
-  connectDevices: string;
-  refreshNetwork: string;
-  // Header
-  title: string;
-  subtitle: string;
-  mode: string;
-  hostname: string;
-  clearTerminal: string;
-  reset: string;
-
-  // Port Panel
-  switchTitle: string;
-  fastEthernetPorts: string;
-  gigabitPorts: string;
-  connected: string;
-  closed: string;
-  blocked: string;
-  idle: string;
-  status: string;
-  portName: string;
-  speed: string;
-  duplex: string;
-  description: string;
-  unassigned: string;
-
-  // VLAN Panel
-  vlanStatus: string;
-  newVlan: string;
-  vlanId: string;
-  vlanName: string;
-  create: string;
-  suspended: string;
-  ports: string;
-
-  // Security Panel
-  securityControls: string;
-  securityLevel: string;
-  enableSecret: string;
-  consoleSecurity: string;
-  vtySecurity: string;
-  passwordEncryption: string;
-  sshAccess: string;
-  definedUsers: string;
-  goodSecurity: string;
-  mediumSecurity: string;
-  lowSecurity: string;
-  criticalSecurity: string;
-  on: string;
-  off: string;
-
-  // Config Panel
-  runningConfig: string;
-  save: string;
-  realTimeUpdate: string;
-
-  // Terminal
-  cliTerminal: string;
-  processing: string;
-  lines: string;
-
-  // Quick Commands
-  quickCommands: string;
-  noCommandsAvailable: string;
-  tabComplete: string;
-  commandHistory: string;
-
-  // Footer
-  nosVersion: string;
-  model: string;
-  uptime: string;
   activePorts: string;
-
-  // Tips
-  levelBasic: string;
-  levelIntermediate: string;
-  levelAdvanced: string;
-  portClickTip: string;
-
-  // Simulator
-  simulatorTitle: string;
-  simulatorCopyright: string;
-
-  // Theme
-  theme: string;
-  light: string;
-  dark: string;
-  language: Language;  // 'tr' | 'en'
-
-  // Additional
-  clearTerminalBtn: string;
-  switchMode: string;
-  newVlanLabel: string;
-  // UI text for global controls in About modal / tour
-  close: string;
-  pcTerminal: string;
-  pcNotConnected: string;
-  pcCableError: string;
-  pcIncompatibleCable: string;
-  pcAccessDenied: string;
-  pcConsoleTip: string;
-  pcPingError: string;
-  pcTelnetError: string;
-  pcTracertError: string;
-  pcNslookupError: string;
-  pcIpconfigError: string;
-  pcTerminalClosing: string;
-  consolePingNotAllowed: string;
-  pcLoginSuccess: string;
-  pcConnectionClosed: string;
-  copyToastSuccessTitle: string;
-  copyToastSuccessDescription: string;
-  copyToastFailureTitle: string;
-  copyToastFailureDescription: string;
-  consolePasswordErrorTitle: string;
-  consolePasswordErrorDescription: string;
-  pcConnectionError: string;
-  dnsInvalidAddress: string;
-  dnsGatewayRequired: string;
-  targetGatewayRequired: string;
-  dnsAddressRequired: string;
-  pcNoDeviceConnected: string;
-  pcConsoleHelp: string;
-  searchOutputTitle: string;
-  searchOutputDescription: string;
-  searchPlaceholder: string;
-  commandPromptTab: string;
-  consoleTab: string;
-  settingsTab: string;
-  servicesTab: string;
-  ipConfigurationLabel: string;
-  staticLabel: string;
-  dnsRecordManagerTip: string;
-  dnsDomainPlaceholder: string;
-  dnsAddressPlaceholder: string;
+  activeSystem: string;
+  add: string;
+  addDevice: string;
+  addDeviceOrCable: string;
+  addDevicesFirst: string;
   addDnsRecord: string;
-  dnsNoRecords: string;
-  dnsARecordLabel: string;
-  dnsCnameRecordLabel: string;
-  httpServiceDescription: string;
-  dhcpPoolsDescription: string;
-  dhcpPoolNamePlaceholder: string;
-  dhcpPoolGatewayPlaceholder: string;
+  addIoT: string;
+  addIotDevice: string;
+  addL2Switch: string;
+  addL3Switch: string;
+  addNote: string;
+  addPC: string;
+  addPc: string;
+  addPcDevice: string;
+  addPcShort: string;
+  addPool: string;
+  addRouter: string;
+  addRouterShort: string;
+  addSwitch: string;
+  addSwitchShort: string;
+  advancedHint: string;
+  align: string;
+  alignLeft: string;
+  alignTop: string;
+  allCommands: string;
+  allStepsCompleted: string;
+  annotations: string;
+  apActive: string;
+  apNoClients: string;
+  applicationError: string;
+  ariaManagement: string;
+  assetLoading: string;
+  back: string;
+  backgroundGreenhouse: string;
+  backgroundHouse: string;
+  backgroundNone: string;
+  backgroundTwoStoryGarage: string;
+  basicCommands: string;
+  basicHint: string;
+  bathroom: string;
+  bedroom: string;
+  beginner: string;
+  blocked: string;
+  bootInitializing: string;
+  bootLoading: string;
+  bootReady: string;
+  bootingFlash: string;
+  boxSelect: string;
+  bugReport: string;
+  cable: string;
+  cableType: string;
+  cableTypeSelector: string;
+  cableTypes: string;
+  cancel: string;
+  celsius: string;
+  channelLabel: string;
+  channelShort: string;
+  clear: string;
+  clearTerminal: string;
+  clearTerminalBtn: string;
+  clearTerminalConfirm: string;
+  cli: string;
+  cliInterface: string;
+  cliTerminal: string;
+  clickIconsToRun: string;
+  clientsLeased: string;
+  close: string;
+  closed: string;
+  cmdSuggestions: string;
+  colorLabel: string;
+  commandHistory: string;
+  commandModes: string;
+  commandPromptTab: string;
+  commandReference: string;
+  commandsFound: string;
+  completeWithTab: string;
+  completedAt: string;
+  configure: string;
+  confirm: string;
+  confirmReset: string;
+  confirmResetDescription: string;
+  confirmResetTitle: string;
+  confirmationRequired: string;
+  congrats: string;
+  connect: string;
+  connectDevices: string;
+  connected: string;
+  connectedLabel: string;
+  connectedShort: string;
+  connectedStatus: string;
+  connectionError: string;
+  console: string;
+  consoleCable: string;
+  consoleConfiguration: string;
+  consolePasswordErrorDescription: string;
+  consolePasswordErrorTitle: string;
+  consolePingNotAllowed: string;
+  consoleSecurity: string;
+  consoleShort: string;
+  consoleTab: string;
+  consoleTerminal: string;
+  contactEmail: string;
+  contactErrorDesc: string;
+  contactErrorTitle: string;
+  contactMessage: string;
+  contactName: string;
+  contactPlaceholderEmail: string;
+  contactPlaceholderMessage: string;
+  contactPlaceholderName: string;
+  contactSend: string;
+  contactSuccessDesc: string;
+  contactSuccessTitle: string;
+  contactTitle: string;
+  contactType: string;
+  contactValidationEmail: string;
+  contactValidationMessage: string;
+  contactValidationName: string;
+  continue: string;
+  copy: string;
+  copyAction: string;
+  copyError: string;
+  copySuccess: string;
+  copyToastFailureDescription: string;
+  copyToastFailureTitle: string;
+  copyToastSuccessDescription: string;
+  copyToastSuccessTitle: string;
+  corruptedProject: string;
+  create: string;
+  criticalSecurity: string;
+  crossover: string;
+  crossoverCable: string;
+  crossoverShort: string;
+  currentStep: string;
+  cut: string;
+  dark: string;
+  darkMode: string;
+  definedUsers: string;
+  delete: string;
+  description: string;
+  details: string;
+  device: string;
+  deviceInfo: string;
+  deviceInfoShort: string;
+  deviceInformation: string;
+  deviceName: string;
+  deviceNameLabel: string;
+  deviceOff: string;
+  deviceTasksAndConfig: string;
+  devices: string;
+  devicesCount: string;
+  dhcpActiveServers: string;
+  dhcpAssignments: string;
+  dhcpCliConfig: string;
+  dhcpEnabled: string;
+  dhcpFailureDescription: string;
+  dhcpFailureTitle: string;
+  dhcpNoLease: string;
+  dhcpNoPool: string;
+  dhcpNotFound: string;
+  dhcpPoolConfig: string;
   dhcpPoolDnsPlaceholder: string;
+  dhcpPoolGatewayPlaceholder: string;
+  dhcpPoolLabel: string;
+  dhcpPoolMaxUsersPlaceholder: string;
+  dhcpPoolNamePlaceholder: string;
   dhcpPoolStartIpPlaceholder: string;
   dhcpPoolSubnetPlaceholder: string;
-  dhcpPoolMaxUsersPlaceholder: string;
-  addPool: string;
-  updatePool: string;
-  noDhcpPools: string;
-  edit: string;
-  dhcpSuccessTitle: string;
+  dhcpPoolsDescription: string;
   dhcpSuccessDescription: string;
-  dhcpFailureTitle: string;
-  dhcpFailureDescription: string;
-  resetToDefaults: string;
-  confirmResetTitle: string;
-  confirmResetDescription: string;
-  confirmReset: string;
-  saveLabel: string;
-  languageLabel: string;
-  themeLabel: string;
+  dhcpSuccessTitle: string;
+  disabled: string;
+  disconnect: string;
+  disconnectAction: string;
+  disconnectedStatus: string;
+  dnsARecordLabel: string;
+  dnsAddressPlaceholder: string;
+  dnsAddressRequired: string;
+  dnsCnameRecordLabel: string;
+  dnsDomainPlaceholder: string;
+  dnsGatewayRequired: string;
+  dnsInvalidAddress: string;
+  dnsNoRecords: string;
+  dnsRecordManagerTip: string;
+  dnsRecordsLabel: string;
+  dnsServer: string;
+  dontSave: string;
+  dragToZoomOrScroll: string;
+  duplex: string;
+  duplicateLabel: string;
+  dynamicRouting: string;
+  edit: string;
+  emptyProject: string;
+  emptyProjectDesc: string;
+  enableSecret: string;
+  enabled: string;
+  english: string;
+  enterPassword: string;
+  environmentBackground: string;
+  environmentSettings: string;
   errorPrefix: string;
-  newBtn: string;
-  dhcpEnabled: string;
-  openServices: string;
-  modeUser: string;
-  modePrivileged: string;
+  exit: string;
+  exitPingMode: string;
+  expand: string;
+  exportLabel: string;
+  extractingFiles: string;
+  failedLoadProject: string;
+  fastEthernetPorts: string;
+  fileImportedSuccessfully: string;
+  finish: string;
+  fontLabel: string;
+  fontSizeLabel: string;
+  freePorts: string;
+  fullScreen: string;
+  gateway: string;
+  gigabitPorts: string;
+  gitAddressLabel: string;
+  globalConfigLabel: string;
+  goodSecurity: string;
+  guidedMode: string;
+  help: string;
+  hideHint: string;
+  highContrast: string;
+  highRes: string;
+  hostname: string;
+  hostnameExample: string;
+  httpServerLabel: string;
+  httpServiceDescription: string;
+  humidity: string;
+  id: string;
+  idle: string;
+  importSuccess: string;
+  initializingSystem: string;
+  instructions: string;
+  interfaceConfigLabel: string;
+  intermediateHint: string;
+  invalidDnsAddress: string;
+  invalidGatewayAddress: string;
+  invalidIpv4Address: string;
+  invalidIpv6Address: string;
+  invalidProject: string;
+  invalidProjectFile: string;
+  invalidSubnetMask: string;
+  ipAddress: string;
+  ipConfiguration: string;
+  ipConfigurationLabel: string;
+  ipInterfaces: string;
+  ipMode: string;
+  ipRenew: string;
+  ipRouting: string;
+  ipRoutingEngine: string;
+  jsonDownloaded: string;
+  keyboardNav: string;
+  kitchen: string;
+  labProgress: string;
+  languageLabel: string;
+  lastSavedAt: string;
+  layer3Switching: string;
+  levelAdvanced: string;
+  levelBasic: string;
+  levelIntermediate: string;
+  licenseInfo: string;
+  light: string;
+  lightLevel: string;
+  lightMode: string;
+  lines: string;
+  linkFrom: string;
+  livingRoom: string;
+  load: string;
+  loadFailed: string;
+  loadProject: string;
+  lowRes: string;
+  lowSecurity: string;
+  macAddress: string;
+  measurementLabel: string;
+  mediumSecurity: string;
+  menu: string;
+  minimize: string;
+  minutes: string;
+  mode: string;
   modeConfig: string;
   modeInterface: string;
+  modeLabel: string;
   modeLine: string;
+  modePrivileged: string;
+  modeUser: string;
   modeVlanLabel: string;
-  macAddress: string;
-  deviceInfo: string;
-  consoleTerminal: string;
-  devices: string;
-  cableTypes: string;
-  cli: string;
-  id: string;
-  portInUse: string;
-  note: string;
-  cable: string;
-  add: string;
-  annotations: string;
-  align: string;
-  selectCable: string;
-  deviceInfoShort: string;
-  addPcShort: string;
-  addSwitchShort: string;
-  addRouterShort: string;
-  ipAddress: string;
-  subnetMask: string;
-  gateway: string;
-  dnsServer: string;
-  accessDenied: string;
-  resetConfirm: string;
-  clearTerminalConfirm: string;
-  unsavedChangesConfirm: string;
-  newProjectConfirm: string;
-  invalidProjectFile: string;
-  failedLoadProject: string;
+  model: string;
+  motionYes: string;
+  navigation: string;
+  networkRefreshed: string;
+  networkStatusUpdated: string;
+  networkTopology: string;
+  new: string;
+  newBtn: string;
+  newMessage: string;
+  newNote: string;
   newProject: string;
-  saveProject: string;
-  loadProject: string;
-  about: string;
+  newProjectConfirm: string;
+  newVlan: string;
+  newVlanLabel: string;
+  next: string;
+  no: string;
+  noCommandsAvailable: string;
+  noConsoleCableDetected: string;
   noDevicesInTopology: string;
-  addDevicesFirst: string;
-  selectDeviceDropdown: string;
-  vlanNameExample: string;
-  hostnameExample: string;
-
-  // Security descriptions
-  secEnableSecretOn: string;
-  secEnableSecretOff: string;
-  secConsoleOn: string;
+  noDevicesToList: string;
+  noDhcpPools: string;
+  noFreePorts: string;
+  noFreePortsMessage: string;
+  noIp: string;
+  noIpInterfaces: string;
+  noServices: string;
+  noWifiConfig: string;
+  noWifiDevices: string;
+  nodePooling: string;
+  none: string;
+  nosVersion: string;
+  notConnected: string;
+  note: string;
+  noteStyle: string;
+  of: string;
+  off: string;
+  on: string;
+  opacityLabel: string;
+  open: string;
+  openCLI: string;
+  openCMD: string;
+  openGuidedLesson: string;
+  openNewProject: string;
+  openNewProjectDesc: string;
+  openServices: string;
+  openSourceInfo: string;
+  other: string;
+  overview: string;
+  pan: string;
+  passive: string;
+  passwordEncryption: string;
+  paste: string;
+  pcAccessDenied: string;
+  pcCableError: string;
+  pcConnected: string;
+  pcConnectionClosed: string;
+  pcConnectionError: string;
+  pcConsoleHelp: string;
+  pcConsoleTip: string;
+  pcDisconnected: string;
+  pcIncompatibleCable: string;
+  pcIpconfigError: string;
+  pcLoginSuccess: string;
+  pcNoDeviceConnected: string;
+  pcNotConnected: string;
+  pcNslookupError: string;
+  pcPingError: string;
+  pcTelnetError: string;
+  pcTerminal: string;
+  pcTerminalClosing: string;
+  pcTracertError: string;
+  percent: string;
+  performanceOptimization: string;
+  physicalConnectionDetected: string;
+  ping: string;
+  pingFailed: string;
+  pingSuccess: string;
+  pools: string;
+  portClickTip: string;
+  portInUse: string;
+  portName: string;
+  portSecurityBlocked: string;
+  portSummary: string;
+  ports: string;
+  portsShort: string;
+  power: string;
+  powerOff: string;
+  powerOn: string;
+  pressEnterToConfirm: string;
+  processing: string;
+  progress: string;
+  project: string;
+  projectLoaded: string;
+  projectSaved: string;
+  pts: string;
+  quickActions: string;
+  quickCommands: string;
+  realTimeUpdate: string;
+  redo: string;
+  refresh: string;
+  refreshNetwork: string;
+  refreshNetworkF5: string;
+  reload: string;
+  reloadPage: string;
+  rename: string;
+  reset: string;
+  resetConfirm: string;
+  resetToDefaults: string;
+  resetView: string;
+  resize: string;
+  resizeAction: string;
+  resizeLabel: string;
+  room1: string;
+  room2: string;
+  routedPorts: string;
+  routerInfoPanel: string;
+  routing: string;
+  routingTasks: string;
+  runningConfig: string;
+  save: string;
+  saveError: string;
+  saveLabel: string;
+  saveProject: string;
+  saveSuccess: string;
+  saved: string;
+  savedViaSheets: string;
+  saving: string;
+  screenReader: string;
+  search: string;
+  searchOutputDescription: string;
+  searchOutputTitle: string;
+  searchPlaceholder: string;
+  searchProjects: string;
+  searchShort: string;
+  searchTerminal: string;
   secConsoleOff: string;
-  secVtyOn: string;
-  secVtyOff: string;
-  secPassEncOn: string;
+  secConsoleOn: string;
+  secEnableSecretOff: string;
+  secEnableSecretOn: string;
+  secNoProtocol: string;
   secPassEncOff: string;
+  secPassEncOn: string;
   secSshOnly: string;
   secTelnetWarn: string;
-  secNoProtocol: string;
-
-  // VLAN Panel
+  secVtyOff: string;
+  secVtyOn: string;
+  securityControls: string;
+  securityLabel: string;
+  securityLevel: string;
+  selectAll: string;
+  selectCable: string;
+  selectDevice: string;
+  selectDeviceDropdown: string;
+  selectSource: string;
+  selectSourcePort: string;
+  selectTarget: string;
+  selectTargetPort: string;
+  sending: string;
+  services: string;
+  servicesTab: string;
+  settings: string;
+  settingsTab: string;
+  showHidePassword: string;
+  showHint: string;
+  shutdownStatus: string;
+  signal: string;
+  simulatorCopyright: string;
+  simulatorTitle: string;
+  sizeLabel: string;
+  skeletonScreens: string;
+  skip: string;
+  spatialPartitioning: string;
+  speed: string;
+  sshAccess: string;
+  startTour: string;
+  static: string;
+  staticLabel: string;
+  status: string;
+  statusLabel: string;
+  step1: string;
+  step2: string;
+  stpSwitchesUpdated: string;
+  straight: string;
+  straightCable: string;
+  straightShort: string;
+  subnetMask: string;
+  subtitle: string;
+  suggestion: string;
+  suspended: string;
+  switchMode: string;
+  switchTasks: string;
+  switchTerminal: string;
+  switchTitle: string;
+  syslogStarted: string;
+  tabComplete: string;
+  tabDescCmd: string;
+  tabDescTasks: string;
+  tabDescTerminal: string;
+  tabDescTopology: string;
+  tabToNext: string;
+  tabsShort: string;
+  targetGatewayRequired: string;
+  taskCompleted: string;
+  taskFailed: string;
+  tasks: string;
+  temperature: string;
+  termsAndConditions: string;
+  termsText: string;
+  theme: string;
+  themeLabel: string;
+  tips: string;
+  title: string;
+  togglePower: string;
+  topologyAriaLabel: string;
+  topologyInvalidConnections: string;
+  tour: string;
+  turkish: string;
+  tutorialCablesDesc: string;
+  tutorialCablesTitle: string;
+  tutorialDevicesDesc: string;
+  tutorialDevicesTitle: string;
+  tutorialPingDesc: string;
+  tutorialPingTitle: string;
+  tutorialProjectDesc: string;
+  tutorialProjectTitle: string;
+  tutorialReadyDesc: string;
+  tutorialReadyTitle: string;
+  tutorialThemeDesc: string;
+  tutorialThemeTitle: string;
+  tutorialTopologyDesc: string;
+  tutorialTopologyTitle: string;
+  tutorialWelcomeDesc: string;
+  tutorialWelcomeTitle: string;
+  tutorialWifiDesc: string;
+  tutorialWifiTitle: string;
+  typeCommand: string;
+  typeCommandPlaceholder: string;
+  unassigned: string;
+  uncomplete: string;
+  undo: string;
+  unsaved: string;
+  unsavedChangesConfirm: string;
+  updatePool: string;
+  uptime: string;
+  vTaskAssignDesc: string;
+  vTaskAssignName: string;
+  vTaskCreateDesc: string;
+  vTaskCreateName: string;
+  vTaskFullNamingDesc: string;
+  vTaskFullNamingHint: string;
+  vTaskFullNamingName: string;
+  vTaskMultipleDesc: string;
+  vTaskMultipleName: string;
+  vTaskNameDesc: string;
+  vTaskNameName: string;
+  vTaskTrunkDesc: string;
+  vTaskTrunkName: string;
+  viewportCulling: string;
+  virtualScrolling: string;
+  vlanExcellent: string;
+  vlanGood: string;
+  vlanId: string;
+  vlanInProgress: string;
+  vlanName: string;
+  vlanNameExample: string;
+  vlanNeeded: string;
   vlanNotApplicable: string;
   vlanOnlyOnNetworkDevices: string;
   vlanScore: string;
+  vlanStatus: string;
   vlanTasks: string;
-  vlanExcellent: string;
-  vlanGood: string;
-  vlanInProgress: string;
-  vlanNeeded: string;
-
-  // VLAN Tasks
-  vTaskCreateName: string;
-  vTaskCreateDesc: string;
-  vTaskNameName: string;
-  vTaskNameDesc: string;
-  vTaskAssignName: string;
-  vTaskAssignDesc: string;
-  vTaskTrunkName: string;
-  vTaskTrunkDesc: string;
-  vTaskMultipleName: string;
-  vTaskMultipleDesc: string;
-  vTaskFullNamingName: string;
-  vTaskFullNamingDesc: string;
-  vTaskFullNamingHint: string;
-  saving: string;
-  connect: string;
-  disconnect: string;
-  physicalConnectionDetected: string;
-  noConsoleCableDetected: string;
-  consoleConfiguration: string;
+  vtySecurity: string;
   waitingForConnection: string;
-  typeCommand: string;
-  labProgress: string;
-  networkTopology: string;
-  navigation: string;
-  project: string;
-  settings: string;
-  selectDevice: string;
-  confirmationRequired: string;
-  cancel: string;
-  continue: string;
-  dontSave: string;
-  pts: string;
-  initializingSystem: string;
-
-  // About Section
-  aboutTitle: string;
-  aboutIntro: string;
-  termsAndConditions: string;
-  termsText: string;
-  licenseInfo: string;
-  gitAddressLabel: string;
-  openSourceInfo: string;
-  startTour: string;
-
-  // Network Topology
-  addDevice: string;
-  addPc: string;
-  addSwitch: string;
-  cableType: string;
-  straight: string;
-  crossover: string;
-  console: string;
-  linkFrom: string;
-  selectSourcePort: string;
-  selectTargetPort: string;
-  step1: string;
-  step2: string;
-  freePorts: string;
-  noFreePorts: string;
-  noFreePortsMessage: string;
-  reloadPage: string;
-  delete: string;
-  resize: string;
-  search: string;
-  tasks: string;
-  basicHint: string;
-  intermediateHint: string;
-  advancedHint: string;
-  syslogStarted: string;
-  bootReady: string;
-  bootLoading: string;
-  bootInitializing: string;
-  bootingFlash: string;
-  extractingFiles: string;
-  performanceOptimization: string;
-  spatialPartitioning: string;
-  viewportCulling: string;
-  virtualScrolling: string;
-  skeletonScreens: string;
-  assetLoading: string;
-  nodePooling: string;
-  layer3Switching: string;
-  routedPorts: string;
-  dynamicRouting: string;
-  ipRoutingEngine: string;
-  routingTasks: string;
-  accessibility: string;
-  ariaManagement: string;
-  keyboardNav: string;
-  highContrast: string;
-  screenReader: string;
-  wifiSignal: string;
-  wifiConnected: string;
-  wifiDisconnected: string;
-  wifiConfig: string;
-  wifiControlPanel: string;
-  wifiMode: string;
-  wifiSsid: string;
-  wifiPassword: string;
-  wifiSecurity: string;
-  wifiChannel: string;
   wifiAp: string;
+  wifiChannel: string;
   wifiClient: string;
-  saveSuccess: string;
-  saveError: string;
-  copySuccess: string;
-  copyError: string;
-  rename: string;
-  powerOn: string;
-  powerOff: string;
-  reload: string;
-  clear: string;
-  confirm: string;
-  yes: string;
-  no: string;
-  newNote: string;
-  deviceOff: string;
+  wifiConfig: string;
+  wifiConnected: string;
+  wifiControlPanel: string;
+  wifiDhcpStatusUpdated: string;
+  wifiDisconnected: string;
+  wifiMode: string;
   wifiOff: string;
   wifiOn: string;
-  statusLabel: string;
-  modeLabel: string;
-  securityLabel: string;
-  channelLabel: string;
-  connectedLabel: string;
-  exitPingMode: string;
-  selectSource: string;
-  selectTarget: string;
-  alignLeft: string;
-  alignTop: string;
-  togglePower: string;
-  topologyAriaLabel: string;
-  fontSizeLabel: string;
-  noIp: string;
-  deviceNameLabel: string;
-  measurementLabel: string;
-  noServices: string;
-  dhcpPoolLabel: string;
-  dnsRecordsLabel: string;
-  httpServerLabel: string;
-  exportLabel: string;
-  pressEnterToConfirm: string;
-  enterPassword: string;
-  typeCommandPlaceholder: string;
-  searchTerminal: string;
-  commandReference: string;
-  commandsFound: string;
-  commandModes: string;
-  basicCommands: string;
-  allCommands: string;
-  globalConfigLabel: string;
-  interfaceConfigLabel: string;
-  activeSystem: string;
-  tutorialWelcomeTitle: string;
-  tutorialWelcomeDesc: string;
-  tutorialTopologyTitle: string;
-  tutorialTopologyDesc: string;
-  tutorialCablesTitle: string;
-  tutorialCablesDesc: string;
-  tutorialDevicesTitle: string;
-  tutorialDevicesDesc: string;
-  tutorialPingTitle: string;
-  tutorialPingDesc: string;
-  tutorialWifiTitle: string;
-  tutorialWifiDesc: string;
-  tutorialProjectTitle: string;
-  tutorialProjectDesc: string;
-  tutorialThemeTitle: string;
-  tutorialThemeDesc: string;
-  tutorialReadyTitle: string;
-  tutorialReadyDesc: string;
-  projectSaved: string;
-  jsonDownloaded: string;
-  invalidProject: string;
-  corruptedProject: string;
-  wifiDhcpStatusUpdated: string;
-  // Environmental settings
-  environmentSettings: string;
-  environmentBackground: string;
-  backgroundNone: string;
-  backgroundHouse: string;
-  backgroundTwoStoryGarage: string;
-  backgroundGreenhouse: string;
-  temperature: string;
-  humidity: string;
-  lightLevel: string;
-  celsius: string;
-  percent: string;
-  // Room labels for floor plan
-  room1: string;
-  room2: string;
-  bedroom: string;
-  livingRoom: string;
-  kitchen: string;
-  bathroom: string;
-  contactTitle: string;
-  contactName: string;
-  contactEmail: string;
-  contactType: string;
-  contactMessage: string;
-  contactSend: string;
-  contactPlaceholderName: string;
-  contactPlaceholderEmail: string;
-  contactPlaceholderMessage: string;
-  contactValidationName: string;
-  contactValidationEmail: string;
-  contactValidationMessage: string;
-  bugReport: string;
-  suggestion: string;
-  other: string;
-  tabDescTopology: string;
-  tabDescCmd: string;
-  tabDescTerminal: string;
-  tabDescTasks: string;
-  networkStatusUpdated: string;
-  networkRefreshed: string;
-  noWifiDevices: string;
-  importSuccess: string;
-  pcDisconnected: string;
-  apNoClients: string;
-  dhcpNoPool: string;
-  dhcpNoLease: string;
-  newMessage: string;
-  sending: string;
-  savedViaSheets: string;
-  dhcpNotFound: string;
-  congrats: string;
-  contactSuccessTitle: string;
-  contactSuccessDesc: string;
-  contactErrorTitle: string;
-  contactErrorDesc: string;
-  sizeLabel: string;
-  resizeLabel: string;
-  pingFailed: string;
-  pingSuccess: string;
-  completeWithTab: string;
-  cmdSuggestions: string;
-  noteStyle: string;
-  open: string;
-  ping: string;
-  addIoT: string;
-  addPC: string;
-  addL2Switch: string;
-  addL3Switch: string;
-  devicesCount: string;
-  none: string;
-  openNewProject: string;
-  openNewProjectDesc: string;
-  searchProjects: string;
-  emptyProject: string;
-  emptyProjectDesc: string;
-  skip: string;
-  back: string;
-  finish: string;
-  next: string;
-  switchTerminal: string;
-  switchTasks: string;
-  deviceTasksAndConfig: string;
-  cliInterface: string;
-  connectionError: string;
-  lightMode: string;
-  darkMode: string;
-  highRes: string;
-  lowRes: string;
-  quickActions: string;
-  new: string;
-  tour: string;
-  searchShort: string;
-  straightCable: string;
-  crossoverCable: string;
-  consoleCable: string;
-  straightShort: string;
-  crossoverShort: string;
-  consoleShort: string;
-  tabToNext: string;
-  unsaved: string;
-  saved: string;
-  lastSavedAt: string;
-  pan: string;
-  boxSelect: string;
-  menu: string;
-  clickIconsToRun: string;
-  tabsShort: string;
-  taskCompleted: string;
-  taskFailed: string;
-  channelShort: string;
-  signal: string;
-  services: string;
-  openCMD: string;
-  openCLI: string;
-  ipMode: string;
-  static: string;
-  portsShort: string;
-  connectedShort: string;
-  routing: string;
-  enabled: string;
-  disabled: string;
-  pools: string;
-  routerInfoPanel: string;
-  expand: string;
-  overview: string;
-  deviceInformation: string;
-  ipRouting: string;
-  ipInterfaces: string;
-  noIpInterfaces: string;
-  portSummary: string;
-  notConnected: string;
-  shutdownStatus: string;
-  noWifiConfig: string;
-  dhcpPoolConfig: string;
-  dhcpCliConfig: string;
+  wifiPassword: string;
+  wifiSecurity: string;
+  wifiSignal: string;
+  wifiSsid: string;
   wifiStatus: string;
-  connectedStatus: string;
-  disconnectedStatus: string;
-  // Missing translations
-  noDevicesToList: string;
-  device: string;
-  openServices: string;
-  copyAction: string;
-  dhcpAssignments: string;
-  none: string;
-  projectLoaded: string;
-  fileImportedSuccessfully: string;
-  invalidProjectFile: string;
-  loadFailed: string;
-  applicationError: string;
-  english: string;
-  turkish: string;
-  addDeviceOrCable: string;
-  refreshNetworkF5: string;
-  openGuidedLesson: string;
-  dragToZoomOrScroll: string;
-  resizeAction: string;
-  details: string;
-  showHidePassword: string;
-  ipRenew: string;
-  disconnectAction: string;
-  stpSwitchesUpdated: string;
-  portSecurityBlocked: string;
-  topologyInvalidConnections: string;
   wirelessClientsConnected: string;
-  apActive: string;
   wirelessClientsDisconnected: string;
-  apNoClients: string;
   wirelessStatus: string;
-  dhcpActiveServers: string;
-  clientsLeased: string;
-  // Additional missing translations for NetworkTopology
-  invalidIpv4Address: string;
-  invalidSubnetMask: string;
-  invalidGatewayAddress: string;
-  invalidDnsAddress: string;
-  invalidIpv6Address: string;
-  passive: string;
-  motionYes: string;
-  addPcDevice: string;
-  addL2Switch: string;
-  addL3Switch: string;
-  addRouter: string;
-  addIotDevice: string;
-  cableTypeSelector: string;
-  straightCable: string;
-  crossoverCable: string;
-  consoleCable: string;
-  dragToZoomOrScroll: string;
-  refreshNetwork: string;
-  refresh: string;
-  reset: string;
-  resetView: string;
-  configure: string;
-  deviceName: string;
-  deviceInfo: string;
-  ipConfiguration: string;
-  ipAddress: string;
-  subnetMask: string;
-  gateway: string;
-  dnsServer: string;
-  noIp: string;
-  fullScreen: string;
-  exit: string;
-  minimize: string;
+  yes: string;
 }
 
 const translations: Record<Language, Translations> = {
   tr: {
-    resetView: 'Sıfırla',
-    exit: 'exit',
-    title: 'Network Simulator 2026',
-    subtitle: 'Ağ Becerilerini Geliştir',
-    mode: 'Kip',
-    hostname: 'Ana Bilgisayar Adı',
-    clearTerminal: 'Terminali Temizle',
-    reset: 'Sıfırla',
-    switchTitle: 'Network 2960 Switch',
-    fastEthernetPorts: 'FastEthernet Portları (Fa0/1 - Fa0/24)',
-    gigabitPorts: 'GigabitEthernet Portları',
-    connected: 'Bağlı',
-    closed: 'Kapalı',
-    blocked: 'Engelli',
-    idle: 'Boşta',
-    status: 'Durum',
-    portName: 'Ad',
-    speed: 'Hız',
-    duplex: 'Çift Yönlü',
-    description: 'Açıklama',
-    unassigned: 'Atanmamış',
-    vlanStatus: 'VLAN Durumu',
-    newVlan: 'Yeni VLAN Oluştur',
-    vlanId: 'ID (1-4094)',
-    vlanName: 'İsim',
-    create: 'Oluştur',
+    about: 'Yardım',
+    aboutIntro: 'Bu uygulama, ağ teknolojilerini ve terminal komutlarını öğrenmek isteyenler için tasarlanmış interaktif bir simülasyon aracıdır.',
+    aboutTitle: 'Hakkında',
+    accessDenied: '% Erişim reddedildi',
+    accessibility: 'Erişilebilirlik',
     active: 'Aktif',
-    suspended: 'Askıda',
-    ports: 'Portlar',
-    securityControls: 'Güvenlik Kontrolleri',
-    securityLevel: 'Güvenlik Seviyesi',
-    enableSecret: 'Enable Secret',
-    consoleSecurity: 'Console Güvenliği',
-    vtySecurity: 'VTY Hatları Güvenliği',
-    passwordEncryption: 'Şifre Şifreleme',
-    sshAccess: 'SSH Erişimi',
-    definedUsers: 'Tanımlı Kullanıcılar',
-    goodSecurity: 'İyi güvenlik seviyesi',
-    mediumSecurity: 'Orta güvenlik seviyesi',
-    lowSecurity: 'Düşük güvenlik seviyesi',
-    criticalSecurity: 'Kritik güvenlik açıkları mevcut',
-    on: 'Açık',
-    off: 'Kapalı',
-    runningConfig: 'Running-Config',
-    save: 'Kaydet (wr)',
-    realTimeUpdate: 'Gerçek zamanlı güncelleme aktif',
-    cliTerminal: 'CLI Terminal',
-    processing: 'İşleniyor...',
-    lines: 'satır',
-    quickCommands: 'Hızlı Komutlar',
-    noCommandsAvailable: 'Bu modda hızlı komut yok',
-    tabComplete: 'komut tamamlama',
-    commandHistory: 'komut geçmişi',
-    help: 'Yardım',
-    nosVersion: 'NOS Versiyon',
-    model: 'Model',
-    uptime: 'Uptime',
     activePorts: 'Aktif Portlar',
-    tips: '🕸️',
-    levelBasic: 'Basit Seviye',
-    levelIntermediate: 'Orta Seviye',
-    levelAdvanced: 'İleri Seviye',
-    portClickTip: 'Port LED\'lerine tıklayarak hızlıca interface moduna geçebilirsiniz',
-    simulatorTitle: 'Network Simulator 2026 v1.0',
-    simulatorCopyright: 'Telif hakkı (c) 2026 Simulator. Tüm hakları saklıdır.',
-    theme: 'Tema',
-    light: 'Açık',
-    dark: 'Koyu',
-    language: 'tr',
-    clearTerminalBtn: 'Temizle',
-    switchMode: 'Switch Modu',
-    newVlanLabel: 'Yeni VLAN',
-    pcTerminal: 'PC Terminali',
-    pcConnected: 'PC bağlı',
-    pcNotConnected: 'Herhangi bir switch veya router\'a bağlı değilsiniz.',
-    pcCableError: 'Ağ kablosu bağlı değil.',
-    pcIncompatibleCable: 'Kablo tipi uyumsuz. PC-Switch için Düz Kablo gerekli.',
-    pcAccessDenied: 'Adrese doğrudan erişim yok.',
-    pcConsoleTip: 'Konsol kablosuyla bağlısınız. Lütfen, "terminal" komutunu kullanın.',
-    pcPingError: 'Ping isteği zaman aşımına uğradı.',
-    pcTelnetError: 'TELNET: Bağlantı kurulamadı.',
-    pcTracertError: 'TRACERT: Hedefe ulaşılamıyor.',
-    pcNslookupError: 'NSLOOKUP: DNS sunucusuyla iletişim kurulamadı.',
-    pcIpconfigError: 'IP yapılandırması alınamadı.',
-    pcTerminalClosing: 'PC terminali kapatılıyor...',
-    consolePingNotAllowed: 'Console bağlantısı üzerinden ping yapılamaz.',
-    pcLoginSuccess: 'Giriş başarılı',
-    pcConnectionClosed: 'Bağlantı uzak bilgisayar tarafından kapatıldı.',
-    copyToastSuccessTitle: 'Kopyalandı',
-    copyToastSuccessDescription: 'Çıktı panoya kopyalandı.',
-    copyToastFailureTitle: 'Kopyalama başarısız',
-    copyToastFailureDescription: 'Panoya erişilemedi.',
-    consolePasswordErrorTitle: 'Parola Hatalı',
-    consolePasswordErrorDescription: 'Lütfen doğru parolayı girin.',
-    pcConnectionError: 'Bağlantı hatası',
-    dnsInvalidAddress: 'DNS adresi geçersiz veya eksik.',
-    dnsGatewayRequired: 'DNS sunucusuna erişim için gateway gerekli.',
-    targetGatewayRequired: 'Hedefe erişim için gateway gerekli.',
-    dnsAddressRequired: 'Alan adı çözümlemek için DNS adresi gerekli.',
-    pcNoDeviceConnected: 'Bağlı bir cihaz yok',
-    pcConsoleHelp: 'Mevcut komutlar:\n  enable   - Privileged mode\n  exit     - Konsoldan çık\n  show     - Bilgi göster\n  ?        - Yardım\n',
-    searchOutputTitle: 'Çıktıda ara',
-    searchOutputDescription: 'Eşleşmeler çıktı alanında vurgulanır.',
-    searchPlaceholder: 'Arama...',
-    commandPromptTab: 'Komut İstemi',
-    consoleTab: 'Konsol',
-    settingsTab: 'Ayarlar',
-    servicesTab: 'Servisler',
-    ipConfigurationLabel: 'IP Yapılandırma',
-    staticLabel: 'Statik',
-    dnsRecordManagerTip: 'Alan adı -> IP adresi kayıtlarını yönet.',
-    dnsDomainPlaceholder: 'Alan adı (site.local)',
-    dnsAddressPlaceholder: 'Adres (192.168.1.10)',
+    activeSystem: 'Aktif Sistem',
+    add: 'Ekle',
+    addDevice: 'Cihaz Ekle',
+    addDeviceOrCable: 'Cihaz veya Kablo Ekle',
+    addDevicesFirst: 'Önce Cihaz Ekleyin',
     addDnsRecord: 'Kayıt Ekle',
-    dnsNoRecords: 'Henüz DNS kaydı yok.',
-    dnsARecordLabel: 'A Kaydı (Address Record)',
-    dnsCnameRecordLabel: 'CNAME Kaydı (Canonical Name Record)',
-    httpServiceDescription: 'HTTP açıkken bu cihazın web içeriği yayınlanır.',
-    dhcpPoolsDescription: 'DHCP havuzlarını ekle, düzenle ve sil.',
-    dhcpPoolNamePlaceholder: 'Havuz Adı',
-    dhcpPoolGatewayPlaceholder: 'Varsayılan Ağ Geçidi',
+    addIoT: 'IoT Ekle',
+    addIotDevice: 'IoT cihazı ekle',
+    addL2Switch: 'L2 Switch ekle',
+    addL3Switch: 'L3 Switch ekle',
+    addNote: 'Not',
+    addPC: 'PC Ekle',
+    addPc: 'PC Ekle',
+    addPcDevice: 'PC cihazı ekle',
+    addPcShort: 'PC Ekle',
+    addPool: 'Havuz Ekle',
+    addRouter: 'Router ekle',
+    addRouterShort: 'Router Ekle',
+    addSwitch: 'Switch Ekle',
+    addSwitchShort: 'Switch Ekle',
+    advancedHint: 'Kapsamlı kurulum ve doğrulama laboratuvarları',
+    align: 'Hizala',
+    alignLeft: 'Sola Hizala',
+    alignTop: 'Üste Hizala',
+    allCommands: 'Tüm komutlar',
+    allStepsCompleted: 'Tüm adımlar tamamlandı!',
+    annotations: 'Notlar',
+    apActive: 'X AP aktif',
+    apNoClients: 'AP istemcisiz',
+    applicationError: 'Uygulama hatası',
+    ariaManagement: 'ARIA Yönetimi',
+    assetLoading: 'Varlık Yükleme Stratejisi',
+    back: 'Geri',
+    backgroundGreenhouse: 'Sera Krokisi',
+    backgroundHouse: 'Ev Krokisi',
+    backgroundNone: 'Yok',
+    backgroundTwoStoryGarage: '2 Katlı Bina',
+    basicCommands: 'Temel komutlar',
+    basicHint: 'Temel komutlar ve ilk topoloji adımları',
+    bathroom: 'Banyo',
+    bedroom: 'Yatak',
+    beginner: 'Başlangıç',
+    blocked: 'Engelli',
+    bootInitializing: 'Donanım başlatılıyor...',
+    bootLoading: 'Sistem yükleniyor...',
+    bootReady: 'Hazır!',
+    bootingFlash: 'Flash üzerinden önyükleme yapılıyor...',
+    boxSelect: 'Kutu',
+    bugReport: 'Hata Raporu',
+    cable: 'Kablo',
+    cableType: 'Kablo Tipi',
+    cableTypeSelector: 'Kablo tipi seçici',
+    cableTypes: 'Kablo Tipleri',
+    cancel: 'İptal',
+    celsius: '°C',
+    channelLabel: 'Kanal:',
+    channelShort: 'Kanal',
+    clear: 'Temizle',
+    clearTerminal: 'Terminali Temizle',
+    clearTerminalBtn: 'Temizle',
+    clearTerminalConfirm: 'Terminal çıktısı temizlenecek. Devam etmek istiyor musunuz?',
+    cli: 'CLI',
+    cliInterface: 'Komut satırı arayüzü (Command Line Interface)',
+    cliTerminal: 'CLI Terminal',
+    clickIconsToRun: 'Program çalıştırmak için simgeleri tıklayınız',
+    clientsLeased: 'X istemci lease aldı',
+    close: 'Kapat',
+    closed: 'Kapalı',
+    cmdSuggestions: 'Komut önerileri',
+    colorLabel: 'Renk',
+    commandHistory: 'komut geçmişi',
+    commandModes: 'Komut Modları:',
+    commandPromptTab: 'Komut İstemi',
+    commandReference: 'Komutlar',
+    commandsFound: 'komut bulundu',
+    completeWithTab: 'ile tamamla',
+    completedAt: 'Tamamlandı',
+    configure: 'Yapılandır',
+    confirm: 'Onayla',
+    confirmReset: 'Cihazı Sıfırla',
+    confirmResetDescription: 'Tüm yapılandırma silinecek ve fabrika ayarları geri yüklenecek. Cihaz yeniden başlatılacak. Bu işlem geri alınamaz.',
+    confirmResetTitle: 'Fabrika Ayarlarına Sıfırla?',
+    confirmationRequired: 'Onay Gerekiyor',
+    congrats: 'Tebrikler!',
+    connect: 'Bağla',
+    connectDevices: 'Bağla',
+    connected: 'Bağlı',
+    connectedLabel: 'Bağlı:',
+    connectedShort: 'bağlı',
+    connectedStatus: 'Bağlı',
+    connectionError: 'Bağlantı hatası',
+    console: 'Konsol',
+    consoleCable: 'Konsol kablo',
+    consoleConfiguration: 'Yapılandırma: 9600 bits/s, 8 data bits, no parity',
+    consolePasswordErrorDescription: 'Lütfen doğru parolayı girin.',
+    consolePasswordErrorTitle: 'Parola Hatalı',
+    consolePingNotAllowed: 'Console bağlantısı üzerinden ping yapılamaz.',
+    consoleSecurity: 'Console Güvenliği',
+    consoleShort: 'Konsol',
+    consoleTab: 'Konsol',
+    consoleTerminal: 'Konsol Terminali',
+    contactEmail: 'E-posta Adresiniz',
+    contactErrorDesc: 'Bir ağ hatası oluştu. Lütfen sonra tekrar deneyin.',
+    contactErrorTitle: 'Gönderilemedi',
+    contactMessage: 'Mesajınız',
+    contactName: 'Adınız',
+    contactPlaceholderEmail: 'E-posta adresinizi girin',
+    contactPlaceholderMessage: 'Mesajınızı yazın...',
+    contactPlaceholderName: 'Adınızı girin',
+    contactSend: 'Gönder',
+    contactSuccessDesc: 'Mesajınız başarıyla gönderildi. Geri bildiriminiz için teşekkürler!',
+    contactSuccessTitle: 'Mesaj Gönderildi',
+    contactTitle: 'Bize Ulaşın',
+    contactType: 'Konu',
+    contactValidationEmail: 'Geçerli bir e-posta adresi girin',
+    contactValidationMessage: 'Lütfen mesajınızı yazın',
+    contactValidationName: 'Lütfen adınızı girin',
+    continue: 'Devam Et',
+    copy: 'Kopyala',
+    copyAction: 'Kopyala',
+    copyError: 'Kopyalama başarısız',
+    copySuccess: 'Panoya kopyalandı',
+    copyToastFailureDescription: 'Panoya erişilemedi.',
+    copyToastFailureTitle: 'Kopyalama başarısız',
+    copyToastSuccessDescription: 'Çıktı panoya kopyalandı.',
+    copyToastSuccessTitle: 'Kopyalandı',
+    corruptedProject: 'Proje dosyası bozuk veya uyumsuz!',
+    create: 'Oluştur',
+    criticalSecurity: 'Kritik güvenlik açıkları mevcut',
+    crossover: 'Çapraz',
+    crossoverCable: 'Çapraz kablo',
+    crossoverShort: 'Çapraz',
+    currentStep: 'Mevcut Adım',
+    cut: 'Kes',
+    dark: 'Koyu',
+    darkMode: 'Koyu Tema',
+    definedUsers: 'Tanımlı Kullanıcılar',
+    delete: 'Sil',
+    description: 'Açıklama',
+    details: 'Detaylar',
+    device: 'Cihaz',
+    deviceInfo: 'CİHAZ BİLGİSİ',
+    deviceInfoShort: 'Bilgi',
+    deviceInformation: 'Cihaz Bilgileri',
+    deviceName: 'Cihaz Adı',
+    deviceNameLabel: 'Cihaz Adı',
+    deviceOff: 'Cihaz Kapalı',
+    deviceTasksAndConfig: 'Cihaz görevleri ve yapılandırma görevleri',
+    devices: 'Cihazlar',
+    devicesCount: 'cihaz',
+    dhcpActiveServers: 'DHCP: X sunucu aktif',
+    dhcpAssignments: 'DHCP Atamaları',
+    dhcpCliConfig: 'DHCP havuzları CLI üzerinden yapılandırılabilir.',
+    dhcpEnabled: 'DHCP Etkin',
+    dhcpFailureDescription: 'DHCP sunucusu bulunamadı.',
+    dhcpFailureTitle: 'DHCP ataması başarısız',
+    dhcpNoLease: 'istemci lease alamadı',
+    dhcpNoPool: 'sunucuda havuz yok',
+    dhcpNotFound: 'DHCP bulunamadı',
+    dhcpPoolConfig: 'DHCP havuzu yapılandırması bulunmuyor.',
     dhcpPoolDnsPlaceholder: 'DNS Sunucusu',
+    dhcpPoolGatewayPlaceholder: 'Varsayılan Ağ Geçidi',
+    dhcpPoolLabel: 'DHCP Havuzu',
+    dhcpPoolMaxUsersPlaceholder: 'Maksimum Kullanıcı',
+    dhcpPoolNamePlaceholder: 'Havuz Adı',
     dhcpPoolStartIpPlaceholder: 'Start IP',
     dhcpPoolSubnetPlaceholder: 'Alt Ağ Maskesi',
-    dhcpPoolMaxUsersPlaceholder: 'Maksimum Kullanıcı',
-    addPool: 'Havuz Ekle',
-    updatePool: 'Havuzu Güncelle',
-    noDhcpPools: 'Henüz DHCP havuzu yok.',
+    dhcpPoolsDescription: 'DHCP havuzlarını ekle, düzenle ve sil.',
+    dhcpSuccessDescription: 'DHCP ile {ip} atandı.',
+    dhcpSuccessTitle: 'DHCP ataması başarılı',
+    disabled: 'Pasif',
+    disconnect: 'Bağlantıyı Kes',
+    disconnectAction: 'Bağlantıyı Kes',
+    disconnectedStatus: 'Bağlı Değil',
+    dnsARecordLabel: 'A Kaydı (Address Record)',
+    dnsAddressPlaceholder: 'Adres (192.168.1.10)',
+    dnsAddressRequired: 'Alan adı çözümlemek için DNS adresi gerekli.',
+    dnsCnameRecordLabel: 'CNAME Kaydı (Canonical Name Record)',
+    dnsDomainPlaceholder: 'Alan adı (site.local)',
+    dnsGatewayRequired: 'DNS sunucusuna erişim için gateway gerekli.',
+    dnsInvalidAddress: 'DNS adresi geçersiz veya eksik.',
+    dnsNoRecords: 'Henüz DNS kaydı yok.',
+    dnsRecordManagerTip: 'Alan adı -> IP adresi kayıtlarını yönet.',
+    dnsRecordsLabel: 'DNS (Domain Name System) Kayıtları',
+    dnsServer: 'DNS Sunucusu',
+    dontSave: 'Kaydetme',
+    dragToZoomOrScroll: 'Sürükleyerek büyütün',
+    duplex: 'Çift Yönlü',
+    duplicateLabel: 'Çoğalt',
+    dynamicRouting: 'Dinamik Yönlendirme',
     edit: 'Düzenle',
-    load: 'Yükle',
-    saveLabel: 'Kaydet',
-    languageLabel: 'Dil',
-    themeLabel: 'Tema',
+    emptyProject: 'Boş Proje',
+    emptyProjectDesc: 'Sıfırdan temiz bir topoloji ile başla',
+    enableSecret: 'Enable Secret',
+    enabled: 'Aktif',
+    english: 'English',
+    enterPassword: 'Parolayı girin...',
+    environmentBackground: 'Arka Plan',
+    environmentSettings: 'Ayarlar',
     errorPrefix: 'HATA',
-    newBtn: 'Yeni',
-    dhcpEnabled: 'DHCP Etkin',
-    openServices: 'Açık Servisler',
-    modeUser: 'Kullanıcı EXEC',
-    modePrivileged: 'Ayrıcalıklı EXEC',
+    exit: 'Çık',
+    exitPingMode: 'Ping modundan çık (ESC)',
+    expand: 'Genişlet',
+    exportLabel: 'Dışa Aktar',
+    extractingFiles: 'Dosyalar flash üzerinden çıkarılıyor...',
+    failedLoadProject: 'Proje dosyası yüklenemedi!',
+    fastEthernetPorts: 'FastEthernet Portları (Fa0/1 - Fa0/24)',
+    fileImportedSuccessfully: 'Dosya başarıyla içe aktarıldı.',
+    finish: 'Bitir',
+    fontLabel: 'Yazı Tipi',
+    fontSizeLabel: 'Boyut',
+    freePorts: 'boş port',
+    fullScreen: 'Tam Ekran',
+    gateway: 'Ağ Geçidi',
+    gigabitPorts: 'GigabitEthernet Portları',
+    gitAddressLabel: 'Kaynak Adresi',
+    globalConfigLabel: 'Global yapılandırma',
+    goodSecurity: 'İyi güvenlik seviyesi',
+    guidedMode: 'Rehberli Ders',
+    help: 'Yardım',
+    hideHint: 'İpucu Gizle',
+    highContrast: 'Yüksek Kontrast Desteği',
+    highRes: 'Yüksek Çözünürlük',
+    hostname: 'Ana Bilgisayar Adı',
+    hostnameExample: 'Örn: Router-X',
+    httpServerLabel: 'HTTP (Hypertext Transfer Protocol) Sunucu',
+    httpServiceDescription: 'HTTP açıkken bu cihazın web içeriği yayınlanır.',
+    humidity: 'Nem',
+    id: 'ID',
+    idle: 'Boşta',
+    importSuccess: 'Dosya başarıyla içe aktarıldı.',
+    initializingSystem: 'Sistem Başlatılıyor...',
+    instructions: 'Talimatlar',
+    interfaceConfigLabel: 'Arayüz yapılandırması',
+    intermediateHint: 'Servisler, VLAN ve yönlendirme senaryoları',
+    invalidDnsAddress: 'Geçerli bir DNS adresi girin.',
+    invalidGatewayAddress: 'Geçerli bir gateway adresi girin.',
+    invalidIpv4Address: 'Geçerli bir IPv4 adresi girin.',
+    invalidIpv6Address: 'Geçerli bir IPv6 adresi girin.',
+    invalidProject: 'Hata',
+    invalidProjectFile: 'Geçersiz proje dosyası',
+    invalidSubnetMask: 'Geçerli bir subnet mask girin.',
+    ipAddress: 'IP Adresi',
+    ipConfiguration: 'IP Yapılandırması',
+    ipConfigurationLabel: 'IP Yapılandırma',
+    ipInterfaces: 'IP Arayüzleri',
+    ipMode: 'IP Modu',
+    ipRenew: 'IP Yenile',
+    ipRouting: 'IP Yönlendirme',
+    ipRoutingEngine: 'IP Yönlendirme Motoru',
+    jsonDownloaded: 'JSON dosyası indirildi.',
+    keyboardNav: 'Klavye Navigasyonu',
+    kitchen: 'Mutfak',
+    labProgress: 'Lab İlerlemesi',
+    languageLabel: 'Dil',
+    lastSavedAt: 'Son kaydedilme: ',
+    layer3Switching: 'Katman 3 Anahtarlama',
+    levelAdvanced: 'İleri Seviye',
+    levelBasic: 'Basit Seviye',
+    levelIntermediate: 'Orta Seviye',
+    licenseInfo: 'Tuzla Mesleki ve Teknik Anadolu Lisesi',
+    light: 'Açık',
+    lightLevel: 'Işık',
+    lightMode: 'Açık Tema',
+    lines: 'satır',
+    linkFrom: 'Bağlantı',
+    livingRoom: 'Salon',
+    load: 'Yükle',
+    loadFailed: 'Yükleme başarısız',
+    loadProject: 'Proje Yükle',
+    lowRes: 'Düşük Çözünürlük',
+    lowSecurity: 'Düşük güvenlik seviyesi',
+    macAddress: 'MAC Adresi',
+    measurementLabel: 'Ölçüm:',
+    mediumSecurity: 'Orta güvenlik seviyesi',
+    menu: 'Menü',
+    minimize: 'Küçült',
+    minutes: 'dakika',
+    mode: 'Kip',
     modeConfig: 'Global Yapılandırma',
     modeInterface: 'Arayüz Yapılandırma',
+    modeLabel: 'Mod:',
     modeLine: 'Hat Yapılandırma',
+    modePrivileged: 'Ayrıcalıklı EXEC',
+    modeUser: 'Kullanıcı EXEC',
     modeVlanLabel: 'VLAN Yapılandırma',
-    secEnableSecretOn: 'Şifreli enable şifresi yapılandırılmış',
-    secEnableSecretOff: 'Enable şifresi yapılandırılmamış',
-    secConsoleOn: 'Console hattı için giriş aktif',
+    model: 'Model',
+    motionYes: 'Hareket Var',
+    navigation: 'Navigasyon',
+    networkRefreshed: 'Ağ Yenilendi',
+    networkStatusUpdated: 'Ağ Durumu Tamamen Güncellendi',
+    networkTopology: 'Ağ Topolojisi',
+    new: 'Yeni',
+    newBtn: 'Yeni',
+    newMessage: 'Yeni Mesaj',
+    newNote: 'Yeni not...',
+    newProject: 'Yeni Proje',
+    newProjectConfirm: 'Tüm yapılandırma ve topoloji sıfırlanacak. Devam etmek istiyor musunuz?',
+    newVlan: 'Yeni VLAN Oluştur',
+    newVlanLabel: 'Yeni VLAN',
+    next: 'İleri',
+    no: 'Hayır',
+    noCommandsAvailable: 'Bu modda hızlı komut yok',
+    noConsoleCableDetected: 'Konsol kablosu algılanmadı. PC\'den bir ağ cihazına konsol kablosu bağlayın.',
+    noDevicesInTopology: 'Topolojide henüz cihaz yok.',
+    noDevicesToList: 'Listelenecek cihaz yok.',
+    noDhcpPools: 'Henüz DHCP havuzu yok.',
+    noFreePorts: 'Boş Port Yok',
+    noFreePortsMessage: 'Lütfen, önce bazı kabloları çıkarın.',
+    noIp: 'IP Yok',
+    noIpInterfaces: 'IP adresi yapılandırılmış arayüz yok.',
+    noServices: 'Servis yok',
+    noWifiConfig: 'WiFi yapılandırması bulunmuyor.',
+    noWifiDevices: 'WiFi cihazı bulunamadı',
+    nodePooling: 'Düğüm Havuzlama',
+    none: 'Yok',
+    nosVersion: 'NOS Versiyon',
+    notConnected: 'Bağlı Değil',
+    note: 'Not',
+    noteStyle: 'Not Biçimi',
+    of: '/',
+    off: 'Kapalı',
+    on: 'Açık',
+    opacityLabel: 'Saydamlık',
+    open: 'Aç',
+    openCLI: 'CLI Aç',
+    openCMD: 'CMD Aç',
+    openGuidedLesson: 'Rehberli Dersi Aç',
+    openNewProject: 'Yeni Proje Aç',
+    openNewProjectDesc: 'Topolojinizi tasarlamaya başlamak için hazır bir senaryo seçin veya boş bir proje ile başlayın.',
+    openServices: 'Açık Servisler',
+    openSourceInfo: 'Bu proje açık kaynaklıdır',
+    other: 'Diğer',
+    overview: 'Genel Bakış',
+    pan: 'Kaydır',
+    passive: 'PASİF',
+    passwordEncryption: 'Şifre Şifreleme',
+    paste: 'Yapıştır',
+    pcAccessDenied: 'Adrese doğrudan erişim yok.',
+    pcCableError: 'Ağ kablosu bağlı değil.',
+    pcConnected: 'PC bağlı',
+    pcConnectionClosed: 'Bağlantı uzak bilgisayar tarafından kapatıldı.',
+    pcConnectionError: 'Bağlantı hatası',
+    pcConsoleHelp: 'Mevcut komutlar:\n  enable   - Privileged mode\n  exit     - Konsoldan çık\n  show     - Bilgi göster\n  ?        - Yardım\n',
+    pcConsoleTip: 'Konsol kablosuyla bağlısınız. Lütfen, "terminal" komutunu kullanın.',
+    pcDisconnected: 'PC bağlantısız',
+    pcIncompatibleCable: 'Kablo tipi uyumsuz. PC-Switch için Düz Kablo gerekli.',
+    pcIpconfigError: 'IP yapılandırması alınamadı.',
+    pcLoginSuccess: 'Giriş başarılı',
+    pcNoDeviceConnected: 'Bağlı bir cihaz yok',
+    pcNotConnected: 'Herhangi bir switch veya router\'a bağlı değilsiniz.',
+    pcNslookupError: 'NSLOOKUP: DNS sunucusuyla iletişim kurulamadı.',
+    pcPingError: 'Ping isteği zaman aşımına uğradı.',
+    pcTelnetError: 'TELNET: Bağlantı kurulamadı.',
+    pcTerminal: 'PC Terminali',
+    pcTerminalClosing: 'PC terminali kapatılıyor...',
+    pcTracertError: 'TRACERT: Hedefe ulaşılamıyor.',
+    percent: '%',
+    performanceOptimization: 'Performans Optimizasyonu',
+    physicalConnectionDetected: 'Fiziksel bağlantı algılandı:',
+    ping: 'Ping',
+    pingFailed: 'Ping başarısız',
+    pingSuccess: 'Ping başarılı',
+    pools: 'Havuz',
+    portClickTip: 'Port LED\'lerine tıklayarak hızlıca interface moduna geçebilirsiniz',
+    portInUse: 'Bu port zaten kullanımda!',
+    portName: 'Ad',
+    portSecurityBlocked: 'Port Security: X bloklandı, Y açıldı',
+    portSummary: 'Port Özeti',
+    ports: 'Portlar',
+    portsShort: 'Portlar',
+    power: 'Güç',
+    powerOff: 'Gücü Kapat',
+    powerOn: 'Gücü Aç',
+    pressEnterToConfirm: 'Devam etmek için Enter\'a basın',
+    processing: 'İşleniyor...',
+    progress: 'İlerleme',
+    project: 'Proje',
+    projectLoaded: 'Proje yüklendi',
+    projectSaved: 'Proje kaydedildi',
+    pts: 'puan',
+    quickActions: 'Hızlı işlemler',
+    quickCommands: 'Hızlı Komutlar',
+    realTimeUpdate: 'Gerçek zamanlı güncelleme aktif',
+    redo: 'Yinele',
+    refresh: 'Yenile',
+    refreshNetwork: 'Ağı Yenile',
+    refreshNetworkF5: 'Ağı Yenile (F5)',
+    reload: 'Yeniden Yükle',
+    reloadPage: 'Sayfayı Yenile',
+    rename: 'Yeniden Adlandır',
+    reset: 'Sıfırla',
+    resetConfirm: 'Tüm yapılandırma sıfırlanacak. Devam etmek istiyor musunuz?',
+    resetToDefaults: 'Varsayılana Sıfırla',
+    resetView: 'Sıfırla',
+    resize: 'Boyutlandır',
+    resizeAction: 'Yeniden boyutlandır',
+    resizeLabel: 'Yeniden Boyutlandır',
+    room1: 'Oda 1',
+    room2: 'Oda 2',
+    routedPorts: 'Yönlendirilmiş Portlar',
+    routerInfoPanel: 'Router Bilgi Paneli',
+    routing: 'Yönlendirme',
+    routingTasks: 'Yönlendirme Görevleri',
+    runningConfig: 'Running-Config',
+    save: 'Kaydet (wr)',
+    saveError: 'Kaydetme sırasında bir hata oluştu',
+    saveLabel: 'Kaydet',
+    saveProject: 'Projeyi Kaydet',
+    saveSuccess: 'Yapılandırma başarıyla kaydedildi',
+    saved: 'Kaydedildi',
+    savedViaSheets: 'Fikirlerinizi paylaşın',
+    saving: 'Kaydediliyor...',
+    screenReader: 'Ekran Okuyucu Duyuruları',
+    search: 'Ara',
+    searchOutputDescription: 'Eşleşmeler çıktı alanında vurgulanır.',
+    searchOutputTitle: 'Çıktıda ara',
+    searchPlaceholder: 'Arama...',
+    searchProjects: 'Proje ara...',
+    searchShort: 'Ara...',
+    searchTerminal: 'Terminal çıktısında arama yapın',
     secConsoleOff: 'Console hattı için giriş yapılandırılmamış',
-    secVtyOn: 'VTY hatları için giriş aktif',
-    secVtyOff: 'VTY hatları için giriş yapılandırılmamış',
-    secPassEncOn: 'Şifreler şifrelenmiş durumda',
+    secConsoleOn: 'Console hattı için giriş aktif',
+    secEnableSecretOff: 'Enable şifresi yapılandırılmamış',
+    secEnableSecretOn: 'Şifreli enable şifresi yapılandırılmış',
+    secNoProtocol: 'Erişim protokolü yapılandırılmamış',
     secPassEncOff: 'Şifreler düz metin olarak saklanıyor',
+    secPassEncOn: 'Şifreler şifrelenmiş durumda',
     secSshOnly: 'Sadece SSH erişimi aktif',
     secTelnetWarn: 'Telnet erişimi aktif (güvenli değil)',
-    secNoProtocol: 'Erişim protokolü yapılandırılmamış',
+    secVtyOff: 'VTY hatları için giriş yapılandırılmamış',
+    secVtyOn: 'VTY hatları için giriş aktif',
+    securityControls: 'Güvenlik Kontrolleri',
+    securityLabel: 'Güvenlik:',
+    securityLevel: 'Güvenlik Seviyesi',
+    selectAll: 'Tümünü Seç',
+    selectCable: 'Kablo Seç',
+    selectDevice: 'Cihaz Seçimi',
+    selectDeviceDropdown: 'Cihaz Seç',
+    selectSource: 'Kaynak seç',
+    selectSourcePort: 'Kaynak Portu Seç',
+    selectTarget: 'Hedef seç',
+    selectTargetPort: 'Hedef Portu Seç',
+    sending: 'Gönderiliyor...',
+    services: 'Servisler',
+    servicesTab: 'Servisler',
+    settings: 'Ayarlar',
+    settingsTab: 'Ayarlar',
+    showHidePassword: 'Parolayı Göster/Gizle',
+    showHint: 'İpucu Göster',
+    shutdownStatus: 'Kapalı',
+    signal: 'Sinyal',
+    simulatorCopyright: 'Telif hakkı (c) 2026 Simulator. Tüm hakları saklıdır.',
+    simulatorTitle: 'Network Simulator 2026 v1.0',
+    sizeLabel: 'Boyut',
+    skeletonScreens: 'İskelet Ekranlar',
+    skip: 'Geç',
+    spatialPartitioning: 'Uzamsal Bölümleme',
+    speed: 'Hız',
+    sshAccess: 'SSH Erişimi',
+    startTour: 'Tur',
+    static: 'STATIK',
+    staticLabel: 'Statik',
+    status: 'Durum',
+    statusLabel: 'Durum:',
+    step1: 'Adım 1: Kaynak',
+    step2: 'Adım 2: Hedef',
+    stpSwitchesUpdated: 'STP: X switch güncellendi',
+    straight: 'Düz',
+    straightCable: 'Düz kablo',
+    straightShort: 'Düz',
+    subnetMask: 'Alt Ağ Maskesi',
+    subtitle: 'Ağ Becerilerini Geliştir',
+    suggestion: 'Öneri',
+    suspended: 'Askıda',
+    switchMode: 'Switch Modu',
+    switchTasks: 'Görevlere geç',
+    switchTerminal: 'switchTerminal',
+    switchTitle: 'Network 2960 Switch',
+    syslogStarted: '*** Syslog istemcisi başlatıldı',
+    tabComplete: 'komut tamamlama',
+    tabDescCmd: 'PC Command Prompt (CMD) ile ping, ipconfig vb. komutları çalıştır.',
+    tabDescTasks: 'Port, VLAN ve güvenlik görevlerini tamamlayarak puan kazan.',
+    tabDescTerminal: 'Switch / router Command Line Interface (CLI) üzerinden yapılandırma komutlarını çalıştır.',
+    tabDescTopology: 'Cihazları sürükleyip bırakarak ağ topolojisini tasarla.',
+    tabToNext: 'TAB ile sonraki cihaz',
+    tabsShort: 'Sekmeler',
+    targetGatewayRequired: 'Hedefe erişim için gateway gerekli.',
+    taskCompleted: '✓ Görev Tamamlandı',
+    taskFailed: '⚠ Görev Başarısız',
+    tasks: 'Görevler',
+    temperature: 'Sıcaklık',
+    termsAndConditions: 'Şartlar ve Koşullar',
+    termsText: 'Bu yazılım eğitim amaçlıdır. Ticari olmayan amaçlarla özgürce kullanılabilir ve dağıtılabilir.',
+    theme: 'Tema',
+    themeLabel: 'Tema',
+    tips: '🕸️',
+    title: 'Network Simulator 2026',
+    togglePower: 'Gücü Aç/Kapat',
+    topologyAriaLabel: 'Ağ topolojisi tuvali. Cihazları sürükleyerek taşıyabilirsiniz.',
+    topologyInvalidConnections: 'Topoloji: X hatalı bağlantı pasifleştirildi',
+    tour: 'Tur',
+    turkish: 'Türkçe',
+    tutorialCablesDesc: 'Kablo türleri: Straight (mavi) - PC↔Switch/Router, Crossover (turuncu) - Switch↔Switch/Router↔Router, Console (cyan) - PC↔Cihaz yapılandırma bağlantılar.',
+    tutorialCablesTitle: '🔌 Kablo Türleri',
+    tutorialDevicesDesc: 'Cihazları aç/kapat (güç düğmesi), yapılandır (CLI/Panel), ve monitör et. CLI sekmesinde komut satırından yapılandırma yapın. Görevler sekmesinde VLAN, port ve güvenlik görevlerini tamamlayın.',
+    tutorialDevicesTitle: '💻 Cihaz Yönetimi',
+    tutorialPingDesc: 'Ping modu ile cihazlar arası bağlantıyı test edin. Başarılı pingler yeşil, başarısız olanlar kırmızı animasyonla gösterilir. DHCP otomatik IP atama, statik IP için manuel yapılandırma yapın.',
+    tutorialPingTitle: '📡 Ping ve Bağlantı Testi',
+    tutorialProjectDesc: 'Projeleri kaydet (Ctrl+S), yükle (Ctrl+O) veya yeni başlat (Alt+N). Örnek projeler ile hazır senaryoları inceleyin. Tüm yapılandırmalar JSON formatında kaydedilir.',
+    tutorialProjectTitle: '💾 Proje Yönetimi',
+    tutorialReadyDesc: 'Artık ağ simülasyonuna başlamaya hazırsınız! Örnek projeleri inceleyin veya kendi topolojinizi oluşturun. Yardım paneli (sağ alt köşe) ve komut referansı her zaman yanınızda. İyi çalışmalar!',
+    tutorialReadyTitle: '🚀 Başlamaya Hazırsınız!',
+    tutorialThemeDesc: 'Karanlık/Açık tema (🌙/☀️) ve dil (🇹🇷/🇬🇧) tercihlerinizi ayarlayın. Grafik kalitesi düşük/yüksek arasında geçiş yapın. Tüm tercihler tarayıcıda otomatik kaydedilir.',
+    tutorialThemeTitle: '🎨 Arayüz Özelleştirme',
+    tutorialTopologyDesc: 'Sürükle-bırak ile cihazları yerleştirin. Bağlantı kurmak için: 1) Bağla düğmesine tıkla, 2) Kaynak cihaz/port seç, 3) Hedef cihaz/port seç. Çift tıklama: PC\'de CMD, Switch/Router\'da CLI açar.',
+    tutorialTopologyTitle: '📐 Topoloji Editörü',
+    tutorialWelcomeDesc: 'Network Simulator 2026\'ya hoş geldiniz! Bu kısa turda temel özellikleri keşfedeceksiniz. Bağlantıları yapılandırın, cihazları yönetin ve ağ becerilerinizi geliştirin.',
+    tutorialWelcomeTitle: '🎓 Hoş Geldiniz',
+    tutorialWifiDesc: 'Router ve Switch\'leri Access Point moduna alın (WiFi ayarları). SSID, şifreleme (WPA2/WPA3) ve şifre ayarlayın. PC\'ler otomatik olarak erişim noktalarına bağlanır.',
+    tutorialWifiTitle: '🌐 WiFi ve Kablosuz',
+    typeCommand: 'Komut yazın...',
+    typeCommandPlaceholder: 'Enter\'a basın veya yazın...',
+    unassigned: 'Atanmamış',
+    uncomplete: 'Tamamlanmadı Olarak İşaretle',
+    undo: 'Geri Al',
+    unsaved: 'Kaydedilmedi',
+    unsavedChangesConfirm: 'Kaydedilmemiş değişiklikler var. Kaydetmek istiyor musunuz?',
+    updatePool: 'Havuzu Güncelle',
+    uptime: 'Uptime',
+    vTaskAssignDesc: 'Bir portu VLAN\'a ata',
+    vTaskAssignName: 'Port Ata',
+    vTaskCreateDesc: 'Varsayılan olmayan en az 1 VLAN oluştur',
+    vTaskCreateName: 'VLAN Oluştur',
+    vTaskFullNamingDesc: 'Tüm VLAN\'ları isimlendir',
+    vTaskFullNamingHint: 'Her VLAN için: name <isim>',
+    vTaskFullNamingName: 'Tam İsimlendirme',
+    vTaskMultipleDesc: 'En az 3 kullanıcılı VLAN\'ı oluştur',
+    vTaskMultipleName: 'Çoklu VLAN',
+    vTaskNameDesc: 'Bir VLAN\'a özel isim ver',
+    vTaskNameName: 'VLAN İsimlendir',
+    vTaskTrunkDesc: 'Bir portu trunk moduna al',
+    vTaskTrunkName: 'Trunk Port',
+    viewportCulling: 'Görünüm Alanı Ayıklama',
+    virtualScrolling: 'Sanal Kaydırma',
+    vlanExcellent: 'Mükemmel VLAN yapılandırması!',
+    vlanGood: 'İyi VLAN yapısı',
+    vlanId: 'ID (1-4094)',
+    vlanInProgress: 'VLAN yapılandırma devam ediyor',
+    vlanName: 'İsim',
+    vlanNameExample: 'Örn: Muhasebe',
+    vlanNeeded: 'VLAN yapılandırması gerekli',
     vlanNotApplicable: 'PC Cihazlarında VLAN Yapılandırması Yok',
     vlanOnlyOnNetworkDevices: 'VLAN bilgileri sadece switch veya router cihazlarında görüntülenebilir ve yapılandırılabilir.',
     vlanScore: 'VLAN Puanı',
+    vlanStatus: 'VLAN Durumu',
     vlanTasks: 'VLAN Görevleri',
-    vlanExcellent: 'Mükemmel VLAN yapılandırması!',
-    vlanGood: 'İyi VLAN yapısı',
-    vlanInProgress: 'VLAN yapılandırma devam ediyor',
-    vlanNeeded: 'VLAN yapılandırması gerekli',
-    vTaskCreateName: 'VLAN Oluştur',
-    vTaskCreateDesc: 'Varsayılan olmayan en az 1 VLAN oluştur',
-    vTaskNameName: 'VLAN İsimlendir',
-    vTaskNameDesc: 'Bir VLAN\'a özel isim ver',
-    vTaskAssignName: 'Port Ata',
-    vTaskAssignDesc: 'Bir portu VLAN\'a ata',
-    vTaskTrunkName: 'Trunk Port',
-    vTaskTrunkDesc: 'Bir portu trunk moduna al',
-    vTaskMultipleName: 'Çoklu VLAN',
-    vTaskMultipleDesc: 'En az 3 kullanıcılı VLAN\'ı oluştur',
-    vTaskFullNamingName: 'Tam İsimlendirme',
-    vTaskFullNamingDesc: 'Tüm VLAN\'ları isimlendir',
-    vTaskFullNamingHint: 'Her VLAN için: name <isim>',
-    saving: 'Kaydediliyor...',
-    connect: 'Bağla',
-    disconnect: 'Bağlantıyı Kes',
-    physicalConnectionDetected: 'Fiziksel bağlantı algılandı:',
-    noConsoleCableDetected: 'Konsol kablosu algılanmadı. PC\'den bir ağ cihazına konsol kablosu bağlayın.',
-    consoleConfiguration: 'Yapılandırma: 9600 bits/s, 8 data bits, no parity',
+    vtySecurity: 'VTY Hatları Güvenliği',
     waitingForConnection: 'Bağlantı bekleniyor...',
-    typeCommand: 'Komut yazın...',
-    labProgress: 'Lab İlerlemesi',
-    networkTopology: 'Ağ Topolojisi',
-    navigation: 'Navigasyon',
-    project: 'Proje',
-    settings: 'Ayarlar',
-    selectDevice: 'Cihaz Seçimi',
-    confirmationRequired: 'Onay Gerekiyor',
-    cancel: 'İptal',
-    continue: 'Devam Et',
-    dontSave: 'Kaydetme',
-    pts: 'puan',
-    initializingSystem: 'Sistem Başlatılıyor...',
-    macAddress: 'MAC Adresi',
-    deviceInfo: 'CİHAZ BİLGİSİ',
-    consoleTerminal: 'Konsol Terminali',
-    devices: 'Cihazlar',
-    cableTypes: 'Kablo Tipleri',
-    cli: 'CLI',
-    id: 'ID',
-    portInUse: 'Bu port zaten kullanımda!',
-    note: 'Not',
-    cable: 'Kablo',
-    add: 'Ekle',
-    annotations: 'Notlar',
-    align: 'Hizala',
-    addDeviceOrCable: 'Cihaz veya Kablo Ekle',
-    selectCable: 'Kablo Seç',
-    deviceInfoShort: 'Bilgi',
-    addPcShort: 'PC Ekle',
-    addSwitchShort: 'Switch Ekle',
-    addRouterShort: 'Router Ekle',
-    ipAddress: 'IP Adresi',
-    subnetMask: 'Alt Ağ Maskesi',
-    gateway: 'Ağ Geçidi',
-    dnsServer: 'DNS Sunucusu',
-    accessDenied: '% Erişim reddedildi',
-    resetConfirm: 'Tüm yapılandırma sıfırlanacak. Devam etmek istiyor musunuz?',
-    clearTerminalConfirm: 'Terminal çıktısı temizlenecek. Devam etmek istiyor musunuz?',
-    unsavedChangesConfirm: 'Kaydedilmemiş değişiklikler var. Kaydetmek istiyor musunuz?',
-    newProjectConfirm: 'Tüm yapılandırma ve topoloji sıfırlanacak. Devam etmek istiyor musunuz?',
-    invalidProjectFile: 'Proje dosyası geçersiz!',
-    failedLoadProject: 'Proje dosyası yüklenemedi!',
-    undo: 'Geri Al',
-    redo: 'Yinele',
-    newProject: 'Yeni Proje',
-    saveProject: 'Projeyi Kaydet',
-    loadProject: 'Proje Yükle',
-    about: 'Yardım',
-    noDevicesInTopology: 'Topolojide henüz cihaz yok.',
-    addDevicesFirst: 'Önce Cihaz Ekleyin',
-    selectDeviceDropdown: 'Cihaz Seç',
-    vlanNameExample: 'Örn: Muhasebe',
-    hostnameExample: 'Örn: Router-X',
-    aboutTitle: 'Hakkında',
-    aboutIntro: 'Bu uygulama, ağ teknolojilerini ve terminal komutlarını öğrenmek isteyenler için tasarlanmış interaktif bir simülasyon aracıdır.',
-    termsAndConditions: 'Şartlar ve Koşullar',
-    termsText: 'Bu yazılım eğitim amaçlıdır. Ticari olmayan amaçlarla özgürce kullanılabilir ve dağıtılabilir.',
-    licenseInfo: 'Tuzla Mesleki ve Teknik Anadolu Lisesi',
-    close: 'Kapat',
-    startTour: 'Tur',
-    gitAddressLabel: 'Kaynak Adresi',
-    openSourceInfo: 'Bu proje açık kaynaklıdır',
-    connectDevices: 'Bağla',
-    addDevice: 'Cihaz Ekle',
-    addPc: 'PC Ekle',
-    addSwitch: 'Switch Ekle',
-    addRouter: 'Router Ekle',
-    addNote: 'Not',
-    cableType: 'Kablo Tipi',
-    straight: 'Düz',
-    crossover: 'Çapraz',
-    console: 'Konsol',
-    linkFrom: 'Bağlantı',
-    selectSourcePort: 'Kaynak Portu Seç',
-    selectTargetPort: 'Hedef Portu Seç',
-    step1: 'Adım 1: Kaynak',
-    step2: 'Adım 2: Hedef',
-    freePorts: 'boş port',
-    noFreePorts: 'Boş Port Yok',
-    noFreePortsMessage: 'Lütfen, önce bazı kabloları çıkarın.',
-    reloadPage: 'Sayfayı Yenile',
-    delete: 'Sil',
-    resize: 'Boyutlandır',
-    search: 'Ara',
-    copy: 'Kopyala',
-    power: 'Güç',
-    tasks: 'Görevler',
-    basicHint: 'Temel komutlar ve ilk topoloji adımları',
-    intermediateHint: 'Servisler, VLAN ve yönlendirme senaryoları',
-    advancedHint: 'Kapsamlı kurulum ve doğrulama laboratuvarları',
-    syslogStarted: '*** Syslog istemcisi başlatıldı',
-    bootReady: 'Hazır!',
-    bootLoading: 'Sistem yükleniyor...',
-    bootInitializing: 'Donanım başlatılıyor...',
-    bootingFlash: 'Flash üzerinden önyükleme yapılıyor...',
-    extractingFiles: 'Dosyalar flash üzerinden çıkarılıyor...',
-    performanceOptimization: 'Performans Optimizasyonu',
-    spatialPartitioning: 'Uzamsal Bölümleme',
-    viewportCulling: 'Görünüm Alanı Ayıklama',
-    virtualScrolling: 'Sanal Kaydırma',
-    skeletonScreens: 'İskelet Ekranlar',
-    assetLoading: 'Varlık Yükleme Stratejisi',
-    nodePooling: 'Düğüm Havuzlama',
-    layer3Switching: 'Katman 3 Anahtarlama',
-    routedPorts: 'Yönlendirilmiş Portlar',
-    dynamicRouting: 'Dinamik Yönlendirme',
-    ipRoutingEngine: 'IP Yönlendirme Motoru',
-    routingTasks: 'Yönlendirme Görevleri',
-    accessibility: 'Erişilebilirlik',
-    ariaManagement: 'ARIA Yönetimi',
-    keyboardNav: 'Klavye Navigasyonu',
-    highContrast: 'Yüksek Kontrast Desteği',
-    screenReader: 'Ekran Okuyucu Duyuruları',
-    wifiSignal: 'WiFi (Wireless Fidelity) Sinyal Gücü',
-    wifiConnected: 'WiFi Bağlı',
-    wifiDisconnected: 'WiFi Bağlantısı Kesildi',
-    wifiConfig: 'WiFi (Wireless Fidelity) Yapılandırması',
-    wifiControlPanel: 'WiFi (Wireless Fidelity) Kontrol Paneli',
-    wifiMode: 'WiFi Modu',
-    wifiSsid: 'SSID',
-    wifiPassword: 'Şifre',
-    wifiSecurity: 'Güvenlik',
-    wifiChannel: 'Kanal',
     wifiAp: 'Erişim Noktası (AP)',
+    wifiChannel: 'Kanal',
     wifiClient: 'İstemci',
-    saveSuccess: 'Yapılandırma başarıyla kaydedildi',
-    saveError: 'Kaydetme sırasında bir hata oluştu',
-    copySuccess: 'Panoya kopyalandı',
-    copyError: 'Kopyalama başarısız',
-    selectAll: 'Tümünü Seç',
-    cut: 'Kes',
-    paste: 'Yapıştır',
-    rename: 'Yeniden Adlandır',
-    powerOn: 'Gücü Aç',
-    powerOff: 'Gücü Kapat',
-    reload: 'Yeniden Yükle',
-    clear: 'Temizle',
-    confirm: 'Onayla',
-    yes: 'Evet',
-    no: 'Hayır',
-    newNote: 'Yeni not...',
-    deviceOff: 'Cihaz Kapalı',
+    wifiConfig: 'WiFi (Wireless Fidelity) Yapılandırması',
+    wifiConnected: 'WiFi Bağlı',
+    wifiControlPanel: 'WiFi (Wireless Fidelity) Kontrol Paneli',
+    wifiDhcpStatusUpdated: '🔄 WiFi + DHCP Durumu Güncellendi',
+    wifiDisconnected: 'WiFi Bağlantısı Kesildi',
+    wifiMode: 'WiFi Modu',
     wifiOff: 'WiFi Kapalı',
     wifiOn: 'WiFi Açık',
-    statusLabel: 'Durum:',
-    modeLabel: 'Mod:',
-    securityLabel: 'Güvenlik:',
-    channelLabel: 'Kanal:',
-    connectedLabel: 'Bağlı:',
-    refreshNetwork: 'Ağı Yenile',
-    exitPingMode: 'Ping modundan çık (ESC)',
-    selectSource: 'Kaynak seç',
-    selectTarget: 'Hedef seç',
-    alignLeft: 'Sola Hizala',
-    alignTop: 'Üste Hizala',
-    togglePower: 'Gücü Aç/Kapat',
-    topologyAriaLabel: 'Ağ topolojisi tuvali. Cihazları sürükleyerek taşıyabilirsiniz.',
-    colorLabel: 'Renk',
-    fontLabel: 'Yazı Tipi',
-    fontSizeLabel: 'Boyut',
-    opacityLabel: 'Saydamlık',
-    duplicateLabel: 'Çoğalt',
-    noIp: 'IP Yok',
-    deviceNameLabel: 'Cihaz Adı',
-    measurementLabel: 'Ölçüm:',
-    noServices: 'Servis yok',
-    dhcpPoolLabel: 'DHCP Havuzu',
-    dnsRecordsLabel: 'DNS (Domain Name System) Kayıtları',
-    httpServerLabel: 'HTTP (Hypertext Transfer Protocol) Sunucu',
-    exportLabel: 'Dışa Aktar',
-    pressEnterToConfirm: 'Devam etmek için Enter\'a basın',
-    enterPassword: 'Parolayı girin...',
-    typeCommandPlaceholder: 'Enter\'a basın veya yazın...',
-    searchTerminal: 'Terminal çıktısında arama yapın',
-    commandReference: 'Komutlar',
-    commandsFound: 'komut bulundu',
-    commandModes: 'Komut Modları:',
-    basicCommands: 'Temel komutlar',
-    allCommands: 'Tüm komutlar',
-    globalConfigLabel: 'Global yapılandırma',
-    interfaceConfigLabel: 'Arayüz yapılandırması',
-    activeSystem: 'Aktif Sistem',
-    tutorialWelcomeTitle: '🎓 Hoş Geldiniz',
-    tutorialWelcomeDesc: 'Network Simulator 2026\'ya hoş geldiniz! Bu kısa turda temel özellikleri keşfedeceksiniz. Bağlantıları yapılandırın, cihazları yönetin ve ağ becerilerinizi geliştirin.',
-    tutorialTopologyTitle: '📐 Topoloji Editörü',
-    tutorialTopologyDesc: 'Sürükle-bırak ile cihazları yerleştirin. Bağlantı kurmak için: 1) Bağla düğmesine tıkla, 2) Kaynak cihaz/port seç, 3) Hedef cihaz/port seç. Çift tıklama: PC\'de CMD, Switch/Router\'da CLI açar.',
-    tutorialCablesTitle: '🔌 Kablo Türleri',
-    tutorialCablesDesc: 'Kablo türleri: Straight (mavi) - PC↔Switch/Router, Crossover (turuncu) - Switch↔Switch/Router↔Router, Console (cyan) - PC↔Cihaz yapılandırma bağlantılar.',
-    tutorialDevicesTitle: '💻 Cihaz Yönetimi',
-    tutorialDevicesDesc: 'Cihazları aç/kapat (güç düğmesi), yapılandır (CLI/Panel), ve monitör et. CLI sekmesinde komut satırından yapılandırma yapın. Görevler sekmesinde VLAN, port ve güvenlik görevlerini tamamlayın.',
-    tutorialPingTitle: '📡 Ping ve Bağlantı Testi',
-    tutorialPingDesc: 'Ping modu ile cihazlar arası bağlantıyı test edin. Başarılı pingler yeşil, başarısız olanlar kırmızı animasyonla gösterilir. DHCP otomatik IP atama, statik IP için manuel yapılandırma yapın.',
-    tutorialWifiTitle: '🌐 WiFi ve Kablosuz',
-    tutorialWifiDesc: 'Router ve Switch\'leri Access Point moduna alın (WiFi ayarları). SSID, şifreleme (WPA2/WPA3) ve şifre ayarlayın. PC\'ler otomatik olarak erişim noktalarına bağlanır.',
-    tutorialProjectTitle: '💾 Proje Yönetimi',
-    tutorialProjectDesc: 'Projeleri kaydet (Ctrl+S), yükle (Ctrl+O) veya yeni başlat (Alt+N). Örnek projeler ile hazır senaryoları inceleyin. Tüm yapılandırmalar JSON formatında kaydedilir.',
-    tutorialThemeTitle: '🎨 Arayüz Özelleştirme',
-    tutorialThemeDesc: 'Karanlık/Açık tema (🌙/☀️) ve dil (🇹🇷/🇬🇧) tercihlerinizi ayarlayın. Grafik kalitesi düşük/yüksek arasında geçiş yapın. Tüm tercihler tarayıcıda otomatik kaydedilir.',
-    tutorialReadyTitle: '🚀 Başlamaya Hazırsınız!',
-    tutorialReadyDesc: 'Artık ağ simülasyonuna başlamaya hazırsınız! Örnek projeleri inceleyin veya kendi topolojinizi oluşturun. Yardım paneli (sağ alt köşe) ve komut referansı her zaman yanınızda. İyi çalışmalar!',
-    projectSaved: 'Proje kaydedildi',
-    jsonDownloaded: 'JSON dosyası indirildi.',
-    invalidProject: 'Hata',
-    corruptedProject: 'Proje dosyası bozuk veya uyumsuz!',
-    wifiDhcpStatusUpdated: '🔄 WiFi + DHCP Durumu Güncellendi',
-    dhcpSuccessTitle: 'DHCP ataması başarılı',
-    dhcpSuccessDescription: 'DHCP ile {ip} atandı.',
-    dhcpFailureTitle: 'DHCP ataması başarısız',
-    dhcpFailureDescription: 'DHCP sunucusu bulunamadı.',
-    resetToDefaults: 'Varsayılana Sıfırla',
-    confirmResetTitle: 'Fabrika Ayarlarına Sıfırla?',
-    confirmResetDescription: 'Tüm yapılandırma silinecek ve fabrika ayarları geri yüklenecek. Cihaz yeniden başlatılacak. Bu işlem geri alınamaz.',
-    confirmReset: 'Cihazı Sıfırla',
-    // Environmental settings
-    environmentSettings: 'Ayarlar',
-    environmentBackground: 'Arka Plan',
-    backgroundNone: 'Yok',
-    backgroundHouse: 'Ev Krokisi',
-    backgroundTwoStoryGarage: '2 Katlı Bina',
-    backgroundGreenhouse: 'Sera Krokisi',
-    temperature: 'Sıcaklık',
-    humidity: 'Nem',
-    lightLevel: 'Işık',
-    celsius: '°C',
-    percent: '%',
-    // Room labels for floor plan
-    room1: 'Oda 1',
-    room2: 'Oda 2',
-    bedroom: 'Yatak',
-    livingRoom: 'Salon',
-    kitchen: 'Mutfak',
-    bathroom: 'Banyo',
-    contactTitle: 'Bize Ulaşın',
-    contactName: 'Adınız',
-    contactEmail: 'E-posta Adresiniz',
-    contactType: 'Konu',
-    contactMessage: 'Mesajınız',
-    contactSend: 'Gönder',
-    contactPlaceholderName: 'Adınızı girin',
-    contactPlaceholderEmail: 'E-posta adresinizi girin',
-    contactPlaceholderMessage: 'Mesajınızı yazın...',
-    contactValidationName: 'Lütfen adınızı girin',
-    contactValidationEmail: 'Geçerli bir e-posta adresi girin',
-    contactValidationMessage: 'Lütfen mesajınızı yazın',
-    bugReport: 'Hata Raporu',
-    suggestion: 'Öneri',
-    other: 'Diğer',
-    tabDescTopology: 'Cihazları sürükleyip bırakarak ağ topolojisini tasarla.',
-    tabDescCmd: 'PC Command Prompt (CMD) ile ping, ipconfig vb. komutları çalıştır.',
-    tabDescTerminal: 'Switch / router Command Line Interface (CLI) üzerinden yapılandırma komutlarını çalıştır.',
-    tabDescTasks: 'Port, VLAN ve güvenlik görevlerini tamamlayarak puan kazan.',
-    networkStatusUpdated: 'Ağ Durumu Tamamen Güncellendi',
-    networkRefreshed: 'Ağ Yenilendi',
-    noWifiDevices: 'WiFi cihazı bulunamadı',
-    importSuccess: 'Dosya başarıyla içe aktarıldı.',
-    pcDisconnected: 'PC bağlantısız',
-    apNoClients: 'AP istemcisiz',
-    dhcpNoPool: 'sunucuda havuz yok',
-    dhcpNoLease: 'istemci lease alamadı',
-    newMessage: 'Yeni Mesaj',
-    sending: 'Gönderiliyor...',
-    savedViaSheets: 'Fikirlerinizi paylaşın',
-    dhcpNotFound: 'DHCP bulunamadı',
-    congrats: 'Tebrikler!',
-    contactSuccessTitle: 'Mesaj Gönderildi',
-    contactSuccessDesc: 'Mesajınız başarıyla gönderildi. Geri bildiriminiz için teşekkürler!',
-    contactErrorTitle: 'Gönderilemedi',
-    contactErrorDesc: 'Bir ağ hatası oluştu. Lütfen sonra tekrar deneyin.',
-    sizeLabel: 'Boyut',
-    resizeLabel: 'Yeniden Boyutlandır',
-    pingFailed: 'Ping başarısız',
-    pingSuccess: 'Ping başarılı',
-    completeWithTab: 'ile tamamla',
-    cmdSuggestions: 'Komut önerileri',
-    noteStyle: 'Not Biçimi',
-    open: 'Aç',
-    ping: 'Ping',
-    addIoT: 'IoT Ekle',
-    addPC: 'PC Ekle',
-    addL2Switch: 'L2 Switch Ekle',
-    addL3Switch: 'L3 Switch Ekle',
-    devicesCount: 'cihaz',
-    none: 'Yok',
-    openNewProject: 'Yeni Proje Aç',
-    openNewProjectDesc: 'Topolojinizi tasarlamaya başlamak için hazır bir senaryo seçin veya boş bir proje ile başlayın.',
-    searchProjects: 'Proje ara...',
-    emptyProject: 'Boş Proje',
-    emptyProjectDesc: 'Sıfırdan temiz bir topoloji ile başla',
-    skip: 'Geç',
-    back: 'Geri',
-    finish: 'Bitir',
-    next: 'İleri',
-    switchTerminal: "CLI Terminal'e geç",
-    switchTasks: 'Görevlere geç',
-    deviceTasksAndConfig: 'Cihaz görevleri ve yapılandırma görevleri',
-    cliInterface: 'Komut satırı arayüzü (Command Line Interface)',
-    connectionError: 'Bağlantı hatası',
-    lightMode: 'Açık Tema',
-    darkMode: 'Koyu Tema',
-    highRes: 'Yüksek Çözünürlük',
-    lowRes: 'Düşük Çözünürlük',
-    quickActions: 'Hızlı işlemler',
-    new: 'Yeni',
-    tour: 'Tur',
-    searchShort: 'Ara...',
-    straightCable: 'Düz Kablo',
-    crossoverCable: 'Çapraz Kablo',
-    consoleCable: 'Konsol Kablosu',
-    straightShort: 'Düz',
-    crossoverShort: 'Çapraz',
-    consoleShort: 'Konsol',
-    tabToNext: 'TAB ile sonraki cihaz',
-    unsaved: 'Kaydedilmedi',
-    saved: 'Kaydedildi',
-    lastSavedAt: 'Son kaydedilme: ',
-    pan: 'Kaydır',
-    boxSelect: 'Kutu',
-    menu: 'Menü',
-    clickIconsToRun: 'Program çalıştırmak için simgeleri tıklayınız',
-    tabsShort: 'Sekmeler',
-    taskCompleted: '✓ Görev Tamamlandı',
-    taskFailed: '⚠ Görev Başarısız',
-    channelShort: 'Kanal',
-    signal: 'Sinyal',
-    services: 'Servisler',
-    openCMD: 'CMD Aç',
-    openCLI: 'CLI Aç',
-    ipMode: 'IP Modu',
-    static: 'STATIK',
-    portsShort: 'Portlar',
-    connectedShort: 'bağlı',
-    routing: 'Yönlendirme',
-    enabled: 'Aktif',
-    disabled: 'Pasif',
-    pools: 'Havuz',
-    routerInfoPanel: 'Router Bilgi Paneli',
-    expand: 'Genişlet',
-    overview: 'Genel Bakış',
-    deviceInformation: 'Cihaz Bilgileri',
-    ipRouting: 'IP Yönlendirme',
-    ipInterfaces: 'IP Arayüzleri',
-    noIpInterfaces: 'IP adresi yapılandırılmış arayüz yok.',
-    portSummary: 'Port Özeti',
-    notConnected: 'Bağlı Değil',
-    shutdownStatus: 'Kapalı',
-    noWifiConfig: 'WiFi yapılandırması bulunmuyor.',
-    dhcpPoolConfig: 'DHCP havuzu yapılandırması bulunmuyor.',
-    dhcpCliConfig: 'DHCP havuzları CLI üzerinden yapılandırılabilir.',
+    wifiPassword: 'Şifre',
+    wifiSecurity: 'Güvenlik',
+    wifiSignal: 'WiFi (Wireless Fidelity) Sinyal Gücü',
+    wifiSsid: 'SSID',
     wifiStatus: 'WiFi Durumu',
-    connectedStatus: 'Bağlı',
-    disconnectedStatus: 'Bağlı Değil',
-    // Missing translations
-    noDevicesToList: 'Listelenecek cihaz yok.',
-    device: 'Cihaz',
-    copyAction: 'Kopyala',
-    dhcpAssignments: 'DHCP Atamaları',
-    projectLoaded: 'Proje yüklendi',
-    fileImportedSuccessfully: 'Dosya başarıyla içe aktarıldı.',
-    invalidProjectFile: 'Geçersiz proje dosyası',
-    loadFailed: 'Yükleme başarısız',
-    applicationError: 'Uygulama hatası',
-    english: 'English',
-    turkish: 'Türkçe',
-    refreshNetworkF5: 'Ağı Yenile (F5)',
-    openGuidedLesson: 'Rehberli Dersi Aç',
-    dragToZoomOrScroll: 'Sürükleyerek büyütün',
-    resizeAction: 'Yeniden boyutlandır',
-    details: 'Detaylar',
-    showHidePassword: 'Parolayı Göster/Gizle',
-    ipRenew: 'IP Yenile',
-    disconnectAction: 'Bağlantıyı Kes',
-    stpSwitchesUpdated: 'STP: X switch güncellendi',
-    portSecurityBlocked: 'Port Security: X bloklandı, Y açıldı',
-    topologyInvalidConnections: 'Topoloji: X hatalı bağlantı pasifleştirildi',
     wirelessClientsConnected: 'X kablosuz istemci bağlandı',
-    apActive: 'X AP aktif',
     wirelessClientsDisconnected: 'X kablosuz istemci bağlantı yok',
     wirelessStatus: 'Kablosuz Ağ Durumu',
-    dhcpActiveServers: 'DHCP: X sunucu aktif',
-    clientsLeased: 'X istemci lease aldı',
-    // Additional missing translations for NetworkTopology
-    invalidIpv4Address: 'Geçerli bir IPv4 adresi girin.',
-    invalidSubnetMask: 'Geçerli bir subnet mask girin.',
-    invalidGatewayAddress: 'Geçerli bir gateway adresi girin.',
-    invalidDnsAddress: 'Geçerli bir DNS adresi girin.',
-    invalidIpv6Address: 'Geçerli bir IPv6 adresi girin.',
-    passive: 'PASİF',
-    motionYes: 'Hareket Var',
-    addPcDevice: 'PC cihazı ekle',
-    addL2Switch: 'L2 Switch ekle',
-    addL3Switch: 'L3 Switch ekle',
-    addRouter: 'Router ekle',
-    addIotDevice: 'IoT cihazı ekle',
-    cableTypeSelector: 'Kablo tipi seçici',
-    straightCable: 'Düz kablo',
-    crossoverCable: 'Çapraz kablo',
-    consoleCable: 'Konsol kablo',
-    dragToZoomOrScroll: 'Sürükleyerek büyütün',
-    refreshNetwork: 'Ağı Yenile',
-    refresh: 'Yenile',
-    reset: 'Sıfırla',
-    resetView: 'Sıfırla',
-    configure: 'Yapılandır',
-    deviceName: 'Cihaz Adı',
-    deviceInfo: 'CİHAZ BİLGİSİ',
-    ipConfiguration: 'IP Yapılandırması',
-    ipAddress: 'IP Adresi',
-    subnetMask: 'Alt Ağ Maskesi',
-    gateway: 'Ağ Geçidi',
-    dnsServer: 'DNS Sunucusu',
-    noIp: 'IP Yok',
-    fullScreen: 'Tam Ekran',
-    exit: 'Çık',
-    minimize: 'Küçült',
+    yes: 'Evet',
   },
   en: {
-    resetView: 'Reset View',
-    exit: 'exit',
-    title: 'Network Simulator 2026',
-    subtitle: 'Develop Your Networking Skills',
-    mode: 'Mode',
-    hostname: 'Hostname',
-    clearTerminal: 'Clear Terminal',
-    reset: 'Reset',
-    switchTitle: 'Network 2960 Switch',
-    fastEthernetPorts: 'FastEthernet Ports (Fa0/1 - Fa0/24)',
-    gigabitPorts: 'GigabitEthernet Ports',
-    connected: 'Connected',
-    closed: 'Closed',
-    blocked: 'Blocked',
-    idle: 'Idle',
-    status: 'Status',
-    portName: 'Name',
-    speed: 'Speed',
-    duplex: 'Duplex',
-    description: 'Description',
-    unassigned: 'Unassigned',
-    vlanStatus: 'VLAN Status',
-    newVlan: 'Create New VLAN',
-    vlanId: 'ID (1-4094)',
-    vlanName: 'Name',
-    create: 'Create',
+    about: 'Help',
+    aboutIntro: 'This application is an interactive simulation tool designed for those who want to learn network technologies and terminal commands.',
+    aboutTitle: 'About',
+    accessDenied: '% Access denied',
+    accessibility: 'Accessibility',
     active: 'Active',
-    suspended: 'Suspended',
-    ports: 'Ports',
-    securityControls: 'Security Controls',
-    securityLevel: 'Security Level',
-    enableSecret: 'Enable Secret',
-    consoleSecurity: 'Console Security',
-    vtySecurity: 'VTY Lines Security',
-    passwordEncryption: 'Password Encryption',
-    sshAccess: 'SSH Access',
-    definedUsers: 'Defined Users',
-    goodSecurity: 'Good security level',
-    mediumSecurity: 'Medium security level',
-    lowSecurity: 'Low security level',
-    criticalSecurity: 'Critical security vulnerabilities',
-    on: 'ON',
-    off: 'OFF',
-    runningConfig: 'Running-Config',
-    save: 'Save (wr)',
-    realTimeUpdate: 'Real-time update active',
-    cliTerminal: 'CLI Terminal',
-    processing: 'Processing...',
-    lines: 'lines',
-    quickCommands: 'Quick Commands',
-    noCommandsAvailable: 'No quick commands in this mode',
-    tabComplete: 'command completion',
-    commandHistory: 'command history',
-    help: 'Help',
-    nosVersion: 'NOS Version',
-    model: 'Model',
-    uptime: 'Uptime',
     activePorts: 'Active Ports',
-    tips: '🕸️',
-    levelBasic: 'Basic Level',
-    levelIntermediate: 'Intermediate Level',
-    levelAdvanced: 'Advanced Level',
-    portClickTip: 'Click on port LEDs to quickly switch to interface mode',
-    simulatorTitle: 'Network Simulator 2026 v1.0',
-    simulatorCopyright: 'Copyright (c) 2026 Simulator. All rights reserved.',
-    theme: 'Theme',
-    light: 'Light',
-    dark: 'Dark',
-    language: 'en',
-    clearTerminalBtn: 'Clear',
-    switchMode: 'Switch Mode',
-    newVlanLabel: 'New VLAN',
-    pcTerminal: 'PC Terminal',
-    pcConnected: 'PC connected',
-    pcNotConnected: 'You are not connected to any switch or router.',
-    pcCableError: 'Network cable not connected.',
-    pcIncompatibleCable: 'Incompatible cable type. Straight-through required for PC-Switch.',
-    pcAccessDenied: 'no direct access to address.',
-    pcConsoleTip: 'Connected via console. Please, use the "terminal" command.',
-    pcPingError: 'Ping request timed out.',
-    pcTelnetError: 'TELNET: Connection failed.',
-    pcTracertError: 'TRACERT: Target unreachable.',
-    pcNslookupError: 'NSLOOKUP: Cannot communicate with DNS server.',
-    pcIpconfigError: 'Could not retrieve IP configuration.',
-    pcTerminalClosing: 'Closing PC terminal...',
-    consolePingNotAllowed: 'Ping cannot be sent over a console connection.',
-    pcLoginSuccess: 'Login successful',
-    pcConnectionClosed: 'Connection closed by foreign host.',
-    copyToastSuccessTitle: 'Copied',
-    copyToastSuccessDescription: 'Output copied to clipboard.',
-    copyToastFailureTitle: 'Copy failed',
-    copyToastFailureDescription: 'Clipboard access was blocked.',
-    consolePasswordErrorTitle: 'Incorrect Password',
-    consolePasswordErrorDescription: 'Please enter the correct password.',
-    pcConnectionError: 'Connection error',
-    dnsInvalidAddress: 'DNS address is missing or invalid.',
-    dnsGatewayRequired: 'Gateway is required to reach DNS server.',
-    targetGatewayRequired: 'Gateway is required to reach target.',
-    dnsAddressRequired: 'A valid DNS address is required to resolve domain.',
-    pcNoDeviceConnected: 'No device connected',
-    pcConsoleHelp: 'Available commands:\n  enable   - Enter privileged mode\n  exit     - Disconnect from console\n  show     - Show information\n  ?        - Help\n',
-    searchOutputTitle: 'Search output',
-    searchOutputDescription: 'Matches will be highlighted in the output.',
-    searchPlaceholder: 'Search...',
-    commandPromptTab: 'Command Prompt',
-    consoleTab: 'Console',
-    settingsTab: 'Settings',
-    servicesTab: 'Services',
-    ipConfigurationLabel: 'IP Configuration',
-    staticLabel: 'Static',
-    dnsRecordManagerTip: 'Manage domain to IP address records.',
-    dnsDomainPlaceholder: 'Domain (site.local)',
-    dnsAddressPlaceholder: 'Address (192.168.1.10)',
+    activeSystem: 'Active System',
+    add: 'Add',
+    addDevice: 'Add Device',
+    addDeviceOrCable: 'Add Device or Cable',
+    addDevicesFirst: 'Add Devices First',
     addDnsRecord: 'Add Record',
-    dnsNoRecords: 'No DNS records yet.',
-    dnsARecordLabel: 'A Record (Address Record)',
-    dnsCnameRecordLabel: 'CNAME Record (Canonical Name Record)',
-    httpServiceDescription: 'When enabled, this PC serves web content.',
-    dhcpPoolsDescription: 'Add, edit and delete DHCP pools.',
-    dhcpPoolNamePlaceholder: 'Pool Name',
-    dhcpPoolGatewayPlaceholder: 'Default Gateway',
+    addIoT: 'Add IoT',
+    addIotDevice: 'Add IoT device',
+    addL2Switch: 'Add L2 Switch',
+    addL3Switch: 'Add L3 Switch',
+    addNote: 'Add Note',
+    addPC: 'Add PC',
+    addPc: 'Add PC',
+    addPcDevice: 'Add PC device',
+    addPcShort: 'Add PC',
+    addPool: 'Add Pool',
+    addRouter: 'Add Router',
+    addRouterShort: 'Add Router',
+    addSwitch: 'Add Switch',
+    addSwitchShort: 'Add Switch',
+    advancedHint: 'Comprehensive setup and verification labs',
+    align: 'Align',
+    alignLeft: 'Align Left',
+    alignTop: 'Align Top',
+    allCommands: 'All commands',
+    allStepsCompleted: 'All steps completed!',
+    annotations: 'Annotations',
+    apActive: 'X AP active',
+    apNoClients: 'AP has no clients',
+    applicationError: 'Application error',
+    ariaManagement: 'ARIA Management',
+    assetLoading: 'Asset Loading Strategy',
+    back: 'Back',
+    backgroundGreenhouse: 'Greenhouse Sketch',
+    backgroundHouse: 'House Sketch',
+    backgroundNone: 'None',
+    backgroundTwoStoryGarage: '2-Story Building',
+    basicCommands: 'Basic commands',
+    basicHint: 'Core commands and first topology steps',
+    bathroom: 'Bathroom',
+    bedroom: 'Bedroom',
+    beginner: 'Beginner',
+    blocked: 'Blocked',
+    bootInitializing: 'Initializing hardware...',
+    bootLoading: 'Loading system...',
+    bootReady: 'Ready!',
+    bootingFlash: 'Booting from flash...',
+    boxSelect: 'Box',
+    bugReport: 'Bug Report',
+    cable: 'Cable',
+    cableType: 'Cable Type',
+    cableTypeSelector: 'Cable type selector',
+    cableTypes: 'Cable Types',
+    cancel: 'Cancel',
+    celsius: '°C',
+    channelLabel: 'Channel:',
+    channelShort: 'Ch',
+    clear: 'Clear',
+    clearTerminal: 'Clear Terminal',
+    clearTerminalBtn: 'Clear',
+    clearTerminalConfirm: 'Terminal output will be cleared. Do you want to continue?',
+    cli: 'CLI',
+    cliInterface: 'Command line interface',
+    cliTerminal: 'CLI Terminal',
+    clickIconsToRun: 'Click icons to run programs',
+    clientsLeased: 'X clients leased',
+    close: 'Close',
+    closed: 'Closed',
+    cmdSuggestions: 'Command suggestions',
+    colorLabel: 'Color',
+    commandHistory: 'command history',
+    commandModes: 'Command Modes:',
+    commandPromptTab: 'Command Prompt',
+    commandReference: 'Commands',
+    commandsFound: 'commands found',
+    completeWithTab: 'to complete',
+    completedAt: 'Completed at',
+    configure: 'Configure',
+    confirm: 'Confirm',
+    confirmReset: 'Reset Device',
+    confirmResetDescription: 'This will erase all configuration and restore factory defaults. The device will reload. This action cannot be undone.',
+    confirmResetTitle: 'Reset to Factory Defaults?',
+    confirmationRequired: 'Confirmation Required',
+    congrats: 'Congratulations!',
+    connect: 'Connect',
+    connectDevices: 'Connect Devices',
+    connected: 'Connected',
+    connectedLabel: 'Connected:',
+    connectedShort: 'connected',
+    connectedStatus: 'Connected',
+    connectionError: 'Connection error',
+    console: 'Console',
+    consoleCable: 'Console cable',
+    consoleConfiguration: 'Configuration: 9600 bits/s, 8 data bits, no parity',
+    consolePasswordErrorDescription: 'Please enter the correct password.',
+    consolePasswordErrorTitle: 'Incorrect Password',
+    consolePingNotAllowed: 'Ping cannot be sent over a console connection.',
+    consoleSecurity: 'Console Security',
+    consoleShort: 'Console',
+    consoleTab: 'Console',
+    consoleTerminal: 'Console Terminal',
+    contactEmail: 'Your Email',
+    contactErrorDesc: 'A network error occurred. Please try again later.',
+    contactErrorTitle: 'Send Failed',
+    contactMessage: 'Your Message',
+    contactName: 'Your Name',
+    contactPlaceholderEmail: 'Enter your email',
+    contactPlaceholderMessage: 'Write your message...',
+    contactPlaceholderName: 'Enter your name',
+    contactSend: 'Send Now',
+    contactSuccessDesc: 'Thank you for your feedback!',
+    contactSuccessTitle: 'Message Sent',
+    contactTitle: 'Contact',
+    contactType: 'Topic',
+    contactValidationEmail: 'Please enter a valid email',
+    contactValidationMessage: 'Please write your message',
+    contactValidationName: 'Please enter your name',
+    continue: 'Continue',
+    copy: 'Copy',
+    copyAction: 'Copy',
+    copyError: 'Copy failed',
+    copySuccess: 'Copied to clipboard',
+    copyToastFailureDescription: 'Clipboard access was blocked.',
+    copyToastFailureTitle: 'Copy failed',
+    copyToastSuccessDescription: 'Output copied to clipboard.',
+    copyToastSuccessTitle: 'Copied',
+    corruptedProject: 'Project file is corrupted or incompatible!',
+    create: 'Create',
+    criticalSecurity: 'Critical security vulnerabilities',
+    crossover: 'Cross-over',
+    crossoverCable: 'Crossover cable',
+    crossoverShort: 'Crossover',
+    currentStep: 'Current Step',
+    cut: 'Cut',
+    dark: 'Dark',
+    darkMode: 'Dark Mode',
+    definedUsers: 'Defined Users',
+    delete: 'Delete',
+    description: 'Description',
+    details: 'Details',
+    device: 'Device',
+    deviceInfo: 'DEVICE INFO',
+    deviceInfoShort: 'Info',
+    deviceInformation: 'Device Information',
+    deviceName: 'Device Name',
+    deviceNameLabel: 'Device Name',
+    deviceOff: 'Device Off',
+    deviceTasksAndConfig: 'Device tasks and configuration tasks',
+    devices: 'Devices',
+    devicesCount: 'devices',
+    dhcpActiveServers: 'DHCP: X active servers',
+    dhcpAssignments: 'DHCP Assignments',
+    dhcpCliConfig: 'DHCP pools can be configured via CLI.',
+    dhcpEnabled: 'DHCP Enabled',
+    dhcpFailureDescription: 'No DHCP server found.',
+    dhcpFailureTitle: 'DHCP assignment failed',
+    dhcpNoLease: 'client could not get lease',
+    dhcpNoPool: 'no pool on server',
+    dhcpNotFound: 'No DHCP found',
+    dhcpPoolConfig: 'No DHCP pool configuration found.',
     dhcpPoolDnsPlaceholder: 'DNS Server',
+    dhcpPoolGatewayPlaceholder: 'Default Gateway',
+    dhcpPoolLabel: 'DHCP Pool',
+    dhcpPoolMaxUsersPlaceholder: 'Max User',
+    dhcpPoolNamePlaceholder: 'Pool Name',
     dhcpPoolStartIpPlaceholder: 'Start IP',
     dhcpPoolSubnetPlaceholder: 'Subnet Mask',
-    dhcpPoolMaxUsersPlaceholder: 'Max User',
-    addPool: 'Add Pool',
-    updatePool: 'Update Pool',
-    noDhcpPools: 'No DHCP pools yet.',
+    dhcpPoolsDescription: 'Add, edit and delete DHCP pools.',
+    dhcpSuccessDescription: 'Assigned via DHCP: {ip}',
+    dhcpSuccessTitle: 'DHCP assignment successful',
+    disabled: 'Disabled',
+    disconnect: 'Disconnect',
+    disconnectAction: 'Disconnect',
+    disconnectedStatus: 'Disconnected',
+    dnsARecordLabel: 'A Record (Address Record)',
+    dnsAddressPlaceholder: 'Address (192.168.1.10)',
+    dnsAddressRequired: 'A valid DNS address is required to resolve domain.',
+    dnsCnameRecordLabel: 'CNAME Record (Canonical Name Record)',
+    dnsDomainPlaceholder: 'Domain (site.local)',
+    dnsGatewayRequired: 'Gateway is required to reach DNS server.',
+    dnsInvalidAddress: 'DNS address is missing or invalid.',
+    dnsNoRecords: 'No DNS records yet.',
+    dnsRecordManagerTip: 'Manage domain to IP address records.',
+    dnsRecordsLabel: 'DNS (Domain Name System) Records',
+    dnsServer: 'DNS Server',
+    dontSave: 'Don\'t Save',
+    dragToZoomOrScroll: 'Drag to zoom or scroll',
+    duplex: 'Duplex',
+    duplicateLabel: 'Duplicate',
+    dynamicRouting: 'Dynamic Routing',
     edit: 'Edit',
-    load: 'Load',
-    saveLabel: 'Save',
-    languageLabel: 'Language',
-    themeLabel: 'Theme',
+    emptyProject: 'Empty Project',
+    emptyProjectDesc: 'Start with a clean topology from scratch',
+    enableSecret: 'Enable Secret',
+    enabled: 'Enabled',
+    english: 'English',
+    enterPassword: 'Enter password...',
+    environmentBackground: 'Background',
+    environmentSettings: 'Settings',
     errorPrefix: 'ERROR',
-    newBtn: 'New',
-    dhcpEnabled: 'DHCP Enabled',
-    openServices: 'Open Services',
-    modeUser: 'User EXEC',
-    modePrivileged: 'Privileged EXEC',
+    exit: 'Exit',
+    exitPingMode: 'Exit ping mode (ESC)',
+    expand: 'Expand',
+    exportLabel: 'Export',
+    extractingFiles: 'Extracting files from flash...',
+    failedLoadProject: 'Failed to load project file!',
+    fastEthernetPorts: 'FastEthernet Ports (Fa0/1 - Fa0/24)',
+    fileImportedSuccessfully: 'File imported successfully.',
+    finish: 'Finish',
+    fontLabel: 'Font',
+    fontSizeLabel: 'Size',
+    freePorts: 'free ports',
+    fullScreen: 'Full Screen',
+    gateway: 'Gateway',
+    gigabitPorts: 'GigabitEthernet Ports',
+    gitAddressLabel: 'Source Address',
+    globalConfigLabel: 'Global config',
+    goodSecurity: 'Good security level',
+    guidedMode: 'Guided Lesson',
+    help: 'Help',
+    hideHint: 'Hide Hint',
+    highContrast: 'High Contrast Support',
+    highRes: 'High Resolution',
+    hostname: 'Hostname',
+    hostnameExample: 'e.g. Router-X',
+    httpServerLabel: 'HTTP (Hypertext Transfer Protocol) Server',
+    httpServiceDescription: 'When enabled, this PC serves web content.',
+    humidity: 'Humidity',
+    id: 'ID',
+    idle: 'Idle',
+    importSuccess: 'File imported successfully.',
+    initializingSystem: 'Initializing System...',
+    instructions: 'Instructions',
+    interfaceConfigLabel: 'Interface config',
+    intermediateHint: 'Services, VLAN and routing scenarios',
+    invalidDnsAddress: 'Enter a valid DNS address.',
+    invalidGatewayAddress: 'Enter a valid gateway address.',
+    invalidIpv4Address: 'Enter a valid IPv4 address.',
+    invalidIpv6Address: 'Enter a valid IPv6 address.',
+    invalidProject: 'Error',
+    invalidProjectFile: 'Invalid project file',
+    invalidSubnetMask: 'Enter a valid subnet mask.',
+    ipAddress: 'IP Address',
+    ipConfiguration: 'IP Configuration',
+    ipConfigurationLabel: 'IP Configuration',
+    ipInterfaces: 'IP Interfaces',
+    ipMode: 'IP Mode',
+    ipRenew: 'IP Renew',
+    ipRouting: 'IP Routing',
+    ipRoutingEngine: 'IP Routing Engine',
+    jsonDownloaded: 'JSON file downloaded.',
+    keyboardNav: 'Keyboard Navigation',
+    kitchen: 'Kitchen',
+    labProgress: 'Lab Progress',
+    languageLabel: 'Language',
+    lastSavedAt: 'Last saved: ',
+    layer3Switching: 'Layer 3 Switching',
+    levelAdvanced: 'Advanced Level',
+    levelBasic: 'Basic Level',
+    levelIntermediate: 'Intermediate Level',
+    licenseInfo: 'Tuzla Vocational and Technical Anatolian High School',
+    light: 'Light',
+    lightLevel: 'Light',
+    lightMode: 'Light Mode',
+    lines: 'lines',
+    linkFrom: 'Link from',
+    livingRoom: 'Living Room',
+    load: 'Load',
+    loadFailed: 'Load failed',
+    loadProject: 'Load Project',
+    lowRes: 'Low Resolution',
+    lowSecurity: 'Low security level',
+    macAddress: 'MAC Address',
+    measurementLabel: 'Measurement:',
+    mediumSecurity: 'Medium security level',
+    menu: 'Menu',
+    minimize: 'Minimize',
+    minutes: 'minutes',
+    mode: 'Mode',
     modeConfig: 'Global Config',
     modeInterface: 'Interface Config',
+    modeLabel: 'Mode:',
     modeLine: 'Line Config',
+    modePrivileged: 'Privileged EXEC',
+    modeUser: 'User EXEC',
     modeVlanLabel: 'VLAN Config',
-    secEnableSecretOn: 'Encrypted enable password configured',
-    secEnableSecretOff: 'Enable password not configured',
-    secConsoleOn: 'Console line login enabled',
+    model: 'Model',
+    motionYes: 'Motion Yes',
+    navigation: 'Navigation',
+    networkRefreshed: 'Network Refreshed',
+    networkStatusUpdated: 'Network Status Fully Updated',
+    networkTopology: 'Network Topology',
+    new: 'New',
+    newBtn: 'New',
+    newMessage: 'New Message',
+    newNote: 'New note...',
+    newProject: 'New Project',
+    newProjectConfirm: 'All configuration and topology will be reset. Do you want to continue?',
+    newVlan: 'Create New VLAN',
+    newVlanLabel: 'New VLAN',
+    next: 'Next',
+    no: 'No',
+    noCommandsAvailable: 'No quick commands in this mode',
+    noConsoleCableDetected: 'No console cable detected. Connect a console cable from the PC to a network device.',
+    noDevicesInTopology: 'No devices in topology yet.',
+    noDevicesToList: 'No devices to list.',
+    noDhcpPools: 'No DHCP pools yet.',
+    noFreePorts: 'No Free Ports',
+    noFreePortsMessage: 'Please, disconnect some cables first.',
+    noIp: 'No IP',
+    noIpInterfaces: 'No interfaces with IP configured.',
+    noServices: 'No services',
+    noWifiConfig: 'No WiFi configuration found.',
+    noWifiDevices: 'No WiFi device found',
+    nodePooling: 'Node Pooling',
+    none: 'None',
+    nosVersion: 'NOS Version',
+    notConnected: 'Not Connected',
+    note: 'Note',
+    noteStyle: 'Note Style',
+    of: 'of',
+    off: 'OFF',
+    on: 'ON',
+    opacityLabel: 'Opacity',
+    open: 'Open',
+    openCLI: 'Open CLI',
+    openCMD: 'Open CMD',
+    openGuidedLesson: 'Open Guided Lesson',
+    openNewProject: 'Open a New Project',
+    openNewProjectDesc: 'Choose a ready scenario to start designing your topology or start with an empty project.',
+    openServices: 'Open Services',
+    openSourceInfo: 'This project is open-source',
+    other: 'Other',
+    overview: 'Overview',
+    pan: 'Pan',
+    passive: 'PASSIVE',
+    passwordEncryption: 'Password Encryption',
+    paste: 'Paste',
+    pcAccessDenied: 'no direct access to address.',
+    pcCableError: 'Network cable not connected.',
+    pcConnected: 'PC connected',
+    pcConnectionClosed: 'Connection closed by foreign host.',
+    pcConnectionError: 'Connection error',
+    pcConsoleHelp: 'Available commands:\n  enable   - Enter privileged mode\n  exit     - Disconnect from console\n  show     - Show information\n  ?        - Help\n',
+    pcConsoleTip: 'Connected via console. Please, use the "terminal" command.',
+    pcDisconnected: 'PC disconnected',
+    pcIncompatibleCable: 'Incompatible cable type. Straight-through required for PC-Switch.',
+    pcIpconfigError: 'Could not retrieve IP configuration.',
+    pcLoginSuccess: 'Login successful',
+    pcNoDeviceConnected: 'No device connected',
+    pcNotConnected: 'You are not connected to any switch or router.',
+    pcNslookupError: 'NSLOOKUP: Cannot communicate with DNS server.',
+    pcPingError: 'Ping request timed out.',
+    pcTelnetError: 'TELNET: Connection failed.',
+    pcTerminal: 'PC Terminal',
+    pcTerminalClosing: 'Closing PC terminal...',
+    pcTracertError: 'TRACERT: Target unreachable.',
+    percent: '%',
+    performanceOptimization: 'Performance Optimization',
+    physicalConnectionDetected: 'Physical connection detected to',
+    ping: 'Ping',
+    pingFailed: 'Ping failed',
+    pingSuccess: 'Ping successful',
+    pools: 'Pools',
+    portClickTip: 'Click on port LEDs to quickly switch to interface mode',
+    portInUse: 'This port already in use!',
+    portName: 'Name',
+    portSecurityBlocked: 'Port Security: X blocked, Y recovered',
+    portSummary: 'Port Summary',
+    ports: 'Ports',
+    portsShort: 'Ports',
+    power: 'Power',
+    powerOff: 'Power Off',
+    powerOn: 'Power On',
+    pressEnterToConfirm: 'Press Enter to confirm',
+    processing: 'Processing...',
+    progress: 'Progress',
+    project: 'Project',
+    projectLoaded: 'Project loaded',
+    projectSaved: 'Project saved',
+    pts: 'pts',
+    quickActions: 'Quick actions',
+    quickCommands: 'Quick Commands',
+    realTimeUpdate: 'Real-time update active',
+    redo: 'Redo',
+    refresh: 'Refresh',
+    refreshNetwork: 'Refresh Network',
+    refreshNetworkF5: 'Refresh Network (F5)',
+    reload: 'Reload',
+    reloadPage: 'Reload page',
+    rename: 'Rename',
+    reset: 'Reset',
+    resetConfirm: 'All configuration will be reset. Do you want to continue?',
+    resetToDefaults: 'Reset to Defaults',
+    resetView: 'Reset',
+    resize: 'Resize',
+    resizeAction: 'Resize',
+    resizeLabel: 'Resize',
+    room1: 'Room 1',
+    room2: 'Room 2',
+    routedPorts: 'Routed Ports',
+    routerInfoPanel: 'Router Information Panel',
+    routing: 'Routing',
+    routingTasks: 'Routing Tasks',
+    runningConfig: 'Running-Config',
+    save: 'Save (wr)',
+    saveError: 'Error occurred while saving',
+    saveLabel: 'Save',
+    saveProject: 'Save Project',
+    saveSuccess: 'Configuration saved successfully',
+    saved: 'Saved',
+    savedViaSheets: 'Share your ideas',
+    saving: 'Saving...',
+    screenReader: 'Screen Reader Announcements',
+    search: 'Search',
+    searchOutputDescription: 'Matches will be highlighted in the output.',
+    searchOutputTitle: 'Search output',
+    searchPlaceholder: 'Search...',
+    searchProjects: 'Search projects...',
+    searchShort: 'Search...',
+    searchTerminal: 'Search in terminal output',
     secConsoleOff: 'Console line login not configured',
-    secVtyOn: 'VTY lines login enabled',
-    secVtyOff: 'VTY lines login not configured',
-    secPassEncOn: 'Passwords encrypted',
+    secConsoleOn: 'Console line login enabled',
+    secEnableSecretOff: 'Enable password not configured',
+    secEnableSecretOn: 'Encrypted enable password configured',
+    secNoProtocol: 'Access protocol not configured',
     secPassEncOff: 'Passwords stored in plain text',
+    secPassEncOn: 'Passwords encrypted',
     secSshOnly: 'SSH-only access enabled',
     secTelnetWarn: 'Telnet access enabled (insecure)',
-    secNoProtocol: 'Access protocol not configured',
+    secVtyOff: 'VTY lines login not configured',
+    secVtyOn: 'VTY lines login enabled',
+    securityControls: 'Security Controls',
+    securityLabel: 'Security:',
+    securityLevel: 'Security Level',
+    selectAll: 'Select All',
+    selectCable: 'Select Cable',
+    selectDevice: 'Select Device',
+    selectDeviceDropdown: 'Select Device',
+    selectSource: 'Select source',
+    selectSourcePort: 'Select Source Port',
+    selectTarget: 'Select target',
+    selectTargetPort: 'Select Target Port',
+    sending: 'Sending...',
+    services: 'Services',
+    servicesTab: 'Services',
+    settings: 'Settings',
+    settingsTab: 'Settings',
+    showHidePassword: 'Show/Hide password',
+    showHint: 'Show Hint',
+    shutdownStatus: 'Shutdown',
+    signal: 'Signal',
+    simulatorCopyright: 'Copyright (c) 2026 Simulator. All rights reserved.',
+    simulatorTitle: 'Network Simulator 2026 v1.0',
+    sizeLabel: 'Size',
+    skeletonScreens: 'Skeleton Screens',
+    skip: 'Skip',
+    spatialPartitioning: 'Spatial Partitioning',
+    speed: 'Speed',
+    sshAccess: 'SSH Access',
+    startTour: 'Tour',
+    static: 'STATIC',
+    staticLabel: 'Static',
+    status: 'Status',
+    statusLabel: 'Status:',
+    step1: 'Step 1: Source',
+    step2: 'Step 2: Destination',
+    stpSwitchesUpdated: 'STP: X switches updated',
+    straight: 'Straight',
+    straightCable: 'Straight cable',
+    straightShort: 'Straight',
+    subnetMask: 'Subnet Mask',
+    subtitle: 'Develop Your Networking Skills',
+    suggestion: 'Suggestion',
+    suspended: 'Suspended',
+    switchMode: 'Switch Mode',
+    switchTasks: 'Switch to Tasks',
+    switchTerminal: 'switchTerminal',
+    switchTitle: 'Network 2960 Switch',
+    syslogStarted: '*** Syslog client started',
+    tabComplete: 'command completion',
+    tabDescCmd: 'Run commands like ping, ipconfig, etc. via PC Command Prompt (CMD).',
+    tabDescTasks: 'Earn points by completing port, VLAN and security tasks.',
+    tabDescTerminal: 'Run configuration commands via Switch / router Command Line Interface (CLI).',
+    tabDescTopology: 'Design the network topology by dragging and dropping devices.',
+    tabToNext: 'TAB for next device',
+    tabsShort: 'Tabs',
+    targetGatewayRequired: 'Gateway is required to reach target.',
+    taskCompleted: '✓ Task Completed',
+    taskFailed: '⚠ Task Failed',
+    tasks: 'Tasks',
+    temperature: 'Temperature',
+    termsAndConditions: 'Terms and Conditions',
+    termsText: 'This software is for educational purposes. It can be freely used and distributed for non-commercial purposes.',
+    theme: 'Theme',
+    themeLabel: 'Theme',
+    tips: '🕸️',
+    title: 'Network Simulator 2026',
+    togglePower: 'Toggle Power',
+    topologyAriaLabel: 'Network topology canvas. You can drag devices to move them.',
+    topologyInvalidConnections: 'Topology: X invalid connections disabled',
+    tour: 'Tour',
+    turkish: 'Türkçe',
+    tutorialCablesDesc: 'Cable types: Straight (blue) - PC↔Switch/Router, Crossover (orange) - Switch↔Switch/Router↔Router, Console (cyan) - PC↔Device config connections.',
+    tutorialCablesTitle: '🔌 Cable Types',
+    tutorialDevicesDesc: 'Power on/off devices (power button), configure (CLI/Panel), and monitor. Use CLI tab for command-line configuration. Complete VLAN, port and security tasks in Tasks tab.',
+    tutorialDevicesTitle: '💻 Device Management',
+    tutorialPingDesc: 'Test connectivity with Ping mode. Successful pings show green, failed ones show red animation. DHCP auto-assigns IPs, or configure static IPs manually.',
+    tutorialPingTitle: '📡 Ping Connectivity',
+    tutorialProjectDesc: 'Save (Ctrl+S), load (Ctrl+O), or start new projects (Alt+N). Explore ready scenarios with example projects. All configurations are saved in JSON format.',
+    tutorialProjectTitle: '💾 Project Management',
+    tutorialReadyDesc: 'You\'re now ready to start network simulation! Explore example projects or create your own topology. Help panel (bottom-right) and command reference are always available. Good luck!',
+    tutorialReadyTitle: '🚀 You\'re Ready!',
+    tutorialThemeDesc: 'Set Dark/Light theme (🌙/☀️) and language (🇹🇷/🇬🇧) preferences. Toggle graphics quality between low/high. All preferences are automatically saved in browser.',
+    tutorialThemeTitle: '🎨 Interface Customization',
+    tutorialTopologyDesc: 'Drag and drop to position devices. To connect: 1) Click Connect button, 2) Select source device/port, 3) Select target device/port. Double-click: Opens CMD on PC, CLI on Switch/Router.',
+    tutorialTopologyTitle: '📐 Topology Editor',
+    tutorialWelcomeDesc: 'Welcome to Network Simulator 2026! This quick tour will show you the essential features. Configure connections, manage devices, and develop your networking skills.',
+    tutorialWelcomeTitle: '🎓 Welcome',
+    tutorialWifiDesc: 'Set Routers and Switches to Access Point mode (WiFi settings). Configure SSID, encryption (WPA2/WPA3) and password. PCs automatically connect to available access points.',
+    tutorialWifiTitle: '🌐 WiFi Wireless',
+    typeCommand: 'Type command...',
+    typeCommandPlaceholder: 'Press Enter or type...',
+    unassigned: 'Unassigned',
+    uncomplete: 'Mark as Incomplete',
+    undo: 'Undo',
+    unsaved: 'Unsaved',
+    unsavedChangesConfirm: 'You have unsaved changes. Do you want to save?',
+    updatePool: 'Update Pool',
+    uptime: 'Uptime',
+    vTaskAssignDesc: 'Assign a port to a VLAN',
+    vTaskAssignName: 'Assign Port',
+    vTaskCreateDesc: 'Create at least 1 non-default VLAN',
+    vTaskCreateName: 'Create VLAN',
+    vTaskFullNamingDesc: 'Name all VLANs properly',
+    vTaskFullNamingHint: 'For each VLAN: name <name>',
+    vTaskFullNamingName: 'Full Naming',
+    vTaskMultipleDesc: 'Create at least 3 user VLANs',
+    vTaskMultipleName: 'Multiple VLANs',
+    vTaskNameDesc: 'Give a custom name to a VLAN',
+    vTaskNameName: 'Name VLAN',
+    vTaskTrunkDesc: 'Configure a port as trunk',
+    vTaskTrunkName: 'Trunk Port',
+    viewportCulling: 'Viewport Culling',
+    virtualScrolling: 'Virtual Scrolling',
+    vlanExcellent: 'Excellent VLAN configuration!',
+    vlanGood: 'Good VLAN structure',
+    vlanId: 'ID (1-4094)',
+    vlanInProgress: 'VLAN configuration in progress',
+    vlanName: 'Name',
+    vlanNameExample: 'e.g. Sales',
+    vlanNeeded: 'VLAN configuration needed',
     vlanNotApplicable: 'VLAN Configuration Not Applicable for PC Devices',
     vlanOnlyOnNetworkDevices: 'VLAN information can only be viewed and configured on switch or router devices.',
     vlanScore: 'VLAN Score',
+    vlanStatus: 'VLAN Status',
     vlanTasks: 'VLAN Tasks',
-    vlanExcellent: 'Excellent VLAN configuration!',
-    vlanGood: 'Good VLAN structure',
-    vlanInProgress: 'VLAN configuration in progress',
-    vlanNeeded: 'VLAN configuration needed',
-    vTaskCreateName: 'Create VLAN',
-    vTaskCreateDesc: 'Create at least 1 non-default VLAN',
-    vTaskNameName: 'Name VLAN',
-    vTaskNameDesc: 'Give a custom name to a VLAN',
-    vTaskAssignName: 'Assign Port',
-    vTaskAssignDesc: 'Assign a port to a VLAN',
-    vTaskTrunkName: 'Trunk Port',
-    vTaskTrunkDesc: 'Configure a port as trunk',
-    vTaskMultipleName: 'Multiple VLANs',
-    vTaskMultipleDesc: 'Create at least 3 user VLANs',
-    vTaskFullNamingName: 'Full Naming',
-    vTaskFullNamingDesc: 'Name all VLANs properly',
-    vTaskFullNamingHint: 'For each VLAN: name <name>',
-    saving: 'Saving...',
-    connect: 'Connect',
-    disconnect: 'Disconnect',
-    physicalConnectionDetected: 'Physical connection detected to',
-    noConsoleCableDetected: 'No console cable detected. Connect a console cable from the PC to a network device.',
-    consoleConfiguration: 'Configuration: 9600 bits/s, 8 data bits, no parity',
+    vtySecurity: 'VTY Lines Security',
     waitingForConnection: 'Waiting for connection...',
-    typeCommand: 'Type command...',
-    labProgress: 'Lab Progress',
-    networkTopology: 'Network Topology',
-    navigation: 'Navigation',
-    project: 'Project',
-    settings: 'Settings',
-    selectDevice: 'Select Device',
-    confirmationRequired: 'Confirmation Required',
-    cancel: 'Cancel',
-    continue: 'Continue',
-    dontSave: 'Don\'t Save',
-    pts: 'pts',
-    initializingSystem: 'Initializing System...',
-    macAddress: 'MAC Address',
-    deviceInfo: 'DEVICE INFO',
-    consoleTerminal: 'Console Terminal',
-    devices: 'Devices',
-    cableTypes: 'Cable Types',
-    cli: 'CLI',
-    id: 'ID',
-    portInUse: 'This port already in use!',
-    note: 'Note',
-    cable: 'Cable',
-    add: 'Add',
-    annotations: 'Annotations',
-    align: 'Align',
-    addDeviceOrCable: 'Add Device or Cable',
-    selectCable: 'Select Cable',
-    deviceInfoShort: 'Info',
-    addPcShort: 'Add PC',
-    addSwitchShort: 'Add Switch',
-    addRouterShort: 'Add Router',
-    ipAddress: 'IP Address',
-    subnetMask: 'Subnet Mask',
-    gateway: 'Gateway',
-    dnsServer: 'DNS Server',
-    accessDenied: '% Access denied',
-    resetConfirm: 'All configuration will be reset. Do you want to continue?',
-    clearTerminalConfirm: 'Terminal output will be cleared. Do you want to continue?',
-    unsavedChangesConfirm: 'You have unsaved changes. Do you want to save?',
-    newProjectConfirm: 'All configuration and topology will be reset. Do you want to continue?',
-    invalidProjectFile: 'Invalid project file!',
-    failedLoadProject: 'Failed to load project file!',
-    undo: 'Undo',
-    redo: 'Redo',
-    newProject: 'New Project',
-    saveProject: 'Save Project',
-    loadProject: 'Load Project',
-    about: 'Help',
-    noDevicesInTopology: 'No devices in topology yet.',
-    addDevicesFirst: 'Add Devices First',
-    selectDeviceDropdown: 'Select Device',
-    vlanNameExample: 'e.g. Sales',
-    hostnameExample: 'e.g. Router-X',
-    aboutTitle: 'About',
-    aboutIntro: 'This application is an interactive simulation tool designed for those who want to learn network technologies and terminal commands.',
-    termsAndConditions: 'Terms and Conditions',
-    termsText: 'This software is for educational purposes. It can be freely used and distributed for non-commercial purposes.',
-    licenseInfo: 'Tuzla Vocational and Technical Anatolian High School',
-    startTour: 'Tour',
-    gitAddressLabel: 'Source Address',
-    openSourceInfo: 'This project is open-source',
-    connectDevices: 'Connect Devices',
-    addDevice: 'Add Device',
-    addPc: 'Add PC',
-    addSwitch: 'Add Switch',
-    addRouter: 'Add Router',
-    addNote: 'Add Note',
-    cableType: 'Cable Type',
-    straight: 'Straight',
-    crossover: 'Cross-over',
-    console: 'Console',
-    linkFrom: 'Link from',
-    selectSourcePort: 'Select Source Port',
-    selectTargetPort: 'Select Target Port',
-    step1: 'Step 1: Source',
-    step2: 'Step 2: Destination',
-    freePorts: 'free ports',
-    noFreePorts: 'No Free Ports',
-    noFreePortsMessage: 'Please, disconnect some cables first.',
-    reloadPage: 'Reload page',
-    delete: 'Delete',
-    resize: 'Resize',
-    search: 'Search',
-    copy: 'Copy',
-    power: 'Power',
-    tasks: 'Tasks',
-    basicHint: 'Core commands and first topology steps',
-    intermediateHint: 'Services, VLAN and routing scenarios',
-    advancedHint: 'Comprehensive setup and verification labs',
-    syslogStarted: '*** Syslog client started',
-    bootReady: 'Ready!',
-    bootLoading: 'Loading system...',
-    bootInitializing: 'Initializing hardware...',
-    bootingFlash: 'Booting from flash...',
-    extractingFiles: 'Extracting files from flash...',
-    performanceOptimization: 'Performance Optimization',
-    spatialPartitioning: 'Spatial Partitioning',
-    viewportCulling: 'Viewport Culling',
-    virtualScrolling: 'Virtual Scrolling',
-    skeletonScreens: 'Skeleton Screens',
-    assetLoading: 'Asset Loading Strategy',
-    nodePooling: 'Node Pooling',
-    layer3Switching: 'Layer 3 Switching',
-    routedPorts: 'Routed Ports',
-    dynamicRouting: 'Dynamic Routing',
-    ipRoutingEngine: 'IP Routing Engine',
-    routingTasks: 'Routing Tasks',
-    accessibility: 'Accessibility',
-    ariaManagement: 'ARIA Management',
-    keyboardNav: 'Keyboard Navigation',
-    highContrast: 'High Contrast Support',
-    screenReader: 'Screen Reader Announcements',
-    wifiSignal: 'WiFi (Wireless Fidelity) Signal Strength',
-    wifiConnected: 'WiFi Connected',
-    wifiDisconnected: 'WiFi Disconnected',
-    wifiConfig: 'WiFi (Wireless Fidelity) Configuration',
-    wifiControlPanel: 'WiFi (Wireless Fidelity) Control Panel',
-    wifiMode: 'WiFi Mode',
-    wifiSsid: 'SSID',
-    wifiPassword: 'Password',
-    wifiSecurity: 'Security',
-    wifiChannel: 'Channel',
     wifiAp: 'Access Point (AP)',
+    wifiChannel: 'Channel',
     wifiClient: 'Client',
-    saveSuccess: 'Configuration saved successfully',
-    saveError: 'Error occurred while saving',
-    copySuccess: 'Copied to clipboard',
-    copyError: 'Copy failed',
-    selectAll: 'Select All',
-    cut: 'Cut',
-    paste: 'Paste',
-    rename: 'Rename',
-    powerOn: 'Power On',
-    powerOff: 'Power Off',
-    reload: 'Reload',
-    clear: 'Clear',
-    confirm: 'Confirm',
-    yes: 'Yes',
-    no: 'No',
-    newNote: 'New note...',
-    deviceOff: 'Device Off',
+    wifiConfig: 'WiFi (Wireless Fidelity) Configuration',
+    wifiConnected: 'WiFi Connected',
+    wifiControlPanel: 'WiFi (Wireless Fidelity) Control Panel',
+    wifiDhcpStatusUpdated: '🔄 WiFi + DHCP Status Updated',
+    wifiDisconnected: 'WiFi Disconnected',
+    wifiMode: 'WiFi Mode',
     wifiOff: 'WiFi Off',
     wifiOn: 'WiFi On',
-    statusLabel: 'Status:',
-    modeLabel: 'Mode:',
-    securityLabel: 'Security:',
-    channelLabel: 'Channel:',
-    connectedLabel: 'Connected:',
-    refreshNetwork: 'Refresh Network',
-    exitPingMode: 'Exit ping mode (ESC)',
-    selectSource: 'Select source',
-    selectTarget: 'Select target',
-    alignLeft: 'Align Left',
-    alignTop: 'Align Top',
-    togglePower: 'Toggle Power',
-    topologyAriaLabel: 'Network topology canvas. You can drag devices to move them.',
-    colorLabel: 'Color',
-    fontLabel: 'Font',
-    fontSizeLabel: 'Size',
-    opacityLabel: 'Opacity',
-    duplicateLabel: 'Duplicate',
-    noIp: 'No IP',
-    deviceNameLabel: 'Device Name',
-    measurementLabel: 'Measurement:',
-    noServices: 'No services',
-    dhcpPoolLabel: 'DHCP Pool',
-    dnsRecordsLabel: 'DNS (Domain Name System) Records',
-    httpServerLabel: 'HTTP (Hypertext Transfer Protocol) Server',
-    exportLabel: 'Export',
-    pressEnterToConfirm: 'Press Enter to confirm',
-    enterPassword: 'Enter password...',
-    typeCommandPlaceholder: 'Press Enter or type...',
-    searchTerminal: 'Search in terminal output',
-    commandReference: 'Commands',
-    commandsFound: 'commands found',
-    commandModes: 'Command Modes:',
-    basicCommands: 'Basic commands',
-    allCommands: 'All commands',
-    globalConfigLabel: 'Global config',
-    interfaceConfigLabel: 'Interface config',
-    activeSystem: 'Active System',
-    tutorialWelcomeTitle: '🎓 Welcome',
-    tutorialWelcomeDesc: 'Welcome to Network Simulator 2026! This quick tour will show you the essential features. Configure connections, manage devices, and develop your networking skills.',
-    tutorialTopologyTitle: '📐 Topology Editor',
-    tutorialTopologyDesc: 'Drag and drop to position devices. To connect: 1) Click Connect button, 2) Select source device/port, 3) Select target device/port. Double-click: Opens CMD on PC, CLI on Switch/Router.',
-    tutorialCablesTitle: '🔌 Cable Types',
-    tutorialCablesDesc: 'Cable types: Straight (blue) - PC↔Switch/Router, Crossover (orange) - Switch↔Switch/Router↔Router, Console (cyan) - PC↔Device config connections.',
-    tutorialDevicesTitle: '💻 Device Management',
-    tutorialDevicesDesc: 'Power on/off devices (power button), configure (CLI/Panel), and monitor. Use CLI tab for command-line configuration. Complete VLAN, port and security tasks in Tasks tab.',
-    tutorialPingTitle: '📡 Ping Connectivity',
-    tutorialPingDesc: 'Test connectivity with Ping mode. Successful pings show green, failed ones show red animation. DHCP auto-assigns IPs, or configure static IPs manually.',
-    tutorialWifiTitle: '🌐 WiFi Wireless',
-    tutorialWifiDesc: 'Set Routers and Switches to Access Point mode (WiFi settings). Configure SSID, encryption (WPA2/WPA3) and password. PCs automatically connect to available access points.',
-    tutorialProjectTitle: '💾 Project Management',
-    tutorialProjectDesc: 'Save (Ctrl+S), load (Ctrl+O), or start new projects (Alt+N). Explore ready scenarios with example projects. All configurations are saved in JSON format.',
-    tutorialThemeTitle: '🎨 Interface Customization',
-    tutorialThemeDesc: 'Set Dark/Light theme (🌙/☀️) and language (🇹🇷/🇬🇧) preferences. Toggle graphics quality between low/high. All preferences are automatically saved in browser.',
-    tutorialReadyTitle: '🚀 You\'re Ready!',
-    tutorialReadyDesc: 'You\'re now ready to start network simulation! Explore example projects or create your own topology. Help panel (bottom-right) and command reference are always available. Good luck!',
-    projectSaved: 'Project saved',
-    jsonDownloaded: 'JSON file downloaded.',
-    invalidProject: 'Error',
-    corruptedProject: 'Project file is corrupted or incompatible!',
-    wifiDhcpStatusUpdated: '🔄 WiFi + DHCP Status Updated',
-    dhcpSuccessTitle: 'DHCP assignment successful',
-    dhcpSuccessDescription: 'Assigned via DHCP: {ip}',
-    dhcpFailureTitle: 'DHCP assignment failed',
-    dhcpFailureDescription: 'No DHCP server found.',
-    resetToDefaults: 'Reset to Defaults',
-    confirmResetTitle: 'Reset to Factory Defaults?',
-    confirmResetDescription: 'This will erase all configuration and restore factory defaults. The device will reload. This action cannot be undone.',
-    confirmReset: 'Reset Device',
-    close: 'Close',
-    // Environmental settings
-    environmentSettings: 'Settings',
-    environmentBackground: 'Background',
-    backgroundNone: 'None',
-    backgroundHouse: 'House Sketch',
-    backgroundTwoStoryGarage: '2-Story Building',
-    backgroundGreenhouse: 'Greenhouse Sketch',
-    temperature: 'Temperature',
-    humidity: 'Humidity',
-    lightLevel: 'Light',
-    celsius: '°C',
-    percent: '%',
-    // Room labels for floor plan
-    room1: 'Room 1',
-    room2: 'Room 2',
-    bedroom: 'Bedroom',
-    livingRoom: 'Living Room',
-    kitchen: 'Kitchen',
-    bathroom: 'Bathroom',
-    contactTitle: 'Contact',
-    contactName: 'Your Name',
-    contactEmail: 'Your Email',
-    contactType: 'Topic',
-    contactMessage: 'Your Message',
-    contactSend: 'Send Now',
-    contactPlaceholderName: 'Enter your name',
-    contactPlaceholderEmail: 'Enter your email',
-    contactPlaceholderMessage: 'Write your message...',
-    contactValidationName: 'Please enter your name',
-    contactValidationEmail: 'Please enter a valid email',
-    contactValidationMessage: 'Please write your message',
-    bugReport: 'Bug Report',
-    suggestion: 'Suggestion',
-    other: 'Other',
-    tabDescTopology: 'Design the network topology by dragging and dropping devices.',
-    tabDescCmd: 'Run commands like ping, ipconfig, etc. via PC Command Prompt (CMD).',
-    tabDescTerminal: 'Run configuration commands via Switch / router Command Line Interface (CLI).',
-    tabDescTasks: 'Earn points by completing port, VLAN and security tasks.',
-    networkStatusUpdated: 'Network Status Fully Updated',
-    networkRefreshed: 'Network Refreshed',
-    noWifiDevices: 'No WiFi device found',
-    importSuccess: 'File imported successfully.',
-    pcDisconnected: 'PC disconnected',
-    apNoClients: 'AP has no clients',
-    dhcpNoPool: 'no pool on server',
-    dhcpNoLease: 'client could not get lease',
-    newMessage: 'New Message',
-    sending: 'Sending...',
-    savedViaSheets: 'Share your ideas',
-    dhcpNotFound: 'No DHCP found',
-    congrats: 'Congratulations!',
-    contactSuccessTitle: 'Message Sent',
-    contactSuccessDesc: 'Thank you for your feedback!',
-    contactErrorTitle: 'Send Failed',
-    contactErrorDesc: 'A network error occurred. Please try again later.',
-    sizeLabel: 'Size',
-    resizeLabel: 'Resize',
-    pingFailed: 'Ping failed',
-    pingSuccess: 'Ping successful',
-    completeWithTab: 'to complete',
-    cmdSuggestions: 'Command suggestions',
-    noteStyle: 'Note Style',
-    open: 'Open',
-    ping: 'Ping',
-    addIoT: 'Add IoT',
-    addPC: 'Add PC',
-    addL2Switch: 'Add L2 Switch',
-    addL3Switch: 'Add L3 Switch',
-    devicesCount: 'devices',
-    none: 'None',
-    openNewProject: 'Open a New Project',
-    openNewProjectDesc: 'Choose a ready scenario to start designing your topology or start with an empty project.',
-    searchProjects: 'Search projects...',
-    emptyProject: 'Empty Project',
-    emptyProjectDesc: 'Start with a clean topology from scratch',
-    skip: 'Skip',
-    back: 'Back',
-    finish: 'Finish',
-    next: 'Next',
-    switchTerminal: "Switch to CLI Terminal",
-    switchTasks: 'Switch to Tasks',
-    deviceTasksAndConfig: 'Device tasks and configuration tasks',
-    cliInterface: 'Command line interface',
-    connectionError: 'Connection error',
-    lightMode: 'Light Mode',
-    darkMode: 'Dark Mode',
-    highRes: 'High Resolution',
-    lowRes: 'Low Resolution',
-    quickActions: 'Quick actions',
-    new: 'New',
-    tour: 'Tour',
-    searchShort: 'Search...',
-    straightCable: 'Straight Cable',
-    crossoverCable: 'Crossover Cable',
-    consoleCable: 'Console Cable',
-    straightShort: 'Straight',
-    crossoverShort: 'Crossover',
-    consoleShort: 'Console',
-    tabToNext: 'TAB for next device',
-    unsaved: 'Unsaved',
-    saved: 'Saved',
-    lastSavedAt: 'Last saved: ',
-    pan: 'Pan',
-    boxSelect: 'Box',
-    menu: 'Menu',
-    clickIconsToRun: 'Click icons to run programs',
-    tabsShort: 'Tabs',
-    taskCompleted: '✓ Task Completed',
-    taskFailed: '⚠ Task Failed',
-    channelShort: 'Ch',
-    signal: 'Signal',
-    services: 'Services',
-    openCMD: 'Open CMD',
-    openCLI: 'Open CLI',
-    ipMode: 'IP Mode',
-    static: 'STATIC',
-    portsShort: 'Ports',
-    connectedShort: 'connected',
-    routing: 'Routing',
-    enabled: 'Enabled',
-    disabled: 'Disabled',
-    pools: 'Pools',
-    routerInfoPanel: 'Router Information Panel',
-    expand: 'Expand',
-    overview: 'Overview',
-    deviceInformation: 'Device Information',
-    ipRouting: 'IP Routing',
-    ipInterfaces: 'IP Interfaces',
-    noIpInterfaces: 'No interfaces with IP configured.',
-    portSummary: 'Port Summary',
-    notConnected: 'Not Connected',
-    shutdownStatus: 'Shutdown',
-    noWifiConfig: 'No WiFi configuration found.',
-    dhcpPoolConfig: 'No DHCP pool configuration found.',
-    dhcpCliConfig: 'DHCP pools can be configured via CLI.',
+    wifiPassword: 'Password',
+    wifiSecurity: 'Security',
+    wifiSignal: 'WiFi (Wireless Fidelity) Signal Strength',
+    wifiSsid: 'SSID',
     wifiStatus: 'WiFi Status',
-    connectedStatus: 'Connected',
-    disconnectedStatus: 'Disconnected',
-    // Missing translations
-    noDevicesToList: 'No devices to list.',
-    device: 'Device',
-    copyAction: 'Copy',
-    dhcpAssignments: 'DHCP Assignments',
-    projectLoaded: 'Project loaded',
-    fileImportedSuccessfully: 'File imported successfully.',
-    invalidProjectFile: 'Invalid project file',
-    loadFailed: 'Load failed',
-    applicationError: 'Application error',
-    english: 'English',
-    turkish: 'Türkçe',
-    refreshNetworkF5: 'Refresh Network (F5)',
-    openGuidedLesson: 'Open Guided Lesson',
-    dragToZoomOrScroll: 'Drag to zoom or scroll',
-    resizeAction: 'Resize',
-    details: 'Details',
-    showHidePassword: 'Show/Hide password',
-    ipRenew: 'IP Renew',
-    disconnectAction: 'Disconnect',
-    stpSwitchesUpdated: 'STP: X switches updated',
-    portSecurityBlocked: 'Port Security: X blocked, Y recovered',
-    topologyInvalidConnections: 'Topology: X invalid connections disabled',
     wirelessClientsConnected: 'X wireless clients connected',
-    apActive: 'X AP active',
     wirelessClientsDisconnected: 'X wireless clients disconnected',
     wirelessStatus: 'Wireless Status',
-    dhcpActiveServers: 'DHCP: X active servers',
-    clientsLeased: 'X clients leased',
-    // Additional missing translations for NetworkTopology
-    invalidIpv4Address: 'Enter a valid IPv4 address.',
-    invalidSubnetMask: 'Enter a valid subnet mask.',
-    invalidGatewayAddress: 'Enter a valid gateway address.',
-    invalidDnsAddress: 'Enter a valid DNS address.',
-    invalidIpv6Address: 'Enter a valid IPv6 address.',
-    passive: 'PASSIVE',
-    motionYes: 'Motion Yes',
-    addPcDevice: 'Add PC device',
-    addL2Switch: 'Add L2 Switch',
-    addL3Switch: 'Add L3 Switch',
-    addRouter: 'Add Router',
-    addIotDevice: 'Add IoT device',
-    cableTypeSelector: 'Cable type selector',
-    straightCable: 'Straight cable',
-    crossoverCable: 'Crossover cable',
-    consoleCable: 'Console cable',
-    dragToZoomOrScroll: 'Drag to zoom or scroll',
-    refreshNetwork: 'Refresh Network',
-    refresh: 'Refresh',
-    reset: 'Reset',
-    resetView: 'Reset',
-    configure: 'Configure',
-    deviceName: 'Device Name',
-    deviceInfo: 'DEVICE INFO',
-    ipConfiguration: 'IP Configuration',
-    ipAddress: 'IP Address',
-    subnetMask: 'Subnet Mask',
-    gateway: 'Gateway',
-    dnsServer: 'DNS Server',
-    noIp: 'No IP',
-    fullScreen: 'Full Screen',
-    exit: 'Exit',
-    minimize: 'Minimize',
-  },
+    yes: 'Yes',
+  }
 };
 
 interface LanguageContextType {
@@ -1852,41 +1781,28 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>('tr');
-  const [initialized, setInitialized] = useState(false);
+  const [language, setLanguage] = useState<Language>('en');
+  const [mounted, setMounted] = useState(false);
 
-  // İlk mount'ta localStorage'dan veya sistem dilinden yükle
   useEffect(() => {
-    if (initialized) return;
-
-    try {
-      const saved = localStorage.getItem('network-sim-language');
-      if (saved === 'tr' || saved === 'en') {
-        setLanguage(saved);
-      } else {
-        const browserLang = navigator.language || (navigator as any).userLanguage;
-        const lang = browserLang.startsWith('tr') ? 'tr' : 'en';
-        setLanguage(lang);
-      }
-    } catch {
-      // localStorage erişim hatası
+    const saved = localStorage.getItem('language') as Language | null;
+    if (saved && (saved === 'tr' || saved === 'en')) {
+      setLanguage(saved);
     }
-    setInitialized(true);
-  }, [initialized]);
+    setMounted(true);
+  }, []);
 
-  // Dil değiştiğinde kaydet
-  useEffect(() => {
-    if (!initialized) return;
+  const handleSetLanguage = (lang: Language) => {
+    setLanguage(lang);
+    localStorage.setItem('language', lang);
+  };
 
-    try {
-      localStorage.setItem('network-sim-language', language);
-    } catch {
-      // localStorage erişim hatası
-    }
-  }, [language, initialized]);
+  if (!mounted) {
+    return <></>;
+  }
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t: translations[language] }}>
+    <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t: translations[language] }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -1895,8 +1811,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (!context) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
+    throw new Error('useLanguage must be used within LanguageProvider');
   }
   return context;
 }
-
