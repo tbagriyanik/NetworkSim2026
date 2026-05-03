@@ -12,6 +12,7 @@ import { useSpatialPartitioning } from '@/lib/performance/spatial';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipWrapper } from "@/components/ui/TooltipWrapper";
+import { ShortcutBadge } from "@/components/ui/ShortcutBadge";
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, CanvasPort, NetworkTopologyProps } from './networkTopology.types';
 import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts } from './networkTopology.portGenerators';
 import { useCanvasHistory } from '@/hooks/useCanvasHistory';
@@ -6858,7 +6859,10 @@ export function NetworkTopology({
                   {t.reset}
                 </button>
               </TooltipTrigger>
-              <TooltipContent>{`${t.reset} (Alt+R)`}</TooltipContent>
+              <TooltipContent className="flex items-center gap-2">
+                <span>{t.reset}</span>
+                <ShortcutBadge shortcut="Alt+R" variant="primary" />
+              </TooltipContent>
             </Tooltip>
           </div>
 
@@ -6928,7 +6932,10 @@ export function NetworkTopology({
                   {t.reset}
                 </button>
               </TooltipTrigger>
-              <TooltipContent>{`${t.reset} (Alt+R)`}</TooltipContent>
+              <TooltipContent className="flex items-center gap-2">
+                <span>{t.reset}</span>
+                <ShortcutBadge shortcut="Alt+R" variant="primary" />
+              </TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -6945,7 +6952,9 @@ export function NetworkTopology({
                   {isFullscreen ? t.exit : t.fullScreen}
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Ctrl+F</TooltipContent>
+              <TooltipContent className="flex items-center gap-2">
+                <ShortcutBadge shortcut="Ctrl+F" variant="warning" />
+              </TooltipContent>
             </Tooltip>
           </div>
 

@@ -168,6 +168,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { TooltipWrapper } from "@/components/ui/TooltipWrapper";
+import { ShortcutBadge } from "@/components/ui/ShortcutBadge";
 import { useLanguage, Translations } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { toast } from "@/hooks/use-toast";
@@ -1876,6 +1877,13 @@ ${state.bannerMOTD}
         setActiveTab(projectData.activeTab);
       }
 
+      // Close all overlay panels when loading a project
+      setShowPCPanel(false);
+      setShowRouterPanel(false);
+      setShowTerminalModal(false);
+      setShowTasksModal(false);
+      setRefreshNetworkReport(null);
+
       // Increment topology key to force remount
       setTopologyKey(prev => prev + 1);
       setHasUnsavedChanges(false);
@@ -1924,7 +1932,7 @@ ${state.bannerMOTD}
       });
       return false;
     }
-  }, [setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setCableInfo, setActiveDeviceId, setActiveDeviceType, setSelectedDevice, setActiveTab, setTopologyKey, setHasUnsavedChanges, resetHistory, toast, setZoom, setPan, language, normalizeDeviceType, applyLinkLocalToUnconfiguredHosts]);
+  }, [setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setCableInfo, setActiveDeviceId, setActiveDeviceType, setSelectedDevice, setActiveTab, setTopologyKey, setHasUnsavedChanges, resetHistory, toast, setZoom, setPan, language, normalizeDeviceType, applyLinkLocalToUnconfiguredHosts, setShowPCPanel, setShowRouterPanel, setShowTerminalModal, setShowTasksModal, setRefreshNetworkReport]);
 
   // Persistence: Load from localStorage on mount
   useEffect(() => {
@@ -4276,7 +4284,10 @@ ${state.bannerMOTD}
                               <File className="w-4 h-4" />
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.newProject} (Alt+N)</TooltipContent>
+                          <TooltipContent className="flex items-center gap-2">
+                            <span>{t.newProject}</span>
+                            <ShortcutBadge shortcut="Alt+N" variant="primary" />
+                          </TooltipContent>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -4287,7 +4298,10 @@ ${state.bannerMOTD}
                               <FolderOpen className="w-4 h-4" />
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.loadProject} (Ctrl+O)</TooltipContent>
+                          <TooltipContent className="flex items-center gap-2">
+                            <span>{t.loadProject}</span>
+                            <ShortcutBadge shortcut="Ctrl+O" variant="primary" />
+                          </TooltipContent>
                         </Tooltip>
 
                         <Tooltip>
@@ -4299,7 +4313,10 @@ ${state.bannerMOTD}
                               <Save className="w-4 h-4" />
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.saveProject} (Ctrl+S)</TooltipContent>
+                          <TooltipContent className="flex items-center gap-2">
+                            <span>{t.saveProject}</span>
+                            <ShortcutBadge shortcut="Ctrl+S" variant="success" />
+                          </TooltipContent>
                         </Tooltip>
 
                         <Tooltip>
@@ -4308,7 +4325,10 @@ ${state.bannerMOTD}
                               <Info className="w-4 h-4" />
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.contactTitle} (F1)</TooltipContent>
+                          <TooltipContent className="flex items-center gap-2">
+                            <span>{t.contactTitle}</span>
+                            <ShortcutBadge shortcut="F1" variant="warning" />
+                          </TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
@@ -4520,7 +4540,10 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{t.refreshNetworkF5}</TooltipContent>
+                      <TooltipContent className="flex items-center gap-2">
+                        <span>{t.refreshNetworkF5}</span>
+                        <ShortcutBadge shortcut="F5" variant="danger" />
+                      </TooltipContent>
                     </Tooltip>
 
                     <div className="w-px h-4 bg-slate-200 mx-0.5 dark:bg-slate-800" />
@@ -5758,7 +5781,10 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{t.ping} (P)</TooltipContent>
+                      <TooltipContent className="flex items-center gap-2">
+                        <span>{t.ping}</span>
+                        <ShortcutBadge shortcut="P" variant="warning" />
+                      </TooltipContent>
                     </Tooltip>
 
                     {/* Add Note Button */}
@@ -5813,7 +5839,10 @@ ${state.bannerMOTD}
                           <Undo2 className={`w-4 h-4 ${!canUndo ? 'opacity-100' : ''}`} />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{t.undo} (Ctrl+Z)</TooltipContent>
+                      <TooltipContent className="flex items-center gap-2">
+                        <span>{t.undo}</span>
+                        <ShortcutBadge shortcut="Ctrl+Z" variant="primary" />
+                      </TooltipContent>
                     </Tooltip>
 
                     {/* Redo Button */}
@@ -5829,7 +5858,10 @@ ${state.bannerMOTD}
                           <Redo2 className={`w-4 h-4 ${!canRedo ? 'opacity-100' : ''}`} />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{t.redo} (Ctrl+Y)</TooltipContent>
+                      <TooltipContent className="flex items-center gap-2">
+                        <span>{t.redo}</span>
+                        <ShortcutBadge shortcut="Ctrl+Y" variant="primary" />
+                      </TooltipContent>
                     </Tooltip>
 
                     <div className={`w-px h-4 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
@@ -5847,7 +5879,10 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{t.refreshNetworkF5}</TooltipContent>
+                      <TooltipContent className="flex items-center gap-2">
+                        <span>{t.refreshNetworkF5}</span>
+                        <ShortcutBadge shortcut="F5" variant="danger" />
+                      </TooltipContent>
                     </Tooltip>
 
                   </div>

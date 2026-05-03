@@ -37,6 +37,7 @@ export {
   TooltipProvider,
 } from './tooltip';
 export { TooltipWrapper } from './TooltipWrapper';
+export { ShortcutBadge } from './ShortcutBadge';
 export {
   AlertDialog,
   AlertDialogAction,

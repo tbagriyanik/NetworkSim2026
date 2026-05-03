@@ -992,7 +992,7 @@ const translations: Record<Language, Translations> = {
     redo: 'Yinele',
     refresh: 'Yenile',
     refreshNetwork: 'Ağı Yenile',
-    refreshNetworkF5: 'Ağı Yenile (F5)',
+    refreshNetworkF5: 'Ağı Yenile',
     reload: 'Yeniden Yükle',
     reloadPage: 'Sayfayı Yenile',
     rename: 'Yeniden Adlandır',
@@ -1108,7 +1108,7 @@ const translations: Record<Language, Translations> = {
     topologyInvalidConnections: 'Topoloji: X hatalı bağlantı pasifleştirildi',
     tour: 'Tur',
     turkish: 'Türkçe',
-    tutorialCablesDesc: 'Kablo türleri: Straight (mavi) - PC↔Switch/Router, Crossover (turuncu) - Switch↔Switch/Router↔Router, Console (cyan) - PC↔Cihaz yapılandırma bağlantılar.',
+    tutorialCablesDesc: 'Kablo türleri: Straight, PC↔Switch/Router, Crossover - Switch↔Switch/Router↔Router, Console PC↔Cihaz yapılandırma bağlantılar.',
     tutorialCablesTitle: '🔌 Kablo Türleri',
     tutorialDevicesDesc: 'Cihazları aç/kapat (güç düğmesi), yapılandır (CLI/Panel), ve monitör et. CLI sekmesinde komut satırından yapılandırma yapın. Görevler sekmesinde VLAN, port ve güvenlik görevlerini tamamlayın.',
     tutorialDevicesTitle: '💻 Cihaz Yönetimi',
@@ -1583,7 +1583,7 @@ const translations: Record<Language, Translations> = {
     redo: 'Redo',
     refresh: 'Refresh',
     refreshNetwork: 'Refresh Network',
-    refreshNetworkF5: 'Refresh Network (F5)',
+    refreshNetworkF5: 'Refresh Network',
     reload: 'Reload',
     reloadPage: 'Reload page',
     rename: 'Rename',
@@ -1677,7 +1677,7 @@ const translations: Record<Language, Translations> = {
     switchTitle: 'Network 2960 Switch',
     syslogStarted: '*** Syslog client started',
     tabComplete: 'command completion',
-    tabDescCmd: 'Run commands like ping, ipconfig, etc. via PC Command Prompt (CMD).',
+    tabDescCmd: 'Run commands like ping, ipconfig, etc. via PC Command Prompt (cmd).',
     tabDescTasks: 'Earn points by completing port, VLAN and security tasks.',
     tabDescTerminal: 'Run configuration commands via Switch / router Command Line Interface (CLI).',
     tabDescTopology: 'Design the network topology by dragging and dropping devices.',
@@ -1699,7 +1699,7 @@ const translations: Record<Language, Translations> = {
     topologyInvalidConnections: 'Topology: X invalid connections disabled',
     tour: 'Tour',
     turkish: 'Türkçe',
-    tutorialCablesDesc: 'Cable types: Straight (blue) - PC↔Switch/Router, Crossover (orange) - Switch↔Switch/Router↔Router, Console (cyan) - PC↔Device config connections.',
+    tutorialCablesDesc: 'Cable types: Straight,  PC↔Switch/Router, Crossover - Switch↔Switch/Router↔Router, Console - PC↔Device config connections.',
     tutorialCablesTitle: '🔌 Cable Types',
     tutorialDevicesDesc: 'Power on/off devices (power button), configure (CLI/Panel), and monitor. Use CLI tab for command-line configuration. Complete VLAN, port and security tasks in Tasks tab.',
     tutorialDevicesTitle: '💻 Device Management',
@@ -1824,3 +1824,4 @@ export function useLanguage() {
   }
   return context;
 }
+
