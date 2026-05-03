@@ -1166,6 +1166,8 @@ export function NetworkTopology({
               isActuallyDraggingRef.current = true;
               setDeviceTooltip(null);
               setPortTooltip(null);
+              // Set grabbing cursor when drag starts
+              document.body.style.cursor = 'grabbing';
             }
             wasDraggingRef.current = true;
           }
@@ -1363,6 +1365,9 @@ export function NetworkTopology({
       isActuallyDraggingRef.current = false;
       setDragStartDevicePositions({});
       lastDragPositionRef.current = null;
+
+      // Reset cursor when drag ends
+      document.body.style.cursor = '';
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });

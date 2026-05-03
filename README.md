@@ -47,6 +47,8 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
   - Real-time **Ping Animation Overlay** showing packet flow on canvas.
   - **Packet Info Panel** with detailed hop-by-hop analysis.
   - Visual feedback for successful/failed pings with timing information.
+  - **ESC key support** to close packet analysis panel.
+  - **Mobile back button support** for seamless mobile navigation.
 - **Improved Error Handling & Validation**:
   - **AppErrorBoundary** with graceful error recovery and user feedback.
   - **Form Validation** utilities for input sanitization and error messages.
@@ -106,6 +108,8 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
   - Gerçek zamanlı **Ping Animasyon Overlay** tuval üzerinde paket akışını gösteriyor.
   - **Paket Bilgi Paneli** detaylı hop-by-hop analizi ile.
   - Başarılı/başarısız ping'ler için görsel geri bildirim ve zamanlama bilgisi.
+  - **ESC tuşu desteği** paket analiz panelini kapatmak için.
+  - **Mobil geri düğmesi desteği** sorunsuz mobil navigasyon için.
 - **Geliştirilmiş Hata Yönetimi & Doğrulama**:
   - **AppErrorBoundary** zarif hata kurtarma ve kullanıcı geri bildirimi ile.
   - **Form Doğrulama** araçları giriş sanitizasyonu ve hata mesajları için.

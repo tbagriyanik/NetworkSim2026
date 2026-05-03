@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 
+const STORAGE_PREFIX = 'draggable_position_';
+
 export function DraggableDialogManager() {
     useEffect(() => {
         const draggableElements = new Map<string, { x: number; y: number }>();
@@ -26,6 +28,9 @@ export function DraggableDialogManager() {
 
             draggableElements.set(dialogId, { x: offsetX, y: offsetY });
 
+            // Set grabbing cursor on document
+            document.body.style.cursor = 'grabbing';
+
             const handleMouseMove = (moveEvent: MouseEvent) => {
                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
@@ -49,6 +54,20 @@ export function DraggableDialogManager() {
             const handleMouseUp = () => {
                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
                 dialog.style.willChange = '';
+
+                // Reset cursor
+                document.body.style.cursor = '';
+
+                // Save position to localStorage
+                const finalPos = draggableElements.get(dialogId);
+                if (finalPos) {
+                    try {
+                        localStorage.setItem(`${STORAGE_PREFIX}${dialogId}`, JSON.stringify(finalPos));
+                    } catch (e) {
+                        // Ignore storage errors
+                    }
+                }
+
                 document.removeEventListener('mousemove', handleMouseMove);
                 document.removeEventListener('mouseup', handleMouseUp);
             };

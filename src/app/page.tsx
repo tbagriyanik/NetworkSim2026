@@ -3838,6 +3838,7 @@ ${state.bannerMOTD}
         setShowAboutModal(false);
         setShowProjectPicker(false);
         setShowOnboarding(false);
+        setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null);
         window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'escape' } }));
       }
 
@@ -5947,15 +5948,54 @@ ${state.bannerMOTD}
           {
             refreshNetworkReport?.show && (
               <div
-                className={`fixed bottom-16 left-6 w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md select-none ${isDark
+                data-draggable-id="refresh-network-report"
+                className={`absolute w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md select-none ${isDark
                   ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
                   : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
                   }`}
-                style={{ zIndex: focusedOverlay === 'refresh' ? 200 : 100 }}
+                style={{
+                  zIndex: focusedOverlay === 'refresh' ? 200 : 100,
+                  bottom: (() => {
+                    try {
+                      const saved = localStorage.getItem('draggable_position_refresh-network-report');
+                      if (saved) {
+                        const pos = JSON.parse(saved);
+                        return 'auto';
+                      }
+                    } catch (e) {
+                      // Ignore
+                    }
+                    return '4rem';
+                  })(),
+                  left: (() => {
+                    try {
+                      const saved = localStorage.getItem('draggable_position_refresh-network-report');
+                      if (saved) {
+                        const pos = JSON.parse(saved);
+                        return `${pos.x}px`;
+                      }
+                    } catch (e) {
+                      // Ignore
+                    }
+                    return '1.5rem';
+                  })(),
+                  top: (() => {
+                    try {
+                      const saved = localStorage.getItem('draggable_position_refresh-network-report');
+                      if (saved) {
+                        const pos = JSON.parse(saved);
+                        return `${pos.y}px`;
+                      }
+                    } catch (e) {
+                      // Ignore
+                    }
+                    return 'auto';
+                  })(),
+                }}
                 onMouseDown={() => setFocusedOverlay('refresh')}
               >
                 <div className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between cursor-grab active:cursor-grabbing" data-drag-handle>
                     <h3 className="text-sm font-bold flex items-center gap-2">
                       <span className="text-blue-500 text-lg">🔄</span>
                       {refreshNetworkReport.title}

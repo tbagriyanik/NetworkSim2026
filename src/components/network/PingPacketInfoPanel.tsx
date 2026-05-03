@@ -324,6 +324,8 @@ function MobilePacketTables({ currentInfo, prevInfo, macChanged, ttlChanged, isD
     );
 }
 
+const PING_PANEL_STORAGE_KEY = 'draggable_position_ping-packet-info-panel';
+
 export function PingPacketInfoPanel({
     isVisible,
     isPaused,
@@ -350,78 +352,40 @@ export function PingPacketInfoPanel({
 }: PingPacketInfoPanelProps) {
     const t = language === 'tr' ? tr : en;
 
-    // Drag support — DOM-direct approach to avoid re-renders during drag
+    // Drag support — use DraggableDialogManager
     const panelRef = React.useRef<HTMLDivElement>(null);
-    const dragState = React.useRef({ dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 });
     const [pos, setPos] = React.useState<{ x: number; y: number } | null>(null);
-    const rafRef = React.useRef<number>(0);
+
+    // Load saved position on mount
+    React.useEffect(() => {
+        if (typeof window === 'undefined' || isMobile) return;
+        try {
+            const saved = localStorage.getItem(PING_PANEL_STORAGE_KEY);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.x !== undefined && parsed.y !== undefined) {
+                    setPos(parsed);
+                }
+            }
+        } catch (e) {
+            // Ignore parse errors
+        }
+    }, [isMobile]);
 
     // Show packet tables when paused or done — derived directly from props, no local state
     const showPacketTables = isPaused || success !== null;
 
-    const onHeaderMouseDown = React.useCallback((e: React.MouseEvent) => {
-        if ((e.target as HTMLElement).closest('button')) return;
-        e.preventDefault();
-        onFocus?.();
-        const panel = panelRef.current;
-        if (!panel) return;
-        const rect = panel.getBoundingClientRect();
-        dragState.current = { dragging: true, startX: e.clientX, startY: e.clientY, originX: rect.left, originY: rect.top };
-        panel.style.transition = 'none';
-        panel.style.willChange = 'left, top';
-    }, []);
-
-    React.useEffect(() => {
-        const onMove = (e: MouseEvent) => {
-            if (!dragState.current.dragging) return;
-            const panel = panelRef.current;
-            if (!panel) return;
-
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
-            rafRef.current = requestAnimationFrame(() => {
-                if (!dragState.current.dragging || !panelRef.current) return;
-                const newX = Math.max(0, Math.min(window.innerWidth - panel.offsetWidth, dragState.current.originX + e.clientX - dragState.current.startX));
-                const newY = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, dragState.current.originY + e.clientY - dragState.current.startY));
-                // Direct DOM update — no React re-render during drag
-                panel.style.left = `${newX}px`;
-                panel.style.top = `${newY}px`;
-                panel.style.bottom = 'auto';
-                panel.style.transform = 'none';
-            });
-        };
-
-        const onUp = (e: MouseEvent) => {
-            if (!dragState.current.dragging) return;
-            dragState.current.dragging = false;
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
-
-            const panel = panelRef.current;
-            if (panel) {
-                const newX = Math.max(0, Math.min(window.innerWidth - panel.offsetWidth, dragState.current.originX + e.clientX - dragState.current.startX));
-                const newY = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, dragState.current.originY + e.clientY - dragState.current.startY));
-                panel.style.willChange = '';
-                // Commit final position to React state once
-                setPos({ x: newX, y: newY });
-            }
-        };
-
-        window.addEventListener('mousemove', onMove, { passive: true });
-        window.addEventListener('mouseup', onUp);
-        return () => {
-            window.removeEventListener('mousemove', onMove);
-            window.removeEventListener('mouseup', onUp);
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        };
-    }, []);
-
-    // P = Play/Pause, N = Next Hop keyboard shortcuts
+    // P = Play/Pause, N = Next Hop, ESC = Close keyboard shortcuts
     React.useEffect(() => {
         if (!isVisible) return;
         const handleKeyDown = (e: KeyboardEvent) => {
             // Ignore if focus is inside an input/textarea
             const tag = (e.target as HTMLElement)?.tagName;
             if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-            if (e.key === 'p' || e.key === 'P') {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                onClose();
+            } else if (e.key === 'p' || e.key === 'P') {
                 e.preventDefault();
                 if (isPaused) onPlay();
                 else onPause();
@@ -432,7 +396,18 @@ export function PingPacketInfoPanel({
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isVisible, isPaused, onPlay, onPause, onNext]);
+    }, [isVisible, isPaused, onPlay, onPause, onNext, onClose]);
+
+    // Mobile back button support
+    React.useEffect(() => {
+        if (!isVisible || !isMobile) return;
+        const handleBackButton = (e: PopStateEvent) => {
+            e.preventDefault();
+            onClose();
+        };
+        window.addEventListener('popstate', handleBackButton);
+        return () => window.removeEventListener('popstate', handleBackButton);
+    }, [isVisible, isMobile, onClose]);
 
     if (!isVisible) return null;
 
@@ -461,6 +436,7 @@ export function PingPacketInfoPanel({
     return (
         <div
             ref={panelRef}
+            data-draggable-id="ping-packet-info-panel"
             className={`rounded-2xl overflow-hidden select-none ${isMobile ? 'rounded-b-none' : ''} ${isGlass
                 ? isDark
                     ? 'bg-slate-900/60 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]'
@@ -483,7 +459,7 @@ export function PingPacketInfoPanel({
                     ? isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/8'
                     : isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
                     }`}
-                onMouseDown={isMobile ? undefined : onHeaderMouseDown}
+                data-drag-handle
             >
                 {/* Left: icon + title + badges */}
                 <div className="flex items-center gap-2.5">
@@ -532,7 +508,7 @@ export function PingPacketInfoPanel({
                             {isPaused ? (
                                 <Tooltip delayDuration={300}>
                                     <TooltipTrigger asChild>
-                                        <button onClick={() => { onPlay(); }} title={t.play}
+                                        <button onClick={() => { onPlay(); }}
                                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isDark ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}>
                                             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
                                             {t.play}
@@ -548,7 +524,7 @@ export function PingPacketInfoPanel({
                             ) : (
                                 <Tooltip delayDuration={300}>
                                     <TooltipTrigger asChild>
-                                        <button onClick={() => { onPause(); }} title={t.pause}
+                                        <button onClick={() => { onPause(); }}
                                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isDark ? 'bg-amber-600 hover:bg-amber-500 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'}`}>
                                             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                                                 <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
@@ -566,7 +542,7 @@ export function PingPacketInfoPanel({
                             )}
                             <Tooltip delayDuration={300}>
                                 <TooltipTrigger asChild>
-                                    <button onClick={onNext} title={t.next} disabled={!isPaused}
+                                    <button onClick={onNext} disabled={!isPaused}
                                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isPaused ? (isDark ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white') : (isDark ? 'bg-slate-700/40 text-slate-600 cursor-not-allowed' : 'bg-slate-100 text-slate-400 cursor-not-allowed')}`}>
                                         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                                             <polygon points="5,3 14,12 5,21" /><rect x="16" y="3" width="3" height="18" />
@@ -586,16 +562,28 @@ export function PingPacketInfoPanel({
                     </>)}
 
                     {/* Close — always visible, rounded square, X always shown */}
-                    <button
-                        onClick={onClose}
-                        title={t.close}
-                        className={`flex items-center justify-center w-7 h-7 rounded-lg font-bold transition-all flex-shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15 hover:border-red-400/50' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10 hover:border-red-400'}`}
-                    >
-                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                            <line x1="2" y1="2" x2="12" y2="12" />
-                            <line x1="12" y1="2" x2="2" y2="12" />
-                        </svg>
-                    </button>
+                    <TooltipProvider>
+                        <Tooltip delayDuration={300}>
+                            <TooltipTrigger asChild>
+                                <button
+                                    onClick={onClose}
+                                    title={t.close}
+                                    className={`flex items-center justify-center w-7 h-7 rounded-lg font-bold transition-all flex-shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15 hover:border-red-400/50' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10 hover:border-red-400'}`}
+                                >
+                                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                        <line x1="2" y1="2" x2="12" y2="12" />
+                                        <line x1="12" y1="2" x2="2" y2="12" />
+                                    </svg>
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" sideOffset={6}>
+                                <span className="flex items-center gap-1.5">
+                                    {t.close}
+                                    <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${isDark ? 'bg-slate-700 border-slate-600 text-slate-300' : 'bg-slate-100 border-slate-300 text-slate-600'}`}>ESC</kbd>
+                                </span>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
             </div>
 
