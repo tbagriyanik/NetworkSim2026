@@ -144,8 +144,8 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] md:max-w-2xl lg:max-w-3xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden liquid-glass-light" data-draggable-id="about-modal">
-        <DialogHeader className="p-6 pb-2 shrink-0 cursor-grab active:cursor-grabbing select-none" data-drag-handle>
+      <DialogContent className="sm:max-w-[600px] md:max-w-2xl lg:max-w-3xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden liquid-glass-light">
+        <DialogHeader className="p-6 pb-2 shrink-0">
           <DialogTitle className="sr-only">
             {activeTab === 'about' ? t.aboutTitle : t.commandReference}
           </DialogTitle>

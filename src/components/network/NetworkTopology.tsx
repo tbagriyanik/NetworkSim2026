@@ -829,40 +829,49 @@ export function NetworkTopology({
     setZoomDragStart({ x: startX, zoom: startZoom });
     zoomDragRef.current = { isDragging: true, startX, startZoom };
 
+    let animationFrameId: number;
+
     // Add global mouse event listeners
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!zoomDragRef.current.isDragging) return;
 
-      const deltaX = moveEvent.clientX - zoomDragRef.current.startX;
-      const zoomDelta = deltaX * 0.002; // Sensitivity adjustment
-      let newZoom = zoomDragRef.current.startZoom + zoomDelta;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-      // Clamp to min/max zoom
-      newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+      animationFrameId = requestAnimationFrame(() => {
+        if (!zoomDragRef.current.isDragging) return;
 
-      if (!canvasRef.current) {
+        const deltaX = moveEvent.clientX - zoomDragRef.current.startX;
+        const zoomDelta = deltaX * 0.002; // Sensitivity adjustment
+        let newZoom = zoomDragRef.current.startZoom + zoomDelta;
+
+        // Clamp to min/max zoom
+        newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+
+        if (!canvasRef.current) {
+          setZoom(newZoom);
+          return;
+        }
+
+        const rect = canvasRef.current.getBoundingClientRect();
+        const cursorX = rect.width / 2;
+        const cursorY = rect.height / 2;
+        setPan(prevPan => ({
+          x: cursorX - (cursorX - prevPan.x) * (newZoom / zoomRef.current),
+          y: cursorY - (cursorY - prevPan.y) * (newZoom / zoomRef.current)
+        }));
         setZoom(newZoom);
-        return;
-      }
-
-      const rect = canvasRef.current.getBoundingClientRect();
-      const cursorX = rect.width / 2;
-      const cursorY = rect.height / 2;
-      setPan(prevPan => ({
-        x: cursorX - (cursorX - prevPan.x) * (newZoom / zoomRef.current),
-        y: cursorY - (cursorY - prevPan.y) * (newZoom / zoomRef.current)
-      }));
-      setZoom(newZoom);
+      });
     };
 
     const handleMouseUp = () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
       setIsDraggingZoom(false);
       zoomDragRef.current = { isDragging: false, startX: 0, startZoom: 0 };
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mouseup', handleMouseUp);
   }, [zoom]);
 
@@ -1500,33 +1509,27 @@ export function NetworkTopology({
     wasDraggingRef.current = false;
 
     // Shift key for multi-selection
+    let newSelectedIds: string[];
+
     if (e.shiftKey) {
-      // Toggle selection when Shift is pressed - use functional update to avoid stale state
-      setSelectedDeviceIds(prevSelected => {
-        const newSelectedIds = prevSelected.includes(deviceId)
-          ? prevSelected.filter(id => id !== deviceId)
-          : [...prevSelected, deviceId];
+      // Toggle selection when Shift is pressed
+      newSelectedIds = selectedDeviceIds.includes(deviceId)
+        ? selectedDeviceIds.filter(id => id !== deviceId)
+        : [...selectedDeviceIds, deviceId];
 
-        // Update ref immediately
-        selectedDeviceIdsRef.current = newSelectedIds;
+      // Update parent component with the first selected device
+      const firstSelectedDevice = devices.find(d => d.id === newSelectedIds[0]);
+      if (firstSelectedDevice && newSelectedIds.length > 0) {
+        onDeviceSelect(firstSelectedDevice.type === 'router' ? 'router' : firstSelectedDevice.type, newSelectedIds[0], undefined, firstSelectedDevice.name);
+      }
 
-        // Update parent component with the first selected device
-        const firstSelectedDevice = devices.find(d => d.id === newSelectedIds[0]);
-        if (firstSelectedDevice && newSelectedIds.length > 0) {
-          onDeviceSelect(firstSelectedDevice.type === 'router' ? 'router' : firstSelectedDevice.type, newSelectedIds[0], undefined, firstSelectedDevice.name);
-        }
-
-        return newSelectedIds;
-      });
+      setSelectedDeviceIds(newSelectedIds);
 
       // Mark that shift was used so handleClick knows to skip
       shiftKeyPressedRef.current = true;
-      return;
     } else {
       // Reset shift key flag for normal clicks
       shiftKeyPressedRef.current = false;
-
-      let newSelectedIds: string[];
 
       // If clicking a device that's not selected, make it the only selection
       // If it IS already selected, keep selection for group dragging
@@ -1537,30 +1540,31 @@ export function NetworkTopology({
       } else {
         newSelectedIds = selectedDeviceIds;
       }
-
-      // Store starting positions of all selected devices for group dragging
-      const initialPositions: { [key: string]: { x: number, y: number } } = {};
-      devices.forEach(d => {
-        if (newSelectedIds.includes(d.id)) {
-          initialPositions[d.id] = { x: d.x, y: d.y };
-        }
-      });
-      // Update ref immediately so drag logic has correct positions without waiting for state
-      dragStartDevicePositionsRef.current = initialPositions;
-      setDragStartDevicePositions(initialPositions);
-
-      // Store the starting position for distance calculation
-      dragStartPosRef.current = { x: e.clientX, y: e.clientY };
-      setDragStartPos({ x: e.clientX, y: e.clientY });
-      setIsActuallyDragging(false);
-      isActuallyDraggingRef.current = false;
-      draggedDeviceRef.current = deviceId;
-      setDraggedDevice(deviceId);
-      setDragOffset({
-        x: (e.clientX - rect.left - pan.x) - device.x * zoom,
-        y: (e.clientY - rect.top - pan.y) - device.y * zoom,
-      });
     }
+
+    // Store starting positions of all selected devices for group dragging
+    // This applies to both shift-selected and normally selected devices
+    const initialPositions: { [key: string]: { x: number, y: number } } = {};
+    devices.forEach(d => {
+      if (newSelectedIds.includes(d.id)) {
+        initialPositions[d.id] = { x: d.x, y: d.y };
+      }
+    });
+    // Update ref immediately so drag logic has correct positions without waiting for state
+    dragStartDevicePositionsRef.current = initialPositions;
+    setDragStartDevicePositions(initialPositions);
+
+    // Store the starting position for distance calculation
+    dragStartPosRef.current = { x: e.clientX, y: e.clientY };
+    setDragStartPos({ x: e.clientX, y: e.clientY });
+    setIsActuallyDragging(false);
+    isActuallyDraggingRef.current = false;
+    draggedDeviceRef.current = deviceId;
+    setDraggedDevice(deviceId);
+    setDragOffset({
+      x: (e.clientX - rect.left - pan.x) - device.x * zoom,
+      y: (e.clientY - rect.top - pan.y) - device.y * zoom,
+    });
   }, [devices, pan, zoom, selectedDeviceIds, onDeviceSelect]);
 
   // Handle device click (single click - select only)
@@ -2586,40 +2590,50 @@ export function NetworkTopology({
 
   // Handle note dragging and resizing with mouse move
   useEffect(() => {
+    let animationFrameId: number;
+
     const handleMouseMove = (e: globalThis.MouseEvent) => {
       if (!canvasRef.current) return;
 
       if (draggedNoteIdRef.current && noteDragStartRef.current) {
-        const currentZoom = zoomRef.current;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-        const deltaX = (e.clientX - noteDragStartRef.current.x) / currentZoom;
-        const deltaY = (e.clientY - noteDragStartRef.current.y) / currentZoom;
+        animationFrameId = requestAnimationFrame(() => {
+          const currentZoom = zoomRef.current;
 
-        setNotes((prev) =>
-          prev.map((n) =>
-            n.id === draggedNoteIdRef.current
-              ? { ...n, x: n.x + deltaX, y: n.y + deltaY }
-              : n
-          )
-        );
+          const deltaX = (e.clientX - noteDragStartRef.current!.x) / currentZoom;
+          const deltaY = (e.clientY - noteDragStartRef.current!.y) / currentZoom;
 
-        setNoteDragStart({ x: e.clientX, y: e.clientY });
+          setNotes((prev) =>
+            prev.map((n) =>
+              n.id === draggedNoteIdRef.current
+                ? { ...n, x: n.x + deltaX, y: n.y + deltaY }
+                : n
+            )
+          );
+
+          setNoteDragStart({ x: e.clientX, y: e.clientY });
+        });
       } else if (resizingNoteIdRef.current && noteResizeStartRef.current) {
-        const currentZoom = zoomRef.current;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-        const deltaX = (e.clientX - noteResizeStartRef.current.x) / currentZoom;
-        const deltaY = (e.clientY - noteResizeStartRef.current.y) / currentZoom;
+        animationFrameId = requestAnimationFrame(() => {
+          const currentZoom = zoomRef.current;
 
-        const newWidth = Math.max(150, noteResizeStartRef.current.width + deltaX);
-        const newHeight = Math.max(100, noteResizeStartRef.current.height + deltaY);
+          const deltaX = (e.clientX - noteResizeStartRef.current!.x) / currentZoom;
+          const deltaY = (e.clientY - noteResizeStartRef.current!.y) / currentZoom;
 
-        setNotes((prev) =>
-          prev.map((n) =>
-            n.id === resizingNoteIdRef.current
-              ? { ...n, width: newWidth, height: newHeight }
-              : n
-          )
-        );
+          const newWidth = Math.max(150, noteResizeStartRef.current!.width + deltaX);
+          const newHeight = Math.max(100, noteResizeStartRef.current!.height + deltaY);
+
+          setNotes((prev) =>
+            prev.map((n) =>
+              n.id === resizingNoteIdRef.current
+                ? { ...n, width: newWidth, height: newHeight }
+                : n
+            )
+          );
+        });
       }
     };
 
@@ -2629,40 +2643,49 @@ export function NetworkTopology({
       const touch = e.touches[0];
 
       if (draggedNoteIdRef.current && noteDragStartRef.current) {
-        const currentZoom = zoomRef.current;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-        const deltaX = (touch.clientX - noteDragStartRef.current.x) / currentZoom;
-        const deltaY = (touch.clientY - noteDragStartRef.current.y) / currentZoom;
+        animationFrameId = requestAnimationFrame(() => {
+          const currentZoom = zoomRef.current;
 
-        setNotes((prev) =>
-          prev.map((n) =>
-            n.id === draggedNoteIdRef.current
-              ? { ...n, x: n.x + deltaX, y: n.y + deltaY }
-              : n
-          )
-        );
+          const deltaX = (touch.clientX - noteDragStartRef.current!.x) / currentZoom;
+          const deltaY = (touch.clientY - noteDragStartRef.current!.y) / currentZoom;
 
-        setNoteDragStart({ x: touch.clientX, y: touch.clientY });
+          setNotes((prev) =>
+            prev.map((n) =>
+              n.id === draggedNoteIdRef.current
+                ? { ...n, x: n.x + deltaX, y: n.y + deltaY }
+                : n
+            )
+          );
+
+          setNoteDragStart({ x: touch.clientX, y: touch.clientY });
+        });
       } else if (resizingNoteIdRef.current && noteResizeStartRef.current) {
-        const currentZoom = zoomRef.current;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-        const deltaX = (touch.clientX - noteResizeStartRef.current.x) / currentZoom;
-        const deltaY = (touch.clientY - noteResizeStartRef.current.y) / currentZoom;
+        animationFrameId = requestAnimationFrame(() => {
+          const currentZoom = zoomRef.current;
 
-        const newWidth = Math.max(150, noteResizeStartRef.current.width + deltaX);
-        const newHeight = Math.max(100, noteResizeStartRef.current.height + deltaY);
+          const deltaX = (touch.clientX - noteResizeStartRef.current!.x) / currentZoom;
+          const deltaY = (touch.clientY - noteResizeStartRef.current!.y) / currentZoom;
 
-        setNotes((prev) =>
-          prev.map((n) =>
-            n.id === resizingNoteIdRef.current
-              ? { ...n, width: newWidth, height: newHeight }
-              : n
-          )
-        );
+          const newWidth = Math.max(150, noteResizeStartRef.current!.width + deltaX);
+          const newHeight = Math.max(100, noteResizeStartRef.current!.height + deltaY);
+
+          setNotes((prev) =>
+            prev.map((n) =>
+              n.id === resizingNoteIdRef.current
+                ? { ...n, width: newWidth, height: newHeight }
+                : n
+            )
+          );
+        });
       }
     };
 
     const handleMouseUp = () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
       setDraggedNoteId(null);
       setNoteDragStart(null);
       setResizingNoteId(null);
@@ -2670,6 +2693,7 @@ export function NetworkTopology({
     };
 
     const handleTouchEnd = () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
       setDraggedNoteId(null);
       setNoteDragStart(null);
       setResizingNoteId(null);
@@ -2681,6 +2705,7 @@ export function NetworkTopology({
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('touchend', handleTouchEnd);
     return () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('touchmove', handleTouchMove);

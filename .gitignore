@@ -55,3 +55,6 @@ server.log
 .idea/misc.xml
 .gitignore
 .idea/ciscosim.iml
+
+# Kilo IDE (deprecated)
+.kilo/

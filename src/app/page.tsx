@@ -164,6 +164,7 @@ import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
+  TooltipWrapper,
 } from "@/components/ui/tooltip";
 import { useLanguage, Translations } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -4557,9 +4558,9 @@ ${state.bannerMOTD}
           </header>
 
           <Dialog open={showProjectPicker} onOpenChange={(open) => { setShowProjectPicker(open); if (!open) setProjectSearchQuery(''); }}>
-            <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl liquid-glass-light`} data-draggable-id="project-picker">
+            <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl liquid-glass-light`}>
               <div className='flex flex-col flex-1 overflow-hidden h-full max-w-full'>
-                <div className='p-4 md:p-8 pb-2 md:pb-4 space-y-4 cursor-grab active:cursor-grabbing select-none' data-drag-handle>
+                <div className='p-4 md:p-8 pb-2 md:pb-4 space-y-4'>
                   <DialogHeader className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r p-4 md:p-6 flex items-center justify-between flex-row'>
                     <DialogTitle className='text-xl bg-gradient-to-br from-white to-slate-900 bg-clip-text text-transparent break-words'>{t.openNewProject}</DialogTitle>
                     <Button
@@ -4849,7 +4850,7 @@ ${state.bannerMOTD}
               else setShowOnboarding(true);
             }}
           >
-            <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl p-0 overflow-hidden liquid-glass-light`} data-draggable-id="onboarding">
+            <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl p-0 overflow-hidden liquid-glass-light`}>
               {/* Progress Bar */}
               <div className="w-full h-1 bg-slate-200 dark:bg-slate-800">
                 <div

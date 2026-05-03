@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 export function DraggableDialogManager() {
     useEffect(() => {
         const draggableElements = new Map<string, { x: number; y: number }>();
+        let animationFrameId: number;
 
         const handleMouseDown = (e: MouseEvent) => {
             const dragHandle = (e.target as HTMLElement).closest('[data-drag-handle]');
@@ -26,21 +27,28 @@ export function DraggableDialogManager() {
             draggableElements.set(dialogId, { x: offsetX, y: offsetY });
 
             const handleMouseMove = (moveEvent: MouseEvent) => {
-                const deltaX = moveEvent.clientX - startX;
-                const deltaY = moveEvent.clientY - startY;
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-                const newX = offsetX + deltaX;
-                const newY = offsetY + deltaY;
+                animationFrameId = requestAnimationFrame(() => {
+                    const deltaX = moveEvent.clientX - startX;
+                    const deltaY = moveEvent.clientY - startY;
 
-                dialog.style.position = 'fixed';
-                dialog.style.left = `${newX}px`;
-                dialog.style.top = `${newY}px`;
-                dialog.style.transform = 'none';
+                    const newX = offsetX + deltaX;
+                    const newY = offsetY + deltaY;
 
-                draggableElements.set(dialogId, { x: newX, y: newY });
+                    dialog.style.position = 'fixed';
+                    dialog.style.left = `${newX}px`;
+                    dialog.style.top = `${newY}px`;
+                    dialog.style.transform = 'none';
+                    dialog.style.willChange = 'left, top';
+
+                    draggableElements.set(dialogId, { x: newX, y: newY });
+                });
             };
 
             const handleMouseUp = () => {
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                dialog.style.willChange = '';
                 document.removeEventListener('mousemove', handleMouseMove);
                 document.removeEventListener('mouseup', handleMouseUp);
             };
@@ -52,6 +60,7 @@ export function DraggableDialogManager() {
         document.addEventListener('mousedown', handleMouseDown);
 
         return () => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
             document.removeEventListener('mousedown', handleMouseDown);
         };
     }, []);

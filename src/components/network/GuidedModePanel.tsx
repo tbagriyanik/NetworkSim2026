@@ -284,17 +284,25 @@ export function GuidedModePanel({
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging || !dragRef.current) return;
 
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
+    let animationFrameId: number;
 
-    // Mark as dragged if moved significantly
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-      setHasDragged(true);
-    }
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-    setPosition({
-      x: Math.max(0, Math.min(window.innerWidth - 320, dragRef.current.initialX + dx)),
-      y: Math.max(0, Math.min(window.innerHeight - 200, dragRef.current.initialY + dy))
+    animationFrameId = requestAnimationFrame(() => {
+      if (!isDragging || !dragRef.current) return;
+
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+
+      // Mark as dragged if moved significantly
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        setHasDragged(true);
+      }
+
+      setPosition({
+        x: Math.max(0, Math.min(window.innerWidth - 320, dragRef.current.initialX + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - 200, dragRef.current.initialY + dy))
+      });
     });
   }, [isDragging]);
 
@@ -323,18 +331,26 @@ export function GuidedModePanel({
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || !dragRef.current) return;
 
-    const touch = e.touches[0];
-    const dx = touch.clientX - dragRef.current.startX;
-    const dy = touch.clientY - dragRef.current.startY;
+    let animationFrameId: number;
 
-    // Mark as dragged if moved significantly
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-      setHasDragged(true);
-    }
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-    setPosition({
-      x: Math.max(0, Math.min(window.innerWidth - 320, dragRef.current.initialX + dx)),
-      y: Math.max(0, Math.min(window.innerHeight - 200, dragRef.current.initialY + dy))
+    animationFrameId = requestAnimationFrame(() => {
+      if (!isDragging || !dragRef.current) return;
+
+      const touch = e.touches[0];
+      const dx = touch.clientX - dragRef.current.startX;
+      const dy = touch.clientY - dragRef.current.startY;
+
+      // Mark as dragged if moved significantly
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        setHasDragged(true);
+      }
+
+      setPosition({
+        x: Math.max(0, Math.min(window.innerWidth - 320, dragRef.current.initialX + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - 200, dragRef.current.initialY + dy))
+      });
     });
   }, [isDragging]);
 
@@ -470,8 +486,8 @@ export function GuidedModePanel({
       <div
         className={cn(
           "flex flex-col rounded-xl shadow-2xl border overflow-hidden",
-          "bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm",
-          "border-slate-200 dark:border-slate-700",
+          "bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl",
+          "border-slate-200/50 dark:border-slate-700/50",
           "max-h-full"
         )}
       >

@@ -36,6 +36,7 @@ export {
   TooltipContent,
   TooltipProvider,
 } from './tooltip';
+export { TooltipWrapper } from './TooltipWrapper';
 export {
   AlertDialog,
   AlertDialogAction,
