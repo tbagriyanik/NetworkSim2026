@@ -6562,12 +6562,12 @@ export function NetworkTopology({
                             e.preventDefault();
                             if (e.touches.length === 1) {
                               const touch = e.touches[0];
-                              const note = notes.find((n) => n.id === note.id);
-                              if (note) {
+                              const currentNote = notes.find((n) => n.id === note.id);
+                              if (currentNote) {
                                 saveToHistory();
-                                setResizingNoteId(note.id);
-                                setNoteResizeStart({ x: touch.clientX, y: touch.clientY, width: note.width, height: note.height });
-                                setSelectedNoteIds([note.id]);
+                                setResizingNoteId(currentNote.id);
+                                setNoteResizeStart({ x: touch.clientX, y: touch.clientY, width: currentNote.width, height: currentNote.height });
+                                setSelectedNoteIds([currentNote.id]);
                               }
                             }
                           }}

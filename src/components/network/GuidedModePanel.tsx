@@ -228,7 +228,7 @@ export function GuidedModePanel({
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging || !dragRef.current) return;
 
-    let animationFrameId: number;
+    let animationFrameId: number | null = null;
 
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
@@ -275,7 +275,7 @@ export function GuidedModePanel({
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || !dragRef.current) return;
 
-    let animationFrameId: number;
+    let animationFrameId: number | null = null;
 
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
 

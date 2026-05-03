@@ -591,6 +591,9 @@ export interface Translations {
   wirelessClientsDisconnected: string;
   wirelessStatus: string;
   yes: string;
+  language: Language;
+  intermediate: string;
+  advanced: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -1126,7 +1129,7 @@ const translations: Record<Language, Translations> = {
     typeCommand: 'Komut yazın...',
     typeCommandPlaceholder: 'Enter\'a basın veya yazın...',
     unassigned: 'Atanmamış',
-    uncomplete: 'Tamamlanmadı Olarak İşaretle',
+    uncomplete: 'Yinele',
     undo: 'Geri Al',
     unsaved: 'Kaydedilmedi',
     unsavedChangesConfirm: 'Kaydedilmemiş değişiklikler var. Kaydetmek istiyor musunuz?',
@@ -1181,6 +1184,9 @@ const translations: Record<Language, Translations> = {
     wirelessClientsDisconnected: 'X kablosuz istemci bağlantı yok',
     wirelessStatus: 'Kablosuz Ağ Durumu',
     yes: 'Evet',
+    language: 'tr',
+    intermediate: 'Orta Seviye',
+    advanced: 'İleri Seviye',
   },
   en: {
     about: 'Help',
@@ -1714,7 +1720,7 @@ const translations: Record<Language, Translations> = {
     typeCommand: 'Type command...',
     typeCommandPlaceholder: 'Press Enter or type...',
     unassigned: 'Unassigned',
-    uncomplete: 'Mark as Incomplete',
+    uncomplete: 'Redo',
     undo: 'Undo',
     unsaved: 'Unsaved',
     unsavedChangesConfirm: 'You have unsaved changes. Do you want to save?',
@@ -1769,6 +1775,9 @@ const translations: Record<Language, Translations> = {
     wirelessClientsDisconnected: 'X wireless clients disconnected',
     wirelessStatus: 'Wireless Status',
     yes: 'Yes',
+    language: 'en',
+    intermediate: 'Intermediate Level',
+    advanced: 'Advanced Level',
   }
 };
 

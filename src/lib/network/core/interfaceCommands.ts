@@ -1417,12 +1417,17 @@ function cmdNoDebug(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  const match = input.match(/^no\s+debug\s+(.+)$/i);
+  const match = input.match(/^no\s+debug(?:\s+(.+))?$/i);
   if (!match) {
     return { success: false, error: '% Invalid debug command' };
   }
 
-  return { success: true, output: `Debug ${match[1]} disabled` };
+  const debugType = match[1];
+  if (debugType) {
+    return { success: true, output: `Debug ${debugType} disabled` };
+  } else {
+    return { success: true, output: 'All debug output disabled' };
+  }
 }
 
 /**
