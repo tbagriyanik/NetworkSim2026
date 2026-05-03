@@ -22,7 +22,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Robust Routing**: Static routing, L3 Switching, RIP, OSPF patterns, and `show ip route` analysis.
 - **Wireless & IoT**: WiFi AP/Client modes, web-based WiFi management, IoT control panels, and sensor simulation.
 - **Guided Lesson Mode**: Step-by-step tasks with automatic completion detection and progress tracking.
-- **Modern UI/UX**: Keyboard shortcuts (`?`), glassmorphism effects, shimmer loading, and accessible design.
+- **Modern UI/UX**: Keyboard shortcuts, glassmorphism effects, shimmer loading, and accessible design.
 
 ### Recent Updates (v1.7.0)
 
@@ -37,7 +37,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
   - Live **Running Config Panel** showing real-time device state.
   - Automated **Hostname Propagation** between topology canvas and CLI prompt.
   - Cross-tab state synchronization (Topology, CLI, Tasks).
-- **Standardized Port Density**: Industry-standard port layouts for 2960 (24+2), 3650 (24+4+1), and ISR (4+1).
+- **Standardized Port Density**: Industry-standard port layouts for C2960 (24eth+2gig), C3650 (24eth+4gig+1wlan), and ISR 4451 (4gig+1wlan).
 
 ### Statistics
 
@@ -64,7 +64,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Kapsamlı Routing**: Statik yönlendirme, L3 Switch yönlendirme, RIP, OSPF kalıpları ve `show ip route` çıktıları.
 - **Wireless ve IoT**: WiFi AP/Client modları, web tabanlı WiFi yönetimi, IoT paneli ve sensör simülasyonu.
 - **Rehberli Ders Modu**: Otomatik tamamlama algılama ve ilerleme takibi ile adım adım görevler.
-- **Modern UI/UX**: Klavye kısayolları (`?`), glassmorphism efektleri, shimmer loading ve erişilebilir tasarım.
+- **Modern UI/UX**: Klavye kısayolları, glassmorphism efektleri, shimmer loading ve erişilebilir tasarım.
 
 ### Son Güncellemeler (v1.7.0)
 
@@ -79,7 +79,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
   - Cihazın canlı durumunu gösteren **Canlı Konfigürasyon Paneli**.
   - Tuval üzerindeki isim değişikliklerinin anında CLI prompt'una yansıması (**Hostname Yayılımı**).
   - Sekmeler arası (Topoloji, CLI, Görevler) tam durum senkronizasyonu.
-- **Standart Port Yapısı**: 2960 (24+2), 3650 (24+4+1) ve ISR (4+1) modelleri için endüstri standardı port düzeni.
+- **Standart Port Yapısı**: C2960 (24eth+2gig), C3650 (24eth+4gig+1wlan) ve ISR 4451 (4gig+1wlan) modelleri için endüstri standardı port düzeni.
 
 ### İstatistikler
 
@@ -109,6 +109,7 @@ npm run dev
 - **Examples / Örnekler**: [examples.md](examples.md)
 - **CLI Commands / CLI Komutları**: [CLI_COMMANDS.md](CLI_COMMANDS.md)
 - **Installation / Kurulum**: [INSTALL.md](INSTALL.md)
+- **Google Sheets Kurulum**: [Google Sheets](GOOGLE_SHEETS_SETUP.md)
 
 ## Tech Stack / Teknoloji
 

@@ -116,6 +116,8 @@ export function NetworkTopology({
   onFullscreenChange,
   onOpenTasks,
   clearSelectionTrigger,
+  onPacketPanelFocus,
+  packetPanelZIndex,
 }: NetworkTopologyProps) {
   const { language, t } = useLanguage();
   const { theme } = useTheme();
@@ -156,7 +158,7 @@ export function NetworkTopology({
   const topologyDevices = useTopologyDevices();
   const topologyConnections = useTopologyConnections();
   const topologyNotes = useTopologyNotes();
-  const { setDevices, setConnections, setNotes } = useAppStore();
+  const { setDevices, setConnections, setNotes, graphicsQuality } = useAppStore();
 
   const devices = topologyDevices;
   const connections = topologyConnections;
@@ -7229,6 +7231,10 @@ export function NetworkTopology({
           onClose={handlePingClose}
           language={language}
           isDark={isDark}
+          graphicsQuality={graphicsQuality}
+          isMobile={isMobile}
+          onFocus={onPacketPanelFocus}
+          zIndex={packetPanelZIndex}
           success={pingAnimation.success}
           isReturn={!!pingAnimation.isReturn}
           errorMessage={pingAnimation.error}

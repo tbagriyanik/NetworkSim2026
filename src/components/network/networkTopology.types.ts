@@ -63,6 +63,8 @@ export interface NetworkTopologyProps {
   focusDeviceId?: string | null;
   onOpenTasks?: (deviceId: string) => void;
   clearSelectionTrigger?: number;
+  onPacketPanelFocus?: () => void;
+  packetPanelZIndex?: number;
 }
 
 export interface CanvasDevice {

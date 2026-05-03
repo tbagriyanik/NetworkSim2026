@@ -400,6 +400,9 @@ export default function Home() {
     devices: RefreshDeviceSummary[];
   } | null>(null);
 
+  // Which overlay panel is on top — last clicked wins
+  const [focusedOverlay, setFocusedOverlay] = useState<'refresh' | 'packet'>('packet');
+
   // Guided Mode hook
   const {
     activeProject: activeGuidedProject,
@@ -5928,10 +5931,14 @@ ${state.bannerMOTD}
 
           {/* Network Refresh Report - Bottom Left */}
           {refreshNetworkReport?.show && (
-            <div className={`fixed bottom-16 left-6 z-[100] w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md ${isDark
-              ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
-              : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
-              }`}>
+            <div
+              className={`fixed bottom-16 left-6 w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md ${isDark
+                ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
+                : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
+                }`}
+              style={{ zIndex: focusedOverlay === 'refresh' ? 200 : 100 }}
+              onMouseDown={() => setFocusedOverlay('refresh')}
+            >
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold flex items-center gap-2">
