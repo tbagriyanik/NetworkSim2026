@@ -3720,10 +3720,8 @@ export function NetworkTopology({
         if (!shouldPause) {
           pingAnimationRef.current = requestAnimationFrame(animate);
         } else {
-          // Only set paused if we're not in step mode (step mode will be handled by handlePingNext)
-          if (!pingStepModeRef.current) {
-            pingIsPausedRef.current = true;
-          }
+          // Always mark as paused so handlePingNext / handlePingPlay can detect it
+          pingIsPausedRef.current = true;
           // Store resume callback so play/next button can continue
           pingResumeCallbackRef.current = () => {
             startTime = Date.now();
@@ -3805,6 +3803,8 @@ export function NetworkTopology({
                 if (!shouldPause) {
                   pingAnimationRef.current = requestAnimationFrame(animateReturn);
                 } else {
+                  // Always mark as paused so handlePingNext / handlePingPlay can detect it
+                  pingIsPausedRef.current = true;
                   // Store resume callback for next step
                   pingResumeCallbackRef.current = () => {
                     returnStartTime = Date.now();
@@ -3896,7 +3896,8 @@ export function NetworkTopology({
   // Ping pause/play/next handlers
   const handlePingPause = useCallback(() => {
     pingIsPausedRef.current = true;
-    pingStepModeRef.current = false;
+    // Don't reset pingStepModeRef here - preserve step mode state
+    // pingStepModeRef.current = false;
 
     // Cancel the current animation frame
     if (pingAnimationRef.current) {
@@ -3935,15 +3936,13 @@ export function NetworkTopology({
     const resume = pingResumeCallbackRef.current;
     if (!resume) return;
 
-    // Clear the callback first to prevent double-execution
-    pingResumeCallbackRef.current = null;
-
     // Step mode: advanceToNextHop will pause again at the next hop boundary
     pingStepModeRef.current = true;
     pingIsPausedRef.current = false;
     setPingAnimation(prev => prev ? { ...prev, isPaused: false } : null);
 
     // Now call the resume callback
+    // Don't clear it before calling - let the animation frame update it naturally
     resume();
   }, []);
 

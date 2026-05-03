@@ -27,6 +27,7 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
     router: false,
     dhcp: false,
     show: false,
+    keyboard: true,
     desktop: true,
     'network-terms': true,
     abbreviations: false,

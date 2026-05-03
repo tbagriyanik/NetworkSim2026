@@ -1,4 +1,4 @@
-import { Terminal, Globe, Wifi, Settings, Eye, Server, Router, Network, Book, Zap, LucideIcon } from 'lucide-react';
+import { Terminal, Globe, Wifi, Settings, Eye, Server, Router, Network, Book, Zap, Keyboard, LucideIcon } from 'lucide-react';
 
 export interface CommandDefinition {
   id: string;
@@ -308,6 +308,28 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['show diagnostic', isTR ? 'Teşhis sonuçları' : 'Display diagnostics'],
         ['show lldp', isTR ? 'LLDP komşuları' : 'Display LLDP info'],
         ['show authentication', isTR ? 'Kimlik doğrulama' : 'Display auth sessions'],
+      ]
+    },
+    {
+      id: 'keyboard',
+      icon: Keyboard,
+      title: isTR ? 'Klavye Kısayolları' : 'Keyboard Shortcuts',
+      cmds: [
+        // Canvas
+        ['Ctrl + Z', isTR ? 'Geri al' : 'Undo'],
+        ['Ctrl + Y / Ctrl + Shift + Z', isTR ? 'Yeniden yap' : 'Redo'],
+        ['Ctrl + C', isTR ? 'Seçili cihazı kopyala' : 'Copy selected device'],
+        ['Ctrl + X', isTR ? 'Seçili cihazı kes' : 'Cut selected device'],
+        ['Ctrl + V', isTR ? 'Yapıştır' : 'Paste'],
+        ['Ctrl + A', isTR ? 'Tümünü seç' : 'Select all'],
+        ['Delete / Backspace', isTR ? 'Seçili öğeyi sil' : 'Delete selected'],
+        ['Escape', isTR ? 'Seçimi iptal et / Modu kapat' : 'Cancel selection / Close mode'],
+        ['Ctrl + Scroll', isTR ? 'Yakınlaştır / Uzaklaştır' : 'Zoom in / out'],
+        ['Space + Sürükle', isTR ? 'Canvas\'ı kaydır' : 'Pan canvas'],
+        ['F1', isTR ? 'Yardım panelini aç / kapat' : 'Open / close help panel'],
+        // Ping packet panel
+        ['P', isTR ? 'Paket analizi: Oynat / Duraklat' : 'Packet analysis: Play / Pause'],
+        ['N', isTR ? 'Paket analizi: Sonraki Hop (duraklatıldığında)' : 'Packet analysis: Next Hop (when paused)'],
       ]
     },
     {

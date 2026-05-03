@@ -1,5 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { CanvasDevice, CanvasConnection } from './networkTopology.types';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
 export interface HopPacketInfo {
     hopIndex: number;
@@ -71,6 +72,7 @@ const tr = {
     noHops: 'Henüz hop yok',
     wireless: 'Kablosuz (WiFi)',
     wired: 'Kablolu (Ethernet)',
+    crossover: 'Çapraz Kablo',
     fiber: 'Fiber Optik',
     console: 'Konsol',
     changed: 'Değişti',
@@ -118,6 +120,7 @@ const en = {
     noHops: 'No hops yet',
     wireless: 'Wireless (WiFi)',
     wired: 'Wired (Ethernet)',
+    crossover: 'Crossover',
     fiber: 'Fiber Optic',
     console: 'Console',
     changed: 'Changed',
@@ -143,16 +146,57 @@ const en = {
 
 function getCableLabel(cableType: string, t: typeof tr) {
     if (cableType === 'wireless') return t.wireless;
+    if (cableType === 'crossover') return t.crossover;
     if (cableType === 'fiber') return t.fiber;
     if (cableType === 'console') return t.console;
     return t.wired;
 }
 
 function getCableColor(cableType: string) {
-    if (cableType === 'wireless') return '#8b5cf6';
+    if (cableType === 'crossover') return '#f97316'; // turuncu
     if (cableType === 'fiber') return '#f59e0b';
     if (cableType === 'console') return '#6b7280';
-    return '#06b6d4';
+    return '#3b82f6'; // mavi — wireless ve straight (Ethernet)
+}
+
+// Kablo tipine göre SVG simgesi döndürür
+function CableIcon({ cableType, color, width = 56, isMobile = false }: { cableType: string; color: string; width?: number; isMobile?: boolean }) {
+    const w = isMobile ? 32 : width;
+    if (cableType === 'wireless') {
+        // WiFi dalgaları simgesi
+        return (
+            <svg width={w} height="16" viewBox="0 0 56 16" fill="none">
+                {/* Merkez nokta */}
+                <circle cx="28" cy="13" r="2" fill={color} />
+                {/* İç dalga */}
+                <path d="M22 10 Q28 5 34 10" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" />
+                {/* Dış dalga */}
+                <path d="M16 7 Q28 0 40 7" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.6" />
+            </svg>
+        );
+    }
+    if (cableType === 'crossover') {
+        // Çapraz kablo — X geçişli çizgi
+        return (
+            <svg width={w} height="14" viewBox="0 0 56 14" fill="none">
+                <line x1="0" y1="4" x2="24" y2="4" stroke={color} strokeWidth="2" />
+                <line x1="24" y1="4" x2="32" y2="10" stroke={color} strokeWidth="2" />
+                <line x1="32" y1="10" x2="48" y2="10" stroke={color} strokeWidth="2" />
+                <line x1="24" y1="10" x2="32" y2="4" stroke={color} strokeWidth="2" />
+                <line x1="0" y1="10" x2="24" y2="10" stroke={color} strokeWidth="2" />
+                <line x1="32" y1="4" x2="48" y2="4" stroke={color} strokeWidth="2" />
+                <polygon points="48,1 56,4 48,7" fill={color} />
+                <polygon points="48,7 56,10 48,13" fill={color} />
+            </svg>
+        );
+    }
+    // Düz kablo (straight / fiber / default)
+    return (
+        <svg width={w} height="12" viewBox="0 0 56 12" fill="none">
+            <line x1="0" y1="6" x2="48" y2="6" stroke={color} strokeWidth="2" />
+            <polygon points="48,2 56,6 48,10" fill={color} />
+        </svg>
+    );
 }
 
 interface FieldRowProps {
@@ -311,7 +355,9 @@ export function PingPacketInfoPanel({
     const dragState = React.useRef({ dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 });
     const [pos, setPos] = React.useState<{ x: number; y: number } | null>(null);
     const rafRef = React.useRef<number>(0);
-    const [isPlaying, setIsPlaying] = React.useState(!isPaused);
+
+    // Show packet tables when paused or done — derived directly from props, no local state
+    const showPacketTables = isPaused || success !== null;
 
     const onHeaderMouseDown = React.useCallback((e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest('button')) return;
@@ -324,13 +370,6 @@ export function PingPacketInfoPanel({
         panel.style.transition = 'none';
         panel.style.willChange = 'left, top';
     }, []);
-
-    // When ping completes (success or failure), show cards again
-    React.useEffect(() => {
-        if (success !== null) {
-            setIsPlaying(false);
-        }
-    }, [success]);
 
     React.useEffect(() => {
         const onMove = (e: MouseEvent) => {
@@ -374,6 +413,26 @@ export function PingPacketInfoPanel({
             if (rafRef.current) cancelAnimationFrame(rafRef.current);
         };
     }, []);
+
+    // P = Play/Pause, N = Next Hop keyboard shortcuts
+    React.useEffect(() => {
+        if (!isVisible) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if focus is inside an input/textarea
+            const tag = (e.target as HTMLElement)?.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            if (e.key === 'p' || e.key === 'P') {
+                e.preventDefault();
+                if (isPaused) onPlay();
+                else onPause();
+            } else if (e.key === 'n' || e.key === 'N') {
+                e.preventDefault();
+                if (isPaused) onNext();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isVisible, isPaused, onPlay, onPause, onNext]);
 
     if (!isVisible) return null;
 
@@ -469,28 +528,60 @@ export function PingPacketInfoPanel({
                 {/* Right: play/pause/next + always-visible close button */}
                 <div className="flex items-center gap-2" onMouseDown={e => e.stopPropagation()}>
                     {!isDone && (<>
-                        {isPaused ? (
-                            <button onClick={() => { setIsPlaying(true); onPlay(); }} title={t.play}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isDark ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}>
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
-                                {t.play}
-                            </button>
-                        ) : (
-                            <button onClick={() => { setIsPlaying(false); onPause(); }} title={t.pause}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isDark ? 'bg-amber-600 hover:bg-amber-500 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'}`}>
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                                    <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
-                                </svg>
-                                {t.pause}
-                            </button>
-                        )}
-                        <button onClick={onNext} title={t.next} disabled={!isPaused}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isPaused ? (isDark ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white') : (isDark ? 'bg-slate-700/40 text-slate-600 cursor-not-allowed' : 'bg-slate-100 text-slate-400 cursor-not-allowed')}`}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                                <polygon points="5,3 14,12 5,21" /><rect x="16" y="3" width="3" height="18" />
-                            </svg>
-                            {t.next}
-                        </button>
+                        <TooltipProvider>
+                            {isPaused ? (
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <button onClick={() => { onPlay(); }} title={t.play}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isDark ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}>
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+                                            {t.play}
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" sideOffset={6}>
+                                        <span className="flex items-center gap-1.5">
+                                            {t.play}
+                                            <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${isDark ? 'bg-slate-700 border-slate-600 text-slate-300' : 'bg-slate-100 border-slate-300 text-slate-600'}`}>P</kbd>
+                                        </span>
+                                    </TooltipContent>
+                                </Tooltip>
+                            ) : (
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <button onClick={() => { onPause(); }} title={t.pause}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isDark ? 'bg-amber-600 hover:bg-amber-500 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'}`}>
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                                                <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
+                                            </svg>
+                                            {t.pause}
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" sideOffset={6}>
+                                        <span className="flex items-center gap-1.5">
+                                            {t.pause}
+                                            <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${isDark ? 'bg-slate-700 border-slate-600 text-slate-300' : 'bg-slate-100 border-slate-300 text-slate-600'}`}>P</kbd>
+                                        </span>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
+                            <Tooltip delayDuration={300}>
+                                <TooltipTrigger asChild>
+                                    <button onClick={onNext} title={t.next} disabled={!isPaused}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isPaused ? (isDark ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white') : (isDark ? 'bg-slate-700/40 text-slate-600 cursor-not-allowed' : 'bg-slate-100 text-slate-400 cursor-not-allowed')}`}>
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                                            <polygon points="5,3 14,12 5,21" /><rect x="16" y="3" width="3" height="18" />
+                                        </svg>
+                                        {t.next}
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" sideOffset={6}>
+                                    <span className="flex items-center gap-1.5">
+                                        {t.next}
+                                        <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${isDark ? 'bg-slate-700 border-slate-600 text-slate-300' : 'bg-slate-100 border-slate-300 text-slate-600'}`}>N</kbd>
+                                    </span>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                         <div className={`w-px h-5 mx-0.5 ${isDark ? 'bg-white/15' : 'bg-black/15'}`} />
                     </>)}
 
@@ -565,10 +656,7 @@ export function PingPacketInfoPanel({
                             {!isMobile && <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${isDark ? 'bg-white/10 text-slate-400' : 'bg-black/10 text-slate-500'}`}>{currentInfo.fromDevice.type}</span>}
                         </div>
                         <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-                            <svg width={isMobile ? 32 : 56} height="12" viewBox="0 0 56 12" fill="none">
-                                <line x1="0" y1="6" x2="48" y2="6" stroke={getCableColor(currentInfo.cableType)} strokeWidth="2" strokeDasharray={currentInfo.cableType === 'wireless' ? '4,3' : 'none'} />
-                                <polygon points="48,2 56,6 48,10" fill={getCableColor(currentInfo.cableType)} />
-                            </svg>
+                            <CableIcon cableType={currentInfo.cableType} color={getCableColor(currentInfo.cableType)} isMobile={isMobile} />
                             {!isMobile && <span className="text-[10px] font-medium" style={{ color: getCableColor(currentInfo.cableType) }}>{getCableLabel(currentInfo.cableType, t)}</span>}
                         </div>
                         <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
@@ -585,7 +673,7 @@ export function PingPacketInfoPanel({
                     </div>
 
                     {/* Packet tables — 3 col desktop, 1 col mobile (tabs) */}
-                    {!isPlaying && (isMobile ? (
+                    {showPacketTables && (isMobile ? (
                         <MobilePacketTables
                             currentInfo={currentInfo}
                             prevInfo={prevInfo}
