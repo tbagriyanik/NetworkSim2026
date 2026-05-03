@@ -730,6 +730,10 @@ export function checkConnectivity(
   }
 
   // 2.5 Block ping over console-only links (console is management, no ICMP)
+  // Only block if the ENTIRE path is console connections (no other data path available)
+  let hasConsoleConnection = false;
+  let hasNonConsoleConnection = false;
+
   for (let i = 0; i < path.length - 1; i++) {
     const aId = path[i];
     const bId = path[i + 1];
@@ -738,22 +742,29 @@ export function checkConnectivity(
       (c.sourceDeviceId === bId && c.targetDeviceId === aId)
     );
     if (conn?.cableType === 'console') {
-      return {
-        success: false,
-        hops: path.slice(0, i + 2).map(id => devices.find(d => d.id === id)?.name || id),
-        hopIds: path.slice(0, i + 2),
-        targetId: targetDevice.id,
-        error: language === 'tr'
-          ? 'Console bağlantısı üzerinden ping yapılamaz.'
-          : 'Ping cannot be sent over a console connection.'
-      };
+      hasConsoleConnection = true;
+    } else {
+      hasNonConsoleConnection = true;
     }
+  }
+
+  // Only block if path has console connection AND no other data connections (like wireless)
+  if (hasConsoleConnection && !hasNonConsoleConnection) {
+    return {
+      success: false,
+      hops: path.map(id => devices.find(d => d.id === id)?.name || id),
+      hopIds: path,
+      targetId: targetDevice.id,
+      error: language === 'tr'
+        ? 'Console bağlantısı üzerinden ping yapılamaz.'
+        : 'Ping cannot be sent over a console connection.'
+    };
   }
 
   const hopNames = path.map(id => devices.find(d => d.id === id)?.name || id);
 
   // 2.5. Check subnet compatibility (Layer 3)
-    const sourceDeviceForSubnet = devices.find(d => d.id === sourceId);
+  const sourceDeviceForSubnet = devices.find(d => d.id === sourceId);
   if (sourceDeviceForSubnet && targetDevice) {
     const sourceIp = getPrimaryDeviceIp(sourceId, devices, deviceStates);
     const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, deviceStates) || sourceDeviceForSubnet.subnet || '255.255.255.0';

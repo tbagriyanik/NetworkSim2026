@@ -215,9 +215,9 @@ function MobilePacketTables({ currentInfo, prevInfo, macChanged, ttlChanged, isD
     const [activeTab, setActiveTab] = React.useState<'l2' | 'l3' | 'l4'>('l2');
 
     const tabs = [
-        { id: 'l2' as const, label: 'L2', color: 'blue' },
-        { id: 'l3' as const, label: 'L3', color: 'emerald' },
-        { id: 'l4' as const, label: 'L4', color: 'purple' },
+        { id: 'l2' as const, label: 'L2', color: 'emerald' },
+        { id: 'l3' as const, label: 'L3', color: 'purple' },
+        { id: 'l4' as const, label: 'L4', color: 'blue' },
     ];
 
     const tabColors = {
@@ -249,7 +249,7 @@ function MobilePacketTables({ currentInfo, prevInfo, macChanged, ttlChanged, isD
             </div>
             {/* Active tab content */}
             {activeTab === 'l2' && (
-                <div className={`rounded-xl overflow-hidden border ${containerCls.blue}`}>
+                <div className={`rounded-xl overflow-hidden border ${containerCls.emerald}`}>
                     <table className="w-full"><tbody>
                         <FieldRow label={t.srcMac} value={currentInfo.srcMac} prevValue={prevInfo?.srcMac} highlight={macChanged ? 'changed' : 'none'} isDark={isDark} badge={macChanged ? t.changed : undefined} badgeColor="#d97706" />
                         <FieldRow label={t.dstMac} value={currentInfo.dstMac} prevValue={prevInfo?.dstMac} highlight={macChanged ? 'changed' : 'none'} isDark={isDark} />
@@ -258,7 +258,7 @@ function MobilePacketTables({ currentInfo, prevInfo, macChanged, ttlChanged, isD
                 </div>
             )}
             {activeTab === 'l3' && (
-                <div className={`rounded-xl overflow-hidden border ${containerCls.emerald}`}>
+                <div className={`rounded-xl overflow-hidden border ${containerCls.purple}`}>
                     <table className="w-full"><tbody>
                         <FieldRow label={t.srcIp} value={currentInfo.srcIp} highlight="same" isDark={isDark} />
                         <FieldRow label={t.dstIp} value={currentInfo.dstIp} highlight="same" isDark={isDark} />
@@ -268,7 +268,7 @@ function MobilePacketTables({ currentInfo, prevInfo, macChanged, ttlChanged, isD
                 </div>
             )}
             {activeTab === 'l4' && (
-                <div className={`rounded-xl overflow-hidden border ${containerCls.purple}`}>
+                <div className={`rounded-xl overflow-hidden border ${containerCls.blue}`}>
                     <table className="w-full"><tbody>
                         <FieldRow label={t.icmpType} value={currentInfo.icmpType} isDark={isDark} />
                         <FieldRow label={t.icmpCode} value={String(currentInfo.icmpCode)} isDark={isDark} />
@@ -311,6 +311,7 @@ export function PingPacketInfoPanel({
     const dragState = React.useRef({ dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 });
     const [pos, setPos] = React.useState<{ x: number; y: number } | null>(null);
     const rafRef = React.useRef<number>(0);
+    const [isPlaying, setIsPlaying] = React.useState(!isPaused);
 
     const onHeaderMouseDown = React.useCallback((e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest('button')) return;
@@ -323,6 +324,13 @@ export function PingPacketInfoPanel({
         panel.style.transition = 'none';
         panel.style.willChange = 'left, top';
     }, []);
+
+    // When ping completes (success or failure), show cards again
+    React.useEffect(() => {
+        if (success !== null) {
+            setIsPlaying(false);
+        }
+    }, [success]);
 
     React.useEffect(() => {
         const onMove = (e: MouseEvent) => {
@@ -462,13 +470,13 @@ export function PingPacketInfoPanel({
                 <div className="flex items-center gap-2" onMouseDown={e => e.stopPropagation()}>
                     {!isDone && (<>
                         {isPaused ? (
-                            <button onClick={onPlay} title={t.play}
+                            <button onClick={() => { setIsPlaying(true); onPlay(); }} title={t.play}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isDark ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}>
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
                                 {t.play}
                             </button>
                         ) : (
-                            <button onClick={onPause} title={t.pause}
+                            <button onClick={() => { setIsPlaying(false); onPause(); }} title={t.pause}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isDark ? 'bg-amber-600 hover:bg-amber-500 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'}`}>
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                                     <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
@@ -577,7 +585,7 @@ export function PingPacketInfoPanel({
                     </div>
 
                     {/* Packet tables — 3 col desktop, 1 col mobile (tabs) */}
-                    {isMobile ? (
+                    {!isPlaying && (isMobile ? (
                         <MobilePacketTables
                             currentInfo={currentInfo}
                             prevInfo={prevInfo}
@@ -590,11 +598,11 @@ export function PingPacketInfoPanel({
                     ) : (
                         <div className="grid grid-cols-3 gap-3">
                             <div className={`rounded-xl overflow-hidden border ${isGlass
-                                ? isDark ? 'border-blue-400/20 bg-blue-500/10' : 'border-blue-400/30 bg-blue-500/8'
-                                : isDark ? 'border-blue-900/60 bg-blue-950/50' : 'border-blue-200 bg-blue-50'}`}>
+                                ? isDark ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-emerald-400/30 bg-emerald-500/8'
+                                : isDark ? 'border-emerald-900/60 bg-emerald-950/50' : 'border-emerald-200 bg-emerald-50'}`}>
                                 <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
-                                    ? isDark ? 'bg-blue-500/15 border-blue-400/20 text-blue-400' : 'bg-blue-500/10 border-blue-400/20 text-blue-700'
-                                    : isDark ? 'bg-blue-950/60 border-blue-900/60 text-blue-400' : 'bg-blue-100 border-blue-200 text-blue-700'}`}>{t.layer2}</div>
+                                    ? isDark ? 'bg-emerald-500/15 border-emerald-400/20 text-emerald-400' : 'bg-emerald-500/10 border-emerald-400/20 text-emerald-700'
+                                    : isDark ? 'bg-emerald-950/60 border-emerald-900/60 text-emerald-400' : 'bg-emerald-100 border-emerald-200 text-emerald-700'}`}>{t.layer2}</div>
                                 <table className="w-full"><tbody>
                                     <FieldRow label={t.srcMac} value={currentInfo.srcMac} prevValue={prevInfo?.srcMac} highlight={macChanged ? 'changed' : 'none'} isDark={isDark} badge={macChanged ? t.changed : undefined} badgeColor="#d97706" />
                                     <FieldRow label={t.dstMac} value={currentInfo.dstMac} prevValue={prevInfo?.dstMac} highlight={macChanged ? 'changed' : 'none'} isDark={isDark} />
@@ -602,11 +610,11 @@ export function PingPacketInfoPanel({
                                 </tbody></table>
                             </div>
                             <div className={`rounded-xl overflow-hidden border ${isGlass
-                                ? isDark ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-emerald-400/30 bg-emerald-500/8'
-                                : isDark ? 'border-emerald-900/60 bg-emerald-950/50' : 'border-emerald-200 bg-emerald-50'}`}>
+                                ? isDark ? 'border-purple-400/20 bg-purple-500/10' : 'border-purple-400/30 bg-purple-500/8'
+                                : isDark ? 'border-purple-900/60 bg-purple-950/50' : 'border-purple-200 bg-purple-50'}`}>
                                 <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
-                                    ? isDark ? 'bg-emerald-500/15 border-emerald-400/20 text-emerald-400' : 'bg-emerald-500/10 border-emerald-400/20 text-emerald-700'
-                                    : isDark ? 'bg-emerald-950/60 border-emerald-900/60 text-emerald-400' : 'bg-emerald-100 border-emerald-200 text-emerald-700'}`}>{t.layer3}</div>
+                                    ? isDark ? 'bg-purple-500/15 border-purple-400/20 text-purple-400' : 'bg-purple-500/10 border-purple-400/20 text-purple-700'
+                                    : isDark ? 'bg-purple-950/60 border-purple-900/60 text-purple-400' : 'bg-purple-100 border-purple-200 text-purple-700'}`}>{t.layer3}</div>
                                 <table className="w-full"><tbody>
                                     <FieldRow label={t.srcIp} value={currentInfo.srcIp} highlight="same" isDark={isDark} />
                                     <FieldRow label={t.dstIp} value={currentInfo.dstIp} highlight="same" isDark={isDark} />
@@ -615,11 +623,11 @@ export function PingPacketInfoPanel({
                                 </tbody></table>
                             </div>
                             <div className={`rounded-xl overflow-hidden border ${isGlass
-                                ? isDark ? 'border-purple-400/20 bg-purple-500/10' : 'border-purple-400/30 bg-purple-500/8'
-                                : isDark ? 'border-purple-900/60 bg-purple-950/50' : 'border-purple-200 bg-purple-50'}`}>
+                                ? isDark ? 'border-blue-400/20 bg-blue-500/10' : 'border-blue-400/30 bg-blue-500/8'
+                                : isDark ? 'border-blue-900/60 bg-blue-950/50' : 'border-blue-200 bg-blue-50'}`}>
                                 <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
-                                    ? isDark ? 'bg-purple-500/15 border-purple-400/20 text-purple-400' : 'bg-purple-500/10 border-purple-400/20 text-purple-700'
-                                    : isDark ? 'bg-purple-950/60 border-purple-900/60 text-purple-400' : 'bg-purple-100 border-purple-200 text-purple-700'}`}>{t.layer4}</div>
+                                    ? isDark ? 'bg-blue-500/15 border-blue-400/20 text-blue-400' : 'bg-blue-500/10 border-blue-400/20 text-blue-700'
+                                    : isDark ? 'bg-blue-950/60 border-blue-900/60 text-blue-400' : 'bg-blue-100 border-blue-200 text-blue-700'}`}>{t.layer4}</div>
                                 <table className="w-full"><tbody>
                                     <FieldRow label={t.icmpType} value={currentInfo.icmpType} isDark={isDark} />
                                     <FieldRow label={t.icmpCode} value={String(currentInfo.icmpCode)} isDark={isDark} />
@@ -627,12 +635,11 @@ export function PingPacketInfoPanel({
                                 </tbody></table>
                             </div>
                         </div>
-                    )}
+                    ))}
                 </div>
             ) : (
                 <div className={`px-5 py-8 text-center text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.noHops}</div>
-            )
-            }
+            )}
         </div >
     );
 }
@@ -658,6 +665,39 @@ export function buildHopPacketInfos(
         return `${hash.slice(0, 2)}:${hash.slice(2, 4)}:${hash.slice(4, 6)}:${hash.slice(6, 8)}:${hash.slice(8, 10)}:${hash.slice(10, 12)}`.toUpperCase();
     };
 
+    // Check if two devices are connected via wireless
+    const isWirelessConnection = (fromId: string, toId: string): boolean => {
+        const fromDev = devices.find(d => d.id === fromId);
+        const toDev = devices.find(d => d.id === toId);
+
+        if (!fromDev || !toDev) return false;
+
+        // Check if connection exists in connections array
+        const conn = connections.find(c =>
+            (c.sourceDeviceId === fromId && c.targetDeviceId === toId) ||
+            (c.sourceDeviceId === toId && c.targetDeviceId === fromId)
+        );
+
+        // If there's an explicit connection, use its cableType
+        if (conn) {
+            return conn.cableType === 'wireless';
+        }
+
+        // If no connection in array, check if it could be wireless
+        // Only PC/IoT can connect wirelessly to Router/Switch
+        const isFromClient = fromDev.type === 'pc' || fromDev.type === 'iot';
+        const isToAP = toDev.type === 'router' || toDev.type.startsWith('switch');
+        const isToClient = toDev.type === 'pc' || toDev.type === 'iot';
+        const isFromAP = fromDev.type === 'router' || fromDev.type.startsWith('switch');
+
+        // Wireless: PC/IoT -> Router/Switch or Router/Switch -> PC/IoT
+        if ((isFromClient && isToAP) || (isFromAP && isToClient)) {
+            return true;
+        }
+
+        return false;
+    };
+
     const infos: HopPacketInfo[] = [];
     let ttl = initialTTL;
     let icmpSeq = 1;
@@ -679,7 +719,7 @@ export function buildHopPacketInfos(
             ttl = Math.max(1, ttl - 1);
         }
 
-        const cableType = conn?.cableType || 'straight';
+        const cableType = conn?.cableType || (isWirelessConnection(path[i], path[i + 1]) ? 'wireless' : 'straight');
 
         infos.push({
             hopIndex: i,

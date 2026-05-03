@@ -3358,6 +3358,7 @@ export function NetworkTopology({
       // Find all connected devices
       for (const conn of connections) {
         // Skip console cables for data path (Ping)
+        // Only allow wireless (WiFi) and wired (Ethernet straight/cross)
         if (conn.cableType === 'console') continue;
 
         let nextDeviceId: string | null = null;
@@ -3540,6 +3541,12 @@ export function NetworkTopology({
         const easeInOutCubic = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
         const animateFailed = () => {
+          // Update resume callback at the start of each frame
+          pingResumeCallbackRef.current = () => {
+            startTime = Date.now();
+            pingAnimationRef.current = requestAnimationFrame(animateFailed);
+          };
+
           if (pingIsPausedRef.current) return;
           const fromId = partialPath[currentHop];
           const toId = partialPath[currentHop + 1];
@@ -3575,7 +3582,10 @@ export function NetworkTopology({
               if (!shouldPause) {
                 pingAnimationRef.current = requestAnimationFrame(animateFailed);
               } else {
-                pingIsPausedRef.current = true;
+                // Only set paused if we're not in step mode (step mode will be handled by handlePingNext)
+                if (!pingStepModeRef.current) {
+                  pingIsPausedRef.current = true;
+                }
                 pingResumeCallbackRef.current = () => { startTime = Date.now(); pingAnimationRef.current = requestAnimationFrame(animateFailed); };
               }
             } else {
@@ -3710,7 +3720,10 @@ export function NetworkTopology({
         if (!shouldPause) {
           pingAnimationRef.current = requestAnimationFrame(animate);
         } else {
-          pingIsPausedRef.current = true;
+          // Only set paused if we're not in step mode (step mode will be handled by handlePingNext)
+          if (!pingStepModeRef.current) {
+            pingIsPausedRef.current = true;
+          }
           // Store resume callback so play/next button can continue
           pingResumeCallbackRef.current = () => {
             startTime = Date.now();
@@ -3722,8 +3735,9 @@ export function NetworkTopology({
         const returnPath = [...path].reverse();
         const returnPacketInfos = buildHopPacketInfos(returnPath, devices, connections);
 
-        pingStepModeRef.current = false;
-        pingIsPausedRef.current = false;
+        // Keep step mode if it was active during forward path
+        // pingStepModeRef.current = false;
+        // pingIsPausedRef.current = false;
 
         // Brief pause at destination before returning
         setTimeout(() => {
@@ -3739,7 +3753,7 @@ export function NetworkTopology({
               currentHopIndex: 0,
               progress: 0,
               hopCount: prev.hopCount + hopCountIncrement,
-              isPaused: false,
+              isPaused: pingStepModeRef.current, // Pause if in step mode
               isReturn: true,
             };
           });
@@ -3752,6 +3766,12 @@ export function NetworkTopology({
           };
 
           const animateReturn = () => {
+            // Update resume callback at the start of each frame
+            pingResumeCallbackRef.current = () => {
+              returnStartTime = Date.now();
+              pingAnimationRef.current = requestAnimationFrame(animateReturn);
+            };
+
             if (pingIsPausedRef.current) return;
 
             const fromId = returnPath[returnHop];
@@ -3785,7 +3805,7 @@ export function NetworkTopology({
                 if (!shouldPause) {
                   pingAnimationRef.current = requestAnimationFrame(animateReturn);
                 } else {
-                  pingIsPausedRef.current = true;
+                  // Store resume callback for next step
                   pingResumeCallbackRef.current = () => {
                     returnStartTime = Date.now();
                     pingAnimationRef.current = requestAnimationFrame(animateReturn);
@@ -3797,12 +3817,28 @@ export function NetworkTopology({
               }
             }
           };
-          pingAnimationRef.current = requestAnimationFrame(animateReturn);
+
+          // Start return animation paused if in step mode
+          if (pingStepModeRef.current) {
+            pingIsPausedRef.current = true;
+            pingResumeCallbackRef.current = () => {
+              returnStartTime = Date.now();
+              pingAnimationRef.current = requestAnimationFrame(animateReturn);
+            };
+          } else {
+            pingAnimationRef.current = requestAnimationFrame(animateReturn);
+          }
         }, 300);
       }
     };
 
     const animate = () => {
+      // Update resume callback at the start of each frame
+      pingResumeCallbackRef.current = () => {
+        startTime = Date.now();
+        pingAnimationRef.current = requestAnimationFrame(animate);
+      };
+
       // If paused, don't advance
       if (pingIsPausedRef.current) return;
 
@@ -3861,19 +3897,29 @@ export function NetworkTopology({
   const handlePingPause = useCallback(() => {
     pingIsPausedRef.current = true;
     pingStepModeRef.current = false;
+
+    // Cancel the current animation frame
     if (pingAnimationRef.current) {
       cancelAnimationFrame(pingAnimationRef.current);
       pingAnimationRef.current = null;
     }
+
+    // Note: We don't need to set pingResumeCallbackRef here because:
+    // 1. If we're in the middle of a hop, the animate() function will be called again by play
+    // 2. If we're at a hop boundary, the callback is already set by advanceToNextHop
+    // The key is that animate() checks pingIsPausedRef at the start and returns early
+
     setPingAnimation(prev => prev ? { ...prev, isPaused: true } : null);
   }, []);
 
   const handlePingPlay = useCallback(() => {
     // If already playing, do nothing
     if (!pingIsPausedRef.current) return;
+
     pingIsPausedRef.current = false;
     pingStepModeRef.current = false;
     setPingAnimation(prev => prev ? { ...prev, isPaused: false } : null);
+
     if (pingResumeCallbackRef.current) {
       const resume = pingResumeCallbackRef.current;
       pingResumeCallbackRef.current = null;
@@ -3882,15 +3928,22 @@ export function NetworkTopology({
   }, []);
 
   const handlePingNext = useCallback(() => {
-    // Only works when paused and there is a resume callback
+    // Only works when paused
     if (!pingIsPausedRef.current) return;
-    if (!pingResumeCallbackRef.current) return;
+
+    // Get the resume callback safely
     const resume = pingResumeCallbackRef.current;
+    if (!resume) return;
+
+    // Clear the callback first to prevent double-execution
     pingResumeCallbackRef.current = null;
+
     // Step mode: advanceToNextHop will pause again at the next hop boundary
     pingStepModeRef.current = true;
     pingIsPausedRef.current = false;
     setPingAnimation(prev => prev ? { ...prev, isPaused: false } : null);
+
+    // Now call the resume callback
     resume();
   }, []);
 
@@ -7349,7 +7402,7 @@ export function NetworkTopology({
       {/* Success/failure result is shown inside PingPacketInfoPanel */}
 
       {/* Ping Packet Info Panel - shows during animation AND on success/failure result */}
-      {pingAnimation && hopPacketInfos.length > 0 && (
+      {pingAnimation && (
         <PingPacketInfoPanel
           isVisible={true}
           isPaused={!!pingAnimation.isPaused}
