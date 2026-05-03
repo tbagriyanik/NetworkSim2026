@@ -24,6 +24,7 @@ import {
   CollapsibleTrigger
 } from '@/components/ui/collapsible';
 import { GuidedStep, GuidedProject, getProgressPercentage } from '@/lib/network/guidedMode';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface GuidedModePanelProps {
   project: GuidedProject | null;
@@ -33,7 +34,6 @@ interface GuidedModePanelProps {
   onClose: () => void;
   onMinimize: () => void;
   isMinimized: boolean;
-  language: 'tr' | 'en';
   lastCompletedStep?: string | null;
   // Step readiness - controls if "Complete" button is enabled
   isCurrentStepReady?: boolean;
@@ -52,61 +52,6 @@ interface GuidedModePanelProps {
   }) => void;
 }
 
-const translations = {
-  tr: {
-    guidedMode: 'Rehberli Ders',
-    step: 'Adım',
-    of: '/',
-    hint: 'İpucu',
-    instructions: 'Detaylı Talimatlar',
-    complete: 'Tamamlandı',
-    completed: 'Tamamla',
-    completedAt: 'Tamamlanma',
-    uncomplete: 'Geri Al',
-    progress: 'İlerleme',
-    estimatedTime: 'Tahmini Süre',
-    minutes: 'dakika',
-    close: 'Kapat',
-    minimize: 'Küçült',
-    maximize: 'Büyüt',
-    allStepsCompleted: 'Tüm adımlar tamamlandı!',
-    nextStep: 'Sonraki Adım',
-    currentStep: 'Mevcut Adım',
-    showHint: 'İpucunu Göster',
-    hideHint: 'İpucunu Gizle',
-    difficulty: 'Zorluk',
-    beginner: 'Başlangıç',
-    intermediate: 'Orta',
-    advanced: 'İleri'
-  },
-  en: {
-    guidedMode: 'Guided Lesson',
-    step: 'Step',
-    of: 'of',
-    hint: 'Hint',
-    instructions: 'Detailed Instructions',
-    complete: 'Complete',
-    completed: 'Mark Complete',
-    completedAt: 'Completed',
-    uncomplete: 'Undo',
-    progress: 'Progress',
-    estimatedTime: 'Estimated Time',
-    minutes: 'minutes',
-    close: 'Close',
-    minimize: 'Minimize',
-    maximize: 'Maximize',
-    allStepsCompleted: 'All steps completed!',
-    nextStep: 'Next Step',
-    currentStep: 'Current Step',
-    showHint: 'Show Hint',
-    hideHint: 'Hide Hint',
-    difficulty: 'Difficulty',
-    beginner: 'Beginner',
-    intermediate: 'Intermediate',
-    advanced: 'Advanced'
-  }
-};
-
 export function GuidedModePanel({
   project,
   currentStepIndex,
@@ -115,7 +60,6 @@ export function GuidedModePanel({
   onClose,
   onMinimize,
   isMinimized,
-  language,
   lastCompletedStep,
   isCurrentStepReady = false,
   lastCommand,
@@ -125,7 +69,7 @@ export function GuidedModePanel({
   topologyDevices,
   onCheckAutoComplete
 }: GuidedModePanelProps) {
-  const t = translations[language];
+  const { t, language } = useLanguage();
 
   // Load hint and expanded states from localStorage
   const [showHint, setShowHint] = React.useState(() => {

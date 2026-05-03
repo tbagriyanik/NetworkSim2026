@@ -11,6 +11,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useSpatialPartitioning } from '@/lib/performance/spatial';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipWrapper } from "@/components/ui/TooltipWrapper";
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, CanvasPort, NetworkTopologyProps } from './networkTopology.types';
 import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts } from './networkTopology.portGenerators';
 import { useCanvasHistory } from '@/hooks/useCanvasHistory';
@@ -640,23 +641,23 @@ export function NetworkTopology({
     const nextIpv6 = ipv6Value.trim();
 
     if (!isValidIpv4(nextIp)) {
-      setConfigError(language === 'tr' ? 'Geçerli bir IPv4 adresi girin.' : 'Enter a valid IPv4 address.');
+      setConfigError(t.invalidIpv4Address || 'Enter a valid IPv4 address.');
       return;
     }
     if (!isValidIpv4(nextSubnet)) {
-      setConfigError(language === 'tr' ? 'Geçerli bir subnet mask girin.' : 'Enter a valid subnet mask.');
+      setConfigError(t.invalidSubnetMask);
       return;
     }
     if (!isValidIpv4(nextGateway)) {
-      setConfigError(language === 'tr' ? 'Geçerli bir gateway adresi girin.' : 'Enter a valid gateway address.');
+      setConfigError(t.invalidGatewayAddress);
       return;
     }
     if (!isValidIpv4(nextDns)) {
-      setConfigError(language === 'tr' ? 'Geçerli bir DNS adresi girin.' : 'Enter a valid DNS address.');
+      setConfigError(t.invalidDnsAddress);
       return;
     }
     if (!isValidIpv6(nextIpv6)) {
-      setConfigError(language === 'tr' ? 'Geçerli bir IPv6 adresi girin.' : 'Enter a valid IPv6 address.');
+      setConfigError(t.invalidIpv6Address);
       return;
     }
 
@@ -2762,7 +2763,7 @@ export function NetworkTopology({
 
   const getIotMeasuredValue = useCallback((device: CanvasDevice) => {
     if (device.iot && device.iot.collaborationEnabled === false) {
-      return language === 'tr' ? 'PASİF' : 'PASSIVE';
+      return t.passive;
     }
     const sensorType = device.iot?.sensorType || 'temperature';
     const baseTemp = environment?.temperature ?? 22;
@@ -2784,7 +2785,7 @@ export function NetworkTopology({
       case 'sound':
         return `${Math.floor(40 + Math.random() * 40)} dB`;
       case 'motion':
-        return language === 'tr' ? 'Hareket Var' : 'Motion Yes';
+        return t.motionYes;
       default:
         return '-';
     }
@@ -4878,7 +4879,7 @@ export function NetworkTopology({
             if (isPassive) {
               return (
                 <text x={deviceWidth / 2} y={70} fill={isDark ? '#94a3b8' : '#64748b'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(1px 1px 0px rgba(0,0,0,1))">
-                  <tspan x={deviceWidth / 2} dy="6">{language === 'tr' ? 'PASİF' : 'PASSIVE'}</tspan>
+                  <tspan x={deviceWidth / 2} dy="6">{t.passive}</tspan>
                 </text>
               );
             }
@@ -5356,7 +5357,7 @@ export function NetworkTopology({
                 ? 'border-blue-600 bg-slate-800 hover:border-blue-400'
                 : 'border-blue-400 bg-white hover:border-blue-600'
                 }`}
-              aria-label={language === 'tr' ? 'PC cihazı ekle' : 'Add PC device'}
+              aria-label={t.addPcDevice}
             >
               <div className="text-blue-500 w-8 h-8">
                 {DEVICE_ICONS['pc']}
@@ -5371,7 +5372,7 @@ export function NetworkTopology({
                 ? 'border-green-600 bg-slate-800 hover:border-green-400'
                 : 'border-green-500 bg-white hover:border-green-700'
                 }`}
-              aria-label={language === 'tr' ? 'L2 Switch ekle' : 'Add L2 Switch'}
+              aria-label={t.addL2Switch}
             >
               <div className="text-green-500 w-8 h-8">
                 {DEVICE_ICONS['switch']}
@@ -5386,7 +5387,7 @@ export function NetworkTopology({
                 ? 'border-purple-600 bg-slate-800 hover:border-purple-400'
                 : 'border-purple-500 bg-white hover:border-purple-700'
                 }`}
-              aria-label={language === 'tr' ? 'L3 Switch ekle' : 'Add L3 Switch'}
+              aria-label={t.addL3Switch}
             >
               <div className="text-purple-500 w-8 h-8">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -5403,7 +5404,7 @@ export function NetworkTopology({
                 ? 'border-orange-600 bg-slate-800 hover:border-orange-400'
                 : 'border-orange-500 bg-white hover:border-orange-700'
                 }`}
-              aria-label={language === 'tr' ? 'Router ekle' : 'Add Router'}
+              aria-label={t.addRouter}
             >
               <div className="text-orange-500 w-6 h-6">
                 {DEVICE_ICONS['router']}
@@ -5418,7 +5419,7 @@ export function NetworkTopology({
                 ? 'border-cyan-600 bg-slate-800 hover:border-cyan-400'
                 : 'border-cyan-500 bg-white hover:border-cyan-700'
                 }`}
-              aria-label={language === 'tr' ? 'IoT cihazı ekle' : 'Add IoT device'}
+              aria-label={t.addIotDevice}
             >
               <div className="text-cyan-500 w-8 h-8">
                 {DEVICE_ICONS['iot']}
@@ -5435,7 +5436,7 @@ export function NetworkTopology({
           <div className={`text-[10px] font-bold tracking-widest mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             {t.cable}
           </div>
-          <div className={`flex items-center rounded-lg border overflow-hidden ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`} role="group" aria-label={language === 'tr' ? 'Kablo tipi seçici' : 'Cable type selector'}>
+          <div className={`flex items-center rounded-lg border overflow-hidden ${isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`} role="group" aria-label={t.cableTypeSelector}>
             {(['straight', 'crossover', 'console'] as CableType[]).map((type, index) => (
               <button
                 key={type}
@@ -5452,7 +5453,7 @@ export function NetworkTopology({
                       ? (cableInfo.cableType === type ? 'text-orange-400' : 'text-orange-500 hover:text-orange-400')
                       : (cableInfo.cableType === type ? 'text-cyan-400' : 'text-cyan-500 hover:text-cyan-400')
                   }`}
-                aria-label={type === 'straight' ? (language === 'tr' ? 'Düz kablo' : 'Straight cable') : type === 'crossover' ? (language === 'tr' ? 'Çapraz kablo' : 'Crossover cable') : (language === 'tr' ? 'Konsol kablo' : 'Console cable')}
+                aria-label={type === 'straight' ? t.straightCable : type === 'crossover' ? t.crossoverCable : t.consoleCable}
                 aria-pressed={cableInfo.cableType === type}
               >
                 {type === 'straight' ? (
@@ -5521,17 +5522,18 @@ export function NetworkTopology({
           >
             −
           </button>
-          <span
-            onMouseDown={handleZoomMouseDown}
-            onWheel={handleZoomWheel}
-            className={`text-xs font-mono w-10 text-center cursor-pointer select-none transition-colors ${isDraggingZoom
-              ? 'text-blue-400'
-              : 'text-slate-300 hover:bg-slate-700'
-              } rounded`}
-            title={language === 'tr' ? "Sürükleyerek büyütün" : "Drag to zoom or scroll"}
-          >
-            {Math.round(zoom * 100)}%
-          </span>
+          <TooltipWrapper title={t.dragToZoomOrScroll}>
+            <span
+              onMouseDown={handleZoomMouseDown}
+              onWheel={handleZoomWheel}
+              className={`text-xs font-mono w-10 text-center cursor-pointer select-none transition-colors ${isDraggingZoom
+                ? 'text-blue-400'
+                : 'text-slate-300 hover:bg-slate-700'
+                } rounded`}
+            >
+              {Math.round(zoom * 100)}%
+            </span>
+          </TooltipWrapper>
           <button
             onClick={() => setZoom((z) => {
               const newZoom = Math.min(MAX_ZOOM, z + 0.25);
@@ -5552,16 +5554,17 @@ export function NetworkTopology({
         </div>
 
         {/* Refresh Network */}
-        <button
-          onClick={onRefreshNetwork}
-          className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg min-h-[48px] min-w-[48px] bg-slate-800 hover:bg-slate-700"
-          title={language === 'tr' ? 'Ağı Yenile' : 'Refresh Network'}
-        >
-          <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span className="text-xs text-slate-300">{language === 'tr' ? 'Yenile' : 'Refresh'}</span>
-        </button>
+        <TooltipWrapper title={t.refreshNetwork}>
+          <button
+            onClick={onRefreshNetwork}
+            className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg min-h-[48px] min-w-[48px] bg-slate-800 hover:bg-slate-700"
+          >
+            <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span className="text-xs text-slate-300">{t.refresh}</span>
+          </button>
+        </TooltipWrapper>
       </div>
     </div>
   );
@@ -5575,16 +5578,17 @@ export function NetworkTopology({
         }`}
     >
       {isFullscreen && (
-        <button
-          onClick={toggleFullscreen}
-          className={`fixed top-4 right-4 z-[10000] flex items-center justify-center w-8 h-8 rounded-full shadow-lg transition-colors ${isDark
-            ? 'bg-slate-800/90 hover:bg-red-500/30 text-slate-300 hover:text-red-400 border border-slate-600'
-            : 'bg-white/90 hover:bg-red-500/30 text-slate-600 hover:text-red-600 border border-slate-300'
-            }`}
-          title={t.exit}
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <TooltipWrapper title={t.exit}>
+          <button
+            onClick={toggleFullscreen}
+            className={`fixed top-4 right-4 z-[10000] flex items-center justify-center w-8 h-8 rounded-full shadow-lg transition-colors ${isDark
+              ? 'bg-slate-800/90 hover:bg-red-500/30 text-slate-300 hover:text-red-400 border border-slate-600'
+              : 'bg-white/90 hover:bg-red-500/30 text-slate-600 hover:text-red-600 border border-slate-300'
+              }`}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </TooltipWrapper>
       )}
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas Area */}
@@ -5754,83 +5758,88 @@ export function NetworkTopology({
                 e.stopPropagation();
               }}
             >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  console.log('[Toolbar] Align left clicked');
-                  handleAlign('left');
-                }}
-                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
-                title={t.alignLeft}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 2v20M8 5h10M8 11h7M8 17h12" />
-                </svg>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  console.log('[Toolbar] Align top clicked');
-                  handleAlign('top');
-                }}
-                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
-                title={t.alignTop}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 4h20M5 8v10M11 8v7M17 8v12" />
-                </svg>
-              </button>
+              <TooltipWrapper title={t.alignLeft}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    console.log('[Toolbar] Align left clicked');
+                    handleAlign('left');
+                  }}
+                  className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 2v20M8 5h10M8 11h7M8 17h12" />
+                  </svg>
+                </button>
+              </TooltipWrapper>
+              <TooltipWrapper title={t.alignTop}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    console.log('[Toolbar] Align top clicked');
+                    handleAlign('top');
+                  }}
+                  className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 4h20M5 8v10M11 8v7M17 8v12" />
+                  </svg>
+                </button>
+              </TooltipWrapper>
               <div className="w-px h-4 bg-slate-700/30 mx-1" />
               <span className="text-xs font-semibold whitespace-nowrap bg-slate-700/30 px-2 py-0.5 rounded">
                 {selectedDeviceIds.length}
               </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  console.log('[Toolbar] Power toggle clicked');
-                  saveToHistory();
-                  togglePowerDevices(selectedDeviceIds);
-                }}
-                className={`p-1.5 rounded-lg transition-colors ${isDark
-                  ? 'hover:bg-amber-500/20 text-amber-300'
-                  : 'hover:bg-amber-100 text-amber-700'
-                  }`}
-                title={t.togglePower}
-              >
-                <Power className="w-4 h-4" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  console.log('[Toolbar] Cancel clicked');
-                  const firstId = selectedDeviceIds[0];
-                  const firstDevice = devices.find(d => d.id === firstId);
-                  setSelectedDeviceIds(firstId ? [firstId] : []);
-                  if (firstDevice) onDeviceSelect(firstDevice.type === 'router' ? 'router' : firstDevice.type, firstId, undefined, firstDevice.name);
-                }}
-                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-600'}`}
-                title={t.cancel}
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  console.log('[Toolbar] Delete clicked');
-                  saveToHistory();
-                  selectedDeviceIds.forEach(id => deleteDevice(id));
-                  setSelectedDeviceIds([]);
-                }}
-                className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-500 transition-colors"
-                title={t.delete}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <TooltipWrapper title={t.togglePower}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    console.log('[Toolbar] Power toggle clicked');
+                    saveToHistory();
+                    togglePowerDevices(selectedDeviceIds);
+                  }}
+                  className={`p-1.5 rounded-lg transition-colors ${isDark
+                    ? 'hover:bg-amber-500/20 text-amber-300'
+                    : 'hover:bg-amber-100 text-amber-700'
+                    }`}
+                >
+                  <Power className="w-4 h-4" />
+                </button>
+              </TooltipWrapper>
+              <TooltipWrapper title={t.cancel}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    console.log('[Toolbar] Cancel clicked');
+                    const firstId = selectedDeviceIds[0];
+                    const firstDevice = devices.find(d => d.id === firstId);
+                    setSelectedDeviceIds(firstId ? [firstId] : []);
+                    if (firstDevice) onDeviceSelect(firstDevice.type === 'router' ? 'router' : firstDevice.type, firstId, undefined, firstDevice.name);
+                  }}
+                  className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-200' : 'hover:bg-slate-100 text-slate-600'}`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </TooltipWrapper>
+              <TooltipWrapper title={t.delete}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    console.log('[Toolbar] Delete clicked');
+                    saveToHistory();
+                    selectedDeviceIds.forEach(id => deleteDevice(id));
+                    setSelectedDeviceIds([]);
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-500 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </TooltipWrapper>
             </div>
           )}
 
@@ -6561,13 +6570,14 @@ export function NetworkTopology({
                             }
                           }}
                           className="absolute right-1 bottom-1 z-10 w-4 h-4 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity touch-manipulation"
-                          title={t.resizeLabel}
                         >
-                          <svg viewBox="0 0 12 12" className="w-full h-full text-black">
-                            <path d="M4 12 L12 4" stroke="currentColor" strokeWidth="1" />
-                            <path d="M7 12 L12 7" stroke="currentColor" strokeWidth="1" />
-                            <path d="M10 12 L12 10" stroke="currentColor" strokeWidth="1" />
-                          </svg>
+                          <TooltipWrapper title={t.resizeLabel}>
+                            <svg viewBox="0 0 12 12" className="w-full h-full text-black">
+                              <path d="M4 12 L12 4" stroke="currentColor" strokeWidth="1" />
+                              <path d="M7 12 L12 7" stroke="currentColor" strokeWidth="1" />
+                              <path d="M10 12 L12 10" stroke="currentColor" strokeWidth="1" />
+                            </svg>
+                          </TooltipWrapper>
                         </div>
                       </div>
                     </foreignObject>
@@ -6754,7 +6764,7 @@ export function NetworkTopology({
                   ? 'text-slate-300 hover:bg-slate-700'
                   : 'text-slate-600 hover:bg-slate-100'
                 }`}
-              title={language === 'tr' ? "Sürükleyerek büyütün" : "Drag to zoom or scroll"}
+              title={t.dragToZoomOrScroll}
             >
               {Math.round(zoom * 100)}%
             </span>
@@ -6786,10 +6796,10 @@ export function NetworkTopology({
                     : 'text-slate-600 hover:text-slate-900'
                     }`}
                 >
-                  {language === 'tr' ? 'Sıfırla' : 'Reset'}
+                  {t.reset}
                 </button>
               </TooltipTrigger>
-              <TooltipContent>{`${language === 'tr' ? 'Sıfırla' : 'Reset'} (Alt+R)`}</TooltipContent>
+              <TooltipContent>{`${t.reset} (Alt+R)`}</TooltipContent>
             </Tooltip>
           </div>
 
@@ -6824,7 +6834,7 @@ export function NetworkTopology({
                   ? 'text-slate-300 hover:bg-slate-700'
                   : 'text-slate-600 hover:bg-slate-100'
                 }`}
-              title={language === 'tr' ? "Sürükleyerek büyütün" : "Drag to zoom or scroll"}
+              title={t.dragToZoomOrScroll}
             >
               {Math.round(zoom * 100)}%
             </span>
@@ -6856,10 +6866,10 @@ export function NetworkTopology({
                     : 'text-slate-600 hover:text-slate-900'
                     }`}
                 >
-                  {language === 'tr' ? 'Sıfırla' : 'Reset'}
+                  {t.reset}
                 </button>
               </TooltipTrigger>
-              <TooltipContent>{`${language === 'tr' ? 'Sıfırla' : 'Reset'} (Alt+R)`}</TooltipContent>
+              <TooltipContent>{`${t.reset} (Alt+R)`}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -6873,7 +6883,7 @@ export function NetworkTopology({
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                   </svg>
-                  {isFullscreen ? (language === 'tr' ? 'Küçült' : 'Exit') : (language === 'tr' ? 'Tam Ekran' : 'Full Screen')}
+                  {isFullscreen ? t.exit : t.fullScreen}
                 </button>
               </TooltipTrigger>
               <TooltipContent>Ctrl+F</TooltipContent>
@@ -7029,7 +7039,7 @@ export function NetworkTopology({
                       const isValidIP = device.ip ? /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(device.ip) : false;
                       const isValidSubnet = device.subnet ? /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(device.subnet) : false;
                       const hasError = !isValidIP || !isValidSubnet;
-                      const displayText = device.ip || (language === 'tr' ? 'IP Yok' : 'No IP');
+                      const displayText = device.ip || t.noIp;
 
                       return (
                         <text
@@ -7169,7 +7179,7 @@ export function NetworkTopology({
                 </div>
                 <div>
                   <h3 id="device-config-title" className={`${isMobile ? 'text-lg' : 'text-xl'} font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                    {language === 'tr' ? 'Yapılandır' : 'Configure'}
+                    {t.configure}
                   </h3>
                   <div className={`text-[10px] font-bold tracking-widest opacity-30 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     {configuringDeviceData?.name}
@@ -7182,7 +7192,7 @@ export function NetworkTopology({
               {/* Hostname */}
               <div className="space-y-2">
                 <label className={`text-[10px] font-black tracking-widest ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                  {language === 'tr' ? 'Cihaz Adı' : 'Device Name'}
+                  {t.deviceName}
                 </label>
                 <div className="relative group">
                   <input
@@ -7202,7 +7212,7 @@ export function NetworkTopology({
               {/* Device Info (MAC Address) */}
               <div className={`p-3 rounded-2xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200/50'}`}>
                 <div className={`text-[10px] font-black tracking-widest mb-2 opacity-70 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
-                  {language === 'tr' ? 'CİHAZ BİLGİSİ' : 'DEVICE INFO'}
+                  {t.deviceInfo}
                 </div>
                 <div className="flex items-center justify-between">
                   <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>MAC Address</span>
@@ -7216,7 +7226,7 @@ export function NetworkTopology({
               {(configuringDeviceData?.type === 'pc' || configuringDeviceData?.type === 'iot') && (
                 <div className={`${isMobile ? 'p-3' : 'p-4'} rounded-2xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200/50'}`}>
                   <div className={`text-[10px] font-black tracking-widest ${isMobile ? 'mb-3' : 'mb-4'} opacity-70 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
-                    {language === 'tr' ? 'IP Yapılandırması' : 'IP Configuration'}
+                    {t.ipConfiguration}
                   </div>
 
                   <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
@@ -7377,15 +7387,16 @@ export function NetworkTopology({
                 <span className="text-xs opacity-90 mt-0.5">{errorToast.details}</span>
               )}
             </div>
-            <button
-              onClick={() => setErrorToast(null)}
-              className="flex-shrink-0 ml-2 hover:bg-red-700 rounded p-1 transition-colors"
-              title={t.close}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <TooltipWrapper title={t.close}>
+              <button
+                onClick={() => setErrorToast(null)}
+                className="flex-shrink-0 ml-2 hover:bg-red-700 rounded p-1 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </TooltipWrapper>
           </div>
         </div>
       )}

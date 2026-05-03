@@ -558,7 +558,7 @@ export interface Translations {
   disabled: string;
   pools: string;
   routerInfoPanel: string;
-  expand: string; 
+  expand: string;
   overview: string;
   deviceInformation: string;
   ipRouting: string;
@@ -573,6 +573,73 @@ export interface Translations {
   wifiStatus: string;
   connectedStatus: string;
   disconnectedStatus: string;
+  // Missing translations
+  noDevicesToList: string;
+  device: string;
+  openServices: string;
+  copyAction: string;
+  dhcpAssignments: string;
+  none: string;
+  projectLoaded: string;
+  fileImportedSuccessfully: string;
+  invalidProjectFile: string;
+  loadFailed: string;
+  applicationError: string;
+  english: string;
+  turkish: string;
+  addDeviceOrCable: string;
+  refreshNetworkF5: string;
+  openGuidedLesson: string;
+  dragToZoomOrScroll: string;
+  resizeAction: string;
+  details: string;
+  showHidePassword: string;
+  ipRenew: string;
+  disconnectAction: string;
+  stpSwitchesUpdated: string;
+  portSecurityBlocked: string;
+  topologyInvalidConnections: string;
+  wirelessClientsConnected: string;
+  apActive: string;
+  wirelessClientsDisconnected: string;
+  apNoClients: string;
+  wirelessStatus: string;
+  dhcpActiveServers: string;
+  clientsLeased: string;
+  // Additional missing translations for NetworkTopology
+  invalidIpv4Address: string;
+  invalidSubnetMask: string;
+  invalidGatewayAddress: string;
+  invalidDnsAddress: string;
+  invalidIpv6Address: string;
+  passive: string;
+  motionYes: string;
+  addPcDevice: string;
+  addL2Switch: string;
+  addL3Switch: string;
+  addRouter: string;
+  addIotDevice: string;
+  cableTypeSelector: string;
+  straightCable: string;
+  crossoverCable: string;
+  consoleCable: string;
+  dragToZoomOrScroll: string;
+  refreshNetwork: string;
+  refresh: string;
+  reset: string;
+  resetView: string;
+  configure: string;
+  deviceName: string;
+  deviceInfo: string;
+  ipConfiguration: string;
+  ipAddress: string;
+  subnetMask: string;
+  gateway: string;
+  dnsServer: string;
+  noIp: string;
+  fullScreen: string;
+  exit: string;
+  minimize: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -1111,6 +1178,69 @@ const translations: Record<Language, Translations> = {
     wifiStatus: 'WiFi Durumu',
     connectedStatus: 'Bağlı',
     disconnectedStatus: 'Bağlı Değil',
+    // Missing translations
+    noDevicesToList: 'Listelenecek cihaz yok.',
+    device: 'Cihaz',
+    copyAction: 'Kopyala',
+    dhcpAssignments: 'DHCP Atamaları',
+    projectLoaded: 'Proje yüklendi',
+    fileImportedSuccessfully: 'Dosya başarıyla içe aktarıldı.',
+    invalidProjectFile: 'Geçersiz proje dosyası',
+    loadFailed: 'Yükleme başarısız',
+    applicationError: 'Uygulama hatası',
+    english: 'English',
+    turkish: 'Türkçe',
+    refreshNetworkF5: 'Ağı Yenile (F5)',
+    openGuidedLesson: 'Rehberli Dersi Aç',
+    dragToZoomOrScroll: 'Sürükleyerek büyütün',
+    resizeAction: 'Yeniden boyutlandır',
+    details: 'Detaylar',
+    showHidePassword: 'Parolayı Göster/Gizle',
+    ipRenew: 'IP Yenile',
+    disconnectAction: 'Bağlantıyı Kes',
+    stpSwitchesUpdated: 'STP: X switch güncellendi',
+    portSecurityBlocked: 'Port Security: X bloklandı, Y açıldı',
+    topologyInvalidConnections: 'Topoloji: X hatalı bağlantı pasifleştirildi',
+    wirelessClientsConnected: 'X kablosuz istemci bağlandı',
+    apActive: 'X AP aktif',
+    wirelessClientsDisconnected: 'X kablosuz istemci bağlantı yok',
+    wirelessStatus: 'Kablosuz Ağ Durumu',
+    dhcpActiveServers: 'DHCP: X sunucu aktif',
+    clientsLeased: 'X istemci lease aldı',
+    // Additional missing translations for NetworkTopology
+    invalidIpv4Address: 'Geçerli bir IPv4 adresi girin.',
+    invalidSubnetMask: 'Geçerli bir subnet mask girin.',
+    invalidGatewayAddress: 'Geçerli bir gateway adresi girin.',
+    invalidDnsAddress: 'Geçerli bir DNS adresi girin.',
+    invalidIpv6Address: 'Geçerli bir IPv6 adresi girin.',
+    passive: 'PASİF',
+    motionYes: 'Hareket Var',
+    addPcDevice: 'PC cihazı ekle',
+    addL2Switch: 'L2 Switch ekle',
+    addL3Switch: 'L3 Switch ekle',
+    addRouter: 'Router ekle',
+    addIotDevice: 'IoT cihazı ekle',
+    cableTypeSelector: 'Kablo tipi seçici',
+    straightCable: 'Düz kablo',
+    crossoverCable: 'Çapraz kablo',
+    consoleCable: 'Konsol kablo',
+    dragToZoomOrScroll: 'Sürükleyerek büyütün',
+    refreshNetwork: 'Ağı Yenile',
+    refresh: 'Yenile',
+    reset: 'Sıfırla',
+    resetView: 'Sıfırla',
+    configure: 'Yapılandır',
+    deviceName: 'Cihaz Adı',
+    deviceInfo: 'CİHAZ BİLGİSİ',
+    ipConfiguration: 'IP Yapılandırması',
+    ipAddress: 'IP Adresi',
+    subnetMask: 'Alt Ağ Maskesi',
+    gateway: 'Ağ Geçidi',
+    dnsServer: 'DNS Sunucusu',
+    noIp: 'IP Yok',
+    fullScreen: 'Tam Ekran',
+    exit: 'Çık',
+    minimize: 'Küçült',
   },
   en: {
     resetView: 'Reset View',
@@ -1647,6 +1777,69 @@ const translations: Record<Language, Translations> = {
     wifiStatus: 'WiFi Status',
     connectedStatus: 'Connected',
     disconnectedStatus: 'Disconnected',
+    // Missing translations
+    noDevicesToList: 'No devices to list.',
+    device: 'Device',
+    copyAction: 'Copy',
+    dhcpAssignments: 'DHCP Assignments',
+    projectLoaded: 'Project loaded',
+    fileImportedSuccessfully: 'File imported successfully.',
+    invalidProjectFile: 'Invalid project file',
+    loadFailed: 'Load failed',
+    applicationError: 'Application error',
+    english: 'English',
+    turkish: 'Türkçe',
+    refreshNetworkF5: 'Refresh Network (F5)',
+    openGuidedLesson: 'Open Guided Lesson',
+    dragToZoomOrScroll: 'Drag to zoom or scroll',
+    resizeAction: 'Resize',
+    details: 'Details',
+    showHidePassword: 'Show/Hide password',
+    ipRenew: 'IP Renew',
+    disconnectAction: 'Disconnect',
+    stpSwitchesUpdated: 'STP: X switches updated',
+    portSecurityBlocked: 'Port Security: X blocked, Y recovered',
+    topologyInvalidConnections: 'Topology: X invalid connections disabled',
+    wirelessClientsConnected: 'X wireless clients connected',
+    apActive: 'X AP active',
+    wirelessClientsDisconnected: 'X wireless clients disconnected',
+    wirelessStatus: 'Wireless Status',
+    dhcpActiveServers: 'DHCP: X active servers',
+    clientsLeased: 'X clients leased',
+    // Additional missing translations for NetworkTopology
+    invalidIpv4Address: 'Enter a valid IPv4 address.',
+    invalidSubnetMask: 'Enter a valid subnet mask.',
+    invalidGatewayAddress: 'Enter a valid gateway address.',
+    invalidDnsAddress: 'Enter a valid DNS address.',
+    invalidIpv6Address: 'Enter a valid IPv6 address.',
+    passive: 'PASSIVE',
+    motionYes: 'Motion Yes',
+    addPcDevice: 'Add PC device',
+    addL2Switch: 'Add L2 Switch',
+    addL3Switch: 'Add L3 Switch',
+    addRouter: 'Add Router',
+    addIotDevice: 'Add IoT device',
+    cableTypeSelector: 'Cable type selector',
+    straightCable: 'Straight cable',
+    crossoverCable: 'Crossover cable',
+    consoleCable: 'Console cable',
+    dragToZoomOrScroll: 'Drag to zoom or scroll',
+    refreshNetwork: 'Refresh Network',
+    refresh: 'Refresh',
+    reset: 'Reset',
+    resetView: 'Reset',
+    configure: 'Configure',
+    deviceName: 'Device Name',
+    deviceInfo: 'DEVICE INFO',
+    ipConfiguration: 'IP Configuration',
+    ipAddress: 'IP Address',
+    subnetMask: 'Subnet Mask',
+    gateway: 'Gateway',
+    dnsServer: 'DNS Server',
+    noIp: 'No IP',
+    fullScreen: 'Full Screen',
+    exit: 'Exit',
+    minimize: 'Minimize',
   },
 };
 

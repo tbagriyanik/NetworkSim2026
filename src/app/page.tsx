@@ -137,9 +137,11 @@ function SwitchInfoPopover({ router, routerState, t, language, isDark, onClose, 
             <SwitchIcon className="w-3.5 h-3.5 text-purple-500" />
             <span className="text-xs font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
           </div>
-          <button onClick={onClose} className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0" title={t.close}>
-            <X className="w-3 h-3 text-white pointer-events-none" />
-          </button>
+          <TooltipWrapper title={t.close}>
+            <button onClick={onClose} className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0">
+              <X className="w-3 h-3 text-white pointer-events-none" />
+            </button>
+          </TooltipWrapper>
         </div>
         <div className="overflow-hidden cursor-default">
           <div className="p-2 space-y-1 text-xs">
@@ -164,8 +166,8 @@ import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-  TooltipWrapper,
 } from "@/components/ui/tooltip";
+import { TooltipWrapper } from "@/components/ui/TooltipWrapper";
 import { useLanguage, Translations } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { toast } from "@/hooks/use-toast";
@@ -323,13 +325,14 @@ function RefreshDeviceListToast({
               ] as Array<[string, string, boolean]>).map(([label, value, copyable]) => (
                 <tr key={label} className="border-t first:border-t-0 border-slate-200 dark:border-slate-700">
                   <td className="w-24 bg-slate-100 px-2 py-1 font-semibold dark:bg-slate-800">{label}</td>
-                  <td
-                    className={`px-2 py-1 font-mono ${copyable ? 'cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 rounded' : ''}`}
-                    onClick={copyable && value !== '-' ? () => navigator.clipboard.writeText(value) : undefined}
-                    title={copyable ? (isTR ? 'Kopyala' : 'Copy') : undefined}
-                  >
-                    {value}
-                  </td>
+                  <TooltipWrapper title={copyable ? (isTR ? 'Kopyala' : 'Copy') : undefined}>
+                    <td
+                      className={`px-2 py-1 font-mono ${copyable ? 'cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 rounded' : ''}`}
+                      onClick={copyable && value !== '-' ? () => navigator.clipboard.writeText(value) : undefined}
+                    >
+                      {value}
+                    </td>
+                  </TooltipWrapper>
                 </tr>
               ))}
             </tbody>
@@ -2064,7 +2067,7 @@ ${state.bannerMOTD}
 
           if (assignments.length > 0) {
             toast({
-              title: language === 'tr' ? '📝 DHCP Atamaları' : '📝 DHCP Assignments',
+              title: `📝 ${t.dhcpAssignments}`,
               description: (
                 <div className="flex flex-col gap-1 text-xs">
                   {assignments.map((asgn, i) => (
@@ -3169,7 +3172,7 @@ ${state.bannerMOTD}
       if (effectiveWifi?.enabled) services.add(effectiveWifi.mode === 'ap' ? 'WiFi AP' : 'WiFi Client');
       if (state?.security?.vtyLines?.transportInput?.some((input) => input === 'ssh' || input === 'all')) services.add('SSH');
       if (state?.security?.vtyLines?.transportInput?.some((input) => input === 'telnet' || input === 'all')) services.add('Telnet');
-      return Array.from(services).join(', ') || (language === 'tr' ? 'Yok' : 'None');
+      return Array.from(services).join(', ') || t.none;
     };
     const buildRefreshDeviceSummaries = (devices: CanvasDevice[], states: Map<string, SwitchState>): RefreshDeviceSummary[] => {
       const summaries = devices.map((device) => {
@@ -3489,7 +3492,7 @@ ${state.bannerMOTD}
         // Show combined DHCP toast if any assignments were made
         if (dhcpAssignments.length > 0) {
           toast({
-            title: language === 'tr' ? '📝 DHCP Atamaları' : '📝 DHCP Assignments',
+            title: `📝 ${t.dhcpAssignments}`,
             description: (
               <div className="flex flex-col gap-1 text-xs">
                 {dhcpAssignments.map((asgn, i) => (
@@ -3669,17 +3672,13 @@ ${state.bannerMOTD}
       const showRefreshPanel = () => {
         const totalDevices = connectedWirelessClients.length + activeAPs.length + disconnectedPCs.length + disconnectedAPs.length;
         const stpMessage = stpUpdatedCount > 0
-          ? (language === 'tr' ? `✓ STP: ${stpUpdatedCount} switch güncellendi` : `✓ STP: ${stpUpdatedCount} switches updated`)
+          ? `✓ ${t.stpSwitchesUpdated.replace('X', String(stpUpdatedCount))}`
           : '';
         const portSecurityMessage = (portSecurityViolationCount > 0 || portSecurityRecoveredCount > 0)
-          ? (language === 'tr'
-            ? `🔒 Port Security: ${portSecurityViolationCount} bloklandı, ${portSecurityRecoveredCount} açıldı`
-            : `🔒 Port Security: ${portSecurityViolationCount} blocked, ${portSecurityRecoveredCount} recovered`)
+          ? `🔒 ${t.portSecurityBlocked.replace('X', String(portSecurityViolationCount)).replace('Y', String(portSecurityRecoveredCount))}`
           : '';
         const topologyMessage = invalidCount > 0
-          ? (language === 'tr'
-            ? `Topoloji: ${invalidCount} hatalı bağlantı pasifleştirildi`
-            : `Topology: ${invalidCount} invalid connections disabled`)
+          ? `${t.topologyInvalidConnections.replace('X', String(invalidCount))}`
           : '';
 
         if (totalDevices > 0 || dhcpClients.length > 0) {
@@ -3708,7 +3707,7 @@ ${state.bannerMOTD}
           // Show combined WiFi status as a single toast
           if (wifiMessages.length > 0) {
             toast({
-              title: language === 'tr' ? '📶 Kablosuz Ağ Durumu' : '📶 Wireless Status',
+              title: `📶 ${t.wirelessStatus}`,
               description: wifiMessages.join('\n'),
               duration: 4000,
             });
@@ -4055,8 +4054,8 @@ ${state.bannerMOTD}
           // Close guided mode panel if open
           closeGuidedMode();
           toast({
-            title: language === 'tr' ? 'Proje yüklendi' : 'Project loaded',
-            description: language === 'tr' ? 'Dosya başarıyla içe aktarıldı.' : 'File imported successfully.',
+            title: t.projectLoaded,
+            description: t.fileImportedSuccessfully,
           });
           // Reset zoom and pan to top-left
           setZoom(1.0);
@@ -4066,7 +4065,7 @@ ${state.bannerMOTD}
           }
         } else {
           toast({
-            title: language === 'tr' ? 'Geçersiz proje dosyası' : 'Invalid project file',
+            title: t.invalidProjectFile,
             description: t.invalidProjectFile,
             variant: "destructive",
           });
@@ -4074,7 +4073,7 @@ ${state.bannerMOTD}
       } catch (error) {
         errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'fileUpload', error: String(error) }));
         toast({
-          title: language === 'tr' ? 'Yükleme başarısız' : 'Load failed',
+          title: t.loadFailed,
           description: formatErrorForUser(error as Error, t.failedLoadProject).userMessage,
           variant: "destructive",
         });
@@ -4115,7 +4114,7 @@ ${state.bannerMOTD}
   }, []);
 
   return (
-    <AppErrorBoundary fallbackTitle={language === 'tr' ? 'Uygulama hatası' : 'Application error'}>
+    <AppErrorBoundary fallbackTitle={t.applicationError}>
       <div className={cn("h-dvh w-full flex flex-col relative transition-colors duration-700 overflow-x-hidden", isAppLoading ? 'bg-slate-950' : (isDark ? 'bg-slate-950' : 'bg-slate-50'))}>
         {!isAppLoading && (
           <div className="fixed inset-0 pointer-events-none z-0 opacity-40 dark:opacity-20 transition-opacity duration-1000">
@@ -4170,26 +4169,27 @@ ${state.bannerMOTD}
             <div className="w-full">
               <div className="flex items-center justify-between">
                 {/* Logo & Title */}
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      window.location.reload();
-                    }
-                  }}
-                  className="flex items-center gap-3 p-2"
-                  title={t.reloadPage}
-                >
-                  <div className="p-1 flex items-center justify-center">
-                    <img src="/favicon.png" alt="Logo" className="w-7 h-7 object-contain" />
-                  </div>
-                  <div className="hidden md:flex flex-col">
-                    <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent leading-none">
-                      {t.title}
-                    </h2>
-                    <p className="text-xs font-medium mt-1 text-slate-400 dark:text-slate-500">{t.subtitle}</p>
-                  </div>
-                </Button>
+                <TooltipWrapper title={t.reloadPage}>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        window.location.reload();
+                      }
+                    }}
+                    className="flex items-center gap-3 p-2"
+                  >
+                    <div className="p-1 flex items-center justify-center">
+                      <img src="/favicon.png" alt="Logo" className="w-7 h-7 object-contain" />
+                    </div>
+                    <div className="hidden md:flex flex-col">
+                      <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent leading-none">
+                        {t.title}
+                      </h2>
+                      <p className="text-xs font-medium mt-1 text-slate-400 dark:text-slate-500">{t.subtitle}</p>
+                    </div>
+                  </Button>
+                </TooltipWrapper>
 
                 {/* Total Score - Desktop - Hidden for PC devices or when no devices exist */}
                 {activeDeviceType !== 'pc' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && (
@@ -4399,7 +4399,7 @@ ${state.bannerMOTD}
                               onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
                             >
                               <Languages className="w-3.5 h-3.5" />
-                              {language === 'tr' ? 'English' : 'Türkçe'}
+                              {language === 'tr' ? t.english : t.turkish}
                             </Button>
                             <Button
                               variant="outline"
@@ -4469,7 +4469,7 @@ ${state.bannerMOTD}
                           <Plus className="w-7 h-7" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Cihaz veya Kablo Ekle' : 'Add Device or Cable'}</TooltipContent>
+                      <TooltipContent>{t.addDeviceOrCable}</TooltipContent>
                     </Tooltip>
 
                     <div className="w-px h-4 bg-slate-200 mx-0.5 dark:bg-slate-800" />
@@ -4512,7 +4512,7 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh Network (F5)'}</TooltipContent>
+                      <TooltipContent>{t.refreshNetworkF5}</TooltipContent>
                     </Tooltip>
 
                     <div className="w-px h-4 bg-slate-200 mx-0.5 dark:bg-slate-800" />
@@ -4547,7 +4547,7 @@ ${state.bannerMOTD}
                               <BookOpen className="w-5 h-5" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>{language === 'tr' ? 'Rehberli Dersi Aç' : 'Open Guided Lesson'}</TooltipContent>
+                          <TooltipContent>{t.openGuidedLesson}</TooltipContent>
                         </Tooltip>
                       </>
                     )}
@@ -4597,7 +4597,7 @@ ${state.bannerMOTD}
                       aria-selected={projectPickerTab === 'all'}
                     >
                       <FolderOpen className="w-4 h-4" />
-                      <span className="uppercase tracking-wide text-xs">{language === 'tr' ? 'Tüm Projeler' : 'All Projects'}</span>
+                      <span className="uppercase tracking-wide text-xs">{language === 'tr' ? t.openNewProject : 'All Projects'}</span>
                     </button>
                     <button
                       onClick={() => setProjectPickerTab('guided')}
@@ -5005,18 +5005,19 @@ ${state.bannerMOTD}
                       </DialogTitle>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
-                        onClick={() => {
-                          setShowTasksModal(false);
-                          setShowTerminalModal(true);
-                        }}
-                        title={t.switchTerminal}
-                      >
-                        <TerminalIcon className="h-5 w-5" />
-                      </Button>
+                      <TooltipWrapper title={t.switchTerminal}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
+                          onClick={() => {
+                            setShowTasksModal(false);
+                            setShowTerminalModal(true);
+                          }}
+                        >
+                          <TerminalIcon className="h-5 w-5" />
+                        </Button>
+                      </TooltipWrapper>
 
                       <Button
                         variant="ghost"
@@ -5097,17 +5098,18 @@ ${state.bannerMOTD}
                       className="absolute left-[10px] right-8 bottom-0 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20"
                       onPointerDown={(e) => handleResizeStart(e, 's', 'tasks')}
                     />
-                    <div
-                      className="absolute bottom-0 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 dark:border-slate-500/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
-                      onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
-                      title={language === 'tr' ? 'Yeniden boyutlandır' : 'Resize'}
-                    >
-                      <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                        <path d="M6 13L13 6" />
-                        <path d="M9.5 13L13 9.5" />
-                        <path d="M12.5 13L13 12.5" />
-                      </svg>
-                    </div>
+                    <TooltipWrapper title={t.resizeAction}>
+                      <div
+                        className="absolute bottom-0 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 dark:border-slate-500/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
+                        onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
+                      >
+                        <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                          <path d="M6 13L13 6" />
+                          <path d="M9.5 13L13 9.5" />
+                          <path d="M12.5 13L13 12.5" />
+                        </svg>
+                      </div>
+                    </TooltipWrapper>
                   </>
                 )}
               </div>
@@ -5208,17 +5210,18 @@ ${state.bannerMOTD}
                       className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20"
                       onPointerDown={(e) => handleResizeStart(e, 's', 'pc')}
                     />
-                    <div
-                      className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
-                      onPointerDown={(e) => handleResizeStart(e, 'se', 'pc')}
-                      title={language === 'tr' ? 'Yeniden boyutlandır' : 'Resize'}
-                    >
-                      <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                        <path d="M6 13L13 6" />
-                        <path d="M9.5 13L13 9.5" />
-                        <path d="M12.5 13L13 12.5" />
-                      </svg>
-                    </div>
+                    <TooltipWrapper title={t.resizeAction}>
+                      <div
+                        className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
+                        onPointerDown={(e) => handleResizeStart(e, 'se', 'pc')}
+                      >
+                        <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                          <path d="M6 13L13 6" />
+                          <path d="M9.5 13L13 9.5" />
+                          <path d="M12.5 13L13 12.5" />
+                        </svg>
+                      </div>
+                    </TooltipWrapper>
                   </>
                 )}
               </div>
@@ -5260,18 +5263,19 @@ ${state.bannerMOTD}
                       </DialogTitle>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
-                        onClick={() => {
-                          setShowTerminalModal(false);
-                          if (activeDeviceType !== 'pc') setShowTasksModal(true);
-                        }}
-                        title={t.switchTasks}
-                      >
-                        <ShieldCheck className="h-3 w-3" />
-                      </Button>
+                      <TooltipWrapper title={t.switchTasks}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
+                          onClick={() => {
+                            setShowTerminalModal(false);
+                            if (activeDeviceType !== 'pc') setShowTasksModal(true);
+                          }}
+                        >
+                          <ShieldCheck className="h-3 w-3" />
+                        </Button>
+                      </TooltipWrapper>
 
                       <Button
                         variant="ghost"
@@ -5345,17 +5349,18 @@ ${state.bannerMOTD}
                       className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20"
                       onPointerDown={(e) => handleResizeStart(e, 's', 'cli')}
                     />
-                    <div
-                      className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
-                      onPointerDown={(e) => handleResizeStart(e, 'se', 'cli')}
-                      title={language === 'tr' ? 'Yeniden boyutlandır' : 'Resize'}
-                    >
-                      <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                        <path d="M6 13L13 6" />
-                        <path d="M9.5 13L13 9.5" />
-                        <path d="M12.5 13L13 12.5" />
-                      </svg>
-                    </div>
+                    <TooltipWrapper title={t.resizeAction}>
+                      <div
+                        className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
+                        onPointerDown={(e) => handleResizeStart(e, 'se', 'cli')}
+                      >
+                        <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                          <path d="M6 13L13 6" />
+                          <path d="M9.5 13L13 9.5" />
+                          <path d="M12.5 13L13 12.5" />
+                        </svg>
+                      </div>
+                    </TooltipWrapper>
                   </>
                 )}
               </div>
@@ -5438,12 +5443,13 @@ ${state.bannerMOTD}
                                           : 'Unknown';
                                   return (
                                     <>
-                                      <span
-                                        className="w-2 h-2 rounded-full mr-0.5"
-                                        title={statusLabel}
-                                      >
-                                        <span className={`block w-2 h-2 rounded-full ${statusColor} shadow-[0_0_6px_rgba(45,212,191,0.8)]`} />
-                                      </span>
+                                      <TooltipWrapper title={statusLabel}>
+                                        <span
+                                          className="w-2 h-2 rounded-full mr-0.5"
+                                        >
+                                          <span className={`block w-2 h-2 rounded-full ${statusColor} shadow-[0_0_6px_rgba(45,212,191,0.8)]`} />
+                                        </span>
+                                      </TooltipWrapper>
                                       <DeviceIcon
                                         type={activeDeviceType}
                                         switchModel={activeTopologyDevice?.switchModel}
@@ -5833,7 +5839,7 @@ ${state.bannerMOTD}
                           </svg>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{language === 'tr' ? 'Ağı Yenile (F5)' : 'Refresh Network (F5)'}</TooltipContent>
+                      <TooltipContent>{t.refreshNetworkF5}</TooltipContent>
                     </Tooltip>
 
                   </div>
@@ -5931,68 +5937,71 @@ ${state.bannerMOTD}
           </main>
 
           {/* Network Refresh Report - Bottom Left */}
-          {refreshNetworkReport?.show && (
-            <div
-              className={`fixed bottom-16 left-6 w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md cursor-grab active:cursor-grabbing select-none ${isDark
-                ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
-                : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
-                }`}
-              style={{ zIndex: focusedOverlay === 'refresh' ? 200 : 100 }}
-              onMouseDown={() => setFocusedOverlay('refresh')}
-              data-draggable-id="refresh-report"
-              data-drag-handle
-            >
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold flex items-center gap-2">
-                    <span className="text-blue-500 text-lg">🔄</span>
-                    {refreshNetworkReport.title}
-                  </h3>
-                  <button
-                    onClick={() => setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null)}
-                    className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
-                    title="Close"
-                  >
-                    <X className="w-3 h-3 text-white pointer-events-none" />
-                  </button>
-                </div>
+          {
+            refreshNetworkReport?.show && (
+              <div
+                className={`fixed bottom-16 left-6 w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md cursor-grab active:cursor-grabbing select-none ${isDark
+                  ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
+                  : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
+                  }`}
+                style={{ zIndex: focusedOverlay === 'refresh' ? 200 : 100 }}
+                onMouseDown={() => setFocusedOverlay('refresh')}
+                data-draggable-id="refresh-report"
+                data-drag-handle
+              >
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold flex items-center gap-2">
+                      <span className="text-blue-500 text-lg">🔄</span>
+                      {refreshNetworkReport.title}
+                    </h3>
+                    <TooltipWrapper title="Close">
+                      <button
+                        onClick={() => setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null)}
+                        className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
+                      >
+                        <X className="w-3 h-3 text-white pointer-events-none" />
+                      </button>
+                    </TooltipWrapper>
+                  </div>
 
-                <div className="space-y-2 text-xs">
-                  {refreshNetworkReport.dhcpMessages.length > 0 && (
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 opacity-80">
-                      {refreshNetworkReport.dhcpMessages.map((msg, i) => (
-                        <div key={i} className="flex items-center gap-1.5">
-                          <span>{msg}</span>
-                        </div>
-                      ))}
+                  <div className="space-y-2 text-xs">
+                    {refreshNetworkReport.dhcpMessages.length > 0 && (
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 opacity-80">
+                        {refreshNetworkReport.dhcpMessages.map((msg, i) => (
+                          <div key={i} className="flex items-center gap-1.5">
+                            <span>{msg}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {refreshNetworkReport.stpMessage && (
+                      <div className="text-pink-500 font-medium py-0.5 px-2 bg-pink-500/10 rounded-lg w-fit">
+                        {refreshNetworkReport.stpMessage}
+                      </div>
+                    )}
+
+                    {refreshNetworkReport.portSecurityMessage && (
+                      <div className="text-red-500 font-medium py-0.5 px-2 bg-red-500/10 rounded-lg w-fit">
+                        {refreshNetworkReport.portSecurityMessage}
+                      </div>
+                    )}
+
+                    {refreshNetworkReport.topologyMessage && (
+                      <div className="text-amber-500 font-medium py-0.5 px-2 bg-amber-500/10 rounded-lg w-fit">
+                        {refreshNetworkReport.topologyMessage}
+                      </div>
+                    )}
+
+                    <div className={`pt-2 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                      <RefreshDeviceListToast devices={refreshNetworkReport.devices} language={language} />
                     </div>
-                  )}
-
-                  {refreshNetworkReport.stpMessage && (
-                    <div className="text-pink-500 font-medium py-0.5 px-2 bg-pink-500/10 rounded-lg w-fit">
-                      {refreshNetworkReport.stpMessage}
-                    </div>
-                  )}
-
-                  {refreshNetworkReport.portSecurityMessage && (
-                    <div className="text-red-500 font-medium py-0.5 px-2 bg-red-500/10 rounded-lg w-fit">
-                      {refreshNetworkReport.portSecurityMessage}
-                    </div>
-                  )}
-
-                  {refreshNetworkReport.topologyMessage && (
-                    <div className="text-amber-500 font-medium py-0.5 px-2 bg-amber-500/10 rounded-lg w-fit">
-                      {refreshNetworkReport.topologyMessage}
-                    </div>
-                  )}
-
-                  <div className={`pt-2 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
-                    <RefreshDeviceListToast devices={refreshNetworkReport.devices} language={language} />
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )
+          }
 
           {/* Footer - Save Status & Hints */}
           <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-40 border-t backdrop-blur-xl transition-all h-[44px] ${isDark ? 'bg-zinc-950/95 border-zinc-900' : 'bg-white/95 border-zinc-200'
@@ -6158,7 +6167,6 @@ ${state.bannerMOTD}
             onClose={togglePanelMinimize}
             onMinimize={togglePanelMinimize}
             isMinimized={isPanelMinimized}
-            language={language}
             lastCompletedStep={lastCompletedStep}
             isCurrentStepReady={isCurrentStepReady}
             lastCommand={lastCommand}
@@ -6168,7 +6176,7 @@ ${state.bannerMOTD}
             topologyDevices={topologyDevices}
             onCheckAutoComplete={checkStepCompletionWithContext}
           />
-        </div>
+        </div >
       </div >
     </AppErrorBoundary >
   );
@@ -6308,36 +6316,47 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
             <Monitor className="w-3.5 h-3.5 text-blue-500" />
             <span className="text-xs font-black tracking-wider uppercase opacity-30">{pc?.name || pc?.id || 'Unknown'}</span>
           </div>
-          <button
-            onClick={onClose}
-            className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
-            title={t.close}
-          >
-            <X className="w-3 h-3 text-white pointer-events-none" />
-          </button>
+          <TooltipWrapper title={t.close}>
+            <button
+              onClick={onClose}
+              className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
+            >
+              <X className="w-3 h-3 text-white pointer-events-none" />
+            </button>
+          </TooltipWrapper>
         </div>
         <div className="overflow-hidden cursor-default">
           <div className="p-2 space-y-1 text-xs">
-            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.ip || '0.0.0.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
-              <span className="opacity-50">IP</span>
-              <span className="font-mono text-blue-500">{pc?.ip || '0.0.0.0'}</span>
-            </div>
-            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.subnet || '255.255.255.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
-              <span className="opacity-50">Subnet</span>
-              <span className="font-mono opacity-80">{pc?.subnet || '255.255.255.0'}</span>
-            </div>
-            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.gateway || '0.0.0.0')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
-              <span className="opacity-50">GW</span>
-              <span className="font-mono opacity-80">{pc?.gateway || '0.0.0.0'}</span>
-            </div>
-            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.ipv6 || '::')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
-              <span className="opacity-50">IPv6</span>
-              <span className="font-mono opacity-80">{pc?.ipv6 || '::'}</span>
-            </div>
-            <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.macAddress ? normalizeMAC(pc.macAddress) : 'N/A')} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
-              <span className="opacity-50">MAC</span>
-              <span className="font-mono opacity-30 text-xs">{pc?.macAddress ? normalizeMAC(pc.macAddress) : 'N/A'}</span>
-            </div>
+            <TooltipWrapper title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+              <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.ip || '0.0.0.0')}>
+                <span className="opacity-50">IP</span>
+                <span className="font-mono text-blue-500">{pc?.ip || '0.0.0.0'}</span>
+              </div>
+            </TooltipWrapper>
+            <TooltipWrapper title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+              <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.subnet || '255.255.255.0')}>
+                <span className="opacity-50">Subnet</span>
+                <span className="font-mono opacity-80">{pc?.subnet || '255.255.255.0'}</span>
+              </div>
+            </TooltipWrapper>
+            <TooltipWrapper title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+              <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.gateway || '0.0.0.0')}>
+                <span className="opacity-50">GW</span>
+                <span className="font-mono opacity-80">{pc?.gateway || '0.0.0.0'}</span>
+              </div>
+            </TooltipWrapper>
+            <TooltipWrapper title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+              <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.ipv6 || '::')}>
+                <span className="opacity-50">IPv6</span>
+                <span className="font-mono opacity-80">{pc?.ipv6 || '::'}</span>
+              </div>
+            </TooltipWrapper>
+            <TooltipWrapper title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+              <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.macAddress ? normalizeMAC(pc.macAddress) : 'N/A')}>
+                <span className="opacity-50">MAC</span>
+                <span className="font-mono opacity-30 text-xs">{pc?.macAddress ? normalizeMAC(pc.macAddress) : 'N/A'}</span>
+              </div>
+            </TooltipWrapper>
             {pc?.wifi && pc.wifi.enabled && (
               <div className="pt-1 border-t border-slate-500/20">
                 <div className="flex justify-between items-center mb-1">
@@ -6418,9 +6437,10 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
               }}
               disabled={!pc?.id}
               className={`px-2 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:bg-slate-800 disabled:text-slate-500' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:bg-slate-200 disabled:text-slate-400'}`}
-              title={language === 'tr' ? 'Detaylar' : 'Details'}
             >
-              <SettingsIcon className="w-3 h-3" />
+              <TooltipWrapper title={language === 'tr' ? 'Detaylar' : 'Details'}>
+                <SettingsIcon className="w-3 h-3" />
+              </TooltipWrapper>
             </button>
           </div>
         </div>
@@ -6586,13 +6606,14 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
             {router.type.startsWith('switch') ? <SwitchIcon isL3={router.type === 'switchL3'} className="w-3.5 h-3.5 text-purple-500" /> : <RouterIcon className="w-3.5 h-3.5 text-purple-500" />}
             <span className="text-xs font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
           </div>
-          <button
-            onClick={(e) => { e.stopPropagation(); onClose(); }}
-            className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
-            title={t.close}
-          >
-            <X className="w-3 h-3 text-white pointer-events-none" />
-          </button>
+          <TooltipWrapper title={t.close}>
+            <button
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
+              className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
+            >
+              <X className="w-3 h-3 text-white pointer-events-none" />
+            </button>
+          </TooltipWrapper>
         </div>
         <div className="overflow-hidden cursor-default">
           <div className="p-2 space-y-1 text-xs">
@@ -6648,14 +6669,14 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
               <div className="pt-1 border-t border-slate-500/20">
                 <div className="opacity-30 text-xs mb-0.5 uppercase font-bold tracking-tighter">IP Addresses</div>
                 {ipAddresses.map((addr: string, i: number) => (
-                  <div
-                    key={i}
-                    className="font-mono text-xs opacity-70 truncate cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors"
-                    onClick={() => navigator.clipboard.writeText(addr)}
-                    title={language === 'tr' ? 'Kopyala' : 'Copy'}
-                  >
-                    {addr}
-                  </div>
+                  <TooltipWrapper key={i} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+                    <div
+                      className="font-mono text-xs opacity-70 truncate cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors"
+                      onClick={() => navigator.clipboard.writeText(addr)}
+                    >
+                      {addr}
+                    </div>
+                  </TooltipWrapper>
                 ))}
               </div>
             )}
@@ -6669,15 +6690,16 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
             >
               {t.openCLI}
             </button>
-            <button
-              onClick={() => {
-                onOpenPanel(router.id);
-              }}
-              className={`px-2 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
-              title={language === 'tr' ? 'Detaylar' : 'Details'}
-            >
-              <SettingsIcon className="w-3 h-3" />
-            </button>
+            <TooltipWrapper title={language === 'tr' ? 'Detaylar' : 'Details'}>
+              <button
+                onClick={() => {
+                  onOpenPanel(router.id);
+                }}
+                className={`px-2 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
+              >
+                <SettingsIcon className="w-3 h-3" />
+              </button>
+            </TooltipWrapper>
           </div>
         </div>
       </div>
