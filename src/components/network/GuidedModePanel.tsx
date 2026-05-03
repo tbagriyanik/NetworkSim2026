@@ -216,6 +216,7 @@ export function GuidedModePanel({
     if (!target.closest('[data-drag-handle]')) return;
 
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
     dragRef.current = {
       startX: e.clientX,
@@ -228,8 +229,8 @@ export function GuidedModePanel({
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging || !dragRef.current) return;
 
+    // Cancel previous animation frame to prevent stacking
     let animationFrameId: number | null = null;
-
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
     animationFrameId = requestAnimationFrame(() => {
@@ -262,6 +263,9 @@ export function GuidedModePanel({
     const target = e.target as HTMLElement;
     if (!target.closest('[data-drag-handle]')) return;
 
+    e.preventDefault();
+    e.stopPropagation();
+
     const touch = e.touches[0];
     setIsDragging(true);
     dragRef.current = {
@@ -275,8 +279,8 @@ export function GuidedModePanel({
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || !dragRef.current) return;
 
+    // Cancel previous animation frame to prevent stacking
     let animationFrameId: number | null = null;
-
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
     animationFrameId = requestAnimationFrame(() => {
@@ -307,9 +311,72 @@ export function GuidedModePanel({
 
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!isDragging || !dragRef.current) return;
+
+        // Cancel previous animation frame to prevent stacking
+        let animationFrameId: number | null = null;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+        animationFrameId = requestAnimationFrame(() => {
+          if (!isDragging || !dragRef.current) return;
+
+          const dx = e.clientX - dragRef.current.startX;
+          const dy = e.clientY - dragRef.current.startY;
+
+          // Mark as dragged if moved significantly
+          if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            setHasDragged(true);
+          }
+
+          setPosition({
+            x: Math.max(0, Math.min(window.innerWidth - 320, dragRef.current.initialX + dx)),
+            y: Math.max(0, Math.min(window.innerHeight - 200, dragRef.current.initialY + dy))
+          });
+        });
+      };
+
+      const handleMouseUp = () => {
+        setIsDragging(false);
+        dragRef.current = null;
+        setTimeout(() => setHasDragged(false), 100);
+      };
+
+      const handleTouchMove = (e: TouchEvent) => {
+        if (!isDragging || !dragRef.current) return;
+
+        // Cancel previous animation frame to prevent stacking
+        let animationFrameId: number | null = null;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+        animationFrameId = requestAnimationFrame(() => {
+          if (!isDragging || !dragRef.current) return;
+
+          const touch = e.touches[0];
+          const dx = touch.clientX - dragRef.current.startX;
+          const dy = touch.clientY - dragRef.current.startY;
+
+          // Mark as dragged if moved significantly
+          if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            setHasDragged(true);
+          }
+
+          setPosition({
+            x: Math.max(0, Math.min(window.innerWidth - 320, dragRef.current.initialX + dx)),
+            y: Math.max(0, Math.min(window.innerHeight - 200, dragRef.current.initialY + dy))
+          });
+        });
+      };
+
+      const handleTouchEnd = () => {
+        setIsDragging(false);
+        dragRef.current = null;
+        setTimeout(() => setHasDragged(false), 100);
+      };
+
+      window.addEventListener('mousemove', handleMouseMove, { passive: true });
       window.addEventListener('mouseup', handleMouseUp);
-      window.addEventListener('touchmove', handleTouchMove);
+      window.addEventListener('touchmove', handleTouchMove, { passive: true });
       window.addEventListener('touchend', handleTouchEnd);
 
       return () => {
@@ -319,7 +386,7 @@ export function GuidedModePanel({
         window.removeEventListener('touchend', handleTouchEnd);
       };
     }
-  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
+  }, [isDragging]);
 
   // Trigger celebration when all steps are completed
   const completedCount = project?.steps.filter(s => s.completed).length || 0;

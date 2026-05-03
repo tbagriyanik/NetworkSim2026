@@ -4623,7 +4623,10 @@ export function PCPanel({
                                       className={`w-full rounded-lg border px-3 py-2 text-sm font-mono resize-y ${isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-700'}`}
                                     />
                                     {serviceHttpEnabled && (
-                                      <div className={`text-xs rounded-lg px-3 py-2 ${isDark ? 'bg-slate-950 border border-slate-800 text-slate-200' : 'bg-slate-50 border border-slate-200 text-slate-700'}`}>
+                                      <div
+                                        className={`text-xs rounded-lg px-3 py-2 overflow-hidden ${isDark ? 'bg-slate-950 border border-slate-800 text-slate-200' : 'bg-slate-50 border border-slate-200 text-slate-700'}`}
+                                        style={{ contain: 'layout style paint', willChange: 'auto' }}
+                                      >
                                         <span dangerouslySetInnerHTML={{ __html: sanitizeHTTPContent(serviceHttpContent || 'Merhaba Dünya!') }} />
                                       </div>
                                     )}
@@ -5429,7 +5432,7 @@ export function PCPanel({
                           <div
                             ref={outputRef}
                             className={`flex-1 overflow-y-auto overflow-x-hidden scroll-smooth p-3 md:p-6 space-y-1.5 font-geist-mono leading-relaxed custom-scrollbar ${isMobile ? 'mobile-scroll' : ''} ${isPcPoweredOff ? 'bg-black' : terminalBg}`}
-                            style={{ ...mobileVerticalScrollStyle, fontSize: `${fontSize}px`, paddingBottom: isMobile ? '8rem' : '7rem' }}
+                            style={{ ...mobileVerticalScrollStyle, fontSize: `${fontSize}px`, paddingBottom: isMobile ? '8rem' : '7rem', contain: 'layout style paint' }}
                           >
                             {isPcPoweredOff ? (
                               <div className="h-full flex flex-col items-center justify-center gap-3">
@@ -5927,12 +5930,13 @@ export function PCPanel({
                   <X className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="flex-1 overflow-hidden bg-gradient-to-b from-transparent to-slate-50 dark:to-slate-900">
+              <div className="flex-1 overflow-hidden bg-gradient-to-b from-transparent to-slate-50 dark:to-slate-900" style={{ contain: 'layout style paint' }}>
                 <iframe
                   title={httpAppTitle}
                   srcDoc={httpAppSrcDoc}
                   sandbox="allow-forms allow-scripts allow-same-origin allow-modals"
                   className="h-full w-full border-0 bg-white"
+                  style={{ display: 'block' }}
                 />
               </div>
               <div

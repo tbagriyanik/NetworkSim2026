@@ -104,12 +104,12 @@ export function ModernPanel({
             startHeight: panelRef.current.offsetHeight,
         };
 
-        let animationFrameId: number;
+        let animationFrameId: number | null = null;
 
         const handleMouseMove = (moveEvent: MouseEvent) => {
             if (!panelRef.current || !isResizingRef.current) return;
 
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
 
             animationFrameId = requestAnimationFrame(() => {
                 if (!panelRef.current || !isResizingRef.current) return;
@@ -128,7 +128,7 @@ export function ModernPanel({
         };
 
         const handleMouseUp = () => {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
             isResizingRef.current = false;
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
@@ -188,12 +188,12 @@ export function ModernPanel({
             startTop: rect.top,
         };
 
-        let animationFrameId: number;
+        let animationFrameId: number | null = null;
 
         const handleMouseMove = (moveEvent: MouseEvent) => {
             if (!panelRef.current || !isDragging) return;
 
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
 
             animationFrameId = requestAnimationFrame(() => {
                 if (!panelRef.current || !isDragging) return;
@@ -212,7 +212,7 @@ export function ModernPanel({
         };
 
         const handleMouseUp = () => {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
             setIsDragging(false);
             document.body.style.cursor = '';
             document.body.style.userSelect = '';

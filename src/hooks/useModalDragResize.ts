@@ -156,7 +156,7 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
     }, []);
 
     useEffect(() => {
-        let animationFrameId: number;
+        let animationFrameId: number | null = null;
 
         const handlePointerMove = (e: PointerEvent) => {
             const ds = dragStateRef.current;
@@ -165,22 +165,27 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
             const modalElement = modalElementRef.current;
             if (!modalElement) return;
 
-            // Use requestAnimationFrame for smoother updates synchronized with the screen refresh
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            
+            // Cancel previous animation frame to prevent stacking
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+            }
+
             animationFrameId = requestAnimationFrame(() => {
                 if (!dragStateRef.current?.active || !modalElementRef.current) return;
+
+                const ds = dragStateRef.current;
+                const modalElement = modalElementRef.current;
 
                 // Direct DOM manipulation - no React state updates during drag/resize
                 if (ds.type === 'drag') {
                     const newX = ds.startPosX + (e.clientX - ds.startX);
                     const newY = ds.startPosY + (e.clientY - ds.startY);
-                    
+
                     // Optimization: Use will-change to hint the browser
                     modalElement.style.willChange = 'left, top';
                     modalElement.style.left = `${newX}px`;
                     modalElement.style.top = `${newY}px`;
-                    
+
                     // Disable transitions during drag
                     modalElement.style.transition = 'none';
                 } else if (ds.type === 'resize' && ds.direction) {
@@ -204,7 +209,7 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
                     modalElement.style.height = `${newH}px`;
                     modalElement.style.left = `${newX}px`;
                     modalElement.style.top = `${newY}px`;
-                    
+
                     // Disable transitions during resize
                     modalElement.style.transition = 'none';
                 }
@@ -212,8 +217,11 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
         };
 
         const handlePointerUp = (e: PointerEvent) => {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+
             const ds = dragStateRef.current;
             if (!ds) return;
 
@@ -252,6 +260,9 @@ export function useModalDragResize(defaultSize: ModalSize = { width: 1200, heigh
         window.addEventListener('pointercancel', handlePointerUp);
 
         return () => {
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+            }
             window.removeEventListener('pointermove', handlePointerMove);
             window.removeEventListener('pointerup', handlePointerUp);
             window.removeEventListener('pointercancel', handlePointerUp);
