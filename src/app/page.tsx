@@ -5098,16 +5098,16 @@ ${state.bannerMOTD}
                       onPointerDown={(e) => handleResizeStart(e, 'w', 'tasks')}
                     />
                     <div
-                      className="absolute right-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20"
+                      className="absolute right-[-5px] top-0 bottom-0 w-[5px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20"
                       onPointerDown={(e) => handleResizeStart(e, 'e', 'tasks')}
                     />
                     <div
-                      className="absolute left-[10px] right-8 bottom-0 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20"
+                      className="absolute left-[10px] right-2 bottom-0 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20"
                       onPointerDown={(e) => handleResizeStart(e, 's', 'tasks')}
                     />
                     <TooltipWrapper title={t.resizeAction}>
                       <div
-                        className="absolute bottom-0 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 dark:border-slate-500/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
+                        className="absolute bottom-0 right-0 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 dark:border-slate-500/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
                         onPointerDown={(e) => handleResizeStart(e, 'se', 'tasks')}
                       >
                         <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
