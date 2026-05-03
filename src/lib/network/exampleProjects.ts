@@ -512,7 +512,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     enabled: true,
     ssid: 'GreenHouse-Network',
     security: 'wpa2',
-    password: 'sera2026',
+    password: 'sera',
     channel: '2.4GHz',
     mode: 'ap'
   };
@@ -527,7 +527,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       wifi: {
         ssid: 'GreenHouse-Network',
         security: 'wpa2',
-        password: 'sera2026',
+        password: 'sera',
         channel: '2.4GHz',
         mode: 'ap'
       }
@@ -568,7 +568,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     enabled: true,
     ssid: 'GreenHouse-Network',
     security: 'wpa2',
-    password: 'sera2026',
+    password: 'sera',
     channel: '2.4GHz',
     mode: 'client'
   };
@@ -581,7 +581,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     enabled: true,
     ssid: 'GreenHouse-Network',
     security: 'wpa2',
-    password: 'sera2026',
+    password: 'sera',
     channel: '2.4GHz',
     mode: 'client'
   };
@@ -597,7 +597,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     enabled: true,
     ssid: 'GreenHouse-Network',
     security: 'wpa2',
-    password: 'sera2026',
+    password: 'sera',
     channel: '2.4GHz',
     mode: 'client'
   };
@@ -613,7 +613,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     enabled: true,
     ssid: 'GreenHouse-Network',
     security: 'wpa2',
-    password: 'sera2026',
+    password: 'sera',
     channel: '2.4GHz',
     mode: 'client'
   };
@@ -629,7 +629,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     enabled: true,
     ssid: 'GreenHouse-Network',
     security: 'wpa2',
-    password: 'sera2026',
+    password: 'sera',
     channel: '2.4GHz',
     mode: 'client'
   };
@@ -646,8 +646,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'greenhouse-note',
       text: isTr
-        ? 'Amaç: Güvenli WiFi ağı ile IoT sensörlerini bağlayarak sera ortamını izlemek.\n\n🌱 AKILLI SERA KROKİSİ:\n1) R1 (Router) WPA2 korumalı WiFi ağı: GreenHouse-Network (şifre: sera2026)\n2) 4 IoT Sensör: Sıcaklık (2.101), Nem (2.102), Işık (2.103), Kapı/Hareket (2.104)\n3) PC-1 ile WiFi panelinden (wget 192.168.2.1) sensörleri izleyin\n4) IoT Panel: wget http://iot-panel (admin/admin) ile cihazları yönetin\n5) Görev: ping 192.168.2.101 ile sensör erişimini test edin'
-        : '🌱 SMART GREENHOUSE SKETCH:\n1) R1 (Router) WPA2 secured WiFi: GreenHouse-Network (password: sera2026)\n2) 4 IoT Sensors: Temperature (.101), Humidity (.102), Light (.103), Door/Motion (.104)\n3) Monitor sensors from PC-1 via WiFi panel (wget 192.168.2.1)\n4) IoT Panel: wget http://iot-panel (admin/admin) to manage devices\n5) Task: Test sensor access with ping 192.168.2.101',
+        ? 'Amaç: Güvenli WiFi ağı ile IoT sensörlerini bağlayarak sera ortamını izlemek.\n\n🌱 AKILLI SERA KROKİSİ:\n1) R1 (Router) WPA2 korumalı WiFi ağı: GreenHouse-Network (şifre: sera)\n2) 4 IoT Sensör: Sıcaklık (2.101), Nem (2.102), Işık (2.103), Kapı/Hareket (2.104)\n3) PC-1 ile WiFi panelinden (wget 192.168.2.1) sensörleri izleyin\n4) IoT Panel: wget http://iot-panel (admin/admin) ile cihazları yönetin\n5) Görev: ping 192.168.2.101 ile sensör erişimini test edin'
+        : '🌱 SMART GREENHOUSE SKETCH:\n1) R1 (Router) WPA2 secured WiFi: GreenHouse-Network (password: sera)\n2) 4 IoT Sensors: Temperature (.101), Humidity (.102), Light (.103), Door/Motion (.104)\n3) Monitor sensors from PC-1 via WiFi panel (wget 192.168.2.1)\n4) IoT Panel: wget http://iot-panel (admin/admin) to manage devices\n5) Task: Test sensor access with ping 192.168.2.101',
       x: 500,
       y: 60,
       width: 480,
@@ -670,7 +670,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     wifi: {
       ssid: 'GreenHouse-Network',
       security: 'wpa2',
-      password: 'sera2026',
+      password: 'sera',
       channel: '2.4GHz',
       mode: 'ap'
     }
@@ -702,7 +702,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' no shutdown',
     '!',
     'wlan GreenHouse-Network 1 GreenHouse-Network',
-    'security wpa psk set-key ascii 0 sera2026',
+    'security wpa psk set-key ascii 0 sera',
     '!',
     'ip dhcp pool greenhouse-pool',
     ' network 192.168.2.0 255.255.255.0',
@@ -2721,8 +2721,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         ? 'Dört çevresel sensör WPA2 güvenli WiFi ile sera izleme yapar.'
         : 'Four environmental sensors use WPA2 WiFi for greenhouse monitoring.',
       detail: isTr
-        ? 'SSID: GreenHouse-Network, Şifre: sera2026 (WPA2), 4 sensör'
-        : 'SSID: GreenHouse-Network, Password: sera2026 (WPA2), 4 sensors',
+        ? 'SSID: GreenHouse-Network, Şifre: sera (WPA2), 4 sensör'
+        : 'SSID: GreenHouse-Network, Password: sera (WPA2), 4 sensors',
       level: 'intermediate',
       data: baseProjectData(greenhouseDevices, greenhouseConnections, greenhouseNotes, [
         { id: 'router-1', state: greenhouseR1State }

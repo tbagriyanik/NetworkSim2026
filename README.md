@@ -66,7 +66,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Rehberli Ders Modu**: Otomatik tamamlama algılama ve ilerleme takibi ile adım adım görevler.
 - **Modern UI/UX**: Klavye kısayolları, glassmorphism efektleri, shimmer loading ve erişilebilir tasarım.
 
-### Son Güncellemeler (v1.7.0)
+### Son Güncellemeler (v1.6.0)
 
 - **UI/UX Performans Faz 1 & 2**:
   - Gereksiz render'ları önlemek için **Zustand Seçiciler** ve memoizasyon eklendi.

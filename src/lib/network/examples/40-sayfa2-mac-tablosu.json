@@ -114,7 +114,7 @@
         },
         "runningConfig": [
           "!",
-          "! Last configuration change at 2026-02-26 22:00:00",
+          "! Last configuration change at-02-26 22:00:00",
           "!",
           "version 15.0",
           "no service pad",
@@ -124,7 +124,7 @@
           "hostname ROUTER-2",
           "! base mac-address 0000.0000.0001",
           "!",
-          "banner motd #Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.#",
+          "banner motd #Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.#",
           "!",
           "!",
           "interface GigabitEthernet0/0",
@@ -158,7 +158,7 @@
           "en"
         ],
         "historyIndex": -1,
-        "bannerMOTD": "Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.",
+        "bannerMOTD": "Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.",
         "version": {
           "nosVersion": "15.4(3)M4",
           "modelName": "ISR 4451 X",
@@ -292,7 +292,7 @@
         ],
         "commandHistory": [],
         "historyIndex": -1,
-        "bannerMOTD": "Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.",
+        "bannerMOTD": "Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.",
         "version": {
           "nosVersion": "15.0(2)SE4",
           "modelName": "WS-C2960-24TT-L",
@@ -456,7 +456,7 @@
         ],
         "commandHistory": [],
         "historyIndex": -1,
-        "bannerMOTD": "Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.",
+        "bannerMOTD": "Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.",
         "version": {
           "nosVersion": "15.0(2)SE4",
           "modelName": "WS-C2960-24TT-L",
@@ -936,7 +936,7 @@
         },
         "runningConfig": [
           "!",
-          "! Last configuration change at 2026-02-26 22:00:00",
+          "! Last configuration change at-02-26 22:00:00",
           "!",
           "version 15.0",
           "no service pad",
@@ -946,7 +946,7 @@
           "hostname SWITCH-1",
           "! base mac-address 0000.0000.0009",
           "!",
-          "banner motd #Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.#",
+          "banner motd #Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.#",
           "!",
           "!",
           "interface FastEthernet0/1",
@@ -1044,7 +1044,7 @@
           "en"
         ],
         "historyIndex": -1,
-        "bannerMOTD": "Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.",
+        "bannerMOTD": "Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.",
         "version": {
           "nosVersion": "15.0(2)SE4",
           "modelName": "WS-C2960-24TT-L",
@@ -1095,7 +1095,7 @@
         {
           "id": "banner-load-static",
           "type": "output",
-          "content": "Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.\n"
+          "content": "Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.\n"
         },
         {
           "id": "boot-1-0000.0000.0001",
@@ -1191,7 +1191,7 @@
         {
           "id": "banner-initial",
           "type": "output",
-          "content": "\nWelcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.\n"
+          "content": "\nWelcome to the Network Simulator\nUnauthorized access is strictly prohibited.\n"
         },
         {
           "id": "boot-ready",
@@ -1206,7 +1206,7 @@
         {
           "id": "banner-load-static",
           "type": "output",
-          "content": "Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.\n"
+          "content": "Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.\n"
         },
         {
           "id": "boot-1",
@@ -1336,7 +1336,7 @@
         {
           "id": "banner-initial",
           "type": "output",
-          "content": "\nWelcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.\n"
+          "content": "\nWelcome to the Network Simulator\nUnauthorized access is strictly prohibited.\n"
         },
         {
           "id": "boot-ready",

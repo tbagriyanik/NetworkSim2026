@@ -1,4 +1,4 @@
-// Network Simulator 2026 Types
+// Network Simulator Types
 
 export type CommandMode =
   | 'user'           // Switch>

@@ -7,22 +7,27 @@ import { FeatureFlagProvider } from '@/contexts/FeatureFlagContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { DraggableDialogManager } from '@/components/DraggableDialogManager';
+import { AppErrorBoundary } from '@/components/ui/AppErrorBoundary';
+import { Toaster } from '@/components/ui/toaster';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <LayoutProvider>
-          <FeatureFlagProvider>
-            <TooltipProvider delayDuration={0}>
-              <SidebarProvider>
-                <DraggableDialogManager />
-                {children}
-              </SidebarProvider>
-            </TooltipProvider>
-          </FeatureFlagProvider>
-        </LayoutProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <AppErrorBoundary>
+      <ThemeProvider>
+        <LanguageProvider>
+          <LayoutProvider>
+            <FeatureFlagProvider>
+              <TooltipProvider delayDuration={0}>
+                <SidebarProvider>
+                  <DraggableDialogManager />
+                  {children}
+                  <Toaster />
+                </SidebarProvider>
+              </TooltipProvider>
+            </FeatureFlagProvider>
+          </LayoutProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </AppErrorBoundary>
   );
 }

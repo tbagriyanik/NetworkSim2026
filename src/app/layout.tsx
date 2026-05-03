@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Network Simulator 2026",
+  title: "Network Simulator",
   description: "Interactive Network NOS switch simulator for learning network configuration. Practice CLI commands, VLAN management, and security settings.",
   keywords: ["Network", "Switch", "Simulator", "NOS", "Network", "CLI", "VLAN", "Learning"],
   authors: [{ name: "Network Simulator Team" }],
@@ -24,15 +24,15 @@ export const metadata: Metadata = {
     icon: "/favicon.png",
   },
   openGraph: {
-    title: "Network Simulator 2026",
+    title: "Network Simulator",
     description: "Practice Network NOS commands in an interactive web-based simulator",
     url: "https://yunus.sf.net",
-    siteName: "Network Simulator 2026",
+    siteName: "Network Simulator",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Network Simulator 2026",
+    title: "Network Simulator",
     description: "Practice Network NOS commands in an interactive web-based simulator",
   },
 };

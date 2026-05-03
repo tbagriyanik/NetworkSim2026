@@ -458,7 +458,7 @@
         ],
         "commandHistory": [],
         "historyIndex": -1,
-        "bannerMOTD": "Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.",
+        "bannerMOTD": "Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.",
         "version": {
           "nosVersion": "15.0(2)SE4",
           "modelName": "WS-C2960-24TT-L",
@@ -622,7 +622,7 @@
         ],
         "commandHistory": [],
         "historyIndex": -1,
-        "bannerMOTD": "Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.",
+        "bannerMOTD": "Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.",
         "version": {
           "nosVersion": "15.0(2)SE4",
           "modelName": "WS-C2960-24TT-L",
@@ -786,7 +786,7 @@
         ],
         "commandHistory": [],
         "historyIndex": -1,
-        "bannerMOTD": "Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.",
+        "bannerMOTD": "Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.",
         "version": {
           "nosVersion": "15.0(2)SE4",
           "modelName": "WS-C2960-24TT-L",
@@ -950,7 +950,7 @@
         ],
         "commandHistory": [],
         "historyIndex": -1,
-        "bannerMOTD": "Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.",
+        "bannerMOTD": "Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.",
         "version": {
           "nosVersion": "15.0(2)SE4",
           "modelName": "WS-C2960-24TT-L",
@@ -1016,7 +1016,7 @@
         {
           "id": "banner-initial",
           "type": "output",
-          "content": "\nWelcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.\n"
+          "content": "\nWelcome to the Network Simulator\nUnauthorized access is strictly prohibited.\n"
         },
         {
           "id": "boot-ready",
@@ -1046,7 +1046,7 @@
         {
           "id": "banner-initial",
           "type": "output",
-          "content": "\nWelcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.\n"
+          "content": "\nWelcome to the Network Simulator\nUnauthorized access is strictly prohibited.\n"
         },
         {
           "id": "boot-ready",
@@ -1076,7 +1076,7 @@
         {
           "id": "banner-initial",
           "type": "output",
-          "content": "\nWelcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.\n"
+          "content": "\nWelcome to the Network Simulator\nUnauthorized access is strictly prohibited.\n"
         },
         {
           "id": "boot-ready",
@@ -1106,7 +1106,7 @@
         {
           "id": "banner-initial",
           "type": "output",
-          "content": "\nWelcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.\n"
+          "content": "\nWelcome to the Network Simulator\nUnauthorized access is strictly prohibited.\n"
         },
         {
           "id": "boot-ready",

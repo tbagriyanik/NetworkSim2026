@@ -3,12 +3,13 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Loader2, Wifi, Server, Database, AlertCircle } from 'lucide-react';
+import { Loader2, Wifi, Server, Database, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   text?: string;
+  variant?: 'default' | 'pulse' | 'bounce';
 }
 
 const sizeMap = {
@@ -18,26 +19,77 @@ const sizeMap = {
   xl: 'w-12 h-12',
 };
 
-export function LoadingSpinner({ size = 'md', className, text }: LoadingSpinnerProps) {
+export function LoadingSpinner({
+  size = 'md',
+  className,
+  text,
+  variant = 'default',
+}: LoadingSpinnerProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
+  const spinnerClass = variant === 'pulse' ? 'animate-pulse' : variant === 'bounce' ? 'animate-bounce' : 'animate-spin';
+
   return (
     <div className={cn('flex flex-col items-center justify-center gap-3', className)}>
-      <Loader2
-        className={cn(
-          'animate-spin text-primary',
-          sizeMap[size]
-        )}
-      />
+      <Loader2 className={cn('text-primary', sizeMap[size], spinnerClass)} />
       {text && (
-        <span className={cn(
-          'text-sm animate-pulse',
-          isDark ? 'text-slate-400' : 'text-slate-600'
-        )}>
+        <span
+          className={cn(
+            'text-sm',
+            isDark ? 'text-slate-400' : 'text-slate-600'
+          )}
+        >
           {text}
         </span>
       )}
+    </div>
+  );
+}
+
+interface ProgressIndicatorProps {
+  current: number;
+  total: number;
+  label?: string;
+  className?: string;
+}
+
+export function ProgressIndicator({
+  current,
+  total,
+  label,
+  className,
+}: ProgressIndicatorProps) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const percentage = Math.round((current / total) * 100);
+
+  return (
+    <div className={cn('flex flex-col gap-2', className)}>
+      {label && (
+        <div className="flex justify-between items-center">
+          <span className={cn('text-sm font-medium', isDark ? 'text-slate-300' : 'text-slate-700')}>
+            {label}
+          </span>
+          <span className={cn('text-xs', isDark ? 'text-slate-500' : 'text-slate-500')}>
+            {current} / {total}
+          </span>
+        </div>
+      )}
+      <div
+        className={cn(
+          'w-full h-2 rounded-full overflow-hidden',
+          isDark ? 'bg-slate-700' : 'bg-slate-200'
+        )}
+      >
+        <div
+          className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300"
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+      <span className={cn('text-xs', isDark ? 'text-slate-500' : 'text-slate-500')}>
+        {percentage}%
+      </span>
     </div>
   );
 }
@@ -48,6 +100,7 @@ interface EmptyStateProps {
   description?: string;
   action?: React.ReactNode;
   className?: string;
+  variant?: 'default' | 'error' | 'success' | 'info';
 }
 
 export function EmptyState({
@@ -56,9 +109,35 @@ export function EmptyState({
   description,
   action,
   className,
+  variant = 'default',
 }: EmptyStateProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+
+  const variantConfig = {
+    default: {
+      bgColor: isDark ? 'bg-slate-800' : 'bg-slate-100',
+      textColor: isDark ? 'text-slate-400' : 'text-slate-500',
+      icon: icon || <Server className="w-8 h-8" />,
+    },
+    error: {
+      bgColor: isDark ? 'bg-red-900/20' : 'bg-red-100',
+      textColor: isDark ? 'text-red-400' : 'text-red-600',
+      icon: icon || <AlertCircle className="w-8 h-8" />,
+    },
+    success: {
+      bgColor: isDark ? 'bg-green-900/20' : 'bg-green-100',
+      textColor: isDark ? 'text-green-400' : 'text-green-600',
+      icon: icon || <CheckCircle2 className="w-8 h-8" />,
+    },
+    info: {
+      bgColor: isDark ? 'bg-blue-900/20' : 'bg-blue-100',
+      textColor: isDark ? 'text-blue-400' : 'text-blue-600',
+      icon: icon || <Clock className="w-8 h-8" />,
+    },
+  };
+
+  const config = variantConfig[variant];
 
   return (
     <div
@@ -68,87 +147,106 @@ export function EmptyState({
         className
       )}
     >
-      <div
-        className={cn(
-          'w-16 h-16 rounded-full flex items-center justify-center mb-4',
-          isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'
-        )}
-      >
-        {icon || <Server className="w-8 h-8" />}
+      <div className={cn('w-16 h-16 rounded-full flex items-center justify-center mb-4', config.bgColor, config.textColor)}>
+        {config.icon}
       </div>
       <h3
         className={cn(
-          'font-semibold text-lg mb-2',
-          isDark ? 'text-slate-200' : 'text-slate-800'
+          'text-lg font-semibold mb-2',
+          isDark ? 'text-white' : 'text-slate-900'
         )}
       >
         {title}
       </h3>
       {description && (
-        <p
-          className={cn(
-            'text-sm max-w-xs mb-4',
-            isDark ? 'text-slate-400' : 'text-slate-600'
-          )}
-        >
+        <p className={cn('text-sm mb-6 max-w-sm', isDark ? 'text-slate-400' : 'text-slate-600')}>
           {description}
         </p>
       )}
-      {action && <div className="mt-2">{action}</div>}
+      {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }
 
-interface NetworkEmptyStateProps {
-  type: 'no-devices' | 'no-connections' | 'no-data' | 'error';
+interface SkeletonProps {
   className?: string;
-  action?: React.ReactNode;
+  count?: number;
 }
 
-export function NetworkEmptyState({ type, className, action }: NetworkEmptyStateProps) {
+export function Skeleton({ className, count = 1 }: SkeletonProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  const configs = {
-    'no-devices': {
-      icon: <Server className="w-8 h-8" />,
-      title: 'Cihaz Bulunamadı',
-      titleEn: 'No Devices Found',
-      description: 'Topolojiye cihaz eklemek için sürükle-bırak kullanın',
-      descriptionEn: 'Use drag and drop to add devices to the topology',
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className={cn(
+            'animate-pulse rounded',
+            isDark ? 'bg-slate-700' : 'bg-slate-200',
+            className
+          )}
+        />
+      ))}
+    </>
+  );
+}
+
+interface StatusIndicatorProps {
+  status: 'loading' | 'success' | 'error' | 'warning' | 'idle';
+  label?: string;
+  className?: string;
+}
+
+export function StatusIndicator({
+  status,
+  label,
+  className,
+}: StatusIndicatorProps) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
+  const statusConfig = {
+    loading: {
+      icon: <Loader2 className="w-4 h-4 animate-spin" />,
+      color: isDark ? 'text-blue-400' : 'text-blue-600',
+      bgColor: isDark ? 'bg-blue-900/20' : 'bg-blue-100',
     },
-    'no-connections': {
-      icon: <Wifi className="w-8 h-8" />,
-      title: 'Bağlantı Yok',
-      titleEn: 'No Connections',
-      description: 'Cihazları bağlamak için kablo aracını kullanın',
-      descriptionEn: 'Use the cable tool to connect devices',
+    success: {
+      icon: <CheckCircle2 className="w-4 h-4" />,
+      color: isDark ? 'text-green-400' : 'text-green-600',
+      bgColor: isDark ? 'bg-green-900/20' : 'bg-green-100',
     },
-    'no-data': {
-      icon: <Database className="w-8 h-8" />,
-      title: 'Veri Yok',
-      titleEn: 'No Data',
-      description: 'Henüz görüntülenecek veri bulunmuyor',
-      descriptionEn: 'No data to display yet',
+    error: {
+      icon: <AlertCircle className="w-4 h-4" />,
+      color: isDark ? 'text-red-400' : 'text-red-600',
+      bgColor: isDark ? 'bg-red-900/20' : 'bg-red-100',
     },
-    'error': {
-      icon: <AlertCircle className="w-8 h-8" />,
-      title: 'Bir Hata Oluştu',
-      titleEn: 'An Error Occurred',
-      description: 'Bir sorun oluştu. Lütfen tekrar deneyin.',
-      descriptionEn: 'Something went wrong. Please try again.',
+    warning: {
+      icon: <AlertCircle className="w-4 h-4" />,
+      color: isDark ? 'text-yellow-400' : 'text-yellow-600',
+      bgColor: isDark ? 'bg-yellow-900/20' : 'bg-yellow-100',
+    },
+    idle: {
+      icon: <Clock className="w-4 h-4" />,
+      color: isDark ? 'text-slate-400' : 'text-slate-600',
+      bgColor: isDark ? 'bg-slate-800' : 'bg-slate-100',
     },
   };
 
-  const config = configs[type];
+  const config = statusConfig[status];
 
   return (
-    <EmptyState
-      icon={config.icon}
-      title={config.title}
-      description={config.description}
-      action={action}
-      className={className}
-    />
+    <div className={cn('flex items-center gap-2', className)}>
+      <div className={cn('p-1.5 rounded-full', config.bgColor, config.color)}>
+        {config.icon}
+      </div>
+      {label && (
+        <span className={cn('text-sm font-medium', config.color)}>
+          {label}
+        </span>
+      )}
+    </div>
   );
 }

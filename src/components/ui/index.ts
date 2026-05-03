@@ -3,7 +3,7 @@ export { AppSkeleton } from './AppSkeleton';
 export { Skeleton, SkeletonCard } from './skeleton';
 export { AppErrorBoundary } from './AppErrorBoundary';
 export { ModernPanel, PanelContainer } from './ModernPanel';
-export { LoadingSpinner, EmptyState, NetworkEmptyState } from './LoadingStates';
+export { LoadingSpinner, EmptyState, ProgressIndicator, StatusIndicator } from './LoadingStates';
 export { Input } from './input';
 export { Textarea } from './textarea';
 export { Label } from './label';

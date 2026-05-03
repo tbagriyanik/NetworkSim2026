@@ -223,7 +223,7 @@ export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' 
     ],
     commandHistory: [],
     historyIndex: -1,
-    bannerMOTD: 'Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.',
+    bannerMOTD: 'Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.',
     bannerLogin: undefined,
     bannerExec: undefined,
     version: {
@@ -349,7 +349,7 @@ export function createInitialRouterState(mac?: string): SwitchState {
     ],
     commandHistory: [],
     historyIndex: -1,
-    bannerMOTD: 'Welcome to the Network Simulator 2026\nUnauthorized access is strictly prohibited.',
+    bannerMOTD: 'Welcome to the Network Simulator\nUnauthorized access is strictly prohibited.',
     version: {
       nosVersion: '15.4(3)M4',
       modelName: 'ISR 4451 X',

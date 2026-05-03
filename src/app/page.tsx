@@ -4144,9 +4144,9 @@ ${state.bannerMOTD}
 
               <h1
                 className="text-3xl font-black tracking-tighter text-white glitch-text mb-2 text-center"
-                data-text="NETWORK SIMULATOR 2026"
+                data-text="NETWORK SIMULATOR"
               >
-                NETWORK SIMULATOR 2026
+                NETWORK SIMULATOR
               </h1>
 
               <div className="flex items-center gap-2 mt-4">
