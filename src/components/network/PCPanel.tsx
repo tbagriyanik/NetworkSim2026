@@ -4259,7 +4259,7 @@ export function PCPanel({
                               )} />
                             </div>
                             <div className="relative flex flex-1 flex-col overflow-y-auto p-3 md:p-8 custom-scrollbar">
-                              <div className="grid grid-cols-3 gap-2 md:gap-5 py-2">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-5 py-2">
                                 {launcherApps.map((app) => (
                                   <button
                                     key={app.tab}

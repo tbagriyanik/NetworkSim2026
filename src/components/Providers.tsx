@@ -6,6 +6,7 @@ import { LayoutProvider } from '@/contexts/LayoutContext';
 import { FeatureFlagProvider } from '@/contexts/FeatureFlagContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { DraggableDialogManager } from '@/components/DraggableDialogManager';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <FeatureFlagProvider>
             <TooltipProvider delayDuration={0}>
               <SidebarProvider>
+                <DraggableDialogManager />
                 {children}
               </SidebarProvider>
             </TooltipProvider>

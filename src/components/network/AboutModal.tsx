@@ -61,21 +61,21 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate fields
     const errors = {
       name: contactData.name.trim() ? '' : t.contactValidationName,
       email: contactData.email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactData.email) ? '' : t.contactValidationEmail,
       message: contactData.message.trim() ? '' : t.contactValidationMessage
     };
-    
+
     setValidationErrors(errors);
-    
+
     // If any errors, don't submit
     if (errors.name || errors.email || errors.message) {
       return;
     }
-    
+
     setIsSubmitting(true);
     setSubmitStatus('idle');
 
@@ -144,8 +144,8 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] md:max-w-2xl lg:max-w-3xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-2 shrink-0">
+      <DialogContent className="sm:max-w-[600px] md:max-w-2xl lg:max-w-3xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden liquid-glass-light" data-draggable-id="about-modal">
+        <DialogHeader className="p-6 pb-2 shrink-0 cursor-grab active:cursor-grabbing select-none" data-drag-handle>
           <DialogTitle className="sr-only">
             {activeTab === 'about' ? t.aboutTitle : t.commandReference}
           </DialogTitle>
@@ -237,9 +237,9 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
               <div className="space-y-4">
                 <h4 className="text-lg font-bold">{t.termsAndConditions}</h4>
                 <p className="text-sm">{t.termsText}</p>
-                <div className="p-3 bg-cyan-500/5 rounded-lg border border-cyan-500/20">                                   
+                <div className="p-3 bg-cyan-500/5 rounded-lg border border-cyan-500/20">
                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.openSourceInfo}</p>
-                   <a
+                  <a
                     href="https://github.com/tbagriyanik/networksim2026"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -296,7 +296,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                           onChange={e => { setContactData(prev => ({ ...prev, name: e.target.value })); setValidationErrors(prev => ({ ...prev, name: '' })); }}
                           className={cn(
                             "w-full px-4 py-2.5 rounded-xl border outline-none transition-all",
-                            validationErrors.name 
+                            validationErrors.name
                               ? isDark ? "border-red-500/70 bg-red-900/20" : "border-red-500 bg-red-50"
                               : isDark ? "bg-slate-900 border-slate-700 focus:border-amber-500/50" : "bg-white border-slate-200 focus:border-amber-600"
                           )}
@@ -312,7 +312,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                           onChange={e => { setContactData(prev => ({ ...prev, email: e.target.value })); setValidationErrors(prev => ({ ...prev, email: '' })); }}
                           className={cn(
                             "w-full px-4 py-2.5 rounded-xl border outline-none transition-all",
-                            validationErrors.email 
+                            validationErrors.email
                               ? isDark ? "border-red-500/70 bg-red-900/20" : "border-red-500 bg-red-50"
                               : isDark ? "bg-slate-900 border-slate-700 focus:border-amber-500/50" : "bg-white border-slate-200 focus:border-amber-600"
                           )}
@@ -356,7 +356,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                         onChange={e => { setContactData(prev => ({ ...prev, message: e.target.value })); setValidationErrors(prev => ({ ...prev, message: '' })); }}
                         className={cn(
                           "w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none",
-                          validationErrors.message 
+                          validationErrors.message
                             ? isDark ? "border-red-500/70 bg-red-900/20" : "border-red-500 bg-red-50"
                             : isDark ? "bg-slate-900 border-slate-700 focus:border-amber-500/50" : "bg-white border-slate-200 focus:border-amber-600"
                         )}
@@ -437,7 +437,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                 </>
               )}
             </Button>
-)}
+          )}
           <Button
             variant="outline"
             onClick={onStartTour}

@@ -4557,9 +4557,9 @@ ${state.bannerMOTD}
           </header>
 
           <Dialog open={showProjectPicker} onOpenChange={(open) => { setShowProjectPicker(open); if (!open) setProjectSearchQuery(''); }}>
-            <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl`}>
+            <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl liquid-glass-light`} data-draggable-id="project-picker">
               <div className='flex flex-col flex-1 overflow-hidden h-full max-w-full'>
-                <div className='p-4 md:p-8 pb-2 md:pb-4 space-y-4'>
+                <div className='p-4 md:p-8 pb-2 md:pb-4 space-y-4 cursor-grab active:cursor-grabbing select-none' data-drag-handle>
                   <DialogHeader className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r p-4 md:p-6 flex items-center justify-between flex-row'>
                     <DialogTitle className='text-xl bg-gradient-to-br from-white to-slate-900 bg-clip-text text-transparent break-words'>{t.openNewProject}</DialogTitle>
                     <Button
@@ -4849,7 +4849,7 @@ ${state.bannerMOTD}
               else setShowOnboarding(true);
             }}
           >
-            <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl p-0 overflow-hidden`}>
+            <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl p-0 overflow-hidden liquid-glass-light`} data-draggable-id="onboarding">
               {/* Progress Bar */}
               <div className="w-full h-1 bg-slate-200 dark:bg-slate-800">
                 <div
@@ -4858,7 +4858,7 @@ ${state.bannerMOTD}
                 />
               </div>
 
-              <DialogHeader className="px-8 pt-6 pb-2">
+              <DialogHeader className="px-8 pt-6 pb-2 cursor-grab active:cursor-grabbing select-none" data-drag-handle>
                 <div className="flex items-center justify-between gap-4 mb-2">
                   <DialogTitle className={`text-2xl md:text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {onboardingSteps[onboardingStep]?.title}
@@ -4973,7 +4973,7 @@ ${state.bannerMOTD}
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
-              className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0 liquid-glass-light`}
               data-modal-content
               style={{
                 position: 'fixed',
@@ -5119,7 +5119,7 @@ ${state.bannerMOTD}
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
               className={cn(
-                "p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0 shadow-[0_35px_120px_rgba(15,23,42,0.35)]",
+                "p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0 shadow-[0_35px_120px_rgba(15,23,42,0.35)] liquid-glass-light",
                 isDark
                   ? "bg-slate-950/80 border-white/10 backdrop-blur-2xl"
                   : "bg-white/70 border-white/70 backdrop-blur-2xl"
@@ -5229,7 +5229,7 @@ ${state.bannerMOTD}
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
-              className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0`}
+              className={`bg-white border-slate-200 p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0 liquid-glass-light`}
               data-modal-content
               style={{
                 position: 'fixed',
@@ -5932,12 +5932,14 @@ ${state.bannerMOTD}
           {/* Network Refresh Report - Bottom Left */}
           {refreshNetworkReport?.show && (
             <div
-              className={`fixed bottom-16 left-6 w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md ${isDark
+              className={`fixed bottom-16 left-6 w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md cursor-grab active:cursor-grabbing select-none ${isDark
                 ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
                 : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
                 }`}
               style={{ zIndex: focusedOverlay === 'refresh' ? 200 : 100 }}
               onMouseDown={() => setFocusedOverlay('refresh')}
+              data-draggable-id="refresh-report"
+              data-drag-handle
             >
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">

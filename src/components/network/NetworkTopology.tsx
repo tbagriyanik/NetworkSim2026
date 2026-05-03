@@ -2555,6 +2555,21 @@ export function NetworkTopology({
     setSelectedNoteIds([noteId]);
   }, [notes, saveToHistory]);
 
+  // Handle note header touch start (mobile)
+  const handleNoteHeaderTouchStart = useCallback((e: React.TouchEvent, noteId: string) => {
+    e.stopPropagation();
+    if (!canvasRef.current || e.touches.length !== 1) return;
+
+    const touch = e.touches[0];
+    const note = notes.find((n) => n.id === noteId);
+    if (!note) return;
+
+    saveToHistory();
+    setDraggedNoteId(noteId);
+    setNoteDragStart({ x: touch.clientX, y: touch.clientY });
+    setSelectedNoteIds([noteId]);
+  }, [notes, saveToHistory]);
+
   // Handle note resize start
   const handleNoteResizeStart = useCallback((e: ReactMouseEvent, noteId: string) => {
     e.stopPropagation();
@@ -2608,7 +2623,53 @@ export function NetworkTopology({
       }
     };
 
+    const handleTouchMove = (e: globalThis.TouchEvent) => {
+      if (!canvasRef.current || e.touches.length !== 1) return;
+
+      const touch = e.touches[0];
+
+      if (draggedNoteIdRef.current && noteDragStartRef.current) {
+        const currentZoom = zoomRef.current;
+
+        const deltaX = (touch.clientX - noteDragStartRef.current.x) / currentZoom;
+        const deltaY = (touch.clientY - noteDragStartRef.current.y) / currentZoom;
+
+        setNotes((prev) =>
+          prev.map((n) =>
+            n.id === draggedNoteIdRef.current
+              ? { ...n, x: n.x + deltaX, y: n.y + deltaY }
+              : n
+          )
+        );
+
+        setNoteDragStart({ x: touch.clientX, y: touch.clientY });
+      } else if (resizingNoteIdRef.current && noteResizeStartRef.current) {
+        const currentZoom = zoomRef.current;
+
+        const deltaX = (touch.clientX - noteResizeStartRef.current.x) / currentZoom;
+        const deltaY = (touch.clientY - noteResizeStartRef.current.y) / currentZoom;
+
+        const newWidth = Math.max(150, noteResizeStartRef.current.width + deltaX);
+        const newHeight = Math.max(100, noteResizeStartRef.current.height + deltaY);
+
+        setNotes((prev) =>
+          prev.map((n) =>
+            n.id === resizingNoteIdRef.current
+              ? { ...n, width: newWidth, height: newHeight }
+              : n
+          )
+        );
+      }
+    };
+
     const handleMouseUp = () => {
+      setDraggedNoteId(null);
+      setNoteDragStart(null);
+      setResizingNoteId(null);
+      setNoteResizeStart(null);
+    };
+
+    const handleTouchEnd = () => {
       setDraggedNoteId(null);
       setNoteDragStart(null);
       setResizingNoteId(null);
@@ -2617,9 +2678,13 @@ export function NetworkTopology({
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, []);
 
@@ -6276,6 +6341,10 @@ export function NetworkTopology({
                             e.preventDefault();
                             handleNoteHeaderMouseDown(e as unknown as ReactMouseEvent, note.id);
                           }}
+                          onTouchStart={(e) => {
+                            e.preventDefault();
+                            handleNoteHeaderTouchStart(e, note.id);
+                          }}
                           className={`flex items-center gap-2 px-2 text-[10px] font-semibold tracking-widest select-none ${isDark ? 'bg-black/10' : 'bg-black/5'
                             } ${draggedNoteId === note.id ? 'cursor-grabbing' : 'cursor-grab'}`}
                           style={{ height: '24px' }}
@@ -6387,6 +6456,10 @@ export function NetworkTopology({
                             // Allow scroll within note without affecting canvas zoom
                             e.stopPropagation();
                           }}
+                          onTouchMove={(e) => {
+                            // Allow touch scroll within note
+                            e.stopPropagation();
+                          }}
                         >
                           <textarea
                             ref={(el) => { noteTextareaRefs.current[note.id] = el; }}
@@ -6395,6 +6468,14 @@ export function NetworkTopology({
                             onMouseDown={(e) => {
                               // Sadece textarea içine tıklandığında olay durdurulsun, 
                               // böylece canvas sürüklenmez ama scrollbar çalışır
+                              e.stopPropagation();
+                            }}
+                            onTouchStart={(e) => {
+                              // Mobilde textarea'ya dokunuş - drag'i durdur
+                              e.stopPropagation();
+                            }}
+                            onTouchEnd={(e) => {
+                              // Mobilde textarea'dan çıkış
                               e.stopPropagation();
                             }}
                             onSelect={(e) => {
@@ -6430,7 +6511,7 @@ export function NetworkTopology({
                                 onTopologyChange(devices, connections, notes);
                               }
                             }}
-                            className="w-full h-full min-h-full px-2 py-1 bg-transparent outline-none resize-none overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words"
+                            className="w-full h-full min-h-full px-2 py-1 bg-transparent outline-none resize-none overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words touch-manipulation"
                             style={{ fontSize: note.fontSize, lineHeight: 1.35, color: '#000000' }}
                           />
                         </div>
@@ -6441,7 +6522,20 @@ export function NetworkTopology({
                             e.preventDefault();
                             handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id);
                           }}
-                          className="absolute right-1 bottom-1 z-10 w-4 h-4 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity"
+                          onTouchStart={(e) => {
+                            e.preventDefault();
+                            if (e.touches.length === 1) {
+                              const touch = e.touches[0];
+                              const note = notes.find((n) => n.id === note.id);
+                              if (note) {
+                                saveToHistory();
+                                setResizingNoteId(note.id);
+                                setNoteResizeStart({ x: touch.clientX, y: touch.clientY, width: note.width, height: note.height });
+                                setSelectedNoteIds([note.id]);
+                              }
+                            }
+                          }}
+                          className="absolute right-1 bottom-1 z-10 w-4 h-4 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity touch-manipulation"
                           title={t.resizeLabel}
                         >
                           <svg viewBox="0 0 12 12" className="w-full h-full text-black">
@@ -6605,7 +6699,7 @@ export function NetworkTopology({
 
           {/* Zoom Controls - Mobile Float - Above Footer */}
           <div
-            className={`fixed bottom-[60px] right-[10px] items-center gap-1 px-2 py-1 rounded-lg ${isDark ? 'bg-slate-800/90' : 'bg-white/90'
+            className={`fixed bottom-[60px] right-[10px] items-center gap-1 px-2 py-1 rounded-lg liquid-glass-strong ${isDark ? 'bg-slate-800/90' : 'bg-white/90'
               } shadow-lg flex z-40`}
           >
             <button
