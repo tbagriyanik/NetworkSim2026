@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { CanvasDevice, CanvasConnection } from './networkTopology.types';
 
 interface PingAnimationOverlayProps {
@@ -27,132 +27,127 @@ export function PingAnimationOverlay({
   getDeviceCenter,
   language
 }: PingAnimationOverlayProps) {
-  const animationElement = useMemo(() => {
-    if (!pingAnimation) return null;
+  if (!pingAnimation) return null;
 
-    const { path, currentHopIndex, progress, success, frame, hopCount } = pingAnimation;
-    if (!path || path.length < 2 || success !== null) return null;
+  const { path, currentHopIndex, progress, success, frame, hopCount } = pingAnimation;
+  if (!path || path.length < 2 || success !== null) return null;
 
-    // Get current hop devices
-    const fromDevice = devices.find(d => d.id === path[currentHopIndex]);
-    const toDevice = devices.find(d => d.id === path[currentHopIndex + 1]);
-    if (!fromDevice || !toDevice) return null;
+  // Get current hop devices
+  const fromDevice = devices.find(d => d.id === path[currentHopIndex]);
+  const toDevice = devices.find(d => d.id === path[currentHopIndex + 1]);
+  if (!fromDevice || !toDevice) return null;
 
-    // Find connection between these devices to get the bezier curve
-    const conn = connections.find(
-      c => (c.sourceDeviceId === fromDevice.id && c.targetDeviceId === toDevice.id) ||
-        (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)
-    );
+  // Find connection between these devices to get the bezier curve
+  const conn = connections.find(
+    c => (c.sourceDeviceId === fromDevice.id && c.targetDeviceId === toDevice.id) ||
+      (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)
+  );
 
-    // Get port positions for this connection
-    let source: { x: number; y: number };
-    let target: { x: number; y: number };
+  // Get port positions for this connection
+  let source: { x: number; y: number };
+  let target: { x: number; y: number };
 
-    if (conn) {
-      source = getPortPosition(fromDevice, conn.sourceDeviceId === fromDevice.id ? conn.sourcePort : conn.targetPort);
-      target = getPortPosition(toDevice, conn.sourceDeviceId === toDevice.id ? conn.sourcePort : conn.targetPort);
-    } else {
-      source = getDeviceCenter(fromDevice);
-      target = getDeviceCenter(toDevice);
-    }
+  if (conn) {
+    source = getPortPosition(fromDevice, conn.sourceDeviceId === fromDevice.id ? conn.sourcePort : conn.targetPort);
+    target = getPortPosition(toDevice, conn.sourceDeviceId === toDevice.id ? conn.sourcePort : conn.targetPort);
+  } else {
+    source = getDeviceCenter(fromDevice);
+    target = getDeviceCenter(toDevice);
+  }
 
-    const midX = (source.x + target.x) / 2;
-    const midY = (source.y + target.y) / 2;
+  const midX = (source.x + target.x) / 2;
+  const midY = (source.y + target.y) / 2;
 
-    const sameDeviceConnections = connections.filter(
-      c => (c.sourceDeviceId === fromDevice.id && c.targetDeviceId === toDevice.id) ||
-        (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)
-    );
-    const sameConnIndex = conn ? sameDeviceConnections.findIndex(c => c.id === conn.id) : 0;
-    const totalSameConns = sameDeviceConnections.length;
-    const maxOffset = 20;
-    const offset = totalSameConns > 1
-      ? (sameConnIndex - (totalSameConns - 1) / 2) * (maxOffset / Math.max(totalSameConns - 1, 1))
-      : 0;
+  const sameDeviceConnections = connections.filter(
+    c => (c.sourceDeviceId === fromDevice.id && c.targetDeviceId === toDevice.id) ||
+      (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)
+  );
+  const sameConnIndex = conn ? sameDeviceConnections.findIndex(c => c.id === conn.id) : 0;
+  const totalSameConns = sameDeviceConnections.length;
+  const maxOffset = 20;
+  const offset = totalSameConns > 1
+    ? (sameConnIndex - (totalSameConns - 1) / 2) * (maxOffset / Math.max(totalSameConns - 1, 1))
+    : 0;
 
-    const dx = target.x - source.x;
-    const dy = target.y - source.y;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const perpX = -dy / len * offset;
-    const perpY = dx / len * offset;
+  const dx = target.x - source.x;
+  const dy = target.y - source.y;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const perpX = -dy / len * offset;
+  const perpY = dx / len * offset;
 
-    const controlPoint1 = {
-      x: midX + perpX,
-      y: source.y + perpY + Math.abs(offset) * 0.5 - (!conn ? 50 : 0)
-    };
-    const controlPoint2 = {
-      x: midX + perpX,
-      y: target.y + perpY - Math.abs(offset) * 0.5 - (!conn ? 50 : 0)
-    };
+  const controlPoint1 = {
+    x: midX + perpX,
+    y: source.y + perpY + Math.abs(offset) * 0.5 - (!conn ? 50 : 0)
+  };
+  const controlPoint2 = {
+    x: midX + perpX,
+    y: target.y + perpY - Math.abs(offset) * 0.5 - (!conn ? 50 : 0)
+  };
 
-    // Bezier curve calculation (Cubic Bezier)
-    const t = progress;
-    const t2 = t * t;
-    const t3 = t2 * t;
-    const mt = 1 - t;
-    const mt2 = mt * mt;
-    const mt3 = mt2 * mt;
+  // Bezier curve calculation (Cubic Bezier)
+  const t = progress;
+  const t2 = t * t;
+  const t3 = t2 * t;
+  const mt = 1 - t;
+  const mt2 = mt * mt;
+  const mt3 = mt2 * mt;
 
-    const bezierX = mt3 * source.x + 3 * mt2 * t * controlPoint1.x + 3 * mt * t2 * controlPoint2.x + t3 * target.x;
-    const bezierY = mt3 * source.y + 3 * mt2 * t * controlPoint1.y + 3 * mt * t2 * controlPoint2.y + t3 * target.y;
+  const bezierX = mt3 * source.x + 3 * mt2 * t * controlPoint1.x + 3 * mt * t2 * controlPoint2.x + t3 * target.x;
+  const bezierY = mt3 * source.y + 3 * mt2 * t * controlPoint1.y + 3 * mt * t2 * controlPoint2.y + t3 * target.y;
 
-    // Calculate angle for the envelope with smooth rotation
-    const angle = Math.atan2(target.y - source.y, target.x - source.x);
+  // Calculate angle for the envelope with smooth rotation
+  const angle = Math.atan2(target.y - source.y, target.x - source.x);
 
-    // Offset envelope slightly to the side of the line
-    const envelopeOffsetX = Math.sin(angle) * 20;
-    const envelopeOffsetY = -Math.cos(angle) * 20;
+  // Offset envelope slightly to the side of the line
+  const envelopeOffsetX = Math.sin(angle) * 20;
+  const envelopeOffsetY = -Math.cos(angle) * 20;
 
-    // Add smooth scale animation for fluent effect
-    const opacity = 0.9; // Stable opacity for cleaner look
+  // Add smooth scale animation for fluent effect
+  const opacity = 0.9; // Stable opacity for cleaner look
 
-    return (
-      <g key={`ping-${currentHopIndex}-${frame}`}>
-        <g
-          transform={`translate(${bezierX + envelopeOffsetX}, ${bezierY + envelopeOffsetY})`}
-          opacity={opacity}
-        >
-          {/* Hop Count Badge */}
-          {hopCount > 0 && (
-            <g transform="translate(0, -22)">
-              <rect 
-                x="-12" y="-10" width="24" height="14" rx="4" 
-                fill="#0891b2" 
-                stroke="white" 
-                strokeWidth="1"
-              />
-              <text
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="10"
-                fontWeight="bold"
-                fill="white"
-                y="-2"
-              >
-                {language === 'tr' ? `Hop: ${hopCount}` : `Hop: ${hopCount}`}
-              </text>
-            </g>
-          )}
+  return (
+    <g key={`ping-${currentHopIndex}`}>
+      <g
+        transform={`translate(${bezierX + envelopeOffsetX}, ${bezierY + envelopeOffsetY})`}
+        opacity={opacity}
+      >
+        {/* Hop Count Badge */}
+        {hopCount > 0 && (
+          <g transform="translate(0, -22)">
+            <rect
+              x="-12" y="-10" width="24" height="14" rx="4"
+              fill="#0891b2"
+              stroke="white"
+              strokeWidth="1"
+            />
+            <text
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize="10"
+              fontWeight="bold"
+              fill="white"
+              y="-2"
+            >
+              {language === 'tr' ? `Hop: ${hopCount}` : `Hop: ${hopCount}`}
+            </text>
+          </g>
+        )}
 
-          {/* Envelope body */}
-          <rect
-            x="-12" y="-8" width="24" height="16" rx="2"
-            fill="#06b6d4"
-            stroke="#0891b2"
-            strokeWidth="1.5"
-          />
-          {/* Envelope flap */}
-          <path
-            d="M-9 -5 L0 3 L9 -5"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </g>
+        {/* Envelope body */}
+        <rect
+          x="-12" y="-8" width="24" height="16" rx="2"
+          fill="#06b6d4"
+          stroke="#0891b2"
+          strokeWidth="1.5"
+        />
+        {/* Envelope flap */}
+        <path
+          d="M-9 -5 L0 3 L9 -5"
+          fill="none"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
       </g>
-    );
-  }, [pingAnimation, devices, connections, getPortPosition, getDeviceCenter, language]);
-
-  return animationElement;
-}
+    </g>
+  );

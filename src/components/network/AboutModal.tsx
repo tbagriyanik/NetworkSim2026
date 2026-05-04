@@ -324,7 +324,10 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
 
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold opacity-50 px-1">{t.contactType}</label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className={cn(
+                        "flex gap-2 p-1 rounded-lg",
+                        isDark ? "bg-slate-900/50 border border-slate-800" : "bg-slate-100 border border-slate-200"
+                      )}>
                         {[
                           { id: 'bug', label: t.bugReport, icon: Bug, color: 'text-red-500' },
                           { id: 'suggestion', label: t.suggestion, icon: Lightbulb, color: 'text-amber-500' },
@@ -335,14 +338,18 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                             type="button"
                             onClick={() => setContactData(prev => ({ ...prev, type: type.id as any }))}
                             className={cn(
-                              "flex flex-col items-center gap-2 p-3 rounded-xl border transition-all",
+                              "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-md border transition-all font-medium text-sm",
                               contactData.type === type.id
-                                ? isDark ? "bg-amber-500/20 border-amber-500/50" : "bg-amber-50 border-amber-600 shadow-sm"
-                                : isDark ? "bg-slate-900/50 border-slate-800 hover:border-slate-700" : "bg-slate-50 border-slate-100 hover:border-slate-200"
+                                ? isDark
+                                  ? "bg-amber-500/30 border-amber-500/60 text-amber-300 shadow-lg shadow-amber-500/20"
+                                  : "bg-amber-100 border-amber-400 text-amber-700 shadow-md shadow-amber-200"
+                                : isDark
+                                  ? "bg-transparent border-transparent text-slate-400 hover:text-slate-300 hover:bg-slate-800/50"
+                                  : "bg-transparent border-transparent text-slate-600 hover:text-slate-700 hover:bg-slate-200/50"
                             )}
                           >
-                            <type.icon className={cn("w-4 h-4", contactData.type === type.id ? (isDark ? "text-amber-400" : "text-amber-600") : "opacity-40", type.color)} />
-                            <span className="text-[10px] font-bold">{type.label}</span>
+                            <type.icon className="w-4 h-4" />
+                            <span className="text-xs font-bold">{type.label}</span>
                           </button>
                         ))}
                       </div>

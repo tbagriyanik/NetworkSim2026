@@ -75,6 +75,7 @@ function SwitchInfoPopover({ router, routerState, t, language, isDark, onClose, 
   const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const positionRef = useRef(position);
   const isDraggingRef = useRef(false);
+  const animationFrameRef = useRef<number | null>(null);
   const [isDraggingUI, setIsDraggingUI] = useState(false);
   useEffect(() => { positionRef.current = position; }, [position]);
   const handleDragStart = (e: React.MouseEvent) => {
@@ -85,11 +86,10 @@ function SwitchInfoPopover({ router, routerState, t, language, isDark, onClose, 
     isDraggingRef.current = true; setIsDraggingUI(true);
     dragStartRef.current = { x: e.clientX, y: e.clientY, posX: positionRef.current.x, posY: positionRef.current.y };
     if (containerRef.current) { containerRef.current.style.cursor = 'grabbing'; containerRef.current.style.transition = 'none'; containerRef.current.style.willChange = 'bottom, right'; }
-    let animationFrameId: number;
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!isDraggingRef.current) return;
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      animationFrameId = requestAnimationFrame(() => {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = requestAnimationFrame(() => {
         if (!isDraggingRef.current || !containerRef.current) return;
         const dx = moveEvent.clientX - dragStartRef.current.x;
         const dy = dragStartRef.current.y - moveEvent.clientY;
@@ -100,7 +100,7 @@ function SwitchInfoPopover({ router, routerState, t, language, isDark, onClose, 
       });
     };
     const handleMouseUp = () => {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       isDraggingRef.current = false; setIsDraggingUI(false);
       if (containerRef.current) {
         containerRef.current.style.cursor = '';

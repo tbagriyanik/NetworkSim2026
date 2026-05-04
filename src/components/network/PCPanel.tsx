@@ -876,6 +876,7 @@ export function PCPanel({
     originW: number;
     originH: number;
   } | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
 
   // Global Navigation handler (Escape key & Mobile Back Button)
@@ -2312,45 +2313,56 @@ export function PCPanel({
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
-      if (dragStateRef.current) {
-        const dragState = dragStateRef.current;
-        const dx = event.clientX - dragState.startX;
-        const dy = event.clientY - dragState.startY;
-        setBrowserWindow((prev) => ({
-          ...prev,
-          x: Math.max(0, dragState.originX + dx),
-          y: Math.max(0, dragState.originY + dy),
-        }));
-      } else if (resizeStateRef.current) {
-        const state = resizeStateRef.current;
-        const dx = event.clientX - state.startX;
-        const dy = event.clientY - state.startY;
-        setBrowserWindow((prev) => {
-          if (state.side === 'bottom') {
-            return {
-              ...prev,
-              height: Math.max(260, state.originH + dy),
-            };
-          }
-          if (state.side === 'right') {
-            return {
-              ...prev,
-              width: Math.max(420, state.originW + dx),
-            };
-          }
-
-          const nextWidth = Math.max(420, state.originW - dx);
-          const widthDiff = nextWidth - state.originW;
-          return {
-            ...prev,
-            width: nextWidth,
-            x: Math.max(0, state.originX - widthDiff),
-          };
-        });
+      // Cancel previous animation frame
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
+
+      animationFrameRef.current = requestAnimationFrame(() => {
+        if (dragStateRef.current) {
+          const dragState = dragStateRef.current;
+          const dx = event.clientX - dragState.startX;
+          const dy = event.clientY - dragState.startY;
+          setBrowserWindow((prev) => ({
+            ...prev,
+            x: Math.max(0, dragState.originX + dx),
+            y: Math.max(0, dragState.originY + dy),
+          }));
+        } else if (resizeStateRef.current) {
+          const state = resizeStateRef.current;
+          const dx = event.clientX - state.startX;
+          const dy = event.clientY - state.startY;
+          setBrowserWindow((prev) => {
+            if (state.side === 'bottom') {
+              return {
+                ...prev,
+                height: Math.max(260, state.originH + dy),
+              };
+            }
+            if (state.side === 'right') {
+              return {
+                ...prev,
+                width: Math.max(420, state.originW + dx),
+              };
+            }
+
+            const nextWidth = Math.max(420, state.originW - dx);
+            const widthDiff = nextWidth - state.originW;
+            return {
+              ...prev,
+              width: nextWidth,
+              x: Math.max(0, state.originX - widthDiff),
+            };
+          });
+        }
+      });
     };
 
     const handlePointerEnd = () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
       dragStateRef.current = null;
       resizeStateRef.current = null;
     };
@@ -2359,6 +2371,9 @@ export function PCPanel({
     window.addEventListener('pointerup', handlePointerEnd);
     window.addEventListener('pointercancel', handlePointerEnd);
     return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerEnd);
       window.removeEventListener('pointercancel', handlePointerEnd);
@@ -5807,18 +5822,22 @@ export function PCPanel({
                 top: browserWindow.y,
                 width: 'auto',
                 height: browserWindow.height,
+                willChange: 'transform',
+                contain: 'layout style paint',
               }
               : {
                 left: browserWindow.x,
                 top: browserWindow.y,
                 width: browserWindow.width,
                 height: browserWindow.height,
+                willChange: 'transform',
+                contain: 'layout style paint',
               }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
               className={`h-full w-full rounded-2xl shadow-2xl border ${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'} flex flex-col overflow-hidden`}
-              style={{ borderWidth: 3 }}
+              style={{ borderWidth: 3, willChange: 'auto', contain: 'layout style paint' }}
             >
               <div
                 className={`flex items-center justify-between px-4 py-2 border-b cursor-grab active:cursor-grabbing select-none touch-none ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100'}`}

@@ -569,7 +569,7 @@ export const NetworkTopologyView = React.memo(
                 {/* Ping Animation Overlay */}
                 {pingAnimation && (
                   <PingAnimationOverlay
-                    key={`ping-${pingAnimation.frame}`}
+                    key={`ping-${pingAnimation.sourceId}-${pingAnimation.targetId}`}
                     pingAnimation={pingAnimation}
                     devices={devices}
                     connections={connections}

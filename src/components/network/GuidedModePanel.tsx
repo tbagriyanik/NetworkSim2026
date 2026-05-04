@@ -108,6 +108,7 @@ export function GuidedModePanel({
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollViewportRef = useRef<HTMLDivElement>(null);
 
@@ -229,11 +230,12 @@ export function GuidedModePanel({
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging || !dragRef.current) return;
 
-    // Cancel previous animation frame to prevent stacking
-    let animationFrameId: number | null = null;
-    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    // Cancel previous animation frame
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
 
-    animationFrameId = requestAnimationFrame(() => {
+    animationFrameRef.current = requestAnimationFrame(() => {
       if (!isDragging || !dragRef.current) return;
 
       const dx = e.clientX - dragRef.current.startX;
@@ -279,11 +281,12 @@ export function GuidedModePanel({
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || !dragRef.current) return;
 
-    // Cancel previous animation frame to prevent stacking
-    let animationFrameId: number | null = null;
-    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    // Cancel previous animation frame
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
 
-    animationFrameId = requestAnimationFrame(() => {
+    animationFrameRef.current = requestAnimationFrame(() => {
       if (!isDragging || !dragRef.current) return;
 
       const touch = e.touches[0];
@@ -314,11 +317,12 @@ export function GuidedModePanel({
       const handleMouseMove = (e: MouseEvent) => {
         if (!isDragging || !dragRef.current) return;
 
-        // Cancel previous animation frame to prevent stacking
-        let animationFrameId: number | null = null;
-        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        // Cancel previous animation frame
+        if (animationFrameRef.current !== null) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
 
-        animationFrameId = requestAnimationFrame(() => {
+        animationFrameRef.current = requestAnimationFrame(() => {
           if (!isDragging || !dragRef.current) return;
 
           const dx = e.clientX - dragRef.current.startX;
@@ -339,17 +343,22 @@ export function GuidedModePanel({
       const handleMouseUp = () => {
         setIsDragging(false);
         dragRef.current = null;
+        if (animationFrameRef.current !== null) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
         setTimeout(() => setHasDragged(false), 100);
       };
 
       const handleTouchMove = (e: TouchEvent) => {
         if (!isDragging || !dragRef.current) return;
 
-        // Cancel previous animation frame to prevent stacking
-        let animationFrameId: number | null = null;
-        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        // Cancel previous animation frame
+        if (animationFrameRef.current !== null) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
 
-        animationFrameId = requestAnimationFrame(() => {
+        animationFrameRef.current = requestAnimationFrame(() => {
           if (!isDragging || !dragRef.current) return;
 
           const touch = e.touches[0];
@@ -371,6 +380,10 @@ export function GuidedModePanel({
       const handleTouchEnd = () => {
         setIsDragging(false);
         dragRef.current = null;
+        if (animationFrameRef.current !== null) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
         setTimeout(() => setHasDragged(false), 100);
       };
 
@@ -380,6 +393,9 @@ export function GuidedModePanel({
       window.addEventListener('touchend', handleTouchEnd);
 
       return () => {
+        if (animationFrameRef.current !== null) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
         window.removeEventListener('touchmove', handleTouchMove);
@@ -434,7 +450,12 @@ export function GuidedModePanel({
     return (
       <div
         className="fixed z-50 flex flex-col gap-2"
-        style={{ left: position.x, top: position.y }}
+        style={{
+          left: position.x,
+          top: position.y,
+          willChange: isDragging ? 'transform' : 'auto',
+          contain: 'layout style paint'
+        }}
       >
         {/* Main Floating Button */}
         <div
@@ -491,7 +512,9 @@ export function GuidedModePanel({
       style={{
         left: position.x,
         top: position.y,
-        maxHeight: 'calc(100vh - 100px)'
+        maxHeight: 'calc(100vh - 100px)',
+        willChange: isDragging ? 'transform' : 'auto',
+        contain: 'layout style paint'
       }}
     >
       <div
