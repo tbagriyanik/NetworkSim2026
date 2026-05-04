@@ -97,6 +97,15 @@ export function ModernPanel({
         document.body.style.cursor = 'se-resize';
         document.body.style.userSelect = 'none';
 
+        // Implement pointer capture for smooth tracking during fast movements
+        if ('setPointerCapture' in panelRef.current && e instanceof PointerEvent) {
+            try {
+                panelRef.current.setPointerCapture((e as PointerEvent).pointerId);
+            } catch (err) {
+                // Ignore if not a PointerEvent
+            }
+        }
+
         resizeStateRef.current = {
             startX: e.clientX,
             startY: e.clientY,
@@ -120,18 +129,27 @@ export function ModernPanel({
                 const newWidth = Math.max(minWidth, resizeStateRef.current.startWidth + deltaX);
                 const newHeight = Math.max(minHeight, resizeStateRef.current.startHeight + deltaY);
 
-                // Direct DOM update
+                // Direct DOM update with batched style changes
                 panelRef.current.style.width = `${newWidth}px`;
                 panelRef.current.style.height = `${newHeight}px`;
                 panelRef.current.style.willChange = 'width, height';
             });
         };
 
-        const handleMouseUp = () => {
+        const handleMouseUp = (upEvent: MouseEvent) => {
             if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
             isResizingRef.current = false;
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
+
+            // Release pointer capture
+            if (panelRef.current && 'releasePointerCapture' in panelRef.current && upEvent instanceof PointerEvent) {
+                try {
+                    panelRef.current.releasePointerCapture((upEvent as PointerEvent).pointerId);
+                } catch (err) {
+                    // Ignore if not a PointerEvent
+                }
+            }
 
             if (panelRef.current) {
                 const finalWidth = panelRef.current.offsetWidth;
@@ -180,6 +198,15 @@ export function ModernPanel({
 
         if (!panelRef.current) return;
 
+        // Implement pointer capture for smooth tracking during fast movements
+        if ('setPointerCapture' in panelRef.current && e instanceof PointerEvent) {
+            try {
+                panelRef.current.setPointerCapture((e as PointerEvent).pointerId);
+            } catch (err) {
+                // Ignore if not a PointerEvent
+            }
+        }
+
         const rect = panelRef.current.getBoundingClientRect();
         dragStateRef.current = {
             startX: e.clientX,
@@ -204,18 +231,28 @@ export function ModernPanel({
                 const newLeft = dragStateRef.current.startLeft + deltaX;
                 const newTop = dragStateRef.current.startTop + deltaY;
 
-                // Direct DOM update
+                // Direct DOM update with batched style changes
                 panelRef.current.style.left = `${newLeft}px`;
                 panelRef.current.style.top = `${newTop}px`;
                 panelRef.current.style.willChange = 'left, top';
             });
         };
 
-        const handleMouseUp = () => {
+        const handleMouseUp = (upEvent: MouseEvent) => {
             if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
             setIsDragging(false);
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
+
+            // Release pointer capture
+            if (panelRef.current && 'releasePointerCapture' in panelRef.current && upEvent instanceof PointerEvent) {
+                try {
+                    panelRef.current.releasePointerCapture((upEvent as PointerEvent).pointerId);
+                } catch (err) {
+                    // Ignore if not a PointerEvent
+                }
+            }
+
             if (panelRef.current) {
                 panelRef.current.style.willChange = '';
             }

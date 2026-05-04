@@ -6048,7 +6048,7 @@ ${state.bannerMOTD}
           }
 
           {/* Footer - Save Status & Hints */}
-          <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-40 border-t backdrop-blur-xl transition-all h-[44px] ${isDark ? 'bg-zinc-950/95 border-zinc-900' : 'bg-white/95 border-zinc-200'
+          <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-40 border-t backdrop-blur-xl transition-all h-[44px] pb-[50px] ${isDark ? 'bg-zinc-950/95 border-zinc-900' : 'bg-white/95 border-zinc-200'
             } ${showProjectPicker || showOnboarding || activeTab === 'terminal' ? 'hidden' : ''}`}>
             <div className="w-full px-5 py-2 pb-[10px]">
               <div className="flex items-center justify-between gap-4">
