@@ -3,11 +3,11 @@
 ## Güncel Durum
 
 - **Sürüm**: 1.7.0
-- **Tarih**: 2026-05-03
-- **Uygulama kodu**: 67,587
-- **Örnek kod satırı**: 1,229
+- **Tarih**: 2026-05-04
+- **Uygulama kodu**: 70,064
+- **Örnek kod satırı**: 300
 - **Dokümantasyon satırı**: 104
-- **Toplam satır**: 68,920
+- **Toplam satır**: 70,468
 - **Kod dosyası**: 182
 - **Hazır topoloji örneği**: 32
 - **Rehberli ders**: 4
@@ -16,6 +16,19 @@
 Not: Toplam satır sayısı uygulama kodu, örnek kod ve dokümantasyonun birleşimidir.
 
 ## Son Yapılanlar
+
+### Chrome Ping Animasyonu Düzeltmesi (Mayıs 2026)
+
+- **flushSync ile Senkron State Güncellemesi**: React'in batch update mekanizmasını bypass ederek, her ping animasyon frame'inde state güncellemesini hemen render etme.
+- **PingAnimationOverlay Optimizasyonu**: useLayoutEffect ile SVG elemanlarının transform attribute'ü doğrudan DOM'a yazılıyor, React render mekanizmasından bağımsız olarak.
+- **Hook Kuralları Uyumu**: Tüm React hook'ları bileşenin başında çağrılıyor, early return'den önce.
+- **Chrome Uyumluluğu**: Firefox'ta çalışan ping animasyonu artık Chrome'da da düzgün şekilde görünüyor.
+
+### Boş Proje ve Proje Açma Işlemlerinde Refresh Dialog Kapatılması (Mayıs 2026)
+
+- **handleLoadProject**: Proje dosyası yüklendiğinde önceki uygulamadaki ağ yenilendi penceresini kapatıyor.
+- **resetToEmptyProject**: Boş proje açıldığında refresh dialog'u kapatıyor.
+- **applyExampleProject**: Örnek proje seçildiğinde refresh dialog'u kapatıyor (zaten var).
 
 ### Ping Paket Takibi ve Görselleştirme (Mayıs 2026)
 

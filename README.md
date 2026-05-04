@@ -5,8 +5,8 @@ A modern browser-based network simulator for learning switching, routing, wirele
 ![Version](https://img.shields.io/badge/version-1.7.0-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Code Lines](https://img.shields.io/badge/code--lines-67587-blueviolet)
-![Total Lines](https://img.shields.io/badge/total--lines-68920-lightgrey)
+![Code Lines](https://img.shields.io/badge/code--lines-70064-blueviolet)
+![Total Lines](https://img.shields.io/badge/total--lines-70364-lightgrey)
 
 Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
@@ -24,7 +24,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Guided Lesson Mode**: Step-by-step tasks with automatic completion detection and progress tracking.
 - **Modern UI/UX**: Keyboard shortcuts, glassmorphism effects, shimmer loading, and accessible design.
 
-### Recent Updates (v1.7.0)
+### Recent Updates (v1.6.0)
 
 - **UI/UX Performance Phase 1 & 2**:
   - Implemented **Zustand Selectors** for granular state management and reduced re-renders.
@@ -62,10 +62,10 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metric | Value |
 | --- | ---: |
-| Application Code | 67,587 |
-| Example Code | 1,229 |
+| Application Code | 70,064 |
+| Example Code | 300 |
 | Documentation | 104 |
-| **Total Lines** | **68,920** |
+| **Total Lines** | **70,468** |
 | Source Files | 182 |
 | Ready Topologies | 32 |
 | Guided Lessons | 4 |
@@ -123,10 +123,10 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metrik | Değer |
 | --- | ---: |
-| Uygulama Kodu | 67,587 |
-| Örnek Kod | 1,229 |
+| Uygulama Kodu | 70,064 |
+| Örnek Kod | 300 |
 | Dokümantasyon | 104 |
-| **Toplam Satır** | **68,920** |
+| **Toplam Satır** | **70,468** |
 | Kaynak Dosya | 182 |
 | Hazır Topoloji | 32 |
 | Rehberli Ders | 4 |
