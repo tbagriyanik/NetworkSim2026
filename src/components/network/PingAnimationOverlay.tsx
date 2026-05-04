@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { CanvasDevice, CanvasConnection } from './networkTopology.types';
 
 interface PingAnimationOverlayProps {
@@ -27,9 +27,20 @@ export function PingAnimationOverlay({
   getDeviceCenter,
   language
 }: PingAnimationOverlayProps) {
+  const groupRef = useRef<SVGGElement>(null);
+  const innerGroupRef = useRef<SVGGElement>(null);
+  const [, setRenderTrigger] = useState(0);
+  const animationStateRef = useRef({
+    bezierX: 0,
+    bezierY: 0,
+    envelopeOffsetX: 0,
+    envelopeOffsetY: 0,
+    hopCount: 0,
+  });
+
   if (!pingAnimation) return null;
 
-  const { path, currentHopIndex, progress, success, frame, hopCount } = pingAnimation;
+  const { path, currentHopIndex, progress, success, hopCount } = pingAnimation;
   if (!path || path.length < 2 || success !== null) return null;
 
   // Get current hop devices
@@ -102,14 +113,33 @@ export function PingAnimationOverlay({
   const envelopeOffsetX = Math.sin(angle) * 20;
   const envelopeOffsetY = -Math.cos(angle) * 20;
 
-  // Add smooth scale animation for fluent effect
-  const opacity = 0.9; // Stable opacity for cleaner look
+  // Use useLayoutEffect to update DOM directly - bypassing React rendering
+  useLayoutEffect(() => {
+    if (!innerGroupRef.current) return;
+
+    // Update transform directly on DOM
+    const transformStr = `translate(${bezierX + envelopeOffsetX}, ${bezierY + envelopeOffsetY})`;
+    innerGroupRef.current.setAttribute('transform', transformStr);
+
+    // Store state for reference
+    animationStateRef.current = {
+      bezierX,
+      bezierY,
+      envelopeOffsetX,
+      envelopeOffsetY,
+      hopCount,
+    };
+
+    // Force a minimal re-render to ensure React knows the component is active
+    setRenderTrigger(prev => prev + 1);
+  }, [bezierX, bezierY, envelopeOffsetX, envelopeOffsetY, hopCount]);
 
   return (
-    <g key={`ping-${currentHopIndex}`}>
+    <g ref={groupRef}>
       <g
+        ref={innerGroupRef}
         transform={`translate(${bezierX + envelopeOffsetX}, ${bezierY + envelopeOffsetY})`}
-        opacity={opacity}
+        opacity="0.9"
       >
         {/* Hop Count Badge */}
         {hopCount > 0 && (

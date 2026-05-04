@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
+import { flushSync } from 'react-dom';
 import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes } from '@/lib/store/appStore';
 import { SwitchState, CableType, CableInfo, isCableCompatible } from '@/lib/network/types';
 import { checkDeviceConnectivity, getPingDiagnostics, getWirelessSignalStrength, getWirelessDistance } from '@/lib/network/connectivity';
@@ -3566,7 +3567,9 @@ export function NetworkTopology({
           const toId = partialPath[currentHop + 1];
           if (!toId) {
             // Reached end of partial path — show error
-            setPingAnimation(prev => prev ? { ...prev, success: false, isPaused: false } : null);
+            flushSync(() => {
+              setPingAnimation(prev => prev ? { ...prev, success: false, isPaused: false } : null);
+            });
             setErrorToast({ message: isTR ? 'Ping başarısız!' : 'Ping failed!', details: errorMessage });
             // Panel stays open — user closes it manually
             setPingMode(false);
@@ -3585,14 +3588,18 @@ export function NetworkTopology({
           frameCount++;
 
           if (progress < 1) {
-            setPingAnimation(prev => prev ? { ...prev, currentHopIndex: currentHop, progress, frame: frameCount } : null);
+            flushSync(() => {
+              setPingAnimation(prev => prev ? { ...prev, currentHopIndex: currentHop, progress, frame: frameCount } : null);
+            });
             pingAnimationRef.current = requestAnimationFrame(animateFailed);
           } else {
             if (currentHop < partialPath.length - 2) {
               currentHop++;
               startTime = Date.now();
               const shouldPause = pingIsPausedRef.current || pingStepModeRef.current;
-              setPingAnimation(prev => prev ? { ...prev, currentHopIndex: currentHop, progress: 0, frame: frameCount, isPaused: shouldPause } : null);
+              flushSync(() => {
+                setPingAnimation(prev => prev ? { ...prev, currentHopIndex: currentHop, progress: 0, frame: frameCount, isPaused: shouldPause } : null);
+              });
               if (!shouldPause) {
                 pingAnimationRef.current = requestAnimationFrame(animateFailed);
               } else {
@@ -3604,7 +3611,9 @@ export function NetworkTopology({
               }
             } else {
               // Last reachable hop — show failure
-              setPingAnimation(prev => prev ? { ...prev, currentHopIndex: currentHop, progress: 1, frame: frameCount, success: false, isPaused: false } : null);
+              flushSync(() => {
+                setPingAnimation(prev => prev ? { ...prev, currentHopIndex: currentHop, progress: 1, frame: frameCount, success: false, isPaused: false } : null);
+              });
               setErrorToast({ message: isTR ? 'Ping başarısız!' : 'Ping failed!', details: errorMessage });
               // Panel stays open — user closes it manually
               setPingMode(false);
@@ -3720,16 +3729,18 @@ export function NetworkTopology({
         startTime = Date.now();
         // Pause at hop boundary if: explicitly paused OR in step mode
         const shouldPause = pingIsPausedRef.current || pingStepModeRef.current;
-        setPingAnimation(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            currentHopIndex: currentHop,
-            progress: 0,
-            frame: frameCount,
-            hopCount: prev.hopCount + hopCountIncrement,
-            isPaused: shouldPause,
-          };
+        flushSync(() => {
+          setPingAnimation(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              currentHopIndex: currentHop,
+              progress: 0,
+              frame: frameCount,
+              hopCount: prev.hopCount + hopCountIncrement,
+              isPaused: shouldPause,
+            };
+          });
         });
         if (!shouldPause) {
           pingAnimationRef.current = requestAnimationFrame(animate);
@@ -3802,18 +3813,24 @@ export function NetworkTopology({
             returnFrameCount++;
 
             if (prog < 1) {
-              setPingAnimation(prev => prev ? { ...prev, currentHopIndex: returnHop, progress: prog, frame: returnFrameCount } : null);
+              flushSync(() => {
+                setPingAnimation(prev => prev ? { ...prev, currentHopIndex: returnHop, progress: prog, frame: returnFrameCount } : null);
+              });
               pingAnimationRef.current = requestAnimationFrame(animateReturn);
             } else {
               // Snap to end
-              setPingAnimation(prev => prev ? { ...prev, currentHopIndex: returnHop, progress: 1, frame: returnFrameCount } : null);
+              flushSync(() => {
+                setPingAnimation(prev => prev ? { ...prev, currentHopIndex: returnHop, progress: 1, frame: returnFrameCount } : null);
+              });
 
               if (returnHop < returnPath.length - 2) {
                 // More return hops
                 returnHop++;
                 returnStartTime = Date.now();
                 const shouldPause = pingIsPausedRef.current || pingStepModeRef.current;
-                setPingAnimation(prev => prev ? { ...prev, currentHopIndex: returnHop, progress: 0, frame: returnFrameCount, isPaused: shouldPause } : null);
+                flushSync(() => {
+                  setPingAnimation(prev => prev ? { ...prev, currentHopIndex: returnHop, progress: 0, frame: returnFrameCount, isPaused: shouldPause } : null);
+                });
                 if (!shouldPause) {
                   pingAnimationRef.current = requestAnimationFrame(animateReturn);
                 } else {
@@ -3866,9 +3883,11 @@ export function NetworkTopology({
       frameCount++;
 
       if (progress < 1) {
-        setPingAnimation(prev => {
-          if (!prev) return null;
-          return { ...prev, currentHopIndex: currentHop, progress, frame: frameCount };
+        flushSync(() => {
+          setPingAnimation(prev => {
+            if (!prev) return null;
+            return { ...prev, currentHopIndex: currentHop, progress, frame: frameCount };
+          });
         });
         pingAnimationRef.current = requestAnimationFrame(animate);
       } else {
@@ -3885,9 +3904,11 @@ export function NetworkTopology({
         const currentSegmentHopCountIncrement = (isWifi || isRouter) ? 1 : 0;
 
         // Snap to end of this segment
-        setPingAnimation(prev => {
-          if (!prev) return null;
-          return { ...prev, currentHopIndex: currentHop, progress: 1, frame: frameCount };
+        flushSync(() => {
+          setPingAnimation(prev => {
+            if (!prev) return null;
+            return { ...prev, currentHopIndex: currentHop, progress: 1, frame: frameCount };
+          });
         });
 
         advanceToNextHop(currentSegmentHopCountIncrement);
