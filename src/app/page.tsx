@@ -2783,6 +2783,9 @@ ${state.bannerMOTD}
     // Close guided mode panel if open
     closeGuidedMode();
 
+    // Close network refresh report if open
+    setRefreshNetworkReport(null);
+
     // Force return to topology
     setActiveTab('topology');
     setHasUnsavedChanges(false);
@@ -4069,6 +4072,8 @@ ${state.bannerMOTD}
           setHasUnsavedChanges(false);
           // Close guided mode panel if open
           closeGuidedMode();
+          // Close network refresh report if open
+          setRefreshNetworkReport(null);
           toast({
             title: t.projectLoaded,
             description: t.fileImportedSuccessfully,
