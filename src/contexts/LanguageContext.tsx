@@ -1789,6 +1789,22 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+/**
+ * Sistem dilini algılar ve desteklenen dile dönüştürür
+ * Türkçe (tr) ve İngilizce (en) desteklenir
+ */
+function getSystemLanguage(): Language {
+  const browserLang = navigator.language.toLowerCase();
+
+  // Türkçe varyantlarını kontrol et (tr, tr-TR, tr-CY, vb.)
+  if (browserLang.startsWith('tr')) {
+    return 'tr';
+  }
+
+  // Varsayılan olarak İngilizce döndür
+  return 'en';
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>('en');
   const [mounted, setMounted] = useState(false);
@@ -1797,6 +1813,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem('language') as Language | null;
     if (saved && (saved === 'tr' || saved === 'en')) {
       setLanguage(saved);
+    } else {
+      // Sistem dilini algıla ve kullan
+      const systemLang = getSystemLanguage();
+      setLanguage(systemLang);
+      localStorage.setItem('language', systemLang);
     }
     setMounted(true);
   }, []);

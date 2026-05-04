@@ -2115,7 +2115,7 @@ export function NetworkTopology({
         point: { x: portX, y: portY },
       });
     }
-  }, [devices, isDrawingConnection, connectionStart, cableInfo, onCableChange, saveToHistory]);
+  }, [devices, isDrawingConnection, connectionStart, cableInfo, onCableChange, saveToHistory, language, t]);
 
   const generateUniqueLinkLocalIp = useCallback((reservedIps: string[] = []) => {
     const usedIps = new Set([
@@ -5029,6 +5029,9 @@ export function NetworkTopology({
                   r={12}
                   fill="transparent"
                   style={{ pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all', cursor: isDraggingInteractionDisabled ? 'default' : 'pointer' }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
                     handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id);
@@ -5147,6 +5150,9 @@ export function NetworkTopology({
                     r={10}
                     fill="transparent"
                     style={{ pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all', cursor: isDraggingInteractionDisabled ? 'default' : 'pointer' }}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id);
@@ -5259,6 +5265,9 @@ export function NetworkTopology({
                     r={10}
                     fill="transparent"
                     style={{ pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all', cursor: isDraggingInteractionDisabled ? 'default' : 'pointer' }}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id);
