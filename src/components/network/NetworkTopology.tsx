@@ -8,6 +8,7 @@ import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useNetworkRefreshWithPositions } from '@/hooks/useNetworkRefreshWithPositions';
 import { useSpatialPartitioning } from '@/lib/performance/spatial';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -176,6 +177,9 @@ export function NetworkTopology({
   useEffect(() => {
     setDeviceStatesVersion(prev => prev + 1);
   }, [deviceStates]);
+
+  // Use hook to preserve window positions during network refresh
+  const { refreshNetworkWithPositions } = useNetworkRefreshWithPositions(onRefreshNetwork || (() => { }));
 
   // Force continuous updates for IoT measurements
   const [iotUpdateTrigger, setIotUpdateTrigger] = useState(0);
@@ -1511,6 +1515,25 @@ export function NetworkTopology({
     const device = devices.find((d) => d.id === deviceId);
     if (!device) return;
 
+    // Ping mode: handle immediately on mousedown for better Chrome compatibility
+    if (pingMode) {
+      if (!pingSource) {
+        // First click: select source
+        setPingSource(device);
+        setPingResult(null);
+        return; // Don't proceed with drag/selection logic
+      } else {
+        // Second click: run ping immediately
+        if (device.id === pingSource.id) return; // same device, ignore
+        // Exit ping mode immediately, then run animation
+        setPingMode(false);
+        setPingSource(null);
+        // Trigger full ping animation (includes connectivity check + toast)
+        startPingAnimationRef.current?.(pingSource.id, device.id);
+        return; // Don't proceed with drag/selection logic
+      }
+    }
+
     // Save current state before drag starts (for undo)
     saveToHistory();
 
@@ -1574,7 +1597,7 @@ export function NetworkTopology({
       x: (e.clientX - rect.left - pan.x) - device.x * zoom,
       y: (e.clientY - rect.top - pan.y) - device.y * zoom,
     });
-  }, [devices, pan, zoom, selectedDeviceIds, onDeviceSelect]);
+  }, [devices, pan, zoom, selectedDeviceIds, onDeviceSelect, pingMode, pingSource]);
 
   // Handle device click (single click - select only)
   const handleDeviceClick = useCallback((e: ReactMouseEvent, device: CanvasDevice) => {
@@ -1589,23 +1612,8 @@ export function NetworkTopology({
       return;
     }
 
-    // Ping mode: select source then target
-    if (pingMode) {
-      if (!pingSource) {
-        // First click: select source
-        setPingSource(device);
-        setPingResult(null);
-      } else {
-        // Second click: run ping immediately
-        if (device.id === pingSource.id) return; // same device, ignore
-        // Exit ping mode immediately, then run animation
-        setPingMode(false);
-        setPingSource(null);
-        // Trigger full ping animation (includes connectivity check + toast)
-        startPingAnimationRef.current?.(pingSource.id, device.id);
-      }
-      return;
-    }
+    // Ping mode is now handled in handleDeviceMouseDown for better browser compatibility
+    // This click handler only handles normal device selection
 
     // Only handle selection if Shift was NOT pressed during mousedown
     setSelectedDeviceIds([device.id]);
@@ -5625,7 +5633,7 @@ export function NetworkTopology({
         {/* Refresh Network */}
         <TooltipWrapper title={t.refreshNetwork}>
           <button
-            onClick={onRefreshNetwork}
+            onClick={refreshNetworkWithPositions}
             className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg min-h-[48px] min-w-[48px] bg-slate-800 hover:bg-slate-700"
           >
             <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

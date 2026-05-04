@@ -329,7 +329,7 @@ export default function NetworkTopologyContextMenu({
 
       {contextMenu.deviceId && contextMenu.mode === 'device' && (
         <div className="px-2 py-2 space-y-1">
-              {(() => {
+          {(() => {
             const device = devices.find((d) => d.id === contextMenu.deviceId);
             const canPaste = !!onPasteDevice && clipboardLength > 0;
             const hasSelection = selectedDeviceIds.includes(contextMenu.deviceId!);
@@ -350,6 +350,7 @@ export default function NetworkTopologyContextMenu({
                   onClick: () => { onOpenTasks(contextMenu.deviceId!); onClose(); },
                   disabled: !device
                 })}
+                <div className="my-1 border-t border-slate-200/20" />
                 {renderMenuItem({
                   label: t.cut,
                   icon: 'cut',
@@ -390,6 +391,7 @@ export default function NetworkTopologyContextMenu({
                   disabled: devices.length === 0,
                   onClick: () => { onSelectAll(); onClose(); }
                 })}
+                <div className="my-1 border-t border-slate-200/20" />
                 {renderMenuItem({
                   label: t.ping,
                   icon: 'ping',
@@ -403,7 +405,6 @@ export default function NetworkTopologyContextMenu({
                   onClick: () => { onSaveToHistory(); onTogglePowerDevices(targets); onClose(); },
                   disabled: !device
                 })}
-                <div className="my-1 border-t border-slate-200/20" />
                 {renderMenuItem({
                   label: t.refreshNetwork,
                   icon: 'refresh',

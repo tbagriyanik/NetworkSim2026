@@ -5979,53 +5979,17 @@ ${state.bannerMOTD}
             </div>
           </main>
 
-          {/* Network Refresh Report - Bottom Left */}
+          {/* Network Refresh Report - Top Right Toast */}
           {
             refreshNetworkReport?.show && (
               <div
                 data-draggable-id="refresh-network-report"
-                className={`absolute w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-left-full duration-300 backdrop-blur-md select-none ${isDark
+                className={`fixed top-20 right-4 w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-right-full duration-300 backdrop-blur-md select-none ${isDark
                   ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
                   : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
                   }`}
                 style={{
                   zIndex: focusedOverlay === 'refresh' ? 200 : 100,
-                  bottom: (() => {
-                    try {
-                      const saved = localStorage.getItem('draggable_position_refresh-network-report');
-                      if (saved) {
-                        const pos = JSON.parse(saved);
-                        return 'auto';
-                      }
-                    } catch (e) {
-                      // Ignore
-                    }
-                    return '4rem';
-                  })(),
-                  left: (() => {
-                    try {
-                      const saved = localStorage.getItem('draggable_position_refresh-network-report');
-                      if (saved) {
-                        const pos = JSON.parse(saved);
-                        return `${pos.x}px`;
-                      }
-                    } catch (e) {
-                      // Ignore
-                    }
-                    return '1.5rem';
-                  })(),
-                  top: (() => {
-                    try {
-                      const saved = localStorage.getItem('draggable_position_refresh-network-report');
-                      if (saved) {
-                        const pos = JSON.parse(saved);
-                        return `${pos.y}px`;
-                      }
-                    } catch (e) {
-                      // Ignore
-                    }
-                    return 'auto';
-                  })(),
                 }}
                 onMouseDown={() => setFocusedOverlay('refresh')}
               >
@@ -6086,7 +6050,7 @@ ${state.bannerMOTD}
           {/* Footer - Save Status & Hints */}
           <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-40 border-t backdrop-blur-xl transition-all h-[44px] ${isDark ? 'bg-zinc-950/95 border-zinc-900' : 'bg-white/95 border-zinc-200'
             } ${showProjectPicker || showOnboarding || activeTab === 'terminal' ? 'hidden' : ''}`}>
-            <div className="w-full px-5 py-2">
+            <div className="w-full px-5 py-2 pb-[10px]">
               <div className="flex items-center justify-between gap-4">
                 {/* Save Status */}
                 <div className="flex items-center gap-3">
