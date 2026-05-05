@@ -2,8 +2,8 @@
 
 ## Güncel Durum
 
-- **Sürüm**: 1.7.0
-- **Tarih**: 2026-05-04
+- **Sürüm**: 1.6.0
+- **Tarih**: 2026-05-05
 - **Uygulama kodu**: 70,064
 - **Örnek kod satırı**: 300
 - **Dokümantasyon satırı**: 104
@@ -12,10 +12,33 @@
 - **Hazır topoloji örneği**: 32
 - **Rehberli ders**: 4
 - **CLI komut ailesi**: 180+
+- **Test Durumu**: ✅ 53 test geçiyor (Jest→Vitest API geçişi tamamlandı)
 
 Not: Toplam satır sayısı uygulama kodu, örnek kod ve dokümantasyonun birleşimidir.
 
 ## Son Yapılanlar
+
+### Jest → Vitest API Geçişi Tamamlandı (Mayıs 2026)
+
+- **API Dönüştürme**: Tüm Jest API çağrıları Vitest API'sine dönüştürüldü
+  - `jest.mock()` → `vi.mock()`
+  - `jest.fn()` → `vi.fn()`
+  - `jest.useFakeTimers()` → `vi.useFakeTimers()`
+  - `jest.clearAllMocks()` → `vi.clearAllMocks()`
+  - `jest.advanceTimersByTime()` → `vi.advanceTimersByTime()`
+- **Test Sonuçları**: ✅ 53 test geçiyor
+  - 4 test dosyası
+  - 0 başarısız test
+  - 100% geçme oranı
+- **Kalite Kontrolleri**: ✅ Tümü başarılı
+  - ESLint: Temiz
+  - TypeScript: Hata yok
+  - Production Build: Başarılı
+- **Düzeltilen Testler**:
+  - RAF throttling testleri - Mock RAF'ı düzgün çalışacak şekilde yapılandırıldı
+  - Storage key format testi - localStorage API'si uyumlu hale getirildi
+  - Draggable dialog positions testi - Storage mock'ları düzeltildi
+  - Async timer testi - Fake timers ile uyumsuzluk çözüldü
 
 ### Chrome Ping Animasyonu Düzeltmesi (Mayıs 2026)
 

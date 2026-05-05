@@ -86,8 +86,23 @@ Kod metriklerinde uygulama kodu ile örnek veri ve dokümanlar ayrı raporlanır
 | Rehberli ders | 4 |
 | Harici JSON örnek | 8 |
 | CLI komut ailesi | 180+ |
+| Test Dosyaları | 4 |
+| Başarısız Testler | 8 ⚠️ |
 
 Örneklerin ayrıntılı listesi için [examples.md](examples.md) dosyasına bakın.
+
+### Test Durumu (2026-05-05)
+
+**Vitest Altyapısı**: ✅ Çalışıyor
+- `npm run test` komutu başarıyla çalışıyor
+- 4 test dosyası mevcut
+- 8 test başarısız (Jest API uyumsuzluğu)
+
+**Başarısız Testler**:
+1. `useNetworkRefreshWithPositions.test.ts` - Jest mock API kullanıyor
+2. `drag-resize-performance.test.tsx` - RAF throttling doğrulaması başarısız (6 test)
+3. `drag-resize-preservation.test.tsx` - Window position preservation başarısız (1 test)
+4. `windowPositionManager.test.ts` - Storage key format başarısız (1 test)
 
 ## Yol Haritası
 

@@ -122,9 +122,10 @@ describe('Preservation - localStorage Position Persistence', () => {
         // Save with correct key format
         localStorage.setItem(`draggable_position_${dialogId}`, JSON.stringify(position));
 
-        // Verify key format
-        const keys = Object.keys(localStorage);
-        expect(keys).toContain(`draggable_position_${dialogId}`);
+        // Verify key format by checking if we can retrieve it
+        const saved = localStorage.getItem(`draggable_position_${dialogId}`);
+        expect(saved).toBeDefined();
+        expect(JSON.parse(saved!)).toEqual(position);
     });
 });
 

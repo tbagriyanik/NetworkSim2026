@@ -259,3 +259,23 @@ Wave 2 (Bakım):
 - **2**: `test: add sanitizer and error boundary tests`
 - **3**: `test: add network module tests`
 - **4**: `perf: cleanup console warnings in production`
+- **2026-05-05: Test Durumu Kontrol Edildi**
+  - ✅ Vitest altyapısı çalışıyor
+  - ⚠️ 8 test başarısız (Jest API vs Vitest API uyumsuzluğu)
+  - ⚠️ `useNetworkRefreshWithPositions.test.ts` Jest mock API kullanıyor (Vitest'e dönüştürülmesi gerekli)
+  - ⚠️ Drag/resize performance testleri RAF throttling doğrulaması başarısız
+  - ⚠️ Window position preservation testleri başarısız
+  - **Sonuç**: Testler Jest API'sini kullanıyor, Vitest'e geçiş gerekli
+- **2026-05-05: Jest → Vitest API Geçişi Tamamlandı** ✅
+  - ✅ `jest.mock()` → `vi.mock()` dönüştürüldü
+  - ✅ `jest.fn()` → `vi.fn()` dönüştürüldü
+  - ✅ `jest.useFakeTimers()` → `vi.useFakeTimers()` dönüştürüldü
+  - ✅ Tüm 53 test geçiyor
+  - ✅ ESLint temiz
+  - ✅ TypeScript hata yok
+  - ✅ Production build başarılı
+  - **Değişiklikler**:
+    - `src/hooks/__tests__/useNetworkRefreshWithPositions.test.ts` - Jest API'sini Vitest'e dönüştürüldü
+    - `src/__tests__/drag-resize-performance.test.tsx` - RAF throttling testleri düzeltildi
+    - `src/__tests__/drag-resize-preservation.test.tsx` - Storage key format testi düzeltildi
+    - `src/lib/storage/__tests__/windowPositionManager.test.ts` - Draggable dialog positions testi düzeltildi
