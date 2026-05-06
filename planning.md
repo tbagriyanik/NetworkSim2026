@@ -3,11 +3,11 @@
 ## Güncel Durum
 
 - **Sürüm**: 1.6.0
-- **Tarih**: 2026-05-05
-- **Uygulama kodu**: 70,064
+- **Tarih**: 2026-05-06
+- **Uygulama kodu**: 71,250
 - **Örnek kod satırı**: 300
 - **Dokümantasyon satırı**: 104
-- **Toplam satır**: 70,468
+- **Toplam satır**: 71,550
 - **Kod dosyası**: 182
 - **Hazır topoloji örneği**: 32
 - **Rehberli ders**: 4

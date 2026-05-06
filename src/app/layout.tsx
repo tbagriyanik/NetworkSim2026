@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   keywords: ["Network", "Switch", "Simulator", "NOS", "Network", "CLI", "VLAN", "Learning"],
   authors: [{ name: "Network Simulator Team" }],
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.svg",
   },
   openGraph: {
     title: "Network Simulator",
