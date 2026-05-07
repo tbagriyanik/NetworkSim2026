@@ -19,24 +19,32 @@ export function getTabSpecificKey(baseKey: string): string {
   return `${TAB_STORAGE_PREFIX}${tabId}-${baseKey}`;
 }
 
-export function createTabSpecificStorage(): StateStorage {
-  return {
-    getItem: (name: string) => {
-      if (typeof window === 'undefined') return null;
-      const tabKey = getTabSpecificKey(name);
-      return localStorage.getItem(tabKey);
-    },
-    setItem: (name: string, value: string) => {
-      if (typeof window === 'undefined') return;
-      const tabKey = getTabSpecificKey(name);
-      localStorage.setItem(tabKey, value);
-    },
-    removeItem: (name: string) => {
-      if (typeof window === 'undefined') return;
-      const tabKey = getTabSpecificKey(name);
-      localStorage.removeItem(tabKey);
-    },
-  };
+export function createTabSpecificStorage() {
+  return createJSONStorage(() => {
+    if (typeof window === 'undefined') {
+      // Return a mock storage for server-side rendering
+      return {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {},
+      };
+    }
+    
+    return {
+      getItem: (name: string) => {
+        const tabKey = getTabSpecificKey(name);
+        return localStorage.getItem(tabKey);
+      },
+      setItem: (name: string, value: string) => {
+        const tabKey = getTabSpecificKey(name);
+        localStorage.setItem(tabKey, value);
+      },
+      removeItem: (name: string) => {
+        const tabKey = getTabSpecificKey(name);
+        localStorage.removeItem(tabKey);
+      },
+    };
+  });
 }
 
 export function getAllTabData(): Record<string, any> {
