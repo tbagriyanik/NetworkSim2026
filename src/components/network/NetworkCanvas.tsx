@@ -987,6 +987,6 @@ export const NetworkCanvas = React.memo(React.forwardRef<HTMLDivElement, Network
             </div>
         );
     }
-)));
+));
 
 NetworkCanvas.displayName = 'NetworkCanvas';
