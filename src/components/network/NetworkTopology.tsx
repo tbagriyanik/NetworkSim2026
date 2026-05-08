@@ -202,12 +202,12 @@ export function NetworkTopology({
       const deviceUpdated = processIotRules(latestDevicesRef.current, environment, (deviceId, updates) => {
         setDevices(prev => prev.map(d => d.id === deviceId ? { ...d, ...updates } : d));
       });
-      
+
       // Trigger topology re-render if any IoT device state changed
       if (deviceUpdated) {
         setIotUpdateTrigger(prev => prev + 1);
       }
-    }, 1000); // Update every second
+    }, 250); // Fast background poll for IoT automation
     return () => clearInterval(interval);
   }, [environment, setDevices]);
 
@@ -2826,14 +2826,38 @@ export function NetworkTopology({
     return Number((otherPort as any).accessVlan || otherPort.vlan || 1);
   }, [connections, getLivePort]);
 
+  const getIotDeviceStatus = useCallback((device: CanvasDevice) => {
+    return device.iot?.collaborationEnabled === false
+      ? (language === 'tr' ? 'Pasif' : 'Inactive')
+      : (language === 'tr' ? 'Aktif' : 'Active');
+  }, [language]);
+
+  const getIotPowerStatus = useCallback((device: CanvasDevice) => {
+    return device.status === 'offline'
+      ? (language === 'tr' ? 'Kapalı' : 'Off')
+      : (language === 'tr' ? 'Açık' : 'On');
+  }, [language]);
+
+  const getIotOpenCloseStatus = useCallback((device: CanvasDevice) => {
+    const isOn = device.iot?.value ?? false;
+    return language === 'tr' ? (isOn ? 'Açık' : 'Kapalı') : (isOn ? 'On' : 'Off');
+  }, [language]);
+
   const getIotMeasuredValue = useCallback((device: CanvasDevice) => {
-    if (device.iot && device.iot.collaborationEnabled === false) {
-      return t.passive;
-    }
+    const kind = device.iot?.kind;
     const sensorType = device.iot?.sensorType || 'temperature';
     const baseTemp = environment?.temperature ?? 22;
     const baseHumidity = environment?.humidity ?? 50;
     const baseLight = environment?.light ?? 70;
+
+    // Controllable devices use open/close state, not sensor measurements
+    if (kind === 'lamp' || kind === 'heater' || kind === 'cooler') {
+      return getIotOpenCloseStatus(device);
+    }
+
+    if (device.iot && device.iot.collaborationEnabled === false) {
+      return t.passive;
+    }
 
     // Add small random fluctuation to simulate real sensor readings
     const tempFluctuation = (Math.random() - 0.5) * 2; // ±1°C
@@ -2854,7 +2878,7 @@ export function NetworkTopology({
       default:
         return '-';
     }
-  }, [language, environment]);
+  }, [language, environment, getIotOpenCloseStatus, t.passive]);
 
   const getLivePortVlanText = useCallback((deviceId: string, portId: string) => {
     const device = devices.find(d => d.id === deviceId);
@@ -4952,18 +4976,18 @@ export function NetworkTopology({
               (() => {
                 const iotKind = device.iot?.kind;
                 const isActive = device.iot?.collaborationEnabled ?? true;
-                
+
                 // Show different icons and colors based on IoT kind and state
                 if (iotKind === 'lamp') {
                   return (
                     <g transform="translate(1, 1)" filter="url(#wifiIconShadow)">
                       {/* Lamp bulb - different appearance based on state */}
-                      <circle 
-                        cx="12" 
-                        cy="12" 
-                        r="8" 
-                        fill={isActive ? '#fbbf24' : '#94a3b8'} 
-                        stroke={isActive ? '#f59e0b' : '#64748b'} 
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                        fill={isActive ? '#fbbf24' : '#94a3b8'}
+                        stroke={isActive ? '#f59e0b' : '#64748b'}
                         strokeWidth="2"
                       />
                       {/* Light rays - only show when active */}
@@ -4984,9 +5008,9 @@ export function NetworkTopology({
                   return (
                     <g transform="translate(1, 1)" filter="url(#wifiIconShadow)">
                       {/* Heater flame - animated when active */}
-                      <path 
-                        d="M12 18 Q10 15 10 12 Q10 9 12 6 Q14 9 18 12" 
-                        fill={isActive ? '#ef4444' : '#94a3b8'} 
+                      <path
+                        d="M12 18 Q10 15 10 12 Q10 9 12 6 Q14 9 18 12"
+                        fill={isActive ? '#ef4444' : '#94a3b8'}
                         className={isActive ? 'animate-pulse' : ''}
                       />
                       <circle cx="12" cy="20" r="2" fill={isDark ? '#475569' : '#94a3b8'} />
@@ -5073,20 +5097,26 @@ export function NetworkTopology({
                   const iotKind = device.iot.kind;
                   const isActive = device.iot.collaborationEnabled ?? true;
                   const rules = device.iot.rules || [];
-                  
-                  if (iotKind === 'lamp' || iotKind === 'heater' || iotKind === 'cooler') {
-                    return (
-                      <div className="space-y-2">
-                        <div className="font-bold text-sm mb-1">
-                          {iotKind === 'lamp' ? (language === 'tr' ? '💡 Lamba' : '💡 Lamp') :
-                           iotKind === 'heater' ? (language === 'tr' ? '🔥 Isıtıcı' : '🔥 Heater') :
-                           (language === 'tr' ? '❄️ Soğutucu' : '❄️ Cooler')}
-                        </div>
-                        <div className="text-xs">
-                          {language === 'tr' ? 'Durum:' : 'Status:'} {isActive ? (language === 'tr' ? 'Açık' : 'ON') : (language === 'tr' ? 'Kapalı' : 'OFF')}
-                        </div>
-                        {rules.length > 0 && (
-                          <div className="mt-2 pt-2 border-t border-slate-300 dark:border-slate-600">
+
+                if (iotKind === 'lamp' || iotKind === 'heater' || iotKind === 'cooler') {
+                  return (
+                    <div className="space-y-2">
+                      <div className="font-bold text-sm mb-1">
+                        {iotKind === 'lamp' ? (language === 'tr' ? '💡 Lamba' : '💡 Lamp') :
+                            iotKind === 'heater' ? (language === 'tr' ? '🔥 Isıtıcı' : '🔥 Heater') :
+                              (language === 'tr' ? '❄️ Soğutucu' : '❄️ Cooler')}
+                      </div>
+                      <div className="text-xs">
+                        {language === 'tr' ? 'Cihaz Durumu:' : 'Device Status:'} {isActive ? (language === 'tr' ? 'Aktif' : 'Active') : (language === 'tr' ? 'Pasif' : 'Inactive')}
+                      </div>
+                      <div className="text-xs">
+                        {language === 'tr' ? 'Güç Durumu:' : 'Power Status:'} {getIotPowerStatus(device)}
+                      </div>
+                      <div className="text-xs">
+                        {language === 'tr' ? 'Açık/Kapalı:' : 'Open/Closed:'} {getIotOpenCloseStatus(device)}
+                      </div>
+                      {rules.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-slate-300 dark:border-slate-600">
                             <div className="text-xs font-semibold mb-1">
                               {language === 'tr' ? '📋 Otomatik Kurallar:' : '📋 Auto Rules:'}
                             </div>
@@ -5117,13 +5147,13 @@ export function NetworkTopology({
                           {language === 'tr' ? 'Tür:' : 'Type:'} {device.iot.sensorType}
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {language === 'tr' ? '💡 Veri toplar ve diğer cihazları kontrol eder' : '💡 Collects data and controls other devices'}
+                          {language === 'tr' ? '💡 Sadece sensör verisi sağlar' : '💡 Provides sensor data only'}
                         </div>
                       </div>
                     );
                   }
                 }
-                
+
                 // Default tooltip for other devices
                 return isPoweredOff ? t.powerOn : t.powerOff;
               })()}
@@ -5189,8 +5219,23 @@ export function NetworkTopology({
               );
             }
 
+            const kind = device.iot?.kind;
             const sensorType = device.iot?.sensorType || 'temperature';
             const value = getIotMeasuredValue(device);
+            const isControllable = kind === 'lamp' || kind === 'heater' || kind === 'cooler';
+
+            // Controllable IoT devices should show status instead of measurements
+            if (isControllable) {
+              const isActive = device.iot?.value ?? false;
+              const statusColor = isActive ? (isDark ? '#fbbf24' : '#f59e0b') : (isDark ? '#94a3b8' : '#64748b');
+              return (
+                <text x={deviceWidth / 2} y={70} fill={statusColor} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(1px 1px 0px rgba(0,0,0,1))">
+                  <tspan x={deviceWidth / 2} dy="6">{value}</tspan>
+                </text>
+              );
+            }
+
+            // For sensors, show measured values
             switch (sensorType) {
               case 'temperature':
                 return (
@@ -7880,11 +7925,25 @@ export function NetworkTopology({
                   {(() => {
                     const dev = devices.find(d => d.id === portTooltip.deviceId);
                     if (dev?.type === 'iot') {
+                      const kind = dev.iot?.kind;
+                      const isControllable = kind === 'lamp' || kind === 'heater' || kind === 'cooler';
                       return (
-                        <>
-                          {language === 'tr' ? 'Ölçüm:' : 'Measurement:'}{' '}
-                          <span className="text-cyan-500">{getIotMeasuredValue(dev)}</span>
-                        </>
+                        <div className="space-y-0.5">
+                          <div>
+                            {language === 'tr' ? 'Cihaz Durumu:' : 'Device Status:'}{' '}
+                            <span className="text-cyan-500">{getIotDeviceStatus(dev)}</span>
+                          </div>
+                          <div>
+                            {language === 'tr' ? 'Güç Durumu:' : 'Power Status:'}{' '}
+                            <span className="text-cyan-500">{getIotPowerStatus(dev)}</span>
+                          </div>
+                          {isControllable && (
+                            <div>
+                              {language === 'tr' ? 'Açık/Kapalı:' : 'Open/Closed:'}{' '}
+                              <span className="text-cyan-500">{getIotOpenCloseStatus(dev)}</span>
+                            </div>
+                          )}
+                        </div>
                       );
                     }
                     return (

@@ -2,6 +2,23 @@
 import { CanvasDevice } from '@/components/network/networkTopology.types';
 import { EnvironmentSettings } from '@/lib/store/appStore';
 
+const getSensorReading = (sensor: string, environment: EnvironmentSettings): number => {
+  switch (sensor) {
+    case 'temperature':
+      return environment.temperature;
+    case 'humidity':
+      return environment.humidity;
+    case 'light':
+      return environment.light;
+    case 'sound':
+      return 40 + Math.random() * 10;
+    case 'motion':
+      return Math.random() > 0.5 ? 1 : 0;
+    default:
+      return 0;
+  }
+};
+
 export const processIotRules = (
   devices: CanvasDevice[],
   environment: EnvironmentSettings,
@@ -18,15 +35,7 @@ export const processIotRules = (
         const [sensor, operator, thresholdStr] = condition.split(' ');
         const threshold = parseFloat(thresholdStr);
 
-        let sensorValue = 0;
-        switch (sensor) {
-          case 'temperature': sensorValue = environment.temperature; break;
-          case 'humidity': sensorValue = environment.humidity; break;
-          case 'light': sensorValue = environment.light; break;
-          // sound and motion are randomized in display, so here we just use fixed or semi-random values
-          case 'sound': sensorValue = 40 + Math.random() * 10; break;
-          case 'motion': sensorValue = Math.random() > 0.5 ? 1 : 0; break;
-        }
+        const sensorValue = getSensorReading(sensor, environment);
 
         let conditionMet = false;
         switch (operator) {
@@ -46,15 +55,20 @@ export const processIotRules = (
           const targetDevice = devices.find(d => d.id === targetId);
           if (!targetDevice || targetDevice.type !== 'iot') return;
 
-          const isCurrentlyActive = targetDevice.iot?.collaborationEnabled;
-          if (finalAction === 'ON' && !isCurrentlyActive) {
+          if (targetDevice.iot?.collaborationEnabled === false) {
+            return;
+          }
+
+          const isCurrentlyPoweredOn = targetDevice.iot?.value ?? false;
+
+          if (finalAction === 'ON' && !isCurrentlyPoweredOn) {
             updateDevice(targetId, {
-              iot: { ...targetDevice.iot!, collaborationEnabled: true }
+              iot: { ...targetDevice.iot!, value: true }
             });
             deviceUpdated = true; // Mark that a device was updated
-          } else if (finalAction === 'OFF' && isCurrentlyActive) {
+          } else if (finalAction === 'OFF' && isCurrentlyPoweredOn) {
             updateDevice(targetId, {
-              iot: { ...targetDevice.iot!, collaborationEnabled: false }
+              iot: { ...targetDevice.iot!, value: false }
             });
             deviceUpdated = true; // Mark that a device was updated
           }
