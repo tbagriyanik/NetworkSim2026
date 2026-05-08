@@ -1,5 +1,6 @@
 
 import { CanvasDevice } from '@/components/network/networkTopology.types';
+import { sanitizeHTML } from '@/lib/security/sanitizer';
 
 export const generateIotWebPanelContent = (
   iotDevices: CanvasDevice[],
@@ -65,17 +66,20 @@ export const generateIotWebPanelContent = (
             : (isActive ? (isTurkish ? 'Aktif' : 'Active') : (isTurkish ? 'Pasif' : 'Inactive'));
         const statusClass = isPoweredOff ? 'offline' : isConnectedToNetwork ? (isActive ? 'online' : 'online-inactive') : (isActive ? 'active' : 'inactive');
 
+        const safeName = sanitizeHTML(device.name || device.id);
+        const safeId = sanitizeHTML(device.id);
+
         return `
       <div class="iot-device-card ${cardClass}">
         <div class="device-info">
-          <span class="device-name">${device.name || device.id}</span>
+          <span class="device-name">${safeName}</span>
           <div class="device-details">
             <span class="device-ip">${isTurkish ? 'IP' : 'IP'}: ${device.ip || '-'}</span>
             <span class="device-mac">${isTurkish ? 'MAC' : 'MAC'}: ${device.macAddress || '-'}</span>
           </div>
           <div class="device-status ${statusClass}">${statusText}</div>
         </div>
-        <button onclick="window.parent.postMessage({ type: 'open-iot-device', deviceId: '${device.id}' }, '*')" class="connect-button">
+        <button onclick="window.parent.postMessage({ type: 'open-iot-device', deviceId: '${safeId}' }, '*')" class="connect-button">
           ${isTurkish ? 'Bağlan' : 'Connect'}
         </button>
       </div>
@@ -571,13 +575,16 @@ export const generateIotDevicePageContent = (
   isPoweredOff: boolean = false,
 ): string => {
   const isTurkish = language === 'tr';
+  const safeName = sanitizeHTML(deviceName);
+  const safeId = sanitizeHTML(deviceId);
+
   return `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>${isTurkish ? 'IoT Cihaz Yönetimi' : 'IoT Device Management'}: ${deviceName}</title>
+        <title>${isTurkish ? 'IoT Cihaz Yönetimi' : 'IoT Device Management'}: ${safeName}</title>
         <style>
           body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -714,11 +721,11 @@ export const generateIotDevicePageContent = (
       </head>
       <body>
         <div class="device-panel">
-          <h1>${deviceName} ${isTurkish ? 'Yönetimi' : 'Management'}</h1>
+          <h1>${safeName} ${isTurkish ? 'Yönetimi' : 'Management'}</h1>
           
           <div class="device-info">
-            <p><strong>${isTurkish ? 'Cihaz ID' : 'Device ID'}:</strong> ${deviceId}</p>
-            <p><strong>${isTurkish ? 'Cihaz Adı' : 'Device Name'}:</strong> ${deviceName}</p>
+            <p><strong>${isTurkish ? 'Cihaz ID' : 'Device ID'}:</strong> ${safeId}</p>
+            <p><strong>${isTurkish ? 'Cihaz Adı' : 'Device Name'}:</strong> ${safeName}</p>
             <p><strong>${isTurkish ? 'Güç Durumu' : 'Power Status'}:</strong> ${isPoweredOff ? (isTurkish ? 'Kapalı' : 'Off') : (isTurkish ? 'Açık' : 'On')}</p>
             <p><strong>${isTurkish ? 'Durum' : 'Status'}:</strong> <span id="statusText" class="${isActive ? 'status-active' : 'status-inactive'}">${isActive ? (isTurkish ? 'Aktif' : 'Active') : (isTurkish ? 'Pasif' : 'Inactive')}</span></p>
           </div>
@@ -762,13 +769,13 @@ export const generateIotDevicePageContent = (
               statusText.className = 'status-text status-active';
               statusMessage.textContent = '${isTurkish ? 'Cihaz aktif' : 'Device is active'}';
               statusMessage.className = 'status-text status-active';
-              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: '${deviceId}', active: true }, '*');
+              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: '${safeId}', active: true }, '*');
             } else {
               statusText.textContent = '${isTurkish ? 'Pasif' : 'Inactive'}';
               statusText.className = 'status-text status-inactive';
               statusMessage.textContent = '${isTurkish ? 'Cihaz pasif' : 'Device is inactive'}';
               statusMessage.className = 'status-text status-inactive';
-              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: '${deviceId}', active: false }, '*');
+              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: '${safeId}', active: false }, '*');
             }
           }
 
