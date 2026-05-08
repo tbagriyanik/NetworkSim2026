@@ -13,8 +13,8 @@ import { Toaster } from '@/components/ui/toaster';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <AppErrorBoundary>
-      <ThemeProvider>
+    <ThemeProvider>
+      <AppErrorBoundary>
         <LanguageProvider>
           <LayoutProvider>
             <FeatureFlagProvider>
@@ -30,7 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             </FeatureFlagProvider>
           </LayoutProvider>
         </LanguageProvider>
-      </ThemeProvider>
-    </AppErrorBoundary>
+      </AppErrorBoundary>
+    </ThemeProvider>
   );
 }

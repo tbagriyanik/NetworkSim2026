@@ -188,6 +188,9 @@ export function NetworkTopology({
   // Use hook to preserve window positions during network refresh
   const { refreshNetworkWithPositions } = useNetworkRefreshWithPositions(onRefreshNetwork || (() => { }));
 
+  // Get environment settings (moved here to be used in useEffect below)
+  const environment = useEnvironment();
+
   // Force continuous updates for IoT measurements and rule processing
   const [iotUpdateTrigger, setIotUpdateTrigger] = useState(0);
   useEffect(() => {
@@ -511,9 +514,7 @@ export function NetworkTopology({
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [isEnvironmentPanelOpen, setIsEnvironmentPanelOpen] = useState(false);
 
-  // Get environment settings
-  const environment = useEnvironment();
-
+  
   // Touch/Mobile state
   const isMobile = useIsMobile();
   const [isTouchDragging, setIsTouchDragging] = useState(false);
@@ -3127,7 +3128,7 @@ export function NetworkTopology({
     setDevices([]);
     setConnections([]);
     setSelectedDeviceIds([]);
-    deviceCounterRef.current = { pc: 0, iot: 0, switch: 0, router: 0 };
+    deviceCounterRef.current = { pc: 0, iot: 0, switch: 0, router: 0, firewall: 0 };
   }, []);
 
   // Copy devices

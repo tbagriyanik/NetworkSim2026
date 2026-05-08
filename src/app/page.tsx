@@ -349,6 +349,7 @@ function RefreshDeviceListToast({
 export default function Home() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, effectiveTheme, setTheme } = useTheme();
+  const isTR = language === 'tr';
   
   // Multi-tab warning system
   const { showWarning, tabCount, acknowledgeWarning, clearCurrentTabData } = useMultiTabWarning();
