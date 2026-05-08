@@ -729,7 +729,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
         </div>
         ` : ''}
         
-        ${(availableIotDevices.filter(d => !d.currentSsid).length > 0 || availableIotDevices.filter(d => d.currentSsid && d.currentSsid !== '${wifi.ssid}').length > 0) ? `
+        ${(availableIotDevices.filter(d => !d.currentSsid).length > 0 || availableIotDevices.filter(d => d.currentSsid && d.currentSsid !== wifi.ssid).length > 0) ? `
         <div class="actions" style="margin-top:20px;">
           <button type="button" class="btn btn-primary" onclick="saveSelectedIotDevices()" id="save-iot-btn">
             💾 ${isTurkish ? 'Seçili Cihazları Bağla' : 'Connect Selected Devices'}
@@ -788,7 +788,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       </div>
     
     <div class="footer">
-      © Network Simulator Router Administration | Model: ${deviceName} | Firmware: v1.0.0
+      © Network Simulator Router Administration | Model: ${safeDeviceName} | Firmware: v1.0.0
     </div>
   </div>
   
