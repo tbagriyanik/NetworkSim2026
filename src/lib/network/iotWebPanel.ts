@@ -852,7 +852,12 @@ export const generateIotDevicePageContent = (
             </div>
 
             <div class="rule-list" id="ruleList">
-              ${rulesHtml}
+              ${(rules || []).map(rule => `
+                <div class="rule-item">
+                  <span>${rule.condition} → ${rule.action}</span>
+                  <button onclick="deleteRule('${rule.id}')" class="delete-rule-btn">×</button>
+                </div>
+              `).join('')}
             </div>
           </div>
 

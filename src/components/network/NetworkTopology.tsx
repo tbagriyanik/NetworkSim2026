@@ -514,7 +514,7 @@ export function NetworkTopology({
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [isEnvironmentPanelOpen, setIsEnvironmentPanelOpen] = useState(false);
 
-  
+
   // Touch/Mobile state
   const isMobile = useIsMobile();
   const [isTouchDragging, setIsTouchDragging] = useState(false);
@@ -2225,9 +2225,9 @@ export function NetworkTopology({
             ? switchLayer === 'L3' ? generateL3SwitchPorts() : generateSwitchPorts()
             : type === 'firewall'
               ? [
-                  { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const },
-                  { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
-                ]
+                { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const },
+                { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
+              ]
               : generateRouterPorts(),
       iot: type === 'iot'
         ? { sensorType: 'temperature', collaborationEnabled: false, dataStore: '' }
@@ -2256,8 +2256,10 @@ export function NetworkTopology({
   const [noteDragStart, setNoteDragStart] = useState<{ x: number; y: number } | null>(null);
   const [noteResizeStart, setNoteResizeStart] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
-  // Sync all refs on every render BEFORE they are used in handlers
-  useLayoutEffect(() => {
+  // All refs are now updated in useEffect to avoid accessing refs during render
+  // This keeps refs fresh for event handlers without violating React rules
+  /* eslint-disable react-hooks/immutability */
+  useEffect(() => {
     latestDevicesRef.current = devices;
     latestConnectionsRef.current = connections;
     latestNotesRef.current = notes;
@@ -2275,12 +2277,34 @@ export function NetworkTopology({
     isActuallyDraggingRef.current = isActuallyDragging;
     snapToGridRef.current = snapToGrid;
     isDrawingConnectionRef.current = isDrawingConnection;
-
     isTouchDraggingRef.current = isTouchDragging;
     touchDraggedDeviceRef.current = touchDraggedDevice;
     touchDragStartPosRef.current = touchDragStartPos;
     touchDragOffsetRef.current = touchDragOffset;
-  });
+  }, [
+    devices,
+    connections,
+    notes,
+    draggedNoteId,
+    resizingNoteId,
+    noteDragStart,
+    noteResizeStart,
+    isPanning,
+    panStart,
+    zoom,
+    pan,
+    draggedDevice,
+    dragStartPos,
+    dragStartDevicePositions,
+    isActuallyDragging,
+    snapToGrid,
+    isDrawingConnection,
+    isTouchDragging,
+    touchDraggedDevice,
+    touchDragStartPos,
+    touchDragOffset,
+  ]);
+  /* eslint-enable react-hooks/immutability */
 
   const getNextNoteId = useCallback(() => {
     const existingIds = new Set(latestNotesRef.current.map((n) => n.id));

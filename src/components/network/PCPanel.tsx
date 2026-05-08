@@ -3465,7 +3465,7 @@ export function PCPanel({
             return;
           }
           addLocalOutput('output', `Tracing route to ${target} over a maximum of 30 hops:\n`);
-          const result = checkConnectivity(deviceId, resolvedTarget, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'tcp', port });
+          const result = checkConnectivity(deviceId, resolvedTarget, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'icmp' });
 
           if (result.hops && result.hops.length > 0) {
             let hopOutput = '';

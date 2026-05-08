@@ -263,9 +263,10 @@ const REFRESH_DEVICE_TYPE_LABELS: Record<DeviceType, string> = {
   switchL2: 'L2 SW',
   pc: 'PC',
   iot: 'IoT',
+  firewall: 'Firewall',
 };
 
-const REFRESH_DEVICE_TYPE_ORDER: DeviceType[] = ['router', 'switchL3', 'switchL2', 'pc', 'iot'];
+const REFRESH_DEVICE_TYPE_ORDER: DeviceType[] = ['router', 'switchL3', 'switchL2', 'pc', 'iot', 'firewall'];
 
 function RefreshDeviceListToast({
   devices,
@@ -350,7 +351,7 @@ export default function Home() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, effectiveTheme, setTheme } = useTheme();
   const isTR = language === 'tr';
-  
+
   // Multi-tab warning system
   const { showWarning, tabCount, acknowledgeWarning, clearCurrentTabData } = useMultiTabWarning();
 
@@ -679,94 +680,96 @@ export default function Home() {
     }
   }, [activeDeviceId]);
 
+  // Function to update device configuration
+  const updateDeviceConfig = useCallback((deviceId: string, config: any) => {
+    // Update topology devices using functional update to avoid stale closure
+    setTopologyDevices(prev =>
+      prev.map((d) =>
+        d.id === deviceId
+          ? { ...d, ...config }
+          : d
+      )
+    );
+
+    // Update deviceStates (CLI hostname)
+    if (config.name) {
+      setDeviceStates((prev) => {
+        const state = prev.get(deviceId);
+        if (state) {
+          const next = new Map(prev);
+          next.set(deviceId, { ...state, hostname: config.name });
+          return next;
+        }
+        return prev;
+      });
+    }
+
+    // Keep router/switch wlan0 runtime state in sync with web-admin WiFi saves
+    if (config.wifi) {
+      setDeviceStates((prev) => {
+        const state = prev.get(deviceId);
+        if (!state || !state.ports?.['wlan0']) return prev;
+        const next = new Map(prev);
+        next.set(deviceId, {
+          ...state,
+          ports: {
+            ...state.ports,
+            wlan0: {
+              ...state.ports['wlan0'],
+              shutdown: !config.wifi.enabled,
+              wifi: {
+                ssid: config.wifi.ssid || '',
+                security: config.wifi.security || 'open',
+                password: config.wifi.password || '',
+                channel: config.wifi.channel || '2.4GHz',
+                // Keep selected mode even when disabled; shutdown controls operational state.
+                mode: config.wifi.mode || 'ap',
+              },
+            },
+          },
+        });
+        return next;
+      });
+    }
+
+    // Handle IoT device disconnect - clear IP and WiFi state
+    if (config.ip === '' && config.wifi?.enabled === false) {
+      setDeviceStates((prev) => {
+        const state = prev.get(deviceId);
+        if (!state) return prev;
+        const next = new Map(prev);
+        next.set(deviceId, {
+          ...state,
+          ports: {
+            ...state.ports,
+            wlan0: {
+              ...state.ports?.['wlan0'],
+              shutdown: true,
+              wifi: {
+                ssid: '',
+                security: 'open',
+                password: '',
+                channel: '2.4GHz',
+                mode: 'client',
+              },
+            },
+          },
+        });
+        return next;
+      });
+    }
+  }, [setTopologyDevices, setDeviceStates]);
+
   // Listen for device config updates from PCPanel
   useEffect(() => {
     const handleDeviceUpdate = (event: any) => {
       const { deviceId, config } = event.detail;
-
-      // Update topology devices using functional update to avoid stale closure
-      setTopologyDevices(prev =>
-        prev.map((d) =>
-          d.id === deviceId
-            ? { ...d, ...config }
-            : d
-        )
-      );
-
-      // Update deviceStates (CLI hostname)
-      if (config.name) {
-        setDeviceStates((prev) => {
-          const state = prev.get(deviceId);
-          if (state) {
-            const next = new Map(prev);
-            next.set(deviceId, { ...state, hostname: config.name });
-            return next;
-          }
-          return prev;
-        });
-      }
-
-      // Keep router/switch wlan0 runtime state in sync with web-admin WiFi saves
-      if (config.wifi) {
-        setDeviceStates((prev) => {
-          const state = prev.get(deviceId);
-          if (!state || !state.ports?.['wlan0']) return prev;
-          const next = new Map(prev);
-          next.set(deviceId, {
-            ...state,
-            ports: {
-              ...state.ports,
-              wlan0: {
-                ...state.ports['wlan0'],
-                shutdown: !config.wifi.enabled,
-                wifi: {
-                  ssid: config.wifi.ssid || '',
-                  security: config.wifi.security || 'open',
-                  password: config.wifi.password || '',
-                  channel: config.wifi.channel || '2.4GHz',
-                  // Keep selected mode even when disabled; shutdown controls operational state.
-                  mode: config.wifi.mode || 'ap',
-                },
-              },
-            },
-          });
-          return next;
-        });
-      }
-
-      // Handle IoT device disconnect - clear IP and WiFi state
-      if (config.ip === '' && config.wifi?.enabled === false) {
-        setDeviceStates((prev) => {
-          const state = prev.get(deviceId);
-          if (!state) return prev;
-          const next = new Map(prev);
-          next.set(deviceId, {
-            ...state,
-            ports: {
-              ...state.ports,
-              wlan0: {
-                ...state.ports?.['wlan0'],
-                shutdown: true,
-                wifi: {
-                  ssid: '',
-                  security: 'open',
-                  password: '',
-                  channel: '2.4GHz',
-                  mode: 'client',
-                },
-              },
-            },
-          });
-          return next;
-        });
-      }
+      updateDeviceConfig(deviceId, config);
     };
 
     window.addEventListener('update-topology-device-config', handleDeviceUpdate);
     return () => window.removeEventListener('update-topology-device-config', handleDeviceUpdate);
-  }, []);
-
-  // Listen for add-topology-device event (from router admin panel IoT add)
+  }, [updateDeviceConfig]);
   useEffect(() => {
     const handleAddDevice = (event: any) => {
       const { device } = event.detail;
@@ -5262,12 +5265,7 @@ ${state.bannerMOTD}
                       theme={theme}
                       isDevicePoweredOff={topologyDevices.find(d => d.id === activeFirewallId)?.status === 'offline'}
                       onUpdateRules={(rules) => {
-                        handleDeviceUpdate({
-                          detail: {
-                            deviceId: activeFirewallId,
-                            config: { firewallRules: rules }
-                          }
-                        });
+                        updateDeviceConfig(activeFirewallId, { firewallRules: rules });
                       }}
                     />
                   )}
