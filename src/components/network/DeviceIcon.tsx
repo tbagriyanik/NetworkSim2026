@@ -82,7 +82,7 @@ export function DeviceIcon({
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M8 11h8M8 15h8"
+            d="M8 11h8M8 15h8M12 11v4"
           />
         </svg>
       );

@@ -4548,7 +4548,7 @@ export function NetworkTopology({
         {/* Device body */}
         {device.type === 'firewall' ? (
           <path
-            d={`M 0 ${deviceHeight} L 0 5 Q 0 0 5 0 L ${deviceWidth - 5} 0 Q ${deviceWidth} 0 ${deviceWidth} 5 L ${deviceWidth} ${deviceHeight} L 0 ${deviceHeight} Z`}
+            d={`M 0 0 L ${deviceWidth} 0 L ${deviceWidth} ${deviceHeight - 15} L ${deviceWidth / 2} ${deviceHeight} L 0 ${deviceHeight - 15} Z`}
             fill={deviceFill}
             stroke={isSelected ? '#06b6d4' : isDark ? '#ef4444' : '#cbd5e1'}
             strokeWidth={isSelected ? 2.5 : 1.5}
@@ -5022,6 +5022,27 @@ export function NetworkTopology({
           <text x={deviceWidth / 2} y={81} fill={isDark ? '#38bdf8' : '#0f766e'} fontSize="9" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
             VLAN {String(getLiveDeviceVlan(device))}
           </text>
+        )}
+        {device.type === 'iot' && (
+          (() => {
+            const kind = device.iot?.kind || 'sensor';
+            const kindLabel = language === 'tr'
+              ? (kind === 'lamp' ? 'Lamba' : kind === 'heater' ? 'Isıtıcı' : kind === 'cooler' ? 'Soğutucu' : 'Sensör')
+              : (kind === 'lamp' ? 'Lamp' : kind === 'heater' ? 'Heater' : kind === 'cooler' ? 'Cooler' : 'Sensor');
+
+            return (
+              <text
+                x={deviceWidth / 2}
+                y={46}
+                fill={isDark ? '#cbd5e1' : '#475569'}
+                fontSize="8"
+                textAnchor="middle"
+                className="select-none pointer-events-none italic opacity-80"
+              >
+                ({kindLabel})
+              </text>
+            );
+          })()
         )}
         {device.type === 'iot' && (
           (() => {

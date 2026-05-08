@@ -577,7 +577,8 @@ export const generateIotDevicePageContent = (
   isPoweredOff: boolean = false,
   kind: string = 'sensor',
   rules: any[] = [],
-  sensorType: string = 'temperature'
+  sensorType: string = 'temperature',
+  iotDevices: CanvasDevice[] = []
 ): string => {
   const isTurkish = language === 'tr';
   const safeName = sanitizeHTML(deviceName);
@@ -829,25 +830,33 @@ export const generateIotDevicePageContent = (
 
             <div class="rule-form">
               <div style="font-size: 12px; margin-bottom: 5px; font-weight: 500;">${isTurkish ? 'Yeni Kural Ekle:' : 'Add New Rule:'}</div>
-              <div style="display: flex; align-items: center; gap: 5px;">
-                <span style="font-size: 12px;">IF</span>
-                <select id="sensorSelect">
-                  <option value="${sensorType}">${sensorType}</option>
-                </select>
-                <select id="operatorSelect">
-                  <option value=">">&gt;</option>
-                  <option value="<">&lt;</option>
-                  <option value="==">=</option>
-                </select>
-                <input type="number" id="thresholdInput" style="width: 50px;" value="25">
-              </div>
-              <div style="display: flex; align-items: center; gap: 5px;">
-                <span style="font-size: 12px;">THEN</span>
-                <select id="actionSelect">
-                  <option value="ON">${isTurkish ? 'AÇ' : 'TURN ON'}</option>
-                  <option value="OFF">${isTurkish ? 'KAPAT' : 'TURN OFF'}</option>
-                </select>
-                <button class="add-rule-btn" onclick="addRule()">${isTurkish ? 'Ekle' : 'Add'}</button>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                  <span style="font-size: 12px; min-width: 35px;">IF</span>
+                  <select id="sensorSelect" style="flex: 1;">
+                    <option value="${sensorType}">${isTurkish ? (sensorType === 'temperature' ? 'Isı' : sensorType === 'light' ? 'Işık' : sensorType === 'humidity' ? 'Nem' : sensorType === 'motion' ? 'Hareket' : sensorType === 'sound' ? 'Ses' : sensorType) : sensorType}</option>
+                  </select>
+                  <select id="operatorSelect">
+                    <option value=">">&gt;</option>
+                    <option value="<">&lt;</option>
+                    <option value="==">=</option>
+                  </select>
+                  <input type="number" id="thresholdInput" style="width: 50px;" value="25">
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                  <span style="font-size: 12px; min-width: 35px;">THEN</span>
+                  <select id="targetDeviceSelect" style="flex: 1;">
+                    <option value="this">${isTurkish ? 'Bu Cihaz' : 'This Device'}</option>
+                    ${iotDevices.filter(d => d.id !== deviceId).map(d => `
+                      <option value="${sanitizeHTML(d.id)}">${sanitizeHTML(d.name || d.id)}</option>
+                    `).join('')}
+                  </select>
+                  <select id="actionSelect">
+                    <option value="ON">${isTurkish ? 'AÇ' : 'TURN ON'}</option>
+                    <option value="OFF">${isTurkish ? 'KAPAT' : 'TURN OFF'}</option>
+                  </select>
+                </div>
+                <button class="add-rule-btn" onclick="addRule()">${isTurkish ? 'Ekle' : 'Add Rule'}</button>
               </div>
             </div>
 
@@ -868,8 +877,53 @@ export const generateIotDevicePageContent = (
 
         <script>
           const isPoweredOff = ${isPoweredOff};
-          const deviceId = '${deviceId}';
+          const deviceId = ${JSON.stringify(deviceId)};
           let rules = ${JSON.stringify(rules || [])};
+
+          function addRule() {
+            if (isPoweredOff) return;
+
+            const sensor = document.getElementById('sensorSelect').value;
+            const operator = document.getElementById('operatorSelect').value;
+            const threshold = document.getElementById('thresholdInput').value;
+            const target = document.getElementById('targetDeviceSelect').value;
+            const action = document.getElementById('actionSelect').value;
+
+            const condition = \`\${sensor} \${operator} \${threshold}\`;
+            const fullAction = target === 'this' ? action : \`\${target}:\${action}\`;
+
+            const newRule = {
+              id: Math.random().toString(36).substr(2, 9),
+              condition,
+              action: fullAction
+            };
+
+            rules.push(newRule);
+            updateRuleList();
+            saveRules();
+          }
+
+          function deleteRule(ruleId) {
+            if (isPoweredOff) return;
+            rules = rules.filter(r => r.id !== ruleId);
+            updateRuleList();
+            saveRules();
+          }
+
+          function updateRuleList() {
+            const list = document.getElementById('ruleList');
+            if (!list) return;
+            list.innerHTML = rules.map(rule => {
+              const safeCondition = rule.condition.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              const safeAction = rule.action.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              return \`
+                <div class="rule-item">
+                  <span>\${safeCondition} &rarr; \${safeAction}</span>
+                  <button onclick="deleteRule('\${rule.id}')" class="delete-rule-btn">&times;</button>
+                </div>
+              \`;
+            }).join('');
+          }
 
           function toggleDevice() {
             if (isPoweredOff) return;
@@ -892,12 +946,7 @@ export const generateIotDevicePageContent = (
               statusMessage.className = 'status-text status-inactive';
               window.parent.postMessage({ type: 'toggle-iot-device', deviceId: ${jsId}, active: false }, '*');
             }
-            list.innerHTML = rules.map(rule => \`
-              <div class="rule-item">
-                <span>\${rule.condition} &rarr; \${rule.action}</span>
-                <button onclick="deleteRule('\${rule.id}')" class="delete-rule-btn">&times;</button>
-              </div>
-            \`).join('');
+            updateRuleList();
           }
 
           function saveRules() {

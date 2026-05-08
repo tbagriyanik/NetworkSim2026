@@ -1857,7 +1857,7 @@ export function PCPanel({
         const kind = targetDevice.iot?.kind || 'sensor';
         const rules = targetDevice.iot?.rules || [];
         const sensorType = targetDevice.iot?.sensorType || 'temperature';
-        const iotDevicePage = generateIotDevicePageContent(targetDevice.id, targetDevice.name || targetDevice.id, language, isActive, isPoweredOff, kind, rules, sensorType);
+        const iotDevicePage = generateIotDevicePageContent(targetDevice.id, targetDevice.name || targetDevice.id, language, isActive, isPoweredOff, kind, rules, sensorType, iotDevices);
         setHttpAppContent(iotDevicePage);
         setHttpAppTitle(`${targetDevice.name || targetDevice.id} ${language === 'tr' ? 'Yönetimi' : 'Management'}`);
         setHttpAppDeviceId(targetDevice.id);
@@ -4901,33 +4901,28 @@ export function PCPanel({
                                   />
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                  <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Cihaz Türü' : 'Device Kind'}</label>
-                                    <Select value={iotKind} onValueChange={(v) => setIotKind(v as any)}>
-                                      <SelectTrigger><SelectValue /></SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="sensor">{language === 'tr' ? 'Sensör' : 'Sensor'}</SelectItem>
-                                        <SelectItem value="cooler">{language === 'tr' ? 'Soğutucu' : 'Cooler'}</SelectItem>
-                                        <SelectItem value="lamp">{language === 'tr' ? 'Lamba' : 'Lamp'}</SelectItem>
-                                        <SelectItem value="heater">{language === 'tr' ? 'Isıtıcı' : 'Heater'}</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-
-                                  <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Sensör Tipi' : 'Sensor Type'}</label>
-                                    <Select value={iotSensorType} onValueChange={(v) => setIotSensorType(v as any)}>
-                                      <SelectTrigger><SelectValue /></SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="temperature">{language === 'tr' ? 'Isı' : 'Temperature'}</SelectItem>
-                                        <SelectItem value="sound">{language === 'tr' ? 'Ses' : 'Sound'}</SelectItem>
-                                        <SelectItem value="motion">{language === 'tr' ? 'Hareket' : 'Motion'}</SelectItem>
-                                        <SelectItem value="humidity">{language === 'tr' ? 'Nem' : 'Humidity'}</SelectItem>
-                                        <SelectItem value="light">{language === 'tr' ? 'Işık' : 'Light'}</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs font-bold text-slate-500">{language === 'tr' ? 'Cihaz Türü' : 'Device Type'}</label>
+                                  <Select
+                                    value={`${iotKind}:${iotSensorType}`}
+                                    onValueChange={(v) => {
+                                      const [kind, sensor] = v.split(':');
+                                      setIotKind(kind as any);
+                                      setIotSensorType(sensor as any);
+                                    }}
+                                  >
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="heater:temperature">{language === 'tr' ? 'Isıtıcı' : 'Heater'}</SelectItem>
+                                      <SelectItem value="lamp:light">{language === 'tr' ? 'Lamba' : 'Lamp'}</SelectItem>
+                                      <SelectItem value="cooler:temperature">{language === 'tr' ? 'Soğutucu' : 'Cooler'}</SelectItem>
+                                      <SelectItem value="sensor:temperature">{language === 'tr' ? 'Isı Sensörü' : 'Temperature Sensor'}</SelectItem>
+                                      <SelectItem value="sensor:light">{language === 'tr' ? 'Işık Sensörü' : 'Light Sensor'}</SelectItem>
+                                      <SelectItem value="sensor:humidity">{language === 'tr' ? 'Nem Sensörü' : 'Humidity Sensor'}</SelectItem>
+                                      <SelectItem value="sensor:motion">{language === 'tr' ? 'Hareket Sensörü' : 'Motion Sensor'}</SelectItem>
+                                      <SelectItem value="sensor:sound">{language === 'tr' ? 'Ses Sensörü' : 'Sound Sensor'}</SelectItem>
+                                    </SelectContent>
+                                  </Select>
                                 </div>
 
 
