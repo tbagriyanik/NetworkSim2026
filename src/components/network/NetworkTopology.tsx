@@ -93,8 +93,9 @@ const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
     </svg>
   ),
   firewall: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#ef4444" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM8 11h8M8 15h8" />
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#ef4444" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4" />
     </svg>
   ),
 };
@@ -4547,14 +4548,23 @@ export function NetworkTopology({
 
         {/* Device body */}
         {device.type === 'firewall' ? (
-          <path
-            d={`M 0 0 L ${deviceWidth} 0 L ${deviceWidth} ${deviceHeight - 15} L ${deviceWidth / 2} ${deviceHeight} L 0 ${deviceHeight - 15} Z`}
-            fill={deviceFill}
-            stroke={isSelected ? '#06b6d4' : isDark ? '#ef4444' : '#cbd5e1'}
-            strokeWidth={isSelected ? 2.5 : 1.5}
-            className={isDragging ? '' : 'transition-all duration-150'}
-            filter="url(#deviceShadow)"
-          />
+          <>
+            <path
+              d={`M 0 0 L ${deviceWidth} 0 L ${deviceWidth} ${deviceHeight - 15} L ${deviceWidth / 2} ${deviceHeight} L 0 ${deviceHeight - 15} Z`}
+              fill={deviceFill}
+              stroke={isSelected ? '#06b6d4' : isDark ? '#ef4444' : '#cbd5e1'}
+              strokeWidth={isSelected ? 2.5 : 1.5}
+              className={isDragging ? '' : 'transition-all duration-150'}
+              filter="url(#deviceShadow)"
+            />
+            {/* Shield Icon inside Firewall device */}
+            <g transform={`translate(${deviceWidth / 2 - 17}, ${deviceHeight / 2 - 40})`}>
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke={isDark ? '#ea7171' : '#e75c5c'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+            </g>
+          </>
         ) : device.type === 'router' ? (
           <path
             d={`M ${20} 0 L ${deviceWidth - 20} 0 Q ${deviceWidth} 0 ${deviceWidth} 20 L ${deviceWidth} ${deviceHeight} L 0 ${deviceHeight} L 0 20 Q 0 0 20 0`}

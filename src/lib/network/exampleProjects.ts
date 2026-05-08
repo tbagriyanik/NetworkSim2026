@@ -273,9 +273,7 @@ const createFirewallDevice = (id: string, name: string, x: number, y: number, ip
     ports: [
       { id: 'console', label: 'Console', status: 'disconnected' as const },
       { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const, macAddress: formatMacFromNumber(macNumber) },
-      { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const, macAddress: formatMacFromNumber(macNumber + 1) },
-      { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const, macAddress: formatMacFromNumber(macNumber + 2) },
-      { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const, macAddress: formatMacFromNumber(macNumber + 3) }
+      { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const, macAddress: formatMacFromNumber(macNumber + 1) }
     ]
   };
 };
