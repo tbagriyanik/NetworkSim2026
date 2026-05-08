@@ -200,7 +200,7 @@ export function NetworkTopologyPortSelectorModal({
                     }
                     return (
                       <button
-                        key={port.id}
+                        key={`${device.id}-${port.id}`}
                         disabled={isConnected}
                         onClick={() => onSelectPort(device.id, port.id)}
                         className={`group relative flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-300 border ${isConnected

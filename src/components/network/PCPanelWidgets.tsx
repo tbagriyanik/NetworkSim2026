@@ -48,7 +48,22 @@ export const WifiSignalMeter = ({ strength }: { strength: number }) => {
     );
 };
 
-/** Live IoT sensor chart + value display */
+/** Get device icon based on kind/sensor type */
+const getDeviceIcon = (device: CanvasDevice): string => {
+    const kind = device.iot?.kind;
+    const sensorType = device.iot?.sensorType;
+    if (kind === 'lamp') return '💡';
+    if (kind === 'heater') return '🔥';
+    if (kind === 'cooler') return '❄️';
+    if (sensorType === 'temperature') return '🌡️';
+    if (sensorType === 'humidity') return '💧';
+    if (sensorType === 'motion') return '🏃';
+    if (sensorType === 'light') return '☀️';
+    if (sensorType === 'sound') return '🔊';
+    return '📟';
+};
+
+/** Live IoT sensor chart + value display, or actuator status display */
 export const IoTSensorDisplay = ({
     device,
     environment,
@@ -62,8 +77,17 @@ export const IoTSensorDisplay = ({
 }) => {
     const [history, setHistory] = useState<number[]>([]);
 
+    // Check if device is an actuator (output) or sensor (input)
+    const isActuator = device.iot?.dataFlowDirection === 'output' ||
+                       device.iot?.kind === 'lamp' ||
+                       device.iot?.kind === 'heater' ||
+                       device.iot?.kind === 'cooler';
+    const isActive = device.iot?.collaborationEnabled ?? true;
+    const deviceIcon = getDeviceIcon(device);
+
     useEffect(() => {
-        if (!device?.iot?.sensorType || !device.iot?.collaborationEnabled) {
+        // Only show sensor data for input devices
+        if (isActuator || !device?.iot?.sensorType || !device.iot?.collaborationEnabled) {
             setHistory([]);
             return;
         }
@@ -119,9 +143,44 @@ export const IoTSensorDisplay = ({
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [device.id, device.iot?.sensorType, device.iot?.collaborationEnabled, environment]);
+    }, [device.id, device.iot?.sensorType, device.iot?.collaborationEnabled, environment, isActuator]);
 
     const isPassive = device.iot?.collaborationEnabled === false;
+
+    // For actuators, show status display instead of sensor data
+    if (isActuator) {
+        const statusText = isActive
+            ? (language === 'tr' ? 'AÇIK' : 'ON')
+            : (language === 'tr' ? 'KAPALI' : 'OFF');
+        const statusColor = isActive ? 'text-emerald-500' : 'text-slate-400';
+        
+        // Special handling for lamp devices: use different emojis based on state
+        const displayIcon = device.iot?.kind === 'lamp' 
+            ? (isActive ? '💡' : '🔆') // Bright bulb for ON, dim bulb for OFF
+            : deviceIcon;
+
+        return (
+            <div className="space-y-4">
+                <div className={`p-4 rounded-lg border-l-4 ${isDark ? 'bg-slate-800 border-emerald-500' : 'bg-emerald-50 border-emerald-500'}`}>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <div className="text-xs text-slate-500 mb-1">
+                                {language === 'tr' ? 'Cihaz Durumu' : 'Device Status'}
+                            </div>
+                            <div className={`text-2xl font-bold ${statusColor}`}>{statusText}</div>
+                        </div>
+                        <div className={`p-3 rounded-full ${isDark ? 'bg-slate-700' : 'bg-white'}`}>
+                            <span className={`text-4xl transition-all duration-300 ${isActive ? 'opacity-100 drop-shadow-lg' : 'opacity-40 grayscale'}`}>
+                                {displayIcon}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Sensor display (original logic)
     if (!device?.iot?.sensorType || (history.length === 0 && !isPassive)) return null;
 
     const sensorType = device.iot.sensorType;
@@ -182,11 +241,7 @@ export const IoTSensorDisplay = ({
                         <div className="text-2xl font-bold text-cyan-500">{displayStr}</div>
                     </div>
                     <div className={`p-3 rounded-full ${isDark ? 'bg-slate-700' : 'bg-white'}`}>
-                        {sensorType === 'temperature' && <span className="text-2xl">🌡️</span>}
-                        {sensorType === 'humidity' && <span className="text-2xl">💧</span>}
-                        {sensorType === 'motion' && <span className="text-2xl">🏃</span>}
-                        {sensorType === 'light' && <span className="text-2xl">💡</span>}
-                        {sensorType === 'sound' && <span className="text-2xl">🔊</span>}
+                        <span className="text-2xl">{deviceIcon}</span>
                     </div>
                 </div>
             </div>

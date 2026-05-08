@@ -578,7 +578,9 @@ export const generateIotDevicePageContent = (
   kind: string = 'sensor',
   rules: any[] = [],
   sensorType: string = 'temperature',
-  iotDevices: CanvasDevice[] = []
+  iotDevices: CanvasDevice[] = [],
+  dataFlowDirection: 'input' | 'output' | 'input/output' = 'input',
+  allDevices: CanvasDevice[] = []
 ): string => {
   const isTurkish = language === 'tr';
   const safeName = sanitizeHTML(deviceName);
@@ -823,6 +825,7 @@ export const generateIotDevicePageContent = (
             </div>
           </div>
 
+          ${dataFlowDirection === 'output' || dataFlowDirection === 'input/output' ? `
           <div class="programming-section ${isPoweredOff ? 'toggle-disabled' : ''}">
             <div class="programming-title">
               <span>⚙️ ${isTurkish ? 'Basit Programlama' : 'Simple Programming'}</span>
@@ -834,7 +837,11 @@ export const generateIotDevicePageContent = (
                 <div style="display: flex; align-items: center; gap: 5px;">
                   <span style="font-size: 12px; min-width: 35px;">IF</span>
                   <select id="sensorSelect" style="flex: 1;">
-                    <option value="${sensorType}">${isTurkish ? (sensorType === 'temperature' ? 'Isı' : sensorType === 'light' ? 'Işık' : sensorType === 'humidity' ? 'Nem' : sensorType === 'motion' ? 'Hareket' : sensorType === 'sound' ? 'Ses' : sensorType) : sensorType}</option>
+                    <option value="temperature">${isTurkish ? 'Isı (Sıcaklık)' : 'Temperature'}</option>
+                    <option value="light">${isTurkish ? 'Işık' : 'Light'}</option>
+                    <option value="humidity">${isTurkish ? 'Nem' : 'Humidity'}</option>
+                    <option value="sound">${isTurkish ? 'Ses' : 'Sound'}</option>
+                    <option value="motion">${isTurkish ? 'Hareket' : 'Motion'}</option>
                   </select>
                   <select id="operatorSelect">
                     <option value=">">&gt;</option>
@@ -847,8 +854,8 @@ export const generateIotDevicePageContent = (
                   <span style="font-size: 12px; min-width: 35px;">THEN</span>
                   <select id="targetDeviceSelect" style="flex: 1;">
                     <option value="this">${isTurkish ? 'Bu Cihaz' : 'This Device'}</option>
-                    ${iotDevices.filter(d => d.id !== deviceId).map(d => `
-                      <option value="${sanitizeHTML(d.id)}">${sanitizeHTML(d.name || d.id)}</option>
+                    ${allDevices.filter(d => d.id !== deviceId && d.type === 'iot' && (d.iot?.dataFlowDirection === 'output' || d.iot?.dataFlowDirection === 'input/output' || d.iot?.kind === 'cooler' || d.iot?.kind === 'lamp' || d.iot?.kind === 'heater')).map(d => `
+                      <option value="${sanitizeHTML(d.id)}">${sanitizeHTML(d.name || d.id)} ${d.iot?.kind ? '(' + (isTurkish ? (d.iot.kind === 'cooler' ? 'Soğutucu' : d.iot.kind === 'lamp' ? 'Lamba' : d.iot.kind === 'heater' ? 'Isıtıcı' : d.iot.kind) : d.iot.kind) + ')' : ''}</option>
                     `).join('')}
                   </select>
                   <select id="actionSelect">
@@ -869,6 +876,7 @@ export const generateIotDevicePageContent = (
               `).join('')}
             </div>
           </div>
+          ` : ''}
 
           <button type="button" class="back-button" onclick="goBack()" style="margin-top: 20px;">
             ${isTurkish ? 'Listeye Dön' : 'Back to List'}

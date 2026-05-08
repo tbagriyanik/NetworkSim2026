@@ -34,14 +34,24 @@ export const processIotRules = (
         }
 
         if (conditionMet) {
-          const isCurrentlyActive = device.iot?.collaborationEnabled;
-          if (action === 'ON' && !isCurrentlyActive) {
-            updateDevice(device.id, {
-              iot: { ...device.iot!, collaborationEnabled: true }
+          // Parse action: can be "ON", "OFF", or "deviceId:ON", "deviceId:OFF"
+          const [targetId, targetAction] = action.includes(':')
+            ? action.split(':')
+            : [device.id, action];
+          const finalAction = targetAction || action;
+
+          // Find target device
+          const targetDevice = devices.find(d => d.id === targetId);
+          if (!targetDevice || targetDevice.type !== 'iot') return;
+
+          const isCurrentlyActive = targetDevice.iot?.collaborationEnabled;
+          if (finalAction === 'ON' && !isCurrentlyActive) {
+            updateDevice(targetId, {
+              iot: { ...targetDevice.iot!, collaborationEnabled: true }
             });
-          } else if (action === 'OFF' && isCurrentlyActive) {
-            updateDevice(device.id, {
-              iot: { ...device.iot!, collaborationEnabled: false }
+          } else if (finalAction === 'OFF' && isCurrentlyActive) {
+            updateDevice(targetId, {
+              iot: { ...targetDevice.iot!, collaborationEnabled: false }
             });
           }
         }

@@ -131,6 +131,7 @@ export interface CanvasDevice {
   iot?: {
     sensorType: 'temperature' | 'sound' | 'motion' | 'humidity' | 'light';
     kind?: 'cooler' | 'lamp' | 'heater' | 'sensor';
+    dataFlowDirection?: 'input' | 'output' | 'input/output'; // input=sensors (read-only), output=actuators (controllable)
     collaborationEnabled?: boolean;
     dataStore?: string;
     rules?: Array<{

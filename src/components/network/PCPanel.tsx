@@ -695,6 +695,10 @@ export function PCPanel({
 
   const saveIotConfig = useCallback((showToast: boolean = true) => {
     if (!selectedIotDeviceId) return;
+    // Determine data flow direction based on kind
+    const dataFlowDirection: 'input' | 'output' | 'input/output' =
+      iotKind === 'sensor' ? 'input' :
+      (iotKind === 'cooler' || iotKind === 'lamp' || iotKind === 'heater') ? 'output' : 'input';
     window.dispatchEvent(new CustomEvent('update-topology-device-config', {
       detail: {
         deviceId: selectedIotDeviceId,
@@ -702,6 +706,7 @@ export function PCPanel({
           iot: {
             sensorType: iotSensorType,
             kind: iotKind,
+            dataFlowDirection,
             collaborationEnabled: iotCollaborationEnabled,
             dataStore: iotDataStore,
           }
@@ -714,7 +719,7 @@ export function PCPanel({
         description: language === 'tr' ? 'Seçili IoT nesnesi güncellendi.' : 'Selected IoT object updated.',
       });
     }
-  }, [selectedIotDeviceId, iotSensorType, iotCollaborationEnabled, iotDataStore, language]);
+  }, [selectedIotDeviceId, iotSensorType, iotKind, iotCollaborationEnabled, iotDataStore, language]);
 
   // Keep saveIotConfig in a ref to avoid circular dependency
   const saveIotConfigRef = useRef(saveIotConfig);
@@ -1857,7 +1862,8 @@ export function PCPanel({
         const kind = targetDevice.iot?.kind || 'sensor';
         const rules = targetDevice.iot?.rules || [];
         const sensorType = targetDevice.iot?.sensorType || 'temperature';
-        const iotDevicePage = generateIotDevicePageContent(targetDevice.id, targetDevice.name || targetDevice.id, language, isActive, isPoweredOff, kind, rules, sensorType, iotDevices);
+        const dataFlowDirection = targetDevice.iot?.dataFlowDirection || (kind === 'sensor' ? 'input' : 'output');
+        const iotDevicePage = generateIotDevicePageContent(targetDevice.id, targetDevice.name || targetDevice.id, language, isActive, isPoweredOff, kind, rules, sensorType, iotDevices, dataFlowDirection, topologyDevices);
         setHttpAppContent(iotDevicePage);
         setHttpAppTitle(`${targetDevice.name || targetDevice.id} ${language === 'tr' ? 'Yönetimi' : 'Management'}`);
         setHttpAppDeviceId(targetDevice.id);
