@@ -3,20 +3,39 @@
 ## Güncel Durum
 
 - **Sürüm**: 1.6.0
-- **Tarih**: 2026-05-06
-- **Uygulama kodu**: 71,250
+- **Tarih**: 2026-05-08
+- **Uygulama kodu**: 72,000+
 - **Örnek kod satırı**: 300
-- **Dokümantasyon satırı**: 104
-- **Toplam satır**: 71,550
-- **Kod dosyası**: 182
+- **Dokümantasyon satırı**: 150+
+- **Toplam satır**: 72,450+
+- **Kod dosyası**: 185+
 - **Hazır topoloji örneği**: 32
 - **Rehberli ders**: 4
 - **CLI komut ailesi**: 180+
-- **Test Durumu**: ✅ 53 test geçiyor (Jest→Vitest API geçişi tamamlandı)
+- **Test Durumu**: ✅ Tüm testler geçiyor (Build, Lint, TypeScript)
 
 Not: Toplam satır sayısı uygulama kodu, örnek kod ve dokümantasyonun birleşimidir.
 
 ## Son Yapılanlar
+
+### React Hooks ve Build Düzeltmeleri (Mayıs 2026 - 8 Mayıs)
+
+- **Yeni Özellikler ve Property'ler**:
+  - `firewall` cihaz tipi desteği - Güvenlik duvarı cihazları için port yapılandırması
+  - `isTR` dil kontrolü - Türkçe/İngilizce arayüz desteği için merkezi yardımcı
+  - IoT cihaz `rules` sistemi - Sensör kuralları ve otomasyon desteği
+  - `stableRefs` pattern - React hooks immutability sorunları için çözüm
+  - `environment` değişkenleri - IoT kural işleme için ortam ayarları
+  - `deviceCounterRef` güncellemesi - Firewall sayacı desteği
+
+- **Düzeltilen Hatalar**:
+  - React hooks immutability hataları (`latestDevicesRef` vb.)
+  - `useTheme` context hatası (ThemeProvider sıralaması)
+  - `isTR` undefined hatası (dil değişkeni scope'u)
+  - `rulesHtml` undefined hatası (IoT web paneli)
+  - ESLint disable yönerge temizliği
+
+- **Build ve Lint Durumu**: ✅ Tüm hatalar düzeltildi, build başarılı
 
 ### Jest → Vitest API Geçişi Tamamlandı (Mayıs 2026)
 

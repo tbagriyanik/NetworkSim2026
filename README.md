@@ -5,8 +5,7 @@ A modern browser-based network simulator for learning switching, routing, wirele
 ![Version](https://img.shields.io/badge/version-1.6.0-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Code Lines](https://img.shields.io/badge/code--lines-71250-blueviolet)
-![Total Lines](https://img.shields.io/badge/total--lines-71550-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-72450+-lightgrey)
 
 Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
@@ -25,6 +24,15 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Modern UI/UX**: Keyboard shortcuts, glassmorphism effects, shimmer loading, and accessible design.
 
 ### Recent Updates (v1.6.0)
+
+- **Bug Fixes & Stability Improvements (May 8, 2026)**:
+  - Fixed React hooks immutability errors (`latestDevicesRef`, ref synchronization)
+  - Fixed `useTheme` context error (ThemeProvider ordering)
+  - Fixed `isTR` undefined error (language variable scope)
+  - Fixed `rulesHtml` undefined error (IoT web panel)
+  - Added `firewall` device type support with proper port configuration
+  - Added IoT device `rules` system for sensor automation
+  - All builds, lint, and TypeScript checks now passing ✅
 
 - **UI/UX Performance Phase 1 & 2**:
   - Implemented **Zustand Selectors** for granular state management and reduced re-renders.
@@ -62,11 +70,11 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metric | Value |
 | --- | ---: |
-| Application Code | 71,250 |
+| Application Code | 72,000+ |
 | Example Code | 300 |
-| Documentation | 104 |
-| **Total Lines** | **71,550** |
-| Source Files | 182 |
+| Documentation | 150+ |
+| **Total Lines** | **72,450+** |
+| Source Files | 185+ |
 | Ready Topologies | 32 |
 | Guided Lessons | 4 |
 | CLI Command Families | 180+ |
@@ -86,6 +94,15 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Modern UI/UX**: Klavye kısayolları, glassmorphism efektleri, shimmer loading ve erişilebilir tasarım.
 
 ### Son Güncellemeler (v1.6.0)
+
+- **Hata Düzeltmeleri ve Kararlılık İyileştirmeleri (8 Mayıs 2026)**:
+  - React hooks immutability hataları düzeltildi (`latestDevicesRef`, ref senkronizasyonu)
+  - `useTheme` context hatası düzeltildi (ThemeProvider sıralaması)
+  - `isTR` undefined hatası düzeltildi (dil değişkeni scope'u)
+  - `rulesHtml` undefined hatası düzeltildi (IoT web paneli)
+  - `firewall` cihaz tipi desteği eklendi, port yapılandırması
+  - IoT cihaz `rules` sistemi eklendi - sensör otomasyonu
+  - Tüm build, lint ve TypeScript kontrolleri başarılı ✅
 
 - **UI/UX Performans Faz 1 & 2**:
   - Gereksiz render'ları önlemek için **Zustand Seçiciler** ve memoizasyon eklendi.
@@ -123,11 +140,11 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metrik | Değer |
 | --- | ---: |
-| Uygulama Kodu | 71,250 |
+| Uygulama Kodu | 72,000+ |
 | Örnek Kod | 300 |
-| Dokümantasyon | 104 |
-| **Toplam Satır** | **71,550** |
-| Kaynak Dosya | 182 |
+| Dokümantasyon | 150+ |
+| **Toplam Satır** | **72,450+** |
+| Kaynak Dosya | 185+ |
 | Hazır Topoloji | 32 |
 | Rehberli Ders | 4 |
 | CLI Komut Ailesi | 180+ |
