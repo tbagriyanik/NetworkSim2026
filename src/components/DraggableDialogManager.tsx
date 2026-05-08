@@ -58,7 +58,6 @@ export function DraggableDialogManager() {
             dragState.offsetY = rect.top;
 
             // Set grabbing cursor on document
-            document.body.classList.add('performance-mode');
             document.body.style.cursor = 'grabbing';
             document.body.style.userSelect = 'none';
 
@@ -113,7 +112,6 @@ export function DraggableDialogManager() {
             dialog.style.transition = '';
 
             // Reset cursor
-            document.body.classList.remove('performance-mode');
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
 

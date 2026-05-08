@@ -188,19 +188,6 @@ export function NetworkTopology({
   // Use hook to preserve window positions during network refresh
   const { refreshNetworkWithPositions } = useNetworkRefreshWithPositions(onRefreshNetwork || (() => { }));
 
-  // Force continuous updates for IoT measurements and rule processing
-  const [iotUpdateTrigger, setIotUpdateTrigger] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIotUpdateTrigger(prev => prev + 1);
-
-      // Process IoT rules periodically
-      processIotRules(latestDevicesRef.current, environment, (deviceId, updates) => {
-        setDevices(prev => prev.map(d => d.id === deviceId ? { ...d, ...updates } : d));
-      });
-    }, 1000); // Update every second
-    return () => clearInterval(interval);
-  }, [environment, setDevices]);
 
   const [zoom, setZoom] = useState(zoomProp ?? DEFAULT_ZOOM);
   const [pan, setPan] = useState(panProp ?? { x: 0, y: 0 });
@@ -513,6 +500,20 @@ export function NetworkTopology({
 
   // Get environment settings
   const environment = useEnvironment();
+
+  // Force continuous updates for IoT measurements and rule processing
+  const [iotUpdateTrigger, setIotUpdateTrigger] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIotUpdateTrigger(prev => prev + 1);
+
+      // Process IoT rules periodically
+      processIotRules(latestDevicesRef.current, environment, (deviceId, updates) => {
+        setDevices(prev => prev.map(d => d.id === deviceId ? { ...d, ...updates } : d));
+      });
+    }, 1000); // Update every second
+    return () => clearInterval(interval);
+  }, [environment, setDevices]);
 
   // Touch/Mobile state
   const isMobile = useIsMobile();
