@@ -1,6 +1,9 @@
 # Sentinel Security Journal 🛡️
 
-## 2025-05-15 - [SSR-Safe HTML Sanitization for IoT/Wifi Modules]
+## 2026-05-08 - [Context-Aware Sanitization for Embedded HTML Panels]
 **Vulnerability:** XSS in IoT Web Panel and Wifi Control Panel due to un-sanitized user input (device names, SSIDs) being rendered via `dangerouslySetInnerHTML`.
-**Learning:** The existing `sanitizeHTML` implementation relied on `document.createElement`, which is not available during SSR in Next.js, causing potential runtime crashes or bypasses if not handled.
-**Prevention:** Use a string-based entity replacement for sanitization that works in both Node.js (SSR) and Browser (Client) environments. Always sanitize variables before interpolating them into HTML strings that will be rendered dangerously.
+**Learning:** Generic HTML sanitization is insufficient and can cause functional regressions when applied to variables used in JavaScript logic (e.g., passwords with `&` becoming `&amp;` and failing comparison). Different contexts (HTML text, HTML attributes, JavaScript string literals) require different escaping strategies.
+**Prevention:**
+1. Use `sanitizeHTML` only for content rendered as text nodes in HTML.
+2. Use `JSON.stringify()` for embedding variables into `<script>` blocks or `onclick` handlers.
+3. When using `JSON.stringify()` in HTML attributes, additionally escape double quotes (e.g., `.replace(/"/g, '&quot;')`) and prevent script tag termination (e.g., `.replace(/</g, '\\u003c')`).

@@ -67,19 +67,21 @@ export const generateIotWebPanelContent = (
         const statusClass = isPoweredOff ? 'offline' : isConnectedToNetwork ? (isActive ? 'online' : 'online-inactive') : (isActive ? 'active' : 'inactive');
 
         const safeName = sanitizeHTML(device.name || device.id);
-        const safeId = sanitizeHTML(device.id);
+        // Using JSON.stringify for JS context to prevent syntax errors and maintain data integrity.
+        // We also escape double quotes for the HTML attribute context.
+        const jsDeviceId = JSON.stringify(device.id).replace(/"/g, '&quot;');
 
         return `
       <div class="iot-device-card ${cardClass}">
         <div class="device-info">
           <span class="device-name">${safeName}</span>
           <div class="device-details">
-            <span class="device-ip">${isTurkish ? 'IP' : 'IP'}: ${device.ip || '-'}</span>
-            <span class="device-mac">${isTurkish ? 'MAC' : 'MAC'}: ${device.macAddress || '-'}</span>
+            <span class="device-ip">${isTurkish ? 'IP' : 'IP'}: ${sanitizeHTML(device.ip || '-')}</span>
+            <span class="device-mac">${isTurkish ? 'MAC' : 'MAC'}: ${sanitizeHTML(device.macAddress || '-')}</span>
           </div>
           <div class="device-status ${statusClass}">${statusText}</div>
         </div>
-        <button onclick="window.parent.postMessage({ type: 'open-iot-device', deviceId: '${safeId}' }, '*')" class="connect-button">
+        <button onclick="window.parent.postMessage({ type: 'open-iot-device', deviceId: ${jsDeviceId} }, '*')" class="connect-button">
           ${isTurkish ? 'Bağlan' : 'Connect'}
         </button>
       </div>
@@ -577,6 +579,8 @@ export const generateIotDevicePageContent = (
   const isTurkish = language === 'tr';
   const safeName = sanitizeHTML(deviceName);
   const safeId = sanitizeHTML(deviceId);
+  // Use JSON.stringify for embedding strings in <script> blocks to prevent XSS and logic corruption.
+  const jsId = JSON.stringify(deviceId).replace(/</g, '\\u003c');
 
   return `
     <!DOCTYPE html>
@@ -769,13 +773,13 @@ export const generateIotDevicePageContent = (
               statusText.className = 'status-text status-active';
               statusMessage.textContent = '${isTurkish ? 'Cihaz aktif' : 'Device is active'}';
               statusMessage.className = 'status-text status-active';
-              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: '${safeId}', active: true }, '*');
+              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: ${jsId}, active: true }, '*');
             } else {
               statusText.textContent = '${isTurkish ? 'Pasif' : 'Inactive'}';
               statusText.className = 'status-text status-inactive';
               statusMessage.textContent = '${isTurkish ? 'Cihaz pasif' : 'Device is inactive'}';
               statusMessage.className = 'status-text status-inactive';
-              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: '${safeId}', active: false }, '*');
+              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: ${jsId}, active: false }, '*');
             }
           }
 
