@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { SwitchState } from '@/lib/network/types';
-import { createInitialState, createInitialRouterState, applyStartupConfig, buildStartupConfig } from '@/lib/network/initialState';
+import { createInitialState, createInitialRouterState, createInitialFirewallState, applyStartupConfig, buildStartupConfig } from '@/lib/network/initialState';
 import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import { executeCommand, getPrompt } from '@/lib/network/executor';
 import type { TerminalOutput } from '@/components/network/Terminal';
@@ -86,8 +86,17 @@ export function useDeviceManager() {
 
   const getBootMessage = useCallback((deviceType: Exclude<DeviceType, 'pc'>, switchModel?: string, language: 'tr' | 'en' = 'en') => {
     const isRouter = deviceType === 'router';
+    const isFirewall = deviceType === 'firewall' || switchModel?.includes('ASA');
     const isL3Switch = deviceType === 'switchL3' || switchModel?.includes('3650');
-    const isL2Switch = !isRouter && !isL3Switch;
+
+    if (isFirewall) {
+      return {
+        boot1: `\n\nCisco Adaptive Security Appliance Software Version 9.6(1)\nDevice Manager Version 7.6(1)\n\n`,
+        boot2: `Compiled on Mon 21-Mar-16 11:52 PDT by builders\nSystem Bootstrap, Version 1.1.8, RELEASE SOFTWARE\n\nASA 5506-X platform with 4096 K bytes of memory\n`,
+        boot3: `\nReading from flash... OK\nValidating image checksum... OK\n\n`,
+        initMessage: language === 'tr' ? 'Firewall başlatılıyor' : 'Firewall is starting'
+      };
+    }
 
     if (isRouter) {
       const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
@@ -243,12 +252,20 @@ export function useDeviceManager() {
     }
 
     let deviceState = deviceStates.get(deviceId);
-    const defaultName = deviceType === 'router' ? 'Router' : (deviceType === 'iot' ? 'IoT' : 'Switch');
+    const defaultName = deviceType === 'router' ? 'Router' : (deviceType === 'firewall' ? 'ciscoasa' : (deviceType === 'iot' ? 'IoT' : 'Switch'));
 
     if (!deviceState) {
-      // Use the provided switchModel, default to L2 for switches, or L3 for routers
-      const model = switchModel || (deviceType === 'router' ? 'WS-C3650-24PS' : deviceType === 'switchL3' ? 'WS-C3650-24PS' : 'WS-C2960-24TT-L');
-      deviceState = deviceType === 'router' ? createInitialRouterState(initialMac) : createInitialState(initialMac, model as any);
+      // Use the provided switchModel, default to L2 for switches, L3 for routers, or ASA for firewall
+      const model = switchModel || (deviceType === 'router' ? 'WS-C3650-24PS' : deviceType === 'switchL3' ? 'WS-C3650-24PS' : (deviceType === 'firewall' ? 'ASA-5506-X' : 'WS-C2960-24TT-L'));
+
+      if (deviceType === 'firewall') {
+        deviceState = createInitialFirewallState(initialMac);
+      } else if (deviceType === 'router') {
+        deviceState = createInitialRouterState(initialMac);
+      } else {
+        deviceState = createInitialState(initialMac, model as any);
+      }
+
       const hostname = initialHostname || defaultName;
       deviceState = { ...deviceState, hostname };
 
@@ -357,11 +374,14 @@ export function useDeviceManager() {
     if (!outputs || !hasBootMessages) {
       const state = deviceStateArg || deviceStates.get(deviceId);
       const isRouter = deviceId.includes('router');
-      const inferredDeviceType: Exclude<DeviceType, 'pc'> = isRouter
-        ? 'router'
-        : state?.switchLayer === 'L3'
-          ? 'switchL3'
-          : 'switchL2';
+      const isFirewall = deviceId.includes('firewall') || state?.switchLayer === 'FW';
+      const inferredDeviceType: Exclude<DeviceType, 'pc'> = isFirewall
+        ? 'firewall'
+        : isRouter
+          ? 'router'
+          : state?.switchLayer === 'L3'
+            ? 'switchL3'
+            : 'switchL2';
 
       const bootInfo = getBootMessage(inferredDeviceType, state?.switchModel, language);
       const fallbackSwitchModel = state?.switchModel || deviceStates.get(deviceId)?.switchModel;

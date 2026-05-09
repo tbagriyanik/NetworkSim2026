@@ -126,6 +126,48 @@ function createInitialPorts(gigabitPortCount: number = 2, baseMac?: string, hasW
   return ports;
 }
 
+// Firewall için başlangıç portları oluştur
+function createInitialFirewallPorts(baseMac?: string): Record<string, Port> {
+  const ports: Record<string, Port> = {};
+  const firewallBaseMac = baseMac || generateUniqueMacAddress(0x00A000000000); // Firewall base MAC range
+
+  // Console port
+  ports['console'] = {
+    id: 'console',
+    name: 'Console',
+    status: 'notconnect',
+    vlan: 1,
+    mode: 'access',
+    duplex: 'auto',
+    speed: 'auto',
+    shutdown: false,
+    type: 'fastethernet'
+  };
+
+  // GigabitEthernet 1/1 - 1/8 (ASA portları)
+  for (let i = 1; i <= 8; i++) {
+    const portId = `gi1/${i}`;
+    const portMacNumber = parseInt(firewallBaseMac.replace(/\./g, ''), 16) + i;
+    const portMac = formatMacFromNumber(portMacNumber);
+
+    ports[portId] = {
+      id: portId,
+      name: '',
+      status: 'notconnect',
+      vlan: 1,
+      mode: 'routed',
+      duplex: 'auto',
+      speed: 'auto',
+      shutdown: true,
+      type: 'gigabitethernet',
+      macAddress: portMac,
+      isRoutedPort: true
+    };
+  }
+
+  return ports;
+}
+
 // Varsayılan VLAN'lar - sadece sistem VLAN'ları (kullanıcı VLAN oluşturmalı)
 function createInitialVlans(): Record<number, Vlan> {
   return {
@@ -361,6 +403,52 @@ export function createInitialRouterState(mac?: string): SwitchState {
   };
 }
 
+// Firewall için başlangıç durumu
+export function createInitialFirewallState(mac?: string): SwitchState {
+  const macAddress = reserveMacAddress(mac);
+  const ports = createInitialFirewallPorts(macAddress);
+  const vlans = createInitialVlans();
+
+  return {
+    hostname: 'ciscoasa',
+    macAddress,
+    switchModel: 'ASA-5506-X' as any,
+    switchLayer: 'FW',
+    currentMode: 'user',
+    consoleAuthenticated: false,
+    ipRouting: true,
+    ports,
+    vlans,
+    security: createInitialSecurity(),
+    arpCache: [],
+    services: {
+      http: {
+        enabled: false,
+        content: '',
+        fontSize: 16
+      }
+    },
+    runningConfig: [
+      '!',
+      `hostname ciscoasa`,
+      '!',
+      '!',
+      'end'
+    ],
+    commandHistory: [],
+    historyIndex: -1,
+    bannerMOTD: 'Cisco Adaptive Security Appliance Software Version 9.6(1)\n',
+    version: {
+      nosVersion: '9.6(1)',
+      modelName: 'ASA-5506-X',
+      serialNumber: 'ASA12345678',
+      uptime: '1 day, 2 hours, 15 minutes'
+    },
+    macAddressTable: [],
+    vtpRevision: 0
+  };
+}
+
 export function buildStartupConfig(state: SwitchState): StartupConfig {
   return {
     hostname: state.hostname,
@@ -470,6 +558,12 @@ export function getModePrompt(mode: CommandMode, hostname: string, context?: str
 export function normalizePortId(input: string): string | null {
   // Boşlukları kaldır ve küçük harfe çevir (örn: "gig 0/1" -> "gig0/1")
   const lower = input.toLowerCase().trim().replace(/\s+/g, '');
+
+  // Match ASA format GigabitEthernet1/1
+  const asaMatch = lower.match(/^(?:gi|gig|gigabit|gigabitethernet)(\d+)\/(\d+)$/);
+  if (asaMatch && asaMatch[1] === '1') {
+    return `gi${asaMatch[1]}/${asaMatch[2]}`;
+  }
 
   const subMatch = lower.match(/^(?:fa|fastethernet|fast|gi|gig|gigabit|gigabitethernet)(\d+)\/(\d+)\.(\d+)$/);
   if (subMatch) {

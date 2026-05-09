@@ -48,6 +48,7 @@ import { routerConfigHandlers } from './core/routerConfigCommands';
 import { lineHandlers } from './core/lineCommands';
 import { privilegedHandlers } from './core/privilegedCommands';
 import { dhcpConfigHandlers } from './core/dhcpConfigCommands';
+import { firewallHandlers } from './core/firewallCommands';
 
 // --- Command handler types & context ---
 export interface CommandContext {
@@ -1504,6 +1505,9 @@ import { cmdDhcpNetwork } from './core/dhcpConfigCommands';
 const commandHandlers: Record<string, CommandHandler> = {
   // System commands
   ...systemHandlers,
+
+  // ASA Firewall commands
+  ...firewallHandlers,
 
   // Show commands
   ...showHandlers,

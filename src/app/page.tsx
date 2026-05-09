@@ -770,6 +770,26 @@ export default function Home() {
     window.addEventListener('update-topology-device-config', handleDeviceUpdate);
     return () => window.removeEventListener('update-topology-device-config', handleDeviceUpdate);
   }, [updateDeviceConfig]);
+
+  useEffect(() => {
+    const handleTriggerOpenFirewall = () => {
+      // Find the first firewall in the topology
+      const firewall = topologyDevices.find(d => d.type === 'firewall');
+      if (firewall) {
+        setActiveFirewallId(firewall.id);
+        setShowFirewallPanel(true);
+      } else {
+        toast({
+          title: t.language === 'tr' ? 'Firewall bulunamadı' : 'Firewall not found',
+          description: t.language === 'tr' ? 'Topolojide yapılandırılmış bir firewall bulunmuyor.' : 'No firewall configured in the topology.',
+          variant: 'destructive'
+        });
+      }
+    };
+
+    window.addEventListener('trigger-open-firewall', handleTriggerOpenFirewall);
+    return () => window.removeEventListener('trigger-open-firewall', handleTriggerOpenFirewall);
+  }, [topologyDevices, t.language]);
   useEffect(() => {
     const handleAddDevice = (event: any) => {
       const { device } = event.detail;
@@ -5267,6 +5287,13 @@ ${state.bannerMOTD}
                       onUpdateRules={(rules) => {
                         updateDeviceConfig(activeFirewallId, { firewallRules: rules });
                       }}
+                      deviceStates={deviceStates}
+                      deviceOutputs={deviceOutputs}
+                      onExecuteCommand={(cmd) => handleExecuteCommand(activeFirewallId!, cmd)}
+                      onUpdateHistory={handleUpdateHistory}
+                      setConfirmDialog={setConfirmDialog}
+                      confirmDialog={confirmDialog}
+                      topologyDevices={topologyDevices}
                     />
                   )}
                 </div>
@@ -5870,7 +5897,7 @@ ${state.bannerMOTD}
                             </svg>
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Add Firewall</TooltipContent>
+                        <TooltipContent>{t.addFirewall}</TooltipContent>
                       </Tooltip>
                     </div>
 

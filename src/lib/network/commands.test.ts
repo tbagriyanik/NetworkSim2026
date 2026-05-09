@@ -259,6 +259,8 @@ describe('Command Handlers Validation', () => {
       'class-map': 'class-map match-all test',
       'policy-map': 'policy-map test',
       'template': 'template test',
+      'nameif': 'nameif inside',
+      'security-level': 'security-level 100',
     };
 
     patterns.forEach(pattern => {
