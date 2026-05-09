@@ -54,7 +54,7 @@ export function HelpPanel({
         {
             term: 'Router',
             definition: 'A device that forwards data packets between networks',
-            example: 'Cisco Router',
+            example: 'Network Router',
         },
         {
             term: 'Switch',

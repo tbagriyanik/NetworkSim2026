@@ -410,7 +410,7 @@ export function createInitialFirewallState(mac?: string): SwitchState {
   const vlans = createInitialVlans();
 
   return {
-    hostname: 'ciscoasa',
+    hostname: 'asa 5506-x',
     macAddress,
     switchModel: 'ASA-5506-X' as any,
     switchLayer: 'FW',
@@ -430,14 +430,14 @@ export function createInitialFirewallState(mac?: string): SwitchState {
     },
     runningConfig: [
       '!',
-      `hostname ciscoasa`,
+      `hostname asa 5506-x`,
       '!',
       '!',
       'end'
     ],
     commandHistory: [],
     historyIndex: -1,
-    bannerMOTD: 'Cisco Adaptive Security Appliance Software Version 9.6(1)\n',
+    bannerMOTD: 'Adaptive Security Appliance Software Version 9.6(1)\n',
     version: {
       nosVersion: '9.6(1)',
       modelName: 'ASA-5506-X',

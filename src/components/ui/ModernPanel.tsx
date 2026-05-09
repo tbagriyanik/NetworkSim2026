@@ -65,7 +65,7 @@ export function ModernPanel({
             return;
         }
 
-        const mediaQuery = window.matchMedia('(max-width: 1023px)');
+        const mediaQuery = window.matchMedia('(max-width: 639px)');
         const updateIsMobile = () => setIsMobile(mediaQuery.matches);
 
         updateIsMobile();
@@ -296,9 +296,9 @@ export function ModernPanel({
                 <div
                     data-drag-header
                     className={cn(
-                        "flex items-center justify-between gap-2 p-3 border-b select-none",
+                        "flex items-center justify-between gap-1.5 p-2 border-b select-none",
                         isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-50 border-zinc-200",
-                        isMobile && "p-2 min-h-[44px] touch-manipulation",
+                        isMobile && "p-1.5 min-h-[40px] touch-manipulation",
                     )}
                     style={{ touchAction: 'none' }}
                 >

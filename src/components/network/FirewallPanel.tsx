@@ -2,12 +2,12 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { FirewallRule, CanvasDevice } from './networkTopology.types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Plus, Trash2, CheckCircle2, XCircle, GripVertical, Terminal as TerminalIcon, Settings } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, XCircle, GripVertical, Terminal as TerminalIcon, Settings } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { Translations } from '@/contexts/LanguageContext';
 import { Terminal } from './Terminal';
@@ -26,6 +26,7 @@ interface FirewallPanelProps {
   onUpdateHistory: (deviceId: string, history: string[]) => void;
   setConfirmDialog: (dialog: any) => void;
   confirmDialog: any;
+  onClose?: () => void;
   topologyDevices?: CanvasDevice[];
 }
 
@@ -41,6 +42,7 @@ export function FirewallPanel({
   onUpdateHistory,
   setConfirmDialog,
   confirmDialog,
+  onClose,
   topologyDevices = []
 }: FirewallPanelProps) {
   const isDark = theme === 'dark';
@@ -106,30 +108,26 @@ export function FirewallPanel({
   const itemBg = isDark ? 'bg-slate-900' : 'bg-slate-50';
 
   return (
-    <Card className={`${cardBg} transition-all duration-300 h-full flex flex-col`}>
-      <CardHeader className="py-3 px-5 border-b shrink-0">
-        <CardTitle className="text-red-500 text-base sm:text-lg flex items-center gap-2">
-          <Shield className="w-5 h-5" />
-          {t.language === 'tr' ? 'Firewall Yapılandırması' : 'Firewall Configuration'}
-        </CardTitle>
-      </CardHeader>
+    <Card className={`${cardBg} transition-all duration-300 h-full flex flex-col py-0 gap-0`}>
       <CardContent className="p-0 flex-1 min-h-0">
         <Tabs defaultValue="console" className="h-full flex flex-col">
-          <div className="px-4 pt-2 border-b bg-muted/30">
-            <TabsList className="bg-transparent gap-4 h-10 p-0 border-b-0">
+          <div className="px-2 sm:px-4 pt-1 border-b bg-muted/30 flex-shrink-0">
+            <TabsList className="bg-transparent gap-2 sm:gap-4 h-10 p-0 border-b-0 w-full flex min-w-0 overflow-visible justify-start">
               <TabsTrigger
                 value="console"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-red-500 data-[state=active]:shadow-none rounded-none px-2 h-10 gap-2 font-bold text-xs"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-red-500 data-[state=active]:shadow-none rounded-none px-1 sm:px-2 h-10 gap-1 sm:gap-2 font-bold text-xs flex-1 sm:flex-none min-w-0 visible"
               >
-                <TerminalIcon className="w-4 h-4" />
-                {t.language === 'tr' ? 'Konsol' : 'Console'}
+                <TerminalIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">{t.language === 'tr' ? 'Konsol' : 'Console'}</span>
+                <span className="sm:hidden">{t.language === 'tr' ? 'K' : 'C'}</span>
               </TabsTrigger>
               <TabsTrigger
                 value="settings"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-red-500 data-[state=active]:shadow-none rounded-none px-2 h-10 gap-2 font-bold text-xs"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-red-500 data-[state=active]:shadow-none rounded-none px-1 sm:px-2 h-10 gap-1 sm:gap-2 font-bold text-xs flex-1 sm:flex-none min-w-0 visible"
               >
-                <Settings className="w-4 h-4" />
-                {t.language === 'tr' ? 'Hızlı Ayarlar' : 'Quick Settings'}
+                <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">{t.language === 'tr' ? 'Hızlı Ayarlar' : 'Quick Settings'}</span>
+                <span className="sm:hidden">{t.language === 'tr' ? 'A' : 'S'}</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -150,7 +148,7 @@ export function FirewallPanel({
                 connectionErrorMessage={t.connectionError}
                 isPoweredOff={isDevicePoweredOff}
                 onTogglePower={() => {}}
-                onClose={() => {}}
+                onClose={onClose}
                 t={t}
                 theme={theme}
                 language={language}

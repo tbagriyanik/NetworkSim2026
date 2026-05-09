@@ -513,7 +513,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 3
   },
 
-  // Cisco ASA specific commands
+  // Firewall ASA specific commands
   'nameif': {
     pattern: /^nameif\s+(\S+)$/i,
     modes: ['interface'],

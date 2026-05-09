@@ -270,7 +270,35 @@ export function Terminal({
 
     // Update the ref for next check
     wasWifiConnectedRef.current = isCurrentlyConnected;
-  }, [device?.id, device?.type, devices?.length, deviceStates?.size]);
+  }, [device, devices, deviceStates, onClose]);
+
+  // Handle mobile back button to close terminal
+  useEffect(() => {
+    if (!onClose) return;
+
+    const handlePopState = (event: PopStateEvent) => {
+      // Check if terminal is currently visible/focused
+      const terminalElement = terminalRef.current;
+      if (terminalElement && document.activeElement?.closest('.terminal-container')) {
+        onClose();
+      }
+    };
+
+    // Add history entry for back button detection
+    if (typeof window !== 'undefined' && window.history) {
+      window.history.pushState({ terminalOpen: true }, '', '');
+
+      window.addEventListener('popstate', handlePopState);
+
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+        // Clean up history entry if still open
+        if (window.history.state?.terminalOpen) {
+          window.history.back();
+        }
+      };
+    }
+  }, [onClose]);
 
   const clearTerminalView = useCallback(() => {
     cancelOutputRef.current = true;
@@ -888,6 +916,12 @@ export function Terminal({
         setInput('');
         return;
       }
+      // Close terminal with ESC when no dialogs are active
+      if (onClose) {
+        e.preventDefault();
+        onClose();
+        return;
+      }
     }
     // Block history/tab navigation during password/confirm modes
     if (state.awaitingPassword || localPasswordPrompt || confirmDialog?.show) return;
@@ -1121,7 +1155,7 @@ export function Terminal({
       )}
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)} className={cn("h-8 w-8 rounded-lg", isDark ? "text-slate-300 hover:text-slate-100" : "")} aria-controls="search-dialog">
+          <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)} className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", isDark && "text-slate-300 hover:text-slate-100")} aria-controls="search-dialog">
             <Search className="w-4 h-4" aria-hidden="true" />
           </Button>
         </TooltipTrigger>
@@ -1129,7 +1163,7 @@ export function Terminal({
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={handleCopyAll} className={cn("h-8 w-8 rounded-lg", isDark ? "text-slate-300 hover:text-slate-100" : "")}>
+          <Button variant="ghost" size="icon" onClick={handleCopyAll} className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", isDark && "text-slate-300 hover:text-slate-100")}>
             <Copy className="w-4 h-4" aria-hidden="true" />
           </Button>
         </TooltipTrigger>
@@ -1137,7 +1171,7 @@ export function Terminal({
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={exportTerminal} className={cn("h-8 w-8 rounded-lg", isDark ? "text-slate-300 hover:text-slate-100" : "")}>
+          <Button variant="ghost" size="icon" onClick={exportTerminal} className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", isDark && "text-slate-300 hover:text-slate-100")}>
             <Download className="w-4 h-4" aria-hidden="true" />
           </Button>
         </TooltipTrigger>
@@ -1145,7 +1179,7 @@ export function Terminal({
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={() => setShowSettings(!showSettings)} className={cn("h-8 w-8 rounded-lg", showSettings && "bg-accent", isDark ? "text-slate-300 hover:text-slate-100" : "")}>
+          <Button variant="ghost" size="icon" onClick={() => setShowSettings(!showSettings)} className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", showSettings && "bg-accent", isDark && "text-slate-300 hover:text-slate-100")}>
             <Settings className="w-4 h-4" aria-hidden="true" />
           </Button>
         </TooltipTrigger>
@@ -1191,7 +1225,7 @@ export function Terminal({
       className={cn("flex flex-col h-full", className)}
       style={{ height: '100%' }}
     >
-      <div className={cn("flex flex-col h-full overflow-hidden", isDark ? "bg-black" : "bg-slate-50")}>
+      <div className={cn("flex flex-col h-full overflow-hidden terminal-container", isDark ? "bg-black" : "bg-slate-50")}>
         {/* Settings Bar */}
         {showSettings && (
           <div className="px-4 py-2 border-b bg-muted/30 flex items-center gap-4 animate-in slide-in-from-top-2">
@@ -1349,9 +1383,8 @@ export function Terminal({
                   <Button
                     type="button"
                     disabled={isInputDisabled}
-                    size="icon"
                     variant="ghost"
-                    className="shrink-0 rounded-xl hover:bg-rose-500/20 text-rose-500"
+                    className="shrink-0 rounded-xl hover:bg-rose-500/20 text-rose-500 px-2 h-9 text-xs"
                     onClick={() => {
                       if (onCommand) {
                         if (state.awaitingPassword || localPasswordPrompt) {
@@ -1368,20 +1401,21 @@ export function Terminal({
                     }}
                     title={t.cancel}
                   >
-                    <X className={cn("w-5 h-5", isMobile && "w-4 h-4")} />
+                    <X className={cn("w-4 h-4 mr-1", isMobile && "w-3 h-3")} />
+                    <span className="text-rose-600 dark:text-rose-400 font-medium">{t.cancel}</span>
                   </Button>
                 )}
                 <Button
                   type="submit"
                   disabled={isInputDisabled}
-                  size="icon"
                   className={cn(
-                    "shrink-0 rounded-xl shadow-lg",
-                    isMobile ? "h-9 w-9" : "h-11 w-11",
-                    (state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending) && "bg-amber-500 hover:bg-amber-600"
+                    "shrink-0 rounded-xl shadow-lg px-3 bg-primary text-primary-foreground hover:bg-primary/90",
+                    isMobile ? "h-9 text-xs" : "h-11 text-sm",
+                    (state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending) && "bg-amber-500 hover:bg-amber-600 text-white"
                   )}
                 >
-                  <CornerDownLeft className={cn("w-5 h-5", isMobile && "w-4 h-4")} />
+                  <CornerDownLeft className={cn("w-4 h-4 mr-1.5", isMobile && "w-3 h-3")} />
+                  <span className="font-semibold">OK</span>
                 </Button>
               </form>
 
