@@ -1,7 +1,7 @@
 // Switch Model Definitions and Utilities
 
-export type SwitchModel = 'WS-C2960-24TT-L' | 'WS-C3650-24PS';
-export type SwitchLayer = 'L2' | 'L3';
+export type SwitchModel = 'WS-C2960-24TT-L' | 'WS-C3650-24PS' | 'ASA-5506-X';
+export type SwitchLayer = 'L2' | 'L3' | 'FW';
 
 export interface SwitchModelInfo {
     model: SwitchModel;
@@ -43,6 +43,20 @@ export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
             'Port Security',
             'Wireless Access Point'
         ]
+    },
+    'ASA-5506-X': {
+        model: 'ASA-5506-X',
+        name: 'ASA 5506-X with FirePOWER',
+        layer: 'FW',
+        ports: 9, // 8 GE + 1 Console
+        description: 'Next-Generation Firewall - 8 GigabitEthernet ports',
+        features: [
+            'Stateful Firewall',
+            'Application Visibility and Control',
+            'Next-Generation Intrusion Prevention',
+            'Site-to-Site and Remote Access VPN',
+            'Advanced Malware Protection'
+        ]
     }
 };
 
@@ -73,7 +87,7 @@ export function isLayer3Switch(model: SwitchModel | string | undefined): boolean
 
 export function canAssignIPToPhysicalPort(model: SwitchModel | string | undefined): boolean {
     if (!model) return true; // Default to allowing IP assignment if model is unknown (for routers)
-    return isLayer3Switch(model);
+    return isLayer3Switch(model) || model === 'ASA-5506-X';
 }
 
 export function getAvailableSwitchModels(): SwitchModel[] {

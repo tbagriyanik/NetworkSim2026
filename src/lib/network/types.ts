@@ -60,6 +60,8 @@ export interface Port {
   isRoutedPort?: boolean;       // For L3 switch routed ports
   isSubinterface?: boolean;     // For subinterfaces (e.g., gi0/0.10)
   parentInterface?: string;     // Parent interface for subinterfaces
+  nameif?: string;              // ASA interface name (inside, outside, etc.)
+  securityLevel?: number;       // ASA security level (0-100)
   wifi?: {
     ssid: string;
     security: 'open' | 'wpa' | 'wpa2' | 'wpa3';
@@ -104,8 +106,8 @@ export interface SecurityConfig {
   vtyLines: LineConfig;
 }
 
-export type SwitchModel = 'WS-C2960-24TT-L' | 'WS-C3650-24PS';
-export type SwitchLayer = 'L2' | 'L3';
+export type SwitchModel = 'WS-C2960-24TT-L' | 'WS-C3650-24PS' | 'ASA-5506-X';
+export type SwitchLayer = 'L2' | 'L3' | 'FW';
 
 export interface SwitchState {
   hostname: string;

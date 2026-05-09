@@ -19,6 +19,7 @@ export interface Translations {
   addDevicesFirst: string;
   addDnsRecord: string;
   addIoT: string;
+  addFirewall: string;
   addIotDevice: string;
   addL2Switch: string;
   addL3Switch: string;
@@ -612,6 +613,7 @@ const translations: Record<Language, Translations> = {
     addDevicesFirst: 'Önce Cihaz Ekleyin',
     addDnsRecord: 'Kayıt Ekle',
     addIoT: 'IoT Ekle',
+    addFirewall: 'Firewall Ekle',
     addIotDevice: 'IoT cihazı ekle',
     addL2Switch: 'L2 Switch ekle',
     addL3Switch: 'L3 Switch ekle',
@@ -1203,6 +1205,7 @@ const translations: Record<Language, Translations> = {
     addDevicesFirst: 'Add Devices First',
     addDnsRecord: 'Add Record',
     addIoT: 'Add IoT',
+    addFirewall: 'Add Firewall',
     addIotDevice: 'Add IoT device',
     addL2Switch: 'Add L2 Switch',
     addL3Switch: 'Add L3 Switch',

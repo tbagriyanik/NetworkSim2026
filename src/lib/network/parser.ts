@@ -513,6 +513,20 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 3
   },
 
+  // Cisco ASA specific commands
+  'nameif': {
+    pattern: /^nameif\s+(\S+)$/i,
+    modes: ['interface'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'security-level': {
+    pattern: /^security-level\s+(\d+)$/i,
+    modes: ['interface'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+
   // Interface komutları - interface ÖNCE gelmeli (daha spesifik)
   'interface': {
     pattern: /^interface\s+(?!r(?:ange)?\s)(fa|fastethernet|gi|gig|gigabitethernet|e|ethernet|po|port-channel|vlan)?\s*(.+)$/i,

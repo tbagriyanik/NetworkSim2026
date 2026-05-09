@@ -3327,6 +3327,9 @@ export function PCPanel({
         const url = args[0];
         if (!url) {
           addLocalOutput('output', `Usage: ${cmd} <url>`);
+        } else if (url === 'firewall-panel') {
+           window.dispatchEvent(new CustomEvent('trigger-open-firewall'));
+           addLocalOutput('success', language === 'tr' ? 'Firewall paneli açılıyor...' : 'Opening firewall panel...');
         } else {
           // Always open in the built-in browser modal instead of new tab
           openWebPage(url, args[1]);

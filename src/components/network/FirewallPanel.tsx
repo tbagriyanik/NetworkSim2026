@@ -1,14 +1,18 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { FirewallRule, CanvasDevice } from './networkTopology.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, Plus, Trash2, CheckCircle2, XCircle, GripVertical } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Shield, Plus, Trash2, CheckCircle2, XCircle, GripVertical, Terminal as TerminalIcon, Settings } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { Translations } from '@/contexts/LanguageContext';
+import { Terminal } from './Terminal';
+import { SwitchState } from '@/lib/network/types';
+import { getPrompt } from '@/lib/network/executor';
 
 interface FirewallPanelProps {
   device: CanvasDevice;
@@ -16,6 +20,13 @@ interface FirewallPanelProps {
   theme: string;
   onUpdateRules: (rules: FirewallRule[]) => void;
   isDevicePoweredOff?: boolean;
+  deviceStates: Map<string, SwitchState>;
+  deviceOutputs: Map<string, any[]>;
+  onExecuteCommand: (command: string) => Promise<void>;
+  onUpdateHistory: (deviceId: string, history: string[]) => void;
+  setConfirmDialog: (dialog: any) => void;
+  confirmDialog: any;
+  topologyDevices?: CanvasDevice[];
 }
 
 export function FirewallPanel({
@@ -23,10 +34,31 @@ export function FirewallPanel({
   t,
   theme,
   onUpdateRules,
-  isDevicePoweredOff = false
+  isDevicePoweredOff = false,
+  deviceStates,
+  deviceOutputs,
+  onExecuteCommand,
+  onUpdateHistory,
+  setConfirmDialog,
+  confirmDialog,
+  topologyDevices = []
 }: FirewallPanelProps) {
   const isDark = theme === 'dark';
   const rules = device.firewallRules || [];
+  const language = t.language as 'tr' | 'en';
+
+  const state = useMemo(() => {
+    return deviceStates.get(device.id) || {
+      hostname: 'ciscoasa',
+      currentMode: 'user',
+      ports: {},
+      security: { consoleLine: {}, vtyLines: {} }
+    } as any;
+  }, [deviceStates, device.id]);
+
+  const output = useMemo(() => {
+    return deviceOutputs.get(device.id) || [];
+  }, [deviceOutputs, device.id]);
 
   const [newRule, setNewRule] = useState<Omit<FirewallRule, 'id'>>({
     sourceIp: '*',
@@ -74,120 +106,174 @@ export function FirewallPanel({
   const itemBg = isDark ? 'bg-slate-900' : 'bg-slate-50';
 
   return (
-    <Card className={`${cardBg} transition-all duration-300`}>
-      <CardHeader className="py-3 px-5 border-b">
+    <Card className={`${cardBg} transition-all duration-300 h-full flex flex-col`}>
+      <CardHeader className="py-3 px-5 border-b shrink-0">
         <CardTitle className="text-red-500 text-base sm:text-lg flex items-center gap-2">
           <Shield className="w-5 h-5" />
           {t.language === 'tr' ? 'Firewall Yapılandırması' : 'Firewall Configuration'}
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4 space-y-4">
-        {isDevicePoweredOff && (
-          <div className="p-2 rounded bg-red-500/10 text-red-500 text-xs text-center border border-red-500/20">
-            {t.language === 'tr' ? 'Cihaz kapalı. Kural yönetimi devre dışı.' : 'Device is offline. Rule management disabled.'}
-          </div>
-        )}
-
-        <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'} space-y-3`}>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Kaynak IP' : 'Source IP'}</label>
-              <Input
-                value={newRule.sourceIp}
-                onChange={e => setNewRule({...newRule, sourceIp: e.target.value})}
-                placeholder="*"
-                className="h-8 text-xs"
-                disabled={isDevicePoweredOff}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Hedef IP' : 'Target IP'}</label>
-              <Input
-                value={newRule.targetIp}
-                onChange={e => setNewRule({...newRule, targetIp: e.target.value})}
-                placeholder="*"
-                className="h-8 text-xs"
-                disabled={isDevicePoweredOff}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase">Port</label>
-              <Input
-                value={newRule.port}
-                onChange={e => setNewRule({...newRule, port: e.target.value})}
-                placeholder="*"
-                className="h-8 text-xs"
-                disabled={isDevicePoweredOff}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Protokol' : 'Protocol'}</label>
-              <Select
-                value={newRule.protocol}
-                onValueChange={(v: any) => setNewRule({...newRule, protocol: v})}
-                disabled={isDevicePoweredOff}
+      <CardContent className="p-0 flex-1 min-h-0">
+        <Tabs defaultValue="console" className="h-full flex flex-col">
+          <div className="px-4 pt-2 border-b bg-muted/30">
+            <TabsList className="bg-transparent gap-4 h-10 p-0 border-b-0">
+              <TabsTrigger
+                value="console"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-red-500 data-[state=active]:shadow-none rounded-none px-2 h-10 gap-2 font-bold text-xs"
               >
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any</SelectItem>
-                  <SelectItem value="tcp">TCP</SelectItem>
-                  <SelectItem value="udp">UDP</SelectItem>
-                  <SelectItem value="icmp">ICMP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Eylem' : 'Action'}</label>
-              <Select
-                value={newRule.action}
-                onValueChange={(v: any) => setNewRule({...newRule, action: v})}
-                disabled={isDevicePoweredOff}
+                <TerminalIcon className="w-4 h-4" />
+                {t.language === 'tr' ? 'Konsol' : 'Console'}
+              </TabsTrigger>
+              <TabsTrigger
+                value="settings"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-red-500 data-[state=active]:shadow-none rounded-none px-2 h-10 gap-2 font-bold text-xs"
               >
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="allow">ALLOW</SelectItem>
-                  <SelectItem value="deny">DENY</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <Settings className="w-4 h-4" />
+                {t.language === 'tr' ? 'Hızlı Ayarlar' : 'Quick Settings'}
+              </TabsTrigger>
+            </TabsList>
           </div>
-          <Button
-            onClick={handleAddRule}
-            className="w-full h-8 bg-red-600 hover:bg-red-700 text-white text-xs font-bold"
-            disabled={isDevicePoweredOff}
-          >
-            <Plus className="w-4 h-4 mr-1" /> {t.language === 'tr' ? 'Kural Ekle' : 'Add Rule'}
-          </Button>
-        </div>
 
-        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-          {rules.length === 0 ? (
-            <div className="text-center py-8 text-slate-500 text-xs italic">
-              {t.language === 'tr' ? 'Henüz kural tanımlanmamış. Varsayılan: Her şeye izin ver.' : 'No rules defined. Default: Allow all.'}
-            </div>
-          ) : (
-            rules.map((rule, index) => (
-              <DraggableRuleItem
-                key={rule.id}
-                rule={rule}
-                index={index}
-                totalRules={rules.length}
-                itemBg={itemBg}
-                isDevicePoweredOff={isDevicePoweredOff}
-                onToggle={() => toggleRule(rule.id)}
-                onDelete={() => handleDeleteRule(rule.id)}
-                onMove={moveRule}
+          <TabsContent value="console" className="flex-1 min-h-0 m-0 p-0 overflow-hidden">
+             <Terminal
+                key="firewall-terminal"
+                className="h-full"
+                deviceId={device.id}
+                deviceName={state.hostname}
+                prompt={getPrompt(state)}
+                state={state}
+                onCommand={onExecuteCommand}
+                onClear={() => {}}
+                output={output}
+                isLoading={false}
+                isConnectionError={isDevicePoweredOff}
+                connectionErrorMessage={t.connectionError}
+                isPoweredOff={isDevicePoweredOff}
+                onTogglePower={() => {}}
+                onClose={() => {}}
                 t={t}
-              />
-            ))
-          )}
-        </div>
+                theme={theme}
+                language={language}
+                onUpdateHistory={onUpdateHistory}
+                confirmDialog={confirmDialog}
+                setConfirmDialog={setConfirmDialog}
+                device={device}
+                devices={topologyDevices}
+                deviceStates={deviceStates}
+             />
+          </TabsContent>
+
+          <TabsContent value="settings" className="flex-1 min-h-0 m-0 p-4 overflow-y-auto custom-scrollbar">
+            <div className="space-y-4">
+              {isDevicePoweredOff && (
+                <div className="p-2 rounded bg-red-500/10 text-red-500 text-xs text-center border border-red-500/20">
+                  {t.language === 'tr' ? 'Cihaz kapalı. Kural yönetimi devre dışı.' : 'Device is offline. Rule management disabled.'}
+                </div>
+              )}
+
+              <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'} space-y-3`}>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Kaynak IP' : 'Source IP'}</label>
+                    <Input
+                      value={newRule.sourceIp}
+                      onChange={e => setNewRule({...newRule, sourceIp: e.target.value})}
+                      placeholder="*"
+                      className="h-8 text-xs"
+                      disabled={isDevicePoweredOff}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Hedef IP' : 'Target IP'}</label>
+                    <Input
+                      value={newRule.targetIp}
+                      onChange={e => setNewRule({...newRule, targetIp: e.target.value})}
+                      placeholder="*"
+                      className="h-8 text-xs"
+                      disabled={isDevicePoweredOff}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Port</label>
+                    <Input
+                      value={newRule.port}
+                      onChange={e => setNewRule({...newRule, port: e.target.value})}
+                      placeholder="*"
+                      className="h-8 text-xs"
+                      disabled={isDevicePoweredOff}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Protokol' : 'Protocol'}</label>
+                    <Select
+                      value={newRule.protocol}
+                      onValueChange={(v: any) => setNewRule({...newRule, protocol: v})}
+                      disabled={isDevicePoweredOff}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="any">Any</SelectItem>
+                        <SelectItem value="tcp">TCP</SelectItem>
+                        <SelectItem value="udp">UDP</SelectItem>
+                        <SelectItem value="icmp">ICMP</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Eylem' : 'Action'}</label>
+                    <Select
+                      value={newRule.action}
+                      onValueChange={(v: any) => setNewRule({...newRule, action: v})}
+                      disabled={isDevicePoweredOff}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="allow">ALLOW</SelectItem>
+                        <SelectItem value="deny">DENY</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleAddRule}
+                  className="w-full h-8 bg-red-600 hover:bg-red-700 text-white text-xs font-bold"
+                  disabled={isDevicePoweredOff}
+                >
+                  <Plus className="w-4 h-4 mr-1" /> {t.language === 'tr' ? 'Kural Ekle' : 'Add Rule'}
+                </Button>
+              </div>
+
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                {rules.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500 text-xs italic">
+                    {t.language === 'tr' ? 'Henüz kural tanımlanmamış. Varsayılan: Her şeye izin ver.' : 'No rules defined. Default: Allow all.'}
+                  </div>
+                ) : (
+                  rules.map((rule, index) => (
+                    <DraggableRuleItem
+                      key={rule.id}
+                      rule={rule}
+                      index={index}
+                      totalRules={rules.length}
+                      itemBg={itemBg}
+                      isDevicePoweredOff={isDevicePoweredOff}
+                      onToggle={() => toggleRule(rule.id)}
+                      onDelete={() => handleDeleteRule(rule.id)}
+                      onMove={moveRule}
+                      t={t}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
