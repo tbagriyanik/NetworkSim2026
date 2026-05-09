@@ -68,6 +68,16 @@ export function buildRunningConfig(state: SwitchState): string[] {
         lines.push('!');
     }
 
+    // Access-lists
+    if (state.accessLists) {
+        Object.entries(state.accessLists).forEach(([aclId, rules]) => {
+            rules.forEach(rule => {
+                lines.push(`access-list ${aclId} ${rule}`);
+            });
+        });
+        lines.push('!');
+    }
+
     lines.push(`spanning-tree mode ${state.spanningTreeMode || 'pvst'}`);
 
     if (state.spanningTreePriority !== undefined) {
@@ -218,6 +228,14 @@ export function buildRunningConfig(state: SwitchState): string[] {
             if (port.ipAddress && port.subnetMask) {
                 lines.push(` ip address ${port.ipAddress} ${port.subnetMask}`);
             }
+
+            if ((port as any).accessGroupIn) {
+                lines.push(` ip access-group ${(port as any).accessGroupIn} in`);
+            }
+            if ((port as any).accessGroupOut) {
+                lines.push(` ip access-group ${(port as any).accessGroupOut} out`);
+            }
+
             if (!port.shutdown) {
                 lines.push(' no shutdown');
             } else {
@@ -251,6 +269,39 @@ export function buildRunningConfig(state: SwitchState): string[] {
             lines.push('!');
         }
     });
+
+    // Dynamic Routing
+    if (state.routingProtocol === 'rip') {
+        lines.push('router rip');
+        lines.push(' version 2');
+        (state.dynamicRoutes || []).forEach(r => {
+            if (r.type === 'dynamic') lines.push(`  network ${r.destination}`);
+        });
+        if (state.autoSummary === false) lines.push(' no auto-summary');
+        lines.push('!');
+    } else if (state.routingProtocol === 'ospf') {
+        lines.push(`router ospf ${state.version.nosVersion ? '1' : '1'}`);
+        (state.dynamicRoutes || []).forEach(r => {
+            if (r.type === 'dynamic') lines.push(`  network ${r.destination} ${r.subnetMask} area ${r.metric || 0}`);
+        });
+        lines.push('!');
+    } else if (state.routingProtocol === 'eigrp') {
+        lines.push(`router eigrp ${state.eigrpAs || '100'}`);
+        (state.dynamicRoutes || []).forEach(r => {
+            if (r.type === 'dynamic') lines.push(`  network ${r.destination} ${r.subnetMask}`);
+        });
+        if (state.autoSummary === false) lines.push(' no auto-summary');
+        lines.push('!');
+    } else if (state.routingProtocol === 'bgp') {
+        lines.push(`router bgp ${state.bgpAs || '65000'}`);
+        (state.dynamicRoutes || []).forEach(r => {
+            if (r.type === 'dynamic') lines.push(`  network ${r.destination} mask ${r.subnetMask}`);
+        });
+        ((state as any).bgpNeighbors || []).forEach((n: any) => {
+            lines.push(`  neighbor ${n.ip} remote-as ${n.as}`);
+        });
+        lines.push('!');
+    }
 
     // Default Vlan1 (if not already configured above)
     const vlan1Port = state.ports['vlan1'];

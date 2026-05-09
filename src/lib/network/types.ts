@@ -38,6 +38,8 @@ export interface Port {
   subnetMask?: string;
   macAddress?: string;         // Per-port MAC address (for router ports)
   allowedVlans?: number[] | 'all'; // For trunk ports
+  accessGroupIn?: string;       // Inbound ACL name/ID
+  accessGroupOut?: string;      // Outbound ACL name/ID
   channelGroup?: number; // Port-channel group id
   channelMode?: EtherChannelMode;
   channelProtocol?: EtherChannelProtocol;
@@ -172,7 +174,12 @@ export interface SwitchState {
   isLayer3Switch?: boolean;        // L3 switch capability
   staticRoutes?: Route[];          // Static routing table
   dynamicRoutes?: Route[];         // Dynamic routing table
-  routingProtocol?: 'none' | 'rip' | 'ospf'; // Routing protocol
+  routingProtocol?: 'none' | 'rip' | 'ospf' | 'eigrp' | 'bgp'; // Routing protocol
+  eigrpAs?: string;
+  bgpAs?: string;
+  bgpNeighbors?: { ip: string; as: string }[];
+  autoSummary?: boolean;
+  accessLists?: Record<string, string[]>; // ACL rules indexed by ACL ID/Name
   // DHCP pool CLI config (ip dhcp pool <name>)
   currentDhcpPool?: string;
   dhcpPools?: Record<string, {

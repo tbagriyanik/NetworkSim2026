@@ -1135,16 +1135,21 @@ function cmdShowIpRoute(
     });
   }
 
-  // Dynamic routes (RIP, OSPF, etc.) - R for RIP
+  // Dynamic routes (RIP, OSPF, EIGRP, BGP)
   if (state.dynamicRoutes && state.dynamicRoutes.length > 0) {
     state.dynamicRoutes.forEach((route: any) => {
       const mask = route.mask || route.subnetMask;
       const network = route.network || route.destination;
       if (mask && network) {
         const prefixLength = getPrefixLength(mask);
-        // RIP uses [120/metric] where 120 is administrative distance
+        let code = 'R';
+        let ad = 120;
+        if (state.routingProtocol === 'ospf') { code = 'O'; ad = 110; }
+        else if (state.routingProtocol === 'eigrp') { code = 'D'; ad = 90; }
+        else if (state.routingProtocol === 'bgp') { code = 'B'; ad = 20; }
+
         const metric = route.metric || 1;
-        output += `R     ${network}/${prefixLength} [120/${metric}] via ${route.nextHop}, 00:00:11, ${route.interface || ''}\n`;
+        output += `${code.padEnd(6)}${network}/${prefixLength} [${ad}/${metric}] via ${route.nextHop}, 00:00:11, ${route.interface || ''}\n`;
       }
     });
   }
@@ -2758,7 +2763,19 @@ function cmdShowIpArpInspection(state: any, input: string, ctx: any): any {
  * Show Access-Lists
  */
 function cmdShowAccessLists(state: any, input: string, ctx: any): any {
-  return { success: true, output: '\n% No access lists configured\n' };
+  if (!state.accessLists || Object.keys(state.accessLists).length === 0) {
+    return { success: true, output: '\n% No access lists configured\n' };
+  }
+
+  let output = '\n';
+  Object.entries(state.accessLists).forEach(([aclId, rules]: [string, any]) => {
+    output += `Standard IP access list ${aclId}\n`;
+    rules.forEach((rule: string, index: number) => {
+      output += `    ${(index + 1) * 10} ${rule}\n`;
+    });
+  });
+
+  return { success: true, output };
 }
 
 /**

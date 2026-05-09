@@ -292,6 +292,18 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 1
   },
+  'router eigrp': {
+    pattern: /^router\s+eigrp\s*(\d*)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'router bgp': {
+    pattern: /^router\s+bgp\s*(\d*)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
   'no router rip': {
     pattern: /^no\s+router\s+rip$/i,
     modes: ['config'],
@@ -304,12 +316,36 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'no router eigrp': {
+    pattern: /^no\s+router\s+eigrp\s*(\d*)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no router bgp': {
+    pattern: /^no\s+router\s+bgp\s*(\d*)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
   // Router config subcommands
   'network': {
-    pattern: /^network\s+([0-9.]+)(\s+([0-9.]+))?(\s+area\s+(\d+))?$/i,
+    pattern: /^network\s+([0-9.]+)(?:\s+([0-9.]+))?(?:\s+area\s+(\d+)|(?:\s+mask\s+([0-9.]+)))?$/i,
     modes: ['router-config', 'dhcp-config'],
     minArgs: 1,
     maxArgs: 4
+  },
+  'neighbor remote-as': {
+    pattern: /^neighbor\s+([0-9.]+)\s+remote-as\s+(\d+)$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'no auto-summary': {
+    pattern: /^no\s+auto-summary$/i,
+    modes: ['router-config'],
+    minArgs: 0,
+    maxArgs: 0
   },
   'router-id': {
     pattern: /^router-id\s+([0-9.]+)$/i,
@@ -1859,16 +1895,40 @@ export const commandPatterns: Record<string, CommandPattern> = {
 
   // Access-list
   'access-list': {
-    pattern: /^(access-list|ip\s+access-list)\s+(standard|extended)\s+(\S+)$/i,
+    pattern: /^access-list\s+(\d+)\s+(permit|deny)\s+(.+)$/i,
     modes: ['config'],
-    minArgs: 2,
+    minArgs: 3,
     maxArgs: 3
   },
+  'ip access-list': {
+    pattern: /^ip\s+access-list\s+(standard|extended)\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
   'no access-list': {
-    pattern: /^no\s+(access-list|ip\s+access-list)\s+(standard|extended)?\s*(\S+)?$/i,
+    pattern: /^no\s+access-list\s+(\d+)$/i,
     modes: ['config'],
     minArgs: 1,
-    maxArgs: 3
+    maxArgs: 1
+  },
+  'no ip access-list': {
+    pattern: /^no\s+ip\s+access-list\s+(standard|extended)\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'ip access-group': {
+    pattern: /^ip\s+access-group\s+(\S+)\s+(in|out)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'no ip access-group': {
+    pattern: /^no\s+ip\s+access-group\s+(\S+)\s+(in|out)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 2,
+    maxArgs: 2
   },
 
   // Mac access-list

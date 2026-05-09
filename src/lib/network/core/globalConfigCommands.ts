@@ -58,8 +58,12 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   // Routing protocols
   'router rip': cmdRouterRip,
   'router ospf': cmdRouterOspf,
+  'router eigrp': cmdRouterEigrp,
+  'router bgp': cmdRouterBgp,
   'no router rip': cmdNoRouterRip,
   'no router ospf': cmdNoRouterOspf,
+  'no router eigrp': cmdNoRouterEigrp,
+  'no router bgp': cmdNoRouterBgp,
   // HTTP Server
   'ip http server': cmdIpHttpServer,
   'no ip http server': cmdNoIpHttpServer,
@@ -96,6 +100,8 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'class-map': cmdStubSuccess,
   'policy-map': cmdStubSuccess,
   'template': cmdStubSuccess,
+  'ip access-list': cmdIpAccessList,
+  'no ip access-list': cmdNoIpAccessList,
 };
 
 /**
@@ -181,6 +187,116 @@ function cmdIpRoute(state: any, input: string, ctx: any): any {
     newState: {
       staticRoutes: filteredRoutes,
       ipRouting: true
+    }
+  };
+}
+
+/**
+ * Router EIGRP - Enable EIGRP routing
+ */
+function cmdRouterEigrp(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  if (!canAssignIPToPhysicalPort(state.switchModel)) {
+    return {
+      success: false,
+      error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support routing protocols.`
+    };
+  }
+
+  const match = input.match(/^router\s+eigrp\s+(\d+)$/i);
+  if (!match) {
+    return { success: false, error: '% Incomplete command.' };
+  }
+
+  const asNumber = match[1];
+  return {
+    success: true,
+    output: `EIGRP Routing Process enabled with AS ${asNumber}`,
+    newState: {
+      routingProtocol: 'eigrp',
+      ipRouting: true,
+      eigrpAs: asNumber,
+      currentMode: 'router-config'
+    }
+  };
+}
+
+/**
+ * No Router EIGRP
+ */
+function cmdNoRouterEigrp(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  const match = input.match(/^no\s+router\s+eigrp\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Incomplete command.' };
+
+  return {
+    success: true,
+    output: 'EIGRP Routing Protocol disabled',
+    newState: {
+      routingProtocol: 'none',
+      dynamicRoutes: [],
+      eigrpAs: undefined
+    }
+  };
+}
+
+/**
+ * Router BGP - Enable BGP routing
+ */
+function cmdRouterBgp(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  if (!canAssignIPToPhysicalPort(state.switchModel)) {
+    return {
+      success: false,
+      error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support routing protocols.`
+    };
+  }
+
+  const match = input.match(/^router\s+bgp\s+(\d+)$/i);
+  if (!match) {
+    return { success: false, error: '% Incomplete command.' };
+  }
+
+  const asNumber = match[1];
+  return {
+    success: true,
+    output: `BGP Routing Process enabled with AS ${asNumber}`,
+    newState: {
+      routingProtocol: 'bgp',
+      ipRouting: true,
+      bgpAs: asNumber,
+      currentMode: 'router-config'
+    }
+  };
+}
+
+/**
+ * No Router BGP
+ */
+function cmdNoRouterBgp(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  const match = input.match(/^no\s+router\s+bgp\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Incomplete command.' };
+
+  return {
+    success: true,
+    output: 'BGP Routing Protocol disabled',
+    newState: {
+      routingProtocol: 'none',
+      dynamicRoutes: [],
+      bgpAs: undefined
     }
   };
 }
@@ -1607,6 +1723,35 @@ function cmdNoIpDhcpExcludedAddress(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
   return { success: true };
+}
+
+/**
+ * IP Access-List (Named)
+ */
+function cmdIpAccessList(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') return { success: false, error: '% Invalid command' };
+
+  const match = input.match(/^ip\s+access-list\s+(standard|extended)\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid ip access-list command' };
+
+  // For simulation simplicity, we'll just success and maybe in the future add a sub-mode
+  return { success: true, output: `IP access-list ${match[2]} configured` };
+}
+
+/**
+ * No IP Access-List
+ */
+function cmdNoIpAccessList(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') return { success: false, error: '% Invalid command' };
+
+  const match = input.match(/^no\s+ip\s+access-list\s+(standard|extended)\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid command' };
+
+  const aclName = match[2];
+  const accessLists = { ...(state.accessLists || {}) };
+  delete accessLists[aclName];
+
+  return { success: true, output: `IP access-list ${aclName} removed`, newState: { accessLists } };
 }
 
 // Register new global config handlers
