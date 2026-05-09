@@ -5327,6 +5327,7 @@ ${state.bannerMOTD}
                       topologyDevices={topologyDevices}
                       activeTab={firewallActiveTab}
                       onTabChange={setFirewallActiveTab}
+                      onTogglePower={toggleDevicePower}
                     />
                   )}
                 </div>

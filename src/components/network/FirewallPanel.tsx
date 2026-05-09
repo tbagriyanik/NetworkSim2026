@@ -30,6 +30,7 @@ interface FirewallPanelProps {
   topologyDevices?: CanvasDevice[];
   activeTab?: 'console' | 'settings';
   onTabChange?: (tab: 'console' | 'settings') => void;
+  onTogglePower?: (deviceId: string) => void;
 }
 
 export function FirewallPanel({
@@ -47,7 +48,8 @@ export function FirewallPanel({
   onClose,
   topologyDevices = [],
   activeTab,
-  onTabChange
+  onTabChange,
+  onTogglePower
 }: FirewallPanelProps) {
   const isDark = theme === 'dark';
   const rules = device.firewallRules || [];
@@ -159,7 +161,7 @@ export function FirewallPanel({
               isConnectionError={isDevicePoweredOff}
               connectionErrorMessage={t.connectionError}
               isPoweredOff={isDevicePoweredOff}
-              onTogglePower={() => { }}
+              onTogglePower={onTogglePower}
               onClose={onClose}
               t={t}
               theme={theme}

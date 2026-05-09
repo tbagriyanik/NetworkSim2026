@@ -91,8 +91,8 @@ export function useDeviceManager() {
 
     if (isFirewall) {
       return {
-        boot1: `\n\nAdaptive Security Appliance Software\nDevice Manager Version 7.6(1)\n\n`,
-        boot2: `Compiled on Mon 21-Mar-16 11:52 PDT by builders\nSystem Bootstrap, Version 1.1.8, RELEASE SOFTWARE\n\nASA 5506-X platform with 4096 K bytes of memory\n`,
+        boot1: `\n\nAdaptive Security Appliance Software\n\n`,
+        boot2: `Compiled on Mon 21-Mar-16 11:52 PDT by builders\nSystem Bootstrap\n\nASA 5506-X platform with 4096 K bytes of memory\n`,
         boot3: `\nReading from flash... OK\nValidating image checksum... OK\n\n`,
         initMessage: language === 'tr' ? 'Firewall başlatılıyor' : 'Firewall is starting'
       };
