@@ -445,7 +445,7 @@ export default function Home() {
   });
   const [lastTaskEvent, setLastTaskEvent] = useState<{ type: 'completed' | 'failed'; taskName: string; timestamp: number } | null>(null);
 
-    const [saveDialog, setSaveDialog] = useState<{
+  const [saveDialog, setSaveDialog] = useState<{
     show: boolean;
     message: string;
     onConfirm: (save: boolean) => void;
@@ -1701,7 +1701,7 @@ export default function Home() {
               {
                 id: `boot-1-${suffix}`, type: 'output', content: `
 
-System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
+System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 ` },
@@ -1735,7 +1735,7 @@ ${state.bannerMOTD}
               {
                 id: `boot-1-${suffix}`, type: 'output', content: `
 
-System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
+System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 ` },
@@ -1769,7 +1769,7 @@ ${state.bannerMOTD}
               {
                 id: `boot-1-${suffix}`, type: 'output', content: `
 
-System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
+System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 ` },

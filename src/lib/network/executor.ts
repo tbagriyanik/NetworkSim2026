@@ -988,7 +988,7 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
     //  ISR Router boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
-      `System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
+      `System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 ISR4451/K9 platform with 4096 K bytes of memory
@@ -1007,7 +1007,7 @@ Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   0 bytes remaining in flash device
 
 ${ifaceSummary}` :
-      `System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
+      `System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 ISR4451/K9 platform with 4096 K bytes of memory
@@ -1030,7 +1030,7 @@ ${ifaceSummary}`;
     //  3650 L3 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
-      `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
+      `System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 C3650 platform with 131072 K bytes of memory
@@ -1049,7 +1049,7 @@ Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   0 bytes remaining in flash device
 
 ${ifaceSummary}` :
-      `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
+      `System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 C3650 platform with 131072 K bytes of memory
@@ -1072,7 +1072,7 @@ ${ifaceSummary}`;
     //  2960 L2 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
-      `System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
+      `System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 C2960 platform with 65536 K bytes of memory
@@ -1091,7 +1091,7 @@ Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
   0 bytes remaining in flash device
 
 ${ifaceSummary}` :
-      `System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
+      `System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 C2960 platform with 65536 K bytes of memory
@@ -1190,7 +1190,7 @@ function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): Command
     //  ISR Router boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
-      `System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
+      `System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 ISR4451/K9 platform with 4096 K bytes of memory
@@ -1201,7 +1201,7 @@ Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
   0 bytes remaining in flash device
 
 ${ifaceSummary}` :
-      `System Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
+      `System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 ISR4451/K9 platform with 4096 K bytes of memory
@@ -1216,7 +1216,7 @@ ${ifaceSummary}`;
     //  3650 L3 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
-      `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
+      `System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 C3650 platform with 131072 K bytes of memory
@@ -1227,7 +1227,7 @@ Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
   0 bytes remaining in flash device
 
 ${ifaceSummary}` :
-      `System Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)
+      `System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 C3650 platform with 131072 K bytes of memory
@@ -1242,7 +1242,7 @@ ${ifaceSummary}`;
     //  2960 L2 Switch boot sequence
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     bootMessages = language === 'tr' ?
-      `System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
+      `System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 C2960 platform with 65536 K bytes of memory
@@ -1253,7 +1253,7 @@ Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
   0 bytes remaining in flash device
 
 ${ifaceSummary}` :
-      `System Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)
+      `System Bootstrap
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 C2960 platform with 65536 K bytes of memory

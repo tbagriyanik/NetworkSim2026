@@ -55,7 +55,7 @@ export function FirewallPanel({
 
   const state = useMemo(() => {
     return deviceStates.get(device.id) || {
-      hostname: 'ciscoasa',
+      hostname: 'asa',
       currentMode: 'user',
       ports: {},
       security: { consoleLine: {}, vtyLines: {} }
@@ -145,32 +145,32 @@ export function FirewallPanel({
           </div>
 
           <TabsContent value="console" className="flex-1 min-h-0 m-0 p-0 overflow-hidden">
-             <Terminal
-                key="firewall-terminal"
-                className="h-full"
-                deviceId={device.id}
-                deviceName={state.hostname}
-                prompt={getPrompt(state)}
-                state={state}
-                onCommand={onExecuteCommand}
-                onClear={() => {}}
-                output={output}
-                isLoading={false}
-                isConnectionError={isDevicePoweredOff}
-                connectionErrorMessage={t.connectionError}
-                isPoweredOff={isDevicePoweredOff}
-                onTogglePower={() => {}}
-                onClose={onClose}
-                t={t}
-                theme={theme}
-                language={language}
-                onUpdateHistory={onUpdateHistory}
-                confirmDialog={confirmDialog}
-                setConfirmDialog={setConfirmDialog}
-                device={device}
-                devices={topologyDevices}
-                deviceStates={deviceStates}
-             />
+            <Terminal
+              key="firewall-terminal"
+              className="h-full"
+              deviceId={device.id}
+              deviceName={state.hostname}
+              prompt={getPrompt(state)}
+              state={state}
+              onCommand={onExecuteCommand}
+              onClear={() => { }}
+              output={output}
+              isLoading={false}
+              isConnectionError={isDevicePoweredOff}
+              connectionErrorMessage={t.connectionError}
+              isPoweredOff={isDevicePoweredOff}
+              onTogglePower={() => { }}
+              onClose={onClose}
+              t={t}
+              theme={theme}
+              language={language}
+              onUpdateHistory={onUpdateHistory}
+              confirmDialog={confirmDialog}
+              setConfirmDialog={setConfirmDialog}
+              device={device}
+              devices={topologyDevices}
+              deviceStates={deviceStates}
+            />
           </TabsContent>
 
           <TabsContent value="settings" className="flex-1 min-h-0 m-0 p-4 overflow-y-auto custom-scrollbar">
@@ -187,7 +187,7 @@ export function FirewallPanel({
                     <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Kaynak IP' : 'Source IP'}</label>
                     <Input
                       value={newRule.sourceIp}
-                      onChange={e => setNewRule({...newRule, sourceIp: e.target.value})}
+                      onChange={e => setNewRule({ ...newRule, sourceIp: e.target.value })}
                       placeholder="*"
                       className="h-8 text-xs"
                       disabled={isDevicePoweredOff}
@@ -197,7 +197,7 @@ export function FirewallPanel({
                     <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Hedef IP' : 'Target IP'}</label>
                     <Input
                       value={newRule.targetIp}
-                      onChange={e => setNewRule({...newRule, targetIp: e.target.value})}
+                      onChange={e => setNewRule({ ...newRule, targetIp: e.target.value })}
                       placeholder="*"
                       className="h-8 text-xs"
                       disabled={isDevicePoweredOff}
@@ -209,7 +209,7 @@ export function FirewallPanel({
                     <label className="text-[10px] font-bold text-slate-500 uppercase">Port</label>
                     <Input
                       value={newRule.port}
-                      onChange={e => setNewRule({...newRule, port: e.target.value})}
+                      onChange={e => setNewRule({ ...newRule, port: e.target.value })}
                       placeholder="*"
                       className="h-8 text-xs"
                       disabled={isDevicePoweredOff}
@@ -219,7 +219,7 @@ export function FirewallPanel({
                     <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Protokol' : 'Protocol'}</label>
                     <Select
                       value={newRule.protocol}
-                      onValueChange={(v: any) => setNewRule({...newRule, protocol: v})}
+                      onValueChange={(v: any) => setNewRule({ ...newRule, protocol: v })}
                       disabled={isDevicePoweredOff}
                     >
                       <SelectTrigger className="h-8 text-xs">
@@ -237,7 +237,7 @@ export function FirewallPanel({
                     <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Eylem' : 'Action'}</label>
                     <Select
                       value={newRule.action}
-                      onValueChange={(v: any) => setNewRule({...newRule, action: v})}
+                      onValueChange={(v: any) => setNewRule({ ...newRule, action: v })}
                       disabled={isDevicePoweredOff}
                     >
                       <SelectTrigger className="h-8 text-xs">

@@ -91,7 +91,7 @@ export function useDeviceManager() {
 
     if (isFirewall) {
       return {
-        boot1: `\n\nCisco Adaptive Security Appliance Software Version 9.6(1)\nDevice Manager Version 7.6(1)\n\n`,
+        boot1: `\n\nAdaptive Security Appliance Software\nDevice Manager Version 7.6(1)\n\n`,
         boot2: `Compiled on Mon 21-Mar-16 11:52 PDT by builders\nSystem Bootstrap, Version 1.1.8, RELEASE SOFTWARE\n\nASA 5506-X platform with 4096 K bytes of memory\n`,
         boot3: `\nReading from flash... OK\nValidating image checksum... OK\n\n`,
         initMessage: language === 'tr' ? 'Firewall başlatılıyor' : 'Firewall is starting'
@@ -101,7 +101,7 @@ export function useDeviceManager() {
     if (isRouter) {
       const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
       return {
-        boot1: `\n\nSystem Bootstrap, Version 15.1(4)M4, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1996-2026 by Network Systems, Inc.\n`,
+        boot1: `\n\nSystem Bootstrap\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1996-2026 by Network Systems, Inc.\n`,
         boot2: `ISR4451/K9 platform with 4096 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded, GOXR initialization\nReading all bootflash vectors\nPOST: CPU PCIe port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n`,
         boot3: `\nBooting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!\nExtracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n`,
         initMessage: language === 'tr' ? 'Sistem başlatılıyor' : 'Initializing system'
@@ -111,7 +111,7 @@ export function useDeviceManager() {
     if (isL3Switch) {
       const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
       return {
-        boot1: `\n\nSystem Bootstrap, Version 12.2(55r)SE, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1996-2026 by Network Systems, Inc.\n`,
+        boot1: `\n\nSystem Bootstrap\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1996-2026 by Network Systems, Inc.\n`,
         boot2: `C3650 platform with 131072 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded\nReading all bootflash vectors\nPOST: CPU PCIe port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n`,
         boot3: `\nBooting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!\nExtracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n`,
         initMessage: language === 'tr' ? 'Sistem açıldı' : 'System is powered on'
@@ -120,7 +120,7 @@ export function useDeviceManager() {
 
     const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
     return {
-      boot1: `\n\nSystem Bootstrap, Version 12.2(11r)EA1, RELEASE SOFTWARE (fc1)\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1996-2026 by Network Systems, Inc.\n`,
+      boot1: `\n\nSystem Bootstrap\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1996-2026 by Network Systems, Inc.\n`,
       boot2: `C2960 platform with 65536 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded\nReading all bootflash vectors\nPOST: CPU Ethernet port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n`,
       boot3: `\nBooting flash:c2960-lanbase-mz.152-2.E6.bin...OK!\nExtracting files from flash:c2960-lanbase-mz.152-2.E6.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n`,
       initMessage: language === 'tr' ? 'Sistem açıldı' : 'System is powered on'
@@ -252,7 +252,7 @@ export function useDeviceManager() {
     }
 
     let deviceState = deviceStates.get(deviceId);
-    const defaultName = deviceType === 'router' ? 'Router' : (deviceType === 'firewall' ? 'ciscoasa' : (deviceType === 'iot' ? 'IoT' : 'Switch'));
+    const defaultName = deviceType === 'router' ? 'Router' : (deviceType === 'firewall' ? 'asa' : (deviceType === 'iot' ? 'IoT' : 'Switch'));
 
     if (!deviceState) {
       // Use the provided switchModel, default to L2 for switches, L3 for routers, or ASA for firewall
@@ -292,7 +292,7 @@ export function useDeviceManager() {
 
       // Rebuild runningConfig from actual state so wlan0 and all ports are reflected correctly
       deviceState = { ...deviceState, runningConfig: buildRunningConfig({ ...deviceState }) } as SwitchState;
-      
+
       // Defer state update to avoid setState during render
       const finalState = deviceState;
       setTimeout(() => {
@@ -537,7 +537,7 @@ export function useDeviceManager() {
         } else if (result.output) {
           newOutputs.push({ id: `${now}-out`, type: 'output', content: result.output, timestamp: now });
         }
-        
+
         // Apply updatedDeviceStates if present (for global STP recalculation)
         if (updatedDeviceStates && updatedDeviceStates instanceof Map) {
           setDeviceStates(prev => {
@@ -548,7 +548,7 @@ export function useDeviceManager() {
             return next;
           });
         }
-        
+
         if (newState) {
           const shouldPropagateVlans = !!topologyConnections && !!topologyDevices && (
             /^(no\s+)?vlan\s+\d+/i.test(command.trim()) ||

@@ -444,7 +444,7 @@ export function createInitialFirewallState(mac?: string): SwitchState {
     ],
     commandHistory: [],
     historyIndex: -1,
-    bannerMOTD: 'Adaptive Security Appliance Software Version 9.6(1)\n',
+    bannerMOTD: 'Adaptive Security Appliance Software\n',
     version: {
       nosVersion: '9.6(1)',
       modelName: 'ASA-5506-X',

@@ -130,15 +130,15 @@ function getSwitchDisplayProfile(state: any) {
     const reportedGiCount = 2;
 
     return {
-      switchModel: 'Cisco ASA 5506-X',
+      switchModel: 'ASA 5506-X',
       isL3: false,
       isRouter: false,
       bootImage: 'asa964-17-smp-k8.bin',
-      softwareImage: 'Cisco Adaptive Security Appliance Software Version 9.16(2)',
+      softwareImage: 'Adaptive Security Appliance Software',
       rom: 'ASA boot loader',
       bootldr: 'ASA Boot Loader Version 9.16(2)',
       systemImage: 'flash:asa964-17-smp-k8.bin',
-      processor: 'Cisco ASA 5506-X (Intel Celeron) processor (revision 01) with 8192K bytes of memory',
+      processor: 'ASA 5506-X (Intel Celeron) processor (revision 01) with 8192K bytes of memory',
       reportedFeCount: 0,
       reportedGiCount,
     };
