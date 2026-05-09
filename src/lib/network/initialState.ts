@@ -158,7 +158,7 @@ function createInitialFirewallPorts(baseMac?: string): Record<string, Port> {
       mode: 'routed',
       duplex: 'auto',
       speed: 'auto',
-      shutdown: true,
+      shutdown: false,
       type: 'gigabitethernet',
       macAddress: portMac,
       isRoutedPort: true
@@ -432,6 +432,12 @@ export function createInitialFirewallState(mac?: string): SwitchState {
     runningConfig: [
       '!',
       `hostname asa 5506-x`,
+      '!',
+      'interface GigabitEthernet0/0',
+      ' no shutdown',
+      '!',
+      'interface GigabitEthernet0/1',
+      ' no shutdown',
       '!',
       '!',
       'end'

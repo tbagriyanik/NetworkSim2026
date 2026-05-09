@@ -27,6 +27,7 @@ export interface ModernPanelProps {
     hideTitle?: boolean;
     hideHeader?: boolean;
     mobileOnlyClose?: boolean;
+    showHeaderOnMobile?: boolean;
 }
 
 export function ModernPanel({
@@ -50,6 +51,7 @@ export function ModernPanel({
     hideTitle = false,
     hideHeader = false,
     mobileOnlyClose = false,
+    showHeaderOnMobile = false,
 }: ModernPanelProps) {
     const { panelLayout } = useLayout();
     const { theme } = useTheme();
@@ -292,7 +294,7 @@ export function ModernPanel({
             onTouchMove={handleTouchMove}
         >
             {/* Header - Simple, clean */}
-            {!hideHeader && (
+            {(!hideHeader || (isMobile && showHeaderOnMobile)) && (
                 <div
                     data-drag-header
                     className={cn(

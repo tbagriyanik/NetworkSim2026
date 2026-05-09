@@ -144,7 +144,20 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
 
   return (
     <Dialog open={isOpen}>
-      <DialogContent className="sm:max-w-[600px] md:max-w-2xl lg:max-w-3xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden liquid-glass-light">
+      <DialogContent showCloseButton={false} className="sm:max-w-[600px] md:max-w-2xl lg:max-w-3xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden liquid-glass-light">
+        <button
+          type="button"
+          onClick={onClose}
+          className={cn(
+            'absolute right-4 top-4 z-20 rounded-md p-1.5 transition-colors',
+            isDark
+              ? 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+          )}
+          aria-label={t.close}
+        >
+          <X className="w-4 h-4" />
+        </button>
         <DialogHeader className="p-6 pb-2 shrink-0">
           <DialogTitle className="sr-only">
             {activeTab === 'about' ? t.aboutTitle : t.commandReference}
@@ -453,8 +466,8 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
             <Compass className="w-4 h-4" />
             {t.startTour}
           </Button>
-          <Button 
-            onClick={onClose} 
+          <Button
+            onClick={onClose}
             className="gap-2 text-foreground hover:bg-red-500 hover:text-white transition-colors"
             variant="outline"
           >

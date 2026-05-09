@@ -2845,7 +2845,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'firewall-basic',
       tag: isTr ? 'FIREWALL' : 'FIREWALL',
-      title: isTr ? 'Firewall Temel (ICMP Blok)' : 'Firewall Basic (ICMP Block)',
+      title: isTr ? 'Firewall Temel (ICMP Bloke)' : 'Firewall Basic (ICMP Block)',
       description: isTr
         ? 'ICMP (ping) engellenmiş, diğer tüm trafiğe izin verilmiş basit firewall.'
         : 'Simple firewall with ICMP (ping) blocked, all other traffic allowed.',

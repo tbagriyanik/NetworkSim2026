@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio, LayoutGrid, ArrowLeft } from 'lucide-react';
+import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio, LayoutGrid, ArrowLeft, SlidersHorizontal } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from "@/hooks/use-toast";
 import { isValidMAC, normalizeMAC, cn } from "@/lib/utils";
@@ -4094,6 +4094,28 @@ export function PCPanel({
                   </TooltipTrigger>
                   <TooltipContent>{language === 'tr' ? 'Ayarlar' : 'Settings'}</TooltipContent>
                 </Tooltip>
+                {isMobile && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowCmdSettings(prev => !prev)}
+                        disabled={isPcPoweredOff}
+                        className={cn(
+                          "h-7 w-7 rounded-full",
+                          showCmdSettings
+                            ? (isDark ? "bg-amber-500/20 text-amber-300" : "bg-amber-100 text-amber-700")
+                            : (isDark ? "text-amber-300 hover:bg-white/5" : "text-amber-700 hover:bg-slate-100")
+                        )}
+                        aria-label={language === 'tr' ? 'Hızlı ayarlar' : 'Quick settings'}
+                      >
+                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{language === 'tr' ? 'Hızlı ayarlar' : 'Quick settings'}</TooltipContent>
+                  </Tooltip>
+                )}
                 <div className={cn(
                   "rounded-full px-2 py-1 md:px-3 md:py-2 text-[10px] md:text-[11px] font-mono font-semibold tracking-wide",
                   isDark ? "bg-white/5 text-cyan-200" : "bg-slate-100 text-cyan-800"
@@ -4126,6 +4148,25 @@ export function PCPanel({
                   </TooltipTrigger>
                   <TooltipContent>{t.power}</TooltipContent>
                 </Tooltip>
+                {isMobile && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={onClose}
+                        className={cn(
+                          "h-7 w-7 rounded-full",
+                          isDark ? "text-rose-400 hover:bg-rose-500/10" : "text-rose-600 hover:bg-rose-500/10"
+                        )}
+                        aria-label={language === 'tr' ? 'Kapat' : 'Close'}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{language === 'tr' ? 'Kapat' : 'Close'}</TooltipContent>
+                  </Tooltip>
+                )}
               </div>
             </div>
           </div>
@@ -4172,6 +4213,7 @@ export function PCPanel({
                   collapsible={false}
                   hideTitle
                   hideHeader
+                  showHeaderOnMobile
                   noPadding
                   style={{ height: '100%' }}
                   className="w-full min-w-0 h-full flex flex-col relative bg-transparent border-none shadow-none"

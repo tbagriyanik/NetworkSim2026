@@ -4494,7 +4494,15 @@ export function NetworkTopology({
       >
         {/* Selection glow effect */}
         {isSelected && (
-          device.type === 'router' ? (
+          device.type === 'firewall' ? (
+            <path
+              d={`M 6 -4 L ${deviceWidth - 6} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight - 11} L ${deviceWidth / 2} ${deviceHeight + 4} L -4 ${deviceHeight - 11} L -4 6 Q -4 -4 6 -4 Z`}
+              fill="none"
+              stroke="#06b6d4"
+              strokeWidth="3"
+              opacity="0.5"
+            />
+          ) : device.type === 'router' ? (
             <path
               d={`M ${16} -4 L ${deviceWidth - 16} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 16 L ${deviceWidth + 4} ${deviceHeight + 4} L -4 ${deviceHeight + 4} L -4 16 Q -4 -4 16 -4`}
               fill="none"
@@ -4542,7 +4550,7 @@ export function NetworkTopology({
               </filter>
             </defs>
             <path
-              d={`M 0 0 L ${deviceWidth} 0 L ${deviceWidth} ${deviceHeight - 15} L ${deviceWidth / 2} ${deviceHeight} L 0 ${deviceHeight - 15} Z`}
+              d={`M 10 0 L ${deviceWidth - 10} 0 Q ${deviceWidth} 0 ${deviceWidth} 10 L ${deviceWidth} ${deviceHeight - 15} L ${deviceWidth / 2} ${deviceHeight} L 0 ${deviceHeight - 15} L 0 10 Q 0 0 10 0 Z`}
               fill={deviceFill}
               stroke={isSelected ? '#06b6d4' : isDark ? '#ef4444' : '#cbd5e1'}
               strokeWidth={isSelected ? 2.5 : 1.5}

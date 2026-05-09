@@ -88,7 +88,15 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
   }
 
   return (
-    <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+    <div 
+      className="fixed inset-0 z-[10002] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          setOpen(false);
+          onClose?.();
+        }
+      }}
+    >
       <div
         className={cn(
           'w-full max-w-3xl max-h-[85vh] rounded-xl shadow-2xl overflow-hidden flex flex-col animate-scale-in',
@@ -97,13 +105,14 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
         role="dialog"
         aria-modal="true"
         aria-label={isTR ? 'CLI Komut Referansı' : 'CLI Command Reference'}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header - Modern Style */}
         <div className={cn(
-          'flex items-center justify-between p-4 border-b shrink-0',
+          'relative flex items-center justify-between p-4 pr-14 border-b shrink-0',
           isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-slate-50/50 border-slate-200'
         )}>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div className={cn(
               'p-2.5 rounded-xl shadow-sm',
               isDark ? 'bg-gradient-to-br from-emerald-500/20 to-emerald-600/10' : 'bg-gradient-to-br from-emerald-100 to-emerald-50'
@@ -120,14 +129,12 @@ export function HelpPanel({ t, theme, initialOpen = false, onClose }: HelpPanelP
             </div>
           </div>
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
+            onClick={() => {
               setOpen(false);
               onClose?.();
             }}
             className={cn(
-              'p-1.5 rounded-md transition-colors relative z-10',
+              'absolute right-4 top-4 p-1.5 rounded-md transition-colors cursor-pointer',
               isDark
                 ? 'hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100'
                 : 'hover:bg-zinc-200 text-zinc-500 hover:text-zinc-900'
