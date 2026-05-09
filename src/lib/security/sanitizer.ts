@@ -123,6 +123,16 @@ export function escapeJSON(obj: any): string {
         .replace(/\t/g, '\\t');
 }
 
+/**
+ * Encodes data as a JSON string safe for embedding in HTML <script> tags or attributes.
+ * Prevents XSS by escaping < and > to their unicode equivalents.
+ */
+export function safeJSONForHTML(data: any): string {
+    return JSON.stringify(data)
+        .replace(/</g, '\\u003c')
+        .replace(/>/g, '\\u003e');
+}
+
 export function safeParseJSON<T>(value: string, fallback: T): T {
     try {
         return sanitizeObject(JSON.parse(value));
