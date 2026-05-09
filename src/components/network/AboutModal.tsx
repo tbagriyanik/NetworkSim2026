@@ -453,7 +453,12 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
             <Compass className="w-4 h-4" />
             {t.startTour}
           </Button>
-          <Button onClick={onClose}>{t.close}</Button>
+          <Button onClick={onClose} className="gap-2 text-foreground">
+            <span className="rounded-md bg-background p-1">
+              <X className="w-4 h-4 " />
+            </span>
+            {t.close}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -1414,8 +1414,7 @@ export function Terminal({
                     (state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending) && "bg-amber-500 hover:bg-amber-600 text-white"
                   )}
                 >
-                  <CornerDownLeft className={cn("w-4 h-4 mr-1.5", isMobile && "w-3 h-3")} />
-                  <span className="font-semibold">OK</span>
+                  <span className="rounded-md p-1"><CornerDownLeft className={cn("w-4 h-4 text-primary", isMobile && "w-3 h-3")} /></span>
                 </Button>
               </form>
 

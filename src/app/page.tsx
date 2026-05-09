@@ -55,7 +55,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal, Square, Minus, Strikethrough, Cable, Usb, BookOpen, Target, Clock, GraduationCap, Settings as SettingsIcon } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, Network, ShieldCheck, Database, Info, File, Layers, Terminal as TerminalIcon, Undo2, Redo2, Link2, Pencil, StickyNote, Sparkles, Cloud, Search, Monitor, X, Compass, Leaf, Server, GripHorizontal, Square, Minus, Strikethrough, Cable, Usb, BookOpen, Target, Clock, GraduationCap, Settings as SettingsIcon, Power, Filter } from "lucide-react";
 import { RouterIcon, SwitchIcon } from '@/components/network/PCPanelWidgets';
 
 // Existing RouterInfoPopover stays unchanged for routers
@@ -384,6 +384,7 @@ export default function Home() {
   const [showPCPanel, setShowPCPanel] = useState(false);
   const [showFirewallPanel, setShowFirewallPanel] = useState(false);
   const [activeFirewallId, setActiveFirewallId] = useState<string | null>(null);
+  const [firewallActiveTab, setFirewallActiveTab] = useState<'console' | 'settings'>('console');
   const [pcPanelInitialTab, setPcPanelInitialTab] = useState<'home' | 'desktop' | 'terminal' | 'settings' | 'services' | 'wireless' | 'iot'>('home');
   const [showPCDeviceId, setShowPCDeviceId] = useState<string>('pc-1');
   const [showRouterPanel, setShowRouterPanel] = useState(false);
@@ -444,12 +445,7 @@ export default function Home() {
   });
   const [lastTaskEvent, setLastTaskEvent] = useState<{ type: 'completed' | 'failed'; taskName: string; timestamp: number } | null>(null);
 
-  useEffect(() => {
-    if (activeDeviceType === 'pc') {
-      setShowTasksModal(false);
-    }
-  }, [activeDeviceType]);
-  const [saveDialog, setSaveDialog] = useState<{
+    const [saveDialog, setSaveDialog] = useState<{
     show: boolean;
     message: string;
     onConfirm: (save: boolean) => void;
@@ -2211,7 +2207,6 @@ ${state.bannerMOTD}
 
     // Handle tasks tab as modal
     if (tabId === 'tasks') {
-      if (activeDeviceType === 'pc') return;
       setShowTasksModal(true);
       return;
     }
@@ -5077,7 +5072,7 @@ ${state.bannerMOTD}
           </AlertDialog>
 
           {/* Tasks Modal */}
-          <Dialog open={showTasksModal && activeDeviceType !== 'pc'} onOpenChange={(open) => setShowTasksModal(open && activeDeviceType !== 'pc')} modal={false}>
+          <Dialog open={showTasksModal} onOpenChange={setShowTasksModal} modal={false}>
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
@@ -5224,10 +5219,16 @@ ${state.bannerMOTD}
           </Dialog>
 
           {/* Firewall Configuration Modal */}
-          <Dialog open={showFirewallPanel} onOpenChange={setShowFirewallPanel} modal={false}>
+          <Dialog open={showFirewallPanel} onOpenChange={(open) => {
+            setShowFirewallPanel(open);
+            if (!open) setFirewallActiveTab('console');
+          }} modal={false}>
             <DialogContent
               showCloseButton={false}
-              onEscapeKeyDown={(e) => e.preventDefault()}
+              onEscapeKeyDown={() => {
+                setShowFirewallPanel(false);
+                setFirewallActiveTab('console');
+              }}
               className={cn(
                 "p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0 shadow-[0_35px_120px_rgba(15,23,42,0.35)] liquid-glass-light",
                 isDark
@@ -5260,17 +5261,47 @@ ${state.bannerMOTD}
                   onPointerDown={(e) => handlePointerDown(e, 'firewall')}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 flex-1">
-                      <DialogTitle className={isDark ? 'text-white font-semibold' : 'text-slate-900 font-semibold'}>
-                        {isTR ? 'Firewall Yapılandırması' : 'Firewall Configuration'} - {topologyDevices?.find((d: any) => d.id === activeFirewallId)?.name || activeFirewallId}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <DialogTitle className={cn("font-semibold truncate", isDark ? 'text-white' : 'text-slate-900')}>
+                        {isTR ? 'Firewall' : 'Firewall'} - {topologyDevices?.find((d: any) => d.id === activeFirewallId)?.name || activeFirewallId}
                       </DialogTitle>
                     </div>
                     <div className="flex items-center gap-1">
+                      {/* Mobile: Power Button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 sm:hidden hover:bg-amber-500/20 hover:text-amber-500"
+                        onClick={() => {
+                          if (activeFirewallId) {
+                            console.log('Firewall power toggle:', activeFirewallId, 'Current status:', topologyDevices.find(d => d.id === activeFirewallId)?.status);
+                            toggleDevicePower(activeFirewallId);
+                          } else {
+                            console.log('No active firewall ID');
+                          }
+                        }}
+                        title={isTR ? 'Güç' : 'Power'}
+                      >
+                        <Power className={cn("h-3.5 w-3.5", topologyDevices.find(d => d.id === activeFirewallId)?.status === 'offline' ? 'text-red-500' : 'text-green-500')} />
+                      </Button>
+                      {/* Mobile: Quick Settings Button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn("h-7 w-7 sm:hidden", firewallActiveTab === 'settings' ? 'bg-primary/20 text-primary' : 'hover:bg-primary/20')}
+                        onClick={() => setFirewallActiveTab(firewallActiveTab === 'settings' ? 'console' : 'settings')}
+                        title={isTR ? 'Hızlı Ayarlar' : 'Quick Settings'}
+                      >
+                        <Filter className="h-3.5 w-3.5" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 hover:bg-red-500 hover:text-white dark:hover:bg-red-600"
-                        onClick={() => setShowFirewallPanel(false)}
+                        onClick={() => {
+                          setShowFirewallPanel(false);
+                          setFirewallActiveTab('console');
+                        }}
                       >
                         <X className="h-3 w-3" />
                       </Button>
@@ -5294,6 +5325,8 @@ ${state.bannerMOTD}
                       setConfirmDialog={setConfirmDialog}
                       confirmDialog={confirmDialog}
                       topologyDevices={topologyDevices}
+                      activeTab={firewallActiveTab}
+                      onTabChange={setFirewallActiveTab}
                     />
                   )}
                 </div>
@@ -5484,7 +5517,7 @@ ${state.bannerMOTD}
                           className="h-6 w-6 hover:bg-slate-300 dark:hover:bg-slate-600"
                           onClick={() => {
                             setShowTerminalModal(false);
-                            if (activeDeviceType !== 'pc') setShowTasksModal(true);
+                            setShowTasksModal(true);
                           }}
                         >
                           <ShieldCheck className="h-3 w-3" />

@@ -168,14 +168,12 @@ export function RouterPanel({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div
-                    className={`w-4 h-4 rounded-full cursor-pointer transition-all duration-200 hover:scale-125 group flex items-center justify-center ${routerDevice.status === 'online' ? 'bg-green-500 animate-pulse hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
-                    onClick={onClose}
+                    className={`w-4 h-4 rounded-full transition-all duration-200 ${routerDevice.status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
                   >
-                    <X className="w-4 h-4 opacity-0 group-hover:opacity-100 text-white" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {t.close}
+                  {routerDevice.status === 'online' ? (language === 'tr' ? 'Çevrimiçi' : 'Online') : (language === 'tr' ? 'Çevrimdışı' : 'Offline')}
                 </TooltipContent>
               </Tooltip>
               <div className={`p-2 rounded-lg ${isDark ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
@@ -190,6 +188,14 @@ export function RouterPanel({
                 </p>
               </div>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-red-500 hover:text-white dark:hover:bg-red-600"
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </DialogHeader>
 
