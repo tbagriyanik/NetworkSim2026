@@ -385,7 +385,7 @@ function DraggableRuleItem({
     >
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <button
-          className="p-1 rounded hover:bg-slate-700/30 text-slate-500"
+          className="p-1.5 rounded-md hover:bg-slate-700/50 text-slate-500 transition-colors"
           disabled={isDevicePoweredOff}
           title={t.language === 'tr' ? 'Sürüklemek için tutun' : 'Hold to drag'}
         >
@@ -406,14 +406,14 @@ function DraggableRuleItem({
       <div className="flex items-center gap-1">
         <button
           onClick={onToggle}
-          className={`p-1.5 rounded-md hover:bg-slate-700/50 transition-colors ${rule.enabled ? 'text-green-500' : 'text-slate-500'}`}
+          className={`p-2 rounded-md hover:bg-slate-700/50 transition-colors ${rule.enabled ? 'text-green-500 hover:bg-green-500/20' : 'text-slate-500 hover:bg-slate-700/30'}`}
           disabled={isDevicePoweredOff}
         >
           {rule.enabled ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
         </button>
         <button
           onClick={onDelete}
-          className="p-1.5 rounded-md hover:bg-red-500/20 text-slate-500 hover:text-red-500 transition-colors"
+          className="p-2 rounded-md hover:bg-red-500/20 text-slate-500 hover:text-red-500 transition-colors"
           disabled={isDevicePoweredOff}
         >
           <Trash2 className="w-4 h-4" />

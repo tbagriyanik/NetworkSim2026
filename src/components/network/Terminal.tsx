@@ -252,9 +252,9 @@ export function Terminal({
     confirmDialogOpenRef.current = !!confirmDialog?.show;
   }, [confirmDialog?.show]);
 
-  // Check WiFi connectivity and close terminal if connection is lost
+  // Check WiFi connectivity but do NOT auto-close terminal (user requested modals stay open)
   useEffect(() => {
-    if (!device || !devices || !deviceStates || !onClose) return;
+    if (!device || !devices || !deviceStates) return;
 
     // Check if this device has WiFi and if it's connected
     if (device.type !== 'pc') return;
@@ -263,42 +263,11 @@ export function Terminal({
     const signalStrength = getWirelessSignalStrength(device, devices, deviceStates);
     const isCurrentlyConnected = signalStrength > 0;
 
-    // If WiFi was connected before but is now disconnected, close terminal
-    if (wasWifiConnectedRef.current && !isCurrentlyConnected) {
-      onClose();
-    }
-
-    // Update the ref for next check
+    // Update the ref for next check but do NOT close terminal
     wasWifiConnectedRef.current = isCurrentlyConnected;
-  }, [device, devices, deviceStates, onClose]);
+  }, [device, devices, deviceStates]);
 
-  // Handle mobile back button to close terminal
-  useEffect(() => {
-    if (!onClose) return;
-
-    const handlePopState = (event: PopStateEvent) => {
-      // Check if terminal is currently visible/focused
-      const terminalElement = terminalRef.current;
-      if (terminalElement && document.activeElement?.closest('.terminal-container')) {
-        onClose();
-      }
-    };
-
-    // Add history entry for back button detection
-    if (typeof window !== 'undefined' && window.history) {
-      window.history.pushState({ terminalOpen: true }, '', '');
-
-      window.addEventListener('popstate', handlePopState);
-
-      return () => {
-        window.removeEventListener('popstate', handlePopState);
-        // Clean up history entry if still open
-        if (window.history.state?.terminalOpen) {
-          window.history.back();
-        }
-      };
-    }
-  }, [onClose]);
+  // Mobile back button handling removed - terminal should stay open per user request
 
   const clearTerminalView = useCallback(() => {
     cancelOutputRef.current = true;

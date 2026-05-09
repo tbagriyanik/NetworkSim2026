@@ -926,29 +926,10 @@ export function NetworkTopology({
       x: centerX - canvasCenterX * newZoom,
       y: centerY - canvasCenterY * newZoom
     });
-    setZoom(newZoom);
   }, [zoom, pan]);
 
 
-  // Close context menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent | PointerEvent | TouchEvent) => {
-      if (contextMenu) {
-        const target = e.target as HTMLElement;
-        // Don't close if clicking on context menu itself
-        if (!target.closest('.context-menu')) {
-          setContextMenu(null);
-        }
-      }
-    };
-
-    window.addEventListener('pointerdown', handleClickOutside as EventListener);
-    window.addEventListener('click', handleClickOutside as EventListener);
-    return () => {
-      window.removeEventListener('pointerdown', handleClickOutside as EventListener);
-      window.removeEventListener('click', handleClickOutside as EventListener);
-    };
-  }, [contextMenu]);
+  // Context menu auto-close removed - should stay open per user request
 
   useEffect(() => {
     if (!contextMenu || !contextMenuRef.current) return;
@@ -970,30 +951,7 @@ export function NetworkTopology({
     };
   }, []);
 
-  // Handle mobile back button to close modals/popups
-  useEffect(() => {
-    const isAnyModalOpen = isPaletteOpen || !!configuringDevice || !!pingSource || showPortSelector || !!contextMenu || isFullscreen;
-
-    if (isAnyModalOpen) {
-      window.history.pushState({ modalOpen: true }, '');
-    }
-
-    const handlePopState = () => {
-      if (isPaletteOpen) setIsPaletteOpen(false);
-      if (configuringDevice) cancelDeviceConfig();
-      if (pingSource) setPingSource(null);
-      if (showPortSelector) {
-        setShowPortSelector(false);
-        setPortSelectorStep('source');
-        setSelectedSourcePort(null);
-      }
-      if (contextMenu) setContextMenu(null);
-      if (isFullscreen && onFullscreenChange) onFullscreenChange(false);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [isPaletteOpen, configuringDevice, pingSource, showPortSelector, contextMenu, cancelDeviceConfig, isFullscreen, onFullscreenChange]);
+  // Mobile back button auto-close removed - modals should stay open per user request
 
   // Allow page-level header buttons (next to the device selector) to control topology UI on mobile.
   useEffect(() => {
