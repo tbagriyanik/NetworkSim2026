@@ -5,7 +5,7 @@ A modern browser-based network simulator for learning switching, routing, wirele
 ![Version](https://img.shields.io/badge/version-1.6.1-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-72450+-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-87860+-lightgrey)
 
 Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
@@ -55,7 +55,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Standardized Port Density**: Industry-standard port layouts for C2960 (24eth+2gig), C3650 (24eth+4gig+1wlan), and ISR 4451 (4gig+1wlan).
 - **Enhanced Documentation & Examples**:
   - Comprehensive **Documentation Index** with guides for CLI, error handling, and integration.
-  - **28 Ready-to-Use Example Projects** with step-by-step instructions.
+  - **63 Ready-to-Use Example Projects** with step-by-step instructions.
   - **Quick Reference Guide** for common tasks and commands.
   - **Implementation Complete** documentation with feature checklist.
 - **Ping Packet Tracking & Visualization**:
@@ -77,12 +77,12 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metric | Value |
 | --- | ---: |
-| Application Code | 72,000+ |
-| Example Code | 300 |
+| Application Code | 87,860+ |
+| Example Projects | 63 |
 | Documentation | 150+ |
-| **Total Lines** | **72,450+** |
-| Source Files | 185+ |
-| Ready Topologies | 32 |
+| **Total Lines** | **87,860+** |
+| Source Files | 235 |
+| Ready Topologies | 63 |
 | Guided Lessons | 4 |
 | CLI Command Families | 180+ |
 
@@ -132,7 +132,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Standart Port Yapısı**: C2960 (24eth+2gig), C3650 (24eth+4gig+1wlan) ve ISR 4451 (4gig+1wlan) modelleri için endüstri standardı port düzeni.
 - **Geliştirilmiş Dokümantasyon & Örnekler**:
   - **Dokümantasyon İndeksi** ile CLI, hata yönetimi ve entegrasyon rehberleri.
-  - **28 Hazır Örnek Proje** adım adım talimatlarla.
+  - **63 Hazır Örnek Proje** adım adım talimatlarla.
   - **Hızlı Referans Rehberi** yaygın görevler ve komutlar için.
   - **Uygulama Tamamlandı** dokümantasyonu özellik kontrol listesiyle.
 - **Ping Paket Takibi & Görselleştirme**:
@@ -154,12 +154,12 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metrik | Değer |
 | --- | ---: |
-| Uygulama Kodu | 72,000+ |
-| Örnek Kod | 300 |
+| Uygulama Kodu | 87,860+ |
+| Örnek Proje | 63 |
 | Dokümantasyon | 150+ |
-| **Toplam Satır** | **72,450+** |
-| Kaynak Dosya | 185+ |
-| Hazır Topoloji | 32 |
+| **Toplam Satır** | **87,860+** |
+| Kaynak Dosya | 235 |
+| Hazır Topoloji | 63 |
 | Rehberli Ders | 4 |
 | CLI Komut Ailesi | 180+ |
 
@@ -176,9 +176,9 @@ npm run dev
 
 - **Detailed Description / Ayrıntılı Açıklama**: [detay.md](detay.md)
 - **Examples / Örnekler**: [examples.md](examples.md)
-- **CLI Commands / CLI Komutları**: [CLI_COMMANDS.md](CLI_COMMANDS.md)
+- **CLI Commands / CLI Komutları**: [doc/CLI_COMMANDS.md](doc/CLI_COMMANDS.md)
 - **Installation / Kurulum**: [INSTALL.md](INSTALL.md)
-- **Google Sheets Kurulum**: [Google Sheets](GOOGLE_SHEETS_SETUP.md)
+- **Google Sheets Kurulum**: [doc/GOOGLE_SHEETS_SETUP.md](doc/GOOGLE_SHEETS_SETUP.md)
 
 ## Tech Stack / Teknoloji
 

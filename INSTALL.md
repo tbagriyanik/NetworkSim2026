@@ -120,7 +120,7 @@ src/
 └── styles/           # Global styles
 
 public/              # Static files
-kiro/                # Project documentation
+doc/                 # Project documentation
 ```
 
 ## 🎯 Özellikler
@@ -148,12 +148,12 @@ kiro/                # Project documentation
 
 ## 📖 Belgelendirme
 
-Detaylı belgelendirme `kiro/` klasöründe bulunur:
+Detaylı belgelendirme `doc/` klasöründe bulunur:
 
-- **POWER_TOGGLE_IMPLEMENTATION.md** - Bulk power control
-- **PING_DIAGNOSTICS_IMPLEMENTATION.md** - Ping diagnostics
-- **SUBNET_VALIDATION_IMPLEMENTATION.md** - Subnet validation
-- **NOTE_SYSTEM_SUMMARY.md** - Note system features
+- **README.md** - Belgelendirme giriş sayfası
+- **DOCUMENTATION_INDEX.md** - Dokümantasyon haritası
+- **GOOGLE_SHEETS_SETUP.md** - Google Sheets kurulum rehberi
+- **CLI_COMMANDS.md** - CLI komut referansı
 
 ## 🚀 Deployment
 
@@ -179,7 +179,7 @@ CMD ["npm", "start"]
 
 ## 📞 Destek
 
-Sorunlar için `kiro/` klasöründeki belgelendirmeyi kontrol edin.
+Sorunlar için `doc/` klasöründeki belgelendirmeyi kontrol edin.
 
 ## 📝 Lisans
 
