@@ -67,6 +67,8 @@ export const generateIotWebPanelContent = (
         const statusClass = isPoweredOff ? 'offline' : isConnectedToNetwork ? (isActive ? 'online' : 'online-inactive') : (isActive ? 'active' : 'inactive');
 
         const safeName = sanitizeHTML(device.name || device.id);
+        const ruleCount = device.iot?.rules?.length ?? 0;
+        const hasSimpleProgramming = ruleCount > 0;
         // Using safeJSONForHTML for JS context to prevent syntax errors and maintain data integrity.
         // We also escape double quotes for the HTML attribute context.
         const jsDeviceId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
@@ -78,6 +80,10 @@ export const generateIotWebPanelContent = (
           <div class="device-details">
             <span class="device-ip">${isTurkish ? 'IP' : 'IP'}: ${sanitizeHTML(device.ip || '-')}</span>
             <span class="device-mac">${isTurkish ? 'MAC' : 'MAC'}: ${sanitizeHTML(device.macAddress || '-')}</span>
+            ${hasSimpleProgramming ? `
+            <span class="device-rules">${isTurkish ? 'Basit Programlama' : 'Simple Programming'}: ${isTurkish ? 'Var' : 'Yes'}</span>
+            <span class="device-rule-count">${isTurkish ? 'Kural Sayısı' : 'Rule Count'}: ${ruleCount}</span>
+            ` : ''}
           </div>
           <div class="device-status ${statusClass}">${statusText}</div>
         </div>
@@ -178,6 +184,11 @@ export const generateIotWebPanelContent = (
             margin-bottom: 15px;
             transition: all 0.2s ease-in-out;
           }
+          .device-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
           .iot-device-card.powered-off {
             background-color: #f8d7da;
             border-color: #f5c6cb;
@@ -233,6 +244,12 @@ export const generateIotWebPanelContent = (
             color: #666;
             font-family: 'Courier New', monospace;
           }
+          .device-rules,
+          .device-rule-count {
+            font-size: 12px;
+            color: #166534;
+            font-weight: 600;
+          }
           .device-status {
             font-size: 13px;
             margin-top: 4px;
@@ -267,6 +284,29 @@ export const generateIotWebPanelContent = (
             border-color: #cdd2d6;
             transform: translateY(-2px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          }
+          @media (min-width: 768px) {
+            .device-list {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .iot-device-card {
+              margin-bottom: 0;
+            }
+          }
+          @media (min-width: 1200px) {
+            .device-list {
+              grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+          }
+          @media (max-width: 640px) {
+            .iot-device-card {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 10px;
+            }
+            .connect-button {
+              width: 100%;
+            }
           }
           .device-name {
             font-size: 16px;
@@ -851,7 +891,7 @@ export const generateIotDevicePageContent = (
             </div>
           </div>
 
-          ${dataFlowDirection === 'output' || dataFlowDirection === 'input/output' ? `
+          ${`
           <div class="programming-section ${isPoweredOff ? 'toggle-disabled' : ''}">
             <div class="programming-title">
               <span>⚙️ ${isTurkish ? 'Basit Programlama' : 'Simple Programming'}</span>
@@ -898,7 +938,7 @@ export const generateIotDevicePageContent = (
               `).join('')}
             </div>
           </div>
-          ` : ''}
+          `}
 
           <button type="button" class="back-button" onclick="goBack()" style="margin-top: 20px;">
             ${isTurkish ? 'Listeye Dön' : 'Back to List'}

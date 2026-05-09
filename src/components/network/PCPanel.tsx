@@ -848,11 +848,11 @@ export function PCPanel({
 
   // Regenerate IoT panel content when dependencies change
   useEffect(() => {
-    if (httpAppUrl === 'iot-panel' || httpAppUrl === 'http://iot-panel') {
+    if (!httpAppDeviceId && (httpAppUrl === 'iot-panel' || httpAppUrl === 'http://iot-panel')) {
       const iotPanelContent = generateIotWebPanelContent(iotDevices, language, undefined, undefined, topologyConnections);
       setHttpAppContent(iotPanelContent);
     }
-  }, [iotDevices, topologyConnections, language, httpAppUrl]);
+  }, [iotDevices, topologyConnections, language, httpAppUrl, httpAppDeviceId]);
   const [browserWindow, setBrowserWindow] = useState(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('pc-browser-window-state') : null;
     if (saved) {
@@ -4147,7 +4147,7 @@ export function PCPanel({
                       </svg>
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{t.power}</TooltipContent>
+                  <TooltipContent className="rounded-md px-2.5 py-1">{t.power}</TooltipContent>
                 </Tooltip>
                 {isMobile && (
                   <Tooltip>
@@ -4898,19 +4898,35 @@ export function PCPanel({
                                   </p>
                                 </div>
                               </div>
-                              <Button
-                                size="sm"
-                                className="h-7 px-3 text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white"
-                                onClick={() => {
-                                  navigateToProgram('desktop');
-                                  setTimeout(() => {
-                                    setInput('curl http://iot-panel');
-                                    void executeCommand('curl http://iot-panel');
-                                  }, 300);
-                                }}
-                              >
-                                {language === 'tr' ? 'Web Paneli Aç' : 'Open Web Panel'}
-                              </Button>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  className="h-7 px-3 text-xs font-semibold bg-cyan-600 hover:bg-cyan-700 text-white"
+                                  onClick={() => {
+                                    navigateToProgram('desktop');
+                                    setTimeout(() => {
+                                      setInput('curl http://iot-panel');
+                                      void executeCommand('curl http://iot-panel');
+                                    }, 300);
+                                  }}
+                                >
+                                  {language === 'tr' ? 'Web Paneli Aç' : 'Open Web Panel'}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-3 text-xs font-semibold"
+                                  onClick={() => {
+                                    navigateToProgram('desktop');
+                                    setTimeout(() => {
+                                      setInput('curl 192.168.1.1');
+                                      void executeCommand('curl 192.168.1.1');
+                                    }, 300);
+                                  }}
+                                >
+                                  {language === 'tr' ? 'Kablosuz Ayarları Aç' : 'Open Wireless Settings'}
+                                </Button>
+                              </div>
                             </div>
 
                             {iotDevices.length === 0 ? (

@@ -4962,50 +4962,19 @@ export function NetworkTopology({
                 if (iotKind === 'lamp') {
                   return (
                     <g transform="translate(1, 1)" filter="url(#wifiIconShadow)">
-                      {/* Lamp bulb - different appearance based on state */}
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="8"
-                        fill={isActive ? '#fbbf24' : '#94a3b8'}
-                        stroke={isActive ? '#f59e0b' : '#64748b'}
-                        strokeWidth="2"
-                      />
-                      {/* Light rays - only show when active */}
-                      {isActive && (
-                        <>
-                          <path d="M12 2 L12 6" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" />
-                          <path d="M12 2 L8 4" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" />
-                          <path d="M12 2 L16 4" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" />
-                          <path d="M12 2 L10 5" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" />
-                          <path d="M12 2 L14 5" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" />
-                        </>
-                      )}
-                      {/* Lamp base */}
-                      <rect x="10" y="18" width="4" height="2" fill={isDark ? '#475569' : '#94a3b8'} />
+                      <text x="12" y="16" textAnchor="middle" fontSize="15" opacity={isActive ? 1 : 0.45}>🏮</text>
                     </g>
                   );
                 } else if (iotKind === 'heater') {
                   return (
                     <g transform="translate(1, 1)" filter="url(#wifiIconShadow)">
-                      {/* Heater flame - animated when active */}
-                      <path
-                        d="M12 18 Q10 15 10 12 Q10 9 12 6 Q14 9 18 12"
-                        fill={isActive ? '#ef4444' : '#94a3b8'}
-                        className={isActive ? 'animate-pulse' : ''}
-                      />
-                      <circle cx="12" cy="20" r="2" fill={isDark ? '#475569' : '#94a3b8'} />
+                      <text x="12" y="16" textAnchor="middle" fontSize="15" opacity={isActive ? 1 : 0.45}>♨️</text>
                     </g>
                   );
                 } else if (iotKind === 'cooler') {
                   return (
                     <g transform="translate(1, 1)" filter="url(#wifiIconShadow)">
-                      {/* Cooler fan blades */}
-                      <g className={isActive ? 'animate-spin' : ''} style={{ transformOrigin: '12px 12px' }}>
-                        <path d="M12 8 L16 12 L14 16 L12 14 L10 16 L8 12 Z" fill={isActive ? '#06b6d4' : '#94a3b8'} />
-                        <path d="M12 16 L16 16 L14 20 L12 18 L10 20 L8 16 Z" fill={isActive ? '#06b6d4' : '#94a3b8'} />
-                      </g>
-                      <circle cx="12" cy="12" r="2" fill={isDark ? '#475569' : '#94a3b8'} />
+                      <text x="12" y="16" textAnchor="middle" fontSize="15" opacity={isActive ? 1 : 0.45}>🧊</text>
                     </g>
                   );
                 } else {
@@ -5083,9 +5052,9 @@ export function NetworkTopology({
                     return (
                       <div className="space-y-2">
                         <div className="font-bold text-sm mb-1">
-                          {iotKind === 'lamp' ? (language === 'tr' ? '💡 Lamba' : '💡 Lamp') :
-                            iotKind === 'heater' ? (language === 'tr' ? '🔥 Isıtıcı' : '🔥 Heater') :
-                              (language === 'tr' ? '❄️ Soğutucu' : '❄️ Cooler')}
+                          {iotKind === 'lamp' ? (language === 'tr' ? '🏮 Lamba' : '🏮 Lamp') :
+                            iotKind === 'heater' ? (language === 'tr' ? '♨️ Isıtıcı' : '♨️ Heater') :
+                              (language === 'tr' ? '🧊 Soğutucu' : '🧊 Cooler')}
                         </div>
                         <div className="text-xs">
                           {language === 'tr' ? 'Cihaz Durumu:' : 'Device Status:'} {isActive ? (language === 'tr' ? 'Aktif' : 'Active') : (language === 'tr' ? 'Pasif' : 'Inactive')}
