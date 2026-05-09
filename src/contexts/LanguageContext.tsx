@@ -36,7 +36,11 @@ export interface Translations {
   advancedHint: string;
   align: string;
   alignLeft: string;
+  alignCenter: string;
+  alignRight: string;
   alignTop: string;
+  alignMiddle: string;
+  alignBottom: string;
   allCommands: string;
   allStepsCompleted: string;
   annotations: string;
@@ -200,6 +204,8 @@ export interface Translations {
   dnsServer: string;
   dontSave: string;
   dragToZoomOrScroll: string;
+  distributeHorizontally: string;
+  distributeVertically: string;
   duplex: string;
   duplicateLabel: string;
   dynamicRouting: string;
@@ -213,6 +219,7 @@ export interface Translations {
   environmentBackground: string;
   environmentSettings: string;
   errorPrefix: string;
+  ethernet: string;
   exit: string;
   exitPingMode: string;
   expand: string;
@@ -371,6 +378,11 @@ export interface Translations {
   pcTerminalClosing: string;
   pcTracertError: string;
   percent: string;
+  fullscreen: string;
+  gridSnapping: string;
+  resetZoom: string;
+  zoomIn: string;
+  zoomOut: string;
   performanceOptimization: string;
   physicalConnectionDetected: string;
   ping: string;
@@ -396,6 +408,7 @@ export interface Translations {
   pts: string;
   quickActions: string;
   quickCommands: string;
+  quickSettings: string;
   realTimeUpdate: string;
   redo: string;
   refresh: string;
@@ -463,6 +476,7 @@ export interface Translations {
   settingsTab: string;
   showHidePassword: string;
   showHint: string;
+  holdToDrag: string;
   shutdownStatus: string;
   signal: string;
   simulatorCopyright: string;
@@ -590,6 +604,8 @@ export interface Translations {
   wifiStatus: string;
   wirelessClientsConnected: string;
   wirelessClientsDisconnected: string;
+  wireless: string;
+  serial: string;
   wirelessStatus: string;
   yes: string;
   language: Language;
@@ -630,7 +646,11 @@ const translations: Record<Language, Translations> = {
     advancedHint: 'Kapsamlı kurulum ve doğrulama laboratuvarları',
     align: 'Hizala',
     alignLeft: 'Sola Hizala',
+    alignCenter: 'Ortala',
+    alignRight: 'Sağa Hizala',
     alignTop: 'Üste Hizala',
+    alignMiddle: 'Ortaya Hizala',
+    alignBottom: 'Alta Hizala',
     allCommands: 'Tüm komutlar',
     allStepsCompleted: 'Tüm adımlar tamamlandı!',
     annotations: 'Notlar',
@@ -793,7 +813,9 @@ const translations: Record<Language, Translations> = {
     dnsRecordsLabel: 'DNS (Domain Name System) Kayıtları',
     dnsServer: 'DNS Sunucusu',
     dontSave: 'Kaydetme',
-    dragToZoomOrScroll: 'Sürükleyerek büyütün',
+    dragToZoomOrScroll: 'Sürükleyerek büyütün, Tek tıklanarak %100 değerine dönülür.',
+    distributeHorizontally: 'Yatay Dağıt',
+    distributeVertically: 'Dikey Dağıt',
     duplex: 'Çift Yönlü',
     duplicateLabel: 'Çoğalt',
     dynamicRouting: 'Dinamik Yönlendirme',
@@ -807,6 +829,7 @@ const translations: Record<Language, Translations> = {
     environmentBackground: 'Arka Plan',
     environmentSettings: 'Ayarlar',
     errorPrefix: 'HATA',
+    ethernet: 'Ethernet',
     exit: 'Çık',
     exitPingMode: 'Ping modundan çık (ESC)',
     expand: 'Genişlet',
@@ -965,6 +988,11 @@ const translations: Record<Language, Translations> = {
     pcTerminalClosing: 'PC terminali kapatılıyor...',
     pcTracertError: 'TRACERT: Hedefe ulaşılamıyor.',
     percent: '%',
+    fullscreen: 'Tam Ekran',
+    gridSnapping: 'Izgara Yakalama',
+    resetZoom: 'Yakınlaştırmayı Sıfırla',
+    zoomIn: 'Yakınlaştır',
+    zoomOut: 'Uzaklaştır',
     performanceOptimization: 'Performans Optimizasyonu',
     physicalConnectionDetected: 'Fiziksel bağlantı algılandı:',
     ping: 'Ping',
@@ -990,6 +1018,7 @@ const translations: Record<Language, Translations> = {
     pts: 'puan',
     quickActions: 'Hızlı işlemler',
     quickCommands: 'Hızlı Komutlar',
+    quickSettings: 'Hızlı Ayarlar',
     realTimeUpdate: 'Gerçek zamanlı güncelleme aktif',
     redo: 'Yinele',
     refresh: 'Yenile',
@@ -1057,6 +1086,7 @@ const translations: Record<Language, Translations> = {
     settingsTab: 'Ayarlar',
     showHidePassword: 'Parolayı Göster/Gizle',
     showHint: 'İpucu Göster',
+    holdToDrag: 'Sürüklemek için tutun',
     shutdownStatus: 'Kapalı',
     signal: 'Sinyal',
     simulatorCopyright: 'Telif hakkı (c) Simulator. Tüm hakları saklıdır.',
@@ -1184,6 +1214,8 @@ const translations: Record<Language, Translations> = {
     wifiStatus: 'WiFi Durumu',
     wirelessClientsConnected: 'X kablosuz istemci bağlandı',
     wirelessClientsDisconnected: 'X kablosuz istemci bağlantı yok',
+    wireless: 'Kablosuz',
+    serial: 'Seri',
     wirelessStatus: 'Kablosuz Ağ Durumu',
     yes: 'Evet',
     language: 'tr',
@@ -1222,7 +1254,11 @@ const translations: Record<Language, Translations> = {
     advancedHint: 'Comprehensive setup and verification labs',
     align: 'Align',
     alignLeft: 'Align Left',
+    alignCenter: 'Align Center',
+    alignRight: 'Align Right',
     alignTop: 'Align Top',
+    alignMiddle: 'Align Middle',
+    alignBottom: 'Align Bottom',
     allCommands: 'All commands',
     allStepsCompleted: 'All steps completed!',
     annotations: 'Annotations',
@@ -1385,7 +1421,9 @@ const translations: Record<Language, Translations> = {
     dnsRecordsLabel: 'DNS (Domain Name System) Records',
     dnsServer: 'DNS Server',
     dontSave: 'Don\'t Save',
-    dragToZoomOrScroll: 'Drag to zoom or scroll',
+    dragToZoomOrScroll: 'Drag to zoom or scroll, single click to return %100 value.',
+    distributeHorizontally: 'Distribute Horizontally',
+    distributeVertically: 'Distribute Vertically',
     duplex: 'Duplex',
     duplicateLabel: 'Duplicate',
     dynamicRouting: 'Dynamic Routing',
@@ -1399,6 +1437,7 @@ const translations: Record<Language, Translations> = {
     environmentBackground: 'Background',
     environmentSettings: 'Settings',
     errorPrefix: 'ERROR',
+    ethernet: 'Ethernet',
     exit: 'Exit',
     exitPingMode: 'Exit ping mode (ESC)',
     expand: 'Expand',
@@ -1557,6 +1596,11 @@ const translations: Record<Language, Translations> = {
     pcTerminalClosing: 'Closing PC terminal...',
     pcTracertError: 'TRACERT: Target unreachable.',
     percent: '%',
+    fullscreen: 'Fullscreen',
+    gridSnapping: 'Grid Snapping',
+    resetZoom: 'Reset Zoom',
+    zoomIn: 'Zoom In',
+    zoomOut: 'Zoom Out',
     performanceOptimization: 'Performance Optimization',
     physicalConnectionDetected: 'Physical connection detected to',
     ping: 'Ping',
@@ -1582,6 +1626,7 @@ const translations: Record<Language, Translations> = {
     pts: 'pts',
     quickActions: 'Quick actions',
     quickCommands: 'Quick Commands',
+    quickSettings: 'Quick Settings',
     realTimeUpdate: 'Real-time update active',
     redo: 'Redo',
     refresh: 'Refresh',
@@ -1649,6 +1694,7 @@ const translations: Record<Language, Translations> = {
     settingsTab: 'Settings',
     showHidePassword: 'Show/Hide password',
     showHint: 'Show Hint',
+    holdToDrag: 'Hold to drag',
     shutdownStatus: 'Shutdown',
     signal: 'Signal',
     simulatorCopyright: 'Copyright (c) Simulator. All rights reserved.',
@@ -1776,6 +1822,8 @@ const translations: Record<Language, Translations> = {
     wifiStatus: 'WiFi Status',
     wirelessClientsConnected: 'X wireless clients connected',
     wirelessClientsDisconnected: 'X wireless clients disconnected',
+    wireless: 'Wireless',
+    serial: 'Serial',
     wirelessStatus: 'Wireless Status',
     yes: 'Yes',
     language: 'en',

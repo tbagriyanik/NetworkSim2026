@@ -275,6 +275,7 @@ function RefreshDeviceListToast({
   devices: RefreshDeviceSummary[];
   language: string;
 }) {
+  const { t } = useLanguage();
   const [selectedId, setSelectedId] = useState<string | null>(devices[0]?.id ?? null);
   const selected = devices.find((device) => device.id === selectedId) || null;
   const isTR = language === 'tr';
@@ -329,7 +330,7 @@ function RefreshDeviceListToast({
               ] as Array<[string, string, boolean]>).map(([label, value, copyable]) => (
                 <tr key={label} className="border-t first:border-t-0 border-slate-200 dark:border-slate-700">
                   <td className="w-24 bg-slate-100 px-2 py-1 font-semibold dark:bg-slate-800">{label}</td>
-                  <TooltipWrapper title={copyable ? (isTR ? 'Kopyala' : 'Copy') : undefined}>
+                      <TooltipWrapper title={copyable ? t.copy : undefined}>
                     <td
                       className={`px-2 py-1 font-mono ${copyable ? 'cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 rounded' : ''}`}
                       onClick={copyable && value !== '-' ? () => navigator.clipboard.writeText(value) : undefined}
@@ -5280,7 +5281,7 @@ ${state.bannerMOTD}
                             console.log('No active firewall ID');
                           }
                         }}
-                        title={isTR ? 'Güç' : 'Power'}
+                        title={t.power}
                       >
                         <Power className={cn("h-3.5 w-3.5", topologyDevices.find(d => d.id === activeFirewallId)?.status === 'offline' ? 'text-red-500' : 'text-green-500')} />
                       </Button>
@@ -5290,7 +5291,7 @@ ${state.bannerMOTD}
                         size="icon"
                         className={cn("h-7 w-7 sm:hidden", firewallActiveTab === 'settings' ? 'bg-primary/20 text-primary' : 'hover:bg-primary/20')}
                         onClick={() => setFirewallActiveTab(firewallActiveTab === 'settings' ? 'console' : 'settings')}
-                        title={isTR ? 'Hızlı Ayarlar' : 'Quick Settings'}
+                        title={t.quickSettings}
                       >
                         <Filter className="h-3.5 w-3.5" />
                       </Button>
@@ -6238,7 +6239,7 @@ ${state.bannerMOTD}
                       <span className="text-blue-500 text-lg">🔄</span>
                       {refreshNetworkReport.title}
                     </h3>
-                    <TooltipWrapper title="Close">
+            <TooltipWrapper title={t.close}>
                       <button
                         onClick={() => setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null)}
                         className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
@@ -6610,31 +6611,31 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
         </div>
         <div className="overflow-hidden cursor-default">
           <div className="p-2 space-y-1 text-xs">
-            <TooltipWrapper title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+            <TooltipWrapper title={t.copy}>
               <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.ip || '0.0.0.0')}>
                 <span className="opacity-50">IP</span>
                 <span className="font-mono text-blue-500">{pc?.ip || '0.0.0.0'}</span>
               </div>
             </TooltipWrapper>
-            <TooltipWrapper title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+            <TooltipWrapper title={t.copy}>
               <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.subnet || '255.255.255.0')}>
                 <span className="opacity-50">Subnet</span>
                 <span className="font-mono opacity-80">{pc?.subnet || '255.255.255.0'}</span>
               </div>
             </TooltipWrapper>
-            <TooltipWrapper title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+            <TooltipWrapper title={t.copy}>
               <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.gateway || '0.0.0.0')}>
                 <span className="opacity-50">GW</span>
                 <span className="font-mono opacity-80">{pc?.gateway || '0.0.0.0'}</span>
               </div>
             </TooltipWrapper>
-            <TooltipWrapper title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+            <TooltipWrapper title={t.copy}>
               <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.ipv6 || '::')}>
                 <span className="opacity-50">IPv6</span>
                 <span className="font-mono opacity-80">{pc?.ipv6 || '::'}</span>
               </div>
             </TooltipWrapper>
-            <TooltipWrapper title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+            <TooltipWrapper title={t.copy}>
               <div className="flex justify-between items-center cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.macAddress ? normalizeMAC(pc.macAddress) : 'N/A')}>
                 <span className="opacity-50">MAC</span>
                 <span className="font-mono opacity-30 text-xs">{pc?.macAddress ? normalizeMAC(pc.macAddress) : 'N/A'}</span>
@@ -6721,7 +6722,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
               disabled={!pc?.id}
               className={`px-2 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:bg-slate-800 disabled:text-slate-500' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:bg-slate-200 disabled:text-slate-400'}`}
             >
-              <TooltipWrapper title={language === 'tr' ? 'Detaylar' : 'Details'}>
+              <TooltipWrapper title={t.details}>
                 <SettingsIcon className="w-3 h-3" />
               </TooltipWrapper>
             </button>
@@ -6952,7 +6953,7 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
               <div className="pt-1 border-t border-slate-500/20">
                 <div className="opacity-30 text-xs mb-0.5 uppercase font-bold tracking-tighter">IP Addresses</div>
                 {ipAddresses.map((addr: string, i: number) => (
-                  <TooltipWrapper key={i} title={language === 'tr' ? 'Kopyala' : 'Copy'}>
+                  <TooltipWrapper key={i} title={t.copy}>
                     <div
                       className="font-mono text-xs opacity-70 truncate cursor-pointer hover:bg-slate-500/10 rounded px-1 transition-colors"
                       onClick={() => navigator.clipboard.writeText(addr)}
@@ -6973,7 +6974,7 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
             >
               {t.openCLI}
             </button>
-            <TooltipWrapper title={language === 'tr' ? 'Detaylar' : 'Details'}>
+            <TooltipWrapper title={t.details}>
               <button
                 onClick={() => {
                   onOpenPanel(router.id);

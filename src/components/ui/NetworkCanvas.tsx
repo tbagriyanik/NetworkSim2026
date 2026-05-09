@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import type { DeviceConfig, Connection, ConnectionType, Port } from '@/types/ui-ux';
 import { Card, CardContent } from './card';
 
@@ -62,6 +63,7 @@ export function NetworkCanvas({
     enableGridSnapping = true,
     defaultConnectionType = 'ethernet',
 }: NetworkCanvasProps) {
+    const { t } = useLanguage();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [panX, setPanX] = useState(0);
@@ -1073,7 +1075,7 @@ export function NetworkCanvas({
                                         ? 'bg-blue-500 text-white'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
-                                title="Ethernet (1)"
+                                title={t.ethernet}
                             >
                                 🔌 Ethernet (1)
                             </button>
@@ -1083,7 +1085,7 @@ export function NetworkCanvas({
                                         ? 'bg-green-500 text-white'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
-                                title="Wireless (2)"
+                                title={t.wireless}
                             >
                                 📡 Wireless (2)
                             </button>
@@ -1093,7 +1095,7 @@ export function NetworkCanvas({
                                         ? 'bg-amber-500 text-white'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
-                                title="Serial (3)"
+                                title={t.serial}
                             >
                                 🔗 Serial (3)
                             </button>
@@ -1106,7 +1108,7 @@ export function NetworkCanvas({
                                     setConnectionPreviewEnd(null);
                                 }}
                                 className="px-2 py-1 rounded text-xs text-red-600 hover:bg-red-50"
-                                title="Cancel (Esc)"
+                                title={t.cancel}
                             >
                                 ✕ Cancel
                             </button>
@@ -1141,21 +1143,21 @@ export function NetworkCanvas({
                             <button
                                 onClick={() => alignDevices(selectedDeviceIds, 'left')}
                                 className="p-1 hover:bg-gray-100 rounded text-xs"
-                                title="Align Left"
+                                title={t.alignLeft}
                             >
                                 ⬅️
                             </button>
                             <button
                                 onClick={() => alignDevices(selectedDeviceIds, 'center')}
                                 className="p-1 hover:bg-gray-100 rounded text-xs"
-                                title="Align Center"
+                                title={t.alignCenter}
                             >
                                 ↔️
                             </button>
                             <button
                                 onClick={() => alignDevices(selectedDeviceIds, 'right')}
                                 className="p-1 hover:bg-gray-100 rounded text-xs"
-                                title="Align Right"
+                                title={t.alignRight}
                             >
                                 ➡️
                             </button>
@@ -1163,21 +1165,21 @@ export function NetworkCanvas({
                             <button
                                 onClick={() => alignDevices(selectedDeviceIds, 'top')}
                                 className="p-1 hover:bg-gray-100 rounded text-xs"
-                                title="Align Top"
+                                title={t.alignTop}
                             >
                                 ⬆️
                             </button>
                             <button
                                 onClick={() => alignDevices(selectedDeviceIds, 'middle')}
                                 className="p-1 hover:bg-gray-100 rounded text-xs"
-                                title="Align Middle"
+                                title={t.alignMiddle}
                             >
                                 ↕️
                             </button>
                             <button
                                 onClick={() => alignDevices(selectedDeviceIds, 'bottom')}
                                 className="p-1 hover:bg-gray-100 rounded text-xs"
-                                title="Align Bottom"
+                                title={t.alignBottom}
                             >
                                 ⬇️
                             </button>
@@ -1185,14 +1187,14 @@ export function NetworkCanvas({
                             <button
                                 onClick={() => alignDevices(selectedDeviceIds, 'distribute-h')}
                                 className="p-1 hover:bg-gray-100 rounded text-xs"
-                                title="Distribute Horizontally"
+                                title={t.distributeHorizontally}
                             >
                                 ⊟
                             </button>
                             <button
                                 onClick={() => alignDevices(selectedDeviceIds, 'distribute-v')}
                                 className="p-1 hover:bg-gray-100 rounded text-xs"
-                                title="Distribute Vertically"
+                                title={t.distributeVertically}
                             >
                                 ⊞
                             </button>

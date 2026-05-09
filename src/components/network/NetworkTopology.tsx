@@ -914,17 +914,16 @@ export function NetworkTopology({
     }
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+    const cursorX = e.clientX - rect.left;
+    const cursorY = e.clientY - rect.top;
 
-    // Calculate the canvas coordinates of the center point before zoom
-    const canvasCenterX = (centerX - pan.x) / zoom;
-    const canvasCenterY = (centerY - pan.y) / zoom;
+    // Keep the canvas point under the cursor fixed while zooming
+    const canvasCursorX = (cursorX - pan.x) / zoom;
+    const canvasCursorY = (cursorY - pan.y) / zoom;
 
-    // Calculate new pan so that the center point stays at the center after zoom
     setPan({
-      x: centerX - canvasCenterX * newZoom,
-      y: centerY - canvasCenterY * newZoom
+      x: cursorX - canvasCursorX * newZoom,
+      y: cursorY - canvasCursorY * newZoom
     });
   }, [zoom, pan]);
 
@@ -6869,7 +6868,9 @@ export function NetworkTopology({
             >
               −
             </button>
-            <span
+            <button
+              type="button"
+              onClick={resetView}
               onMouseDown={handleZoomMouseDown}
               onWheel={handleZoomWheel}
               className={`text-xs font-mono w-12 text-center cursor-pointer select-none rounded transition-colors ${isDraggingZoom
@@ -6881,7 +6882,7 @@ export function NetworkTopology({
               title={t.dragToZoomOrScroll}
             >
               {Math.round(zoom * 100)}%
-            </span>
+            </button>
             <button
               onClick={() => setZoom((z) => {
                 const newZoom = Math.min(MAX_ZOOM, z + 0.25);

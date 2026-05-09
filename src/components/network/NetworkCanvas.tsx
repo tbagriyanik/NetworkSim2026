@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { CanvasDevice, CanvasConnection, CanvasPort } from './networkTopology.types';
 import { DeviceIcon } from './DeviceIcon';
+import { useLanguage } from '@/contexts/LanguageContext';
 import styles from './NetworkCanvas.module.css';
 import { cn } from '@/lib/utils';
 
@@ -153,6 +154,7 @@ export const NetworkCanvas = React.memo(React.forwardRef<HTMLDivElement, Network
         },
         ref
     ) => {
+        const { t } = useLanguage();
         // Local state
         const [internalZoom, setInternalZoom] = useState(zoom);
         const [internalPan, setInternalPan] = useState(pan);
@@ -907,7 +909,7 @@ export const NetworkCanvas = React.memo(React.forwardRef<HTMLDivElement, Network
                         <button
                             className={styles.controlButton}
                             onClick={() => onZoomChange?.(Math.min(MAX_ZOOM, internalZoom + 0.1))}
-                            title="Zoom In"
+                            title={t.zoomIn}
                             aria-label="Zoom In"
                         >
                             <ZoomIn size={16} />
@@ -918,7 +920,7 @@ export const NetworkCanvas = React.memo(React.forwardRef<HTMLDivElement, Network
                         <button
                             className={styles.controlButton}
                             onClick={() => onZoomChange?.(Math.max(MIN_ZOOM, internalZoom - 0.1))}
-                            title="Zoom Out"
+                            title={t.zoomOut}
                             aria-label="Zoom Out"
                         >
                             <ZoomOut size={16} />
@@ -926,7 +928,7 @@ export const NetworkCanvas = React.memo(React.forwardRef<HTMLDivElement, Network
                         <button
                             className={styles.controlButton}
                             onClick={() => onZoomChange?.(1)}
-                            title="Reset Zoom"
+                            title={t.resetZoom}
                             aria-label="Reset Zoom"
                         >
                             <Maximize size={16} />
@@ -937,7 +939,7 @@ export const NetworkCanvas = React.memo(React.forwardRef<HTMLDivElement, Network
                     <button
                         className={cn(styles.gridToggle, { [styles.active]: snapToGrid })}
                         onClick={() => onSnapToGridChange?.(!snapToGrid)}
-                        title="Toggle Grid Snapping"
+                        title={t.gridSnapping}
                         aria-label="Toggle Grid Snapping"
                     >
                         <Grid size={16} />
@@ -950,7 +952,7 @@ export const NetworkCanvas = React.memo(React.forwardRef<HTMLDivElement, Network
                             <button
                                 className={styles.controlButton}
                                 onClick={alignDevicesLeft}
-                                title="Align Left"
+                                title={t.alignLeft}
                                 aria-label="Align Left"
                             >
                                 <AlignLeft size={16} />
@@ -958,7 +960,7 @@ export const NetworkCanvas = React.memo(React.forwardRef<HTMLDivElement, Network
                             <button
                                 className={styles.controlButton}
                                 onClick={alignDevicesCenter}
-                                title="Align Center"
+                                title={t.alignCenter}
                                 aria-label="Align Center"
                             >
                                 <AlignCenter size={16} />
@@ -966,7 +968,7 @@ export const NetworkCanvas = React.memo(React.forwardRef<HTMLDivElement, Network
                             <button
                                 className={styles.controlButton}
                                 onClick={alignDevicesRight}
-                                title="Align Right"
+                                title={t.alignRight}
                                 aria-label="Align Right"
                             >
                                 <AlignRight size={16} />
@@ -975,7 +977,7 @@ export const NetworkCanvas = React.memo(React.forwardRef<HTMLDivElement, Network
                                 <button
                                     className={styles.controlButton}
                                     onClick={distributeDevices}
-                                    title="Distribute Horizontally"
+                                    title={t.distributeHorizontally}
                                     aria-label="Distribute Horizontally"
                                 >
                                     <AlignJustify size={16} />

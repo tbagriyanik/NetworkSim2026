@@ -694,9 +694,9 @@ export const NetworkTopologyView = React.memo(
               ? 'hover:bg-slate-700/50 hover:text-amber-400 text-slate-400'
               : 'hover:bg-slate-100 hover:text-amber-600 text-slate-600'
               }`}
-            title={`${language === 'tr' ? 'Sıfırla' : 'Reset'} ${!isMobile ? '(Shift+R)' : ''}`}
+            title={`${t.reset} ${!isMobile ? '(Shift+R)' : ''}`}
           >
-            {language === 'tr' ? 'Sıfırla' : 'Reset'}
+            {t.reset}
           </button>
           <button
             onClick={() => trackInteraction(() => toggleFullscreen())}
@@ -704,9 +704,9 @@ export const NetworkTopologyView = React.memo(
               ? 'hover:bg-slate-700/50 hover:text-purple-400 text-slate-400'
               : 'hover:bg-slate-100 hover:text-purple-600 text-slate-600'
               }`}
-            title={props.isFullscreen ? (language === 'tr' ? 'Çık' : 'Exit') : (language === 'tr' ? 'Tam Ekran' : 'Fullscreen')}
+            title={props.isFullscreen ? t.exit : t.fullscreen}
           >
-            {props.isFullscreen ? (language === 'tr' ? 'Çık' : 'Exit') : (language === 'tr' ? 'Tam Ekran' : 'Fullscreen')}
+            {props.isFullscreen ? t.exit : t.fullscreen}
           </button>
         </div>
 
