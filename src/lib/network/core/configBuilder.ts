@@ -68,12 +68,16 @@ export function buildRunningConfig(state: SwitchState): string[] {
         lines.push('!');
     }
 
-    // Access-lists
-    if (state.accessLists) {
-        Object.entries(state.accessLists).forEach(([aclId, rules]) => {
-            rules.forEach(rule => {
-                lines.push(`access-list ${aclId} ${rule}`);
-            });
+    // IPv6 Routing
+    if (state.ipv6Enabled) {
+        lines.push('ipv6 unicast-routing');
+        lines.push('!');
+    }
+
+    // IPv6 Static Routes
+    if (state.ipv6StaticRoutes && state.ipv6StaticRoutes.length > 0) {
+        state.ipv6StaticRoutes.forEach(route => {
+            lines.push(`ipv6 route ${route.destination}/${route.prefixLength} ${route.nextHop}${route.metric ? ` ${route.metric}` : ''}`);
         });
         lines.push('!');
     }
@@ -228,14 +232,15 @@ export function buildRunningConfig(state: SwitchState): string[] {
             if (port.ipAddress && port.subnetMask) {
                 lines.push(` ip address ${port.ipAddress} ${port.subnetMask}`);
             }
-
-            if ((port as any).accessGroupIn) {
-                lines.push(` ip access-group ${(port as any).accessGroupIn} in`);
+            if (port.ipv6Address && port.ipv6Prefix) {
+                lines.push(` ipv6 address ${port.ipv6Address}/${port.ipv6Prefix}`);
             }
-            if ((port as any).accessGroupOut) {
-                lines.push(` ip access-group ${(port as any).accessGroupOut} out`);
+            if (port.ipv6Rip?.enabled) {
+                lines.push(` ipv6 rip ${port.ipv6Rip.processName} enable`);
             }
-
+            if (port.ipv6Ospf?.enabled) {
+                lines.push(` ipv6 ospf ${port.ipv6Ospf.processId} area ${port.ipv6Ospf.area}`);
+            }
             if (!port.shutdown) {
                 lines.push(' no shutdown');
             } else {
