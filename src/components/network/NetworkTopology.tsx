@@ -4536,6 +4536,11 @@ export function NetworkTopology({
         {/* Device body */}
         {device.type === 'firewall' ? (
           <>
+            <defs>
+              <filter id="deviceShadow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="2" dy="3" stdDeviation="3" floodOpacity={isDark ? "0.3" : "0.2"} />
+              </filter>
+            </defs>
             <path
               d={`M 0 0 L ${deviceWidth} 0 L ${deviceWidth} ${deviceHeight - 15} L ${deviceWidth / 2} ${deviceHeight} L 0 ${deviceHeight - 15} Z`}
               fill={deviceFill}
@@ -4545,7 +4550,7 @@ export function NetworkTopology({
               filter="url(#deviceShadow)"
             />
             {/* Shield Icon inside Firewall device */}
-            <g transform={`translate(${deviceWidth / 2 - 17}, ${deviceHeight / 2 - 40})`}>
+            <g transform={`translate(${deviceWidth / 2 - 17}, ${deviceHeight / 2 - 40})`} filter="url(#deviceShadow)">
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke={isDark ? '#ea7171' : '#e75c5c'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 <path d="m9 12 2 2 4-4" />

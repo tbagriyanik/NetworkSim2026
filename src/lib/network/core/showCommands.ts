@@ -123,6 +123,23 @@ function getSwitchDisplayProfile(state: any) {
   const modelName = state.version?.modelName || '';
   const isRouter = modelName.includes('ISR') || modelName.includes('4451') || modelName.includes('1900');
   const isL3 = switchModel === 'WS-C3650-24PS' || (isRouter && !switchModel.includes('2960'));
+  const isFirewall = state.deviceType === 'firewall' || modelName.includes('ASA') || modelName.includes('Firepower');
+
+  if (isFirewall) {
+    return {
+      switchModel: 'Cisco ASA 5506-X',
+      isL3: false,
+      isRouter: false,
+      bootImage: 'asa964-17-smp-k8.bin',
+      softwareImage: 'Cisco Adaptive Security Appliance Software Version 9.16(2)',
+      rom: 'ASA boot loader',
+      bootldr: 'ASA Boot Loader Version 9.16(2)',
+      systemImage: 'flash:asa964-17-smp-k8.bin',
+      processor: 'Cisco ASA 5506-X (Intel Celeron) processor (revision 01) with 8192K bytes of memory',
+      reportedFeCount: 0,
+      reportedGiCount: 2,
+    };
+  }
 
   if (isRouter) {
     return {
@@ -208,8 +225,21 @@ function cmdShowRunningConfig(
     output += `spanning-tree mode ${state.spanningTree?.mode || 'pvst'}\n`;
     output += '!\n';
 
-    // Interface configurations
-    Object.entries(state.ports || {}).forEach(([portId, port]: [string, any]) => {
+    // Firewall-specific interface configuration
+    const isFirewall = state.deviceType === 'firewall';
+    if (isFirewall) {
+      output += '!\n';
+      output += 'interface GigabitEthernet0/0\n';
+      output += ' shutdown\n';
+      output += '!\n';
+      output += 'interface GigabitEthernet0/1\n';
+      output += ' shutdown\n';
+      output += '!\n';
+    }
+
+    // Interface configurations (skip for firewalls as they have their own interface config above)
+    if (!isFirewall) {
+      Object.entries(state.ports || {}).forEach(([portId, port]: [string, any]) => {
       if (port.description || port.ipAddress || port.mode !== 'access' || port.vlan !== 1 || port.shutdown !== false) {
         output += `interface ${portId}\n`;
         const portDescription = port.description || port.name;
@@ -242,6 +272,7 @@ function cmdShowRunningConfig(
         output += '!\n';
       }
     });
+    }
 
     // VLAN configurations
     Object.entries(state.vlans || {}).forEach(([vlanId, vlan]: [string, any]) => {
