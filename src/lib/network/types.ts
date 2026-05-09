@@ -38,6 +38,8 @@ export interface Port {
   subnetMask?: string;
   macAddress?: string;         // Per-port MAC address (for router ports)
   allowedVlans?: number[] | 'all'; // For trunk ports
+  accessGroupIn?: string;       // Inbound ACL name/ID
+  accessGroupOut?: string;      // Outbound ACL name/ID
   channelGroup?: number; // Port-channel group id
   channelMode?: EtherChannelMode;
   channelProtocol?: EtherChannelProtocol;

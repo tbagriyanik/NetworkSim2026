@@ -74,6 +74,8 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   // Access-list
   'access-list': cmdAccessList,
   'no access-list': cmdNoAccessList,
+  'ip access-group': cmdIpAccessGroup,
+  'no ip access-group': cmdNoIpAccessGroup,
   // EtherChannel
   'channel-group': cmdChannelGroup,
   'no channel-group': cmdNoChannelGroup,
@@ -1511,7 +1513,16 @@ function cmdAccessList(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid access-list command' };
   }
 
-  return { success: true, output: `Access-list ${match[1]} configured` };
+  const aclId = match[1];
+  const rule = `${match[2]} ${match[3]}`;
+  const accessLists = { ...(state.accessLists || {}) };
+  accessLists[aclId] = [...(accessLists[aclId] || []), rule];
+
+  return {
+    success: true,
+    output: `Access-list ${aclId} rule added`,
+    newState: { accessLists }
+  };
 }
 
 /**
@@ -1527,7 +1538,66 @@ function cmdNoAccessList(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid access-list command' };
   }
 
-  return { success: true, output: `Access-list ${match[1]} removed` };
+  const aclId = match[1];
+  const accessLists = { ...(state.accessLists || {}) };
+  delete accessLists[aclId];
+
+  return {
+    success: true,
+    output: `Access-list ${aclId} removed`,
+    newState: { accessLists }
+  };
+}
+
+/**
+ * IP Access-Group - Apply ACL to interface
+ */
+function cmdIpAccessGroup(state: any, input: string, ctx: any): any {
+  if (!isInInterfaceMode(state) || !state.currentInterface) {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  const match = input.match(/^ip\s+access-group\s+(\S+)\s+(in|out)$/i);
+  if (!match) return { success: false, error: '% Invalid ip access-group command' };
+
+  const [_, aclName, direction] = match;
+  const prop = direction.toLowerCase() === 'in' ? 'accessGroupIn' : 'accessGroupOut';
+
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+    ...port,
+    [prop]: aclName
+  }));
+
+  return {
+    success: true,
+    output: `IP access-group ${aclName} ${direction} applied to ${state.currentInterface}`,
+    newState: { ports: newPorts }
+  };
+}
+
+/**
+ * No IP Access-Group
+ */
+function cmdNoIpAccessGroup(state: any, input: string, ctx: any): any {
+  if (!isInInterfaceMode(state) || !state.currentInterface) {
+    return { success: false, error: '% Invalid command at this mode' };
+  }
+
+  const match = input.match(/^no\s+ip\s+access-group\s+(\S+)\s+(in|out)$/i);
+  if (!match) return { success: false, error: '% Invalid command' };
+
+  const direction = match[2];
+  const prop = direction.toLowerCase() === 'in' ? 'accessGroupIn' : 'accessGroupOut';
+
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+    ...port,
+    [prop]: undefined
+  }));
+
+  return {
+    success: true,
+    newState: { ports: newPorts }
+  };
 }
 
 /**

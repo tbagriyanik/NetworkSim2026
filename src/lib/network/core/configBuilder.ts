@@ -275,6 +275,39 @@ export function buildRunningConfig(state: SwitchState): string[] {
         }
     });
 
+    // Dynamic Routing
+    if (state.routingProtocol === 'rip') {
+        lines.push('router rip');
+        lines.push(' version 2');
+        (state.dynamicRoutes || []).forEach(r => {
+            if (r.type === 'dynamic') lines.push(`  network ${r.destination}`);
+        });
+        if (state.autoSummary === false) lines.push(' no auto-summary');
+        lines.push('!');
+    } else if (state.routingProtocol === 'ospf') {
+        lines.push(`router ospf ${state.version.nosVersion ? '1' : '1'}`);
+        (state.dynamicRoutes || []).forEach(r => {
+            if (r.type === 'dynamic') lines.push(`  network ${r.destination} ${r.subnetMask} area ${r.metric || 0}`);
+        });
+        lines.push('!');
+    } else if (state.routingProtocol === 'eigrp') {
+        lines.push(`router eigrp ${state.eigrpAs || '100'}`);
+        (state.dynamicRoutes || []).forEach(r => {
+            if (r.type === 'dynamic') lines.push(`  network ${r.destination} ${r.subnetMask}`);
+        });
+        if (state.autoSummary === false) lines.push(' no auto-summary');
+        lines.push('!');
+    } else if (state.routingProtocol === 'bgp') {
+        lines.push(`router bgp ${state.bgpAs || '65000'}`);
+        (state.dynamicRoutes || []).forEach(r => {
+            if (r.type === 'dynamic') lines.push(`  network ${r.destination} mask ${r.subnetMask}`);
+        });
+        ((state as any).bgpNeighbors || []).forEach((n: any) => {
+            lines.push(`  neighbor ${n.ip} remote-as ${n.as}`);
+        });
+        lines.push('!');
+    }
+
     // Default Vlan1 (if not already configured above)
     const vlan1Port = state.ports['vlan1'];
     if (!vlan1Port || !vlan1Port.ipAddress || !vlan1Port.subnetMask) {
