@@ -2,7 +2,7 @@
 
 import { CanvasDevice } from './networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
-import { sanitizeHTML } from '@/lib/security/sanitizer';
+import { sanitizeHTML, safeJSONForHTML } from '@/lib/security/sanitizer';
 
 export interface WifiAdminConfig {
   enabled: boolean;
@@ -62,14 +62,13 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
   const safePassword = sanitizeHTML(password || '');
 
   // JSON stringified versions for use in <script> blocks to prevent logic corruption and XSS
-  // We escape < to prevent </script> injection.
-  const jsUsername = JSON.stringify(username || '').replace(/</g, '\\u003c');
-  const jsPassword = JSON.stringify(password || '').replace(/</g, '\\u003c');
-  const jsDeviceId = JSON.stringify(deviceId || '').replace(/</g, '\\u003c');
-  const jsSsid = JSON.stringify(wifi.ssid || '').replace(/</g, '\\u003c');
-  const jsWifiPassword = JSON.stringify(wifi.password || '').replace(/</g, '\\u003c');
-  const jsChannel = JSON.stringify(wifi.channel || '').replace(/</g, '\\u003c');
-  const jsSecurity = JSON.stringify(wifi.security || '').replace(/</g, '\\u003c');
+  const jsUsername = safeJSONForHTML(username || '');
+  const jsPassword = safeJSONForHTML(password || '');
+  const jsDeviceId = safeJSONForHTML(deviceId || '');
+  const jsSsid = safeJSONForHTML(wifi.ssid || '');
+  const jsWifiPassword = safeJSONForHTML(wifi.password || '');
+  const jsChannel = safeJSONForHTML(wifi.channel || '');
+  const jsSecurity = safeJSONForHTML(wifi.security || '');
 
   const securityOptions = [
     { value: 'open', label: isTurkish ? 'Açık (Güvenlik Yok)' : 'Open (No Security)' },
@@ -642,7 +641,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
             const safeIotName = sanitizeHTML(device.name);
             const safeIotId = sanitizeHTML(device.id);
             const safeIotIp = sanitizeHTML(device.ip || '');
-            const jsIotId = JSON.stringify(device.id).replace(/"/g, '&quot;');
+            const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
             return `
             <div class="iot-device-card connected" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:1px solid #e9ecef;cursor:pointer;" onclick="focusDeviceInTopology(${jsIotId})">
               <div style="display:flex;align-items:center;gap:12px;">               
@@ -687,7 +686,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
           ${availableIotDevices.filter(d => !d.currentSsid).map(device => {
             const safeIotName = sanitizeHTML(device.name);
             const safeIotId = sanitizeHTML(device.id);
-            const jsIotId = JSON.stringify(device.id).replace(/"/g, '&quot;');
+            const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
             return `
             <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:2px solid #e9ecef;cursor:pointer;transition:all 0.3s;" onclick="event.stopPropagation(); focusDeviceInTopology(${jsIotId}); toggleIotDeviceSelection(${jsIotId})">
               <div style="display:flex;align-items:center;gap:12px;">
@@ -711,7 +710,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
           ${availableIotDevices.filter(d => d.currentSsid && d.currentSsid !== wifi.ssid).map(device => {
             const safeIotName = sanitizeHTML(device.name);
             const safeIotId = sanitizeHTML(device.id);
-            const jsIotId = JSON.stringify(device.id).replace(/"/g, '&quot;');
+            const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
             return `
             <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:2px solid #e9ecef;cursor:pointer;transition:all 0.3s;" onclick="event.stopPropagation(); focusDeviceInTopology(${jsIotId}); toggleIotDeviceSelection(${jsIotId})">
               <div style="display:flex;align-items:center;gap:12px;">

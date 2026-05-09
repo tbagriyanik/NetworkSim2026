@@ -1,6 +1,6 @@
 
 import { CanvasDevice } from '@/components/network/networkTopology.types';
-import { sanitizeHTML } from '@/lib/security/sanitizer';
+import { sanitizeHTML, safeJSONForHTML } from '@/lib/security/sanitizer';
 
 export const generateIotWebPanelContent = (
   iotDevices: CanvasDevice[],
@@ -67,9 +67,9 @@ export const generateIotWebPanelContent = (
         const statusClass = isPoweredOff ? 'offline' : isConnectedToNetwork ? (isActive ? 'online' : 'online-inactive') : (isActive ? 'active' : 'inactive');
 
         const safeName = sanitizeHTML(device.name || device.id);
-        // Using JSON.stringify for JS context to prevent syntax errors and maintain data integrity.
+        // Using safeJSONForHTML for JS context to prevent syntax errors and maintain data integrity.
         // We also escape double quotes for the HTML attribute context.
-        const jsDeviceId = JSON.stringify(device.id).replace(/"/g, '&quot;');
+        const jsDeviceId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
 
         return `
       <div class="iot-device-card ${cardClass}">
@@ -585,8 +585,8 @@ export const generateIotDevicePageContent = (
   const isTurkish = language === 'tr';
   const safeName = sanitizeHTML(deviceName);
   const safeId = sanitizeHTML(deviceId);
-  // Use JSON.stringify for embedding strings in <script> blocks to prevent XSS and logic corruption.
-  const jsId = JSON.stringify(deviceId).replace(/</g, '\\u003c');
+  // Use safeJSONForHTML for embedding strings in <script> blocks to prevent XSS and logic corruption.
+  const jsId = safeJSONForHTML(deviceId);
 
   return `
     <!DOCTYPE html>
@@ -885,8 +885,8 @@ export const generateIotDevicePageContent = (
 
         <script>
           const isPoweredOff = ${isPoweredOff};
-          const deviceId = ${JSON.stringify(deviceId)};
-          let rules = ${JSON.stringify(rules || [])};
+          const deviceId = ${safeJSONForHTML(deviceId)};
+          let rules = ${safeJSONForHTML(rules || [])};
 
           function addRule() {
             if (isPoweredOff) return;
