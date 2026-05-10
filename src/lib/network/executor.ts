@@ -942,12 +942,20 @@ export function executeCommand(
     sourceDeviceId,
   };
 
-  const handler = commandHandlers[commandName];
+  const commandInput = parsed.resolvedInput || parsed.rawInput;
+  let handler = commandHandlers[commandName];
+
+  // Intent-first routing for SHOW family to reduce raw string-prefix coupling.
+  if (!handler && parsed.intent?.family === 'show') {
+    const lowered = commandInput.toLowerCase();
+    const showKey = Object.keys(showHandlers).find(key => lowered === key || lowered.startsWith(`${key} `));
+    if (showKey) handler = showHandlers[showKey];
+  }
+
   if (!handler) {
     return { success: true };
   }
-
-  return handler(state, parsed.resolvedInput || parsed.rawInput, ctx);
+  return handler(state, commandInput, ctx);
 }
 
 // --- Session helpers (kept local) ---

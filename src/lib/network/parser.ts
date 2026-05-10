@@ -1,5 +1,5 @@
 // Network Command Parser
-import { CommandMode, ParsedCommand } from './types';
+import { CommandMode, ParsedCommand, CommandValidationResult } from './types';
 import { commandAliases } from './initialState';
 
 // Komut yapıları
@@ -2166,7 +2166,7 @@ export function resolveAliases(input: string): string {
 
 // Komut parse et
 export function parseCommand(input: string, currentMode: CommandMode): ParsedCommand | null {
-  const resolvedInput = resolveAliases(input);
+  const resolvedInput = expandKeywordPrefixes(resolveAliases(input), currentMode);
   const trimmed = resolvedInput.trim();
 
   if (!trimmed) return null;
@@ -2175,13 +2175,123 @@ export function parseCommand(input: string, currentMode: CommandMode): ParsedCom
   const parts = trimmed.split(/\s+/);
   const command = parts[0];
   const args = parts.slice(1);
+  const intent = inferIntent(parts.map(p => p.toLowerCase()));
 
   return {
     command: command.toLowerCase(),
     args: args.map(a => a.toLowerCase()),
     rawInput: input,
-    resolvedInput: resolvedInput  // Store resolved input for executor
+    resolvedInput: resolvedInput,  // Store resolved input for executor
+    intent
   };
+}
+
+function inferIntent(tokens: string[]): ParsedCommand['intent'] {
+  const [t0 = '', t1 = '', t2 = ''] = tokens;
+  if (t0 === 'show') return { family: 'show', action: [t0, t1, t2].filter(Boolean).join(' ') };
+  if (t0 === 'interface' || (t0 === 'int')) return { family: 'interface', action: 'interface' };
+  if (t0 === 'ip' && (t1 === 'route' || t1 === 'routing')) return { family: 'routing', action: `ip ${t1}` };
+  if (t0 === 'router' || (t0 === 'ipv6' && t1 === 'router')) return { family: 'routing', action: [t0, t1, t2].filter(Boolean).join(' ') };
+  if (t0 === 'spanning-tree' || (t0 === 'switchport' && t1 === 'port-security')) return { family: 'security', action: [t0, t1, t2].filter(Boolean).join(' ') };
+  if (['enable', 'disable', 'exit', 'end', 'reload', 'write', 'copy', 'delete', 'clear', 'debug', 'undebug'].includes(t0)) {
+    return { family: 'system', action: [t0, t1].filter(Boolean).join(' ') };
+  }
+  return { family: 'other', action: t0 || 'unknown' };
+}
+
+interface CommandTreeNode {
+  children: Map<string, CommandTreeNode>;
+  terminalPatterns: string[];
+}
+
+const commandTreeByMode: Partial<Record<CommandMode, CommandTreeNode>> = {};
+
+function createNode(): CommandTreeNode {
+  return { children: new Map<string, CommandTreeNode>(), terminalPatterns: [] };
+}
+
+function isKeywordToken(token: string): boolean {
+  return /^[a-z0-9-]+$/i.test(token);
+}
+
+function ensureCommandTree(mode: CommandMode): CommandTreeNode {
+  if (commandTreeByMode[mode]) return commandTreeByMode[mode]!;
+  const root = createNode();
+
+  for (const [patternName, pattern] of Object.entries(commandPatterns)) {
+    if (!pattern.modes.includes(mode)) continue;
+    const tokens = patternName.toLowerCase().split(/\s+/).filter(isKeywordToken);
+    if (tokens.length === 0) continue;
+    let current = root;
+    for (const token of tokens) {
+      if (!current.children.has(token)) current.children.set(token, createNode());
+      current = current.children.get(token)!;
+    }
+    current.terminalPatterns.push(patternName);
+  }
+
+  commandTreeByMode[mode] = root;
+  return root;
+}
+
+function tokenize(input: string): string[] {
+  return input.trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+function expandKeywordPrefixes(input: string, currentMode: CommandMode): string {
+  const rawTokens = input.trim().split(/\s+/).filter(Boolean);
+  if (rawTokens.length === 0) return input;
+
+  let frontier: CommandTreeNode[] = [ensureCommandTree(currentMode)];
+  const expanded = [...rawTokens];
+
+  for (let i = 0; i < rawTokens.length; i++) {
+    const token = rawTokens[i].toLowerCase();
+    const matches: Array<{ keyword: string; child: CommandTreeNode }> = [];
+    for (const node of frontier) {
+      for (const [keyword, child] of node.children.entries()) {
+        if (keyword.startsWith(token)) matches.push({ keyword, child });
+      }
+    }
+    if (matches.length === 0) break;
+    const uniqueKeywords = Array.from(new Set(matches.map(m => m.keyword)));
+    if (uniqueKeywords.length === 1) expanded[i] = uniqueKeywords[0];
+    frontier = matches.map(m => m.child);
+  }
+
+  return expanded.join(' ');
+}
+
+function resolveByCommandTree(input: string, currentMode: CommandMode): { kind: 'ok' | 'ambiguous' | 'incomplete'; candidates?: string[] } {
+  const tokens = tokenize(input);
+  if (tokens.length === 0) return { kind: 'ok' };
+
+  let frontier: CommandTreeNode[] = [ensureCommandTree(currentMode)];
+  for (const token of tokens) {
+    const next: CommandTreeNode[] = [];
+    for (const node of frontier) {
+      for (const [keyword, child] of node.children.entries()) {
+        if (keyword.startsWith(token)) next.push(child);
+      }
+    }
+    if (next.length === 0) return { kind: 'ok' };
+    frontier = next;
+  }
+
+  const terminal = frontier.flatMap(n => n.terminalPatterns);
+  const hasChildren = frontier.some(n => n.children.size > 0);
+
+  if (terminal.length === 0 && hasChildren) {
+    const nextKeywords = Array.from(new Set(frontier.flatMap(n => Array.from(n.children.keys())))).slice(0, 8);
+    return { kind: 'incomplete', candidates: nextKeywords };
+  }
+
+  if (terminal.length > 1) {
+    const unique = Array.from(new Set(terminal)).slice(0, 8);
+    return { kind: 'ambiguous', candidates: unique };
+  }
+
+  return { kind: 'ok' };
 }
 
 // Komut geçerli mi kontrol et
@@ -2189,10 +2299,19 @@ export function validateCommand(
   parsed: ParsedCommand,
   currentMode: CommandMode,
   state?: any
-): { valid: boolean; error?: string; matchedPattern?: string } {
+): CommandValidationResult {
 
   const input = parsed.rawInput.toLowerCase();
   const resolvedInput = resolveAliases(parsed.rawInput);
+  const treeResolution = resolveByCommandTree(resolvedInput, currentMode);
+  if (treeResolution.kind === 'ambiguous') {
+    const options = (treeResolution.candidates || []).join(', ');
+    return { valid: false, reason: 'ambiguous', error: `% Ambiguous command${options ? `: ${options}` : ''}` };
+  }
+  if (treeResolution.kind === 'incomplete') {
+    const options = (treeResolution.candidates || []).join(', ');
+    return { valid: false, reason: 'incomplete', error: `% Incomplete command${options ? `. Expected: ${options}` : ''}` };
+  }
 
   // Tüm pattern'leri kontrol et
   for (const [name, pattern] of Object.entries(commandPatterns)) {
@@ -2203,17 +2322,19 @@ export function validateCommand(
       if (!pattern.modes.includes(currentMode)) {
         return {
           valid: false,
+          reason: 'invalid-mode',
           error: getModeError(parsed.rawInput, currentMode)
         };
       }
 
-      return { valid: true, matchedPattern: name };
+      return { valid: true, reason: 'ok', matchedPattern: name };
     }
   }
 
   // Eşleşme bulunamadı
   return {
     valid: false,
+    reason: 'unknown-command',
     error: getInvalidCommandError(parsed.rawInput, state)
   };
 }

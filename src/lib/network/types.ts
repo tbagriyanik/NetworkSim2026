@@ -284,6 +284,19 @@ export interface ParsedCommand {
   args: string[];
   rawInput: string;
   resolvedInput?: string;  // Alias-resolved input for executor
+  intent?: {
+    family: 'show' | 'interface' | 'routing' | 'system' | 'security' | 'other';
+    action: string;
+  };
+}
+
+export type ValidationReason = 'ok' | 'ambiguous' | 'incomplete' | 'invalid-mode' | 'unknown-command';
+
+export interface CommandValidationResult {
+  valid: boolean;
+  reason: ValidationReason;
+  error?: string;
+  matchedPattern?: string;
 }
 
 // Kablo Tipleri
