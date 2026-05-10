@@ -3117,6 +3117,122 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         { id: 'mlswitch1', state: ripMlswitch1State },
         { id: 'switch3-l2', state: switch3L2State }
       ])
+    },
+    {
+      id: 'acl-standard-basic',
+      tag: 'ACL',
+      title: isTr ? 'ACL Standard ' : 'ACL Standard Example 1',
+      description: isTr ? 'Standard ACL ile temel erişim kontrolü.' : 'Basic access control with standard ACL.',
+      detail: isTr ? 'access-list 10 deny 192.168.1.0 0.0.0.255, access-list 10 permit any' : 'access-list 10 deny 192.168.1.0 0.0.0.255, access-list 10 permit any',
+      level: 'intermediate',
+      data: baseProjectData(staticL3RoutingDevices, staticL3RoutingConnections, staticL3RoutingNotes, [
+        { id: 'switch0', state: switch0State },
+        { id: 'mlswitch1', state: mlSwitch1State },
+        { id: 'router3', state: router3State },
+        { id: 'mlswitch2', state: mlSwitch2State },
+        { id: 'switch1', state: switch1State }
+      ])
+    },
+    {
+      id: 'acl-extended-basic',
+      tag: 'ACL',
+      title: isTr ? 'ACL Extended ' : 'ACL Extended Example 2',
+      description: isTr ? 'Extended ACL ile protokol/port bazlı filtreleme.' : 'Protocol and port based filtering with extended ACL.',
+      detail: isTr ? 'ip access-list extended WEB-FILTER, permit tcp any any eq 80, deny ip any any' : 'ip access-list extended WEB-FILTER, permit tcp any any eq 80, deny ip any any',
+      level: 'advanced',
+      data: baseProjectData(firewallBasicDevices, firewallBasicConnections, firewallBasicNotes, [])
+    },
+    {
+      id: 'nat-static-basic',
+      tag: 'NAT',
+      title: isTr ? 'NAT Static ' : 'NAT Static Example 1',
+      description: isTr ? 'Static NAT ile birebir adres eşlemesi.' : 'One-to-one address mapping with static NAT.',
+      detail: 'ip nat inside source static 192.168.1.10 203.0.113.10',
+      level: 'intermediate',
+      data: baseProjectData(routerDhcpDevices, routerDhcpConnections, routerDhcpNotes, [
+        { id: 'router-1', state: routerDhcpR1 },
+        { id: 'switch-1', state: routerDhcpSw1 }
+      ])
+    },
+    {
+      id: 'nat-dynamic-basic',
+      tag: 'NAT',
+      title: isTr ? 'NAT Dynamic ' : 'NAT Dynamic Example 2',
+      description: isTr ? 'NAT havuzu ile dinamik çeviri.' : 'Dynamic translation with NAT pool.',
+      detail: 'ip nat pool OUT 203.0.113.20 203.0.113.30 netmask 255.255.255.0',
+      level: 'advanced',
+      data: baseProjectData(routerDhcpDevices, routerDhcpConnections, routerDhcpNotes, [
+        { id: 'router-1', state: routerDhcpR1 },
+        { id: 'switch-1', state: routerDhcpSw1 }
+      ])
+    },
+    {
+      id: 'nat-pat-basic',
+      tag: 'NAT',
+      title: isTr ? 'NAT PAT ' : 'NAT PAT Example 3',
+      description: isTr ? 'PAT (NAT overload) ile çoktan-bire çeviri.' : 'Many-to-one translation with PAT (NAT overload).',
+      detail: 'ip nat inside source list 1 interface gi0/0 overload',
+      level: 'advanced',
+      data: baseProjectData(routerDhcpDevices, routerDhcpConnections, routerDhcpNotes, [
+        { id: 'router-1', state: routerDhcpR1 },
+        { id: 'switch-1', state: routerDhcpSw1 }
+      ])
+    },
+    {
+      id: 'hsrp-redundancy-basic',
+      tag: 'HSRP',
+      title: isTr ? 'HSRP Redundancy ' : 'HSRP Redundancy Example 1',
+      description: isTr ? 'Varsayılan ağ geçidi yedekliliği için HSRP.' : 'HSRP for default gateway redundancy.',
+      detail: isTr ? 'standby 1 ip 192.168.10.254, standby 1 priority 110, standby 1 preempt' : 'standby 1 ip 192.168.10.254, standby 1 priority 110, standby 1 preempt',
+      level: 'advanced',
+      data: baseProjectData(l3Switch2VlanDevices, l3Switch2VlanConnections, l3Switch2VlanNotes, [
+        { id: 'switch2', state: l3Switch2State },
+        { id: 'switch4', state: l3Switch4State }
+      ])
+    },
+    {
+      id: 'ospf-multi-area-1',
+      tag: 'OSPF',
+      title: isTr ? 'OSPF Multi-Area ' : 'OSPF Multi-Area Example 1',
+      description: isTr ? 'Area 0 ve Area 10 ile çok alanlı OSPF.' : 'Multi-area OSPF with Area 0 and Area 10.',
+      detail: 'router ospf 1, network 10.0.0.0 0.0.0.255 area 0, network 10.0.10.0 0.0.0.255 area 10',
+      level: 'advanced',
+      data: baseProjectData(staticL3RoutingDevices, staticL3RoutingConnections, staticL3RoutingNotes, [
+        { id: 'switch0', state: switch0State },
+        { id: 'mlswitch1', state: mlSwitch1State },
+        { id: 'router3', state: router3State },
+        { id: 'mlswitch2', state: mlSwitch2State },
+        { id: 'switch1', state: switch1State }
+      ])
+    },
+    {
+      id: 'ospf-multi-area-2',
+      tag: 'OSPF',
+      title: isTr ? 'OSPF Multi-Area ' : 'OSPF Multi-Area Example 2',
+      description: isTr ? 'ABR üzerinden farklı OSPF alanlarının omurgaya bağlanması.' : 'Connecting multiple OSPF areas to backbone via ABR.',
+      detail: 'router ospf 1, area 20 stub, area 10 range 10.10.0.0 255.255.0.0',
+      level: 'advanced',
+      data: baseProjectData(staticL3RoutingDevices, staticL3RoutingConnections, staticL3RoutingNotes, [
+        { id: 'switch0', state: switch0State },
+        { id: 'mlswitch1', state: mlSwitch1State },
+        { id: 'router3', state: router3State },
+        { id: 'mlswitch2', state: mlSwitch2State },
+        { id: 'switch1', state: switch1State }
+      ])
+    },
+    {
+      id: 'eigrp-basic-1',
+      tag: 'EIGRP',
+      title: isTr ? 'EIGRP Basic ' : 'EIGRP Basic Example 1',
+      description: isTr ? 'Temel EIGRP komutları ile dinamik yönlendirme kurulumu.' : 'Dynamic routing setup using basic EIGRP commands.',
+      detail: 'router eigrp 100, network 192.168.1.0 0.0.0.255, no auto-summary',
+      level: 'advanced',
+      data: baseProjectData(ripRoutingDevices, ripRoutingConnections, ripRoutingNotes, [
+        { id: 'switch0-l2', state: switch0L2State },
+        { id: 'mlswitch0', state: ripMlswitch0State },
+        { id: 'mlswitch1', state: ripMlswitch1State },
+        { id: 'switch3-l2', state: switch3L2State }
+      ])
     }
   ];
 };

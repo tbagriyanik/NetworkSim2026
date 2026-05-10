@@ -1,6 +1,6 @@
 # Network Simulator 2026 - Example Projects
 
-This document provides detailed descriptions of all 28 example projects available in the Network Simulator 2026.
+This document provides detailed descriptions of all 37 example projects available in the Network Simulator 2026.
 
 ## Table of Contents
 
@@ -1322,6 +1322,60 @@ L3 switch'ler arasında RIP dynamic routing yapılandırarak otomatik route öğ
    - show ip route
    - Tüm PC'ler birbirine ping atabilir
 
+### 29. ACL Standard Example 1
+**ID:** `acl-standard-basic`  
+**Tag:** ACL  
+**Description:** Basic access control with standard ACL.  
+**Details:** access-list 10 deny 192.168.1.0 0.0.0.255, access-list 10 permit any.  
+
+### 30. ACL Extended Example 2
+**ID:** `acl-extended-basic`  
+**Tag:** ACL  
+**Description:** Protocol and port based filtering with extended ACL.  
+**Details:** ip access-list extended WEB-FILTER, permit tcp any any eq 80, deny ip any any.  
+
+### 31. NAT Static Example 1
+**ID:** `nat-static-basic`  
+**Tag:** NAT  
+**Description:** One-to-one address mapping with static NAT.  
+**Details:** ip nat inside source static 192.168.1.10 203.0.113.10.  
+
+### 32. NAT Dynamic Example 2
+**ID:** `nat-dynamic-basic`  
+**Tag:** NAT  
+**Description:** Dynamic translation with NAT pool.  
+**Details:** ip nat pool OUT 203.0.113.20 203.0.113.30 netmask 255.255.255.0.  
+
+### 33. NAT PAT Example 3
+**ID:** `nat-pat-basic`  
+**Tag:** NAT  
+**Description:** Many-to-one translation with PAT (NAT overload).  
+**Details:** ip nat inside source list 1 interface gi0/0 overload.  
+
+### 34. HSRP Redundancy Example 1
+**ID:** `hsrp-redundancy-basic`  
+**Tag:** HSRP  
+**Description:** HSRP for default gateway redundancy.  
+**Details:** standby 1 ip 192.168.10.254, standby 1 priority 110, standby 1 preempt.  
+
+### 35. OSPF Multi-Area Example 1
+**ID:** `ospf-multi-area-1`  
+**Tag:** OSPF  
+**Description:** Multi-area OSPF with Area 0 and Area 10.  
+**Details:** router ospf 1, network 10.0.0.0 0.0.0.255 area 0, network 10.0.10.0 0.0.0.255 area 10.  
+
+### 36. OSPF Multi-Area Example 2
+**ID:** `ospf-multi-area-2`  
+**Tag:** OSPF  
+**Description:** Connecting multiple OSPF areas to backbone via ABR.  
+**Details:** router ospf 1, area 20 stub, area 10 range 10.10.0.0 255.255.0.0.  
+
+### 37. EIGRP Basic Example 1
+**ID:** `eigrp-basic-1`  
+**Tag:** EIGRP  
+**Description:** Dynamic routing setup using basic EIGRP commands.  
+**Details:** router eigrp 100, network 192.168.1.0 0.0.0.255, no auto-summary.  
+
 ---
 
 ## Summary
@@ -1329,9 +1383,9 @@ L3 switch'ler arasında RIP dynamic routing yapılandırarak otomatik route öğ
 | Level | Count |
 |-------|-------|
 | Basic | 8 |
-| Intermediate | 10 |
-| Advanced | 10 |
-| **Total Examples** | **28** |
+| Intermediate | 12 |
+| Advanced | 17 |
+| **Total Examples** | **37** |
 | **Total Code Lines** | **63,995** |
 
 ## Getting Started

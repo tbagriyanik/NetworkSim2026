@@ -62,7 +62,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Standardized Port Density**: Industry-standard port layouts for C2960 (24eth+2gig), C3650 (24eth+4gig+1wlan), and ISR 4451 (4gig+1wlan).
 - **Enhanced Documentation & Examples**:
   - Comprehensive **Documentation Index** with guides for CLI, error handling, and integration.
-  - **63 Ready-to-Use Example Projects** with step-by-step instructions.
+  - **37 Ready-to-Use Example Projects** with step-by-step instructions.
   - **Quick Reference Guide** for common tasks and commands.
   - **Implementation Complete** documentation with feature checklist.
 - **Ping Packet Tracking & Visualization**:
@@ -85,12 +85,12 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 | Metric | Value |
 | --- | ---: |
 | Application Code | 87,860+ |
-| Example Projects | 63 |
+| Example Projects | 37 |
 | Documentation | 150+ |
 | **Total Lines** | **87,860+** |
 | Source Files | 235 |
-| Ready Topologies | 63 |
-| Guided Lessons | 4 |
+| Ready Topologies | 37 |
+| Guided Lessons | 3 |
 | CLI Command Families | 180+ |
 
 ---
@@ -146,7 +146,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Standart Port Yapısı**: C2960 (24eth+2gig), C3650 (24eth+4gig+1wlan) ve ISR 4451 (4gig+1wlan) modelleri için endüstri standardı port düzeni.
 - **Geliştirilmiş Dokümantasyon & Örnekler**:
   - **Dokümantasyon İndeksi** ile CLI, hata yönetimi ve entegrasyon rehberleri.
-  - **63 Hazır Örnek Proje** adım adım talimatlarla.
+  - **37 Hazır Örnek Proje** adım adım talimatlarla.
   - **Hızlı Referans Rehberi** yaygın görevler ve komutlar için.
   - **Uygulama Tamamlandı** dokümantasyonu özellik kontrol listesiyle.
 - **Ping Paket Takibi & Görselleştirme**:
@@ -169,12 +169,12 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 | Metrik | Değer |
 | --- | ---: |
 | Uygulama Kodu | 87,860+ |
-| Örnek Proje | 63 |
+| Örnek Proje | 37 |
 | Dokümantasyon | 150+ |
 | **Toplam Satır** | **87,860+** |
 | Kaynak Dosya | 235 |
-| Hazır Topoloji | 63 |
-| Rehberli Ders | 4 |
+| Hazır Topoloji | 37 |
+| Rehberli Ders | 3 |
 | CLI Komut Ailesi | 180+ |
 
 ---
