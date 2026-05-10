@@ -7,3 +7,8 @@
 1. Use `sanitizeHTML` only for content rendered as text nodes in HTML.
 2. Use `JSON.stringify()` for embedding variables into `<script>` blocks or `onclick` handlers.
 3. When using `JSON.stringify()` in HTML attributes, additionally escape double quotes (e.g., `.replace(/"/g, '&quot;')`) and prevent script tag termination (e.g., `.replace(/</g, '\\u003c')`).
+
+## 2026-05-10 - [Complex XSS in IoT Simple Programming]
+**Vulnerability:** XSS and attribute injection in `iotWebPanel.ts` via rule IDs, sensor types, and device kinds being injected into `onclick` handlers and list items.
+**Learning:** Even generated IDs (like `Math.random().toString(36)`) should be treated as potentially malicious if they can be manipulated (e.g., by mocking state) or if they are echoed back from user-defined names. The `safeJSONForHTML` helper must be combined with attribute escaping (`replace(/"/g, '&quot;')`) when used inside inline event handlers to prevent attribute breakout.
+**Prevention:** Always use the `safeJSONForHTML(data).replace(/"/g, '&quot;')` pattern for variables injected into `onclick` or other event handler attributes in string-templated HTML.
