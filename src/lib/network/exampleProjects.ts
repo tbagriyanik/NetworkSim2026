@@ -3121,7 +3121,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'acl-standard-basic',
       tag: 'ACL',
-      title: isTr ? 'ACL Standard ' : 'ACL Standard Example 1',
+      title: isTr ? 'ACL Standard ' : 'ACL Standard ',
       description: isTr ? 'Standard ACL ile temel erişim kontrolü.' : 'Basic access control with standard ACL.',
       detail: isTr ? 'access-list 10 deny 192.168.1.0 0.0.0.255, access-list 10 permit any' : 'access-list 10 deny 192.168.1.0 0.0.0.255, access-list 10 permit any',
       level: 'intermediate',
@@ -3136,7 +3136,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'acl-extended-basic',
       tag: 'ACL',
-      title: isTr ? 'ACL Extended ' : 'ACL Extended Example 2',
+      title: isTr ? 'ACL Extended ' : 'ACL Extended ',
       description: isTr ? 'Extended ACL ile protokol/port bazlı filtreleme.' : 'Protocol and port based filtering with extended ACL.',
       detail: isTr ? 'ip access-list extended WEB-FILTER, permit tcp any any eq 80, deny ip any any' : 'ip access-list extended WEB-FILTER, permit tcp any any eq 80, deny ip any any',
       level: 'advanced',
@@ -3145,7 +3145,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'nat-static-basic',
       tag: 'NAT',
-      title: isTr ? 'NAT Static ' : 'NAT Static Example 1',
+      title: isTr ? 'NAT Static ' : 'NAT Static ',
       description: isTr ? 'Static NAT ile birebir adres eşlemesi.' : 'One-to-one address mapping with static NAT.',
       detail: 'ip nat inside source static 192.168.1.10 203.0.113.10',
       level: 'intermediate',
@@ -3157,7 +3157,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'nat-dynamic-basic',
       tag: 'NAT',
-      title: isTr ? 'NAT Dynamic ' : 'NAT Dynamic Example 2',
+      title: isTr ? 'NAT Dynamic ' : 'NAT Dynamic ',
       description: isTr ? 'NAT havuzu ile dinamik çeviri.' : 'Dynamic translation with NAT pool.',
       detail: 'ip nat pool OUT 203.0.113.20 203.0.113.30 netmask 255.255.255.0',
       level: 'advanced',
@@ -3169,7 +3169,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'nat-pat-basic',
       tag: 'NAT',
-      title: isTr ? 'NAT PAT ' : 'NAT PAT Example 3',
+      title: isTr ? 'NAT PAT ' : 'NAT PAT ',
       description: isTr ? 'PAT (NAT overload) ile çoktan-bire çeviri.' : 'Many-to-one translation with PAT (NAT overload).',
       detail: 'ip nat inside source list 1 interface gi0/0 overload',
       level: 'advanced',
@@ -3181,7 +3181,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'hsrp-redundancy-basic',
       tag: 'HSRP',
-      title: isTr ? 'HSRP Redundancy ' : 'HSRP Redundancy Example 1',
+      title: isTr ? 'HSRP Redundancy ' : 'HSRP Redundancy ',
       description: isTr ? 'Varsayılan ağ geçidi yedekliliği için HSRP.' : 'HSRP for default gateway redundancy.',
       detail: isTr ? 'standby 1 ip 192.168.10.254, standby 1 priority 110, standby 1 preempt' : 'standby 1 ip 192.168.10.254, standby 1 priority 110, standby 1 preempt',
       level: 'advanced',
@@ -3193,7 +3193,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'ospf-multi-area-1',
       tag: 'OSPF',
-      title: isTr ? 'OSPF Multi-Area ' : 'OSPF Multi-Area Example 1',
+      title: isTr ? 'OSPF Multi-Area ' : 'OSPF Multi-Area ',
       description: isTr ? 'Area 0 ve Area 10 ile çok alanlı OSPF.' : 'Multi-area OSPF with Area 0 and Area 10.',
       detail: 'router ospf 1, network 10.0.0.0 0.0.0.255 area 0, network 10.0.10.0 0.0.0.255 area 10',
       level: 'advanced',
@@ -3208,7 +3208,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'ospf-multi-area-2',
       tag: 'OSPF',
-      title: isTr ? 'OSPF Multi-Area ' : 'OSPF Multi-Area Example 2',
+      title: isTr ? 'OSPF Multi-Area ' : 'OSPF Multi-Area ',
       description: isTr ? 'ABR üzerinden farklı OSPF alanlarının omurgaya bağlanması.' : 'Connecting multiple OSPF areas to backbone via ABR.',
       detail: 'router ospf 1, area 20 stub, area 10 range 10.10.0.0 255.255.0.0',
       level: 'advanced',
@@ -3223,7 +3223,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'eigrp-basic-1',
       tag: 'EIGRP',
-      title: isTr ? 'EIGRP Basic ' : 'EIGRP Basic Example 1',
+      title: isTr ? 'EIGRP Basic ' : 'EIGRP Basic ',
       description: isTr ? 'Temel EIGRP komutları ile dinamik yönlendirme kurulumu.' : 'Dynamic routing setup using basic EIGRP commands.',
       detail: 'router eigrp 100, network 192.168.1.0 0.0.0.255, no auto-summary',
       level: 'advanced',

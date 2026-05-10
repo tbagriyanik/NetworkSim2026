@@ -1322,59 +1322,224 @@ L3 switch'ler arasında RIP dynamic routing yapılandırarak otomatik route öğ
    - show ip route
    - Tüm PC'ler birbirine ping atabilir
 
-### 29. ACL Standard Example 1
+### 29. ACL Standard 
 **ID:** `acl-standard-basic`  
 **Tag:** ACL  
 **Description:** Basic access control with standard ACL.  
 **Details:** access-list 10 deny 192.168.1.0 0.0.0.255, access-list 10 permit any.  
 
-### 30. ACL Extended Example 2
+**Kısa Tanıtım:**
+Bu örnekte standard ACL ile belirli bir kaynak ağın erişimi sınırlandırılır.
+
+**Adım Adım Proje Yapımı:**
+1. **Topoloji Oluşturma:**
+   - 1 Router (R1), 1 Switch (SW1), 2 PC (PC-1, PC-2) ekleyin.
+   - PC-1 ve PC-2'yi SW1'e, SW1'i R1'e bağlayın.
+2. **IP Yapılandırması:**
+   - PC-1: `192.168.1.10/24`, GW `192.168.1.1`
+   - PC-2: `192.168.2.10/24`, GW `192.168.2.1`
+   - R1 arayüzleri ilgili ağlara IP alacak şekilde yapılandırın.
+3. **ACL Tanımı:**
+   - R1 CLI:
+   - `access-list 10 deny 192.168.1.0 0.0.0.255`
+   - `access-list 10 permit any`
+4. **ACL Uygulama:**
+   - ACL 10'u hedef ağa yakın çıkış/yön arayüzüne uygulayın:
+   - `interface gi0/1`
+   - `ip access-group 10 out`
+5. **Doğrulama:**
+   - `show access-lists`
+   - PC-1'den hedef ağa ping test edin (engellenmeli), diğer kaynakları test edin.
+
+### 30. ACL Extended 
 **ID:** `acl-extended-basic`  
 **Tag:** ACL  
 **Description:** Protocol and port based filtering with extended ACL.  
 **Details:** ip access-list extended WEB-FILTER, permit tcp any any eq 80, deny ip any any.  
 
-### 31. NAT Static Example 1
+**Kısa Tanıtım:**
+Extended ACL ile sadece HTTP trafiğine izin verip diğer IP trafiği engelleyeceksiniz.
+
+**Adım Adım Proje Yapımı:**
+1. **Topoloji Oluşturma:**
+   - Router, switch ve en az 2 istemci ekleyin.
+2. **Temel IP Ayarları:**
+   - İstemcileri farklı segmentlerden erişecek şekilde yapılandırın.
+3. **Extended ACL Yazımı:**
+   - `ip access-list extended WEB-FILTER`
+   - `permit tcp any any eq 80`
+   - `deny ip any any`
+4. **Arayüze Uygulama:**
+   - `interface gi0/0`
+   - `ip access-group WEB-FILTER in`
+5. **Test:**
+   - HTTP (`wget`/web erişimi) başarılı olmalı.
+   - Ping ve diğer trafik türleri engellenmeli.
+   - `show access-lists` ile sayaçları kontrol edin.
+
+### 31. NAT Static 
 **ID:** `nat-static-basic`  
 **Tag:** NAT  
 **Description:** One-to-one address mapping with static NAT.  
 **Details:** ip nat inside source static 192.168.1.10 203.0.113.10.  
 
-### 32. NAT Dynamic Example 2
+**Kısa Tanıtım:**
+Bu örnekte iç ağdaki bir sunucu, sabit bir genel IP ile dış dünyaya yayınlanır.
+
+**Adım Adım Proje Yapımı:**
+1. **Topoloji Oluşturma:**
+   - 1 Router, 1 iç ağ istemcisi/sunucusu, 1 dış ağ test istemcisi kurun.
+2. **Inside/Outside Arayüzleri:**
+   - İç arayüz: `ip nat inside`
+   - Dış arayüz: `ip nat outside`
+3. **Static NAT Kuralı:**
+   - `ip nat inside source static 192.168.1.10 203.0.113.10`
+4. **Yönlendirme:**
+   - Gerekli default/static route'ları ekleyin.
+5. **Doğrulama:**
+   - Dış istemciden `203.0.113.10` adresine erişimi test edin.
+   - `show ip nat translations` çıktısını kontrol edin.
+
+### 32. NAT Dynamic 
 **ID:** `nat-dynamic-basic`  
 **Tag:** NAT  
 **Description:** Dynamic translation with NAT pool.  
 **Details:** ip nat pool OUT 203.0.113.20 203.0.113.30 netmask 255.255.255.0.  
 
-### 33. NAT PAT Example 3
+**Kısa Tanıtım:**
+Dinamik NAT ile iç ağdaki istemcilere havuzdan geçici genel IP atanır.
+
+**Adım Adım Proje Yapımı:**
+1. **NAT Havuzu Tanımı:**
+   - `ip nat pool OUT 203.0.113.20 203.0.113.30 netmask 255.255.255.0`
+2. **Erişim Listesi:**
+   - `access-list 1 permit 192.168.1.0 0.0.0.255`
+3. **NAT Eşleme:**
+   - `ip nat inside source list 1 pool OUT`
+4. **Inside/Outside Arayüz Ataması:**
+   - İç arayüzlerde `ip nat inside`, dış arayüzde `ip nat outside`.
+5. **Test ve Doğrulama:**
+   - İç istemcilerden dış ağa trafik oluşturun.
+   - `show ip nat translations` ve `show ip nat statistics` komutlarını kontrol edin.
+
+### 33. NAT PAT 
 **ID:** `nat-pat-basic`  
 **Tag:** NAT  
 **Description:** Many-to-one translation with PAT (NAT overload).  
 **Details:** ip nat inside source list 1 interface gi0/0 overload.  
 
-### 34. HSRP Redundancy Example 1
+**Kısa Tanıtım:**
+PAT (NAT overload) ile birden çok istemci tek dış IP üzerinden internete çıkar.
+
+**Adım Adım Proje Yapımı:**
+1. **ACL Tanımı:**
+   - `access-list 1 permit 192.168.10.0 0.0.0.255`
+2. **PAT Konfigürasyonu:**
+   - `ip nat inside source list 1 interface gi0/0 overload`
+3. **Arayüz Rolleri:**
+   - LAN arayüzü `ip nat inside`
+   - WAN arayüzü `ip nat outside`
+4. **Yönlendirme:**
+   - `ip route 0.0.0.0 0.0.0.0 <upstream-next-hop>`
+5. **Doğrulama:**
+   - Birden fazla PC’den eşzamanlı web/ping testi yapın.
+   - `show ip nat translations` içinde port bazlı eşleşmeleri görün.
+
+### 34. HSRP Redundancy 
 **ID:** `hsrp-redundancy-basic`  
 **Tag:** HSRP  
 **Description:** HSRP for default gateway redundancy.  
 **Details:** standby 1 ip 192.168.10.254, standby 1 priority 110, standby 1 preempt.  
 
-### 35. OSPF Multi-Area Example 1
+**Kısa Tanıtım:**
+HSRP ile iki L3 cihaz arasında sanal gateway oluşturularak kesintisiz ağ geçidi sağlanır.
+
+**Adım Adım Proje Yapımı:**
+1. **Topoloji Oluşturma:**
+   - Aynı VLAN’a bağlı 2 L3 cihaz ve istemciler ekleyin.
+2. **SVI/IP Konfigürasyonu:**
+   - Her iki cihazda VLAN arayüzlerine gerçek IP verin.
+3. **HSRP Ayarları (Primary):**
+   - `standby 1 ip 192.168.10.254`
+   - `standby 1 priority 110`
+   - `standby 1 preempt`
+4. **HSRP Ayarları (Secondary):**
+   - Aynı grup ve sanal IP ile daha düşük priority verin.
+5. **Failover Testi:**
+   - Primary arayüzünü kapatıp gateway erişimini test edin.
+   - `show standby brief` ile active/standby durumlarını doğrulayın.
+
+### 35. OSPF Multi-Area 
 **ID:** `ospf-multi-area-1`  
 **Tag:** OSPF  
 **Description:** Multi-area OSPF with Area 0 and Area 10.  
 **Details:** router ospf 1, network 10.0.0.0 0.0.0.255 area 0, network 10.0.10.0 0.0.0.255 area 10.  
 
-### 36. OSPF Multi-Area Example 2
+**Kısa Tanıtım:**
+Bu senaryoda backbone (Area 0) ve bir edge area (Area 10) arasında OSPF komşulukları kurulur.
+
+**Adım Adım Proje Yapımı:**
+1. **Router Planı:**
+   - En az 3 router ile bir ABR topolojisi kurun.
+2. **OSPF Süreci:**
+   - `router ospf 1`
+3. **Area Atamaları:**
+   - Backbone linklerinde `area 0`
+   - Uç segmentlerde `area 10`
+4. **Arayüz/Network Komutları:**
+   - `network 10.0.0.0 0.0.0.255 area 0`
+   - `network 10.0.10.0 0.0.0.255 area 10`
+5. **Doğrulama:**
+   - `show ip ospf neighbor`
+   - `show ip route ospf`
+   - Farklı alanlardaki istemciler arası ping testi.
+
+### 36. OSPF Multi-Area 
 **ID:** `ospf-multi-area-2`  
 **Tag:** OSPF  
 **Description:** Connecting multiple OSPF areas to backbone via ABR.  
 **Details:** router ospf 1, area 20 stub, area 10 range 10.10.0.0 255.255.0.0.  
 
-### 37. EIGRP Basic Example 1
+**Kısa Tanıtım:**
+Bu örnekte stub area ve route summarization ile OSPF ölçeklenebilirliği artırılır.
+
+**Adım Adım Proje Yapımı:**
+1. **Çok Alanlı Topoloji:**
+   - Area 0, Area 10 ve Area 20 içeren yapı oluşturun.
+2. **Stub Area Tanımı:**
+   - İlgili ABR/area router’da `area 20 stub`.
+3. **Özetleme (Summarization):**
+   - ABR üzerinde `area 10 range 10.10.0.0 255.255.0.0`.
+4. **Komşuluk ve LSA Kontrolü:**
+   - `show ip ospf database`
+   - `show ip ospf interface brief`
+5. **Test:**
+   - Stub area’dan dış alanlara erişimi doğrulayın.
+   - Routing tablosunda özet rota davranışını kontrol edin.
+
+### 37. EIGRP Basic 
 **ID:** `eigrp-basic-1`  
 **Tag:** EIGRP  
 **Description:** Dynamic routing setup using basic EIGRP commands.  
 **Details:** router eigrp 100, network 192.168.1.0 0.0.0.255, no auto-summary.  
+
+**Kısa Tanıtım:**
+EIGRP AS 100 ile temel komşuluk ve rota öğrenimi kurulur.
+
+**Adım Adım Proje Yapımı:**
+1. **Topoloji Kurulumu:**
+   - En az 2 router ve uç ağlar oluşturun.
+2. **EIGRP Süreci:**
+   - `router eigrp 100`
+3. **Ağ Duyuruları:**
+   - `network 192.168.1.0 0.0.0.255`
+   - Diğer bağlı ağları da ekleyin.
+4. **Özetleme Ayarı:**
+   - `no auto-summary`
+5. **Doğrulama:**
+   - `show ip eigrp neighbors`
+   - `show ip route eigrp`
+   - Uçtan uca ping ile erişim testi.
 
 ---
 
