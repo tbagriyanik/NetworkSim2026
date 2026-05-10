@@ -1688,11 +1688,21 @@ export default function Home() {
   const loadProjectData = useCallback((projectData: any, options?: { keepActiveDevice?: boolean }) => {
     try {
       const shouldKeepActiveDevice = options?.keepActiveDevice === true;
+      const data = (projectData && typeof projectData === 'object') ? projectData : {};
+      const topology = (data.topology && typeof data.topology === 'object') ? data.topology : {};
+      const safeDevices = Array.isArray(data.devices) ? data.devices : [];
+      const safeDeviceOutputs = Array.isArray(data.deviceOutputs) ? data.deviceOutputs : [];
+      const safePcOutputs = Array.isArray(data.pcOutputs) ? data.pcOutputs : [];
+      const safePcHistories = Array.isArray(data.pcHistories) ? data.pcHistories : [];
+      const safeTopologyDevices = Array.isArray(topology.devices) ? topology.devices : [];
+      const safeTopologyConnections = Array.isArray(topology.connections) ? topology.connections : [];
+      const safeTopologyNotes = Array.isArray(topology.notes) ? topology.notes : [];
+      const safeCableInfo = (data.cableInfo && typeof data.cableInfo === 'object') ? data.cableInfo : null;
 
       // Load device states
-      if (projectData.devices && Array.isArray(projectData.devices)) {
+      if (safeDevices.length > 0) {
         const newDeviceStates = new Map<string, SwitchState>();
-        projectData.devices.forEach((item: { id: string; state: SwitchState }) => {
+        safeDevices.forEach((item: { id: string; state: SwitchState }) => {
           // Skip devices with empty/invalid IDs
           if (item.id && item.id.trim() !== '') {
             newDeviceStates.set(item.id, item.state);
@@ -1702,13 +1712,13 @@ export default function Home() {
       }
 
       // Load device outputs
-      if (projectData.deviceOutputs && Array.isArray(projectData.deviceOutputs)) {
+      if (safeDeviceOutputs.length > 0) {
         const newDeviceOutputs = new Map<string, TerminalOutput[]>();
-        projectData.deviceOutputs.forEach((item: { id: string; outputs: TerminalOutput[] }) => {
+        safeDeviceOutputs.forEach((item: { id: string; outputs: TerminalOutput[] }) => {
           let outputs = item.outputs || [];
 
           // If banner is in state but not in outputs, prepend it (only for switches/routers)
-          const stateItem = projectData.devices?.find((d: any) => d.id === item.id);
+          const stateItem = safeDevices.find((d: any) => d.id === item.id);
           if (stateItem?.state?.bannerMOTD && !outputs.some(o => o.content?.includes(stateItem.state.bannerMOTD))) {
             outputs = [
               {
@@ -1723,10 +1733,10 @@ export default function Home() {
           newDeviceOutputs.set(item.id, outputs);
         });
         setDeviceOutputs(newDeviceOutputs);
-      } else if (projectData.devices && Array.isArray(projectData.devices)) {
+      } else if (safeDevices.length > 0) {
         // If no device outputs provided, generate boot messages for all devices
         const newDeviceOutputs = new Map<string, TerminalOutput[]>();
-        projectData.devices.forEach((item: { id: string; state: SwitchState }) => {
+        safeDevices.forEach((item: { id: string; state: SwitchState }) => {
           const deviceId = item.id;
           const state = item.state;
           const isRouter = deviceId.includes('router');
@@ -1853,27 +1863,27 @@ ${state.bannerMOTD}
       }
 
       // Load PC outputs
-      if (projectData.pcOutputs && Array.isArray(projectData.pcOutputs)) {
+      if (safePcOutputs.length > 0) {
         const newPcOutputs = new Map<string, PCOutputLine[]>();
-        projectData.pcOutputs.forEach((item: { id: string; outputs: PCOutputLine[] }) => {
+        safePcOutputs.forEach((item: { id: string; outputs: PCOutputLine[] }) => {
           newPcOutputs.set(item.id, item.outputs || []);
         });
         setPcOutputs(newPcOutputs);
       }
 
       // Load PC histories
-      if (projectData.pcHistories && Array.isArray(projectData.pcHistories)) {
+      if (safePcHistories.length > 0) {
         const newPcHistories = new Map<string, string[]>();
-        projectData.pcHistories.forEach((item: { id: string; history: string[] }) => {
+        safePcHistories.forEach((item: { id: string; history: string[] }) => {
           newPcHistories.set(item.id, item.history || []);
         });
         setPcHistories(newPcHistories);
       }
 
       // Load topology
-      if (projectData.topology) {
+      if (safeTopologyDevices.length > 0 || safeTopologyConnections.length > 0 || safeTopologyNotes.length > 0) {
         // Filter out devices with empty/invalid IDs
-        const validDevices = (projectData.topology.devices || []).filter(
+        const validDevices = safeTopologyDevices.filter(
           (device: CanvasDevice) => device.id && device.id.trim() !== ''
         );
         const normalizedDevices = applyLinkLocalToUnconfiguredHosts(validDevices.map((device: CanvasDevice) => ({
@@ -1881,22 +1891,29 @@ ${state.bannerMOTD}
           type: normalizeDeviceType(device.type),
         })));
         setTopologyDevices(normalizedDevices);
-        setTopologyConnections(projectData.topology.connections || []);
-        setTopologyNotes(projectData.topology.notes || []);
-        if (projectData.topology.zoom) setZoom(projectData.topology.zoom);
-        if (projectData.topology.pan) setPan(projectData.topology.pan);
+        setTopologyConnections(safeTopologyConnections);
+        setTopologyNotes(safeTopologyNotes);
+        if (typeof topology.zoom === 'number') setZoom(topology.zoom);
+        if (topology.pan && typeof topology.pan.x === 'number' && typeof topology.pan.y === 'number') setPan(topology.pan);
+      } else {
+        // Empty project fallback
+        setTopologyDevices([]);
+        setTopologyConnections([]);
+        setTopologyNotes([]);
+        setZoom(typeof data.zoom === 'number' ? data.zoom : 1.0);
+        setPan(data.pan && typeof data.pan.x === 'number' && typeof data.pan.y === 'number' ? data.pan : { x: 0, y: 0 });
       }
 
       // Sync STP state from deviceStates to topologyDevices ports
-      if (projectData.devices && Array.isArray(projectData.devices) && projectData.topology?.devices) {
+      if (safeDevices.length > 0 && safeTopologyDevices.length > 0) {
         const newDeviceStates = new Map<string, SwitchState>();
-        projectData.devices.forEach((item: { id: string; state: SwitchState }) => {
+        safeDevices.forEach((item: { id: string; state: SwitchState }) => {
           if (item.id && item.id.trim() !== '') {
             newDeviceStates.set(item.id, item.state);
           }
         });
 
-        const validDevices = (projectData.topology.devices || []).filter(
+        const validDevices = safeTopologyDevices.filter(
           (device: CanvasDevice) => device.id && device.id.trim() !== ''
         );
         const normalizedDevices = applyLinkLocalToUnconfiguredHosts(validDevices.map((device: CanvasDevice) => ({
@@ -1932,29 +1949,27 @@ ${state.bannerMOTD}
       }
 
       // Load cable info
-      if (projectData.cableInfo) {
+      if (safeCableInfo) {
         setCableInfo({
-          ...projectData.cableInfo,
-          sourceDevice: normalizeDeviceType(projectData.cableInfo.sourceDevice),
-          targetDevice: normalizeDeviceType(projectData.cableInfo.targetDevice),
+          ...safeCableInfo,
+          sourceDevice: normalizeDeviceType(typeof safeCableInfo.sourceDevice === 'string' ? safeCableInfo.sourceDevice : 'pc'),
+          targetDevice: normalizeDeviceType(typeof safeCableInfo.targetDevice === 'string' ? safeCableInfo.targetDevice : 'switchL2'),
         });
+      } else {
+        setCableInfo({ connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' });
       }
 
       // Load active device. User-initiated project/file opens should start with info panels closed.
-      if (shouldKeepActiveDevice && projectData.activeDeviceId) {
-        setActiveDeviceId(projectData.activeDeviceId);
+      if (shouldKeepActiveDevice && typeof data.activeDeviceId === 'string' && data.activeDeviceId.trim() !== '') {
+        setActiveDeviceId(data.activeDeviceId);
       } else {
         setActiveDeviceId('');
         setSelectedDevice(null);
       }
-      if (projectData.activeDeviceType) {
-        setActiveDeviceType(normalizeDeviceType(projectData.activeDeviceType));
-      }
+      setActiveDeviceType(normalizeDeviceType(typeof data.activeDeviceType === 'string' ? data.activeDeviceType : 'switchL2'));
 
       // Load active tab
-      if (projectData.activeTab) {
-        setActiveTab(projectData.activeTab);
-      }
+      setActiveTab(data.activeTab === 'cmd' || data.activeTab === 'terminal' || data.activeTab === 'ports' || data.activeTab === 'vlan' || data.activeTab === 'security' || data.activeTab === 'topology' ? data.activeTab : 'topology');
 
       // Close all overlay panels when loading a project
       setShowPCPanel(false);
@@ -1976,28 +1991,28 @@ ${state.bannerMOTD}
               type: normalizeDeviceType(device.type),
             }))
         ),
-        topologyConnections: projectData.topology?.connections || [],
-        topologyNotes: projectData.topology?.notes || [],
+        topologyConnections: safeTopologyConnections,
+        topologyNotes: safeTopologyNotes,
         deviceStates: new Map(
-          projectData.devices
+          safeDevices
             ?.filter((item: any) => item.id && item.id.trim() !== '')
             ?.map((item: any) => [item.id, item.state]) || []
         ),
-        deviceOutputs: new Map(projectData.deviceOutputs?.map((item: any) => [item.id, item.outputs]) || []),
-        pcOutputs: new Map(projectData.pcOutputs?.map((item: any) => [item.id, item.outputs]) || []),
-        pcHistories: new Map(projectData.pcHistories?.map((item: any) => [item.id, item.history]) || []),
-        cableInfo: projectData.cableInfo
+        deviceOutputs: new Map(safeDeviceOutputs.map((item: any) => [item.id, item.outputs])),
+        pcOutputs: new Map(safePcOutputs.map((item: any) => [item.id, item.outputs])),
+        pcHistories: new Map(safePcHistories.map((item: any) => [item.id, item.history])),
+        cableInfo: safeCableInfo
           ? {
-            ...projectData.cableInfo,
-            sourceDevice: normalizeDeviceType(projectData.cableInfo.sourceDevice),
-            targetDevice: normalizeDeviceType(projectData.cableInfo.targetDevice),
+            ...safeCableInfo,
+            sourceDevice: normalizeDeviceType(typeof safeCableInfo.sourceDevice === 'string' ? safeCableInfo.sourceDevice : 'pc'),
+            targetDevice: normalizeDeviceType(typeof safeCableInfo.targetDevice === 'string' ? safeCableInfo.targetDevice : 'switchL2'),
           }
           : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
-        activeDeviceId: shouldKeepActiveDevice ? (projectData.activeDeviceId || 'switch-1') : '',
-        activeDeviceType: normalizeDeviceType(projectData.activeDeviceType || 'switchL2'),
-        zoom: projectData.zoom || 1.0,
-        pan: projectData.pan || { x: 0, y: 0 },
-        activeTab: projectData.activeTab || 'topology'
+        activeDeviceId: shouldKeepActiveDevice ? (typeof data.activeDeviceId === 'string' ? data.activeDeviceId : 'switch-1') : '',
+        activeDeviceType: normalizeDeviceType(typeof data.activeDeviceType === 'string' ? data.activeDeviceType : 'switchL2'),
+        zoom: typeof data.zoom === 'number' ? data.zoom : 1.0,
+        pan: data.pan && typeof data.pan.x === 'number' && typeof data.pan.y === 'number' ? data.pan : { x: 0, y: 0 },
+        activeTab: data.activeTab === 'cmd' || data.activeTab === 'terminal' || data.activeTab === 'ports' || data.activeTab === 'vlan' || data.activeTab === 'security' || data.activeTab === 'topology' ? data.activeTab : 'topology'
       });
 
       return true;

@@ -13,8 +13,8 @@ type ProjectData = {
   version: string;
   timestamp: string;
   devices: { id: string; state: SwitchState }[];
-  deviceOutputs: { id: string; outputs: any[] }[];
-  pcOutputs: { id: string; outputs: any[] }[];
+  deviceOutputs: { id: string; outputs: unknown[] }[];
+  pcOutputs: { id: string; outputs: unknown[] }[];
   pcHistories: { id: string; history: string[] }[];
   topology: {
     devices: CanvasDevice[];
@@ -29,6 +29,18 @@ type ProjectData = {
   pan: { x: number; y: number };
 };
 
+type FirewallProtocol = 'icmp' | 'tcp' | 'udp' | 'any';
+type FirewallAction = 'allow' | 'deny';
+type FirewallRule = {
+  id: string;
+  sourceIp: string;
+  targetIp: string;
+  port: string;
+  protocol: FirewallProtocol;
+  action: FirewallAction;
+  enabled: boolean;
+};
+
 const defaultCableInfo: CableInfo = {
   connected: true,
   cableType: 'straight',
@@ -39,7 +51,7 @@ const defaultCableInfo: CableInfo = {
 const normalizeDeviceType = (type: string): CanvasDevice['type'] => {
   if (type === 'switch') return 'switchL2';
   if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'iot' || type === 'router' || type === 'firewall') return type;
-  return 'pc';
+  throw new Error(`Invalid device type: ${type}`);
 };
 
 const isValidIpv4 = (value?: string) => {
@@ -47,6 +59,7 @@ const isValidIpv4 = (value?: string) => {
   const parts = value.split('.');
   if (parts.length !== 4) return false;
   return parts.every((part) => {
+    if (part.length > 1 && part.startsWith('0')) return false;
     const n = Number(part);
     return Number.isInteger(n) && n >= 0 && n <= 255;
   });
@@ -64,9 +77,6 @@ const applyLinkLocalToUnconfiguredHosts = (devices: CanvasDevice[]): CanvasDevic
     if (device.type !== 'pc' && device.type !== 'iot') return device;
     if (isValidIpv4(device.ip) && device.ip !== '0.0.0.0') return device;
 
-    // Don't assign link-local IP to DHCP mode devices - they should get IP from DHCP server
-    if (device.ipConfigMode === 'dhcp') return device;
-
     const linkLocalIp = generateRandomLinkLocalIpv4(usedIps);
     usedIps.add(linkLocalIp);
     return {
@@ -80,35 +90,53 @@ const applyLinkLocalToUnconfiguredHosts = (devices: CanvasDevice[]): CanvasDevic
   });
 };
 
-const ensureProjectData = (source: any): ProjectData => {
-  const partial = source || {};
+const ensureProjectData = (source: unknown): ProjectData => {
+  const asRecord = (value: unknown): Record<string, unknown> =>
+    value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  const partial = asRecord(source);
+  const topology = asRecord(partial.topology);
+  const cableInfo = asRecord(partial.cableInfo);
+
+  const safeNormalizeType = (deviceType: string): CanvasDevice['type'] => {
+    try {
+      return normalizeDeviceType(deviceType);
+    } catch {
+      return 'pc';
+    }
+  };
+
   return {
-    version: partial.version ?? '1.0',
-    timestamp: partial.timestamp ?? new Date().toISOString(),
-    devices: partial.devices ?? [],
-    deviceOutputs: partial.deviceOutputs ?? [],
-    pcOutputs: partial.pcOutputs ?? [],
-    pcHistories: partial.pcHistories ?? [],
+    version: typeof partial.version === 'string' ? partial.version : '1.0',
+    timestamp: typeof partial.timestamp === 'string' ? partial.timestamp : new Date().toISOString(),
+    devices: Array.isArray(partial.devices) ? (partial.devices as { id: string; state: SwitchState }[]) : [],
+    deviceOutputs: Array.isArray(partial.deviceOutputs) ? (partial.deviceOutputs as { id: string; outputs: unknown[] }[]) : [],
+    pcOutputs: Array.isArray(partial.pcOutputs) ? (partial.pcOutputs as { id: string; outputs: unknown[] }[]) : [],
+    pcHistories: Array.isArray(partial.pcHistories) ? (partial.pcHistories as { id: string; history: string[] }[]) : [],
     topology: {
-      devices: applyLinkLocalToUnconfiguredHosts((partial.topology?.devices ?? []).map((device: CanvasDevice) => ({
+      devices: applyLinkLocalToUnconfiguredHosts(((Array.isArray(topology.devices) ? topology.devices : []) as CanvasDevice[]).map((device: CanvasDevice) => ({
         ...device,
-        type: normalizeDeviceType(device.type),
+        type: safeNormalizeType(device.type),
       }))),
-      connections: partial.topology?.connections ?? [],
-      notes: partial.topology?.notes ?? []
+      connections: Array.isArray(topology.connections) ? (topology.connections as CanvasConnection[]) : [],
+      notes: Array.isArray(topology.notes) ? (topology.notes as CanvasNote[]) : []
     },
-    cableInfo: partial.cableInfo
+    cableInfo: Object.keys(cableInfo).length
       ? {
-        ...partial.cableInfo,
-        sourceDevice: normalizeDeviceType(partial.cableInfo.sourceDevice),
-        targetDevice: normalizeDeviceType(partial.cableInfo.targetDevice),
+        connected: typeof cableInfo.connected === 'boolean' ? cableInfo.connected : defaultCableInfo.connected,
+        cableType: cableInfo.cableType === 'straight' || cableInfo.cableType === 'crossover' || cableInfo.cableType === 'console' ? cableInfo.cableType : defaultCableInfo.cableType,
+        sourcePort: typeof cableInfo.sourcePort === 'string' ? cableInfo.sourcePort : '',
+        targetPort: typeof cableInfo.targetPort === 'string' ? cableInfo.targetPort : '',
+        sourceDevice: safeNormalizeType(typeof cableInfo.sourceDevice === 'string' ? cableInfo.sourceDevice : 'pc'),
+        targetDevice: safeNormalizeType(typeof cableInfo.targetDevice === 'string' ? cableInfo.targetDevice : 'switchL2'),
       }
       : defaultCableInfo,
-    activeDeviceId: partial.activeDeviceId ?? 'switch-1',
-    activeDeviceType: normalizeDeviceType(partial.activeDeviceType ?? 'switchL2'),
-    activeTab: partial.activeTab ?? 'topology',
-    zoom: partial.zoom ?? 1,
-    pan: partial.pan ?? { x: 0, y: 0 }
+    activeDeviceId: typeof partial.activeDeviceId === 'string' ? partial.activeDeviceId : 'switch-1',
+    activeDeviceType: safeNormalizeType(typeof partial.activeDeviceType === 'string' ? partial.activeDeviceType : 'switchL2'),
+    activeTab: partial.activeTab === 'topology' || partial.activeTab === 'cmd' || partial.activeTab === 'terminal' || partial.activeTab === 'ports' || partial.activeTab === 'vlan' || partial.activeTab === 'security' ? partial.activeTab : 'topology',
+    zoom: typeof partial.zoom === 'number' ? partial.zoom : 1,
+    pan: (partial.pan && typeof partial.pan === 'object' && typeof (partial.pan as { x?: unknown }).x === 'number' && typeof (partial.pan as { y?: unknown }).y === 'number')
+      ? { x: (partial.pan as { x: number }).x, y: (partial.pan as { y: number }).y }
+      : { x: 0, y: 0 }
   };
 };
 
@@ -131,10 +159,15 @@ const ipConfigExampleData: ProjectData = ensureProjectData(ipConfigExample);
 const dhcpExampleData: ProjectData = ensureProjectData(dhcpExample);
 const trunk2SwitchData: ProjectData = ensureProjectData(trunk2SwitchExample);
 
-let exampleMacCounter = 0;
-const nextExampleMac = () => {
-  exampleMacCounter += 1;
-  const base = (0x00e0f701a100 + exampleMacCounter).toString(16).padStart(12, '0').toUpperCase();
+const deterministicMac = (seed: string, scope: string = 'example-projects') => {
+  const input = `${scope}:${seed}`;
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  const low24 = (hash >>> 0) & 0xffffff;
+  const base = `00E0F7${low24.toString(16).padStart(6, '0').toUpperCase()}`;
   return `${base.slice(0, 4)}.${base.slice(4, 8)}.${base.slice(8, 12)}`;
 };
 
@@ -145,7 +178,7 @@ const createSwitchDevice = (id: string, name: string, x: number, y: number, ip: 
   x,
   y,
   ip,
-  macAddress: nextExampleMac(),
+  macAddress: deterministicMac(id),
   status: 'online',
   switchModel: 'WS-C2960-24TT-L',
   ports: [
@@ -163,8 +196,8 @@ const createL3SwitchDevice = (id: string, name: string, x: number, y: number): C
   x,
   y,
   ip: '',
-  ipConfigMode: 'dhcp',
-  macAddress: nextExampleMac(),
+  ipConfigMode: 'static',
+  macAddress: deterministicMac(id),
   status: 'online',
   switchModel: 'WS-C3650-24PS',
   ports: [
@@ -187,7 +220,7 @@ const createPcDevice = (id: string, name: string, x: number, y: number, ip: stri
   ip,
   vlan,
   gateway,
-  macAddress: nextExampleMac(),
+  macAddress: deterministicMac(id),
   status: 'online',
   ports: [
     { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
@@ -196,13 +229,7 @@ const createPcDevice = (id: string, name: string, x: number, y: number, ip: stri
 });
 
 const createRouterDevice = (id: string, name: string, x: number, y: number, ip: string = ''): CanvasDevice => {
-  const baseMac = nextExampleMac();
-  const macNumber = parseInt(baseMac.replace(/\./g, ''), 16);
-
-  const formatMacFromNumber = (value: number): string => {
-    const base = value.toString(16).padStart(12, '0').toUpperCase();
-    return `${base.slice(0, 4)}.${base.slice(4, 8)}.${base.slice(8, 12)}`;
-  };
+  const baseMac = deterministicMac(id);
 
   return {
     id,
@@ -215,11 +242,11 @@ const createRouterDevice = (id: string, name: string, x: number, y: number, ip: 
     status: 'online',
     ports: [
       { id: 'console', label: 'Console', status: 'disconnected' as const },
-      { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const, macAddress: formatMacFromNumber(macNumber) },
-      { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const, macAddress: formatMacFromNumber(macNumber + 1) },
-      { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const, macAddress: formatMacFromNumber(macNumber + 2) },
-      { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const, macAddress: formatMacFromNumber(macNumber + 3) },
-      { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, macAddress: formatMacFromNumber(macNumber + 4) }
+      { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/0`) },
+      { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/1`) },
+      { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/2`) },
+      { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/3`) },
+      { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:wlan0`) }
     ]
   };
 };
@@ -231,7 +258,7 @@ const createIotDevice = (id: string, name: string, x: number, y: number, sensorT
   x,
   y,
   ip: '',
-  macAddress: nextExampleMac(),
+  macAddress: deterministicMac(id),
   status: 'online',
   iot: {
     sensorType,
@@ -251,14 +278,8 @@ const createIotDevice = (id: string, name: string, x: number, y: number, sensorT
   ]
 });
 
-const createFirewallDevice = (id: string, name: string, x: number, y: number, ip: string = '', firewallRules?: any[]): CanvasDevice => {
-  const baseMac = nextExampleMac();
-  const macNumber = parseInt(baseMac.replace(/\./g, ''), 16);
-
-  const formatMacFromNumber = (value: number): string => {
-    const base = value.toString(16).padStart(12, '0').toUpperCase();
-    return `${base.slice(0, 4)}.${base.slice(4, 8)}.${base.slice(8, 12)}`;
-  };
+const createFirewallDevice = (id: string, name: string, x: number, y: number, ip: string = '', firewallRules?: FirewallRule[]): CanvasDevice => {
+  const baseMac = deterministicMac(id);
 
   return {
     id,
@@ -272,8 +293,8 @@ const createFirewallDevice = (id: string, name: string, x: number, y: number, ip
     firewallRules: firewallRules || [],
     ports: [
       { id: 'console', label: 'Console', status: 'disconnected' as const },
-      { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const, macAddress: formatMacFromNumber(macNumber) },
-      { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const, macAddress: formatMacFromNumber(macNumber + 1) }
+      { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/0`) },
+      { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/1`) }
     ]
   };
 };
@@ -302,7 +323,7 @@ const connectPorts = (
     device.ports = device.ports.map(port => {
       const isMatch = (device.id === sourceDeviceId && port.id === sourcePort) ||
         (device.id === targetDeviceId && port.id === targetPort);
-      return isMatch ? { ...port, status: 'connected' as const } : port;
+      return isMatch ? { ...port, status: 'connected' as const, adminStatus: 'up', operStatus: 'up' } : port;
     });
   });
 };
@@ -326,7 +347,7 @@ const baseProjectData = (devices: CanvasDevice[], connections: CanvasConnection[
     targetDevice: 'switchL2'
   },
   activeDeviceId: deviceStates[0]?.id || 'switch-1',
-  activeDeviceType: 'switchL2',
+  activeDeviceType: (devices[0]?.type || 'switchL2') as DeviceType,
   activeTab: 'topology',
   zoom: 1.0,
   pan: { x: 0, y: 0 }
