@@ -2,12 +2,12 @@
 
 ## Güncel Durum
 
-- **Sürüm**: 1.6.1
+- **Sürüm**: 1.6.2
 - **Tarih**: 2026-05-09
-- **Uygulama kodu**: 72,000+
-- **Örnek kod satırı**: 300
+- **Uygulama kodu**: 88,624
+- **Örnek kod satırı**: 15,298
 - **Dokümantasyon satırı**: 150+
-- **Toplam satır**: 72,450+
+- **Toplam satır**: 103,922
 - **Kod dosyası**: 185+
 - **Hazır topoloji örneği**: 32
 - **Rehberli ders**: 4

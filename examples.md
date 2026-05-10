@@ -1551,7 +1551,7 @@ EIGRP AS 100 ile temel komşuluk ve rota öğrenimi kurulur.
 | Intermediate | 12 |
 | Advanced | 17 |
 | **Total Examples** | **37** |
-| **Total Code Lines** | **63,995** |
+| **Total Code Lines** | **15,298** |
 
 ## Getting Started
 

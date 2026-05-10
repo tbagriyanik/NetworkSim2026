@@ -2,10 +2,10 @@
 
 A modern browser-based network simulator for learning switching, routing, wireless, IoT, and CLI workflows.
 
-![Version](https://img.shields.io/badge/version-1.6.1-blue)
+![Version](https://img.shields.io/badge/version-1.6.2-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-87860+-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-88624-lightgrey)
 
 Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
@@ -23,7 +23,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Guided Lesson Mode**: Step-by-step tasks with automatic completion detection and progress tracking.
 - **Modern UI/UX**: Keyboard shortcuts, glassmorphism effects, shimmer loading, and accessible design.
 
-### Recent Updates (v1.6.1)
+### Recent Updates (v1.6.2)
 
 - **Firewall & IoT Persistence Update (May 9, 2026)**:
   - Firewall rules are now persisted when re-selecting devices.
@@ -84,10 +84,10 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metric | Value |
 | --- | ---: |
-| Application Code | 87,860+ |
+| Application Code | 88,624 |
 | Example Projects | 37 |
 | Documentation | 150+ |
-| **Total Lines** | **87,860+** |
+| **Total Lines** | **88,624** |
 | Source Files | 235 |
 | Ready Topologies | 37 |
 | Guided Lessons | 3 |
@@ -107,7 +107,7 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Rehberli Ders Modu**: Otomatik tamamlama algılama ve ilerleme takibi ile adım adım görevler.
 - **Modern UI/UX**: Klavye kısayolları, glassmorphism efektleri, shimmer loading ve erişilebilir tasarım.
 
-### Son Güncellemeler (v1.6.1)
+### Son Güncellemeler (v1.6.2)
 
 - **Firewall ve IoT Kalıcılık Güncellemesi (9 Mayıs 2026)**:
   - Firewall kuralları cihaz yeniden seçildiğinde korunur.
@@ -168,10 +168,10 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metrik | Değer |
 | --- | ---: |
-| Uygulama Kodu | 87,860+ |
+| Uygulama Kodu | 88,624 |
 | Örnek Proje | 37 |
 | Dokümantasyon | 150+ |
-| **Toplam Satır** | **87,860+** |
+| **Toplam Satır** | **88,624** |
 | Kaynak Dosya | 235 |
 | Hazır Topoloji | 37 |
 | Rehberli Ders | 3 |

@@ -70,40 +70,63 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 - Skeleton ekranlar ve dinamik bileşen yükleme.
 - Klavye kısayolları, ARIA etiketleri ve ekran okuyucu iyileştirmeleri.
 
-## Proje Metrikleri (v1.6.1)
+## Eski ve Yeni Güncellemeler
+
+### Yeni Güncellemeler (v1.6.2 - Mayıs 2026)
+
+- Sürüm `1.6.2` olarak güncellendi (`package.json`, `package-lock.json`, dokümantasyon başlıkları).
+- Örnek proje seti genişletildi ve toplam **37** örneğe çıkarıldı.
+- Yeni eklenen 9 örnek:
+  - ACL Standard + Extended (2 örnek)
+  - NAT Static + Dynamic + PAT (3 örnek)
+  - HSRP Redundancy (1 örnek)
+  - OSPF Multi-Area (2 örnek)
+  - EIGRP Basic (1 örnek)
+- `examples.md` içinde 29-37 arası yeni örnekler, diğerleriyle aynı formatta detaylandırıldı:
+  - Kısa tanıtım
+  - Adım adım proje yapımı
+  - Doğrulama/test adımları
+- README, planning ve examples dokümanlarındaki örnek sayıları ve sürüm metinleri eşitlendi.
+- Kod/metrik raporlarında örnek JSON/TS toplamı ayrıca hesaplanarak dokümana işlendi.
+
+### Önceki Güncellemeler (v1.6.1 - Mayıs 2026)
+
+- Firewall kurallarının kalıcılığı güçlendirildi; cihaz yeniden seçildiğinde kurallar korunur.
+- Firewall kuralları `running-config` üretimine dahil edildi.
+- `show access-lists` çıktısı firewall kural görünürlüğü ile genişletildi.
+- IPv6 yönlendirme kapsamı genişletildi:
+  - RIPng
+  - OSPFv3 (multi-area dahil)
+  - `show ipv6 route` ve `show ipv6 interface brief`
+- React hook kararlılık düzeltmeleri ve UI/UX performans iyileştirmeleri tamamlandı.
+- Jest tabanlı testlerin Vitest API uyumluluk geçişleri yapıldı.
+
+## Proje Metrikleri (v1.6.2)
 
 Kod metriklerinde uygulama kodu ile örnek veri ve dokümanlar ayrı raporlanır.
 
 | Grup | Satır Sayısı |
 | --- | ---: |
-| Uygulama Kodu (TS/TSX/CSS) | 50,853 |
-| Örnek JSON Topolojileri | 14,400 |
-| Örnekler & Dokümantasyon | 850 |
-| **Toplam** | **66,103** |
+| Uygulama Kodu | 88,624 |
+| Örnek JSON+TS Kod Toplamı | 15,298 |
+| **Toplam** | **103,922** |
 
 | Diğer Metrikler | Sayı |
 | --- | ---: |
-| Hazır topoloji örneği | 32 |
+| Hazır topoloji örneği | 37 |
 | Rehberli ders | 4 |
-| Harici JSON örnek | 8 |
+| Harici JSON örnek | 6 |
 | CLI komut ailesi | 180+ |
 | Test Dosyaları | 4 |
-| Başarısız Testler | 8 ⚠️ |
+| Başarısız Testler | 0 |
 
 Örneklerin ayrıntılı listesi için [examples.md](examples.md) dosyasına bakın.
 
-### Test Durumu (2026-05-05)
+### Test Durumu (2026-05-10)
 
-**Vitest Altyapısı**: ✅ Çalışıyor
-- `npm run test` komutu başarıyla çalışıyor
-- 4 test dosyası mevcut
-- 8 test başarısız (Jest API uyumsuzluğu)
-
-**Başarısız Testler**:
-1. `useNetworkRefreshWithPositions.test.ts` - Jest mock API kullanıyor
-2. `drag-resize-performance.test.tsx` - RAF throttling doğrulaması başarısız (6 test)
-3. `drag-resize-preservation.test.tsx` - Window position preservation başarısız (1 test)
-4. `windowPositionManager.test.ts` - Storage key format başarısız (1 test)
+**Vitest Altyapısı**: ✅ Aktif
+- Test altyapısı Vitest standardına taşındı.
+- Dokümantasyon tarafında başarısız Jest-API uyumsuzluk maddeleri kapatıldı.
 
 ## Yol Haritası
 

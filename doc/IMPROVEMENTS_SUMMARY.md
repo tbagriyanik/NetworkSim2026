@@ -74,7 +74,7 @@
 
 **Dosya**: `src/components/ui/ConfirmationDialog.tsx`
 
-### 8. **IPv6 Yönlendirme Desteği (v1.6.1)**
+### 8. **IPv6 Yönlendirme Desteği (v1.6.2)**
 - ✅ RIPng ve OSPFv3 protokol desteği
 - ✅ IPv6 Statik yönlendirme (prefix/length)
 - ✅ Otomatik IPv6 kısa yazım (::) genişletme
