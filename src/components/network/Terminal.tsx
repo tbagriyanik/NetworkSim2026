@@ -9,7 +9,7 @@ import { checkConnectivity, getWirelessSignalStrength, getDeviceWifiConfig } fro
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Copy, Save, Trash2, Download, Settings, Wifi } from 'lucide-react';
+import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Copy, Save, Trash2, Download, Settings, Wifi, Type } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from "@/hooks/use-toast";
 import { commandHelp } from '@/lib/network/executor';
@@ -79,6 +79,7 @@ interface TerminalProps {
   isPoweredOff?: boolean;
   onTogglePower?: (deviceId: string) => void;
   onClose?: () => void;
+  onQuickSettings?: () => void;
   t: Translations;
   theme: string;
   language: string;
@@ -109,6 +110,7 @@ export function Terminal({
   isPoweredOff = false,
   onTogglePower,
   onClose,
+  onQuickSettings,
   t,
   theme,
   language,
@@ -1149,10 +1151,10 @@ export function Terminal({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button variant="ghost" size="icon" onClick={() => setShowSettings(!showSettings)} className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", showSettings && "bg-accent", isDark && "text-slate-300 hover:text-slate-100")}>
-            <Settings className="w-4 h-4" aria-hidden="true" />
+            <Type className="w-4 h-4" aria-hidden="true" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>{t.settings}</TooltipContent>
+        <TooltipContent>Yazıtipi</TooltipContent>
       </Tooltip>
       <div className={cn("w-px h-4 mx-1", isDark ? "bg-slate-600" : "bg-border")} />
       <Tooltip>
@@ -1166,6 +1168,26 @@ export function Terminal({
         </TooltipTrigger>
         <TooltipContent>{t.power}</TooltipContent>
       </Tooltip>
+      {isMobile && onQuickSettings && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" onClick={onQuickSettings} className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", isDark && "text-slate-300 hover:text-slate-100")}>
+              <Settings className="w-4 h-4" aria-hidden="true" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t.quickSettingsAndTasks}</TooltipContent>
+        </Tooltip>
+      )}
+      {isMobile && device?.type === 'firewall' && onClose && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-lg hover:bg-red-500 hover:text-white dark:hover:bg-red-600">
+              <X className="w-4 h-4" aria-hidden="true" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t.close || 'Close'}</TooltipContent>
+        </Tooltip>
+      )}
     </div>
   );
 

@@ -133,7 +133,7 @@ export function FirewallPanel({
               >
                 <TerminalIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">{t.language === 'tr' ? 'Konsol' : 'Console'}</span>
-                <span className="sm:hidden">{t.language === 'tr' ? 'K' : 'C'}</span>
+                <span className="sm:hidden">{t.language === 'tr' ? 'CLI' : 'CLI'}</span>
               </TabsTrigger>
               <TabsTrigger
                 value="settings"
@@ -141,7 +141,7 @@ export function FirewallPanel({
               >
                 <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">{t.language === 'tr' ? 'Hızlı Ayarlar' : 'Quick Settings'}</span>
-                <span className="sm:hidden">{t.language === 'tr' ? 'A' : 'S'}</span>
+                <span className="sm:hidden">{t.language === 'tr' ? 'Ayarlar' : 'Settings'}</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -163,6 +163,7 @@ export function FirewallPanel({
               isPoweredOff={isDevicePoweredOff}
               onTogglePower={onTogglePower}
               onClose={onClose}
+              onQuickSettings={() => onTabChange?.('settings')}
               t={t}
               theme={theme}
               language={language}

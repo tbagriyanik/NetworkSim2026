@@ -330,7 +330,7 @@ function RefreshDeviceListToast({
               ] as Array<[string, string, boolean]>).map(([label, value, copyable]) => (
                 <tr key={label} className="border-t first:border-t-0 border-slate-200 dark:border-slate-700">
                   <td className="w-24 bg-slate-100 px-2 py-1 font-semibold dark:bg-slate-800">{label}</td>
-                      <TooltipWrapper title={copyable ? t.copy : undefined}>
+                  <TooltipWrapper title={copyable ? t.copy : undefined}>
                     <td
                       className={`px-2 py-1 font-mono ${copyable ? 'cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 rounded' : ''}`}
                       onClick={copyable && value !== '-' ? () => navigator.clipboard.writeText(value) : undefined}
@@ -691,10 +691,10 @@ export default function Home() {
       nextDevices = nextDevices.map((device) =>
         device.id === deviceId
           ? {
-              ...device,
-              ...updates,
-              iot: updates.iot ? { ...device.iot, ...updates.iot } : device.iot,
-            }
+            ...device,
+            ...updates,
+            iot: updates.iot ? { ...device.iot, ...updates.iot } : device.iot,
+          }
           : device
       );
     });
@@ -717,10 +717,10 @@ export default function Home() {
       prev.map((d) =>
         d.id === deviceId
           ? {
-              ...d,
-              ...config,
-              iot: config.iot ? { ...d.iot, ...config.iot } : d.iot,
-            }
+            ...d,
+            ...config,
+            iot: config.iot ? { ...d.iot, ...config.iot } : d.iot,
+          }
           : d
       )
     );
@@ -5203,11 +5203,11 @@ ${state.bannerMOTD}
                       </DialogTitle>
                     </div>
                     <div className="flex items-center gap-1">
-                      {/* Mobile: Power Button */}
+                      {/* Power Button */}
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 sm:hidden hover:bg-amber-500/20 hover:text-amber-500"
+                        className="h-7 w-7 hover:bg-amber-500/20 hover:text-amber-500"
                         onClick={() => {
                           if (activeFirewallId) {
                             console.log('Firewall power toggle:', activeFirewallId, 'Current status:', topologyDevices.find(d => d.id === activeFirewallId)?.status);
@@ -5220,11 +5220,11 @@ ${state.bannerMOTD}
                       >
                         <Power className={cn("h-3.5 w-3.5", topologyDevices.find(d => d.id === activeFirewallId)?.status === 'offline' ? 'text-red-500' : 'text-green-500')} />
                       </Button>
-                      {/* Mobile: Quick Settings Button */}
+                      {/* Quick Settings Button */}
                       <Button
                         variant="ghost"
                         size="icon"
-                        className={cn("h-7 w-7 sm:hidden", firewallActiveTab === 'settings' ? 'bg-primary/20 text-primary' : 'hover:bg-primary/20')}
+                        className={cn("h-7 w-7", firewallActiveTab === 'settings' ? 'bg-primary/20 text-primary' : 'hover:bg-primary/20')}
                         onClick={() => setFirewallActiveTab(firewallActiveTab === 'settings' ? 'console' : 'settings')}
                         title={t.quickSettings}
                       >
@@ -6036,7 +6036,7 @@ ${state.bannerMOTD}
                       <span className="text-blue-500 text-lg">🔄</span>
                       {refreshNetworkReport.title}
                     </h3>
-            <TooltipWrapper title={t.close}>
+                    <TooltipWrapper title={t.close}>
                       <button
                         onClick={() => setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null)}
                         className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"

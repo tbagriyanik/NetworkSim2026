@@ -92,10 +92,11 @@ export interface Translations {
   commandPromptTab: string;
   commandReference: string;
   commandsFound: string;
-  completeWithTab: string;
-  completedAt: string;
-  configure: string;
-  portStatus: string;
+   completeWithTab: string;
+   completedAt: string;
+   configAndMonitor: string;
+   configure: string;
+   portStatus: string;
   vlanManagement: string;
   securityAndAcl: string;
   tasksAndScore: string;
@@ -694,7 +695,7 @@ const translations: Record<Language, Translations> = {
     clearTerminalBtn: 'Temizle',
     clearTerminalConfirm: 'Terminal çıktısı temizlenecek. Devam etmek istiyor musunuz?',
     cli: 'CLI',
-    cliInterface: 'Komut satırı arayüzü (Command Line Interface)',
+    cliInterface: 'Command Line Interface',
     cliTerminal: 'CLI Terminal',
     clickIconsToRun: 'Program çalıştırmak için simgeleri tıklayınız',
     clientsLeased: 'X istemci lease aldı',
@@ -705,7 +706,7 @@ const translations: Record<Language, Translations> = {
     commandHistory: 'komut geçmişi',
     commandModes: 'Komut Modları:',
     commandPromptTab: 'Komut İstemi',
-    commandReference: 'Komutlar',
+    commandReference: 'Yardım',
     commandsFound: 'komut bulundu',
     completeWithTab: 'ile tamamla',
     completedAt: 'Tamamlandı',
@@ -749,7 +750,7 @@ const translations: Record<Language, Translations> = {
     contactSend: 'Gönder',
     contactSuccessDesc: 'Mesajınız başarıyla gönderildi. Geri bildiriminiz için teşekkürler!',
     contactSuccessTitle: 'Mesaj Gönderildi',
-    contactTitle: 'Bize Ulaşın',
+    contactTitle: 'Mesaj',
     contactType: 'Konu',
     contactValidationEmail: 'Geçerli bir e-posta adresi girin',
     contactValidationMessage: 'Lütfen mesajınızı yazın',
@@ -1029,7 +1030,7 @@ const translations: Record<Language, Translations> = {
     quickActions: 'Hızlı işlemler',
     quickCommands: 'Hızlı Komutlar',
     quickSettings: 'Hızlı Ayarlar',
-    quickSettingsAndTasks: 'Hızlı Ayarlar & Görevler',
+    quickSettingsAndTasks: 'Görevler',
     realTimeUpdate: 'Gerçek zamanlı güncelleme aktif',
     redo: 'Yinele',
     refresh: 'Yenile',
@@ -1308,7 +1309,7 @@ const translations: Record<Language, Translations> = {
     clearTerminalBtn: 'Clear',
     clearTerminalConfirm: 'Terminal output will be cleared. Do you want to continue?',
     cli: 'CLI',
-    cliInterface: 'Command line interface',
+    cliInterface: 'Command Line Interface',
     cliTerminal: 'CLI Terminal',
     clickIconsToRun: 'Click icons to run programs',
     clientsLeased: 'X clients leased',
@@ -1319,7 +1320,7 @@ const translations: Record<Language, Translations> = {
     commandHistory: 'command history',
     commandModes: 'Command Modes:',
     commandPromptTab: 'Command Prompt',
-    commandReference: 'Commands',
+    commandReference: 'Help',
     commandsFound: 'commands found',
     completeWithTab: 'to complete',
     completedAt: 'Completed at',
@@ -1643,7 +1644,7 @@ const translations: Record<Language, Translations> = {
     quickActions: 'Quick actions',
     quickCommands: 'Quick Commands',
     quickSettings: 'Quick Settings',
-    quickSettingsAndTasks: 'Quick Settings & Tasks',
+    quickSettingsAndTasks: 'Tasks',
     realTimeUpdate: 'Real-time update active',
     redo: 'Redo',
     refresh: 'Refresh',

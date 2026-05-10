@@ -6,13 +6,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import {
-  Terminal as TerminalIcon,
-  Settings,
-  X,
-  ShieldCheck,
-  Network,
-  Cpu,
-  Layers
+    Terminal as TerminalIcon,
+    Settings,
+    Power,
+    Funnel,
+    X,
+    ShieldCheck,
+    Network,
+    Cpu,
+    Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
@@ -153,25 +155,23 @@ export function UnifiedDevicePanel({
                         data-modal-header
                         onPointerDown={(e) => handlePointerDown(e, 'deviceUnified')}
                     >
-                        <div className="flex items-center justify-between px-3 py-1.5 sm:px-4 sm:py-2">
-                            <Tabs value={activeTab} onValueChange={(v: any) => onTabChange(v)} className="w-auto">
-                                <TabsList className={cn("h-9 p-1", isDark ? "bg-slate-800" : "bg-slate-100")}>
-                                    <TabsTrigger value="console" className="flex items-center gap-2 px-3 h-7">
+                        <div className="flex items-center gap-2 px-2 py-1.5 sm:justify-between sm:px-4 sm:py-2">
+                            <Tabs value={activeTab} onValueChange={(v: any) => onTabChange(v)} className="min-w-0 flex-1 sm:flex-none sm:w-auto">
+                                <TabsList className={cn("h-9 p-1 w-full sm:w-auto overflow-x-auto", isDark ? "bg-slate-800" : "bg-slate-100")}>
+                                    <TabsTrigger value="console" className="flex items-center gap-1.5 px-2 sm:px-3 h-7 whitespace-nowrap text-xs sm:text-sm">
                                         <TerminalIcon className="w-3.5 h-3.5" />
-                                        <span className="hidden sm:inline">{t.cliInterface}</span>
-                                        <span className="sm:hidden">K</span>
+                                        <span>{t.cliInterface}</span>
                                     </TabsTrigger>
-                                    <TabsTrigger value="settings" className="flex items-center gap-2 px-3 h-7">
+                                    <TabsTrigger value="settings" className="flex items-center gap-1.5 px-2 sm:px-3 h-7 whitespace-nowrap text-xs sm:text-sm">
                                         <Settings className="w-3.5 h-3.5" />
-                                        <span className="hidden sm:inline">{t.quickSettingsAndTasks}</span>
-                                        <span className="sm:hidden">A</span>
+                                        <span>{t.quickSettingsAndTasks}</span>
                                     </TabsTrigger>
                                 </TabsList>
                             </Tabs>
 
-                            <div className="flex items-center gap-3 min-w-0 flex-1 justify-center px-4">
+                            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 justify-center px-1 sm:px-4">
                                 <div className={cn(
-                                    "flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-medium max-w-full truncate",
+                                    "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium max-w-full truncate",
                                     isDark ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-100 border-slate-200 text-slate-600"
                                 )}>
                                     <div className={cn("w-2 h-2 rounded-full shrink-0", isOffline ? "bg-red-500" : "bg-green-500")} />
@@ -180,14 +180,16 @@ export function UnifiedDevicePanel({
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 shrink-0">
+
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 hover:bg-red-500 hover:text-white dark:hover:bg-red-600 transition-colors"
+                                    className="h-7 w-7 hover:bg-red-500 hover:text-white dark:hover:bg-red-600 transition-colors"
+                                    title={t.language === 'tr' ? 'Kapat' : 'Close'}
                                     onClick={() => onOpenChange(false)}
                                 >
-                                    <X className="h-4 w-4" />
+                                    <X className="h-3 w-3" />
                                 </Button>
                             </div>
                         </div>
@@ -219,6 +221,7 @@ export function UnifiedDevicePanel({
                                     isPoweredOff={isOffline}
                                     onTogglePower={() => toggleDevicePower(deviceId)}
                                     onClose={() => onOpenChange(false)}
+                                    onQuickSettings={() => onTabChange('settings')}
                                     t={t}
                                     theme={theme}
                                     language={language}
@@ -334,9 +337,9 @@ export function UnifiedDevicePanel({
                                 onPointerDown={(e) => handleResizeStart(e, 'se', 'deviceUnified')}
                             >
                                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                    <path d="M11 5L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                    <path d="M11 9L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                    <path d="M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                    <path d="M11 5L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                    <path d="M11 9L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                                 </svg>
                             </div>
                         </>
