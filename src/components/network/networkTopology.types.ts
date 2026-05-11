@@ -8,9 +8,14 @@ export interface CanvasPort {
   id: string;
   label: string;
   status: CanvasPortStatus;
+  adminStatus?: 'up' | 'down';
+  operStatus?: 'up' | 'down';
+  linkStatus?: 'up' | 'down' | 'blocked' | 'err-disabled' | 'disconnected';
   shutdown?: boolean;
   vlan?: number;
   accessVlan?: number | string;
+  allowedVlans?: number[] | 'all' | string;
+  nativeVlan?: number;
   mode?: CanvasPortMode;
   name?: string;
   description?: string;

@@ -3481,11 +3481,13 @@ ${state.bannerMOTD}
     let dhcpServerNoPoolCount = 0;
     let dhcpClientWithLeaseCount = 0;
     let dhcpClientNoLeaseCount = 0;
-    let duplicateIpCount = 0;
-    let duplicateMacCount = 0;
-    let subnetMismatchCount = 0;
-    let loopDetectedCount = 0;
-    let vlanInconsistencyCount = 0;
+      let duplicateIpCount = 0;
+      let duplicateMacCount = 0;
+      let subnetMismatchCount = 0;
+      let invalidGatewayCount = 0;
+      let disconnectedLinkCount = 0;
+      let loopDetectedCount = 0;
+      let vlanInconsistencyCount = 0;
 
     if (topologyDevices && deviceStates) {
       const { sanitizedConnections, invalidCount } = validateTopologyConnections(topologyDevices, topologyConnections);
@@ -3840,7 +3842,27 @@ ${state.bannerMOTD}
 
       iotProcessedDevices.forEach((device) => {
         if ((device.type !== 'pc' && device.type !== 'iot') || !device.gateway || !isValidIpv4(device.ip) || !isValidIpv4(device.subnet)) return;
-        if (!isSameSubnetByMask(device.ip, device.gateway, device.subnet)) subnetMismatchCount++;
+        const gateway = device.gateway || '';
+        if (!isValidIpv4(gateway) || gateway === '0.0.0.0') {
+          invalidGatewayCount++;
+          return;
+        }
+        if (!isSameSubnetByMask(device.ip, gateway, device.subnet)) {
+          subnetMismatchCount++;
+          invalidGatewayCount++;
+        }
+      });
+
+      // Disconnected links: endpoints are present but link is inactive or one side admin-down/blocked.
+      sanitizedConnections.forEach((connection) => {
+        const aState = portSecurityUpdatedStates.get(connection.sourceDeviceId);
+        const bState = portSecurityUpdatedStates.get(connection.targetDeviceId);
+        const aPort = aState?.ports?.[connection.sourcePort];
+        const bPort = bState?.ports?.[connection.targetPort];
+        if (!aPort || !bPort) return;
+        const aDown = aPort.shutdown || aPort.adminStatus === 'down' || aPort.operStatus === 'down' || aPort.status === 'blocked' || aPort.status === 'err-disabled';
+        const bDown = bPort.shutdown || bPort.adminStatus === 'down' || bPort.operStatus === 'down' || bPort.status === 'blocked' || bPort.status === 'err-disabled';
+        if (connection.active === false || aDown || bDown) disconnectedLinkCount++;
       });
 
       const graph = new Map<string, string[]>();
@@ -3908,6 +3930,8 @@ ${state.bannerMOTD}
           duplicateIpCount > 0 ? `⚠ Duplicate IP: ${duplicateIpCount}` : '',
           duplicateMacCount > 0 ? `⚠ Duplicate MAC: ${duplicateMacCount}` : '',
           subnetMismatchCount > 0 ? `⚠ Subnet mismatch: ${subnetMismatchCount}` : '',
+          invalidGatewayCount > 0 ? `⚠ Invalid gateway: ${invalidGatewayCount}` : '',
+          disconnectedLinkCount > 0 ? `⚠ Disconnected link: ${disconnectedLinkCount}` : '',
           loopDetectedCount > 0 ? `⚠ Loop detected` : '',
           vlanInconsistencyCount > 0 ? `⚠ VLAN inconsistency: ${vlanInconsistencyCount}` : '',
         ].filter(Boolean);
