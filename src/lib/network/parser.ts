@@ -2303,6 +2303,21 @@ export function validateCommand(
 
   const input = parsed.rawInput.toLowerCase();
   const resolvedInput = resolveAliases(parsed.rawInput);
+
+  // Exact pattern match must win over prefix-tree ambiguity.
+  for (const [name, pattern] of Object.entries(commandPatterns)) {
+    const match = resolvedInput.match(pattern.pattern);
+    if (!match) continue;
+    if (!pattern.modes.includes(currentMode)) {
+      return {
+        valid: false,
+        reason: 'invalid-mode',
+        error: getModeError(parsed.rawInput, currentMode)
+      };
+    }
+    return { valid: true, reason: 'ok', matchedPattern: name };
+  }
+
   const treeResolution = resolveByCommandTree(resolvedInput, currentMode);
   if (treeResolution.kind === 'ambiguous') {
     const options = (treeResolution.candidates || []).join(', ');
@@ -2311,24 +2326,6 @@ export function validateCommand(
   if (treeResolution.kind === 'incomplete') {
     const options = (treeResolution.candidates || []).join(', ');
     return { valid: false, reason: 'incomplete', error: `% Incomplete command${options ? `. Expected: ${options}` : ''}` };
-  }
-
-  // Tüm pattern'leri kontrol et
-  for (const [name, pattern] of Object.entries(commandPatterns)) {
-    const match = resolvedInput.match(pattern.pattern);
-
-    if (match) {
-      // Mode kontrolü
-      if (!pattern.modes.includes(currentMode)) {
-        return {
-          valid: false,
-          reason: 'invalid-mode',
-          error: getModeError(parsed.rawInput, currentMode)
-        };
-      }
-
-      return { valid: true, reason: 'ok', matchedPattern: name };
-    }
   }
 
   // Eşleşme bulunamadı
