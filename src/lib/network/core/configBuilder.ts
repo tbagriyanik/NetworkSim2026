@@ -169,11 +169,20 @@ export function buildRunningConfig(state: SwitchState): string[] {
             }
         } else {
             // Regular (Ethernet) interface
-            if (port.speed !== 'auto') {
-                lines.push(` speed ${port.speed}`);
+            const isRoutedPort = port.mode === 'routed' || (port as any).isRoutedPort;
+            if (isRoutedPort) {
+                lines.push(' no switchport');
             }
-            if (port.duplex !== 'auto') {
-                lines.push(` duplex ${port.duplex}`);
+            if (isRoutedPort) {
+                lines.push(` duplex ${port.duplex || 'auto'}`);
+                lines.push(` speed ${port.speed || 'auto'}`);
+            } else {
+                if (port.speed !== 'auto') {
+                    lines.push(` speed ${port.speed}`);
+                }
+                if (port.duplex !== 'auto') {
+                    lines.push(` duplex ${port.duplex}`);
+                }
             }
             if ((port as any).stpCost !== undefined) {
                 lines.push(` spanning-tree cost ${(port as any).stpCost}`);
@@ -241,10 +250,10 @@ export function buildRunningConfig(state: SwitchState): string[] {
             if (port.ipv6Ospf?.enabled) {
                 lines.push(` ipv6 ospf ${port.ipv6Ospf.processId} area ${port.ipv6Ospf.area}`);
             }
-            if (!port.shutdown) {
-                lines.push(' no shutdown');
-            } else {
+            if (port.shutdown) {
                 lines.push(' shutdown');
+            } else if (!isRoutedPort) {
+                lines.push(' no shutdown');
             }
         }
 

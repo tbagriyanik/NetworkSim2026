@@ -834,6 +834,20 @@ function cmdIpAddress(state: any, input: string, ctx: any): any {
     }
   }
 
+  // L3 switch physical ports: require either global ip routing OR routed port mode (no switchport)
+  const currentPort = state.ports?.[state.currentInterface];
+  const isPhysicalInterface = !!currentPort && (currentPort.type === 'fastethernet' || currentPort.type === 'gigabitethernet');
+  const isL3Sw = isLayer3Switch(state.switchModel);
+  const hasIpRouting = !!state.ipRouting;
+  const isRoutedPort = currentPort?.mode === 'routed' || currentPort?.isRoutedPort === true;
+
+  if (isL3Sw && isPhysicalInterface && !hasIpRouting && !isRoutedPort) {
+    return {
+      success: false,
+      error: `% Invalid input detected at '^' marker.`
+    };
+  }
+
   // Physical routed port IP assignment (Layer 3 switch or router)
   const newPorts = applyToSelectedPorts(state, (port: any) => ({
     ...port,
