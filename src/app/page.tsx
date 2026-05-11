@@ -1301,7 +1301,7 @@ export default function Home() {
   const normalizeDeviceType = useCallback((type: string): DeviceType => {
     if (type === 'switch') return 'switchL2';
     if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'iot' || type === 'router' || type === 'firewall') return type;
-    return 'pc';
+    throw new Error(`Unknown device type: ${type}`);
   }, []);
 
   const isValidIpv4 = useCallback((value?: string) => {

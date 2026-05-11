@@ -3,14 +3,19 @@ import { SwitchState, CableInfo } from '@/lib/network/types';
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from '@/components/network/networkTopology.types';
 import { TerminalOutput } from '@/components/network/Terminal';
 
+interface PCOutputLine {
+  id: string;
+  type: 'command' | 'output' | 'error' | 'success';
+  content: string;
+}
+
 export interface ProjectState {
   topologyDevices: CanvasDevice[];
   topologyConnections: CanvasConnection[];
   topologyNotes: CanvasNote[];
   deviceStates: Map<string, SwitchState>;
   deviceOutputs: Map<string, TerminalOutput[]>;
-  // pcOutputs uses any[] because PCOutputLine is defined in page.tsx and not shared
-  pcOutputs: Map<string, any[]>;
+  pcOutputs: Map<string, PCOutputLine[]>;
   pcHistories: Map<string, string[]>;
   cableInfo: CableInfo;
   activeDeviceId: string;

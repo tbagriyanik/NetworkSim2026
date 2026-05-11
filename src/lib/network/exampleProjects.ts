@@ -98,11 +98,7 @@ const ensureProjectData = (source: unknown): ProjectData => {
   const cableInfo = asRecord(partial.cableInfo);
 
   const safeNormalizeType = (deviceType: string): CanvasDevice['type'] => {
-    try {
-      return normalizeDeviceType(deviceType);
-    } catch {
-      return 'pc';
-    }
+    return normalizeDeviceType(deviceType);
   };
 
   return {

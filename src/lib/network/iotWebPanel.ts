@@ -2,6 +2,13 @@
 import { CanvasDevice } from '@/components/network/networkTopology.types';
 import { sanitizeHTML, safeJSONForHTML } from '@/lib/security/sanitizer';
 
+type IotRule = {
+  id: string;
+  condition: string;
+  action: string;
+  enabled?: boolean;
+};
+
 export const generateIotWebPanelContent = (
   iotDevices: CanvasDevice[],
   language: string,
@@ -616,7 +623,7 @@ export const generateIotDevicePageContent = (
   isActive: boolean = true,
   isPoweredOff: boolean = false,
   kind: string = 'sensor',
-  rules: any[] = [],
+  rules: IotRule[] = [],
   sensorType: string = 'temperature',
   iotDevices: CanvasDevice[] = [],
   dataFlowDirection: 'input' | 'output' | 'input/output' = 'input',

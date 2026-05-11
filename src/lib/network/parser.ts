@@ -1327,7 +1327,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 2
   },
   'show ip interface brief': {
-    pattern: /^show\s+ip\s+interfaces?\s+(brief|br)$/i,
+    pattern: /^show\s+ip\s+(?:int(?:erfaces?)?)\s+(brief|br)$/i,
     modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
     minArgs: 1,
     maxArgs: 1
@@ -2366,12 +2366,12 @@ Bu komut bu modda kullanılamaz. Mevcut mod: ${modeNames[currentMode]}`;
 
 // Geçersiz komut hatası
 function getInvalidCommandError(input: string, state?: any): string {
-  // Check if domain lookup is disabled
-  if (state?.domainLookup === false) {
-    return `% Unknown command`;
-  }
-  return `Translating "${input}"...domain server (255.255.255.255)
-% Unknown command or computer name, or unable to find computer address`;
+  const firstNonSpace = input.search(/\S|$/);
+  const cleanedInput = input.replace(/\s+$/g, '');
+  const indicator = ' '.repeat(Math.max(0, firstNonSpace)) + '^';
+  return `${cleanedInput}
+${indicator}
+% Invalid input detected at '^' marker.`;
 }
 
 // Komut için gereken argümanları al

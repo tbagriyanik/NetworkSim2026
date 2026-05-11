@@ -853,7 +853,17 @@ function cmdShowIpInterfaceBrief(
   input: string,
   ctx: any
 ): any {
-  let output = '\nInterface              IP-Address      OK? Method Status                Protocol                 Description\n';
+  let output = '\nInterface              IP-Address      OK? Method Status                Protocol \n';
+  const modelName = String(state?.version?.modelName || '');
+  const isRouter = modelName.includes('ISR') || modelName.includes('4451') || modelName.includes('1900') || state?.deviceType === 'router';
+  const toDisplayName = (portName: string) => {
+    if (!isRouter) return portName;
+    const p = String(portName);
+    if (/^gi\d+\/\d+$/i.test(p)) return `GigabitEthernet${p.slice(2)}`;
+    if (/^fa\d+\/\d+$/i.test(p)) return `FastEthernet${p.slice(2)}`;
+    if (/^vlan\d+$/i.test(p)) return `Vlan${p.slice(4)}`;
+    return p;
+  };
 
   // Build channel groups map
   const channelGroups: Record<number, string[]> = {};
@@ -870,7 +880,7 @@ function cmdShowIpInterfaceBrief(
     const poName = `Po${group}`;
     const status = 'up';
     const protocol = ports.every(p => !state.ports[p]?.shutdown) ? 'up' : 'down';
-    output += `${poName.padEnd(22)} unassigned      YES manual ${status.padEnd(23)} ${protocol.padEnd(23)} Bundled ${ports.join(',')}\n`;
+    output += `${poName.padEnd(22)} unassigned      YES manual ${status.padEnd(23)} ${protocol.padEnd(8)} \n`;
   });
 
   // Show regular interfaces
@@ -881,12 +891,12 @@ function cmdShowIpInterfaceBrief(
 
     const status = port.shutdown ? 'administratively down' : 'up';
     const protocol = port.shutdown ? 'down' : 'up';
-    const description = port.description || port.name || '';
+    const displayPortName = toDisplayName(portName);
 
     if (port.ipAddress && port.subnetMask) {
-      output += `${portName.padEnd(22)} ${port.ipAddress.padEnd(15)} YES manual ${status.padEnd(23)} ${protocol.padEnd(23)} ${description.padEnd(25)}\n`;
+      output += `${displayPortName.padEnd(22)} ${port.ipAddress.padEnd(15)} YES manual ${status.padEnd(23)} ${protocol.padEnd(8)} \n`;
     } else {
-      output += `${portName.padEnd(22)} unassigned      YES unset  ${status.padEnd(23)} ${protocol.padEnd(23)} ${description.padEnd(25)}\n`;
+      output += `${displayPortName.padEnd(22)} unassigned      YES unset  ${status.padEnd(23)} ${protocol.padEnd(8)} \n`;
     }
   });
 
