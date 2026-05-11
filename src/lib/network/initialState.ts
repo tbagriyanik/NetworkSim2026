@@ -292,7 +292,7 @@ function createInitialRouterPorts(baseMac?: string): Record<string, Port> {
     name: 'Console',
     status: 'notconnect',
     vlan: 1,
-    mode: 'access',
+    mode: 'routed',
     duplex: 'auto',
     speed: 'auto',
     shutdown: false,
@@ -311,7 +311,7 @@ function createInitialRouterPorts(baseMac?: string): Record<string, Port> {
       name: i === 0 ? 'WAN' : i === 1 ? 'LAN' : '',
       status: 'notconnect',
       vlan: 1,
-      mode: 'access',
+      mode: 'routed',
       voiceVlan: 'none',
       duplex: 'auto',
       speed: 'auto',
@@ -321,7 +321,8 @@ function createInitialRouterPorts(baseMac?: string): Record<string, Port> {
       channelGroup: undefined,
       channelMode: undefined,
       channelProtocol: undefined,
-      macAddress: portMac // Per-port MAC address for router
+      macAddress: portMac, // Per-port MAC address for router
+      isRoutedPort: true
     };
   }
 
@@ -332,7 +333,7 @@ function createInitialRouterPorts(baseMac?: string): Record<string, Port> {
     name: 'WLAN',
     status: 'notconnect',
     vlan: 1,
-    mode: 'access',
+    mode: 'routed',
     duplex: 'auto',
     speed: 'auto',
     shutdown: true,
@@ -344,7 +345,8 @@ function createInitialRouterPorts(baseMac?: string): Record<string, Port> {
       channel: '2.4GHz',
       mode: 'ap'
     },
-    macAddress: wlanMac
+    macAddress: wlanMac,
+    isRoutedPort: true
   };
 
   return ports;
@@ -361,6 +363,7 @@ export function createInitialRouterState(mac?: string): SwitchState {
     macAddress,
     switchModel: 'WS-C3650-24PS' as any,
     switchLayer: 'L3',
+    deviceType: 'router',
     currentMode: 'user',
     consoleAuthenticated: false,
     ipRouting: true,

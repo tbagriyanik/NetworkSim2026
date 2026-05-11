@@ -1,6 +1,6 @@
 /**
- * Cisco L3 Switch Configuration Validation
- * Implements proper L3 switch behavior per Cisco standards
+ * L3 Switch Configuration Validation
+ * Implements proper L3 switch behavior 
  */
 
 import { isLayer3Switch, isLayer2Switch } from '../switchModels';

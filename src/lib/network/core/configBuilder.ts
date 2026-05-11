@@ -10,7 +10,7 @@ const TIMESTAMP = '2026-02-26 22:00:00';
 export function buildRunningConfig(state: SwitchState): string[] {
     const lines: string[] = [];
     const modelName = (state.version?.modelName || '').toLowerCase();
-    const isRouterLike = state.deviceType === 'router' || state.switchLayer === 'router' || modelName.includes('cisco2911') || modelName.includes('router');
+    const isRouterLike = state.deviceType === 'router' || modelName.includes('router');
 
     // Header
     lines.push('!');
@@ -84,30 +84,33 @@ export function buildRunningConfig(state: SwitchState): string[] {
         lines.push('!');
     }
 
-    lines.push(`spanning-tree mode ${state.spanningTreeMode || 'pvst'}`);
+    // Spanning Tree (only for switches, not routers)
+    if (!isRouterLike) {
+        lines.push(`spanning-tree mode ${state.spanningTreeMode || 'pvst'}`);
 
-    if (state.spanningTreePriority !== undefined) {
-        lines.push(`spanning-tree priority ${state.spanningTreePriority}`);
+        if (state.spanningTreePriority !== undefined) {
+            lines.push(`spanning-tree priority ${state.spanningTreePriority}`);
+        }
+
+        const spanningTreeVlans = state.spanningTreeVlans || {};
+        Object.keys(spanningTreeVlans)
+            .sort((a, b) => Number(a) - Number(b))
+            .forEach(vlanId => {
+                const vlanConfig = spanningTreeVlans[vlanId];
+                if (vlanConfig?.enabled === false) {
+                    lines.push(`no spanning-tree vlan ${vlanId}`);
+                    return;
+                }
+
+                if (vlanConfig?.priority !== undefined) {
+                    lines.push(`spanning-tree vlan ${vlanId} priority ${vlanConfig.priority}`);
+                } else if (vlanConfig?.enabled) {
+                    lines.push(`spanning-tree vlan ${vlanId}`);
+                }
+            });
+
+        lines.push('!');
     }
-
-    const spanningTreeVlans = state.spanningTreeVlans || {};
-    Object.keys(spanningTreeVlans)
-        .sort((a, b) => Number(a) - Number(b))
-        .forEach(vlanId => {
-            const vlanConfig = spanningTreeVlans[vlanId];
-            if (vlanConfig?.enabled === false) {
-                lines.push(`no spanning-tree vlan ${vlanId}`);
-                return;
-            }
-
-            if (vlanConfig?.priority !== undefined) {
-                lines.push(`spanning-tree vlan ${vlanId} priority ${vlanConfig.priority}`);
-            } else if (vlanConfig?.enabled) {
-                lines.push(`spanning-tree vlan ${vlanId}`);
-            }
-        });
-
-    lines.push('!');
 
     // VLANs (id 2-1001)
     Object.values(state.vlans).forEach(vlan => {

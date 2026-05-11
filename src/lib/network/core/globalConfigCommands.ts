@@ -11,7 +11,7 @@ import {
   validateIpRoutingEnabled,
   getIpAddressPurpose,
   validateL3SwitchPrerequisites
-} from './ciscoL3Validation';
+} from './L3Validation';
 
 // Global config (hostname, vlan, vtp, spanning-tree, security, ip domain-name, etc.)
 

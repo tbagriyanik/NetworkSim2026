@@ -7,7 +7,7 @@ import {
   validateNoSwitchportSupport,
   validateSviStatus,
   getIpAddressPurpose
-} from './ciscoL3Validation';
+} from './L3Validation';
 
 // Helper function to check if in interface mode (single or range)
 function isInInterfaceMode(state: any): boolean {
