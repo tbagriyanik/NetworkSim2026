@@ -131,7 +131,7 @@ function SwitchInfoPopover({ router, routerState, t, language, isDark, onClose, 
   const connectedPorts = topologyConnections?.filter(conn => conn.sourceDeviceId === router.id || conn.targetDeviceId === router.id).length || 0;
 
   return (
-    <div ref={containerRef} className={cn("hidden md:block fixed z-[10000] animate-scale-in")}
+    <div ref={containerRef} className={cn("hidden md:block fixed z-40 animate-scale-in")}
       style={{ bottom: `${position.y}px`, right: `${position.x}px` }} onMouseDown={handleDragStart}>
       <div className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[280px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}>
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDraggingUI ? 'cursor-grabbing' : 'cursor-grab'}`}>
@@ -6123,6 +6123,8 @@ ${state.bannerMOTD}
                       setShowUnifiedDeviceModal(true);
                     }}
                     clearSelectionTrigger={clearSelectionTrigger}
+                    onPacketPanelFocus={() => setFocusedOverlay('packet')}
+                    packetPanelZIndex={focusedOverlay === 'packet' ? 35 : 30}
                   />
 
                   {/* PC Info Popover - Bottom Right Mini Panel */}
@@ -6188,7 +6190,7 @@ ${state.bannerMOTD}
                   : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
                   }`}
                 style={{
-                  zIndex: focusedOverlay === 'refresh' ? 200 : 100,
+                  zIndex: focusedOverlay === 'refresh' ? 35 : 30,
                 }}
                 onMouseDown={() => setFocusedOverlay('refresh')}
               >
@@ -6543,7 +6545,7 @@ function PCInfoPopover({ pc, t, language, isDark, onClose, handleDeviceDoubleCli
   return (
     <div
       ref={containerRef}
-      className={cn("hidden md:block fixed z-[10000] animate-scale-in")}
+      className={cn("hidden md:block fixed z-40 animate-scale-in")}
       style={{
         bottom: `${position.y}px`,
         right: `${position.x}px`,
@@ -6833,7 +6835,7 @@ function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, 
   return (
     <div
       ref={containerRef}
-      className={cn("hidden md:block fixed z-[10000] animate-scale-in")}
+      className={cn("hidden md:block fixed z-40 animate-scale-in")}
       style={{
         bottom: `${position.y}px`,
         right: `${position.x}px`,
