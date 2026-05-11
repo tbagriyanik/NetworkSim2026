@@ -1,3 +1,4 @@
+import { IOS_ERRORS, iosModeError } from './iosErrors';
 import type { CommandHandler } from './commandTypes';
 import { checkConnectivity, getWirelessSignalStrength, getWirelessDistance } from '../connectivity';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
@@ -73,7 +74,7 @@ function generatePingLatencies(distance: number): { min: number; avg: number; ma
  */
 function cmdPing(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^ping\s+([0-9.]+|[\w.-]+)(?:\s+(\d+))?(?:\s+(\d+))?$/i);
@@ -175,7 +176,7 @@ function cmdPing(state: any, input: string, ctx: any): any {
 function cmdTelnet(state: any, input: string, ctx: any): any {
     // Allow telnet from both user and privileged modes
     if (state.currentMode !== 'user' && state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^telnet\s+([0-9.]+|[\w.-]+)(?:\s+(\d+))?$/i);
@@ -238,7 +239,7 @@ function cmdTelnet(state: any, input: string, ctx: any): any {
 function cmdSsh(state: any, input: string, ctx: any): any {
     // Allow ssh from both user and privileged modes
     if (state.currentMode !== 'user' && state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^ssh\s+(-l\s+\S+\s+)?([0-9.]+|[\w.-]+)$/i);
@@ -328,7 +329,7 @@ function cmdSsh(state: any, input: string, ctx: any): any {
  */
 function cmdWriteMemory(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     return {
@@ -343,7 +344,7 @@ function cmdWriteMemory(state: any, input: string, ctx: any): any {
  */
 function cmdCopyRunningStartup(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     return {
@@ -358,7 +359,7 @@ function cmdCopyRunningStartup(state: any, input: string, ctx: any): any {
  */
 function cmdCopyRunningFlash(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^copy\s+running-config\s+flash:(\S+)?$/i);
@@ -382,7 +383,7 @@ function cmdCopyRunningFlash(state: any, input: string, ctx: any): any {
  */
 function cmdCopyFlashStartup(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^copy\s+flash:(\S+)?\s+startup-config$/i);
@@ -422,7 +423,7 @@ function cmdCopyFlashStartup(state: any, input: string, ctx: any): any {
  */
 function cmdEraseStartupConfig(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     return {
@@ -440,7 +441,7 @@ function cmdEraseStartupConfig(state: any, input: string, ctx: any): any {
  */
 function cmdEraseNvram(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     return {
@@ -458,7 +459,7 @@ function cmdEraseNvram(state: any, input: string, ctx: any): any {
  */
 function cmdReload(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
     // Immediately perform reload without confirmation
     return {
@@ -473,7 +474,7 @@ function cmdReload(state: any, input: string, ctx: any): any {
  */
 function cmdIpRoute(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^ip\s+route\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+|\S+)(?:\s+(\d+))?$/i);
@@ -505,7 +506,7 @@ function cmdIpRoute(state: any, input: string, ctx: any): any {
  */
 function cmdNoIpRoute(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^no\s+ip\s+route\s+([0-9.]+)\s+([0-9.]+)(?:\s+([0-9.]+|\S+))?$/i);
@@ -539,7 +540,7 @@ function cmdNoIpRoute(state: any, input: string, ctx: any): any {
  */
 function cmdDebug(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^debug\s+(.+)$/i);
@@ -563,7 +564,7 @@ function cmdDebug(state: any, input: string, ctx: any): any {
  */
 function cmdUndebugAll(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     return {
@@ -579,7 +580,7 @@ function cmdUndebugAll(state: any, input: string, ctx: any): any {
  */
 function cmdTraceroute(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^traceroute\s+([0-9.]+|[\w.-]+)$/i);
@@ -672,7 +673,7 @@ function cmdTraceroute(state: any, input: string, ctx: any): any {
  */
 function cmdTracert(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^tracert\s+([0-9.]+|[\w.-]+)$/i);
@@ -990,7 +991,7 @@ function cmdClearInterface(state: any, input: string, ctx: any): any {
  */
 function cmdDeleteVlanDat(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     // Check if this is a confirmation (skipConfirm is passed from useDeviceManager)
@@ -1027,4 +1028,5 @@ function cmdDeleteVlanDat(state: any, input: string, ctx: any): any {
         deleteVlanDat: true
     };
 }
+
 

@@ -1,3 +1,4 @@
+import { IOS_ERRORS, iosModeError } from './iosErrors';
 import type { CommandHandler } from './commandTypes';
 
 // Line (console/vty) komutları (line console, password, login, transport input, vs.)
@@ -37,7 +38,7 @@ export const lineHandlers: Record<string, CommandHandler> = {
  */
 function cmdLineConsole(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^line\s+console\s+(\d+)$/i);
@@ -59,7 +60,7 @@ function cmdLineConsole(state: any, input: string, ctx: any): any {
  */
 function cmdLineVty(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^line\s+vty\s+(\d+)\s+(\d+)$/i);
@@ -81,7 +82,7 @@ function cmdLineVty(state: any, input: string, ctx: any): any {
  */
 function cmdPassword(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^password\s+(.+)$/i);
@@ -114,7 +115,7 @@ function cmdPassword(state: any, input: string, ctx: any): any {
  */
 function cmdLogin(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newSecurity = { ...state.security };
@@ -145,7 +146,7 @@ function cmdLogin(state: any, input: string, ctx: any): any {
  */
 function cmdNoLogin(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newSecurity = { ...state.security };
@@ -175,7 +176,7 @@ function cmdNoLogin(state: any, input: string, ctx: any): any {
  */
 function cmdTransportInput(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^transport\s+input\s+(.+)$/i);
@@ -213,7 +214,7 @@ function cmdTransportInput(state: any, input: string, ctx: any): any {
  */
 function cmdLoggingSynchronous(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newSecurity = { ...state.security };
@@ -236,7 +237,7 @@ function cmdLoggingSynchronous(state: any, input: string, ctx: any): any {
  */
 function cmdExecTimeout(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^exec-timeout\s+(\d+)(?:\s+(\d+))?$/i);
@@ -272,7 +273,7 @@ function cmdExecTimeout(state: any, input: string, ctx: any): any {
  */
 function cmdNoPassword(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newSecurity = { ...state.security };
@@ -300,7 +301,7 @@ function cmdNoPassword(state: any, input: string, ctx: any): any {
  */
 function cmdNoTransportInput(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newSecurity = { ...state.security };
@@ -323,7 +324,7 @@ function cmdNoTransportInput(state: any, input: string, ctx: any): any {
  */
 function cmdNoLoggingSynchronous(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newSecurity = { ...state.security };
@@ -346,7 +347,7 @@ function cmdNoLoggingSynchronous(state: any, input: string, ctx: any): any {
  */
 function cmdNoExecTimeout(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newSecurity = { ...state.security };
@@ -374,7 +375,7 @@ function cmdNoExecTimeout(state: any, input: string, ctx: any): any {
  */
 function cmdHistory(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^history\s+size\s+(\d+)$/i);
@@ -408,7 +409,7 @@ function cmdHistory(state: any, input: string, ctx: any): any {
  */
 function cmdNoHistory(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newSecurity = { ...state.security };
@@ -436,7 +437,7 @@ function cmdNoHistory(state: any, input: string, ctx: any): any {
  */
 function cmdExec(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newSecurity = { ...state.security };
@@ -464,7 +465,7 @@ function cmdExec(state: any, input: string, ctx: any): any {
  */
 function cmdNoExec(state: any, input: string, cmd: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newSecurity = { ...state.security };
@@ -492,7 +493,7 @@ function cmdNoExec(state: any, input: string, cmd: any): any {
  */
 function cmdAutocommand(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^autocommand\s+(.+)$/i);
@@ -520,7 +521,7 @@ function cmdAutocommand(state: any, input: string, ctx: any): any {
  */
 function cmdNoAutocommand(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newSecurity = { ...state.security };
@@ -566,7 +567,7 @@ function cmdLine(state: any, input: string, ctx: any): any {
  */
 function cmdPrivilegeLevel(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'line' || !state.currentLine) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^privilege\s+level\s+(\d+)$/i);
@@ -593,3 +594,4 @@ function cmdPrivilegeLevel(state: any, input: string, ctx: any): any {
     newState: { security: newSecurity }
   };
 }
+

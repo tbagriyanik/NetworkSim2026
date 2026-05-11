@@ -1,4 +1,5 @@
 'use client';
+import { IOS_ERRORS, iosModeError } from './iosErrors';
 
 import type { CommandHandler } from './commandTypes';
 import { buildRunningConfig } from './configBuilder';
@@ -7,7 +8,7 @@ import { buildRunningConfig } from './configBuilder';
 
 export function cmdDhcpNetwork(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'dhcp-config') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
     const match = input.match(/^network\s+(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)$/i);
     if (!match) {
@@ -47,7 +48,7 @@ export function cmdDhcpNetwork(state: any, input: string, ctx: any): any {
 
 function cmdDhcpDefaultRouter(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'dhcp-config') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
     const match = input.match(/^default-router\s+(.+)$/i);
     if (!match) return { success: false, error: '% Invalid default-router command' };
@@ -73,7 +74,7 @@ function cmdDhcpDefaultRouter(state: any, input: string, ctx: any): any {
 
 function cmdDhcpDnsServer(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'dhcp-config') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
     const match = input.match(/^dns-server\s+(.+)$/i);
     if (!match) return { success: false, error: '% Invalid dns-server command' };
@@ -99,7 +100,7 @@ function cmdDhcpDnsServer(state: any, input: string, ctx: any): any {
 
 function cmdDhcpLease(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'dhcp-config') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
     const match = input.match(/^lease\s+(.+)$/i);
     if (!match) return { success: false, error: '% Invalid lease command' };
@@ -116,7 +117,7 @@ function cmdDhcpLease(state: any, input: string, ctx: any): any {
 
 function cmdDhcpDomainName(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'dhcp-config') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
     const match = input.match(/^domain-name\s+(\S+)$/i);
     if (!match) return { success: false, error: '% Invalid domain-name command' };
@@ -138,3 +139,4 @@ export const dhcpConfigHandlers: Record<string, CommandHandler> = {
     'lease': cmdDhcpLease,
     'domain-name': cmdDhcpDomainName,
 };
+

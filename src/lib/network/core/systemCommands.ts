@@ -1,3 +1,4 @@
+import { IOS_ERRORS, iosModeError } from './iosErrors';
 import type { CommandHandler } from './commandTypes';
 import { showHandlers } from './showCommands';
 import { privilegedHandlers } from './privilegedCommands';
@@ -79,7 +80,7 @@ function cmdDisable(
   ctx: any
 ): any {
   if (state.currentMode !== 'privileged') {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   return {
@@ -99,7 +100,7 @@ function cmdConfigureTerminal(
   ctx: any
 ): any {
   if (state.currentMode !== 'privileged') {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   return {
@@ -348,5 +349,6 @@ function cmdDo(
   // Unknown command
   return { success: false, error: `% Unknown command: ${subCommand}` };
 }
+
 
 

@@ -1,3 +1,4 @@
+import { IOS_ERRORS, iosModeError } from './iosErrors';
 import type { CommandHandler } from './commandTypes';
 import { normalizePortId } from '../initialState';
 import { canAssignIPToPhysicalPort, isLayer3Switch } from '../switchModels';
@@ -142,7 +143,7 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
  */
 function cmdInterface(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^interface\s+(.+)$/i);
@@ -262,7 +263,7 @@ function cmdInterface(state: any, input: string, ctx: any): any {
  */
 function cmdShutdown(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   // VLAN interface'i için shutdown
@@ -300,7 +301,7 @@ function cmdShutdown(state: any, input: string, ctx: any): any {
  */
 function cmdNoShutdown(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   // VLAN interface'i için no shutdown
@@ -338,7 +339,7 @@ function cmdNoShutdown(state: any, input: string, ctx: any): any {
  */
 function cmdSpeed(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^speed\s+(10|100|1000|10000|auto)$/i);
@@ -363,7 +364,7 @@ function cmdSpeed(state: any, input: string, ctx: any): any {
  */
 function cmdDuplex(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^duplex\s+(half|full|auto)$/i);
@@ -384,7 +385,7 @@ function cmdDuplex(state: any, input: string, ctx: any): any {
  */
 function cmdDescription(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^description\s+(.+)$/i);
@@ -405,7 +406,7 @@ function cmdDescription(state: any, input: string, ctx: any): any {
  */
 function cmdNoSwitchport(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   // Validate support using comprehensive checker
@@ -462,7 +463,7 @@ function cmdNoSwitchport(state: any, input: string, ctx: any): any {
  */
 function cmdSwitchportMode(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   // Routers do not support switchport mode commands on interfaces
@@ -513,7 +514,7 @@ function cmdSwitchportModeTrunk(state: any, input: string, ctx: any): any {
  */
 function cmdSwitchportAccessVlan(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^switchport\s+access\s+vlan\s+(\d+)$/i);
@@ -591,7 +592,7 @@ function cmdSwitchportAccessVlan(state: any, input: string, ctx: any): any {
  */
 function cmdSwitchportTrunkNativeVlan(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^switchport\s+trunk\s+native\s+vlan\s+(\d+)$/i);
@@ -612,7 +613,7 @@ function cmdSwitchportTrunkNativeVlan(state: any, input: string, ctx: any): any 
  */
 function cmdSwitchportTrunkAllowedVlan(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^switchport\s+trunk\s+allowed\s+vlan\s+(.+)$/i);
@@ -633,7 +634,7 @@ function cmdSwitchportTrunkAllowedVlan(state: any, input: string, ctx: any): any
  */
 function cmdSwitchportPortSecurity(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newPorts = { ...state.ports };
@@ -653,7 +654,7 @@ function cmdSwitchportPortSecurity(state: any, input: string, ctx: any): any {
  */
 function cmdSwitchportPortSecurityMaximum(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^switchport\s+port-security\s+maximum\s+(\d+)$/i);
@@ -678,7 +679,7 @@ function cmdSwitchportPortSecurityMaximum(state: any, input: string, ctx: any): 
  */
 function cmdSwitchportPortSecurityViolation(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^switchport\s+port-security\s+violation\s+(protect|restrict|shutdown)$/i);
@@ -703,7 +704,7 @@ function cmdSwitchportPortSecurityViolation(state: any, input: string, ctx: any)
  */
 function cmdSwitchportPortSecuritySticky(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newPorts = { ...state.ports };
@@ -723,7 +724,7 @@ function cmdSwitchportPortSecuritySticky(state: any, input: string, ctx: any): a
  */
 function cmdSpanningTreePortfast(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newPorts = { ...state.ports };
@@ -743,7 +744,7 @@ function cmdSpanningTreePortfast(state: any, input: string, ctx: any): any {
  */
 function cmdSpanningTreeBpduguard(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const newPorts = { ...state.ports };
@@ -1510,7 +1511,7 @@ function cmdNoSpanningTree(state: any, input: string, ctx: any): any {
  */
 function cmdDebug(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'privileged') {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^debug\s+(.+)$/i);
@@ -1526,7 +1527,7 @@ function cmdDebug(state: any, input: string, ctx: any): any {
  */
 function cmdNoDebug(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'privileged' && state.currentMode !== 'config') {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^no\s+debug(?:\s+(.+))?$/i);
@@ -1547,7 +1548,7 @@ function cmdNoDebug(state: any, input: string, ctx: any): any {
  */
 function cmdMonitorSession(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^monitor\s+session\s+(\d+)\s+(source|destination)\s+(.+)$/i);
@@ -1563,7 +1564,7 @@ function cmdMonitorSession(state: any, input: string, ctx: any): any {
  */
 function cmdNoMonitorSession(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^no\s+monitor\s+session\s+(\d+)$/i);
@@ -1579,7 +1580,7 @@ function cmdNoMonitorSession(state: any, input: string, ctx: any): any {
  */
 function cmdAccessList(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^access-list\s+(\d+)\s+(permit|deny)\s+(.+)$/i);
@@ -1588,7 +1589,18 @@ function cmdAccessList(state: any, input: string, ctx: any): any {
   }
 
   const aclId = match[1];
-  const rule = `${match[2]} ${match[3]}`;
+  const ruleBody = match[3].trim();
+  if (/\*/.test(ruleBody)) {
+    return { success: false, error: "% Invalid input detected at '^' marker." };
+  }
+  const protocolMatch = ruleBody.match(/^(ip|tcp|udp|icmp)\b/i);
+  if (protocolMatch) {
+    const protocol = protocolMatch[1].toLowerCase();
+    if (protocol === 'icmp' && /\beq\s+\d+\b/i.test(ruleBody)) {
+      return { success: false, error: "% Invalid input detected at '^' marker." };
+    }
+  }
+  const rule = `${match[2]} ${ruleBody}`;
   const accessLists = { ...(state.accessLists || {}) };
   accessLists[aclId] = [...(accessLists[aclId] || []), rule];
 
@@ -1604,7 +1616,7 @@ function cmdAccessList(state: any, input: string, ctx: any): any {
  */
 function cmdNoAccessList(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^no\s+access-list\s+(\d+)$/i);
@@ -1628,7 +1640,7 @@ function cmdNoAccessList(state: any, input: string, ctx: any): any {
  */
 function cmdIpAccessGroup(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^ip\s+access-group\s+(\S+)\s+(in|out)$/i);
@@ -1654,7 +1666,7 @@ function cmdIpAccessGroup(state: any, input: string, ctx: any): any {
  */
 function cmdNoIpAccessGroup(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^no\s+ip\s+access-group\s+(\S+)\s+(in|out)$/i);
@@ -1679,7 +1691,7 @@ function cmdNoIpAccessGroup(state: any, input: string, ctx: any): any {
  */
 function cmdChannelGroup(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state)) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^channel-group\s+(\d+)\s+mode\s+(active|passive|on|desirable|auto)$/i);
@@ -1708,7 +1720,7 @@ function cmdChannelGroup(state: any, input: string, ctx: any): any {
  */
 function cmdIpHelperAddress(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state)) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^ip\s+helper-address\s+(\d+\.\d+\.\d+\.\d+)$/i);
@@ -1733,7 +1745,7 @@ function cmdIpHelperAddress(state: any, input: string, ctx: any): any {
  */
 function cmdNoIpHelperAddress(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state)) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^no\s+ip\s+helper-address(?:\s+(\d+\.\d+\.\d+\.\d+))?$/i);
@@ -1755,7 +1767,7 @@ function cmdNoIpHelperAddress(state: any, input: string, ctx: any): any {
  */
 function cmdSwitchportNonegotiate(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state)) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const updatePort = (port: any) => ({ ...port, nonegotiate: true });
@@ -1776,7 +1788,7 @@ function cmdSwitchportNonegotiate(state: any, input: string, ctx: any): any {
  */
 function cmdSwitchportVoiceVlan(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state)) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^switchport\s+voice\s+vlan\s+(\d+)$/i);
@@ -1803,7 +1815,7 @@ function cmdSwitchportVoiceVlan(state: any, input: string, ctx: any): any {
  */
 function cmdCdpEnable(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state)) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const updatePort = (port: any) => ({ ...port, cdpEnabled: true });
@@ -1824,7 +1836,7 @@ function cmdCdpEnable(state: any, input: string, ctx: any): any {
  */
 function cmdSpanningTreeBpduguardDisable(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state)) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const updatePort = (port: any) => ({ ...port, bpduguard: false });
@@ -1845,7 +1857,7 @@ function cmdSpanningTreeBpduguardDisable(state: any, input: string, ctx: any): a
  */
 function cmdSpanningTreeCost(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state)) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^spanning-tree\s+cost\s+(\d+)$/i);
@@ -1999,7 +2011,7 @@ function cmdNoIpv6Ospf(state: any, input: string, ctx: any): any {
  */
 function cmdSpanningTreePriority(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state)) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^spanning-tree\s+priority\s+(\d+)$/i);
@@ -2031,7 +2043,7 @@ function cmdSpanningTreePriority(state: any, input: string, ctx: any): any {
  * Switchport Trunk Encapsulation
  */
 function cmdSwitchportTrunkEncapsulation(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^switchport\s+trunk\s+encapsulation\s+(dot1q|isl|negotiate)$/i);
   if (!match) return { success: false, error: '% Invalid encapsulation command' };
   const updatePort = (port: any) => ({ ...port, trunkEncapsulation: match[1].toLowerCase() });
@@ -2046,7 +2058,7 @@ function cmdSwitchportTrunkEncapsulation(state: any, input: string, ctx: any): a
  * Encapsulation dot1Q (subinterface)
  */
 function cmdEncapsulationDot1q(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^encapsulation\s+dot1[qQ]\s+(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid encapsulation command' };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
@@ -2059,7 +2071,7 @@ function cmdEncapsulationDot1q(state: any, input: string, ctx: any): any {
  * Switchport Protected
  */
 function cmdSwitchportProtected(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const updatePort = (port: any) => ({ ...port, protected: true });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
@@ -2072,7 +2084,7 @@ function cmdSwitchportProtected(state: any, input: string, ctx: any): any {
  * Switchport Block (unicast/multicast)
  */
 function cmdSwitchportBlock(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^switchport\s+block\s+(unicast|multicast)$/i);
   if (!match) return { success: false, error: '% Invalid switchport block command' };
   const updatePort = (port: any) => ({ ...port, [`block${match[1]}`]: true });
@@ -2087,7 +2099,7 @@ function cmdSwitchportBlock(state: any, input: string, ctx: any): any {
  * Switchport Port-Security MAC-Address (static)
  */
 function cmdSwitchportPortSecurityMacAddress(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^switchport\s+port-security\s+mac-address\s+([0-9a-fA-F.:-]+)$/i);
   if (!match) return { success: false, error: '% Invalid mac-address command' };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
@@ -2103,7 +2115,7 @@ function cmdSwitchportPortSecurityMacAddress(state: any, input: string, ctx: any
  * Storm-Control
  */
 function cmdStormControl(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^storm-control\s+(broadcast|multicast|unicast)\s+level\s+([\d.]+)(?:\s+([\d.]+))?$/i);
   if (!match) return { success: false, error: '% Invalid storm-control command. Use: storm-control {broadcast|multicast|unicast} level <rising> [falling]' };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
@@ -2116,7 +2128,7 @@ function cmdStormControl(state: any, input: string, ctx: any): any {
  * Storm-Control Action
  */
 function cmdStormControlAction(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^storm-control\s+action\s+(shutdown|trap)$/i);
   if (!match) return { success: false, error: '% Invalid storm-control action command' };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
@@ -2129,7 +2141,7 @@ function cmdStormControlAction(state: any, input: string, ctx: any): any {
  * MLS QoS Trust
  */
 function cmdMlsQosTrust(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^mls\s+qos\s+trust\s+(cos|dscp|ip-precedence)$/i);
   if (!match) return { success: false, error: '% Invalid mls qos trust command' };
   const updatePort = (port: any) => ({ ...port, qosTrust: match[1] });
@@ -2144,7 +2156,7 @@ function cmdMlsQosTrust(state: any, input: string, ctx: any): any {
  * MLS QoS CoS
  */
 function cmdMlsQosCos(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^mls\s+qos\s+cos\s+(\d)$/i);
   if (!match) return { success: false, error: '% Invalid mls qos cos command' };
   const updatePort = (port: any) => ({ ...port, qosCos: parseInt(match[1]) });
@@ -2159,7 +2171,7 @@ function cmdMlsQosCos(state: any, input: string, ctx: any): any {
  * IP DHCP Snooping Trust
  */
 function cmdIpDhcpSnoopingTrust(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const updatePort = (port: any) => ({ ...port, dhcpSnoopingTrust: true });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
@@ -2172,7 +2184,7 @@ function cmdIpDhcpSnoopingTrust(state: any, input: string, ctx: any): any {
  * No IP DHCP Snooping Trust
  */
 function cmdNoIpDhcpSnoopingTrust(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const updatePort = (port: any) => ({ ...port, dhcpSnoopingTrust: false });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
@@ -2185,7 +2197,7 @@ function cmdNoIpDhcpSnoopingTrust(state: any, input: string, ctx: any): any {
  * IP ARP Inspection Trust
  */
 function cmdIpArpInspectionTrust(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const updatePort = (port: any) => ({ ...port, arpInspectionTrust: true });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
@@ -2198,7 +2210,7 @@ function cmdIpArpInspectionTrust(state: any, input: string, ctx: any): any {
  * No IP ARP Inspection Trust
  */
 function cmdNoIpArpInspectionTrust(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const updatePort = (port: any) => ({ ...port, arpInspectionTrust: false });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
@@ -2211,7 +2223,7 @@ function cmdNoIpArpInspectionTrust(state: any, input: string, ctx: any): any {
  * Bandwidth
  */
 function cmdBandwidth(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^bandwidth\s+(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid bandwidth command' };
   const updatePort = (port: any) => ({ ...port, bandwidth: parseInt(match[1]) });
@@ -2226,7 +2238,7 @@ function cmdBandwidth(state: any, input: string, ctx: any): any {
  * Delay
  */
 function cmdDelay(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^delay\s+(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid delay command' };
   const delayValue = parseInt(match[1]);
@@ -2242,7 +2254,7 @@ function cmdDelay(state: any, input: string, ctx: any): any {
  * MTU
  */
 function cmdMtu(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^mtu\s+(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid MTU command' };
   const mtuValue = parseInt(match[1]);
@@ -2261,7 +2273,7 @@ function cmdMtu(state: any, input: string, ctx: any): any {
  * Keepalive
  */
 function cmdKeepalive(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^keepalive(?:\s+(\d+))?$/i);
   const interval = match?.[1] ? parseInt(match[1]) : 10;
   const updatePort = (port: any) => ({ ...port, keepalive: interval });
@@ -2276,7 +2288,7 @@ function cmdKeepalive(state: any, input: string, ctx: any): any {
  * IP Proxy-ARP (enable)
  */
 function cmdIpProxyArp(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const updatePort = (port: any) => ({ ...port, proxyArp: true });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
@@ -2289,7 +2301,7 @@ function cmdIpProxyArp(state: any, input: string, ctx: any): any {
  * IP Verify Source
  */
 function cmdIpVerifySource(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const hasPortSecurity = input.includes('port-security');
   const updatePort = (port: any) => ({
     ...port,
@@ -2307,7 +2319,7 @@ function cmdIpVerifySource(state: any, input: string, ctx: any): any {
  * UDLD Enable / Port
  */
 function cmdUdldEnable(state: any, input: string, ctx: any): any {
-  if (!isInInterfaceMode(state)) return { success: false, error: '% Invalid command at this mode' };
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const updatePort = (port: any) => ({ ...port, udld: true });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
@@ -2321,7 +2333,7 @@ function cmdUdldEnable(state: any, input: string, ctx: any): any {
  */
 function cmdSwitchportPortSecurityAgingTime(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^switchport\s+port-security\s+aging\s+time\s+(\d+)$/i);
@@ -2350,7 +2362,7 @@ function cmdSwitchportPortSecurityAgingTime(state: any, input: string, ctx: any)
  */
 function cmdSwitchportPortSecurityAgingType(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 
   const match = input.match(/^switchport\s+port-security\s+aging\s+type\s+(absolute|inactivity)$/i);
@@ -2373,4 +2385,5 @@ function cmdSwitchportPortSecurityAgingType(state: any, input: string, ctx: any)
     newState: { ports: newPorts }
   };
 }
+
 

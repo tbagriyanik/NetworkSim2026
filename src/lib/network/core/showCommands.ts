@@ -1,3 +1,4 @@
+import { IOS_ERRORS, iosModeError } from './iosErrors';
 import type { CommandHandler } from './commandTypes';
 import { ensureDeviceStatesMap } from '../networkUtils';
 
@@ -3289,7 +3290,7 @@ function cmdShowIpSourceBinding(state: any, input: string, ctx: any): any {
  * Show parent command (incomplete)
  */
 function cmdShowParent(state: any, input: string, ctx: any): any {
-  return { success: false, error: '% Incomplete command.' };
+  return { success: false, error: IOS_ERRORS.incomplete };
 }
 
 /**
@@ -3644,3 +3645,4 @@ function cmdShowQueuingInterface(state: any, input: string, ctx: any): any {
   output += '!\n';
   return { success: true, output };
 }
+

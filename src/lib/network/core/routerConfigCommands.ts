@@ -1,4 +1,5 @@
 'use client';
+import { IOS_ERRORS, iosModeError } from './iosErrors';
 
 import type { CommandHandler } from './commandTypes';
 
@@ -96,7 +97,7 @@ export function cmdRouterNetwork(state: any, input: string, ctx: any): any {
  */
 function cmdRouterId(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'router-config') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^router-id\s+([0-9.]+)$/i);
@@ -116,7 +117,7 @@ function cmdRouterId(state: any, input: string, ctx: any): any {
  */
 function cmdPassiveInterface(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'router-config') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^passive-interface\s+(\S+)$/i);
@@ -138,7 +139,7 @@ function cmdPassiveInterface(state: any, input: string, ctx: any): any {
  */
 function cmdNeighborRemoteAs(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'router-config' || state.routingProtocol !== 'bgp') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^neighbor\s+([0-9.]+)\s+remote-as\s+(\d+)$/i);
@@ -160,7 +161,7 @@ function cmdNeighborRemoteAs(state: any, input: string, ctx: any): any {
  */
 function cmdNoAutoSummary(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'router-config') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     return {
@@ -174,7 +175,7 @@ function cmdNoAutoSummary(state: any, input: string, ctx: any): any {
  */
 function cmdDefaultInformation(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'router-config') {
-        return { success: false, error: '% Invalid command at this mode' };
+        return { success: false, error: iosModeError() };
     }
 
     const match = input.match(/^default-information\s+(originate|always)$/i);

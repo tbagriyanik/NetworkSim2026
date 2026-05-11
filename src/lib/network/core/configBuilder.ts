@@ -402,8 +402,14 @@ export function buildRunningConfig(state: SwitchState): string[] {
     if (state.switchLayer === 'FW' && state.firewallRules && state.firewallRules.length > 0) {
         state.firewallRules.forEach((rule, index) => {
             const statusPrefix = rule.enabled === false ? 'inactive ' : '';
+            const action = rule.action === 'allow' ? 'permit' : rule.action;
+            const sourceIp = rule.sourceIp === '*' ? 'any' : rule.sourceIp;
+            const targetIp = rule.targetIp === '*' ? 'any' : rule.targetIp;
+            const protocol = (rule.protocol || 'ip').toLowerCase();
+            const hasPort = (rule.port !== '*' && rule.port !== 'any' && protocol !== 'icmp' && protocol !== 'ip' && protocol !== 'any');
+            const portSuffix = hasPort ? ` eq ${rule.port}` : '';
             lines.push(
-                `access-list OUTSIDE-IN line ${index + 1} extended ${statusPrefix}${rule.action} ${rule.protocol} ${rule.sourceIp} ${rule.targetIp} eq ${rule.port}`
+                `access-list OUTSIDE-IN line ${index + 1} extended ${statusPrefix}${action} ${protocol} ${sourceIp} ${targetIp}${portSuffix}`
             );
         });
         lines.push('!');

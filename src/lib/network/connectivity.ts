@@ -1152,8 +1152,8 @@ export function checkConnectivity(
 
       // Evaluate enabled rules in order
       for (const rule of enabledRules) {
-        const sourceMatch = rule.sourceIp === '*' || rule.sourceIp === sourceIpForFirewall;
-        const targetMatch = rule.targetIp === '*' || rule.targetIp === resolvedTargetIp;
+        const sourceMatch = rule.sourceIp === '*' || rule.sourceIp === 'any' || rule.sourceIp === sourceIpForFirewall;
+        const targetMatch = rule.targetIp === '*' || rule.targetIp === 'any' || rule.targetIp === resolvedTargetIp;
 
         // Protocol matching
         const requestedProtocol = options?.protocol || 'icmp';
@@ -1161,7 +1161,7 @@ export function checkConnectivity(
 
         // Port matching
         let portMatch = true;
-        if (rule.port !== '*') {
+        if (rule.port !== '*' && rule.port !== 'any') {
           if (requestedProtocol === 'tcp' || requestedProtocol === 'udp') {
             portMatch = rule.port === (options?.port || '*');
           } else {

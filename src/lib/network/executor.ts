@@ -7,6 +7,7 @@ import { getModePrompt } from './initialState';
 import { isValidMAC, normalizeMAC } from '../utils';
 import { ensureDeviceStatesMap } from './networkUtils';
 import { encryptMd5Password, decryptType7Password } from './crypto';
+import { IOS_ERRORS, iosModeError } from './core/iosErrors';
 
 /**
  * Generate CLI prompt string based on current switch state
@@ -781,7 +782,7 @@ function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string):
   lines.push('');
 
   if (suggestions.length === 0) {
-    lines.push('% Unrecognized command');
+    lines.push(IOS_ERRORS.unknown);
   } else {
     suggestions.forEach(cmd => {
       if (cmd && !cmd.startsWith('<')) {
@@ -817,7 +818,7 @@ export function executeCommand(
   // Special reload control tokens from Terminal to avoid normal parsing
   if (input === '__RELOAD_CONFIRM__' || input === '__RELOAD_CANCEL__') {
     // No longer used - reload is immediate
-    return { success: false, error: '% Unknown command' };
+    return { success: false, error: IOS_ERRORS.unknown };
   }
 
   if (input === '__TELNET_CONNECT__') {
@@ -930,7 +931,7 @@ export function executeCommand(
   if (!commandName) {
     return {
       success: false,
-      error: '% Unknown command'
+      error: IOS_ERRORS.unknown
     };
   }
 
@@ -1514,7 +1515,7 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
 
   return {
     success: false,
-    error: '% Password error',
+    error: IOS_ERRORS.badPasswords,
     newState: {
       awaitingPassword: true,
       passwordContext: state.passwordContext
@@ -1563,8 +1564,9 @@ const commandHandlers: Record<string, CommandHandler> = {
     } else if (state.currentMode === 'dhcp-config') {
       return cmdDhcpNetwork(state, input, ctx);
     }
-    return { success: false, error: '% Invalid command at this mode' };
+    return { success: false, error: iosModeError() };
   }
 };
+
 
 
