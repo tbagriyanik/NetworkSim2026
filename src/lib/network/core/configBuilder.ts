@@ -9,6 +9,8 @@ const TIMESTAMP = '2026-02-26 22:00:00';
  */
 export function buildRunningConfig(state: SwitchState): string[] {
     const lines: string[] = [];
+    const modelName = (state.version?.modelName || '').toLowerCase();
+    const isRouterLike = state.deviceType === 'router' || state.switchLayer === 'router' || modelName.includes('cisco2911') || modelName.includes('router');
 
     // Header
     lines.push('!');
@@ -170,10 +172,11 @@ export function buildRunningConfig(state: SwitchState): string[] {
         } else {
             // Regular (Ethernet) interface
             const isRoutedPort = port.mode === 'routed' || (port as any).isRoutedPort;
+            const isRouterInterface = isRouterLike;
             if (isRoutedPort) {
                 lines.push(' no switchport');
             }
-            if (isRoutedPort) {
+            if (isRoutedPort || isRouterInterface) {
                 lines.push(` duplex ${port.duplex || 'auto'}`);
                 lines.push(` speed ${port.speed || 'auto'}`);
             } else {
@@ -196,19 +199,21 @@ export function buildRunningConfig(state: SwitchState): string[] {
             if (port.spanningTree?.bpduguard) {
                 lines.push(' spanning-tree bpduguard enable');
             }
-            if (port.mode === 'trunk') {
-                lines.push(' switchport mode trunk');
-            } else if (port.mode === 'dynamic-auto') {
-                lines.push(' switchport mode dynamic auto');
-            } else if (port.mode === 'dynamic-desirable') {
-                lines.push(' switchport mode dynamic desirable');
-            } else if (port.mode === 'dot1q-tunnel') {
-                lines.push(' switchport mode dot1q-tunnel');
-            } else if (port.mode === 'access') {
-                lines.push(' switchport mode access');
-                const vlanId = Number((port as any).accessVlan || port.vlan || 1);
-                if (vlanId !== 1) {
-                    lines.push(` switchport access vlan ${vlanId}`);
+            if (!isRouterLike) {
+                if (port.mode === 'trunk') {
+                    lines.push(' switchport mode trunk');
+                } else if (port.mode === 'dynamic-auto') {
+                    lines.push(' switchport mode dynamic auto');
+                } else if (port.mode === 'dynamic-desirable') {
+                    lines.push(' switchport mode dynamic desirable');
+                } else if (port.mode === 'dot1q-tunnel') {
+                    lines.push(' switchport mode dot1q-tunnel');
+                } else if (port.mode === 'access') {
+                    lines.push(' switchport mode access');
+                    const vlanId = Number((port as any).accessVlan || port.vlan || 1);
+                    if (vlanId !== 1) {
+                        lines.push(` switchport access vlan ${vlanId}`);
+                    }
                 }
             }
             // Port Security
@@ -240,6 +245,8 @@ export function buildRunningConfig(state: SwitchState): string[] {
 
             if (port.ipAddress && port.subnetMask) {
                 lines.push(` ip address ${port.ipAddress} ${port.subnetMask}`);
+            } else if (isRouterInterface) {
+                lines.push(' no ip address');
             }
             if (port.ipv6Address && port.ipv6Prefix) {
                 lines.push(` ipv6 address ${port.ipv6Address}/${port.ipv6Prefix}`);

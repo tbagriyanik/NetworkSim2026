@@ -465,6 +465,11 @@ function cmdSwitchportMode(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
+  // Routers do not support switchport mode commands on interfaces
+  if (state.deviceType === 'router') {
+    return { success: false, error: "% Invalid input detected at '^' marker." };
+  }
+
   const match = input.match(/^switchport\s+mode\s+(access|trunk|dynamic\s+auto|dynamic\s+desirable|dot1q-tunnel)$/i);
   if (!match) {
     return { success: false, error: '% Invalid switchport mode' };
