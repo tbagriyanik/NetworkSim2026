@@ -2452,8 +2452,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'static-l3-routing-note',
       text: isTr
-        ? 'Amaç: L3 switch\'ler ve router arasında static routing yapılandırarak farklı ağlar arası iletişim sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (ML1, ML2) ekle\n   - 1 adet Router (R3) ekle\n   - 2 adet L2 Switch (Switch0, Switch1) ekle\n   - 4 adet PC ekle\n   - Bağlantıları yapıştır (topolojiye göre)\n\n2) ML1 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface fa0/1\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/2\n     ip address 10.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\n3) R3 KONFİGÜRASYONU:\n   - enable, conf t\n   - interface gi0/0\n     ip address 10.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 20.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 10.0.0.1\n   - ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\n4) ML2 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface fa0/1\n     ip address 20.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface fa0/2\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\n5) TEST:\n   - show ip route (statik rotaları gör)\n   - PC\'ler arası ping testi'
-        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (ML1, ML2)\n   - Add 1 Router (R3)\n   - Add 2 L2 Switches (Switch0, Switch1)\n   - Add 4 PCs\n   - Connect all devices according to topology\n\n2) ML1 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface fa0/1\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/2\n     ip address 10.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\n3) R3 CONFIGURATION:\n   - enable, conf t\n   - interface gi0/0\n     ip address 10.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 20.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 10.0.0.1\n   - ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\n4) ML2 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface fa0/1\n     ip address 20.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface fa0/2\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\n5) TEST:\n   - show ip route (view static routes)\n   - Ping test between PCs',
+        ? 'Amaç: L3 switch\'ler ve router arasında static routing yapılandırarak farklı ağlar arası iletişim sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (ML1, ML2) ekle\n   - 1 adet Router (R3) ekle\n   - 2 adet L2 Switch (Switch0, Switch1) ekle\n   - 4 adet PC ekle\n   - Bağlantıları yapıştır (topolojiye göre)\n\n2) ML1 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface fa0/1\n     no switchport\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/2\n     no switchport\n     ip address 10.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\n3) R3 KONFİGÜRASYONU:\n   - enable, conf t\n   - interface gi0/0\n     ip address 10.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 20.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 10.0.0.1\n   - ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\n4) ML2 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface fa0/1\n     no switchport\n     ip address 20.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface fa0/2\n     no switchport\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\n5) TEST:\n   - show ip route (statik rotaları gör)\n   - PC\'ler arası ping testi'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (ML1, ML2)\n   - Add 1 Router (R3)\n   - Add 2 L2 Switches (Switch0, Switch1)\n   - Add 4 PCs\n   - Connect all devices according to topology\n\n2) ML1 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface fa0/1\n     no switchport\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/2\n     no switchport\n     ip address 10.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\n3) R3 CONFIGURATION:\n   - enable, conf t\n   - interface gi0/0\n     ip address 10.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 20.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 10.0.0.1\n   - ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\n4) ML2 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface fa0/1\n     no switchport\n     ip address 20.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface fa0/2\n     no switchport\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\n5) TEST:\n   - show ip route (view static routes)\n   - Ping test between PCs',
       x: 450,
       y: 80,
       width: 520,
@@ -2483,10 +2483,12 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     'ip routing',
     '!',
     'interface FastEthernet0/1',
+    ' no switchport',
     ' ip address 10.0.0.1 255.0.0.0',
     ' no shutdown',
     '!',
     'interface FastEthernet0/2',
+    ' no switchport',
     ' ip address 192.168.1.1 255.255.255.0',
     ' no shutdown',
     '!',
@@ -2541,10 +2543,12 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     'ip routing',
     '!',
     'interface FastEthernet0/1',
+    ' no switchport',
     ' ip address 20.0.0.2 255.0.0.0',
     ' no shutdown',
     '!',
     'interface FastEthernet0/2',
+    ' no switchport',
     ' ip address 192.168.2.1 255.255.255.0',
     ' no shutdown',
     '!',
@@ -2606,8 +2610,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'rip-routing-note',
       text: isTr
-        ? 'Amaç: L3 switch\'ler arasında RIP dynamic routing yapılandırarak otomatik route öğrenimi sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (ML0, ML1) ekle\n   - 2 adet L2 Switch (Switch0-L2, Switch3-L2) ekle\n   - 4 adet PC (PC0-PC3) ekle\n   - PC0-PC1 -> Switch0-L2 Fa0/1-2\n   - Switch0-L2 Fa0/24 -> ML0 Fa0/23\n   - ML0 Fa0/24 -> ML1 Fa0/24 (Crossover)\n   - ML1 Fa0/23 -> Switch3-L2 Fa0/24\n   - Switch3-L2 Fa0/1-2 -> PC2-PC3\n\n2) ML0 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface fa0/23\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/24\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.1.0\n     network 192.168.2.0\n   - exit\n\n3) ML1 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface fa0/24\n     ip address 192.168.2.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/23\n     ip address 192.168.3.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.2.0\n     network 192.168.3.0\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC0-PC1: IP 192.168.1.x, GW 192.168.1.1\n   - PC2-PC3: IP 192.168.3.x, GW 192.168.3.1\n\n5) TEST:\n   - show ip route (dinamik rotaları gör)\n   - PC0 ping 192.168.3.10 (PC2)'
-        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (ML0, ML1)\n   - Add 2 L2 Switches (Switch0-L2, Switch3-L2)\n   - Add 4 PCs (PC0-PC3)\n   - Connect PC0-PC1 -> Switch0-L2 Fa0/1-2\n   - Connect Switch0-L2 Fa0/24 -> ML0 Fa0/23\n   - Connect ML0 Fa0/24 -> ML1 Fa0/24 (Crossover)\n   - Connect ML1 Fa0/23 -> Switch3-L2 Fa0/24\n   - Connect Switch3-L2 Fa0/1-2 -> PC2-PC3\n\n2) ML0 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface fa0/23\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/24\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.1.0\n     network 192.168.2.0\n   - exit\n\n3) ML1 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface fa0/24\n     ip address 192.168.2.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/23\n     ip address 192.168.3.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.2.0\n     network 192.168.3.0\n   - exit\n\n4) PC CONFIGURATION:\n   - PC0-PC1: IP 192.168.1.x, GW 192.168.1.1\n   - PC2-PC3: IP 192.168.3.x, GW 192.168.3.1\n\n5) TEST:\n   - show ip route (view dynamic routes)\n   - PC0 ping 192.168.3.10 (PC2)',
+        ? 'Amaç: L3 switch\'ler arasında RIP dynamic routing yapılandırarak otomatik route öğrenimi sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (ML0, ML1) ekle\n   - 2 adet L2 Switch (Switch0-L2, Switch3-L2) ekle\n   - 4 adet PC (PC0-PC3) ekle\n   - PC0-PC1 -> Switch0-L2 Fa0/1-2\n   - Switch0-L2 Fa0/24 -> ML0 Fa0/23\n   - ML0 Fa0/24 -> ML1 Fa0/24 (Crossover)\n   - ML1 Fa0/23 -> Switch3-L2 Fa0/24\n   - Switch3-L2 Fa0/1-2 -> PC2-PC3\n\n2) ML0 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface fa0/23\n     no switchport\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/24\n     no switchport\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.1.0\n     network 192.168.2.0\n   - exit\n\n3) ML1 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface fa0/24\n     no switchport\n     ip address 192.168.2.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/23\n     no switchport\n     ip address 192.168.3.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.2.0\n     network 192.168.3.0\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC0-PC1: IP 192.168.1.x, GW 192.168.1.1\n   - PC2-PC3: IP 192.168.3.x, GW 192.168.3.1\n\n5) TEST:\n   - show ip route (dinamik rotaları gör)\n   - PC0 ping 192.168.3.10 (PC2)'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (ML0, ML1)\n   - Add 2 L2 Switches (Switch0-L2, Switch3-L2)\n   - Add 4 PCs (PC0-PC3)\n   - Connect PC0-PC1 -> Switch0-L2 Fa0/1-2\n   - Connect Switch0-L2 Fa0/24 -> ML0 Fa0/23\n   - Connect ML0 Fa0/24 -> ML1 Fa0/24 (Crossover)\n   - Connect ML1 Fa0/23 -> Switch3-L2 Fa0/24\n   - Connect Switch3-L2 Fa0/1-2 -> PC2-PC3\n\n2) ML0 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface fa0/23\n     no switchport\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/24\n     no switchport\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.1.0\n     network 192.168.2.0\n   - exit\n\n3) ML1 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface fa0/24\n     no switchport\n     ip address 192.168.2.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/23\n     no switchport\n     ip address 192.168.3.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.2.0\n     network 192.168.3.0\n   - exit\n\n4) PC CONFIGURATION:\n   - PC0-PC1: IP 192.168.1.x, GW 192.168.1.1\n   - PC2-PC3: IP 192.168.3.x, GW 192.168.3.1\n\n5) TEST:\n   - show ip route (view dynamic routes)\n   - PC0 ping 192.168.3.10 (PC2)',
       x: 450,
       y: 80,
       width: 520,
@@ -2638,10 +2642,12 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     'ip routing',
     '!',
     'interface FastEthernet0/23',
+    ' no switchport',
     ' ip address 192.168.1.1 255.255.255.0',
     ' no shutdown',
     '!',
     'interface FastEthernet0/24',
+    ' no switchport',
     ' ip address 192.168.2.1 255.255.255.0',
     ' no shutdown',
     '!',
@@ -2671,10 +2677,12 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     'ip routing',
     '!',
     'interface FastEthernet0/24',
+    ' no switchport',
     ' ip address 192.168.2.2 255.255.255.0',
     ' no shutdown',
     '!',
     'interface FastEthernet0/23',
+    ' no switchport',
     ' ip address 192.168.3.1 255.255.255.0',
     ' no shutdown',
     '!',

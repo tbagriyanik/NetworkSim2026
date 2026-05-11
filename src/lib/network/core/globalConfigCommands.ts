@@ -2,10 +2,16 @@
 
 import type { CommandHandler } from './commandTypes';
 import { buildRunningConfig } from './configBuilder';
-import { canAssignIPToPhysicalPort } from '../switchModels';
+import { canAssignIPToPhysicalPort, isLayer3Switch } from '../switchModels';
 import { encryptMd5Password, encryptType7Password } from '../crypto';
 import { calculatePVST } from './showCommands';
 import { getDeviceCapabilities } from '../capabilities';
+import {
+  validateIpRoutingSupport,
+  validateIpRoutingEnabled,
+  getIpAddressPurpose,
+  validateL3SwitchPrerequisites
+} from './ciscoL3Validation';
 
 // Global config (hostname, vlan, vtp, spanning-tree, security, ip domain-name, etc.)
 
@@ -139,7 +145,13 @@ function cmdIpRouting(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  // Check if device supports routing (router or L3 switch)
+  // Validate IP routing support with comprehensive checks
+  const validation = validateIpRoutingSupport(state.switchModel, state);
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
+  }
+
+  // Check device capabilities as backup
   const currentDevice = ctx.devices?.find((d: any) => d.id === ctx.sourceDeviceId);
   const capabilities = getDeviceCapabilities(currentDevice || null, state.switchModel);
   if (!capabilities.routing) {
@@ -149,9 +161,18 @@ function cmdIpRouting(state: any, input: string, ctx: any): any {
     };
   }
 
+  let output = 'IP routing enabled\n';
+  const newState: any = { ipRouting: true };
+
+  // If sdm prefer was configured, show helpful message
+  if (state.sdmPreferConfigured) {
+    output += 'SDM preference configuration is active. Routing table has been allocated.\n';
+  }
+
   return {
     success: true,
-    newState: { ipRouting: true }
+    output,
+    newState
   };
 }
 
@@ -817,8 +838,8 @@ function cmdEnablePassword(state: any, input: string, ctx: any): any {
 
   const password = match[1];
   // Encrypt with Type 7 if service password encryption is enabled
-  const encryptedPassword = state.security?.servicePasswordEncryption 
-    ? encryptType7Password(password) 
+  const encryptedPassword = state.security?.servicePasswordEncryption
+    ? encryptType7Password(password)
     : password;
 
   return {
@@ -1609,7 +1630,63 @@ function cmdSystemMtu(state: any, input: string, ctx: any): any {
  */
 function cmdSdmPrefer(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') return { success: false, error: '% Invalid command at this mode' };
-  return { success: true, output: 'Changes to the SDM preferences will take effect after reload' };
+
+  const match = input.match(/^sdm\s+prefer\s+(\S+)(?:\s+(\S+))?/i);
+  if (!match) {
+    return {
+      success: false,
+      error: `% Invalid sdm prefer command.\nUsage: sdm prefer {lanbase-routing | lanbase | desktop | default}`
+    };
+  }
+
+  const template = match[1].toLowerCase();
+  const validTemplates = ['lanbase-routing', 'lanbase', 'desktop', 'default', 'routing'];
+
+  if (!validTemplates.includes(template)) {
+    return {
+      success: false,
+      error: `% Invalid template: ${template}\nValid templates: lanbase-routing, lanbase, desktop, default`
+    };
+  }
+
+  // Check if this is an L3 switch
+  if (!isLayer3Switch(state.switchModel)) {
+    return {
+      success: false,
+      error: `% SDM preference is not supported on ${state.switchModel}\nSDM prefer is only available on Layer 3 switches`
+    };
+  }
+
+  let output = '';
+  let requiresReload = false;
+
+  if (template === 'lanbase-routing' || template === 'routing') {
+    output = `Changes to the SDM preferences will take effect after reload.\n`;
+    output += `This template will configure: 16384 IPv4 ACL entries, 2048 QoS labels, 16384 IPv4 Multicast entries\n`;
+    requiresReload = true;
+  } else if (template === 'lanbase') {
+    output = `Changes to the SDM preferences will take effect after reload.\n`;
+    output += `This template will configure: 8192 IPv4 ACL entries, 2048 QoS labels, 2048 IPv4 Multicast entries\n`;
+    requiresReload = true;
+  } else if (template === 'desktop') {
+    output = `Changes to the SDM preferences will take effect after reload.\n`;
+    output += `This template will configure: 4096 IPv4 ACL entries, 512 QoS labels, 256 IPv4 Multicast entries\n`;
+    requiresReload = true;
+  } else {
+    output = `Current SDM template is: ${template}\n`;
+  }
+
+  output += `\n% System needs to be reloaded for the new template to take effect.\n% Use 'reload' command to reboot the device.\n`;
+
+  return {
+    success: true,
+    output,
+    newState: {
+      sdmPreferConfigured: true,
+      sdmTemplate: template,
+      reloaded: false  // Mark that reload is needed
+    }
+  };
 }
 
 /**

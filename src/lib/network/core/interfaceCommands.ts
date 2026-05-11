@@ -1,8 +1,13 @@
 import type { CommandHandler } from './commandTypes';
 import { normalizePortId } from '../initialState';
-import { canAssignIPToPhysicalPort } from '../switchModels';
+import { canAssignIPToPhysicalPort, isLayer3Switch } from '../switchModels';
 import { buildRunningConfig } from './configBuilder';
 import { calculateSTPState, calculatePVST } from './showCommands';
+import {
+  validateNoSwitchportSupport,
+  validateSviStatus,
+  getIpAddressPurpose
+} from './ciscoL3Validation';
 
 // Helper function to check if in interface mode (single or range)
 function isInInterfaceMode(state: any): boolean {
@@ -403,12 +408,10 @@ function cmdNoSwitchport(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command at this mode' };
   }
 
-  // Check if device supports L3 routing
-  if (!canAssignIPToPhysicalPort(state.switchModel)) {
-    return {
-      success: false,
-      error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support routed ports.\nno switchport is only available on Layer 3 switches.`
-    };
+  // Validate support using comprehensive checker
+  const validation = validateNoSwitchportSupport(state.switchModel);
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
   }
 
   // Don't allow on VLAN interfaces
@@ -421,20 +424,35 @@ function cmdNoSwitchport(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid command on WLAN interface' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
-    ...port,
-    mode: 'routed',
-    // Clear Layer 2 specific settings
-    accessVlan: undefined,
-    nativeVlan: undefined,
-    allowedVlans: undefined,
-    portSecurity: undefined,
-    spanningTree: undefined,
-  }));
+  const newPorts = applyToSelectedPorts(state, (port: any) => {
+    // Convert port from L2 switchport mode to L3 routed mode
+    return {
+      ...port,
+      mode: 'routed',
+      isRoutedPort: true,
+      // Clear Layer 2 specific settings when converting to routed port
+      accessVlan: undefined,
+      nativeVlan: undefined,
+      allowedVlans: undefined,
+      portSecurity: undefined,
+      spanningTree: undefined,
+      trunkAllowedVlans: undefined,
+      trunkNativeVlan: undefined,
+      voiceVlan: undefined,
+    };
+  });
+
+  let output = `\n`;
+  if (state.selectedInterfaces && state.selectedInterfaces.length > 1) {
+    output += `Interfaces ${state.selectedInterfaces.join(', ')} converted to routed ports\n`;
+  } else {
+    output += `Interface ${state.currentInterface} converted to routed port\n`;
+  }
+  output += `Port(s) are now in L3 routed mode. Use 'ip address' to assign an IP address.\n`;
 
   return {
     success: true,
-    output: `Interface ${state.currentInterface} converted to routed port`,
+    output,
     newState: { ports: newPorts }
   };
 }
@@ -755,13 +773,30 @@ function cmdIpAddress(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid IP address format' };
   }
 
-  // VLAN interface'i için IP atama
+  // VLAN interface IP assignment
   if (isVlanInterfaceName(state.currentInterface)) {
     const vlanPortKey = getVlanPortKey(state.currentInterface);
     const vlanId = parseInt(vlanPortKey.replace(/^vlan/, ''), 10);
     const newPorts = { ...state.ports };
 
     if (newPorts[vlanPortKey]) {
+      // Validate SVI status - check that there are active ports in this VLAN
+      const sviStatus = validateSviStatus(state, vlanId);
+
+      let warningMsg = '';
+      if (sviStatus.activePorts.length === 0) {
+        warningMsg = `\n% Warning: VLAN ${vlanId} has no active ports assigned.\n% SVI will be down until at least one port in this VLAN is configured and active.\n`;
+      }
+
+      // Get IP purpose for L2 vs L3 distinction
+      const ipPurpose = getIpAddressPurpose(state, state.currentInterface);
+      let purposeMsg = '';
+      if (ipPurpose.purpose === 'management') {
+        purposeMsg = `\n% Note: This is a Layer 2 switch. IP address is for device management only (SSH/Telnet).\n% Traffic between VLANs cannot be routed.\n`;
+      } else if (ipPurpose.purpose === 'both') {
+        purposeMsg = `\n% Note: This IP will be used for both device management and VLAN ${vlanId} routing gateway.\n`;
+      }
+
       newPorts[vlanPortKey] = {
         ...newPorts[vlanPortKey],
         ipAddress: ip,
@@ -771,14 +806,24 @@ function cmdIpAddress(state: any, input: string, ctx: any): any {
     }
 
     const updatedState = { ...state, ports: newPorts };
+    let output = `Interface Vlan${vlanId} configured with IP ${ip} ${mask}\n`;
+
+    // Add status indicator
+    const sviStatus = validateSviStatus(state, vlanId);
+    if (sviStatus.activePorts.length > 0) {
+      output += `Vlan${vlanId} will be up (Active ports: ${sviStatus.activePorts.join(', ')})\n`;
+    } else {
+      output += `Vlan${vlanId} status: down (no active ports assigned)\n`;
+    }
+
     return {
       success: true,
-      output: `Interface Vlan${vlanId} configured with IP ${ip} ${mask}`,
+      output,
       newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) }
     };
   }
 
-  // Layer 2 switch kontrolü - fastethernet portlarına IP ataması engelle
+  // Layer 2 switch check - prevent IP assignment on physical ports
   if (!canAssignIPToPhysicalPort(state.switchModel)) {
     const port = state.ports[state.currentInterface];
     if (port && (port.type === 'fastethernet' || port.type === 'gigabitethernet')) {
@@ -789,12 +834,21 @@ function cmdIpAddress(state: any, input: string, ctx: any): any {
     }
   }
 
-  // Fiziksel port'a IP atama (Layer 3 switch veya routed port)
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, ipAddress: ip, subnetMask: mask, mode: 'routed' }));
+  // Physical routed port IP assignment (Layer 3 switch or router)
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+    ...port,
+    ipAddress: ip,
+    subnetMask: mask,
+    mode: 'routed',
+    isRoutedPort: true
+  }));
 
   const updatedState = { ...state, ports: newPorts };
+  const output = `\nInterface ${state.currentInterface} configured with IP ${ip} ${mask}\n`;
+
   return {
     success: true,
+    output,
     newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) }
   };
 }
