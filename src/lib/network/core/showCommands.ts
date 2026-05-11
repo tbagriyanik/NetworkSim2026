@@ -1,6 +1,7 @@
 import { IOS_ERRORS, iosModeError } from './iosErrors';
 import type { CommandHandler } from './commandTypes';
 import { ensureDeviceStatesMap } from '../networkUtils';
+import { buildRunningConfig } from './configBuilder';
 
 // Show komutları (show running-config, show vlan, show ip route, vs.)
 
@@ -199,131 +200,10 @@ function cmdShowRunningConfig(
   input: string,
   ctx: any
 ): any {
-  const { systemImage } = getSwitchDisplayProfile(state);
   let output = '\nBuilding configuration...\n\n';
   output += 'Current configuration : 1024 bytes\n\n';
-
-  // Use actual runningConfig if available, otherwise generate fallback
-  if (state.runningConfig && state.runningConfig.length > 0) {
-    output += state.runningConfig.join('\n');
-  } else {
-    // Fallback to generated config if runningConfig is empty
-    output += '!\n';
-    output += `version 15.0\n`;
-    output += `hostname ${state.hostname || 'Switch'}\n`;
-
-    // Banner MOTD
-    if (state.bannerMOTD) {
-      const escapedBanner = state.bannerMOTD.replace(/\n/g, '\\n');
-      output += `banner motd #${escapedBanner}#\n`;
-      output += '!\n';
-    }
-
-    // Boot system
-    output += `boot system ${systemImage}\n`;
-    output += '!\n';
-
-    // Service passwords-encryption
-    if (state.security?.servicePasswordEncryption) {
-      output += 'service password-encryption\n';
-    }
-    output += '!\n';
-
-    // Spanning-tree mode
-    output += `spanning-tree mode ${state.spanningTree?.mode || 'pvst'}\n`;
-    output += '!\n';
-
-    // Firewall-specific interface configuration
-    const isFirewall = state.deviceType === 'firewall';
-    if (isFirewall) {
-      output += '!\n';
-      output += 'interface GigabitEthernet0/0\n';
-      output += ' shutdown\n';
-      output += '!\n';
-      output += 'interface GigabitEthernet0/1\n';
-      output += ' shutdown\n';
-      output += '!\n';
-    }
-
-    // Interface configurations (skip for firewalls as they have their own interface config above)
-    if (!isFirewall) {
-      Object.entries(state.ports || {}).forEach(([portId, port]: [string, any]) => {
-        if (port.description || port.ipAddress || port.mode !== 'access' || port.vlan !== 1 || port.shutdown !== false) {
-          output += `interface ${portId}\n`;
-          const portDescription = port.description || port.name;
-          if (portDescription) {
-            output += ` description ${portDescription}\n`;
-          }
-          if (port.mode === 'trunk') {
-            output += ` switchport mode trunk\n`;
-          } else if (port.mode === 'dynamic-auto') {
-            output += ` switchport mode dynamic auto\n`;
-          } else if (port.mode === 'dynamic-desirable') {
-            output += ` switchport mode dynamic desirable\n`;
-          } else if (port.mode === 'dot1q-tunnel') {
-            output += ` switchport mode dot1q-tunnel\n`;
-          }
-
-          if (port.mode === 'trunk') {
-            if (port.trunkAllowedVlans && port.trunkAllowedVlans !== '1-4094') {
-              output += ` switchport trunk allowed vlan ${port.trunkAllowedVlans}\n`;
-            }
-          } else if (port.vlan && port.vlan !== 1) {
-            output += ` switchport access vlan ${port.vlan}\n`;
-          }
-          if (port.ipAddress) {
-            output += ` ip address ${port.ipAddress} ${port.subnetMask || '255.255.255.0'}\n`;
-          }
-          if (port.shutdown) {
-            output += ` shutdown\n`;
-          }
-          output += '!\n';
-        }
-      });
-    }
-
-    // VLAN configurations
-    Object.entries(state.vlans || {}).forEach(([vlanId, vlan]: [string, any]) => {
-      if (parseInt(vlanId) !== 1 && vlan.name) {
-        output += `vlan ${vlanId}\n`;
-        output += ` name ${vlan.name}\n`;
-        if (vlan.state === 'suspend') {
-          output += ` state suspend\n`;
-        }
-        output += '!\n';
-      }
-    });
-
-    // Line configurations
-    output += 'line con 0\n';
-    if (state.security?.consolePassword) {
-      if (state.security?.servicePasswordEncryption) {
-        output += ` password 7 ********\n`;
-      } else {
-        output += ` password ${state.security.consolePassword}\n`;
-      }
-    }
-    output += 'line vty 0 4\n';
-    if (state.security?.vtyLines?.transportInput && state.security.vtyLines.transportInput.length > 0) {
-      output += ` transport input ${state.security.vtyLines.transportInput.join(' ')}\n`;
-    }
-    output += ' login\n';
-    output += 'line vty 5 15\n';
-    output += ' login\n';
-    output += '!\n';
-
-    // Enable secret
-    if (state.security?.enableSecret) {
-      output += `enable secret ${state.security.enableSecret}\n`;
-    } else if (state.security?.enablePassword) {
-      if (state.security?.servicePasswordEncryption) {
-        output += `enable password 7 ${state.security.enablePassword}\n`;
-      } else {
-        output += `enable password ${state.security.enablePassword}\n`;
-      }
-    }
-    output += '!\n';
-  }
+  const lines = buildRunningConfig(state as any);
+  output += lines.join('\n');
 
   output += '\nend\n';
   return { success: true, output };

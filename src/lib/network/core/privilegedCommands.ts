@@ -131,6 +131,15 @@ function cmdPing(state: any, input: string, ctx: any): any {
         if (connectivity.success) {
             let output = `\nType escape sequence to abort.\n`;
             output += `Sending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n`;
+            const debugLines: string[] = [];
+            const sourceIp = (ctx.deviceStates?.get(ctx.sourceDeviceId || '') as any)?.ipAddress || '0.0.0.0';
+            if (state.debugs?.['ip icmp'] || state.debugs?.['ip packet']) {
+                debugLines.push(`*Mar  1 00:00:00.001: ICMP: echo request sent, src ${sourceIp}, dst ${host}`);
+                debugLines.push(`*Mar  1 00:00:00.004: ICMP: echo reply rcvd, src ${host}, dst ${sourceIp}`);
+            }
+            if ((state.debugs?.['sw-vlan packet'] || state.debugs?.['vlan packet']) && connectivity.hops?.length) {
+                debugLines.push(`*Mar  1 00:00:00.002: SW_VLAN-PACKET: frame forwarded across ${Math.max(0, connectivity.hops.length - 1)} hop(s)`);
+            }
             const successCount = parseInt(count, 10) || 5;
             const devices = (ctx.devices || []) as CanvasDevice[];
             const sourceDevice = ctx.sourceDeviceId ? devices.find(d => d.id === ctx.sourceDeviceId) : undefined;
@@ -156,6 +165,9 @@ function cmdPing(state: any, input: string, ctx: any): any {
             const fmtMs = (ms: number) => ms <= 1 ? '<1' : String(ms);
             for (let i = 0; i < successCount; i++) output += '!';
             output += `\n\nSuccess rate is 100 percent (${successCount}/${successCount}), round-trip min/avg/max = ${fmtMs(pingResult.min)}/${fmtMs(pingResult.avg)}/${fmtMs(pingResult.max)} ms\n`;
+            if (debugLines.length > 0) {
+                output = `${debugLines.join('\n')}\n${output}`;
+            }
             return { success: true, output, triggerPingAnimation: connectivity.targetId, deviceStates: updatedDeviceStates };
         } else {
             return {

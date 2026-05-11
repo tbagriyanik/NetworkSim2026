@@ -5,7 +5,7 @@ A modern browser-based network simulator for learning switching, routing, wirele
 ![Version](https://img.shields.io/badge/version-1.6.2-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-88624-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-89755-lightgrey)
 
 Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
@@ -84,10 +84,10 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metric | Value |
 | --- | ---: |
-| Application Code | 88,624 |
+| Application Code | 89,755 |
 | Example Projects | 37 |
 | Documentation | 150+ |
-| **Total Lines** | **88,624** |
+| **Total Lines** | **89,755** |
 | Source Files | 235 |
 | Ready Topologies | 37 |
 | Guided Lessons | 3 |
@@ -168,10 +168,10 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metrik | Değer |
 | --- | ---: |
-| Uygulama Kodu | 88,624 |
+| Uygulama Kodu | 89,755 |
 | Örnek Proje | 37 |
 | Dokümantasyon | 150+ |
-| **Toplam Satır** | **88,624** |
+| **Toplam Satır** | **89,755** |
 | Kaynak Dosya | 235 |
 | Hazır Topoloji | 37 |
 | Rehberli Ders | 3 |
