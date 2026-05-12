@@ -176,8 +176,8 @@ function getSwitchDisplayProfile(state: any) {
     bootldr: isL3 ? 'C3650 Boot Loader (C3650-HBOOT-M)' : 'C2960 Boot Loader (C2960-HBOOT-M)',
     systemImage: isL3 ? 'flash:C3650-ipbase-mz.150-2.SE4.bin' : 'flash:c2960-lanbase-mz.150-2.SE4.bin',
     processor: isL3 ? 'WS-C3650-24PS (PowerPC405) processor (revision 01) with 131072K bytes of memory' : 'WS-C2960-24TT-L (PowerPC405) processor (revision C0) with 65536K bytes of memory',
-    reportedFeCount: 24,
-    reportedGiCount: isL3 ? 4 : 2,
+    reportedFeCount: isL3 ? 0 : 24,
+    reportedGiCount: isL3 ? 28 : 2,
   };
 }
 
@@ -379,7 +379,7 @@ function cmdShowVersion(
 ): any {
   const { switchModel, softwareImage, rom, bootldr, systemImage, processor, reportedFeCount, reportedGiCount } = getSwitchDisplayProfile(state);
 
-  const wlanPortCount = Object.values(state.ports || {}).filter((p: any) => p.id.startsWith('wlan')).length;
+  const wlanPortCount = Object.values(state.ports || {}).filter((p: any) => (p?.id || '').startsWith('wlan')).length;
 
   let output = `\nNetwork NOS Software, ${softwareImage}\n`;
   output += 'Technical Support: http://yunus.sf.net\n';

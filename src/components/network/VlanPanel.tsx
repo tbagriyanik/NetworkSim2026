@@ -63,9 +63,9 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
   }
 
   const getPortsForVlan = (vlanId: number): string[] => {
-    return Object.values(ports)
-      .filter(p => Number(p.accessVlan || p.vlan || 1) === vlanId && !p.shutdown)
-      .map(p => p.id.toUpperCase());
+    return Object.entries(ports)
+      .filter(([_, p]) => Number(p?.accessVlan || p?.vlan || 1) === vlanId && !p?.shutdown)
+      .map(([portKey, p]) => String(p?.id || portKey).toUpperCase());
   };
 
   const handleCreateVlan = async () => {

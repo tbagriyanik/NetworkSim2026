@@ -974,7 +974,7 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
   const reportedGiCount = isFirewall
     ? 2
     : (isRouter || isL3Switch) ? 4 : 2;
-  const wlanCount = Object.values(state.ports || {}).filter((p: any) => p.id.startsWith('wlan')).length;
+  const wlanCount = Object.values(state.ports || {}).filter((p: any) => (p?.id || '').startsWith('wlan')).length;
 
   let ifaceSummary = '';
   if (reportedFeCount > 0) {
@@ -1176,7 +1176,7 @@ function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): Command
   const reportedGiCount = isFirewall
     ? 2
     : (isRouter || isL3Switch) ? 4 : 2;
-  const wlanCount = Object.values(state.ports || {}).filter((p: any) => p.id.startsWith('wlan')).length;
+  const wlanCount = Object.values(state.ports || {}).filter((p: any) => (p?.id || '').startsWith('wlan')).length;
 
   let ifaceSummary = '';
   if (reportedFeCount > 0) {
