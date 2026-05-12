@@ -323,7 +323,7 @@ export function useDeviceManager() {
         deviceState = updatedState;
       }
 
-      if (isSwitchDeviceType(deviceType) && deviceState.switchModel === 'WS-C3650-24PS' && (!deviceState.ports['gi0/3'] || !deviceState.ports['gi0/4'])) {
+      if (isSwitchDeviceType(deviceType) && deviceState.switchModel === 'WS-C3650-24PS' && (!deviceState.ports['gi1/1/3'] || !deviceState.ports['gi1/1/4'])) {
         const healedState = ensureSwitchModelConsistency(deviceState, deviceState.switchModel, initialMac, false);
         setTimeout(() => {
           if (isMounted.current) {

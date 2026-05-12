@@ -12,17 +12,17 @@ export function generateSwitchPorts(): CanvasPort[] {
     return ports;
 }
 
-/** Generates L3 switch ports: 24x FastEthernet + 4x GigabitEthernet + WLAN0 */
+/** Generates L3 switch ports: 24x GigabitEthernet1/0/x + 4x GigabitEthernet1/1/x + WLAN0 */
 export function generateL3SwitchPorts(): CanvasPort[] {
     const ports: CanvasPort[] = [];
     for (let i = 1; i <= 24; i++) {
-        ports.push({ id: `fa0/${i}`, label: `Fa0/${i}`, status: 'disconnected' as const });
+        ports.push({ id: `gi1/0/${i}`, label: `Gi1/0/${i}`, status: 'disconnected' as const });
     }
     ports.push({ id: 'console', label: 'Console', status: 'disconnected' as const });
-    ports.push({ id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const });
-    ports.push({ id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const });
-    ports.push({ id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const });
-    ports.push({ id: 'gi0/4', label: 'Gi0/4', status: 'disconnected' as const });
+    ports.push({ id: 'gi1/1/1', label: 'Gi1/1/1', status: 'disconnected' as const });
+    ports.push({ id: 'gi1/1/2', label: 'Gi1/1/2', status: 'disconnected' as const });
+    ports.push({ id: 'gi1/1/3', label: 'Gi1/1/3', status: 'disconnected' as const });
+    ports.push({ id: 'gi1/1/4', label: 'Gi1/1/4', status: 'disconnected' as const });
     ports.push({ id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, shutdown: true });
     return ports;
 }

@@ -214,6 +214,11 @@ function cmdInterface(state: any, input: string, ctx: any): any {
   // Validate interface exists or create subinterface
   const normalized = normalizePortId(interfaceName) || interfaceName.toLowerCase();
 
+  // Console is not a configurable switchport interface in Cisco CLI
+  if (normalized === 'console') {
+    return { success: false, error: "% Invalid interface type and number" };
+  }
+
   // Check if it's a subinterface (contains a dot)
   const isSubinterface = normalized.includes('.');
 

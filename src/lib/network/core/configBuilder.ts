@@ -129,7 +129,7 @@ export function buildRunningConfig(state: SwitchState): string[] {
         }
 
         const normalizedPortId = portId.toLowerCase();
-        if (normalizedPortId.startsWith('vlan')) {
+        if (normalizedPortId.startsWith('vlan') || normalizedPortId === 'console') {
             return;
         }
 
@@ -336,8 +336,8 @@ export function buildRunningConfig(state: SwitchState): string[] {
         lines.push('!');
     }
 
-    // IP default-gateway
-    if (state.defaultGateway) {
+    // IP default-gateway is only valid for L2/no-routing behavior
+    if (state.defaultGateway && !state.ipRouting) {
         lines.push(`ip default-gateway ${state.defaultGateway}`);
         lines.push('!');
     }

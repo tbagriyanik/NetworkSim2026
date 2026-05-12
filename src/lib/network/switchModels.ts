@@ -32,7 +32,7 @@ export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
         name: 'Catalyst 3650 24-Port PoE',
         layer: 'L3',
         ports: 29,
-        description: 'Layer 3 Switch - 24 FastEthernet + 4 GigabitEthernet + 1 Wireless ports',
+        description: 'Layer 3 Switch - 24 GigabitEthernet1/0/x + 4 GigabitEthernet1/1/x + 1 Wireless ports',
         features: [
             'Layer 3 Routing',
             'Layer 2 Switching',

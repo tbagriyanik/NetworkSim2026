@@ -53,10 +53,11 @@ function createInitialPorts(gigabitPortCount: number = 2, baseMac?: string, hasW
     type: 'fastethernet'
   };
 
-  // FastEthernet 0/1 - 0/24 - HEPSİ AÇIK (no shutdown) BAŞLANGIÇTA
+  const isL3GigabitLayout = gigabitPortCount === 4;
 
+  // Access ports (L2: FastEthernet0/1-24, L3-3650: GigabitEthernet1/0/1-24)
   for (let i = 1; i <= 24; i++) {
-    const portId = `fa0/${i}`;
+    const portId = isL3GigabitLayout ? `gi1/0/${i}` : `fa0/${i}`;
     const portMac = formatMacFromNumber(parseInt(switchBaseMac.replace(/\./g, ''), 16) + i);
     ports[portId] = {
       id: portId,
@@ -68,7 +69,7 @@ function createInitialPorts(gigabitPortCount: number = 2, baseMac?: string, hasW
       duplex: 'auto',
       speed: 'auto',
       shutdown: false, // BAŞLANGIÇTA AÇIK
-      type: 'fastethernet',
+      type: isL3GigabitLayout ? 'gigabitethernet' : 'fastethernet',
       allowedVlans: 'all',
       channelGroup: undefined,
       channelMode: undefined,
@@ -79,7 +80,7 @@ function createInitialPorts(gigabitPortCount: number = 2, baseMac?: string, hasW
 
   // GigabitEthernet uplink/routed ports
   for (let i = 1; i <= gigabitPortCount; i++) {
-    const portId = `gi0/${i}`;
+    const portId = isL3GigabitLayout ? `gi1/1/${i}` : `gi0/${i}`;
     const portMac = formatMacFromNumber(parseInt(switchBaseMac.replace(/\./g, ''), 16) + 24 + i);
     ports[portId] = {
       id: portId,
