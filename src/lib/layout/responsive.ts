@@ -46,11 +46,13 @@ export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
         header: {
             height: { mobile: 60, tablet: 70, desktop: 80 },
             sticky: true,
-            zIndex: 100,
+            zIndex: 1,
         },
         sidebar: {
             width: { mobile: 0, tablet: 280, desktop: 320 },
-            padding: { mobile: 0, tablet: 16, desktop: 16 },
+            height: { mobile: '100%', tablet: '100%', desktop: '100%' },
+            sticky: true,
+            zIndex: 200,
         },
         main: {
             padding: { mobile: 16, tablet: 24, desktop: 32 },
@@ -58,7 +60,7 @@ export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
         footer: {
             height: { mobile: 60, tablet: 70, desktop: 80 },
             sticky: false,
-            zIndex: 50,
+            zIndex: 2,
         },
     },
     spacing: {

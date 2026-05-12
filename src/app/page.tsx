@@ -8,6 +8,7 @@ import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { useDeviceManager } from '@/hooks/useDeviceManager';
 import { useModalDragResize } from '@/hooks/useModalDragResize';
 import { useMultiTabWarning } from '@/hooks/useMultiTabWarning';
+import { useIsMobile } from '@/hooks/use-mobile';
 import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes, useZoom, usePan, useActiveTab, useEnvironment } from '@/lib/store/appStore';
 import { NetworkTopology } from '@/components/network/NetworkTopology';
 import { cn, normalizeMAC } from '@/lib/utils';
@@ -419,6 +420,9 @@ export default function Home() {
 
   // Which overlay panel is on top — last clicked wins
   const [focusedOverlay, setFocusedOverlay] = useState<'refresh' | 'packet'>('packet');
+
+  // Mobile detection
+  const isMobile = useIsMobile();
 
   // Guided Mode hook
   const {
@@ -4464,7 +4468,7 @@ ${state.bannerMOTD}
         {/* Main Content with transition */}
         <div className="flex flex-col flex-1 animate-fade-in w-full max-w-[1920px] mx-auto">
           {/* Header */}
-          <header className={`liquid-glass sticky top-0 z-50 border-b px-5 py-3 pb-0`}>
+          <header className={`liquid-glass sticky top-0 z-1 border-b px-5 py-3 pb-0`}>
             <div className="w-full">
               <div className="flex items-center justify-between">
                 {/* Logo & Title */}
@@ -6178,9 +6182,8 @@ ${state.bannerMOTD}
               {/* Tasks Sekmesi - Removed from inline, now shown as modal */}
 
             </div>
-          </main>
 
-          {/* Network Refresh Report - Top Right Toast */}
+{/* Network Refresh Report - Top Right Toast */}
           {
             refreshNetworkReport?.show && (
               <div
@@ -6191,6 +6194,8 @@ ${state.bannerMOTD}
                   }`}
                 style={{
                   zIndex: focusedOverlay === 'refresh' ? 35 : 30,
+                  // On mobile, ensure it's below header (60px) + some margin
+                  ...(isMobile ? { top: '80px' } : {})
                 }}
                 onMouseDown={() => setFocusedOverlay('refresh')}
               >
@@ -6247,9 +6252,10 @@ ${state.bannerMOTD}
               </div>
             )
           }
+          </main>
 
           {/* Footer - Save Status & Hints */}
-          <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-40 border-t backdrop-blur-xl transition-all h-[44px] pb-[50px] ${isDark ? 'bg-zinc-950/95 border-zinc-900' : 'bg-white/95 border-zinc-200'
+          <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-2 border-t backdrop-blur-xl transition-all h-[44px] pb-[50px] ${isDark ? 'bg-zinc-950/95 border-zinc-900' : 'bg-white/95 border-zinc-200'
             } ${showProjectPicker || showOnboarding || activeTab === 'terminal' ? 'hidden' : ''}`}>
             <div className="w-full px-5 py-2 pb-[10px]">
               <div className="flex items-center justify-between gap-4">
@@ -6356,7 +6362,7 @@ ${state.bannerMOTD}
           </footer>
 
           {/* Mobile Footer - Hints */}
-          <footer className={`md:hidden fixed bottom-0 inset-x-0 z-40 border-t backdrop-blur-xl transition-all h-[36px] ${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'
+          <footer className={`md:hidden fixed bottom-0 inset-x-0 z-2 border-t backdrop-blur-xl transition-all h-[36px] ${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'
             } ${showProjectPicker || showOnboarding || activeTab === 'terminal' ? 'hidden' : ''}`}>
             <div className="w-full px-3 py-1.5">
               <div className="flex items-center justify-between gap-2">
@@ -6421,9 +6427,9 @@ ${state.bannerMOTD}
             topologyDevices={topologyDevices}
             onCheckAutoComplete={checkStepCompletionWithContext}
           />
-        </div >
-      </div >
-    </AppErrorBoundary >
+        </div>
+      </div>
+    </AppErrorBoundary>
   );
 }
 

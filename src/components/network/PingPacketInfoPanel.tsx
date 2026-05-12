@@ -425,7 +425,7 @@ export function PingPacketInfoPanel({
     const isFailure = success === false;
 
     const posStyle: React.CSSProperties = isMobile
-        ? { position: 'fixed', bottom: 0, left: 0, right: 0, transform: 'none' }
+        ? { position: 'fixed', top: 60, bottom: 60, left: 0, right: 0, transform: 'none' } // Account for header (60px) and footer (60px) on mobile
         : pos
             ? { position: 'fixed', left: pos.x, top: pos.y, bottom: 'auto', transform: 'none' }
             : { position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)' };
@@ -730,14 +730,26 @@ export function buildHopPacketInfos(
     const sourceDevice = devices.find(d => d.id === path[0]);
     const targetDevice = devices.find(d => d.id === path[path.length - 1]);
 
-    const srcIp = sourceDevice?.ip || '0.0.0.0';
-    const dstIp = targetDevice?.ip || '0.0.0.0';
+    const originalSrcIp = sourceDevice?.ip || '0.0.0.0';
+    const originalDstIp = targetDevice?.ip || '0.0.0.0';
 
     const getMac = (device: CanvasDevice | undefined, fallback: string): string => {
         if (!device) return fallback;
         if (device.macAddress) return device.macAddress;
         const hash = device.id.replace(/[^a-f0-9]/gi, '').padEnd(12, '0').slice(0, 12);
         return `${hash.slice(0, 2)}:${hash.slice(2, 4)}:${hash.slice(4, 6)}:${hash.slice(6, 8)}:${hash.slice(8, 10)}:${hash.slice(10, 12)}`.toUpperCase();
+    };
+
+    // Generate interface-specific IP addresses for router interfaces
+    const generateInterfaceIp = (deviceId: string, interfaceId: string, hopIndex: number): string => {
+        // Create a deterministic but realistic interface IP based on device ID and hop
+        const hash = deviceId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const baseOctet = 10 + (hash % 240); // 10-249 range
+        const secondOctet = 0 + (hopIndex % 255); // Different subnet per interface
+        const thirdOctet = 1 + (hash % 254); // 1-254 range
+        const fourthOctet = 1 + ((hash + hopIndex) % 254); // 1-254 range
+        
+        return `${baseOctet}.${secondOctet}.${thirdOctet}.${fourthOctet}`;
     };
 
     // Check if two devices are connected via wireless
@@ -796,6 +808,25 @@ export function buildHopPacketInfos(
 
         const cableType = conn?.cableType || (isWirelessConnection(path[i], path[i + 1]) ? 'wireless' : 'straight');
 
+        // Calculate hop-specific IP addresses
+        // For router hops, use interface IPs; for end devices, use device IPs
+        let hopSrcIp = fromDev?.ip || '0.0.0.0';
+        let hopDstIp = toDev?.ip || '0.0.0.0';
+
+        // If this is a router interface, generate interface-specific IPs
+        if (fromDev?.type === 'router') {
+            // Router interfaces use different IPs than the main device IP
+            // Generate interface IP based on router ID and hop index
+            const interfaceId = `GigabitEthernet0/${i}`;
+            hopSrcIp = generateInterfaceIp(fromDev.id, interfaceId, i);
+        }
+        
+        if (toDev?.type === 'router') {
+            // Router interfaces use different IPs than the main device IP
+            const interfaceId = `GigabitEthernet0/${i + 1}`;
+            hopDstIp = generateInterfaceIp(toDev.id, interfaceId, i + 1);
+        }
+
         infos.push({
             hopIndex: i,
             fromDevice: {
@@ -816,8 +847,8 @@ export function buildHopPacketInfos(
             srcMac,
             dstMac,
             etherType: '0x0800 (IPv4)',
-            srcIp,
-            dstIp,
+            srcIp: hopSrcIp,
+            dstIp: hopDstIp,
             ttl,
             protocol: 'ICMP (1)',
             icmpType: 'Echo Request (8)',
