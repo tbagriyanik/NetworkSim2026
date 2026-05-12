@@ -197,12 +197,12 @@ const createL3SwitchDevice = (id: string, name: string, x: number, y: number): C
   status: 'online',
   switchModel: 'WS-C3650-24PS',
   ports: [
-    ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' as const })),
+    ...Array.from({ length: 24 }, (_, i) => ({ id: `gi1/0/${i + 1}`, label: `Gi1/0/${i + 1}`, status: 'disconnected' as const })),
     { id: 'console', label: 'Console', status: 'disconnected' as const },
-    { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
-    { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const },
-    { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const },
-    { id: 'gi0/4', label: 'Gi0/4', status: 'disconnected' as const },
+    { id: 'gi1/1/1', label: 'Gi1/1/1', status: 'disconnected' as const },
+    { id: 'gi1/1/2', label: 'Gi1/1/2', status: 'disconnected' as const },
+    { id: 'gi1/1/3', label: 'Gi1/1/3', status: 'disconnected' as const },
+    { id: 'gi1/1/4', label: 'Gi1/1/4', status: 'disconnected' as const },
     { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, shutdown: true }
   ]
 });
