@@ -2814,7 +2814,8 @@ function cmdShowAccessLists(state: any, input: string, ctx: any): any {
     output += 'access-list OUTSIDE-IN\n';
     firewallRules.forEach((rule: any, index: number) => {
       const inactive = rule.enabled === false ? 'inactive ' : '';
-      output += `    line ${index + 1} extended ${inactive}${rule.action} ${rule.protocol} ${rule.sourceIp} ${rule.targetIp} eq ${rule.port}\n`;
+      const protocol = rule.protocol === 'any' ? 'ip' : (rule.protocol || 'ip');
+      output += `    line ${index + 1} extended ${inactive}${rule.action} ${protocol} ${rule.sourceIp} ${rule.targetIp} eq ${rule.port}\n`;
     });
   }
 

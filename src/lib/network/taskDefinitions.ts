@@ -357,7 +357,7 @@ export const routingTasks: TaskDefinition[] = [
     tip: { tr: 'no switchport komutu ile L3 port yapın', en: 'Make L3 port with no switchport command' },
     weight: 15,
     checkFn: (state) => {
-      return Object.values(state.ports || {}).some(port => port.mode === 'routed' && !port.id.startsWith('vlan'));
+      return Object.values(state.ports || {}).some(port => port && port.mode === 'routed' && port.id && !port.id.startsWith('vlan'));
     },
   },
 ];

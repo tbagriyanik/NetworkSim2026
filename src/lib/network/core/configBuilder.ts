@@ -412,7 +412,7 @@ export function buildRunningConfig(state: SwitchState): string[] {
             const action = rule.action === 'allow' ? 'permit' : rule.action;
             const sourceIp = rule.sourceIp === '*' ? 'any' : rule.sourceIp;
             const targetIp = rule.targetIp === '*' ? 'any' : rule.targetIp;
-            const protocol = (rule.protocol || 'ip').toLowerCase();
+            const protocol = (rule.protocol === 'any' ? 'ip' : (rule.protocol || 'ip')).toLowerCase();
             const hasPort = (rule.port !== '*' && rule.port !== 'any' && protocol !== 'icmp' && protocol !== 'ip' && protocol !== 'any');
             const portSuffix = hasPort ? ` eq ${rule.port}` : '';
             lines.push(

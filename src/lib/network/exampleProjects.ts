@@ -1179,7 +1179,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     duplex: 'auto',
     speed: 'auto',
     shutdown: false,
-    type: 'fastethernet',
+    type: 'gigabitethernet',
     ipAddress: '192.168.10.150',
     subnetMask: '255.255.255.0'
   };
@@ -1438,17 +1438,17 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     createL3SwitchDevice('switch-1', 'L3SW1', 260, 330)
   ];
   const l3RoutingConnections: CanvasConnection[] = [];
-  connectPorts(l3RoutingDevices, l3RoutingConnections, 'pc-1', 'eth0', 'switch-1', 'fa0/1');
-  connectPorts(l3RoutingDevices, l3RoutingConnections, 'pc-2', 'eth0', 'switch-1', 'fa0/2');
-  connectPorts(l3RoutingDevices, l3RoutingConnections, 'pc-3', 'eth0', 'switch-1', 'fa0/3');
-  connectPorts(l3RoutingDevices, l3RoutingConnections, 'pc-4', 'eth0', 'switch-1', 'fa0/4');
+  connectPorts(l3RoutingDevices, l3RoutingConnections, 'pc-1', 'eth0', 'switch-1', 'gi1/0/1');
+  connectPorts(l3RoutingDevices, l3RoutingConnections, 'pc-2', 'eth0', 'switch-1', 'gi1/0/2');
+  connectPorts(l3RoutingDevices, l3RoutingConnections, 'pc-3', 'eth0', 'switch-1', 'gi1/1/1');
+  connectPorts(l3RoutingDevices, l3RoutingConnections, 'pc-4', 'eth0', 'switch-1', 'gi1/1/2');
   const l3RoutingNotes: CanvasNote[] = [
     {
       id: 'l3-routing-note',
       text: isTr
-        ? 'Amaç: L3 Switch üzerinde SVI interface\'leri kullanarak farklı VLAN\'lar arası routing sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 1 adet L3 Switch (L3SW1) ekle\n   - 4 adet PC ekle (PC-1, PC-2, PC-3, PC-4)\n   - PC-1 Eth0 -> L3SW1 Fa0/1 (Straight kablo)\n   - PC-2 Eth0 -> L3SW1 Fa0/2 (Straight kablo)\n   - PC-3 Eth0 -> L3SW1 Fa0/3 (Straight kablo)\n   - PC-4 Eth0 -> L3SW1 Fa0/4 (Straight kablo)\n\n2) L3 SWITCH KONFİGÜRASYONU:\n   - L3SW1 terminaline gir: enable, conf t\n   - ip routing\n   - vlan 10\n     name VLAN10\n   - exit\n   - vlan 20\n     name VLAN20\n   - exit\n   - vlan 30\n     name VLAN30\n   - exit\n   - vlan 40\n     name VLAN40\n   - exit\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 30\n     ip address 192.168.30.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 40\n     ip address 192.168.40.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface fa0/2\n     switchport mode access\n     switchport access vlan 20\n   - exit\n   - interface fa0/3\n     switchport mode access\n     switchport access vlan 30\n   - exit\n   - interface fa0/4\n     switchport mode access\n     switchport access vlan 40\n   - exit\n\n3) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1, VLAN 10\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1, VLAN 20\n   - PC-3: IP 192.168.30.10, GW 192.168.30.1, VLAN 30\n   - PC-4: IP 192.168.40.10, GW 192.168.40.1, VLAN 40\n\n4) TEST:\n   - show ip route (routing tablosunu gör)\n   - Tüm PC\'ler birbirine ping atabilir'
-        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 1 L3 Switch (L3SW1)\n   - Add 4 PCs (PC-1, PC-2, PC-3, PC-4)\n   - Connect PC-1 Eth0 -> L3SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> L3SW1 Fa0/2 (Straight cable)\n   - Connect PC-3 Eth0 -> L3SW1 Fa0/3 (Straight cable)\n   - Connect PC-4 Eth0 -> L3SW1 Fa0/4 (Straight cable)\n\n2) L3 SWITCH CONFIGURATION:\n   - Enter L3SW1 terminal: enable, conf t\n   - ip routing\n   - vlan 10\n     name VLAN10\n   - exit\n   - vlan 20\n     name VLAN20\n   - exit\n   - vlan 30\n     name VLAN30\n   - exit\n   - vlan 40\n     name VLAN40\n   - exit\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 30\n     ip address 192.168.30.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 40\n     ip address 192.168.40.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface fa0/2\n     switchport mode access\n     switchport access vlan 20\n   - exit\n   - interface fa0/3\n     switchport mode access\n     switchport access vlan 30\n   - exit\n   - interface fa0/4\n     switchport mode access\n     switchport access vlan 40\n   - exit\n\n3) PC CONFIGURATION:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1, VLAN 10\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1, VLAN 20\n   - PC-3: IP 192.168.30.10, GW 192.168.30.1, VLAN 30\n   - PC-4: IP 192.168.40.10, GW 192.168.40.1, VLAN 40\n\n4) TEST:\n   - show ip route (view routing table)\n   - All PCs can ping each other',
-      x: 600,
+        ? 'Amaç: L3 Switch üzerinde SVI interface\'leri kullanarak farklı VLAN\'lar arası routing sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 1 adet L3 Switch (L3SW1) ekle\n   - 4 adet PC ekle (PC-1, PC-2, PC-3, PC-4)\n   - PC-1 Eth0 -> L3SW1 Gig1/0/1 (Straight kablo)\n   - PC-2 Eth0 -> L3SW1 Gig1/0/2 (Straight kablo)\n   - PC-3 Eth0 -> L3SW1 Gig1/1/1 (Straight kablo)\n   - PC-4 Eth0 -> L3SW1 Gig1/1/2 (Straight kablo)\n\n2) L3 SWITCH KONFİGÜRASYONU:\n   - L3SW1 terminaline gir: enable, conf t\n   - ip routing\n   - vlan 10\n     name VLAN10\n   - exit\n   - vlan 20\n     name VLAN20\n   - exit\n   - vlan 30\n     name VLAN30\n   - exit\n   - vlan 40\n     name VLAN40\n   - exit\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 30\n     ip address 192.168.30.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 40\n     ip address 192.168.40.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface gi1/0/2\n     switchport mode access\n     switchport access vlan 20\n   - exit\n   - interface gi1/1/1\n     switchport mode access\n     switchport access vlan 30\n   - exit\n   - interface gi1/1/2\n     switchport mode access\n     switchport access vlan 40\n   - exit\n\n3) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1, VLAN 10\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1, VLAN 20\n   - PC-3: IP 192.168.30.10, GW 192.168.30.1, VLAN 30\n   - PC-4: IP 192.168.40.10, GW 192.168.40.1, VLAN 40\n\n4) TEST:\n   - show ip route (routing tablosunu gör)\n   - Tüm PC\'ler birbirine ping atabilir'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 1 L3 Switch (L3SW1)\n   - Add 4 PCs (PC-1, PC-2, PC-3, PC-4)\n   - Connect PC-1 Eth0 -> L3SW1 Gig1/0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> L3SW1 Gig1/0/2 (Straight cable)\n   - Connect PC-3 Eth0 -> L3SW1 Gig1/1/1 (Straight cable)\n   - Connect PC-4 Eth0 -> L3SW1 Gig1/1/2 (Straight cable)\n\n2) L3 SWITCH CONFIGURATION:\n   - Enter L3SW1 terminal: enable, conf t\n   - ip routing\n   - vlan 10\n     name VLAN10\n   - exit\n   - vlan 20\n     name VLAN20\n   - exit\n   - vlan 30\n     name VLAN30\n   - exit\n   - vlan 40\n     name VLAN40\n   - exit\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 30\n     ip address 192.168.30.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 40\n     ip address 192.168.40.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/1\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface gi1/0/2\n     switchport mode access\n     switchport access vlan 20\n   - exit\n   - interface gi1/1/1\n     switchport mode access\n     switchport access vlan 30\n   - exit\n   - interface gi1/1/2\n     switchport mode access\n     switchport access vlan 40\n   - exit\n\n3) PC CONFIGURATION:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1, VLAN 10\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1, VLAN 20\n   - PC-3: IP 192.168.30.10, GW 192.168.30.1, VLAN 30\n   - PC-4: IP 192.168.40.10, GW 192.168.40.1, VLAN 40\n\n4) TEST:\n   - show ip route (view routing table)\n   - All PCs can ping each other',
+              x: 600,
       y: 40,
       width: 500,
       height: 400,
@@ -1461,19 +1461,19 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   const l3RoutingState = createInitialState(undefined, 'WS-C3650-24PS');
   l3RoutingState.hostname = 'L3SW1';
   l3RoutingState.ipRouting = true;
-  l3RoutingState.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['FA0/1'] };
-  l3RoutingState.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2'] };
-  l3RoutingState.vlans[30] = { id: 30, name: 'VLAN30', status: 'active', ports: ['FA0/3'] };
-  l3RoutingState.vlans[40] = { id: 40, name: 'VLAN40', status: 'active', ports: ['FA0/4'] };
-  l3RoutingState.ports['vlan1'] = { ...l3RoutingState.ports['vlan1'], ipAddress: '192.168.1.1', subnetMask: '255.255.255.0' };
-  l3RoutingState.ports['vlan10'] = { id: 'vlan10', name: '', status: 'notconnect', vlan: 10, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'fastethernet', ipAddress: '192.168.10.1', subnetMask: '255.255.255.0' };
-  l3RoutingState.ports['vlan20'] = { id: 'vlan20', name: '', status: 'notconnect', vlan: 20, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'fastethernet', ipAddress: '192.168.20.1', subnetMask: '255.255.255.0' };
-  l3RoutingState.ports['vlan30'] = { id: 'vlan30', name: '', status: 'notconnect', vlan: 30, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'fastethernet', ipAddress: '192.168.30.1', subnetMask: '255.255.255.0' };
-  l3RoutingState.ports['vlan40'] = { id: 'vlan40', name: '', status: 'notconnect', vlan: 40, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'fastethernet', ipAddress: '192.168.40.1', subnetMask: '255.255.255.0' };
-  l3RoutingState.ports['fa0/1'] = { ...l3RoutingState.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
-  l3RoutingState.ports['fa0/2'] = { ...l3RoutingState.ports['fa0/2'], vlan: 20, mode: 'access', status: 'connected' };
-  l3RoutingState.ports['fa0/3'] = { ...l3RoutingState.ports['fa0/3'], vlan: 30, mode: 'access', status: 'connected' };
-  l3RoutingState.ports['fa0/4'] = { ...l3RoutingState.ports['fa0/4'], vlan: 40, mode: 'access', status: 'connected' };
+  l3RoutingState.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['GI1/1/1'] };
+  l3RoutingState.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['GI1/1/2'] };
+  l3RoutingState.vlans[30] = { id: 30, name: 'VLAN30', status: 'active', ports: ['GI1/1/3'] };
+  l3RoutingState.vlans[40] = { id: 40, name: 'VLAN40', status: 'active', ports: ['GI1/1/4'] };
+  l3RoutingState.ports['vlan1'] = { id: 'vlan1', name: '', status: 'notconnect', vlan: 1, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.1.1', subnetMask: '255.255.255.0' };
+  l3RoutingState.ports['vlan10'] = { id: 'vlan10', name: '', status: 'notconnect', vlan: 10, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.10.1', subnetMask: '255.255.255.0' };
+  l3RoutingState.ports['vlan20'] = { id: 'vlan20', name: '', status: 'notconnect', vlan: 20, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.20.1', subnetMask: '255.255.255.0' };
+  l3RoutingState.ports['vlan30'] = { id: 'vlan30', name: '', status: 'notconnect', vlan: 30, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.30.1', subnetMask: '255.255.255.0' };
+  l3RoutingState.ports['vlan40'] = { id: 'vlan40', name: '', status: 'notconnect', vlan: 40, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.40.1', subnetMask: '255.255.255.0' };
+  l3RoutingState.ports['gi1/1/1'] = { ...l3RoutingState.ports['gi1/1/1'], vlan: 10, mode: 'access', status: 'connected' };
+  l3RoutingState.ports['gi1/1/2'] = { ...l3RoutingState.ports['gi1/1/2'], vlan: 20, mode: 'access', status: 'connected' };
+  l3RoutingState.ports['gi1/1/3'] = { ...l3RoutingState.ports['gi1/1/3'], vlan: 30, mode: 'access', status: 'connected' };
+  l3RoutingState.ports['gi1/1/4'] = { ...l3RoutingState.ports['gi1/1/4'], vlan: 40, mode: 'access', status: 'connected' };
 
   // Example 7: Static Routing
   const staticRoutingDevices = [
@@ -1485,17 +1485,17 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     createSwitchDevice('switch-2', 'SW2', 640, 190)
   ];
   const staticRoutingConnections: CanvasConnection[] = [];
-  connectPorts(staticRoutingDevices, staticRoutingConnections, 'pc-1', 'eth0', 'switch-1', 'fa0/1');
-  connectPorts(staticRoutingDevices, staticRoutingConnections, 'pc-2', 'eth0', 'switch-2', 'fa0/1');
-  connectPorts(staticRoutingDevices, staticRoutingConnections, 'switch-1', 'gi0/1', 'router-1', 'gi0/0', 'crossover');
-  connectPorts(staticRoutingDevices, staticRoutingConnections, 'router-1', 'gi0/1', 'router-2', 'gi0/0', 'crossover');
-  connectPorts(staticRoutingDevices, staticRoutingConnections, 'router-2', 'gi0/1', 'switch-2', 'gi0/1', 'crossover');
+  connectPorts(staticRoutingDevices, staticRoutingConnections, 'pc-1', 'eth0', 'switch-1', 'gi1/0/1');
+  connectPorts(staticRoutingDevices, staticRoutingConnections, 'pc-2', 'eth0', 'switch-2', 'gi1/0/2');
+  connectPorts(staticRoutingDevices, staticRoutingConnections, 'switch-1', 'gi1/0/2', 'router-1', 'gi1/0/0', 'crossover');
+  connectPorts(staticRoutingDevices, staticRoutingConnections, 'router-1', 'gi1/0/1', 'router-2', 'gi1/0/0', 'crossover');
+  connectPorts(staticRoutingDevices, staticRoutingConnections, 'router-2', 'gi1/0/1', 'switch-2', 'gi1/0/2', 'crossover');
   const staticRoutingNotes: CanvasNote[] = [
     {
       id: 'static-routing-note',
       text: isTr
-        ? 'Amaç: Router\'larda static routing yapılandırarak farklı ağlar arası iletişim sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet Router (R1, R2) ekle\n   - 2 adet Switch (SW1, SW2) ekle\n   - 2 adet PC (PC-1, PC-2) ekle\n   - PC-1 Eth0 -> SW1 Fa0/1 (Straight kablo)\n   - PC-2 Eth0 -> SW2 Fa0/1 (Straight kablo)\n   - SW1 Gi0/1 -> R1 Gi0/0 (Crossover kablo)\n   - R1 Gi0/1 -> R2 Gi0/0 (Crossover kablo)\n   - R2 Gi0/1 -> SW2 Gi0/1 (Crossover kablo)\n\n2) R1 KONFİGÜRASYONU:\n   - R1 terminaline gir: enable, conf t\n   - interface gi0/0\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.20.0 255.255.255.0 192.168.1.2\n   - exit\n\n3) R2 KONFİGÜRASYONU:\n   - R2 terminaline gir: enable, conf t\n   - interface gi0/0\n     ip address 192.168.1.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.10.0 255.255.255.0 192.168.1.1\n   - exit\n\n4) SWITCH KONFİGÜRASYONU:\n   - SW1 ve SW2: interface fa0/1 -> switchport mode access\n   - SW1 ve SW2: interface gi0/1 -> switchport mode access\n\n5) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1\n\n6) TEST:\n   - show ip route (statik rotaları gör)\n   - PC-1 ping 192.168.20.10 (PC-2)'
-        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 Routers (R1, R2)\n   - Add 2 Switches (SW1, SW2)\n   - Add 2 PCs (PC-1, PC-2)\n   - Connect PC-1 Eth0 -> SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> SW2 Fa0/1 (Straight cable)\n   - Connect SW1 Gi0/1 -> R1 Gi0/0 (Crossover cable)\n   - Connect R1 Gi0/1 -> R2 Gi0/0 (Crossover cable)\n   - Connect R2 Gi0/1 -> SW2 Gi0/1 (Crossover cable)\n\n2) R1 CONFIGURATION:\n   - Enter R1 terminal: enable, conf t\n   - interface gi0/0\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.20.0 255.255.255.0 192.168.1.2\n   - exit\n\n3) R2 CONFIGURATION:\n   - Enter R2 terminal: enable, conf t\n   - interface gi0/0\n     ip address 192.168.1.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.10.0 255.255.255.0 192.168.1.1\n   - exit\n\n4) SWITCH CONFIGURATION:\n   - SW1 and SW2: interface fa0/1 -> switchport mode access\n   - SW1 and SW2: interface gi0/1 -> switchport mode access\n\n5) PC CONFIGURATION:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1\n\n6) TEST:\n   - show ip route (view static routes)\n   - PC-1 ping 192.168.20.10 (PC-2)',
+        ? 'Amaç: Router\'larda static routing yapılandırarak farklı ağlar arası iletişim sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet Router (R1, R2) ekle\n   - 2 adet Switch (SW1, SW2) ekle\n   - 2 adet PC (PC-1, PC-2) ekle\n   - PC-1 Eth0 -> SW1 Gi1/0/1 (Straight kablo)\n   - PC-2 Eth0 -> SW2 Gi1/0/1 (Straight kablo)\n   - SW1 Gi1/0/2 -> R1 Gi1/0/0 (Crossover kablo)\n   - R1 Gi1/0/1 -> R2 Gi1/0/0 (Crossover kablo)\n   - R2 Gi1/0/1 -> SW2 Gi1/0/2 (Crossover kablo)\n\n2) R1 KONFİGÜRASYONU:\n   - R1 terminaline gir: enable, conf t\n   - interface gi1/0/0\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/1\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.20.0 255.255.255.0 192.168.1.2\n   - exit\n\n3) R2 KONFİGÜRASYONU:\n   - R2 terminaline gir: enable, conf t\n   - interface gi1/0/0\n     ip address 192.168.1.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/1\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.10.0 255.255.255.0 192.168.1.1\n   - exit\n\n4) SWITCH KONFİGÜRASYONU:\n   - SW1 ve SW2: interface fa0/1 -> switchport mode access\n   - SW1 ve SW2: interface gi1/0/1 -> switchport mode access\n\n5) PC KONFİGÜRASYONU:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1\n\n6) TEST:\n   - show ip route (statik rotaları gör)\n   - PC-1 ping 192.168.20.10 (PC-2)'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 Routers (R1, R2)\n   - Add 2 Switches (SW1, SW2)\n   - Add 2 PCs (PC-1, PC-2)\n   - Connect PC-1 Eth0 -> SW1 Gi1/0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> SW2 Gi1/0/1 (Straight cable)\n   - Connect SW1 Gi1/0/2 -> R1 Gi1/0/0 (Crossover cable)\n   - Connect R1 Gi1/0/1 -> R2 Gi1/0/0 (Crossover cable)\n   - Connect R2 Gi1/0/1 -> SW2 Gi1/0/2 (Crossover cable)\n\n2) R1 CONFIGURATION:\n   - Enter R1 terminal: enable, conf t\n   - interface gi1/0/0\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/1\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.20.0 255.255.255.0 192.168.1.2\n   - exit\n\n3) R2 CONFIGURATION:\n   - Enter R2 terminal: enable, conf t\n   - interface gi1/0/0\n     ip address 192.168.1.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/1\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.10.0 255.255.255.0 192.168.1.1\n   - exit\n\n4) PC CONFIGURATION:\n   - PC-1: IP 192.168.10.10, GW 192.168.10.1\n   - PC-2: IP 192.168.20.10, GW 192.168.20.1\n\n5) TEST:\n   - PC-1 ping PC-2 (should work via static routes)\n   - show ip route on both routers',
       x: 600,
       y: 40,
       width: 500,
@@ -1508,29 +1508,29 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   ];
   const staticSw1 = createInitialState('00:1A:2B:3C:4D:67', 'WS-C2960-24TT-L');
   staticSw1.hostname = 'SW1';
-  staticSw1.ports['fa0/1'] = { ...staticSw1.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
-  staticSw1.ports['gi0/1'] = { ...staticSw1.ports['gi0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  staticSw1.ports['gi1/0/1'] = { ...staticSw1.ports['gi1/0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  staticSw1.ports['gi1/0/2'] = { ...staticSw1.ports['gi1/0/2'], vlan: 1, mode: 'access', status: 'connected' };
 
   const staticR1 = createInitialRouterState('00:50:00:00:00:01');
   staticR1.hostname = 'R1';
-  staticR1.ports['gi0/0'] = { ...staticR1.ports['gi0/0'], ipAddress: '192.168.1.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
-  staticR1.ports['gi0/1'] = { ...staticR1.ports['gi0/1'], ipAddress: '192.168.10.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  staticR1.ports['gi1/0/0'] = { ...staticR1.ports['gi1/0/0'], ipAddress: '192.168.1.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  staticR1.ports['gi1/0/1'] = { ...staticR1.ports['gi1/0/1'], ipAddress: '192.168.10.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
   staticR1.staticRoutes = [
     { destination: '192.168.20.0', subnetMask: '255.255.255.0', nextHop: '192.168.1.2', metric: 1, type: 'static' }
   ];
 
   const staticR2 = createInitialRouterState('00:50:00:00:00:02');
   staticR2.hostname = 'R2';
-  staticR2.ports['gi0/0'] = { ...staticR2.ports['gi0/0'], ipAddress: '192.168.1.2', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
-  staticR2.ports['gi0/1'] = { ...staticR2.ports['gi0/1'], ipAddress: '192.168.20.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  staticR2.ports['gi1/0/0'] = { ...staticR2.ports['gi1/0/0'], ipAddress: '192.168.1.2', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  staticR2.ports['gi1/0/1'] = { ...staticR2.ports['gi1/0/1'], ipAddress: '192.168.20.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
   staticR2.staticRoutes = [
     { destination: '192.168.10.0', subnetMask: '255.255.255.0', nextHop: '192.168.1.1', metric: 1, type: 'static' }
   ];
 
   const staticSw2 = createInitialState('00:1A:2B:3C:4D:68', 'WS-C2960-24TT-L');
   staticSw2.hostname = 'SW2';
-  staticSw2.ports['fa0/1'] = { ...staticSw2.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
-  staticSw2.ports['gi0/1'] = { ...staticSw2.ports['gi0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  staticSw2.ports['gi1/0/1'] = { ...staticSw2.ports['gi1/0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  staticSw2.ports['gi1/0/2'] = { ...staticSw2.ports['gi1/0/2'], vlan: 1, mode: 'access', status: 'connected' };
 
   // Example 8: EtherChannel
   const etherChannelDevices = [
@@ -2234,24 +2234,24 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
 
   const l3Switch2VlanConnections: CanvasConnection[] = [];
   // Trunk connection between Switch2 and Switch4
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'switch2', 'gi0/1', 'switch4', 'gi0/1', 'crossover');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'switch2', 'gi1/0/5', 'switch4', 'gi1/0/5', 'crossover');
   // Switch2 PC connections
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc4', 'eth0', 'switch2', 'fa0/1');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc5', 'eth0', 'switch2', 'fa0/2');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc6', 'eth0', 'switch2', 'fa0/3');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc7', 'eth0', 'switch2', 'fa0/4');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc4', 'eth0', 'switch2', 'gi1/0/1');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc5', 'eth0', 'switch2', 'gi1/0/2');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc6', 'eth0', 'switch2', 'gi1/0/3');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc7', 'eth0', 'switch2', 'gi1/0/4');
   // Switch4 PC connections
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc8', 'eth0', 'switch4', 'fa0/1');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc9', 'eth0', 'switch4', 'fa0/2');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc10', 'eth0', 'switch4', 'fa0/3');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc11', 'eth0', 'switch4', 'fa0/4');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc8', 'eth0', 'switch4', 'gi1/0/1');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc9', 'eth0', 'switch4', 'gi1/0/2');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc10', 'eth0', 'switch4', 'gi1/0/3');
+  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc11', 'eth0', 'switch4', 'gi1/0/4');
 
   const l3Switch2VlanNotes: CanvasNote[] = [
     {
       id: 'l3-switch2-vlan-note',
       text: isTr
-        ? 'Amaç: İki L3 switch arasında trunk bağlantısı ile VLAN\'lar arası routing sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (Switch2, Switch4) ekle\n   - 8 adet PC ekle (PC4-PC11)\n   - Switch2 Gi0/1 -> Switch4 Gi0/1 (Crossover kablo)\n   - PC4-PC5 -> Switch2 Fa0/1-2 (VLAN 10)\n   - PC6-PC7 -> Switch2 Fa0/3-4 (VLAN 20)\n   - PC8-PC9 -> Switch4 Fa0/1-2 (VLAN 10)\n   - PC10-PC11 -> Switch4 Fa0/3-4 (VLAN 20)\n\n2) SWITCH2 KONFİGÜRASYONU:\n   - Switch2 terminaline gir: enable, conf t\n   - vlan 10\n     name AG1\n   - exit\n   - vlan 20\n     name AG2\n   - exit\n   - ip routing\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     switchport trunk encapsulation dot1q\n     switchport mode trunk\n   - exit\n   - interface range fa0/1-2\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range fa0/3-4\n     switchport mode access\n     switchport access vlan 20\n   - exit\n\n3) SWITCH4 KONFİGÜRASYONU:\n   - Switch4 terminaline gir: enable, conf t\n   - Aynı yapılandırma Switch2 ile aynı\n\n4) PC KONFİGÜRASYONU:\n   - VLAN 10 PC\'ler: IP 192.168.10.x, GW 192.168.10.1\n   - VLAN 20 PC\'ler: IP 192.168.20.x, GW 192.168.20.1\n\n5) TEST:\n   - Tüm PC\'ler birbirine ping atabilir'
-        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (Switch2, Switch4)\n   - Add 8 PCs (PC4-PC11)\n   - Connect Switch2 Gi0/1 -> Switch4 Gi0/1 (Crossover cable)\n   - Connect PC4-PC5 -> Switch2 Fa0/1-2 (VLAN 10)\n   - Connect PC6-PC7 -> Switch2 Fa0/3-4 (VLAN 20)\n   - Connect PC8-PC9 -> Switch4 Fa0/1-2 (VLAN 10)\n   - Connect PC10-PC11 -> Switch4 Fa0/3-4 (VLAN 20)\n\n2) SWITCH2 CONFIGURATION:\n   - Enter Switch2 terminal: enable, conf t\n   - vlan 10\n     name AG1\n   - exit\n   - vlan 20\n     name AG2\n   - exit\n   - ip routing\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     switchport trunk encapsulation dot1q\n     switchport mode trunk\n   - exit\n   - interface range fa0/1-2\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range fa0/3-4\n     switchport mode access\n     switchport access vlan 20\n   - exit\n\n3) SWITCH4 CONFIGURATION:\n   - Enter Switch4 terminal: enable, conf t\n   - Same configuration as Switch2\n\n4) PC CONFIGURATION:\n   - VLAN 10 PCs: IP 192.168.10.x, GW 192.168.10.1\n   - VLAN 20 PCs: IP 192.168.20.x, GW 192.168.20.1\n\n5) TEST:\n   - All PCs can ping each other',
+        ? 'Amaç: İki L3 switch arasında trunk bağlantısı ile VLAN\'lar arası routing sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (Switch2, Switch4) ekle\n   - 8 adet PC ekle (PC4-PC11)\n   - Switch2 Gi1/0/5 -> Switch4 Gi1/0/5 (Crossover kablo)\n   - PC4-PC5 -> Switch2 Gi1/0/1-2 (VLAN 10)\n   - PC6-PC7 -> Switch2 Gi1/0/3-4 (VLAN 20)\n   - PC8-PC9 -> Switch4 Gi1/0/1-2 (VLAN 10)\n   - PC10-PC11 -> Switch4 Gi1/0/3-4 (VLAN 20)\n\n2) SWITCH2 KONFİGÜRASYONU:\n   - Switch2 terminaline gir: enable, conf t\n   - vlan 10\n     name AG1\n   - exit\n   - vlan 20\n     name AG2\n   - exit\n   - ip routing\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/5\n     switchport trunk encapsulation dot1q\n     switchport mode trunk\n   - exit\n   - interface range gi1/0/1-2\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range gi1/0/3-4\n     switchport mode access\n     switchport access vlan 20\n   - exit\n\n3) SWITCH4 KONFİGÜRASYONU:\n   - Switch4 terminaline gir: enable, conf t\n   - Aynı yapılandırma Switch2 ile aynı\n\n4) PC KONFİGÜRASYONU:\n   - VLAN 10 PC\'ler: IP 192.168.10.x, GW 192.168.10.1\n   - VLAN 20 PC\'ler: IP 192.168.20.x, GW 192.168.20.1\n\n5) TEST:\n   - Tüm PC\'ler birbirine ping atabilir'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (Switch2, Switch4)\n   - Add 8 PCs (PC4-PC11)\n   - Connect Switch2 Gi1/0/5 -> Switch4 Gi1/0/5 (Crossover cable)\n   - Connect PC4-PC5 -> Switch2 Gi1/0/1-2 (VLAN 10)\n   - Connect PC6-PC7 -> Switch2 Gi1/0/3-4 (VLAN 20)\n   - Connect PC8-PC9 -> Switch4 Gi1/0/1-2 (VLAN 10)\n   - Connect PC10-PC11 -> Switch4 Gi1/0/3-4 (VLAN 20)\n\n2) SWITCH2 CONFIGURATION:\n   - Enter Switch2 terminal: enable, conf t\n   - vlan 10\n     name AG1\n   - exit\n   - vlan 20\n     name AG2\n   - exit\n   - ip routing\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/5\n     switchport trunk encapsulation dot1q\n     switchport mode trunk\n   - exit\n   - interface range gi1/0/1-2\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range gi1/0/3-4\n     switchport mode access\n     switchport access vlan 20\n   - exit\n\n3) SWITCH4 CONFIGURATION:\n   - Enter Switch4 terminal: enable, conf t\n   - Same configuration as Switch2\n\n4) PC CONFIGURATION:\n   - VLAN 10 PCs: IP 192.168.10.x, GW 192.168.10.1\n   - VLAN 20 PCs: IP 192.168.20.x, GW 192.168.20.1\n\n5) TEST:\n   - All PCs can ping each other',
       x: 400,
       y: 400,
       width: 520,
@@ -2269,8 +2269,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   l3Switch2State.switchModel = 'WS-C3650-24PS';
   l3Switch2State.switchLayer = 'L3';
   l3Switch2State.ipRouting = true;
-  l3Switch2State.vlans[10] = { id: 10, name: 'AG1', status: 'active', ports: ['FA0/1', 'FA0/2', 'GI0/1'] };
-  l3Switch2State.vlans[20] = { id: 20, name: 'AG2', status: 'active', ports: ['FA0/3', 'FA0/4', 'GI0/1'] };
+  l3Switch2State.vlans[10] = { id: 10, name: 'AG1', status: 'active', ports: ['GI1/0/1', 'GI1/0/2', 'GI1/0/5'] };
+  l3Switch2State.vlans[20] = { id: 20, name: 'AG2', status: 'active', ports: ['GI1/0/3', 'GI1/0/4', 'GI1/0/5'] };
   l3Switch2State.ports['vlan10'] = {
     id: 'vlan10',
     name: 'VLAN10',
@@ -2280,7 +2280,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     duplex: 'auto',
     speed: 'auto',
     shutdown: false,
-    type: 'fastethernet',
+    type: 'gigabitethernet',
     ipAddress: '192.168.10.1',
     subnetMask: '255.255.255.0'
   };
@@ -2293,15 +2293,15 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     duplex: 'auto',
     speed: 'auto',
     shutdown: false,
-    type: 'fastethernet',
+    type: 'gigabitethernet',
     ipAddress: '192.168.20.1',
     subnetMask: '255.255.255.0'
   };
-  l3Switch2State.ports['fa0/1'] = { ...l3Switch2State.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
-  l3Switch2State.ports['fa0/2'] = { ...l3Switch2State.ports['fa0/2'], vlan: 10, mode: 'access', status: 'connected' };
-  l3Switch2State.ports['fa0/3'] = { ...l3Switch2State.ports['fa0/3'], vlan: 20, mode: 'access', status: 'connected' };
-  l3Switch2State.ports['fa0/4'] = { ...l3Switch2State.ports['fa0/4'], vlan: 20, mode: 'access', status: 'connected' };
-  l3Switch2State.ports['gi0/1'] = { ...l3Switch2State.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  l3Switch2State.ports['gi1/0/1'] = { id: 'gi1/0/1', name: '', status: 'connected', vlan: 10, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
+  l3Switch2State.ports['gi1/0/2'] = { id: 'gi1/0/2', name: '', status: 'connected', vlan: 10, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
+  l3Switch2State.ports['gi1/0/3'] = { id: 'gi1/0/3', name: '', status: 'connected', vlan: 20, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
+  l3Switch2State.ports['gi1/0/4'] = { id: 'gi1/0/4', name: '', status: 'connected', vlan: 20, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
+  l3Switch2State.ports['gi1/0/5'] = { id: 'gi1/0/5', name: '', status: 'connected', vlan: 1, mode: 'trunk', allowedVlans: 'all', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
   l3Switch2State.runningConfig = [
     '!',
     'hostname Switch2',
@@ -2322,15 +2322,15 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' ip address 192.168.20.1 255.255.255.0',
     ' no shutdown',
     '!',
-    'interface range fa0/1 - 2',
+    'interface range gi1/0/1 - 2',
     ' switchport access vlan 10',
     ' switchport mode access',
     '!',
-    'interface range fa0/3 - 4',
+    'interface range gi1/0/3 - 4',
     ' switchport access vlan 20',
     ' switchport mode access',
     '!',
-    'interface gi0/1',
+    'interface gi1/0/5',
     ' switchport trunk encapsulation dot1q',
     ' switchport mode trunk',
     ' switchport trunk allowed vlan all',
@@ -2344,8 +2344,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   l3Switch4State.switchModel = 'WS-C3650-24PS';
   l3Switch4State.switchLayer = 'L3';
   l3Switch4State.ipRouting = true;
-  l3Switch4State.vlans[10] = { id: 10, name: 'AG1', status: 'active', ports: ['FA0/1', 'FA0/2', 'GI0/1'] };
-  l3Switch4State.vlans[20] = { id: 20, name: 'AG2', status: 'active', ports: ['FA0/3', 'FA0/4', 'GI0/1'] };
+  l3Switch4State.vlans[10] = { id: 10, name: 'AG1', status: 'active', ports: ['GI1/0/1', 'GI1/0/2', 'GI1/0/5'] };
+  l3Switch4State.vlans[20] = { id: 20, name: 'AG2', status: 'active', ports: ['GI1/0/3', 'GI1/0/4', 'GI1/0/5'] };
   l3Switch4State.ports['vlan10'] = {
     id: 'vlan10',
     name: 'VLAN10',
@@ -2355,7 +2355,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     duplex: 'auto',
     speed: 'auto',
     shutdown: false,
-    type: 'fastethernet',
+    type: 'gigabitethernet',
     ipAddress: '192.168.10.1',
     subnetMask: '255.255.255.0'
   };
@@ -2368,15 +2368,15 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     duplex: 'auto',
     speed: 'auto',
     shutdown: false,
-    type: 'fastethernet',
+    type: 'gigabitethernet',
     ipAddress: '192.168.20.1',
     subnetMask: '255.255.255.0'
   };
-  l3Switch4State.ports['fa0/1'] = { ...l3Switch4State.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
-  l3Switch4State.ports['fa0/2'] = { ...l3Switch4State.ports['fa0/2'], vlan: 10, mode: 'access', status: 'connected' };
-  l3Switch4State.ports['fa0/3'] = { ...l3Switch4State.ports['fa0/3'], vlan: 20, mode: 'access', status: 'connected' };
-  l3Switch4State.ports['fa0/4'] = { ...l3Switch4State.ports['fa0/4'], vlan: 20, mode: 'access', status: 'connected' };
-  l3Switch4State.ports['gi0/1'] = { ...l3Switch4State.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  l3Switch4State.ports['gi1/0/1'] = { id: 'gi1/0/1', name: '', status: 'connected', vlan: 10, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
+  l3Switch4State.ports['gi1/0/2'] = { id: 'gi1/0/2', name: '', status: 'connected', vlan: 10, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
+  l3Switch4State.ports['gi1/0/3'] = { id: 'gi1/0/3', name: '', status: 'connected', vlan: 20, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
+  l3Switch4State.ports['gi1/0/4'] = { id: 'gi1/0/4', name: '', status: 'connected', vlan: 20, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
+  l3Switch4State.ports['gi1/0/5'] = { id: 'gi1/0/5', name: '', status: 'connected', vlan: 1, mode: 'trunk', allowedVlans: 'all', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
   l3Switch4State.runningConfig = [
     '!',
     'hostname Switch4',
@@ -2397,15 +2397,15 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' ip address 192.168.20.1 255.255.255.0',
     ' no shutdown',
     '!',
-    'interface range fa0/1 - 2',
+    'interface range gi1/0/1 - 2',
     ' switchport access vlan 10',
     ' switchport mode access',
     '!',
-    'interface range fa0/3 - 4',
+    'interface range gi1/0/3 - 4',
     ' switchport access vlan 20',
     ' switchport mode access',
     '!',
-    'interface gi0/1',
+    'interface gi1/0/5',
     ' switchport trunk encapsulation dot1q',
     ' switchport mode trunk',
     ' switchport trunk allowed vlan all',
