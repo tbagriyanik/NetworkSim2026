@@ -1465,11 +1465,11 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   l3RoutingState.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['GI1/1/2'] };
   l3RoutingState.vlans[30] = { id: 30, name: 'VLAN30', status: 'active', ports: ['GI1/1/3'] };
   l3RoutingState.vlans[40] = { id: 40, name: 'VLAN40', status: 'active', ports: ['GI1/1/4'] };
-  l3RoutingState.ports['vlan1'] = { id: 'vlan1', name: '', status: 'notconnect', vlan: 1, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.1.1', subnetMask: '255.255.255.0' };
-  l3RoutingState.ports['vlan10'] = { id: 'vlan10', name: '', status: 'notconnect', vlan: 10, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.10.1', subnetMask: '255.255.255.0' };
-  l3RoutingState.ports['vlan20'] = { id: 'vlan20', name: '', status: 'notconnect', vlan: 20, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.20.1', subnetMask: '255.255.255.0' };
-  l3RoutingState.ports['vlan30'] = { id: 'vlan30', name: '', status: 'notconnect', vlan: 30, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.30.1', subnetMask: '255.255.255.0' };
-  l3RoutingState.ports['vlan40'] = { id: 'vlan40', name: '', status: 'notconnect', vlan: 40, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.40.1', subnetMask: '255.255.255.0' };
+  l3RoutingState.ports['vlan1'] = { id: 'vlan1', name: '', status: 'connected', vlan: 1, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.1.1', subnetMask: '255.255.255.0' };
+  l3RoutingState.ports['vlan10'] = { id: 'vlan10', name: '', status: 'connected', vlan: 10, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.10.1', subnetMask: '255.255.255.0' };
+  l3RoutingState.ports['vlan20'] = { id: 'vlan20', name: '', status: 'connected', vlan: 20, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.20.1', subnetMask: '255.255.255.0' };
+  l3RoutingState.ports['vlan30'] = { id: 'vlan30', name: '', status: 'connected', vlan: 30, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.30.1', subnetMask: '255.255.255.0' };
+  l3RoutingState.ports['vlan40'] = { id: 'vlan40', name: '', status: 'connected', vlan: 40, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet', ipAddress: '192.168.40.1', subnetMask: '255.255.255.0' };
   l3RoutingState.ports['gi1/1/1'] = { ...l3RoutingState.ports['gi1/1/1'], vlan: 10, mode: 'access', status: 'connected' };
   l3RoutingState.ports['gi1/1/2'] = { ...l3RoutingState.ports['gi1/1/2'], vlan: 20, mode: 'access', status: 'connected' };
   l3RoutingState.ports['gi1/1/3'] = { ...l3RoutingState.ports['gi1/1/3'], vlan: 30, mode: 'access', status: 'connected' };
@@ -2437,10 +2437,10 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'pc0', 'eth0', 'switch0', 'fa0/1');
   // Switch0 -> MultilayerSwitch1 (Fa0/2)
   connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'switch0', 'fa0/2', 'mlswitch1', 'gi1/0/2');
-  // MultilayerSwitch1 (Gi1/0/1) -> Router3 (Gi1/0/0)
-  connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'mlswitch1', 'gi1/0/1', 'router3', 'gi1/0/0', 'crossover');
-  // Router3 (Gi1/0/0) -> MultilayerSwitch2 (Gi1/0/1)
-  connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'router3', 'gi1/0/0', 'mlswitch2', 'gi1/0/1', 'crossover');
+  // MultilayerSwitch1 (Gi1/0/1) -> Router3 (Gi0/0)
+  connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'mlswitch1', 'gi1/0/1', 'router3', 'gi0/0', 'crossover');
+  // Router3 (Gi0/1) -> MultilayerSwitch2 (Gi0/1)
+  connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'router3', 'gi0/1', 'mlswitch2', 'gi1/0/1', 'crossover');
   // MultilayerSwitch2 (Gi1/0/2) -> Switch1
   connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'mlswitch2', 'gi1/0/2', 'switch1', 'fa0/1');
   // Switch1 -> PC4
