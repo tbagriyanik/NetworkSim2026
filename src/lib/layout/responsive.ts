@@ -50,7 +50,7 @@ export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
         },
         sidebar: {
             width: { mobile: 0, tablet: 280, desktop: 320 },
-            height: { mobile: '100%', tablet: '100%', desktop: '100%' },
+            height: { mobile: 100, tablet: 100, desktop: 100 },
             sticky: true,
             zIndex: 200,
         },
