@@ -3665,7 +3665,7 @@ export function NetworkTopology({
         error: errorMessage,
         hopCount: 0,
         isPaused: false,
-        showPacketPanel: false,
+        showPacketPanel: true,
       });
       setErrorToast({ message: isTR ? 'Ping başarısız!' : 'Ping failed!', details: errorMessage });
       pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setPingMode(false); setErrorToast(null); }, 3000);
@@ -4005,6 +4005,7 @@ export function NetworkTopology({
   const handleEnvelopeClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     handlePingPause();
+    setPingAnimation(prev => prev ? { ...prev, showPacketPanel: true } : null);
     if (onPacketPanelFocus) onPacketPanelFocus();
   }, [handlePingPause, onPacketPanelFocus]);
 
@@ -7484,7 +7485,7 @@ export function NetworkTopology({
       {/* Ping Packet Info Panel - shows during animation AND on success/failure result */}
       {pingAnimation && (
         <PingPacketInfoPanel
-          isVisible={true}
+          isVisible={!!(pingAnimation.showPacketPanel)}
           isPaused={!!pingAnimation.isPaused}
           hopPacketInfos={hopPacketInfos}
           currentHopIndex={pingAnimation.currentHopIndex}
