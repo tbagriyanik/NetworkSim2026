@@ -7,6 +7,7 @@ import { SwitchState, CableInfo } from '@/lib/network/types';
 import { useDeviceManager } from '@/hooks/useDeviceManager';
 import { useNetworkLogic } from '@/hooks/useNetworkLogic';
 import { useProjectPersistence } from '@/hooks/useProjectPersistence';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { useDrag } from '@/hooks/useDrag';
 import { useMultiTabWarning } from '@/hooks/useMultiTabWarning';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -258,17 +259,11 @@ export default function Home() {
   const { showWarning, tabCount, acknowledgeWarning, clearCurrentTabData } = useMultiTabWarning();
 
   // Refs moved to top to avoid TDZ errors
-  const navigationHistoryRef = useRef<{ tab: TabType; deviceId?: string; program?: string }[]>([{ tab: 'topology' }]);
-  const currentNavIndexRef = useRef(0);
-  const isInternalNavRef = useRef(false);
-  const activeTabRef = useRef<TabType>('topology');
   const isApplyingHistoryRef = useRef(false);
   const pendingHistoryActionRef = useRef<'undo' | 'redo' | null>(null);
   const lastAppliedHistoryStateRef = useRef<ProjectState | null>(null);
   const lastPushedStateRef = useRef<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const topologyContainerRef = useRef<HTMLDivElement | null>(null);
-  const pendingFocusDeviceRef = useRef<string | null>(null);
   const prevTaskStatusRef = useRef<Map<string, boolean>>(new Map());
   const shownToastsRef = useRef<Set<string>>(new Set());
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -425,46 +420,30 @@ export default function Home() {
   const graphicsQuality = useAppStore((state) => state.graphicsQuality);
   const setGraphicsQuality = useAppStore((state) => state.setGraphicsQuality);
 
-  const focusDeviceInTopology = useCallback((deviceId?: string, targetZoom?: number, deviceData?: CanvasDevice) => {
-    if (!deviceId && !deviceData) return;
-    // Pan after any programmatic zoom/pan changes so centering uses fresh layout.
-    requestAnimationFrame(() => {
-      const rect = topologyContainerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const targetDevice = deviceData ?? topologyDevices.find((device) => device.id === deviceId);
-      if (!targetDevice) return;
-
-      // Use provided targetZoom or read from store
-      const currentZoom = targetZoom ?? useAppStore.getState().topology.zoom;
-
-      // Calculate device center based on device type
-      const deviceWidth = (targetDevice.type === 'pc' || targetDevice.type === 'iot') ? 90 : targetDevice.type === 'router' ? 90 : 130;
-      const portsPerRow = 8;
-      const numRows = Math.ceil(targetDevice.ports.length / portsPerRow);
-      const deviceHeight = (targetDevice.type === 'pc' || targetDevice.type === 'iot') ? 99 : 80 + numRows * 14 + 5;
-      const deviceCenter = {
-        x: targetDevice.x + deviceWidth / 2,
-        y: targetDevice.y + deviceHeight / 2
-      };
-
-      // If device is very close to (0,0), keep (0,0) at top-left and only scroll enough to show the device
-      const isNearOrigin = deviceCenter.x < 100 && deviceCenter.y < 100;
-      if (isNearOrigin) {
-        // Keep (0,0) at top-left, just scroll enough to show the device
-        const padding = 20;
-        setPan({
-          x: padding,
-          y: padding,
-        });
-      } else {
-        // Normal centering behavior
-        setPan({
-          x: rect.width / 2 - deviceCenter.x * currentZoom,
-          y: rect.height / 2 - deviceCenter.y * currentZoom,
-        });
-      }
-    });
-  }, [topologyDevices, setPan]);
+  // Navigation hook (provides history management, device selection, focus)
+  const nav = useAppNavigation({
+    setActiveTab: (tab) => setActiveTab(tab as any),
+    setActiveDeviceId,
+    setActiveDeviceType,
+    setSelectedDevice,
+    setZoom,
+    setPan,
+    topologyDevices,
+    getOrCreatePCOutputs,
+    getOrCreateDeviceState,
+    getOrCreateDeviceOutputs,
+  });
+  const {
+    setActiveTabWithHistory, setDeviceTabWithHistory, handlePCPanelNavigate,
+    switchTabOrTopology, applyDeviceSelection, handleDeviceSelectFromCanvas,
+    handleDeviceSelectFromMenu, focusDeviceInTopology,
+    navigationHistoryRef, currentNavIndexRef, isInternalNavRef, activeTabRef,
+    pendingFocusDeviceRef, topologyContainerRef,
+  } = nav;
+  // Wrapper to match PCPanel's single-arg onNavigate signature
+  const handlePCPanelNavigateWrapper = useCallback((program: string) => {
+    handlePCPanelNavigate(program, activeDeviceId);
+  }, [handlePCPanelNavigate, activeDeviceId]);
 
   useEffect(() => {
     setHasHydrated(true);
@@ -506,92 +485,6 @@ export default function Home() {
   const setTopologyNotes = setNotes;
 
   // Currently active device in terminal
-
-  // Custom tab setter with navigation history
-  const setActiveTabWithHistory = useCallback((tab: TabType) => {
-    if (isInternalNavRef.current) {
-      isInternalNavRef.current = false;
-      setActiveTab(tab);
-      return;
-    }
-
-    // Add to history
-    const newState = { tab, deviceId: undefined, program: undefined };
-    const currentIndex = currentNavIndexRef.current;
-
-    // Remove any forward history
-    if (currentIndex < navigationHistoryRef.current.length - 1) {
-      navigationHistoryRef.current = navigationHistoryRef.current.slice(0, currentIndex + 1);
-    }
-
-    // Don't add duplicate consecutive states
-    const lastState = navigationHistoryRef.current[navigationHistoryRef.current.length - 1];
-    if (lastState && lastState.tab === tab) {
-      setActiveTab(tab);
-      return;
-    }
-
-    navigationHistoryRef.current.push(newState);
-    currentNavIndexRef.current = navigationHistoryRef.current.length - 1;
-
-    // Push to browser history
-    window.history.pushState({ tab }, '');
-    setActiveTab(tab);
-  }, [setActiveTab]);
-
-  // Custom device tab setter with navigation history (for PC terminal)
-  const setDeviceTabWithHistory = useCallback((tab: TabType, deviceId: string, deviceType: DeviceType) => {
-    // Ensure PC outputs are generated before showing terminal
-    if (deviceType === 'pc' && tab === 'cmd') {
-      getOrCreatePCOutputs(deviceId, topologyDevices);
-    }
-
-    if (isInternalNavRef.current) {
-      isInternalNavRef.current = false;
-      setActiveDeviceId(deviceId);
-      setActiveDeviceType(deviceType);
-      setActiveTab(tab);
-      return;
-    }
-
-    // Add to history
-    const newState = { tab, deviceId, program: undefined };
-    const currentIndex = currentNavIndexRef.current;
-
-    // Remove any forward history
-    if (currentIndex < navigationHistoryRef.current.length - 1) {
-      navigationHistoryRef.current = navigationHistoryRef.current.slice(0, currentIndex + 1);
-    }
-
-    navigationHistoryRef.current.push(newState);
-    currentNavIndexRef.current = navigationHistoryRef.current.length - 1;
-
-    // Push to browser history
-    window.history.pushState({ tab, deviceId }, '');
-
-    setActiveDeviceId(deviceId);
-    setActiveDeviceType(deviceType);
-    setActiveTab(tab);
-  }, [setActiveTab, setActiveDeviceId, setActiveDeviceType, getOrCreatePCOutputs]);
-
-  // Handle PCPanel tablet program navigation
-  const handlePCPanelNavigate = useCallback((program: string) => {
-    if (program === 'home') {
-      // Navigate back to topology when going home from tablet
-      if (isInternalNavRef.current) {
-        isInternalNavRef.current = false;
-        return;
-      }
-      window.history.pushState({ tab: 'topology', deviceId: activeDeviceId }, '');
-    } else if (program === 'terminal' || program === 'desktop') {
-      // Navigate to CMD terminal tab
-      if (isInternalNavRef.current) {
-        isInternalNavRef.current = false;
-        return;
-      }
-      window.history.pushState({ tab: 'cmd', deviceId: activeDeviceId, program }, '');
-    }
-  }, [activeDeviceId]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -1172,6 +1065,23 @@ export default function Home() {
     inferEndpointVlan, getServerPoolVlan, hasActivePathBetweenDevices, isDhcpPoolCompatibleForClient,
     buildLinkLocalLease, assignDhcpLeaseForPc, applyLinkLocalToUnconfiguredHosts,
     applyIotAutomationPass: iotAutomationPass } = networkLogic;
+
+  // Persistence hook (provides load/save/autosave operations)
+  const persistence = useProjectPersistence({
+    t, language, topologyDevices, topologyConnections, topologyNotes,
+    deviceStates, deviceOutputs, pcOutputs, pcHistories,
+    cableInfo, activeDeviceId, activeDeviceType, activeTab,
+    zoom, pan, normalizeDeviceType, applyLinkLocalToUnconfiguredHosts,
+    setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories,
+    setTopologyDevices: setDevices, setTopologyConnections: setConnections, setTopologyNotes: setNotes,
+    setCableInfo, setActiveDeviceId, setActiveDeviceType, setSelectedDevice,
+    setActiveTab: (tab: string) => setActiveTab(tab as any), setZoom, setPan,
+    setHasUnsavedChanges, setLastSaveTime,
+    setShowPCPanel, setShowRouterPanel, setShowUnifiedDeviceModal,
+    setRefreshNetworkReport, setIsAppLoading: setIsLoading,
+    resetHistory: (state: any) => resetHistory(state),
+    setTopologyKey: (fn: (prev: number) => number) => setTopologyKey(fn),
+  });
 
   // Persistence: Save to localStorage
   useEffect(() => {
@@ -1827,123 +1737,7 @@ ${state.bannerMOTD}
     setPan({ x: PADDING - minX * nextZoom, y: PADDING - minY * nextZoom });
   }, [topologyDevices, topologyNotes, setZoom, setPan]);
 
-  const switchTabOrTopology = useCallback((tabId: TabType) => {
-    const targetTab = ALL_TABS.find(tab => tab.id === tabId);
-    if (!targetTab) return;
 
-    // Handle tasks tab as modal
-    if (tabId === 'tasks') {
-      setUnifiedDeviceActiveTab('settings');
-      setShowUnifiedDeviceModal(true);
-      return;
-    }
-
-    // Handle cmd tab as modal
-    if (tabId === 'cmd') {
-      const deviceObj = topologyDevices?.find(d => d.id === activeDeviceId);
-      if (deviceObj && deviceObj.type === 'pc') {
-        setShowPCDeviceId(activeDeviceId);
-        getOrCreatePCOutputs(activeDeviceId, topologyDevices);
-        setShowPCPanel(true);
-      }
-      return;
-    }
-
-    // Handle terminal tab as modal
-    if (tabId === 'terminal') {
-      // Ensure boot messages are generated before showing terminal
-      const deviceObj = topologyDevices?.find(d => d.id === activeDeviceId);
-      if (deviceObj && (deviceObj.type === 'router' || deviceObj.type === 'switchL2' || deviceObj.type === 'switchL3')) {
-        const deviceState = getOrCreateDeviceState(activeDeviceId, deviceObj.type, deviceObj.name, deviceObj.macAddress, deviceObj.switchModel);
-        getOrCreateDeviceOutputs(activeDeviceId, deviceState);
-      }
-      setUnifiedDeviceActiveTab('console');
-      setShowUnifiedDeviceModal(true);
-      return;
-    }
-
-    const deviceVisible = activeDeviceId && topologyDevices.some(d => d.id === activeDeviceId);
-    const isCompatible = tabId === 'topology' || (deviceVisible && targetTab.showFor.includes(activeDeviceType));
-
-    setActiveTab(isCompatible ? tabId : 'topology');
-  }, [activeDeviceId, activeDeviceType, topologyDevices, setActiveTab, getOrCreatePCOutputs]);
-
-  const pendingDeviceSelectionRef = useRef<{ device: DeviceType; deviceId: string; switchModel?: string; deviceName?: string } | null>(null);
-
-  const applyDeviceSelection = useCallback((device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string) => {
-    if (!deviceId) return;
-
-    // Immediately create device state so sync effects have correct data
-    if (device !== 'pc') {
-      const deviceObj = topologyDevices?.find(d => d.id === deviceId);
-      const modelToUse = switchModel || deviceObj?.switchModel;
-      const initialHostname = deviceObj?.name || deviceName;
-      const deviceState = getOrCreateDeviceState(deviceId, device, initialHostname, deviceObj?.macAddress, modelToUse);
-      getOrCreateDeviceOutputs(deviceId, deviceState);
-    }
-
-    // Schedule UI-only state updates outside render cycle
-    pendingDeviceSelectionRef.current = { device, deviceId, switchModel, deviceName };
-    queueMicrotask(() => {
-      const pending = pendingDeviceSelectionRef.current;
-      if (!pending) return;
-      pendingDeviceSelectionRef.current = null;
-
-      const currentTab = activeTabRef.current;
-      const currentTabDef = ALL_TABS.find(t => t.id === currentTab);
-      const nextTab: TabType =
-        currentTabDef && currentTabDef.showFor.includes(pending.device)
-          ? currentTab
-          : 'topology';
-
-      setSelectedDevice(pending.device);
-      setActiveDeviceId(pending.deviceId);
-      setActiveDeviceType(pending.device);
-      if (nextTab !== currentTab) {
-        setActiveTabWithHistory(nextTab);
-      }
-    });
-  }, [topologyDevices, getOrCreateDeviceState, getOrCreateDeviceOutputs, setSelectedDevice, setActiveDeviceId, setActiveDeviceType, setActiveTabWithHistory]);
-
-  // Topology canvas click: selects device only (no zoom/pan).
-  const handleDeviceSelectFromCanvas = useCallback((device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string, isNew?: boolean, deviceData?: CanvasDevice) => {
-    applyDeviceSelection(device, deviceId, switchModel, deviceName);
-
-    // If it's a newly added device, focus on it
-    if (isNew && deviceId) {
-      if (activeTab === 'topology' && topologyContainerRef.current) {
-        setZoom(1.0); // Reset zoom to 100%
-        focusDeviceInTopology(deviceId, 1.0, deviceData); // Center on new device
-        pendingFocusDeviceRef.current = null;
-      } else {
-        pendingFocusDeviceRef.current = deviceId;
-      }
-    }
-  }, [activeTab, applyDeviceSelection, focusDeviceInTopology, setZoom]);
-
-  // Device dropdown/menu click: focus the selected device at 100% zoom.
-  const handleDeviceSelectFromMenu = useCallback((device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string) => {
-    applyDeviceSelection(device, deviceId, switchModel, deviceName);
-    if (!deviceId) return;
-
-    if (activeTab === 'topology' && topologyContainerRef.current) {
-      setZoom(1.0); // Reset zoom to 100%
-      focusDeviceInTopology(deviceId, 1.0); // Center on selected device with zoom 1.0
-      pendingFocusDeviceRef.current = null;
-    } else {
-      // If not in topology tab or container not ready, queue the focus
-      pendingFocusDeviceRef.current = deviceId;
-    }
-  }, [activeTab, applyDeviceSelection, focusDeviceInTopology, setZoom]);
-
-  useLayoutEffect(() => {
-    if (activeTab !== 'topology') return;
-    if (!pendingFocusDeviceRef.current) return;
-    if (!topologyContainerRef.current) return;
-    setZoom(1.0); // Reset zoom to 100%
-    focusDeviceInTopology(pendingFocusDeviceRef.current, 1.0); // Center on selected device with zoom 1.0
-    pendingFocusDeviceRef.current = null;
-  }, [activeTab, focusDeviceInTopology, setZoom]);
 
   // Handle command using active device
   const handleCommand = useCallback(async (command: string) => {
@@ -2639,10 +2433,7 @@ ${state.bannerMOTD}
 
   // Handle back/forward navigation
   useEffect(() => {
-    const handlePopState = (e: PopStateEvent) => {
-      const state = e.state as { tab?: TabType; deviceId?: string; program?: string; modal?: boolean } | null;
-
-      // Close modals first
+    const handlePopState = () => {
       setShowMobileMenu(false);
       setConfirmDialog(null);
       setSaveDialog(null);
@@ -2653,30 +2444,11 @@ ${state.bannerMOTD}
       setShowProjectPicker(false);
       setShowOnboarding(false);
       window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'back' } }));
-
-      // Handle navigation state
-      if (state && state.tab) {
-        isInternalNavRef.current = true;
-
-        // Update history index
-        currentNavIndexRef.current = Math.max(0, currentNavIndexRef.current - 1);
-
-        // Navigate to the state
-        if (state.tab === 'cmd' || state.tab === 'terminal') {
-          if (state.deviceId) {
-            setActiveDeviceId(state.deviceId);
-            setActiveDeviceType(state.deviceId.startsWith('pc') ? 'pc' : state.deviceId.startsWith('router') ? 'router' : 'switchL2');
-          }
-          setActiveTab(state.tab);
-        } else {
-          setActiveTab(state.tab);
-        }
-      }
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowUnifiedDeviceModal, setShowAboutModal, setShowProjectPicker, setShowOnboarding, setActiveTab, setActiveDeviceId, setActiveDeviceType]);
+  }, [setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowUnifiedDeviceModal, setShowAboutModal, setShowProjectPicker, setShowOnboarding]);
 
   // History pushState for back button tracking
   useEffect(() => {
@@ -4408,7 +4180,7 @@ ${state.bannerMOTD}
                     pcHistories={pcHistories}
                     onUpdatePCHistory={handleUpdatePCHistory}
                     onExecuteDeviceCommand={handleExecuteCommand}
-                    onNavigate={handlePCPanelNavigate}
+                    onNavigate={handlePCPanelNavigateWrapper}
                     onDeleteDevice={handleDeviceDelete}
                   />
                 </div>

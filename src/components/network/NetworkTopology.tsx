@@ -578,6 +578,10 @@ export function NetworkTopology({
   const pingIsPausedRef = useRef<boolean>(false);
   const pingResumeCallbackRef = useRef<(() => void) | null>(null);
   const pingStepModeRef = useRef<boolean>(false); // When true, pause at each hop boundary
+  // Track the current ping path for external interruption checks (power off, cable change)
+  const pingPathRef = useRef<string[]>([]);
+  // Ref for cancel function to avoid stale closure issues in RAF callbacks
+  const cancelPingDueToInterruptionRef = useRef<(reason: string) => void>(() => {});
 
   // Added refs moved from below to avoid TDZ and sync issues
   const noteCounterRef = useRef<number>(0);
@@ -3461,6 +3465,32 @@ export function NetworkTopology({
     return null; // No path found
   }, [connections, devices]);
 
+  // Cancel active ping due to external interruption (device power off, connection lost, etc.)
+  const cancelPingDueToInterruption = useCallback((reasonMessage: string) => {
+    pingIsPausedRef.current = false;
+    pingStepModeRef.current = false;
+    if (pingAnimationRef.current) {
+      cancelAnimationFrame(pingAnimationRef.current);
+      pingAnimationRef.current = null;
+    }
+    if (pingCleanupTimeoutRef.current) {
+      clearTimeout(pingCleanupTimeoutRef.current);
+      pingCleanupTimeoutRef.current = null;
+    }
+    setPingAnimation(null);
+    setHopPacketInfos([]);
+    setPingMode(false);
+    setErrorToast({
+      message: isTR ? 'Ping başarısız!' : 'Ping failed!',
+      details: reasonMessage
+    });
+  }, [isTR]);
+
+  // Keep ref updated for RAF closures
+  useLayoutEffect(() => {
+    cancelPingDueToInterruptionRef.current = cancelPingDueToInterruption;
+  }, [cancelPingDueToInterruption]);
+
   // Ping animation between devices with multi-hop support
   const startPingAnimation = useCallback((sourceId: string, targetId: string) => {
     // Cancel any existing animation
@@ -3546,6 +3576,7 @@ export function NetworkTopology({
       const partialPath = (connectivity.hopIds && connectivity.hopIds.length >= 1)
         ? connectivity.hopIds
         : [sourceId];
+      pingPathRef.current = partialPath;
 
       const packetInfos = buildHopPacketInfos(partialPath, devices, connections, 64, targetIp);
       setHopPacketInfos(packetInfos);
@@ -3584,6 +3615,16 @@ export function NetworkTopology({
           };
 
           if (pingIsPausedRef.current) return;
+
+          // Check if any device in the path has been turned off during animation
+          if (partialPath.some(id => {
+            const d = latestDevicesRef.current.find(dd => dd.id === id);
+            return !d || d.status === 'offline';
+          })) {
+            cancelPingDueToInterruptionRef.current(isTR ? 'Cihaz kapatıldığı için ping iptal edildi.' : 'Ping cancelled because a device was powered off.');
+            return;
+          }
+
           const fromId = partialPath[currentHop];
           const toId = partialPath[currentHop + 1];
           if (!toId) {
@@ -3650,6 +3691,7 @@ export function NetworkTopology({
 
     // Find path between source and target
     const path = connectivity.hopIds;
+    pingPathRef.current = path;
 
     if (!path || path.length < 2) {
       const errorMessage = isTR ? 'Fiziksel bağlantı yok' : 'No physical connection';
@@ -3818,6 +3860,15 @@ export function NetworkTopology({
 
             if (pingIsPausedRef.current) return;
 
+            // Check if any device in return path has been powered off during animation
+            if (returnPath.some(id => {
+              const d = latestDevicesRef.current.find(dd => dd.id === id);
+              return !d || d.status === 'offline';
+            })) {
+              cancelPingDueToInterruptionRef.current(isTR ? 'Cihaz kapatıldığı için ping iptal edildi.' : 'Ping cancelled because a device was powered off.');
+              return;
+            }
+
             const fromId = returnPath[returnHop];
             const toId = returnPath[returnHop + 1];
 
@@ -3893,6 +3944,29 @@ export function NetworkTopology({
 
       // If paused, don't advance
       if (pingIsPausedRef.current) return;
+
+      // Check if any device in path has been powered off during animation
+      if (path.some(id => {
+        const d = latestDevicesRef.current.find(dd => dd.id === id);
+        return !d || d.status === 'offline';
+      })) {
+        cancelPingDueToInterruptionRef.current(isTR ? 'Cihaz kapatıldığı için ping iptal edildi.' : 'Ping cancelled because a device was powered off.');
+        return;
+      }
+
+      // Check if the current connection segment is still active
+      const currentFromId = path[currentHop];
+      const currentToId = path[currentHop + 1];
+      if (currentToId) {
+        const segmentConn = latestConnectionsRef.current.find(c =>
+          (c.sourceDeviceId === currentFromId && c.targetDeviceId === currentToId) ||
+          (c.sourceDeviceId === currentToId && c.targetDeviceId === currentFromId)
+        );
+        if (!segmentConn || segmentConn.active === false) {
+          cancelPingDueToInterruptionRef.current(isTR ? 'Bağlantı koptuğu için ping iptal edildi.' : 'Ping cancelled because a connection was lost.');
+          return;
+        }
+      }
 
       const fromId = path[currentHop];
       const toId = path[currentHop + 1];
@@ -4052,6 +4126,20 @@ export function NetworkTopology({
     window.addEventListener('trigger-ping-animation', handlePingTrigger);
     return () => window.removeEventListener('trigger-ping-animation', handlePingTrigger);
   }, [startPingAnimation]);
+
+  // Listen for device power toggle events — cancel active ping if a device in the path is turned off
+  useEffect(() => {
+    const handlePowerToggle = (event: any) => {
+      const { deviceId, nextStatus } = event.detail;
+      if (nextStatus === 'offline' && pingPathRef.current.includes(deviceId)) {
+        cancelPingDueToInterruptionRef.current(
+          isTR ? 'Cihaz kapatıldığı için ping iptal edildi.' : 'Ping cancelled because a device was powered off.'
+        );
+      }
+    };
+    window.addEventListener('trigger-topology-toggle-power', handlePowerToggle as EventListener);
+    return () => window.removeEventListener('trigger-topology-toggle-power', handlePowerToggle as EventListener);
+  }, [isTR]);
 
   // Handle device config updates from WiFi control panel (e.g., IoT disconnect)
   useEffect(() => {
