@@ -557,17 +557,24 @@ export function checkConnectivity(
     }
   }
 
-  // 1. Find target device by IP
+  // 1. Find target device by IP (supports both IPv4 and IPv6)
   // First check topology devices (PCs usually)
-  let targetDevice = devices.find(d => d.ip === resolvedTargetIp);
+  let targetDevice = devices.find(d =>
+    d.ip === resolvedTargetIp ||
+    (d.ipv6 && d.ipv6.toLowerCase() === resolvedTargetIp.toLowerCase())
+  );
 
   // Then check Switch/Router management/interface IPs if not found
   if (!targetDevice && deviceStates) {
     const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
     for (const [id, state] of safeDeviceStates.entries()) {
-      // Check all interfaces (SVI, physical, loopback)
+      // Check all interfaces (SVI, physical, loopback) — both IPv4 and IPv6
       for (const portId in state.ports) {
-        if (state.ports[portId].ipAddress === resolvedTargetIp) {
+        const port = state.ports[portId];
+        if (
+          port.ipAddress === resolvedTargetIp ||
+          (port.ipv6Address && port.ipv6Address.toLowerCase() === resolvedTargetIp.toLowerCase())
+        ) {
           targetDevice = devices.find(d => d.id === id);
           break;
         }
@@ -1093,7 +1100,10 @@ export function checkConnectivity(
     const sourceState = deviceStates.get(sourceId);
 
     // Check if source has routing capability and a route to target
-    if (sourceState?.ipRouting) {
+    const isTargetIpv6 = resolvedTargetIp.includes(':');
+    const sourceHasRouting = isTargetIpv6 ? (sourceState?.ipv6Enabled || sourceState?.ipRouting) : sourceState?.ipRouting;
+    
+    if (sourceHasRouting) {
       const sourceRoutes = getRoutingTable(sourceId, deviceStates);
       const route = findRoute(resolvedTargetIp, sourceRoutes);
 
@@ -1107,12 +1117,13 @@ export function checkConnectivity(
       for (const deviceId of path) {
         const state = deviceStates.get(deviceId);
         const device = devices.find(d => d.id === deviceId);
+        const hasRouting = isTargetIpv6 ? (state?.ipv6Enabled || state?.ipRouting) : state?.ipRouting;
 
-        if (state?.ipRouting && (device?.type === 'router' || device?.type === 'switchL3')) {
+        if (hasRouting && (device?.type === 'router' || device?.type === 'switchL3')) {
           // Router in path - check if it has routes to both source and target networks
           const routes = getRoutingTable(deviceId, deviceStates);
           // Get source IP from device data
-          const srcIp = getPrimaryDeviceIp(sourceId, devices, deviceStates);
+          const srcIp = getPrimaryDeviceIp(sourceId, devices, deviceStates, isTargetIpv6);
           const sourceRoute = findRoute(srcIp, routes);
           const targetRoute = findRoute(resolvedTargetIp, routes);
 
@@ -1268,8 +1279,8 @@ export function getPingDiagnostics(
 
   // Resolve hostname to IP if necessary
   let resolvedTargetIp = targetIp;
-  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-  if (!ipRegex.test(targetIp)) {
+  const isIpAddress = (val: string) => /^(\d{1,3}\.){3}\d{1,3}$/.test(val) || val.includes(':');
+  if (!isIpAddress(targetIp)) {
     const resolvedIp = resolveHostname(targetIp, devices, deviceStates);
     if (!resolvedIp) {
       reasons.push('Hostname could not be resolved');
@@ -1278,14 +1289,22 @@ export function getPingDiagnostics(
     resolvedTargetIp = resolvedIp;
   }
 
-  let targetDevice = devices.find(d => d.ip === resolvedTargetIp);
+  const isTargetIpv6 = resolvedTargetIp.includes(':');
+  let targetDevice = devices.find(d =>
+    d.ip === resolvedTargetIp ||
+    (d.ipv6 && d.ipv6.toLowerCase() === resolvedTargetIp.toLowerCase())
+  );
 
   // Resolve target for routers/switches if not found in topology IPs
   if (!targetDevice && deviceStates) {
     const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
     for (const [id, state] of safeDeviceStates.entries()) {
       for (const pId in state.ports) {
-        if (state.ports[pId].ipAddress === resolvedTargetIp) {
+        const port = state.ports[pId];
+        if (
+          port.ipAddress === resolvedTargetIp ||
+          (port.ipv6Address && port.ipv6Address.toLowerCase() === resolvedTargetIp.toLowerCase())
+        ) {
           targetDevice = devices.find(d => d.id === id);
           break;
         }
@@ -1305,16 +1324,15 @@ export function getPingDiagnostics(
     return { success: false, reasons };
   }
 
-  // 2. Check source has IP address
-  let sourceIp = sourceDevice.ip || '';
+  // 2. Check source has IP address (IPv4 or IPv6)
+  let sourceIp = sourceDevice.ip || sourceDevice.ipv6 || '';
   if (!sourceIp && deviceStates) {
     const state = deviceStates.get(sourceId);
     if (state) {
       for (const pId in state.ports) {
-        if (state.ports[pId].ipAddress) {
-          sourceIp = state.ports[pId].ipAddress!;
-          break;
-        }
+        const port = state.ports[pId];
+        const addr = isTargetIpv6 ? (port.ipv6Address || port.ipAddress) : (port.ipAddress || port.ipv6Address);
+        if (addr) { sourceIp = addr; break; }
       }
     }
   }
@@ -1340,28 +1358,28 @@ export function getPingDiagnostics(
     return { success: false, reasons };
   }
 
-  // 5. Check subnet compatibility
-  const sourceSubnet = sourceDevice.subnet || '255.255.255.0';
-  const targetSubnet = targetDevice.subnet || '255.255.255.0';
-
-  const isSourceInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);
-  const isTargetInSameSubnet = isIpInSubnet(resolvedTargetIp, sourceIp, targetSubnet);
-
-  if (!isSourceInSameSubnet && !isTargetInSameSubnet) {
-    reasons.push(`Subnet uyumsuzluğu: Kaynak ${sourceIp}/${sourceSubnet}, Hedef ${resolvedTargetIp}/${targetSubnet}. Router ile routing gerekli.`);
-    return { success: false, reasons };
-  }
-
-  // 6. Check gateway configuration if different subnets
-  if (!isSourceInSameSubnet) {
-    if (!sourceDevice.gateway) {
-      reasons.push("Kaynak cihazın gateway'i yok (farklı subnet)");
+  // 5. Check subnet compatibility (IPv4 only — IPv6 routing handled separately)
+  if (!isTargetIpv6) {
+    const sourceSubnet = sourceDevice.subnet || '255.255.255.0';
+    const targetSubnet = targetDevice.subnet || '255.255.255.0';
+    const isSourceInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);
+    const isTargetInSameSubnet = isIpInSubnet(resolvedTargetIp, sourceIp, targetSubnet);
+    if (!isSourceInSameSubnet && !isTargetInSameSubnet) {
+      reasons.push(`Subnet uyumsuzluğu: Kaynak ${sourceIp}/${sourceSubnet}, Hedef ${resolvedTargetIp}/${targetSubnet}. Router ile routing gerekli.`);
+      return { success: false, reasons };
     }
-  }
 
-  if (!isTargetInSameSubnet) {
-    if (!targetDevice.gateway) {
-      reasons.push("Hedef cihazın gateway'i yok (farklı subnet)");
+    // 6. Check gateway configuration if different subnets
+    if (!isSourceInSameSubnet) {
+      if (!sourceDevice.gateway) {
+        reasons.push("Kaynak cihazın gateway'i yok (farklı subnet)");
+      }
+    }
+
+    if (!isTargetInSameSubnet) {
+      if (!targetDevice.gateway) {
+        reasons.push("Hedef cihazın gateway'i yok (farklı subnet)");
+      }
     }
   }
 
@@ -1414,8 +1432,8 @@ export function getPingDiagnostics(
     }
   }
 
-  // 10. Check routing if needed
-  if (!isSourceInSameSubnet || !isTargetInSameSubnet) {
+  // 10. Check routing if different subnets (only when routing is relevant)
+  if (!isTargetIpv6) {
     const sourceDeviceObj = devices.find(d => d.id === sourceId);
     const isSourceL3Capable = sourceDeviceObj?.type === 'router' || sourceDeviceObj?.type === 'switchL3';
     

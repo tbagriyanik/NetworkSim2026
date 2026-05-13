@@ -2,10 +2,10 @@
 
 A modern browser-based network simulator for learning switching, routing, wireless, IoT, and CLI workflows.
 
-![Version](https://img.shields.io/badge/version-1.6.2-blue)
+![Version](https://img.shields.io/badge/version-1.6.3-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-89755-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-90093-lightgrey)
 
 Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
@@ -23,7 +23,18 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 - **Guided Lesson Mode**: Step-by-step tasks with automatic completion detection and progress tracking.
 - **Modern UI/UX**: Keyboard shortcuts, glassmorphism effects, shimmer loading, and accessible design.
 
-### Recent Updates (v1.6.2)
+### Recent Updates (v1.6.3)
+
+- **IPv6 Ping Diagnostics & Pathfinding (May 13, 2026)**:
+  - Fixed IPv6 routing logic to correctly respect the `ipv6 unicast-routing` state.
+  - Resolved source IP ambiguity in multi-stack environments for IPv6 connectivity checks.
+  - Standardized PC terminal ping output to match Windows "Request timed out" behavior for IPv6 failures.
+  - Standardized IPv6 address representation to lowercase across all diagnostic outputs.
+
+- **Infrastructure & Documentation Audit**:
+  - Synchronized project metrics across all documentation files.
+  - Audited `examples.md` to ensure all 39 lab scenarios are accurately described.
+  - Updated example projects metadata to support continued growth.
 
 - **Firewall & IoT Persistence Update (May 9, 2026)**:
   - Firewall rules are now persisted when re-selecting devices.
@@ -84,12 +95,12 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metric | Value |
 | --- | ---: |
-| Application Code | 89,755 |
-| Example Projects | 37 |
+| Application Code | 90,093 |
+| Example Projects | 39 |
 | Documentation | 150+ |
-| **Total Lines** | **89,755** |
+| **Total Lines** | **90,093** |
 | Source Files | 235 |
-| Ready Topologies | 37 |
+| Ready Topologies | 39 |
 | Guided Lessons | 3 |
 | CLI Command Families | 180+ |
 
@@ -168,12 +179,12 @@ Live app: [network2026.vercel.app](https://network2026.vercel.app)
 
 | Metrik | Değer |
 | --- | ---: |
-| Uygulama Kodu | 89,755 |
-| Örnek Proje | 37 |
+| Uygulama Kodu | 90,093 |
+| Örnek Proje | 39 |
 | Dokümantasyon | 150+ |
-| **Toplam Satır** | **89,755** |
+| **Toplam Satır** | **90,093** |
 | Kaynak Dosya | 235 |
-| Hazır Topoloji | 37 |
+| Hazır Topoloji | 39 |
 | Rehberli Ders | 3 |
 | CLI Komut Ailesi | 180+ |
 

@@ -3264,7 +3264,7 @@ export function PCPanel({
 
           const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'icmp' });
           if (result.success) {
-            const pingTargetDisplay = dnsResolved ? `${target} [${targetIp}]` : targetIp;
+            const pingTargetDisplay = dnsResolved ? `${target} [${targetIp.toLowerCase()}]` : targetIp.toLowerCase();
 
             // Calculate ping latency from both source and target WiFi distances
             const srcDist = getWirelessDistance(deviceFromTopology, topologyDevices, deviceStates);
@@ -3290,10 +3290,11 @@ export function PCPanel({
 
             const formatTime = (ms: number) => ms === 0 ? '<1ms' : `${ms}ms`;
 
-            await addMultilineOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nReply from ${targetIp}: bytes=32 time=${formatTime(time1)} TTL=128\nReply from ${targetIp}: bytes=32 time=${formatTime(time2)} TTL=128\nReply from ${targetIp}: bytes=32 time=${formatTime(time3)} TTL=128\nReply from ${targetIp}: bytes=32 time=${formatTime(time4)} TTL=128\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`, 100);
+            await addMultilineOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time1)} TTL=128\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time2)} TTL=128\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time3)} TTL=128\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time4)} TTL=128\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`, 100);
           } else {
-            const pingTargetDisplay = dnsResolved ? `${target} [${targetIp}]` : targetIp;
-            const errorMsg = result.error ? `\n${result.error}` : '\nRequest timed out.';
+            const pingTargetDisplay = dnsResolved ? `${target} [${targetIp.toLowerCase()}]` : targetIp.toLowerCase();
+            // Windows-style timeout for all pings in PC terminal, matching user request for IPv6
+            const errorMsg = '\nRequest timed out.';
             await addMultilineOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:${errorMsg}${errorMsg}${errorMsg}${errorMsg}\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)`, 100);
           }
         }

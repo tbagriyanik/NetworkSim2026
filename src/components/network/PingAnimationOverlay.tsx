@@ -16,9 +16,9 @@ interface PingAnimationOverlayProps {
   } | null;
   devices: CanvasDevice[];
   connections: CanvasConnection[];
-  getPortPosition: (device: CanvasDevice, portId: string) => { x: number; y: number };
-  getDeviceCenter: (device: CanvasDevice) => { x: number; y: number };
   language: 'tr' | 'en';
+  onPause?: () => void;
+  onFocus?: () => void;
 }
 
 export function PingAnimationOverlay({
@@ -27,7 +27,9 @@ export function PingAnimationOverlay({
   connections,
   getPortPosition,
   getDeviceCenter,
-  language
+  language,
+  onPause,
+  onFocus
 }: PingAnimationOverlayProps) {
   const groupRef = useRef<SVGGElement>(null);
   const innerGroupRef = useRef<SVGGElement>(null);
@@ -188,6 +190,12 @@ export function PingAnimationOverlay({
         ref={innerGroupRef}
         transform={`translate(${bezierX + envelopeOffsetX}, ${bezierY + envelopeOffsetY})`}
         opacity={pingAnimation?.success === false && pingAnimation.currentHopIndex === pingAnimation.failedAtHop ? 0.3 : 0.9}
+        className="cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (onPause) onPause();
+          if (onFocus) onFocus();
+        }}
       >
         {/* Hop Count Badge */}
         {hopCount > 0 && (

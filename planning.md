@@ -2,21 +2,38 @@
 
 ## Güncel Durum
 
-- **Sürüm**: 1.6.2
-- **Tarih**: 2026-05-11
-- **Uygulama kodu**: 89,755
-- **Örnek kod satırı**: 15,298
+- **Sürüm**: 1.6.3
+- **Tarih**: 2026-05-13
+- **Uygulama kodu**: 90,093
+- **Örnek kod satırı**: 15,650
 - **Dokümantasyon satırı**: 150+
-- **Toplam satır**: 105,053
-- **Kod dosyası**: 185+
-- **Hazır topoloji örneği**: 32
-- **Rehberli ders**: 4
+- **Toplam satır**: 105,743
+- **Kod dosyası**: 235
+- **Hazır topoloji örneği**: 39
+- **Rehberli ders**: 3
 - **CLI komut ailesi**: 180+
 - **Test Durumu**: ✅ Tüm testler geçiyor (Build, Lint, TypeScript)
 
 Not: Toplam satır sayısı uygulama kodu, örnek kod ve dokümantasyonun birleşimidir.
 
 ## Son Yapılanlar
+
+### IPv6 Ping Teşhis ve Bağlantı Düzeltmeleri (Mayıs 2026 - 13 Mayıs)
+
+- **IPv6 Yönlendirme Mantığı**: `connectivity.ts` dosyasında yönlendirme kontrolü, `ipv6 unicast-routing` komutuyla set edilen `ipv6Enabled` bayrağını da kontrol edecek şekilde güncellendi.
+- **Kaynak IP Çözümleme**: IPv6 hedeflerine atılan pinglerde, kaynak cihazın (PC vb.) IPv6 adresi artık doğru şekilde önceliklendirilerek rota hesaplamasına dahil ediliyor.
+- **Ping Çıktı Standardizasyonu**: `PCPanel.tsx` dosyasında başarısız olan IPv6 pingleri için "Request timed out." mesajı ve istatistik tablosu Windows terminal formatına tam uyumlu hale getirildi.
+- **IPv6 Adres Formatı**: Ping çıktılarındaki IPv6 adresleri, standartlara uygun olarak küçük harf (lowercase) formatına dönüştürüldü.
+
+### Altyapı ve Dokümantasyon Güncellemesi (Mayıs 2026 - 13 Mayıs)
+
+- **Sürüm Artırımı (v1.6.3)**: Proje versiyonu `package.json` üzerinde 1.6.3'e yükseltildi.
+- **Metrik Yenileme**: Tüm README ve dokümantasyon dosyalarındaki istatistikler (90,093 satır kod, 235 dosya) güncellendi.
+- **Yeni Örnek Projeler**: 
+  - **#38: Firewall Basic (ICMP Block)** - Temel firewall kural mantığı örneği.
+  - **#39: IPv6 Advanced Lab (DHCPv6 & OSPFv3)** - Gelişmiş IPv6 senaryosu.
+- **Dokümantasyon Bütünlüğü**: `examples.md` tamamen gözden geçirilerek 39 örneğin tamamı, özet tablolar ve başlangıç rehberleri ile senkronize edildi.
+- **Planlama Güncellemesi**: Mevcut durum ve gelecek hedefler 1.6.3 durumuna göre revize edildi.
 
 ### React Hooks ve Build Düzeltmeleri (Mayıs 2026 - 8 Mayıs)
 

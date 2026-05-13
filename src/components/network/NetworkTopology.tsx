@@ -6794,7 +6794,15 @@ export function NetworkTopology({
 
                     return (
                       <g key="ping-animation" opacity={0.9}>
-                        <g transform={`translate(${envelopeX}, ${envelopeY})`}>
+                        <g 
+                          transform={`translate(${envelopeX}, ${envelopeY})`}
+                          className="cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePingPause();
+                            if (onPacketPanelFocus) onPacketPanelFocus();
+                          }}
+                        >
                           <rect x="-10" y="-7" width="20" height="14" rx="2" fill="#06b6d4" stroke="#0891b2" strokeWidth="1.5" />
                           <path d="M-8 -3 L0 4 L8 -3" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </g>

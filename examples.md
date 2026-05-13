@@ -1,6 +1,6 @@
 # Network Simulator 2026 - Example Projects
 
-This document provides detailed descriptions of all 37 example projects available in the Network Simulator 2026.
+This document provides detailed descriptions of all 39 example projects available in the Network Simulator 2026.
 
 ## Table of Contents
 
@@ -1192,8 +1192,8 @@ PVST kullanarak her VLAN için ayrı STP instance'ı oluşturarak load balancing
 
 3. **Switch4 Konfigürasyonu:**
    - Switch4 terminaline gir: enable, conf t
-   - Aynı yapılandırma Switch2 ile aynı
-
+   - Aynı yapılandırma Switch2 ile manyetik
+ 
 4. **PC IP Konfigürasyonu:**
    - VLAN 10 PC'ler: IP 192.168.10.x, GW 192.168.10.1
    - VLAN 20 PC'ler: IP 192.168.20.x, GW 192.168.20.1
@@ -1397,8 +1397,9 @@ Bu örnekte iç ağdaki bir sunucu, sabit bir genel IP ile dış dünyaya yayın
 4. **Yönlendirme:**
    - Gerekli default/static route'ları ekleyin.
 5. **Doğrulama:**
-   - Dış istemciden `203.0.113.10` adresine erişimi test edin.
-   - `show ip nat translations` çıktısını kontrol edin.
+    - Dış istemciden `203.0.113.10` adresine erişimi test edin.
+    - `show ip nat translations` çıktısını kontrol edin.
+
 
 ### 32. NAT Dynamic 
 **ID:** `nat-dynamic-basic`  
@@ -1541,17 +1542,51 @@ EIGRP AS 100 ile temel komşuluk ve rota öğrenimi kurulur.
    - `show ip route eigrp`
    - Uçtan uca ping ile erişim testi.
 
+### 38. Firewall Basic (ICMP Block)
+**ID:** `firewall-basic`  
+**Tag:** FIREWALL  
+**Description:** ICMP (ping) blocked, all other traffic allowed simple firewall.  
+**Details:** Rule 1: DENY ICMP | Rule 2: ALLOW ANY.  
+
+**Kısa Tanıtım:**
+ICMP paketlerinin engellendiği ancak HTTP gibi diğer trafiklerin izin verildiği temel bir firewall senaryosunu inceleyeceksiniz.
+
+**Adım Adım Proje Yapımı:**
+1. **Topoloji:** 1 Firewall cihazı, 1 PC ve 1 Router/Sunucu ekleyin.
+2. **Kurallar:** 
+   - Firewall panelinden ICMP (Ping) protokolünü `DENY` olarak ekleyin.
+   - Ardından tüm trafiğe (`ANY`) `ALLOW` kuralı ekleyin.
+3. **Test:**
+   - PC'den router'a ping atmayı deneyin (Başarısız olmalı).
+   - PC'den router'a HTTP (curl/wget) isteği yapın (Başarılı olmalı).
+
+### 39. IPv6 Advanced Lab (DHCPv6 & OSPFv3)
+**ID:** `ipv6-advanced-lab`  
+**Tag:** IPv6  
+**Description:** IPv6 addressing, DHCPv6 pools and OSPFv3 dynamic routing.  
+**Details:** ipv6 unicast-routing, ipv6 dhcp pool LAN, address prefix 2001:db8:1::/64, ipv6 router ospf 1.  
+
+**Kısa Tanıtım:**
+Gelişmiş IPv6 yapılandırması, DHCPv6 ile otomatik adres dağıtımı ve OSPFv3 yönlendirme protokolünü öğreneceksiniz.
+
+**Adım Adım Proje Yapımı:**
+1. **Topoloji:** 2 Router ve bağlı PC'ler ekleyin.
+2. **Unicast Routing:** `ipv6 unicast-routing` komutu ile IPv6 yönlendirmeyi aktif edin.
+3. **Adresleme:** Interface'lere `2001:db8:...` bloklarından IP atayın.
+4. **DHCPv6:** İstemciler için DHCPv6 havuzu oluşturun.
+5. **OSPFv3:** `ipv6 router ospf 1` ile router'lar arası dinamik rota paylaşımı sağlayın.
+
 ---
 
 ## Summary
 
 | Level | Count |
 |-------|-------|
-| Basic | 8 |
-| Intermediate | 12 |
+| Basic | 11 |
+| Intermediate | 11 |
 | Advanced | 17 |
-| **Total Examples** | **37** |
-| **Total Code Lines** | **15,298** |
+| **Total Examples** | **39** |
+| **Total Code Lines** | **15,650** |
 
 ## Getting Started
 
@@ -1571,7 +1606,6 @@ To add a new example:
 4. Add notes explaining the topology and configuration.
 5. Add the example to the `exampleProjects` array.
 6. Update this documentation.
-
 
 ---
 
