@@ -7,7 +7,7 @@ import { SwitchState, CableInfo } from '@/lib/network/types';
 import { useDeviceManager } from '@/hooks/useDeviceManager';
 import { useNetworkLogic } from '@/hooks/useNetworkLogic';
 import { useProjectPersistence } from '@/hooks/useProjectPersistence';
-import { useModalDragResize } from '@/hooks/useModalDragResize';
+import { useDrag } from '@/hooks/useDrag';
 import { useMultiTabWarning } from '@/hooks/useMultiTabWarning';
 import { useIsMobile } from '@/hooks/use-mobile';
 import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes, useZoom, usePan, useActiveTab, useEnvironment } from '@/lib/store/appStore';
@@ -938,23 +938,10 @@ export default function Home() {
     });
   }, [setTopologyDevices, setTopologyConnections]);
 
-  // Modal drag/resize — managed by useModalDragResize hook
-  const {
-    pcModalPosition,
-    pcModalSize,
-    firewallModalPosition,
-    firewallModalSize,
-    unifiedModalPosition,
-    unifiedModalSize,
-    setPcModalPosition,
-    setPcModalSize,
-    setFirewallModalPosition,
-    setFirewallModalSize,
-    setUnifiedModalPosition,
-    setUnifiedModalSize,
-    handlePointerDown,
-    handleResizeStart,
-  } = useModalDragResize({ width: 1200, height: 700 }, graphicsQuality);
+  // Modal drag/resize — unified hook
+  const pcDrag = useDrag({ mode: 'drag-resize', storageKey: 'pc-modal-position', defaultSize: { width: 800, height: 600 } });
+  const firewallDrag = useDrag({ mode: 'drag-resize', storageKey: 'firewall-modal-position', defaultSize: { width: 600, height: 500 } });
+  const unifiedDrag = useDrag({ mode: 'drag-resize', storageKey: 'unified-modal-position', defaultSize: { width: 1200, height: 700 } });
 
   // Get current state helper
   const getCurrentState = useCallback((): ProjectState => ({
@@ -4194,10 +4181,10 @@ ${state.bannerMOTD}
             state={state}
             activeDeviceTasks={activeDeviceTasks}
             taskContext={taskContext}
-            modalPosition={unifiedModalPosition}
-            modalSize={unifiedModalSize}
-            handlePointerDown={handlePointerDown}
-            handleResizeStart={handleResizeStart}
+            modalPosition={unifiedDrag.position}
+            modalSize={unifiedDrag.size}
+            handlePointerDown={unifiedDrag.handlePointerDown}
+            handleResizeStart={unifiedDrag.handleResizeStart}
           />
 
           {/* Firewall Configuration Modal */}
@@ -4220,10 +4207,10 @@ ${state.bannerMOTD}
               data-modal-content
               style={{
                 position: 'fixed',
-                left: typeof window !== 'undefined' && window.innerWidth >= 768 ? firewallModalPosition.x : 0,
-                top: typeof window !== 'undefined' && window.innerWidth >= 768 ? firewallModalPosition.y : 0,
-                width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${firewallModalSize.width}px` : '100vw',
-                height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${firewallModalSize.height}px` : '100vh',
+                left: typeof window !== 'undefined' && window.innerWidth >= 768 ? firewallDrag.position.x : 0,
+                top: typeof window !== 'undefined' && window.innerWidth >= 768 ? firewallDrag.position.y : 0,
+                width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${firewallDrag.size.width}px` : '100vw',
+                height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${firewallDrag.size.height}px` : '100vh',
                 maxWidth: 'none',
                 maxHeight: 'none',
                 borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
@@ -4240,7 +4227,7 @@ ${state.bannerMOTD}
                     isDark ? "border-white/10 bg-slate-900/75" : "border-white/70 bg-white/80"
                   )}
                   data-modal-header
-                  onPointerDown={(e) => handlePointerDown(e, 'firewall')}
+                  onPointerDown={(e) => firewallDrag.handlePointerDown(e, 'firewall')}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -4318,20 +4305,20 @@ ${state.bannerMOTD}
                   <>
                     <div
                       className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-red-500/10"
-                      onPointerDown={(e) => handleResizeStart(e, 'w', 'firewall')}
+                      onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'w', 'firewall')}
                     />
                     <div
                       className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-red-500/20"
-                      onPointerDown={(e) => handleResizeStart(e, 'e', 'firewall')}
+                      onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'e', 'firewall')}
                     />
                     <div
                       className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-red-500/20"
-                      onPointerDown={(e) => handleResizeStart(e, 's', 'firewall')}
+                      onPointerDown={(e) => firewallDrag.handleResizeStart(e, 's', 'firewall')}
                     />
                     <TooltipWrapper title={t.resizeAction}>
                       <div
                         className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-red-500/30 hover:text-white flex items-center justify-center"
-                        onPointerDown={(e) => handleResizeStart(e, 'se', 'firewall')}
+                        onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'se', 'firewall')}
                       >
                         <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
                           <path d="M6 13L13 6" />
@@ -4360,10 +4347,10 @@ ${state.bannerMOTD}
               data-modal-content
               style={{
                 position: 'fixed',
-                left: typeof window !== 'undefined' && window.innerWidth >= 768 ? pcModalPosition.x : 0,
-                top: typeof window !== 'undefined' && window.innerWidth >= 768 ? pcModalPosition.y : 0,
-                width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${pcModalSize.width}px` : '100vw',
-                height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${pcModalSize.height}px` : '100vh',
+                left: typeof window !== 'undefined' && window.innerWidth >= 768 ? pcDrag.position.x : 0,
+                top: typeof window !== 'undefined' && window.innerWidth >= 768 ? pcDrag.position.y : 0,
+                width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${pcDrag.size.width}px` : '100vw',
+                height: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${pcDrag.size.height}px` : '100vh',
                 maxWidth: 'none',
                 maxHeight: 'none',
                 borderRadius: typeof window !== 'undefined' && window.innerWidth >= 768 ? '1rem' : 0,
@@ -4380,7 +4367,7 @@ ${state.bannerMOTD}
                     isDark ? "border-white/10 bg-slate-900/75" : "border-white/70 bg-white/80"
                   )}
                   data-modal-header
-                  onPointerDown={(e) => handlePointerDown(e, 'pc')}
+                  onPointerDown={(e) => pcDrag.handlePointerDown(e, 'pc')}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
@@ -4430,20 +4417,20 @@ ${state.bannerMOTD}
                   <>
                     <div
                       className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10"
-                      onPointerDown={(e) => handleResizeStart(e, 'w', 'pc')}
+                      onPointerDown={(e) => pcDrag.handleResizeStart(e, 'w', 'pc')}
                     />
                     <div
                       className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20"
-                      onPointerDown={(e) => handleResizeStart(e, 'e', 'pc')}
+                      onPointerDown={(e) => pcDrag.handleResizeStart(e, 'e', 'pc')}
                     />
                     <div
                       className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20"
-                      onPointerDown={(e) => handleResizeStart(e, 's', 'pc')}
+                      onPointerDown={(e) => pcDrag.handleResizeStart(e, 's', 'pc')}
                     />
                     <TooltipWrapper title={t.resizeAction}>
                       <div
                         className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
-                        onPointerDown={(e) => handleResizeStart(e, 'se', 'pc')}
+                        onPointerDown={(e) => pcDrag.handleResizeStart(e, 'se', 'pc')}
                       >
                         <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
                           <path d="M6 13L13 6" />

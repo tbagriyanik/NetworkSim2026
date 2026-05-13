@@ -6,7 +6,7 @@ import { SwitchIcon, RouterIcon } from '@/components/network/PCPanelWidgets';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { cn, normalizeMAC } from '@/lib/utils';
 import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
-import { useDraggableInfoPopover } from '@/hooks/useDraggableInfoPopover';
+import { useDrag } from '@/hooks/useDrag';
 import { getWirelessSignalStrength } from '@/lib/network/connectivity';
 import type { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
@@ -41,9 +41,10 @@ interface PCInfoPopoverProps {
 }
 
 export function SwitchInfoPopover({ router, routerState, t, language, isDark, onClose, handleDeviceDoubleClick, onOpenPanel, topologyConnections, onFocus, zIndex }: RouterInfoPopoverProps & { onFocus: () => void; zIndex: number }) {
-  const { containerRef, isDraggingUI, handleDragStart, position } = useDraggableInfoPopover({
+  const { containerRef, isDragging, handleDragStart, position } = useDrag({
     storageKey: 'switch-info-position',
     defaultPosition: { x: 16, y: 96 },
+    origin: 'bottom-right',
   });
 
   const ports = routerState?.ports ? Object.values(routerState.ports) : (router.ports || []);
@@ -55,7 +56,7 @@ export function SwitchInfoPopover({ router, routerState, t, language, isDark, on
       style={{ bottom: `${position.y}px`, right: `${position.x}px`, zIndex }}
       onMouseDown={(e) => { onFocus(); handleDragStart(e); }}>
       <div className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[280px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}>
-        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDraggingUI ? 'cursor-grabbing' : 'cursor-grab'}`}>
+        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
           <div className="flex items-center gap-1.5">
             <GripHorizontal className="w-3 h-3 opacity-30" />
             <SwitchIcon className="w-3.5 h-3.5 text-purple-500" />
@@ -81,11 +82,10 @@ export function SwitchInfoPopover({ router, routerState, t, language, isDark, on
 }
 
 export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zIndex, handleDeviceDoubleClick, onOpenPanel, topologyDevices, deviceStates }: PCInfoPopoverProps) {
-  const { containerRef, isDraggingUI, handleDragStart, position } = useDraggableInfoPopover({
+  const { containerRef, isDragging, handleDragStart, position } = useDrag({
     storageKey: 'pc-info-position',
     defaultPosition: { x: 16, y: 96 },
-    panelWidth: 280,
-    panelHeight: 400,
+    origin: 'bottom-right',
   });
 
   return (
@@ -102,17 +102,14 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
       <div
         className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[260px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}
       >
-        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDraggingUI ? 'cursor-grabbing' : 'cursor-grab'}`}>
+        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
           <div className="flex items-center gap-1.5">
             <GripHorizontal className="w-3 h-3 opacity-30" />
             <Monitor className="w-3.5 h-3.5 text-blue-500" />
             <span className="text-xs font-black tracking-wider uppercase opacity-30">{pc?.name || pc?.id || 'Unknown'}</span>
           </div>
           <TooltipWrapper title={t.close}>
-            <button
-              onClick={onClose}
-              className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
-            >
+            <button onClick={onClose} className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0">
               <X className="w-3 h-3 text-white pointer-events-none" />
             </button>
           </TooltipWrapper>
@@ -242,9 +239,10 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
 }
 
 export function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, onFocus, zIndex, handleDeviceDoubleClick, onOpenPanel, topologyConnections }: RouterInfoPopoverProps) {
-  const { containerRef, isDraggingUI, handleDragStart, position } = useDraggableInfoPopover({
+  const { containerRef, isDragging, handleDragStart, position } = useDrag({
     storageKey: 'router-info-position',
     defaultPosition: { x: 16, y: 96 },
+    origin: 'bottom-right',
   });
 
   const ports = routerState?.ports ? Object.values(routerState.ports) : (router.ports || []);
@@ -274,7 +272,7 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
       <div
         className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[280px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}
       >
-        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDraggingUI ? 'cursor-grabbing' : 'cursor-grab'}`}>
+        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
           <div className="flex items-center gap-1.5">
             <GripHorizontal className="w-3 h-3 opacity-30" />
             {router.type.startsWith('switch') ? <SwitchIcon isL3={router.type === 'switchL3'} className="w-3.5 h-3.5 text-purple-500" /> : <RouterIcon className="w-3.5 h-3.5 text-purple-500" />}

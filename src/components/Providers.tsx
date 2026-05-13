@@ -7,7 +7,7 @@ import { FeatureFlagProvider } from '@/contexts/FeatureFlagContext';
 import { ModeProvider } from '@/contexts/ModeContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { DraggableDialogManager } from '@/components/DraggableDialogManager';
+import { GlobalDragManager } from '@/hooks/useDrag';
 import { AppErrorBoundary } from '@/components/ui/AppErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -21,7 +21,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <ModeProvider>
                 <TooltipProvider delayDuration={0}>
                   <SidebarProvider>
-                    <DraggableDialogManager />
+                    <GlobalDragManager />
                     {children}
                     <Toaster />
                   </SidebarProvider>
