@@ -1487,6 +1487,7 @@ export function PCPanel({
   }, [deviceId, topologyDevices, topologyConnections, deviceStates, t.language]);
 
   const isValidIpv4 = useCallback((value: string) => validateIP(value), []);
+  const isValidIpv6 = useCallback((value: string) => validateIPv6(value), []);
 
   const isSameSubnet = useCallback((sourceIp: string, targetIp: string, subnetMask: string) => {
     try {
@@ -3244,7 +3245,7 @@ export function PCPanel({
           }
 
           // If target is not an IP, try to resolve it via DNS
-          if (!isValidIpv4(targetIp)) {
+          if (!isValidIpv4(targetIp) && !isValidIpv6(targetIp)) {
             const dnsResult = resolveDomainWithDnsServices(target);
             if (dnsResult) {
               targetIp = dnsResult.address;
@@ -3381,7 +3382,7 @@ export function PCPanel({
           if (namedResult) {
             targetIp = namedResult.ip;
           }
-          if (!isValidIpv4(targetIp)) {
+          if (!isValidIpv4(targetIp) && !isValidIpv6(targetIp)) {
             const dnsResult = resolveDomainWithDnsServices(target);
             if (dnsResult) {
               targetIp = dnsResult.address;
@@ -3479,7 +3480,8 @@ export function PCPanel({
             result.hops.forEach((hop, index) => {
               // Simulate some variation in hop display
               const hopName = hop;
-              const hopIp = topologyDevices.find(d => d.name === hop || d.id === hop)?.ip || '?.?.?.?';
+              const hopDevice = topologyDevices.find(d => d.name === hop || d.id === hop);
+              const hopIp = hopDevice?.ipv6 || hopDevice?.ip || '?.?.?.?';
               hopOutput += `  ${index + 1}    <1 ms    <1 ms    <1 ms  ${hopName} [${hopIp}]\n`;
             });
             await addMultilineOutput('output', hopOutput + '\nTrace complete.', 80);

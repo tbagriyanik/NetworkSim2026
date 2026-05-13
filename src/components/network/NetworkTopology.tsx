@@ -3479,14 +3479,16 @@ export function NetworkTopology({
     setErrorToast(null);
 
     const getDevicePrimaryIp = (deviceId: string): string => {
-      const topologyIp = devices.find(d => d.id === deviceId)?.ip;
-      if (topologyIp) return topologyIp;
+      const device = devices.find(d => d.id === deviceId);
+      if (device?.ip) return device.ip;
+      if (device?.ipv6) return device.ipv6;
 
       const state = deviceStates?.get(deviceId);
       if (!state) return '';
 
       for (const port of Object.values(state.ports)) {
         if (port.ipAddress) return port.ipAddress;
+        if (port.ipv6Address) return port.ipv6Address;
       }
 
       return '';
@@ -3494,11 +3496,15 @@ export function NetworkTopology({
 
     // Validate source device IP
     const sourceIp = getDevicePrimaryIp(sourceId);
-    const isSourceIpValid = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(sourceIp);
+    const ipv4Regex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
+    const ipv6Regex = /^([0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F:]{1,4}$/i; // Basic IPv6 check
+    const isIpValid = (ip: string) => ipv4Regex.test(ip) || ipv6Regex.test(ip) || ip.includes(':');
+
+    const isSourceIpValid = isIpValid(sourceIp);
 
     // Validate target device IP
     const targetIp = getDevicePrimaryIp(targetId);
-    const isTargetIpValid = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(targetIp);
+    const isTargetIpValid = isIpValid(targetIp);
 
     // Check if both IPs are valid
     if (!isSourceIpValid || !isTargetIpValid) {
@@ -3541,7 +3547,7 @@ export function NetworkTopology({
         ? connectivity.hopIds
         : [sourceId];
 
-      const packetInfos = buildHopPacketInfos(partialPath, devices, connections);
+      const packetInfos = buildHopPacketInfos(partialPath, devices, connections, 64, targetIp);
       setHopPacketInfos(packetInfos);
 
       pingIsPausedRef.current = true;
@@ -3667,7 +3673,7 @@ export function NetworkTopology({
     }
 
     // Build packet infos for all hops upfront
-    const packetInfos = buildHopPacketInfos(path, devices, connections);
+    const packetInfos = buildHopPacketInfos(path, devices, connections, 64, targetIp);
     setHopPacketInfos(packetInfos);
 
     // Start ping animation — begin PAUSED so the packet panel is visible immediately
@@ -3771,7 +3777,7 @@ export function NetworkTopology({
       } else {
         // Last forward segment done — start return animation (Echo Reply)
         const returnPath = [...path].reverse();
-        const returnPacketInfos = buildHopPacketInfos(returnPath, devices, connections);
+        const returnPacketInfos = buildHopPacketInfos(returnPath, devices, connections, 64, sourceIp);
 
         // Keep step mode if it was active during forward path
         // pingStepModeRef.current = false;

@@ -519,8 +519,8 @@ export function checkConnectivity(
   let routingRequired = false;
 
   // Check if targetIp is a hostname (not an IP address)
-  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-  if (!ipRegex.test(targetIp)) {
+  const isIp = (val: string) => /^(\d{1,3}\.){3}\d{1,3}$/.test(val) || val.includes(':');
+  if (!isIp(targetIp)) {
     // Check if source device has domain lookup disabled
     const sourceState = deviceStates?.get(sourceId);
     if (sourceState?.domainLookup === false) {
@@ -762,8 +762,8 @@ export function checkConnectivity(
   // 2.5. Check subnet compatibility (Layer 3)
   const sourceDeviceForSubnet = devices.find(d => d.id === sourceId);
   if (sourceDeviceForSubnet && targetDevice) {
-    const sourceIp = getPrimaryDeviceIp(sourceId, devices, deviceStates);
     const isTargetIpv6 = resolvedTargetIp.includes(':');
+    const sourceIp = getPrimaryDeviceIp(sourceId, devices, deviceStates, isTargetIpv6);
     const isSourceIpv6 = sourceIp.includes(':');
 
     let isInSameSubnet = false;
@@ -1472,17 +1472,23 @@ function isIpInSubnet(ip: string, targetIp: string, subnet: string): boolean {
 function getPrimaryDeviceIp(
   deviceId: string,
   devices: CanvasDevice[],
-  deviceStates?: Map<string, SwitchState>
+  deviceStates?: Map<string, SwitchState>,
+  preferIpv6: boolean = false
 ): string {
   const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
-  const topologyIp = devices.find(d => d.id === deviceId)?.ip;
-  if (topologyIp) return topologyIp;
+  const device = devices.find(d => d.id === deviceId);
+
+  if (preferIpv6 && device?.ipv6) return device.ipv6;
+  if (device?.ip) return device.ip;
+  if (device?.ipv6) return device.ipv6;
 
   const state = safeDeviceStates.get(deviceId);
   if (!state) return '';
 
   for (const port of Object.values(state.ports)) {
+    if (preferIpv6 && port.ipv6Address) return port.ipv6Address;
     if (port.ipAddress) return port.ipAddress;
+    if (port.ipv6Address) return port.ipv6Address;
   }
 
   return '';

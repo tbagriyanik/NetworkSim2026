@@ -1779,7 +1779,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
 
   // Ping
   'ping': {
-    pattern: /^ping\s+([0-9.]+|[\w.-]+)(\s+(repeat\s+\d+|size\s+\d+|timeout\s+\d+))*$/i,
+    pattern: /^ping\s+([0-9a-fA-F:.]+|[\w.-]+)(\s+(repeat\s+\d+|size\s+\d+|timeout\s+\d+))*$/i,
     modes: ['privileged'],
     minArgs: 1,
     maxArgs: 6
@@ -1787,7 +1787,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
 
   // Traceroute
   'traceroute': {
-    pattern: /^traceroute\s+([0-9.]+|[\w.-]+)$/i,
+    pattern: /^traceroute\s+([0-9a-fA-F:.]+|[\w.-]+)$/i,
     modes: ['privileged'],
     minArgs: 1,
     maxArgs: 1
@@ -1795,7 +1795,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
 
   // Tracert (traceroute equivalent)
   'tracert': {
-    pattern: /^tracert\s+([0-9.]+|[\w.-]+)$/i,
+    pattern: /^tracert\s+([0-9a-fA-F:.]+|[\w.-]+)$/i,
     modes: ['privileged'],
     minArgs: 1,
     maxArgs: 1
@@ -1803,7 +1803,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
 
   // Telnet
   'telnet': {
-    pattern: /^telnet\s+([0-9.]+|[\w.-]+)(\s+(\d+))?$/i,
+    pattern: /^telnet\s+([0-9a-fA-F:.]+|[\w.-]+)(\s+(\d+))?$/i,
     modes: ['user', 'privileged'],
     minArgs: 1,
     maxArgs: 2
@@ -1811,7 +1811,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
 
   // SSH
   'ssh': {
-    pattern: /^ssh\s+(-l\s+\S+\s+)?([0-9.]+|[\w.-]+)$/i,
+    pattern: /^ssh\s+(-l\s+\S+\s+)?([0-9a-fA-F:.]+|[\w.-]+)$/i,
     modes: ['privileged'],
     minArgs: 1,
     maxArgs: 3

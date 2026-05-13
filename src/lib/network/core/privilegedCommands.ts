@@ -77,7 +77,7 @@ function cmdPing(state: any, input: string, ctx: any): any {
         return { success: false, error: iosModeError() };
     }
 
-    const match = input.match(/^ping\s+([0-9.]+|[\w.-]+)(?:\s+(\d+))?(?:\s+(\d+))?$/i);
+    const match = input.match(/^ping\s+([0-9a-fA-F:.]+|[\w.-]+)(?:\s+(\d+))?(?:\s+(\d+))?$/i);
     if (!match) {
         return { success: false, error: '% Invalid ping command. Use: ping <host> [size] [count]' };
     }

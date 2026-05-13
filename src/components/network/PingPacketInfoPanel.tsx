@@ -304,9 +304,9 @@ function MobilePacketTables({ currentInfo, prevInfo, macChanged, ttlChanged, isD
             {activeTab === 'l3' && (
                 <div className={`rounded-xl overflow-hidden border ${containerCls.purple}`}>
                     <table className="w-full"><tbody>
-                        <FieldRow label={t.srcIp} value={currentInfo.srcIp} highlight="same" isDark={isDark} />
-                        <FieldRow label={t.dstIp} value={currentInfo.dstIp} highlight="same" isDark={isDark} />
-                        <FieldRow label={t.ttl} value={String(currentInfo.ttl)} prevValue={prevInfo ? String(prevInfo.ttl) : undefined} highlight={ttlChanged ? 'changed' : 'none'} isDark={isDark} badge={ttlChanged ? t.ttlDec : undefined} badgeColor="#d97706" />
+                        <FieldRow label={currentInfo.layer3 === 'IPv6' ? (t.srcIp.replace('IP', 'IPv6')) : t.srcIp} value={currentInfo.srcIp} highlight="same" isDark={isDark} />
+                        <FieldRow label={currentInfo.layer3 === 'IPv6' ? (t.dstIp.replace('IP', 'IPv6')) : t.dstIp} value={currentInfo.dstIp} highlight="same" isDark={isDark} />
+                        <FieldRow label={currentInfo.layer3 === 'IPv6' ? 'Hop Limit' : t.ttl} value={String(currentInfo.ttl)} prevValue={prevInfo ? String(prevInfo.ttl) : undefined} highlight={ttlChanged ? 'changed' : 'none'} isDark={isDark} badge={ttlChanged ? t.ttlDec : undefined} badgeColor="#d97706" />
                         <FieldRow label={t.protocol} value={currentInfo.protocol} isDark={isDark} />
                     </tbody></table>
                 </div>
@@ -314,8 +314,8 @@ function MobilePacketTables({ currentInfo, prevInfo, macChanged, ttlChanged, isD
             {activeTab === 'l4' && (
                 <div className={`rounded-xl overflow-hidden border ${containerCls.blue}`}>
                     <table className="w-full"><tbody>
-                        <FieldRow label={t.icmpType} value={currentInfo.icmpType} isDark={isDark} />
-                        <FieldRow label={t.icmpCode} value={String(currentInfo.icmpCode)} isDark={isDark} />
+                        <FieldRow label={currentInfo.layer4 === 'ICMPv6' ? 'ICMPv6 Type' : t.icmpType} value={currentInfo.icmpType} isDark={isDark} />
+                        <FieldRow label={currentInfo.layer4 === 'ICMPv6' ? 'ICMPv6 Code' : t.icmpCode} value={String(currentInfo.icmpCode)} isDark={isDark} />
                         <FieldRow label={t.icmpSeq} value={String(currentInfo.icmpSeq)} isDark={isDark} />
                     </tbody></table>
                 </div>
@@ -425,7 +425,7 @@ export function PingPacketInfoPanel({
     const isFailure = success === false;
 
     const posStyle: React.CSSProperties = isMobile
-        ? { position: 'fixed', top: 60, bottom: 60, left: 0, right: 0, transform: 'none' } // Account for header (60px) and footer (60px) on mobile
+        ? { position: 'fixed', bottom: 72, left: 12, right: 12, top: 'auto', transform: 'none' }
         : pos
             ? { position: 'fixed', left: pos.x, top: pos.y, bottom: 'auto', transform: 'none' }
             : { position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)' };
@@ -437,7 +437,7 @@ export function PingPacketInfoPanel({
         <div
             ref={panelRef}
             data-draggable-id="ping-packet-info-panel"
-            className={`rounded-2xl overflow-hidden select-none ${isMobile ? 'rounded-b-none' : ''} ${isGlass
+            className={`flex flex-col rounded-2xl overflow-hidden select-none ${isGlass
                 ? isDark
                     ? 'bg-slate-900/60 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]'
                     : 'bg-white/60 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.9)]'
@@ -447,7 +447,8 @@ export function PingPacketInfoPanel({
                 }`}
             style={{
                 ...posStyle,
-                width: isMobile ? '100%' : 780,
+                width: isMobile ? 'calc(100% - 24px)' : 780,
+                maxHeight: isMobile ? 'calc(100dvh - 140px)' : 'none',
                 zIndex: resolvedZIndex,
                 ...(isGlass ? { backdropFilter: 'blur(24px) saturate(180%)' } : {}),
             }}
@@ -586,6 +587,8 @@ export function PingPacketInfoPanel({
                 </div>
             </div>
 
+            <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
+
             {/* Result banner */}
             {isDone && (
                 <div className={`px-5 py-3 flex items-start gap-3 border-b ${isSuccess
@@ -689,11 +692,11 @@ export function PingPacketInfoPanel({
                                 : isDark ? 'border-purple-900/60 bg-purple-950/50' : 'border-purple-200 bg-purple-50'}`}>
                                 <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
                                     ? isDark ? 'bg-purple-500/15 border-purple-400/20 text-purple-400' : 'bg-purple-500/10 border-purple-400/20 text-purple-700'
-                                    : isDark ? 'bg-purple-950/60 border-purple-900/60 text-purple-400' : 'bg-purple-100 border-purple-200 text-purple-700'}`}>{t.layer3}</div>
+                                    : isDark ? 'bg-purple-950/60 border-purple-900/60 text-purple-400' : 'bg-purple-100 border-purple-200 text-purple-700'}`}>{currentInfo.layer3 === 'IPv6' ? (language === 'tr' ? 'Katman 3 — IPv6 Başlığı' : 'Layer 3 — IPv6 Header') : t.layer3}</div>
                                 <table className="w-full"><tbody>
-                                    <FieldRow label={t.srcIp} value={currentInfo.srcIp} highlight="same" isDark={isDark} />
-                                    <FieldRow label={t.dstIp} value={currentInfo.dstIp} highlight="same" isDark={isDark} />
-                                    <FieldRow label={t.ttl} value={String(currentInfo.ttl)} prevValue={prevInfo ? String(prevInfo.ttl) : undefined} highlight={ttlChanged ? 'changed' : 'none'} isDark={isDark} badge={ttlChanged ? t.ttlDec : undefined} badgeColor="#d97706" />
+                                    <FieldRow label={currentInfo.layer3 === 'IPv6' ? (t.srcIp.replace('IP', 'IPv6')) : t.srcIp} value={currentInfo.srcIp} highlight="same" isDark={isDark} />
+                                    <FieldRow label={currentInfo.layer3 === 'IPv6' ? (t.dstIp.replace('IP', 'IPv6')) : t.dstIp} value={currentInfo.dstIp} highlight="same" isDark={isDark} />
+                                    <FieldRow label={currentInfo.layer3 === 'IPv6' ? 'Hop Limit' : t.ttl} value={String(currentInfo.ttl)} prevValue={prevInfo ? String(prevInfo.ttl) : undefined} highlight={ttlChanged ? 'changed' : 'none'} isDark={isDark} badge={ttlChanged ? t.ttlDec : undefined} badgeColor="#d97706" />
                                     <FieldRow label={t.protocol} value={currentInfo.protocol} isDark={isDark} />
                                 </tbody></table>
                             </div>
@@ -702,10 +705,10 @@ export function PingPacketInfoPanel({
                                 : isDark ? 'border-blue-900/60 bg-blue-950/50' : 'border-blue-200 bg-blue-50'}`}>
                                 <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
                                     ? isDark ? 'bg-blue-500/15 border-blue-400/20 text-blue-400' : 'bg-blue-500/10 border-blue-400/20 text-blue-700'
-                                    : isDark ? 'bg-blue-950/60 border-blue-900/60 text-blue-400' : 'bg-blue-100 border-blue-200 text-blue-700'}`}>{t.layer4}</div>
+                                    : isDark ? 'bg-blue-950/60 border-blue-900/60 text-blue-400' : 'bg-blue-100 border-blue-200 text-blue-700'}`}>{currentInfo.layer4 === 'ICMPv6' ? (language === 'tr' ? 'Katman 4 — ICMPv6' : 'Layer 4 — ICMPv6') : t.layer4}</div>
                                 <table className="w-full"><tbody>
-                                    <FieldRow label={t.icmpType} value={currentInfo.icmpType} isDark={isDark} />
-                                    <FieldRow label={t.icmpCode} value={String(currentInfo.icmpCode)} isDark={isDark} />
+                                    <FieldRow label={currentInfo.layer4 === 'ICMPv6' ? 'ICMPv6 Type' : t.icmpType} value={currentInfo.icmpType} isDark={isDark} />
+                                    <FieldRow label={currentInfo.layer4 === 'ICMPv6' ? 'ICMPv6 Code' : t.icmpCode} value={String(currentInfo.icmpCode)} isDark={isDark} />
                                     <FieldRow label={t.icmpSeq} value={String(currentInfo.icmpSeq)} isDark={isDark} />
                                 </tbody></table>
                             </div>
@@ -715,6 +718,7 @@ export function PingPacketInfoPanel({
             ) : (
                 <div className={`px-5 py-8 text-center text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.noHops}</div>
             )}
+            </div>
         </div >
     );
 }
@@ -723,15 +727,18 @@ export function buildHopPacketInfos(
     path: string[],
     devices: CanvasDevice[],
     connections: CanvasConnection[],
-    initialTTL = 64
+    initialTTL = 64,
+    targetIp?: string
 ): HopPacketInfo[] {
     if (!path || path.length < 2) return [];
 
     const sourceDevice = devices.find(d => d.id === path[0]);
     const targetDevice = devices.find(d => d.id === path[path.length - 1]);
 
-    const originalSrcIp = sourceDevice?.ip || '0.0.0.0';
-    const originalDstIp = targetDevice?.ip || '0.0.0.0';
+    const originalSrcIp = sourceDevice?.ip || sourceDevice?.ipv6 || '0.0.0.0';
+    const originalDstIp = targetDevice?.ip || targetDevice?.ipv6 || '0.0.0.0';
+
+    const isIPv6 = (targetIp && targetIp.includes(':')) || originalDstIp.includes(':');
 
     const getMac = (device: CanvasDevice | undefined, fallback: string): string => {
         if (!device) return fallback;
@@ -750,6 +757,13 @@ export function buildHopPacketInfos(
         const fourthOctet = 1 + ((hash + hopIndex) % 254); // 1-254 range
         
         return `${baseOctet}.${secondOctet}.${thirdOctet}.${fourthOctet}`;
+    };
+
+    const generateInterfaceIpv6 = (deviceId: string, interfaceId: string, hopIndex: number): string => {
+        const hash = deviceId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const second = (hash % 65535).toString(16);
+        const third = (hopIndex % 65535).toString(16);
+        return `2001:db8:${second}:${third}::1`;
     };
 
     // Check if two devices are connected via wireless
@@ -810,21 +824,21 @@ export function buildHopPacketInfos(
 
         // Calculate hop-specific IP addresses
         // For router hops, use interface IPs; for end devices, use device IPs
-        let hopSrcIp = fromDev?.ip || '0.0.0.0';
-        let hopDstIp = toDev?.ip || '0.0.0.0';
+        let hopSrcIp = isIPv6 ? (fromDev?.ipv6 || fromDev?.ip || '::') : (fromDev?.ip || '0.0.0.0');
+        let hopDstIp = isIPv6 ? (toDev?.ipv6 || toDev?.ip || '::') : (toDev?.ip || '0.0.0.0');
 
         // If this is a router interface, generate interface-specific IPs
         if (fromDev?.type === 'router') {
             // Router interfaces use different IPs than the main device IP
             // Generate interface IP based on router ID and hop index
             const interfaceId = `GigabitEthernet0/${i}`;
-            hopSrcIp = generateInterfaceIp(fromDev.id, interfaceId, i);
+            hopSrcIp = isIPv6 ? generateInterfaceIpv6(fromDev.id, interfaceId, i) : generateInterfaceIp(fromDev.id, interfaceId, i);
         }
         
         if (toDev?.type === 'router') {
             // Router interfaces use different IPs than the main device IP
             const interfaceId = `GigabitEthernet0/${i + 1}`;
-            hopDstIp = generateInterfaceIp(toDev.id, interfaceId, i + 1);
+            hopDstIp = isIPv6 ? generateInterfaceIpv6(toDev.id, interfaceId, i + 1) : generateInterfaceIp(toDev.id, interfaceId, i + 1);
         }
 
         infos.push({
@@ -833,30 +847,30 @@ export function buildHopPacketInfos(
                 id: fromDev?.id || path[i],
                 name: fromDev?.name || path[i],
                 type: fromDev?.type || 'unknown',
-                ip: fromDev?.ip || '0.0.0.0',
+                ip: isIPv6 ? (fromDev?.ipv6 || fromDev?.ip || '::') : (fromDev?.ip || '0.0.0.0'),
                 mac: srcMac,
             },
             toDevice: {
                 id: toDev?.id || path[i + 1],
                 name: toDev?.name || path[i + 1],
                 type: toDev?.type || 'unknown',
-                ip: toDev?.ip || '0.0.0.0',
+                ip: isIPv6 ? (toDev?.ipv6 || toDev?.ip || '::') : (toDev?.ip || '0.0.0.0'),
                 mac: dstMac,
             },
             cableType,
             srcMac,
             dstMac,
-            etherType: '0x0800 (IPv4)',
+            etherType: isIPv6 ? '0x86DD (IPv6)' : '0x0800 (IPv4)',
             srcIp: hopSrcIp,
             dstIp: hopDstIp,
             ttl,
-            protocol: 'ICMP (1)',
-            icmpType: 'Echo Request (8)',
+            protocol: isIPv6 ? 'ICMPv6 (58)' : 'ICMP (1)',
+            icmpType: isIPv6 ? 'Echo Request (128)' : 'Echo Request (8)',
             icmpCode: 0,
             icmpSeq: icmpSeq++,
             layer2: 'Ethernet II',
-            layer3: 'IPv4',
-            layer4: 'ICMP',
+            layer3: isIPv6 ? 'IPv6' : 'IPv4',
+            layer4: isIPv6 ? 'ICMPv6' : 'ICMP',
         });
     }
 
