@@ -66,7 +66,8 @@ export default function RootLayout({
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg"
         >
-          Ana içeriğe atla
+          <span lang="en">Skip to main content</span>
+          <span lang="tr" className="hidden">Ana içeriğe atla</span>
         </a>
         <Providers>
           <div id="main-content" className="w-full h-screen flex flex-col overflow-hidden">

@@ -26,19 +26,19 @@ interface QuickCommand {
 }
 
 const quickCommands: QuickCommand[] = [
-  { command: 'enable', label: 'enable', modes: ['user'], color: 'btn-glass-success' },
-  { command: 'disable', label: 'disable', modes: ['privileged'], color: 'btn-glass-secondary' },
-  { command: 'configure terminal', label: 'conf t', modes: ['privileged'], color: 'btn-glass-primary' },
-  { command: 'exit', label: 'exit', modes: ['privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config'], color: 'btn-glass-warning' },
-  { command: 'end', label: 'end', modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config'], color: 'btn-glass-danger' },
-  { command: 'show running-config', label: 'sh run', modes: ['privileged'], color: 'btn-glass-indigo' },
-  { command: 'show vlan brief', label: 'sh vlan', modes: ['privileged'], color: 'btn-glass-secondary' },
-  { command: 'show interfaces', label: 'sh int', modes: ['privileged'], color: 'btn-glass-secondary' },
-  { command: 'show version', label: 'sh ver', modes: ['privileged'], color: 'btn-glass-secondary' },
-  { command: 'show mac address-table', label: 'sh mac', modes: ['privileged'], color: 'btn-glass-secondary' },
-  { command: 'write memory', label: 'wr', modes: ['privileged'], color: 'btn-glass-warning' },
-  { command: 'no shutdown', label: 'no shut', modes: ['interface'], color: 'btn-glass-success' },
-  { command: 'shutdown', label: 'shut', modes: ['interface'], color: 'btn-glass-danger' },
+  { command: 'enable', label: 'enable', modes: ['user'], color: 'glass-success' },
+  { command: 'disable', label: 'disable', modes: ['privileged'], color: 'glass-secondary' },
+  { command: 'configure terminal', label: 'conf t', modes: ['privileged'], color: 'glass-primary' },
+  { command: 'exit', label: 'exit', modes: ['privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config'], color: 'glass-warning' },
+  { command: 'end', label: 'end', modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config'], color: 'glass-danger' },
+  { command: 'show running-config', label: 'sh run', modes: ['privileged'], color: 'glass-indigo' },
+  { command: 'show vlan brief', label: 'sh vlan', modes: ['privileged'], color: 'glass-secondary' },
+  { command: 'show interfaces', label: 'sh int', modes: ['privileged'], color: 'glass-secondary' },
+  { command: 'show version', label: 'sh ver', modes: ['privileged'], color: 'glass-secondary' },
+  { command: 'show mac address-table', label: 'sh mac', modes: ['privileged'], color: 'glass-secondary' },
+  { command: 'write memory', label: 'wr', modes: ['privileged'], color: 'glass-warning' },
+  { command: 'no shutdown', label: 'no shut', modes: ['interface'], color: 'glass-success' },
+  { command: 'shutdown', label: 'shut', modes: ['interface'], color: 'glass-danger' },
 ];
 
 export function QuickCommands({ currentMode, onExecuteCommand, t, theme, language, isDevicePoweredOff = false }: QuickCommandsProps) {
@@ -90,16 +90,17 @@ export function QuickCommands({ currentMode, onExecuteCommand, t, theme, languag
             {availableCommands.map((cmd) => (
               <Tooltip key={cmd.command}>
                 <TooltipTrigger asChild>
-                  <button
+                  <Button
+                    variant={cmd.color as any}
+                    size="sm"
                     onClick={() => onExecuteCommand(cmd.command)}
                     className={cn(
-                      cmd.color,
-                      "text-[9px] px-2 py-1 rounded-lg font-black tracking-widest transition-all",
+                      "text-[9px] px-2 py-1 font-black tracking-widest",
                       isMobile ? 'flex-1' : 'min-w-[50px]'
                     )}
                   >
                     <span className="truncate">{cmd.label}</span>
-                  </button>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent className="text-xs">
                   <span className="truncate">{cmd.command}</span>

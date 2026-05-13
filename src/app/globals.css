@@ -357,55 +357,6 @@
   border-color: rgba(255, 255, 255, 0.12);
 }
 
-/* Button Styles - Explicit declarations to satisfy Tailwind v4 engine */
-.btn-glass-primary,
-.btn-glass-secondary,
-.btn-glass-success,
-.btn-glass-danger,
-.btn-glass-warning,
-.btn-glass-indigo {
-  @apply relative flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-colors duration-200 backdrop-blur-md border outline-none select-none overflow-hidden;
-  @apply shadow-sm;
-}
-
-.btn-glass-primary {
-  @apply border-cyan-500/30 text-white shadow-cyan-500/10;
-  @apply bg-cyan-600/80 hover:bg-cyan-500 hover:border-cyan-400 hover:shadow-cyan-500/30;
-}
-
-.btn-glass-secondary {
-  @apply border-slate-700/50 text-slate-300 shadow-slate-900/40;
-  @apply bg-slate-800/80 hover:bg-slate-700 hover:border-slate-600 hover:text-white;
-}
-
-.dark .btn-glass-secondary {
-  @apply bg-slate-900/60 border-slate-800 hover:bg-slate-800 hover:border-slate-700;
-}
-
-:root:not(.dark) .btn-glass-secondary {
-  @apply bg-white/60 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300;
-}
-
-.btn-glass-success {
-  @apply border-emerald-500/30 text-white shadow-emerald-500/10;
-  @apply bg-emerald-600/80 hover:bg-emerald-500 hover:border-emerald-400 hover:shadow-emerald-500/30;
-}
-
-.btn-glass-danger {
-  @apply border-rose-500/30 text-white shadow-rose-500/10;
-  @apply bg-rose-600/80 hover:bg-rose-500 hover:border-rose-400 hover:shadow-rose-500/30;
-}
-
-.btn-glass-warning {
-  @apply border-amber-500/30 text-white shadow-amber-500/10;
-  @apply bg-amber-600/80 hover:bg-amber-500 hover:border-amber-400 hover:shadow-amber-500/30;
-}
-
-.btn-glass-indigo {
-  @apply border-indigo-500/30 text-white shadow-indigo-500/10;
-  @apply bg-indigo-600/80 hover:bg-indigo-500 hover:border-indigo-400 hover:shadow-indigo-500/30;
-}
-
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
 
@@ -418,13 +369,6 @@
     scroll-behavior: auto !important;
   }
 
-  .btn-glass-primary::after,
-  .btn-glass-success::after,
-  .btn-glass-danger::after,
-  .btn-glass-warning::after,
-  .btn-glass-indigo::after {
-    display: none;
-  }
 }
 
 /* Animations */
