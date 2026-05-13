@@ -1,10 +1,10 @@
-# Cisco L3 Switch Configuration - Implementation Guide
+#  L3 Switch Configuration - Implementation Guide
 
-This document describes how the NetworkSim simulator implements proper Cisco Layer 3 switch behavior according to Cisco networking standards.
+This document describes how the NetworkSim simulator implements proper  Layer 3 switch behavior according to  networking standards.
 
 ## Overview
 
-The simulator now enforces 5 key Cisco networking concepts:
+The simulator now enforces 5 key  networking concepts:
 
 1. **Routed Port Configuration (no switchport)**
 2. **IP Routing Enablement (ip routing)**
@@ -17,9 +17,9 @@ The simulator now enforces 5 key Cisco networking concepts:
 ## 1. Routed Port Configuration (no switchport)
 
 ### Concept
-Physical ports on a Cisco Layer 3 switch default to Layer 2 (switchport) mode. To use a physical port for Layer 3 routing, you must first disable the switching feature with `no switchport`.
+Physical ports on a  Layer 3 switch default to Layer 2 (switchport) mode. To use a physical port for Layer 3 routing, you must first disable the switching feature with `no switchport`.
 
-### Cisco Standards
+###  Standards
 - Physical ports are **Layer 2 by default**
 - `no switchport` command **only available on L3 switches**
 - Cannot be used on VLAN interfaces or wireless interfaces
@@ -64,7 +64,7 @@ Port(s) are now in L3 routed mode. Use 'ip address' to assign an IP address.
 ### Concept
 For an L3 switch to route packets between VLANs, the `ip routing` command must be enabled in global configuration mode. Without this command, the device operates as a Layer 2 switch only.
 
-### Cisco Standards
+###  Standards
 - **Mandatory** for inter-VLAN routing on L3 switches
 - **Global configuration mode** only
 - Activates the Routing Information Base (RIB)
@@ -119,7 +119,7 @@ A Switched Virtual Interface (SVI) - created with `interface vlan X` - becomes "
 2. At least one physical port is assigned to that VLAN
 3. At least one of those ports is active (not shutdown)
 
-### Cisco Standards
+###  Standards
 - SVI requires **at least one active port** in the VLAN
 - If all ports in VLAN are shutdown, SVI goes down
 - SVI status affects gateway functionality
@@ -128,7 +128,7 @@ A Switched Virtual Interface (SVI) - created with `interface vlan X` - becomes "
 
 ### Implementation in NetworkSim
 
-**Validation Function**: [ciscoL3Validation.ts](src/lib/network/core/ciscoL3Validation.ts) - `validateSviStatus()`
+**Validation Function**: [L3Validation.ts](src/lib/network/core/L3Validation.ts) - `validateSviStatus()`
 
 **Used By**: `ip address` command on VLAN interfaces
 
@@ -173,9 +173,9 @@ else:
 ## 4. Memory Configuration (sdm prefer)
 
 ### Concept
-On some Cisco switches, the memory must be configured for the routing table before enabling IP routing. The `sdm prefer lanbase-routing` command allocates TCAM memory for routing.
+On some  switches, the memory must be configured for the routing table before enabling IP routing. The `sdm prefer lanbase-routing` command allocates TCAM memory for routing.
 
-### Cisco Standards
+###  Standards
 - Only on specific L3 switch models
 - **Requires reload** to take effect
 - Cannot enable `ip routing` until reload completes
@@ -241,7 +241,7 @@ The purpose of an IP address differs based on the device type:
 
 ### Implementation in NetworkSim
 
-**Validation Function**: [ciscoL3Validation.ts](src/lib/network/core/ciscoL3Validation.ts) - `getIpAddressPurpose()`
+**Validation Function**: [L3Validation.ts](src/lib/network/core/L3Validation.ts) - `getIpAddressPurpose()`
 
 **Used By**: `ip address` command
 
@@ -281,7 +281,7 @@ Interface Gi0/1 configured with IP 10.0.0.1 255.255.255.0
 
 ## Validation Helper Functions
 
-All validations are provided in [ciscoL3Validation.ts](src/lib/network/core/ciscoL3Validation.ts):
+All validations are provided in [L3Validation.ts](src/lib/network/core/L3Validation.ts):
 
 ### Public Functions
 
@@ -394,7 +394,7 @@ Switch(config-if)# exit
 
 ## Related Files
 
-- [ciscoL3Validation.ts](src/lib/network/core/ciscoL3Validation.ts) - Validation functions
+- [L3Validation.ts](src/lib/network/core/L3Validation.ts) - Validation functions
 - [globalConfigCommands.ts](src/lib/network/core/globalConfigCommands.ts) - `ip routing` and `sdm prefer` commands
 - [interfaceCommands.ts](src/lib/network/core/interfaceCommands.ts) - `no switchport` and `ip address` commands
 - [switchModels.ts](src/lib/network/switchModels.ts) - Device type definitions
@@ -404,7 +404,7 @@ Switch(config-if)# exit
 
 ## References
 
-- Cisco Catalyst 2960 (L2): Limited to VLAN management only
-- Cisco Catalyst 3650 (L3): Full inter-VLAN routing support
-- Cisco IOS Command Reference: ip routing, no switchport, sdm prefer
-- Cisco Documentation: L2 vs L3 switching differences
+-  Catalyst 2960 (L2): Limited to VLAN management only
+-  Catalyst 3650 (L3): Full inter-VLAN routing support
+-  IOS Command Reference: ip routing, no switchport, sdm prefer
+-  Documentation: L2 vs L3 switching differences

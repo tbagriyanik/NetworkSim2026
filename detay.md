@@ -6,151 +6,239 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 
 ### Etkileşimli Topoloji
 
-- Sürükle-bırak ile PC, IoT, L2 switch, L3 switch ve router ekleme.
+- Sürükle-bırak ile PC, IoT, L2 switch, L3 switch, router ve firewall ekleme.
 - Zoom, pan, çoklu seçim, lastik kutu seçimi ve bağlam menüsü.
 - Straight-through, crossover ve console kablo desteği.
 - Port durumları, kablo uyumluluğu, STP bloklama rengi ve bağlantı animasyonları.
 - Cihaz taşınırken port tıklama ve tooltip davranışı askıya alınır; drop sonrası otomatik döner.
+- Pencere konumları otomatik kaydedilir; refresh sonrası geri yüklenir.
 
 ### CLI, CMD ve Console
 
 - Switch/router CLI terminali, PC CMD ve PC üzerinden console bağlantısı.
 - Komut geçmişi, autocomplete, yardım çıktısı ve anlık `?` desteği.
 - Terminal girişleri, çıktı alanları ve öneri listeleri Geist Mono ile görüntülenir.
-- Desteklenen komut aileleri: VLAN, trunk, VTP, STP, EtherChannel, port security, DHCP, DNS, HTTP, static routing, RIP, OSPF, SSH, Telnet, ping ve show komutları.
+- Desteklenen komut aileleri: VLAN, trunk, VTP, STP, EtherChannel, port security, DHCP, DNS, HTTP, static routing, RIP, OSPF, EIGRP, HSRP, NAT, ACL, firewall, SSH, Telnet, ping ve show komutları (180+ komut).
+- Hata mesajları gerçek IOS stilinde görüntülenir.
 
-### Switching
+### Switching (Layer 2)
 
-- VLAN oluşturma, adlandırma, access/trunk port atama.
+- VLAN oluşturma, adlandırma, access/trunk port atama (1-4094).
 - Native VLAN ve allowed VLAN davranışı.
-- VTP server/client senaryoları.
-- EtherChannel/LACP yapılandırmaları.
-- STP ve PVST görselleştirmesi:
+- VTP server/client/transparent senaryoları, domain ve password.
+- EtherChannel/LACP (active/passive/on) yapılandırmaları, port-channel interface.
+- STP, PVST+, Rapid-PVST ve MST görselleştirmesi:
   - Root/designated/alternate rol takibi.
-  - VLAN bazlı STP yol hesaplama.
+  - VLAN bazlı STP yol hesaplama ve prioriteler.
   - Link kesilince yedek yolun devreye girmesi.
-  - VLAN 1 için özel bloklama görselleştirmesi.
+  - PortFast, BPDU guard, UplinkFast, BackboneFast.
+- MAC adres tablosu (dinamik/statik, aging, temizleme).
+- Port security (sticky MAC, violation protect/restrict/shutdown, aging).
+- Voice VLAN, storm-control, SPAN/RSPAN port mirroring.
+- UDLD aggressive/normal mode, errdisable recovery.
+- DHCP snooping, DAI (Dynamic ARP Inspection), IP Source Guard.
+- MLS QoS, CoS değerleri, trust cos/dscp.
+- CDP komşu keşfi.
+- L2 switch model: WS-C2960-24TT-L (24 FE + 2 GE).
+- L3 switch model: WS-C3650-24PS (24 GE + 4 GE + WLAN).
 
-### Routing
+### Routing (Layer 3)
 
-- IPv4 ve IPv6 Static routing (prefix/length desteği).
+- IPv4 ve IPv6 static routing (prefix/length desteği, administrative distance).
 - Router ve L3 switch üzerinde route doğrulama.
-- RIP ve OSPF dynamic routing desteği.
-- **IPv6 Yönlendirme**: RIPng ve OSPFv3 protokolleri.
+- Inter-VLAN routing: Router-on-a-Stick (802.1Q subinterface), Legacy routing, L3 switch SVI.
+- RIP (v1/v2) dynamic routing, network advertisement, no auto-summary.
+- OSPF multi-area (backbone area 0, stub, route summarization).
+- OSPFv3 (IPv6) per-interface enable.
+- EIGRP (AS numarası, network, no auto-summary).
+- RIPng (IPv6).
+- HSRP redundancy (active/standby, priority, preempt).
 - `show ip route` ve `show ipv6 route` çıktılarında protokol bazlı ayrım.
 - Ping animasyonu IPv4/IPv6 route ve VLAN/STP durumunu dikkate alır.
+- L3 switch'te `ip routing`, `no switchport` ve `sdm prefer` yapılandırması.
+
+### NAT (Network Address Translation)
+
+- Static NAT (one-to-one IP mapping).
+- Dynamic NAT (pool-based).
+- PAT / NAT Overload (interface overload).
+- Inside/Outside interface ataması.
+- `show ip nat translations` ve `show ip nat statistics` doğrulama.
+
+### Access Control ve Firewall
+
+- Standard ACL (1-99) ve Extended ACL (100-199, named).
+- ACL interface'de `ip access-group` ile uygulama (in/out).
+- Firewall cihaz tipi: özel panel, sürükle-bırak kural yönetimi.
+- Firewall kuralları (allow/deny, protocol, port, IP).
+- Firewall kuralları `running-config` ve `show access-lists` ile görünür.
+- Kural kalıcılığı (cihaz yeniden seçilince korunur).
+
+### IP Servisler
+
+- DHCP server: pool yönetimi, default router, DNS, lease, domain, excluded addresses.
+- DHCP client: `ipconfig /renew`, otomatik lease, DHCP discovery/offer flow.
+- DHCP relay: `ip helper-address` ile broadcast forwarding.
+- DNS server: `ip dns server`, `ip host` domain/IP kaydı.
+- DNS client: `nslookup`, `ip name-server`, domain lookup.
+- HTTP server: router üzerinde web panel, yapılandırılabilir içerik.
+- NTP, SNMP, Syslog, SSH, Telnet.
+- Banner MOTD/login/exec, enable secret/password, username/privilege.
 
 ### Wireless ve IoT
 
 - Router/switch WiFi AP ve PC/IoT client modu.
-- SSID, güvenlik tipi, parola ve kanal ayarları.
-- WiFi sinyal gücü göstergesi.
+- SSID, güvenlik tipi (Open/WPA/WPA2/WPA3), PSK parola, kanal ayarı.
+- Hidden SSID desteği, WLAN-ID/VLAN binding.
+- WiFi sinyal gücü göstergesi, WLC show komutları.
 - Router yönetim web paneli.
 - IoT paneli:
   - Oturum tabanlı giriş.
-  - Bağlı cihaz listesi.
-  - Sensör durumu ve aktif/pasif kontrolü.
+  - Sensör tipleri: temperature, humidity, motion, light, sound.
+  - Aktüatörler: heater, cooler, lamp.
+  - Kural motoru: condition-action (if-then) otomasyonu.
+  - Çevresel değişkenler (sıcaklık, nem, ışık %0-100).
+  - Cihaz işbirliği (cross-device rule evaluation).
   - IoT cihazını topolojiye odaklama, IP yenileme ve bağlantı kesme.
+  - Greenhouse akıllı tarım senaryosu (9 IoT cihaz).
 
-### Rehberli Dersler
+### Ping ve Diagnostik
 
-- Temel switch yapılandırma.
-- Temel LAN kurulumu.
-- VLAN yapılandırma.
-- Her ders adımları otomatik tamamlanma kontrolleriyle izlenir:
-  - Cihaz erişimi.
-  - Komut kalıbı.
-  - Bağlantı ve kablo tipi.
-  - Konfigürasyon durumu.
+- Ping (ICMP) IPv4/IPv6, parametre: size, count.
+- Ping animasyonu: gerçek zamanlı paket animasyonu, renk kodlu başarı/basarsızlık.
+- Packet info paneli: hop-by-hop analiz, latency, route detayı.
+- Traceroute/tracert.
+- ARP: `arp`, `arp -a`, `clear arp-cache` (4 saat timeout).
+- MAC tablosu: `show mac address-table`, `clear mac address-table`.
+- 50+ show komutu (tüm protokol ve servisler için).
+- Debug: `debug <type>`, `undebug all`.
+- STP bloklama ve yedek yol görselleştirmesi.
 
-### Performans ve Erişilebilirlik
+### Örnek Projeler ve Rehberli Dersler
 
-- Spatial partitioning ve viewport culling.
-- Büyük topolojilerde bağlantı ve cihaz render optimizasyonu.
-- Skeleton ekranlar ve dinamik bileşen yükleme.
-- Klavye kısayolları, ARIA etiketleri ve ekran okuyucu iyileştirmeleri.
+- **39 hazır topoloji örneği** (11 basic, 11 intermediate, 17 advanced):
+  - Basic: passwords, VLAN, SSH, DHCP, MAC, ARP, IP config, native VLAN.
+  - Intermediate: VTP, ROAS, legacy routing, port-security, WiFi, IoT, DNS/HTTP, DHCP distribution, trunk.
+  - Advanced: L3 switching, static routing, EtherChannel, STP, campus network, PVST, L3 VLAN, RIP, ACL, NAT, HSRP, OSPF multi-area, EIGRP, firewall, IPv6 advanced.
+- **3 rehberli ders** (Basic Switch, Intermediate, Advanced):
+  - Adım adım yönlendirme, otomatik tamamlanma kontrolleri.
+  - Cihaz erişimi, komut kalıbı, kablo tipi, konfigürasyon durumu kontrolü.
 
-## Eski ve Yeni Güncellemeler
+### UI/UX ve Kullanıcı Deneyimi
 
-### Yeni Güncellemeler (v1.6.2 - Mayıs 2026)
+- İnteraktif topoloji canvas: SVG tabanlı, drag-drop, pan/zoom, bağlam menüsü.
+- Cihaz paleti: PC, IoT, L2 switch, L3 switch, router, firewall, kablo araçları.
+- Cihaz konfigürasyon paneli (Port, VLAN, Security, Config sekmeleri).
+- Terminal/CLI paneli (tam özellikli terminal emülatörü).
+- PC paneli (services, CMD, WiFi, IoT).
+- Router paneli, VLAN paneli, Security paneli, Firewall paneli.
+- WiFi kontrol paneli, Environment paneli, Help paneli.
+- Ping görselleştirme, Task paneli (puanlama).
+- Rehberli ders paneli, başarı rozetleri.
+- Sürüklenebilir dialog pencereleri, pencere pozisyonu koruma.
+- Dual dil desteği (Türkçe/İngilizce), dark/light tema.
+- Yüksek kontrast modu, erişilebilirlik (ARIA, klavye kısayolları).
+- Mobil navigasyon, responsive tasarım.
 
-- Sürüm `1.6.2` olarak güncellendi (`package.json`, `package-lock.json`, dokümantasyon başlıkları).
-- Örnek proje seti genişletildi ve toplam **37** örneğe çıkarıldı.
-- Yeni eklenen 9 örnek:
-  - ACL Standard + Extended (2 örnek)
-  - NAT Static + Dynamic + PAT (3 örnek)
-  - HSRP Redundancy (1 örnek)
-  - OSPF Multi-Area (2 örnek)
-  - EIGRP Basic (1 örnek)
-- `examples.md` içinde 29-37 arası yeni örnekler, diğerleriyle aynı formatta detaylandırıldı:
-  - Kısa tanıtım
-  - Adım adım proje yapımı
-  - Doğrulama/test adımları
-- README, planning ve examples dokümanlarındaki örnek sayıları ve sürüm metinleri eşitlendi.
-- Kod/metrik raporlarında örnek JSON/TS toplamı ayrıca hesaplanarak dokümana işlendi.
+### Performans ve Altyapı
 
-### Önceki Güncellemeler (v1.6.1 - Mayıs 2026)
+- Spatial partitioning ve viewport culling (büyük topolojilerde optimizasyon).
+- react-window ile sanal liste (büyük cihaz listeleri).
+- Skeleton ekranlar, dinamik bileşen yükleme (next/dynamic).
+- Zustand store (merkezi state yönetimi, persistence).
+- Tab-specific storage (çoklu sekme izolasyonu).
+- localStorage ile proje kaydetme/yükleme, pencere pozisyonları.
+- Flash file system simülasyonu (running-config, startup-config).
+- Autosave, proje export/import (JSON).
+- Toast bildirimleri (success/error/warning/info/critical).
+- API client (retry, exponential backoff, timeout).
+- App Error Boundary (global hata yakalama).
 
-- Firewall kurallarının kalıcılığı güçlendirildi; cihaz yeniden seçildiğinde kurallar korunur.
-- Firewall kuralları `running-config` üretimine dahil edildi.
-- `show access-lists` çıktısı firewall kural görünürlüğü ile genişletildi.
-- IPv6 yönlendirme kapsamı genişletildi:
-  - RIPng
-  - OSPFv3 (multi-area dahil)
-  - `show ipv6 route` ve `show ipv6 interface brief`
-- React hook kararlılık düzeltmeleri ve UI/UX performans iyileştirmeleri tamamlandı.
-- Jest tabanlı testlerin Vitest API uyumluluk geçişleri yapıldı.
+## Güncellemeler
 
-## Proje Metrikleri (v1.6.2)
+### Yeni (v1.6.3 - Mayıs 2026)
 
-Kod metriklerinde uygulama kodu ile örnek veri ve dokümanlar ayrı raporlanır.
+- Sürüm `1.6.3` olarak güncellendi.
+- IPv6 gelişmiş lab (örnek #39): DHCPv6 + OSPFv3 senaryosu.
+- Firewall temel (örnek #38): ICMP bloklama labı.
+- IPv6 ping tanılama düzeltmesi, kaynak IP çözümleme.
+- Ping çıktısı Windows formatında standardize edildi.
+- Örnek sayısı **39**'a çıkarıldı.
+
+### v1.6.2 - Mayıs 2026
+
+- Firewall cihaz tipi eklendi, kural kalıcılığı güçlendirildi.
+- Firewall kuralları `running-config` ve `show access-lists` ile görünür.
+- IoT kural motoru (condition-action), çevresel değişkenler.
+- ACL Standard + Extended (2 örnek), NAT Static + Dynamic + PAT (3 örnek).
+- HSRP Redundancy (1 örnek), OSPF Multi-Area (2 örnek), EIGRP Basic (1 örnek).
+- React hook kararlılık düzeltmeleri, immutability fixleri.
+- Pencere pozisyonu koruma özelliği.
+
+### v1.6.1 - Mayıs 2026
+
+- Jest'ten Vitest'e test geçişi tamamlandı (53 test, 100% geçme).
+- RIPng, OSPFv3 (multi-area) IPv6 yönlendirme desteği.
+- `show ipv6 route`, `show ipv6 interface brief`.
+- Chrome ping animasyonu düzeltmesi (flushSync).
+- UI/UX performans iyileştirmeleri.
+
+## Proje Metrikleri (v1.6.3)
 
 | Grup | Satır Sayısı |
 | --- | ---: |
-| Uygulama Kodu | 88,624 |
-| Örnek JSON+TS Kod Toplamı | 15,298 |
-| **Toplam** | **103,922** |
+| Uygulama Kodu | 90,093 |
+| Örnek JSON+TS Kod Toplamı | 15,650 |
+| **Toplam** | **105,743** |
 
 | Diğer Metrikler | Sayı |
 | --- | ---: |
-| Hazır topoloji örneği | 37 |
-| Rehberli ders | 4 |
-| Harici JSON örnek | 6 |
+| Toplam kod dosyası | 235 |
+| Hazır topoloji örneği | 39 |
+| Rehberli ders | 3 |
 | CLI komut ailesi | 180+ |
-| Test Dosyaları | 4 |
-| Başarısız Testler | 0 |
+| Test Dosyaları | 5 |
+| Başarılı Testler | 53 |
+| Test Başarı Oranı | 100% |
+| Derleme | Temiz |
+| Lint | Temiz |
+| TypeScript | Hata yok |
 
 Örneklerin ayrıntılı listesi için [examples.md](examples.md) dosyasına bakın.
 
-### Test Durumu (2026-05-10)
+### Test Durumu (2026-05-13)
 
-**Vitest Altyapısı**: ✅ Aktif
+**Vitest Altyapısı**: ✅ Aktif (53 test, 0 başarısız)
 - Test altyapısı Vitest standardına taşındı.
-- Dokümantasyon tarafında başarısız Jest-API uyumsuzluk maddeleri kapatıldı.
+- Firewall, L3 switch, port security ve temel ağ testleri kapsanıyor.
 
 ## Yol Haritası
 
 ### Tamamlanan Ana Başlıklar
 
-- Interaktif topoloji ve cihaz yönetimi.
+- Interaktif topoloji ve cihaz yönetimi (PC, IoT, L2/L3 switch, router, firewall).
 - PC CMD, router/switch CLI ve console bağlantısı.
-- VLAN, trunk, VTP, STP/PVST, EtherChannel.
-- Port security ve aging komutları.
-- Static routing, RIP ve route doğrulama.
-- DHCP, DNS ve HTTP servisleri.
-- WiFi ve IoT yönetim panelleri.
-- Rehberli ders modu.
-- Refresh sonrası cihaz özet tablosu.
-- **UI/UX Performans Optimizasyonları (Faz 1 & 2)**.
-- **CLI ve Topoloji Senkronizasyon Düzeltmeleri**.
+- VLAN, trunk, VTP, STP/PVST/Rapid-PVST/MST, EtherChannel/LACP.
+- Port security, voice VLAN, storm-control, SPAN, UDLD, errdisable.
+- DHCP snooping, DAI, IP Source Guard, MLS QoS.
+- Static routing, RIP, OSPF (multi-area), EIGRP, HSRP.
+- NAT (static/dynamic/PAT), ACL (standard/extended), Firewall.
+- DHCP, DNS, HTTP, NTP, SNMP, SSH, Telnet servisleri.
+- WiFi AP/client, IoT sensör/aktüatör ve kural motoru.
+- 39 hazır örnek proje, 3 rehberli ders.
+- IPv4/IPv6 routing, RIPng, OSPFv3.
+- Ping animasyonu, traceroute, ARP, diagnostik.
+- Dual dil (TR/EN), dark/light tema, erişilebilirlik.
+- Pencere pozisyonu koruma, otomatik kaydetme.
+- UI/UX performans optimizasyonları (Faz 1 & 2).
+- CLI ve topoloji senkronizasyon düzeltmeleri.
 
 ### Kısa Vadeli Plan
 
-- ACL, NAT ve firewall simülasyonunu genişletme.
 - Paket yakalama/izleme ekranı.
 - Rehberli ders sayısını artırma.
 - Otomatik lab değerlendirme.
-- IPv6 mobil ve DHCPv6 desteği.
+- IPv6 mobil ve DHCPv6 desteği (temel eklendi).
 
 ### Uzun Vadeli Plan
 
