@@ -1,6 +1,6 @@
 import { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 import { CableInfo, SwitchState, isCableCompatible } from './types';
-import { findRoute, ipToNumber, getRoutingTable } from './routing';
+import { findRoute, ipToNumber, getRoutingTable, isIpv6InNetwork } from './routing';
 import { performArpResolution, getMacFromArpCache } from './arp';
 import { processFrameMacLearning } from './macLearning';
 import { ensureDeviceStatesMap } from './networkUtils';
@@ -763,27 +763,30 @@ export function checkConnectivity(
   const sourceDeviceForSubnet = devices.find(d => d.id === sourceId);
   if (sourceDeviceForSubnet && targetDevice) {
     const sourceIp = getPrimaryDeviceIp(sourceId, devices, deviceStates);
-    const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, deviceStates) || sourceDeviceForSubnet.subnet || '255.255.255.0';
-    const targetIp_check = resolvedTargetIp;
+    const isTargetIpv6 = resolvedTargetIp.includes(':');
+    const isSourceIpv6 = sourceIp.includes(':');
 
-    // Resolve target subnet mask
-    let targetSubnet = '255.255.255.0';
-    if (targetDevice.type === 'pc') {
-      targetSubnet = targetDevice.subnet || '255.255.255.0';
-    } else if (deviceStates) {
-      const state = deviceStates.get(targetDevice.id);
-      if (state) {
-        for (const pId in state.ports) {
-          if (state.ports[pId].ipAddress === resolvedTargetIp) {
-            targetSubnet = state.ports[pId].subnetMask || '255.255.255.0';
-            break;
+    let isInSameSubnet = false;
+    if (isTargetIpv6 && isSourceIpv6) {
+      // Find prefix length for source
+      let prefixLength = 64;
+      if (deviceStates) {
+        const state = deviceStates.get(sourceId);
+        if (state) {
+          for (const pId in state.ports) {
+            if (state.ports[pId].ipv6Address === sourceIp) {
+              prefixLength = state.ports[pId].ipv6Prefix || 64;
+              break;
+            }
           }
         }
       }
+      isInSameSubnet = isIpv6InNetwork(resolvedTargetIp, sourceIp, prefixLength);
+    } else if (!isTargetIpv6 && !isSourceIpv6) {
+      const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, deviceStates) || sourceDeviceForSubnet.subnet || '255.255.255.0';
+      isInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);
     }
 
-    // Check if source and target are in the same subnet
-    const isInSameSubnet = isIpInSubnet(sourceIp, targetIp_check, sourceSubnet);
     routingRequired = !isInSameSubnet;
 
     if (!isInSameSubnet) {
@@ -798,7 +801,7 @@ export function checkConnectivity(
         if ((device?.type === 'router' || device?.type === 'switchL3') && state?.ipRouting) {
           // Check if this router has a route to the destination network
           const routingTable = getRoutingTable(deviceId, safeDeviceStates);
-          const route = findRoute(targetIp_check, routingTable);
+          const route = findRoute(resolvedTargetIp, routingTable);
           if (route) {
             hasL3Gateway = true;
             routerDeviceId = deviceId;
@@ -827,7 +830,7 @@ export function checkConnectivity(
           if (routerState?.ipRouting) {
             // Check if router has a route to destination
             const routingTable = getRoutingTable(router.id, safeDeviceStates);
-            const route = findRoute(targetIp_check, routingTable);
+            const route = findRoute(resolvedTargetIp, routingTable);
             if (!route) continue; // Skip routers without proper route
 
             // Check if router is connected to any device in the path

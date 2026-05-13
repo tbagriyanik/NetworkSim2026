@@ -371,6 +371,24 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 2,
     maxArgs: 2
   },
+  'ipv6 dhcp pool': {
+    pattern: /^ipv6\s+dhcp\s+pool\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'ipv6 dhcp server': {
+    pattern: /^ipv6\s+dhcp\s+server\s+(\S+)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'address prefix': {
+    pattern: /^address\s+prefix\s+([0-9a-fA-F:]+\/\d+)$/i,
+    modes: ['dhcp-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
   'no auto-summary': {
     pattern: /^no\s+auto-summary$/i,
     modes: ['router-config'],
@@ -649,7 +667,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'ipv6 address': {
-    pattern: /^ipv6\s+address\s+([0-9a-f:]+)\/(\d+)$/i,
+    pattern: /^ipv6\s+address\s+([0-9a-fA-F:]+)\/(\d+)$/i,
     modes: ['interface', 'config-if-range'],
     minArgs: 2,
     maxArgs: 2
@@ -2103,7 +2121,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 8
   },
   'dns-server': {
-    pattern: /^dns-server\s+\d+\.\d+\.\d+\.\d+(?:\s+\d+\.\d+\.\d+\.\d+)*$/i,
+    pattern: /^dns-server\s+(?:[0-9.]+|[0-9a-fA-F:]+)(?:\s+(?:[0-9.]+|[0-9a-fA-F:]+))*$/i,
     modes: ['dhcp-config'],
     minArgs: 1,
     maxArgs: 8

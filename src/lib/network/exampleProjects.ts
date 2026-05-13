@@ -1485,11 +1485,11 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     createSwitchDevice('switch-2', 'SW2', 640, 190)
   ];
   const staticRoutingConnections: CanvasConnection[] = [];
-  connectPorts(staticRoutingDevices, staticRoutingConnections, 'pc-1', 'eth0', 'switch-1', 'gi1/0/1');
-  connectPorts(staticRoutingDevices, staticRoutingConnections, 'pc-2', 'eth0', 'switch-2', 'gi1/0/2');
-  connectPorts(staticRoutingDevices, staticRoutingConnections, 'switch-1', 'gi1/0/2', 'router-1', 'gi1/0/0', 'crossover');
-  connectPorts(staticRoutingDevices, staticRoutingConnections, 'router-1', 'gi1/0/1', 'router-2', 'gi1/0/0', 'crossover');
-  connectPorts(staticRoutingDevices, staticRoutingConnections, 'router-2', 'gi1/0/1', 'switch-2', 'gi1/0/2', 'crossover');
+  connectPorts(staticRoutingDevices, staticRoutingConnections, 'pc-1', 'eth0', 'switch-1', 'fa0/1');
+  connectPorts(staticRoutingDevices, staticRoutingConnections, 'pc-2', 'eth0', 'switch-2', 'fa0/1');
+  connectPorts(staticRoutingDevices, staticRoutingConnections, 'switch-1', 'gi0/1', 'router-1', 'gi0/0', 'crossover');
+  connectPorts(staticRoutingDevices, staticRoutingConnections, 'router-1', 'gi0/1', 'router-2', 'gi0/0', 'crossover');
+  connectPorts(staticRoutingDevices, staticRoutingConnections, 'router-2', 'gi0/1', 'switch-2', 'gi0/1', 'crossover');
   const staticRoutingNotes: CanvasNote[] = [
     {
       id: 'static-routing-note',
@@ -1508,29 +1508,29 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   ];
   const staticSw1 = createInitialState('00:1A:2B:3C:4D:67', 'WS-C2960-24TT-L');
   staticSw1.hostname = 'SW1';
-  staticSw1.ports['gi1/0/1'] = { ...staticSw1.ports['gi1/0/1'], vlan: 1, mode: 'access', status: 'connected' };
-  staticSw1.ports['gi1/0/2'] = { ...staticSw1.ports['gi1/0/2'], vlan: 1, mode: 'access', status: 'connected' };
+  staticSw1.ports['fa0/1'] = { ...staticSw1.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  staticSw1.ports['gi0/1'] = { ...staticSw1.ports['gi0/1'], vlan: 1, mode: 'access', status: 'connected' };
 
   const staticR1 = createInitialRouterState('00:50:00:00:00:01');
   staticR1.hostname = 'R1';
-  staticR1.ports['gi1/0/0'] = { ...staticR1.ports['gi1/0/0'], ipAddress: '192.168.1.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
-  staticR1.ports['gi1/0/1'] = { ...staticR1.ports['gi1/0/1'], ipAddress: '192.168.10.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  staticR1.ports['gi0/0'] = { ...staticR1.ports['gi0/0'], ipAddress: '192.168.1.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  staticR1.ports['gi0/1'] = { ...staticR1.ports['gi0/1'], ipAddress: '192.168.10.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
   staticR1.staticRoutes = [
     { destination: '192.168.20.0', subnetMask: '255.255.255.0', nextHop: '192.168.1.2', metric: 1, type: 'static' }
   ];
 
   const staticR2 = createInitialRouterState('00:50:00:00:00:02');
   staticR2.hostname = 'R2';
-  staticR2.ports['gi1/0/0'] = { ...staticR2.ports['gi1/0/0'], ipAddress: '192.168.1.2', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
-  staticR2.ports['gi1/0/1'] = { ...staticR2.ports['gi1/0/1'], ipAddress: '192.168.20.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  staticR2.ports['gi0/0'] = { ...staticR2.ports['gi0/0'], ipAddress: '192.168.1.2', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  staticR2.ports['gi0/1'] = { ...staticR2.ports['gi0/1'], ipAddress: '192.168.20.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
   staticR2.staticRoutes = [
     { destination: '192.168.10.0', subnetMask: '255.255.255.0', nextHop: '192.168.1.1', metric: 1, type: 'static' }
   ];
 
   const staticSw2 = createInitialState('00:1A:2B:3C:4D:68', 'WS-C2960-24TT-L');
   staticSw2.hostname = 'SW2';
-  staticSw2.ports['gi1/0/1'] = { ...staticSw2.ports['gi1/0/1'], vlan: 1, mode: 'access', status: 'connected' };
-  staticSw2.ports['gi1/0/2'] = { ...staticSw2.ports['gi1/0/2'], vlan: 1, mode: 'access', status: 'connected' };
+  staticSw2.ports['fa0/1'] = { ...staticSw2.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  staticSw2.ports['gi0/1'] = { ...staticSw2.ports['gi0/1'], vlan: 1, mode: 'access', status: 'connected' };
 
   // Example 8: EtherChannel
   const etherChannelDevices = [
@@ -1762,9 +1762,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
 
   const stpPvstConnections: CanvasConnection[] = [];
   // Switch-to-switch trunk connections
-  connectPorts(stpPvstDevices, stpPvstConnections, 'sw1', 'gi0/1', 'sw2', 'gi0/1');
-  connectPorts(stpPvstDevices, stpPvstConnections, 'sw1', 'gi0/2', 'sw3', 'gi0/1');
-  connectPorts(stpPvstDevices, stpPvstConnections, 'sw2', 'gi0/2', 'sw3', 'gi0/2');
+  connectPorts(stpPvstDevices, stpPvstConnections, 'sw1', 'gi1/0/1', 'sw2', 'gi1/0/1');
+  connectPorts(stpPvstDevices, stpPvstConnections, 'sw1', 'gi1/0/2', 'sw3', 'gi1/0/1');
+  connectPorts(stpPvstDevices, stpPvstConnections, 'sw2', 'gi1/0/2', 'sw3', 'gi1/0/2');
   // SW1 PC connections
   connectPorts(stpPvstDevices, stpPvstConnections, 'pc1-vlan1', 'eth0', 'sw1', 'fa0/3');
   connectPorts(stpPvstDevices, stpPvstConnections, 'pc1-vlan10', 'eth0', 'sw1', 'fa0/4');
@@ -1842,21 +1842,16 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw1.switchModel = 'WS-C3650-24PS';
   stpPvstSw1.switchLayer = 'L3';
   stpPvstSw1.spanningTreeMode = 'pvst';
-  stpPvstSw1.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['FA0/3', 'GI0/1', 'GI0/2'] };
-  stpPvstSw1.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['FA0/1', 'FA0/4', 'GI0/1', 'GI0/2'] };
-  stpPvstSw1.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2', 'FA0/5', 'GI0/1', 'GI0/2'] };
+  stpPvstSw1.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['GI1/0/3', 'GI1/0/1', 'GI1/0/2'] };
+  stpPvstSw1.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['GI1/0/4', 'GI1/0/1', 'GI1/0/2'] };
+  stpPvstSw1.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['GI1/0/5', 'GI1/0/1', 'GI1/0/2'] };
   (stpPvstSw1 as any).spanningTreeVlans = {
     '1': { priority: '24576' },
     '10': { priority: '32768' },
     '20': { priority: '32768' }
   };
-  stpPvstSw1.ports['fa0/1'] = { ...stpPvstSw1.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
-  stpPvstSw1.ports['fa0/2'] = { ...stpPvstSw1.ports['fa0/2'], vlan: 20, mode: 'access', status: 'connected' };
-  stpPvstSw1.ports['fa0/3'] = { ...stpPvstSw1.ports['fa0/3'], vlan: 1, mode: 'access', status: 'connected' };
-  stpPvstSw1.ports['fa0/4'] = { ...stpPvstSw1.ports['fa0/4'], vlan: 10, mode: 'access', status: 'connected' };
-  stpPvstSw1.ports['fa0/5'] = { ...stpPvstSw1.ports['fa0/5'], vlan: 20, mode: 'access', status: 'connected' };
-  stpPvstSw1.ports['gi0/1'] = {
-    ...stpPvstSw1.ports['gi0/1'],
+  stpPvstSw1.ports['gi1/0/1'] = {
+    ...stpPvstSw1.ports['gi1/0/1'],
     mode: 'trunk',
     allowedVlans: 'all',
     status: 'connected',
@@ -1868,8 +1863,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       }
     }
   };
-  stpPvstSw1.ports['gi0/2'] = {
-    ...stpPvstSw1.ports['gi0/2'],
+  stpPvstSw1.ports['gi1/0/2'] = {
+    ...stpPvstSw1.ports['gi1/0/2'],
     mode: 'trunk',
     allowedVlans: 'all',
     status: 'connected',
@@ -1881,6 +1876,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       }
     }
   };
+  stpPvstSw1.ports['gi1/0/3'] = { ...stpPvstSw1.ports['gi1/0/3'], vlan: 1, mode: 'access', status: 'connected' };
+  stpPvstSw1.ports['gi1/0/4'] = { ...stpPvstSw1.ports['gi1/0/4'], vlan: 10, mode: 'access', status: 'connected' };
+  stpPvstSw1.ports['gi1/0/5'] = { ...stpPvstSw1.ports['gi1/0/5'], vlan: 20, mode: 'access', status: 'connected' };
   stpPvstSw1.runningConfig = [
     '!',
     'hostname SW1',
@@ -1903,7 +1901,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' ip address 192.168.20.1 255.255.255.0',
     ' no shutdown',
     '!',
-    'interface range gi0/1 - 2',
+    'interface range gi1/0/1 - 2',
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
@@ -1918,21 +1916,16 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw2.switchModel = 'WS-C3650-24PS';
   stpPvstSw2.switchLayer = 'L3';
   stpPvstSw2.spanningTreeMode = 'pvst';
-  stpPvstSw2.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['FA0/3', 'GI0/1', 'GI0/2'] };
-  stpPvstSw2.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['FA0/1', 'FA0/4', 'GI0/1', 'GI0/2'] };
-  stpPvstSw2.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2', 'FA0/5', 'GI0/1', 'GI0/2'] };
+  stpPvstSw2.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['GI1/0/3', 'GI1/0/1', 'GI1/0/2'] };
+  stpPvstSw2.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['GI1/0/4', 'GI1/0/1', 'GI1/0/2'] };
+  stpPvstSw2.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['GI1/0/5', 'GI1/0/1', 'GI1/0/2'] };
   (stpPvstSw2 as any).spanningTreeVlans = {
     '1': { priority: '32768' },
     '10': { priority: '24576' },
     '20': { priority: '32768' }
   };
-  stpPvstSw2.ports['fa0/1'] = { ...stpPvstSw2.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
-  stpPvstSw2.ports['fa0/2'] = { ...stpPvstSw2.ports['fa0/2'], vlan: 20, mode: 'access', status: 'connected' };
-  stpPvstSw2.ports['fa0/3'] = { ...stpPvstSw2.ports['fa0/3'], vlan: 1, mode: 'access', status: 'connected' };
-  stpPvstSw2.ports['fa0/4'] = { ...stpPvstSw2.ports['fa0/4'], vlan: 10, mode: 'access', status: 'connected' };
-  stpPvstSw2.ports['fa0/5'] = { ...stpPvstSw2.ports['fa0/5'], vlan: 20, mode: 'access', status: 'connected' };
-  stpPvstSw2.ports['gi0/1'] = {
-    ...stpPvstSw2.ports['gi0/1'],
+  stpPvstSw2.ports['gi1/0/1'] = {
+    ...stpPvstSw2.ports['gi1/0/1'],
     mode: 'trunk',
     allowedVlans: 'all',
     status: 'connected',
@@ -1944,8 +1937,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       }
     }
   };
-  stpPvstSw2.ports['gi0/2'] = {
-    ...stpPvstSw2.ports['gi0/2'],
+  stpPvstSw2.ports['gi1/0/2'] = {
+    ...stpPvstSw2.ports['gi1/0/2'],
     mode: 'trunk',
     allowedVlans: 'all',
     status: 'connected',
@@ -1957,6 +1950,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       }
     }
   };
+  stpPvstSw2.ports['gi1/0/3'] = { ...stpPvstSw2.ports['gi1/0/3'], vlan: 1, mode: 'access', status: 'connected' };
+  stpPvstSw2.ports['gi1/0/4'] = { ...stpPvstSw2.ports['gi1/0/4'], vlan: 10, mode: 'access', status: 'connected' };
+  stpPvstSw2.ports['gi1/0/5'] = { ...stpPvstSw2.ports['gi1/0/5'], vlan: 20, mode: 'access', status: 'connected' };
   stpPvstSw2.runningConfig = [
     '!',
     'hostname SW2',
@@ -1979,7 +1975,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' ip address 192.168.20.2 255.255.255.0',
     ' no shutdown',
     '!',
-    'interface range gi0/1 - 2',
+    'interface range gi1/0/1 - 2',
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
@@ -1994,21 +1990,16 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw3.switchModel = 'WS-C3650-24PS';
   stpPvstSw3.switchLayer = 'L3';
   stpPvstSw3.spanningTreeMode = 'pvst';
-  stpPvstSw3.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['FA0/3', 'GI0/1', 'GI0/2'] };
-  stpPvstSw3.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['FA0/1', 'FA0/4', 'GI0/1', 'GI0/2'] };
-  stpPvstSw3.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/2', 'FA0/5', 'GI0/1', 'GI0/2'] };
+  stpPvstSw3.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['GI1/0/3', 'GI1/0/1', 'GI1/0/2'] };
+  stpPvstSw3.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['GI1/0/4', 'GI1/0/1', 'GI1/0/2'] };
+  stpPvstSw3.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['GI1/0/5', 'GI1/0/1', 'GI1/0/2'] };
   (stpPvstSw3 as any).spanningTreeVlans = {
     '1': { priority: '32768' },
     '10': { priority: '32768' },
     '20': { priority: '24576' }
   };
-  stpPvstSw3.ports['fa0/1'] = { ...stpPvstSw3.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
-  stpPvstSw3.ports['fa0/2'] = { ...stpPvstSw3.ports['fa0/2'], vlan: 20, mode: 'access', status: 'connected' };
-  stpPvstSw3.ports['fa0/3'] = { ...stpPvstSw3.ports['fa0/3'], vlan: 1, mode: 'access', status: 'connected' };
-  stpPvstSw3.ports['fa0/4'] = { ...stpPvstSw3.ports['fa0/4'], vlan: 10, mode: 'access', status: 'connected' };
-  stpPvstSw3.ports['fa0/5'] = { ...stpPvstSw3.ports['fa0/5'], vlan: 20, mode: 'access', status: 'connected' };
-  stpPvstSw3.ports['gi0/1'] = {
-    ...stpPvstSw3.ports['gi0/1'],
+  stpPvstSw3.ports['gi1/0/1'] = {
+    ...stpPvstSw3.ports['gi1/0/1'],
     mode: 'trunk',
     allowedVlans: 'all',
     status: 'connected',
@@ -2020,8 +2011,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       }
     }
   };
-  stpPvstSw3.ports['gi0/2'] = {
-    ...stpPvstSw3.ports['gi0/2'],
+  stpPvstSw3.ports['gi1/0/2'] = {
+    ...stpPvstSw3.ports['gi1/0/2'],
     mode: 'trunk',
     allowedVlans: 'all',
     status: 'connected',
@@ -2033,6 +2024,9 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       }
     }
   };
+  stpPvstSw3.ports['gi1/0/3'] = { ...stpPvstSw3.ports['gi1/0/3'], vlan: 1, mode: 'access', status: 'connected' };
+  stpPvstSw3.ports['gi1/0/4'] = { ...stpPvstSw3.ports['gi1/0/4'], vlan: 10, mode: 'access', status: 'connected' };
+  stpPvstSw3.ports['gi1/0/5'] = { ...stpPvstSw3.ports['gi1/0/5'], vlan: 20, mode: 'access', status: 'connected' };
   stpPvstSw3.runningConfig = [
     '!',
     'hostname SW3',
@@ -2055,7 +2049,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' ip address 192.168.20.3 255.255.255.0',
     ' no shutdown',
     '!',
-    'interface range gi0/1 - 2',
+    'interface range gi1/0/1 - 2',
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
@@ -2558,14 +2552,14 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   // Switch0 State (Sol L2 Switch)
   const switch0State = createInitialState('00:1A:2B:3C:4D:82', 'WS-C2960-24TT-L');
   switch0State.hostname = 'Switch0';
-  switch0State.ports['gi1/0/1'] = { ...switch0State.ports['gi1/0/1'], vlan: 1, mode: 'access', status: 'connected' };
-  switch0State.ports['gi1/0/2'] = { ...switch0State.ports['gi1/0/2'], vlan: 1, mode: 'access', status: 'connected' };
+  switch0State.ports['fa0/1'] = { ...switch0State.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  switch0State.ports['fa0/2'] = { ...switch0State.ports['fa0/2'], vlan: 1, mode: 'access', status: 'connected' };
 
   // Switch1 State (Sağ L2 Switch)
   const switch1State = createInitialState('00:1A:2B:3C:4D:83', 'WS-C2960-24TT-L');
   switch1State.hostname = 'Switch1';
-  switch1State.ports['gi1/0/1'] = { ...switch1State.ports['gi1/0/1'], vlan: 1, mode: 'access', status: 'connected' };
-  switch1State.ports['gi1/0/2'] = { ...switch1State.ports['gi1/0/2'], vlan: 1, mode: 'access', status: 'connected' };
+  switch1State.ports['fa0/1'] = { ...switch1State.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  switch1State.ports['fa0/2'] = { ...switch1State.ports['fa0/2'], vlan: 1, mode: 'access', status: 'connected' };
 
   // Dinamik Yönlendirme Topolojisi (RIP)
   // 2 Multilayer Switch + 2 L2 Switch + 4 PC - RIP Dynamic Routing
@@ -2590,19 +2584,19 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
 
   const ripRoutingConnections: CanvasConnection[] = [];
   // PC0 -> Switch0-L2
-  connectPorts(ripRoutingDevices, ripRoutingConnections, 'pc0', 'eth0', 'switch0-l2', 'gi1/0/1');
+  connectPorts(ripRoutingDevices, ripRoutingConnections, 'pc0', 'eth0', 'switch0-l2', 'fa0/1');
   // PC1 -> Switch0-L2
-  connectPorts(ripRoutingDevices, ripRoutingConnections, 'pc1', 'eth0', 'switch0-l2', 'gi1/0/2');
+  connectPorts(ripRoutingDevices, ripRoutingConnections, 'pc1', 'eth0', 'switch0-l2', 'fa0/2');
   // Switch0-L2 -> MultilayerSwitch0
-  connectPorts(ripRoutingDevices, ripRoutingConnections, 'switch0-l2', 'gi1/0/24', 'mlswitch0', 'gi1/0/23');
+  connectPorts(ripRoutingDevices, ripRoutingConnections, 'switch0-l2', 'fa0/24', 'mlswitch0', 'gi1/0/23');
   // MultilayerSwitch0 <-> MultilayerSwitch1 (Trunk/Routed link)
-  connectPorts(ripRoutingDevices, ripRoutingConnections, 'mlswitch0', 'gi1/0/23', 'mlswitch1', 'gi1/0/24', 'crossover');
+  connectPorts(ripRoutingDevices, ripRoutingConnections, 'mlswitch0', 'gi1/0/24', 'mlswitch1', 'gi1/0/24', 'crossover');
   // MultilayerSwitch1 -> Switch3-L2
-  connectPorts(ripRoutingDevices, ripRoutingConnections, 'mlswitch1', 'gi1/0/23', 'switch3-l2', 'gi1/0/24');
+  connectPorts(ripRoutingDevices, ripRoutingConnections, 'mlswitch1', 'gi1/0/23', 'switch3-l2', 'fa0/24');
   // Switch3-L2 -> PC2
-  connectPorts(ripRoutingDevices, ripRoutingConnections, 'switch3-l2', 'gi1/0/1', 'pc2', 'eth0');
+  connectPorts(ripRoutingDevices, ripRoutingConnections, 'switch3-l2', 'fa0/1', 'pc2', 'eth0');
   // Switch3-L2 -> PC3
-  connectPorts(ripRoutingDevices, ripRoutingConnections, 'switch3-l2', 'gi1/0/2', 'pc3', 'eth0');
+  connectPorts(ripRoutingDevices, ripRoutingConnections, 'switch3-l2', 'fa0/2', 'pc3', 'eth0');
 
   const ripRoutingNotes: CanvasNote[] = [
     {
@@ -2694,16 +2688,66 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   // Switch0-L2 State (Sol L2 Switch)
   const switch0L2State = createInitialState('00:1A:2B:3C:4D:92', 'WS-C2960-24TT-L');
   switch0L2State.hostname = 'Switch0-L2';
-  switch0L2State.ports['gi1/0/1'] = { ...switch0L2State.ports['gi1/0/1'], vlan: 1, mode: 'access', status: 'connected' };
-  switch0L2State.ports['gi1/0/2'] = { ...switch0L2State.ports['gi1/0/2'], vlan: 1, mode: 'access', status: 'connected' };
-  switch0L2State.ports['gi1/0/24'] = { ...switch0L2State.ports['gi1/0/24'], vlan: 1, mode: 'access', status: 'connected' };
+  switch0L2State.ports['fa0/1'] = { ...switch0L2State.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  switch0L2State.ports['fa0/2'] = { ...switch0L2State.ports['fa0/2'], vlan: 1, mode: 'access', status: 'connected' };
+  switch0L2State.ports['fa0/24'] = { ...switch0L2State.ports['fa0/24'], vlan: 1, mode: 'access', status: 'connected' };
 
   // Switch3-L2 State (Sağ L2 Switch)
   const switch3L2State = createInitialState('00:1A:2B:3C:4D:93', 'WS-C2960-24TT-L');
   switch3L2State.hostname = 'Switch3-L2';
-  switch3L2State.ports['gi1/0/1'] = { ...switch3L2State.ports['gi1/0/1'], vlan: 1, mode: 'access', status: 'connected' };
-  switch3L2State.ports['gi1/0/2'] = { ...switch3L2State.ports['gi1/0/2'], vlan: 1, mode: 'access', status: 'connected' };
-  switch3L2State.ports['gi1/0/24'] = { ...switch3L2State.ports['gi1/0/24'], vlan: 1, mode: 'access', status: 'connected' };
+  switch3L2State.ports['fa0/1'] = { ...switch3L2State.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  switch3L2State.ports['fa0/2'] = { ...switch3L2State.ports['fa0/2'], vlan: 1, mode: 'access', status: 'connected' };
+  switch3L2State.ports['fa0/24'] = { ...switch3L2State.ports['fa0/24'], vlan: 1, mode: 'access', status: 'connected' };
+
+  // Example 15: Advanced IPv6 Lab (Routing, DHCPv6, OSPFv3)
+  const ipv6LabDevices = [
+    createPcDevice('pc-1', 'PC-1', 50, 150, '', 1),
+    createRouterDevice('router-1', 'R1', 300, 150),
+    createRouterDevice('router-2', 'R2', 600, 150),
+    createPcDevice('pc-2', 'PC-2', 850, 150, '', 1)
+  ];
+  ipv6LabDevices[0].ipv6 = '2001:DB8:1::10';
+  ipv6LabDevices[3].ipv6 = '2001:DB8:2::10';
+
+  const ipv6LabConnections: CanvasConnection[] = [];
+  connectPorts(ipv6LabDevices, ipv6LabConnections, 'pc-1', 'eth0', 'router-1', 'gi0/0');
+  connectPorts(ipv6LabDevices, ipv6LabConnections, 'router-1', 'gi0/1', 'router-2', 'gi0/1', 'crossover');
+  connectPorts(ipv6LabDevices, ipv6LabConnections, 'router-2', 'gi0/0', 'pc-2', 'eth0');
+
+  const ipv6LabNotes: CanvasNote[] = [
+    {
+      id: 'ipv6-lab-note',
+      text: isTr
+        ? '🌐 IPv6 Gelişmiş Laboratuvar (Routing, DHCPv6, OSPFv3):\n\n1) IPv6 Unicast Routing: Cihazlarda IPv6 yönlendirmeyi etkinleştirin.\n2) Adresleme: \n   - R1 Gi0/0: 2001:DB8:1::1/64\n   - R1-R2 Link: 2001:DB8:AC::/64\n   - R2 Gi0/0: 2001:DB8:2::1/64\n3) DHCPv6: R1 ve R2 üzerinde PC\'ler için IPv6 havuzları oluşturun.\n4) Yönlendirme (OSPFv3):\n   - R1: ipv6 router ospf 1, area 0\n   - R2: ipv6 router ospf 1, area 0\n\nTest: PC-1 > ping 2001:DB8:2::10'
+        : '🌐 IPv6 Advanced Lab (Routing, DHCPv6, OSPFv3):\n\n1) IPv6 Unicast Routing: Enable IPv6 routing on devices.\n2) Addressing: \n   - R1 Gi0/0: 2001:DB8:1::1/64\n   - R1-R2 Link: 2001:DB8:AC::/64\n   - R2 Gi0/0: 2001:DB8:2::1/64\n3) DHCPv6: Configure IPv6 pools for PCs on R1 and R2.\n4) Routing (OSPFv3):\n   - R1: ipv6 router ospf 1, area 0\n   - R2: ipv6 router ospf 1, area 0\n\nTest: PC-1 > ping 2001:DB8:2::10',
+      x: 250,
+      y: 300,
+      width: 500,
+      height: 220,
+      color: '#3b82f6',
+      font: 'verdana',
+      fontSize: 12,
+      opacity: 0.75
+    }
+  ];
+
+  const ipv6R1 = createInitialRouterState('00:50:00:00:00:21');
+  ipv6R1.hostname = 'R1';
+  ipv6R1.ipv6Enabled = true;
+  ipv6R1.ports['gi0/0'] = { ...ipv6R1.ports['gi0/0'], ipv6Address: '2001:DB8:1::1', ipv6Prefix: 64, status: 'connected', shutdown: false };
+  ipv6R1.ports['gi0/1'] = { ...ipv6R1.ports['gi0/1'], ipv6Address: '2001:DB8:AC::1', ipv6Prefix: 64, status: 'connected', shutdown: false };
+  ipv6R1.ipv6DynamicRoutes = [
+    { destination: '2001:DB8:2::', prefixLength: 64, nextHop: '2001:DB8:AC::2', metric: 1, type: 'dynamic', area: 0 }
+  ];
+
+  const ipv6R2 = createInitialRouterState('00:50:00:00:00:22');
+  ipv6R2.hostname = 'R2';
+  ipv6R2.ipv6Enabled = true;
+  ipv6R2.ports['gi0/0'] = { ...ipv6R2.ports['gi0/0'], ipv6Address: '2001:DB8:2::1', ipv6Prefix: 64, status: 'connected', shutdown: false };
+  ipv6R2.ports['gi0/1'] = { ...ipv6R2.ports['gi0/1'], ipv6Address: '2001:DB8:AC::2', ipv6Prefix: 64, status: 'connected', shutdown: false };
+  ipv6R2.ipv6DynamicRoutes = [
+    { destination: '2001:DB8:1::', prefixLength: 64, nextHop: '2001:DB8:AC::1', metric: 1, type: 'dynamic', area: 0 }
+  ];
 
   return [
     {
@@ -3259,6 +3303,18 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         { id: 'mlswitch0', state: ripMlswitch0State },
         { id: 'mlswitch1', state: ripMlswitch1State },
         { id: 'switch3-l2', state: switch3L2State }
+      ])
+    },
+    {
+      id: 'ipv6-advanced-lab',
+      tag: 'IPv6',
+      title: isTr ? 'IPv6 Gelişmiş Laboratuvar (DHCPv6 & OSPFv3)' : 'IPv6 Advanced Lab (DHCPv6 & OSPFv3)',
+      description: isTr ? 'IPv6 adresleme, DHCPv6 havuzları ve OSPFv3 dinamik yönlendirme.' : 'IPv6 addressing, DHCPv6 pools and OSPFv3 dynamic routing.',
+      detail: 'ipv6 unicast-routing, ipv6 dhcp pool LAN, address prefix 2001:db8:1::/64, ipv6 router ospf 1',
+      level: 'advanced',
+      data: baseProjectData(ipv6LabDevices, ipv6LabConnections, ipv6LabNotes, [
+        { id: 'router-1', state: ipv6R1 },
+        { id: 'router-2', state: ipv6R2 }
       ])
     }
   ];
