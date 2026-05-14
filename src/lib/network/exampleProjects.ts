@@ -287,8 +287,7 @@ const createFirewallDevice = (id: string, name: string, x: number, y: number, ip
     macAddress: baseMac,
     status: 'online',
     firewallRules: firewallRules || [],
-    ports: [
-      { id: 'console', label: 'Console', status: 'disconnected' as const },
+    ports: [      
       { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/0`) },
       { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/1`) }
     ]

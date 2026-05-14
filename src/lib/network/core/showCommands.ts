@@ -108,6 +108,7 @@ function getNativeVlanString(port: any): string {
 }
 
 function getSTPCost(port: any): number {
+  if (!port) return 19;
   // If manual STP cost is set, use it
   if (port.stpCost !== undefined) {
     return port.stpCost;

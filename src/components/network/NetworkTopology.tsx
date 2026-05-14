@@ -571,6 +571,7 @@ export function NetworkTopology({
   const [errorToast, setErrorToast] = useState<{ message: string; details?: string } | null>(null);
   // Hop packet infos for the packet analysis panel
   const [hopPacketInfos, setHopPacketInfos] = useState<import('./PingPacketInfoPanel').HopPacketInfo[]>([]);
+  const [packetPopupHop, setPacketPopupHop] = useState<number | null>(null);
 
   // Refs
   const deviceCounterRef = useRef<{ pc: number; iot: number; switch: number; router: number; firewall: number }>({ pc: 0, iot: 0, switch: 0, router: 0, firewall: 0 });
@@ -3398,9 +3399,8 @@ export function NetworkTopology({
 
       // Find all connected devices
       for (const conn of connections) {
-        // Skip console cables for data path (Ping)
-        // Only allow wireless (WiFi) and wired (Ethernet straight/cross)
-        if (conn.cableType === 'console') continue;
+        // Only allow data path cables: Ethernet (straight/crossover) and WiFi (wireless)
+        if (conn.cableType !== 'straight' && conn.cableType !== 'crossover' && conn.cableType !== 'wireless') continue;
 
         let nextDeviceId: string | null = null;
         let sourcePortId: string | null = null;
@@ -3750,6 +3750,23 @@ export function NetworkTopology({
     let currentHop = 0;
     let frameCount = 0;
 
+    // Helper: detect wireless hop (persisted or implicit WiFi)
+    const isWirelessHop = (fromId: string, toId: string): boolean => {
+      const conn = connections.find(c =>
+        (c.sourceDeviceId === fromId && c.targetDeviceId === toId) ||
+        (c.sourceDeviceId === toId && c.targetDeviceId === fromId)
+      );
+      if (conn?.cableType === 'wireless') return true;
+      // Implicit wireless: IoT/PC ↔ Router/Switch via WiFi (not in persisted connections)
+      const fromDev = deviceMap.get(fromId);
+      const toDev = deviceMap.get(toId);
+      if (!fromDev || !toDev) return false;
+      const isClient = (t: string | undefined) => t === 'pc' || t === 'iot';
+      const isInfra = (t: string | undefined) => t === 'router' || t === 'switchL2' || t === 'switchL3';
+      return (isClient(fromDev.type) && isInfra(toDev.type)) ||
+             (isClient(toDev.type) && isInfra(fromDev.type));
+    };
+
     // Calculate distance-based duration for stable animation on long cables
     const calculateHopDuration = (fromId: string, toId: string): number => {
       const fromDevice = deviceMap.get(fromId);
@@ -3757,12 +3774,7 @@ export function NetworkTopology({
 
       if (!fromDevice || !toDevice) return hopDuration;
 
-      // Check if this hop is wireless
-      const conn = connections.find(c =>
-        (c.sourceDeviceId === fromId && c.targetDeviceId === toId) ||
-        (c.sourceDeviceId === toId && c.targetDeviceId === fromId)
-      );
-      const isWifi = conn?.cableType === 'wireless';
+      const isWifi = isWirelessHop(fromId, toId);
 
       if (isWifi) {
         // For WiFi hops: use the weaker signal of the two endpoints
@@ -3970,8 +3982,13 @@ export function NetworkTopology({
           (c.sourceDeviceId === currentToId && c.targetDeviceId === currentFromId)
         );
         if (!segmentConn || segmentConn.active === false) {
-          cancelPingDueToInterruptionRef.current(isTR ? 'Bağlantı koptuğu için ping iptal edildi.' : 'Ping cancelled because a connection was lost.');
-          return;
+          // Connection not found in persisted connections — check if this is an
+          // implicit wireless hop (IoT/PC ↔ Router/Switch via WiFi), which is
+          // dynamically generated in checkConnectivity but not stored in state
+          if (!isWirelessHop(currentFromId, currentToId)) {
+            cancelPingDueToInterruptionRef.current(isTR ? 'Bağlantı koptuğu için ping iptal edildi.' : 'Ping cancelled because a connection was lost.');
+            return;
+          }
         }
       }
 
@@ -3996,13 +4013,9 @@ export function NetworkTopology({
         const fromId = path[currentHop];
         const toId = path[currentHop + 1];
 
-        const conn = connections.find(c =>
-          (c.sourceDeviceId === fromId && c.targetDeviceId === toId) ||
-          (c.sourceDeviceId === toId && c.targetDeviceId === fromId)
-        );
-        const toDevice = deviceMap.get(toId);
-        const isWifi = conn?.cableType === 'wireless';
-        const isRouter = toDevice?.type === 'router';
+        const isWifi = isWirelessHop(fromId, toId);
+        const toDev = deviceMap.get(toId);
+        const isRouter = toDev?.type === 'router';
         const currentSegmentHopCountIncrement = (isWifi || isRouter) ? 1 : 0;
 
         // Snap to end of this segment
@@ -4088,7 +4101,8 @@ export function NetworkTopology({
     handlePingPause();
     setPingAnimation(prev => prev ? { ...prev, showPacketPanel: true } : null);
     if (onPacketPanelFocus) onPacketPanelFocus();
-  }, [handlePingPause, onPacketPanelFocus]);
+    if (pingAnimation) setPacketPopupHop(pingAnimation.currentHopIndex);
+  }, [handlePingPause, onPacketPanelFocus, pingAnimation]);
 
   const handlePingClose = useCallback(() => {
     pingIsPausedRef.current = false;
@@ -7603,6 +7617,36 @@ export function NetworkTopology({
           sourceIp={deviceMap.get(pingAnimation.sourceId)?.ip ?? ''}
           targetIp={deviceMap.get(pingAnimation.targetId)?.ip ?? ''}
         />
+      )}
+
+      {/* Packet Content Popup - mektup tıklandığında açılır */}
+      {packetPopupHop !== null && hopPacketInfos[packetPopupHop] && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={() => setPacketPopupHop(null)}>
+          <div className="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 w-80 max-w-[90vw]" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+                {language === 'tr' ? `Paket İçeriği — Hop ${packetPopupHop + 1}` : `Packet Contents — Hop ${packetPopupHop + 1}`}
+              </h3>
+              <button onClick={() => setPacketPopupHop(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-4 py-3 space-y-2 text-xs font-mono text-slate-700 dark:text-slate-300">
+              <div><span className="text-slate-400 dark:text-slate-500">L2:</span> {hopPacketInfos[packetPopupHop].layer2}</div>
+              <div><span className="text-slate-400 dark:text-slate-500">L3:</span> {hopPacketInfos[packetPopupHop].layer3}</div>
+              <div><span className="text-slate-400 dark:text-slate-500">L4:</span> {hopPacketInfos[packetPopupHop].layer4}</div>
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-2 mt-2" />
+              <div><span className="text-slate-400 dark:text-slate-500">{language === 'tr' ? 'Kaynak IP' : 'Src IP'}:</span> {hopPacketInfos[packetPopupHop].srcIp}</div>
+              <div><span className="text-slate-400 dark:text-slate-500">{language === 'tr' ? 'Hedef IP' : 'Dst IP'}:</span> {hopPacketInfos[packetPopupHop].dstIp}</div>
+              <div><span className="text-slate-400 dark:text-slate-500">TTL:</span> {hopPacketInfos[packetPopupHop].ttl}</div>
+              <div><span className="text-slate-400 dark:text-slate-500">MAC (Src):</span> {hopPacketInfos[packetPopupHop].srcMac}</div>
+              <div><span className="text-slate-400 dark:text-slate-500">MAC (Dst):</span> {hopPacketInfos[packetPopupHop].dstMac}</div>
+              <div><span className="text-slate-400 dark:text-slate-500">ICMP:</span> {hopPacketInfos[packetPopupHop].icmpType} (Seq: {hopPacketInfos[packetPopupHop].icmpSeq})</div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Persistent Error Toast - ping başarısız olduğunda göster, kullanıcı kapatana kadar açık kalır */}
