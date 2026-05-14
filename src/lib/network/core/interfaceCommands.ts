@@ -1016,6 +1016,18 @@ function expandInterfaceRange(rangeSpec: string, state: any): string[] {
   const allPorts: string[] = [];
 
   for (const part of parts) {
+    // Try VLAN interface range: vlan10-20
+    const vlanMatch = part.match(/^vlan(\d+)(?:-(\d+))?$/);
+    if (vlanMatch) {
+      const startVlan = parseInt(vlanMatch[1], 10);
+      const endVlan = vlanMatch[2] ? parseInt(vlanMatch[2], 10) : startVlan;
+      for (let vid = startVlan; vid <= endVlan; vid++) {
+        const vlanId = `vlan${vid}`;
+        if (!allPorts.includes(vlanId)) allPorts.push(vlanId);
+      }
+      continue;
+    }
+
     const match = part.match(/^(fastethernet|gigabitethernet|gigabit|fastethernet|fa|gig|gi)(\d+)\/(\d+)(?:-(\d+))?$/);
     if (!match) continue;
 
@@ -1852,6 +1864,10 @@ function cmdSwitchportVoiceVlan(state: any, input: string, ctx: any): any {
 function cmdCdpEnable(state: any, input: string, ctx: any): any {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
+  }
+
+  if (state.cdpEnabled === false) {
+    return { success: false, error: '% CDP is not enabled globally. Use "cdp run" first.' };
   }
 
   const updatePort = (port: any) => ({ ...port, cdpEnabled: true });

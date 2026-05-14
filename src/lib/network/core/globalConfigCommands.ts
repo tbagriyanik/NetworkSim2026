@@ -1861,7 +1861,9 @@ function cmdIpSshAuthRetries(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
   const match = input.match(/^ip\s+ssh\s+authentication-retries\s+(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid command' };
-  return { success: true, output: `SSH authentication retries set to ${match[1]}` };
+  const retries = parseInt(match[1], 10);
+  if (retries < 0 || retries > 5) return { success: false, error: '% Value must be between 0 and 5' };
+  return { success: true, output: `SSH authentication retries set to ${retries}` };
 }
 
 /**

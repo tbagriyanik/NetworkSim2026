@@ -423,7 +423,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...npfx('spanning-tree', 'vlan', ['<vlan-id>']),
     ...npfx('spanning-tree vlan', '<vlan-id>', ['priority', 'root']),
 
-    ...pfx('vtp', ['mode', 'domain']),
+    ...pfx('vtp', ['mode', 'domain', 'password']),
     ...npfx('vtp', 'mode', ['server', 'client', 'transparent']),
     ...npfx('vtp', 'domain', ['']),
 

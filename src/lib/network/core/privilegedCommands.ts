@@ -473,10 +473,9 @@ function cmdReload(state: any, input: string, ctx: any): any {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
-    // Immediately perform reload without confirmation
     return {
         success: true,
-        output: 'Reloading...\n',
+        output: 'Proceed with reload? [confirm]\nReloading...\n',
         reloadDevice: true
     };
 }

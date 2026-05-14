@@ -201,9 +201,10 @@ function cmdShowRunningConfig(
   ctx: any
 ): any {
   let output = '\nBuilding configuration...\n\n';
-  output += 'Current configuration : 1024 bytes\n\n';
   const lines = buildRunningConfig(state as any);
-  output += lines.join('\n');
+  const configText = lines.join('\n');
+  output += `Current configuration : ${configText.length} bytes\n\n`;
+  output += configText;
 
   output += '\nend\n';
   return { success: true, output };
@@ -947,7 +948,7 @@ function cmdShowMacAddressTable(
 function formatMacAddressSimple(mac: string): string {
   if (!mac) return '0000.0000.0000';
   // Remove all separators (dots, dashes, colons)
-  const cleanMac = mac.replace(/[-:.]/g, '').toUpperCase();
+  const cleanMac = mac.replace(/[-:.]/g, '').toLowerCase();
   // Pad with zeros to ensure 12 characters
   const padded = cleanMac.padStart(12, '0').slice(0, 12);
   // Add dots every 4 characters for format
