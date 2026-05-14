@@ -101,6 +101,94 @@ const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
 
 const isSwitchDeviceType = (type: DeviceType) => type === 'switchL2' || type === 'switchL3';
 
+function PacketPopup({ hopIndex, info, language, onClose }: {
+  hopIndex: number;
+  info: import('./PingPacketInfoPanel').HopPacketInfo;
+  language: 'tr' | 'en';
+  onClose: () => void;
+}) {
+  const [pos, setPos] = useState(() => {
+    try {
+      const saved = localStorage.getItem('draggable_position_packet-popup');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') return parsed;
+      }
+    } catch {}
+    return typeof window !== 'undefined'
+      ? { x: Math.max(16, (window.innerWidth - 320) / 2), y: Math.max(16, (window.innerHeight - 340) / 2) }
+      : { x: 100, y: 100 };
+  });
+  const dragRef = useRef<{ startX: number; startY: number; startPosX: number; startPosY: number } | null>(null);
+
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    dragRef.current = { startX: e.clientX, startY: e.clientY, startPosX: pos.x, startPosY: pos.y };
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
+
+    const onMove = (ev: MouseEvent) => {
+      if (!dragRef.current) return;
+      setPos({
+        x: Math.max(0, dragRef.current.startPosX + ev.clientX - dragRef.current.startX),
+        y: Math.max(0, dragRef.current.startPosY + ev.clientY - dragRef.current.startY),
+      });
+    };
+    const onUp = () => {
+      dragRef.current = null;
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp, { once: true });
+  }, [pos]);
+
+  useEffect(() => {
+    try { localStorage.setItem('draggable_position_packet-popup', JSON.stringify(pos)); } catch {}
+  }, [pos]);
+
+  const p = info;
+  return (
+    <div
+      style={{ position: 'fixed', left: pos.x, top: pos.y, zIndex: 9999 }}
+      onClick={e => e.stopPropagation()}
+    >
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 w-80">
+        <div
+          className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700 cursor-grab select-none"
+          onMouseDown={handleDragStart}
+        >
+          <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+            {language === 'tr' ? `Paket İçeriği — Hop ${hopIndex + 1}` : `Packet Contents — Hop ${hopIndex + 1}`}
+          </h3>
+          <button
+            onClick={onClose}
+            className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
+          >
+            <svg className="w-3 h-3 text-white pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="px-4 py-3 space-y-2 text-xs font-mono text-slate-700 dark:text-slate-300">
+          <div><span className="text-slate-400 dark:text-slate-500">L2:</span> {p.layer2}</div>
+          <div><span className="text-slate-400 dark:text-slate-500">L3:</span> {p.layer3}</div>
+          <div><span className="text-slate-400 dark:text-slate-500">L4:</span> {p.layer4}</div>
+          <div className="border-t border-slate-200 dark:border-slate-700 pt-2 mt-2" />
+          <div><span className="text-slate-400 dark:text-slate-500">{language === 'tr' ? 'Kaynak IP' : 'Src IP'}:</span> {p.srcIp}</div>
+          <div><span className="text-slate-400 dark:text-slate-500">{language === 'tr' ? 'Hedef IP' : 'Dst IP'}:</span> {p.dstIp}</div>
+          <div><span className="text-slate-400 dark:text-slate-500">TTL:</span> {p.ttl}</div>
+          <div><span className="text-slate-400 dark:text-slate-500">MAC (Src):</span> {p.srcMac}</div>
+          <div><span className="text-slate-400 dark:text-slate-500">MAC (Dst):</span> {p.dstMac}</div>
+          <div><span className="text-slate-400 dark:text-slate-500">ICMP:</span> {p.icmpType} (Seq: {p.icmpSeq})</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function NetworkTopology({
   cableInfo,
   onCableChange,
@@ -7621,32 +7709,12 @@ export function NetworkTopology({
 
       {/* Packet Content Popup - mektup tıklandığında açılır */}
       {packetPopupHop !== null && hopPacketInfos[packetPopupHop] && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={() => setPacketPopupHop(null)}>
-          <div className="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 w-80 max-w-[90vw]" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-200">
-                {language === 'tr' ? `Paket İçeriği — Hop ${packetPopupHop + 1}` : `Packet Contents — Hop ${packetPopupHop + 1}`}
-              </h3>
-              <button onClick={() => setPacketPopupHop(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="px-4 py-3 space-y-2 text-xs font-mono text-slate-700 dark:text-slate-300">
-              <div><span className="text-slate-400 dark:text-slate-500">L2:</span> {hopPacketInfos[packetPopupHop].layer2}</div>
-              <div><span className="text-slate-400 dark:text-slate-500">L3:</span> {hopPacketInfos[packetPopupHop].layer3}</div>
-              <div><span className="text-slate-400 dark:text-slate-500">L4:</span> {hopPacketInfos[packetPopupHop].layer4}</div>
-              <div className="border-t border-slate-200 dark:border-slate-700 pt-2 mt-2" />
-              <div><span className="text-slate-400 dark:text-slate-500">{language === 'tr' ? 'Kaynak IP' : 'Src IP'}:</span> {hopPacketInfos[packetPopupHop].srcIp}</div>
-              <div><span className="text-slate-400 dark:text-slate-500">{language === 'tr' ? 'Hedef IP' : 'Dst IP'}:</span> {hopPacketInfos[packetPopupHop].dstIp}</div>
-              <div><span className="text-slate-400 dark:text-slate-500">TTL:</span> {hopPacketInfos[packetPopupHop].ttl}</div>
-              <div><span className="text-slate-400 dark:text-slate-500">MAC (Src):</span> {hopPacketInfos[packetPopupHop].srcMac}</div>
-              <div><span className="text-slate-400 dark:text-slate-500">MAC (Dst):</span> {hopPacketInfos[packetPopupHop].dstMac}</div>
-              <div><span className="text-slate-400 dark:text-slate-500">ICMP:</span> {hopPacketInfos[packetPopupHop].icmpType} (Seq: {hopPacketInfos[packetPopupHop].icmpSeq})</div>
-            </div>
-          </div>
-        </div>
+        <PacketPopup
+          hopIndex={packetPopupHop}
+          info={hopPacketInfos[packetPopupHop]}
+          language={language}
+          onClose={() => setPacketPopupHop(null)}
+        />
       )}
 
       {/* Persistent Error Toast - ping başarısız olduğunda göster, kullanıcı kapatana kadar açık kalır */}

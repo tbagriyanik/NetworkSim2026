@@ -3302,7 +3302,7 @@ ${state.bannerMOTD}
               ? `DHCP: ${dhcpServerActiveCount} sunucu aktif`
               : `DHCP: ${dhcpServerActiveCount} active servers`,
             language === 'tr'
-              ? `${dhcpClientWithLeaseCount} istemci lease aldı`
+              ? `${dhcpClientWithLeaseCount} istemci kiraladı`
               : `${dhcpClientWithLeaseCount} clients leased`,
           ];
           if (dhcpServerNoPoolCount > 0) {
@@ -4329,29 +4329,6 @@ ${state.bannerMOTD}
                       }}
                       topologyDevices={topologyDevices}
                       deviceStates={deviceStates}
-                    />
-                  )}
-
-                  {/* Switch Info Popover - Bottom Right Mini Panel */}
-                  {activeDeviceId && (topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'switchL2' || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'switchL3') && topologyDevices && (
-                    <SwitchInfoPopover
-                      router={topologyDevices.find(d => d.id === activeDeviceId)!}
-                      routerState={deviceStates.get(activeDeviceId)}
-                      t={t}
-                      language={language}
-                      isDark={isDark}
-                      onClose={() => {
-                        setSelectedDevice(null);
-                        setActiveDeviceId('');
-                      }}
-                      onFocus={() => setFocusedOverlay('switch-info')}
-                      zIndex={focusedOverlay === 'switch-info' ? 36 : 25}
-                      handleDeviceDoubleClick={handleDeviceDoubleClick}
-                      onOpenPanel={(id) => {
-                        setShowRouterDeviceId(id);
-                        setShowRouterPanel(true);
-                      }}
-                      topologyConnections={topologyConnections}
                     />
                   )}
 

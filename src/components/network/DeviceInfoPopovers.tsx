@@ -58,7 +58,7 @@ export function SwitchInfoPopover({ router, routerState, t, language, isDark, on
       <div className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[280px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}>
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
           <div className="flex items-center gap-1.5">
-            <GripHorizontal className="w-3 h-3 opacity-30" />
+            <GripHorizontal className="hidden w-3 h-3 opacity-30" />
             <SwitchIcon className="w-3.5 h-3.5 text-purple-500" />
             <span className="text-xs font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
           </div>
@@ -104,7 +104,7 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
       >
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
           <div className="flex items-center gap-1.5">
-            <GripHorizontal className="w-3 h-3 opacity-30" />
+            <GripHorizontal className="hidden w-3 h-3 opacity-30" />
             <Monitor className="w-3.5 h-3.5 text-blue-500" />
             <span className="text-xs font-black tracking-wider uppercase opacity-30">{pc?.name || pc?.id || 'Unknown'}</span>
           </div>
@@ -274,7 +274,7 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
       >
         <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
           <div className="flex items-center gap-1.5">
-            <GripHorizontal className="w-3 h-3 opacity-30" />
+            <GripHorizontal className="hidden w-3 h-3 opacity-30" />
             {router.type.startsWith('switch') ? <SwitchIcon isL3={router.type === 'switchL3'} className="w-3.5 h-3.5 text-purple-500" /> : <RouterIcon className="w-3.5 h-3.5 text-purple-500" />}
             <span className="text-xs font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
           </div>
