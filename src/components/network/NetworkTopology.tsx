@@ -1790,7 +1790,13 @@ export function NetworkTopology({
 
   // Handle device touch start - for mobile dragging
   const handleDeviceTouchStart = useCallback((e: ReactTouchEvent, deviceId: string) => {
-    if (activePointerDragRef.current) return;
+    // If pointer drag was already active, we want touch events to take precedence
+    // especially on mobile devices where pointer events might be less reliable for dragging.
+    if (activePointerDragRef.current) {
+      activePointerDragRef.current = false;
+      // We don't reset draggedDeviceRef here because it might be needed for the new touch drag
+    }
+
     if (e.touches.length !== 1) return;
     e.stopPropagation();
 
@@ -1851,8 +1857,8 @@ export function NetworkTopology({
   // Handle device touch move - for mobile dragging
   const handleDeviceTouchMove = useCallback((e: ReactTouchEvent) => {
     if (e.touches.length !== 1 || !touchDraggedDevice || !canvasRef.current) return;
-    e.stopPropagation();
-    e.preventDefault();
+    // e.stopPropagation(); // Removed to allow event bubbling
+    // e.preventDefault(); // Removed to allow browser-native behavior
 
     const touch = e.touches[0];
 
