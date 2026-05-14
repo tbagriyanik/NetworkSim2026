@@ -595,6 +595,11 @@ function cmdNoVlan(state: any, input: string, ctx: any): any {
   }
 
   const vlanId = match[1];
+
+  if (vlanId === '1') {
+    return { success: false, error: '% Cannot remove VLAN 1.' };
+  }
+
   const newVlans = { ...state.vlans };
 
   if (!newVlans[vlanId]) {
@@ -862,14 +867,11 @@ function cmdNoEnableSecret(state: any, input: string, ctx: any): any {
     return { success: false, error: iosModeError() };
   }
 
+  const newSecurity = { ...state.security };
+  delete newSecurity.enableSecret;
   return {
     success: true,
-    newState: {
-      security: {
-        ...state.security,
-        enableSecret: ''
-      }
-    }
+    newState: { security: newSecurity }
   };
 }
 
@@ -881,14 +883,11 @@ function cmdNoEnablePassword(state: any, input: string, ctx: any): any {
     return { success: false, error: iosModeError() };
   }
 
+  const newSecurity = { ...state.security };
+  delete newSecurity.enablePassword;
   return {
     success: true,
-    newState: {
-      security: {
-        ...state.security,
-        enablePassword: ''
-      }
-    }
+    newState: { security: newSecurity }
   };
 }
 
@@ -1520,7 +1519,7 @@ function cmdSpanningTreeVlan(state: any, input: string, ctx: any): any {
       finalValue = '24576'; // Default to primary if no value specified
     }
   } else if (subCommand === 'priority' && !value) {
-    finalValue = '32768'; // Default priority
+    return { success: false, error: '% Incomplete command.' };
   }
 
   const updatedVlans = {

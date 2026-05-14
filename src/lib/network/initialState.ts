@@ -145,9 +145,9 @@ function createInitialFirewallPorts(baseMac?: string): Record<string, Port> {
     type: 'fastethernet'
   };
 
-  // Firewall default interfaces: GigabitEthernet0/0 and GigabitEthernet0/1
-  for (let i = 0; i <= 1; i++) {
-    const portId = `gi0/${i}`;
+  // ASA 5506-X has 8 GigabitEthernet ports (Gi1/0/0-7) + Management 1/1
+  for (let i = 0; i <= 7; i++) {
+    const portId = `gi1/0/${i}`;
     const portMacNumber = parseInt(firewallBaseMac.replace(/\./g, ''), 16) + i + 1;
     const portMac = formatMacFromNumber(portMacNumber);
 
@@ -159,12 +159,28 @@ function createInitialFirewallPorts(baseMac?: string): Record<string, Port> {
       mode: 'routed',
       duplex: 'auto',
       speed: 'auto',
-      shutdown: false,
+      shutdown: true,
       type: 'gigabitethernet',
       macAddress: portMac,
       isRoutedPort: true
     };
   }
+
+  // Management 1/1
+  const mgmtMac = formatMacFromNumber(parseInt(firewallBaseMac.replace(/\./g, ''), 16) + 8);
+  ports['mgmt1/1'] = {
+    id: 'mgmt1/1',
+    name: 'Management',
+    status: 'notconnect',
+    vlan: 1,
+    mode: 'routed',
+    duplex: 'auto',
+    speed: 'auto',
+    shutdown: false,
+    type: 'gigabitethernet',
+    macAddress: mgmtMac,
+    isRoutedPort: true
+  };
 
   return ports;
 }
@@ -362,7 +378,7 @@ export function createInitialRouterState(mac?: string): SwitchState {
   return {
     hostname: 'Router',
     macAddress,
-    switchModel: 'WS-C3650-24PS' as any,
+    switchModel: 'ISR4451-X' as any,
     switchLayer: 'L3',
     deviceType: 'router',
     currentMode: 'user',
@@ -414,7 +430,7 @@ export function createInitialFirewallState(mac?: string): SwitchState {
   const vlans = createInitialVlans();
 
   return {
-    hostname: 'asa 5506-x',
+    hostname: 'ciscoasa',
     macAddress,
     switchModel: 'ASA-5506-X' as any,
     switchLayer: 'FW',

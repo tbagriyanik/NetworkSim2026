@@ -626,7 +626,38 @@ function cmdSwitchportTrunkAllowedVlan(state: any, input: string, ctx: any): any
     return { success: false, error: '% Invalid VLAN list' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, allowedVlans: match[1] }));
+  const vlanSpec = match[1].trim();
+  const keywordMatch = vlanSpec.match(/^(add|remove|except)\s+(.+)$/i);
+  const currentVlans = (state.currentPort?.allowedVlans === 'all' || state.currentPort?.allowedVlans === undefined)
+    ? 'all' : (typeof state.currentPort?.allowedVlans === 'string' ? state.currentPort.allowedVlans : '1');
+
+  let newAllowed: string;
+  if (keywordMatch) {
+    const keyword = keywordMatch[1].toLowerCase();
+    const vlanList = keywordMatch[2];
+    if (keyword === 'add') {
+      newAllowed = currentVlans === 'all' ? 'all' : `${currentVlans},${vlanList}`;
+    } else if (keyword === 'remove') {
+      if (currentVlans === 'all') {
+        const removed = vlanList.split(',').map(v => v.trim());
+        newAllowed = removed.length > 0 ? `1-${Math.max(...removed.map(Number)) - 1}` : 'all';
+      } else {
+        const existing = new Set(currentVlans.split(',').map((v: string) => v.trim()));
+        vlanList.split(',').forEach((v: string) => existing.delete(v.trim()));
+        newAllowed = Array.from(existing).join(',') || 'none';
+      }
+    } else if (keyword === 'except') {
+      newAllowed = `except ${vlanList}`;
+    } else {
+      newAllowed = vlanSpec;
+    }
+  } else if (vlanSpec.toLowerCase() === 'all') {
+    newAllowed = 'all';
+  } else {
+    newAllowed = vlanSpec;
+  }
+
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, allowedVlans: newAllowed }));
 
   return {
     success: true,

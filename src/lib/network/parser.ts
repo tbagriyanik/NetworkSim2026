@@ -63,7 +63,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
   },
   'abort': {
     pattern: /^abort$/i,
-    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config'],
+    modes: ['config'],
     minArgs: 0,
     maxArgs: 0
   },
@@ -190,7 +190,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 0
   },
   'no ip domain-lookup': {
-    pattern: /^no\s+ip\s+domain[-\s]lookup$/i,
+    pattern: /^no\s+ip\s+domain-lookup$/i,
     modes: ['config'],
     minArgs: 0,
     maxArgs: 0
@@ -209,13 +209,13 @@ export const commandPatterns: Record<string, CommandPattern> = {
   },
   'ip default-gateway': {
     pattern: /^ip\s+default-gateway\s+([0-9.]+|[\w.-]+)$/i,
-    modes: ['config', 'interface', 'config-if-range'],
+    modes: ['config'],
     minArgs: 1,
     maxArgs: 1
   },
   'no ip default-gateway': {
     pattern: /^no\s+ip\s+default-gateway$/i,
-    modes: ['config', 'interface', 'config-if-range'],
+    modes: ['config'],
     minArgs: 0,
     maxArgs: 0
   },
@@ -465,7 +465,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'spanning-tree vlan': {
-    pattern: /^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|priorty|root)(?:\s+(primary|secondary|\d+))?)?$/i,
+    pattern: /^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|root)(?:\s+(primary|secondary|\d+))?)?$/i,
     modes: ['config'],
     minArgs: 1,
     maxArgs: 4
@@ -519,7 +519,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 2
   },
   'errdisable recovery cause': {
-    pattern: /^errdisable\s+recovery\s+cause\s+(.+)$/i,
+    pattern: /^errdisable\s+recovery\s+cause\s+(all|bpduguard|channel-misconfig|dhcp-rate-limit|dtp-flap|gbic-invalid|l2ptguard|linkstate|loopback|mac-limit|pagp-flap|port-mode-failure|port-security|psecure-violation|security-violation|sfp-config-mismatch|small-frame|storm-control|udld|unicast-flood)$/i,
     modes: ['config'],
     minArgs: 1,
     maxArgs: 1
@@ -1103,9 +1103,9 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 0
   },
   'line vty': {
-    pattern: /^line\s+vty\s+(\d+)\s+(\d+)$/i,
+    pattern: /^line\s+vty\s+(\d+)(?:\s+(\d+))?$/i,
     modes: ['config'],
-    minArgs: 2,
+    minArgs: 1,
     maxArgs: 2
   },
   'line aux': {
@@ -1169,9 +1169,9 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'exec-timeout': {
-    pattern: /^exec-timeout\s+(\d+)\s+(\d+)$/i,
+    pattern: /^exec-timeout\s+(\d+)(?:\s+(\d+))?$/i,
     modes: ['line'],
-    minArgs: 2,
+    minArgs: 1,
     maxArgs: 2
   },
   'no exec-timeout': {
@@ -1780,7 +1780,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
   // Ping
   'ping': {
     pattern: /^ping\s+([0-9a-fA-F:.]+|[\w.-]+)(\s+(repeat\s+\d+|size\s+\d+|timeout\s+\d+))*$/i,
-    modes: ['privileged'],
+    modes: ['user', 'privileged'],
     minArgs: 1,
     maxArgs: 6
   },
