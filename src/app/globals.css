@@ -333,6 +333,32 @@
   -webkit-user-select: none;
 }
 
+/* Touch action styles for mobile device dragging */
+.touch-draggable {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Prevent scroll interference on canvas elements */
+svg {
+  touch-action: none;
+}
+
+/* Better touch handling for draggable elements */
+[draggable="true"] {
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+/* Touch-friendly button areas */
+button,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Smooth scroll behavior for all scrollable containers */
 @media (prefers-reduced-motion: no-preference) {
   html {
