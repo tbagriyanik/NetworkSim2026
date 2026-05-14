@@ -97,7 +97,7 @@ export function TopologyToolbar({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition-all ${isDark
+            className={`w-48 flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition-all ${isDark
               ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-600'
               : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-400'
               }`}

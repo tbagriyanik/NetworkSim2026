@@ -35,9 +35,16 @@ export function TaskPortList({ state, t, theme, isDevicePoweredOff = false }: Ta
       if (aIsGigabit && !bIsGigabit) return 1;
       if (!aIsGigabit && bIsGigabit) return -1;
       
-      // Extract port numbers
-      const aNum = parseInt(a.id.split('/')[1] || '0');
-      const bNum = parseInt(b.id.split('/')[1] || '0');
+      // Sort by module number first (for gi1/0/x vs gi1/1/x)
+      const partsA = a.id.split('/');
+      const partsB = b.id.split('/');
+      const aMod = partsA.length >= 3 ? parseInt(partsA[partsA.length - 2], 10) || 0 : 0;
+      const bMod = partsB.length >= 3 ? parseInt(partsB[partsB.length - 2], 10) || 0 : 0;
+      if (aMod !== bMod) return aMod - bMod;
+      
+      // Then by port number (last segment)
+      const aNum = parseInt(partsA[partsA.length - 1], 10) || 0;
+      const bNum = parseInt(partsB[partsB.length - 1], 10) || 0;
       return aNum - bNum;
     });
 

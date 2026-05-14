@@ -88,21 +88,24 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
     return conn.sourceDeviceId.toLowerCase() === lowerDeviceId ? conn.targetDeviceId : conn.sourceDeviceId;
   };
 
+  const sortPorts = (a: Port, b: Port): number => {
+    const partsA = a.id.split('/');
+    const partsB = b.id.split('/');
+    const aMod = partsA.length >= 3 ? parseInt(partsA[partsA.length - 2], 10) || 0 : 0;
+    const bMod = partsB.length >= 3 ? parseInt(partsB[partsB.length - 2], 10) || 0 : 0;
+    if (aMod !== bMod) return aMod - bMod;
+    const aNum = parseInt(partsA[partsA.length - 1], 10) || 0;
+    const bNum = parseInt(partsB[partsB.length - 1], 10) || 0;
+    return aNum - bNum;
+  };
+
   const faPorts = Object.values(ports)
-    .filter(p => p.type === 'fastethernet' && p.id !== 'vlan1')
-    .sort((a, b) => {
-      const aNum = parseInt(a.id.split('/')[1]);
-      const bNum = parseInt(b.id.split('/')[1]);
-      return aNum - bNum;
-    });
+    .filter(p => p.type === 'fastethernet' && p.id !== 'vlan1' && !p.id.startsWith('wlan'))
+    .sort(sortPorts);
 
   const giPorts = Object.values(ports)
-    .filter(p => p.type === 'gigabitethernet' && p.id !== 'vlan1')
-    .sort((a, b) => {
-      const aNum = parseInt(a.id.split('/')[1]);
-      const bNum = parseInt(b.id.split('/')[1]);
-      return aNum - bNum;
-    });
+    .filter(p => p.type === 'gigabitethernet' && p.id !== 'vlan1' && !p.id.startsWith('wlan'))
+    .sort(sortPorts);
 
   const consolePort = Object.values(ports).find(p => p.id.toLowerCase() === 'console');
 

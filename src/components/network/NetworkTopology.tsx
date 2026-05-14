@@ -1481,35 +1481,31 @@ export function NetworkTopology({
       }
 
       if (isTouchDraggingRef.current) {
-        if (e.cancelable) e.preventDefault(); // Prevent page scroll
+        if (e.cancelable) e.preventDefault();
         const rect = canvasRef.current.getBoundingClientRect();
         const currentPan = panRef.current;
         const currentZoom = zoomRef.current;
-        const currentTouchDragOffset = touchDragOffsetRef.current;
+        const currentTouchDragStartPos = touchDragStartPosRef.current;
 
-        const newX = (touch.clientX - rect.left - currentPan.x - currentTouchDragOffset.x) / currentZoom;
-        const newY = (touch.clientY - rect.top - currentPan.y - currentTouchDragOffset.y) / currentZoom;
-
-        // Clamp to canvas bounds
+        if (!currentTouchDragStartPos) return;
+        const dx = (touch.clientX - currentTouchDragStartPos.x) / currentZoom;
+        const dy = (touch.clientY - currentTouchDragStartPos.y) / currentZoom;
+        const initialPositions = dragStartDevicePositionsRef.current;
         const canvasDims = getCanvasDimensions();
-        const clampedX = Math.max(50, Math.min(newX, canvasDims.width - 120));
-        const clampedY = Math.max(50, Math.min(newY, canvasDims.height - 150));
 
-        // Store position in ref for animation frame
-        lastDragPositionRef.current = { x: clampedX, y: clampedY };
-
-        // Use requestAnimationFrame for smooth updates
         if (!dragAnimationFrameRef.current) {
           dragAnimationFrameRef.current = requestAnimationFrame(() => {
-            if (lastDragPositionRef.current && touchDraggedDeviceRef.current) {
-              setDevices((prev) =>
-                prev.map((d) =>
-                  d.id === touchDraggedDeviceRef.current?.id
-                    ? { ...d, x: lastDragPositionRef.current!.x, y: lastDragPositionRef.current!.y }
-                    : d
-                )
-              );
-            }
+            setDevices((prev) =>
+              prev.map((d) => {
+                const init = initialPositions[d.id];
+                if (!init) return d;
+                return {
+                  ...d,
+                  x: Math.max(50, Math.min(init.x + dx, canvasDims.width - 120)),
+                  y: Math.max(50, Math.min(init.y + dy, canvasDims.height - 150)),
+                };
+              })
+            );
             dragAnimationFrameRef.current = null;
           });
         }
@@ -1528,10 +1524,15 @@ export function NetworkTopology({
 
       // If we weren't dragging, treat it as a tap (select)
       if (currentTouchDraggedDevice && !currentIsTouchDragging) {
-        // We use latestDevicesRef to avoid stale devices closure
         const device = latestDevicesRef.current.find(d => d.id === currentTouchDraggedDevice.id);
         if (device) {
-          setSelectedDeviceIds([device.id]);
+          // Keep multi-selection if device was already selected
+          const currentSelected = selectedDeviceIdsRef.current;
+          if (currentSelected.length > 1 && currentSelected.includes(device.id)) {
+            // already set, keep as-is
+          } else {
+            setSelectedDeviceIds([device.id]);
+          }
           onDeviceSelect(device.type, device.id, isSwitchDeviceType(device.type) ? device.switchModel : undefined, device.name);
         }
       }
@@ -1741,7 +1742,7 @@ export function NetworkTopology({
 
   // Handle device touch start - for mobile dragging
   const handleDeviceTouchStart = useCallback((e: ReactTouchEvent, deviceId: string) => {
-    if (e.touches.length !== 1) return; // Only handle single touch for dragging
+    if (e.touches.length !== 1) return;
     e.stopPropagation();
 
     if (!canvasRef.current) return;
@@ -1751,29 +1752,38 @@ export function NetworkTopology({
     const device = deviceMap.get(deviceId);
     if (!device) return;
 
-    // Save current state before touch drag starts (for undo)
     saveToHistory();
 
-    // Cancel any pending long press timer from canvas touch
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
 
-    // Store the starting position for distance calculation
     setTouchDragStartPos({ x: touch.clientX, y: touch.clientY });
     setIsTouchDragging(false);
-    setTouchDraggedDevice(device); // device is already CanvasDevice from find() above
+    setTouchDraggedDevice(device);
+
+    // Determine selection: if device is already selected, keep all for group drag
+    const alreadySelected = selectedDeviceIds.length > 1 && selectedDeviceIds.includes(deviceId);
+    const idsForDrag = alreadySelected ? selectedDeviceIds : [deviceId];
+    if (!alreadySelected) setSelectedDeviceIds(idsForDrag);
+
     setTouchDragOffset({
       x: (touch.clientX - rect.left - pan.x) - device.x * zoom,
       y: (touch.clientY - rect.top - pan.y) - device.y * zoom,
     });
-    setSelectedDeviceIds([deviceId]);
 
-    // Check for double tap
+    // Store initial positions of all devices that will be dragged
+    const initialPositions: { [key: string]: { x: number; y: number } } = {};
+    devices.forEach(d => {
+      if (idsForDrag.includes(d.id)) {
+        initialPositions[d.id] = { x: d.x, y: d.y };
+      }
+    });
+    dragStartDevicePositionsRef.current = initialPositions;
+
     const now = Date.now();
     if (now - lastTapTime < 300 && lastTappedDevice === deviceId) {
-      // Double tap detected - open terminal
       handleDeviceDoubleClick(device);
       setLastTapTime(0);
       setLastTappedDevice(null);
@@ -1781,17 +1791,16 @@ export function NetworkTopology({
       setLastTapTime(now);
       setLastTappedDevice(deviceId);
     }
-  }, [devices, pan, zoom, longPressTimer, lastTapTime, lastTappedDevice, handleDeviceDoubleClick]);
+  }, [devices, pan, zoom, longPressTimer, lastTapTime, lastTappedDevice, handleDeviceDoubleClick, selectedDeviceIds]);
 
   // Handle device touch move - for mobile dragging
   const handleDeviceTouchMove = useCallback((e: ReactTouchEvent) => {
     if (e.touches.length !== 1 || !touchDraggedDevice || !canvasRef.current) return;
     e.stopPropagation();
-    e.preventDefault(); // Prevent scrolling
+    e.preventDefault();
 
     const touch = e.touches[0];
 
-    // Check if we've moved enough to consider it a drag
     if (touchDragStartPos) {
       const distance = getDistance(touchDragStartPos.x, touchDragStartPos.y, touch.clientX, touch.clientY);
       if (distance > DRAG_THRESHOLD) {
@@ -1799,21 +1808,25 @@ export function NetworkTopology({
       }
     }
 
-    if (isTouchDragging) {
+    if (isTouchDragging && touchDragStartPos) {
       const rect = canvasRef.current.getBoundingClientRect();
-      const newX = (touch.clientX - rect.left - pan.x - touchDragOffset.x) / zoom;
-      const newY = (touch.clientY - rect.top - pan.y - touchDragOffset.y) / zoom;
-
+      const dx = (touch.clientX - touchDragStartPos.x) / zoom;
+      const dy = (touch.clientY - touchDragStartPos.y) / zoom;
+      const initialPositions = dragStartDevicePositionsRef.current;
       const canvasDims = getCanvasDimensions();
       setDevices((prev) =>
-        prev.map((d) =>
-          d.id === touchDraggedDevice?.id
-            ? { ...d, x: Math.max(50, Math.min(newX, canvasDims.width - 120)), y: Math.max(50, Math.min(newY, canvasDims.height - 150)) }
-            : d
-        )
+        prev.map((d) => {
+          const init = initialPositions[d.id];
+          if (!init) return d;
+          return {
+            ...d,
+            x: Math.max(50, Math.min(init.x + dx, canvasDims.width - 120)),
+            y: Math.max(50, Math.min(init.y + dy, canvasDims.height - 150)),
+          };
+        })
       );
     }
-  }, [touchDraggedDevice, touchDragOffset, touchDragStartPos, isTouchDragging, pan, zoom, getDistance]);
+  }, [touchDraggedDevice, touchDragStartPos, isTouchDragging, zoom, getCanvasDimensions, getDistance]);
 
   // Handle device touch end - for mobile dragging
   const handleDeviceTouchEnd = useCallback(() => {

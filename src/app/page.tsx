@@ -206,7 +206,7 @@ function RefreshDeviceListToast({
             key={device.id}
             type="button"
             onClick={() => setSelectedId(device.id)}
-            className={`px-2 py-0.5 text-[10px] font-bold rounded transition-all border ${selectedId === device.id
+            className={`w-24 px-2 py-0.5 text-[10px] font-bold rounded transition-all border ${selectedId === device.id
               ? 'bg-blue-600 border-blue-700 text-white shadow-sm scale-105 z-10'
               : isDark
                 ? 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-300'
