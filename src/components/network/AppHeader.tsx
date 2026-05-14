@@ -100,7 +100,7 @@ export function AppHeader({
                 <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent leading-none">
                   {t.title}
                 </h2>
-                <p className="text-xs font-medium mt-1 text-slate-400 dark:text-slate-500">{t.subtitle}</p>
+                <p className="text-xs font-medium mt-1 text-slate-400 dark:text-slate-200">{t.subtitle}</p>
               </div>
             </Button>
           </TooltipWrapper>
@@ -110,7 +110,7 @@ export function AppHeader({
             <div className="hidden md:flex items-center gap-4">
               <div className="flex flex-col items-end gap-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500">
+                  <span className="text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-200">
                     {t.labProgress}
                   </span>
                   <span
@@ -174,7 +174,7 @@ export function AppHeader({
                 <div className="flex items-center rounded-lg border overflow-hidden bg-white border-slate-200 dark:bg-slate-800/50 dark:border-slate-700">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button
+                      <button aria-label={t.newProject}
                         className="h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50 text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 dark:hover:bg-slate-700/50"
                         onClick={handleNewProject}
                       >
@@ -188,7 +188,7 @@ export function AppHeader({
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button
+                      <button aria-label={t.loadProject}
                         className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-blue-400 hover:bg-slate-700/50' : 'text-slate-600 hover:text-blue-600')}
                         onClick={() => fileInputRef.current?.click()}
                       >
@@ -202,7 +202,7 @@ export function AppHeader({
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button
+                      <button aria-label={t.saveProject}
                         className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-blue-400 hover:bg-slate-700/50' : 'text-slate-600 hover:text-blue-600')}
                         onClick={handleSaveProject}
                       >
@@ -216,7 +216,7 @@ export function AppHeader({
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-blue-400 hover:bg-slate-700/50' : 'text-slate-500 hover:text-blue-600')} onClick={() => setShowAboutModal(true)}>
+                      <button aria-label={t.contactTitle} className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-blue-400 hover:bg-slate-700/50' : 'text-slate-500 hover:text-blue-600')} onClick={() => setShowAboutModal(true)}>
                         <Info className="w-4 h-4" />
                       </button>
                     </TooltipTrigger>
@@ -241,6 +241,7 @@ export function AppHeader({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
+                    aria-label={isDark ? t.lightMode : t.darkMode}
                     className={cn("h-7 w-7 rounded flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-yellow-300' : 'text-slate-500 hover:text-yellow-600')}
                     onClick={() => setTheme(isDark ? 'light' : 'dark')}
                   >
@@ -252,6 +253,7 @@ export function AppHeader({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
+                    aria-label={graphicsQuality !== 'high' ? t.highRes : t.lowRes}
                     className={cn("h-7 w-7 rounded flex items-center justify-center transition-all ui-hover-surface", graphicsQuality === 'high' ? (isDark ? 'text-slate-300 hover:text-green-300' : 'text-slate-500 hover:text-green-600') : (isDark ? 'text-slate-300 hover:text-orange-300' : 'text-slate-500 hover:text-orange-600'))}
                     onClick={() => setGraphicsQuality(graphicsQuality === 'high' ? 'low' : 'high')}
                   >
@@ -372,6 +374,7 @@ export function AppHeader({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    aria-label={t.addDeviceOrCable}
                     variant="ghost"
                     size="icon"
                     className="px-2.5 py-1.5 h-auto text-red-500 hover:bg-red-500/10"
@@ -391,6 +394,7 @@ export function AppHeader({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    aria-label={t.connectDevices}
                     variant="ghost"
                     size="icon"
                     className="h-9 w-9 text-cyan-500 hover:bg-cyan-500/10"
@@ -412,6 +416,7 @@ export function AppHeader({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    aria-label={t.refreshNetworkF5}
                     variant="ghost"
                     size="icon"
                     className="h-9 w-9 text-pink-500 hover:bg-pink-500/10"
@@ -431,6 +436,7 @@ export function AppHeader({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    aria-label={t.environmentSettings}
                     variant="ghost"
                     size="icon"
                     className="h-9 w-9 text-emerald-500 hover:bg-emerald-500/10"
@@ -447,6 +453,7 @@ export function AppHeader({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        aria-label={t.openGuidedLesson}
                         variant="ghost"
                         size="icon"
                         className="h-9 w-9 text-blue-500 hover:bg-blue-500/10 animate-pulse"

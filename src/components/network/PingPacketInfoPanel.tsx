@@ -567,6 +567,7 @@ export function PingPacketInfoPanel({
                         <Tooltip delayDuration={300}>
                             <TooltipTrigger asChild>
                                 <button
+                                    aria-label={t.close}
                                     onClick={onClose}
                                     className={`flex items-center justify-center w-5 h-5 rounded-md transition-all flex-shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10'}`}
                                 >

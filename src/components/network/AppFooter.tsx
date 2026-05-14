@@ -45,7 +45,7 @@ export function AppFooter({
                     : t.saved}
                 </span>
                 {lastSaveTime && (
-                  <span className={`text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                  <span className={`text-[11px] ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
                     {t.lastSavedAt + lastSaveTime}
                   </span>
                 )}

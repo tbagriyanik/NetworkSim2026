@@ -26,10 +26,14 @@ export function TooltipWrapper({
         return <>{children}</>;
     }
 
+    const child = React.isValidElement(children)
+        ? React.cloneElement(children as React.ReactElement<{ 'aria-label'?: string }>, { 'aria-label': title })
+        : children;
+
     return (
         <Tooltip delayDuration={delayDuration}>
             <TooltipTrigger asChild>
-                {children}
+                {child}
             </TooltipTrigger>
             <TooltipContent side={side}>
                 {title}

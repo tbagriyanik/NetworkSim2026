@@ -73,6 +73,7 @@ export function TopologyToolbar({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            aria-label={t.resetView}
             variant="ghost"
             size="icon"
             className={`h-8 w-8 ${isDark
@@ -240,15 +241,11 @@ export function TopologyToolbar({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              aria-label={t.addPC}
               variant="ghost"
               size="icon"
               className="h-8 w-8 p-0 text-blue-500 hover:bg-blue-500/10"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  const event = new CustomEvent('add-device', { detail: 'pc' });
-                  window.dispatchEvent(event);
-                }
-              }}
+              onClick={() => { window.dispatchEvent(new CustomEvent('add-device', { detail: 'pc' })); }}
             >
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
@@ -260,6 +257,7 @@ export function TopologyToolbar({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              aria-label={t.addL2Switch}
               variant="ghost"
               size="icon"
               className="h-8 w-8 p-0 text-green-500 hover:bg-green-500/10"
@@ -280,6 +278,7 @@ export function TopologyToolbar({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              aria-label={t.addL3Switch}
               variant="ghost"
               size="icon"
               className="h-8 w-8 p-0 text-purple-500 hover:bg-purple-500/10"
@@ -300,6 +299,7 @@ export function TopologyToolbar({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              aria-label={t.addRouter}
               variant="ghost"
               size="icon"
               className="h-8 w-8 p-0 text-purple-500 hover:bg-purple-500/10"
@@ -321,6 +321,7 @@ export function TopologyToolbar({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              aria-label={t.addIoT}
               variant="ghost"
               size="icon"
               className="h-8 w-8 p-0 text-cyan-500 hover:bg-cyan-500/10"
@@ -345,6 +346,7 @@ export function TopologyToolbar({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              aria-label={t.addFirewall}
               variant="ghost"
               size="icon"
               className="h-8 w-8 p-0 text-red-500 hover:bg-red-500/10"
@@ -371,6 +373,7 @@ export function TopologyToolbar({
           <Tooltip key={type}>
             <TooltipTrigger asChild>
               <Button
+                aria-label={type === 'straight' ? t.straightCable : type === 'crossover' ? t.crossoverCable : t.consoleCable}
                 variant="ghost"
                 size="sm"
                 className={`h-8 px-2 flex items-center gap-1 text-xs font-bold
@@ -408,6 +411,7 @@ export function TopologyToolbar({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            aria-label={t.connectDevices}
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-cyan-500 hover:bg-cyan-500/10"
@@ -430,6 +434,7 @@ export function TopologyToolbar({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            aria-label={t.ping}
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-amber-500 hover:bg-amber-500/10"
@@ -453,6 +458,7 @@ export function TopologyToolbar({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            aria-label={t.addNote}
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-slate-500 hover:bg-slate-500/10"
@@ -473,6 +479,7 @@ export function TopologyToolbar({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            aria-label={t.environmentSettings}
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-emerald-500 hover:bg-emerald-500/10"
@@ -490,6 +497,7 @@ export function TopologyToolbar({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            aria-label={t.undo}
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-slate-500 hover:bg-slate-500/10"
@@ -509,6 +517,7 @@ export function TopologyToolbar({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            aria-label={t.redo}
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-slate-500 hover:bg-slate-500/10"
@@ -530,6 +539,7 @@ export function TopologyToolbar({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            aria-label={t.refreshNetworkF5}
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-pink-500 hover:bg-pink-500/10"

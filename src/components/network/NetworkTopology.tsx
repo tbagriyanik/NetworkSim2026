@@ -5076,6 +5076,7 @@ export function NetworkTopology({
                     transform="translate(2, 0) scale(0.9)"
                     filter="url(#wifiIconShadow)"
                     style={{ cursor: 'pointer' }}
+                    aria-label={language === 'tr' ? 'WiFi durumu' : 'WiFi status'}
                   >
                     {/* Invisible rect for easier hover */}
                     <rect x="0" y="5" width="24" height="20" fill="transparent" />
@@ -5299,6 +5300,7 @@ export function NetworkTopology({
                 saveToHistory();
                 togglePowerDevices([device.id]);
               }}
+              aria-label={isPoweredOff ? (language === 'tr' ? 'Gücü aç' : 'Power on') : (language === 'tr' ? 'Gücü kapat' : 'Power off')}
             >
               {/* Background circle - adjusted Y for routers */}
               <circle
@@ -6769,6 +6771,7 @@ export function NetworkTopology({
                                   }}
                                   className="w-4 h-4 rounded border border-black/20"
                                   style={{ backgroundColor: note.color }}
+                                  aria-label={t.colorLabel}
                                 />
                               </TooltipTrigger>
                               <TooltipContent>{t.colorLabel}</TooltipContent>
@@ -6838,6 +6841,7 @@ export function NetworkTopology({
                                   deleteNote(note.id);
                                 }}
                                 className="ml-auto px-1.5 py-0.5 rounded hover:bg-black/10"
+                                aria-label={t.delete}
                               >
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1 -1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0 -1-1h-4a1 1 0 0 0 -1 1v3M4 7h16" />
@@ -6866,6 +6870,7 @@ export function NetworkTopology({
                           }}
                         >
                           <textarea
+                            aria-label={language === 'tr' ? 'Not içeriği' : 'Note content'}
                             ref={(el) => { noteTextareaRefs.current[note.id] = el; }}
                             value={note.text}
                             onChange={(e) => updateNoteText(note.id, e.target.value)}
