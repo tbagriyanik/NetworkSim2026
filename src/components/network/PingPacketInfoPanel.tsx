@@ -469,7 +469,7 @@ export function PingPacketInfoPanel({
                         <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
                         <path d="M2 7l10 7 10-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                     </svg>
-                    <span className={`text-sm font-bold tracking-tight ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{t.title}</span>
+                    {!isMobile && <span className={`text-sm font-bold tracking-tight ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{t.title}</span>}
 
                     {isReturn ? (
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${isDark ? 'bg-amber-900/50 text-amber-300 border border-amber-800/40' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
@@ -496,8 +496,8 @@ export function PingPacketInfoPanel({
                     )}
 
                     {isPaused && !isDone && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${isDark ? 'bg-amber-900/50 text-amber-300 border border-amber-800/40' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                            ⏸ {t.paused}
+                        <span className={`${isMobile ? 'w-2 h-2 bg-amber-500 rounded-full animate-pulse' : 'text-[10px] px-2 py-0.5 rounded-full font-semibold ' + (isDark ? 'bg-amber-900/50 text-amber-300 border border-amber-800/40' : 'bg-amber-50 text-amber-700 border border-amber-200')}`}>
+                            {!isMobile && <>{'⏸ '}{t.paused}</>}
                         </span>
                     )}
                 </div>
@@ -510,7 +510,7 @@ export function PingPacketInfoPanel({
                                 <Tooltip delayDuration={300}>
                                     <TooltipTrigger asChild>
                                         <button onClick={() => { onPlay(); }}
-                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isMobile ? 'p-1.5' : ''} ${isDark ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}>
+                                            className={`flex items-center justify-center rounded-lg text-xs font-semibold transition-all ${isMobile ? 'w-7 h-7' : 'gap-1.5 px-3 py-1.5'} ${isDark ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}>
                                             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
                                             {!isMobile && t.play}
                                         </button>
@@ -526,7 +526,7 @@ export function PingPacketInfoPanel({
                                 <Tooltip delayDuration={300}>
                                     <TooltipTrigger asChild>
                                         <button onClick={() => { onPause(); }}
-                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isMobile ? 'p-1.5' : ''} ${isDark ? 'bg-amber-600 hover:bg-amber-500 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'}`}>
+                                            className={`flex items-center justify-center rounded-lg text-xs font-semibold transition-all ${isMobile ? 'w-7 h-7' : 'gap-1.5 px-3 py-1.5'} ${isDark ? 'bg-amber-600 hover:bg-amber-500 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'}`}>
                                             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                                                 <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
                                             </svg>
@@ -544,7 +544,7 @@ export function PingPacketInfoPanel({
                             <Tooltip delayDuration={300}>
                                 <TooltipTrigger asChild>
                                     <button onClick={onNext} disabled={!isPaused}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isMobile ? 'p-1.5' : ''} ${isPaused ? (isDark ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white') : (isDark ? 'bg-slate-700/40 text-slate-600 cursor-not-allowed' : 'bg-slate-100 text-slate-400 cursor-not-allowed')}`}>
+                                        className={`flex items-center justify-center rounded-lg text-xs font-semibold transition-all ${isMobile ? 'w-7 h-7' : 'gap-1.5 px-3 py-1.5'} ${isPaused ? (isDark ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white') : (isDark ? 'bg-slate-700/40 text-slate-600 cursor-not-allowed' : 'bg-slate-100 text-slate-400 cursor-not-allowed')}`}>
                                         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                                             <polygon points="5,3 14,12 5,21" /><rect x="16" y="3" width="3" height="18" />
                                         </svg>

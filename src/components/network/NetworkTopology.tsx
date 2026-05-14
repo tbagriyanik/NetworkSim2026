@@ -107,7 +107,7 @@ function PacketPopup({ hopIndex, info, language, onClose }: {
   language: 'tr' | 'en';
   onClose: () => void;
 }) {
-  const [pos, setPos] = useState(() => {
+  const [pos, setPos] = useState<{ x: number; y: number }>(() => {
     try {
       const saved = localStorage.getItem('draggable_position_packet-popup');
       if (saved) {
@@ -127,14 +127,21 @@ function PacketPopup({ hopIndex, info, language, onClose }: {
     document.body.style.userSelect = 'none';
     document.body.style.cursor = 'grabbing';
 
+    const clamp = (x: number, y: number) => ({
+      x: Math.max(0, Math.min(x, window.innerWidth - 320)),
+      y: Math.max(0, Math.min(y, window.innerHeight - 200)),
+    });
     const onMove = (ev: MouseEvent) => {
       if (!dragRef.current) return;
-      setPos({
-        x: Math.max(0, dragRef.current.startPosX + ev.clientX - dragRef.current.startX),
-        y: Math.max(0, dragRef.current.startPosY + ev.clientY - dragRef.current.startY),
-      });
+      setPos(clamp(
+        dragRef.current.startPosX + ev.clientX - dragRef.current.startX,
+        dragRef.current.startPosY + ev.clientY - dragRef.current.startY,
+      ));
     };
     const onUp = () => {
+      if (dragRef.current) {
+        setPos(prev => clamp(prev.x, prev.y));
+      }
       dragRef.current = null;
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
@@ -3879,13 +3886,28 @@ export function NetworkTopology({
         return Math.min(wifiBase, 2000);
       }
 
-      // Wired: scale by pixel distance
+      // Wired: scale by pixel distance and port speed
+      const conn = connections.find(c =>
+        (c.sourceDeviceId === fromId && c.targetDeviceId === toId) ||
+        (c.sourceDeviceId === toId && c.targetDeviceId === fromId)
+      );
+      const getPortSpeed = (deviceId: string, portId: string | undefined): number => {
+        if (!portId) return 100;
+        const st = deviceStates?.get(deviceId);
+        const port = st?.ports?.[portId];
+        if (!port?.speed || port.speed === 'auto') return 100;
+        return parseInt(port.speed, 10) || 100;
+      };
+      const srcSpeed = getPortSpeed(fromId, conn?.sourceDeviceId === fromId ? conn?.sourcePort : conn?.targetPort);
+      const dstSpeed = getPortSpeed(toId, conn?.sourceDeviceId === toId ? conn?.sourcePort : conn?.targetPort);
+      const linkSpeed = Math.min(srcSpeed, dstSpeed);
+      const speedFactor = linkSpeed >= 1000 ? 0.5 : linkSpeed >= 100 ? 1 : linkSpeed >= 10 ? 1.5 : 1;
       const dx = toDevice.x - fromDevice.x;
       const dy = toDevice.y - fromDevice.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       const baseDistance = 200;
       const scaleFactor = Math.max(1, distance / baseDistance);
-      return Math.min(hopDuration * scaleFactor, 2000);
+      return Math.min(hopDuration * scaleFactor * speedFactor, 2000);
     };
 
     // Smooth easing function for fluent animation
@@ -4152,7 +4174,6 @@ export function NetworkTopology({
   }, []);
 
   const handlePingPlay = useCallback(() => {
-    // If already playing, do nothing
     if (!pingIsPausedRef.current) return;
 
     pingIsPausedRef.current = false;
@@ -4167,20 +4188,15 @@ export function NetworkTopology({
   }, []);
 
   const handlePingNext = useCallback(() => {
-    // Only works when paused
     if (!pingIsPausedRef.current) return;
 
-    // Get the resume callback safely
     const resume = pingResumeCallbackRef.current;
     if (!resume) return;
 
-    // Step mode: advanceToNextHop will pause again at the next hop boundary
     pingStepModeRef.current = true;
     pingIsPausedRef.current = false;
     setPingAnimation(prev => prev ? { ...prev, isPaused: false } : null);
 
-    // Now call the resume callback
-    // Don't clear it before calling - let the animation frame update it naturally
     resume();
   }, []);
 
@@ -6996,13 +7012,26 @@ export function NetworkTopology({
                     const envelopeX = bezierX + (tangentDy / tangentLen * 20);
                     const envelopeY = bezierY + (-tangentDx / tangentLen * 20);
 
+                    const glowFilter = graphicsQuality === 'high'
+                      ? 'url(#packetGlow)'
+                      : undefined;
                     return (
                       <g key="ping-animation" opacity={0.9}>
-                        <g 
+                        <g
                           transform={`translate(${envelopeX}, ${envelopeY})`}
                           className="cursor-pointer"
                           onClick={handleEnvelopeClick}
                         >
+                          {/* Glow highlight */}
+                          {graphicsQuality === 'high' ? (
+                            <circle cx="0" cy="0" r="16" fill="#06b6d4" opacity="0.2" filter="url(#packetGlow)">
+                              <animate attributeName="opacity" values="0.15;0.35;0.15" dur="1.5s" repeatCount="indefinite" />
+                            </circle>
+                          ) : (
+                            <circle cx="0" cy="0" r="14" fill="#06b6d4" opacity="0.1">
+                              <animate attributeName="opacity" values="0.08;0.2;0.08" dur="1.5s" repeatCount="indefinite" />
+                            </circle>
+                          )}
                           <rect x="-10" y="-7" width="20" height="14" rx="2" fill="#06b6d4" stroke="#0891b2" strokeWidth="1.5" />
                           <path d="M-8 -3 L0 4 L8 -3" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </g>
@@ -7279,6 +7308,13 @@ export function NetworkTopology({
                     </>
                   )}
                 </radialGradient>
+                <filter id="packetGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
               </defs>
 
               {/* Background */}

@@ -268,10 +268,20 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
           finalH = parseInt(ds.element.style.height) || ds.startH;
         }
 
-        // Clamp position
+        // Clamp position to viewport
         const margin = 16;
-        const clampedX = Math.max(margin, Math.min(finalX, typeof window !== 'undefined' ? window.innerWidth - margin : 1000));
-        const clampedY = Math.max(margin, Math.min(finalY, typeof window !== 'undefined' ? window.innerHeight - margin : 800));
+        const elRect = ds.element.getBoundingClientRect();
+        const elW = elRect.width || 200;
+        const elH = elRect.height || 100;
+        let clampedX: number, clampedY: number;
+        if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
+          // finalX is `right`, finalY is `bottom`
+          clampedX = Math.max(0, Math.min(finalX, window.innerWidth - elW));
+          clampedY = Math.max(0, Math.min(finalY, window.innerHeight - elH));
+        } else {
+          clampedX = Math.max(margin - elW, Math.min(finalX, window.innerWidth - margin));
+          clampedY = Math.max(margin - elH, Math.min(finalY, window.innerHeight - margin));
+        }
         const finalPos = { x: clampedX, y: clampedY };
         const finalSize = { width: Math.max(ds.minSize.width, finalW), height: Math.max(ds.minSize.height, finalH) };
 
@@ -387,8 +397,14 @@ export function GlobalDragManager() {
       document.body.style.userSelect = '';
       const finalLeft = parseInt(state.el.style.left) || state.offsetX;
       const finalTop = parseInt(state.el.style.top) || state.offsetY;
+      const margin = 16;
+      const rect = state.el.getBoundingClientRect();
+      const clampedLeft = Math.max(margin - rect.width, Math.min(finalLeft, window.innerWidth - margin));
+      const clampedTop = Math.max(margin - rect.height, Math.min(finalTop, window.innerHeight - margin));
+      state.el.style.left = `${clampedLeft}px`;
+      state.el.style.top = `${clampedTop}px`;
       if (state.id) {
-        try { localStorage.setItem(`draggable_position_${state.id}`, JSON.stringify({ x: finalLeft, y: finalTop })); } catch { }
+        try { localStorage.setItem(`draggable_position_${state.id}`, JSON.stringify({ x: clampedLeft, y: clampedTop })); } catch { }
       }
       state.active = false;
       state.el = null;
