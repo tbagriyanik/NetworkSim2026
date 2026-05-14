@@ -4978,7 +4978,6 @@ export function NetworkTopology({
                     const clientBssid = pcwifi?.bssid;
                     if ((!clientBssid || clientBssid === device.id) && clientSsid === apSsid && clientSecurity === apSecurity && (apSecurity === 'open' || apPass === clientPass)) {
                       isConnected = true;
-                      connectedDevices++;
                     }
                   });
                 }
@@ -5008,13 +5007,16 @@ export function NetworkTopology({
 
               // Count connected devices (PC and IoT)
               if (wifiMode === 'ap' && deviceStates && wifiSsid) {
+                const apPass = wlanState?.wifi?.password || '';
                 devices.forEach(otherDev => {
                   if (otherDev.id === device.id || (otherDev.type !== 'pc' && otherDev.type !== 'iot')) return;
                   const pcwifi = otherDev.wifi;
                   const otherWlan = deviceStates.get(otherDev.id)?.ports['wlan0'];
                   const clientSsid = pcwifi?.ssid || otherWlan?.wifi?.ssid || '';
                   const clientSecurity = pcwifi?.security || otherWlan?.wifi?.security || 'open';
-                  if (clientSsid === wifiSsid && clientSecurity === wifiSecurity) {
+                  const clientPass = pcwifi?.password || otherWlan?.wifi?.password || '';
+                  const clientBssid = pcwifi?.bssid;
+                  if ((!clientBssid || clientBssid === device.id) && clientSsid === wifiSsid && clientSecurity === wifiSecurity && (wifiSecurity === 'open' || apPass === clientPass)) {
                     connectedDevices++;
                   }
                 });
