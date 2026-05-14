@@ -401,31 +401,21 @@ Router-on-a-Stick kullanarak tek bir router interface'i üzerinden farklı VLAN'
    - vlan 20
      name VLAN20
    - exit
-   - interface gi1/0/1
-     switchport mode access
-     switchport access vlan 10
-   - exit
-   - interface gi1/0/2
-     switchport mode access
-     switchport access vlan 20
-   - exit
-   - interface gi1/0/3
-     switchport mode access
-     switchport access vlan 30
-   - exit
-   - interface gi1/0/4
-     switchport mode access
-     switchport access vlan 40
-   - exit
+    - interface fa0/1
+      switchport mode access
+      switchport access vlan 10
+    - exit
+    - interface fa0/2
+      switchport mode access
+      switchport access vlan 20
+    - exit
 
 3. **PC IP ve Gateway Konfigürasyonu:**
-   - PC-1: IP 192.168.10.10, GW 192.168.10.1, VLAN 10
-   - PC-2: IP 192.168.20.10, GW 192.168.20.1, VLAN 20
-   - PC-3: IP 192.168.30.10, GW 192.168.30.1, VLAN 30
-   - PC-4: IP 192.168.40.10, GW 192.168.40.1, VLAN 40
+    - PC-1: IP 192.168.10.10, GW 192.168.10.1, VLAN 10
+    - PC-2: IP 192.168.20.10, GW 192.168.20.1, VLAN 20
 
 4. **Test:**
-   - Tüm PC'ler birbirine ping atabilir
+    - PC-1 ping 192.168.20.10 (inter-VLAN routing)
 
 ### 20. Static Routing Lab
 **ID:** `static-routing`  
@@ -818,12 +808,12 @@ L3 switch'ler ve router arasında static routing yapılandırarak farklı ağlar
    - ip routing
    - interface gi1/0/1
      no switchport
-     ip address 192.168.1.1 255.255.255.0
+     ip address 10.0.0.1 255.0.0.0
      no shutdown
    - exit
    - interface gi1/0/2
      no switchport
-     ip address 10.0.0.1 255.0.0.0
+     ip address 192.168.1.1 255.255.255.0
      no shutdown
    - exit
    - ip route 192.168.2.0 255.255.255.0 10.0.0.2

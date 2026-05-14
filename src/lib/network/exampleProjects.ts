@@ -390,8 +390,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       opacity: 0.75
     }
   ];
-  connectPorts(firewallBasicDevices, firewallBasicConnections, 'pc-1', 'eth0', 'firewall-1', 'gi0/0');
-  connectPorts(firewallBasicDevices, firewallBasicConnections, 'firewall-1', 'gi0/1', 'pc-2', 'eth0');
+  connectPorts(firewallBasicDevices, firewallBasicConnections, 'pc-1', 'eth0', 'firewall-1', 'gi0/0', 'crossover');
+  connectPorts(firewallBasicDevices, firewallBasicConnections, 'firewall-1', 'gi0/1', 'pc-2', 'eth0', 'crossover');
 
   // Example 13: IoT WiFi Lab - 3 IoT devices, 1 PC, 1 Router (WiFi with connected IoT)
   const iotWifiDevices = [
@@ -887,7 +887,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' no shutdown',
     '!',
     'wlan GreenHouse-Network 1 GreenHouse-Network',
-    'security wpa psk set-key ascii 0 sera',
+    'security wpa psk ascii 0 sera',
     '!',
     'ip dhcp pool greenhouse-pool',
     ' network 192.168.2.0 255.255.255.0',
@@ -1098,7 +1098,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   // Varsayılan L2 switch ayarlarına eşitle (IP'siz, tüm portlar dinamik)
   routerDhcpSw1.ports['fa0/1'] = { ...routerDhcpSw1.ports['fa0/1'], status: 'connected' };
   routerDhcpSw1.ports['fa0/2'] = { ...routerDhcpSw1.ports['fa0/2'], status: 'connected' };
-  routerDhcpSw1.ports['gi0/1'] = { ...routerDhcpSw1.ports['gi0/1'], status: 'connected' };
+  routerDhcpSw1.ports['gi0/1'] = { ...routerDhcpSw1.ports['gi0/1'], mode: 'access', status: 'connected' };
   routerDhcpSw1.runningConfig = [
     '!',
     'hostname SW1',
@@ -1702,14 +1702,14 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   };
   stpTriangleSw1.ports['fa0/1'] = {
     ...stpTriangleSw1.ports['fa0/1'],
-    mode: 'access',
-    vlan: 1,
+    mode: 'trunk',
+    allowedVlans: [1],
     status: 'connected'
   };
   stpTriangleSw1.ports['fa0/2'] = {
     ...stpTriangleSw1.ports['fa0/2'],
-    mode: 'access',
-    vlan: 1,
+    mode: 'trunk',
+    allowedVlans: [1],
     status: 'connected'
   };
 
@@ -1726,21 +1726,34 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   };
   stpTriangleSw2.ports['fa0/1'] = {
     ...stpTriangleSw2.ports['fa0/1'],
-    mode: 'access',
-    vlan: 1,
+    mode: 'trunk',
+    allowedVlans: [1],
     status: 'connected'
   };
   stpTriangleSw2.ports['fa0/2'] = {
     ...stpTriangleSw2.ports['fa0/2'],
-    mode: 'access',
-    vlan: 1,
+    mode: 'trunk',
+    allowedVlans: [1],
     status: 'connected'
   };
 
   const stpTriangleSw3 = createInitialState('00:1A:2B:3C:4D:60');
   stpTriangleSw3.hostname = 'SW3';
   stpTriangleSw3.spanningTreeMode = 'rapid-pvst';
-
+  stpTriangleSw3.spanningTreePriority = 32768; // Default priority
+  stpTriangleSw3.vlans[1] = { id: 1, name: 'VLAN1', status: 'active', ports: ['FA0/1', 'FA0/2'] };
+  stpTriangleSw3.ports['fa0/1'] = {
+    ...stpTriangleSw3.ports['fa0/1'],
+    mode: 'trunk',
+    allowedVlans: [1],
+    status: 'connected'
+  };
+  stpTriangleSw3.ports['fa0/2'] = {
+    ...stpTriangleSw3.ports['fa0/2'],
+    mode: 'trunk',
+    allowedVlans: [1],
+    status: 'connected'
+  };
   // STP 3-Switch PVST Example (Per-VLAN Spanning Tree)
   const stpPvstDevices = [
     createL3SwitchDevice('sw1', 'SW1', 300, 200),
@@ -1841,6 +1854,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw1.hostname = 'SW1';
   stpPvstSw1.switchModel = 'WS-C3650-24PS';
   stpPvstSw1.switchLayer = 'L3';
+  stpPvstSw1.ipRouting = true;
   stpPvstSw1.spanningTreeMode = 'pvst';
   stpPvstSw1.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['GI1/0/3', 'GI1/0/1', 'GI1/0/2'] };
   stpPvstSw1.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['GI1/0/4', 'GI1/0/1', 'GI1/0/2'] };
@@ -1883,6 +1897,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     '!',
     'hostname SW1',
     '!',
+    'ip routing',
+    '!',
     'vlan 10',
     ' name VLAN10',
     '!',
@@ -1901,7 +1917,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' ip address 192.168.20.1 255.255.255.0',
     ' no shutdown',
     '!',
-    'interface range gi1/0/1 - 2',
+    'interface range gi1/0/1-2',
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
@@ -1915,6 +1931,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw2.hostname = 'SW2';
   stpPvstSw2.switchModel = 'WS-C3650-24PS';
   stpPvstSw2.switchLayer = 'L3';
+  stpPvstSw2.ipRouting = true;
   stpPvstSw2.spanningTreeMode = 'pvst';
   stpPvstSw2.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['GI1/0/3', 'GI1/0/1', 'GI1/0/2'] };
   stpPvstSw2.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['GI1/0/4', 'GI1/0/1', 'GI1/0/2'] };
@@ -1957,6 +1974,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     '!',
     'hostname SW2',
     '!',
+    'ip routing',
+    '!',
     'vlan 10',
     ' name VLAN10',
     '!',
@@ -1975,7 +1994,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' ip address 192.168.20.2 255.255.255.0',
     ' no shutdown',
     '!',
-    'interface range gi1/0/1 - 2',
+    'interface range gi1/0/1-2',
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
@@ -1989,6 +2008,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw3.hostname = 'SW3';
   stpPvstSw3.switchModel = 'WS-C3650-24PS';
   stpPvstSw3.switchLayer = 'L3';
+  stpPvstSw3.ipRouting = true;
   stpPvstSw3.spanningTreeMode = 'pvst';
   stpPvstSw3.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['GI1/0/3', 'GI1/0/1', 'GI1/0/2'] };
   stpPvstSw3.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['GI1/0/4', 'GI1/0/1', 'GI1/0/2'] };
@@ -2031,6 +2051,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     '!',
     'hostname SW3',
     '!',
+    'ip routing',
+    '!',
     'vlan 10',
     ' name VLAN10',
     '!',
@@ -2049,7 +2071,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' ip address 192.168.20.3 255.255.255.0',
     ' no shutdown',
     '!',
-    'interface range gi1/0/1 - 2',
+    'interface range gi1/0/1-2',
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
@@ -2106,23 +2128,23 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   campusAcc1.hostname = 'ACC-SW1';
   campusAcc1.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['FA0/1'] };
   campusAcc1.ports['fa0/1'] = { ...campusAcc1.ports['fa0/1'], vlan: 10, mode: 'access', status: 'connected' };
-  campusAcc1.ports['gi0/1'] = { ...campusAcc1.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  campusAcc1.ports['gi0/1'] = { ...campusAcc1.ports['gi0/1'], mode: 'access', vlan: 10, status: 'connected' };
 
   const campusCore = createInitialRouterState('00:50:00:00:00:03');
   campusCore.hostname = 'CORE-R1';
   campusCore.ipRouting = true;
-  campusCore.ports['gi0/0'] = { ...campusCore.ports['gi0/0'], ipAddress: '192.168.1.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
-  campusCore.ports['gi0/1'] = { ...campusCore.ports['gi0/1'], ipAddress: '192.168.2.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  campusCore.ports['gi0/0'] = { ...campusCore.ports['gi0/0'], ipAddress: '192.168.10.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
+  campusCore.ports['gi0/1'] = { ...campusCore.ports['gi0/1'], ipAddress: '192.168.20.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
   campusCore.staticRoutes = [
-    { destination: '192.168.10.0', subnetMask: '255.255.255.0', nextHop: '192.168.10.2', metric: 1, type: 'static' },
-    { destination: '192.168.20.0', subnetMask: '255.255.255.0', nextHop: '192.168.20.2', metric: 1, type: 'static' }
+    { destination: '0.0.0.0', subnetMask: '0.0.0.0', nextHop: '192.168.10.254', metric: 1, type: 'static' },
+    { destination: '0.0.0.0', subnetMask: '0.0.0.0', nextHop: '192.168.20.254', metric: 1, type: 'static' }
   ];
 
   const campusAcc2 = createInitialState('00:1A:2B:3C:4D:6A');
   campusAcc2.hostname = 'ACC-SW2';
   campusAcc2.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/1'] };
   campusAcc2.ports['fa0/1'] = { ...campusAcc2.ports['fa0/1'], vlan: 20, mode: 'access', status: 'connected' };
-  campusAcc2.ports['gi0/1'] = { ...campusAcc2.ports['gi0/1'], mode: 'trunk', allowedVlans: 'all', status: 'connected' };
+  campusAcc2.ports['gi0/1'] = { ...campusAcc2.ports['gi0/1'], mode: 'access', vlan: 20, status: 'connected' };
 
   // Example 12: Router SSH Lab (Basic) - 1 PC, 1 Router
   const routerSshDevices = [
@@ -2130,7 +2152,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     createRouterDevice('router-1', 'R1', 420, 220),
   ];
   const routerSshConnections: CanvasConnection[] = [];
-  connectPorts(routerSshDevices, routerSshConnections, 'pc-1', 'eth0', 'router-1', 'gi0/0', 'straight');
+  connectPorts(routerSshDevices, routerSshConnections, 'pc-1', 'eth0', 'router-1', 'gi0/0', 'crossover');
   const routerSshNotes: CanvasNote[] = [
     {
       id: 'router-ssh-note',
@@ -2316,7 +2338,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' ip address 192.168.20.1 255.255.255.0',
     ' no shutdown',
     '!',
-    'interface range gi1/0/1 - 2',
+    'interface range gi1/0/1-2',
     ' switchport access vlan 10',
     ' switchport mode access',
     '!',
@@ -2391,7 +2413,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' ip address 192.168.20.1 255.255.255.0',
     ' no shutdown',
     '!',
-    'interface range gi1/0/1 - 2',
+    'interface range gi1/0/1-2',
     ' switchport access vlan 10',
     ' switchport mode access',
     '!',
@@ -2444,8 +2466,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'static-l3-routing-note',
       text: isTr
-        ? 'Amaç: L3 switch\'ler ve router arasında static routing yapılandırarak farklı ağlar arası iletişim sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (ML1, ML2) ekle\n   - 1 adet Router (R3) ekle\n   - 2 adet L2 Switch (Switch0, Switch1) ekle\n   - 4 adet PC ekle\n   - Bağlantıları yapıştır (topolojiye göre)\n\n2) ML1 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/1\n     no switchport\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/2\n     no switchport\n     ip address 10.0.0.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\n3) R3 KONFİGÜRASYONU:\n   - enable, conf t\n   - interface gi0/0\n     ip address 10.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 20.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 10.0.0.1\n   - ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\n4) ML2 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/1\n     no switchport\n     ip address 20.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi1/0/2\n     no switchport\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\n5) TEST:\n   - show ip route (statik rotaları gör)\n   - PC\'ler arası ping testi'
-        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (ML1, ML2)\n   - Add 1 Router (R3)\n   - Add 2 L2 Switches (Switch0, Switch1)\n   - Add 4 PCs\n   - Connect all devices according to topology\n\n2) ML1 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/1\n     no switchport\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/2\n     no switchport\n     ip address 10.0.0.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\n3) R3 CONFIGURATION:\n   - enable, conf t\n   - interface gi0/0\n     ip address 10.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 20.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 10.0.0.1\n   - ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\n4) ML2 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/1\n     no switchport\n     ip address 20.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi1/0/2\n     no switchport\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\n5) TEST:\n   - show ip route (view static routes)\n   - Ping test between PCs',
+        ? 'Amaç: L3 switch\'ler ve router arasında static routing yapılandırarak farklı ağlar arası iletişim sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (ML1, ML2) ekle\n   - 1 adet Router (R3) ekle\n   - 2 adet L2 Switch (Switch0, Switch1) ekle\n   - 4 adet PC ekle\n   - Bağlantıları yapıştır (topolojiye göre)\n\n2) ML1 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/1\n     no switchport\n     ip address 10.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi1/0/2\n     no switchport\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\n3) R3 KONFİGÜRASYONU:\n   - enable, conf t\n   - interface gi0/0\n     ip address 10.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 20.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 10.0.0.1\n   - ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\n4) ML2 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/1\n     no switchport\n     ip address 20.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi1/0/2\n     no switchport\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\n5) TEST:\n   - show ip route (statik rotaları gör)\n   - PC\'ler arası ping testi'
+        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (ML1, ML2)\n   - Add 1 Router (R3)\n   - Add 2 L2 Switches (Switch0, Switch1)\n   - Add 4 PCs\n   - Connect all devices according to topology\n\n2) ML1 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/1\n     no switchport\n     ip address 10.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi1/0/2\n     no switchport\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.2.0 255.255.255.0 10.0.0.2\n\n3) R3 CONFIGURATION:\n   - enable, conf t\n   - interface gi0/0\n     ip address 10.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi0/1\n     ip address 20.0.0.1 255.0.0.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 10.0.0.1\n   - ip route 192.168.2.0 255.255.255.0 20.0.0.2\n\n4) ML2 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/1\n     no switchport\n     ip address 20.0.0.2 255.0.0.0\n     no shutdown\n   - exit\n   - interface gi1/0/2\n     no switchport\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip route 192.168.1.0 255.255.255.0 20.0.0.1\n\n5) TEST:\n   - show ip route (view static routes)\n   - Ping test between PCs',
       x: 450,
       y: 80,
       width: 520,
@@ -2602,7 +2624,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'rip-routing-note',
       text: isTr
-        ? 'Amaç: L3 switch\'ler arasında RIP dynamic routing yapılandırarak otomatik route öğrenimi sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (ML0, ML1) ekle\n   - 2 adet L2 Switch (Switch0-L2, Switch3-L2) ekle\n   - 4 adet PC (PC0-PC3) ekle\n   - PC0-PC1 -> Switch0-L2 Fa0/1-2\n   - Switch0-L2 Fa0/24 -> ML0 Fa0/23\n   - ML0 Fa0/24 -> ML1 Fa0/24 (Crossover)\n   - ML1 Fa0/23 -> Switch3-L2 Fa0/24\n   - Switch3-L2 Fa0/1-2 -> PC2-PC3\n\n2) ML0 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/23\n     no switchport\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/24\n     no switchport\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.1.0\n     network 192.168.2.0\n   - exit\n\n3) ML1 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/24\n     no switchport\n     ip address 192.168.2.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/23\n     no switchport\n     ip address 192.168.3.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.2.0\n     network 192.168.3.0\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC0-PC1: IP 192.168.1.x, GW 192.168.1.1\n   - PC2-PC3: IP 192.168.3.x, GW 192.168.3.1\n\n5) TEST:\n   - show ip route (dinamik rotaları gör)\n   - PC0 ping 192.168.3.10 (PC2)'
+        ? 'Amaç: L3 switch\'ler arasında RIP dynamic routing yapılandırarak otomatik route öğrenimi sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (ML0, ML1) ekle\n   - 2 adet L2 Switch (Switch0-L2, Switch3-L2) ekle\n   - 4 adet PC (PC0-PC3) ekle\n   - PC0-PC1 -> Switch0-L2 Fa0/1-2\n   - Switch0-L2 Fa0/24 -> ML0 Gi1/0/23\n   - ML0 Gi1/0/24 -> ML1 Gi1/0/24 (Crossover)\n   - ML1 Gi1/0/23 -> Switch3-L2 Fa0/24\n   - Switch3-L2 Fa0/1-2 -> PC2-PC3\n\n2) ML0 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/23\n     no switchport\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/24\n     no switchport\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.1.0\n     network 192.168.2.0\n   - exit\n\n3) ML1 KONFİGÜRASYONU:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/24\n     no switchport\n     ip address 192.168.2.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/23\n     no switchport\n     ip address 192.168.3.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.2.0\n     network 192.168.3.0\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC0-PC1: IP 192.168.1.x, GW 192.168.1.1\n   - PC2-PC3: IP 192.168.3.x, GW 192.168.3.1\n\n5) TEST:\n   - show ip route (dinamik rotaları gör)\n   - PC0 ping 192.168.3.10 (PC2)'
         : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (ML0, ML1)\n   - Add 2 L2 Switches (Switch0-L2, Switch3-L2)\n   - Add 4 PCs (PC0-PC3)\n   - Connect PC0-PC1 -> Switch0-L2 Fa0/1-2\n   - Connect Switch0-L2 Fa0/24 -> ML0 Fa0/23\n   - Connect ML0 Fa0/24 -> ML1 Fa0/24 (Crossover)\n   - Connect ML1 Fa0/23 -> Switch3-L2 Fa0/24\n   - Connect Switch3-L2 Fa0/1-2 -> PC2-PC3\n\n2) ML0 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/23\n     no switchport\n     ip address 192.168.1.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/24\n     no switchport\n     ip address 192.168.2.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.1.0\n     network 192.168.2.0\n   - exit\n\n3) ML1 CONFIGURATION:\n   - enable, conf t\n   - ip routing\n   - interface gi1/0/24\n     no switchport\n     ip address 192.168.2.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/23\n     no switchport\n     ip address 192.168.3.1 255.255.255.0\n     no shutdown\n   - exit\n   - router rip\n     network 192.168.2.0\n     network 192.168.3.0\n   - exit\n\n4) PC CONFIGURATION:\n   - PC0-PC1: IP 192.168.1.x, GW 192.168.1.1\n   - PC2-PC3: IP 192.168.3.x, GW 192.168.3.1\n\n5) TEST:\n   - show ip route (view dynamic routes)\n   - PC0 ping 192.168.3.10 (PC2)',
       x: 450,
       y: 80,
@@ -2816,8 +2838,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         ? 'Router iki fiziksel interface ile VLANlara bağlanır, trunk kullanılmaz.'
         : 'Router connects to VLANs using two physical interfaces without trunk.',
       detail: isTr
-        ? 'Router Gi0/0: VLAN 10 (192.168.10.1), Gi0/1: VLAN 20 (192.168.20.1)'
-        : 'Router Gi0/0: VLAN 10 (192.168.10.1), Gi0/1: VLAN 20 (192.168.20.1)',
+        ? 'Router Gi0/1: VLAN 10 (192.168.0.1), Gi0/0: VLAN 20 (192.168.1.1)'
+        : 'Router Gi0/1: VLAN 10 (192.168.0.1), Gi0/0: VLAN 20 (192.168.1.1)',
       level: 'intermediate',
       data: baseProjectData(legacyRoutingDevices, legacyRoutingConnections, legacyRoutingNotes, [
         { id: 'switch-1', state: legacyRoutingSw },
