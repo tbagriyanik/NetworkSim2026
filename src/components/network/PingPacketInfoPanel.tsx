@@ -293,7 +293,8 @@ function MobilePacketTables({ currentInfo, prevInfo, macChanged, ttlChanged, isD
             </div>
             {/* Active tab content */}
             {activeTab === 'l2' && (
-                <div className={`rounded-xl overflow-hidden border ${containerCls.emerald}`}>
+                <div className={`rounded-xl overflow-hidden border ${containerCls.emerald}`}
+                    style={isGlass ? { backdropFilter: 'blur(12px) saturate(180%)' } : undefined}>
                     <table className="w-full"><tbody>
                         <FieldRow label={t.srcMac} value={currentInfo.srcMac} prevValue={prevInfo?.srcMac} highlight={macChanged ? 'changed' : 'none'} isDark={isDark} badge={macChanged ? t.changed : undefined} badgeColor="#d97706" />
                         <FieldRow label={t.dstMac} value={currentInfo.dstMac} prevValue={prevInfo?.dstMac} highlight={macChanged ? 'changed' : 'none'} isDark={isDark} />
@@ -302,7 +303,8 @@ function MobilePacketTables({ currentInfo, prevInfo, macChanged, ttlChanged, isD
                 </div>
             )}
             {activeTab === 'l3' && (
-                <div className={`rounded-xl overflow-hidden border ${containerCls.purple}`}>
+                <div className={`rounded-xl overflow-hidden border ${containerCls.purple}`}
+                    style={isGlass ? { backdropFilter: 'blur(12px) saturate(180%)' } : undefined}>
                     <table className="w-full"><tbody>
                         <FieldRow label={currentInfo.layer3 === 'IPv6' ? (t.srcIp.replace('IP', 'IPv6')) : t.srcIp} value={currentInfo.srcIp} highlight="same" isDark={isDark} />
                         <FieldRow label={currentInfo.layer3 === 'IPv6' ? (t.dstIp.replace('IP', 'IPv6')) : t.dstIp} value={currentInfo.dstIp} highlight="same" isDark={isDark} />
@@ -312,7 +314,8 @@ function MobilePacketTables({ currentInfo, prevInfo, macChanged, ttlChanged, isD
                 </div>
             )}
             {activeTab === 'l4' && (
-                <div className={`rounded-xl overflow-hidden border ${containerCls.blue}`}>
+                <div className={`rounded-xl overflow-hidden border ${containerCls.blue}`}
+                    style={isGlass ? { backdropFilter: 'blur(12px) saturate(180%)' } : undefined}>
                     <table className="w-full"><tbody>
                         <FieldRow label={currentInfo.layer4 === 'ICMPv6' ? 'ICMPv6 Type' : t.icmpType} value={currentInfo.icmpType} isDark={isDark} />
                         <FieldRow label={currentInfo.layer4 === 'ICMPv6' ? 'ICMPv6 Code' : t.icmpCode} value={String(currentInfo.icmpCode)} isDark={isDark} />
@@ -438,9 +441,7 @@ export function PingPacketInfoPanel({
             ref={panelRef}
             data-draggable-id="ping-packet-info-panel"
             className={`flex flex-col rounded-2xl overflow-hidden select-none ${isGlass
-                ? isDark
-                    ? 'bg-slate-900/60 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]'
-                    : 'bg-white/60 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.9)]'
+                ? 'liquid-glass-strong'
                 : isDark
                     ? 'bg-slate-900 border border-slate-700 shadow-2xl'
                     : 'bg-white border border-slate-200 shadow-2xl'
@@ -450,14 +451,13 @@ export function PingPacketInfoPanel({
                 width: isMobile ? 'calc(100% - 24px)' : 780,
                 maxHeight: isMobile ? 'calc(100dvh - 140px)' : 'none',
                 zIndex: resolvedZIndex,
-                ...(isGlass ? { backdropFilter: 'blur(24px) saturate(180%)' } : {}),
             }}
             onMouseDown={onFocus}
         >
             {/* Header — drag handle */}
             <div
-                className={`flex items-center justify-between px-4 py-2.5 border-b ${isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} ${isGlass
-                    ? isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/8'
+                className={`flex items-center justify-between px-3 py-2 border-b ${isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} ${isGlass
+                    ? isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'
                     : isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
                     }`}
                 data-drag-handle
@@ -469,7 +469,7 @@ export function PingPacketInfoPanel({
                         <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
                         <path d="M2 7l10 7 10-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                     </svg>
-                    {!isMobile && <span className={`text-sm font-bold tracking-tight ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{t.title}</span>}
+                    {!isMobile && <span className={`font-semibold text-sm ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{t.title}</span>}
 
                     {isReturn ? (
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${isDark ? 'bg-amber-900/50 text-amber-300 border border-amber-800/40' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
@@ -568,9 +568,9 @@ export function PingPacketInfoPanel({
                             <TooltipTrigger asChild>
                                 <button
                                     onClick={onClose}
-                                    className={`flex items-center justify-center w-7 h-7 rounded-lg font-bold transition-all flex-shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15 hover:border-red-400/50' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10 hover:border-red-400'}`}
+                                    className={`flex items-center justify-center w-5 h-5 rounded-md transition-all flex-shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10'}`}
                                 >
-                                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                                         <line x1="2" y1="2" x2="12" y2="12" />
                                         <line x1="12" y1="2" x2="2" y2="12" />
                                     </svg>
@@ -677,7 +677,8 @@ export function PingPacketInfoPanel({
                         <div className="grid grid-cols-3 gap-3">
                             <div className={`rounded-xl overflow-hidden border ${isGlass
                                 ? isDark ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-emerald-400/30 bg-emerald-500/8'
-                                : isDark ? 'border-emerald-900/60 bg-emerald-950/50' : 'border-emerald-200 bg-emerald-50'}`}>
+                                : isDark ? 'border-emerald-900/60 bg-emerald-950/50' : 'border-emerald-200 bg-emerald-50'}`}
+                                style={isGlass ? { backdropFilter: 'blur(12px) saturate(180%)' } : undefined}>
                                 <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
                                     ? isDark ? 'bg-emerald-500/15 border-emerald-400/20 text-emerald-400' : 'bg-emerald-500/10 border-emerald-400/20 text-emerald-700'
                                     : isDark ? 'bg-emerald-950/60 border-emerald-900/60 text-emerald-400' : 'bg-emerald-100 border-emerald-200 text-emerald-700'}`}>{t.layer2}</div>
@@ -689,7 +690,8 @@ export function PingPacketInfoPanel({
                             </div>
                             <div className={`rounded-xl overflow-hidden border ${isGlass
                                 ? isDark ? 'border-purple-400/20 bg-purple-500/10' : 'border-purple-400/30 bg-purple-500/8'
-                                : isDark ? 'border-purple-900/60 bg-purple-950/50' : 'border-purple-200 bg-purple-50'}`}>
+                                : isDark ? 'border-purple-900/60 bg-purple-950/50' : 'border-purple-200 bg-purple-50'}`}
+                                style={isGlass ? { backdropFilter: 'blur(12px) saturate(180%)' } : undefined}>
                                 <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
                                     ? isDark ? 'bg-purple-500/15 border-purple-400/20 text-purple-400' : 'bg-purple-500/10 border-purple-400/20 text-purple-700'
                                     : isDark ? 'bg-purple-950/60 border-purple-900/60 text-purple-400' : 'bg-purple-100 border-purple-200 text-purple-700'}`}>{currentInfo.layer3 === 'IPv6' ? (language === 'tr' ? 'Katman 3 — IPv6 Başlığı' : 'Layer 3 — IPv6 Header') : t.layer3}</div>
@@ -702,7 +704,8 @@ export function PingPacketInfoPanel({
                             </div>
                             <div className={`rounded-xl overflow-hidden border ${isGlass
                                 ? isDark ? 'border-blue-400/20 bg-blue-500/10' : 'border-blue-400/30 bg-blue-500/8'
-                                : isDark ? 'border-blue-900/60 bg-blue-950/50' : 'border-blue-200 bg-blue-50'}`}>
+                                : isDark ? 'border-blue-900/60 bg-blue-950/50' : 'border-blue-200 bg-blue-50'}`}
+                                style={isGlass ? { backdropFilter: 'blur(12px) saturate(180%)' } : undefined}>
                                 <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
                                     ? isDark ? 'bg-blue-500/15 border-blue-400/20 text-blue-400' : 'bg-blue-500/10 border-blue-400/20 text-blue-700'
                                     : isDark ? 'bg-blue-950/60 border-blue-900/60 text-blue-400' : 'bg-blue-100 border-blue-200 text-blue-700'}`}>{currentInfo.layer4 === 'ICMPv6' ? (language === 'tr' ? 'Katman 4 — ICMPv6' : 'Layer 4 — ICMPv6') : t.layer4}</div>

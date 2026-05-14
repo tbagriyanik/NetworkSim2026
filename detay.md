@@ -158,7 +158,19 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 
 ### Yeni (v1.6.3 - Mayıs 2026)
 
-- Sürüm `1.6.3` olarak güncellendi.
+- **Glass Effect Standardizasyonu ve UI Tutarlılığı (14 Mayıs)**:
+  - Tüm pencere panelleri `liquid-glass-strong` CSS sınıfına standardize edildi (alfa: light 0.6, dark 0.85, blur 40px).
+  - PacketPopup, PingPacketInfoPanel, DeviceInfoPopovers header stilleri birleştirildi.
+  - Tooltip border-radius `rounded-full` → `rounded-lg`.
+  - Paket içeriği tablolarına (L2/L3/L4) ve PacketPopup'a glass efekt eklendi.
+  - RouterPanel'deki çift kapat butonu düzeltildi (`showCloseButton={false}`).
+
+- **Panel Kapatma Davranışları**:
+  - Ağ yenilendiğinde tüm açık paneller otomatik kapanıyor (custom event + context menu fix).
+  - Oynat/Sonraki Hop butonları PacketPopup'u kapatıyor.
+
+- **WiFi Bağlı Sayısı Düzeltmesi**: AP tooltip'te çift sayma hatası giderildi, şifre/BSSID doğrulaması eklendi.
+
 - IPv6 gelişmiş lab (örnek #39): DHCPv6 + OSPFv3 senaryosu.
 - Firewall temel (örnek #38): ICMP bloklama labı.
 - IPv6 ping tanılama düzeltmesi, kaynak IP çözümleme.
@@ -187,13 +199,13 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 
 | Grup | Satır Sayısı |
 | --- | ---: |
-| Uygulama Kodu | 90,093 |
+| Uygulama Kodu | 91,694 |
 | Örnek JSON+TS Kod Toplamı | 15,650 |
-| **Toplam** | **105,743** |
+| **Toplam** | **107,344** |
 
 | Diğer Metrikler | Sayı |
 | --- | ---: |
-| Toplam kod dosyası | 235 |
+| Toplam kod dosyası | 256 |
 | Hazır topoloji örneği | 39 |
 | Rehberli ders | 3 |
 | CLI komut ailesi | 180+ |
@@ -206,7 +218,7 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 
 Örneklerin ayrıntılı listesi için [examples.md](examples.md) dosyasına bakın.
 
-### Test Durumu (2026-05-13)
+### Test Durumu (2026-05-14)
 
 **Vitest Altyapısı**: ✅ Aktif (53 test, 0 başarısız)
 - Test altyapısı Vitest standardına taşındı.

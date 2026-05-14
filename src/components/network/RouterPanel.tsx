@@ -161,7 +161,7 @@ export function RouterPanel({
     <Dialog open={isVisible} onOpenChange={(open) => {
       if (!open) onClose();
     }} modal={false}>
-      <DialogContent className="max-w-4xl max-h-[80vh] p-0" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent className="max-w-4xl max-h-[80vh] p-0" showCloseButton={false} onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="p-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

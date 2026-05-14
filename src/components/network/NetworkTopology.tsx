@@ -101,11 +101,12 @@ const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
 
 const isSwitchDeviceType = (type: DeviceType) => type === 'switchL2' || type === 'switchL3';
 
-function PacketPopup({ hopIndex, info, language, onClose }: {
+function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
   hopIndex: number;
   info: import('./PingPacketInfoPanel').HopPacketInfo;
   language: 'tr' | 'en';
   onClose: () => void;
+  isDark: boolean;
 }) {
   const [pos, setPos] = useState<{ x: number; y: number }>(() => {
     try {
@@ -162,34 +163,34 @@ function PacketPopup({ hopIndex, info, language, onClose }: {
       style={{ position: 'fixed', left: pos.x, top: pos.y, zIndex: 9999 }}
       onClick={e => e.stopPropagation()}
     >
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 w-80">
+      <div className="rounded-xl border w-80 liquid-glass-strong">
         <div
-          className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700 cursor-grab select-none"
+          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
           onMouseDown={handleDragStart}
         >
-          <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+          <h3 className={`font-semibold text-sm ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
             {language === 'tr' ? `Paket İçeriği — Hop ${hopIndex + 1}` : `Packet Contents — Hop ${hopIndex + 1}`}
           </h3>
           <button
             onClick={onClose}
-            className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
+            className={`w-5 h-5 rounded-md cursor-pointer transition-colors inline-flex items-center justify-center shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10'}`}
           >
-            <svg className="w-3 h-3 text-white pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <div className="px-4 py-3 space-y-2 text-xs font-mono text-slate-700 dark:text-slate-300">
-          <div><span className="text-slate-400 dark:text-slate-500">L2:</span> {p.layer2}</div>
-          <div><span className="text-slate-400 dark:text-slate-500">L3:</span> {p.layer3}</div>
-          <div><span className="text-slate-400 dark:text-slate-500">L4:</span> {p.layer4}</div>
-          <div className="border-t border-slate-200 dark:border-slate-700 pt-2 mt-2" />
-          <div><span className="text-slate-400 dark:text-slate-500">{language === 'tr' ? 'Kaynak IP' : 'Src IP'}:</span> {p.srcIp}</div>
-          <div><span className="text-slate-400 dark:text-slate-500">{language === 'tr' ? 'Hedef IP' : 'Dst IP'}:</span> {p.dstIp}</div>
-          <div><span className="text-slate-400 dark:text-slate-500">TTL:</span> {p.ttl}</div>
-          <div><span className="text-slate-400 dark:text-slate-500">MAC (Src):</span> {p.srcMac}</div>
-          <div><span className="text-slate-400 dark:text-slate-500">MAC (Dst):</span> {p.dstMac}</div>
-          <div><span className="text-slate-400 dark:text-slate-500">ICMP:</span> {p.icmpType} (Seq: {p.icmpSeq})</div>
+        <div className={`px-4 py-3 space-y-2 text-xs font-mono ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+          <div><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>L2:</span> {p.layer2}</div>
+          <div><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>L3:</span> {p.layer3}</div>
+          <div><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>L4:</span> {p.layer4}</div>
+          <div className={`border-t pt-2 mt-2 ${isDark ? 'border-white/10' : 'border-black/10'}`} />
+          <div><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{language === 'tr' ? 'Kaynak IP' : 'Src IP'}:</span> {p.srcIp}</div>
+          <div><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{language === 'tr' ? 'Hedef IP' : 'Dst IP'}:</span> {p.dstIp}</div>
+          <div><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>TTL:</span> {p.ttl}</div>
+          <div><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>MAC (Src):</span> {p.srcMac}</div>
+          <div><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>MAC (Dst):</span> {p.dstMac}</div>
+          <div><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>ICMP:</span> {p.icmpType} (Seq: {p.icmpSeq})</div>
         </div>
       </div>
     </div>
@@ -667,6 +668,23 @@ export function NetworkTopology({
   // Hop packet infos for the packet analysis panel
   const [hopPacketInfos, setHopPacketInfos] = useState<import('./PingPacketInfoPanel').HopPacketInfo[]>([]);
   const [packetPopupHop, setPacketPopupHop] = useState<number | null>(null);
+
+  // Wrapped refresh handler: closes floating panels then delegates
+  const handleRefresh = useCallback(() => {
+    setPacketPopupHop(null);
+    setPingAnimation(null);
+    onRefreshNetwork?.();
+  }, [onRefreshNetwork]);
+
+  // Listen for network-refresh custom event (dispatched from page.tsx)
+  useEffect(() => {
+    const handler = () => {
+      setPacketPopupHop(null);
+      setPingAnimation(null);
+    };
+    window.addEventListener('network-refresh', handler);
+    return () => window.removeEventListener('network-refresh', handler);
+  }, []);
 
   // Refs
   const deviceCounterRef = useRef<{ pc: number; iot: number; switch: number; router: number; firewall: number }>({ pc: 0, iot: 0, switch: 0, router: 0, firewall: 0 });
@@ -4192,6 +4210,7 @@ export function NetworkTopology({
     pingIsPausedRef.current = false;
     pingStepModeRef.current = false;
     setPingAnimation(prev => prev ? { ...prev, isPaused: false } : null);
+    setPacketPopupHop(null);
 
     if (pingResumeCallbackRef.current) {
       const resume = pingResumeCallbackRef.current;
@@ -4209,6 +4228,7 @@ export function NetworkTopology({
     pingStepModeRef.current = true;
     pingIsPausedRef.current = false;
     setPingAnimation(prev => prev ? { ...prev, isPaused: false } : null);
+    setPacketPopupHop(null);
 
     resume();
   }, []);
@@ -7528,6 +7548,7 @@ export function NetworkTopology({
         onSaveToHistory={() => saveToHistory()}
         onClearDeviceSelection={() => setSelectedDeviceIds([])}
         onOpenTasks={onOpenTasks}
+        onRefreshNetwork={handleRefresh}
         note={notes.find(n => n.id === contextMenu?.noteId)}
       />
       {/* Device Configuration Modal (Name & IP) */}
@@ -7764,6 +7785,7 @@ export function NetworkTopology({
           hopIndex={packetPopupHop}
           info={hopPacketInfos[packetPopupHop]}
           language={language}
+          isDark={isDark}
           onClose={() => setPacketPopupHop(null)}
         />
       )}

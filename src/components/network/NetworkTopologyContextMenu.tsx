@@ -411,9 +411,13 @@ export default function NetworkTopologyContextMenu({
                   shortcut: 'F5',
                   onClick: () => {
                     onClose();
-                    setTimeout(() => {
-                      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F5' }));
-                    }, 0);
+                    if (onRefreshNetwork) {
+                      onRefreshNetwork();
+                    } else {
+                      setTimeout(() => {
+                        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F5' }));
+                      }, 0);
+                    }
                   }
                 })}
               </>

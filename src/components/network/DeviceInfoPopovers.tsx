@@ -55,16 +55,15 @@ export function SwitchInfoPopover({ router, routerState, t, language, isDark, on
     <div ref={containerRef} className={cn("hidden md:block fixed animate-scale-in")}
       style={{ bottom: `${position.y}px`, right: `${position.x}px`, zIndex }}
       onMouseDown={(e) => { onFocus(); handleDragStart(e); }}>
-      <div className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[280px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}>
-        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
+      <div className="rounded-2xl border shadow-2xl min-w-[200px] max-w-[280px] liquid-glass-strong">
+        <div className={`flex items-center justify-between px-3 py-2 border-b cursor-grab select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
           <div className="flex items-center gap-1.5">
-            <GripHorizontal className="hidden w-3 h-3 opacity-30" />
             <SwitchIcon className="w-3.5 h-3.5 text-purple-500" />
-            <span className="text-xs font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
+            <span className={`font-semibold text-sm ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{router.name || router.id}</span>
           </div>
           <TooltipWrapper title={t.close}>
-            <button onClick={onClose} className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0">
-              <X className="w-3 h-3 text-white pointer-events-none" />
+            <button onClick={onClose} className={`w-5 h-5 rounded-md cursor-pointer transition-colors inline-flex items-center justify-center shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10'}`}>
+              <X className="w-3 h-3 pointer-events-none" />
             </button>
           </TooltipWrapper>
         </div>
@@ -99,18 +98,15 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
       }}
       onMouseDown={(e) => { onFocus(); handleDragStart(e); }}
     >
-      <div
-        className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[260px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}
-      >
-        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
+      <div className="rounded-2xl border shadow-2xl min-w-[200px] max-w-[260px] liquid-glass-strong">
+        <div className={`flex items-center justify-between px-3 py-2 border-b cursor-grab select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
           <div className="flex items-center gap-1.5">
-            <GripHorizontal className="hidden w-3 h-3 opacity-30" />
             <Monitor className="w-3.5 h-3.5 text-blue-500" />
-            <span className="text-xs font-black tracking-wider uppercase opacity-30">{pc?.name || pc?.id || 'Unknown'}</span>
+            <span className={`font-semibold text-sm ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{pc?.name || pc?.id || 'Unknown'}</span>
           </div>
           <TooltipWrapper title={t.close}>
-            <button onClick={onClose} className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0">
-              <X className="w-3 h-3 text-white pointer-events-none" />
+            <button onClick={onClose} className={`w-5 h-5 rounded-md cursor-pointer transition-colors inline-flex items-center justify-center shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10'}`}>
+              <X className="w-3 h-3 pointer-events-none" />
             </button>
           </TooltipWrapper>
         </div>
@@ -269,21 +265,18 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
       }}
       onMouseDown={(e) => { onFocus(); handleDragStart(e); }}
     >
-      <div
-        className={`rounded-2xl border shadow-2xl backdrop-blur-md min-w-[200px] max-w-[280px] ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'}`}
-      >
-        <div className={`flex items-center justify-between px-2 py-1.5 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
+      <div className="rounded-2xl border shadow-2xl min-w-[200px] max-w-[280px] liquid-glass-strong">
+        <div className={`flex items-center justify-between px-3 py-2 border-b cursor-grab select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
           <div className="flex items-center gap-1.5">
-            <GripHorizontal className="hidden w-3 h-3 opacity-30" />
             {router.type.startsWith('switch') ? <SwitchIcon isL3={router.type === 'switchL3'} className="w-3.5 h-3.5 text-purple-500" /> : <RouterIcon className="w-3.5 h-3.5 text-purple-500" />}
-            <span className="text-xs font-black tracking-wider uppercase opacity-30">{router.name || router.id}</span>
+            <span className={`font-semibold text-sm ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{router.name || router.id}</span>
           </div>
           <TooltipWrapper title={t.close}>
             <button
               onClick={(e) => { e.stopPropagation(); onClose(); }}
-              className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
+              className={`w-5 h-5 rounded-md cursor-pointer transition-colors inline-flex items-center justify-center shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10'}`}
             >
-              <X className="w-3 h-3 text-white pointer-events-none" />
+              <X className="w-3 h-3 pointer-events-none" />
             </button>
           </TooltipWrapper>
         </div>

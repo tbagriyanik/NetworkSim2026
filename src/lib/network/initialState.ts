@@ -432,7 +432,7 @@ export function createInitialFirewallState(mac?: string): SwitchState {
   const vlans = createInitialVlans();
 
   return {
-    hostname: 'ciscoasa',
+    hostname: 'asa',
     macAddress,
     switchModel: 'ASA-5506-X' as any,
     switchLayer: 'FW',

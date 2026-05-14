@@ -3,12 +3,12 @@
 ## Güncel Durum
 
 - **Sürüm**: 1.6.3
-- **Tarih**: 2026-05-13
-- **Uygulama kodu**: 90,093
+- **Tarih**: 2026-05-14
+- **Uygulama kodu**: 91,694
 - **Örnek kod satırı**: 15,650
 - **Dokümantasyon satırı**: 150+
-- **Toplam satır**: 105,743
-- **Kod dosyası**: 235
+- **Toplam satır**: 107,344
+- **Kod dosyası**: 256
 - **Hazır topoloji örneği**: 39
 - **Rehberli ders**: 3
 - **CLI komut ailesi**: 180+
@@ -17,6 +17,36 @@
 Not: Toplam satır sayısı uygulama kodu, örnek kod ve dokümantasyonun birleşimidir.
 
 ## Son Yapılanlar
+
+### Glass Effect Standardizasyonu ve UI Tutarlılığı (Mayıs 2026 - 14 Mayıs)
+
+- **Glass Effect Alfa Değerleri Standardize Edildi**:
+  - Tüm pencere panelleri (PingPacketInfoPanel, PacketPopup, DeviceInfoPopovers) `liquid-glass-strong` CSS sınıfını kullanacak şekilde değiştirildi.
+  - Light mode: `rgba(255,255,255,0.6)`, Dark mode: `rgba(2,6,23,0.85)`, blur: `40px` saturate `200%`.
+  - Düşük grafik kalitesinde CSS otomatik olarak glass efektini kapatır (`body.graphics-low`).
+  - Tooltip border-radius `rounded-full` → `rounded-lg` olarak düşürüldü (çok satırlı içerikler için).
+
+- **Header Stilleri Birleştirildi**:
+  - PacketPopup, PingPacketInfoPanel ve DeviceInfoPopovers (Router/PC/Switch) header'ları aynı yapıya getirildi:
+    - Padding: `px-3 py-2`, Background: `bg-white/5` / `bg-black/5`, Border: `border-white/10` / `border-black/10`
+    - Başlık: `font-semibold text-sm`, Kapat butonu: `w-5 h-5 rounded-md` glass red-hover stil.
+  - Paket içeriği tablolarına (L2/L3/L4) `backdropFilter: blur(12px) saturate(180%)` glass efekti eklendi.
+  - PacketPopup bileşenine glass efekt ve `isDark` tema desteği eklendi.
+
+- **Panel Kapatma Davranışları**:
+  - Ağ yenilendiğinde (handleRefreshNetwork) tüm açık paneller kapanıyor:
+    - `page.tsx`: `setActiveDeviceId('')`, `setSelectedDevice(null)`, `window.dispatchEvent(new CustomEvent('network-refresh'))`
+    - `NetworkTopology.tsx`: Custom event listener ile `setPacketPopupHop(null)`, `setPingAnimation(null)`
+    - Context menu artık F5 göndermek yerine `onRefreshNetwork` prop'unu kullanıyor.
+  - Oynat/Sonraki Hop tıklandığında PacketPopup kapanıyor (`setPacketPopupHop(null)`).
+
+- **WiFi Bağlı Sayısı Düzeltmesi**:
+  - AP cihazlarda bağlı istemci sayısı 2× gösteriliyordu: Block 1 (renk belirleme) ve Block 2 (tooltip sayma) aynı `connectedDevices` değişkenini kullanıyordu.
+  - Block 1'deki `connectedDevices++` kaldırıldı, Block 2 tek sayma kaynağı olarak bırakıldı.
+  - Tooltip sayma bloğuna şifre (`apPass === clientPass`) ve BSSID (`!clientBssid || clientBssid === device.id`) doğrulaması eklendi.
+
+- **Router Çift Kapat Butonu Düzeltmesi**:
+  - `DialogContent`'e `showCloseButton={false}` eklendi.
 
 ### IPv6 Ping Teşhis ve Bağlantı Düzeltmeleri (Mayıs 2026 - 13 Mayıs)
 

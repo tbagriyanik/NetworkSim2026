@@ -2562,6 +2562,11 @@ ${state.bannerMOTD}
 
   // Refresh network connections and WiFi status
   const handleRefreshNetwork = useCallback(() => {
+    // Close floating panels on network refresh
+    setActiveDeviceId('');
+    setSelectedDevice(null);
+    window.dispatchEvent(new CustomEvent('network-refresh'));
+
     const isSwitchDeviceType = (type: string) => type === 'switchL2' || type === 'switchL3';
     const normalizeWifiMode = (mode: string | undefined): 'ap' | 'client' | 'disabled' => {
       if (!mode) return 'disabled';

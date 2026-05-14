@@ -44,6 +44,7 @@ interface LazyNetworkTopologyContextMenuProps {
     onSaveToHistory: () => void;
     onClearDeviceSelection: () => void;
     onOpenTasks?: (deviceId: string) => void;
+    onRefreshNetwork?: () => void;
 }
 
 function ContextMenuFallback() {

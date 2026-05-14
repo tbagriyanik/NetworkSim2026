@@ -119,18 +119,39 @@ export function ProjectPickerDialog({
                 className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
+                    const q = projectSearchQuery.trim().toLowerCase();
+                    // Search example projects first
                     let firstProject: any = null;
                     for (const level of exampleLevelOrder) {
                       const projects = groupedExampleProjects[level] || [];
                       const filtered = projects.filter(project =>
-                        project.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                        project.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                        project.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                        (project.detail && project.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
+                        project.title.toLowerCase().includes(q) ||
+                        project.description.toLowerCase().includes(q) ||
+                        project.tag.toLowerCase().includes(q) ||
+                        (project.detail && project.detail.toLowerCase().includes(q))
                       );
                       if (filtered.length > 0) {
                         firstProject = filtered[0];
                         break;
+                      }
+                    }
+                    // If not found, search guided lessons
+                    if (!firstProject) {
+                      const guided = getAvailableProjects(language).find(proj =>
+                        proj.title.toLowerCase().includes(q) ||
+                        proj.description.toLowerCase().includes(q) ||
+                        proj.tag.toLowerCase().includes(q) ||
+                        (proj.detail && proj.detail.toLowerCase().includes(q))
+                      );
+                      if (guided) {
+                        closeProjectPicker();
+                        runWithSaveGuard(() => {
+                          setZoom(1.0);
+                          setPan({ x: 0, y: 0 });
+                          startGuidedProject(guided);
+                          loadProjectData(guided.data);
+                        });
+                        return;
                       }
                     }
                     if (firstProject) {
@@ -172,14 +193,16 @@ export function ProjectPickerDialog({
 
                     <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
                       {getAvailableProjects(language)
-                        .filter(guidedProject =>
-                          projectSearchQuery.trim() === '' ||
-                          guidedProject.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                          guidedProject.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                          guidedProject.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                          (guidedProject.detail && guidedProject.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
-                        )
-                        .map((guidedProject: GuidedProject) => (
+                        .filter((guidedProject, idx) => {
+                          const q = projectSearchQuery.trim().toLowerCase();
+                          return q === '' ||
+                          guidedProject.title.toLowerCase().includes(q) ||
+                          guidedProject.description.toLowerCase().includes(q) ||
+                          guidedProject.tag.toLowerCase().includes(q) ||
+                          (guidedProject.detail && guidedProject.detail.toLowerCase().includes(q)) ||
+                          String(idx + 1).includes(q);
+                        })
+                        .map((guidedProject: GuidedProject, idx) => (
                           <Button
                             key={guidedProject.id}
                             variant='ghost'
@@ -196,7 +219,7 @@ export function ProjectPickerDialog({
                           >
                             <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
                               <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-emerald-400 text-emerald-100' : 'group-hover:text-emerald-600 text-black'}`}>
-                                {guidedProject.title}
+                                <span className={`${isDark ? 'text-slate-500' : 'text-slate-400'} mr-2`}>{idx + 1}.</span>{guidedProject.title}
                               </span>
                               <span className={`text-[8px] md:text-[10px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-emerald-100 text-emerald-600 border-emerald-200'}`}>
                                 {guidedProject.tag}
@@ -237,13 +260,14 @@ export function ProjectPickerDialog({
                             )}
                           </Button>
                         ))}
-                      {getAvailableProjects(language).filter(guidedProject =>
-                        projectSearchQuery.trim() === '' ||
-                        guidedProject.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                        guidedProject.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                        guidedProject.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                        (guidedProject.detail && guidedProject.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
-                      ).length === 0 && (
+                      {getAvailableProjects(language).filter((guidedProject) => {
+                        const q = projectSearchQuery.trim().toLowerCase();
+                        return q === '' ||
+                        guidedProject.title.toLowerCase().includes(q) ||
+                        guidedProject.description.toLowerCase().includes(q) ||
+                        guidedProject.tag.toLowerCase().includes(q) ||
+                        (guidedProject.detail && guidedProject.detail.toLowerCase().includes(q));
+                      }).length === 0 && (
                           <div className={`text-center py-12 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                             <p className="text-sm">
                               {language === 'tr' ? 'Aramanızla eşleşen rehberli ders bulunamadı.' : 'No guided lessons found matching your search.'}
@@ -258,18 +282,29 @@ export function ProjectPickerDialog({
               {/* All Projects Section */}
               {projectPickerTab === 'all' && (
                 <div className='flex flex-col gap-16'>
-                  {exampleLevelOrder.map((level) => {
+                  {(() => {
+                    // Precompute global number for each project id
+                    const projectNumMap = new Map<string, number>();
+                    let counter = 0;
+                    for (const lvl of exampleLevelOrder) {
+                      const projs = groupedExampleProjects[lvl];
+                      if (projs) projs.forEach(p => projectNumMap.set(p.id, ++counter));
+                    }
+                    return exampleLevelOrder.map((level) => {
                     const projects = groupedExampleProjects[level];
                     if (!projects || projects.length === 0) return null;
 
-                    const filteredProjects = projectSearchQuery.trim() === ''
+                    const q = projectSearchQuery.trim().toLowerCase();
+                    const filteredProjects = q === ''
                       ? projects
-                      : projects.filter(project =>
-                        project.title.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                        project.description.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                        project.tag.toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
-                        (project.detail && project.detail.toLowerCase().includes(projectSearchQuery.toLowerCase()))
-                      );
+                      : projects.filter(project => {
+                        const num = projectNumMap.get(project.id) || 0;
+                        return project.title.toLowerCase().includes(q) ||
+                        project.description.toLowerCase().includes(q) ||
+                        project.tag.toLowerCase().includes(q) ||
+                        (project.detail && project.detail.toLowerCase().includes(q)) ||
+                        String(num).includes(q);
+                      });
 
                     if (filteredProjects.length === 0) return null;
 
@@ -286,7 +321,9 @@ export function ProjectPickerDialog({
                         </div>
 
                         <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
-                          {filteredProjects.map((example) => (
+                           {filteredProjects.map((example) => {
+                             const num = projectNumMap.get(example.id) || 0;
+                             return (
                             <Button
                               key={example.id}
                               variant='ghost'
@@ -294,7 +331,7 @@ export function ProjectPickerDialog({
                               onClick={() => { closeProjectPicker(); runWithSaveGuard(() => applyExampleProject(example.data, example.id)); }}
                             >
                               <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
-                                <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-cyan-400' : 'group-hover:text-blue-600'}`}>{example.title}</span>
+                                <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-cyan-400' : 'group-hover:text-blue-600'}`}><span className={`${isDark ? 'text-slate-500' : 'text-slate-400'} mr-2`}>{num}.</span>{example.title}</span>
                                 <span className={`text-[8px] md:text-[10px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>{example.tag}</span>
                               </div>
                               <p className={`text-[11px] md:text-sm leading-relaxed font-medium italic transition-colors whitespace-normal break-words break-all w-full ${isDark ? 'text-slate-400/80 group-hover:text-slate-200' : 'text-slate-600 group-hover:text-slate-800'}`}>{example.description}</p>
@@ -305,11 +342,13 @@ export function ProjectPickerDialog({
                                 </div>
                               )}
                             </Button>
-                          ))}
+                          );
+                        })}
                         </div>
                       </section>
                     );
-                  })}
+                  });
+                })()}
                 </div>
               )}
             </div>
