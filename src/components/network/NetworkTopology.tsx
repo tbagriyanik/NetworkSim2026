@@ -534,6 +534,7 @@ export function NetworkTopology({
   const touchDraggedDeviceRef = useRef<CanvasDevice | null>(null);
   const touchDragStartPosRef = useRef<{ x: number; y: number } | null>(null);
   const touchDragOffsetRef = useRef({ x: 0, y: 0 });
+  const activePointerDragRef = useRef(false);
 
   // Mouse position animation frame ref for smooth tracking
   const mousePosAnimationFrameRef = useRef<number | null>(null);
@@ -1365,6 +1366,8 @@ export function NetworkTopology({
     };
 
     const handleMouseUp = (e: globalThis.MouseEvent) => {
+      activePointerDragRef.current = false;
+
       // Cancel any pending animation frames
       if (dragAnimationFrameRef.current) {
         cancelAnimationFrame(dragAnimationFrameRef.current);
@@ -1465,11 +1468,24 @@ export function NetworkTopology({
       document.body.style.cursor = '';
     };
 
+    const handlePointerMove = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') handleMouseMove(e as unknown as globalThis.MouseEvent);
+    };
+    const handlePointerUp = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') handleMouseUp(e as unknown as globalThis.MouseEvent);
+    };
+
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
       if (dragAnimationFrameRef.current) cancelAnimationFrame(dragAnimationFrameRef.current);
       if (panAnimationFrameRef.current) cancelAnimationFrame(panAnimationFrameRef.current);
       if (mousePosAnimationFrameRef.current) cancelAnimationFrame(mousePosAnimationFrameRef.current);
@@ -1478,8 +1494,6 @@ export function NetworkTopology({
   // Global touch event handlers for device dragging on mobile
   // FIXED: uses refs to avoid re-registering the listener on ogni state change
   useEffect(() => {
-    if (!isMobile) return;
-
     const handleGlobalTouchMove = (e: globalThis.TouchEvent) => {
       const currentTouchDraggedDevice = touchDraggedDeviceRef.current;
       if (e.touches.length !== 1 || !currentTouchDraggedDevice || !canvasRef.current) return;
@@ -1595,7 +1609,7 @@ export function NetworkTopology({
         cancelAnimationFrame(dragAnimationFrameRef.current);
       }
     };
-  }, [isMobile, onDeviceSelect, saveToHistory, getCanvasDimensions]);
+  }, [onDeviceSelect, saveToHistory, getCanvasDimensions]);
 
   // Handle device drag start
   const handleDeviceMouseDown = useCallback((e: ReactMouseEvent, deviceId: string) => {
@@ -1690,6 +1704,22 @@ export function NetworkTopology({
     });
   }, [devices, pan, zoom, selectedDeviceIds, onDeviceSelect, pingMode, pingSource]);
 
+  const handleDevicePointerDown = useCallback((e: React.PointerEvent<SVGGElement>, deviceId: string) => {
+    if (e.pointerType === 'mouse') return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    activePointerDragRef.current = true;
+
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // SVG pointer capture can fail in older mobile browsers; global pointermove still handles drag.
+    }
+
+    handleDeviceMouseDown(e as unknown as ReactMouseEvent, deviceId);
+  }, [handleDeviceMouseDown]);
+
   // Handle device click (single click - select only)
   const handleDeviceClick = useCallback((e: ReactMouseEvent, device: CanvasDevice) => {
     e.stopPropagation();
@@ -1760,6 +1790,7 @@ export function NetworkTopology({
 
   // Handle device touch start - for mobile dragging
   const handleDeviceTouchStart = useCallback((e: ReactTouchEvent, deviceId: string) => {
+    if (activePointerDragRef.current) return;
     if (e.touches.length !== 1) return;
     e.stopPropagation();
 
@@ -1778,8 +1809,10 @@ export function NetworkTopology({
     }
 
     setTouchDragStartPos({ x: touch.clientX, y: touch.clientY });
+    touchDragStartPosRef.current = { x: touch.clientX, y: touch.clientY };
     setIsTouchDragging(false);
     setTouchDraggedDevice(device);
+    touchDraggedDeviceRef.current = device;
 
     // Determine selection: if device is already selected, keep all for group drag
     const alreadySelected = selectedDeviceIds.length > 1 && selectedDeviceIds.includes(deviceId);
@@ -1790,6 +1823,10 @@ export function NetworkTopology({
       x: (touch.clientX - rect.left - pan.x) - device.x * zoom,
       y: (touch.clientY - rect.top - pan.y) - device.y * zoom,
     });
+    touchDragOffsetRef.current = {
+      x: (touch.clientX - rect.left - pan.x) - device.x * zoom,
+      y: (touch.clientY - rect.top - pan.y) - device.y * zoom,
+    };
 
     // Store initial positions of all devices that will be dragged
     const initialPositions: { [key: string]: { x: number; y: number } } = {};
@@ -1856,7 +1893,9 @@ export function NetworkTopology({
     }
 
     setTouchDraggedDevice(null);
+    touchDraggedDeviceRef.current = null;
     setTouchDragStartPos(null);
+    touchDragStartPosRef.current = null;
     setIsTouchDragging(false);
   }, [touchDraggedDevice, isTouchDragging, onDeviceSelect]);
 
@@ -6701,6 +6740,7 @@ export function NetworkTopology({
                         isDark={isDark}
                         iotUpdateTrigger={iotUpdateTrigger}
                         onMouseDown={(e, id) => handleDeviceMouseDown(e as unknown as ReactMouseEvent, id)}
+                        onPointerDown={(e, id) => handleDevicePointerDown(e, id)}
                         onClick={(e, device) => handleDeviceClick(e as unknown as ReactMouseEvent, device)}
                         onDoubleClick={() => handleDeviceDoubleClick(device)}
                         onContextMenu={(e, id) => handleContextMenu(e as unknown as ReactMouseEvent, id)}

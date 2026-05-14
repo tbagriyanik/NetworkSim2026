@@ -9,6 +9,7 @@ interface DeviceNodeProps {
   isActive?: boolean;
   iotUpdateTrigger?: number;
   onMouseDown: (e: React.MouseEvent<SVGGElement>, deviceId: string) => void;
+  onPointerDown?: (e: React.PointerEvent<SVGGElement>, deviceId: string) => void;
   onClick: (e: React.MouseEvent<SVGGElement>, device: CanvasDevice) => void;
   onDoubleClick: (device: CanvasDevice) => void;
   onContextMenu: (e: React.MouseEvent<SVGGElement>, deviceId: string) => void;
@@ -28,6 +29,7 @@ export const DeviceNode = memo(function DeviceNode({
   isActive,
   iotUpdateTrigger,
   onMouseDown,
+  onPointerDown,
   onClick,
   onDoubleClick,
   onContextMenu,
@@ -42,6 +44,7 @@ export const DeviceNode = memo(function DeviceNode({
     <g
       role="button"
       tabIndex={0}
+      data-device-id={device.id}
       aria-label={`${device.type} ${device.name}, Status: ${device.status}, IP: ${device.ip || 'Not assigned'}`}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -53,6 +56,11 @@ export const DeviceNode = memo(function DeviceNode({
         }
       }}
       onMouseDown={(e) => onMouseDown(e, device.id)}
+      onPointerDown={(e) => {
+        if (e.pointerType !== 'mouse') {
+          onPointerDown?.(e, device.id);
+        }
+      }}
       onClick={(e) => onClick(e, device)}
       onDoubleClick={() => onDoubleClick(device)}
       onContextMenu={(e) => onContextMenu(e, device.id)}
