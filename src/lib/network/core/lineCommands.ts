@@ -572,7 +572,7 @@ function cmdPrivilegeLevel(state: any, input: string, ctx: any): any {
 
   const match = input.match(/^privilege\s+level\s+(\d+)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid privilege level command. Use: privilege level {0|1|15}' };
+    return { success: false, error: '% Invalid privilege level command. Use: privilege level {0-15}' };
   }
 
   const level = parseInt(match[1]);

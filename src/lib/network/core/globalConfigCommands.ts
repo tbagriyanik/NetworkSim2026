@@ -1998,7 +1998,7 @@ function cmdNoIpAccessList(state: any, input: string, ctx: any): any {
 // Register new global config handlers
 
 function cmdStubSuccess(state: any, input: string, ctx: any): any {
-  return { success: true };
+  return { success: true, output: `% ${input.trim()} configured` };
 }
 
 // ── End of Handlers ──────────────────────────────────────────────────────────

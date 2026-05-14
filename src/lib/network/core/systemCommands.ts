@@ -347,7 +347,7 @@ function cmdDo(
   }
 
   // Unknown command
-  return { success: false, error: `% Unknown command: ${subCommand}` };
+  return { success: false, error: `% Invalid input detected at '^' marker.\n${subCommand ? `% ${subCommand}` : ''}` };
 }
 
 

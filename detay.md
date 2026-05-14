@@ -262,3 +262,84 @@ npx tsc --noEmit
 ```
 
 Not: Bu çalışma ortamında Node/NPM zaman zaman `Could not determine Node.js install directory` ve `CSPRNG` hatasıyla başlamadan kapanabiliyor. Bu durumda manuel derleme doğrulaması yerel Node kurulumu düzeltilince tekrar çalıştırılmalıdır.
+
+---
+
+## Düzeltme Geçmişi (2026-05-14)
+
+Tüm örneklerde port bağlantıları, CLI mantığı ve gerçek Cisco IOS/Packet Tracer uyumluluğu denetlendi. **Toplam 45+ düzeltme.**
+
+### Port Hataları (9 düzeltme)
+
+| # | Dosya | Hata | Düzeltme |
+|---|-------|------|----------|
+| 1 | `examples.md` | L3 Inter-VLAN: L3SW1 için `Fa0/1-4` | `Gi1/0/1-4` |
+| 2 | `examples.md` | 2 L3 Switch VLAN: Switch2/4 için `Gi0/1` trunk | `Gi1/0/5` |
+| 3 | `examples.md` | 2 L3 Switch VLAN: Switch2/4 access portları `Fa0/x` | `Gi1/0/x` |
+| 4 | `examples.md` | Static L3 Routing: ML1/ML2 için `fa0/1-2` | `gi1/0/1-2` |
+| 5 | `examples.md` | RIP Routing: ML0/ML1 için `Fa0/23-24` | `Gi1/0/23-24` |
+| 6 | `examples.md` | ROAS: L2 switch'te `gi1/0/x`, fazla VLAN/PC | `fa0/x`, fazlalıklar kaldırıldı |
+| 7 | `exampleProjects.ts` | L3 Routing notu: `Gi1/1/1-2` | `Gi1/0/3-4` |
+| 8 | `exampleProjects.ts` | Static Routing notu: L2 switch/router'da `Gi1/0/x` | Doğru portlarla değiştirildi |
+| 9 | `exampleProjects.ts` | RIP notu: L3 switch'te `Fa0/x` | `Gi1/0/x` |
+
+### CLI Mantık Hataları (14 düzeltme)
+
+| # | Dosya | Hata | Düzeltme |
+|---|-------|------|----------|
+| 1 | `exampleProjects.ts` | Campus Network: Router IP'leri notla uyuşmuyor (`192.168.1.1/2.1`) | `192.168.10.1/20.1`, static route'lar düzeltildi |
+| 2 | `exampleProjects.ts` | Legacy Routing detay: VLAN/port mapping yanlış | `Gi0/0: VLAN 10(192.168.10.1)` → `Gi0/1: VLAN 10(192.168.0.1)` |
+| 3 | `exampleProjects.ts` | Static L3 Routing notu: ML1 IP'leri ters | `gi1/0/1=192.168.1.1` ↔ `gi1/0/2=10.0.0.1` düzeltildi |
+| 4 | `exampleProjects.ts` | Greenhouse: Geçersiz `security wpa psk set-key` | `set-key` kaldırıldı |
+| 5 | `exampleProjects.ts` | Campus: ACC-SW1/2 gi0/1 `mode: trunk` | `mode: access` |
+| 6 | `exampleProjects.ts` | Router DHCP: SW1 gi0/1 `mode` eksik | `mode: 'access'` eklendi |
+| 7 | `exampleProjects.ts` | Router SSH: PC→Router `straight` kablo | `crossover` |
+| 8 | `exampleProjects.ts` | Firewall Basic: PC→Firewall `straight` kablo | `crossover` |
+| 9 | `exampleProjects.ts` | STP PVST: L3 switch'lerde `ip routing` eksik | State + runningConfig'e eklendi |
+| 10 | `exampleProjects.ts` | STP Triangle: Switch'ler arası `access` modu | `trunk` |
+| 11 | `exampleProjects.ts` | Interface range spacing `gi1/0/1 - 2` | `gi1/0/1-2` |
+| 12 | `examples.md` | Static L3 Routing: ML1 IP'leri ters (doküman) | `gi1/0/1=10.0.0.1`, `gi1/0/2=192.168.1.1` |
+
+### Gerçek IOS/Packet Tracer Uyumsuzlukları (22+ düzeltme)
+
+| # | Dosya | Hata | Düzeltme |
+|---|-------|------|----------|
+| 1 | `initialState.ts` | Router switchModel `WS-C3650-24PS` | `ISR4451-X` |
+| 2 | `initialState.ts` | ASA port sayısı 2 (gerçekte 8+1) | 8 GE (`gi1/0/0-7`) + MGMT (`mgmt1/1`) |
+| 3 | `initialState.ts` | ASA portları varsayılan `shutdown: false` | `shutdown: true` (MGMT hariç) |
+| 4 | `initialState.ts` | ASA hostname `asa 5506-x` | `ciscoasa` |
+| 5 | `globalConfigCommands.ts` | `no vlan 1` silinebiliyor | `% Cannot remove VLAN 1.` hatası |
+| 6 | `interfaceCommands.ts` | `switchport trunk allowed vlan add/remove` parse edilmiyor | `add/remove/except/all` desteği eklendi |
+| 7 | `parser.ts` | `ping` sadece privileged modda | `user` modu da eklendi |
+| 8 | `parser.ts` | `ip default-gateway` interface modunda | Sadece `config` modu |
+| 9 | `parser.ts` | `abort` interface/line/vlan modlarında | Sadece `config` modu |
+| 10 | `parser.ts` | `line vty 0` (tek port) kabul edilmiyor | Artık kabul edilir |
+| 11 | `parser.ts` | `exec-timeout` saniye zorunlu | Saniye opsiyonel yapıldı |
+| 12 | `parser.ts` | `no ip domain-lookup` boşluklu kabul | Sadece hyphen formu |
+| 13 | `parser.ts` | `spanning-tree vlan priority` regex'te `priorty` typo | Kaldırıldı |
+| 14 | `parser.ts` | `errdisable recovery cause` her string kabul | Sadece geçerli cause'lar |
+| 15 | `globalConfigCommands.ts` | `spanning-tree priority` değersiz kabul | Hata döndürür |
+| 16 | `globalConfigCommands.ts` | `no enable secret` boş string atar | `delete` ile tamamen kaldırılır |
+| 17 | `globalConfigCommands.ts` | `ip ssh authentication-retries` range yok | 0-5 arası validasyon |
+| 18 | `showCommands.ts` | `show running-config` byte count sabit 1024 | Gerçek config boyutu hesaplanır |
+| 19 | `showCommands.ts` | `formatMacAddressSimple` uppercase | lowercase (IOS formatı) |
+| 20 | `showCommands.ts` | Boot mesajlarında trademarked IOS isimleri | Generic isimler |
+| 21 | `executor.ts` | Boot mesajlarında trademarked IOS isimleri | Generic isimler |
+| 22 | `executor.ts` | `vtp password` help tree'de eksik | Eklendi |
+| 23 | `interfaceCommands.ts` | `cdp enable` global `cdp run` kontrolü yok | Eklendi |
+| 24 | `interfaceCommands.ts` | `expandInterfaceRange` VLAN desteklemiyor | `vlan10-20` aralığı eklendi |
+| 25 | `interfaceCommands.ts` | Stub komutlar sessiz `{success: true}` | `% command configured` çıktısı |
+| 26 | `privilegedCommands.ts` | `reload` anında, onaysız | `Proceed with reload? [confirm]` |
+| 27 | `lineCommands.ts` | `privilege level` hata mesajı `{0\|1\|15}` | `{0-15}` |
+| 28 | `showCommands.ts` | `show version` uptime sabit string | `bootTime` timestamp ile dinamik hesaplama |
+| 29 | `systemCommands.ts` | `do` hata mesajı `% Unknown command` | `% Invalid input detected at '^' marker.` |
+| 30 | `types.ts` | `bootTime` alanı eksik | Eklendi |
+| 31 | `initialState.ts` | `bootTime` tüm create*State fonksiyonlarına eklendi | `Date.now()` |
+
+### Kapsam Dışı Bırakılanlar (mimari değişiklik gerektirir)
+
+- ASA CLI'sini IOS'tan ayırma (tamamen farklı komut seti)
+- Routing simülasyonunda routing tablosu kontrolü (BFS yerine)
+- `help` komut açıklamaları (tüm komut ağacına description eklenmeli)
+- `show interfaces` Hardware formatı (`FastEthernet0/1` vs `Fa0/1`)
+- VLAN naming (`VLAN0010` vs `VLAN10` — mevcut hali IOS ile uyumlu)

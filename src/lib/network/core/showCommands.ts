@@ -139,11 +139,11 @@ function getSwitchDisplayProfile(state: any) {
       switchModel: 'ASA 5506-X',
       isL3: false,
       isRouter: false,
-      bootImage: 'asa964-17-smp-k8.bin',
+      bootImage: 'asa-software.bin',
       softwareImage: 'Adaptive Security Appliance Software',
       rom: 'ASA boot loader',
-      bootldr: 'ASA Boot Loader Version 9.16(2)',
-      systemImage: 'flash:asa964-17-smp-k8.bin',
+      bootldr: 'ASA Boot Loader',
+      systemImage: 'flash:asa-software.bin',
       processor: 'ASA 5506-X (Intel Celeron) processor (revision 01) with 8192K bytes of memory',
       reportedFeCount: 0,
       reportedGiCount,
@@ -155,11 +155,11 @@ function getSwitchDisplayProfile(state: any) {
       switchModel: modelName,
       isL3: true,
       isRouter: true,
-      bootImage: 'c1900-universalk9-mz.SPA.154-3.M.bin',
-      softwareImage: 'C1900 Software (C1900-UNIVERSALK9-M), Version 15.4(3)M4',
-      rom: 'C1900 boot loader',
-      bootldr: 'C1900 Boot Loader (C1900-HBOOT-M) Version 15.1(4)M4',
-      systemImage: 'flash:c1900-universalk9-mz.SPA.154-3.M.bin',
+      bootImage: 'router-software.bin',
+      softwareImage: 'Network Simulator IOS Software, Version 1.0',
+      rom: 'Router boot loader',
+      bootldr: 'Router Boot Loader',
+      systemImage: 'flash:router-software.bin',
       processor: `${modelName} (PowerPC405) processor (revision 01) with 4096K bytes of memory`,
       reportedFeCount: 0,
       reportedGiCount: 4,
@@ -170,11 +170,11 @@ function getSwitchDisplayProfile(state: any) {
     switchModel,
     isL3,
     isRouter: false,
-    bootImage: isL3 ? 'C3650-ipbase-mz.150-2.SE4.bin' : 'c2960-lanbase-mz.150-2.SE4.bin',
-    softwareImage: isL3 ? 'C3650 Software (C3650-IPBASE-M)' : 'C2960 Software (C2960-LANBASE-M)',
-    rom: isL3 ? 'C3650 boot loader' : 'C2960 boot loader',
-    bootldr: isL3 ? 'C3650 Boot Loader (C3650-HBOOT-M)' : 'C2960 Boot Loader (C2960-HBOOT-M)',
-    systemImage: isL3 ? 'flash:C3650-ipbase-mz.150-2.SE4.bin' : 'flash:c2960-lanbase-mz.150-2.SE4.bin',
+    bootImage: isL3 ? 'l3switch-software.bin' : 'l2switch-software.bin',
+    softwareImage: isL3 ? 'L3 Switch Software' : 'L2 Switch Software',
+    rom: isL3 ? 'L3 Switch boot loader' : 'L2 Switch boot loader',
+    bootldr: isL3 ? 'L3 Switch Boot Loader' : 'L2 Switch Boot Loader',
+    systemImage: isL3 ? 'flash:l3switch-software.bin' : 'flash:l2switch-software.bin',
     processor: isL3 ? 'WS-C3650-24PS (PowerPC405) processor (revision 01) with 131072K bytes of memory' : 'WS-C2960-24TT-L (PowerPC405) processor (revision C0) with 65536K bytes of memory',
     reportedFeCount: isL3 ? 0 : 24,
     reportedGiCount: isL3 ? 28 : 2,
@@ -387,7 +387,15 @@ function cmdShowVersion(
   output += 'Copyright (c) 1996-2026 by Network Systems, Inc.\n\n';
   output += `ROM: Bootstrap program is ${rom}\n`;
   output += `BOOTLDR: ${bootldr}\n\n`;
-  output += `Switch uptime is ${state.uptime || '1 day, 2 hours, 3 minutes'}\n`;
+  const bootTime = state.bootTime || Date.now();
+  const elapsedMs = Date.now() - bootTime;
+  const totalSeconds = Math.floor(elapsedMs / 1000);
+  const weeks = Math.floor(totalSeconds / (7 * 24 * 3600));
+  const days = Math.floor((totalSeconds % (7 * 24 * 3600)) / (24 * 3600));
+  const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const uptimeStr = `${weeks} week${weeks !== 1 ? 's' : ''}, ${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}, ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  output += `Switch uptime is ${uptimeStr}\n`;
   output += `System image file is "${systemImage}"\n\n`;
   output += `${processor}\n`;
   output += 'Processor board ID FOC1234X5YZ\n';

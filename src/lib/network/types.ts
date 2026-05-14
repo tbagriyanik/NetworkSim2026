@@ -263,6 +263,7 @@ export interface SwitchState {
   sshLastSource?: string;
   // Reload confirmation state
   awaitingReloadConfirm?: boolean;
+  bootTime: number;
   // New optional properties for extended features
   domainName?: string;
   defaultGateway?: string;

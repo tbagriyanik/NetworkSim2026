@@ -1010,8 +1010,8 @@ CPU memory test . . . . . . . . . . . . . OK
 Board initialization completed
 Initializing flash file system
 
-Booting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!
-Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
+Booting flash:router-software.bin...OK!
+Extracting files from flash:router-software.bin...
   ########## [OK]
   0 bytes remaining in flash device
 
@@ -1029,8 +1029,8 @@ CPU memory test . . . . . . . . . . . . . OK
 Board initialization completed
 Initializing flash file system
 
-Booting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!
-Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
+Booting flash:router-software.bin...OK!
+Extracting files from flash:router-software.bin...
   ########## [OK]
   0 bytes remaining in flash device
 
@@ -1052,8 +1052,8 @@ CPU memory test . . . . . . . . . . . . . OK
 Board initialization completed
 Initializing flash file system
 
-Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
-Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
+Booting flash:l3switch-software.bin...OK!
+Extracting files from flash:l3switch-software.bin...
   ########## [OK]
   0 bytes remaining in flash device
 
@@ -1071,8 +1071,8 @@ CPU memory test . . . . . . . . . . . . . OK
 Board initialization completed
 Initializing flash file system
 
-Booting flash:C3650-ipbase-mz.152-2.SE4.bin...OK!
-Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
+Booting flash:l3switch-software.bin...OK!
+Extracting files from flash:l3switch-software.bin...
   ########## [OK]
   0 bytes remaining in flash device
 
@@ -1094,8 +1094,8 @@ CPU memory test . . . . . . . . . . . . . OK
 Board initialization completed
 Initializing flash file system
 
-Booting flash:c2960-lanbase-mz.152-2.E6.bin...OK!
-Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
+Booting flash:l2switch-software.bin...OK!
+Extracting files from flash:l2switch-software.bin...
   ########## [OK]
   0 bytes remaining in flash device
 
@@ -1113,8 +1113,8 @@ CPU memory test . . . . . . . . . . . . . OK
 Board initialization completed
 Initializing flash file system
 
-Booting flash:c2960-lanbase-mz.152-2.E6.bin...OK!
-Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
+Booting flash:l2switch-software.bin...OK!
+Extracting files from flash:l2switch-software.bin...
   ########## [OK]
   0 bytes remaining in flash device
 
@@ -1205,7 +1205,7 @@ Copyright (c) 1996-2026 by Network Systems, Inc.
 ISR4451/K9 platform with 4096 K bytes of memory
 
 ${syslog}
-Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
+Extracting files from flash:router-software.bin...
   ########## [OK]
   0 bytes remaining in flash device
 
@@ -1216,7 +1216,7 @@ Copyright (c) 1996-2026 by Network Systems, Inc.
 ISR4451/K9 platform with 4096 K bytes of memory
 
 ${syslog}
-Extracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...
+Extracting files from flash:router-software.bin...
   ########## [OK]
   0 bytes remaining in flash device
 
@@ -1231,7 +1231,7 @@ Copyright (c) 1996-2026 by Network Systems, Inc.
 C3650 platform with 131072 K bytes of memory
 
 ${syslog}
-Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
+Extracting files from flash:l3switch-software.bin...
   ########## [OK]
   0 bytes remaining in flash device
 
@@ -1242,7 +1242,7 @@ Copyright (c) 1996-2026 by Network Systems, Inc.
 C3650 platform with 131072 K bytes of memory
 
 ${syslog}
-Extracting files from flash:C3650-ipbase-mz.152-2.SE4.bin...
+Extracting files from flash:l3switch-software.bin...
   ########## [OK]
   0 bytes remaining in flash device
 
@@ -1257,7 +1257,7 @@ Copyright (c) 1996-2026 by Network Systems, Inc.
 C2960 platform with 65536 K bytes of memory
 
 ${syslog}
-Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
+Extracting files from flash:l2switch-software.bin...
   ########## [OK]
   0 bytes remaining in flash device
 
@@ -1268,7 +1268,7 @@ Copyright (c) 1996-2026 by Network Systems, Inc.
 C2960 platform with 65536 K bytes of memory
 
 ${syslog}
-Extracting files from flash:c2960-lanbase-mz.152-2.E6.bin...
+Extracting files from flash:l2switch-software.bin...
   ########## [OK]
   0 bytes remaining in flash device
 
