@@ -589,10 +589,10 @@ export function normalizePortId(input: string): string | null {
   // Boşlukları kaldır ve küçük harfe çevir (örn: "gig 0/1" -> "gig0/1")
   const lower = input.toLowerCase().trim().replace(/\s+/g, '');
 
-  // Match ASA format GigabitEthernet1/1
-  const asaMatch = lower.match(/^(?:gi|gig|gigabit|gigabitethernet)(\d+)\/(\d+)$/);
-  if (asaMatch && asaMatch[1] === '1') {
-    return `gi${asaMatch[1]}/${asaMatch[2]}`;
+  // Match GigabitEthernet1/0/1 (L3 switch üç parçalı port) veya GigabitEthernet1/1 (ASA)
+  const giThreePart = lower.match(/^(?:gigabitethernet|gigabit|gig|gi)(\d+)\/(\d+)\/(\d+)$/);
+  if (giThreePart) {
+    return `gi${giThreePart[1]}/${giThreePart[2]}/${giThreePart[3]}`;
   }
 
   const subMatch = lower.match(/^(?:fa|fastethernet|fast|gi|gig|gigabit|gigabitethernet)(\d+)\/(\d+)\.(\d+)$/);
@@ -613,6 +613,12 @@ export function normalizePortId(input: string): string | null {
   const giMatch = lower.match(/^(?:gigabitethernet|gigabit|gig|gi)(\d+)\/(\d+)$/);
   if (giMatch) {
     return `gi${giMatch[1]}/${giMatch[2]}`;
+  }
+
+  // Match ASA format GigabitEthernet1/1 (fallback, after three-part check)
+  const asaMatch = lower.match(/^(?:gi|gig|gigabit|gigabitethernet)(\d+)\/(\d+)$/);
+  if (asaMatch && asaMatch[1] === '1') {
+    return `gi${asaMatch[1]}/${asaMatch[2]}`;
   }
 
   // Wlan0 formatını kabul et

@@ -484,6 +484,20 @@ function cmdSwitchportMode(state: any, input: string, ctx: any): any {
   const requestedMode = match[1].toLowerCase().replace(/\s+/g, '-');
   const normalizedMode = requestedMode as 'access' | 'trunk' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
 
+  // L3 switch'te trunk modu için önce switchport trunk encapsulation dot1q gereklidir
+  if (normalizedMode === 'trunk' && state.switchLayer === 'L3') {
+    const targetPorts = Array.isArray(state.selectedInterfaces) && state.selectedInterfaces.length > 0
+      ? state.selectedInterfaces
+      : state.currentInterface ? [state.currentInterface] : [];
+    const missingEncapsulation = targetPorts.some((portId: string) => {
+      const port = state.ports?.[portId];
+      return !port?.trunkEncapsulation || port.trunkEncapsulation !== 'dot1q';
+    });
+    if (missingEncapsulation) {
+      return { success: false, error: "% Command rejected: The interface does not support trunking. Use 'switchport trunk encapsulation dot1q' first." };
+    }
+  }
+
   const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, mode: normalizedMode }));
   const updatedCurrentState = {
     ...state,
