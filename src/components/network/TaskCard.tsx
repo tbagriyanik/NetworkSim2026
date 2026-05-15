@@ -115,7 +115,7 @@ export const TaskCard = React.memo(({ tasks, state, context, color, isDark }: Ta
           "px-3 py-1.5 rounded-2xl font-black text-xs tabular-nums shadow-lg transition-all duration-500",
           isCategoryComplete
             ? "bg-emerald-500 text-zinc-950 shadow-emerald-500/40 scale-110"
-            : "bg-primary text-primary-foreground shadow-primary/20"
+            : "bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 shadow-black/20"
         )}>
           {score} / {maxScore}
         </div>

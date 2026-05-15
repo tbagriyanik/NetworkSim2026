@@ -4033,7 +4033,7 @@ export function PCPanel({
                 </div>
               </div>
               <div className={cn(
-                "pointer-events-auto flex items-center gap-1 rounded-full border px-1.5 py-1 md:px-2 md:py-1.5 backdrop-blur-2xl shadow-lg mr-auto",
+                "pointer-events-auto flex items-center gap-1 rounded-full border px-1.5 py-1 md:px-2 md:py-1.5 backdrop-blur-2xl shadow-lg ml-auto",
                 isDark ? "border-white/10 bg-slate-900/70" : "border-white/80 bg-white/85"
               )}>
                 {/* Back Button - Shows when not on home */}
@@ -4356,7 +4356,7 @@ export function PCPanel({
                     {/* Content Area */}
                     <div className={cn(
                       "relative z-10 flex-1 min-h-0 flex flex-col overflow-hidden",
-                      activeTab === 'home' ? "px-2 pb-2 pt-2 md:px-5 md:pb-5 md:pt-5" : "px-2 pb-2 pt-2 md:px-5 md:pb-5 md:pt-5",
+                      "p-[5px]",
                       isMobile ? "mx-[10px]" : "" // Add horizontal margin for mobile
                     )}>
                       {activeTab === 'home' && !isPcPoweredOff && (

@@ -36,30 +36,29 @@ const completedBootIds = new Set<string>();
 function BootProgressBar({ id, isDark, onDone }: { id: string; isDark: boolean; onDone: (id: string) => void }) {
   const [filled, setFilled] = useState(0);
   const [done, setDone] = useState(false);
-  const total = 9;
-  // Stable ref to avoid re-triggering the effect when parent re-renders
+  const total = 10;
   const onDoneRef = useRef(onDone);
   useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
 
   useEffect(() => {
     if (filled < total) {
-      const t = setTimeout(() => setFilled(f => f + 1), 220);
+      const t = setTimeout(() => setFilled(f => f + 1), 180);
       return () => clearTimeout(t);
     } else {
       const t = setTimeout(() => {
         setDone(true);
         onDoneRef.current(id);
-      }, 300);
+      }, 200);
       return () => clearTimeout(t);
     }
   }, [filled, id]);
 
   return (
-    <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>
+    <span className={`font-mono ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
       {done ? (
         <span className="font-bold">{'#'.repeat(total)} Ready!</span>
       ) : (
-        <span>{'#'.repeat(filled)}<span className="opacity-30">{'#'.repeat(total - filled)}</span></span>
+        <span className="inline-block min-w-[12ch]">{'#'.repeat(filled)}<span className="opacity-30">{'#'.repeat(total - filled)}</span></span>
       )}
     </span>
   );
@@ -222,13 +221,24 @@ export function Terminal({
 
   const [tabCycleIndex, setTabCycleIndex] = useState(-1);
   const [lastTabInput, setLastTabInput] = useState('');
+  const [bootVersion, setBootVersion] = useState(0);
 
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const wasWifiConnectedRef = useRef<boolean>(true);
 
-  const isInputDisabled = isLoading || isConnectionError;
+  const isBooted = useMemo(() => {
+    const bootMarkers = output.filter(o => o.content === BOOT_PROGRESS_MARKER);
+    return bootMarkers.length === 0 || bootMarkers.every(m => completedBootIds.has(m.id));
+  }, [output, bootVersion]);
+  const isInputDisabled = isLoading || isConnectionError || !isBooted;
+
+  useEffect(() => {
+    if (isBooted && !isInputDisabled) {
+      inputRef.current?.focus();
+    }
+  }, [isBooted]);
 
   const commandQueueRef = useRef<string[]>([]);
   const isProcessingQueueRef = useRef(false);
@@ -1280,8 +1290,8 @@ export function Terminal({
                       )}>
                         {line.content === BOOT_PROGRESS_MARKER
                           ? (completedBootIds.has(line.id)
-                            ? <span className={isDark ? 'text-emerald-400 font-bold' : 'text-emerald-600 font-bold'}>{'#'.repeat(10)} Ready!</span>
-                            : <BootProgressBar key={line.id} id={line.id} isDark={isDark} onDone={(id) => { completedBootIds.add(id); }} />)
+                            ? <span className={`font-mono font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{'#'.repeat(10)} Ready!</span>
+                            : <BootProgressBar key={line.id} id={line.id} isDark={isDark} onDone={(id) => { completedBootIds.add(id); setBootVersion(v => v + 1); }} />)
                           : highlightText(line.content)}
                       </div>
                     )}
@@ -1400,12 +1410,12 @@ export function Terminal({
                   type="submit"
                   disabled={isInputDisabled}
                   className={cn(
-                    "shrink-0 rounded-xl shadow-lg px-3 bg-primary text-primary-foreground hover:bg-primary/90",
+                    "shrink-0 rounded-xl shadow-lg px-3 bg-zinc-800 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200",
                     isMobile ? "h-9 text-xs" : "h-11 text-sm",
                     (state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending) && "bg-amber-500 hover:bg-amber-600 text-white"
                   )}
                 >
-                  <span className="rounded-md p-1"><CornerDownLeft className={cn("w-4 h-4 text-primary", isMobile && "w-3 h-3")} /></span>
+                  <span className="rounded-md p-1"><CornerDownLeft className={cn("w-4 h-4 text-white dark:text-zinc-900", isMobile && "w-3 h-3")} /></span>
                 </Button>
               </form>
 

@@ -3977,7 +3977,7 @@ export function NetworkTopology({
       const srcSpeed = getPortSpeed(fromId, conn?.sourceDeviceId === fromId ? conn?.sourcePort : conn?.targetPort);
       const dstSpeed = getPortSpeed(toId, conn?.sourceDeviceId === toId ? conn?.sourcePort : conn?.targetPort);
       const linkSpeed = Math.min(srcSpeed, dstSpeed);
-      const speedFactor = linkSpeed >= 1000 ? 0.5 : linkSpeed >= 100 ? 1 : linkSpeed >= 10 ? 1.5 : 1;
+      const speedFactor = linkSpeed >= 1000 ? 0.75 : linkSpeed >= 100 ? 1 : linkSpeed >= 10 ? 1.5 : 1;
       const dx = toDevice.x - fromDevice.x;
       const dy = toDevice.y - fromDevice.y;
       const distance = Math.sqrt(dx * dx + dy * dy);

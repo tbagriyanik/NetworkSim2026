@@ -119,7 +119,7 @@ function AlertDialogAction({
         <AlertDialogPrimitive.Action
             data-slot="alert-dialog-action"
             className={cn(
-                "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold ring-offset-background transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 shrink-0 px-4 py-2",
+                "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold ring-offset-background transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-zinc-800 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 h-9 shrink-0 px-4 py-2",
                 className
             )}
             {...props}
