@@ -12,6 +12,12 @@ export function checkBasicL2Connectivity(
   connections: CanvasConnection[],
   deviceStates?: Map<string, SwitchState>
 ): { success: boolean; hops: string[]; error?: string } {
+  // BOLT: Use a device map for O(1) lookups
+  const deviceMap = new Map<string, CanvasDevice>();
+  for (const d of devices) {
+    deviceMap.set(d.id, d);
+  }
+
   // Find target device by IP
   let targetDevice = devices.find(d => d.ip === targetIp);
 
@@ -20,7 +26,7 @@ export function checkBasicL2Connectivity(
     for (const [id, state] of deviceStates.entries()) {
       for (const portId in state.ports) {
         if (state.ports[portId].ipAddress === targetIp) {
-          targetDevice = devices.find(d => d.id === id);
+          targetDevice = deviceMap.get(id);
           break;
         }
       }
@@ -32,6 +38,18 @@ export function checkBasicL2Connectivity(
     return { success: false, hops: [], error: 'Target device not found' };
   }
 
+  // BOLT: Pre-calculate adjacency list for O(V + C) BFS
+  const adjList = new Map<string, string[]>();
+  for (const conn of connections) {
+    if (conn.active === false) continue;
+
+    if (!adjList.has(conn.sourceDeviceId)) adjList.set(conn.sourceDeviceId, []);
+    adjList.get(conn.sourceDeviceId)!.push(conn.targetDeviceId);
+
+    if (!adjList.has(conn.targetDeviceId)) adjList.set(conn.targetDeviceId, []);
+    adjList.get(conn.targetDeviceId)!.push(conn.sourceDeviceId);
+  }
+
   // Simple BFS pathfinding for L2 connectivity
   const queue: string[] = [sourceId];
   const visited = new Set<string>([sourceId]);
@@ -41,9 +59,7 @@ export function checkBasicL2Connectivity(
     const currentId = queue.shift()!;
     if (currentId === targetDevice.id) break;
 
-    const neighbors = connections
-      .filter(c => c.active !== false && (c.sourceDeviceId === currentId || c.targetDeviceId === currentId))
-      .map(c => c.sourceDeviceId === currentId ? c.targetDeviceId : c.sourceDeviceId);
+    const neighbors = adjList.get(currentId) || [];
 
     for (const neighborId of neighbors) {
       if (!visited.has(neighborId)) {
@@ -66,7 +82,7 @@ export function checkBasicL2Connectivity(
     curr = parent.get(curr);
   }
 
-  const hopNames = path.map(id => devices.find(d => d.id === id)?.name || id);
+  const hopNames = path.map(id => deviceMap.get(id)?.name || id);
 
   return { success: true, hops: hopNames, error: undefined };
 }
