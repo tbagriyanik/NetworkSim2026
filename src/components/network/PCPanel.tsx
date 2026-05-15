@@ -4501,29 +4501,29 @@ export function PCPanel({
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
                               {renderNetworkInput("IP Address", pcIP, (newIp) => {
                                 setPcIP(newIp);
-                                  if (validateIP(newIp)) {
-                                    const duplicateDevices = topologyDevices.filter(d => d.id !== deviceId && d.ip === newIp);
-                                    if (duplicateDevices.length > 0) {
-                                      const names = duplicateDevices.map(d => d.name || d.id).join(', ');
-                                      setErrors(prev => ({ ...prev, ip: language === 'tr' ? `Bu IP adresi zaten ${names} tarafından kullanılıyor` : `This IP address is already used by ${names}` }));
-                                    } else {
+                                if (validateIP(newIp)) {
+                                  const duplicateDevices = topologyDevices.filter(d => d.id !== deviceId && d.ip === newIp);
+                                  if (duplicateDevices.length > 0) {
+                                    const names = duplicateDevices.map(d => d.name || d.id).join(', ');
+                                    setErrors(prev => ({ ...prev, ip: language === 'tr' ? `Bu IP adresi zaten ${names} tarafından kullanılıyor` : `This IP address is already used by ${names}` }));
+                                  } else {
                                     setErrors(prev => { const { ip, ...rest } = prev; return rest; });
                                   }
-                                }
-                                let updatedSubnet = pcSubnet;
-                                const firstOctet = newIp.split('.')[0];
-                                if (firstOctet) {
-                                  const octetNum = parseInt(firstOctet, 10);
-                                  if (!isNaN(octetNum)) {
-                                    let autoSubnet = '255.255.255.0';
-                                    if (octetNum === 10) autoSubnet = '255.0.0.0';
-                                    else if (octetNum === 192) autoSubnet = '255.255.255.0';
-                                    else if (octetNum === 169) autoSubnet = '255.255.0.0';
-                                    updatedSubnet = autoSubnet;
-                                    setPcSubnet(autoSubnet);
+                                  let updatedSubnet = pcSubnet;
+                                  const firstOctet = newIp.split('.')[0];
+                                  if (firstOctet) {
+                                    const octetNum = parseInt(firstOctet, 10);
+                                    if (!isNaN(octetNum)) {
+                                      let autoSubnet = '255.255.255.0';
+                                      if (octetNum === 10) autoSubnet = '255.0.0.0';
+                                      else if (octetNum === 192) autoSubnet = '255.255.255.0';
+                                      else if (octetNum === 169) autoSubnet = '255.255.0.0';
+                                      updatedSubnet = autoSubnet;
+                                      setPcSubnet(autoSubnet);
+                                    }
                                   }
+                                  setTimeout(() => dispatchDeviceConfig({ ip: newIp, subnet: updatedSubnet, ipConfigMode: 'static' }), 500);
                                 }
-                                setTimeout(() => dispatchDeviceConfig({ ip: newIp, subnet: updatedSubnet, ipConfigMode: 'static' }), 500);
                               }, "192.168.1.100", errors.ip, ipConfigMode === 'dhcp')}
 
                               {renderNetworkInput("Subnet Mask", pcSubnet, (newSubnet) => {

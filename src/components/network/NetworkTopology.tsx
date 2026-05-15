@@ -3782,10 +3782,10 @@ export function NetworkTopology({
         let currentHop = 0;
         let frameCount = 0;
 
-        const hopDuration = 800;
-        const easeInOutCubic = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const hopDuration = 1500;
 
-        const animateFailed = () => {
+    // Animate failed - last know[n] good position
+    const animateFailed = () => {
           // Update resume callback at the start of each frame
           pingResumeCallbackRef.current = () => {
             startTime = Date.now();
@@ -3820,7 +3820,7 @@ export function NetworkTopology({
           const dx = (toDev?.x ?? 0) - (fromDev?.x ?? 0);
           const dy = (toDev?.y ?? 0) - (fromDev?.y ?? 0);
           const dist = Math.sqrt(dx * dx + dy * dy);
-          const dur = Math.min(hopDuration * Math.max(1, dist / 200), 2000);
+          const dur = Math.min(hopDuration * Math.max(1, dist / 200), 3000);
 
           const elapsed = Date.now() - startTime;
           const rawProgress = Math.min(elapsed / dur, 1);
@@ -3916,7 +3916,7 @@ export function NetworkTopology({
     setErrorToast(null);
 
     // Animate ping - dynamic duration based on cable distance
-    const hopDuration = 800; // Base duration
+    const hopDuration = 1500; // Base duration
     let startTime = Date.now();
     let currentHop = 0;
     let frameCount = 0;
@@ -3957,9 +3957,9 @@ export function NetworkTopology({
           srcDist === Infinity ? 0 : srcDist,
           dstDist === Infinity ? 0 : dstDist
         );
-        // Map 0px→300ms, 549px→2000ms using exponential curve
-        const wifiBase = 300 * Math.exp(effectiveDist / 200);
-        return Math.min(wifiBase, 2000);
+        // Map 0px→800ms, 549px→3000ms using exponential curve
+        const wifiBase = 800 * Math.exp(effectiveDist / 200);
+        return Math.min(wifiBase, 3000);
       }
 
       // Wired: scale by pixel distance and port speed
@@ -3983,7 +3983,7 @@ export function NetworkTopology({
       const distance = Math.sqrt(dx * dx + dy * dy);
       const baseDistance = 200;
       const scaleFactor = Math.max(1, distance / baseDistance);
-      return Math.min(hopDuration * scaleFactor * speedFactor, 2000);
+      return Math.min(hopDuration * scaleFactor * speedFactor, 3000);
     };
 
     // Smooth easing function for fluent animation
