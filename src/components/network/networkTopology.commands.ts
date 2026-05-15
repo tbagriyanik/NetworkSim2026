@@ -109,6 +109,11 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['macro name <name>', isTR ? 'Komut makrosu' : 'Define command macro'],
         ['sdm prefer <template>', isTR ? 'SDM şablonu' : 'Set SDM template'],
         ['ip arp inspection vlan <id>', isTR ? 'DAI (ARP Denetimi)' : 'Enable DAI on VLAN'],
+        ['iot sensor <tip>', isTR ? 'IoT sensör tipi (temperature|humidity|motion|light|sound)' : 'IoT sensor type (temperature|humidity|motion|light|sound)'],
+        ['iot name <isim>', isTR ? 'IoT cihaz adı' : 'Set IoT device name'],
+        ['iot wifi ssid <ssid>', isTR ? 'IoT WiFi SSID' : 'Set IoT WiFi SSID'],
+        ['iot wifi password <şifre>', isTR ? 'IoT WiFi şifresi' : 'Set IoT WiFi password'],
+        ['iot wifi security <tip>', isTR ? 'IoT WiFi güvenliği (open|wpa|wpa2|wpa3)' : 'Set IoT WiFi security (open|wpa|wpa2|wpa3)'],
       ]
     },
     {

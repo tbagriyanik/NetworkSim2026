@@ -116,10 +116,10 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 
 ### Örnek Projeler ve Rehberli Dersler
 
-- **39 hazır topoloji örneği** (11 basic, 11 intermediate, 17 advanced):
-  - Basic: passwords, VLAN, SSH, DHCP, MAC, ARP, IP config, native VLAN.
-  - Intermediate: VTP, ROAS, legacy routing, port-security, WiFi, IoT, DNS/HTTP, DHCP distribution, trunk.
-  - Advanced: L3 switching, static routing, EtherChannel, STP, campus network, PVST, L3 VLAN, RIP, ACL, NAT, HSRP, OSPF multi-area, EIGRP, firewall, IPv6 advanced.
+- **39 hazır topoloji örneği** (9 basic, 12 intermediate, 18 advanced):
+  - Basic: passwords, VLAN, SSH, DHCP, firewall, MAC table, ARP, IP config, native VLAN.
+  - Intermediate: VTP, ROAS, legacy routing, port-security, WiFi, IoT WiFi, greenhouse, DNS/HTTP, DHCP distribution, trunk, ACL standard, NAT static.
+  - Advanced: L3 routing, static routing, EtherChannel, STP redundant, STP triangle, campus, PVST, L3 VLAN, static L3, RIP, ACL extended, NAT dynamic, NAT PAT, HSRP, OSPF multi-area, EIGRP, IPv6 advanced.
 - **3 rehberli ders** (Basic Switch, Intermediate, Advanced):
   - Adım adım yönlendirme, otomatik tamamlanma kontrolleri.
   - Cihaz erişimi, komut kalıbı, kablo tipi, konfigürasyon durumu kontrolü.
@@ -154,47 +154,6 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 - API client (retry, exponential backoff, timeout).
 - App Error Boundary (global hata yakalama).
 
-## Güncellemeler
-
-### Yeni (v1.6.3 - Mayıs 2026)
-
-- **Glass Effect Standardizasyonu ve UI Tutarlılığı (14 Mayıs)**:
-  - Tüm pencere panelleri `liquid-glass-strong` CSS sınıfına standardize edildi (alfa: light 0.6, dark 0.85, blur 40px).
-  - PacketPopup, PingPacketInfoPanel, DeviceInfoPopovers header stilleri birleştirildi.
-  - Tooltip border-radius `rounded-full` → `rounded-lg`.
-  - Paket içeriği tablolarına (L2/L3/L4) ve PacketPopup'a glass efekt eklendi.
-  - RouterPanel'deki çift kapat butonu düzeltildi (`showCloseButton={false}`).
-
-- **Panel Kapatma Davranışları**:
-  - Ağ yenilendiğinde tüm açık paneller otomatik kapanıyor (custom event + context menu fix).
-  - Oynat/Sonraki Hop butonları PacketPopup'u kapatıyor.
-
-- **WiFi Bağlı Sayısı Düzeltmesi**: AP tooltip'te çift sayma hatası giderildi, şifre/BSSID doğrulaması eklendi.
-
-- IPv6 gelişmiş lab (örnek #39): DHCPv6 + OSPFv3 senaryosu.
-- Firewall temel (örnek #38): ICMP bloklama labı.
-- IPv6 ping tanılama düzeltmesi, kaynak IP çözümleme.
-- Ping çıktısı Windows formatında standardize edildi.
-- Örnek sayısı **39**'a çıkarıldı.
-
-### v1.6.2 - Mayıs 2026
-
-- Firewall cihaz tipi eklendi, kural kalıcılığı güçlendirildi.
-- Firewall kuralları `running-config` ve `show access-lists` ile görünür.
-- IoT kural motoru (condition-action), çevresel değişkenler.
-- ACL Standard + Extended (2 örnek), NAT Static + Dynamic + PAT (3 örnek).
-- HSRP Redundancy (1 örnek), OSPF Multi-Area (2 örnek), EIGRP Basic (1 örnek).
-- React hook kararlılık düzeltmeleri, immutability fixleri.
-- Pencere pozisyonu koruma özelliği.
-
-### v1.6.1 - Mayıs 2026
-
-- Jest'ten Vitest'e test geçişi tamamlandı (53 test, 100% geçme).
-- RIPng, OSPFv3 (multi-area) IPv6 yönlendirme desteği.
-- `show ipv6 route`, `show ipv6 interface brief`.
-- Chrome ping animasyonu düzeltmesi (flushSync).
-- UI/UX performans iyileştirmeleri.
-
 ## Proje Metrikleri (v1.6.3)
 
 | Grup | Satır Sayısı |
@@ -217,12 +176,7 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 | TypeScript | Hata yok |
 
 Örneklerin ayrıntılı listesi için [examples.md](examples.md) dosyasına bakın.
-
-### Test Durumu (2026-05-14)
-
-**Vitest Altyapısı**: ✅ Aktif (53 test, 0 başarısız)
-- Test altyapısı Vitest standardına taşındı.
-- Firewall, L3 switch, port security ve temel ağ testleri kapsanıyor.
+Değişiklik günlüğü ve planlama için [planning.md](planning.md) dosyasına bakın.
 
 ## Yol Haritası
 
@@ -258,22 +212,6 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 - Gelişmiş QoS ve trafik şekillendirme.
 - BGP ve IS-IS protokol desteği.
 - Sertifika hazırlık senaryoları.
-
-## Kurulum
-
-```bash
-npm install
-npm run dev
-```
-
-Build ve doğrulama:
-
-```bash
-npm run lint
-npx tsc --noEmit
-```
-
-Not: Bu çalışma ortamında Node/NPM zaman zaman `Could not determine Node.js install directory` ve `CSPRNG` hatasıyla başlamadan kapanabiliyor. Bu durumda manuel derleme doğrulaması yerel Node kurulumu düzeltilince tekrar çalıştırılmalıdır.
 
 ---
 
