@@ -460,6 +460,12 @@ export function checkConnectivity(
   // Track port security violations for React state updates
   const portSecurityViolations: Array<{ deviceId: string; portId: string; action: string; mac: string }> = [];
 
+  // BOLT: Use a device map for O(1) lookups
+  const deviceMap = new Map<string, CanvasDevice>();
+  for (const d of devices) {
+    deviceMap.set(d.id, d);
+  }
+
   // 1.5. Implicit Wireless Connections
   const connections = [..._connections];
   if (deviceStates) {
@@ -513,6 +519,18 @@ export function checkConnectivity(
     }
   }
 
+  // BOLT: Pre-calculate adjacency list for O(V + C) BFS
+  const adjList = new Map<string, Array<{ neighborId: string, conn: CanvasConnection }>>();
+  for (const conn of connections) {
+    if (conn.active === false) continue;
+
+    if (!adjList.has(conn.sourceDeviceId)) adjList.set(conn.sourceDeviceId, []);
+    adjList.get(conn.sourceDeviceId)!.push({ neighborId: conn.targetDeviceId, conn });
+
+    if (!adjList.has(conn.targetDeviceId)) adjList.set(conn.targetDeviceId, []);
+    adjList.get(conn.targetDeviceId)!.push({ neighborId: conn.sourceDeviceId, conn });
+  }
+
   // 0. Resolve hostname to IP if necessary
   let resolvedTargetIp = targetIp;
   let isExternal = false;
@@ -559,6 +577,7 @@ export function checkConnectivity(
 
   // 1. Find target device by IP (supports both IPv4 and IPv6)
   // First check topology devices (PCs usually)
+  // BOLT: Use pre-calculated deviceMap if possible, but IP search still needs a scan if we don't have an ipMap
   let targetDevice = devices.find(d =>
     d.ip === resolvedTargetIp ||
     (d.ipv6 && d.ipv6.toLowerCase() === resolvedTargetIp.toLowerCase())
@@ -575,7 +594,7 @@ export function checkConnectivity(
           port.ipAddress === resolvedTargetIp ||
           (port.ipv6Address && port.ipv6Address.toLowerCase() === resolvedTargetIp.toLowerCase())
         ) {
-          targetDevice = devices.find(d => d.id === id);
+          targetDevice = deviceMap.get(id);
           break;
         }
       }
@@ -677,25 +696,20 @@ export function checkConnectivity(
     const currentId = queue.shift()!;
     if (currentId === targetDevice.id) break;
 
-    const neighbors = connections
-      .filter(c => c.active !== false && (c.sourceDeviceId === currentId || c.targetDeviceId === currentId))
-      .map(c => c.sourceDeviceId === currentId ? c.targetDeviceId : c.sourceDeviceId);
+    // BOLT: Use pre-calculated adjacency list for O(1) neighbor lookup
+    const neighbors = adjList.get(currentId) || [];
 
-    for (const neighborId of neighbors) {
+    for (const { neighborId, conn } of neighbors) {
       if (!visited.has(neighborId)) {
         // Check if port is shutdown or device is powered off on either side
-        const conn = connections.find(c =>
-          (c.sourceDeviceId === currentId && c.targetDeviceId === neighborId) ||
-          (c.sourceDeviceId === neighborId && c.targetDeviceId === currentId)
-        );
-
         if (conn) {
           // Check source side port
           const srcPortId = conn.sourceDeviceId === currentId ? conn.sourcePort : conn.targetPort;
           const dstPortId = conn.sourceDeviceId === neighborId ? conn.sourcePort : conn.targetPort;
 
-          const srcDevice = devices.find(d => d.id === currentId);
-          const dstDevice = devices.find(d => d.id === neighborId);
+          // BOLT: Use pre-calculated deviceMap for O(1) device lookup
+          const srcDevice = deviceMap.get(currentId);
+          const dstDevice = deviceMap.get(neighborId);
 
           const isSrcShutdown = isPortShutdown(currentId, srcPortId, devices, deviceStates);
           const isDstShutdown = isPortShutdown(neighborId, dstPortId, devices, deviceStates);
@@ -732,6 +746,15 @@ export function checkConnectivity(
     curr = parent.get(curr);
   }
 
+  // BOLT: Pre-calculate path-related connections for O(1) lookup in later stages
+  const pathConnections = new Map<string, CanvasConnection>();
+  for (let i = 0; i < path.length - 1; i++) {
+    const aId = path[i];
+    const bId = path[i + 1];
+    const conn = adjList.get(aId)?.find(n => n.neighborId === bId)?.conn;
+    if (conn) pathConnections.set(`${aId}-${bId}`, conn);
+  }
+
   // 2.5 Block ping over console-only links (console is management, no ICMP)
   // Only block if the ENTIRE path is console connections (no other data path available)
   let hasConsoleConnection = false;
@@ -740,10 +763,7 @@ export function checkConnectivity(
   for (let i = 0; i < path.length - 1; i++) {
     const aId = path[i];
     const bId = path[i + 1];
-    const conn = connections.find(c =>
-      (c.sourceDeviceId === aId && c.targetDeviceId === bId) ||
-      (c.sourceDeviceId === bId && c.targetDeviceId === aId)
-    );
+    const conn = pathConnections.get(`${aId}-${bId}`);
     if (conn?.cableType === 'console') {
       hasConsoleConnection = true;
     } else {
@@ -755,7 +775,7 @@ export function checkConnectivity(
   if (hasConsoleConnection && !hasNonConsoleConnection) {
     return {
       success: false,
-      hops: path.map(id => devices.find(d => d.id === id)?.name || id),
+      hops: path.map(id => deviceMap.get(id)?.name || id),
       hopIds: path,
       targetId: targetDevice.id,
       error: language === 'tr'
@@ -764,10 +784,10 @@ export function checkConnectivity(
     };
   }
 
-  const hopNames = path.map(id => devices.find(d => d.id === id)?.name || id);
+  const hopNames = path.map(id => deviceMap.get(id)?.name || id);
 
   // 2.5. Check subnet compatibility (Layer 3)
-  const sourceDeviceForSubnet = devices.find(d => d.id === sourceId);
+  const sourceDeviceForSubnet = deviceMap.get(sourceId);
   if (sourceDeviceForSubnet && targetDevice) {
     const isTargetIpv6 = resolvedTargetIp.includes(':');
     const sourceIp = getPrimaryDeviceIp(sourceId, devices, deviceStates, isTargetIpv6);
@@ -803,7 +823,7 @@ export function checkConnectivity(
 
       // Find the first L3 device in the path (the one that will actually route the packet)
       for (const deviceId of path) {
-        const device = devices.find(d => d.id === deviceId);
+        const device = deviceMap.get(deviceId);
         const state = deviceStates?.get(deviceId);
         if ((device?.type === 'router' || device?.type === 'switchL3') && state?.ipRouting) {
           // Check if this router has a route to the destination network
@@ -842,10 +862,7 @@ export function checkConnectivity(
 
             // Check if router is connected to any device in the path
             for (const pathDeviceId of path) {
-              const conn = connections.find(c =>
-                (c.sourceDeviceId === router.id && c.targetDeviceId === pathDeviceId) ||
-                (c.targetDeviceId === router.id && c.sourceDeviceId === pathDeviceId)
-              );
+              const conn = adjList.get(router.id)?.find(n => n.neighborId === pathDeviceId)?.conn;
               if (conn) {
                 hasL3Gateway = true;
                 routerDeviceId = router.id;
@@ -882,12 +899,9 @@ export function checkConnectivity(
     for (let i = 0; i < path.length - 1; i++) {
       const aId = path[i];
       const bId = path[i + 1];
-      const a = devices.find(d => d.id === aId);
-      const b = devices.find(d => d.id === bId);
-      const conn = connections.find(c =>
-        (c.sourceDeviceId === aId && c.targetDeviceId === bId) ||
-        (c.sourceDeviceId === bId && c.targetDeviceId === aId)
-      );
+      const a = deviceMap.get(aId);
+      const b = deviceMap.get(bId);
+      const conn = pathConnections.get(`${aId}-${bId}`);
       if (!a || !b || !conn) continue;
 
       // If a PC connects to a switch, enforce VLAN match unless the switch port is trunk.
@@ -964,7 +978,7 @@ export function checkConnectivity(
   if (deviceStates) {
     for (let i = 1; i < path.length - 1; i++) {
       const deviceId = path[i];
-      const device = devices.find(d => d.id === deviceId);
+      const device = deviceMap.get(deviceId);
       if (device && isSwitchDeviceType(device.type)) {
         const switchState = deviceStates.get(deviceId);
         if (!switchState) continue;
@@ -972,14 +986,8 @@ export function checkConnectivity(
         const prevDeviceId = path[i - 1];
         const nextDeviceId = path[i + 1];
 
-        const ingressConn = connections.find(c =>
-          (c.sourceDeviceId === prevDeviceId && c.targetDeviceId === deviceId) ||
-          (c.sourceDeviceId === deviceId && c.targetDeviceId === prevDeviceId)
-        );
-        const egressConn = connections.find(c =>
-          (c.sourceDeviceId === deviceId && c.targetDeviceId === nextDeviceId) ||
-          (c.sourceDeviceId === nextDeviceId && c.targetDeviceId === deviceId)
-        );
+        const ingressConn = pathConnections.get(`${prevDeviceId}-${deviceId}`);
+        const egressConn = pathConnections.get(`${deviceId}-${nextDeviceId}`);
 
         if (ingressConn && egressConn) {
           const ingressPortId = ingressConn.sourceDeviceId === deviceId ? ingressConn.sourcePort : ingressConn.targetPort;
@@ -999,7 +1007,7 @@ export function checkConnectivity(
               // Check if there's a router with ipRouting in the path (L3 routing scenario)
               let hasL3RouterInPath = false;
               for (const pathDeviceId of path) {
-                const pathDevice = devices.find(d => d.id === pathDeviceId);
+                const pathDevice = deviceMap.get(pathDeviceId);
                 const pathState = deviceStates?.get(pathDeviceId);
                 if ((pathDevice?.type === 'router' || pathDevice?.type === 'switchL3') && pathState?.ipRouting) {
                   hasL3RouterInPath = true;
@@ -1028,7 +1036,7 @@ export function checkConnectivity(
   let l2ConnectivityPossible = false;
   if (deviceStates) {
     const getDeviceVlanForIp = (deviceId: string, ip: string): number | null => {
-      const device = devices.find(d => d.id === deviceId);
+      const device = deviceMap.get(deviceId);
       if (!device) return null;
       const state = deviceStates.get(deviceId);
       if (!state) return (device.type === 'pc' || device.type === 'iot') ? Number(device.vlan || 1) : 1;
@@ -1070,7 +1078,7 @@ export function checkConnectivity(
         // Different VLANs: check if router with ipRouting is in path
         let hasL3RouterInPath = false;
         for (const pathDeviceId of path) {
-          const pathDevice = devices.find(d => d.id === pathDeviceId);
+          const pathDevice = deviceMap.get(pathDeviceId);
           const pathState = deviceStates?.get(pathDeviceId);
           if ((pathDevice?.type === 'router' || pathDevice?.type === 'switchL3') && pathState?.ipRouting) {
             hasL3RouterInPath = true;
@@ -1116,7 +1124,7 @@ export function checkConnectivity(
       // Check if there's a router in the path that can route between VLANs
       for (const deviceId of path) {
         const state = deviceStates.get(deviceId);
-        const device = devices.find(d => d.id === deviceId);
+        const device = deviceMap.get(deviceId);
         const hasRouting = isTargetIpv6 ? (state?.ipv6Enabled || state?.ipRouting) : state?.ipRouting;
 
         if (hasRouting && (device?.type === 'router' || device?.type === 'switchL3')) {
@@ -1156,7 +1164,7 @@ export function checkConnectivity(
   // 7. Firewall Logic - Check rules for any firewalls in the path
   const sourceIpForFirewall = getPrimaryDeviceIp(sourceId, devices, deviceStates);
   for (const stepDeviceId of path) {
-    const device = devices.find(d => d.id === stepDeviceId);
+    const device = deviceMap.get(stepDeviceId);
     if (device?.type === 'firewall') {
       const rules = device.firewallRules || [];
       const enabledRules = rules.filter(r => r.enabled);
@@ -1228,8 +1236,12 @@ export function checkDeviceConnectivity(
   options?: { protocol?: 'tcp' | 'udp' | 'icmp' | 'any'; port?: string }
 ): { success: boolean; hops: string[]; hopIds: string[]; targetId?: string; error?: string } {
   const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
-  const sourceDevice = devices.find(d => d.id === sourceId);
-  const targetDevice = devices.find(d => d.id === targetId);
+  const deviceMap = new Map<string, CanvasDevice>();
+  for (const d of devices) {
+    deviceMap.set(d.id, d);
+  }
+  const sourceDevice = deviceMap.get(sourceId);
+  const targetDevice = deviceMap.get(targetId);
 
   if (!sourceDevice || !targetDevice) {
     return { success: false, hops: [], hopIds: [], error: 'Destination host unreachable.' };
