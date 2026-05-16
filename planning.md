@@ -2,7 +2,7 @@
 
 ## Güncel Durum
 
-- **Sürüm**: 1.6.3
+- **Sürüm**: 1.6.4
 - **Tarih**: 2026-05-16
 - **Uygulama kodu**: 103,498
 - **Dokümantasyon satırı**: 13,290
@@ -75,13 +75,13 @@ Not: Toplam satır sayısı uygulama kodu, örnek kod ve dokümantasyonun birle�
 
 ### Altyapı ve Dokümantasyon Güncellemesi (Mayıs 2026 - 13 Mayıs)
 
-- **Sürüm Artırımı (v1.6.3)**: Proje versiyonu `package.json` üzerinde 1.6.3'e yükseltildi.
+- **Sürüm Artırımı (v1.6.4)**: Proje versiyonu `package.json` üzerinde 1.6.4'e yükseltildi.
 - **Metrik Yenileme**: Tüm README ve dokümantasyon dosyalarındaki istatistikler (90,093 satır kod, 235 dosya) güncellendi.
 - **Yeni Örnek Projeler**: 
   - **#38: Firewall Basic (ICMP Block)** - Temel firewall kural mantığı örneği.
   - **#39: IPv6 Advanced Lab (DHCPv6 & OSPFv3)** - Gelişmiş IPv6 senaryosu.
 - **Dokümantasyon Bütünlüğü**: `examples.md` tamamen gözden geçirilerek 39 örneğin tamamı, özet tablolar ve başlangıç rehberleri ile senkronize edildi.
-- **Planlama Güncellemesi**: Mevcut durum ve gelecek hedefler 1.6.3 durumuna göre revize edildi.
+- **Planlama Güncellemesi**: Mevcut durum ve gelecek hedefler 1.6.4 durumuna göre revize edildi.
 
 ### React Hooks ve Build Düzeltmeleri (Mayıs 2026 - 8 Mayıs)
 

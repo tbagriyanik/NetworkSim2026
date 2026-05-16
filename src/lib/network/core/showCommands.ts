@@ -83,6 +83,9 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show alias': cmdShowAlias,
   'show redundancy': cmdShowRedundancy,
   'show archive': cmdShowArchive,
+  'show ip protocols': cmdShowIpProtocols,
+  'show ip ospf neighbor': cmdShowIpOspfNeighbor,
+  'show ip ospf': cmdShowIpOspf,
 };
 
 function isPhysicalEthernetPort(portId: string): boolean {
@@ -1126,7 +1129,153 @@ function cmdShowIpRoute(
     output += 'No routes in routing table\n';
   }
 
+  output += '  Time Since Last Boot: 01:00:00\n';
   output += '!\n';
+  return { success: true, output };
+}
+
+/**
+ * Show IP Protocols
+ */
+function cmdShowIpProtocols(state: any, input: string, ctx: any): any {
+  if (!state.routingProtocol) {
+    return { success: true, output: '\n% No routing protocols configured\n' };
+  }
+
+  let output = '\n';
+  if (state.routingProtocol === 'ospf') {
+    const processId = state.ospfProcessId || 1;
+    const routerId = state.ospfRouterId || state.ip || '192.168.1.1';
+    output += `Routing Protocol is "ospf ${processId}"\n`;
+    output += '  Outgoing update filter list for all interfaces is not set\n';
+    output += '  Incoming update filter list for all interfaces is not set\n';
+    output += `  Router ID ${routerId}\n`;
+    output += '  Number of areas in this router is 1. 1 normal 0 stub 0 nssa\n';
+    output += '  Maximum path: 4\n';
+    output += '  Routing for Networks:\n';
+    if (state.dynamicRoutes && state.dynamicRoutes.length > 0) {
+      state.dynamicRoutes.forEach((route: any) => {
+        if (route.network && route.mask) {
+          // Wildcard mask approximation from subnet
+          const wildcard = route.mask.split('.').map((p: string) => 255 - parseInt(p)).join('.');
+          output += `    ${route.network} ${wildcard} area ${route.area || 0}\n`;
+        }
+      });
+    } else {
+      output += '    (No networks advertised)\n';
+    }
+    output += '  Routing Information Sources:\n';
+    output += '    Gateway         Distance      Last Update\n';
+    if (state.dynamicRoutes) {
+      state.dynamicRoutes.forEach((route: any) => {
+         if(route.nextHop) {
+             output += `    ${route.nextHop.padEnd(15)} 110           00:00:15\n`;
+         }
+      });
+    }
+    output += '  Distance: (default is 110)\n';
+  } else if (state.routingProtocol === 'eigrp') {
+    const asNum = state.eigrpAs || 1;
+    output += `Routing Protocol is "eigrp ${asNum}"\n`;
+    output += '  Outgoing update filter list for all interfaces is not set\n';
+    output += '  Incoming update filter list for all interfaces is not set\n';
+    output += '  Default networks accepted in routing updates\n';
+    output += '  Default networks will not be sent in routing updates\n';
+    output += '  EIGRP-IPv4 Protocol for AS(1)\n';
+    output += `    Metric weight K1=1, K2=0, K3=1, K4=0, K5=0\n`;
+    output += '    NSF-aware route hold timer is 240\n';
+    output += '    Router-ID: 10.0.0.1\n';
+    output += '    Topology : 0 (base)\n';
+    output += '      Active Timer: 3 min\n';
+    output += '      Distance: internal 90 external 170\n';
+    output += '      Maximum path: 4\n';
+    output += '      Maximum hopcount 100\n';
+    output += '      Maximum metric variance 1\n';
+  } else {
+    output += `Routing Protocol is "${state.routingProtocol}"\n`;
+    output += '  No detailed information available for this protocol.\n';
+  }
+
+  return { success: true, output };
+}
+
+/**
+ * Show IP OSPF Neighbor
+ */
+function cmdShowIpOspfNeighbor(state: any, input: string, ctx: any): any {
+  if (state.routingProtocol !== 'ospf') {
+    return { success: true, output: '\n% OSPF is not enabled\n' };
+  }
+
+  let output = '\nNeighbor ID     Pri   State           Dead Time   Address         Interface\n';
+  
+  // Simulate neighbors from dynamic routes
+  if (state.dynamicRoutes && state.dynamicRoutes.length > 0) {
+    const neighbors = new Set<string>();
+    state.dynamicRoutes.forEach((r: any) => {
+      if (r.nextHop && !neighbors.has(r.nextHop)) {
+        neighbors.add(r.nextHop);
+        // Mocking OSPF neighbor entry
+        const routerId = r.nextHop; // Fallback to IP
+        const address = r.nextHop;
+        const intf = r.interface || 'FastEthernet0/0';
+        output += `${routerId.padEnd(15)} 1     FULL/DR         00:00:32    ${address.padEnd(15)} ${intf}\n`;
+      }
+    });
+  }
+
+  return { success: true, output };
+}
+
+/**
+ * Show IP OSPF
+ */
+function cmdShowIpOspf(state: any, input: string, ctx: any): any {
+  if (state.routingProtocol !== 'ospf') {
+    return { success: true, output: '\n% OSPF is not enabled\n' };
+  }
+
+  const processId = state.ospfProcessId || 1;
+  const routerId = state.ospfRouterId || state.ip || '192.168.1.1';
+  let output = `\n Routing Process "ospf ${processId}" with ID ${routerId}\n`;
+  output += ' Start time: 00:00:01.000, Time elapsed: 00:02:15.000\n';
+  output += ' Supports only single TOS(TOS0) routes\n';
+  output += ' Supports opaque LSA\n';
+  output += ' Supports Link-local Signaling (LLS)\n';
+  output += ' Supports area transit capability\n';
+  output += ' Initial SPF schedule delay 5000 msecs\n';
+  output += ' Minimum hold time between two consecutive SPFs 10000 msecs\n';
+  output += ' Maximum wait time between two consecutive SPFs 10000 msecs\n';
+  output += ' Incremental-SPF disabled\n';
+  output += ' Minimum LSA interval 5 secs\n';
+  output += ' Minimum LSA arrival 1000 msecs\n';
+  output += ' LSA group pacing timer 240 secs\n';
+  output += ' Interface flood pacing timer 33 msecs\n';
+  output += ' Retransmission pacing timer 66 msecs\n';
+  output += ' Number of external LSA 0. Checksum Sum 0x000000\n';
+  output += ' Number of opaque AS LSA 0. Checksum Sum 0x000000\n';
+  output += ' Number of DCbitless external and opaque AS LSA 0\n';
+  output += ' Number of DoNotAge external and opaque AS LSA 0\n';
+  output += ' Number of areas in this router is 1. 1 normal 0 stub 0 nssa\n';
+  output += ' Number of areas transit capable is 0\n';
+  output += ' External flood list length 0\n';
+  output += ' IETF NSF helper support enabled\n';
+  output += ' Cisco NSF helper support enabled\n';
+  output += ' Reference bandwidth unit is 100 mbps\n';
+  
+  output += '    Area BACKBONE(0)\n';
+  output += '        Number of interfaces in this area is 1\n';
+  output += '        Area has no authentication\n';
+  output += '        SPF algorithm last executed 00:01:15.000 ago\n';
+  output += '        SPF algorithm executed 2 times\n';
+  output += '        Area ranges are\n';
+  output += '        Number of LSA 3. Checksum Sum 0x01A3B1\n';
+  output += '        Number of opaque link LSA 0. Checksum Sum 0x000000\n';
+  output += '        Number of DCbitless LSA 0\n';
+  output += '        Number of indication LSA 0\n';
+  output += '        Number of DoNotAge LSA 0\n';
+  output += '        Flood list length 0\n';
+
   return { success: true, output };
 }
 

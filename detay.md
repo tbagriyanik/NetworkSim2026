@@ -154,7 +154,7 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 - API client (retry, exponential backoff, timeout).
 - App Error Boundary (global hata yakalama).
 
-## Proje Metrikleri (v1.6.3)
+## Proje Metrikleri (v1.6.4)
 
 | Grup | Satır Sayısı |
 | --- | ---: |
