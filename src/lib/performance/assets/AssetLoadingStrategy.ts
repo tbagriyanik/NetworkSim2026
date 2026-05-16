@@ -4,6 +4,8 @@
  * Ensures HTML, CSS, core JS load first, with non-critical assets deferred
  */
 
+import { logger } from '@/lib/logger';
+
 export interface AssetLoadingConfig {
     criticalAssets: string[];
     deferredAssets: string[];
@@ -140,7 +142,7 @@ export class AssetLoadingStrategy {
 
             this.loadedAssets.add(assetPath);
         } catch (error) {
-            console.error(`Error loading asset ${assetPath}:`, error);
+            logger.error(`Error loading asset ${assetPath}:`, error);
             throw error;
         }
     }

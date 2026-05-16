@@ -12,13 +12,11 @@
  * Validates: Requirements 6.6
  */
 
-/**
- * Cache for inlined SVG content
- */
+import { logger } from '@/lib/logger';
+
 const svgCache = new Map<string, string>();
 
-/**
- * Fetches and caches SVG content from a URL.
+/** Fetches and caches SVG content from a URL.
  * 
  * @param url - URL to the SVG file
  * @returns Promise resolving to SVG content string
@@ -42,7 +40,7 @@ export async function fetchSVG(url: string): Promise<string> {
 
         return content;
     } catch (error) {
-        console.error(`Error fetching SVG from ${url}:`, error);
+        logger.error(`Error fetching SVG from ${url}:`, error);
         throw error;
     }
 }
@@ -173,7 +171,7 @@ export async function batchInlineSVGs(
                 results.push(inlined);
             }
         } catch (error) {
-            console.error('Error inlining SVG:', error);
+            logger.error('Error inlining SVG:', error);
             results.push(''); // Add empty string on error
         }
     }
@@ -192,7 +190,7 @@ export async function preloadSVGs(urls: string[]): Promise<void> {
     await Promise.all(
         urls.map(url =>
             fetchSVG(url).catch(error => {
-                console.warn(`Failed to preload SVG: ${url}`, error);
+                logger.warn(`Failed to preload SVG: ${url}`, error);
             })
         )
     );

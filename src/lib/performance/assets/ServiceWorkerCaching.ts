@@ -4,6 +4,8 @@
  * Implements cache update strategy and versioning
  */
 
+import { logger } from '@/lib/logger';
+
 export interface CacheConfig {
     cacheName: string;
     version: string;
@@ -35,7 +37,7 @@ export class ServiceWorkerCaching {
      */
     public async registerServiceWorker(swPath: string): Promise<ServiceWorkerRegistration | null> {
         if (!this.isSupported) {
-            console.warn('[ServiceWorkerCaching] Service Workers not supported');
+            logger.warn('[ServiceWorkerCaching] Service Workers not supported');
             return null;
         }
 
@@ -43,10 +45,10 @@ export class ServiceWorkerCaching {
             const registration = await navigator.serviceWorker.register(swPath, {
                 scope: '/',
             });
-            console.log('[ServiceWorkerCaching] Service Worker registered');
+            logger.debug('[ServiceWorkerCaching] Service Worker registered');
             return registration;
         } catch (error) {
-            console.error('[ServiceWorkerCaching] Failed to register Service Worker:', error);
+            logger.error('[ServiceWorkerCaching] Failed to register Service Worker:', error);
             return null;
         }
     }
@@ -84,7 +86,7 @@ export class ServiceWorkerCaching {
 
             return true;
         } catch (error) {
-            console.error(`[ServiceWorkerCaching] Failed to cache asset ${url}:`, error);
+            logger.error(`[ServiceWorkerCaching] Failed to cache asset ${url}:`, error);
             return false;
         }
     }
@@ -109,7 +111,7 @@ export class ServiceWorkerCaching {
             const response = await cache.match(url);
             return response || null;
         } catch (error) {
-            console.error(`[ServiceWorkerCaching] Failed to get cached asset ${url}:`, error);
+            logger.error(`[ServiceWorkerCaching] Failed to get cached asset ${url}:`, error);
             return null;
         }
     }
@@ -130,7 +132,7 @@ export class ServiceWorkerCaching {
             // Cache new version
             return this.cacheAsset(url);
         } catch (error) {
-            console.error(`[ServiceWorkerCaching] Failed to update cache for ${url}:`, error);
+            logger.error(`[ServiceWorkerCaching] Failed to update cache for ${url}:`, error);
             return false;
         }
     }
@@ -149,7 +151,7 @@ export class ServiceWorkerCaching {
             this.cacheEntries.clear();
             return deleted;
         } catch (error) {
-            console.error('[ServiceWorkerCaching] Failed to clear cache:', error);
+            logger.error('[ServiceWorkerCaching] Failed to clear cache:', error);
             return false;
         }
     }

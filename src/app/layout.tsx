@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/Providers";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { AppErrorBoundary } from "@/components/ui/AppErrorBoundary";
 
 const inriaSans = Inria_Sans({
   variable: "--font-inria-sans",
@@ -73,9 +74,11 @@ export default function RootLayout({
           <span lang="tr" className="hidden">Ana içeriğe atla</span>
         </a>
         <Providers>
-          <div id="main-content" className="w-full h-screen flex flex-col overflow-hidden">
-            {children}
-          </div>
+          <AppErrorBoundary>
+            <div id="main-content" className="w-full h-screen flex flex-col overflow-hidden">
+              {children}
+            </div>
+          </AppErrorBoundary>
         </Providers>
         <Toaster />
         <ServiceWorkerRegister />

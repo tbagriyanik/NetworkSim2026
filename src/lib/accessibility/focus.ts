@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Focus Management Utilities
  *
@@ -70,7 +72,7 @@ export function focusElement(
         }
     } catch (error) {
         // Focus may fail in some contexts
-        console.warn('Failed to focus element:', error);
+        logger.warn('Failed to focus element:', error);
     }
 }
 
