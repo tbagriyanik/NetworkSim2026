@@ -11,6 +11,7 @@ import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { useDrag } from '@/hooks/useDrag';
 import { useMultiTabWarning } from '@/hooks/useMultiTabWarning';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useMobileBack } from '@/hooks/useMobileBack';
 import { usePanels } from '@/hooks/usePanels';
 import { useRefreshReport } from '@/hooks/useRefreshReport';
 import { useDeviceSelection } from '@/hooks/useDeviceSelection';
@@ -320,8 +321,9 @@ export default function Home() {
   // Which overlay panel is on top — last clicked wins
   const [focusedOverlay, setFocusedOverlay] = useState<'refresh' | 'packet' | 'pc-info' | 'router-info' | 'switch-info'>('packet');
 
-  // Mobile detection
+  // Mobile detection and back button handler
   const isMobile = useIsMobile();
+  useMobileBack();
 
   // Guided Mode hook
   const {
@@ -447,6 +449,18 @@ export default function Home() {
   const handlePCPanelNavigateWrapper = useCallback((program: string) => {
     handlePCPanelNavigate(program, activeDeviceId);
   }, [handlePCPanelNavigate, activeDeviceId]);
+
+  useEffect(() => {
+    const handleMobileBack = () => {
+      closeAllPanels();
+      // Also clear focused overlay if any
+      if (focusedOverlay !== 'packet') {
+        // Maybe nothing here, or some other clear state
+      }
+    };
+    window.addEventListener('mobile-back-pressed', handleMobileBack as EventListener);
+    return () => window.removeEventListener('mobile-back-pressed', handleMobileBack as EventListener);
+  }, [closeAllPanels, focusedOverlay]);
 
   useEffect(() => {
     setHasHydrated(true);

@@ -685,6 +685,16 @@ export function NetworkTopology({
     return () => window.removeEventListener('network-refresh', handler);
   }, []);
 
+  // Listen for mobile-back-pressed custom event
+  useEffect(() => {
+    const handleMobileBack = () => {
+      setContextMenu(null);
+      setPacketPopupHop(null);
+    };
+    window.addEventListener('mobile-back-pressed', handleMobileBack);
+    return () => window.removeEventListener('mobile-back-pressed', handleMobileBack);
+  }, []);
+
   // Refs
   const deviceCounterRef = useRef<{ pc: number; iot: number; switch: number; router: number; firewall: number }>({ pc: 0, iot: 0, switch: 0, router: 0, firewall: 0 });
   const getCounterKey = useCallback((type: DeviceType | string): 'pc' | 'iot' | 'switch' | 'router' | 'firewall' => {

@@ -70,24 +70,6 @@ export function AppSkeleton() {
                     </div>
                 </div>
 
-                {/* Right Sidebar - Panels */}
-                <div className="hidden xl:flex w-80 flex-col gap-4">
-                    {/* Panel 1 */}
-                    <div className="flex-1 rounded-lg border border-border bg-background p-4 space-y-3">
-                        <Skeleton className="w-24 h-6" />
-                        <Skeleton className="w-full h-4" />
-                        <Skeleton className="w-full h-4" />
-                        <Skeleton className="w-3/4 h-4" />
-                    </div>
-
-                    {/* Panel 2 */}
-                    <div className="flex-1 rounded-lg border border-border bg-background p-4 space-y-3">
-                        <Skeleton className="w-24 h-6" />
-                        <Skeleton className="w-full h-4" />
-                        <Skeleton className="w-full h-4" />
-                        <Skeleton className="w-3/4 h-4" />
-                    </div>
-                </div>
             </main>
 
             {/* Footer Skeleton */}
