@@ -3698,7 +3698,7 @@ ${state.bannerMOTD}
             <div className="flex flex-col items-center animate-scale-in">
               <div className="relative mb-8">
                 <div className="p-2 animate-glitch">
-                  <Image src="/icon192.svg" alt="Logo" width={64} height={64} className="w-16 h-16 object-contain" priority />
+                  <Image src="/app.png" alt="Logo" width={64} height={64} className="w-16 h-16 object-contain" priority />
                 </div>
                 {/* Glitch overlays */}
                 <div className="absolute inset-0 p-4 rounded-2xl bg-red-500/30 animate-glitch-skew mix-blend-screen" />

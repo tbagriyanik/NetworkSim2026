@@ -121,7 +121,7 @@ function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
         const parsed = JSON.parse(saved);
         if (typeof parsed.x === 'number' && typeof parsed.y === 'number') return parsed;
       }
-    } catch {}
+    } catch { }
     return typeof window !== 'undefined'
       ? { x: Math.max(16, (window.innerWidth - 320) / 2), y: Math.max(16, (window.innerHeight - 340) / 2) }
       : { x: 100, y: 100 };
@@ -160,7 +160,7 @@ function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
   }, [pos]);
 
   useEffect(() => {
-    try { localStorage.setItem('draggable_position_packet-popup', JSON.stringify(pos)); } catch {}
+    try { localStorage.setItem('draggable_position_packet-popup', JSON.stringify(pos)); } catch { }
   }, [pos]);
 
   const p = info;
@@ -733,7 +733,7 @@ export function NetworkTopology({
   // Track the current ping path for external interruption checks (power off, cable change)
   const pingPathRef = useRef<string[]>([]);
   // Ref for cancel function to avoid stale closure issues in RAF callbacks
-  const cancelPingDueToInterruptionRef = useRef<(reason: string) => void>(() => {});
+  const cancelPingDueToInterruptionRef = useRef<(reason: string) => void>(() => { });
 
   // Added refs moved from below to avoid TDZ and sync issues
   const noteCounterRef = useRef<number>(0);
@@ -3848,10 +3848,10 @@ export function NetworkTopology({
         let currentHop = 0;
         let frameCount = 0;
 
-    const hopDuration = 1500;
+        const hopDuration = 1500;
 
-    // Animate failed - last know[n] good position
-    const animateFailed = () => {
+        // Animate failed - last know[n] good position
+        const animateFailed = () => {
           // Update resume callback at the start of each frame
           pingResumeCallbackRef.current = () => {
             startTime = Date.now();
@@ -4001,7 +4001,7 @@ export function NetworkTopology({
       const isClient = (t: string | undefined) => t === 'pc' || t === 'iot';
       const isInfra = (t: string | undefined) => t === 'router' || t === 'switchL2' || t === 'switchL3';
       return (isClient(fromDev.type) && isInfra(toDev.type)) ||
-             (isClient(toDev.type) && isInfra(fromDev.type));
+        (isClient(toDev.type) && isInfra(fromDev.type));
     };
 
     // Calculate distance-based duration for stable animation on long cables
@@ -4872,51 +4872,39 @@ export function NetworkTopology({
       >
         {/* Selection glow effect */}
         {isSelected && (
-          device.type === 'firewall' ? (
-            <path
-              d={`M 6 -4 L ${deviceWidth - 6} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight - 11} L ${deviceWidth / 2} ${deviceHeight + 4} L -4 ${deviceHeight - 11} L -4 6 Q -4 -4 6 -4 Z`}
-              fill="none"
-              stroke="#06b6d4"
-              strokeWidth="3"
-              opacity="0.5"
-            />
-          ) : device.type === 'router' ? (
-            <path
-              d={`M ${16} -4 L ${deviceWidth - 16} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 16 L ${deviceWidth + 4} ${deviceHeight + 4} L -4 ${deviceHeight + 4} L -4 16 Q -4 -4 16 -4`}
-              fill="none"
-              stroke="#06b6d4"
-              strokeWidth="3"
-              opacity="0.5"
-            />
-          ) : device.type === 'iot' ? (
-            <path
-              d={`M -4 -4 L ${deviceWidth + 4 - 10} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight + 4} L 6 ${deviceHeight + 4} Q -4 ${deviceHeight + 4} -4 ${deviceHeight + 4 - 10} L -4 -4 Z`}
-              fill="none"
-              stroke="#06b6d4"
-              strokeWidth="3"
-              opacity="0.5"
-            />
-          ) : isSwitchDeviceType(device.type) ? (
-            <path
-              d={`M -4 -4 L ${deviceWidth + 4} -4 L ${deviceWidth + 4} ${deviceHeight + 4 - 10} Q ${deviceWidth + 4} ${deviceHeight + 4} ${deviceWidth + 4 - 10} ${deviceHeight + 4} L 6 ${deviceHeight + 4} Q -4 ${deviceHeight + 4} -4 ${deviceHeight + 4 - 10} L -4 -4 Z`}
-              fill="none"
-              stroke="#06b6d4"
-              strokeWidth="3"
-              opacity="0.5"
-            />
-          ) : (
-            <rect
-              x="-4"
-              y="-4"
-              width={deviceWidth + 8}
-              height={deviceHeight + 8}
-              rx={10}
-              fill="none"
-              stroke="#06b6d4"
-              strokeWidth="3"
-              opacity="0.5"
-            />
-          )
+          <>
+            <defs>
+              <filter id="selectionGlowFilter" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#f97316" floodOpacity="0.50" />
+              </filter>
+            </defs>
+            {device.type === 'firewall' ? (
+              <>
+                <path d={`M 6 -4 L ${deviceWidth - 6} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight - 11} L ${deviceWidth / 2} ${deviceHeight + 4} L -4 ${deviceHeight - 11} L -4 6 Q -4 -4 6 -4 Z`} fill="none" stroke="#f97316" strokeWidth="4" opacity="0.5" filter="url(#selectionGlowFilter)" className="selection-glow" />
+                <path d={`M 6 -4 L ${deviceWidth - 6} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight - 11} L ${deviceWidth / 2} ${deviceHeight + 4} L -4 ${deviceHeight - 11} L -4 6 Q -4 -4 6 -4 Z`} fill="none" stroke="#f97316" strokeWidth="2" opacity="0.35" className="selection-glow-outer" />
+              </>
+            ) : device.type === 'router' ? (
+              <>
+                <path d={`M ${16} -4 L ${deviceWidth - 16} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 16 L ${deviceWidth + 4} ${deviceHeight + 4} L -4 ${deviceHeight + 4} L -4 16 Q -4 -4 16 -4`} fill="none" stroke="#f97316" strokeWidth="4" opacity="0.5" filter="url(#selectionGlowFilter)" className="selection-glow" />
+                <path d={`M ${16} -4 L ${deviceWidth - 16} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 16 L ${deviceWidth + 4} ${deviceHeight + 4} L -4 ${deviceHeight + 4} L -4 16 Q -4 -4 16 -4`} fill="none" stroke="#f97316" strokeWidth="2" opacity="0.35" className="selection-glow-outer" />
+              </>
+            ) : device.type === 'iot' ? (
+              <>
+                <path d={`M -4 -4 L ${deviceWidth + 4 - 10} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight + 4} L 6 ${deviceHeight + 4} Q -4 ${deviceHeight + 4} -4 ${deviceHeight + 4 - 10} L -4 -4 Z`} fill="none" stroke="#f97316" strokeWidth="4" opacity="0.5" filter="url(#selectionGlowFilter)" className="selection-glow" />
+                <path d={`M -4 -4 L ${deviceWidth + 4 - 10} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight + 4} L 6 ${deviceHeight + 4} Q -4 ${deviceHeight + 4} -4 ${deviceHeight + 4 - 10} L -4 -4 Z`} fill="none" stroke="#f97316" strokeWidth="2" opacity="0.35" className="selection-glow-outer" />
+              </>
+            ) : isSwitchDeviceType(device.type) ? (
+              <>
+                <path d={`M -4 -4 L ${deviceWidth + 4} -4 L ${deviceWidth + 4} ${deviceHeight + 4 - 10} Q ${deviceWidth + 4} ${deviceHeight + 4} ${deviceWidth + 4 - 10} ${deviceHeight + 4} L 6 ${deviceHeight + 4} Q -4 ${deviceHeight + 4} -4 ${deviceHeight + 4 - 10} L -4 -4 Z`} fill="none" stroke="#f97316" strokeWidth="4" opacity="0.5" filter="url(#selectionGlowFilter)" className="selection-glow" />
+                <path d={`M -4 -4 L ${deviceWidth + 4} -4 L ${deviceWidth + 4} ${deviceHeight + 4 - 10} Q ${deviceWidth + 4} ${deviceHeight + 4} ${deviceWidth + 4 - 10} ${deviceHeight + 4} L 6 ${deviceHeight + 4} Q -4 ${deviceHeight + 4} -4 ${deviceHeight + 4 - 10} L -4 -4 Z`} fill="none" stroke="#f97316" strokeWidth="2" opacity="0.35" className="selection-glow-outer" />
+              </>
+            ) : (
+              <>
+                <rect x="-4" y="-4" width={deviceWidth + 8} height={deviceHeight + 8} rx={10} fill="none" stroke="#f97316" strokeWidth="4" opacity="0.5" filter="url(#selectionGlowFilter)" className="selection-glow" />
+                <rect x="-4" y="-4" width={deviceWidth + 8} height={deviceHeight + 8} rx={10} fill="none" stroke="#f97316" strokeWidth="2" opacity="0.35" className="selection-glow-outer" />
+              </>
+            )}
+          </>
         )}
 
         {device.type === 'iot' && iotGlowColor && (
@@ -4942,8 +4930,8 @@ export function NetworkTopology({
             <path
               d={`M 10 0 L ${deviceWidth - 10} 0 Q ${deviceWidth} 0 ${deviceWidth} 10 L ${deviceWidth} ${deviceHeight - 15} L ${deviceWidth / 2} ${deviceHeight} L 0 ${deviceHeight - 15} L 0 10 Q 0 0 10 0 Z`}
               fill={deviceFill}
-              stroke={isSelected ? '#06b6d4' : isDark ? '#ef4444' : '#cbd5e1'}
-              strokeWidth={isSelected ? 2.5 : 1.5}
+              stroke={isDark ? '#ef4444' : '#cbd5e1'}
+              strokeWidth={1.5}
               className={isDragging ? '' : 'transition-all duration-150'}
               filter="url(#deviceShadow)"
             />
@@ -4959,8 +4947,8 @@ export function NetworkTopology({
           <path
             d={`M ${20} 0 L ${deviceWidth - 20} 0 Q ${deviceWidth} 0 ${deviceWidth} 20 L ${deviceWidth} ${deviceHeight} L 0 ${deviceHeight} L 0 20 Q 0 0 20 0`}
             fill={deviceFill}
-            stroke={isSelected ? '#06b6d4' : isDark ? '#a855f7' : '#cbd5e1'}
-            strokeWidth={isSelected ? 2.5 : 1.5}
+            stroke={isDark ? '#a855f7' : '#cbd5e1'}
+            strokeWidth={1.5}
             className={isDragging ? '' : 'transition-all duration-150'}
             filter="url(#deviceShadow)"
           />
@@ -4968,8 +4956,8 @@ export function NetworkTopology({
           <path
             d={`M 0 0 L ${deviceWidth - 8} 0 Q ${deviceWidth} 0 ${deviceWidth} 8 L ${deviceWidth} ${deviceHeight} L 8 ${deviceHeight} Q 0 ${deviceHeight} 0 ${deviceHeight - 8} L 0 0 Z`}
             fill={deviceFill}
-            stroke={isSelected ? '#06b6d4' : isDark ? '#f97316' : '#cbd5e1'}
-            strokeWidth={isSelected ? 2.5 : 1.5}
+            stroke={isDark ? '#f97316' : '#cbd5e1'}
+            strokeWidth={1.5}
             className={isDragging ? '' : 'transition-all duration-150'}
             filter="url(#deviceShadow)"
           />
@@ -4977,8 +4965,8 @@ export function NetworkTopology({
           <path
             d={`M 0 0 L ${deviceWidth} 0 L ${deviceWidth} ${deviceHeight - 8} Q ${deviceWidth} ${deviceHeight} ${deviceWidth - 8} ${deviceHeight} L 8 ${deviceHeight} Q 0 ${deviceHeight} 0 ${deviceHeight - 8} L 0 0 Z`}
             fill={deviceFill}
-            stroke={isSelected ? '#06b6d4' : isDark ? '#22c55e' : '#cbd5e1'}
-            strokeWidth={isSelected ? 2.5 : 1.5}
+            stroke={isDark ? '#22c55e' : '#cbd5e1'}
+            strokeWidth={1.5}
             className={isDragging ? '' : 'transition-all duration-150'}
             filter="url(#deviceShadow)"
           />
@@ -4988,10 +4976,10 @@ export function NetworkTopology({
             height={deviceHeight}
             rx={8}
             fill={deviceFill}
-            stroke={isSelected ? '#06b6d4' : isDark
+            stroke={isDark
               ? (device.type === 'pc' ? '#3b82f6' : device.type === 'iot' ? '#f97316' : device.type === 'firewall' ? '#ef4444' : isSwitchDeviceType(device.type) ? '#22c55e' : '#a855f7')
               : '#cbd5e1'}
-            strokeWidth={isSelected ? 2.5 : 1.5}
+            strokeWidth={1.5}
             className={isDragging ? '' : 'transition-all duration-150'}
             filter="url(#deviceShadow)"
           />
@@ -5499,10 +5487,10 @@ export function NetworkTopology({
         <text
           x={deviceWidth / 2}
           y={58}
-          fill={isDark ? '#f1f5f9' : '#1e293b'}
+          fill={isSelected ? '#f97316' : isDark ? '#f1f5f9' : '#1e293b'}
           fontSize="10"
           textAnchor="middle"
-          fontWeight="bold"
+          fontWeight={isSelected ? '800' : 'bold'}
           className="select-none pointer-events-none"
         >
           {device.name}

@@ -276,6 +276,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                     {t.licenseInfo}
                   </a>
                 </div>
+                <img src="/app.png" alt="Logo" width="64" height="64" className="w-16 h-16 object-contain" />
                 <div className="text-xs text-slate-500">Version: {version}</div>
               </div>
             ) : activeTab === 'contact' ? (

@@ -46,7 +46,34 @@
 }
 
 .deviceGroup.selected {
-    filter: drop-shadow(0 2px 8px rgba(0, 102, 255, 0.3));
+    filter: drop-shadow(0 2px 8px rgba(249, 115, 22, 0.3));
+}
+
+/* Selection glow animation for stable highlight */
+@keyframes selectionGlow {
+    0%, 100% {
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+@keyframes selectionGlowOuter {
+    0%, 100% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 0.25;
+    }
+}
+
+.selection-glow {
+    animation: selectionGlow 2s ease-in-out infinite;
+}
+
+.selection-glow-outer {
+    animation: selectionGlowOuter 2s ease-in-out infinite;
 }
 
 /* Grid background */
