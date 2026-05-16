@@ -470,17 +470,28 @@ export default function Home() {
     handlePCPanelNavigate(program, activeDeviceId);
   }, [handlePCPanelNavigate, activeDeviceId]);
 
+  const closeEscLikeWindows = useCallback(() => {
+    setShowMobileMenu(false);
+    setConfirmDialog(null);
+    setSaveDialog(null);
+    setShowPCPanel(false);
+    setShowRouterPanel(false);
+    setShowUnifiedDeviceModal(false);
+    setShowAboutModal(false);
+    setShowProjectPicker(false);
+    setShowOnboarding(false);
+    setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null);
+    window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'escape' } }));
+  }, []);
+
   useEffect(() => {
     const handleMobileBack = () => {
+      closeEscLikeWindows();
       closeAllPanels();
-      // Also clear focused overlay if any
-      if (focusedOverlay !== 'packet') {
-        // Maybe nothing here, or some other clear state
-      }
     };
     window.addEventListener('mobile-back-pressed', handleMobileBack as EventListener);
     return () => window.removeEventListener('mobile-back-pressed', handleMobileBack as EventListener);
-  }, [closeAllPanels, focusedOverlay]);
+  }, [closeAllPanels, closeEscLikeWindows]);
 
   useEffect(() => {
     setHasHydrated(true);
@@ -3446,17 +3457,7 @@ ${state.bannerMOTD}
       }
 
       if (e.key === 'Escape') {
-        setShowMobileMenu(false);
-        setConfirmDialog(null);
-        setSaveDialog(null);
-        setShowPCPanel(false);
-        setShowRouterPanel(false);
-        setShowUnifiedDeviceModal(false);
-        setShowAboutModal(false);
-        setShowProjectPicker(false);
-        setShowOnboarding(false);
-        setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null);
-        window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'escape' } }));
+        closeEscLikeWindows();
       }
 
       // Ctrl Shortcuts
@@ -3670,7 +3671,7 @@ ${state.bannerMOTD}
       window.removeEventListener('stp-recalculation-needed', handleSTPRecalculation);
       window.removeEventListener('beforeprint', handleBeforePrint);
     };
-  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel, showProjectPicker, handleSaveProject, handleNewProject, handleUndo, handleRedo, tabs, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowProjectPicker, setActiveTab, activeTab, topologyDevices, topologyConnections, deviceStates, setDeviceStates, handleDeviceDoubleClick, handleRefreshNetwork]);
+  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel, showProjectPicker, handleSaveProject, handleNewProject, handleUndo, handleRedo, tabs, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowProjectPicker, setActiveTab, activeTab, topologyDevices, topologyConnections, deviceStates, setDeviceStates, handleDeviceDoubleClick, handleRefreshNetwork, closeEscLikeWindows]);
 
   // Load project from JSON file
   const handleLoadProject = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
