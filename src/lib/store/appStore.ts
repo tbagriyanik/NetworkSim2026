@@ -15,6 +15,50 @@ export interface EnvironmentSettings {
     light: number; // Percentage 0-100
 }
 
+const VALID_DEVICE_TYPES = new Set(['pc', 'iot', 'switchL2', 'switchL3', 'router', 'firewall']);
+const VALID_NOTE_FONTS = new Set(['Arial', 'Courier', 'Georgia', 'Times New Roman', 'Verdana', 'monospace', 'sans-serif', 'serif']);
+const VALID_NOTE_SIZES = new Set([10, 12, 16, 20]);
+const VALID_NOTE_OPACITIES = new Set([0.25, 0.5, 0.75, 1]);
+
+function isValidCanvasDevice(value: unknown): value is CanvasDevice {
+    if (!value || typeof value !== 'object') return false;
+    const d = value as Record<string, unknown>;
+    return typeof d.id === 'string' &&
+        VALID_DEVICE_TYPES.has(d.type as string) &&
+        typeof d.name === 'string' &&
+        typeof d.x === 'number' &&
+        typeof d.y === 'number' &&
+        typeof d.ip === 'string' &&
+        Array.isArray(d.ports);
+}
+
+function isValidCanvasConnection(value: unknown): value is CanvasConnection {
+    if (!value || typeof value !== 'object') return false;
+    const c = value as Record<string, unknown>;
+    return typeof c.id === 'string' &&
+        typeof c.sourceDeviceId === 'string' &&
+        typeof c.sourcePort === 'string' &&
+        typeof c.targetDeviceId === 'string' &&
+        typeof c.targetPort === 'string' &&
+        typeof c.cableType === 'string' &&
+        typeof c.active === 'boolean';
+}
+
+function isValidCanvasNote(value: unknown): value is CanvasNote {
+    if (!value || typeof value !== 'object') return false;
+    const n = value as Record<string, unknown>;
+    return typeof n.id === 'string' &&
+        typeof n.text === 'string' &&
+        typeof n.x === 'number' &&
+        typeof n.y === 'number' &&
+        typeof n.width === 'number' &&
+        typeof n.height === 'number' &&
+        typeof n.color === 'string' &&
+        (n.font === undefined || typeof n.font === 'string') &&
+        (n.fontSize === undefined || VALID_NOTE_SIZES.has(n.fontSize as number)) &&
+        (n.opacity === undefined || VALID_NOTE_OPACITIES.has(n.opacity as number));
+}
+
 // Types for the store
 interface TopologyState {
     devices: CanvasDevice[];
@@ -113,70 +157,85 @@ const STORE_KEY = 'network-simulator-storage';
 const STORE_VERSION = 3;
 const STORE_BACKUP_KEY = `${STORE_KEY}-backup`;
 
-function isValidTopologyState(value: any): value is TopologyState {
-    return !!value &&
-        Array.isArray(value.devices) &&
+function isValidTopologyState(value: Record<string, unknown> | undefined): boolean {
+    if (!value) return false;
+    return Array.isArray(value.devices) &&
         Array.isArray(value.connections) &&
         Array.isArray(value.notes) &&
         typeof value.zoom === 'number' &&
         !!value.pan &&
-        typeof value.pan.x === 'number' &&
-        typeof value.pan.y === 'number' &&
+        typeof (value.pan as Record<string, unknown>)?.x === 'number' &&
+        typeof (value.pan as Record<string, unknown>)?.y === 'number' &&
         !!value.environment &&
-        typeof value.environment.background === 'string' &&
-        typeof value.environment.temperature === 'number' &&
-        typeof value.environment.humidity === 'number' &&
-        typeof value.environment.light === 'number';
+        typeof (value.environment as Record<string, unknown>)?.background === 'string' &&
+        typeof (value.environment as Record<string, unknown>)?.temperature === 'number' &&
+        typeof (value.environment as Record<string, unknown>)?.humidity === 'number' &&
+        typeof (value.environment as Record<string, unknown>)?.light === 'number';
 }
 
-function isValidDeviceStates(value: any): value is DeviceStates {
-    return !!value &&
-        typeof value.switchStates === 'object' &&
+function isValidDeviceStates(value: Record<string, unknown> | undefined): boolean {
+    if (!value) return false;
+    return typeof value.switchStates === 'object' &&
         !Array.isArray(value.switchStates) &&
         typeof value.pcOutputs === 'object' &&
         !Array.isArray(value.pcOutputs);
 }
 
-function sanitizePersistedState(input: any): Partial<AppState> {
+function sanitizePersistedState(input: Record<string, unknown> | undefined): Partial<AppState> {
     const safe: Partial<AppState> = {};
 
-    if (isValidTopologyState(input?.topology)) {
-        safe.topology = input.topology;
+    if (isValidTopologyState(input?.topology as Record<string, unknown> | undefined)) {
+        const top = input!.topology as Record<string, unknown>;
+        safe.topology = {
+            devices: (top.devices as unknown[]).filter(isValidCanvasDevice),
+            connections: (top.connections as unknown[]).filter(isValidCanvasConnection),
+            notes: (top.notes as unknown[]).filter(isValidCanvasNote),
+            selectedDeviceId: typeof top.selectedDeviceId === 'string' ? top.selectedDeviceId as string : null,
+            zoom: typeof top.zoom === 'number' ? top.zoom as number : 1,
+            pan: { x: Number((top.pan as Record<string, unknown>)?.x ?? 0), y: Number((top.pan as Record<string, unknown>)?.y ?? 0) },
+            environment: {
+                background: (top.environment as Record<string, unknown>)?.background as EnvironmentBackground || 'none',
+                temperature: Number((top.environment as Record<string, unknown>)?.temperature ?? 22),
+                humidity: Number((top.environment as Record<string, unknown>)?.humidity ?? 50),
+                light: Number((top.environment as Record<string, unknown>)?.light ?? 70),
+            },
+        };
     } else {
-        // Preserve existing topology data but ensure environment is set
-        const topology = input?.topology || {};
+        const topology = input?.topology as Record<string, unknown> | undefined || {};
         safe.topology = {
             ...initialTopologyState,
-            ...topology,
+            devices: Array.isArray(topology.devices) ? (topology.devices as unknown[]).filter(isValidCanvasDevice) : [],
+            connections: Array.isArray(topology.connections) ? (topology.connections as unknown[]).filter(isValidCanvasConnection) : [],
+            notes: Array.isArray(topology.notes) ? (topology.notes as unknown[]).filter(isValidCanvasNote) : [],
             environment: {
                 ...initialEnvironmentSettings,
-                ...(topology.environment || {})
+                ...((topology.environment as Record<string, unknown>) || {})
             }
         };
     }
 
-    if (isValidDeviceStates(input?.deviceStates)) {
-        safe.deviceStates = input.deviceStates;
+    if (isValidDeviceStates(input?.deviceStates as Record<string, unknown> | undefined)) {
+        safe.deviceStates = input!.deviceStates as DeviceStates;
     } else {
         safe.deviceStates = initialDeviceStates;
     }
 
     if (input?.activeTab === 'topology' || input?.activeTab === 'cmd' || input?.activeTab === 'terminal' || input?.activeTab === 'tasks') {
-        safe.activeTab = input.activeTab;
+        safe.activeTab = input.activeTab as 'topology' | 'cmd' | 'terminal' | 'tasks';
     } else {
         safe.activeTab = 'topology';
     }
 
     if (input?.activePanel === 'port' || input?.activePanel === 'vlan' || input?.activePanel === 'security' || input?.activePanel === 'config' || input?.activePanel === null) {
-        safe.activePanel = input.activePanel;
+        safe.activePanel = input.activePanel as 'port' | 'vlan' | 'security' | 'config' | null;
     } else {
         safe.activePanel = null;
     }
 
-    safe.sidebarOpen = typeof input?.sidebarOpen === 'boolean' ? input.sidebarOpen : true;
+    safe.sidebarOpen = typeof input?.sidebarOpen === 'boolean' ? input.sidebarOpen as boolean : true;
 
     if (input?.graphicsQuality === 'high' || input?.graphicsQuality === 'low') {
-        safe.graphicsQuality = input.graphicsQuality;
+        safe.graphicsQuality = input.graphicsQuality as 'high' | 'low';
     } else {
         safe.graphicsQuality = 'high';
     }
@@ -184,9 +243,9 @@ function sanitizePersistedState(input: any): Partial<AppState> {
     return safe;
 }
 
-export function migrateAndValidatePersistedState(persistedState: any, persistedVersion?: number): Partial<AppState> {
-    const stateCandidate = persistedState?.state ?? persistedState ?? {};
-    const sanitized = sanitizePersistedState(stateCandidate);
+export function migrateAndValidatePersistedState(persistedState: unknown, persistedVersion?: number): Partial<AppState> {
+    const stateCandidate = (persistedState as Record<string, unknown>)?.state ?? persistedState ?? {};
+    const sanitized = sanitizePersistedState(stateCandidate as Record<string, unknown>);
 
     // Reset legacy saved graphics preference so new default opens in high quality.
     if (typeof persistedVersion === 'number' && persistedVersion < STORE_VERSION) {

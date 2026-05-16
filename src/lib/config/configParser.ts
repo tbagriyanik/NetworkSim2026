@@ -109,101 +109,117 @@ export const deserializeNetworkState = (jsonString: string): ParseResult => {
         }
 
         // Validate and clean devices
-        const devices: DeviceConfig[] = (networkData.devices as Record<string, unknown>[]).map((device, index) => {
+        const rawDevices = networkData.devices as Record<string, unknown>[];
+        const devices: DeviceConfig[] = rawDevices.map((device, index) => {
+            const id = typeof device.id === 'string' ? device.id : `device-${Date.now()}-${index}`;
+            const rawType = String(device.type ?? 'pc');
+            const type = VALID_DEVICE_TYPES.has(rawType) ? rawType : 'pc';
+            const name = typeof device.name === 'string' ? device.name : `${type}-${index + 1}`;
+
             if (!device.id) {
                 warnings.push(`Device at index ${index} missing ID, generating new ID`);
-                device.id = `device-${Date.now()}-${index}`;
             }
-
             if (!device.type) {
-                warnings.push(`Device "${device.id}" missing type, defaulting to "pc"`);
-                device.type = 'pc';
+                warnings.push(`Device "${id}" missing type, defaulting to "pc"`);
             } else if (!VALID_DEVICE_TYPES.has(String(device.type))) {
-                warnings.push(`Device "${device.id}" has unknown type "${String(device.type)}", defaulting to "pc"`);
-                device.type = 'pc';
+                warnings.push(`Device "${id}" has unknown type "${String(device.type)}", defaulting to "pc"`);
             }
-
             if (!device.name) {
-                device.name = `${device.type}-${index + 1}`;
+                warnings.push(`Device "${id}" missing name, using default`);
             }
 
-            if (!device.position) {
-                warnings.push(`Device "${device.name}" missing position, using default`);
-                device.position = { x: 100 + index * 50, y: 100 };
+            const rawPos = device.position as Record<string, unknown> | undefined;
+            if (!rawPos || typeof rawPos.x !== 'number' || typeof rawPos.y !== 'number') {
+                warnings.push(`Device "${id}" missing or invalid position, using default`);
             }
+            const posX = rawPos && typeof rawPos.x === 'number' ? rawPos.x : 100 + index * 50;
+            const posY = rawPos && typeof rawPos.y === 'number' ? rawPos.y : 100;
 
             const deviceMac = device.macAddress;
             if (deviceMac !== undefined && !isValidMACAddress(deviceMac)) {
-                warnings.push(`Device "${device.id}" has invalid MAC address "${String(deviceMac)}", removing`);
-                delete device.macAddress;
+                warnings.push(`Device "${id}" has invalid MAC address "${String(deviceMac)}", removing`);
             }
 
-            // Validate IPv4 address format
             const deviceIp = device.ip;
             if (deviceIp !== undefined && !isValidIPv4(deviceIp)) {
-                warnings.push(`Device "${device.id}" has invalid IPv4 address "${String(deviceIp)}", resetting`);
-                device.ip = '';
+                warnings.push(`Device "${id}" has invalid IPv4 address "${String(deviceIp)}", resetting`);
             }
 
-            // Ensure required fields
+            // Validate ports array
+            const rawPorts = device.ports;
+            const ports = Array.isArray(rawPorts)
+                ? rawPorts.filter((p: unknown) => p && typeof p === 'object' && typeof (p as Record<string, unknown>).id === 'string')
+                : undefined;
+
+            // Validate network object
+            const rawNetwork = device.network as Record<string, unknown> | undefined;
+            const network = {
+                ipv4: rawNetwork?.ipv4 && typeof rawNetwork.ipv4 === 'string' ? rawNetwork.ipv4 as string : undefined,
+                ipv6: rawNetwork?.ipv6 && typeof rawNetwork.ipv6 === 'string' ? rawNetwork.ipv6 as string : undefined,
+                subnet: rawNetwork?.subnet && typeof rawNetwork.subnet === 'string' ? rawNetwork.subnet as string : undefined,
+                gateway: rawNetwork?.gateway && typeof rawNetwork.gateway === 'string' ? rawNetwork.gateway as string : undefined,
+                dns: Array.isArray(rawNetwork?.dns) ? rawNetwork!.dns as string[] : undefined,
+                dhcp: rawNetwork?.dhcp && typeof rawNetwork.dhcp === 'object' ? rawNetwork.dhcp as DeviceConfig['network']['dhcp'] : undefined,
+            };
+
             return {
-                id: String(device.id),
-                type: String(device.type) as DeviceType,
-                name: String(device.name),
-                position: {
-                    x: Number((device.position as Record<string, unknown>).x) || 0,
-                    y: Number((device.position as Record<string, unknown>).y) || 0,
-                },
-                status: String(device.status || 'offline'),
-                network: (device.network as Record<string, unknown>) || {},
-                macAddress: device.macAddress as string | undefined,
-                ports: device.ports as any[],
+                id,
+                type: type as DeviceType,
+                name,
+                position: { x: posX, y: posY },
+                status: typeof device.status === 'string' ? device.status : 'offline',
+                network,
+                macAddress: deviceMac !== undefined && isValidMACAddress(deviceMac) ? String(deviceMac) : undefined,
+                ports,
                 isSelected: false,
                 isHighlighted: false,
             } as DeviceConfig;
         });
 
         // Validate and clean connections
-        const connections: Connection[] = (networkData.connections as Record<string, unknown>[]).map((conn, index) => {
-            if (!conn.id) {
-                conn.id = `conn-${Date.now()}-${index}`;
-            }
+        const rawConnections = networkData.connections as Record<string, unknown>[];
+        const validTypes: ConnectionType[] = ['ethernet', 'wireless', 'serial'];
+        const connections: Connection[] = rawConnections
+            .map((conn, index): Connection | null => {
+                const id = typeof conn.id === 'string' ? conn.id : `conn-${Date.now()}-${index}`;
+                const sourceDeviceId = String(conn.sourceDeviceId || '');
+                const targetDeviceId = String(conn.targetDeviceId || '');
+                const connType = String(conn.type || 'ethernet') as ConnectionType;
 
-            // Validate connection references valid devices
-            const sourceExists = devices.some(d => d.id === conn.sourceDeviceId);
-            const targetExists = devices.some(d => d.id === conn.targetDeviceId);
+                // Validate connection type
+                if (!validTypes.includes(connType)) {
+                    warnings.push(`Connection ${id} has unknown type "${connType}", defaulting to "ethernet"`);
+                }
 
-            if (!sourceExists) {
-                warnings.push(`Connection ${index} references non-existent source device "${conn.sourceDeviceId}"`);
-            }
+                // Validate connection references valid devices
+                const sourceExists = devices.some(d => d.id === sourceDeviceId);
+                const targetExists = devices.some(d => d.id === targetDeviceId);
 
-            if (!targetExists) {
-                warnings.push(`Connection ${index} references non-existent target device "${conn.targetDeviceId}"`);
-            }
+                if (!sourceExists) {
+                    warnings.push(`Connection ${index} references non-existent source device "${sourceDeviceId}"`);
+                }
+                if (!targetExists) {
+                    warnings.push(`Connection ${index} references non-existent target device "${targetDeviceId}"`);
+                }
 
-            // Validate connection type
-            const validTypes: ConnectionType[] = ['ethernet', 'wireless', 'serial'];
-            const connType = String(conn.type || 'ethernet') as ConnectionType;
-            if (!validTypes.includes(connType)) {
-                warnings.push(`Connection ${conn.id} has unknown type "${connType}", defaulting to "ethernet"`);
-            }
-
-            return {
-                id: String(conn.id),
-                sourceDeviceId: String(conn.sourceDeviceId || ''),
-                sourcePortId: conn.sourcePortId !== undefined ? String(conn.sourcePortId) : undefined,
-                targetDeviceId: String(conn.targetDeviceId || ''),
-                targetPortId: conn.targetPortId !== undefined ? String(conn.targetPortId) : undefined,
-                type: validTypes.includes(connType) ? connType : 'ethernet',
-                status: conn.status === 'active' || conn.status === 'inactive' ? conn.status : 'inactive',
-                createdAt: conn.createdAt ? new Date(String(conn.createdAt)) : new Date(),
-            } as Connection;
-        }).filter((conn: Connection) => {
-            // Remove orphaned connections
-            const sourceExists = devices.some(d => d.id === conn.sourceDeviceId);
-            const targetExists = devices.some(d => d.id === conn.targetDeviceId);
-            return sourceExists && targetExists;
-        });
+                return {
+                    id,
+                    sourceDeviceId,
+                    sourcePortId: typeof conn.sourcePortId === 'string' ? conn.sourcePortId : undefined,
+                    targetDeviceId,
+                    targetPortId: typeof conn.targetPortId === 'string' ? conn.targetPortId : undefined,
+                    type: validTypes.includes(connType) ? connType : 'ethernet',
+                    status: conn.status === 'active' || conn.status === 'inactive' ? conn.status : 'inactive',
+                    createdAt: typeof conn.createdAt === 'string' ? new Date(conn.createdAt) : new Date(),
+                } as Connection;
+            })
+            .filter((conn): conn is Connection => {
+                if (!conn) return false;
+                const sourceExists = devices.some(d => d.id === conn.sourceDeviceId);
+                const targetExists = devices.some(d => d.id === conn.targetDeviceId);
+                // Remove orphaned connections (only warn once, already warned above)
+                return sourceExists && targetExists;
+            });
 
         // Reconstruct metadata
         const metadata = (networkData.metadata as Record<string, unknown>) || {};

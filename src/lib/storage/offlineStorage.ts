@@ -187,6 +187,7 @@ class OfflineStorage {
       
       return { used, available, total };
     } catch (error) {
+      errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'getStorageInfo', error: String(error) }));
       return { used: 0, available: 0, total: 0 };
     }
   }
@@ -198,6 +199,7 @@ class OfflineStorage {
       localStorage.removeItem(test);
       return true;
     } catch (error) {
+      errorHandler.logError(STORAGE_ERRORS.SAVE_FAILED({ operation: 'isAvailable', error: String(error) }));
       return false;
     }
   }
