@@ -8,6 +8,7 @@ import { isValidMAC, normalizeMAC } from '../utils';
 import { ensureDeviceStatesMap } from './networkUtils';
 import { encryptMd5Password, decryptType7Password } from './crypto';
 import { IOS_ERRORS, iosModeError } from './core/iosErrors';
+import type { CanvasDevice, CanvasConnection, CanvasPort } from '@/components/network/networkTopology.types';
 
 /**
  * Generate CLI prompt string based on current switch state
@@ -54,8 +55,8 @@ import { firewallHandlers } from './core/firewallCommands';
 // --- Command handler types & context ---
 export interface CommandContext {
   language: 'tr' | 'en';
-  devices?: any[];
-  connections?: any[];
+  devices?: CanvasDevice[];
+  connections?: CanvasConnection[];
   deviceStates: Map<string, SwitchState>;
   sourceDeviceId?: string;
 }
@@ -765,7 +766,7 @@ function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string):
   if (suggestions.length === 0) {
     const patternSuggestions: string[] = [];
     for (const [name, pattern] of Object.entries(commandPatterns)) {
-      if (!pattern.modes.includes(mode as any)) continue;
+      if (!pattern.modes.includes(mode)) continue;
       if (!name.startsWith(lower + ' ') && name !== lower) continue;
       const remaining = name.substring(lower.length).trim();
       if (!remaining) continue;
@@ -801,8 +802,8 @@ export function executeCommand(
   state: SwitchState,
   input: string,
   language: 'tr' | 'en' = 'tr',
-  devices?: any[],
-  connections?: any[],
+  devices?: CanvasDevice[],
+  connections?: CanvasConnection[],
   deviceStates?: Map<string, SwitchState>,
   sourceDeviceId?: string
 ): CommandResult {
@@ -974,7 +975,7 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
   const reportedGiCount = isFirewall
     ? 2
     : (isRouter || isL3Switch) ? 4 : 2;
-  const wlanCount = Object.values(state.ports || {}).filter((p: any) => (p?.id || '').startsWith('wlan')).length;
+  const wlanCount = Object.values(state.ports || {}).filter(p => (p?.id || '').startsWith('wlan')).length;
 
   let ifaceSummary = '';
   if (reportedFeCount > 0) {
@@ -986,9 +987,6 @@ function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): Comman
   if (wlanCount > 0) {
     ifaceSummary += `\n${wlanCount} 802.11 Wireless interface(s)`;
   }
-
-  // Device type detection for realistic boot messages
-  const isL2Switch = !isRouter && !isL3Switch;
 
   // Generate realistic boot messages based on device type
   let bootMessages: string;
@@ -1176,7 +1174,7 @@ function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): Command
   const reportedGiCount = isFirewall
     ? 2
     : (isRouter || isL3Switch) ? 4 : 2;
-  const wlanCount = Object.values(state.ports || {}).filter((p: any) => (p?.id || '').startsWith('wlan')).length;
+  const wlanCount = Object.values(state.ports || {}).filter(p => (p?.id || '').startsWith('wlan')).length;
 
   let ifaceSummary = '';
   if (reportedFeCount > 0) {
@@ -1188,9 +1186,6 @@ function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): Command
   if (wlanCount > 0) {
     ifaceSummary += `\n${wlanCount} 802.11 Wireless interface(s)`;
   }
-
-  // Device type detection for realistic boot messages
-  const isL2Switch = !isRouter && !isL3Switch;
 
   // Generate realistic boot messages based on device type
   let bootMessages: string;
@@ -1469,9 +1464,9 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
     const useLocalLogin = !!state.security?.vtyLines?.loginLocal;
     const configuredPassword = state.security.vtyLines.password || '';
     const rawUsers = state.security?.users;
-    const configuredUsers: any[] = Array.isArray(rawUsers) ? rawUsers : Object.values(rawUsers || {}) as any[];
+    const configuredUsers: { username: string; password: string; privilege: number }[] = Array.isArray(rawUsers) ? rawUsers : Object.values(rawUsers || {});
     const sshUsername = state.sshLastUser || '';
-    const matchedUser: any | undefined = configuredUsers.find((user: any) => (user?.username || '').toLowerCase() === sshUsername.toLowerCase());
+    const matchedUser = configuredUsers.find(user => user.username.toLowerCase() === sshUsername.toLowerCase());
     const validPassword = useLocalLogin
       ? !!matchedUser && String(matchedUser.password || '') === password
       : password === configuredPassword;

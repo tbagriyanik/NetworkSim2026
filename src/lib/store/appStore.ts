@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { CanvasDevice, CanvasConnection, CanvasNote } from '@/components/network/networkTopology.types';
 import { SwitchState } from '@/lib/network/types';
 import { createTabSpecificStorage, getTabSpecificKey } from './tabStorage';
+import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
 
 // Environment settings types
 export type EnvironmentBackground = 'none' | 'house' | 'twoStoryGarage' | 'greenhouse';
@@ -353,7 +354,8 @@ export const useAppStore = create<AppState>()(
             migrate: (persistedState: unknown, version: number) => {
                 try {
                     return migrateAndValidatePersistedState(persistedState, version) as AppState;
-                } catch {
+                } catch (e) {
+                    errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'migrate', version, error: String(e) }));
                     return {
                         ...initialState,
                         ...createActions(() => { }, () => initialState as AppState),
@@ -370,8 +372,8 @@ export const useAppStore = create<AppState>()(
                             localStorage.setItem(STORE_BACKUP_KEY, raw);
                         }
                         localStorage.removeItem(STORE_KEY);
-                    } catch {
-                        // noop
+                    } catch (e) {
+                        errorHandler.logError(STORAGE_ERRORS.SAVE_FAILED({ operation: 'onRehydrateStorage-backup', error: String(e) }));
                     }
                     return;
                 }
@@ -388,17 +390,17 @@ export const useAppStore = create<AppState>()(
                     };
                     localStorage.setItem(STORE_KEY, JSON.stringify(sanitizedPayload));
                     localStorage.setItem(STORE_BACKUP_KEY, JSON.stringify(sanitizedPayload));
-                } catch {
-                    // If we cannot parse persisted value, preserve raw payload and reset.
+                } catch (e) {
                     try {
                         const raw = localStorage.getItem(STORE_KEY);
                         if (raw) {
                             localStorage.setItem(STORE_BACKUP_KEY, raw);
                             localStorage.removeItem(STORE_KEY);
                         }
-                    } catch {
-                        // noop
+                    } catch (e2) {
+                        errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'onRehydrateStorage-reset', error: String(e2) }));
                     }
+                    errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'onRehydrateStorage', error: String(e) }));
                 }
             }
         }

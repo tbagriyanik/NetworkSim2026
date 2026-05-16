@@ -9,6 +9,8 @@ import type { TerminalOutput } from '@/components/network/Terminal';
 import type { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from '@/components/network/networkTopology.types';
 import type { SwitchState, CableInfo } from '@/lib/network/types';
 import type { Translations } from '@/contexts/LanguageContext';
+import type { RefreshNetworkReport } from '@/hooks/useRefreshReport';
+import type { ProjectState } from '@/hooks/useHistory';
 
 interface PCOutputLine {
   id: string;
@@ -54,9 +56,9 @@ interface ProjectPersistenceOptions {
   setShowPCPanel: (v: boolean) => void;
   setShowRouterPanel: (v: boolean) => void;
   setShowUnifiedDeviceModal: (v: boolean) => void;
-  setRefreshNetworkReport: (v: any) => void;
+  setRefreshNetworkReport: (v: RefreshNetworkReport | null) => void;
   setIsAppLoading: (v: boolean) => void;
-  resetHistory: (state: any) => void;
+  resetHistory: (state: ProjectState) => void;
   setTopologyKey: (fn: (prev: number) => number) => void;
   handleRefreshNetwork?: () => void;
 }
@@ -84,7 +86,7 @@ export function useProjectPersistence(options: ProjectPersistenceOptions) {
       const shouldKeepActiveDevice = options?.keepActiveDevice === true;
       const data = (projectData && typeof projectData === 'object') ? projectData as Record<string, unknown> : {};
       const topology = (data.topology && typeof data.topology === 'object') ? data.topology as Record<string, unknown> : {};
-      const safeDevices = Array.isArray(data.devices) ? data.devices : [];
+      const safeDevices: { id: string; state: SwitchState }[] = Array.isArray(data.devices) ? data.devices : [];
       const safeDeviceOutputs = Array.isArray(data.deviceOutputs) ? data.deviceOutputs : [];
       const safePcOutputs = Array.isArray(data.pcOutputs) ? data.pcOutputs : [];
       const safePcHistories = Array.isArray(data.pcHistories) ? data.pcHistories : [];
@@ -119,8 +121,9 @@ export function useProjectPersistence(options: ProjectPersistenceOptions) {
         const newDeviceOutputs = new Map<string, TerminalOutput[]>();
         safeDeviceOutputs.forEach((item: { id: string; outputs: TerminalOutput[] }) => {
           let outputs = item.outputs || [];
-          const stateItem = safeDevices.find((d: any) => d.id === item.id);
-          if (stateItem?.state?.bannerMOTD && !outputs.some(o => o.content?.includes(stateItem.state.bannerMOTD))) {
+          const stateItem = safeDevices.find(d => d.id === item.id);
+          const bannerMOTD = stateItem?.state?.bannerMOTD;
+          if (bannerMOTD && !outputs.some(o => o.content?.includes(bannerMOTD))) {
             outputs = [
               { id: 'banner-load-static', type: 'output', content: stateItem.state.bannerMOTD + '\n' },
               ...outputs
@@ -336,13 +339,13 @@ export function useProjectPersistence(options: ProjectPersistenceOptions) {
       const iotOutput = deviceOutputs.get(iotId);
       if (iotOutput) {
         const filteredOutput = iotOutput.filter(o => o.type !== 'password-prompt');
-        adjustedPcOutputs.set(iotId, filteredOutput as any);
+        adjustedPcOutputs.set(iotId, filteredOutput as PCOutputLine[]);
         adjustedDeviceOutputs.delete(iotId);
       }
     });
 
     const MAX_SAVED_OUTPUT_LINES = 100;
-    const trimOutputs = (outputs: any[]) => {
+    const trimOutputs = <T>(outputs: T[]): T[] => {
       if (outputs.length <= MAX_SAVED_OUTPUT_LINES) return outputs;
       return outputs.slice(-MAX_SAVED_OUTPUT_LINES);
     };

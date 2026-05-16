@@ -5,11 +5,29 @@
  * **Validates: Requirements 11.1, 11.2, 11.3**
  */
 
-import type { NetworkState, DeviceConfig, Connection } from '@/types/ui-ux';
+import type { NetworkState, DeviceConfig, Connection, DeviceType, ConnectionType } from '@/types/ui-ux';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+const VALID_DEVICE_TYPES = new Set(['pc', 'router', 'switch', 'switchL2', 'switchL3', 'iot', 'firewall', 'loadbalancer']);
+
+function isValidMACAddress(mac: unknown): boolean {
+    if (typeof mac !== 'string') return false;
+    const hex = mac.replace(/[^a-fA-F0-9]/g, '');
+    return hex.length === 12;
+}
+
+function isValidIPv4(ip: unknown): boolean {
+    if (typeof ip !== 'string') return false;
+    const parts = ip.split('.');
+    if (parts.length !== 4) return false;
+    return parts.every(part => {
+        const n = Number(part);
+        return Number.isInteger(n) && n >= 0 && n <= 255;
+    });
+}
 
 export interface ParsedConfig {
     version: string;
@@ -65,15 +83,14 @@ export const deserializeNetworkState = (jsonString: string): ParseResult => {
         const parsed = JSON.parse(jsonString);
 
         // Check if it's the wrapped format (with version and network)
-        let networkData: any;
+        let networkData: Record<string, unknown>;
         if (parsed.network && typeof parsed.network === 'object') {
-            networkData = parsed.network;
+            networkData = parsed.network as Record<string, unknown>;
             if (parsed.version) {
                 warnings.push(`Configuration version: ${parsed.version}`);
             }
         } else {
-            // Assume it's the raw network state
-            networkData = parsed;
+            networkData = parsed as Record<string, unknown>;
         }
 
         // Validate structure
@@ -92,7 +109,7 @@ export const deserializeNetworkState = (jsonString: string): ParseResult => {
         }
 
         // Validate and clean devices
-        const devices: DeviceConfig[] = networkData.devices.map((device: any, index: number) => {
+        const devices: DeviceConfig[] = (networkData.devices as Record<string, unknown>[]).map((device, index) => {
             if (!device.id) {
                 warnings.push(`Device at index ${index} missing ID, generating new ID`);
                 device.id = `device-${Date.now()}-${index}`;
@@ -100,6 +117,9 @@ export const deserializeNetworkState = (jsonString: string): ParseResult => {
 
             if (!device.type) {
                 warnings.push(`Device "${device.id}" missing type, defaulting to "pc"`);
+                device.type = 'pc';
+            } else if (!VALID_DEVICE_TYPES.has(String(device.type))) {
+                warnings.push(`Device "${device.id}" has unknown type "${String(device.type)}", defaulting to "pc"`);
                 device.type = 'pc';
             }
 
@@ -112,26 +132,39 @@ export const deserializeNetworkState = (jsonString: string): ParseResult => {
                 device.position = { x: 100 + index * 50, y: 100 };
             }
 
+            const deviceMac = device.macAddress;
+            if (deviceMac !== undefined && !isValidMACAddress(deviceMac)) {
+                warnings.push(`Device "${device.id}" has invalid MAC address "${String(deviceMac)}", removing`);
+                delete device.macAddress;
+            }
+
+            // Validate IPv4 address format
+            const deviceIp = device.ip;
+            if (deviceIp !== undefined && !isValidIPv4(deviceIp)) {
+                warnings.push(`Device "${device.id}" has invalid IPv4 address "${String(deviceIp)}", resetting`);
+                device.ip = '';
+            }
+
             // Ensure required fields
             return {
                 id: String(device.id),
-                type: device.type,
+                type: String(device.type) as DeviceType,
                 name: String(device.name),
                 position: {
-                    x: Number(device.position.x) || 0,
-                    y: Number(device.position.y) || 0,
+                    x: Number((device.position as Record<string, unknown>).x) || 0,
+                    y: Number((device.position as Record<string, unknown>).y) || 0,
                 },
-                status: device.status || 'offline',
-                network: device.network || {},
-                macAddress: device.macAddress,
-                ports: device.ports,
+                status: String(device.status || 'offline'),
+                network: (device.network as Record<string, unknown>) || {},
+                macAddress: device.macAddress as string | undefined,
+                ports: device.ports as any[],
                 isSelected: false,
                 isHighlighted: false,
-            };
+            } as DeviceConfig;
         });
 
         // Validate and clean connections
-        const connections: Connection[] = networkData.connections.map((conn: any, index: number) => {
+        const connections: Connection[] = (networkData.connections as Record<string, unknown>[]).map((conn, index) => {
             if (!conn.id) {
                 conn.id = `conn-${Date.now()}-${index}`;
             }
@@ -148,16 +181,23 @@ export const deserializeNetworkState = (jsonString: string): ParseResult => {
                 warnings.push(`Connection ${index} references non-existent target device "${conn.targetDeviceId}"`);
             }
 
+            // Validate connection type
+            const validTypes: ConnectionType[] = ['ethernet', 'wireless', 'serial'];
+            const connType = String(conn.type || 'ethernet') as ConnectionType;
+            if (!validTypes.includes(connType)) {
+                warnings.push(`Connection ${conn.id} has unknown type "${connType}", defaulting to "ethernet"`);
+            }
+
             return {
                 id: String(conn.id),
                 sourceDeviceId: String(conn.sourceDeviceId || ''),
-                sourcePortId: conn.sourcePortId,
+                sourcePortId: conn.sourcePortId !== undefined ? String(conn.sourcePortId) : undefined,
                 targetDeviceId: String(conn.targetDeviceId || ''),
-                targetPortId: conn.targetPortId,
-                type: conn.type || 'ethernet',
-                status: conn.status || 'inactive',
-                createdAt: conn.createdAt ? new Date(conn.createdAt) : new Date(),
-            };
+                targetPortId: conn.targetPortId !== undefined ? String(conn.targetPortId) : undefined,
+                type: validTypes.includes(connType) ? connType : 'ethernet',
+                status: conn.status === 'active' || conn.status === 'inactive' ? conn.status : 'inactive',
+                createdAt: conn.createdAt ? new Date(String(conn.createdAt)) : new Date(),
+            } as Connection;
         }).filter((conn: Connection) => {
             // Remove orphaned connections
             const sourceExists = devices.some(d => d.id === conn.sourceDeviceId);
@@ -166,17 +206,17 @@ export const deserializeNetworkState = (jsonString: string): ParseResult => {
         });
 
         // Reconstruct metadata
-        const metadata = networkData.metadata || {};
+        const metadata = (networkData.metadata as Record<string, unknown>) || {};
 
         const result: NetworkState = {
             devices,
             connections,
             metadata: {
-                name: metadata.name || 'Imported Network',
-                description: metadata.description,
-                createdAt: metadata.createdAt ? new Date(metadata.createdAt) : new Date(),
+                name: String(metadata.name || 'Imported Network'),
+                description: metadata.description !== undefined ? String(metadata.description) : undefined,
+                createdAt: metadata.createdAt ? new Date(String(metadata.createdAt)) : new Date(),
                 lastModified: new Date(),
-                mode: metadata.mode || 'beginner',
+                mode: String(metadata.mode || 'beginner') as import('@/types/ui-ux').LearningMode,
             },
         };
 

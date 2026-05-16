@@ -362,7 +362,6 @@ export function NetworkTopology({
 
   // Zoom mouse drag state
   const [isDraggingZoom, setIsDraggingZoom] = useState(false);
-  const [zoomDragStart, setZoomDragStart] = useState({ x: 0, zoom: 0 });
   const zoomDragRef = useRef({ isDragging: false, startX: 0, startZoom: 0 });
 
   // Use spatial partitioning for efficient visibility culling
@@ -582,8 +581,6 @@ export function NetworkTopology({
     saveToHistory,
     handleUndo,
     handleRedo,
-    canUndo: localCanUndo,
-    canRedo: localCanRedo,
     historyIndex,
     historyLength,
   } = useCanvasHistory({
@@ -612,7 +609,6 @@ export function NetworkTopology({
 
   // UI state
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const [isEnvironmentPanelOpen, setIsEnvironmentPanelOpen] = useState(false);
 
 
   // Touch/Mobile state
@@ -967,7 +963,6 @@ export function NetworkTopology({
     const startZoom = zoom;
 
     setIsDraggingZoom(true);
-    setZoomDragStart({ x: startX, zoom: startZoom });
     zoomDragRef.current = { isDragging: true, startX, startZoom };
 
     let animationFrameId: number;
@@ -2982,7 +2977,7 @@ export function NetworkTopology({
       return getIotOpenCloseStatus(device);
     }
 
-    if (device.iot && device.iot.collaborationEnabled === false) {
+    if (device.iot?.collaborationEnabled === false) {
       return t.passive;
     }
 
@@ -4378,12 +4373,6 @@ export function NetworkTopology({
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
-  // Show toast notification
-  const showToast = useCallback((message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  }, []);
 
   // Get device position (center based on device type)
   const getDeviceCenter = useCallback((device: CanvasDevice) => {
@@ -8197,7 +8186,7 @@ export function NetworkTopology({
                             )}
                           </div>
 
-                          {dev.services.dhcp?.enabled && dev.services.dhcp.pools && dev.services.dhcp.pools.length > 0 && (
+                          {dev.services?.dhcp?.pools && dev.services.dhcp.pools.length > 0 && (
                             <div className="space-y-1 mt-2 pt-2 border-t border-white/5">
                               <div className="text-[9px] font-bold opacity-30 uppercase tracking-wider">{isTR ? 'DHCP Pool' : 'DHCP Pool'}</div>
                               {dev.services.dhcp.pools.map((pool, idx) => (
@@ -8212,7 +8201,7 @@ export function NetworkTopology({
                             </div>
                           )}
 
-                          {dev.services.dns?.enabled && dev.services.dns.records && dev.services.dns.records.length > 0 && (
+                          {dev.services?.dns?.records && dev.services.dns.records.length > 0 && (
                             <div className="space-y-1 mt-2 pt-2 border-t border-white/5">
                               <div className="text-[9px] font-bold opacity-30 uppercase tracking-wider">{isTR ? 'DNS Kayıtları' : 'DNS Records'}</div>
                               {dev.services.dns.records.map((record, idx) => (

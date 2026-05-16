@@ -3,15 +3,17 @@
 
 import { createAppSession, isSessionValid, persistAppSession, readAppSession } from '@/lib/security/sessionManager';
 import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
+import type { CanvasDevice, CanvasConnection, CanvasNote } from '@/components/network/networkTopology.types';
+import type { SwitchState } from '@/lib/network/types';
 
 export interface OfflineProject {
   id: string;
   name: string;
   description?: string;
-  devices: any[];
-  connections: any[];
-  notes: any[];
-  deviceStates: Record<string, any>;
+  devices: CanvasDevice[];
+  connections: CanvasConnection[];
+  notes: CanvasNote[];
+  deviceStates: Record<string, SwitchState>;
   createdAt: string;
   updatedAt: string;
 }
