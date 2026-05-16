@@ -329,6 +329,7 @@ function MobilePacketTables({ currentInfo, prevInfo, macChanged, ttlChanged, isD
 }
 
 const PING_PANEL_STORAGE_KEY = 'draggable_position_ping-packet-info-panel';
+const HEADER_SAFE_TOP = 72;
 
 export function PingPacketInfoPanel({
     isVisible,
@@ -373,7 +374,7 @@ export function PingPacketInfoPanel({
                     const margin = 16;
                     setPos({
                         x: Math.max(margin - 780, Math.min(parsed.x, vw - margin)),
-                        y: Math.max(margin - 500, Math.min(parsed.y, vh - margin)),
+                        y: Math.max(HEADER_SAFE_TOP, Math.min(parsed.y, vh - margin)),
                     });
                 }
             }

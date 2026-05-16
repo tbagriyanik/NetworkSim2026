@@ -114,6 +114,7 @@ function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
   onClose: () => void;
   isDark: boolean;
 }) {
+  const HEADER_SAFE_TOP = 72;
   const [pos, setPos] = useState<{ x: number; y: number }>(() => {
     try {
       const saved = localStorage.getItem('draggable_position_packet-popup');
@@ -124,13 +125,13 @@ function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
           const vh = window.innerHeight;
           return {
             x: Math.max(0, Math.min(parsed.x, vw - 320)),
-            y: Math.max(0, Math.min(parsed.y, vh - 200)),
+            y: Math.max(HEADER_SAFE_TOP, Math.min(parsed.y, vh - 200)),
           };
         }
       }
     } catch { }
     return typeof window !== 'undefined'
-      ? { x: Math.max(16, (window.innerWidth - 320) / 2), y: Math.max(16, (window.innerHeight - 340) / 2) }
+      ? { x: Math.max(16, (window.innerWidth - 320) / 2), y: Math.max(HEADER_SAFE_TOP, (window.innerHeight - 340) / 2) }
       : { x: 100, y: 100 };
   });
   const dragRef = useRef<{ startX: number; startY: number; startPosX: number; startPosY: number } | null>(null);
@@ -150,7 +151,7 @@ function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
       };
       return {
         x: Math.max(0, Math.min(snapped.x, vw - 320)),
-        y: Math.max(0, Math.min(snapped.y, vh - 200)),
+        y: Math.max(HEADER_SAFE_TOP, Math.min(snapped.y, vh - 200)),
       };
     };
     const onMove = (ev: MouseEvent) => {
@@ -3920,6 +3921,16 @@ export function NetworkTopology({
             setPingMode(false);
             return;
           }
+          const failedSegConn = latestConnectionsRef.current.find(c =>
+            (c.sourceDeviceId === fromId && c.targetDeviceId === toId) ||
+            (c.sourceDeviceId === toId && c.targetDeviceId === fromId)
+          );
+          if (!failedSegConn || failedSegConn.active === false) {
+            if (!isWirelessHop(fromId, toId)) {
+              cancelPingDueToInterruptionRef.current(isTR ? 'Bağlantı koptuğu için ping iptal edildi.' : 'Ping cancelled because a connection was lost.');
+              return;
+            }
+          }
           const fromDev = deviceMap.get(fromId);
           const toDev = deviceMap.get(toId);
           const dx = (toDev?.x ?? 0) - (fromDev?.x ?? 0);
@@ -4098,6 +4109,18 @@ export function NetworkTopology({
 
     const advanceToNextHop = (hopCountIncrement: number) => {
       if (currentHop < path.length - 1) {
+        const nextFromId = path[currentHop + 1];
+        const nextToId = path[currentHop + 2];
+        if (nextFromId && nextToId) {
+          const nextSegConn = latestConnectionsRef.current.find(c =>
+            (c.sourceDeviceId === nextFromId && c.targetDeviceId === nextToId) ||
+            (c.sourceDeviceId === nextToId && c.targetDeviceId === nextFromId)
+          );
+          if ((!nextSegConn || nextSegConn.active === false) && !isWirelessHop(nextFromId, nextToId)) {
+            cancelPingDueToInterruptionRef.current(isTR ? 'Bağlantı koptuğu için ping iptal edildi.' : 'Ping cancelled because a connection was lost.');
+            return;
+          }
+        }
         currentHop++;
         startTime = Date.now();
         // Pause at hop boundary if: explicitly paused OR in step mode
@@ -4186,6 +4209,16 @@ export function NetworkTopology({
             if (!toId) {
               finishSuccess();
               return;
+            }
+            const returnSegConn = latestConnectionsRef.current.find(c =>
+              (c.sourceDeviceId === fromId && c.targetDeviceId === toId) ||
+              (c.sourceDeviceId === toId && c.targetDeviceId === fromId)
+            );
+            if (!returnSegConn || returnSegConn.active === false) {
+              if (!isWirelessHop(fromId, toId)) {
+                cancelPingDueToInterruptionRef.current(isTR ? 'Bağlantı koptuğu için ping iptal edildi.' : 'Ping cancelled because a connection was lost.');
+                return;
+              }
             }
 
             const dur = calculateHopDuration(fromId, toId);

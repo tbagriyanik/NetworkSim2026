@@ -11,6 +11,7 @@ type DragMode = 'drag-only' | 'drag-resize';
 type OriginCorner = 'top-left' | 'bottom-right';
 
 const SNAP_THRESHOLD = 30;
+const TOP_SAFE_OFFSET = 128; // Keep floating panels below fixed header + toolbar
 
 function snapToEdge(x: number, y: number, elW: number, elH: number): { x: number; y: number } {
   const vw = window.innerWidth;
@@ -110,7 +111,7 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
             } else {
               return {
                 x: Math.max(margin - approxW, Math.min(parsed.x, vw - margin)),
-                y: Math.max(margin - approxH, Math.min(parsed.y, vh - margin)),
+                y: Math.max(TOP_SAFE_OFFSET, Math.min(parsed.y, vh - margin)),
               };
             }
           }
@@ -313,10 +314,12 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
         if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
           // finalX is `right`, finalY is `bottom`
           clampedX = Math.max(0, Math.min(finalX, window.innerWidth - elW));
-          clampedY = Math.max(0, Math.min(finalY, window.innerHeight - elH));
+          // For bottom-origin panels: limit bottom offset so panel top never goes above safe header area.
+          const maxBottom = Math.max(0, window.innerHeight - elH - TOP_SAFE_OFFSET);
+          clampedY = Math.max(0, Math.min(finalY, maxBottom));
         } else {
           clampedX = Math.max(margin - elW, Math.min(finalX, window.innerWidth - margin));
-          clampedY = Math.max(margin - elH, Math.min(finalY, window.innerHeight - margin));
+          clampedY = Math.max(TOP_SAFE_OFFSET, Math.min(finalY, window.innerHeight - margin));
         }
         // Snap to edges
         const snapped = snapToEdge(clampedX, clampedY, elW, elH);
@@ -464,7 +467,7 @@ export function GlobalDragManager() {
       const margin = 16;
       const rect = state.el.getBoundingClientRect();
       const clampedLeft = Math.max(margin - rect.width, Math.min(finalLeft, window.innerWidth - margin));
-      const clampedTop = Math.max(margin - rect.height, Math.min(finalTop, window.innerHeight - margin));
+      const clampedTop = Math.max(TOP_SAFE_OFFSET, Math.min(finalTop, window.innerHeight - margin));
       const snapped = snapToEdge(clampedLeft, clampedTop, rect.width, rect.height);
       state.el.style.position = 'fixed';
       state.el.style.left = `${snapped.x}px`;

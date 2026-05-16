@@ -42,7 +42,7 @@ export function OnboardingDialog({
           />
         </div>
 
-        <DialogHeader className="px-8 pt-6 pb-2 cursor-grab active:cursor-grabbing select-none" data-drag-handle>
+        <DialogHeader className="px-8 pt-6 pb-2 cursor-default active:cursor-default select-none" data-drag-handle>
           <div className="flex items-center justify-between gap-4 mb-2">
             <DialogTitle className={`text-2xl md:text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
               {onboardingSteps[onboardingStep]?.title}
