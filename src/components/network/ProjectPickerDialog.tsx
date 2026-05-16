@@ -7,6 +7,7 @@ import { Plus, FolderOpen, X, BookOpen, Clock, Target, Search } from 'lucide-rea
 import type { Translations } from '@/contexts/LanguageContext';
 import type { ExampleProject, ExampleProjectLevel } from '@/lib/network/exampleProjects';
 import type { GuidedProject } from '@/lib/network/guidedMode';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
 interface ProjectPickerDialogProps {
   open: boolean;
@@ -43,6 +44,65 @@ export function ProjectPickerDialog({
   setZoom, setPan,
   closeProjectPicker,
 }: ProjectPickerDialogProps) {
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setSelectedProjectId(null);
+  }, [open, projectPickerTab, projectSearchQuery]);
+
+  const visibleProjectIds = useMemo<string[]>(() => {
+    const result: string[] = [];
+    if (projectPickerTab === 'guided') {
+      const q = projectSearchQuery.trim().toLowerCase();
+      const guidedProjects = getAvailableProjects(language);
+      guidedProjects.forEach((gp) => {
+        const match = q === '' ||
+          gp.title.toLowerCase().includes(q) ||
+          gp.description.toLowerCase().includes(q) ||
+          gp.tag.toLowerCase().includes(q) ||
+          (gp.detail && gp.detail.toLowerCase().includes(q));
+        if (match) result.push(gp.id);
+      });
+    } else {
+      const q = projectSearchQuery.trim().toLowerCase();
+      let counter = 0;
+      for (const lvl of exampleLevelOrder) {
+        const projects = groupedExampleProjects[lvl];
+        if (!projects) continue;
+        for (const project of projects) {
+          counter++;
+          const match = q === '' ||
+            project.title.toLowerCase().includes(q) ||
+            project.description.toLowerCase().includes(q) ||
+            project.tag.toLowerCase().includes(q) ||
+            (project.detail && project.detail.toLowerCase().includes(q)) ||
+            String(counter).includes(q);
+          if (match) result.push(project.id);
+        }
+      }
+    }
+    return result;
+  }, [projectPickerTab, projectSearchQuery, language, getAvailableProjects, groupedExampleProjects, exampleLevelOrder]);
+
+  const handleGridKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (visibleProjectIds.length === 0) return;
+      const direction = e.shiftKey ? -1 : 1;
+      const currentIdx = selectedProjectId ? visibleProjectIds.indexOf(selectedProjectId) : -1;
+      const nextIdx = currentIdx < 0
+        ? (direction > 0 ? 0 : visibleProjectIds.length - 1)
+        : (currentIdx + direction + visibleProjectIds.length) % visibleProjectIds.length;
+      const nextId = visibleProjectIds[nextIdx];
+      setSelectedProjectId(nextId);
+      scrollRef.current?.querySelector(`[data-project-id="${CSS.escape(nextId)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else if (e.key === 'Enter' && selectedProjectId) {
+      e.preventDefault();
+      (scrollRef.current?.querySelector(`[data-project-id="${CSS.escape(selectedProjectId)}"]`) as HTMLButtonElement | null)?.click();
+    }
+  }, [visibleProjectIds, selectedProjectId]);
+
   return (
     <Dialog open={open} onOpenChange={(open) => { onOpenChange(open); if (!open) setProjectSearchQuery(''); }}>
       <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl liquid-glass-light`}>
@@ -172,7 +232,12 @@ export function ProjectPickerDialog({
             </div>
           </div>
 
-          <div className='flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-12 pb-12 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent'>
+          <div
+            ref={scrollRef}
+            tabIndex={0}
+            onKeyDown={handleGridKeyDown}
+            className='flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-12 pb-12 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:ring-inset'
+          >
             <div className='flex flex-col gap-12 max-w-full'>
               {/* Guided Mode Projects Section */}
               {projectPickerTab === 'guided' && (
@@ -202,8 +267,9 @@ export function ProjectPickerDialog({
                         .map((guidedProject: GuidedProject, idx) => (
                           <Button
                             key={guidedProject.id}
+                            data-project-id={guidedProject.id}
                             variant='ghost'
-                            className={`group h-auto min-h-[140px] md:min-h-[180px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-emerald-800/40 bg-emerald-900/10 hover:bg-emerald-900/30 hover:border-emerald-500/50' : 'border-emerald-200/50 bg-emerald-50/30 hover:bg-emerald-50 hover:border-emerald-500/40'} w-full overflow-hidden shadow-sm hover:shadow-2xl relative`}
+                            className={`group h-auto min-h-[140px] md:min-h-[180px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-emerald-800/40 bg-emerald-900/10 hover:bg-emerald-900/30 hover:border-emerald-500/50' : 'border-emerald-200/50 bg-emerald-50/30 hover:bg-emerald-50 hover:border-emerald-500/40'} w-full overflow-hidden shadow-sm hover:shadow-2xl relative ${selectedProjectId === guidedProject.id ? (isDark ? 'ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-900' : 'ring-2 ring-emerald-500 ring-offset-2 ring-offset-white') : ''}`}
                             onClick={() => {
                               closeProjectPicker();
                               setZoom(1.0);
@@ -321,8 +387,9 @@ export function ProjectPickerDialog({
                               return (
                                 <Button
                                   key={example.id}
+                                  data-project-id={example.id}
                                   variant='ghost'
-                                  className={`group h-auto min-h-[120px] md:min-h-[160px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/80 hover:border-cyan-500/30' : 'border-slate-200/50 bg-white hover:bg-slate-50 hover:border-blue-500/20'} w-full overflow-hidden shadow-sm hover:shadow-2xl`}
+                                  className={`group h-auto min-h-[120px] md:min-h-[160px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/80 hover:border-cyan-500/30' : 'border-slate-200/50 bg-white hover:bg-slate-50 hover:border-blue-500/20'} w-full overflow-hidden shadow-sm hover:shadow-2xl ${selectedProjectId === example.id ? (isDark ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900' : 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white') : ''}`}
                                   onClick={() => { closeProjectPicker(); applyExampleProject(example.data, example.id); }}
                                 >
                                   <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>

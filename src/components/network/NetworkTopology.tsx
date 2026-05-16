@@ -119,7 +119,14 @@ function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
       const saved = localStorage.getItem('draggable_position_packet-popup');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') return parsed;
+        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+          const vw = window.innerWidth;
+          const vh = window.innerHeight;
+          return {
+            x: Math.max(0, Math.min(parsed.x, vw - 320)),
+            y: Math.max(0, Math.min(parsed.y, vh - 200)),
+          };
+        }
       }
     } catch { }
     return typeof window !== 'undefined'
@@ -134,10 +141,18 @@ function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
     document.body.style.userSelect = 'none';
     document.body.style.cursor = 'grabbing';
 
-    const clamp = (x: number, y: number) => ({
-      x: Math.max(0, Math.min(x, window.innerWidth - 320)),
-      y: Math.max(0, Math.min(y, window.innerHeight - 200)),
-    });
+    const clamp = (x: number, y: number) => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const snapped = {
+        x: x < 30 ? 0 : vw - 320 - x < 30 ? vw - 320 : x,
+        y: y < 30 ? 0 : vh - 200 - y < 30 ? vh - 200 : y,
+      };
+      return {
+        x: Math.max(0, Math.min(snapped.x, vw - 320)),
+        y: Math.max(0, Math.min(snapped.y, vh - 200)),
+      };
+    };
     const onMove = (ev: MouseEvent) => {
       if (!dragRef.current) return;
       setPos(clamp(
@@ -169,9 +184,9 @@ function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
       style={{ position: 'fixed', left: pos.x, top: pos.y, zIndex: 9999 }}
       onClick={e => e.stopPropagation()}
     >
-      <div className="rounded-xl border w-80 liquid-glass-strong">
+      <div className={`rounded-xl border w-80 backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
         <div
-          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
+          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab active:cursor-grabbing select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
           onMouseDown={handleDragStart}
         >
           <h3 className={`font-semibold text-sm ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
@@ -179,11 +194,9 @@ function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
           </h3>
           <button
             onClick={onClose}
-            className={`w-5 h-5 rounded-md cursor-pointer transition-colors inline-flex items-center justify-center shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10'}`}
+            className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
           >
-            <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-3 h-3 text-white pointer-events-none" />
           </button>
         </div>
         <div className={`px-4 py-3 space-y-2 text-xs font-mono ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>

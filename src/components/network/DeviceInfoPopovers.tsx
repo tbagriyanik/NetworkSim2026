@@ -55,9 +55,9 @@ export function SwitchInfoPopover({ router, routerState, t, language, isDark, on
     <div ref={containerRef} className={cn("hidden md:block fixed animate-scale-in")}
       style={{ bottom: `${position.y}px`, right: `${position.x}px`, zIndex }}
       onPointerDown={onFocus}>
-      <div className="rounded-2xl border shadow-2xl min-w-[200px] max-w-[280px] liquid-glass-strong">
+      <div className={`rounded-2xl border shadow-2xl min-w-[200px] max-w-[280px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
         <div
-          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
+          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab active:cursor-grabbing select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
           onPointerDown={handleDragStart}
         >
           <div className="flex items-center gap-1.5">
@@ -65,8 +65,8 @@ export function SwitchInfoPopover({ router, routerState, t, language, isDark, on
             <span className={`font-semibold text-sm ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{router.name || router.id}</span>
           </div>
           <TooltipWrapper title={t.close}>
-            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className={`w-5 h-5 rounded-md cursor-pointer transition-colors inline-flex items-center justify-center shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10'}`}>
-              <X className="w-3 h-3 pointer-events-none" />
+            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className={`w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0`}>
+              <X className="w-3 h-3 text-white pointer-events-none" />
             </button>
           </TooltipWrapper>
         </div>
@@ -101,9 +101,9 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
       }}
       onPointerDown={onFocus}
     >
-      <div className="rounded-2xl border shadow-2xl min-w-[200px] max-w-[260px] liquid-glass-strong">
+      <div className={`rounded-2xl border shadow-2xl min-w-[200px] max-w-[260px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
         <div
-          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
+          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab active:cursor-grabbing select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
           onPointerDown={handleDragStart}
         >
           <div className="flex items-center gap-1.5">
@@ -111,8 +111,8 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
             <span className={`font-semibold text-sm ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{pc?.name || pc?.id || 'Unknown'}</span>
           </div>
           <TooltipWrapper title={t.close}>
-            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className={`w-5 h-5 rounded-md cursor-pointer transition-colors inline-flex items-center justify-center shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10'}`}>
-              <X className="w-3 h-3 pointer-events-none" />
+            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className={`w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0`}>
+              <X className="w-3 h-3 text-white pointer-events-none" />
             </button>
           </TooltipWrapper>
         </div>
@@ -271,9 +271,9 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
       }}
       onPointerDown={onFocus}
     >
-      <div className="rounded-2xl border shadow-2xl min-w-[200px] max-w-[280px] liquid-glass-strong">
+      <div className={`rounded-2xl border shadow-2xl min-w-[200px] max-w-[280px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
         <div
-          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
+          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab active:cursor-grabbing select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
           onPointerDown={handleDragStart}
         >
           <div className="flex items-center gap-1.5">
@@ -283,9 +283,9 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
           <TooltipWrapper title={t.close}>
             <button
               onClick={(e) => { e.stopPropagation(); onClose(); }}
-              className={`w-5 h-5 rounded-md cursor-pointer transition-colors inline-flex items-center justify-center shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10'}`}
+              className={`w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0`}
             >
-              <X className="w-3 h-3 pointer-events-none" />
+              <X className="w-3 h-3 text-white pointer-events-none" />
             </button>
           </TooltipWrapper>
         </div>

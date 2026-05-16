@@ -12,6 +12,7 @@ interface AppFooterProps {
   activeDeviceId: string;
   hasUnsavedChanges: boolean;
   lastSaveTime: string | null;
+  projectName: string;
   totalScore: number;
   maxScore: number;
   topologyDevices: CanvasDevice[];
@@ -22,7 +23,7 @@ interface AppFooterProps {
 
 export function AppFooter({
   t, isDark, language, activeTab, activeDeviceType, activeDeviceId,
-  hasUnsavedChanges, lastSaveTime, totalScore, maxScore,
+  hasUnsavedChanges, lastSaveTime, projectName, totalScore, maxScore,
   topologyDevices, lastTaskEvent, showProjectPicker, showOnboarding,
 }: AppFooterProps) {
   return (
@@ -36,17 +37,17 @@ export function AppFooter({
             <div className="flex items-center gap-3">
               <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDark ? 'bg-zinc-900/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
                 }`}>
-                <span className={`flex items-center gap-1.5 text-xs font-semibold ${hasUnsavedChanges ? 'text-amber-500' : (isDark ? 'text-emerald-500' : 'text-emerald-700')
-                  }`}>
-                  <span className={`w-2 h-2 rounded-full ${hasUnsavedChanges ? 'bg-amber-500' : 'bg-emerald-500'
-                    }`} />
-                  {hasUnsavedChanges
-                    ? t.unsaved
-                    : t.saved}
-                </span>
+                <span className={`w-2 h-2 rounded-full ${hasUnsavedChanges ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`} />
                 {lastSaveTime && (
                   <span className={`text-[11px] ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
                     {t.lastSavedAt + lastSaveTime}
+                    {projectName !== 'Untitled' && (
+                      <>
+                        <span className={`mx-1.5 ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>•</span>
+                        <span className="font-medium">{projectName}</span>
+                      </>
+                    )}
                   </span>
                 )}
               </div>
@@ -155,10 +156,6 @@ export function AppFooter({
             <div className="flex items-center gap-1.5">
               <span className={`w-1.5 h-1.5 rounded-full ${hasUnsavedChanges ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'
                 }`} />
-              <span className={`text-[10px] font-semibold ${hasUnsavedChanges ? 'text-amber-400' : 'text-emerald-400'
-                } ${!isDark && !hasUnsavedChanges ? 'text-emerald-700' : ''}`}>
-                {hasUnsavedChanges ? (language === 'tr' ? 'Kaydedilmedi' : 'Unsaved') : (language === 'tr' ? 'Kaydedildi' : 'Saved')}
-              </span>
             </div>
           </div>
         </div>

@@ -10,6 +10,17 @@ export interface DragSize { width: number; height: number }
 type DragMode = 'drag-only' | 'drag-resize';
 type OriginCorner = 'top-left' | 'bottom-right';
 
+const SNAP_THRESHOLD = 30;
+
+function snapToEdge(x: number, y: number, elW: number, elH: number): { x: number; y: number } {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  return {
+    x: x < SNAP_THRESHOLD ? 0 : vw - elW - x < SNAP_THRESHOLD ? vw - elW : x,
+    y: y < SNAP_THRESHOLD ? 0 : vh - elH - y < SNAP_THRESHOLD ? vh - elH : y,
+  };
+}
+
 export interface UseDragOptions {
   /** Unique key for localStorage persistence */
   storageKey?: string;
@@ -83,7 +94,27 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
     if (storageKey && typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem(storageKey);
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const approxW = mode === 'drag-resize' ? (defaultSize?.width || 800) : 280;
+            const approxH = mode === 'drag-resize' ? (defaultSize?.height || 600) : 120;
+            const margin = 16;
+            if (origin === 'bottom-right') {
+              return {
+                x: Math.max(0, Math.min(parsed.x, vw - approxW)),
+                y: Math.max(0, Math.min(parsed.y, vh - approxH)),
+              };
+            } else {
+              return {
+                x: Math.max(margin - approxW, Math.min(parsed.x, vw - margin)),
+                y: Math.max(margin - approxH, Math.min(parsed.y, vh - margin)),
+              };
+            }
+          }
+        }
       } catch { /* ignore */ }
     }
     return defaultPosition;
@@ -287,7 +318,9 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
           clampedX = Math.max(margin - elW, Math.min(finalX, window.innerWidth - margin));
           clampedY = Math.max(margin - elH, Math.min(finalY, window.innerHeight - margin));
         }
-        const finalPos = { x: clampedX, y: clampedY };
+        // Snap to edges
+        const snapped = snapToEdge(clampedX, clampedY, elW, elH);
+        const finalPos = { x: snapped.x, y: snapped.y };
         const finalSize = { width: Math.max(ds.minSize.width, finalW), height: Math.max(ds.minSize.height, finalH) };
 
         setPosition(finalPos);
@@ -432,9 +465,10 @@ export function GlobalDragManager() {
       const rect = state.el.getBoundingClientRect();
       const clampedLeft = Math.max(margin - rect.width, Math.min(finalLeft, window.innerWidth - margin));
       const clampedTop = Math.max(margin - rect.height, Math.min(finalTop, window.innerHeight - margin));
+      const snapped = snapToEdge(clampedLeft, clampedTop, rect.width, rect.height);
       state.el.style.position = 'fixed';
-      state.el.style.left = `${clampedLeft}px`;
-      state.el.style.top = `${clampedTop}px`;
+      state.el.style.left = `${snapped.x}px`;
+      state.el.style.top = `${snapped.y}px`;
       if (state.id) {
         try { localStorage.setItem(`draggable_position_${state.id}`, JSON.stringify({ x: clampedLeft, y: clampedTop })); } catch { }
       }

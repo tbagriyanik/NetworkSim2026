@@ -1,6 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { CanvasDevice, CanvasConnection } from './networkTopology.types';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { X } from 'lucide-react';
 
 export interface HopPacketInfo {
     hopIndex: number;
@@ -367,7 +368,13 @@ export function PingPacketInfoPanel({
             if (saved) {
                 const parsed = JSON.parse(saved);
                 if (parsed.x !== undefined && parsed.y !== undefined) {
-                    setPos(parsed);
+                    const vw = window.innerWidth;
+                    const vh = window.innerHeight;
+                    const margin = 16;
+                    setPos({
+                        x: Math.max(margin - 780, Math.min(parsed.x, vw - margin)),
+                        y: Math.max(margin - 500, Math.min(parsed.y, vh - margin)),
+                    });
                 }
             }
         } catch (e) {
@@ -440,11 +447,9 @@ export function PingPacketInfoPanel({
         <div
             ref={panelRef}
             data-draggable-id="ping-packet-info-panel"
-            className={`flex flex-col rounded-2xl overflow-hidden select-none ${isGlass
-                ? 'liquid-glass-strong'
-                : isDark
-                    ? 'bg-slate-900 border border-slate-700 shadow-2xl'
-                    : 'bg-white border border-slate-200 shadow-2xl'
+            className={`flex flex-col rounded-2xl overflow-hidden select-none backdrop-blur-md ${isDark
+                ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
+                : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
                 }`}
             style={{
                 ...posStyle,
@@ -456,10 +461,7 @@ export function PingPacketInfoPanel({
         >
             {/* Header — drag handle */}
             <div
-                className={`flex items-center justify-between px-3 py-2 border-b ${isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} ${isGlass
-                    ? isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'
-                    : isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
-                    }`}
+                className={`flex items-center justify-between px-3 py-2 border-b ${isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing select-none'} ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
                 data-drag-handle
             >
                 {/* Left: icon + title + badges */}
@@ -569,12 +571,9 @@ export function PingPacketInfoPanel({
                                 <button
                                     aria-label={t.close}
                                     onClick={onClose}
-                                    className={`flex items-center justify-center w-5 h-5 rounded-md transition-all flex-shrink-0 ${isDark ? 'bg-white/10 hover:bg-red-500/80 text-slate-300 hover:text-white border border-white/15' : 'bg-black/8 hover:bg-red-500 text-slate-500 hover:text-white border border-black/10'}`}
+                                    className="flex items-center justify-center w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 transition-all flex-shrink-0"
                                 >
-                                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                                        <line x1="2" y1="2" x2="12" y2="12" />
-                                        <line x1="12" y1="2" x2="2" y2="12" />
-                                    </svg>
+                                    <X className="w-3 h-3 text-white pointer-events-none" />
                                 </button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" sideOffset={6}>

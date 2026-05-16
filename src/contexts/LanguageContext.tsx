@@ -93,11 +93,11 @@ export interface Translations {
   commandPromptTab: string;
   commandReference: string;
   commandsFound: string;
-   completeWithTab: string;
-   completedAt: string;
-   configAndMonitor: string;
-   configure: string;
-   portStatus: string;
+  completeWithTab: string;
+  completedAt: string;
+  configAndMonitor: string;
+  configure: string;
+  portStatus: string;
   vlanManagement: string;
   securityAndAcl: string;
   tasksAndScore: string;
@@ -898,7 +898,7 @@ const translations: Record<Language, Translations> = {
     kitchen: 'Mutfak',
     labProgress: 'Lab İlerlemesi',
     languageLabel: 'Dil',
-    lastSavedAt: 'Son kaydedilme: ',
+    lastSavedAt: 'Kayıt: ',
     layer3Switching: 'Katman 3 Anahtarlama',
     levelAdvanced: 'İleri Seviye',
     levelBasic: 'Basit Seviye',
@@ -1513,7 +1513,7 @@ const translations: Record<Language, Translations> = {
     kitchen: 'Kitchen',
     labProgress: 'Lab Progress',
     languageLabel: 'Language',
-    lastSavedAt: 'Last saved: ',
+    lastSavedAt: 'Saved: ',
     layer3Switching: 'Layer 3 Switching',
     levelAdvanced: 'Advanced Level',
     levelBasic: 'Basic Level',

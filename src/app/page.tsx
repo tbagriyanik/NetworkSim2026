@@ -274,6 +274,7 @@ export default function Home() {
   const shownToastsRef = useRef<Set<string>>(new Set());
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const modalHistoryPushedRef = useRef(false);
+  const refreshReportRef = useRef<HTMLDivElement>(null);
 
   // State moved to top to avoid TDZ errors
   const {
@@ -317,6 +318,9 @@ export default function Home() {
   const [showContent, setShowContent] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSaveTime, setLastSaveTime] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState<string>(
+    typeof window !== 'undefined' && localStorage.getItem('lastProjectName') || 'Untitled'
+  );
   const [projectSearchQuery, setProjectSearchQuery] = useState('');
 
   // Which overlay panel is on top — last clicked wins
@@ -350,6 +354,20 @@ export default function Home() {
     targetDevice: 'switchL2',
   });
   const [lastTaskEvent, setLastTaskEvent] = useState<{ type: 'completed' | 'failed'; taskName: string; timestamp: number } | null>(null);
+
+  // Track project name from guided mode
+  useEffect(() => {
+    if (activeGuidedProject) {
+      setProjectName(activeGuidedProject.title);
+    }
+  }, [activeGuidedProject]);
+
+  // Persist project name across refreshes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lastProjectName', projectName);
+    }
+  }, [projectName]);
 
   const [saveDialog, setSaveDialog] = useState<{
     show: boolean;
@@ -1119,6 +1137,30 @@ export default function Home() {
       }
     };
   }, [deviceStates, deviceOutputs, pcOutputs, pcHistories, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, activeTab, isAppLoading, zoom, pan]);
+
+  // Restore saved position for refresh network report
+  useEffect(() => {
+    if (!refreshNetworkReport?.show || !refreshReportRef.current) return;
+    try {
+      const saved = localStorage.getItem('draggable_position_refresh-network-report');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+          const vw = window.innerWidth;
+          const vh = window.innerHeight;
+          const margin = 16;
+          const el = refreshReportRef.current;
+          const rect = el.getBoundingClientRect();
+          el.style.position = 'fixed';
+          el.style.left = `${Math.max(margin - rect.width, Math.min(parsed.x, vw - margin))}px`;
+          el.style.top = `${Math.max(margin - rect.height, Math.min(parsed.y, vh - margin))}px`;
+          el.style.right = 'auto';
+          el.style.bottom = 'auto';
+          el.style.transform = 'none';
+        }
+      }
+    } catch { /* ignore */ }
+  }, [refreshNetworkReport?.show]);
 
   // Load project from JSON data
   const loadProjectData = useCallback((projectData: unknown, options?: { keepActiveDevice?: boolean }) => {
@@ -2113,7 +2155,8 @@ ${state.bannerMOTD}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `network-project-${new Date().toISOString().slice(0, 10)}.json`;
+    const sanitizedName = projectName.replace(/[^a-zA-Z0-9\s_-]/g, '').trim().replace(/\s+/g, '-').substring(0, 60) || 'network-project';
+    a.download = `${sanitizedName}-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -2124,7 +2167,7 @@ ${state.bannerMOTD}
       title: t.projectSaved,
       description: t.jsonDownloaded,
     });
-  }, [deviceStates, deviceOutputs, pcOutputs, pcHistories, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, setHasUnsavedChanges, setLastSaveTime, language]);
+  }, [deviceStates, deviceOutputs, pcOutputs, pcHistories, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, setHasUnsavedChanges, setLastSaveTime, language, projectName]);
 
   // Handle Project Saving (Wrapper)
   function handleSaveProject() {
@@ -2278,7 +2321,7 @@ ${state.bannerMOTD}
       pan: { x: 0, y: 0 },
       activeTab: 'topology'
     });
-  }, [resetHistory, setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setActiveDeviceId, setActiveDeviceType, setSelectedDevice, setShowPCPanel, setShowRouterPanel, setActiveTab, setHasUnsavedChanges, setTopologyKey, setZoom, setPan, closeGuidedMode]);
+  }, [resetHistory, setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setTopologyDevices, setTopologyConnections, setTopologyNotes, setActiveDeviceId, setActiveDeviceType, setSelectedDevice, setShowPCPanel, setShowRouterPanel, setActiveTab, setHasUnsavedChanges, setTopologyKey, setZoom, setPan, closeGuidedMode, setProjectName]);
 
   const runWithSaveGuard = useCallback((action: () => void) => {
     if (hasUnsavedChanges) {
@@ -3619,12 +3662,14 @@ ${state.bannerMOTD}
         const projectData = safeParse<unknown>(e.target?.result as string);
         if (loadProjectData(projectData)) {
           setHasUnsavedChanges(false);
+          const loadedName = file.name.replace(/\.[^/.]+$/, '');
+          setProjectName(loadedName);
           // Close guided mode panel if open
           closeGuidedMode();
           // Close network refresh report if open
           setRefreshNetworkReport(null);
           toast({
-            title: t.projectLoaded,
+            title: `"${loadedName}" ${language === 'tr' ? 'projesi yüklendi' : 'project is loaded'}`,
             description: t.fileImportedSuccessfully,
           });
           // Reset zoom and pan to top-left
@@ -3652,13 +3697,24 @@ ${state.bannerMOTD}
     reader.readAsText(file);
     // Reset input
     event.target.value = '';
-  }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode]);
+  }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode, setProjectName]);
 
   const applyExampleProject = useCallback((projectData: any, exampleId?: string) => {
     loadProjectData(projectData);
     setRefreshNetworkReport(null);
     if (exampleId) {
       setLoadedExampleId(exampleId);
+      // Look up example project title
+      for (const level of exampleLevelOrder) {
+        const projects = groupedExampleProjects[level];
+        if (projects) {
+          const found = projects.find(p => p.id === exampleId);
+          if (found) {
+            setProjectName(found.title);
+            break;
+          }
+        }
+      }
     }
     setShowProjectPicker(false);
     // Close guided mode panel if open (unless it's a guided project itself)
@@ -3671,7 +3727,7 @@ ${state.bannerMOTD}
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
     }
-  }, [loadProjectData, setShowProjectPicker, setZoom, setPan, closeGuidedMode]);
+  }, [loadProjectData, setShowProjectPicker, setZoom, setPan, closeGuidedMode, setProjectName, setLoadedExampleId, setRefreshNetworkReport, groupedExampleProjects, exampleLevelOrder]);
 
   const isDark = (effectiveTheme ?? theme) === 'dark';
 
@@ -4350,6 +4406,7 @@ ${state.bannerMOTD}
             {
               refreshNetworkReport?.show && (
                 <div
+                  ref={refreshReportRef}
                   data-draggable-id="refresh-network-report"
                   className={`fixed top-20 right-4 w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-right-full duration-300 backdrop-blur-md select-none ${isDark
                     ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
@@ -4362,64 +4419,64 @@ ${state.bannerMOTD}
                   }}
                   onMouseDown={() => setFocusedOverlay('refresh')}
                 >
-                  <div className="p-4 space-y-3">
-                    <div className="flex items-center justify-between cursor-grab active:cursor-grabbing" data-drag-handle>
-                      <h3 className="text-sm font-bold flex items-center gap-2">
-
-                        {refreshNetworkReport.title}
-                      </h3>
-                      <div className="flex items-center gap-1">
-                        <TooltipWrapper title={t.refreshNetwork}>
-                          <button
-                            onClick={() => { handleRefreshNetwork(); }}
-                            className="w-5 h-5 rounded-md bg-blue-500 hover:bg-blue-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
-                          >
-                            <RefreshCw className="w-3 h-3 text-white pointer-events-none" />
-                          </button>
-                        </TooltipWrapper>
-                        <TooltipWrapper title={t.close}>
-                          <button
-                            onClick={() => setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null)}
-                            className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
-                          >
-                            <X className="w-3 h-3 text-white pointer-events-none" />
-                          </button>
-                        </TooltipWrapper>
-                      </div>
+                  <div
+                    className={`flex items-center justify-between px-3 py-2 border-b rounded-t-xl cursor-grab active:cursor-grabbing select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
+                    data-drag-handle
+                  >
+                    <h3 className="text-sm font-bold flex items-center gap-2">
+                      {refreshNetworkReport.title}
+                    </h3>
+                    <div className="flex items-center gap-1">
+                      <TooltipWrapper title={t.refreshNetwork}>
+                        <button
+                          onClick={() => { handleRefreshNetwork(); }}
+                          className="w-5 h-5 rounded-md bg-blue-500 hover:bg-blue-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
+                        >
+                          <RefreshCw className="w-3 h-3 text-white pointer-events-none" />
+                        </button>
+                      </TooltipWrapper>
+                      <TooltipWrapper title={t.close}>
+                        <button
+                          onClick={() => setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null)}
+                          className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
+                        >
+                          <X className="w-3 h-3 text-white pointer-events-none" />
+                        </button>
+                      </TooltipWrapper>
                     </div>
+                  </div>
 
-                    <div className="space-y-2 text-xs">
-                      {refreshNetworkReport.dhcpMessages.length > 0 && (
-                        <div className="flex flex-wrap gap-x-3 gap-y-1 opacity-80">
-                          {refreshNetworkReport.dhcpMessages.map((msg, i) => (
-                            <div key={i} className="flex items-center gap-1.5">
-                              <span>{msg}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {refreshNetworkReport.stpMessage && (
-                        <div className="text-pink-500 font-medium py-0.5 px-2 bg-pink-500/10 rounded-lg w-fit">
-                          {refreshNetworkReport.stpMessage}
-                        </div>
-                      )}
-
-                      {refreshNetworkReport.portSecurityMessage && (
-                        <div className="text-red-500 font-medium py-0.5 px-2 bg-red-500/10 rounded-lg w-fit">
-                          {refreshNetworkReport.portSecurityMessage}
-                        </div>
-                      )}
-
-                      {refreshNetworkReport.topologyMessage && (
-                        <div className="text-amber-500 font-medium py-0.5 px-2 bg-amber-500/10 rounded-lg w-fit">
-                          {refreshNetworkReport.topologyMessage}
-                        </div>
-                      )}
-
-                      <div className={`pt-2 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
-                        <RefreshDeviceListToast devices={refreshNetworkReport.devices} language={language} />
+                  <div className="p-4 space-y-2">
+                    {refreshNetworkReport.dhcpMessages.length > 0 && (
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 opacity-80">
+                        {refreshNetworkReport.dhcpMessages.map((msg, i) => (
+                          <div key={i} className="flex items-center gap-1.5">
+                            <span>{msg}</span>
+                          </div>
+                        ))}
                       </div>
+                    )}
+
+                    {refreshNetworkReport.stpMessage && (
+                      <div className="text-pink-500 font-medium py-0.5 px-2 bg-pink-500/10 rounded-lg w-fit">
+                        {refreshNetworkReport.stpMessage}
+                      </div>
+                    )}
+
+                    {refreshNetworkReport.portSecurityMessage && (
+                      <div className="text-red-500 font-medium py-0.5 px-2 bg-red-500/10 rounded-lg w-fit">
+                        {refreshNetworkReport.portSecurityMessage}
+                      </div>
+                    )}
+
+                    {refreshNetworkReport.topologyMessage && (
+                      <div className="text-amber-500 font-medium py-0.5 px-2 bg-amber-500/10 rounded-lg w-fit">
+                        {refreshNetworkReport.topologyMessage}
+                      </div>
+                    )}
+
+                    <div className={`pt-2 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
+                      <RefreshDeviceListToast devices={refreshNetworkReport.devices} language={language} />
                     </div>
                   </div>
                 </div>
@@ -4436,6 +4493,7 @@ ${state.bannerMOTD}
             activeDeviceId={activeDeviceId}
             hasUnsavedChanges={hasUnsavedChanges}
             lastSaveTime={lastSaveTime}
+            projectName={projectName}
             totalScore={totalScore}
             maxScore={maxScore}
             topologyDevices={topologyDevices}
