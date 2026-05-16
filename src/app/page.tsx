@@ -3820,7 +3820,6 @@ ${state.bannerMOTD}
             exampleLevelHints={exampleLevelHints}
             exampleLevelOrder={exampleLevelOrder}
             getAvailableProjects={getAvailableProjects}
-            runWithSaveGuard={runWithSaveGuard}
             resetToEmptyProject={resetToEmptyProject}
             applyExampleProject={applyExampleProject}
             startGuidedProject={startGuidedProject}

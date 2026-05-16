@@ -23,7 +23,6 @@ interface ProjectPickerDialogProps {
   exampleLevelHints: Record<ExampleProjectLevel, string>;
   exampleLevelOrder: ExampleProjectLevel[];
   getAvailableProjects: (lang: 'tr' | 'en') => GuidedProject[];
-  runWithSaveGuard: (action: () => void) => void;
   resetToEmptyProject: () => void;
   applyExampleProject: (data: any, exampleId?: string) => void;
   startGuidedProject: (project: GuidedProject) => void;
@@ -39,7 +38,7 @@ export function ProjectPickerDialog({
   projectSearchQuery, setProjectSearchQuery,
   groupedExampleProjects, exampleLevelLabels, exampleLevelHints, exampleLevelOrder,
   getAvailableProjects,
-  runWithSaveGuard, resetToEmptyProject, applyExampleProject,
+  resetToEmptyProject, applyExampleProject,
   startGuidedProject, loadProjectData,
   setZoom, setPan,
   closeProjectPicker,
@@ -55,7 +54,7 @@ export function ProjectPickerDialog({
                 variant='outline'
                 size='sm'
                 className={`flex items-center gap-2 text-xs px-3 py-1.5 h-8 ${isDark ? 'text-slate-200 border-slate-700 hover:bg-slate-800 hover:text-cyan-400' : 'text-slate-700 border-slate-300 hover:bg-slate-100 hover:text-cyan-600'}`}
-                onClick={() => { closeProjectPicker(); runWithSaveGuard(() => { resetToEmptyProject(); }); }}
+                onClick={() => { closeProjectPicker(); resetToEmptyProject(); }}
               >
                 <Plus className="w-3.5 h-3.5" />
                 {t.emptyProject}
@@ -145,21 +144,19 @@ export function ProjectPickerDialog({
                       );
                       if (guided) {
                         closeProjectPicker();
-                        runWithSaveGuard(() => {
-                          setZoom(1.0);
-                          setPan({ x: 0, y: 0 });
-                          startGuidedProject(guided);
-                          loadProjectData(guided.data);
-                        });
+                        setZoom(1.0);
+                        setPan({ x: 0, y: 0 });
+                        startGuidedProject(guided);
+                        loadProjectData(guided.data);
                         return;
                       }
                     }
                     if (firstProject) {
                       closeProjectPicker();
-                      runWithSaveGuard(() => applyExampleProject(firstProject.data));
+                      applyExampleProject(firstProject.data);
                     } else {
                       closeProjectPicker();
-                      runWithSaveGuard(() => { resetToEmptyProject(); });
+                      resetToEmptyProject();
                     }
                   }
                 }}
@@ -196,11 +193,11 @@ export function ProjectPickerDialog({
                         .filter((guidedProject, idx) => {
                           const q = projectSearchQuery.trim().toLowerCase();
                           return q === '' ||
-                          guidedProject.title.toLowerCase().includes(q) ||
-                          guidedProject.description.toLowerCase().includes(q) ||
-                          guidedProject.tag.toLowerCase().includes(q) ||
-                          (guidedProject.detail && guidedProject.detail.toLowerCase().includes(q)) ||
-                          String(idx + 1).includes(q);
+                            guidedProject.title.toLowerCase().includes(q) ||
+                            guidedProject.description.toLowerCase().includes(q) ||
+                            guidedProject.tag.toLowerCase().includes(q) ||
+                            (guidedProject.detail && guidedProject.detail.toLowerCase().includes(q)) ||
+                            String(idx + 1).includes(q);
                         })
                         .map((guidedProject: GuidedProject, idx) => (
                           <Button
@@ -209,12 +206,10 @@ export function ProjectPickerDialog({
                             className={`group h-auto min-h-[140px] md:min-h-[180px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-emerald-800/40 bg-emerald-900/10 hover:bg-emerald-900/30 hover:border-emerald-500/50' : 'border-emerald-200/50 bg-emerald-50/30 hover:bg-emerald-50 hover:border-emerald-500/40'} w-full overflow-hidden shadow-sm hover:shadow-2xl relative`}
                             onClick={() => {
                               closeProjectPicker();
-                              runWithSaveGuard(() => {
-                                setZoom(1.0);
-                                setPan({ x: 0, y: 0 });
-                                startGuidedProject(guidedProject);
-                                loadProjectData(guidedProject.data);
-                              });
+                              setZoom(1.0);
+                              setPan({ x: 0, y: 0 });
+                              startGuidedProject(guidedProject);
+                              loadProjectData(guidedProject.data);
                             }}
                           >
                             <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
@@ -263,10 +258,10 @@ export function ProjectPickerDialog({
                       {getAvailableProjects(language).filter((guidedProject) => {
                         const q = projectSearchQuery.trim().toLowerCase();
                         return q === '' ||
-                        guidedProject.title.toLowerCase().includes(q) ||
-                        guidedProject.description.toLowerCase().includes(q) ||
-                        guidedProject.tag.toLowerCase().includes(q) ||
-                        (guidedProject.detail && guidedProject.detail.toLowerCase().includes(q));
+                          guidedProject.title.toLowerCase().includes(q) ||
+                          guidedProject.description.toLowerCase().includes(q) ||
+                          guidedProject.tag.toLowerCase().includes(q) ||
+                          (guidedProject.detail && guidedProject.detail.toLowerCase().includes(q));
                       }).length === 0 && (
                           <div className={`text-center py-12 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                             <p className="text-sm">
@@ -291,64 +286,64 @@ export function ProjectPickerDialog({
                       if (projs) projs.forEach(p => projectNumMap.set(p.id, ++counter));
                     }
                     return exampleLevelOrder.map((level) => {
-                    const projects = groupedExampleProjects[level];
-                    if (!projects || projects.length === 0) return null;
+                      const projects = groupedExampleProjects[level];
+                      if (!projects || projects.length === 0) return null;
 
-                    const q = projectSearchQuery.trim().toLowerCase();
-                    const filteredProjects = q === ''
-                      ? projects
-                      : projects.filter(project => {
-                        const num = projectNumMap.get(project.id) || 0;
-                        return project.title.toLowerCase().includes(q) ||
-                        project.description.toLowerCase().includes(q) ||
-                        project.tag.toLowerCase().includes(q) ||
-                        (project.detail && project.detail.toLowerCase().includes(q)) ||
-                        String(num).includes(q);
-                      });
+                      const q = projectSearchQuery.trim().toLowerCase();
+                      const filteredProjects = q === ''
+                        ? projects
+                        : projects.filter(project => {
+                          const num = projectNumMap.get(project.id) || 0;
+                          return project.title.toLowerCase().includes(q) ||
+                            project.description.toLowerCase().includes(q) ||
+                            project.tag.toLowerCase().includes(q) ||
+                            (project.detail && project.detail.toLowerCase().includes(q)) ||
+                            String(num).includes(q);
+                        });
 
-                    if (filteredProjects.length === 0) return null;
+                      if (filteredProjects.length === 0) return null;
 
-                    return (
-                      <section key={level} className='space-y-4 md:space-y-6 w-full'>
-                        <div className='flex items-center gap-3 md:gap-4 px-1 md:px-2'>
-                          <p className={`text-[10px] md:text-xs font-black tracking-[0.3em] md:tracking-[0.4em] whitespace-nowrap ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                            {exampleLevelLabels[level]}
-                          </p>
-                          <p className={`text-[10px] md:text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} truncate`}>
-                            {exampleLevelHints[level]}
-                          </p>
-                          <div className={`h-px flex-1 ${isDark ? 'bg-blue-500/60' : 'bg-blue-400/60'}`} />
-                        </div>
+                      return (
+                        <section key={level} className='space-y-4 md:space-y-6 w-full'>
+                          <div className='flex items-center gap-3 md:gap-4 px-1 md:px-2'>
+                            <p className={`text-[10px] md:text-xs font-black tracking-[0.3em] md:tracking-[0.4em] whitespace-nowrap ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                              {exampleLevelLabels[level]}
+                            </p>
+                            <p className={`text-[10px] md:text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} truncate`}>
+                              {exampleLevelHints[level]}
+                            </p>
+                            <div className={`h-px flex-1 ${isDark ? 'bg-blue-500/60' : 'bg-blue-400/60'}`} />
+                          </div>
 
-                        <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
-                           {filteredProjects.map((example) => {
-                             const num = projectNumMap.get(example.id) || 0;
-                             return (
-                            <Button
-                              key={example.id}
-                              variant='ghost'
-                              className={`group h-auto min-h-[120px] md:min-h-[160px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/80 hover:border-cyan-500/30' : 'border-slate-200/50 bg-white hover:bg-slate-50 hover:border-blue-500/20'} w-full overflow-hidden shadow-sm hover:shadow-2xl`}
-                              onClick={() => { closeProjectPicker(); runWithSaveGuard(() => applyExampleProject(example.data, example.id)); }}
-                            >
-                              <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
-                                <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-cyan-400' : 'group-hover:text-blue-600'}`}><span className={`${isDark ? 'text-slate-500' : 'text-slate-400'} mr-2`}>{num}.</span>{example.title}</span>
-                                <span className={`text-[8px] md:text-[10px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>{example.tag}</span>
-                              </div>
-                              <p className={`text-[11px] md:text-sm leading-relaxed font-medium italic transition-colors whitespace-normal break-words break-all w-full ${isDark ? 'text-slate-400/80 group-hover:text-slate-200' : 'text-slate-600 group-hover:text-slate-800'}`}>{example.description}</p>
-                              {example.detail && (
-                                <div className='mt-auto pt-2 md:pt-4 flex items-center gap-2 md:gap-3 w-full border-t border-slate-800/10 dark:border-slate-800/50'>
-                                  <div className='w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.5)]' />
-                                  <span className={`text-[8px] md:text-[11px] font-bold tracking-wide whitespace-normal break-words break-all w-full ${isDark ? 'text-amber-400/80' : 'text-amber-700/80'}`}>{example.detail}</span>
-                                </div>
-                              )}
-                            </Button>
-                          );
-                        })}
-                        </div>
-                      </section>
-                    );
-                  });
-                })()}
+                          <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
+                            {filteredProjects.map((example) => {
+                              const num = projectNumMap.get(example.id) || 0;
+                              return (
+                                <Button
+                                  key={example.id}
+                                  variant='ghost'
+                                  className={`group h-auto min-h-[120px] md:min-h-[160px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-slate-800/40 bg-slate-900/20 hover:bg-slate-900/80 hover:border-cyan-500/30' : 'border-slate-200/50 bg-white hover:bg-slate-50 hover:border-blue-500/20'} w-full overflow-hidden shadow-sm hover:shadow-2xl`}
+                                  onClick={() => { closeProjectPicker(); applyExampleProject(example.data, example.id); }}
+                                >
+                                  <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
+                                    <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-cyan-400' : 'group-hover:text-blue-600'}`}><span className={`${isDark ? 'text-slate-500' : 'text-slate-400'} mr-2`}>{num}.</span>{example.title}</span>
+                                    <span className={`text-[8px] md:text-[10px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>{example.tag}</span>
+                                  </div>
+                                  <p className={`text-[11px] md:text-sm leading-relaxed font-medium italic transition-colors whitespace-normal break-words break-all w-full ${isDark ? 'text-slate-400/80 group-hover:text-slate-200' : 'text-slate-600 group-hover:text-slate-800'}`}>{example.description}</p>
+                                  {example.detail && (
+                                    <div className='mt-auto pt-2 md:pt-4 flex items-center gap-2 md:gap-3 w-full border-t border-slate-800/10 dark:border-slate-800/50'>
+                                      <div className='w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.5)]' />
+                                      <span className={`text-[8px] md:text-[11px] font-bold tracking-wide whitespace-normal break-words break-all w-full ${isDark ? 'text-amber-400/80' : 'text-amber-700/80'}`}>{example.detail}</span>
+                                    </div>
+                                  )}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </section>
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </div>
