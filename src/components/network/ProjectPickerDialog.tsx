@@ -103,6 +103,29 @@ export function ProjectPickerDialog({
     }
   }, [visibleProjectIds, selectedProjectId]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    const handleGlobalTab = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (visibleProjectIds.length === 0) return;
+
+      const direction = e.shiftKey ? -1 : 1;
+      const currentIdx = selectedProjectId ? visibleProjectIds.indexOf(selectedProjectId) : -1;
+      const nextIdx = currentIdx < 0
+        ? (direction > 0 ? 0 : visibleProjectIds.length - 1)
+        : (currentIdx + direction + visibleProjectIds.length) % visibleProjectIds.length;
+      const nextId = visibleProjectIds[nextIdx];
+      setSelectedProjectId(nextId);
+      scrollRef.current?.querySelector(`[data-project-id="${CSS.escape(nextId)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    window.addEventListener('keydown', handleGlobalTab, true);
+    return () => window.removeEventListener('keydown', handleGlobalTab, true);
+  }, [open, visibleProjectIds, selectedProjectId]);
+
   return (
     <Dialog open={open} onOpenChange={(open) => { onOpenChange(open); if (!open) setProjectSearchQuery(''); }}>
       <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl liquid-glass-light`}>
@@ -178,6 +201,11 @@ export function ProjectPickerDialog({
                 className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
+                    if (selectedProjectId) {
+                      e.preventDefault();
+                      (scrollRef.current?.querySelector(`[data-project-id="${CSS.escape(selectedProjectId)}"]`) as HTMLButtonElement | null)?.click();
+                      return;
+                    }
                     const q = projectSearchQuery.trim().toLowerCase();
                     // Search example projects first
                     let firstProject: any = null;
@@ -213,7 +241,7 @@ export function ProjectPickerDialog({
                     }
                     if (firstProject) {
                       closeProjectPicker();
-                      applyExampleProject(firstProject.data);
+                      applyExampleProject(firstProject.data, firstProject.id);
                     } else {
                       closeProjectPicker();
                       resetToEmptyProject();

@@ -61,7 +61,7 @@ export function AppFooter({
                   {activeTab === 'topology' && (
                     <>
                       <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
-                        }`}>TAB</kbd>
+                        }`}>(Shift) TAB</kbd>
                       <span className="mx-1">{t.tabToNext}</span>
                       <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
                         }`}>Ctrl+S</kbd>

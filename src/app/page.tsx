@@ -3499,6 +3499,9 @@ ${state.bannerMOTD}
         }
       }
       if (e.key === 'Tab') {
+        if (showProjectPicker) {
+          return;
+        }
         // Tab key navigation - only cycle devices in topology if no panel is open
         // If a panel is open (PC panel, Router panel, etc.), let the panel handle Tab navigation
         if (activeTab === 'topology' && topologyDevices.length > 0 && !showPCPanel && !showRouterPanel && !showUnifiedDeviceModal) {
@@ -3511,7 +3514,10 @@ ${state.bannerMOTD}
           }
 
           const currentIndex = topologyDevices.findIndex(d => d.id === activeDeviceId);
-          const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % topologyDevices.length;
+          const direction = e.shiftKey ? -1 : 1;
+          const nextIndex = currentIndex === -1
+            ? (direction > 0 ? 0 : topologyDevices.length - 1)
+            : (currentIndex + direction + topologyDevices.length) % topologyDevices.length;
           const nextDevice = topologyDevices[nextIndex];
           if (nextDevice) {
             setActiveDeviceId(nextDevice.id);
