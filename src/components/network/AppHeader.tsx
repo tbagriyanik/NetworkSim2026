@@ -80,7 +80,7 @@ export function AppHeader({
   isGuidedModeActive, isPanelMinimized, expandPanel, setShowAboutModal,
 }: AppHeaderProps) {
   return (
-    <header className={`liquid-glass sticky top-0 z-1 border-b px-5 py-3 pb-0`}>
+    <header className={`liquid-glass fixed top-0 left-0 right-0 z-40 border-b px-5 py-2 pb-0`}>
       <div className="w-full">
         <div className="flex items-center justify-between">
           {/* Logo & Title */}
@@ -346,7 +346,7 @@ export function AppHeader({
                   </div>
 
                   {/* Lab Progress Mobile */}
-          {activeDeviceType !== 'pc' && activeDeviceType !== 'iot' && activeDeviceType !== 'firewall' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && maxScore > 0 && (
+                  {activeDeviceType !== 'pc' && activeDeviceType !== 'iot' && activeDeviceType !== 'firewall' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && maxScore > 0 && (
                     <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-800/30' : 'bg-slate-50'} border ${isDark ? 'border-slate-800/50' : 'border-slate-200'}`}>
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-bold tracking-[0.15em] text-slate-500">{t.labProgress}</span>

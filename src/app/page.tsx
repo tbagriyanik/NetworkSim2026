@@ -4295,7 +4295,7 @@ ${state.bannerMOTD}
           />}
 
           {/* Main Content - Fits between header and footer with scroll */}
-          <main className="flex-1 overflow-hidden flex flex-col min-h-0">
+          <main className={`overflow-hidden flex flex-col min-h-0 h-[calc(100vh-44px)] pt-[72px] ${activeTab === 'topology' ? 'md:pt-[120px]' : 'md:pt-[72px]'}`}>
             <div className="w-full flex-1 flex flex-col min-h-0 overflow-hidden">
               {/* Tab Content - Always render but hide non-active */}
               <div className={`flex-1 flex flex-col min-h-0 ${activeTab === 'topology' ? 'flex' : 'hidden'} print:flex`}>
@@ -4326,7 +4326,7 @@ ${state.bannerMOTD}
                   />
                 )}
                 {/* Network Topology fills remaining space */}
-                <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0">
+                <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0 overflow-hidden">
                   <NetworkTopology
                     key={topologyKey}
                     cableInfo={cableInfo}

@@ -66,10 +66,11 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
   };
 
   return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black">
-      <div className={`w-full max-w-md mx-4 rounded-xl backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border border-zinc-800/50 text-zinc-100 shadow-black/40' : 'bg-white/40 border border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'} overflow-hidden`}>
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/35 backdrop-blur-sm">
+      <div className={`liquid-glass-light relative w-full max-w-md mx-4 rounded-2xl border text-zinc-100 overflow-hidden shadow-[0_35px_120px_rgba(15,23,42,0.35)] ${isDark ? 'border-white/10' : 'border-white/70 text-zinc-900'}`}>
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/20 via-white/5 to-transparent" />
         {/* Header */}
-        <div className={`px-3 py-2 border-b ${isDark ? 'border-white/10 bg-white/5' : 'border-black/10 bg-black/5'}`}>
+        <div className={`relative px-3 py-2 border-b ${isDark ? 'border-white/10 bg-white/[0.02]' : 'border-white/60 bg-white/20'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {step === 'target' && (
@@ -134,7 +135,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
         </div>
 
         {/* Device Port List */}
-        <div className="max-h-72 overflow-y-auto overflow-x-hidden p-3 space-y-2">
+        <div className="relative max-h-72 overflow-y-auto overflow-x-hidden p-3 space-y-2">
           {devices.map((device) => {
             const availablePorts = getAvailablePorts(device.id);
             if (availablePorts.length === 0) return null;
@@ -188,7 +189,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
         </div>
 
         {/* Footer Hint */}
-        <div className={`px-3 py-2 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'} text-center`}>
+        <div className={`relative px-3 py-2 border-t ${isDark ? 'border-slate-700/70' : 'border-slate-200/80'} text-center`}>
           <p className={`text-[9px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             {step === 'source'
               ? (language === 'tr' ? 'Bağlantıyı başlatacak portu seçin' : 'Select the port to start connection from')

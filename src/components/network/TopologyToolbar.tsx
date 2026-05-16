@@ -68,7 +68,7 @@ export function TopologyToolbar({
   handleRefreshNetwork, setIsEnvironmentPanelOpen,
 }: TopologyToolbarProps) {
   return (
-    <div className="sticky top-0 z-30 px-4 py-2 border-b backdrop-blur-md bg-background/95 hidden md:flex items-center gap-3">
+    <div className="fixed top-[72px] left-0 right-0 z-30 px-4 py-[5px] pt-3 border-b backdrop-blur-md bg-background/95 hidden md:flex items-center gap-3">
       {/* Reset View Button */}
       <Tooltip>
         <TooltipTrigger asChild>
