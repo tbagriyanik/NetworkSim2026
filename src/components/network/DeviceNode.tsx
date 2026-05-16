@@ -45,7 +45,8 @@ export const DeviceNode = memo(function DeviceNode({
       role="button"
       tabIndex={0}
       data-device-id={device.id}
-      aria-label={`${device.type} ${device.name}, Status: ${device.status}, IP: ${device.ip || 'Not assigned'}`}
+      aria-label={`${device.type} ${device.name}`}
+      aria-describedby={`device-desc-${device.id}`}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -82,6 +83,9 @@ export const DeviceNode = memo(function DeviceNode({
         style={{ touchAction: 'none' }}
       />
       {renderDeviceContent(device, isDragging)}
+      <desc id={`device-desc-${device.id}`}>
+        {`Status: ${device.status}, IP: ${device.ip || 'Not assigned'}`}
+      </desc>
     </g>
   );
 }, (prevProps, nextProps) => {

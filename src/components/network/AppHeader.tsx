@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -86,6 +87,7 @@ export function AppHeader({
           <TooltipWrapper title={t.reloadPage}>
             <Button
               variant="ghost"
+              aria-label={`${t.title} - ${t.subtitle}. ${t.reloadPage}`}
               onClick={() => {
                 if (typeof window !== 'undefined') {
                   window.location.reload();
@@ -94,13 +96,13 @@ export function AppHeader({
               className="flex items-center gap-3 p-2"
             >
               <div className="p-1 flex items-center justify-center">
-                <img src="/app.png" alt="Logo" className="w-7 h-7 object-contain" />
+                <Image src="/icon192.svg" alt="Logo" width={28} height={28} className="w-7 h-7 object-contain" />
               </div>
               <div className="hidden md:flex flex-col">
                 <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent leading-none">
                   {t.title}
                 </h2>
-                <p className="text-xs font-medium mt-1 text-slate-400 dark:text-slate-200">{t.subtitle}</p>
+                <p className="text-xs font-medium mt-1 text-slate-600 dark:text-slate-200">{t.subtitle}</p>
               </div>
             </Button>
           </TooltipWrapper>
@@ -233,7 +235,7 @@ export function AppHeader({
               <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'} hidden md:block`} />
               <button
                 onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
-                className={cn("text-[10px] font-bold h-7 px-1.5 flex items-center gap-1 rounded transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-purple-300' : 'text-slate-500 hover:text-purple-600')}
+                className={cn("text-[10px] font-bold h-7 px-1.5 flex items-center gap-1 rounded transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-purple-300' : 'text-slate-700 hover:text-purple-700')}
               >
                 <Languages className="w-3.5 h-3.5" />
                 {language.toUpperCase()}
@@ -276,7 +278,7 @@ export function AppHeader({
               <SheetHeader className="p-4 text-left border-b border-slate-800/50">
                 <SheetTitle className="text-lg font-black flex items-center gap-2">
                   <div className="p-1 flex items-center justify-center">
-                    <img src="/app.png" alt="Logo" className="w-5 h-5 object-contain" />
+                    <Image src="/icon192.svg" alt="Logo" width={20} height={20} className="w-5 h-5 object-contain" />
                   </div>
                   {t.title}
                 </SheetTitle>

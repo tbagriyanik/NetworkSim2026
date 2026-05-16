@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo, useLayoutEffect } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 import { SwitchState, CableInfo } from '@/lib/network/types';
 import { useDeviceManager } from '@/hooks/useDeviceManager';
@@ -103,19 +104,15 @@ import { AppSkeleton } from '@/components/ui/AppSkeleton';
 import { AppErrorBoundary } from '@/components/ui/AppErrorBoundary';
 import { SwitchModel } from '@/lib/network/switchModels';
 
-const PCPanel = dynamic(() => import('@/components/network/PCPanel').then((m) => m.PCPanel), { ssr: false });
-const RouterPanel = dynamic(() => import('@/components/network/RouterPanel').then((m) => m.RouterPanel), { ssr: false });
-const UnifiedDevicePanel = dynamic(() => import('@/components/network/UnifiedDevicePanel').then((m) => m.UnifiedDevicePanel), { ssr: false });
-const PortPanel = dynamic(() => import('@/components/network/PortPanel').then((m) => m.PortPanel), { ssr: false });
-const VlanPanel = dynamic(() => import('@/components/network/VlanPanel').then((m) => m.VlanPanel), { ssr: false });
-const SecurityPanel = dynamic(() => import('@/components/network/SecurityPanel').then((m) => m.SecurityPanel), { ssr: false });
-const ConfigPanel = dynamic(() => import('@/components/network/ConfigPanel').then((m) => m.ConfigPanel), { ssr: false });
-const LazyAboutModal = dynamic(() => import('@/components/network/LazyAboutModal').then((m) => m.LazyAboutModal), { ssr: false });
-const ProjectPickerDialog = dynamic(() => import('@/components/network/ProjectPickerDialog').then((m) => m.ProjectPickerDialog), { ssr: false });
-const GuidedModePanel = dynamic(() => import('@/components/network/GuidedModePanel').then((m) => m.GuidedModePanel), { ssr: false });
-const FirewallPanel = dynamic(() => import('@/components/network/FirewallPanel').then((m) => m.FirewallPanel), { ssr: false });
-const EnvironmentSettingsPanel = dynamic(() => import('@/components/network/EnvironmentSettingsPanel').then((m) => m.EnvironmentSettingsPanel), { ssr: false });
-const OnboardingDialog = dynamic(() => import('@/components/network/OnboardingDialog').then((m) => m.OnboardingDialog), { ssr: false });
+const PCPanel = dynamic(() => import('@/components/network/PCPanel').then((m) => m.PCPanel));
+const RouterPanel = dynamic(() => import('@/components/network/RouterPanel').then((m) => m.RouterPanel));
+const UnifiedDevicePanel = dynamic(() => import('@/components/network/UnifiedDevicePanel').then((m) => m.UnifiedDevicePanel));
+const LazyAboutModal = dynamic(() => import('@/components/network/LazyAboutModal').then((m) => m.LazyAboutModal));
+const ProjectPickerDialog = dynamic(() => import('@/components/network/ProjectPickerDialog').then((m) => m.ProjectPickerDialog));
+const GuidedModePanel = dynamic(() => import('@/components/network/GuidedModePanel').then((m) => m.GuidedModePanel));
+const FirewallPanel = dynamic(() => import('@/components/network/FirewallPanel').then((m) => m.FirewallPanel));
+const EnvironmentSettingsPanel = dynamic(() => import('@/components/network/EnvironmentSettingsPanel').then((m) => m.EnvironmentSettingsPanel));
+const OnboardingDialog = dynamic(() => import('@/components/network/OnboardingDialog').then((m) => m.OnboardingDialog));
 
 type TabType = 'topology' | 'cmd' | 'terminal' | 'tasks';
 
@@ -3697,7 +3694,7 @@ ${state.bannerMOTD}
             <div className="flex flex-col items-center animate-scale-in">
               <div className="relative mb-8">
                 <div className="p-2 animate-glitch">
-                  <img src="/app.png" alt="Logo" className="w-16 h-16 object-contain" />
+                  <Image src="/icon192.svg" alt="Logo" width={64} height={64} className="w-16 h-16 object-contain" priority />
                 </div>
                 {/* Glitch overlays */}
                 <div className="absolute inset-0 p-4 rounded-2xl bg-red-500/30 animate-glitch-skew mix-blend-screen" />
@@ -3805,7 +3802,7 @@ ${state.bannerMOTD}
             setShowAboutModal={setShowAboutModal}
           />
 
-          <ProjectPickerDialog
+          {showProjectPicker && <ProjectPickerDialog
             open={showProjectPicker}
             onOpenChange={setShowProjectPicker}
             t={t}
@@ -3827,10 +3824,10 @@ ${state.bannerMOTD}
             setZoom={setZoom}
             setPan={setPan}
             closeProjectPicker={() => setShowProjectPicker(false)}
-          />
+          />}
 
 
-          <OnboardingDialog
+          {showOnboarding && <OnboardingDialog
             open={showOnboarding}
             onOpenChange={setShowOnboarding}
             t={t}
@@ -3840,7 +3837,7 @@ ${state.bannerMOTD}
             closeOnboardingForever={closeOnboardingForever}
             prevOnboarding={prevOnboarding}
             nextOnboarding={nextOnboarding}
-          />
+          />}
 
 
           {/* Global Dialogs (AlertDialog for better z-index and standard behavior) */}
@@ -3916,7 +3913,7 @@ ${state.bannerMOTD}
           </AlertDialog>
 
           {/* Unified Device Panel (CLI + Tasks) */}
-          <UnifiedDevicePanel
+          {showUnifiedDeviceModal && <UnifiedDevicePanel
             isOpen={showUnifiedDeviceModal}
             onOpenChange={setShowUnifiedDeviceModal}
             activeTab={unifiedDeviceActiveTab}
@@ -3946,10 +3943,10 @@ ${state.bannerMOTD}
             modalSize={unifiedDrag.size}
             handlePointerDown={unifiedDrag.handlePointerDown}
             handleResizeStart={unifiedDrag.handleResizeStart}
-          />
+          />}
 
           {/* Firewall Configuration Modal */}
-          <Dialog open={showFirewallPanel} onOpenChange={(open) => {
+          {showFirewallPanel && <Dialog open={showFirewallPanel} onOpenChange={(open) => {
             setShowFirewallPanel(open);
             if (!open) setFirewallActiveTab('console');
           }} modal={false}>
@@ -4092,10 +4089,10 @@ ${state.bannerMOTD}
                 )}
               </div>
             </DialogContent>
-          </Dialog>
+          </Dialog>}
 
           {/* PC Terminal Modal */}
-          <Dialog open={showPCPanel} onOpenChange={setShowPCPanel} modal={false}>
+          {showPCPanel && <Dialog open={showPCPanel} onOpenChange={setShowPCPanel} modal={false}>
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
@@ -4204,17 +4201,17 @@ ${state.bannerMOTD}
                 )}
               </div>
             </DialogContent>
-          </Dialog>
+          </Dialog>}
 
           {/* Router Info Panel Modal */}
-          <RouterPanel
+          {showRouterPanel && <RouterPanel
             deviceId={showRouterDeviceId}
             isVisible={showRouterPanel}
             onClose={() => setShowRouterPanel(false)}
             topologyDevices={topologyDevices || undefined}
             deviceStates={deviceStates}
             cableInfo={cableInfo}
-          />
+          />}
 
           {/* Main Content - Fits between header and footer with scroll */}
           <main className="flex-1 overflow-hidden flex flex-col min-h-0">
@@ -4443,7 +4440,7 @@ ${state.bannerMOTD}
             showOnboarding={showOnboarding}
           />
 
-          <LazyAboutModal
+          {showAboutModal && <LazyAboutModal
             isOpen={showAboutModal}
             onClose={() => setShowAboutModal(false)}
             onStartTour={() => {
@@ -4451,15 +4448,15 @@ ${state.bannerMOTD}
               setShowOnboarding(true);
               setOnboardingStep(0);
             }}
-          />
+          />}
 
-          <EnvironmentSettingsPanel
+          {isEnvironmentPanelOpen && <EnvironmentSettingsPanel
             isOpen={isEnvironmentPanelOpen}
             onOpenChange={setIsEnvironmentPanelOpen}
-          />
+          />}
 
           {/* Guided Mode Panel */}
-          <GuidedModePanel
+          {isGuidedModeActive && <GuidedModePanel
             project={activeGuidedProject}
             currentStepIndex={guidedStepIndex}
             onStepComplete={completeStep}
@@ -4475,7 +4472,7 @@ ${state.bannerMOTD}
             topologyConnections={topologyConnections}
             topologyDevices={topologyDevices}
             onCheckAutoComplete={checkStepCompletionWithContext}
-          />
+          />}
         </div>
       </div>
     </AppErrorBoundary>
