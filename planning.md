@@ -3,12 +3,11 @@
 ## Güncel Durum
 
 - **Sürüm**: 1.6.3
-- **Tarih**: 2026-05-14
-- **Uygulama kodu**: 91,694
-- **Örnek kod satırı**: 15,650
-- **Dokümantasyon satırı**: 150+
-- **Toplam satır**: 107,344
-- **Kod dosyası**: 256
+- **Tarih**: 2026-05-16
+- **Uygulama kodu**: 103,498
+- **Dokümantasyon satırı**: 13,290
+- **Toplam satır**: 128,176
+- **Kod dosyası**: 261
 - **Hazır topoloji örneği**: 39
 - **Rehberli ders**: 3
 - **CLI komut ailesi**: 180+
@@ -17,6 +16,25 @@
 Not: Toplam satır sayısı uygulama kodu, örnek kod ve dokümantasyonun birleşimidir.
 
 ## Son Yapılanlar
+
+### Kalite ve Tip Güvenliği Sertleştirmesi (Mayıs 2026 - 16 Mayıs)
+
+- **appStore.ts Schema Doğrulama**:
+  - `isValidCanvasDevice`, `isValidCanvasConnection`, `isValidCanvasNote` per-item validatörleri eklendi.
+  - `sanitizePersistedState` artık bozuk device/connection/note'u tek tek filtreliyor (toplu red yerine).
+  - Tüm `any` tiplemeler `unknown` + type guard ile değiştirildi.
+  - `migrateAndValidatePersistedState` imzası `any` → `unknown`.
+
+- **configParser.ts Tip Güvenliği**:
+  - `device.ports as any[]` → Array.isArray + id bazlı port validasyonu.
+  - `device.network as Record<string, unknown>` → yapılandırılmış network nesnesi (ipv4, subnet, gateway, dns, dhcp tipleri korunuyor).
+  - Bağlantı (connection) ayrıştırmasında da gevşek cast'ler temizlendi, null-safe tipler kullanıldı.
+
+- **Sessiz Catch Blokları Gözlemlenebilir Yapıldı**:
+  - `offlineStorage.ts`: `getStorageInfo` ve `isAvailable` metotlarındaki sessiz catch'ler `errorHandler.logError`'a yönlendirildi.
+  - `networkUtils.ts`: `ensureDeviceStatesMap` içindeki `logger.error` → `errorHandler.logError` (merkezi hata yönetimi).
+
+- **Test Dosyaları Temizliği**: Tüm spec/test dosyaları projeden kaldırıldı (vitest run artık 0 test).
 
 ### Glass Effect Standardizasyonu ve UI Tutarlılığı (Mayıs 2026 - 14 Mayıs)
 

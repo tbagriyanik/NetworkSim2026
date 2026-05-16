@@ -158,19 +158,18 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 
 | Grup | Satır Sayısı |
 | --- | ---: |
-| Uygulama Kodu | 91,694 |
-| Örnek JSON+TS Kod Toplamı | 15,650 |
-| **Toplam** | **107,344** |
+| Uygulama Kodu | 103,498 |
+| Dokümantasyon | 13,290 |
+| **Toplam** | **128,176** |
 
 | Diğer Metrikler | Sayı |
 | --- | ---: |
-| Toplam kod dosyası | 256 |
+| Toplam kod dosyası | 261 |
 | Hazır topoloji örneği | 39 |
 | Rehberli ders | 3 |
 | CLI komut ailesi | 180+ |
-| Test Dosyaları | 5 |
-| Başarılı Testler | 53 |
-| Test Başarı Oranı | 100% |
+| Test Dosyaları | 0 |
+| Başarılı Testler | N/A |
 | Derleme | Temiz |
 | Lint | Temiz |
 | TypeScript | Hata yok |
