@@ -114,7 +114,7 @@ export function AppFooter({
             </div>
 
             {/* Lab Progress */}
-            {activeDeviceType !== 'pc' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && totalScore > 0 && (
+            {activeDeviceType !== 'pc' && activeDeviceType !== 'iot' && activeDeviceType !== 'firewall' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && maxScore > 0 && (
               <div className={`hidden md:flex items-center gap-2`}>
                 <span className={`text-[11px] font-bold tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
                   {t.labProgress}

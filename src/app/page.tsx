@@ -985,7 +985,7 @@ export default function Home() {
     return getOrCreateDeviceState(activeDeviceId, resolvedType, activeDevice?.name, activeDevice?.macAddress, activeDevice?.switchModel);
   }, [activeDeviceId, activeDeviceType, topologyDevices, deviceStates, getOrCreateDeviceState]);
   const output = getOrCreateDeviceOutputs(activeDeviceId, state);
-  const isTaskSystemEnabled = activeDeviceType !== 'pc';
+  const isTaskSystemEnabled = activeDeviceType === 'switchL2' || activeDeviceType === 'switchL3' || activeDeviceType === 'router';
   const activeDeviceTasks = useMemo(
     () => isTaskSystemEnabled
       ? [...topologyTasks, ...portTasks, ...vlanTasks, ...securityTasks, ...dhcpTasks, ...(activeDeviceType === 'router' || activeDeviceType === 'switchL3' ? routingTasks : []), ...(activeDeviceType !== 'switchL2' ? wirelessTasks : [])]
@@ -1042,7 +1042,7 @@ export default function Home() {
       // Update previous status
       prevTaskStatusRef.current.set(task.id, currentStatus);
     });
-  }, [activeDeviceTasks, isTaskSystemEnabled, state, taskContext, language]);
+  }, [activeDeviceTasks, isTaskSystemEnabled, state, taskContext, language, activeDeviceType]);
 
   // Calculate total score
   const totalScore = isTaskSystemEnabled ? calculateTaskScore(activeDeviceTasks, state, taskContext) : 0;

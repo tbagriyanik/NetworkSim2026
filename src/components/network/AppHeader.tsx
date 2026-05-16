@@ -108,7 +108,7 @@ export function AppHeader({
           </TooltipWrapper>
 
           {/* Total Score - Desktop */}
-          {activeDeviceType !== 'pc' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && (
+          {activeDeviceType !== 'pc' && activeDeviceType !== 'iot' && activeDeviceType !== 'firewall' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && maxScore > 0 && (
             <div className="hidden md:flex items-center gap-4">
               <div className="flex flex-col items-end gap-1">
                 <div className="flex items-center gap-2">
@@ -346,7 +346,7 @@ export function AppHeader({
                   </div>
 
                   {/* Lab Progress Mobile */}
-                  {activeDeviceType !== 'pc' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && (
+          {activeDeviceType !== 'pc' && activeDeviceType !== 'iot' && activeDeviceType !== 'firewall' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && maxScore > 0 && (
                     <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-800/30' : 'bg-slate-50'} border ${isDark ? 'border-slate-800/50' : 'border-slate-200'}`}>
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-bold tracking-[0.15em] text-slate-500">{t.labProgress}</span>

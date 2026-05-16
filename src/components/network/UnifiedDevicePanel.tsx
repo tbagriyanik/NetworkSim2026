@@ -107,6 +107,7 @@ export function UnifiedDevicePanel({
     const isOffline = useMemo(() => {
         return topologyDevices.some(d => d.id === deviceId && d.status === 'offline');
     }, [topologyDevices, deviceId]);
+    const hasTaskSystem = deviceType === 'switchL2' || deviceType === 'switchL3' || deviceType === 'router';
 
     // Handle focus on terminal
     const focusActiveTerminalInput = () => {
@@ -296,21 +297,23 @@ export function UnifiedDevicePanel({
                                             </div>
                                         </div>
 
-                                        <div className="space-y-6">
-                                            <div className="space-y-4 sticky top-0">
-                                                <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                                                    <Cpu className="w-4 h-4" />
-                                                    {t.tasksAndScore}
+                                        {hasTaskSystem && (
+                                            <div className="space-y-6">
+                                                <div className="space-y-4 sticky top-0">
+                                                    <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                                                        <Cpu className="w-4 h-4" />
+                                                        {t.tasksAndScore}
+                                                    </div>
+                                                    <TaskCard
+                                                        tasks={activeDeviceTasks}
+                                                        state={state}
+                                                        context={taskContext}
+                                                        color="from-indigo-500 to-purple-600"
+                                                        isDark={isDark}
+                                                    />
                                                 </div>
-                                                <TaskCard
-                                                    tasks={activeDeviceTasks}
-                                                    state={state}
-                                                    context={taskContext}
-                                                    color="from-indigo-500 to-purple-600"
-                                                    isDark={isDark}
-                                                />
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             </TabsContent>

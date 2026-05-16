@@ -101,6 +101,26 @@ export function GuidedModePanel({
   // Dragging state
   const [position, setPosition] = useState({ x: 0, y: 80 }); // right-4 top-20 (x set in useEffect)
 
+  // Elapsed time since guided project started
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  useEffect(() => {
+    if (!project?.startedAt) return;
+    const update = () => {
+      setElapsedSeconds(Math.floor((Date.now() - new Date(project.startedAt!).getTime()) / 1000));
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [project?.startedAt]);
+
+  const formatElapsed = (totalSec: number) => {
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
   // Set initial position on mount (client-side only)
   useEffect(() => {
     setPosition({ x: window.innerWidth - 336, y: 80 });
@@ -741,7 +761,7 @@ export function GuidedModePanel({
         <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            {project.estimatedTimeMinutes} {t.minutes}
+            <span className="font-mono tabular-nums">{formatElapsed(elapsedSeconds)}</span>
           </div>
           <div className="flex items-center gap-1">
             <Target className="w-3 h-3" />
