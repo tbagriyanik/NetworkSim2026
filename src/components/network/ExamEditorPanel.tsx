@@ -89,6 +89,11 @@ export function ExamEditorPanel({
     return device?.ports || [];
   };
 
+  const getDeviceLabel = (deviceId: string) => {
+    const d = topologyDevices.find((x) => x.id === deviceId);
+    return d ? `${d.name} (${d.id})` : deviceId;
+  };
+
   const handleAddNewTask = () => {
     const newTask: Partial<ExamTask> = {
       title: { tr: 'Yeni Görev', en: 'New Task' },
@@ -469,14 +474,35 @@ export function ExamEditorPanel({
                               {task.checkType === 'command' && (
                                 <div className="space-y-1">
                                   <label className="text-[9px] font-bold opacity-50 uppercase ml-1">{isTr ? 'Komut Deseni (Regex)' : 'Command Pattern (Regex)'}</label>
-                                  <Input
-                                    value={task.checkParams?.commandPattern || ''}
-                                    onChange={(e) => updateTask(task.id, {
-                                      checkParams: { ...task.checkParams, commandPattern: e.target.value }
-                                    })}
-                                    className="h-7 text-[11px] font-mono"
-                                    placeholder="örn: hostname .+"
-                                  />
+                                  <div className="flex gap-1">
+                                    <Input
+                                      value={task.checkParams?.commandPattern || ''}
+                                      onChange={(e) => updateTask(task.id, {
+                                        checkParams: { ...task.checkParams, commandPattern: e.target.value }
+                                      })}
+                                      className="h-7 text-[11px] font-mono flex-1 min-w-0"
+                                      placeholder="orn: hostname .+"
+                                    />
+                                    <Select
+                                      value=""
+                                      onValueChange={(val) => updateTask(task.id, {
+                                        checkParams: { ...task.checkParams, commandPattern: val }
+                                      })}
+                                    >
+                                      <SelectTrigger className="h-7 w-[26px] p-0 flex-shrink-0">
+                                        <span className="text-[10px] opacity-60">↓</span>
+                                      </SelectTrigger>
+                                      <SelectContent align="end" className="max-h-[200px]">
+                                        <div className="text-[10px] font-bold opacity-50 px-2 py-1">{isTr ? 'Hazir komutlar' : 'Preset patterns'}</div>
+                                        <SelectItem value="hostname\\s+.+">hostname .+</SelectItem>
+                                        <SelectItem value="ip\\s+route\\s+0\\.0\\.0\\.0\\s+0\\.0\\.0\\.0\\s+.+">ip route default</SelectItem>
+                                        <SelectItem value="interface\\s+.+">interface .+</SelectItem>
+                                        <SelectItem value="vlan\\s+\\d+">vlan number</SelectItem>
+                                        <SelectItem value="enable\\s+secret\\s+.+">enable secret .+</SelectItem>
+                                        <SelectItem value="line\\s+console\\s+0">line console 0</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
                                 </div>
                               )}
 
@@ -525,13 +551,36 @@ export function ExamEditorPanel({
                                     </div>
                                     <div className="space-y-1">
                                       <label className="text-[9px] font-bold opacity-50 uppercase ml-1">Value</label>
-                                      <Input
-                                        value={task.checkParams?.configValue || ''}
-                                        onChange={(e) => updateTask(task.id, {
-                                          checkParams: { ...task.checkParams, configValue: e.target.value }
-                                        })}
-                                        className="h-7 text-[11px] font-mono"
-                                      />
+                                      <div className="flex gap-1">
+                                        <Input
+                                          value={task.checkParams?.configValue || ''}
+                                          onChange={(e) => updateTask(task.id, {
+                                            checkParams: { ...task.checkParams, configValue: e.target.value }
+                                          })}
+                                          className="h-7 text-[11px] font-mono flex-1 min-w-0"
+                                        />
+                                        <Select
+                                          value=""
+                                          onValueChange={(val) => updateTask(task.id, {
+                                            checkParams: { ...task.checkParams, configValue: val }
+                                          })}
+                                        >
+                                          <SelectTrigger className="h-7 w-[26px] p-0 flex-shrink-0">
+                                            <span className="text-[10px] opacity-60">↓</span>
+                                          </SelectTrigger>
+                                          <SelectContent align="end">
+                                            <div className="text-[10px] font-bold opacity-50 px-2 py-1">{isTr ? 'Sik degerler' : 'Common values'}</div>
+                                            <SelectItem value="true">true</SelectItem>
+                                            <SelectItem value="false">false</SelectItem>
+                                            <SelectItem value="up">up</SelectItem>
+                                            <SelectItem value="down">down</SelectItem>
+                                            <SelectItem value="10">10</SelectItem>
+                                            <SelectItem value="20">20</SelectItem>
+                                            <SelectItem value="192.168.1.1">192.168.1.1</SelectItem>
+                                            <SelectItem value="255.255.255.0">255.255.255.0</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -539,6 +588,23 @@ export function ExamEditorPanel({
 
                               {task.checkType === 'connection' && (
                                 <div className="space-y-2">
+                                  {(() => {
+                                    const sourceDeviceId = task.checkParams?.sourceDevice || '';
+                                    const targetDeviceId = task.checkParams?.targetDevice || '';
+                                    const sourcePorts = getDevicePorts(sourceDeviceId);
+                                    const targetPorts = getDevicePorts(targetDeviceId);
+                                    const hasDevices = topologyDevices.length > 0;
+                                    const sourceDeviceOptions = topologyDevices.filter(d => d.id !== targetDeviceId);
+                                    const targetDeviceOptions = topologyDevices.filter(d => d.id !== sourceDeviceId);
+                                    const isValidSourceDevice = sourceDeviceOptions.some(d => d.id === sourceDeviceId);
+                                    const isValidTargetDevice = targetDeviceOptions.some(d => d.id === targetDeviceId);
+                                    const selectedSourcePort = task.checkParams?.sourcePort;
+                                    const selectedTargetPort = task.checkParams?.targetPort;
+                                    const isValidSourcePort = sourcePorts.some((p: any) => p.id === selectedSourcePort);
+                                    const isValidTargetPort = targetPorts.some((p: any) => p.id === selectedTargetPort);
+
+                                    return (
+                                      <>
                                   <div className="grid grid-cols-2 gap-2">
                                     <div className="space-y-1">
                                       <label className="text-[9px] font-bold opacity-50 uppercase ml-1">Kablo Tipi</label>
@@ -563,16 +629,21 @@ export function ExamEditorPanel({
                                     <div className="space-y-1">
                                       <label className="text-[9px] font-bold opacity-50 uppercase ml-1">Kaynak Cihaz</label>
                                       <Select
-                                        value={task.checkParams?.sourceDevice || ''}
+                                        value={isValidSourceDevice ? sourceDeviceId : undefined}
                                         onValueChange={(val) => updateTask(task.id, {
-                                          checkParams: { ...task.checkParams, sourceDevice: val, sourcePort: '' }
+                                          checkParams: { ...task.checkParams, sourceDevice: val, sourcePort: undefined }
                                         })}
                                       >
                                         <SelectTrigger className="h-7 text-[11px]">
                                           <SelectValue placeholder={isTr ? 'Seçin...' : 'Select...'} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                          {topologyDevices.map(d => (
+                                          {!hasDevices && (
+                                            <SelectItem value="__no_devices__" disabled>
+                                              {isTr ? 'Topolojide cihaz yok' : 'No devices in topology'}
+                                            </SelectItem>
+                                          )}
+                                          {sourceDeviceOptions.map(d => (
                                             <SelectItem key={d.id} value={d.id}>{d.name} ({d.id})</SelectItem>
                                           ))}
                                         </SelectContent>
@@ -581,16 +652,24 @@ export function ExamEditorPanel({
                                     <div className="space-y-1">
                                       <label className="text-[9px] font-bold opacity-50 uppercase ml-1">Kaynak Port</label>
                                       <Select
-                                        value={task.checkParams?.sourcePort || ''}
+                                        value={isValidSourcePort ? selectedSourcePort : undefined}
                                         onValueChange={(val) => updateTask(task.id, {
                                           checkParams: { ...task.checkParams, sourcePort: val }
                                         })}
+                                        disabled={!sourceDeviceId || sourcePorts.length === 0}
                                       >
                                         <SelectTrigger className="h-7 text-[11px]">
-                                          <SelectValue placeholder={isTr ? 'Seçin...' : 'Select...'} />
+                                          <SelectValue placeholder={sourceDeviceId ? (isTr ? 'Port seçin...' : 'Select port...') : (isTr ? 'Önce cihaz seçin' : 'Select device first')} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                          {getDevicePorts(task.checkParams?.sourceDevice || '').map((p: any) => (
+                                          {sourcePorts.length === 0 && (
+                                            <SelectItem value="__no_ports__" disabled>
+                                              {sourceDeviceId
+                                                ? (isTr ? `${getDeviceLabel(sourceDeviceId)} için port yok` : `No ports for ${getDeviceLabel(sourceDeviceId)}`)
+                                                : (isTr ? 'Önce kaynak cihaz seçin' : 'Select source device first')}
+                                            </SelectItem>
+                                          )}
+                                          {sourcePorts.map((p: any) => (
                                             <SelectItem key={p.id} value={p.id}>{p.label || p.id}</SelectItem>
                                           ))}
                                         </SelectContent>
@@ -601,16 +680,21 @@ export function ExamEditorPanel({
                                     <div className="space-y-1">
                                       <label className="text-[9px] font-bold opacity-50 uppercase ml-1">Hedef Cihaz</label>
                                       <Select
-                                        value={task.checkParams?.targetDevice || ''}
+                                        value={isValidTargetDevice ? targetDeviceId : undefined}
                                         onValueChange={(val) => updateTask(task.id, {
-                                          checkParams: { ...task.checkParams, targetDevice: val, targetPort: '' }
+                                          checkParams: { ...task.checkParams, targetDevice: val, targetPort: undefined }
                                         })}
                                       >
                                         <SelectTrigger className="h-7 text-[11px]">
                                           <SelectValue placeholder={isTr ? 'Seçin...' : 'Select...'} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                          {topologyDevices.map(d => (
+                                          {!hasDevices && (
+                                            <SelectItem value="__no_devices_target__" disabled>
+                                              {isTr ? 'Topolojide cihaz yok' : 'No devices in topology'}
+                                            </SelectItem>
+                                          )}
+                                          {targetDeviceOptions.map(d => (
                                             <SelectItem key={d.id} value={d.id}>{d.name} ({d.id})</SelectItem>
                                           ))}
                                         </SelectContent>
@@ -619,22 +703,33 @@ export function ExamEditorPanel({
                                     <div className="space-y-1">
                                       <label className="text-[9px] font-bold opacity-50 uppercase ml-1">Hedef Port</label>
                                       <Select
-                                        value={task.checkParams?.targetPort || ''}
+                                        value={isValidTargetPort ? selectedTargetPort : undefined}
                                         onValueChange={(val) => updateTask(task.id, {
                                           checkParams: { ...task.checkParams, targetPort: val }
                                         })}
+                                        disabled={!targetDeviceId || targetPorts.length === 0}
                                       >
                                         <SelectTrigger className="h-7 text-[11px]">
-                                          <SelectValue placeholder={isTr ? 'Seçin...' : 'Select...'} />
+                                          <SelectValue placeholder={targetDeviceId ? (isTr ? 'Port seçin...' : 'Select port...') : (isTr ? 'Önce cihaz seçin' : 'Select device first')} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                          {getDevicePorts(task.checkParams?.targetDevice || '').map((p: any) => (
+                                          {targetPorts.length === 0 && (
+                                            <SelectItem value="__no_target_ports__" disabled>
+                                              {targetDeviceId
+                                                ? (isTr ? `${getDeviceLabel(targetDeviceId)} için port yok` : `No ports for ${getDeviceLabel(targetDeviceId)}`)
+                                                : (isTr ? 'Önce hedef cihaz seçin' : 'Select target device first')}
+                                            </SelectItem>
+                                          )}
+                                          {targetPorts.map((p: any) => (
                                             <SelectItem key={p.id} value={p.id}>{p.label || p.id}</SelectItem>
                                           ))}
                                         </SelectContent>
                                       </Select>
                                     </div>
                                   </div>
+                                      </>
+                                    );
+                                  })()}
                                 </div>
                               )}
 
