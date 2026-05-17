@@ -130,6 +130,14 @@ export function ExamModePanel({
     }
   }, [timeLeft, isFinishedState, onFinish]);
 
+  // Auto-finish when full score is reached
+  useEffect(() => {
+    if (score >= 100 && !isFinishedState && onFinish) {
+      setHasAutoFinished(true);
+      onFinish();
+    }
+  }, [score, isFinishedState, onFinish]);
+
   // Auto-check tasks when context changes
   useEffect(() => {
     if (onCheckTasks && project && !isFinishedState) {

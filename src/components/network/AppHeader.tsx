@@ -20,7 +20,9 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from '@/lib/utils';
 import {
-  ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, File, Undo2, Redo2, BookOpen, Leaf, Compass, Info, Sparkles, Cloud
+  ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, File, Undo2, Redo2, BookOpen, Leaf, Compass, Info, Sparkles, Cloud, Activity,
+  LetterTextIcon,
+  Mail
 } from 'lucide-react';
 import type { Translations } from '@/contexts/LanguageContext';
 import type { CanvasDevice, DeviceType } from '@/components/network/networkTopology.types';
@@ -274,7 +276,7 @@ export function AppHeader({
                 <Menu className="w-5 h-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} p-0 w-72`}>
+            <SheetContent side="right" className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} p-0 w-72 h-dvh overflow-hidden`}>
               <SheetHeader className="p-4 text-left border-b border-slate-800/50">
                 <SheetTitle className="text-lg font-black flex items-center gap-2">
                   <div className="p-1 flex items-center justify-center">
@@ -286,41 +288,41 @@ export function AppHeader({
                   Main navigation and project controls
                 </SheetDescription>
               </SheetHeader>
-              <ScrollArea className="h-[calc(100vh-80px)]">
+              <ScrollArea className="h-[calc(100dvh-80px)] overflow-y-auto">
                 <div className="p-3 space-y-4">
+                  {/* Group 1: New / Save / Load */}
                   <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200'}`}>
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         variant="secondary"
-                        className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                         onClick={() => { setShowProjectPicker(true); setShowMobileMenu(false); }}
                       >
                         <File className="w-3.5 h-3.5" /> {t.new}
                       </Button>
                       <Button
                         variant="secondary"
-                        className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                         onClick={() => { handleSaveProject(); setShowMobileMenu(false); }}
                       >
                         <Save className="w-3.5 h-3.5" /> {t.saveLabel}
                       </Button>
                       <Button
                         variant="secondary"
-                        className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                         onClick={() => { fileInputRef.current?.click(); setShowMobileMenu(false); }}
                       >
                         <FolderOpen className="w-3.5 h-3.5" /> {t.load}
                       </Button>
-                      <Button
-                        variant="secondary"
-                        className={cn("justify-start gap-2 h-9 text-xs font-bold", isDark ? "hover:text-cyan-400" : "hover:text-cyan-600")}
-                        onClick={() => { setShowOnboarding(true); setOnboardingStep(0); setShowMobileMenu(false); }}
-                      >
-                        <Compass className="w-3.5 h-3.5" /> {t.tour}
-                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Group 2: Language / Theme / Graphics */}
+                  <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className="grid grid-cols-2 gap-2">
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                         onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
                       >
                         <Languages className="w-3.5 h-3.5" />
@@ -328,7 +330,7 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                         onClick={() => setTheme(isDark ? 'light' : 'dark')}
                       >
                         {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
@@ -336,15 +338,21 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                         onClick={() => setGraphicsQuality(graphicsQuality === 'high' ? 'low' : 'high')}
                       >
                         {graphicsQuality === 'high' ? <Sparkles className="w-3.5 h-3.5" /> : <Cloud className="w-3.5 h-3.5" />}
                         {graphicsQuality !== 'high' ? t.highRes : t.lowRes}
                       </Button>
+                    </div>
+                  </div>
+
+                  {/* Group 3: Add Device / Connect / Refresh / Settings / Ping */}
+                  <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className="grid grid-cols-2 gap-2">
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                         onClick={() => {
                           if (typeof window !== 'undefined') {
                             const event = new CustomEvent('trigger-topology-palette');
@@ -358,7 +366,7 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                         onClick={() => {
                           if (typeof window !== 'undefined') {
                             const event = new CustomEvent('trigger-topology-connect');
@@ -374,7 +382,7 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                         onClick={() => {
                           handleRefreshNetwork();
                           setShowMobileMenu(false);
@@ -387,7 +395,7 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                         onClick={() => {
                           setIsEnvironmentPanelOpen(true);
                           setShowMobileMenu(false);
@@ -398,7 +406,34 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`w-full justify-start gap-2 h-9 text-xs font-bold ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            const event = new CustomEvent('toggle-ping-mode');
+                            window.dispatchEvent(event);
+                          }
+                          setShowMobileMenu(false);
+                        }}
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        {t.ping}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Group 4: Tour / Help */}
+                  <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="secondary"
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap", isDark ? "hover:text-cyan-400" : "hover:text-cyan-600")}
+                        onClick={() => { setShowOnboarding(true); setOnboardingStep(0); setShowMobileMenu(false); }}
+                      >
+                        <Compass className="w-3.5 h-3.5" /> {t.tour}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isDark ? 'hover:text-cyan-400' : 'hover:text-cyan-600'}`}
                         onClick={() => { setShowAboutModal(true); setShowMobileMenu(false); }}
                       >
                         <Info className="w-3.5 h-3.5" />
@@ -434,25 +469,26 @@ export function AppHeader({
       <div className="flex items-end gap-1 mt-4 pt-1 overflow-x-auto no-scrollbar">
         <div className="flex md:hidden items-center gap-1.5 mr-auto">
           {isGuidedModeActive && isPanelMinimized && (
-                <>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        aria-label={t.openGuidedLesson}
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 text-blue-500 hover:bg-blue-500/10 animate-pulse"
-                        onClick={expandPanel}
-                      >
-                        <BookOpen className="w-5 h-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t.openGuidedLesson}</TooltipContent>
-                  </Tooltip>
-                </>
-              )}
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label={t.openGuidedLesson}
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-blue-500 hover:bg-blue-500/10 animate-pulse"
+                    onClick={expandPanel}
+                  >
+                    <BookOpen className="w-5 h-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t.openGuidedLesson}</TooltipContent>
+              </Tooltip>
+            </>
+          )}
         </div>
       </div>
     </header>
   );
 }
+
