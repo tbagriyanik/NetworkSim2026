@@ -77,6 +77,14 @@ const response = await apiClient.post('/api/contact', data);
 - ✅ Ağ hatası algılama
 - ✅ Detaylı hata kodları
 
+### ⌨️ Akıllı CLI Terminali (v1.6.4)
+- ✅ Komut yazım hatalarında fuzzy Levenshtein önerileri
+- ✅ Cihaz ve moda duyarlı "Tahmini Öneriler" / "Estimated Suggestions" listesi
+
+### 🪟 Akıcı Pencere Yönetimi (v1.6.4)
+- ✅ Kenar snap'leme (edge snapping) kaldırıldı
+- ✅ Tüm pencereler, modaller ve popover'lar için tamamen pürüzsüz sürükleme deneyimi
+
 ---
 
 ## 📁 Yeni Dosyalar

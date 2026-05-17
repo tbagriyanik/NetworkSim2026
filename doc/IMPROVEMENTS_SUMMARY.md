@@ -83,7 +83,7 @@
 
 **Dosya**: `src/lib/network/routing.ts`, `src/lib/network/core/*`
 
-### 8. **İyileştirilmiş Yükleme Durumları**
+### 9. **İyileştirilmiş Yükleme Durumları**
 - ✅ `ProgressIndicator` - İlerleme göstergesi
 - ✅ `StatusIndicator` - Durum göstergesi
 - ✅ `Skeleton` - Yeniden kullanılabilir iskelet yükleyici
@@ -91,6 +91,22 @@
 - ✅ Geliştirilmiş `LoadingSpinner` (varyantlar: default, pulse, bounce)
 
 **Dosya**: `src/components/ui/LoadingStates.tsx`
+
+### 10. **Akıllı CLI Terminal Öneri Sistemi (v1.6.4)**
+- ✅ Komut yazım hatalarında (typo) otomatik Levenshtein mesafesi analizi
+- ✅ Cihaz türü ve CLI moduna duyarlı komut ve alt komut eşleme
+- ✅ Hata mesajlarının altında otomatik olarak "Tahmini Öneriler" / "Estimated Suggestions" listeleme
+- ✅ Dil duyarlı (Türkçe / İngilizce) çıktı ve dinamik filtreleme desteği
+
+**Dosya**: `src/lib/network/executor.ts`, `src/lib/network/parser.ts`
+
+### 11. **Pürüzsüz Pencere Sürükleme Deneyimi (v1.6.4)**
+- ✅ Tüm modal panellerde ve mini popover'larda kenar snap'leme (edge snapping) kaldırıldı
+- ✅ Pencere sürükleme sırasında oluşan ani sıçrama ve yapışmalar giderildi
+- ✅ Görsel Paket Analiz pencereleri, PC Konsol pencereleri ve Router/Switch detay panelleri tamamen akıcı ve pürüzsüz hareket eder
+- ✅ Ekran dışına taşmayı engelleyici güvenli alan sınırları (viewport clamping) muhafaza edildi
+
+**Dosya**: `src/hooks/useDrag.ts`, `src/components/network/NetworkTopology.tsx`
 
 ## 📚 Yeni Dosyalar
 

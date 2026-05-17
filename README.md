@@ -9,7 +9,10 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 **Live app:** [network2026.vercel.app](https://network2026.vercel.app)
 
-Exam update (2026-05-17): Exam editor mobile responsive, finish exam now freezes timer (panel stays open), file open accepts `.json` + `.exam`.
+Latest Updates (2026-05-17):
+- **CLI Smart Terminal Suggestions**: Intelligent command typo estimation system that suggests valid available commands and subcommands directly below CLI error messages.
+- **Smooth Window Dragging**: Completely disabled edge snapping across all draggable modals and mini popovers (PC terminals, unified switch/router configurations, exam panels, ping diagnostics) to ensure a premium, non-snapping dragging experience.
+- **Exam Editor & File Open**: Full mobile responsive layout for the Exam Editor, frozen timer state upon exam completion, and dual extension `.json` / `.exam` file import capabilities.
 
 ---
 
@@ -27,7 +30,7 @@ npm install && npm run dev
 | Source Files | 278 |
 | Example Projects | 39 |
 | Guided Lessons | 8 |
-| Quizzes | 3 |
+| Exams | 3 |
 | CLI Command Families | 180+ |
 
 ## Documentation

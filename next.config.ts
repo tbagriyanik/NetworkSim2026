@@ -7,7 +7,7 @@ try {
 } catch {
   // Not a git repo or git not available - use default
 }
-
+const countInt = parseInt(commitCount, 10) || 0;
 const nextConfig: NextConfig = {
   output: "standalone",
   productionBrowserSourceMaps: false,
@@ -68,7 +68,7 @@ const nextConfig: NextConfig = {
     ];
   },
   env: {
-    NEXT_PUBLIC_GIT_COMMIT_COUNT: (commitCount < '900') ? '1030' : commitCount,
+    NEXT_PUBLIC_GIT_COMMIT_COUNT: String(countInt < 900 ? 1030 : countInt),
   },
 };
 
