@@ -201,21 +201,75 @@ export const l3SwitchDhcpExamTasks: ExamTask[] = [
     completed: false
   },
   {
-    id: 'exam-l3-vlan-svi',
-    title: { tr: 'VLAN ve SVI Yapılandırması', en: 'VLAN and SVI Configuration' },
-    description: { tr: 'VLAN 20 oluşturun ve Interface VLAN 20\'ye 172.16.20.1/24 IP\'sini atayın.', en: 'Create VLAN 20 and assign 172.16.20.1/24 IP to Interface VLAN 20.' },
-    weight: 40,
+    id: 'exam-l3-vlan20-create',
+    title: { tr: 'VLAN 20 Oluşturma', en: 'Create VLAN 20' },
+    description: { tr: 'VLAN 20 oluşturun.', en: 'Create VLAN 20.' },
+    weight: 20,
+    checkType: 'command',
+    checkParams: { commandPattern: 'vlan 20' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-svi20-ip',
+    title: { tr: 'SVI VLAN 20 IP Atama', en: 'Assign SVI VLAN 20 IP' },
+    description: { tr: 'Interface VLAN 20\'ye 172.16.20.1/24 IP\'sini atayın.', en: 'Assign 172.16.20.1/24 IP to Interface VLAN 20.' },
+    weight: 20,
     checkType: 'config',
     checkParams: { configKey: 'interfaces.vlan20.ip', configValue: '172.16.20.1' },
     completed: false
   },
   {
-    id: 'exam-l3-dhcp-pool',
-    title: { tr: 'DHCP Havuzu', en: 'DHCP Pool' },
+    id: 'exam-l3-dhcp-pool-create',
+    title: { tr: 'DHCP Havuzu Oluşturma', en: 'Create DHCP Pool' },
     description: { tr: 'L3 Switch üzerinde "MY-POOL" isminde bir DHCP havuzu oluşturun.', en: 'Create a DHCP pool named "MY-POOL" on L3 Switch.' },
-    weight: 40,
+    weight: 5,
     checkType: 'command',
     checkParams: { commandPattern: 'ip dhcp pool MY-POOL' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-dhcp-excluded',
+    title: { tr: 'DHCP Hariç Tutulan IP', en: 'DHCP Excluded IP' },
+    description: { tr: '172.16.20.1 adresini DHCP dağıtımından hariç tutun.', en: 'Exclude 172.16.20.1 from DHCP allocation.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { commandPattern: 'ip dhcp excluded-address 172.16.20.1' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-dhcp-network',
+    title: { tr: 'DHCP Network Tanımı', en: 'DHCP Network Definition' },
+    description: { tr: 'DHCP havuzunda ağı 172.16.20.0/24 olarak tanımlayın.', en: 'Define DHCP pool network as 172.16.20.0/24.' },
+    weight: 10,
+    checkType: 'command',
+    checkParams: { commandPattern: 'network 172.16.20.0 255.255.255.0' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-dhcp-default-router',
+    title: { tr: 'DHCP Varsayılan Ağ Geçidi', en: 'DHCP Default Gateway' },
+    description: { tr: 'DHCP havuzunda varsayılan ağ geçidi olarak 172.16.20.1 tanımlayın.', en: 'Set DHCP default gateway to 172.16.20.1 in the pool.' },
+    weight: 10,
+    checkType: 'command',
+    checkParams: { commandPattern: 'default-router 172.16.20.1' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-dhcp-dns',
+    title: { tr: 'DHCP DNS Tanımı', en: 'DHCP DNS Definition' },
+    description: { tr: 'DHCP havuzunda DNS sunucusu olarak 8.8.8.8 tanımlayın.', en: 'Set DHCP DNS server to 8.8.8.8 in the pool.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { commandPattern: 'dns-server 8.8.8.8' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-dhcp-lease',
+    title: { tr: 'DHCP Lease Süresi', en: 'DHCP Lease Duration' },
+    description: { tr: 'DHCP havuzunda kira süresini 7 gün olarak ayarlayın.', en: 'Set DHCP lease time to 7 days in the pool.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { commandPattern: 'lease 7' },
     completed: false
   }
 ];

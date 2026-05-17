@@ -1149,6 +1149,14 @@ export const checkStepCompletion = (
         }
       }
 
+      // Check SVI IP assignment (e.g. interface vlan 20)
+      if (step.checkParams.configKey === 'interfaces.vlan20.ip') {
+        const vlan20 = context.deviceState.ports?.['vlan20'] || context.deviceState.ports?.['Vlan20'];
+        if (vlan20) {
+          return vlan20.ipAddress === step.checkParams.configValue;
+        }
+      }
+
       // Check console password
       if (step.checkParams.configKey === 'security.consoleLine.password') {
         const consoleLine = context.deviceState.security?.consoleLine;
