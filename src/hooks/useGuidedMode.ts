@@ -106,6 +106,8 @@ export function useGuidedMode(): UseGuidedModeReturn {
     if (!isMounted) return;
     if (activeProject) {
       localStorage.setItem(STORAGE_KEY, serializeProject(activeProject));
+      // Safety: Clear exam mode if guided mode is active
+      localStorage.removeItem('examModeState');
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }

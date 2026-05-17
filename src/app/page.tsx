@@ -343,7 +343,7 @@ export default function Home() {
     isGuidedModeActive,
     isPanelMinimized,
     lastCompletedStep,
-    startGuidedProject,
+    startGuidedProject: startGuidedInternal,
     completeStep,
     uncompleteStep,
     closeGuidedMode,
@@ -358,11 +358,9 @@ export default function Home() {
   const {
     activeExam,
     isExamActive,
-    isExamFinished,
     isPanelMinimized: isExamPanelMinimized,
-    startExam: startExamProject,
+    startExam: startExamInternal,
     finishExam,
-    closeExam,
     togglePanelMinimize: toggleExamPanelMinimize,
     expandPanel: expandExamPanel,
     isEditorOpen,
@@ -377,6 +375,17 @@ export default function Home() {
     currentScore: examScore,
     getAvailableExams
   } = useExamMode();
+
+  // Mutual exclusion wrappers
+  const startGuidedProject = useCallback((project: GuidedProject) => {
+    finishExam(); // Close exam mode if active
+    startGuidedInternal(project);
+  }, [finishExam, startGuidedInternal]);
+
+  const startExamProject = useCallback((project: ExamProject) => {
+    closeGuidedMode(); // Close guided mode if active
+    startExamInternal(project);
+  }, [closeGuidedMode, startExamInternal]);
   const [cableInfo, setCableInfo] = useState<CableInfo>({
     connected: true,
     cableType: 'straight',
@@ -384,7 +393,6 @@ export default function Home() {
     targetDevice: 'switchL2',
   });
   const [lastTaskEvent, setLastTaskEvent] = useState<{ type: 'completed' | 'failed'; taskName: string; timestamp: number } | null>(null);
-  const [isExamLoadedFromFile, setIsExamLoadedFromFile] = useState(false);
 
   // Track project name from guided/exam mode
   useEffect(() => {
@@ -1428,38 +1436,6 @@ ${state.bannerMOTD}
         setPcHistories(newPcHistories);
       }
 
-      const resolveNoteOverlap = (notes: CanvasNote[], devices: CanvasDevice[]): CanvasNote[] => {
-        const deviceBoxes = devices.map((d) => ({ x: d.x - 50, y: d.y - 35, w: 100, h: 70 }));
-        const placed: CanvasNote[] = [];
-        const overlaps = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }) =>
-          a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-
-        for (const note of notes) {
-          const w = Math.max(160, Number(note.width) || 260);
-          const h = Math.max(80, Number(note.height) || 120);
-          let x = Number(note.x) || 0;
-          let y = Number(note.y) || 0;
-          let tries = 0;
-
-          while (tries < 80) {
-            const box = { x, y, w, h };
-            const collidesDevice = deviceBoxes.some((d) => overlaps(box, d));
-            const collidesNote = placed.some((n) => overlaps(box, { x: n.x, y: n.y, w: Math.max(160, Number(n.width) || 260), h: Math.max(80, Number(n.height) || 120) }));
-            if (!collidesDevice && !collidesNote) break;
-            x += 36;
-            if (x > 1200) {
-              x = 40;
-              y += 28;
-            }
-            tries += 1;
-          }
-
-          placed.push({ ...note, x, y });
-        }
-
-        return placed;
-      };
-
       // Load topology
       if (safeTopologyDevices.length > 0 || safeTopologyConnections.length > 0 || safeTopologyNotes.length > 0) {
         // Filter out devices with empty/invalid IDs
@@ -1472,7 +1448,7 @@ ${state.bannerMOTD}
         })));
         setTopologyDevices(normalizedDevices);
         setTopologyConnections(safeTopologyConnections);
-        setTopologyNotes(resolveNoteOverlap(safeTopologyNotes, normalizedDevices));
+        setTopologyNotes(safeTopologyNotes);
         if (typeof topology.zoom === 'number') setZoom(topology.zoom);
         if (safeTopologyPan && typeof safeTopologyPan.x === 'number' && typeof safeTopologyPan.y === 'number') setPan({ x: safeTopologyPan.x, y: safeTopologyPan.y });
       } else {
@@ -2145,10 +2121,9 @@ ${state.bannerMOTD}
     setPcHistories(prev => new Map(prev).set(deviceId, history));
   }, [setPcHistories]);
 
-  // Save project to JSON file
-  const handleSaveProjectInternal = useCallback(() => {
+  // Get full project data (for saving and exam export)
+  const getFullProjectData = useCallback(() => {
     // Get PC and IoT device IDs to filter them out from deviceStates
-    // These device types don't need full SwitchState with ports
     const excludedDeviceIds = new Set(
       topologyDevices.filter(d => d.type === 'pc' || d.type === 'iot').map(d => d.id)
     );
@@ -2160,156 +2135,20 @@ ${state.bannerMOTD}
     iotDeviceIds.forEach(iotId => {
       const iotOutput = deviceOutputs.get(iotId);
       if (iotOutput) {
-        // Filter out password-prompt type which is not compatible with PCOutputLine
         const filteredOutput = iotOutput.filter(o => o.type !== 'password-prompt');
         adjustedPcOutputs.set(iotId, filteredOutput as any);
         adjustedDeviceOutputs.delete(iotId);
       }
     });
 
-    // Optimization: Limit terminal outputs to last 100 lines to reduce file size
+    // Optimization: Limit terminal outputs to last 100 lines
     const MAX_SAVED_OUTPUT_LINES = 100;
     const trimOutputs = (outputs: any[]) => {
       if (outputs.length <= MAX_SAVED_OUTPUT_LINES) return outputs;
       return outputs.slice(-MAX_SAVED_OUTPUT_LINES);
     };
 
-    // Synchronize MAC addresses and port statuses from topology devices to device states
-    const syncedDeviceStates = new Map(deviceStates);
-    const topologyDeviceIds = new Set(topologyDevices.map(d => d.id));
-    topologyDevices.forEach(device => {
-      const state = syncedDeviceStates.get(device.id);
-      if (state) {
-        // Synchronize MAC address
-        if (device.macAddress && state.macAddress !== device.macAddress) {
-          syncedDeviceStates.set(device.id, { ...state, macAddress: device.macAddress });
-        }
-        // Synchronize port MAC addresses and statuses
-        const updatedPorts = { ...state.ports };
-        let portsChanged = false;
-        device.ports.forEach(topoPort => {
-          const statePort = updatedPorts[topoPort.id];
-          if (statePort) {
-            // Synchronize port MAC address
-            if (topoPort.macAddress && statePort.macAddress !== topoPort.macAddress) {
-              updatedPorts[topoPort.id] = { ...statePort, macAddress: topoPort.macAddress };
-              portsChanged = true;
-            }
-            // Synchronize WLAN0 port status specifically
-            if (topoPort.id === 'wlan0') {
-              const targetStatus = topoPort.shutdown ? 'notconnect' : (topoPort.status === 'connected' ? 'connected' : 'notconnect');
-              if (statePort.status !== targetStatus) {
-                updatedPorts[topoPort.id] = { ...updatedPorts[topoPort.id], status: targetStatus };
-                portsChanged = true;
-              }
-            }
-          }
-        });
-        if (portsChanged) {
-          syncedDeviceStates.set(device.id, { ...state, ports: updatedPorts });
-        }
-      }
-    });
-
-    const projectData = {
-      version: '1.1', // Incremented version
-      timestamp: new Date().toISOString(),
-      // Filter out PC/IoT device states - they don't need SwitchState with ports
-      // Also filter out devices that don't exist in topology
-      devices: Array.from(syncedDeviceStates.entries())
-        .filter(([id]) => !excludedDeviceIds.has(id) && topologyDeviceIds.has(id))
-        .map(([id, state]) => ({
-          id,
-          state: {
-            ...state,
-            // Optimization: Limit command history
-            commandHistory: state.commandHistory.slice(-50),
-            // Optimization: Remove temporary UI states if present
-            awaitingPassword: undefined,
-            passwordContext: undefined,
-            awaitingReloadConfirm: undefined
-          }
-        })),
-      // Filter out device outputs for devices that don't exist in topology
-      deviceOutputs: Array.from(adjustedDeviceOutputs.entries())
-        .filter(([id]) => id && id.trim() !== '' && topologyDeviceIds.has(id))
-        .map(([id, outputs]) => ({ id, outputs: trimOutputs(outputs) })),
-      pcOutputs: Array.from(adjustedPcOutputs.entries())
-        .filter(([id]) => id && id.trim() !== '' && topologyDeviceIds.has(id))
-        .map(([id, outputs]) => ({ id, outputs: trimOutputs(outputs) })),
-      pcHistories: Array.from(pcHistories.entries())
-        .filter(([id]) => id && id.trim() !== '')
-        .map(([id, history]) => ({ id, history: history.slice(-50) })),
-      topology: {
-        // Filter out devices with empty/invalid IDs
-        devices: topologyDevices.filter(d => d.id && d.id.trim() !== ''),
-        connections: topologyConnections,
-        notes: topologyNotes
-      },
-      // Reset cableInfo if no valid devices exist or no connections
-      cableInfo: topologyDevices.length > 0 && topologyConnections.length > 0 ? cableInfo : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
-      activeDeviceId: topologyDevices.find(d => d.id === activeDeviceId)?.id || '',
-      activeDeviceType,
-      // Include exam metadata if currently in exam mode (for teacher editing)
-      ...(activeExam ? {
-        examData: {
-          id: activeExam.id,
-          title: activeExam.title,
-          tasks: activeExam.tasks,
-          durationMinutes: activeExam.durationMinutes,
-          difficulty: activeExam.difficulty,
-          isCustom: activeExam.isCustom
-        }
-      } : {})
-    };
-
-    // Optimization: Use no indentation to reduce file size
-    const blob = new Blob([safeStringify(projectData)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const baseProjectName = projectName
-      .replace(/\.json$/i, '')
-      .replace(/-\d{4}-\d{2}-\d{2}$/i, '');
-    const sanitizedName = baseProjectName.replace(/[^a-zA-Z0-9\s_-]/g, '').trim().replace(/\s+/g, '-').substring(0, 60) || 'network-project';
-    const savedFileName = `${sanitizedName}-${new Date().toISOString().slice(0, 10)}.json`;
-    a.download = savedFileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setProjectName(savedFileName);
-    setHasUnsavedChanges(false);
-    setLastSaveTime(new Date().toLocaleTimeString());
-    toast({
-      title: t.projectSaved,
-      description: t.jsonDownloaded,
-    });
-  }, [activeExam, deviceStates, deviceOutputs, pcOutputs, pcHistories, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, setHasUnsavedChanges, setLastSaveTime, language, projectName, setProjectName]);
-
-  // Handle Project Saving (Wrapper)
-  function handleSaveProject() {
-    handleSaveProjectInternal();
-  }
-
-  // Get full project data for exam export
-  const getFullProjectData = useCallback(() => {
-    // This is essentially the logic from handleSaveProjectInternal but returns data instead of downloading
-    const excludedDeviceIds = new Set(
-      topologyDevices.filter(d => d.type === 'pc' || d.type === 'iot').map(d => d.id)
-    );
-    const iotDeviceIds = new Set(topologyDevices.filter(d => d.type === 'iot').map(d => d.id));
-    const adjustedDeviceOutputs = new Map(deviceOutputs);
-    const adjustedPcOutputs = new Map(pcOutputs);
-    iotDeviceIds.forEach(iotId => {
-      const iotOutput = deviceOutputs.get(iotId);
-      if (iotOutput) {
-        const filteredOutput = iotOutput.filter(o => o.type !== 'password-prompt');
-        adjustedPcOutputs.set(iotId, filteredOutput as any);
-        adjustedDeviceOutputs.delete(iotId);
-      }
-    });
-
+    // Synchronize states
     const syncedDeviceStates = new Map(deviceStates);
     const topologyDeviceIds = new Set(topologyDevices.map(d => d.id));
     topologyDevices.forEach(device => {
@@ -2342,14 +2181,20 @@ ${state.bannerMOTD}
         .filter(([id]) => !excludedDeviceIds.has(id) && topologyDeviceIds.has(id))
         .map(([id, state]) => ({
           id,
-          state: { ...state, commandHistory: state.commandHistory.slice(-50) }
+          state: {
+            ...state,
+            commandHistory: state.commandHistory.slice(-50),
+            awaitingPassword: undefined,
+            passwordContext: undefined,
+            awaitingReloadConfirm: undefined
+          }
         })),
       deviceOutputs: Array.from(adjustedDeviceOutputs.entries())
         .filter(([id]) => id && id.trim() !== '' && topologyDeviceIds.has(id))
-        .map(([id, outputs]) => ({ id, outputs: outputs.slice(-100) })),
+        .map(([id, outputs]) => ({ id, outputs: trimOutputs(outputs) })),
       pcOutputs: Array.from(adjustedPcOutputs.entries())
         .filter(([id]) => id && id.trim() !== '' && topologyDeviceIds.has(id))
-        .map(([id, outputs]) => ({ id, outputs: outputs.slice(-100) })),
+        .map(([id, outputs]) => ({ id, outputs: trimOutputs(outputs) })),
       pcHistories: Array.from(pcHistories.entries())
         .filter(([id]) => id && id.trim() !== '')
         .map(([id, history]) => ({ id, history: history.slice(-50) })),
@@ -2361,7 +2206,6 @@ ${state.bannerMOTD}
       cableInfo: topologyDevices.length > 0 && topologyConnections.length > 0 ? cableInfo : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
       activeDeviceId: topologyDevices.find(d => d.id === activeDeviceId)?.id || '',
       activeDeviceType,
-      // Exam metadata included if active (allows continuation of editing)
       ...(activeExam ? {
         examData: {
           id: activeExam.id,
@@ -2374,6 +2218,38 @@ ${state.bannerMOTD}
       } : {})
     };
   }, [activeExam, deviceStates, deviceOutputs, pcOutputs, pcHistories, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType]);
+
+  // Save project to JSON file
+  const handleSaveProjectInternal = useCallback(() => {
+    const projectData = getFullProjectData();
+    const blob = new Blob([safeStringify(projectData)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const baseProjectName = projectName
+      .replace(/\.json$/i, '')
+      .replace(/-\d{4}-\d{2}-\d{2}$/i, '');
+    const sanitizedName = baseProjectName.replace(/[^a-zA-Z0-9\s_-]/g, '').trim().replace(/\s+/g, '-').substring(0, 60) || 'network-project';
+    const savedFileName = `${sanitizedName}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = savedFileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setProjectName(savedFileName);
+    setHasUnsavedChanges(false);
+    setLastSaveTime(new Date().toLocaleTimeString());
+    toast({
+      title: t.projectSaved,
+      description: t.jsonDownloaded,
+    });
+  }, [activeExam, deviceStates, deviceOutputs, pcOutputs, pcHistories, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, setHasUnsavedChanges, setLastSaveTime, language, projectName, setProjectName]);
+
+  // Handle Project Saving (Wrapper)
+  function handleSaveProject() {
+    handleSaveProjectInternal();
+  }
+
 
   // New project - reset everything
   const resetToEmptyProject = useCallback(() => {
@@ -2460,7 +2336,7 @@ ${state.bannerMOTD}
 
     // Close guided/exam mode panel if open
     closeGuidedMode();
-    closeExam();
+    finishExam();
     setProjectName('Untitled');
 
     // Close network refresh report if open
@@ -2541,13 +2417,20 @@ ${state.bannerMOTD}
       });
       return;
     }
-    action();
-  }, [hasUnsavedChanges, handleSaveProject, setSaveDialog, t.unsavedChangesConfirm]);
+    setConfirmDialog({
+      show: true,
+      message: t.newProjectConfirm,
+      action: 'new-project',
+      onConfirm: () => {
+        setConfirmDialog(null);
+        action();
+      }
+    });
+  }, [hasUnsavedChanges, handleSaveProject, setSaveDialog, setConfirmDialog, t.unsavedChangesConfirm, t.newProjectConfirm]);
 
   function handleNewProject() {
     setProjectSearchQuery(''); // Reset search when opening new project dialog
-    closeExam();
-    runWithSaveGuard(() => setShowProjectPicker(true));
+    setShowProjectPicker(true);
   }
 
   // Sync hostname changes between Topology and Simulator
@@ -3847,86 +3730,68 @@ ${state.bannerMOTD}
   const handleLoadProject = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    // Prevent previously active exam session from re-appearing while opening another file/workflow
-    closeExam();
-    // Reset input
-    event.target.value = '';
 
-    const doLoad = () => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const content = e.target?.result as string;
-          let projectData: any;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        let projectData: any;
 
-          // Try decrypting as exam file first if extension matches
-          if (file.name.endsWith('.exam')) {
-            projectData = decryptExamData(content);
-            if (projectData) {
-              setIsExamLoadedFromFile(true);
-              closeGuidedMode();
-              startExamProject(projectData);
-              loadProjectData(projectData.data);
-              setHasUnsavedChanges(false);
-              setProjectName(projectData.title.en);
-              toast({
-                title: language === 'tr' ? 'Sınav Modu Başlatıldı' : 'Exam Mode Started',
-                description: projectData.title[language === 'tr' ? 'tr' : 'en'],
-              });
-              return;
-            }
-          }
-
-          projectData = safeParse<unknown>(content);
-          if (loadProjectData(projectData)) {
+        // Try decrypting as exam file first if extension matches
+        if (file.name.endsWith('.exam')) {
+          projectData = decryptExamData(content);
+          if (projectData) {
+            startExamProject(projectData);
+            loadProjectData(projectData.data);
             setHasUnsavedChanges(false);
-            const loadedName = file.name.replace(/\.[^/.]+$/, '');
-            setProjectName(loadedName);
-            closeGuidedMode();
-            closeExam();
-            setRefreshNetworkReport(null);
+            setProjectName(projectData.title);
             toast({
-              title: `"${loadedName}" ${language === 'tr' ? 'projesi yüklendi' : 'project is loaded'}`,
-              description: t.fileImportedSuccessfully,
+              title: language === 'tr' ? 'Sınav Modu Başlatıldı' : 'Exam Mode Started',
+              description: projectData.title,
             });
-            setZoom(1.0);
-            setPan({ x: 0, y: 0 });
-            if (typeof window !== 'undefined') {
-              window.scrollTo(0, 0);
-            }
-          } else {
-            toast({
-              title: t.invalidProjectFile,
-              description: t.invalidProjectFile,
-              variant: "destructive",
-            });
+            return;
           }
-        } catch (error) {
-          errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'fileUpload', error: String(error) }));
+        }
+
+        projectData = safeParse<unknown>(content);
+        if (loadProjectData(projectData)) {
+          setHasUnsavedChanges(false);
+          const loadedName = file.name.replace(/\.[^/.]+$/, '');
+          setProjectName(loadedName);
+          // Close guided mode panel if open
+          closeGuidedMode();
+          // Close network refresh report if open
+          setRefreshNetworkReport(null);
           toast({
-            title: t.loadFailed,
-            description: formatErrorForUser(error as Error, t.failedLoadProject).userMessage,
+            title: `"${loadedName}" ${language === 'tr' ? 'projesi yüklendi' : 'project is loaded'}`,
+            description: t.fileImportedSuccessfully,
+          });
+          // Reset zoom and pan to top-left
+          setZoom(1.0);
+          setPan({ x: 0, y: 0 });
+          if (typeof window !== 'undefined') {
+            window.scrollTo(0, 0);
+          }
+        } else {
+          toast({
+            title: t.invalidProjectFile,
+            description: t.invalidProjectFile,
             variant: "destructive",
           });
         }
-      };
-      reader.readAsText(file);
+      } catch (error) {
+        errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'fileUpload', error: String(error) }));
+        toast({
+          title: t.loadFailed,
+          description: formatErrorForUser(error as Error, t.failedLoadProject).userMessage,
+          variant: "destructive",
+        });
+      }
     };
-
-    if (hasUnsavedChanges) {
-      setSaveDialog({
-        show: true,
-        message: t.unsavedChangesConfirm,
-        onConfirm: (save: boolean) => {
-          setSaveDialog(null);
-          if (save) handleSaveProject();
-          doLoad();
-        }
-      });
-      return;
-    }
-    doLoad();
-  }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode, closeExam, setProjectName, hasUnsavedChanges, handleSaveProject, setSaveDialog, t.unsavedChangesConfirm, startExamProject]);
+    reader.readAsText(file);
+    // Reset input
+    event.target.value = '';
+  }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode, setProjectName]);
 
   const applyExampleProject = useCallback((projectData: any, exampleId?: string) => {
     loadProjectData(projectData);
@@ -3948,7 +3813,7 @@ ${state.bannerMOTD}
     setShowProjectPicker(false);
     // Close guided/exam mode panel if open (unless it's a guided project itself)
     closeGuidedMode();
-    closeExam();
+    finishExam();
 
     // Reset zoom and pan to top-left
     setZoom(1.0);
@@ -3958,12 +3823,6 @@ ${state.bannerMOTD}
       window.scrollTo(0, 0);
     }
   }, [loadProjectData, setShowProjectPicker, setZoom, setPan, closeGuidedMode, setProjectName, setLoadedExampleId, setRefreshNetworkReport, groupedExampleProjects, exampleLevelOrder]);
-
-  const startExamFromCatalog = useCallback((project: ExamProject) => {
-    setIsExamLoadedFromFile(false);
-    closeGuidedMode();
-    startExamProject(project);
-  }, [startExamProject, closeGuidedMode]);
 
   const isDark = (effectiveTheme ?? theme) === 'dark';
 
@@ -4117,12 +3976,11 @@ ${state.bannerMOTD}
             resetToEmptyProject={resetToEmptyProject}
             applyExampleProject={applyExampleProject}
             startGuidedProject={startGuidedProject}
-            startExamProject={startExamFromCatalog}
+            startExamProject={startExamProject}
             loadProjectData={loadProjectData}
             setZoom={setZoom}
             setPan={setPan}
             closeProjectPicker={() => setShowProjectPicker(false)}
-            onOpenFile={() => fileInputRef.current?.click()}
           />}
 
 
@@ -4532,7 +4390,6 @@ ${state.bannerMOTD}
                     canUndo={canUndo}
                     canRedo={canRedo}
                     hasHydrated={hasHydrated}
-                    isExamActive={isExamActive}
                     setDeviceSearchQuery={setDeviceSearchQuery}
                     setCableInfo={setCableInfo}
                     setZoom={setZoom}
@@ -4571,8 +4428,6 @@ ${state.bannerMOTD}
                     onRedo={handleRedo}
                     onRefreshNetwork={handleRefreshNetwork}
                     focusDeviceId={focusDeviceId}
-                    isExamActive={isExamActive}
-                    isExamEditorOpen={isEditorOpen}
                     onOpenTasks={(deviceId: string) => {
                       setActiveDeviceId(deviceId);
                       const device = topologyDevices?.find(d => d.id === deviceId);
@@ -4783,20 +4638,17 @@ ${state.bannerMOTD}
           {/* Exam Mode Panel */}
           {isExamActive && !isEditorOpen && <ExamModePanel
             project={activeExam}
-            onClose={closeExam}
+            onClose={finishExam}
             onMinimize={toggleExamPanelMinimize}
             isMinimized={isExamPanelMinimized}
-            isFinished={isExamFinished}
-            onFinish={finishExam}
             score={examScore}
             lastCommand={lastCommand}
             deviceAccessed={showUnifiedDeviceModal ? (activeDeviceType === 'switchL2' || activeDeviceType === 'switchL3' ? 'switch' : activeDeviceType === 'router' ? 'router' : 'pc') : null}
-            deviceAccessedId={showUnifiedDeviceModal ? activeDeviceId : null}
             deviceState={state}
             topologyConnections={topologyConnections}
             topologyDevices={topologyDevices}
             onCheckTasks={checkExamTasks}
-            onOpenEditor={!isExamLoadedFromFile ? () => toggleEditor(true) : undefined}
+            onOpenEditor={() => toggleEditor(true)}
           />}
 
           {/* Exam Editor Panel */}

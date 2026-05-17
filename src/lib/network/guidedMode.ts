@@ -18,7 +18,6 @@ export interface GuidedStep {
     sourceDevice?: string;
     sourcePort?: string;
     targetDevice?: string;
-    targetDeviceId?: string;
     targetPort?: string;
     connections?: Array<{ sourceDevice: string; sourcePort: string; targetDevice: string; targetPort: string }>;
     subnetMask?: string;
@@ -1043,11 +1042,7 @@ export const checkStepCompletion = (
 ): boolean => {
   switch (step.checkType) {
     case 'deviceAccess':
-      if (context.deviceAccessed !== step.checkParams?.deviceType) return false;
-      if (step.checkParams?.targetDeviceId) {
-        return (context as any).deviceAccessedId === step.checkParams.targetDeviceId;
-      }
-      return true;
+      return context.deviceAccessed === step.checkParams?.deviceType;
     
     case 'command':
       if (!step.checkParams?.commandPattern || !context.lastCommand) return false;
@@ -1151,14 +1146,6 @@ export const checkStepCompletion = (
         const port = context.deviceState.ports?.['fa0/1'] || context.deviceState.ports?.['Fa0/1'];
         if (port) {
           return port.vlan === step.checkParams.configValue || port.accessVlan === step.checkParams.configValue;
-        }
-      }
-
-      // Check SVI IP assignment (e.g. interface vlan 20)
-      if (step.checkParams.configKey === 'interfaces.vlan20.ip') {
-        const vlan20 = context.deviceState.ports?.['vlan20'] || context.deviceState.ports?.['Vlan20'];
-        if (vlan20) {
-          return vlan20.ipAddress === step.checkParams.configValue;
         }
       }
 

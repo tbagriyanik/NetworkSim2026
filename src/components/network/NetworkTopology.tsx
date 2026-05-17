@@ -244,8 +244,6 @@ export function NetworkTopology({
   clearSelectionTrigger,
   onPacketPanelFocus,
   packetPanelZIndex,
-  isExamActive = false,
-  isExamEditorOpen = false,
 }: NetworkTopologyProps) {
   const { language, t } = useLanguage();
   const { theme } = useTheme();
@@ -876,7 +874,6 @@ export function NetworkTopology({
 
   // Delete device and its connections
   const deleteDevice = useCallback((deviceId: string) => {
-    if (isExamActive) return;
     saveToHistory();
     setDevices((prev) => prev.filter((d) => d.id !== deviceId));
     setConnections((prev) =>
@@ -893,7 +890,7 @@ export function NetworkTopology({
     if (onDeviceDelete) {
       onDeviceDelete(deviceId);
     }
-  }, [saveToHistory, onDeviceDelete, isExamActive]);
+  }, [saveToHistory, onDeviceDelete]);
 
   // Toggle power for devices (bulk operation)
   const togglePowerDevices = useCallback((deviceIds: string[]) => {
@@ -2376,7 +2373,6 @@ export function NetworkTopology({
 
   // Add device from palette button
   const addDevice = useCallback((type: 'pc' | 'iot' | 'switch' | 'router' | 'firewall', layer?: 'L2' | 'L3') => {
-    if (isExamActive && !isExamEditorOpen) return;
     saveToHistory();
     deviceCounterRef.current[type]++;
 
@@ -2449,7 +2445,7 @@ export function NetworkTopology({
     // Pass the switchModel directly to avoid race condition
     onDeviceSelect(resolvedType, newDevice.id, newDevice.switchModel, newDevice.name, true, newDevice);
 
-  }, [devices.length, saveToHistory, generateUniqueHostname, generateUniqueLinkLocalIp, onDeviceSelect, canvasDimensions, pan, zoom, isExamActive, isExamEditorOpen]);
+  }, [devices.length, saveToHistory, generateUniqueHostname, generateUniqueLinkLocalIp, onDeviceSelect, canvasDimensions, pan, zoom]);
 
   // Note management functions
   const [noteClipboard, setNoteClipboard] = useState('');
@@ -2539,7 +2535,6 @@ export function NetworkTopology({
   // Handle toolbar events from page.tsx
   useEffect(() => {
     const handleAddDevice = (event: CustomEvent) => {
-      if (isExamActive && !isExamEditorOpen) return;
       const deviceType = event.detail;
       if (deviceType === 'pc') addDevice('pc');
       else if (deviceType === 'switchL2') addDevice('switch', 'L2');
@@ -3418,7 +3413,6 @@ export function NetworkTopology({
 
   // Confirm rename
   const confirmRename = useCallback(() => {
-    if (isExamActive) return;
     if (renamingDevice && renameValue.trim()) {
       saveToHistory();
       setDevices(prev => prev.map(d =>
@@ -3428,7 +3422,7 @@ export function NetworkTopology({
     }
     setRenamingDevice(null);
     setRenameValue('');
-  }, [renamingDevice, renameValue, saveToHistory, onDeviceRename, isExamActive]);
+  }, [renamingDevice, renameValue, saveToHistory, onDeviceRename]);
   // Paste devices
   const pasteDevice = useCallback(() => {
     if (clipboard.length === 0) return;
@@ -3566,8 +3560,8 @@ export function NetworkTopology({
         }
       }
 
-      // Arrow keys move selected devices on topology (disabled during exam)
-      if (!isEditable && !isExamActive && selectedDeviceIds.length > 0 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      // Arrow keys move selected devices on topology
+      if (!isEditable && selectedDeviceIds.length > 0 && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const step = e.shiftKey ? 32 : 16;
         let deltaX = 0;
         let deltaY = 0;
@@ -3612,19 +3606,19 @@ export function NetworkTopology({
           handleRedo();
         }
         // Ctrl+C to copy
-        if (key === 'c' && !isExamActive) {
+        if (key === 'c') {
           if (selectedDeviceIds.length > 0) {
             copyDevice(selectedDeviceIds);
           }
         }
-        // Ctrl+X to cut (disabled during exam)
-        if (key === 'x' && !isExamActive) {
+        // Ctrl+X to cut
+        if (key === 'x') {
           if (selectedDeviceIds.length > 0) {
             cutDevice(selectedDeviceIds);
           }
         }
-        // Ctrl+V to paste (disabled during exam)
-        if (key === 'v' && pasteDevice && !isExamActive) {
+        // Ctrl+V to paste
+        if (key === 'v' && pasteDevice) {
           e.preventDefault();
           pasteDevice();
         }
@@ -3667,7 +3661,7 @@ export function NetworkTopology({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('close-menus-broadcast', handleCloseBroadcast);
     };
-  }, [selectedDeviceIds, selectedNoteIds, deleteDevice, deleteNote, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, pingMode, showPortSelector, toggleFullscreen, isFullscreen, resetView, onFullscreenChange, isExamActive]);
+  }, [selectedDeviceIds, selectedNoteIds, deleteDevice, deleteNote, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, pingMode, showPortSelector, toggleFullscreen, isFullscreen, resetView, onFullscreenChange]);
 
   // Find path between devices using BFS
   const findPath = useCallback((sourceId: string, targetId: string): string[] | null => {
@@ -7696,7 +7690,6 @@ export function NetworkTopology({
         noteClipboardLength={noteClipboard.length}
         canUndo={historyIndex > 0}
         canRedo={historyIndex < historyLength - 1}
-        isExamActive={isExamActive}
         onClose={() => setContextMenu(null)}
         onUpdateNoteStyle={(id, style) => updateNoteStyle(id, style)}
         onNoteCut={(id) => handleNoteTextCut(id)}

@@ -19,9 +19,14 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from '@/components/ui/collapsible';
 import { ExamProject, ExamTask } from '@/lib/network/examMode';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useIsMobile } from '@/hooks/use-breakpoint';
 
 interface ExamModePanelProps {
   project: ExamProject | null;
@@ -29,19 +34,15 @@ interface ExamModePanelProps {
   onMinimize: () => void;
   isMinimized: boolean;
   score: number;
-  isFinished?: boolean;
-  onFinish?: () => void;
   // Auto-completion context
   lastCommand?: string;
   deviceAccessed?: 'switch' | 'router' | 'pc' | null;
-  deviceAccessedId?: string | null;
   deviceState?: any;
   topologyConnections?: any[];
   topologyDevices?: any[];
   onCheckTasks?: (context: {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
-    deviceAccessedId?: string | null;
     deviceState?: any;
     topologyConnections?: any[];
     topologyDevices?: any[];
@@ -55,11 +56,8 @@ export function ExamModePanel({
   onMinimize,
   isMinimized,
   score,
-  isFinished = false,
-  onFinish,
   lastCommand,
   deviceAccessed,
-  deviceAccessedId,
   deviceState,
   topologyConnections,
   topologyDevices,
@@ -67,7 +65,6 @@ export function ExamModePanel({
   onOpenEditor
 }: ExamModePanelProps) {
   const { t, language } = useLanguage();
-  const isMobile = useIsMobile();
 
   const [isChecklistExpanded, setIsChecklistExpanded] = useState(true);
   const [position, setPosition] = useState({ x: 0, y: 80 });
@@ -75,36 +72,22 @@ export function ExamModePanel({
   // Elapsed time since exam started
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timeLeft, setTimeLimit] = useState<number | null>(null);
-  const [hasAutoFinished, setHasAutoFinished] = useState(false);
-
-  const isFinishedState = isFinished || !!project?.finishedAt || hasAutoFinished;
 
   useEffect(() => {
     if (!project?.startedAt) return;
 
     const limitSec = project.durationMinutes * 60;
 
-    const update = (nowMs: number = Date.now()) => {
-      const diff = Math.floor((nowMs - new Date(project.startedAt!).getTime()) / 1000);
+    const update = () => {
+      const diff = Math.floor((Date.now() - new Date(project.startedAt!).getTime()) / 1000);
       setElapsedSeconds(diff);
       setTimeLimit(Math.max(0, limitSec - diff));
     };
 
-    // Stop timer immediately when exam is finished (with or without finishedAt persisted yet)
-    if (isFinishedState) {
-      const endTimeMs = project.finishedAt ? new Date(project.finishedAt).getTime() : Date.now();
-      update(endTimeMs);
-      return;
-    }
-
     update();
-    const id = window.setInterval(update, 1000);
-    return () => window.clearInterval(id);
-  }, [project?.startedAt, project?.durationMinutes, project?.finishedAt, isFinishedState]);
-
-  useEffect(() => {
-    setHasAutoFinished(false);
-  }, [project?.startedAt, project?.finishedAt]);
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [project?.startedAt, project?.durationMinutes]);
 
   const formatTime = (totalSec: number) => {
     const h = Math.floor(totalSec / 3600);
@@ -116,44 +99,31 @@ export function ExamModePanel({
 
   // Set initial position
   useEffect(() => {
-    const panelWidth = isMobile ? Math.min(320, window.innerWidth - 16) : 320;
-    setPosition({ x: Math.max(0, window.innerWidth - panelWidth - 16), y: 80 });
-  }, [isMobile]);
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      setPosition({ x: (window.innerWidth - 320) / 2, y: window.innerHeight - 250 });
+    } else {
+      setPosition({ x: window.innerWidth - 336, y: 80 });
+    }
+  }, []);
 
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  // Auto-finish when time expires
-  useEffect(() => {
-    if (timeLeft !== null && timeLeft <= 0 && !isFinishedState && onFinish) {
-      setHasAutoFinished(true);
-      onFinish();
-    }
-  }, [timeLeft, isFinishedState, onFinish]);
-
-  // Auto-finish when full score is reached
-  useEffect(() => {
-    if (score >= 100 && !isFinishedState && onFinish) {
-      setHasAutoFinished(true);
-      onFinish();
-    }
-  }, [score, isFinishedState, onFinish]);
-
   // Auto-check tasks when context changes
   useEffect(() => {
-    if (onCheckTasks && project && !isFinishedState) {
-      onCheckTasks({
+    if (onCheckTasks && project) {
+        onCheckTasks({
           lastCommand,
           deviceAccessed,
-          deviceAccessedId,
           deviceState,
-        topologyConnections,
-        topologyDevices
-      });
+          topologyConnections,
+          topologyDevices
+        });
     }
-  }, [lastCommand, deviceAccessed, deviceAccessedId, deviceState, topologyConnections, topologyDevices, onCheckTasks, project, isFinishedState]);
+  }, [lastCommand, deviceAccessed, deviceState, topologyConnections, topologyDevices, onCheckTasks, project]);
 
   // Drag handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -233,7 +203,7 @@ export function ExamModePanel({
           <div className="flex flex-col items-end ml-2">
             <span className="text-[10px] font-bold leading-tight">{score}/100</span>
             <span className={cn("text-[10px] font-mono leading-tight", isOverTime && "text-yellow-200 font-bold")}>
-              {timeLeft !== null ? formatTime(timeLeft) : '--:--'}
+                {timeLeft !== null ? formatTime(timeLeft) : '--:--'}
             </span>
           </div>
           <ChevronUp className="w-4 h-4 ml-1 opacity-60" />
@@ -245,7 +215,7 @@ export function ExamModePanel({
   return (
     <div
       className={cn(
-        "fixed z-50 w-[320px] max-w-[calc(100vw-16px)] flex flex-col rounded-xl overflow-hidden",
+        "fixed z-50 w-80 flex flex-col rounded-xl overflow-hidden",
         isDragging && "cursor-default"
       )}
       style={{
@@ -266,25 +236,17 @@ export function ExamModePanel({
         <div
           data-drag-handle
           className={cn(
-            "flex items-center justify-between p-4 bg-gradient-to-r text-white",
+            "flex items-center justify-between p-4 bg-gradient-to-r from-rose-500 to-rose-600 text-white",
             "cursor-default select-none",
-            isFinishedState
-              ? "from-emerald-500 to-emerald-600"
-              : isOverTime
-                ? "from-red-600 to-red-700"
-                : "from-rose-500 to-rose-600"
+            isOverTime && "from-red-600 to-red-700"
           )}
           onMouseDown={handleMouseDown}
         >
           <div className="flex items-center gap-2">
             <GripHorizontal className="w-4 h-4 opacity-50" />
-            {isFinishedState ? <CheckCircle2 className="w-5 h-5" /> : <GraduationCap className="w-5 h-5" />}
+            <GraduationCap className="w-5 h-5" />
             <div>
-              <h3 className="font-semibold text-sm">
-                {isFinishedState
-                  ? (language === 'tr' ? 'Sınav Tamamlandı' : 'Exam Completed')
-                  : t.examMode}
-              </h3>
+              <h3 className="font-semibold text-sm">{t.examMode}</h3>
               <p className="text-xs text-rose-100 truncate max-w-[160px]">{project.title}</p>
             </div>
           </div>
@@ -298,55 +260,57 @@ export function ExamModePanel({
                 <Settings className="w-4 h-4" />
               </button>
             )}
-            <button onClick={onMinimize} className="p-1.5 rounded-md hover:bg-black/10 transition-colors" title={language === 'tr' ? 'Küçült' : 'Minimize'}>
+            <button onClick={onMinimize} className="p-1.5 rounded-md hover:bg-black/10 transition-colors">
               <ChevronDown className="w-4 h-4" />
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-md hover:bg-black/10 transition-colors">
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Score + Checklist */}
-        <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
-          <div className="flex flex-col">
-            {/* Stats Row */}
-            <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-700 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-              <div className="flex flex-col items-center py-3">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">{t.score}</span>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-rose-500">{score}</span>
-                  <span className="text-xs text-slate-400">/ 100</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-center py-3">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">{t.examTime}</span>
-                <div className={cn("flex items-center gap-1.5", isOverTime && "text-red-500 animate-pulse")}>
-                  <Clock className="w-4 h-4" />
-                  <span className="text-xl font-mono font-bold">
-                    {timeLeft !== null ? formatTime(timeLeft) : '--:--'}
-                  </span>
-                </div>
-              </div>
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-700 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+          <div className="flex flex-col items-center py-3">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">{t.score}</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-black text-rose-500">{score}</span>
+              <span className="text-xs text-slate-400">/ 100</span>
             </div>
+          </div>
+          <div className="flex flex-col items-center py-3">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">{t.examTime}</span>
+            <div className={cn("flex items-center gap-1.5", isOverTime && "text-red-500 animate-pulse")}>
+              <Clock className="w-4 h-4" />
+              <span className="text-xl font-mono font-bold">
+                {timeLeft !== null ? formatTime(timeLeft) : '--:--'}
+              </span>
+            </div>
+          </div>
+        </div>
 
-            {/* Overtime Alert */}
-            {isOverTime && (
-              <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2 text-[11px] text-red-600 dark:text-red-400 font-bold">
+        {/* Overtime Alert */}
+        {isOverTime && (
+            <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2 text-[11px] text-red-600 dark:text-red-400 font-bold">
                 <AlertTriangle className="w-3 h-3" />
                 {language === 'tr' ? 'SÜRE DOLDU!' : 'TIME EXPIRED!'}
-              </div>
-            )}
+            </div>
+        )}
 
-            {/* Checklist */}
-            <button
-              onClick={() => setIsChecklistExpanded(!isChecklistExpanded)}
-              className="flex items-center justify-between w-full px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700"
-            >
+        {/* Checklist */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+        <Collapsible open={isChecklistExpanded} onOpenChange={setIsChecklistExpanded}>
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center justify-between w-full px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
               <div className="flex items-center gap-2">
                 <Target className="w-3.5 h-3.5" />
                 {t.checklist} ({completedCount}/{project.tasks.length})
               </div>
               {isChecklistExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
-            {isChecklistExpanded && (
+          </CollapsibleTrigger>
+          <CollapsibleContent className="flex-1 overflow-hidden flex flex-col">
+            <ScrollArea className="flex-1 overflow-y-auto">
               <div className="p-3 space-y-2">
                 {project.tasks.map((task) => (
                   <div
@@ -384,26 +348,24 @@ export function ExamModePanel({
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+            </ScrollArea>
+          </CollapsibleContent>
+        </Collapsible>
         </div>
 
         {/* Footer */}
-        {!isFinishedState && !isOverTime && (
-          <div className="p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700">
-            <Button
-              className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold h-9 rounded-lg"
-              onClick={() => {
+        <div className="p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700">
+          <Button
+            className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold h-9 rounded-lg"
+            onClick={() => {
                 if (window.confirm(language === 'tr' ? 'Sınavı bitirmek istediğinize emin misiniz?' : 'Are you sure you want to finish the exam?')) {
-                  setHasAutoFinished(true);
-                  onFinish?.();
+                    onClose();
                 }
-              }}
-            >
-              {t.finishExam}
-            </Button>
-          </div>
-        )}
+            }}
+          >
+            {t.finishExam}
+          </Button>
+        </div>
       </div>
     </div>
   );

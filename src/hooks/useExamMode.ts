@@ -5,12 +5,10 @@ import { checkStepCompletion } from '@/lib/network/guidedMode';
 interface UseExamModeReturn {
   activeExam: ExamProject | null;
   isExamActive: boolean;
-  isExamFinished: boolean;
   isPanelMinimized: boolean;
   isEditorOpen: boolean;
   startExam: (project: ExamProject) => void;
   finishExam: () => void;
-  closeExam: () => void;
   togglePanelMinimize: () => void;
   expandPanel: () => void;
   toggleEditor: (open?: boolean) => void;
@@ -23,7 +21,6 @@ interface UseExamModeReturn {
   checkTasks: (context: {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
-    deviceAccessedId?: string | null;
     deviceState?: any;
     topologyConnections?: any[];
     topologyDevices?: any[];
@@ -48,7 +45,6 @@ export function useExamMode(): UseExamModeReturn {
       try {
         const parsed = JSON.parse(saved);
         if (parsed.startedAt) parsed.startedAt = new Date(parsed.startedAt);
-        if (parsed.finishedAt) parsed.finishedAt = new Date(parsed.finishedAt);
         if (parsed.tasks) {
           parsed.tasks = parsed.tasks.map((t: any) => ({
             ...t,
@@ -67,6 +63,8 @@ export function useExamMode(): UseExamModeReturn {
     if (!isMounted) return;
     if (activeExam) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(activeExam));
+      // Safety: Clear guided mode if exam mode is active
+      localStorage.removeItem('guidedModeState');
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
@@ -82,14 +80,6 @@ export function useExamMode(): UseExamModeReturn {
   }, []);
 
   const finishExam = useCallback(() => {
-    setActiveExam(prev => {
-      if (!prev || prev.finishedAt) return prev;
-      return { ...prev, finishedAt: new Date() };
-    });
-    setIsPanelMinimized(false);
-  }, []);
-
-  const closeExam = useCallback(() => {
     setActiveExam(null);
     setIsPanelMinimized(false);
   }, []);
@@ -167,8 +157,7 @@ export function useExamMode(): UseExamModeReturn {
       ...activeExam,
       data: projectData, // Inject current project state (topology + device states)
       isExam: true,
-      startedAt: undefined,
-      finishedAt: undefined, // Clear session data
+      startedAt: undefined, // Clear session data
       tasks: activeExam.tasks.map(t => ({ ...t, completed: false, completedAt: undefined }))
     };
 
@@ -190,12 +179,11 @@ export function useExamMode(): UseExamModeReturn {
   const checkTasks = useCallback((context: {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
-    deviceAccessedId?: string | null;
     deviceState?: any;
     topologyConnections?: any[];
     topologyDevices?: any[];
   }) => {
-    if (!activeExam || activeExam.finishedAt) return;
+    if (!activeExam) return;
 
     let changed = false;
     const updatedTasks = activeExam.tasks.map(task => {
@@ -227,11 +215,9 @@ export function useExamMode(): UseExamModeReturn {
   return {
     activeExam,
     isExamActive: activeExam !== null,
-    isExamFinished: activeExam?.finishedAt != null,
     isPanelMinimized,
     startExam,
     finishExam,
-    closeExam,
     togglePanelMinimize,
     expandPanel,
     isEditorOpen,

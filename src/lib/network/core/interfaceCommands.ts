@@ -880,9 +880,7 @@ function cmdIpAddress(state: any, input: string, ctx: any): any {
   }
 
   // Layer 2 switch check - prevent IP assignment on physical ports
-  // Apply this guard only for switch devices; routers must allow physical IP addressing.
-  const isSwitchDevice = state.deviceType === 'switchL2' || state.deviceType === 'switchL3';
-  if (isSwitchDevice && !canAssignIPToPhysicalPort(state.switchModel)) {
+  if (!canAssignIPToPhysicalPort(state.switchModel)) {
     const port = state.ports[state.currentInterface];
     if (port && (port.type === 'fastethernet' || port.type === 'gigabitethernet')) {
       return {
@@ -1044,21 +1042,20 @@ function expandInterfaceRange(rangeSpec: string, state: any): string[] {
       continue;
     }
 
-    const match = part.match(/^(fastethernet|gigabitethernet|gigabit|fastethernet|fa|gig|gi)(\d+(?:\/\d+)?)\/(\d+)(?:-(\d+))?$/);
+    const match = part.match(/^(fastethernet|gigabitethernet|gigabit|fastethernet|fa|gig|gi)(\d+)\/(\d+)(?:-(\d+))?$/);
     if (!match) continue;
 
     const prefix = match[1].startsWith('f') ? 'fa' : 'gi';
-    const moduleSlot = match[2]; // e.g. "0" (2-level) or "1/0" (3-level)
+    const moduleNum = match[2];
     const startPort = parseInt(match[3], 10);
     const endPort = match[4] ? parseInt(match[4], 10) : startPort;
 
     if (Number.isNaN(startPort) || Number.isNaN(endPort) || endPort < startPort) continue;
 
     const available = Object.keys(state.ports || {});
-    const modulePrefix = `${prefix}${moduleSlot}/`;
     const modulePorts = available
-      .filter(portId => portId.startsWith(modulePrefix))
-      .map(portId => parseInt(portId.split('/').pop() || '', 10))
+      .filter(portId => portId.startsWith(`${prefix}${moduleNum}/`))
+      .map(portId => parseInt(portId.split('/')[1] || '', 10))
       .filter(n => !Number.isNaN(n))
       .sort((a, b) => a - b);
 
@@ -1068,7 +1065,7 @@ function expandInterfaceRange(rangeSpec: string, state: any): string[] {
     if (startPort < minPort || endPort > maxPort) return [];
 
     for (let port = startPort; port <= endPort; port++) {
-      const normalizedId = `${prefix}${moduleSlot}/${port}`;
+      const normalizedId = `${prefix}${moduleNum}/${port}`;
       if (available.includes(normalizedId) && !allPorts.includes(normalizedId)) {
         allPorts.push(normalizedId);
       }

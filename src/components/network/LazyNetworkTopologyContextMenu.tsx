@@ -21,7 +21,6 @@ interface LazyNetworkTopologyContextMenuProps {
     noteClipboardLength: number;
     canUndo: boolean;
     canRedo: boolean;
-    isExamActive?: boolean;
     onClose: () => void;
     onUpdateNoteStyle: (id: string, style: any) => void;
     onNoteCut: (id: string) => void;
