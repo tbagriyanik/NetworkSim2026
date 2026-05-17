@@ -12,6 +12,7 @@ import {
   ChevronUp,
   X,
   GraduationCap,
+  Settings,
   Move,
   Trophy,
   AlertTriangle
@@ -46,6 +47,7 @@ interface ExamModePanelProps {
     topologyConnections?: any[];
     topologyDevices?: any[];
   }) => void;
+  onOpenEditor?: () => void;
 }
 
 export function ExamModePanel({
@@ -59,7 +61,8 @@ export function ExamModePanel({
   deviceState,
   topologyConnections,
   topologyDevices,
-  onCheckTasks
+  onCheckTasks,
+  onOpenEditor
 }: ExamModePanelProps) {
   const { t, language } = useLanguage();
 
@@ -243,6 +246,15 @@ export function ExamModePanel({
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {project.isCustom && onOpenEditor && (
+              <button
+                onClick={onOpenEditor}
+                className="p-1.5 rounded-md hover:bg-black/10 transition-colors"
+                title={t.examEditor}
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            )}
             <button onClick={onMinimize} className="p-1.5 rounded-md hover:bg-black/10 transition-colors">
               <ChevronDown className="w-4 h-4" />
             </button>

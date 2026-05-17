@@ -165,11 +165,11 @@ export function ProjectPickerDialog({
             </DialogHeader>
 
             {/* Tab Buttons */}
-            <div className={`flex items-end gap-1 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200'}`}>
+            <div className={`flex items-end gap-0.5 md:gap-1 border-b overflow-x-auto flex-nowrap no-scrollbar ${isDark ? 'border-slate-700/50' : 'border-slate-200'}`}>
               <button
                 onClick={() => setProjectPickerTab('all')}
                 className={cn(
-                  'relative inline-flex items-center gap-2 rounded-t-lg border border-b-0 px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out focus-ring-animate',
+                  'relative inline-flex items-center gap-1.5 md:gap-2 rounded-t-lg border border-b-0 px-3 md:px-4 py-2 md:py-2.5 text-[11px] md:text-sm font-semibold transition-all duration-200 ease-out focus-ring-animate flex-shrink-0',
                   projectPickerTab === 'all'
                     ? isDark
                       ? 'bg-slate-900 text-blue-400 border-slate-600 shadow-[0_-2px_8px_rgba(0,0,0,0.3)]'
@@ -182,12 +182,12 @@ export function ProjectPickerDialog({
                 aria-selected={projectPickerTab === 'all'}
               >
                 <FolderOpen className="w-4 h-4" />
-                <span className="uppercase tracking-wide text-xs">{language === 'tr' ? t.openNewProject : 'All Projects'}</span>
+                <span className="uppercase tracking-wide text-xs">{t.allProjects}</span>
               </button>
               <button
                 onClick={() => setProjectPickerTab('guided')}
                 className={cn(
-                  'relative inline-flex items-center gap-2 rounded-t-lg border border-b-0 px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out focus-ring-animate',
+                  'relative inline-flex items-center gap-1.5 md:gap-2 rounded-t-lg border border-b-0 px-3 md:px-4 py-2 md:py-2.5 text-[11px] md:text-sm font-semibold transition-all duration-200 ease-out focus-ring-animate flex-shrink-0',
                   projectPickerTab === 'guided'
                     ? isDark
                       ? 'bg-slate-900 text-emerald-400 border-slate-600 shadow-[0_-2px_8px_rgba(0,0,0,0.3)]'
@@ -200,12 +200,12 @@ export function ProjectPickerDialog({
                 aria-selected={projectPickerTab === 'guided'}
               >
                 <BookOpen className="w-4 h-4" />
-                <span className="uppercase tracking-wide text-xs">{language === 'tr' ? 'Rehberli Ders' : 'Guided Lesson'}</span>
+                <span className="uppercase tracking-wide text-xs">{t.guidedMode}</span>
               </button>
               <button
                 onClick={() => setProjectPickerTab('exam')}
                 className={cn(
-                  'relative inline-flex items-center gap-2 rounded-t-lg border border-b-0 px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out focus-ring-animate',
+                  'relative inline-flex items-center gap-1.5 md:gap-2 rounded-t-lg border border-b-0 px-3 md:px-4 py-2 md:py-2.5 text-[11px] md:text-sm font-semibold transition-all duration-200 ease-out focus-ring-animate flex-shrink-0',
                   projectPickerTab === 'exam'
                     ? isDark
                       ? 'bg-slate-900 text-rose-400 border-slate-600 shadow-[0_-2px_8px_rgba(0,0,0,0.3)]'
@@ -218,7 +218,7 @@ export function ProjectPickerDialog({
                 aria-selected={projectPickerTab === 'exam'}
               >
                 <GraduationCap className="w-4 h-4" />
-                <span className="uppercase tracking-wide text-xs">{language === 'tr' ? 'Sınav' : 'Exam'}</span>
+                <span className="uppercase tracking-wide text-xs">{t.exam}</span>
               </button>
             </div>
 

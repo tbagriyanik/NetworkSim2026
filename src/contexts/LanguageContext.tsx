@@ -42,6 +42,7 @@ export interface Translations {
   alignMiddle: string;
   alignBottom: string;
   allCommands: string;
+  allProjects: string;
   allStepsCompleted: string;
   annotations: string;
   apActive: string;
@@ -241,6 +242,11 @@ export interface Translations {
   examPoints: string;
   examStarted: string;
   examStatus: string;
+  examEditor: string;
+  examTemplate: string;
+  saveAsExam: string;
+  addTask: string;
+  smartBalance: string;
   exit: string;
   exitPingMode: string;
   expand: string;
@@ -674,6 +680,7 @@ const translations: Record<Language, Translations> = {
     alignMiddle: 'Ortaya Hizala',
     alignBottom: 'Alta Hizala',
     allCommands: 'Tüm komutlar',
+    allProjects: 'Tüm Projeler',
     allStepsCompleted: 'Tüm adımlar tamamlandı!',
     annotations: 'Notlar',
     apActive: 'X AP aktif',
@@ -873,6 +880,11 @@ const translations: Record<Language, Translations> = {
     examPoints: 'Sınav Puanı',
     examStarted: 'Sınav Başladı',
     examStatus: 'Sınav Durumu',
+    examEditor: 'Sınav Düzenleyici',
+    examTemplate: 'Sınav Şablonu',
+    saveAsExam: 'Sınav Olarak Kaydet (.exam)',
+    addTask: 'Görev Ekle',
+    smartBalance: 'Puanları Dengeler',
     exit: 'Çık',
     exitPingMode: 'Ping modundan çık (ESC)',
     expand: 'Genişlet',
@@ -1304,6 +1316,7 @@ const translations: Record<Language, Translations> = {
     alignMiddle: 'Align Middle',
     alignBottom: 'Align Bottom',
     allCommands: 'All commands',
+    allProjects: 'All Projects',
     allStepsCompleted: 'All steps completed!',
     annotations: 'Annotations',
     apActive: 'X AP active',
@@ -1503,6 +1516,11 @@ const translations: Record<Language, Translations> = {
     examPoints: 'Exam Points',
     examStarted: 'Exam Started',
     examStatus: 'Exam Status',
+    examEditor: 'Exam Editor',
+    examTemplate: 'Exam Template',
+    saveAsExam: 'Save as Exam (.exam)',
+    addTask: 'Add Task',
+    smartBalance: 'Balance Points',
     exit: 'Exit',
     exitPingMode: 'Exit ping mode (ESC)',
     expand: 'Expand',

@@ -1,15 +1,23 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { ExamProject, ExamTask, getExamProjects } from '@/lib/network/examMode';
+import { ExamProject, ExamTask, getExamProjects, encryptExamData } from '@/lib/network/examMode';
 import { checkStepCompletion } from '@/lib/network/guidedMode';
 
 interface UseExamModeReturn {
   activeExam: ExamProject | null;
   isExamActive: boolean;
   isPanelMinimized: boolean;
+  isEditorOpen: boolean;
   startExam: (project: ExamProject) => void;
   finishExam: () => void;
   togglePanelMinimize: () => void;
   expandPanel: () => void;
+  toggleEditor: (open?: boolean) => void;
+  addTask: (task: any) => void;
+  updateTask: (id: string, updates: any) => void;
+  deleteTask: (id: string) => void;
+  updateExamMeta: (updates: Partial<ExamProject>) => void;
+  smartBalanceWeights: () => void;
+  exportExamFile: (topologyData: any) => void;
   checkTasks: (context: {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
@@ -26,6 +34,7 @@ const STORAGE_KEY = 'examModeState';
 export function useExamMode(): UseExamModeReturn {
   const [activeExam, setActiveExam] = useState<ExamProject | null>(null);
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   // Load from localStorage after mount
@@ -81,6 +90,101 @@ export function useExamMode(): UseExamModeReturn {
     setIsPanelMinimized(false);
   }, []);
 
+  const toggleEditor = useCallback((open?: boolean) => {
+    setIsEditorOpen(prev => open !== undefined ? open : !prev);
+  }, []);
+
+  const addTask = useCallback((task: any) => {
+    setActiveExam(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        tasks: [...prev.tasks, { ...task, id: `task-${Date.now()}`, completed: false }]
+      };
+    });
+  }, []);
+
+  const updateTask = useCallback((id: string, updates: any) => {
+    setActiveExam(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        tasks: prev.tasks.map(t => t.id === id ? { ...t, ...updates } : t)
+      };
+    });
+  }, []);
+
+  const deleteTask = useCallback((id: string) => {
+    setActiveExam(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        tasks: prev.tasks.filter(t => t.id !== id)
+      };
+    });
+  }, []);
+
+  const updateExamMeta = useCallback((updates: Partial<ExamProject>) => {
+    setActiveExam(prev => {
+      if (!prev) return null;
+      return { ...prev, ...updates };
+    });
+  }, []);
+
+  const smartBalanceWeights = useCallback(() => {
+    setActiveExam(prev => {
+      if (!prev || prev.tasks.length === 0) return prev;
+      const count = prev.tasks.length;
+      const baseWeight = Math.floor(100 / count);
+      const remainder = 100 % count;
+
+      return {
+        ...prev,
+        tasks: prev.tasks.map((t, i) => ({
+          ...t,
+          weight: i < remainder ? baseWeight + 1 : baseWeight
+        }))
+      };
+    });
+  }, []);
+
+  const exportExamFile = useCallback((topologyData: any) => {
+    if (!activeExam) return;
+
+    const fullProjectData = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      devices: [],
+      deviceOutputs: [],
+      pcOutputs: [],
+      pcHistories: [],
+      topology: topologyData,
+      activeTab: 'topology'
+    };
+
+    const examData = {
+      ...activeExam,
+      data: fullProjectData, // Inject current topology wrapped in project structure
+      isExam: true,
+      startedAt: undefined, // Clear session data
+      tasks: activeExam.tasks.map(t => ({ ...t, completed: false, completedAt: undefined }))
+    };
+
+    const encrypted = encryptExamData(examData);
+    const blob = new Blob([encrypted], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const downloadName = typeof activeExam.title === 'string'
+      ? activeExam.title.replace(/\s+/g, '_')
+      : 'exam_file';
+    a.download = `${downloadName}.exam`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [activeExam]);
+
   const checkTasks = useCallback((context: {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
@@ -125,6 +229,14 @@ export function useExamMode(): UseExamModeReturn {
     finishExam,
     togglePanelMinimize,
     expandPanel,
+    isEditorOpen,
+    toggleEditor,
+    addTask,
+    updateTask,
+    deleteTask,
+    updateExamMeta,
+    smartBalanceWeights,
+    exportExamFile,
     checkTasks,
     currentScore,
     getAvailableExams

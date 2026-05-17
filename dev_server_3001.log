@@ -1,0 +1,22 @@
+
+> network-simulator@1.6.4 dev
+> next dev -p 3000
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 892ms
+- Experiments (use with caution):
+  · optimizePackageImports
+
+ GET / 200 in 1047ms (next.js: 470ms, application-code: 577ms)
+ GET / 200 in 182ms (next.js: 18ms, application-code: 164ms)
+ GET / 200 in 154ms (next.js: 5ms, application-code: 149ms)
+ GET / 200 in 62ms (next.js: 4ms, application-code: 58ms)
+ GET / 200 in 69ms (next.js: 4ms, application-code: 65ms)
+ GET / 200 in 65ms (next.js: 5ms, application-code: 60ms)
+ GET / 200 in 89ms (next.js: 4ms, application-code: 84ms)
+ GET / 200 in 64ms (next.js: 7ms, application-code: 57ms)
+ GET / 200 in 120ms (next.js: 6ms, application-code: 115ms)
+ GET / 200 in 61ms (next.js: 4ms, application-code: 57ms)
+ GET / 200 in 88ms (next.js: 5ms, application-code: 83ms)
