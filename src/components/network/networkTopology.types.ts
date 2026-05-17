@@ -71,6 +71,7 @@ export interface NetworkTopologyProps {
   onPacketPanelFocus?: () => void;
   packetPanelZIndex?: number;
   isExamActive?: boolean;
+  isExamEditorOpen?: boolean;
 }
 
 export interface FirewallRule {

@@ -245,6 +245,7 @@ export function NetworkTopology({
   onPacketPanelFocus,
   packetPanelZIndex,
   isExamActive = false,
+  isExamEditorOpen = false,
 }: NetworkTopologyProps) {
   const { language, t } = useLanguage();
   const { theme } = useTheme();
@@ -2375,7 +2376,7 @@ export function NetworkTopology({
 
   // Add device from palette button
   const addDevice = useCallback((type: 'pc' | 'iot' | 'switch' | 'router' | 'firewall', layer?: 'L2' | 'L3') => {
-    if (isExamActive) return;
+    if (isExamActive && !isExamEditorOpen) return;
     saveToHistory();
     deviceCounterRef.current[type]++;
 
@@ -2448,7 +2449,7 @@ export function NetworkTopology({
     // Pass the switchModel directly to avoid race condition
     onDeviceSelect(resolvedType, newDevice.id, newDevice.switchModel, newDevice.name, true, newDevice);
 
-  }, [devices.length, saveToHistory, generateUniqueHostname, generateUniqueLinkLocalIp, onDeviceSelect, canvasDimensions, pan, zoom, isExamActive]);
+  }, [devices.length, saveToHistory, generateUniqueHostname, generateUniqueLinkLocalIp, onDeviceSelect, canvasDimensions, pan, zoom, isExamActive, isExamEditorOpen]);
 
   // Note management functions
   const [noteClipboard, setNoteClipboard] = useState('');
@@ -2538,7 +2539,7 @@ export function NetworkTopology({
   // Handle toolbar events from page.tsx
   useEffect(() => {
     const handleAddDevice = (event: CustomEvent) => {
-      if (isExamActive) return;
+      if (isExamActive && !isExamEditorOpen) return;
       const deviceType = event.detail;
       if (deviceType === 'pc') addDevice('pc');
       else if (deviceType === 'switchL2') addDevice('switch', 'L2');

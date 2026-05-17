@@ -880,7 +880,9 @@ function cmdIpAddress(state: any, input: string, ctx: any): any {
   }
 
   // Layer 2 switch check - prevent IP assignment on physical ports
-  if (!canAssignIPToPhysicalPort(state.switchModel)) {
+  // Apply this guard only for switch devices; routers must allow physical IP addressing.
+  const isSwitchDevice = state.deviceType === 'switchL2' || state.deviceType === 'switchL3';
+  if (isSwitchDevice && !canAssignIPToPhysicalPort(state.switchModel)) {
     const port = state.ports[state.currentInterface];
     if (port && (port.type === 'fastethernet' || port.type === 'gigabitethernet')) {
       return {

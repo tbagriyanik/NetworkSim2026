@@ -80,16 +80,16 @@ export function ExamModePanel({
 
     const limitSec = project.durationMinutes * 60;
 
-    const update = () => {
-      const diff = Math.floor((Date.now() - new Date(project.startedAt!).getTime()) / 1000);
+    const update = (nowMs: number = Date.now()) => {
+      const diff = Math.floor((nowMs - new Date(project.startedAt!).getTime()) / 1000);
       setElapsedSeconds(diff);
       setTimeLimit(Math.max(0, limitSec - diff));
     };
 
-    if (isFinishedState && project.finishedAt) {
-      const diff = Math.floor((new Date(project.finishedAt).getTime() - new Date(project.startedAt).getTime()) / 1000);
-      setElapsedSeconds(diff);
-      setTimeLimit(Math.max(0, limitSec - diff));
+    // Stop timer immediately when exam is finished (with or without finishedAt persisted yet)
+    if (isFinishedState) {
+      const endTimeMs = project.finishedAt ? new Date(project.finishedAt).getTime() : Date.now();
+      update(endTimeMs);
       return;
     }
 
@@ -116,6 +116,13 @@ export function ExamModePanel({
   const [hasDragged, setHasDragged] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+
+  // Auto-finish when time expires
+  useEffect(() => {
+    if (timeLeft !== null && timeLeft <= 0 && !isFinishedState && onFinish) {
+      onFinish();
+    }
+  }, [timeLeft, isFinishedState, onFinish]);
 
   // Auto-check tasks when context changes
   useEffect(() => {

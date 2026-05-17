@@ -4425,6 +4425,7 @@ ${state.bannerMOTD}
                     onRefreshNetwork={handleRefreshNetwork}
                     focusDeviceId={focusDeviceId}
                     isExamActive={isExamActive}
+                    isExamEditorOpen={isEditorOpen}
                     onOpenTasks={(deviceId: string) => {
                       setActiveDeviceId(deviceId);
                       const device = topologyDevices?.find(d => d.id === deviceId);
