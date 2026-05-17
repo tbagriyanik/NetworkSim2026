@@ -134,6 +134,7 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 - Router paneli, VLAN paneli, Security paneli, Firewall paneli.
 - WiFi kontrol paneli, Environment paneli, Help paneli.
 - Ping görselleştirme, Task paneli (puanlama).
+- Sınav modu: öğretmen düzenleyici, süreli sınav, XOR şifreli `.exam` dosyası, otomatik puanlama.
 - Rehberli ders paneli, başarı rozetleri.
 - Sürüklenebilir dialog pencereleri, pencere pozisyonu koruma.
 - Dual dil desteği (Türkçe/İngilizce), dark/light tema.

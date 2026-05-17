@@ -370,15 +370,8 @@ export function ExamModePanel({
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700">
-          {isFinishedState ? (
-            <Button
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-9 rounded-lg"
-              onClick={onClose}
-            >
-              {language === 'tr' ? 'Kapat' : 'Close'}
-            </Button>
-          ) : (
+        {!isFinishedState && (
+          <div className="p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700">
             <Button
               className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold h-9 rounded-lg"
               onClick={() => {
@@ -389,8 +382,8 @@ export function ExamModePanel({
             >
               {t.finishExam}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

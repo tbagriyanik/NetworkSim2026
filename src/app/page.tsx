@@ -2406,20 +2406,12 @@ ${state.bannerMOTD}
       });
       return;
     }
-    setConfirmDialog({
-      show: true,
-      message: t.newProjectConfirm,
-      action: 'new-project',
-      onConfirm: () => {
-        setConfirmDialog(null);
-        action();
-      }
-    });
-  }, [hasUnsavedChanges, handleSaveProject, setSaveDialog, setConfirmDialog, t.unsavedChangesConfirm, t.newProjectConfirm]);
+    action();
+  }, [hasUnsavedChanges, handleSaveProject, setSaveDialog, t.unsavedChangesConfirm]);
 
   function handleNewProject() {
     setProjectSearchQuery(''); // Reset search when opening new project dialog
-    setShowProjectPicker(true);
+    runWithSaveGuard(() => setShowProjectPicker(true));
   }
 
   // Sync hostname changes between Topology and Simulator
@@ -3719,68 +3711,82 @@ ${state.bannerMOTD}
   const handleLoadProject = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    // Reset input
+    event.target.value = '';
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = e.target?.result as string;
-        let projectData: any;
+    const doLoad = () => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string;
+          let projectData: any;
 
-        // Try decrypting as exam file first if extension matches
-        if (file.name.endsWith('.exam')) {
-          projectData = decryptExamData(content);
-          if (projectData) {
-            startExamProject(projectData);
-            loadProjectData(projectData.data);
+          // Try decrypting as exam file first if extension matches
+          if (file.name.endsWith('.exam')) {
+            projectData = decryptExamData(content);
+            if (projectData) {
+              startExamProject(projectData);
+              loadProjectData(projectData.data);
+              setHasUnsavedChanges(false);
+              setProjectName(projectData.title.en);
+              toast({
+                title: language === 'tr' ? 'Sınav Modu Başlatıldı' : 'Exam Mode Started',
+                description: projectData.title[language === 'tr' ? 'tr' : 'en'],
+              });
+              return;
+            }
+          }
+
+          projectData = safeParse<unknown>(content);
+          if (loadProjectData(projectData)) {
             setHasUnsavedChanges(false);
-            setProjectName(projectData.title.en);
+            const loadedName = file.name.replace(/\.[^/.]+$/, '');
+            setProjectName(loadedName);
+            closeGuidedMode();
+            closeExam();
+            setRefreshNetworkReport(null);
             toast({
-              title: language === 'tr' ? 'Sınav Modu Başlatıldı' : 'Exam Mode Started',
-              description: projectData.title[language === 'tr' ? 'tr' : 'en'],
+              title: `"${loadedName}" ${language === 'tr' ? 'projesi yüklendi' : 'project is loaded'}`,
+              description: t.fileImportedSuccessfully,
             });
-            return;
+            setZoom(1.0);
+            setPan({ x: 0, y: 0 });
+            if (typeof window !== 'undefined') {
+              window.scrollTo(0, 0);
+            }
+          } else {
+            toast({
+              title: t.invalidProjectFile,
+              description: t.invalidProjectFile,
+              variant: "destructive",
+            });
           }
-        }
-
-        projectData = safeParse<unknown>(content);
-        if (loadProjectData(projectData)) {
-          setHasUnsavedChanges(false);
-          const loadedName = file.name.replace(/\.[^/.]+$/, '');
-          setProjectName(loadedName);
-          // Close guided mode panel if open
-          closeGuidedMode();
-          // Close network refresh report if open
-          setRefreshNetworkReport(null);
+        } catch (error) {
+          errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'fileUpload', error: String(error) }));
           toast({
-            title: `"${loadedName}" ${language === 'tr' ? 'projesi yüklendi' : 'project is loaded'}`,
-            description: t.fileImportedSuccessfully,
-          });
-          // Reset zoom and pan to top-left
-          setZoom(1.0);
-          setPan({ x: 0, y: 0 });
-          if (typeof window !== 'undefined') {
-            window.scrollTo(0, 0);
-          }
-        } else {
-          toast({
-            title: t.invalidProjectFile,
-            description: t.invalidProjectFile,
+            title: t.loadFailed,
+            description: formatErrorForUser(error as Error, t.failedLoadProject).userMessage,
             variant: "destructive",
           });
         }
-      } catch (error) {
-        errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'fileUpload', error: String(error) }));
-        toast({
-          title: t.loadFailed,
-          description: formatErrorForUser(error as Error, t.failedLoadProject).userMessage,
-          variant: "destructive",
-        });
-      }
+      };
+      reader.readAsText(file);
     };
-    reader.readAsText(file);
-    // Reset input
-    event.target.value = '';
-  }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode, setProjectName]);
+
+    if (hasUnsavedChanges) {
+      setSaveDialog({
+        show: true,
+        message: t.unsavedChangesConfirm,
+        onConfirm: (save: boolean) => {
+          setSaveDialog(null);
+          if (save) handleSaveProject();
+          doLoad();
+        }
+      });
+      return;
+    }
+    doLoad();
+  }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode, closeExam, setProjectName, hasUnsavedChanges, handleSaveProject, setSaveDialog, t.unsavedChangesConfirm, startExamProject]);
 
   const applyExampleProject = useCallback((projectData: any, exampleId?: string) => {
     loadProjectData(projectData);

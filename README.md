@@ -5,11 +5,11 @@
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Total Lines](https://img.shields.io/badge/total--lines-128k-lightgrey)
 
-A browser-based network simulator for learning switching, routing, wireless, IoT, and CLI workflows. TR/EN interface support.
+A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows. TR/EN interface support.
 
 **Live app:** [network2026.vercel.app](https://network2026.vercel.app)
 
-Keyboard update (2026-05-16): Selected device(s) can be moved with arrow keys on topology (`Shift + Arrow` for faster movement).
+Exam update (2026-05-17): Exam editor mobile responsive, finish exam now freezes timer (panel stays open), file open accepts `.json` + `.exam`.
 
 ---
 
