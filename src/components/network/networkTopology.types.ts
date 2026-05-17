@@ -70,6 +70,7 @@ export interface NetworkTopologyProps {
   clearSelectionTrigger?: number;
   onPacketPanelFocus?: () => void;
   packetPanelZIndex?: number;
+  isExamActive?: boolean;
 }
 
 export interface FirewallRule {

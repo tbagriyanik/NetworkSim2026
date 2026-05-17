@@ -20,11 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible';
+
 import { ExamProject, ExamTask } from '@/lib/network/examMode';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -286,7 +282,7 @@ export function ExamModePanel({
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-700 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+        <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-700 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 shrink-0">
           <div className="flex flex-col items-center py-3">
             <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">{t.score}</span>
             <div className="flex items-baseline gap-1">
@@ -307,66 +303,67 @@ export function ExamModePanel({
 
         {/* Overtime Alert */}
         {isOverTime && (
-            <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2 text-[11px] text-red-600 dark:text-red-400 font-bold">
+            <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2 text-[11px] text-red-600 dark:text-red-400 font-bold shrink-0">
                 <AlertTriangle className="w-3 h-3" />
                 {language === 'tr' ? 'SÜRE DOLDU!' : 'TIME EXPIRED!'}
             </div>
         )}
 
         {/* Checklist */}
-        <div className="flex-1 overflow-hidden flex flex-col">
-        <Collapsible open={isChecklistExpanded} onOpenChange={setIsChecklistExpanded}>
-          <CollapsibleTrigger asChild>
-            <button className="flex items-center justify-between w-full px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-              <div className="flex items-center gap-2">
-                <Target className="w-3.5 h-3.5" />
-                {t.checklist} ({completedCount}/{project.tasks.length})
-              </div>
-              {isChecklistExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="flex-1 overflow-hidden flex flex-col">
-            <ScrollArea className="flex-1 overflow-y-auto">
-              <div className="p-3 space-y-2">
-                {project.tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className={cn(
-                      "flex items-start gap-3 p-3 rounded-lg border transition-all",
-                      task.completed
-                        ? "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/30 opacity-75"
-                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
-                    )}
-                  >
-                    <div className="mt-0.5">
-                      {task.completed ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                      ) : (
-                        <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+          <button
+            onClick={() => setIsChecklistExpanded(!isChecklistExpanded)}
+            className="flex items-center justify-between w-full px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shrink-0"
+          >
+            <div className="flex items-center gap-2">
+              <Target className="w-3.5 h-3.5" />
+              {t.checklist} ({completedCount}/{project.tasks.length})
+            </div>
+            {isChecklistExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+          {isChecklistExpanded && (
+            <div className="flex-1 overflow-hidden min-h-0">
+              <ScrollArea className="h-full">
+                <div className="p-3 space-y-2">
+                  {project.tasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className={cn(
+                        "flex items-start gap-3 p-3 rounded-lg border transition-all",
+                        task.completed
+                          ? "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/30 opacity-75"
+                          : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                       )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className={cn(
-                          "text-xs font-bold",
-                          task.completed ? "text-green-600 dark:text-green-400 line-through" : "text-slate-700 dark:text-slate-200"
-                        )}>
-                          {task.title[language]}
-                        </span>
-                        <span className="text-[10px] font-black bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500">
-                          {task.weight} pts
-                        </span>
+                    >
+                      <div className="mt-0.5">
+                        {task.completed ? (
+                          <CheckCircle2 className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                        )}
                       </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                        {task.description[language]}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className={cn(
+                            "text-xs font-bold",
+                            task.completed ? "text-green-600 dark:text-green-400 line-through" : "text-slate-700 dark:text-slate-200"
+                          )}>
+                            {task.title[language]}
+                          </span>
+                          <span className="text-[10px] font-black bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500">
+                            {task.weight} pts
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                          {task.description[language]}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </CollapsibleContent>
-        </Collapsible>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

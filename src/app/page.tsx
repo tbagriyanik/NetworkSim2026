@@ -4385,6 +4385,7 @@ ${state.bannerMOTD}
                     canUndo={canUndo}
                     canRedo={canRedo}
                     hasHydrated={hasHydrated}
+                    isExamActive={isExamActive}
                     setDeviceSearchQuery={setDeviceSearchQuery}
                     setCableInfo={setCableInfo}
                     setZoom={setZoom}
@@ -4423,6 +4424,7 @@ ${state.bannerMOTD}
                     onRedo={handleRedo}
                     onRefreshNetwork={handleRefreshNetwork}
                     focusDeviceId={focusDeviceId}
+                    isExamActive={isExamActive}
                     onOpenTasks={(deviceId: string) => {
                       setActiveDeviceId(deviceId);
                       const device = topologyDevices?.find(d => d.id === deviceId);

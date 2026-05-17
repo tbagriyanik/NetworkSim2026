@@ -23,6 +23,7 @@ interface NetworkTopologyContextMenuProps {
   noteClipboardLength: number;
   canUndo: boolean;
   canRedo: boolean;
+  isExamActive?: boolean;
   onClose: () => void;
   onUpdateNoteStyle: (id: string, style: any) => void;
   onNoteCut: (id: string) => void;
@@ -57,11 +58,13 @@ export default function NetworkTopologyContextMenu({
   noteFonts,
   notes,
   devices,
+  note,
   selectedDeviceIds,
   clipboardLength,
   noteClipboardLength,
   canUndo,
   canRedo,
+  isExamActive = false,
   onClose,
   onUpdateNoteStyle,
   onNoteCut,
@@ -86,7 +89,6 @@ export default function NetworkTopologyContextMenu({
   onClearDeviceSelection,
   onOpenTasks,
   onRefreshNetwork,
-  note
 }: NetworkTopologyContextMenuProps) {
   const { t } = useLanguage();
   const [position, setPosition] = useState({ x: contextMenu?.x || 0, y: contextMenu?.y || 0 });
@@ -351,28 +353,28 @@ export default function NetworkTopologyContextMenu({
                   disabled: !device
                 })}
                 <div className="my-1 border-t border-slate-200/20" />
-                {renderMenuItem({
+                {!isExamActive && renderMenuItem({
                   label: t.cut,
                   icon: 'cut',
                   shortcut: 'Ctrl+X',
                   disabled: !device,
                   onClick: () => { onSaveToHistory(); onCutDevices(targets); onClose(); }
                 })}
-                {renderMenuItem({
+                {!isExamActive && renderMenuItem({
                   label: t.copy,
                   icon: 'copy',
                   shortcut: 'Ctrl+C',
                   disabled: !device,
                   onClick: () => { onCopyDevices(targets); onClose(); }
                 })}
-                {renderMenuItem({
+                {!isExamActive && renderMenuItem({
                   label: t.paste,
                   icon: 'paste',
                   shortcut: 'Ctrl+V',
                   disabled: !canPaste,
                   onClick: () => { if (onPasteDevice) onPasteDevice(); onClose(); }
                 })}
-                {renderMenuItem({
+                {!isExamActive && renderMenuItem({
                   label: t.delete,
                   icon: 'delete',
                   shortcut: 'Del',
