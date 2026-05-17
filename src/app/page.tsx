@@ -1552,6 +1552,18 @@ ${state.bannerMOTD}
       // Load active tab
       setActiveTab(resolvedActiveTab);
 
+      // Restore exam state if present (for teacher mode editing)
+      if (data.examData && typeof data.examData === 'object') {
+        const exam = data.examData as any;
+        startExamProject({
+          ...exam,
+          isExam: true,
+          data: projectData, // The project itself is the template
+          tag: 'EDIT',
+          description: { tr: 'Düzenleniyor...', en: 'Editing...' }
+        });
+      }
+
       // Close all overlay panels when loading a project
       setShowPCPanel(false);
       setShowRouterPanel(false);
@@ -2237,7 +2249,18 @@ ${state.bannerMOTD}
       // Reset cableInfo if no valid devices exist or no connections
       cableInfo: topologyDevices.length > 0 && topologyConnections.length > 0 ? cableInfo : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
       activeDeviceId: topologyDevices.find(d => d.id === activeDeviceId)?.id || '',
-      activeDeviceType
+      activeDeviceType,
+      // Include exam metadata if currently in exam mode (for teacher editing)
+      ...(activeExam ? {
+        examData: {
+          id: activeExam.id,
+          title: activeExam.title,
+          tasks: activeExam.tasks,
+          durationMinutes: activeExam.durationMinutes,
+          difficulty: activeExam.difficulty,
+          isCustom: activeExam.isCustom
+        }
+      } : {})
     };
 
     // Optimization: Use no indentation to reduce file size
@@ -2262,16 +2285,95 @@ ${state.bannerMOTD}
       title: t.projectSaved,
       description: t.jsonDownloaded,
     });
-  }, [deviceStates, deviceOutputs, pcOutputs, pcHistories, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, setHasUnsavedChanges, setLastSaveTime, language, projectName, setProjectName]);
+  }, [activeExam, deviceStates, deviceOutputs, pcOutputs, pcHistories, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, setHasUnsavedChanges, setLastSaveTime, language, projectName, setProjectName]);
 
   // Handle Project Saving (Wrapper)
   function handleSaveProject() {
-    if (activeExam?.isCustom) {
-      toggleEditor(true);
-      return;
-    }
     handleSaveProjectInternal();
   }
+
+  // Get full project data for exam export
+  const getFullProjectData = useCallback(() => {
+    // This is essentially the logic from handleSaveProjectInternal but returns data instead of downloading
+    const excludedDeviceIds = new Set(
+      topologyDevices.filter(d => d.type === 'pc' || d.type === 'iot').map(d => d.id)
+    );
+    const iotDeviceIds = new Set(topologyDevices.filter(d => d.type === 'iot').map(d => d.id));
+    const adjustedDeviceOutputs = new Map(deviceOutputs);
+    const adjustedPcOutputs = new Map(pcOutputs);
+    iotDeviceIds.forEach(iotId => {
+      const iotOutput = deviceOutputs.get(iotId);
+      if (iotOutput) {
+        const filteredOutput = iotOutput.filter(o => o.type !== 'password-prompt');
+        adjustedPcOutputs.set(iotId, filteredOutput as any);
+        adjustedDeviceOutputs.delete(iotId);
+      }
+    });
+
+    const syncedDeviceStates = new Map(deviceStates);
+    const topologyDeviceIds = new Set(topologyDevices.map(d => d.id));
+    topologyDevices.forEach(device => {
+      const state = syncedDeviceStates.get(device.id);
+      if (state) {
+        if (device.macAddress && state.macAddress !== device.macAddress) {
+          syncedDeviceStates.set(device.id, { ...state, macAddress: device.macAddress });
+        }
+        const updatedPorts = { ...state.ports };
+        let portsChanged = false;
+        device.ports.forEach(topoPort => {
+          const statePort = updatedPorts[topoPort.id];
+          if (statePort) {
+            if (topoPort.macAddress && statePort.macAddress !== topoPort.macAddress) {
+              updatedPorts[topoPort.id] = { ...statePort, macAddress: topoPort.macAddress };
+              portsChanged = true;
+            }
+          }
+        });
+        if (portsChanged) {
+          syncedDeviceStates.set(device.id, { ...state, ports: updatedPorts });
+        }
+      }
+    });
+
+    return {
+      version: '1.1',
+      timestamp: new Date().toISOString(),
+      devices: Array.from(syncedDeviceStates.entries())
+        .filter(([id]) => !excludedDeviceIds.has(id) && topologyDeviceIds.has(id))
+        .map(([id, state]) => ({
+          id,
+          state: { ...state, commandHistory: state.commandHistory.slice(-50) }
+        })),
+      deviceOutputs: Array.from(adjustedDeviceOutputs.entries())
+        .filter(([id]) => id && id.trim() !== '' && topologyDeviceIds.has(id))
+        .map(([id, outputs]) => ({ id, outputs: outputs.slice(-100) })),
+      pcOutputs: Array.from(adjustedPcOutputs.entries())
+        .filter(([id]) => id && id.trim() !== '' && topologyDeviceIds.has(id))
+        .map(([id, outputs]) => ({ id, outputs: outputs.slice(-100) })),
+      pcHistories: Array.from(pcHistories.entries())
+        .filter(([id]) => id && id.trim() !== '')
+        .map(([id, history]) => ({ id, history: history.slice(-50) })),
+      topology: {
+        devices: topologyDevices.filter(d => d.id && d.id.trim() !== ''),
+        connections: topologyConnections,
+        notes: topologyNotes
+      },
+      cableInfo: topologyDevices.length > 0 && topologyConnections.length > 0 ? cableInfo : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
+      activeDeviceId: topologyDevices.find(d => d.id === activeDeviceId)?.id || '',
+      activeDeviceType,
+      // Exam metadata included if active (allows continuation of editing)
+      ...(activeExam ? {
+        examData: {
+          id: activeExam.id,
+          title: activeExam.title,
+          tasks: activeExam.tasks,
+          durationMinutes: activeExam.durationMinutes,
+          difficulty: activeExam.difficulty,
+          isCustom: activeExam.isCustom
+        }
+      } : {})
+    };
+  }, [activeExam, deviceStates, deviceOutputs, pcOutputs, pcHistories, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType]);
 
   // New project - reset everything
   const resetToEmptyProject = useCallback(() => {
@@ -4708,20 +4810,11 @@ ${state.bannerMOTD}
               deleteTask={deleteTask}
               updateExamMeta={updateExamMeta}
               smartBalanceWeights={smartBalanceWeights}
-              exportExamFile={(topData) => {
-                // Ensure latest topology data is used
-                const currentTop = {
-                  devices: topologyDevices,
-                  connections: topologyConnections,
-                  notes: topologyNotes
-                };
-                exportExamFile(currentTop);
+              exportExamFile={(projData) => {
+                // Export final student .exam file using current project state
+                exportExamFile(projData);
               }}
-              topologyData={{
-                devices: topologyDevices,
-                connections: topologyConnections,
-                notes: topologyNotes
-              }}
+              projectData={getFullProjectData()}
               isDark={isDark}
             />
           )}

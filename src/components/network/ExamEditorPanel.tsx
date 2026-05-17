@@ -49,8 +49,8 @@ interface ExamEditorPanelProps {
   deleteTask: (id: string) => void;
   updateExamMeta: (updates: Partial<ExamProject>) => void;
   smartBalanceWeights: () => void;
-  exportExamFile: (topologyData: any) => void;
-  topologyData: any;
+  exportExamFile: (projectData: any) => void;
+  projectData: any;
   isDark: boolean;
 }
 
@@ -64,7 +64,7 @@ export function ExamEditorPanel({
   updateExamMeta,
   smartBalanceWeights,
   exportExamFile,
-  topologyData,
+  projectData,
   isDark
 }: ExamEditorPanelProps) {
   const { t, language } = useLanguage();
@@ -804,22 +804,45 @@ export function ExamEditorPanel({
 
       {/* Footer Actions */}
       <div className={cn(
-        "p-4 border-t mt-auto flex items-center justify-between gap-3",
+        "p-4 border-t mt-auto flex flex-col gap-3",
         isDark ? "bg-slate-950/80 border-slate-800" : "bg-slate-50 border-slate-200"
       )}>
-        <div className="flex-1">
-          <p className="text-[10px] font-bold opacity-40 mb-1 ml-1 uppercase">
-            {isTr ? 'Sınavı Tamamla' : 'Finalize Exam'}
-          </p>
-          <Button
-            className="w-full h-10 bg-purple-600 hover:bg-purple-700 text-white gap-2 font-bold shadow-lg shadow-purple-500/20"
-            disabled={activeExam.tasks.length === 0 || totalWeight !== 100}
-            onClick={() => exportExamFile(topologyData)}
-          >
-            <Save className="w-4 h-4" />
-            {isTr ? 'Sınav Dosyası Olarak Kaydet' : 'Save as Exam File (.exam)'}
-          </Button>
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <p className="text-[10px] font-bold opacity-40 mb-1 ml-1 uppercase">
+              {isTr ? 'Taslak' : 'Draft'}
+            </p>
+            <Button
+              variant="outline"
+              className="w-full h-10 gap-2 font-bold"
+              onClick={() => {
+                const event = new KeyboardEvent('keydown', { key: 's', ctrlKey: true });
+                window.dispatchEvent(event);
+              }}
+            >
+              <FileText className="w-4 h-4" />
+              {isTr ? 'JSON Kaydet' : 'Save JSON'}
+            </Button>
+          </div>
+          <div className="flex-[2]">
+            <p className="text-[10px] font-bold opacity-40 mb-1 ml-1 uppercase">
+              {isTr ? 'Yayınla' : 'Publish'}
+            </p>
+            <Button
+              className="w-full h-10 bg-purple-600 hover:bg-purple-700 text-white gap-2 font-bold shadow-lg shadow-purple-500/20"
+              disabled={activeExam.tasks.length === 0 || totalWeight !== 100}
+              onClick={() => exportExamFile(projectData)}
+            >
+              <Save className="w-4 h-4" />
+              {isTr ? 'Sınav Dosyası (.exam)' : 'Exam File (.exam)'}
+            </Button>
+          </div>
         </div>
+        <p className="text-[9px] text-center opacity-50 italic">
+          {isTr
+            ? 'JSON dosyası daha sonra düzenlenebilir, .exam dosyası öğrenciler içindir.'
+            : 'JSON files can be edited later, .exam files are for students.'}
+        </p>
       </div>
     </div>
   );

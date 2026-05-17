@@ -19,7 +19,7 @@ interface UseExamModeReturn {
   deleteTask: (id: string) => void;
   updateExamMeta: (updates: Partial<ExamProject>) => void;
   smartBalanceWeights: () => void;
-  exportExamFile: (topologyData: any) => void;
+  exportExamFile: (projectData: any) => void;
   checkTasks: (context: {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
@@ -160,23 +160,12 @@ export function useExamMode(): UseExamModeReturn {
     });
   }, []);
 
-  const exportExamFile = useCallback((topologyData: any) => {
+  const exportExamFile = useCallback((projectData: any) => {
     if (!activeExam) return;
-
-    const fullProjectData = {
-      version: '1.0',
-      timestamp: new Date().toISOString(),
-      devices: [],
-      deviceOutputs: [],
-      pcOutputs: [],
-      pcHistories: [],
-      topology: topologyData,
-      activeTab: 'topology'
-    };
 
     const examData = {
       ...activeExam,
-      data: fullProjectData, // Inject current topology wrapped in project structure
+      data: projectData, // Inject current project state (topology + device states)
       isExam: true,
       startedAt: undefined,
       finishedAt: undefined, // Clear session data
