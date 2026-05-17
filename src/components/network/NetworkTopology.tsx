@@ -145,13 +145,9 @@ function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
     const clamp = (x: number, y: number) => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const snapped = {
-        x: x < 30 ? 0 : vw - 320 - x < 30 ? vw - 320 : x,
-        y: y < 30 ? 0 : vh - 200 - y < 30 ? vh - 200 : y,
-      };
       return {
-        x: Math.max(0, Math.min(snapped.x, vw - 320)),
-        y: Math.max(HEADER_SAFE_TOP, Math.min(snapped.y, vh - 200)),
+        x: Math.max(0, Math.min(x, vw - 320)),
+        y: Math.max(HEADER_SAFE_TOP, Math.min(y, vh - 200)),
       };
     };
     const onMove = (ev: MouseEvent) => {

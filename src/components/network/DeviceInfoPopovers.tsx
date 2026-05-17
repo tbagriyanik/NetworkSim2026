@@ -45,6 +45,7 @@ export function SwitchInfoPopover({ router, routerState, t, language, isDark, on
     storageKey: `switch-info-pos-${router.id}`,
     defaultPosition: { x: 16, y: 96 },
     origin: 'bottom-right',
+    disableSnap: true,
   });
 
   const ports = routerState?.ports ? Object.values(routerState.ports) : (router.ports || []);
@@ -88,6 +89,7 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
     storageKey: `pc-info-pos-${pc.id}`,
     defaultPosition: { x: 16, y: 96 },
     origin: 'bottom-right',
+    disableSnap: true,
   });
 
   return (
@@ -245,6 +247,7 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
     storageKey: `router-info-pos-${router.id}`,
     defaultPosition: { x: 16, y: 96 },
     origin: 'bottom-right',
+    disableSnap: true,
   });
 
   const ports = routerState?.ports ? Object.values(routerState.ports) : (router.ports || []);

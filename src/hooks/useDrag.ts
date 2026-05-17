@@ -13,7 +13,8 @@ type OriginCorner = 'top-left' | 'bottom-right';
 const SNAP_THRESHOLD = 30;
 const TOP_SAFE_OFFSET = 128; // Keep floating panels below fixed header + toolbar
 
-function snapToEdge(x: number, y: number, elW: number, elH: number): { x: number; y: number } {
+function snapToEdge(x: number, y: number, elW: number, elH: number, disableSnap?: boolean): { x: number; y: number } {
+  if (disableSnap) return { x, y };
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   return {
@@ -37,6 +38,8 @@ export interface UseDragOptions {
   origin?: OriginCorner;
   /** Whether to skip elements with data-modal-content attribute */
   skipModalContent?: boolean;
+  /** Whether to disable edge snapping completely */
+  disableSnap?: boolean;
 }
 
 export interface UseDragReturn {
@@ -75,6 +78,7 @@ interface DragInstanceState {
   element: HTMLElement | null;
   storageKey?: string;
   minSize: DragSize;
+  disableSnap?: boolean;
 }
 
 // ─── Main hook ───────────────────────────────────────────────────────────────
@@ -88,6 +92,7 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
     mode = 'drag-only',
     origin = 'top-left',
     skipModalContent = false,
+    disableSnap = false,
   } = options;
 
   // ── State ──
@@ -177,6 +182,7 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
       startPosX: pos.x, startPosY: pos.y,
       startW: 0, startH: 0,
       element: el, storageKey, minSize,
+      disableSnap,
     };
 
     el.style.cursor = 'grabbing';
@@ -204,6 +210,7 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
       startPosX: pos.x, startPosY: pos.y,
       startW: 0, startH: 0,
       element: modalElement, storageKey, minSize,
+      disableSnap,
     };
   }, [origin, storageKey]);
 
@@ -223,6 +230,7 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
       startPosX: pos.x, startPosY: pos.y,
       startW: sz.width, startH: sz.height,
       element: modalElement, storageKey, minSize,
+      disableSnap,
     };
   }, [origin, storageKey]);
 
@@ -322,7 +330,7 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
           clampedY = Math.max(TOP_SAFE_OFFSET, Math.min(finalY, window.innerHeight - margin));
         }
         // Snap to edges
-        const snapped = snapToEdge(clampedX, clampedY, elW, elH);
+        const snapped = snapToEdge(clampedX, clampedY, elW, elH, ds.disableSnap);
         const finalPos = { x: snapped.x, y: snapped.y };
         const finalSize = { width: Math.max(ds.minSize.width, finalW), height: Math.max(ds.minSize.height, finalH) };
 
@@ -468,7 +476,8 @@ export function GlobalDragManager() {
       const rect = state.el.getBoundingClientRect();
       const clampedLeft = Math.max(margin - rect.width, Math.min(finalLeft, window.innerWidth - margin));
       const clampedTop = Math.max(TOP_SAFE_OFFSET, Math.min(finalTop, window.innerHeight - margin));
-      const snapped = snapToEdge(clampedLeft, clampedTop, rect.width, rect.height);
+      const disableSnap = state.el.getAttribute('data-disable-snap') === 'true';
+      const snapped = snapToEdge(clampedLeft, clampedTop, rect.width, rect.height, disableSnap);
       state.el.style.position = 'fixed';
       state.el.style.left = `${snapped.x}px`;
       state.el.style.top = `${snapped.y}px`;

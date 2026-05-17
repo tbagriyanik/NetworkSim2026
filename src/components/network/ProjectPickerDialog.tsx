@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus, FolderOpen, X, BookOpen, Clock, Target, Search, Wand2, Sparkles } from 'lucide-react';
+import { FolderOpen, X, BookOpen, Clock, Target, Search, Sparkles, File } from 'lucide-react';
 import type { Translations } from '@/contexts/LanguageContext';
 import type { ExampleProject, ExampleProjectLevel } from '@/lib/network/exampleProjects';
 import type { GuidedProject } from '@/lib/network/guidedMode';
@@ -154,6 +154,15 @@ export function ProjectPickerDialog({
                 <Button
                   variant='outline'
                   size='sm'
+                  className={`flex items-center gap-2 text-xs px-3 py-1.5 h-8 ${isDark ? 'text-slate-200 border-slate-700 hover:bg-slate-800 hover:text-cyan-400' : 'text-slate-700 border-slate-300 hover:bg-slate-100 hover:text-cyan-600'}`}
+                  onClick={() => { closeProjectPicker(); resetToEmptyProject(); }}
+                >
+                  <File className="w-3.5 h-3.5" />
+                  {t.emptyProject}
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
                   className={`flex items-center gap-2 text-xs px-3 py-1.5 h-8 ${isDark ? 'text-sky-300 border-sky-700/50 hover:bg-sky-900/30 hover:text-sky-300' : 'text-sky-600 border-sky-300 hover:bg-sky-50 hover:text-sky-700'}`}
                   onClick={() => {
                     closeProjectPicker();
@@ -179,15 +188,7 @@ export function ProjectPickerDialog({
                   <GraduationCap className="w-3.5 h-3.5" />
                   {t.examTemplate}
                 </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className={`flex items-center gap-2 text-xs px-3 py-1.5 h-8 ${isDark ? 'text-slate-200 border-slate-700 hover:bg-slate-800 hover:text-cyan-400' : 'text-slate-700 border-slate-300 hover:bg-slate-100 hover:text-cyan-600'}`}
-                  onClick={() => { closeProjectPicker(); resetToEmptyProject(); }}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  {t.emptyProject}
-                </Button>
+
               </div>
               <DialogDescription className="sr-only">
                 {language === 'tr'
@@ -391,7 +392,7 @@ export function ProjectPickerDialog({
                             }}
                           >
                             <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
-                              <div className="flex flex-col gap-1 flex-1 min-w-0">                                
+                              <div className="flex flex-col gap-1 flex-1 min-w-0">
                                 <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words ${isDark ? 'group-hover:text-emerald-400 text-emerald-100' : 'group-hover:text-emerald-600 text-black'}`}>
                                   <span className={`${isDark ? 'text-slate-500' : 'text-slate-400'} mr-2`}>{idx + 1}.</span>{guidedProject.title}
                                 </span>
@@ -464,7 +465,7 @@ export function ProjectPickerDialog({
                   <section className='space-y-4 md:space-y-6 w-full'>
                     <div className='flex items-center gap-3 md:gap-4 px-1 md:px-2'>
                       <p className='text-[10px] md:text-xs font-black tracking-[0.3em] md:tracking-[0.4em] text-rose-500 dark:text-rose-400 whitespace-nowrap'>
-                        {language === 'tr' ? 'SINAVLAR' : 'EXAMS'}
+                        {language === 'tr' ? 'Sınavlar' : 'Exams'}
                       </p>
                       <p className={`text-[10px] md:text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} truncate`}>
                         {language === 'tr' ? 'Bilginizi test edin' : 'Test your knowledge'}
