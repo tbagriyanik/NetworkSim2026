@@ -79,6 +79,68 @@ export const basicConnectivityExamTasks: ExamTask[] = [
   }
 ];
 
+// Exam tasks - Routing Basics
+export const routingBasicsExamTasks: ExamTask[] = [
+  {
+    id: 'exam-route-config-ip',
+    title: { tr: 'Interface IP Yapılandırması', en: 'Interface IP Configuration' },
+    description: { tr: 'R1 Gi0/0 portuna 192.168.1.1/24 IP adresini atayın ve aktif edin.', en: 'Assign 192.168.1.1/24 to R1 Gi0/0 and enable it.' },
+    weight: 25,
+    checkType: 'config',
+    checkParams: { configKey: 'interfaces.gi0/0.ip', configValue: '192.168.1.1' },
+    completed: false
+  },
+  {
+    id: 'exam-route-static',
+    title: { tr: 'Statik Rota', en: 'Static Route' },
+    description: { tr: 'R1 üzerinde 10.0.0.0/24 ağına giden bir statik rota tanımlayın.', en: 'Define a static route to 10.0.0.0/24 network on R1.' },
+    weight: 35,
+    checkType: 'command',
+    checkParams: { commandPattern: 'ip route 10.0.0.0 255.255.255.0' },
+    completed: false
+  },
+  {
+    id: 'exam-route-ping',
+    title: { tr: 'Uçtan Uca Bağlantı', en: 'End-to-End Connectivity' },
+    description: { tr: 'PC-1\'den PC-2\'ye (10.0.0.10) ping atın.', en: 'Ping from PC-1 to PC-2 (10.0.0.10).' },
+    weight: 40,
+    checkType: 'command',
+    checkParams: { commandPattern: 'ping 10.0.0.10' },
+    completed: false
+  }
+];
+
+// Exam tasks - L3 Switch & DHCP
+export const l3SwitchDhcpExamTasks: ExamTask[] = [
+  {
+    id: 'exam-l3-enable-routing',
+    title: { tr: 'IP Routing Etkinleştirme', en: 'Enable IP Routing' },
+    description: { tr: 'L3 Switch üzerinde "ip routing" komutunu çalıştırın.', en: 'Run "ip routing" command on L3 Switch.' },
+    weight: 20,
+    checkType: 'command',
+    checkParams: { commandPattern: 'ip routing' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-vlan-svi',
+    title: { tr: 'VLAN ve SVI Yapılandırması', en: 'VLAN and SVI Configuration' },
+    description: { tr: 'VLAN 20 oluşturun ve Interface VLAN 20\'ye 172.16.20.1/24 IP\'sini atayın.', en: 'Create VLAN 20 and assign 172.16.20.1/24 IP to Interface VLAN 20.' },
+    weight: 40,
+    checkType: 'config',
+    checkParams: { configKey: 'interfaces.vlan20.ip', configValue: '172.16.20.1' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-dhcp-pool',
+    title: { tr: 'DHCP Havuzu', en: 'DHCP Pool' },
+    description: { tr: 'L3 Switch üzerinde "MY-POOL" isminde bir DHCP havuzu oluşturun.', en: 'Create a DHCP pool named "MY-POOL" on L3 Switch.' },
+    weight: 40,
+    checkType: 'command',
+    checkParams: { commandPattern: 'ip dhcp pool MY-POOL' },
+    completed: false
+  }
+];
+
 export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
   const isTr = language === 'tr';
 
@@ -175,6 +237,104 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
       tasks: basicConnectivityExamTasks,
       durationMinutes: 15,
       difficulty: 'beginner'
+    },
+    {
+      id: 'exam-routing-1',
+      tag: isTr ? 'SINAV' : 'EXAM',
+      title: isTr ? 'Statik Yönlendirme Sınavı' : 'Static Routing Exam',
+      description: isTr
+        ? 'Router yapılandırması ve statik rotalar'
+        : 'Router configuration and static routes',
+      detail: isTr
+        ? 'İki router arasındaki trafiği statik rotalar ile yönlendirmeniz beklenmektedir.'
+        : 'You are expected to route traffic between two routers using static routes.',
+      data: {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        devices: [],
+        topology: {
+          devices: [
+            {
+              id: 'r-1',
+              type: 'router',
+              name: 'R1',
+              x: 300,
+              y: 200,
+              ip: '',
+              status: 'online',
+              ports: [
+                { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const },
+                { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const }
+              ]
+            },
+            {
+              id: 'pc-1',
+              type: 'pc',
+              name: 'PC-1',
+              x: 100,
+              y: 200,
+              ip: '192.168.1.10',
+              subnet: '255.255.255.0',
+              gateway: '192.168.1.1',
+              status: 'online',
+              ports: [
+                { id: 'eth0', label: 'Eth0', status: 'disconnected' as const }
+              ]
+            }
+          ],
+          connections: []
+        },
+        activeDeviceId: 'r-1',
+        activeDeviceType: 'router'
+      } as any,
+      level: 'intermediate',
+      isExam: true,
+      tasks: routingBasicsExamTasks,
+      durationMinutes: 20,
+      difficulty: 'intermediate'
+    },
+    {
+      id: 'exam-l3-1',
+      tag: isTr ? 'SINAV' : 'EXAM',
+      title: isTr ? 'L3 Switch ve DHCP Sınavı' : 'L3 Switch and DHCP Exam',
+      description: isTr
+        ? 'Layer 3 switch ayarları ve DHCP servisi'
+        : 'Layer 3 switch settings and DHCP service',
+      detail: isTr
+        ? 'L3 Switch üzerinde yönlendirme ve DHCP havuzu oluşturma becerinizi test edin.'
+        : 'Test your L3 Switch routing and DHCP pool creation skills.',
+      data: {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        devices: [],
+        topology: {
+          devices: [
+            {
+              id: 'l3-1',
+              type: 'switchL3',
+              name: 'L3-Switch',
+              x: 400,
+              y: 200,
+              status: 'online',
+              ports: [
+                ...Array.from({ length: 24 }, (_, i) => ({
+                  id: `gi1/0/${i + 1}`,
+                  label: `Gi1/0/${i + 1}`,
+                  status: 'disconnected' as const
+                }))
+              ]
+            }
+          ],
+          connections: []
+        },
+        activeDeviceId: 'l3-1',
+        activeDeviceType: 'switchL3'
+      } as any,
+      level: 'advanced',
+      isExam: true,
+      tasks: l3SwitchDhcpExamTasks,
+      durationMinutes: 25,
+      difficulty: 'advanced'
     }
   ];
 };
