@@ -242,6 +242,11 @@ export interface Translations {
   examPoints: string;
   examStarted: string;
   examStatus: string;
+  examEditor: string;
+  examTemplate: string;
+  saveAsExam: string;
+  addTask: string;
+  smartBalance: string;
   exit: string;
   exitPingMode: string;
   expand: string;
@@ -875,6 +880,11 @@ const translations: Record<Language, Translations> = {
     examPoints: 'Sınav Puanı',
     examStarted: 'Sınav Başladı',
     examStatus: 'Sınav Durumu',
+    examEditor: 'Sınav Düzenleyici',
+    examTemplate: 'Sınav Şablonu',
+    saveAsExam: 'Sınav Olarak Kaydet (.exam)',
+    addTask: 'Görev Ekle',
+    smartBalance: 'Puanları Dengeler',
     exit: 'Çık',
     exitPingMode: 'Ping modundan çık (ESC)',
     expand: 'Genişlet',
@@ -1506,6 +1516,11 @@ const translations: Record<Language, Translations> = {
     examPoints: 'Exam Points',
     examStarted: 'Exam Started',
     examStatus: 'Exam Status',
+    examEditor: 'Exam Editor',
+    examTemplate: 'Exam Template',
+    saveAsExam: 'Save as Exam (.exam)',
+    addTask: 'Add Task',
+    smartBalance: 'Balance Points',
     exit: 'Exit',
     exitPingMode: 'Exit ping mode (ESC)',
     expand: 'Expand',

@@ -31,6 +31,36 @@ export interface ExamProject extends ExampleProject {
   durationMinutes: number;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   startedAt?: Date;
+  isCustom?: boolean; // True if created by a teacher
+}
+
+/**
+ * Security utilities for Exam files
+ * Obfuscates the JSON content to prevent students from reading task requirements
+ */
+const EXAM_KEY = 'SENTINEL_EXAM_SECURE_KEY_2024';
+
+export function encryptExamData(data: any): string {
+  const json = JSON.stringify(data);
+  let result = '';
+  for (let i = 0; i < json.length; i++) {
+    result += String.fromCharCode(json.charCodeAt(i) ^ EXAM_KEY.charCodeAt(i % EXAM_KEY.length));
+  }
+  return btoa(encodeURIComponent(result));
+}
+
+export function decryptExamData(encrypted: string): any {
+  try {
+    const decoded = decodeURIComponent(atob(encrypted));
+    let result = '';
+    for (let i = 0; i < decoded.length; i++) {
+      result += String.fromCharCode(decoded.charCodeAt(i) ^ EXAM_KEY.charCodeAt(i % EXAM_KEY.length));
+    }
+    return JSON.parse(result);
+  } catch (e) {
+    console.error('Failed to decrypt exam data', e);
+    return null;
+  }
 }
 
 // Exam tasks - Basic Connectivity Exam
@@ -145,6 +175,30 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
   const isTr = language === 'tr';
 
   return [
+    {
+      id: 'exam-template-blank',
+      tag: isTr ? 'TASLAK' : 'TEMPLATE',
+      title: isTr ? 'Boş Sınav Şablonu' : 'Blank Exam Template',
+      description: isTr
+        ? 'Kendi sınavınızı oluşturmak için bu şablonu kullanın'
+        : 'Use this template to create your own exam',
+      detail: isTr
+        ? 'Topolojinizi oluşturun ve ardından "Sınav Düzenleyici" panelini kullanarak görevleri tanımlayın.'
+        : 'Create your topology and then use the "Exam Editor" panel to define tasks.',
+      data: {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        devices: [],
+        topology: { devices: [], connections: [] },
+        activeTab: 'topology'
+      } as any,
+      level: 'basic',
+      isExam: true,
+      isCustom: true,
+      tasks: [],
+      durationMinutes: 30,
+      difficulty: 'beginner'
+    },
     {
       id: 'exam-basic-1',
       tag: isTr ? 'SINAV' : 'EXAM',

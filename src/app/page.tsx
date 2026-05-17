@@ -101,6 +101,7 @@ import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import { performanceMonitor } from '@/lib/performance/monitoring';
 import { useGuidedMode } from '@/hooks/useGuidedMode';
 import { useExamMode } from '@/hooks/useExamMode';
+import { decryptExamData } from '@/lib/network/examMode';
 
 import { DeviceIcon } from '@/components/network/DeviceIcon';
 import { PCInfoPopover, SwitchInfoPopover, RouterInfoPopover } from '@/components/network/DeviceInfoPopovers';
@@ -121,6 +122,7 @@ const ExamModePanel = dynamic(() => import('@/components/network/ExamModePanel')
 const FirewallPanel = dynamic(() => import('@/components/network/FirewallPanel').then((m) => m.FirewallPanel));
 const EnvironmentSettingsPanel = dynamic(() => import('@/components/network/EnvironmentSettingsPanel').then((m) => m.EnvironmentSettingsPanel));
 const OnboardingDialog = dynamic(() => import('@/components/network/OnboardingDialog').then((m) => m.OnboardingDialog));
+const ExamEditorPanel = dynamic(() => import('@/components/network/ExamEditorPanel').then((m) => m.ExamEditorPanel));
 
 type TabType = 'topology' | 'cmd' | 'terminal' | 'tasks';
 
@@ -361,6 +363,14 @@ export default function Home() {
     finishExam,
     togglePanelMinimize: toggleExamPanelMinimize,
     expandPanel: expandExamPanel,
+    isEditorOpen,
+    toggleEditor,
+    addTask,
+    updateTask,
+    deleteTask,
+    updateExamMeta,
+    smartBalanceWeights,
+    exportExamFile,
     checkTasks: checkExamTasks,
     currentScore: examScore,
     getAvailableExams
@@ -379,8 +389,12 @@ export default function Home() {
       setProjectName(activeGuidedProject.title);
     } else if (activeExam) {
       setProjectName(activeExam.title);
+      // Auto-open editor for blank templates
+      if (activeExam.isCustom && activeExam.tasks.length === 0) {
+        toggleEditor(true);
+      }
     }
-  }, [activeGuidedProject, activeExam]);
+  }, [activeGuidedProject, activeExam, toggleEditor]);
 
   // Persist project name across refreshes
   useEffect(() => {
@@ -2217,6 +2231,10 @@ ${state.bannerMOTD}
 
   // Handle Project Saving (Wrapper)
   function handleSaveProject() {
+    if (activeExam?.isCustom) {
+      toggleEditor(true);
+      return;
+    }
     handleSaveProjectInternal();
   }
 
@@ -3703,7 +3721,26 @@ ${state.bannerMOTD}
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const projectData = safeParse<unknown>(e.target?.result as string);
+        const content = e.target?.result as string;
+        let projectData: any;
+
+        // Try decrypting as exam file first if extension matches
+        if (file.name.endsWith('.exam')) {
+          projectData = decryptExamData(content);
+          if (projectData) {
+            startExamProject(projectData);
+            loadProjectData(projectData.data);
+            setHasUnsavedChanges(false);
+            setProjectName(projectData.title.en);
+            toast({
+              title: language === 'tr' ? 'Sınav Modu Başlatıldı' : 'Exam Mode Started',
+              description: projectData.title[language === 'tr' ? 'tr' : 'en'],
+            });
+            return;
+          }
+        }
+
+        projectData = safeParse<unknown>(content);
         if (loadProjectData(projectData)) {
           setHasUnsavedChanges(false);
           const loadedName = file.name.replace(/\.[^/.]+$/, '');
@@ -4586,7 +4623,7 @@ ${state.bannerMOTD}
           />}
 
           {/* Exam Mode Panel */}
-          {isExamActive && <ExamModePanel
+          {isExamActive && !isEditorOpen && <ExamModePanel
             project={activeExam}
             onClose={finishExam}
             onMinimize={toggleExamPanelMinimize}
@@ -4598,7 +4635,37 @@ ${state.bannerMOTD}
             topologyConnections={topologyConnections}
             topologyDevices={topologyDevices}
             onCheckTasks={checkExamTasks}
+            onOpenEditor={() => toggleEditor(true)}
           />}
+
+          {/* Exam Editor Panel */}
+          {isEditorOpen && activeExam && (
+            <ExamEditorPanel
+              isOpen={isEditorOpen}
+              onClose={() => toggleEditor(false)}
+              activeExam={activeExam}
+              addTask={addTask}
+              updateTask={updateTask}
+              deleteTask={deleteTask}
+              updateExamMeta={updateExamMeta}
+              smartBalanceWeights={smartBalanceWeights}
+              exportExamFile={(topData) => {
+                // Ensure latest topology data is used
+                const currentTop = {
+                  devices: topologyDevices,
+                  connections: topologyConnections,
+                  notes: topologyNotes
+                };
+                exportExamFile(currentTop);
+              }}
+              topologyData={{
+                devices: topologyDevices,
+                connections: topologyConnections,
+                notes: topologyNotes
+              }}
+              isDark={isDark}
+            />
+          )}
         </div>
       </div>
     </AppErrorBoundary>
