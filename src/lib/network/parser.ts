@@ -2267,7 +2267,7 @@ export function resolveAliases(input: string): string {
 }
 
 // Levenshtein mesafesi hesaplama (bulanık eşleşme için)
-function getLevenshteinDistance(a: string, b: string): number {
+export function getLevenshteinDistance(a: string, b: string): number {
   const matrix = Array.from({ length: a.length + 1 }, (_, i) => [i]);
   for (let j = 1; j <= b.length; j++) matrix[0][j] = j;
 

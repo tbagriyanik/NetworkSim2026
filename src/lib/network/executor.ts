@@ -2,7 +2,8 @@
 import { SwitchState, CommandMode, CommandResult } from './types';
 import { checkConnectivity } from './connectivity';
 import { addStaticRoute, removeStaticRoute, getRoutingTable } from './routing';
-import { parseCommand, validateCommand, getHelpContent, commandPatterns } from './parser';
+import { parseCommand, validateCommand, getHelpContent, commandPatterns, getLevenshteinDistance } from './parser';
+import { getDeviceCapabilities } from './capabilities';
 import { getModePrompt } from './initialState';
 import { isValidMAC, normalizeMAC } from '../utils';
 import { ensureDeviceStatesMap } from './networkUtils';
@@ -851,6 +852,131 @@ function getSmartHint(state: SwitchState, lang: 'tr' | 'en'): string {
   return '';
 }
 
+/**
+ * Akıllı hata tahmin ve komut öneri sistemi
+ */
+export function getEstimatedSuggestions(
+  input: string,
+  mode: CommandMode,
+  state?: SwitchState
+): string[] {
+  const inputClean = input.trim().toLowerCase();
+  if (!inputClean) return [];
+
+  const words = inputClean.split(/\s+/);
+  const lastWord = words[words.length - 1];
+  const prefix = words.slice(0, -1).join(' ');
+
+  const modeCommands = commandHelp[mode] || commandHelp.user;
+  
+  let effectivePrefix = prefix;
+  let effectiveLastWord = lastWord;
+
+  // Tüm girdinin geçerli bir prefix olup olmadığını kontrol et (örn: "do")
+  const isEntireInputPrefix = !!modeCommands[inputClean] || Object.keys(commandPatterns).some(name => name.startsWith(inputClean + ' '));
+  if (isEntireInputPrefix) {
+    effectivePrefix = inputClean;
+    effectiveLastWord = '';
+  }
+
+  const validNextWords = new Set<string>();
+  
+  const inferredDeviceType = state
+    ? (state.deviceType === 'switch'
+        ? (state.switchLayer === 'L3' ? 'switchL3' : 'switchL2')
+        : state.deviceType || (state.switchLayer === 'FW' ? 'firewall' : state.switchLayer === 'L3' ? 'switchL3' : 'switchL2'))
+    : 'switchL2';
+  const capabilities = state ? getDeviceCapabilities({ type: inferredDeviceType } as any, state.switchModel) : undefined;
+
+  // 1. commandHelp ağacından sonraki kelimeleri al
+  if (effectivePrefix && modeCommands[effectivePrefix]) {
+    modeCommands[effectivePrefix].forEach(cmd => validNextWords.add(cmd));
+  } else if (!effectivePrefix) {
+    (modeCommands[''] || []).forEach(cmd => validNextWords.add(cmd));
+  }
+
+  // 2. commandPatterns ağacından sonraki kelimeleri al
+  for (const [patternName, pattern] of Object.entries(commandPatterns)) {
+    if (!pattern.modes.includes(mode)) continue;
+    if (capabilities && pattern.capability && !capabilities[pattern.capability]) continue;
+
+    const patternWords = patternName.toLowerCase().split(/\s+/);
+    if (effectivePrefix) {
+      const prefixWords = effectivePrefix.split(/\s+/);
+      let matchesPrefix = true;
+      for (let i = 0; i < prefixWords.length; i++) {
+        if (i >= patternWords.length || !patternWords[i].startsWith(prefixWords[i])) {
+          matchesPrefix = false;
+          break;
+        }
+      }
+      if (matchesPrefix && patternWords.length > prefixWords.length) {
+        validNextWords.add(patternWords[prefixWords.length]);
+      }
+    } else {
+      validNextWords.add(patternWords[0]);
+    }
+  }
+
+  const cleanNextWords = Array.from(validNextWords)
+    .filter(s => s && !s.startsWith('<') && !s.endsWith('>'));
+
+  // Eğer kullanıcının yazdığı son kelime varsa, en yakınları süz
+  if (effectiveLastWord) {
+    const closeMatches = cleanNextWords.filter(cmd => 
+      cmd.startsWith(effectiveLastWord) || getLevenshteinDistance(effectiveLastWord, cmd) <= 2
+    );
+    if (closeMatches.length > 0) {
+      return closeMatches.slice(0, 8);
+    }
+  }
+
+  return cleanNextWords.slice(0, 8);
+}
+
+/**
+ * Hata sonuçlarına tahmin önerilerini ekleyen yardımcı fonksiyon
+ */
+function processCommandResult(
+  result: CommandResult,
+  input: string,
+  mode: CommandMode,
+  state: SwitchState,
+  language: 'tr' | 'en'
+): CommandResult {
+  if (
+    !result.success &&
+    result.error &&
+    !result.requiresPassword &&
+    !result.newState?.awaitingPassword &&
+    !result.error.includes('cancelled') &&
+    !result.error.includes('Access denied') &&
+    !result.error.includes('Erişim reddedildi')
+  ) {
+    const suggestions = getEstimatedSuggestions(input, mode, state);
+    if (suggestions.length > 0) {
+      const suggestionTitle = language === 'tr' ? 'Tahmini Öneriler' : 'Estimated Suggestions';
+      
+      // Çift hata önerisi olmaması için mevcut "Bunu mu demek istediniz?" kısmını temizle
+      let cleanError = result.error;
+      const trIndex = cleanError.indexOf('\n\nBunu mu demek istediniz?');
+      if (trIndex !== -1) {
+        cleanError = cleanError.substring(0, trIndex);
+      }
+      const enIndex = cleanError.indexOf('\n\nDid you mean?');
+      if (enIndex !== -1) {
+        cleanError = cleanError.substring(0, enIndex);
+      }
+
+      result = {
+        ...result,
+        error: `${cleanError}\n\n${suggestionTitle}: ${suggestions.join(', ')}`
+      };
+    }
+  }
+  return result;
+}
+
 // --- Core executor ---
 export function executeCommand(
   state: SwitchState,
@@ -982,18 +1108,18 @@ export function executeCommand(
   const validation = validateCommand(parsed, state.currentMode, state);
 
   if (!validation.valid) {
-    return {
+    return processCommandResult({
       success: false,
       error: validation.error || 'Unknown error'
-    };
+    }, cmdToProcess, state.currentMode, state, language);
   }
 
   const commandName = validation.matchedPattern;
   if (!commandName) {
-    return {
+    return processCommandResult({
       success: false,
       error: IOS_ERRORS.unknown
-    };
+    }, cmdToProcess, state.currentMode, state, language);
   }
 
   const ctx: CommandContext = {
@@ -1017,7 +1143,7 @@ export function executeCommand(
   if (!handler) {
     return { success: true };
   }
-  return handler(state, commandInput, ctx);
+  return processCommandResult(handler(state, commandInput, ctx), cmdToProcess, state.currentMode, state, language);
 }
 
 // --- Session helpers (kept local) ---

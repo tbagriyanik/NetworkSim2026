@@ -26,17 +26,15 @@ npm install && npm run dev
 | Code | 117,853 |
 | Source Files | 278 |
 | Example Projects | 39 |
-| Guided Lessons | 3 |
+| Guided Lessons | 8 |
+| Quizzes | 3 |
 | CLI Command Families | 180+ |
-| Tests | N/A (removed) |
 
 ## Documentation
 
 | Document | Description |
 | --- | --- |
-| [detay.md](detay.md) | Full feature details, roadmap, fix history (TR) |
 | [examples.md](examples.md) | 39 example projects with step-by-step guides |
-| [planning.md](planning.md) | Changelog, planning, development notes |
 | [INSTALL.md](INSTALL.md) | Installation & build instructions |
 | [doc/USAGE.md](doc/USAGE.md) | Usage guide & keyboard shortcuts (TR/EN) |
 | [doc/CLI_COMMANDS.md](doc/CLI_COMMANDS.md) | CLI commands reference |

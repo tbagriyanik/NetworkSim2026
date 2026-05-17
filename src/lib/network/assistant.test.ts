@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getInvalidCommandError, checkDeviceCompatibility } from './parser';
 import { SwitchState } from './types';
+import { executeCommand } from './executor';
 
 describe('CLI Assistant Logic', () => {
   const mockState: SwitchState = {
@@ -33,5 +34,61 @@ describe('CLI Assistant Logic', () => {
     const validCommand = 'vlan 10';
     const result = checkDeviceCompatibility(validCommand, mockState);
     expect(result.valid).toBe(true);
+  });
+
+  it('smart suggestions are appended to executeCommand errors in user mode', () => {
+    const state: SwitchState = {
+      hostname: 'Switch',
+      switchModel: 'WS-C2960-24TT-L',
+      currentMode: 'user',
+      deviceType: 'switch',
+      switchLayer: 'L2',
+      ports: {},
+      vlans: {},
+      security: { users: [] },
+    } as any;
+
+    const result = executeCommand(state, 'shw', 'tr');
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Tahmini Öneriler');
+    expect(result.error).toContain('show');
+  });
+
+  it('smart suggestions are appended to executeCommand errors in global config mode with "do"', () => {
+    const state: SwitchState = {
+      hostname: 'Switch',
+      switchModel: 'WS-C2960-24TT-L',
+      currentMode: 'config',
+      deviceType: 'switch',
+      switchLayer: 'L2',
+      ports: {},
+      vlans: {},
+      security: { users: [] },
+    } as any;
+
+    const result = executeCommand(state, 'do shw', 'tr');
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Tahmini Öneriler');
+    expect(result.error).toContain('show');
+  });
+
+  it('general suggestion fallback is triggered for completely unknown subcommands', () => {
+    const state: SwitchState = {
+      hostname: 'Switch',
+      switchModel: 'WS-C2960-24TT-L',
+      currentMode: 'config',
+      deviceType: 'switch',
+      switchLayer: 'L2',
+      ports: {},
+      vlans: {},
+      security: { users: [] },
+    } as any;
+
+    const result = executeCommand(state, 'do x', 'tr');
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Tahmini Öneriler');
+    expect(result.error).toContain('show');
+    expect(result.error).toContain('ping');
+    expect(result.error).toContain('write');
   });
 });
