@@ -5,7 +5,7 @@ import {
   X, Plus, Trash2, Save, Wand2, Shield,
   ChevronDown, ChevronUp, AlertCircle, Info,
   Settings, CheckCircle2, Layout, Type, Target,
-  Monitor, Network
+  Monitor, Network, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,7 +77,7 @@ export function ExamEditorPanel({
   const totalWeight = activeExam.tasks.reduce((sum, t) => sum + (t.weight || 0), 0);
 
   const topologyDevices: { id: string; name: string; type: string; ports: { id: string; label: string }[] }[] =
-    topologyData?.topology?.devices?.map((d: any) => ({
+    projectData?.topology?.devices?.map((d: any) => ({
       id: d.id,
       name: d.name,
       type: d.type,
@@ -493,7 +493,7 @@ export function ExamEditorPanel({
                                         <span className="text-[10px] opacity-60">↓</span>
                                       </SelectTrigger>
                                       <SelectContent align="end" className="max-h-[200px]">
-                                        <div className="text-[10px] font-bold opacity-50 px-2 py-1">{isTr ? 'Hazir komutlar' : 'Preset patterns'}</div>
+                                        <div className="text-[10px] font-bold opacity-50 px-2 py-1">{isTr ? 'Hazır Komutlar' : 'Preset Patterns'}</div>
                                         <SelectItem value="hostname\\s+.+">hostname .+</SelectItem>
                                         <SelectItem value="ip\\s+route\\s+0\\.0\\.0\\.0\\s+0\\.0\\.0\\.0\\s+.+">ip route default</SelectItem>
                                         <SelectItem value="interface\\s+.+">interface .+</SelectItem>
@@ -569,7 +569,7 @@ export function ExamEditorPanel({
                                             <span className="text-[10px] opacity-60">↓</span>
                                           </SelectTrigger>
                                           <SelectContent align="end">
-                                            <div className="text-[10px] font-bold opacity-50 px-2 py-1">{isTr ? 'Sik degerler' : 'Common values'}</div>
+                                            <div className="text-[10px] font-bold opacity-50 px-2 py-1">{isTr ? 'Sık Değerler' : 'Common Values'}</div>
                                             <SelectItem value="true">true</SelectItem>
                                             <SelectItem value="false">false</SelectItem>
                                             <SelectItem value="up">up</SelectItem>
@@ -607,7 +607,7 @@ export function ExamEditorPanel({
                                       <>
                                   <div className="grid grid-cols-2 gap-2">
                                     <div className="space-y-1">
-                                      <label className="text-[9px] font-bold opacity-50 uppercase ml-1">Kablo Tipi</label>
+                                      <label className="text-[9px] font-bold opacity-50 uppercase ml-1">{isTr ? 'Kablo Tipi' : 'Cable Type'}</label>
                                       <Select
                                         value={task.checkParams?.cableType || ''}
                                         onValueChange={(val) => updateTask(task.id, {
@@ -618,16 +618,16 @@ export function ExamEditorPanel({
                                           <SelectValue placeholder={isTr ? 'Seçin...' : 'Select...'} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                          <SelectItem value="straight">Straight</SelectItem>
-                                          <SelectItem value="crossover">Crossover</SelectItem>
-                                          <SelectItem value="console">Console</SelectItem>
+                                          <SelectItem value="straight">{isTr ? 'Düz' : 'Straight'}</SelectItem>
+                                          <SelectItem value="crossover">{isTr ? 'Çapraz' : 'Crossover'}</SelectItem>
+                                          <SelectItem value="console">{isTr ? 'Konsol' : 'Console'}</SelectItem>
                                         </SelectContent>
                                       </Select>
                                     </div>
                                   </div>
                                   <div className="grid grid-cols-2 gap-2">
                                     <div className="space-y-1">
-                                      <label className="text-[9px] font-bold opacity-50 uppercase ml-1">Kaynak Cihaz</label>
+                                      <label className="text-[9px] font-bold opacity-50 uppercase ml-1">{isTr ? 'Kaynak Cihaz' : 'Source Device'}</label>
                                       <Select
                                         value={isValidSourceDevice ? sourceDeviceId : undefined}
                                         onValueChange={(val) => updateTask(task.id, {
@@ -650,7 +650,7 @@ export function ExamEditorPanel({
                                       </Select>
                                     </div>
                                     <div className="space-y-1">
-                                      <label className="text-[9px] font-bold opacity-50 uppercase ml-1">Kaynak Port</label>
+                                      <label className="text-[9px] font-bold opacity-50 uppercase ml-1">{isTr ? 'Kaynak Port' : 'Source Port'}</label>
                                       <Select
                                         value={isValidSourcePort ? selectedSourcePort : undefined}
                                         onValueChange={(val) => updateTask(task.id, {
@@ -678,7 +678,7 @@ export function ExamEditorPanel({
                                   </div>
                                   <div className="grid grid-cols-2 gap-2">
                                     <div className="space-y-1">
-                                      <label className="text-[9px] font-bold opacity-50 uppercase ml-1">Hedef Cihaz</label>
+                                      <label className="text-[9px] font-bold opacity-50 uppercase ml-1">{isTr ? 'Hedef Cihaz' : 'Target Device'}</label>
                                       <Select
                                         value={isValidTargetDevice ? targetDeviceId : undefined}
                                         onValueChange={(val) => updateTask(task.id, {
@@ -701,7 +701,7 @@ export function ExamEditorPanel({
                                       </Select>
                                     </div>
                                     <div className="space-y-1">
-                                      <label className="text-[9px] font-bold opacity-50 uppercase ml-1">Hedef Port</label>
+                                      <label className="text-[9px] font-bold opacity-50 uppercase ml-1">{isTr ? 'Hedef Port' : 'Target Port'}</label>
                                       <Select
                                         value={isValidTargetPort ? selectedTargetPort : undefined}
                                         onValueChange={(val) => updateTask(task.id, {
