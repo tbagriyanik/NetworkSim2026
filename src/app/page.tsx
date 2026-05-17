@@ -358,9 +358,11 @@ export default function Home() {
   const {
     activeExam,
     isExamActive,
+    isExamFinished,
     isPanelMinimized: isExamPanelMinimized,
     startExam: startExamProject,
     finishExam,
+    closeExam,
     togglePanelMinimize: toggleExamPanelMinimize,
     expandPanel: expandExamPanel,
     isEditorOpen,
@@ -382,6 +384,7 @@ export default function Home() {
     targetDevice: 'switchL2',
   });
   const [lastTaskEvent, setLastTaskEvent] = useState<{ type: 'completed' | 'failed'; taskName: string; timestamp: number } | null>(null);
+  const [isExamLoadedFromFile, setIsExamLoadedFromFile] = useState(false);
 
   // Track project name from guided/exam mode
   useEffect(() => {
@@ -1425,6 +1428,38 @@ ${state.bannerMOTD}
         setPcHistories(newPcHistories);
       }
 
+      const resolveNoteOverlap = (notes: CanvasNote[], devices: CanvasDevice[]): CanvasNote[] => {
+        const deviceBoxes = devices.map((d) => ({ x: d.x - 50, y: d.y - 35, w: 100, h: 70 }));
+        const placed: CanvasNote[] = [];
+        const overlaps = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }) =>
+          a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+        for (const note of notes) {
+          const w = Math.max(160, Number(note.width) || 260);
+          const h = Math.max(80, Number(note.height) || 120);
+          let x = Number(note.x) || 0;
+          let y = Number(note.y) || 0;
+          let tries = 0;
+
+          while (tries < 80) {
+            const box = { x, y, w, h };
+            const collidesDevice = deviceBoxes.some((d) => overlaps(box, d));
+            const collidesNote = placed.some((n) => overlaps(box, { x: n.x, y: n.y, w: Math.max(160, Number(n.width) || 260), h: Math.max(80, Number(n.height) || 120) }));
+            if (!collidesDevice && !collidesNote) break;
+            x += 36;
+            if (x > 1200) {
+              x = 40;
+              y += 28;
+            }
+            tries += 1;
+          }
+
+          placed.push({ ...note, x, y });
+        }
+
+        return placed;
+      };
+
       // Load topology
       if (safeTopologyDevices.length > 0 || safeTopologyConnections.length > 0 || safeTopologyNotes.length > 0) {
         // Filter out devices with empty/invalid IDs
@@ -1437,7 +1472,7 @@ ${state.bannerMOTD}
         })));
         setTopologyDevices(normalizedDevices);
         setTopologyConnections(safeTopologyConnections);
-        setTopologyNotes(safeTopologyNotes);
+        setTopologyNotes(resolveNoteOverlap(safeTopologyNotes, normalizedDevices));
         if (typeof topology.zoom === 'number') setZoom(topology.zoom);
         if (safeTopologyPan && typeof safeTopologyPan.x === 'number' && typeof safeTopologyPan.y === 'number') setPan({ x: safeTopologyPan.x, y: safeTopologyPan.y });
       } else {
@@ -2425,7 +2460,7 @@ ${state.bannerMOTD}
 
     // Close guided/exam mode panel if open
     closeGuidedMode();
-    finishExam();
+    closeExam();
     setProjectName('Untitled');
 
     // Close network refresh report if open
@@ -2506,20 +2541,13 @@ ${state.bannerMOTD}
       });
       return;
     }
-    setConfirmDialog({
-      show: true,
-      message: t.newProjectConfirm,
-      action: 'new-project',
-      onConfirm: () => {
-        setConfirmDialog(null);
-        action();
-      }
-    });
-  }, [hasUnsavedChanges, handleSaveProject, setSaveDialog, setConfirmDialog, t.unsavedChangesConfirm, t.newProjectConfirm]);
+    action();
+  }, [hasUnsavedChanges, handleSaveProject, setSaveDialog, t.unsavedChangesConfirm]);
 
   function handleNewProject() {
     setProjectSearchQuery(''); // Reset search when opening new project dialog
-    setShowProjectPicker(true);
+    closeExam();
+    runWithSaveGuard(() => setShowProjectPicker(true));
   }
 
   // Sync hostname changes between Topology and Simulator
@@ -3819,68 +3847,86 @@ ${state.bannerMOTD}
   const handleLoadProject = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    // Prevent previously active exam session from re-appearing while opening another file/workflow
+    closeExam();
+    // Reset input
+    event.target.value = '';
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = e.target?.result as string;
-        let projectData: any;
+    const doLoad = () => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string;
+          let projectData: any;
 
-        // Try decrypting as exam file first if extension matches
-        if (file.name.endsWith('.exam')) {
-          projectData = decryptExamData(content);
-          if (projectData) {
-            startExamProject(projectData);
-            loadProjectData(projectData.data);
+          // Try decrypting as exam file first if extension matches
+          if (file.name.endsWith('.exam')) {
+            projectData = decryptExamData(content);
+            if (projectData) {
+              setIsExamLoadedFromFile(true);
+              closeGuidedMode();
+              startExamProject(projectData);
+              loadProjectData(projectData.data);
+              setHasUnsavedChanges(false);
+              setProjectName(projectData.title.en);
+              toast({
+                title: language === 'tr' ? 'Sınav Modu Başlatıldı' : 'Exam Mode Started',
+                description: projectData.title[language === 'tr' ? 'tr' : 'en'],
+              });
+              return;
+            }
+          }
+
+          projectData = safeParse<unknown>(content);
+          if (loadProjectData(projectData)) {
             setHasUnsavedChanges(false);
-            setProjectName(projectData.title);
+            const loadedName = file.name.replace(/\.[^/.]+$/, '');
+            setProjectName(loadedName);
+            closeGuidedMode();
+            closeExam();
+            setRefreshNetworkReport(null);
             toast({
-              title: language === 'tr' ? 'Sınav Modu Başlatıldı' : 'Exam Mode Started',
-              description: projectData.title,
+              title: `"${loadedName}" ${language === 'tr' ? 'projesi yüklendi' : 'project is loaded'}`,
+              description: t.fileImportedSuccessfully,
             });
-            return;
+            setZoom(1.0);
+            setPan({ x: 0, y: 0 });
+            if (typeof window !== 'undefined') {
+              window.scrollTo(0, 0);
+            }
+          } else {
+            toast({
+              title: t.invalidProjectFile,
+              description: t.invalidProjectFile,
+              variant: "destructive",
+            });
           }
-        }
-
-        projectData = safeParse<unknown>(content);
-        if (loadProjectData(projectData)) {
-          setHasUnsavedChanges(false);
-          const loadedName = file.name.replace(/\.[^/.]+$/, '');
-          setProjectName(loadedName);
-          // Close guided mode panel if open
-          closeGuidedMode();
-          // Close network refresh report if open
-          setRefreshNetworkReport(null);
+        } catch (error) {
+          errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'fileUpload', error: String(error) }));
           toast({
-            title: `"${loadedName}" ${language === 'tr' ? 'projesi yüklendi' : 'project is loaded'}`,
-            description: t.fileImportedSuccessfully,
-          });
-          // Reset zoom and pan to top-left
-          setZoom(1.0);
-          setPan({ x: 0, y: 0 });
-          if (typeof window !== 'undefined') {
-            window.scrollTo(0, 0);
-          }
-        } else {
-          toast({
-            title: t.invalidProjectFile,
-            description: t.invalidProjectFile,
+            title: t.loadFailed,
+            description: formatErrorForUser(error as Error, t.failedLoadProject).userMessage,
             variant: "destructive",
           });
         }
-      } catch (error) {
-        errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'fileUpload', error: String(error) }));
-        toast({
-          title: t.loadFailed,
-          description: formatErrorForUser(error as Error, t.failedLoadProject).userMessage,
-          variant: "destructive",
-        });
-      }
+      };
+      reader.readAsText(file);
     };
-    reader.readAsText(file);
-    // Reset input
-    event.target.value = '';
-  }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode, setProjectName]);
+
+    if (hasUnsavedChanges) {
+      setSaveDialog({
+        show: true,
+        message: t.unsavedChangesConfirm,
+        onConfirm: (save: boolean) => {
+          setSaveDialog(null);
+          if (save) handleSaveProject();
+          doLoad();
+        }
+      });
+      return;
+    }
+    doLoad();
+  }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode, closeExam, setProjectName, hasUnsavedChanges, handleSaveProject, setSaveDialog, t.unsavedChangesConfirm, startExamProject]);
 
   const applyExampleProject = useCallback((projectData: any, exampleId?: string) => {
     loadProjectData(projectData);
@@ -3902,7 +3948,7 @@ ${state.bannerMOTD}
     setShowProjectPicker(false);
     // Close guided/exam mode panel if open (unless it's a guided project itself)
     closeGuidedMode();
-    finishExam();
+    closeExam();
 
     // Reset zoom and pan to top-left
     setZoom(1.0);
@@ -3912,6 +3958,12 @@ ${state.bannerMOTD}
       window.scrollTo(0, 0);
     }
   }, [loadProjectData, setShowProjectPicker, setZoom, setPan, closeGuidedMode, setProjectName, setLoadedExampleId, setRefreshNetworkReport, groupedExampleProjects, exampleLevelOrder]);
+
+  const startExamFromCatalog = useCallback((project: ExamProject) => {
+    setIsExamLoadedFromFile(false);
+    closeGuidedMode();
+    startExamProject(project);
+  }, [startExamProject, closeGuidedMode]);
 
   const isDark = (effectiveTheme ?? theme) === 'dark';
 
@@ -4065,11 +4117,12 @@ ${state.bannerMOTD}
             resetToEmptyProject={resetToEmptyProject}
             applyExampleProject={applyExampleProject}
             startGuidedProject={startGuidedProject}
-            startExamProject={startExamProject}
+            startExamProject={startExamFromCatalog}
             loadProjectData={loadProjectData}
             setZoom={setZoom}
             setPan={setPan}
             closeProjectPicker={() => setShowProjectPicker(false)}
+            onOpenFile={() => fileInputRef.current?.click()}
           />}
 
 
@@ -4479,6 +4532,7 @@ ${state.bannerMOTD}
                     canUndo={canUndo}
                     canRedo={canRedo}
                     hasHydrated={hasHydrated}
+                    isExamActive={isExamActive}
                     setDeviceSearchQuery={setDeviceSearchQuery}
                     setCableInfo={setCableInfo}
                     setZoom={setZoom}
@@ -4517,6 +4571,8 @@ ${state.bannerMOTD}
                     onRedo={handleRedo}
                     onRefreshNetwork={handleRefreshNetwork}
                     focusDeviceId={focusDeviceId}
+                    isExamActive={isExamActive}
+                    isExamEditorOpen={isEditorOpen}
                     onOpenTasks={(deviceId: string) => {
                       setActiveDeviceId(deviceId);
                       const device = topologyDevices?.find(d => d.id === deviceId);
@@ -4727,17 +4783,20 @@ ${state.bannerMOTD}
           {/* Exam Mode Panel */}
           {isExamActive && !isEditorOpen && <ExamModePanel
             project={activeExam}
-            onClose={finishExam}
+            onClose={closeExam}
             onMinimize={toggleExamPanelMinimize}
             isMinimized={isExamPanelMinimized}
+            isFinished={isExamFinished}
+            onFinish={finishExam}
             score={examScore}
             lastCommand={lastCommand}
             deviceAccessed={showUnifiedDeviceModal ? (activeDeviceType === 'switchL2' || activeDeviceType === 'switchL3' ? 'switch' : activeDeviceType === 'router' ? 'router' : 'pc') : null}
+            deviceAccessedId={showUnifiedDeviceModal ? activeDeviceId : null}
             deviceState={state}
             topologyConnections={topologyConnections}
             topologyDevices={topologyDevices}
             onCheckTasks={checkExamTasks}
-            onOpenEditor={() => toggleEditor(true)}
+            onOpenEditor={!isExamLoadedFromFile ? () => toggleEditor(true) : undefined}
           />}
 
           {/* Exam Editor Panel */}

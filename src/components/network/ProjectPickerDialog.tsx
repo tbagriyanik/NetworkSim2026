@@ -35,6 +35,7 @@ interface ProjectPickerDialogProps {
   setZoom: (zoom: number) => void;
   setPan: (pan: { x: number; y: number }) => void;
   closeProjectPicker: () => void;
+  onOpenFile: () => void;
 }
 
 export function ProjectPickerDialog({
@@ -47,6 +48,7 @@ export function ProjectPickerDialog({
   startGuidedProject, startExamProject, loadProjectData,
   setZoom, setPan,
   closeProjectPicker,
+  onOpenFile,
 }: ProjectPickerDialogProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -70,7 +72,7 @@ export function ProjectPickerDialog({
       });
     } else if (projectPickerTab === 'exam') {
       const q = projectSearchQuery.trim().toLowerCase();
-      const examProjects = getAvailableExams(language);
+      const examProjects = getAvailableExams(language).filter((ep: any) => ep.id !== 'exam-template-blank');
       examProjects.forEach((ep) => {
         const match = q === '' ||
           ep.title.toLowerCase().includes(q) ||
@@ -148,15 +150,45 @@ export function ProjectPickerDialog({
           <div className='p-4 md:p-8 pb-2 md:pb-4 space-y-4'>
             <DialogHeader className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r p-4 md:p-6 flex items-center justify-between flex-row'>
               <DialogTitle className='text-xl bg-gradient-to-br from-white to-slate-900 bg-clip-text text-transparent break-words'>{t.openNewProject}</DialogTitle>
-              <Button
-                variant='outline'
-                size='sm'
-                className={`flex items-center gap-2 text-xs px-3 py-1.5 h-8 ${isDark ? 'text-slate-200 border-slate-700 hover:bg-slate-800 hover:text-cyan-400' : 'text-slate-700 border-slate-300 hover:bg-slate-100 hover:text-cyan-600'}`}
-                onClick={() => { closeProjectPicker(); resetToEmptyProject(); }}
-              >
-                <Plus className="w-3.5 h-3.5" />
-                {t.emptyProject}
-              </Button>
+              <div className='flex items-center gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className={`flex items-center gap-2 text-xs px-3 py-1.5 h-8 ${isDark ? 'text-sky-300 border-sky-700/50 hover:bg-sky-900/30 hover:text-sky-300' : 'text-sky-600 border-sky-300 hover:bg-sky-50 hover:text-sky-700'}`}
+                  onClick={() => {
+                    closeProjectPicker();
+                    onOpenFile();
+                  }}
+                >
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  {language === 'tr' ? 'Dosya Aç' : 'Open File'}
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className={`flex items-center gap-2 text-xs px-3 py-1.5 h-8 ${isDark ? 'text-rose-300 border-rose-700/50 hover:bg-rose-900/30 hover:text-rose-300' : 'text-rose-600 border-rose-300 hover:bg-rose-50 hover:text-rose-700'}`}
+                  onClick={() => {
+                    const examTemplate = getAvailableExams(language).find((ep: any) => ep.id === 'exam-template-blank');
+                    if (examTemplate) {
+                      closeProjectPicker();
+                      startExamProject(examTemplate);
+                      loadProjectData(examTemplate.data);
+                    }
+                  }}
+                >
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  {t.examTemplate}
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className={`flex items-center gap-2 text-xs px-3 py-1.5 h-8 ${isDark ? 'text-slate-200 border-slate-700 hover:bg-slate-800 hover:text-cyan-400' : 'text-slate-700 border-slate-300 hover:bg-slate-100 hover:text-cyan-600'}`}
+                  onClick={() => { closeProjectPicker(); resetToEmptyProject(); }}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  {t.emptyProject}
+                </Button>
+              </div>
               <DialogDescription className="sr-only">
                 {language === 'tr'
                   ? 'Yeni proje penceresi: boş projeyle başlayın veya hazır örneklerden birini seçin.'
@@ -274,7 +306,9 @@ export function ProjectPickerDialog({
                     }
                     // If still not found, search exams
                     if (!firstProject) {
-                        const exam = getAvailableExams(language).find(proj =>
+                        const exam = getAvailableExams(language)
+                          .filter((proj: any) => proj.id !== 'exam-template-blank')
+                          .find(proj =>
                           proj.title.toLowerCase().includes(q) ||
                           proj.description.toLowerCase().includes(q) ||
                           proj.tag.toLowerCase().includes(q) ||
@@ -314,7 +348,7 @@ export function ProjectPickerDialog({
             ref={scrollRef}
             tabIndex={0}
             onKeyDown={handleGridKeyDown}
-            className='flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-12 pb-12 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:ring-inset'
+            className='flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-12 pb-12 custom-scrollbar focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:ring-inset'
           >
             <div className='flex flex-col gap-12 max-w-full'>
               {/* Guided Mode Projects Section */}
@@ -434,6 +468,7 @@ export function ProjectPickerDialog({
 
                     <div className='grid grid-cols-1 gap-6 w-full max-w-full'>
                       {getAvailableExams(language)
+                        .filter(ep => ep.id !== 'exam-template-blank')
                         .filter((examProject, idx) => {
                           const q = projectSearchQuery.trim().toLowerCase();
                           return q === '' ||
@@ -500,7 +535,9 @@ export function ProjectPickerDialog({
                             )}
                           </Button>
                         ))}
-                      {getAvailableExams(language).filter((examProject) => {
+                      {getAvailableExams(language)
+                        .filter(ep => ep.id !== 'exam-template-blank')
+                        .filter((examProject) => {
                         const q = projectSearchQuery.trim().toLowerCase();
                         return q === '' ||
                           examProject.title.toLowerCase().includes(q) ||

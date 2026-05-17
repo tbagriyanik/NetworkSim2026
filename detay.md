@@ -134,6 +134,7 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 - Router paneli, VLAN paneli, Security paneli, Firewall paneli.
 - WiFi kontrol paneli, Environment paneli, Help paneli.
 - Ping görselleştirme, Task paneli (puanlama).
+- Sınav modu: öğretmen düzenleyici, süreli sınav, XOR şifreli `.exam` dosyası, otomatik puanlama.
 - Rehberli ders paneli, başarı rozetleri.
 - Sürüklenebilir dialog pencereleri, pencere pozisyonu koruma.
 - Dual dil desteği (Türkçe/İngilizce), dark/light tema.
@@ -158,15 +159,16 @@ Bu dosya README'den çıkarılan uzun açıklamaları ve ayrıntılı proje notl
 
 | Grup | Satır Sayısı |
 | --- | ---: |
-| Uygulama Kodu | 103,498 |
-| Dokümantasyon | 13,290 |
-| **Toplam** | **128,176** |
+| Uygulama Kodu | 117,853 |
+| Dokümantasyon | 6,472 |
+| **Toplam** | **124,325** |
 
 | Diğer Metrikler | Sayı |
 | --- | ---: |
-| Toplam kod dosyası | 261 |
+| Toplam kod dosyası | 278 |
 | Hazır topoloji örneği | 39 |
 | Rehberli ders | 3 |
+| Sınav | 3 |
 | CLI komut ailesi | 180+ |
 | Test Dosyaları | 0 |
 | Başarılı Testler | N/A |

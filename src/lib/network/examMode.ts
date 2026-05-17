@@ -15,6 +15,7 @@ export interface ExamTask {
     sourceDevice?: string;
     sourcePort?: string;
     targetDevice?: string;
+    targetDeviceId?: string;
     targetPort?: string;
     connections?: Array<{ sourceDevice: string; sourcePort: string; targetDevice: string; targetPort: string }>;
     subnetMask?: string;
@@ -31,6 +32,7 @@ export interface ExamProject extends ExampleProject {
   durationMinutes: number;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   startedAt?: Date;
+  finishedAt?: Date;
   isCustom?: boolean; // True if created by a teacher
 }
 
@@ -112,30 +114,78 @@ export const basicConnectivityExamTasks: ExamTask[] = [
 // Exam tasks - Routing Basics
 export const routingBasicsExamTasks: ExamTask[] = [
   {
-    id: 'exam-route-config-ip',
-    title: { tr: 'Interface IP Yapılandırması', en: 'Interface IP Configuration' },
-    description: { tr: 'R1 Gi0/0 portuna 192.168.1.1/24 IP adresini atayın ve aktif edin.', en: 'Assign 192.168.1.1/24 to R1 Gi0/0 and enable it.' },
-    weight: 25,
+    id: 'exam-route-connect-pc1',
+    title: { tr: 'PC-1 Bağlantısı', en: 'PC-1 Connection' },
+    description: { tr: 'PC-1\'i R1 Gi0/0 portuna doğru kablo ile bağlayın.', en: 'Connect PC-1 to R1 Gi0/0 with the correct cable.' },
+    weight: 15,
+    checkType: 'connection',
+    checkParams: {
+      cableType: 'straight',
+      sourceDevice: 'pc-1',
+      sourcePort: 'eth0',
+      targetDevice: 'r-1',
+      targetPort: 'gi0/0'
+    },
+    completed: false
+  },
+  {
+    id: 'exam-route-connect-pc2',
+    title: { tr: 'PC-2 Bağlantısı', en: 'PC-2 Connection' },
+    description: { tr: 'PC-2\'yi R1 Gi0/1 portuna doğru kablo ile bağlayın.', en: 'Connect PC-2 to R1 Gi0/1 with the correct cable.' },
+    weight: 15,
+    checkType: 'connection',
+    checkParams: {
+      cableType: 'straight',
+      sourceDevice: 'pc-2',
+      sourcePort: 'eth0',
+      targetDevice: 'r-1',
+      targetPort: 'gi0/1'
+    },
+    completed: false
+  },
+  {
+    id: 'exam-route-gi00',
+    title: { tr: 'R1 Gi0/0 Arayüz Yapılandırması', en: 'R1 Gi0/0 Interface Configuration' },
+    description: { tr: 'R1 Gi0/0 portuna 192.168.1.1/24 IP atayın ve no shutdown ile aktif edin.', en: 'Assign 192.168.1.1/24 to R1 Gi0/0 and enable it with no shutdown.' },
+    weight: 20,
+    checkType: 'command',
+    checkParams: { commandPattern: 'ip address 192.168.1.1 255.255.255.0' },
+    completed: false
+  },
+  {
+    id: 'exam-route-gi01',
+    title: { tr: 'R1 Gi0/1 Arayüz Yapılandırması', en: 'R1 Gi0/1 Interface Configuration' },
+    description: { tr: 'R1 Gi0/1 portuna 192.168.2.1/24 IP atayın ve no shutdown ile aktif edin.', en: 'Assign 192.168.2.1/24 to R1 Gi0/1 and enable it with no shutdown.' },
+    weight: 20,
+    checkType: 'command',
+    checkParams: { commandPattern: 'ip address 192.168.2.1 255.255.255.0' },
+    completed: false
+  },
+  {
+    id: 'exam-route-pc1',
+    title: { tr: 'PC-1 IP Yapılandırması', en: 'PC-1 IP Configuration' },
+    description: { tr: 'PC-1\'e 192.168.1.10/24 IP ve 192.168.1.1 gateway atayın.', en: 'Assign IP 192.168.1.10/24 and gateway 192.168.1.1 to PC-1.' },
+    weight: 10,
     checkType: 'config',
-    checkParams: { configKey: 'interfaces.gi0/0.ip', configValue: '192.168.1.1' },
+    checkParams: { configKey: 'pc.pc-1.ip', configValue: '192.168.1.10', subnetMask: '255.255.255.0' },
+    completed: false
+  },
+  {
+    id: 'exam-route-pc2',
+    title: { tr: 'PC-2 IP Yapılandırması', en: 'PC-2 IP Configuration' },
+    description: { tr: 'PC-2\'ye 192.168.2.10/24 IP ve 192.168.2.1 gateway atayın.', en: 'Assign IP 192.168.2.10/24 and gateway 192.168.2.1 to PC-2.' },
+    weight: 10,
+    checkType: 'config',
+    checkParams: { configKey: 'pc.pc-2.ip', configValue: '192.168.2.10', subnetMask: '255.255.255.0' },
     completed: false
   },
   {
     id: 'exam-route-static',
     title: { tr: 'Statik Rota', en: 'Static Route' },
-    description: { tr: 'R1 üzerinde 10.0.0.0/24 ağına giden bir statik rota tanımlayın.', en: 'Define a static route to 10.0.0.0/24 network on R1.' },
-    weight: 35,
+    description: { tr: 'R1 üzerinde 10.0.0.0/24 ağına giden statik rota tanımlayın.', en: 'Define a static route to 10.0.0.0/24 on R1.' },
+    weight: 10,
     checkType: 'command',
     checkParams: { commandPattern: 'ip route 10.0.0.0 255.255.255.0' },
-    completed: false
-  },
-  {
-    id: 'exam-route-ping',
-    title: { tr: 'Uçtan Uca Bağlantı', en: 'End-to-End Connectivity' },
-    description: { tr: 'PC-1\'den PC-2\'ye (10.0.0.10) ping atın.', en: 'Ping from PC-1 to PC-2 (10.0.0.10).' },
-    weight: 40,
-    checkType: 'command',
-    checkParams: { commandPattern: 'ping 10.0.0.10' },
     completed: false
   }
 ];
@@ -152,21 +202,75 @@ export const l3SwitchDhcpExamTasks: ExamTask[] = [
     completed: false
   },
   {
-    id: 'exam-l3-vlan-svi',
-    title: { tr: 'VLAN ve SVI Yapılandırması', en: 'VLAN and SVI Configuration' },
-    description: { tr: 'VLAN 20 oluşturun ve Interface VLAN 20\'ye 172.16.20.1/24 IP\'sini atayın.', en: 'Create VLAN 20 and assign 172.16.20.1/24 IP to Interface VLAN 20.' },
-    weight: 40,
+    id: 'exam-l3-vlan20-create',
+    title: { tr: 'VLAN 20 Oluşturma', en: 'Create VLAN 20' },
+    description: { tr: 'VLAN 20 oluşturun.', en: 'Create VLAN 20.' },
+    weight: 20,
+    checkType: 'command',
+    checkParams: { commandPattern: 'vlan 20' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-svi20-ip',
+    title: { tr: 'SVI VLAN 20 IP Atama', en: 'Assign SVI VLAN 20 IP' },
+    description: { tr: 'Interface VLAN 20\'ye 172.16.20.1/24 IP\'sini atayın.', en: 'Assign 172.16.20.1/24 IP to Interface VLAN 20.' },
+    weight: 20,
     checkType: 'config',
     checkParams: { configKey: 'interfaces.vlan20.ip', configValue: '172.16.20.1' },
     completed: false
   },
   {
-    id: 'exam-l3-dhcp-pool',
-    title: { tr: 'DHCP Havuzu', en: 'DHCP Pool' },
+    id: 'exam-l3-dhcp-pool-create',
+    title: { tr: 'DHCP Havuzu Oluşturma', en: 'Create DHCP Pool' },
     description: { tr: 'L3 Switch üzerinde "MY-POOL" isminde bir DHCP havuzu oluşturun.', en: 'Create a DHCP pool named "MY-POOL" on L3 Switch.' },
-    weight: 40,
+    weight: 5,
     checkType: 'command',
     checkParams: { commandPattern: 'ip dhcp pool MY-POOL' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-dhcp-excluded',
+    title: { tr: 'DHCP Hariç Tutulan IP', en: 'DHCP Excluded IP' },
+    description: { tr: '172.16.20.1 adresini DHCP dağıtımından hariç tutun.', en: 'Exclude 172.16.20.1 from DHCP allocation.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { commandPattern: 'ip dhcp excluded-address 172.16.20.1' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-dhcp-network',
+    title: { tr: 'DHCP Network Tanımı', en: 'DHCP Network Definition' },
+    description: { tr: 'DHCP havuzunda ağı 172.16.20.0/24 olarak tanımlayın.', en: 'Define DHCP pool network as 172.16.20.0/24.' },
+    weight: 10,
+    checkType: 'command',
+    checkParams: { commandPattern: 'network 172.16.20.0 255.255.255.0' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-dhcp-default-router',
+    title: { tr: 'DHCP Varsayılan Ağ Geçidi', en: 'DHCP Default Gateway' },
+    description: { tr: 'DHCP havuzunda varsayılan ağ geçidi olarak 172.16.20.1 tanımlayın.', en: 'Set DHCP default gateway to 172.16.20.1 in the pool.' },
+    weight: 10,
+    checkType: 'command',
+    checkParams: { commandPattern: 'default-router 172.16.20.1' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-dhcp-dns',
+    title: { tr: 'DHCP DNS Tanımı', en: 'DHCP DNS Definition' },
+    description: { tr: 'DHCP havuzunda DNS sunucusu olarak 8.8.8.8 tanımlayın.', en: 'Set DHCP DNS server to 8.8.8.8 in the pool.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { commandPattern: 'dns-server 8.8.8.8' },
+    completed: false
+  },
+  {
+    id: 'exam-l3-dhcp-lease',
+    title: { tr: 'DHCP Lease Süresi', en: 'DHCP Lease Duration' },
+    description: { tr: 'DHCP havuzunda kira süresini 7 gün olarak ayarlayın.', en: 'Set DHCP lease time to 7 days in the pool.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { commandPattern: 'lease 7' },
     completed: false
   }
 ];
@@ -261,8 +365,8 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
             {
               id: 'exam-intro',
               text: isTr
-                ? '📝 TEMEL AĞ BİLGİSİ SINAVI\n\nBu bir sınavdır. İpucu veya yardım sunulmaz.\nGörevleri tamamladıkça puanınız güncellenecektir.\n\nBaşarılar!'
-                : '📝 BASIC NETWORKING EXAM\n\nThis is an exam. No hints or help are provided.\nYour score will be updated as you complete tasks.\n\nGood luck!',
+                ? '📝 TEMEL AĞ BİLGİSİ SINAVI\n\nŞu anda bir sınavdasınız. \nGörevleri tamamladıkça puanınız güncellenecektir.\n\nBaşarılar!'
+                : '📝 BASIC NETWORKING EXAM\n\nThis is an exam.\nYour score will be updated as you complete tasks.\n\nGood luck!',
               x: 450,
               y: 80,
               width: 350,
@@ -300,25 +404,31 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
         ? 'Router yapılandırması ve statik rotalar'
         : 'Router configuration and static routes',
       detail: isTr
-        ? 'İki router arasındaki trafiği statik rotalar ile yönlendirmeniz beklenmektedir.'
-        : 'You are expected to route traffic between two routers using static routes.',
+        ? 'Router arayüzlerini yapılandırın, PC\'lere IP atayın ve statik rota ekleyin.'
+        : 'Configure router interfaces, assign IPs to PCs, and add a static route.',
       data: {
         version: '1.0',
         timestamp: new Date().toISOString(),
         devices: [],
+        deviceOutputs: [],
+        pcOutputs: [],
+        pcHistories: [],
         topology: {
           devices: [
             {
               id: 'r-1',
               type: 'router',
               name: 'R1',
-              x: 300,
+              x: 400,
               y: 200,
               ip: '',
               status: 'online',
               ports: [
+                { id: 'console', label: 'Console', status: 'disconnected' as const },
                 { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const },
-                { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const }
+                { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
+                { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const },
+                { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const }
               ]
             },
             {
@@ -327,24 +437,67 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
               name: 'PC-1',
               x: 100,
               y: 200,
-              ip: '192.168.1.10',
-              subnet: '255.255.255.0',
-              gateway: '192.168.1.1',
+              ip: '',
+              subnet: '',
+              gateway: '',
+              macAddress: '00:50:79:66:68:01',
               status: 'online',
               ports: [
-                { id: 'eth0', label: 'Eth0', status: 'disconnected' as const }
+                { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
+                { id: 'com1', label: 'COM1', status: 'disconnected' as const }
+              ]
+            },
+            {
+              id: 'pc-2',
+              type: 'pc',
+              name: 'PC-2',
+              x: 700,
+              y: 200,
+              ip: '',
+              subnet: '',
+              gateway: '',
+              macAddress: '00:50:79:66:68:02',
+              status: 'online',
+              ports: [
+                { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
+                { id: 'com1', label: 'COM1', status: 'disconnected' as const }
               ]
             }
           ],
-          connections: []
+          connections: [],
+          notes: [
+            {
+              id: 'exam-intro',
+              text: isTr
+                ? '📝 STATİK YÖNLENDİRME SINAVI\n\nKabloları ve IP yapılandırmalarını kendiniz yapmalısınız.\nGörevleri tamamladıkça puanınız güncellenir.\n\nBaşarılar!'
+                : '📝 STATIC ROUTING EXAM\n\nYou must make the cable connections and IP configurations yourself.\nYour score will be updated as you complete tasks.\n\nGood luck!',
+              x: 50,
+              y: 50,
+              width: 400,
+              height: 140,
+              color: '#ef4444',
+              font: 'verdana',
+              fontSize: 12,
+              opacity: 0.75
+            }
+          ]
+        },
+        cableInfo: {
+          connected: true,
+          cableType: 'straight',
+          sourceDevice: 'pc',
+          targetDevice: 'router'
         },
         activeDeviceId: 'r-1',
-        activeDeviceType: 'router'
+        activeDeviceType: 'router',
+        activeTab: 'topology',
+        zoom: 1,
+        pan: { x: 0, y: 0 }
       } as any,
       level: 'intermediate',
       isExam: true,
       tasks: routingBasicsExamTasks,
-      durationMinutes: 20,
+      durationMinutes: 15,
       difficulty: 'intermediate'
     },
     {
@@ -375,7 +528,12 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
                   id: `gi1/0/${i + 1}`,
                   label: `Gi1/0/${i + 1}`,
                   status: 'disconnected' as const
-                }))
+                })),
+                { id: 'console', label: 'Console', status: 'disconnected' as const },
+                { id: 'gi1/1/1', label: 'Gi1/1/1', status: 'disconnected' as const },
+                { id: 'gi1/1/2', label: 'Gi1/1/2', status: 'disconnected' as const },
+                { id: 'gi1/1/3', label: 'Gi1/1/3', status: 'disconnected' as const },
+                { id: 'gi1/1/4', label: 'Gi1/1/4', status: 'disconnected' as const }
               ]
             }
           ],

@@ -3,13 +3,13 @@
 ![Version](https://img.shields.io/badge/version-1.6.4-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-128k-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-124325-lightgrey)
 
-A browser-based network simulator for learning switching, routing, wireless, IoT, and CLI workflows. TR/EN interface support.
+A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows. TR/EN interface support.
 
 **Live app:** [network2026.vercel.app](https://network2026.vercel.app)
 
-Keyboard update (2026-05-16): Selected device(s) can be moved with arrow keys on topology (`Shift + Arrow` for faster movement).
+Exam update (2026-05-17): Exam editor mobile responsive, finish exam now freezes timer (panel stays open), file open accepts `.json` + `.exam`.
 
 ---
 
@@ -23,8 +23,8 @@ npm install && npm run dev
 
 | Metric | Value |
 | --- | ---: |
-| Code | 92,265 |
-| Source Files | 263 |
+| Code | 117,853 |
+| Source Files | 278 |
 | Example Projects | 39 |
 | Guided Lessons | 3 |
 | CLI Command Families | 180+ |
