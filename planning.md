@@ -4,18 +4,30 @@
 
 - **Sürüm**: 1.6.4
 - **Tarih**: 2026-05-17
-- **Uygulama kodu**: 103,498
-- **Dokümantasyon satırı**: 13,290
-- **Toplam satır**: 128,176
-- **Kod dosyası**: 261
+- **Uygulama kodu**: 117,853
+- **Dokümantasyon satırı**: 6,472
+- **Toplam satır**: 124,325
+- **Kod dosyası**: 278
 - **Hazır topoloji örneği**: 39
 - **Rehberli ders**: 3
+- **Sınav**: 3
 - **CLI komut ailesi**: 180+
-- **Test Durumu**: ✅ Tüm testler geçiyor (Build, Lint, TypeScript)
+- **Test Durumu**: N/A (test dosyalari kaldirildi)
 
 Not: Toplam satır sayısı uygulama kodu, örnek kod ve dokümantasyonun birleşimidir.
 
 ## Son Yapılanlar
+
+### Sinav Editor Dogrulama Akisi ve Liste Destekleri (Mayis 2026 - 17 Mayis)
+
+- **Baglanti Cihaz/Port Secimi Iyilestirmesi**:
+  - `connection` dogrulamasinda kaynak/hedef cihaz listeleri topolojideki mevcut cihazlardan uretiliyor.
+  - Kaynakta secilen cihaz hedef listeden, hedefte secilen cihaz kaynak listeden otomatik dislaniyor (aynı cihazin iki ucta secilmesi engellendi).
+  - Kaynak/Hedef port listeleri secili cihaza gore filtreleniyor; gecersiz kalan secimler otomatik temizleniyor.
+- **Dogrulama Mantigi Hizli Giris Listeleri**:
+  - `Komut Deseni (Regex)` alani icin hazir secenek listesi eklendi.
+  - `Config Value` alani icin sik kullanilan degerler listesi eklendi.
+  - Manuel metin girisi korunarak karma kullanim desteklendi.
 
 ### Sınav Modu İyileştirmeleri (Mayıs 2026 - 17 Mayıs)
 
@@ -138,7 +150,7 @@ Not: Toplam satır sayısı uygulama kodu, örnek kod ve dokümantasyonun birle�
   - `jest.useFakeTimers()` → `vi.useFakeTimers()`
   - `jest.clearAllMocks()` → `vi.clearAllMocks()`
   - `jest.advanceTimersByTime()` → `vi.advanceTimersByTime()`
-- **Test Sonuçları**: ✅ 53 test geçiyor
+- **Test Sonuçları (Tarihsel)**: ✅ O tarihte 53 test geçiyordu (guncel durumda test dosyalari kaldirildi)
   - 4 test dosyası
   - 0 başarısız test
   - 100% geçme oranı
