@@ -189,8 +189,25 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
         version: '1.0',
         timestamp: new Date().toISOString(),
         devices: [],
-        topology: { devices: [], connections: [] },
-        activeTab: 'topology'
+        deviceOutputs: [],
+        pcOutputs: [],
+        pcHistories: [],
+        topology: {
+          devices: [],
+          connections: [],
+          notes: []
+        },
+        cableInfo: {
+          connected: false,
+          cableType: 'straight',
+          sourceDevice: 'pc',
+          targetDevice: 'switchL2'
+        },
+        activeDeviceId: '',
+        activeDeviceType: 'switchL2',
+        activeTab: 'topology',
+        zoom: 1,
+        pan: { x: 0, y: 0 }
       } as any,
       level: 'basic',
       isExam: true,

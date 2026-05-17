@@ -401,7 +401,7 @@ export default function Home() {
     } else if (activeExam) {
       setProjectName(activeExam.title);
       // Auto-open editor for blank templates
-      if (activeExam.isCustom && activeExam.tasks.length === 0) {
+      if (activeExam.isCustom && (activeExam.tasks || []).length === 0) {
         toggleEditor(true);
       }
     }

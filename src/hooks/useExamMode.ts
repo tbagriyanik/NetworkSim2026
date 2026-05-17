@@ -73,7 +73,7 @@ export function useExamMode(): UseExamModeReturn {
   const startExam = useCallback((project: ExamProject) => {
     setActiveExam({
       ...project,
-      tasks: project.tasks.map(t => ({ ...t, completed: false, completedAt: undefined })),
+      tasks: (project.tasks || []).map(t => ({ ...t, completed: false, completedAt: undefined })),
       startedAt: new Date()
     });
     setIsPanelMinimized(false);
@@ -99,16 +99,17 @@ export function useExamMode(): UseExamModeReturn {
   const addTask = useCallback((task: any) => {
     setActiveExam(prev => {
       if (!prev) return null;
+      const tasks = prev.tasks || [];
       return {
         ...prev,
-        tasks: [...prev.tasks, { ...task, id: `task-${Date.now()}`, completed: false }]
+        tasks: [...tasks, { ...task, id: `task-${Date.now()}`, completed: false }]
       };
     });
   }, []);
 
   const updateTask = useCallback((id: string, updates: any) => {
     setActiveExam(prev => {
-      if (!prev) return null;
+      if (!prev || !prev.tasks) return prev;
       return {
         ...prev,
         tasks: prev.tasks.map(t => t.id === id ? { ...t, ...updates } : t)
@@ -118,7 +119,7 @@ export function useExamMode(): UseExamModeReturn {
 
   const deleteTask = useCallback((id: string) => {
     setActiveExam(prev => {
-      if (!prev) return null;
+      if (!prev || !prev.tasks) return prev;
       return {
         ...prev,
         tasks: prev.tasks.filter(t => t.id !== id)
@@ -135,7 +136,7 @@ export function useExamMode(): UseExamModeReturn {
 
   const smartBalanceWeights = useCallback(() => {
     setActiveExam(prev => {
-      if (!prev || prev.tasks.length === 0) return prev;
+      if (!prev || (prev.tasks || []).length === 0) return prev;
       const count = prev.tasks.length;
       const baseWeight = Math.floor(100 / count);
       const remainder = 100 % count;
@@ -183,7 +184,7 @@ export function useExamMode(): UseExamModeReturn {
     topologyConnections?: any[];
     topologyDevices?: any[];
   }) => {
-    if (!activeExam) return;
+    if (!activeExam || !activeExam.tasks) return;
 
     let changed = false;
     const updatedTasks = activeExam.tasks.map(task => {
@@ -204,7 +205,7 @@ export function useExamMode(): UseExamModeReturn {
   }, [activeExam]);
 
   const currentScore = useMemo(() => {
-    if (!activeExam) return 0;
+    if (!activeExam || !activeExam.tasks) return 0;
     return activeExam.tasks.reduce((sum, t) => sum + (t.completed ? t.weight : 0), 0);
   }, [activeExam]);
 

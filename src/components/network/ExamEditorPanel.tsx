@@ -72,7 +72,7 @@ export function ExamEditorPanel({
   if (!isOpen || !activeExam) return null;
 
   const isTr = language === 'tr';
-  const totalWeight = activeExam.tasks.reduce((sum, t) => sum + (t.weight || 0), 0);
+  const totalWeight = (activeExam.tasks || []).reduce((sum, t) => sum + (t.weight || 0), 0);
 
   const handleAddNewTask = () => {
     const newTask: Partial<ExamTask> = {
@@ -210,7 +210,7 @@ export function ExamEditorPanel({
               </div>
             </div>
 
-            {activeExam.tasks.length === 0 ? (
+            {(activeExam.tasks || []).length === 0 ? (
               <div className={cn(
                 "p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center",
                 isDark ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50/50"
@@ -225,7 +225,7 @@ export function ExamEditorPanel({
               </div>
             ) : (
               <div className="space-y-3">
-                {activeExam.tasks.map((task, index) => (
+                {(activeExam.tasks || []).map((task, index) => (
                   <Card key={task.id} className={cn(
                     "overflow-hidden transition-all duration-200",
                     isDark ? "bg-slate-800/40 border-slate-700" : "bg-white border-slate-200",
@@ -455,7 +455,7 @@ export function ExamEditorPanel({
             </p>
             <Button
               className="w-full h-10 bg-purple-600 hover:bg-purple-700 text-white gap-2 font-bold shadow-lg shadow-purple-500/20"
-              disabled={activeExam.tasks.length === 0 || totalWeight !== 100}
+            disabled={(activeExam.tasks || []).length === 0 || totalWeight !== 100}
               onClick={() => exportExamFile(projectData)}
             >
               <Save className="w-4 h-4" />
