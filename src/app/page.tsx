@@ -384,6 +384,7 @@ export default function Home() {
     targetDevice: 'switchL2',
   });
   const [lastTaskEvent, setLastTaskEvent] = useState<{ type: 'completed' | 'failed'; taskName: string; timestamp: number } | null>(null);
+  const [isExamLoadedFromFile, setIsExamLoadedFromFile] = useState(false);
 
   // Track project name from guided/exam mode
   useEffect(() => {
@@ -1427,6 +1428,38 @@ ${state.bannerMOTD}
         setPcHistories(newPcHistories);
       }
 
+      const resolveNoteOverlap = (notes: CanvasNote[], devices: CanvasDevice[]): CanvasNote[] => {
+        const deviceBoxes = devices.map((d) => ({ x: d.x - 50, y: d.y - 35, w: 100, h: 70 }));
+        const placed: CanvasNote[] = [];
+        const overlaps = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }) =>
+          a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+        for (const note of notes) {
+          const w = Math.max(160, Number(note.width) || 260);
+          const h = Math.max(80, Number(note.height) || 120);
+          let x = Number(note.x) || 0;
+          let y = Number(note.y) || 0;
+          let tries = 0;
+
+          while (tries < 80) {
+            const box = { x, y, w, h };
+            const collidesDevice = deviceBoxes.some((d) => overlaps(box, d));
+            const collidesNote = placed.some((n) => overlaps(box, { x: n.x, y: n.y, w: Math.max(160, Number(n.width) || 260), h: Math.max(80, Number(n.height) || 120) }));
+            if (!collidesDevice && !collidesNote) break;
+            x += 36;
+            if (x > 1200) {
+              x = 40;
+              y += 28;
+            }
+            tries += 1;
+          }
+
+          placed.push({ ...note, x, y });
+        }
+
+        return placed;
+      };
+
       // Load topology
       if (safeTopologyDevices.length > 0 || safeTopologyConnections.length > 0 || safeTopologyNotes.length > 0) {
         // Filter out devices with empty/invalid IDs
@@ -1439,7 +1472,7 @@ ${state.bannerMOTD}
         })));
         setTopologyDevices(normalizedDevices);
         setTopologyConnections(safeTopologyConnections);
-        setTopologyNotes(safeTopologyNotes);
+        setTopologyNotes(resolveNoteOverlap(safeTopologyNotes, normalizedDevices));
         if (typeof topology.zoom === 'number') setZoom(topology.zoom);
         if (safeTopologyPan && typeof safeTopologyPan.x === 'number' && typeof safeTopologyPan.y === 'number') setPan({ x: safeTopologyPan.x, y: safeTopologyPan.y });
       } else {
@@ -2411,6 +2444,7 @@ ${state.bannerMOTD}
 
   function handleNewProject() {
     setProjectSearchQuery(''); // Reset search when opening new project dialog
+    closeExam();
     runWithSaveGuard(() => setShowProjectPicker(true));
   }
 
@@ -3711,6 +3745,8 @@ ${state.bannerMOTD}
   const handleLoadProject = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    // Prevent previously active exam session from re-appearing while opening another file/workflow
+    closeExam();
     // Reset input
     event.target.value = '';
 
@@ -3725,6 +3761,8 @@ ${state.bannerMOTD}
           if (file.name.endsWith('.exam')) {
             projectData = decryptExamData(content);
             if (projectData) {
+              setIsExamLoadedFromFile(true);
+              closeGuidedMode();
               startExamProject(projectData);
               loadProjectData(projectData.data);
               setHasUnsavedChanges(false);
@@ -3818,6 +3856,12 @@ ${state.bannerMOTD}
       window.scrollTo(0, 0);
     }
   }, [loadProjectData, setShowProjectPicker, setZoom, setPan, closeGuidedMode, setProjectName, setLoadedExampleId, setRefreshNetworkReport, groupedExampleProjects, exampleLevelOrder]);
+
+  const startExamFromCatalog = useCallback((project: ExamProject) => {
+    setIsExamLoadedFromFile(false);
+    closeGuidedMode();
+    startExamProject(project);
+  }, [startExamProject, closeGuidedMode]);
 
   const isDark = (effectiveTheme ?? theme) === 'dark';
 
@@ -3971,11 +4015,12 @@ ${state.bannerMOTD}
             resetToEmptyProject={resetToEmptyProject}
             applyExampleProject={applyExampleProject}
             startGuidedProject={startGuidedProject}
-            startExamProject={startExamProject}
+            startExamProject={startExamFromCatalog}
             loadProjectData={loadProjectData}
             setZoom={setZoom}
             setPan={setPan}
             closeProjectPicker={() => setShowProjectPicker(false)}
+            onOpenFile={() => fileInputRef.current?.click()}
           />}
 
 
@@ -4644,11 +4689,12 @@ ${state.bannerMOTD}
             score={examScore}
             lastCommand={lastCommand}
             deviceAccessed={showUnifiedDeviceModal ? (activeDeviceType === 'switchL2' || activeDeviceType === 'switchL3' ? 'switch' : activeDeviceType === 'router' ? 'router' : 'pc') : null}
+            deviceAccessedId={showUnifiedDeviceModal ? activeDeviceId : null}
             deviceState={state}
             topologyConnections={topologyConnections}
             topologyDevices={topologyDevices}
             onCheckTasks={checkExamTasks}
-            onOpenEditor={() => toggleEditor(true)}
+            onOpenEditor={!isExamLoadedFromFile ? () => toggleEditor(true) : undefined}
           />}
 
           {/* Exam Editor Panel */}

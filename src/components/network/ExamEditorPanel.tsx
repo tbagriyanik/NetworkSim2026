@@ -639,23 +639,53 @@ export function ExamEditorPanel({
                               )}
 
                               {task.checkType === 'deviceAccess' && (
-                                <div className="space-y-1">
-                                  <label className="text-[9px] font-bold opacity-50 uppercase ml-1">{isTr ? 'Cihaz Tipi' : 'Device Type'}</label>
-                                  <Select
-                                    value={task.checkParams?.deviceType || ''}
-                                    onValueChange={(val) => updateTask(task.id, {
-                                      checkParams: { ...task.checkParams, deviceType: val as 'switch' | 'router' | 'pc' }
-                                    })}
-                                  >
-                                    <SelectTrigger className="h-7 text-[11px]">
-                                      <SelectValue placeholder={isTr ? 'Seçin...' : 'Select...'} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="switch">{isTr ? 'Switch' : 'Switch'}</SelectItem>
-                                      <SelectItem value="router">{isTr ? 'Router' : 'Router'}</SelectItem>
-                                      <SelectItem value="pc">PC</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                <div className="space-y-2">
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-1">
+                                      <label className="text-[9px] font-bold opacity-50 uppercase ml-1">{isTr ? 'Cihaz Tipi' : 'Device Type'}</label>
+                                      <Select
+                                        value={task.checkParams?.deviceType || ''}
+                                        onValueChange={(val) => updateTask(task.id, {
+                                          checkParams: { ...task.checkParams, deviceType: val as 'switch' | 'router' | 'pc', targetDeviceId: undefined }
+                                        })}
+                                      >
+                                        <SelectTrigger className="h-7 text-[11px]">
+                                          <SelectValue placeholder={isTr ? 'Seçin...' : 'Select...'} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="switch">{isTr ? 'Switch' : 'Switch'}</SelectItem>
+                                          <SelectItem value="router">{isTr ? 'Router' : 'Router'}</SelectItem>
+                                          <SelectItem value="pc">PC</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-[9px] font-bold opacity-50 uppercase ml-1">{isTr ? 'Topolojideki Cihaz' : 'Topology Device'}</label>
+                                      <Select
+                                        value={task.checkParams?.targetDeviceId || '__any__'}
+                                        onValueChange={(val) => updateTask(task.id, {
+                                          checkParams: { ...task.checkParams, targetDeviceId: val === '__any__' ? undefined : val }
+                                        })}
+                                      >
+                                        <SelectTrigger className="h-7 text-[11px]">
+                                          <SelectValue placeholder={isTr ? 'Seçin...' : 'Select...'} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="__any__">{isTr ? 'Herhangi biri' : 'Any device'}</SelectItem>
+                                          {topologyDevices
+                                            .filter((d) => {
+                                              if (task.checkParams?.deviceType === 'switch') return d.type === 'switchL2' || d.type === 'switchL3';
+                                              if (task.checkParams?.deviceType === 'router') return d.type === 'router';
+                                              if (task.checkParams?.deviceType === 'pc') return d.type === 'pc';
+                                              return true;
+                                            })
+                                            .map((d) => (
+                                              <SelectItem key={d.id} value={d.id}>{d.name} ({d.id})</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
                                 </div>
                               )}
                               <div className="flex items-center gap-1.5 mt-1">

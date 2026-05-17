@@ -18,6 +18,7 @@ export interface GuidedStep {
     sourceDevice?: string;
     sourcePort?: string;
     targetDevice?: string;
+    targetDeviceId?: string;
     targetPort?: string;
     connections?: Array<{ sourceDevice: string; sourcePort: string; targetDevice: string; targetPort: string }>;
     subnetMask?: string;
@@ -1042,7 +1043,11 @@ export const checkStepCompletion = (
 ): boolean => {
   switch (step.checkType) {
     case 'deviceAccess':
-      return context.deviceAccessed === step.checkParams?.deviceType;
+      if (context.deviceAccessed !== step.checkParams?.deviceType) return false;
+      if (step.checkParams?.targetDeviceId) {
+        return (context as any).deviceAccessedId === step.checkParams.targetDeviceId;
+      }
+      return true;
     
     case 'command':
       if (!step.checkParams?.commandPattern || !context.lastCommand) return false;

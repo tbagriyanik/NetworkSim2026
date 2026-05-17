@@ -15,6 +15,7 @@ export interface ExamTask {
     sourceDevice?: string;
     sourcePort?: string;
     targetDevice?: string;
+    targetDeviceId?: string;
     targetPort?: string;
     connections?: Array<{ sourceDevice: string; sourcePort: string; targetDevice: string; targetPort: string }>;
     subnetMask?: string;

@@ -35,6 +35,7 @@ interface ProjectPickerDialogProps {
   setZoom: (zoom: number) => void;
   setPan: (pan: { x: number; y: number }) => void;
   closeProjectPicker: () => void;
+  onOpenFile: () => void;
 }
 
 export function ProjectPickerDialog({
@@ -47,6 +48,7 @@ export function ProjectPickerDialog({
   startGuidedProject, startExamProject, loadProjectData,
   setZoom, setPan,
   closeProjectPicker,
+  onOpenFile,
 }: ProjectPickerDialogProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -149,6 +151,18 @@ export function ProjectPickerDialog({
             <DialogHeader className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r p-4 md:p-6 flex items-center justify-between flex-row'>
               <DialogTitle className='text-xl bg-gradient-to-br from-white to-slate-900 bg-clip-text text-transparent break-words'>{t.openNewProject}</DialogTitle>
               <div className='flex items-center gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className={`flex items-center gap-2 text-xs px-3 py-1.5 h-8 ${isDark ? 'text-sky-300 border-sky-700/50 hover:bg-sky-900/30 hover:text-sky-300' : 'text-sky-600 border-sky-300 hover:bg-sky-50 hover:text-sky-700'}`}
+                  onClick={() => {
+                    closeProjectPicker();
+                    onOpenFile();
+                  }}
+                >
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  {language === 'tr' ? 'Dosya Aç' : 'Open File'}
+                </Button>
                 <Button
                   variant='outline'
                   size='sm'

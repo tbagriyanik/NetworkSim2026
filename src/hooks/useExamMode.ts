@@ -23,6 +23,7 @@ interface UseExamModeReturn {
   checkTasks: (context: {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
+    deviceAccessedId?: string | null;
     deviceState?: any;
     topologyConnections?: any[];
     topologyDevices?: any[];
@@ -200,6 +201,7 @@ export function useExamMode(): UseExamModeReturn {
   const checkTasks = useCallback((context: {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
+    deviceAccessedId?: string | null;
     deviceState?: any;
     topologyConnections?: any[];
     topologyDevices?: any[];
