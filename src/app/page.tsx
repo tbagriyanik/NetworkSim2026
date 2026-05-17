@@ -4534,7 +4534,7 @@ ${state.bannerMOTD}
           />}
 
           {/* Main Content - Fits between header and footer with scroll */}
-          <main className={`overflow-hidden flex flex-col min-h-0 h-[calc(100vh-44px)] pt-[72px] ${activeTab === 'topology' ? 'md:pt-[120px]' : 'md:pt-[72px]'}`}>
+          <main className={`overflow-hidden flex flex-col min-h-0 h-[calc(100vh-44px)] pt-[72px] ${activeTab === 'topology' ? 'md:pt-[130px]' : 'md:pt-[72px]'}`}>
             <div className="w-full flex-1 flex flex-col min-h-0 overflow-hidden">
               {/* Tab Content - Always render but hide non-active */}
               <div className={`flex-1 flex flex-col min-h-0 ${activeTab === 'topology' ? 'flex' : 'hidden'} print:flex`}>

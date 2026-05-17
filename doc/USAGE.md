@@ -118,6 +118,7 @@
 - **F1** anywhere toggles the help panel / Her yerde F1 yardım panelini açar
 - **ESC** closes modals and deselects / ESC modal kapatır ve seçimi iptal eder
 - **?** in CLI or CMD shows available commands / CLI veya CMD'de `?` komutları gösterir
+- **CLI Suggestions** show valid commands when you make a typo / CLI hataları yaptığınızda benzer geçerli komutları önerir
 - **Tab** auto-completes commands / `Tab` komutları tamamlar
 - **Ctrl + Drag** snaps devices to 16px grid / `Ctrl + Drag` cihazları ızgaraya yapıştırır
 - **Double-click** any device to open its panel / Cihaza çift tık paneli açar

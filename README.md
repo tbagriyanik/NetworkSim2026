@@ -10,6 +10,7 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 **Live app:** [network2026.vercel.app](https://network2026.vercel.app)
 
 Latest Updates (2026-05-17):
+- **Canvas Layout Rendering**: Resolved stacking and overlapping issues to ensure the network canvas renders perfectly within bounded areas without bleeding underneath the header and toolbars on both mobile and wide-screen resolutions.
 - **CLI Smart Terminal Suggestions**: Intelligent command typo estimation system that suggests valid available commands and subcommands directly below CLI error messages.
 - **Smooth Window Dragging**: Completely disabled edge snapping across all draggable modals and mini popovers (PC terminals, unified switch/router configurations, exam panels, ping diagnostics) to ensure a premium, non-snapping dragging experience.
 - **Exam Editor & File Open**: Full mobile responsive layout for the Exam Editor, frozen timer state upon exam completion, and dual extension `.json` / `.exam` file import capabilities.
