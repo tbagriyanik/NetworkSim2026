@@ -145,6 +145,7 @@ doc/                 # Project documentation
 - ✅ Öğretmen tarafı sınav oluşturma ve düzenleme editörü
 - ✅ Proje → Sınav dönüştürme
 - ✅ Öğrenci sınav dağıtımı (.json / .exam dosya formatı)
+- ✅ Gelişmiş sınav içe aktarma: akıllı PC IP çıkarma, bağlantı ayrıştırma, not çıkarma, ağırlıklı puanlama
 - ✅ Zamanlayıcı, puanlama ve sınav bittiğinde dondurulan sonuç ekranı
 - ✅ Mobil uyumlu sınav yönetimi ve görev yeniden sıralama
 
@@ -165,11 +166,17 @@ doc/                 # Project documentation
 - ✅ Not stil özelleştirmesi
 - ✅ Undo/Redo desteği
 
+### Başarım Sistemi (Achievements)
+- ✅ Rozet/badge sistemi ile kullanıcı başarımları
+- ✅ İzlenebilir kilometre taşları ve ödül bildirimleri
+- ✅ Profil ilerleme takibi
+
 ### Gelişmiş Özellikler
 - ✅ Zoom ve pan (fare tekerleği / klavye)
 - ✅ Multi-select (Shift + tık)
 - ✅ Tuval seçimi (orta tık + sürükle)
 - ✅ Pürüzsüz pencere sürükleme (edge snapping kaldırıldı)
+- ✅ PC servis kalıcılığı (DHCP/DNS/HTTP ayarları yenilemede korunur)
 - ✅ Dark/Light mode
 - ✅ Turkish/English support
 - ✅ Offline storage

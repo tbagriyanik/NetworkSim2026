@@ -1,6 +1,6 @@
 # Network Simulator 2026
 
-![Version](https://img.shields.io/badge/version-1.6.4-blue)
+![Version](https://img.shields.io/badge/version-1.6.5-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%206.0%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Total Lines](https://img.shields.io/badge/total--lines-104000-lightgrey)
@@ -9,13 +9,13 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 **Live app:** [network2026.vercel.app](https://network2026.vercel.app)
 
-Latest Updates (2026-05-17):
-- **Exam Mode**: Teacher exam editor with `.json` / `.exam` dual-extension file import, mobile-responsive layout, and secure student distribution.
-- **Project → Exam Conversion**: Convert any existing network project into a timed exam with scoring, task extraction, and reorderable steps.
+Latest Updates (2026-05-18):
+- **Başarım Sistemi**: Achievement/badge system with trackable milestones, reward notifications, and profile progress tracking.
+- **Exam Import Enhancements**: Improved `.json` / `.exam` import with smarter PC IP extraction, connection parsing, note extraction, and weighted scoring balance.
+- **PC Services Persistence**: PC service configurations (DHCP, DNS, HTTP) now persist across network refreshes.
+- **Exam Mode**: Teacher exam editor, project-to-exam conversion, mobile-responsive layout, and secure student distribution.
 - **Guided Mode & Tutorial Wizard**: Step-by-step guided lessons with gamification points, progress tracking, and hint system.
 - **Intelligent CLI Non-AI Assistant**: Fuzzy-matched command suggestions and device-aware subcommand hints shown below CLI error messages.
-- **Smooth Window Dragging**: Edge snapping fully disabled across all draggable modals and popovers (PC terminals, exam panels, configs, ping diagnostics).
-- **Canvas Layout Rendering**: Network canvas renders perfectly within bounded areas without bleeding under header and toolbars on all resolutions.
 
 ---
 

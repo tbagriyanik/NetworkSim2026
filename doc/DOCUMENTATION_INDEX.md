@@ -371,8 +371,8 @@ Kod/
 
 ## 📅 Güncelleme Tarihi
 
-**Son Güncelleme**: 2026-05-15
-**Versiyon**: 1.1.0
+**Son Güncelleme**: 2026-05-18
+**Versiyon**: 1.2.0
 **Durum**: ✅ Tamamlandı
 
 ---

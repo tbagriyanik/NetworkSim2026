@@ -564,5 +564,5 @@ Detaylı bilgi için `ERROR_HANDLING_GUIDE.md` dosyasını okuyun.
 
 ---
 
-**Güncelleme Tarihi**: 2026-05-03  
-**Versiyon**: 1.0
+**Güncelleme Tarihi**: 2026-05-18  
+**Versiyon**: 1.2

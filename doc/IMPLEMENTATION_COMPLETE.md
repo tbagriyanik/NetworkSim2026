@@ -1,8 +1,8 @@
 # ✅ Hata Kontrolü & UI/UX İyileştirme - Uygulama Tamamlandı
 
-**Tarih**: 2026-05-15
+**Tarih**: 2026-05-18
 **Durum**: ✅ **TAMAMLANDI**  
-**Versiyon**: 1.1.0
+**Versiyon**: 1.2.0
 
 ---
 
@@ -456,8 +456,8 @@ Uygulamada kapsamlı hata kontrolü ve UI/UX iyileştirmeleri başarıyla uygula
 
 ---
 
-**Güncelleme Tarihi**: 2026-05-15
-**Versiyon**: 1.1.0
+**Güncelleme Tarihi**: 2026-05-18
+**Versiyon**: 1.2.0
 **Durum**: ✅ **TAMAMLANDI**  
 **Sonraki Adım**: Faz 5 (Mobil Desteği)
 

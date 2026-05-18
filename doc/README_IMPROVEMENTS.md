@@ -322,8 +322,10 @@ Uygulamada kapsamlı hata kontrolü ve UI/UX iyileştirmeleri başarıyla uygula
 
 ---
 
-**Versiyon**: 1.0.0  
+**Versiyon**: 1.2.0  
+
 **Durum**: ✅ Tamamlandı  
-**Tarih**: 2026-05-03
+
+**Tarih**: 2026-05-18
 
 *Detaylı bilgi için ilgili dokümantasyon dosyalarını okuyun.*
