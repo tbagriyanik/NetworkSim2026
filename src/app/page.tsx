@@ -105,6 +105,8 @@ import { decryptExamData } from '@/lib/network/examMode';
 
 import { DeviceIcon } from '@/components/network/DeviceIcon';
 import { PCInfoPopover, SwitchInfoPopover, RouterInfoPopover } from '@/components/network/DeviceInfoPopovers';
+import { BasarilarimPanel } from '@/components/ui/BasarilarimPanel';
+import { addSessionRecord, addGuidedLessonRecord, addExamRecord, addProjectRecord } from '@/utils/achievementRecords';
 import { AppHeader } from '@/components/network/AppHeader';
 import { AppFooter } from '@/components/network/AppFooter';
 import { TopologyToolbar } from '@/components/network/TopologyToolbar';
@@ -328,6 +330,10 @@ export default function Home() {
     typeof window !== 'undefined' && localStorage.getItem('lastProjectName') || 'Untitled'
   );
   const [projectSearchQuery, setProjectSearchQuery] = useState('');
+  const [showBasarilarim, setShowBasarilarim] = useState(false);
+
+  // Track session start time for achievement records
+  const sessionStartRef = useRef(Date.now());
 
   // Which overlay panel is on top — last clicked wins
   const [focusedOverlay, setFocusedOverlay] = useState<'refresh' | 'packet' | 'pc-info' | 'router-info' | 'switch-info'>('packet');
@@ -422,6 +428,44 @@ export default function Home() {
       localStorage.setItem('lastProjectName', projectName);
     }
   }, [projectName]);
+
+  // Record session duration on unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const elapsed = Math.floor((Date.now() - sessionStartRef.current) / 1000);
+      if (elapsed >= 10) {
+        try {
+          const existing = JSON.parse(localStorage.getItem('netsim_achievement_records') || '[]');
+          existing.push({ type: 'session', date: new Date().toISOString(), durationSeconds: elapsed });
+          localStorage.setItem('netsim_achievement_records', JSON.stringify(existing));
+        } catch {}
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  // Record guided lesson completion
+  const prevGuidedRef = useRef(activeGuidedProject);
+  useEffect(() => {
+    const prev = prevGuidedRef.current;
+    if (prev && !activeGuidedProject && prev.steps.every(s => s.completed)) {
+      const totalPoints = prev.steps.reduce((sum, s) => sum + (s.points || 0), 0);
+      const earnedPoints = prev.steps.filter(s => s.completed).reduce((sum, s) => sum + (s.points || 0), 0);
+      const lessonName = typeof prev.title === 'string' ? prev.title : (prev.title as any)?.tr || (prev.title as any)?.en || 'Guided Lesson';
+      addGuidedLessonRecord(lessonName, earnedPoints, totalPoints);
+    }
+    prevGuidedRef.current = activeGuidedProject;
+  }, [activeGuidedProject]);
+
+  // Record exam completion
+  useEffect(() => {
+    if (isExamFinished && activeExam) {
+      const maxScore = activeExam.tasks.reduce((sum, t) => sum + t.weight, 0);
+      const examName = typeof activeExam.title === 'string' ? activeExam.title : (activeExam.title as any)?.tr || (activeExam.title as any)?.en || 'Exam';
+      addExamRecord(examName, examScore, maxScore || 100);
+    }
+  }, [isExamFinished, activeExam, examScore]);
 
   const [saveDialog, setSaveDialog] = useState<{
     show: boolean;
@@ -533,6 +577,7 @@ export default function Home() {
     setShowAboutModal(false);
     setShowProjectPicker(false);
     setShowOnboarding(false);
+    setShowBasarilarim(false);
     if (!isExamActive) {
         setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null);
     }
@@ -2316,6 +2361,7 @@ ${state.bannerMOTD}
   // Handle Project Saving (Wrapper)
   function handleSaveProject() {
     handleSaveProjectInternal();
+    addProjectRecord(projectName);
   }
 
   // Get full project data for exam export
@@ -4147,6 +4193,8 @@ ${state.bannerMOTD}
             isPanelMinimized={isPanelMinimized}
             expandPanel={expandPanel}
             setShowAboutModal={setShowAboutModal}
+            showBasarilarim={showBasarilarim}
+            setShowBasarilarim={setShowBasarilarim}
           />
 
           {showProjectPicker && <ProjectPickerDialog
@@ -4806,6 +4854,14 @@ ${state.bannerMOTD}
               setShowOnboarding(true);
               setOnboardingStep(0);
             }}
+          />}
+
+          {showBasarilarim && <BasarilarimPanel
+            t={t}
+            language={language}
+            isDark={isDark}
+            onClose={() => setShowBasarilarim(false)}
+            zIndex={60}
           />}
 
           {isEnvironmentPanelOpen && <EnvironmentSettingsPanel

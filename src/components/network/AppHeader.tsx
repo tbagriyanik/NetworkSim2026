@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from '@/lib/utils';
 import {
-  ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, File, Undo2, Redo2, BookOpen, Leaf, Compass, Info, Sparkles, Cloud, Activity,
+  ChevronDown, ChevronUp, Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, File, Undo2, Redo2, BookOpen, Leaf, Compass, Info, Sparkles, Cloud, Activity, Trophy,
   LetterTextIcon,
   Mail
 } from 'lucide-react';
@@ -67,6 +67,8 @@ interface AppHeaderProps {
   isPanelMinimized: boolean;
   expandPanel: () => void;
   setShowAboutModal: (v: boolean) => void;
+  showBasarilarim: boolean;
+  setShowBasarilarim: (v: boolean) => void;
 }
 
 export function AppHeader({
@@ -80,6 +82,7 @@ export function AppHeader({
   setShowProjectPicker, setShowOnboarding, setOnboardingStep,
   handleRefreshNetwork, setIsEnvironmentPanelOpen,
   isGuidedModeActive, isPanelMinimized, expandPanel, setShowAboutModal,
+  showBasarilarim, setShowBasarilarim,
 }: AppHeaderProps) {
   return (
     <header className={`liquid-glass fixed top-0 left-0 right-0 z-[50] border-b px-5 py-2 pb-0`}>
@@ -216,6 +219,16 @@ export function AppHeader({
                     <TooltipContent className="flex items-center gap-2">
                       <span>{t.saveProject}</span>
                       <ShortcutBadge shortcut="Ctrl+S" variant="success" />
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button aria-label={t.basarilarim} className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-amber-400 hover:bg-slate-700/50' : 'text-slate-500 hover:text-amber-600')} onClick={() => setShowBasarilarim(!showBasarilarim)}>
+                        <Trophy className={`w-4 h-4 ${showBasarilarim ? 'text-amber-500' : ''}`} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="flex items-center gap-2">
+                      <span>{t.basarilarim}</span>
                     </TooltipContent>
                   </Tooltip>
                   <Tooltip>
@@ -421,9 +434,16 @@ export function AppHeader({
                     </div>
                   </div>
 
-                  {/* Group 4: Tour / Help */}
+                  {/* Group 4: Achievements / Tour / Help */}
                   <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-800/30 border-slate-800/50' : 'bg-slate-50 border-slate-200'}`}>
                     <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="secondary"
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap", isDark ? "hover:text-amber-400" : "hover:text-amber-600")}
+                        onClick={() => { setShowBasarilarim(!showBasarilarim); setShowMobileMenu(false); }}
+                      >
+                        <Trophy className="w-3.5 h-3.5" /> {t.basarilarim}
+                      </Button>
                       <Button
                         variant="secondary"
                         className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap", isDark ? "hover:text-cyan-400" : "hover:text-cyan-600")}

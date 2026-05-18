@@ -113,5 +113,6 @@ export { DevicePalette, type DevicePaletteProps } from './DevicePalette';
 export { NetworkCanvas, type NetworkCanvasProps } from './NetworkCanvas';
 export { DeviceConfigurationPanel, type DeviceConfigurationPanelProps } from './DeviceConfigurationPanel';
 export { AchievementPanel, type AchievementPanelProps } from './AchievementPanel';
+export { BasarilarimPanel } from './BasarilarimPanel';
 export { HelpPanel, type HelpPanelProps } from './HelpPanel';
 export { ErrorMessage, ErrorContainer, type ErrorMessageProps, type ErrorContainerProps } from './ErrorMessage';

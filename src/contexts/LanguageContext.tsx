@@ -647,6 +647,10 @@ export interface Translations {
   language: Language;
   intermediate: string;
   advanced: string;
+  basarilarim: string;
+  basarilarimEmpty: string;
+  sessionDuration: string;
+  guidedLesson: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -1293,6 +1297,10 @@ const translations: Record<Language, Translations> = {
     language: 'tr',
     intermediate: 'Orta Seviye',
     advanced: 'İleri Seviye',
+    basarilarim: 'Başarılarım',
+    basarilarimEmpty: 'Henüz kayıt bulunmuyor. Rehberli dersleri tamamlayarak, sınavlara girerek ve projeler kaydederek başarılarınızı burada görebilirsiniz.',
+    sessionDuration: 'Oturum Süresi',
+    guidedLesson: 'Rehberli Ders',
   },
   en: {
     about: 'Help',
@@ -1937,6 +1945,10 @@ const translations: Record<Language, Translations> = {
     language: 'en',
     intermediate: 'Intermediate Level',
     advanced: 'Advanced Level',
+    basarilarim: 'My Achievements',
+    basarilarimEmpty: 'No records yet. Complete guided lessons, take exams, and save projects to see your achievements here.',
+    sessionDuration: 'Session Duration',
+    guidedLesson: 'Guided Lesson',
   }
 };
 
