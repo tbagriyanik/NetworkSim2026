@@ -1015,8 +1015,17 @@ export default function Home() {
     }
   }, [topologyDevices, topologyConnections, topologyNotes, deviceStates, deviceOutputs, pcOutputs, pcHistories, cableInfo, activeDeviceId, activeDeviceType, zoom, pan, activeTab, isAppLoading, pushState]);
 
-  // Initial App Loading State
-  // No longer needed here as it's declared earlier
+  // Show hourglass cursor during app startup
+  useEffect(() => {
+    document.body.style.cursor = 'wait';
+    return () => { document.body.style.cursor = ''; };
+  }, []);
+
+  useEffect(() => {
+    if (!isAppLoading) {
+      document.body.style.cursor = '';
+    }
+  }, [isAppLoading]);
 
   useEffect(() => {
     // Initial loading sequence: short splash, then skeleton, then content.
@@ -3870,6 +3879,7 @@ ${state.bannerMOTD}
     event.target.value = '';
 
     const doLoad = () => {
+      document.body.style.cursor = 'wait';
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -3886,6 +3896,7 @@ ${state.bannerMOTD}
               loadProjectData(projectData.data);
               setHasUnsavedChanges(false);
               setProjectName(projectData.title.en);
+              document.body.style.cursor = '';
               toast({
                 title: language === 'tr' ? 'Sınav Modu Başlatıldı' : 'Exam Mode Started',
                 description: projectData.title[language === 'tr' ? 'tr' : 'en'],
@@ -3902,6 +3913,7 @@ ${state.bannerMOTD}
             closeGuidedMode();
             closeExam();
             setRefreshNetworkReport(null);
+            document.body.style.cursor = '';
             toast({
               title: `"${loadedName}" ${language === 'tr' ? 'projesi yüklendi' : 'project is loaded'}`,
               description: t.fileImportedSuccessfully,
@@ -3912,6 +3924,7 @@ ${state.bannerMOTD}
               window.scrollTo(0, 0);
             }
           } else {
+            document.body.style.cursor = '';
             toast({
               title: t.invalidProjectFile,
               description: t.invalidProjectFile,
@@ -3919,6 +3932,7 @@ ${state.bannerMOTD}
             });
           }
         } catch (error) {
+          document.body.style.cursor = '';
           errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'fileUpload', error: String(error) }));
           toast({
             title: t.loadFailed,
@@ -3983,12 +3997,14 @@ ${state.bannerMOTD}
   }, [startExamProject, closeGuidedMode]);
 
   const handleConvertProjectToExam = useCallback((projectData: any) => {
+    document.body.style.cursor = 'wait';
     closeExam();
     closeGuidedMode();
     const exam = generateExamFromProject(projectData, language);
     startExamProject(exam);
     loadProjectData(projectData);
     toggleEditor(true);
+    document.body.style.cursor = '';
     toast({
       title: language === 'tr' ? 'Proje Dönüştürüldü' : 'Project Converted',
       description: language === 'tr' ? 'Görevler otomatik olarak çıkarıldı ve Sınav Düzenleyici açıldı.' : 'Tasks were automatically extracted and Exam Editor opened.',

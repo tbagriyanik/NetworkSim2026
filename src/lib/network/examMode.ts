@@ -558,6 +558,8 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
 function extractCliCommandsFromNotes(notes: any[]): string[] {
   if (!notes || !Array.isArray(notes)) return [];
 
+  const reservedVlanIds = new Set([1002, 1003, 1004, 1005]);
+
   const knownCliVerbs = [
     'enable', 'disable', 'configure', 'conf', 'hostname', 'interface',
     'ip', 'ipv6', 'vlan', 'name', 'no', 'show', 'do', 'ping', 'traceroute', 'tracert',
@@ -613,6 +615,14 @@ function extractCliCommandsFromNotes(notes: any[]): string[] {
       );
 
       if (matched && !seen.has(lowerLine)) {
+        // Skip reserved VLAN creation (1002-1005)
+        const vlanMatch = lowerLine.match(/^vlan\s+(\d+)$/);
+        if (vlanMatch && reservedVlanIds.has(parseInt(vlanMatch[1]))) continue;
+
+        // Skip reserved VLAN in switchport access (1002-1005)
+        const switchportVlanMatch = lowerLine.match(/^switchport\s+access\s+vlan\s+(\d+)$/);
+        if (switchportVlanMatch && reservedVlanIds.has(parseInt(switchportVlanMatch[1]))) continue;
+
         seen.add(lowerLine);
         commands.push(cleaned);
       }
@@ -703,20 +713,6 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
   // 4. VLAN & Interface Tasks (Simplified)
   if (Array.isArray(projectData.devices)) {
     projectData.devices.forEach((d: any) => {
-      // VLANs
-      if (d.state?.vlans) {
-        Object.values(d.state.vlans).forEach((vlan: any) => {
-          if (vlan.id > 1) {
-            addDeviceTask(d.id,
-              { tr: `VLAN ${vlan.id} Oluşturma`, en: `Create VLAN ${vlan.id}` },
-              { tr: `${d.id} üzerinde VLAN ${vlan.id} (${vlan.name}) oluşturun.`, en: `Create VLAN ${vlan.id} (${vlan.name}) on ${d.id}.` },
-              'command',
-              { commandPattern: `vlan ${vlan.id}` }
-            );
-          }
-        });
-      }
-
       // Interface IPs (Router/L3 Switch) & WLAN
       if (d.state?.ports) {
         Object.values(d.state.ports).forEach((p: any) => {
@@ -790,14 +786,6 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
           }
         }
 
-        if (s.http?.enabled) {
-          addDeviceTask(d.id,
-            { tr: 'HTTP Servisini Etkinleştir', en: 'Enable HTTP Service' },
-            { tr: `${d.id} üzerinde HTTP servisini aktif edin.`, en: `Enable HTTP service on ${d.id}.` },
-            'config',
-            { configKey: 'services.http.enabled', configValue: true }
-          );
-        }
       }
     });
   }
@@ -912,8 +900,8 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
             );
           }
 
-          // Port access VLAN (non-default)
-          if (p.mode === 'access' && p.vlan && p.vlan !== 1) {
+          // Port access VLAN (skip default VLAN 1 and reserved VLANs 1002-1005)
+          if (p.mode === 'access' && p.vlan && p.vlan !== 1 && p.vlan !== 1002 && p.vlan !== 1003 && p.vlan !== 1004 && p.vlan !== 1005) {
             addDeviceTask(d.id,
               { tr: `${p.id} VLAN ${p.vlan}`, en: `${p.id} VLAN ${p.vlan}` },
               { tr: `${d.id} cihazının ${p.id} portunu VLAN ${p.vlan}'a atayın.`, en: `Assign ${d.id} port ${p.id} to VLAN ${p.vlan}.` },

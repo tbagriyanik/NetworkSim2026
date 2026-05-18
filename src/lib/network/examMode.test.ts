@@ -52,10 +52,6 @@ describe('generateExamFromProject', () => {
     expect(connectionTask).toBeDefined();
     expect(connectionTask?.checkParams?.sourceDevice).toBe('pc-1');
 
-    // Check for VLAN task
-    const vlanTask = exam.tasks.find(t => t.checkType === 'command' && t.checkParams?.commandPattern === 'vlan 10');
-    expect(vlanTask).toBeDefined();
-
     // Total weight should be 100
     const totalWeight = exam.tasks.reduce((sum, t) => sum + t.weight, 0);
     expect(totalWeight).toBe(100);
@@ -88,7 +84,6 @@ describe('generateExamFromProject', () => {
     expect(exam.tasks.some(t => t.checkParams?.configKey === 'dhcpPools.LAN.network')).toBe(true);
     expect(exam.tasks.some(t => t.checkParams?.configKey === 'services.dns.enabled')).toBe(true);
     expect(exam.tasks.some(t => t.checkParams?.configKey === 'services.dns.records')).toBe(true);
-    expect(exam.tasks.some(t => t.checkParams?.configKey === 'services.http.enabled')).toBe(true);
     expect(exam.tasks.some(t => t.checkParams?.configKey === 'ports.wlan0.wifi.ssid')).toBe(true);
   });
 
