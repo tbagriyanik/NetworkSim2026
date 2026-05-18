@@ -52,10 +52,6 @@ describe('generateExamFromProject', () => {
     expect(connectionTask).toBeDefined();
     expect(connectionTask?.checkParams?.sourceDevice).toBe('pc-1');
 
-    // Check for PC IP task
-    const ipTask = exam.tasks.find(t => t.checkType === 'config' && t.checkParams?.configKey === 'pc.pc-1.ip');
-    expect(ipTask).toBeDefined();
-
     // Check for VLAN task
     const vlanTask = exam.tasks.find(t => t.checkType === 'command' && t.checkParams?.commandPattern === 'vlan 10');
     expect(vlanTask).toBeDefined();
@@ -191,6 +187,64 @@ describe('generateExamFromProject', () => {
     expect(hostnameTask).toBeDefined();
     const vlanTask = commandTasks.find(t => t.checkParams?.commandPattern === 'vlan 10');
     expect(vlanTask).toBeDefined();
+  });
+
+  it('should extract comprehensive device CLI configurations', () => {
+    const projectData = {
+      devices: [
+        {
+          id: 'switch-1',
+          state: {
+            hostname: 'SW1',
+            security: {
+              enableSecret: 'class',
+              consoleLine: { password: 'console', login: true },
+              vtyLines: { password: 'vty123', login: true, transportInput: ['ssh'] },
+              servicePasswordEncryption: true,
+              users: [{ username: 'admin', password: 'admin123', privilege: 15 }]
+            },
+            ipRouting: true,
+            vtp: { mode: 'server', domain: 'LAB' },
+            ports: {
+              'fa0/1': { id: 'fa0/1', mode: 'trunk', vlan: 1, description: 'To SW2' },
+              'fa0/2': { id: 'fa0/2', mode: 'access', vlan: 10 },
+              'fa0/3': { id: 'fa0/3', mode: 'access', vlan: 1, portSecurity: { enabled: true } }
+            },
+            staticRoutes: [
+              { destination: '10.0.0.0', prefixLength: 24, nextHop: '192.168.1.1' }
+            ]
+          }
+        }
+      ],
+      topology: { devices: [], connections: [] }
+    };
+
+    const exam = generateExamFromProject(projectData, 'en');
+
+    // Security tasks
+    expect(exam.tasks.some(t => t.checkParams?.commandPattern === 'enable secret')).toBe(true);
+    expect(exam.tasks.some(t => t.checkParams?.commandPattern === 'line con 0')).toBe(true);
+    expect(exam.tasks.some(t => t.checkParams?.commandPattern === 'line vty')).toBe(true);
+    expect(exam.tasks.some(t => t.checkParams?.commandPattern === 'service password-encryption')).toBe(true);
+    expect(exam.tasks.some(t => t.checkParams?.commandPattern === 'username admin')).toBe(true);
+
+    // Routing task
+    expect(exam.tasks.some(t => t.checkParams?.commandPattern === 'ip routing')).toBe(true);
+
+    // Static route task
+    expect(exam.tasks.some(t => t.checkParams?.commandPattern === 'ip route 10.0.0.0')).toBe(true);
+
+    // Port tasks
+    expect(exam.tasks.some(t => t.checkParams?.commandPattern === 'switchport mode trunk')).toBe(true);
+    expect(exam.tasks.some(t => t.checkParams?.commandPattern === 'switchport access vlan 10')).toBe(true);
+    expect(exam.tasks.some(t => t.checkParams?.commandPattern === 'switchport port-security')).toBe(true);
+
+    // VTP task
+    expect(exam.tasks.some(t => t.checkParams?.commandPattern === 'vtp mode server')).toBe(true);
+
+    // Total weight should be 100
+    const totalWeight = exam.tasks.reduce((sum, t) => sum + t.weight, 0);
+    expect(totalWeight).toBe(100);
   });
 
   it('should not extract non-command text from notes', () => {

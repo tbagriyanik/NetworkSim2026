@@ -700,23 +700,6 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
       });
   }
 
-  // 3. PC IP Configuration Tasks
-  if (projectData.topology?.devices) {
-    projectData.topology.devices.forEach((d: any) => {
-      if (d.type === 'pc' && d.ip && d.ip !== '0.0.0.0') {
-        addDeviceTask(d.id,
-          { tr: `${d.name} IP Yapılandırması`, en: `${d.name} IP Configuration` },
-          {
-            tr: `${d.name} cihazına ${d.ip}/${d.subnet} IP adresini ve ${d.gateway || 'yok'} gateway değerini atayın.`,
-            en: `Assign IP ${d.ip}/${d.subnet} and gateway ${d.gateway || 'none'} to ${d.name}.`
-          },
-          'config',
-          { configKey: `pc.${d.id}.ip`, configValue: d.ip, subnetMask: d.subnet }
-        );
-      }
-    });
-  }
-
   // 4. VLAN & Interface Tasks (Simplified)
   if (Array.isArray(projectData.devices)) {
     projectData.devices.forEach((d: any) => {
@@ -819,7 +802,171 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
     });
   }
 
-  // 5. CLI Commands from Notes
+  // 5. Comprehensive Device Configuration Tasks (Security, Routing, Ports)
+  if (Array.isArray(projectData.devices)) {
+    projectData.devices.forEach((d: any) => {
+      if (!d.state) return;
+
+      // Security: enable secret
+      if (d.state.security?.enableSecret) {
+        addDeviceTask(d.id,
+          { tr: `Enable Secret`, en: `Enable Secret` },
+          { tr: `${d.id} üzerinde enable secret şifresi belirleyin.`, en: `Set enable secret password on ${d.id}.` },
+          'command',
+          { commandPattern: 'enable secret' }
+        );
+      }
+
+      // Security: console line password
+      if (d.state.security?.consoleLine?.password) {
+        addDeviceTask(d.id,
+          { tr: `Console Şifresi`, en: `Console Password` },
+          { tr: `${d.id} üzerinde console hattına şifre ve login ekleyin.`, en: `Set console line password and login on ${d.id}.` },
+          'command',
+          { commandPattern: 'line con 0' }
+        );
+      }
+
+      // Security: VTY line password
+      if (d.state.security?.vtyLines?.password) {
+        addDeviceTask(d.id,
+          { tr: `VTY Şifresi`, en: `VTY Password` },
+          { tr: `${d.id} üzerinde VTY hatlarına şifre ve login ekleyin.`, en: `Set VTY line password and login on ${d.id}.` },
+          'command',
+          { commandPattern: 'line vty' }
+        );
+      }
+
+      // Security: password encryption
+      if (d.state.security?.servicePasswordEncryption) {
+        addDeviceTask(d.id,
+          { tr: `Şifre Şifreleme`, en: `Password Encryption` },
+          { tr: `${d.id} üzerinde şifre şifrelemeyi etkinleştirin.`, en: `Enable password encryption on ${d.id}.` },
+          'command',
+          { commandPattern: 'service password-encryption' }
+        );
+      }
+
+      // Security: local users
+      if (d.state.security?.users?.length > 0) {
+        d.state.security.users.forEach((u: any) => {
+          addDeviceTask(d.id,
+            { tr: `Kullanıcı: ${u.username}`, en: `User: ${u.username}` },
+            { tr: `${d.id} üzerinde "${u.username}" kullanıcısını oluşturun.`, en: `Create user "${u.username}" on ${d.id}.` },
+            'command',
+            { commandPattern: `username ${u.username}` }
+          );
+        });
+      }
+
+      // Static Routes
+      if (d.state.staticRoutes?.length > 0) {
+        d.state.staticRoutes.forEach((r: any) => {
+          addDeviceTask(d.id,
+            { tr: `Statik Rota: ${r.destination}`, en: `Static Route: ${r.destination}` },
+            { tr: `${d.id} üzerinde ${r.destination}/${r.prefixLength} ağına statik rota ekleyin.`, en: `Add static route to ${r.destination}/${r.prefixLength} on ${d.id}.` },
+            'command',
+            { commandPattern: `ip route ${r.destination}` }
+          );
+        });
+      }
+
+      // IP Routing enabled
+      if (d.state.ipRouting) {
+        addDeviceTask(d.id,
+          { tr: `IP Routing`, en: `IP Routing` },
+          { tr: `${d.id} üzerinde IP routing'i etkinleştirin.`, en: `Enable IP routing on ${d.id}.` },
+          'command',
+          { commandPattern: 'ip routing' }
+        );
+      }
+
+      // Routing Protocol
+      if (d.state.routingProtocol === 'rip') {
+        addDeviceTask(d.id,
+          { tr: `RIP Protokolü`, en: `RIP Protocol` },
+          { tr: `${d.id} üzerinde RIP routing protokolünü yapılandırın.`, en: `Configure RIP routing protocol on ${d.id}.` },
+          'command',
+          { commandPattern: 'router rip' }
+        );
+      }
+      if (d.state.routingProtocol === 'ospf') {
+        addDeviceTask(d.id,
+          { tr: `OSPF Protokolü`, en: `OSPF Protocol` },
+          { tr: `${d.id} üzerinde OSPF routing protokolünü yapılandırın.`, en: `Configure OSPF routing protocol on ${d.id}.` },
+          'command',
+          { commandPattern: 'router ospf' }
+        );
+      }
+
+      // Port configurations
+      if (d.state.ports) {
+        Object.values(d.state.ports).forEach((p: any) => {
+          // Trunk port
+          if (p.mode === 'trunk') {
+            addDeviceTask(d.id,
+              { tr: `${p.id} Trunk`, en: `${p.id} Trunk` },
+              { tr: `${d.id} cihazının ${p.id} portunu trunk moduna alın.`, en: `Configure ${p.id} as trunk port on ${d.id}.` },
+              'command',
+              { commandPattern: `switchport mode trunk` }
+            );
+          }
+
+          // Port access VLAN (non-default)
+          if (p.mode === 'access' && p.vlan && p.vlan !== 1) {
+            addDeviceTask(d.id,
+              { tr: `${p.id} VLAN ${p.vlan}`, en: `${p.id} VLAN ${p.vlan}` },
+              { tr: `${d.id} cihazının ${p.id} portunu VLAN ${p.vlan}'a atayın.`, en: `Assign ${d.id} port ${p.id} to VLAN ${p.vlan}.` },
+              'command',
+              { commandPattern: `switchport access vlan ${p.vlan}` }
+            );
+          }
+
+          // Port description
+          if (p.description) {
+            addDeviceTask(d.id,
+              { tr: `${p.id} Açıklaması`, en: `${p.id} Description` },
+              { tr: `${d.id} cihazının ${p.id} portuna açıklama ekleyin.`, en: `Add description to ${d.id} port ${p.id}.` },
+              'command',
+              { commandPattern: `description ${p.description}` }
+            );
+          }
+
+          // Port-security
+          if (p.portSecurity?.enabled) {
+            addDeviceTask(d.id,
+              { tr: `${p.id} Port Güvenliği`, en: `${p.id} Port Security` },
+              { tr: `${d.id} cihazının ${p.id} portunda port güvenliğini etkinleştirin.`, en: `Enable port security on ${d.id} port ${p.id}.` },
+              'command',
+              { commandPattern: `switchport port-security` }
+            );
+          }
+
+          // Routed port (no switchport)
+          if (p.mode === 'routed') {
+            addDeviceTask(d.id,
+              { tr: `${p.id} Routed Port`, en: `${p.id} Routed Port` },
+              { tr: `${d.id} cihazının ${p.id} portunu routed moda alın.`, en: `Configure ${d.id} port ${p.id} as routed port.` },
+              'command',
+              { commandPattern: `no switchport` }
+            );
+          }
+        });
+      }
+
+      // VTP
+      if (d.state.vtp?.mode && d.state.vtp.mode !== 'transparent') {
+        addDeviceTask(d.id,
+          { tr: `VTP ${d.state.vtp.mode.toUpperCase()}`, en: `VTP ${d.state.vtp.mode.toUpperCase()}` },
+          { tr: `${d.id} üzerinde VTP ${d.state.vtp.mode} modunu yapılandırın.`, en: `Configure VTP ${d.state.vtp.mode} mode on ${d.id}.` },
+          'command',
+          { commandPattern: `vtp mode ${d.state.vtp.mode}` }
+        );
+      }
+    });
+  }
+
+  // 6. CLI Commands from Notes
   const noteCommands = extractCliCommandsFromNotes(projectData.topology?.notes);
   noteCommands.forEach(cmd => {
     addDeviceTask('note-cmd',

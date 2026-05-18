@@ -2607,14 +2607,19 @@ export function PCPanel({
     }
 
     isDhcpEditingRef.current = true;
-    setServiceDhcpPools((prev) => {
-      if (editingDhcpIndex === null) {
-        return [...prev, cleaned];
+    const newPools = editingDhcpIndex === null
+      ? [...serviceDhcpPools, cleaned]
+      : serviceDhcpPools.map((pool, idx) => (idx === editingDhcpIndex ? cleaned : pool));
+    setServiceDhcpPools(newPools);
+    dispatchDeviceConfig({
+      services: {
+        dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+        http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+        dhcp: { enabled: serviceDhcpEnabled, pools: newPools }
       }
-      return prev.map((pool, idx) => (idx === editingDhcpIndex ? cleaned : pool));
     });
 
-    // Reset editing flag after a delay to allow useEffect to sync
+    // Reset editing flag after a delay
     setTimeout(() => {
       isDhcpEditingRef.current = false;
     }, 1000);
@@ -4611,7 +4616,17 @@ export function PCPanel({
                                         type="button"
                                         role="switch"
                                         aria-checked={serviceDnsEnabled}
-                                        onClick={() => setServiceDnsEnabled((prev) => !prev)}
+                                        onClick={() => {
+                                          const enabled = !serviceDnsEnabled;
+                                          setServiceDnsEnabled(enabled);
+                                          dispatchDeviceConfig({
+                                            services: {
+                                              dns: { enabled, records: serviceDnsRecords },
+                                              http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                              dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                                            }
+                                          });
+                                        }}
                                         className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60 ${serviceDnsEnabled
                                           ? 'bg-purple-500/90 border-purple-400'
                                           : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
@@ -4642,13 +4657,18 @@ export function PCPanel({
                                         const domain = dnsFormDomain.trim().toLowerCase();
                                         const address = dnsFormAddress.trim();
                                         if (!domain || !address) return;
-                                        setServiceDnsRecords((prev) => {
-                                          const withoutSame = prev.filter((r) => r.domain.toLowerCase() !== domain);
-                                          return [...withoutSame, { domain, address }];
+                                        const newRecords = serviceDnsRecords.filter((r) => r.domain.toLowerCase() !== domain);
+                                        newRecords.push({ domain, address });
+                                        setServiceDnsRecords(newRecords);
+                                        dispatchDeviceConfig({
+                                          services: {
+                                            dns: { enabled: serviceDnsEnabled, records: newRecords },
+                                            http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                            dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                                          }
                                         });
                                         setDnsFormDomain('');
                                         setDnsFormAddress('');
-                                        // Reset editing flag after a delay
                                         setTimeout(() => { isDnsEditingRef.current = false; }, 1000);
                                       }}
                                     >
@@ -4672,8 +4692,15 @@ export function PCPanel({
                                           variant="outline"
                                           onClick={() => {
                                             isDnsEditingRef.current = true;
-                                            setServiceDnsRecords((prev) => prev.filter((r) => !(r.domain === record.domain && r.address === record.address)));
-                                            // Reset editing flag after a delay
+                                            const newRecords = serviceDnsRecords.filter((r) => !(r.domain === record.domain && r.address === record.address));
+                                            setServiceDnsRecords(newRecords);
+                                            dispatchDeviceConfig({
+                                              services: {
+                                                dns: { enabled: serviceDnsEnabled, records: newRecords },
+                                                http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                                dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                                              }
+                                            });
                                             setTimeout(() => { isDnsEditingRef.current = false; }, 1000);
                                           }}
                                         >
@@ -4708,7 +4735,17 @@ export function PCPanel({
                                         type="button"
                                         role="switch"
                                         aria-checked={serviceHttpEnabled}
-                                        onClick={() => setServiceHttpEnabled((prev) => !prev)}
+                                        onClick={() => {
+                                          const enabled = !serviceHttpEnabled;
+                                          setServiceHttpEnabled(enabled);
+                                          dispatchDeviceConfig({
+                                            services: {
+                                              dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+                                              http: { enabled, content: serviceHttpContent },
+                                              dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                                            }
+                                          });
+                                        }}
                                         className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 ${serviceHttpEnabled
                                           ? 'bg-emerald-500/90 border-emerald-400'
                                           : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
@@ -4775,7 +4812,17 @@ export function PCPanel({
                                         type="button"
                                         role="switch"
                                         aria-checked={serviceDhcpEnabled}
-                                        onClick={() => setServiceDhcpEnabled((prev) => !prev)}
+                                        onClick={() => {
+                                          const enabled = !serviceDhcpEnabled;
+                                          setServiceDhcpEnabled(enabled);
+                                          dispatchDeviceConfig({
+                                            services: {
+                                              dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+                                              http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                              dhcp: { enabled, pools: serviceDhcpPools }
+                                            }
+                                          });
+                                        }}
                                         className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 ${serviceDhcpEnabled
                                           ? 'bg-sky-500/90 border-sky-400'
                                           : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')
@@ -4865,7 +4912,15 @@ export function PCPanel({
                                             variant="outline"
                                             onClick={() => {
                                               isDhcpEditingRef.current = true;
-                                              setServiceDhcpPools((prev) => prev.filter((_, i) => i !== index));
+                                              const newPools = serviceDhcpPools.filter((_, i) => i !== index);
+                                              setServiceDhcpPools(newPools);
+                                              dispatchDeviceConfig({
+                                                services: {
+                                                  dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+                                                  http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                                  dhcp: { enabled: serviceDhcpEnabled, pools: newPools }
+                                                }
+                                              });
                                               if (editingDhcpIndex === index) {
                                                 resetDhcpForm();
                                               }
