@@ -552,8 +552,80 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
 };
 
 /**
+ * Extract CLI commands from note text and return them as a deduplicated array.
+ * Detects lines that start with known Cisco IOS command verbs.
+ */
+function extractCliCommandsFromNotes(notes: any[]): string[] {
+  if (!notes || !Array.isArray(notes)) return [];
+
+  const knownCliVerbs = [
+    'enable', 'disable', 'configure', 'conf', 'hostname', 'interface',
+    'ip', 'ipv6', 'vlan', 'name', 'no', 'show', 'do', 'ping', 'traceroute', 'tracert',
+    'switchport', 'username', 'banner', 'motd', 'line', 'router',
+    'network', 'passive-interface', 'default-router', 'dns-server', 'domain-name',
+    'dhcp', 'lease', 'excluded-address', 'exit', 'end',
+    'write', 'copy', 'reload', 'delete', 'erase',
+    'description', 'speed', 'duplex', 'mac', 'arp',
+    'service', 'login', 'password', 'secret', 'encryption',
+    'ssh', 'crypto', 'access-list', 'access-group', 'nat', 'pool', 'route',
+    'standby', 'vtp', 'spanning-tree', 'channel-group', 'channel-protocol',
+    'wlan', 'station-role', 'security', 'radius', 'aaa',
+    'clock', 'ntp', 'logging', 'snmp', 'privilege',
+    'alias', 'prompt', 'exec', 'timeout', 'history',
+    'terminal', 'monitor', 'debug', 'undebug', 'clear',
+    'lacp', 'pagp', 'lldp', 'cdp', 'mls', 'sdm',
+    'power', 'environment', 'redundancy', 'errdisable',
+    'storm-control', 'port-security', 'dot1x',
+    'default', 'set', 'reset', 'restart', 'startup',
+    'help', 'telnet', 'shutdown', 'state', 'active', 'suspend',
+    'ipconfig', 'ifconfig', 'arp', 'tracert', 'nslookup',
+  ];
+
+  const seen = new Set<string>();
+  const commands: string[] = [];
+
+  for (const note of notes) {
+    if (!note.text) continue;
+    const lines = note.text.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      // Skip lines that clearly aren't CLI commands
+      if (/^[\u{1F000}-\u{1FFFF}]/u.test(trimmed)) continue;
+      if (/^#{1,6}\s/.test(trimmed)) continue;
+      if (/^[A-ZÖÇŞİĞÜ]/u.test(trimmed) && trimmed.length > 3) continue;
+
+      // Remove bullet markers and numbering prefixes
+      const cleaned = trimmed.replace(/^[-–*•]\s*/, '').replace(/^\d+[\.\)]\s*/, '').trim();
+      if (!cleaned) continue;
+
+      // Skip remaining non-command patterns
+      if (/^[A-ZÖÇŞİĞÜ]/u.test(cleaned) && !cleaned.startsWith('IP')) continue;
+      if (/^["'`\(\)\[\]]/.test(cleaned)) continue;
+      if (cleaned.length < 2) continue;
+      if (/^[\d]+$/.test(cleaned)) continue;
+
+      // Check if the line starts with a known CLI verb
+      const lowerLine = cleaned.toLowerCase();
+      const matched = knownCliVerbs.some(verb =>
+        lowerLine === verb || lowerLine.startsWith(verb + ' ')
+      );
+
+      if (matched && !seen.has(lowerLine)) {
+        seen.add(lowerLine);
+        commands.push(cleaned);
+      }
+    }
+  }
+
+  return commands;
+}
+
+/**
  * Automatically generates exam tasks from a project data object.
  * Analyzes connections, hostnames, IP configs, and VLANs.
+ * Also extracts CLI commands from topology notes.
  */
 export function generateExamFromProject(projectData: any, language: 'tr' | 'en'): ExamProject {
   const isTr = language === 'tr';
@@ -605,25 +677,27 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
     });
   }
 
-  // 2. Physical Connection Tasks
+  // 2. Physical Connection Tasks - skip already-active connections
   if (projectData.topology?.connections?.length > 0) {
-    projectData.topology.connections.forEach((conn: any) => {
-      addDeviceTask(conn.sourceDeviceId,
-        { tr: 'Fiziksel Bağlantı', en: 'Physical Connection' },
-        {
-          tr: `${conn.sourceDeviceId} (${conn.sourcePort}) ile ${conn.targetDeviceId} (${conn.targetPort}) arasını bağlayın.`,
-          en: `Connect ${conn.sourceDeviceId} (${conn.sourcePort}) to ${conn.targetDeviceId} (${conn.targetPort}).`
-        },
-        'connection',
-        {
-          sourceDevice: conn.sourceDeviceId,
-          sourcePort: conn.sourcePort,
-          targetDevice: conn.targetDeviceId,
-          targetPort: conn.targetPort,
-          cableType: conn.cableType
-        }
-      );
-    });
+    projectData.topology.connections
+      .filter((conn: any) => !conn.active)
+      .forEach((conn: any) => {
+        addDeviceTask(conn.sourceDeviceId,
+          { tr: 'Fiziksel Bağlantı', en: 'Physical Connection' },
+          {
+            tr: `${conn.sourceDeviceId} (${conn.sourcePort}) ile ${conn.targetDeviceId} (${conn.targetPort}) arasını bağlayın.`,
+            en: `Connect ${conn.sourceDeviceId} (${conn.sourcePort}) to ${conn.targetDeviceId} (${conn.targetPort}).`
+          },
+          'connection',
+          {
+            sourceDevice: conn.sourceDeviceId,
+            sourcePort: conn.sourcePort,
+            targetDevice: conn.targetDeviceId,
+            targetPort: conn.targetPort,
+            cableType: conn.cableType
+          }
+        );
+      });
   }
 
   // 3. PC IP Configuration Tasks
@@ -744,6 +818,17 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
       }
     });
   }
+
+  // 5. CLI Commands from Notes
+  const noteCommands = extractCliCommandsFromNotes(projectData.topology?.notes);
+  noteCommands.forEach(cmd => {
+    addDeviceTask('note-cmd',
+      { tr: `Komut: ${cmd}`, en: `Command: ${cmd}` },
+      { tr: `"${cmd}" komutunu çalıştırın.`, en: `Execute the command "${cmd}".` },
+      'command',
+      { commandPattern: cmd }
+    );
+  });
 
   // Equalize weights to sum up to 100
   if (tasks.length > 0) {

@@ -1,19 +1,21 @@
 # Network Simulator 2026
 
 ![Version](https://img.shields.io/badge/version-1.6.4-blue)
-![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%205.9%20|%20Tailwind%204-green)
+![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%206.0%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-124325-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-104000-lightgrey)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows. TR/EN interface support.
 
 **Live app:** [network2026.vercel.app](https://network2026.vercel.app)
 
 Latest Updates (2026-05-17):
-- **Canvas Layout Rendering**: Resolved stacking and overlapping issues to ensure the network canvas renders perfectly within bounded areas without bleeding underneath the header and toolbars on both mobile and wide-screen resolutions.
-- **CLI Smart Terminal Suggestions**: Intelligent command typo estimation system that suggests valid available commands and subcommands directly below CLI error messages.
-- **Smooth Window Dragging**: Completely disabled edge snapping across all draggable modals and mini popovers (PC terminals, unified switch/router configurations, exam panels, ping diagnostics) to ensure a premium, non-snapping dragging experience.
-- **Exam Editor & File Open**: Full mobile responsive layout for the Exam Editor, frozen timer state upon exam completion, and dual extension `.json` / `.exam` file import capabilities.
+- **Exam Mode**: Teacher exam editor with `.json` / `.exam` dual-extension file import, mobile-responsive layout, and secure student distribution.
+- **Project → Exam Conversion**: Convert any existing network project into a timed exam with scoring, task extraction, and reorderable steps.
+- **Guided Mode & Tutorial Wizard**: Step-by-step guided lessons with gamification points, progress tracking, and hint system.
+- **Intelligent CLI Non-AI Assistant**: Fuzzy-matched command suggestions and device-aware subcommand hints shown below CLI error messages.
+- **Smooth Window Dragging**: Edge snapping fully disabled across all draggable modals and popovers (PC terminals, exam panels, configs, ping diagnostics).
+- **Canvas Layout Rendering**: Network canvas renders perfectly within bounded areas without bleeding under header and toolbars on all resolutions.
 
 ---
 
@@ -27,8 +29,8 @@ npm install && npm run dev
 
 | Metric | Value |
 | --- | ---: |
-| Code | 117,853 |
-| Source Files | 278 |
+| Total Lines | 104,000+ |
+| Source Files | 267 |
 | Example Projects | 39 |
 | Guided Lessons | 8 |
 | Exams | 3 |
@@ -47,7 +49,7 @@ npm install && npm run dev
 
 ## Tech Stack
 
-Next.js 16.2, React 19, TypeScript 5.9, Tailwind CSS 4, Radix UI, Zustand
+Next.js 16.2, React 19, TypeScript 6.0, Tailwind CSS 4, Radix UI, Zustand 5.0
 
 ## License
 

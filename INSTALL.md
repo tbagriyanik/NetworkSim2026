@@ -72,6 +72,12 @@ npm run lint
 npm run build
 ```
 
+### Test
+```bash
+npm run test
+npm run test:watch
+```
+
 ## 🐛 Sorun Giderme
 
 ### PowerShell Execution Policy Hatası
@@ -126,11 +132,32 @@ doc/                 # Project documentation
 ## 🎯 Özellikler
 
 ### Network Simulator
-- ✅ Cihaz yönetimi (PC, Switch, Router)
-- ✅ Bağlantı yönetimi
+- ✅ Cihaz yönetimi (PC, Switch, Router, Firewall, IoT)
+- ✅ Bağlantı yönetimi (Straight, Crossover, Console, WiFi)
 - ✅ VLAN konfigürasyonu
-- ✅ IP routing
+- ✅ IP routing (IPv4/IPv6) — RIP, OSPF, OSPFv3, static
 - ✅ Ping ve connectivity kontrol
+- ✅ Akıllı CLI Terminal Öneri Sistemi (typo algılaması + komut önerileri)
+- ✅ Firewall/Dynamic Access Control Lists
+- ✅ DHCP havuz yönetimi
+
+### Sınav Modu (Exam Mode)
+- ✅ Öğretmen tarafı sınav oluşturma ve düzenleme editörü
+- ✅ Proje → Sınav dönüştürme
+- ✅ Öğrenci sınav dağıtımı (.json / .exam dosya formatı)
+- ✅ Zamanlayıcı, puanlama ve sınav bittiğinde dondurulan sonuç ekranı
+- ✅ Mobil uyumlu sınav yönetimi ve görev yeniden sıralama
+
+### Rehberli Ders Modu (Guided Mode) & Tutorial Wizard
+- ✅ Adım adım rehberli dersler (otomatik doğrulama, puan, ilerleme)
+- ✅ Tutorial Wizard oyunlaştırma (points, progress, gamification)
+- ✅ CLI + Yapılandırma + Bağlantı + Ping adım doğrulamaları
+
+### IoT & Çevre İzleme
+- ✅ WiFi bağlantısı ile IoT cihazları (sensör, aktüatör)
+- ✅ Router AP modunda WiFi ağı (open / WPA2)
+- ✅ DHCP ile otomatik IP atama (IoT + WiFi istemcileri)
+- ✅ IoT Panel (sensor/actuator yönetimi, kurallar)
 
 ### Not Sistemi
 - ✅ Not ekleme/silme
@@ -139,21 +166,26 @@ doc/                 # Project documentation
 - ✅ Undo/Redo desteği
 
 ### Gelişmiş Özellikler
-- ✅ Zoom ve pan
-- ✅ Multi-select
-- ✅ Keyboard shortcuts
+- ✅ Zoom ve pan (fare tekerleği / klavye)
+- ✅ Multi-select (Shift + tık)
+- ✅ Tuval seçimi (orta tık + sürükle)
+- ✅ Pürüzsüz pencere sürükleme (edge snapping kaldırıldı)
 - ✅ Dark/Light mode
 - ✅ Turkish/English support
 - ✅ Offline storage
+- ✅ Canlı uygulama: network2026.vercel.app
 
 ## 📖 Belgelendirme
 
 Detaylı belgelendirme `doc/` klasöründe bulunur:
 
-- **README.md** - Belgelendirme giriş sayfası
-- **DOCUMENTATION_INDEX.md** - Dokümantasyon haritası
-- **GOOGLE_SHEETS_SETUP.md** - Google Sheets kurulum rehberi
+- **README.md** - Dokümantasyon giriş sayfası
+- **USAGE.md** - Kullanım kılavuzu ve klavye kısayolları (TR/EN)
 - **CLI_COMMANDS.md** - CLI komut referansı
+- **L3_SWITCH_CONFIGURATION.md** - L3 Switch yapılandırma rehberi
+- **QUICK_REFERENCE.md** - Hızlı referans ve kod parçacıkları
+- **GOOGLE_SHEETS_SETUP.md** - Google Sheets entegrasyonu kurulumu
+- **DOCUMENTATION_INDEX.md** - Dokümantasyon haritası
 
 ## 🚀 Deployment
 
