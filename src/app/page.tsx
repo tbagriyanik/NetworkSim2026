@@ -106,7 +106,7 @@ import { decryptExamData } from '@/lib/network/examMode';
 import { DeviceIcon } from '@/components/network/DeviceIcon';
 import { PCInfoPopover, SwitchInfoPopover, RouterInfoPopover } from '@/components/network/DeviceInfoPopovers';
 import { BasarilarimPanel } from '@/components/ui/BasarilarimPanel';
-import { addSessionRecord, addGuidedLessonRecord, addExamRecord, addProjectRecord } from '@/utils/achievementRecords';
+import { addSessionDuration, addGuidedLessonRecord, addExamRecord, addProjectRecord } from '@/utils/achievementRecords';
 import { AppHeader } from '@/components/network/AppHeader';
 import { AppFooter } from '@/components/network/AppFooter';
 import { TopologyToolbar } from '@/components/network/TopologyToolbar';
@@ -434,11 +434,7 @@ export default function Home() {
     const handleBeforeUnload = () => {
       const elapsed = Math.floor((Date.now() - sessionStartRef.current) / 1000);
       if (elapsed >= 10) {
-        try {
-          const existing = JSON.parse(localStorage.getItem('netsim_achievement_records') || '[]');
-          existing.push({ type: 'session', date: new Date().toISOString(), durationSeconds: elapsed });
-          localStorage.setItem('netsim_achievement_records', JSON.stringify(existing));
-        } catch {}
+        addSessionDuration(elapsed);
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);

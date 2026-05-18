@@ -1,97 +1,103 @@
 'use client';
 
-export interface SessionRecord {
-  type: 'session';
-  date: string;
-  durationSeconds: number;
-}
-
-export interface ProjectRecord {
-  type: 'project';
-  date: string;
+interface SummaryProject {
   name: string;
+  lastDate: string;
 }
 
-export interface GuidedLessonRecord {
-  type: 'guided-lesson';
-  date: string;
+interface SummaryGuidedLesson {
   name: string;
   points: number;
   totalPoints: number;
+  completedAt: string;
 }
 
-export interface ExamRecord {
-  type: 'exam';
-  date: string;
+interface SummaryExam {
   name: string;
   score: number;
   maxScore: number;
+  completedAt: string;
 }
 
-export type AchievementRecord = SessionRecord | ProjectRecord | GuidedLessonRecord | ExamRecord;
+export interface AchievementSummary {
+  totalSessionSeconds: number;
+  projects: SummaryProject[];
+  guidedLessons: SummaryGuidedLesson[];
+  exams: SummaryExam[];
+}
 
-const STORAGE_KEY = 'netsim_achievement_records';
+const STORAGE_KEY = 'netsim_achievement_summary';
 
-export function getRecords(): AchievementRecord[] {
+export function getSummary(): AchievementSummary {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    return stored ? JSON.parse(stored) : { totalSessionSeconds: 0, projects: [], guidedLessons: [], exams: [] };
   } catch {
-    return [];
+    return { totalSessionSeconds: 0, projects: [], guidedLessons: [], exams: [] };
   }
 }
 
-export function addRecord(record: AchievementRecord): void {
+function saveSummary(summary: AchievementSummary): void {
   try {
-    const records = getRecords();
-    records.push(record);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(summary));
   } catch {
     // storage error
   }
+  try {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('basarilarim-updated'));
+    }
+  } catch {}
 }
 
-export function addSessionRecord(durationSeconds: number): void {
-  addRecord({
-    type: 'session',
-    date: new Date().toISOString(),
-    durationSeconds,
-  });
+export function addSessionDuration(seconds: number): void {
+  const summary = getSummary();
+  summary.totalSessionSeconds += seconds;
+  saveSummary(summary);
 }
 
 export function addProjectRecord(name: string): void {
-  addRecord({
-    type: 'project',
-    date: new Date().toISOString(),
-    name,
-  });
+  const summary = getSummary();
+  const existing = summary.projects.find(p => p.name === name);
+  if (existing) {
+    existing.lastDate = new Date().toISOString();
+  } else {
+    summary.projects.push({ name, lastDate: new Date().toISOString() });
+  }
+  saveSummary(summary);
 }
 
 export function addGuidedLessonRecord(name: string, points: number, totalPoints: number): void {
-  addRecord({
-    type: 'guided-lesson',
-    date: new Date().toISOString(),
-    name,
-    points,
-    totalPoints,
-  });
+  const summary = getSummary();
+  const existing = summary.guidedLessons.find(l => l.name === name);
+  if (existing) {
+    if (points > existing.points) {
+      existing.points = points;
+      existing.totalPoints = totalPoints;
+      existing.completedAt = new Date().toISOString();
+    }
+  } else {
+    summary.guidedLessons.push({ name, points, totalPoints, completedAt: new Date().toISOString() });
+  }
+  saveSummary(summary);
 }
 
 export function addExamRecord(name: string, score: number, maxScore: number): void {
-  addRecord({
-    type: 'exam',
-    date: new Date().toISOString(),
-    name,
-    score,
-    maxScore,
-  });
+  const summary = getSummary();
+  const existing = summary.exams.find(e => e.name === name);
+  if (existing) {
+    if (score > existing.score) {
+      existing.score = score;
+      existing.maxScore = maxScore;
+      existing.completedAt = new Date().toISOString();
+    }
+  } else {
+    summary.exams.push({ name, score, maxScore, completedAt: new Date().toISOString() });
+  }
+  saveSummary(summary);
 }
 
-export function getRecordsSorted(): AchievementRecord[] {
-  return getRecords().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-}
-
-export function clearRecords(): void {
+export function clearSummary(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch {
