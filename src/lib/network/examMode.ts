@@ -581,6 +581,7 @@ function extractCliCommandsFromNotes(notes: any[]): string[] {
     'default', 'set', 'reset', 'restart', 'startup',
     'help', 'telnet', 'shutdown', 'state', 'active', 'suspend',
     'ipconfig', 'ifconfig', 'arp', 'tracert', 'nslookup',
+    'ip host', 'wget', 'curl', 'snake', 'ssh', 'crypto',
   ];
 
   const seen = new Set<string>();
@@ -603,7 +604,7 @@ function extractCliCommandsFromNotes(notes: any[]): string[] {
       if (!cleaned) continue;
 
       // Skip remaining non-command patterns
-      if (/^[A-ZÖÇŞİĞÜ]/u.test(cleaned) && !cleaned.startsWith('IP')) continue;
+      if (/^[A-ZÖÇŞİĞÜ]/u.test(cleaned) && !cleaned.startsWith('IP') && !cleaned.startsWith('PC-')) continue;
       if (/^["'`\(\)\[\]]/.test(cleaned)) continue;
       if (cleaned.length < 2) continue;
       if (/^[\d]+$/.test(cleaned)) continue;
@@ -630,6 +631,133 @@ function extractCliCommandsFromNotes(notes: any[]): string[] {
   }
 
   return commands;
+}
+
+/**
+ * Extract PC IP configuration information from note text.
+ * Parses patterns like "PC-1: IP 192.168.1.10, Subnet 255.255.255.0"
+ * or "PC-1: IP 192.168.1.10, DNS 192.168.1.10"
+ * or "PC-1 → IP: 192.168.1.10 /24"
+ * Returns an array of { deviceId, ip, subnet, gateway, dns } objects.
+ */
+interface NotePcConfig {
+  deviceId: string;
+  ip?: string;
+  subnet?: string;
+  gateway?: string;
+  dns?: string;
+}
+
+function extractPcConfigsFromNotes(notes: any[]): NotePcConfig[] {
+  if (!notes || !Array.isArray(notes)) return [];
+  const configs: NotePcConfig[] = [];
+  const seen = new Set<string>();
+
+  for (const note of notes) {
+    if (!note.text) continue;
+    const lines = note.text.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      // Remove numbering prefixes like "1) ", "1. ", "- ", "* "
+      const cleaned = trimmed.replace(/^[-–*•\d]+[\.\)]\s*/, '').trim();
+      if (!cleaned) continue;
+
+      // Pattern: "PC-X: IP a.b.c.d, Subnet w.x.y.z"
+      // or "PC-X: IP a.b.c.d, DNS w.x.y.z"
+      // or "PC-X: IP a.b.c.d, Subnet w.x.y.z, Gateway a.b.c.d"
+      const pcMatch = cleaned.match(/^(PC-[\w-]+)\s*[:\-–→]\s*IP\s+([\d.]+)/i);
+      if (pcMatch) {
+        const deviceId = pcMatch[1].toLowerCase();
+        const ip = pcMatch[2];
+        if (!seen.has(deviceId)) {
+          seen.add(deviceId);
+          configs.push({ deviceId, ip });
+        } else {
+          const existing = configs.find(c => c.deviceId === deviceId);
+          if (existing) existing.ip = ip;
+        }
+
+        // Extract Subnet from same line
+        const subnetMatch = cleaned.match(/Subnet\s+([\d.]+)/i);
+        if (subnetMatch) {
+          const existing = configs.find(c => c.deviceId === deviceId);
+          if (existing) existing.subnet = subnetMatch[1];
+        }
+
+        // Extract Gateway from same line
+        const gwMatch = cleaned.match(/Gateway\s+([\d.]+)/i);
+        if (gwMatch) {
+          const existing = configs.find(c => c.deviceId === deviceId);
+          if (existing) existing.gateway = gwMatch[1];
+        }
+
+        // Extract DNS from same line
+        const dnsMatch = cleaned.match(/DNS\s+([\d.]+)/i);
+        if (dnsMatch) {
+          const existing = configs.find(c => c.deviceId === deviceId);
+          if (existing) existing.dns = dnsMatch[1];
+        }
+      }
+    }
+  }
+  return configs;
+}
+
+/**
+ * Extract connection information from note text.
+ * Parses patterns like "PC-1 (eth0) ile Switch-1 (fa0/1) arasını bağlayın"
+ * Returns an array of { sourceDevice, sourcePort, targetDevice, targetPort } objects.
+ */
+interface NoteConnectionInfo {
+  sourceDevice: string;
+  sourcePort?: string;
+  targetDevice: string;
+  targetPort?: string;
+}
+
+function extractConnectionsFromNotes(notes: any[]): NoteConnectionInfo[] {
+  if (!notes || !Array.isArray(notes)) return [];
+  const connections: NoteConnectionInfo[] = [];
+  const seen = new Set<string>();
+
+  for (const note of notes) {
+    if (!note.text) continue;
+    const lines = note.text.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      // Remove numbering prefixes like "3) ", "1. ", "- ", "* "
+      const cleaned = trimmed.replace(/^[-–*•\d]+[\.\)]\s*/, '').trim();
+      if (!cleaned) continue;
+
+      // Pattern: "PC-1 (eth0) ile Switch-1 (fa0/1) arasını bağlayın"
+      // or "PC-1 → Switch-1"
+      // or "PC-1 bağla Switch-1"
+      const connMatch = cleaned.match(/([\w-]+)\s*(?:\((\w+)\))?\s*(?:ile|→|bağla|bağlayın|connect)\s+([\w-]+)\s*(?:\((\w+)\))?/i);
+      if (connMatch) {
+        const source = connMatch[1].toLowerCase();
+        const sourcePort = connMatch[2]?.toLowerCase();
+        const target = connMatch[3]?.toLowerCase();
+        const targetPort = connMatch[4]?.toLowerCase();
+        if (source && target) {
+          const key = `${source}-${target}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            connections.push({
+              sourceDevice: source,
+              sourcePort: sourcePort || undefined,
+              targetDevice: target,
+              targetPort: targetPort || undefined,
+            });
+          }
+        }
+      }
+    }
+  }
+  return connections;
 }
 
 /**
@@ -709,6 +837,73 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
         );
       });
   }
+
+  // 2b. Connection tasks extracted from notes
+  const noteConnections = extractConnectionsFromNotes(projectData.topology?.notes);
+  noteConnections.forEach(conn => {
+    addDeviceTask(conn.sourceDevice,
+      { tr: 'Fiziksel Bağlantı (Not)', en: 'Physical Connection (Note)' },
+      {
+        tr: `${conn.sourceDevice} (${conn.sourcePort || 'uygun port'}) ile ${conn.targetDevice} (${conn.targetPort || 'uygun port'}) arasını bağlayın.`,
+        en: `Connect ${conn.sourceDevice} (${conn.sourcePort || 'appropriate port'}) to ${conn.targetDevice} (${conn.targetPort || 'appropriate port'}).`
+      },
+      'connection',
+      {
+        sourceDevice: conn.sourceDevice,
+        sourcePort: conn.sourcePort,
+        targetDevice: conn.targetDevice,
+        targetPort: conn.targetPort,
+      }
+    );
+  });
+
+  // 3. PC IP Configuration Tasks from Topology Devices
+  if (projectData.topology?.devices?.length > 0) {
+    projectData.topology.devices.forEach((d: any) => {
+      if (d.type === 'pc' && d.ip && d.ip !== '') {
+        addDeviceTask(d.id,
+          { tr: `${d.name || d.id} IP Yapılandırması`, en: `${d.name || d.id} IP Configuration` },
+          {
+            tr: `${d.name || d.id} cihazına IP ${d.ip}${d.subnet ? ', Subnet ' + d.subnet : ''}${d.gateway ? ', Gateway ' + d.gateway : ''} atayın.`,
+            en: `Assign IP ${d.ip}${d.subnet ? ', Subnet ' + d.subnet : ''}${d.gateway ? ', Gateway ' + d.gateway : ''} to ${d.name || d.id}.`
+          },
+          'config',
+          {
+            configKey: `pc.${d.id}.ip`,
+            configValue: d.ip,
+            subnetMask: d.subnet,
+          }
+        );
+      }
+    });
+  }
+
+  // 3b. PC IP Configuration Tasks from Notes
+  const notePcConfigs = extractPcConfigsFromNotes(projectData.topology?.notes);
+  notePcConfigs.forEach(pcConfig => {
+    // Only add if a topology device with this id exists and has matching ip
+    const topoDevice = projectData.topology?.devices?.find((d: any) =>
+      d.id === pcConfig.deviceId || d.id === pcConfig.deviceId
+    );
+    if (topoDevice && topoDevice.ip && topoDevice.ip !== '') {
+      // Already added from topology data above
+      return;
+    }
+    const deviceLabel = pcConfig.deviceId.toUpperCase();
+    addDeviceTask(pcConfig.deviceId,
+      { tr: `${deviceLabel} IP Yapılandırması`, en: `${deviceLabel} IP Configuration` },
+      {
+        tr: `${deviceLabel} cihazına IP ${pcConfig.ip}${pcConfig.subnet ? ', Subnet ' + pcConfig.subnet : ''}${pcConfig.gateway ? ', Gateway ' + pcConfig.gateway : ''}${pcConfig.dns ? ', DNS ' + pcConfig.dns : ''} atayın.`,
+        en: `Assign IP ${pcConfig.ip}${pcConfig.subnet ? ', Subnet ' + pcConfig.subnet : ''}${pcConfig.gateway ? ', Gateway ' + pcConfig.gateway : ''}${pcConfig.dns ? ', DNS ' + pcConfig.dns : ''} to ${deviceLabel}.`
+      },
+      'config',
+      {
+        configKey: `pc.${pcConfig.deviceId}.ip`,
+        configValue: pcConfig.ip,
+        subnetMask: pcConfig.subnet,
+      }
+    );
+  });
 
   // 4. VLAN & Interface Tasks (Simplified)
   if (Array.isArray(projectData.devices)) {
@@ -965,15 +1160,70 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
     );
   });
 
-  // Equalize weights to sum up to 100
+  // Smart weight balancing based on task complexity
   if (tasks.length > 0) {
-    const baseWeight = Math.floor(100 / tasks.length);
-    tasks.forEach(t => t.weight = baseWeight);
+    // Priority-based weight assignment
+    // High priority (2x weight): routing, security, static routes, trunk
+    // Medium priority (1.5x weight): VLAN, DHCP, DNS, port-security, VTP
+    // Normal priority (1x weight): hostname, IP configs, connections, show commands, notes
+    const highPriorityPatterns = [
+      'ip route ', 'ip routing', 'router rip', 'router ospf',
+      'static route', 'statik rota',
+      'enable secret',
+      'switchport mode trunk', 'trunk',
+      'port-security', 'port security',
+      'no switchport', 'routed port',
+      'ip dhcp pool',
+    ];
+    const mediumPriorityPatterns = [
+      ' vlan', 'VLAN',
+      'switchport access vlan',
+      'dhcp', 'DHCP',
+      'dns-server', 'dns server', 'dns record', 'DNS',
+      'vtp mode', 'VTP',
+      'username', 'kullanıcı',
+      'line con', 'line vty', 'console şifre', 'vty şifre',
+      'ip host',
+      'ip domain',
+      'service dhcp',
+      'ssh',
+      'password-encryption', 'password encryption',
+    ];
 
-    // Add remainder to the first task
-    const total = tasks.reduce((sum, t) => sum + t.weight, 0);
-    if (total < 100) {
-      tasks[0].weight += (100 - total);
+    let highCount = 0, mediumCount = 0, normalCount = 0;
+
+    tasks.forEach(t => {
+      const text = `${t.title.tr} ${t.title.en} ${t.checkParams?.commandPattern || ''} ${t.checkParams?.configKey || ''}`;
+      const isHigh = highPriorityPatterns.some(p => text.includes(p));
+      const isMedium = mediumPriorityPatterns.some(p => text.includes(p));
+
+      if (isHigh) { t.weight = 3; highCount++; }
+      else if (isMedium) { t.weight = 2; mediumCount++; }
+      else { t.weight = 1; normalCount++; }
+    });
+
+    // Calculate total raw weight and scale to 100
+    const rawTotal = tasks.reduce((sum, t) => sum + t.weight, 0);
+    if (rawTotal > 0) {
+      let assigned = 0;
+      tasks.forEach((t, i) => {
+        const scaled = Math.round((t.weight / rawTotal) * 100);
+        t.weight = scaled;
+        assigned += scaled;
+      });
+      // Adjust remainder to reach exactly 100
+      const diff = 100 - assigned;
+      if (diff !== 0 && tasks.length > 0) {
+        tasks[tasks.length - 1].weight += diff;
+      }
+      // Ensure no task has 0 weight
+      tasks.forEach(t => { if (t.weight <= 0) t.weight = 1; });
+      // Re-balance if needed after zero-fix
+      const finalTotal = tasks.reduce((sum, t) => sum + t.weight, 0);
+      if (finalTotal !== 100 && tasks.length > 0) {
+        const finalDiff = 100 - finalTotal;
+        tasks[tasks.length - 1].weight += finalDiff;
+      }
     }
   }
 

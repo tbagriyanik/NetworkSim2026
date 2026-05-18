@@ -264,4 +264,129 @@ describe('generateExamFromProject', () => {
     const commandTasks = exam.tasks.filter(t => t.checkType === 'command' && t.id.startsWith('task-note-cmd'));
     expect(commandTasks.length).toBe(0);
   });
+
+  it('should create PC IP config tasks from topology device data', () => {
+    const projectData = {
+      devices: [],
+      topology: {
+        devices: [
+          {
+            id: 'pc-1',
+            type: 'pc',
+            name: 'PC-1',
+            ip: '192.168.1.10',
+            subnet: '255.255.255.0',
+            gateway: '192.168.1.1'
+          },
+          {
+            id: 'pc-2',
+            type: 'pc',
+            name: 'PC-2',
+            ip: '192.168.1.20',
+            subnet: '255.255.255.0',
+            gateway: '192.168.1.1'
+          }
+        ],
+        connections: []
+      }
+    };
+
+    const exam = generateExamFromProject(projectData, 'en');
+
+    const pc1ConfigTask = exam.tasks.find(t => t.checkParams?.configKey === 'pc.pc-1.ip');
+    expect(pc1ConfigTask).toBeDefined();
+    expect(pc1ConfigTask?.checkParams?.configValue).toBe('192.168.1.10');
+
+    const pc2ConfigTask = exam.tasks.find(t => t.checkParams?.configKey === 'pc.pc-2.ip');
+    expect(pc2ConfigTask).toBeDefined();
+    expect(pc2ConfigTask?.checkParams?.configValue).toBe('192.168.1.20');
+
+    const totalWeight = exam.tasks.reduce((sum, t) => sum + t.weight, 0);
+    expect(totalWeight).toBe(100);
+  });
+
+  it('should extract PC config info and connections from note text', () => {
+    const projectData = {
+      devices: [],
+      topology: {
+        devices: [],
+        connections: [],
+        notes: [
+          {
+            id: 'note-1',
+            text: 'Proje Yapımı:\n1) PC-1: IP 192.168.1.10, Subnet 255.255.255.0\n2) PC-2: IP 192.168.1.20, Subnet 255.255.255.0\n3) PC-1 (eth0) ile Switch-1 (fa0/1) arasını bağlayın',
+            x: 100, y: 100, width: 300, height: 200,
+            color: '#fee2e2', font: 'Arial', fontSize: 16, opacity: 1
+          }
+        ]
+      }
+    };
+
+    const exam = generateExamFromProject(projectData, 'en');
+
+    // Should create PC IP config tasks from notes
+    const pc1Task = exam.tasks.find(t => t.checkParams?.configKey === 'pc.pc-1.ip');
+    expect(pc1Task).toBeDefined();
+    expect(pc1Task?.checkParams?.configValue).toBe('192.168.1.10');
+
+    // Should create connection tasks from notes
+    const connTasks = exam.tasks.filter(t => t.checkType === 'connection');
+    expect(connTasks.length).toBeGreaterThanOrEqual(1);
+
+    const totalWeight = exam.tasks.reduce((sum, t) => sum + t.weight, 0);
+    expect(totalWeight).toBe(100);
+  });
+
+  it('should give higher weight to complex tasks like routing and security', () => {
+    const projectData = {
+      devices: [
+        {
+          id: 'router-1',
+          state: {
+            hostname: 'Router-Main',
+            ipRouting: true,
+            staticRoutes: [
+              { destination: '10.0.0.0', prefixLength: 24, nextHop: '192.168.1.1' }
+            ],
+            security: {
+              enableSecret: 'class',
+              servicePasswordEncryption: true,
+            }
+          }
+        }
+      ],
+      topology: {
+        devices: [
+          {
+            id: 'pc-1',
+            type: 'pc',
+            name: 'PC-1',
+            ip: '192.168.1.10',
+            subnet: '255.255.255.0'
+          }
+        ],
+        connections: []
+      }
+    };
+
+    const exam = generateExamFromProject(projectData, 'en');
+
+    // High priority tasks (routing, security) should have higher weight than simple hostname tasks
+    const routingTask = exam.tasks.find(t => t.checkParams?.commandPattern === 'ip routing');
+    const staticRouteTask = exam.tasks.find(t => t.checkParams?.commandPattern?.startsWith('ip route'));
+    const secretTask = exam.tasks.find(t => t.checkParams?.commandPattern === 'enable secret');
+    const encryptionTask = exam.tasks.find(t => t.checkParams?.commandPattern === 'service password-encryption');
+    const hostnameTask = exam.tasks.find(t => t.checkParams?.commandPattern?.startsWith('hostname'));
+
+    // Hostname is a simple task and should have lower or equal weight compared to complex tasks
+    const highPriorityTasks = [routingTask, staticRouteTask, secretTask, encryptionTask].filter(Boolean);
+    if (hostnameTask && highPriorityTasks.length > 0) {
+      highPriorityTasks.forEach(hpTask => {
+        expect(hpTask!.weight).toBeGreaterThanOrEqual(hostnameTask.weight);
+      });
+    }
+
+    const totalWeight = exam.tasks.reduce((sum, t) => sum + t.weight, 0);
+    expect(totalWeight).toBe(100);
+  });
 });
