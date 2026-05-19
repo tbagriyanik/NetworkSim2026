@@ -377,9 +377,15 @@ export const commandPatterns: Record<string, CommandPattern> = {
   // Router config subcommands
   'network': {
     pattern: /^network\s+([0-9.]+)(?:\s+([0-9.]+))?(?:\s+area\s+(\d+)|(?:\s+mask\s+([0-9.]+)))?$/i,
-    modes: ['router-config', 'dhcp-config'],
+    modes: ['router-config'],
     minArgs: 1,
     maxArgs: 4
+  },
+  'dhcp-config network': {
+    pattern: /^network\s+(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)$/i,
+    modes: ['dhcp-config'],
+    minArgs: 2,
+    maxArgs: 2
   },
   'neighbor remote-as': {
     pattern: /^neighbor\s+([0-9.]+)\s+remote-as\s+(\d+)$/i,
@@ -426,14 +432,14 @@ export const commandPatterns: Record<string, CommandPattern> = {
   'default-information originate': {
     pattern: /^default-information\s+originate$/i,
     modes: ['router-config'],
-    minArgs: 1,
-    maxArgs: 1
+    minArgs: 0,
+    maxArgs: 0
   },
   'default-information always': {
     pattern: /^default-information\s+always$/i,
     modes: ['router-config'],
-    minArgs: 1,
-    maxArgs: 1
+    minArgs: 0,
+    maxArgs: 0
   },
 
   // Alias for subcommands in router config

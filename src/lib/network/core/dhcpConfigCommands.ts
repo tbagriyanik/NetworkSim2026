@@ -134,6 +134,7 @@ function cmdDhcpDomainName(state: any, input: string, ctx: any): any {
 
 export const dhcpConfigHandlers: Record<string, CommandHandler> = {
     'network': cmdDhcpNetwork,
+    'dhcp-config network': cmdDhcpNetwork,
     'default-router': cmdDhcpDefaultRouter,
     'dns-server': cmdDhcpDnsServer,
     'lease': cmdDhcpLease,

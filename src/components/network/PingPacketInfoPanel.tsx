@@ -751,25 +751,6 @@ export function buildHopPacketInfos(
         return `${hash.slice(0, 2)}:${hash.slice(2, 4)}:${hash.slice(4, 6)}:${hash.slice(6, 8)}:${hash.slice(8, 10)}:${hash.slice(10, 12)}`.toUpperCase();
     };
 
-    // Generate interface-specific IP addresses for router interfaces
-    const generateInterfaceIp = (deviceId: string, interfaceId: string, hopIndex: number): string => {
-        // Create a deterministic but realistic interface IP based on device ID and hop
-        const hash = deviceId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const baseOctet = 10 + (hash % 240); // 10-249 range
-        const secondOctet = 0 + (hopIndex % 255); // Different subnet per interface
-        const thirdOctet = 1 + (hash % 254); // 1-254 range
-        const fourthOctet = 1 + ((hash + hopIndex) % 254); // 1-254 range
-        
-        return `${baseOctet}.${secondOctet}.${thirdOctet}.${fourthOctet}`;
-    };
-
-    const generateInterfaceIpv6 = (deviceId: string, interfaceId: string, hopIndex: number): string => {
-        const hash = deviceId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const second = (hash % 65535).toString(16);
-        const third = (hopIndex % 65535).toString(16);
-        return `2001:db8:${second}:${third}::1`;
-    };
-
     // Check if two devices are connected via wireless
     const isWirelessConnection = (fromId: string, toId: string): boolean => {
         const fromDev = devices.find(d => d.id === fromId);
@@ -816,11 +797,11 @@ export function buildHopPacketInfos(
             (c.sourceDeviceId === path[i + 1] && c.targetDeviceId === path[i])
         );
 
-        const isRouterHop = fromDev?.type === 'router' || toDev?.type === 'router';
+        const isL3Hop = fromDev?.type === 'router' || fromDev?.type === 'switchL3';
         const srcMac = getMac(fromDev, 'AA:BB:CC:DD:EE:FF');
         const dstMac = getMac(toDev, 'FF:EE:DD:CC:BB:AA');
 
-        if (i > 0 && isRouterHop) {
+        if (i > 0 && isL3Hop) {
             ttl = Math.max(1, ttl - 1);
         }
 
@@ -831,19 +812,7 @@ export function buildHopPacketInfos(
         let hopSrcIp = isIPv6 ? (fromDev?.ipv6 || fromDev?.ip || '::') : (fromDev?.ip || '0.0.0.0');
         let hopDstIp = isIPv6 ? (toDev?.ipv6 || toDev?.ip || '::') : (toDev?.ip || '0.0.0.0');
 
-        // If this is a router interface, generate interface-specific IPs
-        if (fromDev?.type === 'router') {
-            // Router interfaces use different IPs than the main device IP
-            // Generate interface IP based on router ID and hop index
-            const interfaceId = `GigabitEthernet0/${i}`;
-            hopSrcIp = isIPv6 ? generateInterfaceIpv6(fromDev.id, interfaceId, i) : generateInterfaceIp(fromDev.id, interfaceId, i);
-        }
-        
-        if (toDev?.type === 'router') {
-            // Router interfaces use different IPs than the main device IP
-            const interfaceId = `GigabitEthernet0/${i + 1}`;
-            hopDstIp = isIPv6 ? generateInterfaceIpv6(toDev.id, interfaceId, i + 1) : generateInterfaceIp(toDev.id, interfaceId, i + 1);
-        }
+        // Use configured device/interface addresses only; do not synthesize router interface IPs.
 
         infos.push({
             hopIndex: i,

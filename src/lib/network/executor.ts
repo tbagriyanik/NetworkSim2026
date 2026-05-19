@@ -1767,10 +1767,6 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
   };
 }
 
-// Import router and DHCP network handlers
-import { cmdRouterNetwork } from './core/routerConfigCommands';
-import { cmdDhcpNetwork } from './core/dhcpConfigCommands';
-
 // --- Placeholder command handlers map ---
 // Combine all handler maps into one unified command registry
 const commandHandlers: Record<string, CommandHandler> = {
@@ -1792,24 +1788,14 @@ const commandHandlers: Record<string, CommandHandler> = {
   // Global configuration commands - AFTER privileged so these take precedence for overlapping commands
   ...globalConfigHandlers,
 
-  // Router configuration commands (OSPF/RIP) - without network (will be added below)
-  ...Object.fromEntries(Object.entries(routerConfigHandlers).filter(([k]) => k !== 'network')),
+  // Router configuration commands (OSPF/RIP)
+  ...routerConfigHandlers,
 
   // Line commands
   ...lineHandlers,
 
-  // DHCP pool sub-commands - without network (will be added below)
+  // DHCP pool sub-commands (exclude generic 'network' to avoid shadowing router 'network')
   ...Object.fromEntries(Object.entries(dhcpConfigHandlers).filter(([k]) => k !== 'network')),
-
-  // Network command wrapper that routes to appropriate handler based on mode
-  'network': (state, input, ctx) => {
-    if (state.currentMode === 'router-config') {
-      return cmdRouterNetwork(state, input, ctx);
-    } else if (state.currentMode === 'dhcp-config') {
-      return cmdDhcpNetwork(state, input, ctx);
-    }
-    return { success: false, error: iosModeError() };
-  }
 };
 
 
