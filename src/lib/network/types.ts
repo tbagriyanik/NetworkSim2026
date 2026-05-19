@@ -68,6 +68,7 @@ export interface Port {
     processId?: string;
     area?: string;
   };
+  ipv6DhcpServer?: string;
   isRoutedPort?: boolean;       // For L3 switch routed ports
   isSubinterface?: boolean;     // For subinterfaces (e.g., gi0/0.10)
   parentInterface?: string;     // Parent interface for subinterfaces
@@ -304,6 +305,10 @@ export interface SwitchState {
     dnsServer?: string;
     leaseTime?: string;
     domainName?: string;
+  }>;
+  currentIpv6DhcpPool?: string;
+  ipv6DhcpPools?: Record<string, {
+    addressPrefix?: string;
   }>;
   // Services (DHCP, DNS, HTTP)
   services?: {

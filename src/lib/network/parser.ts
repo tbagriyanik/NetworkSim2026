@@ -21,6 +21,12 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'show ipv6 dhcp pool': {
+    pattern: /^show\s+ipv6\s+dhcp\s+pool(?:\s+(\S+))?$/i,
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'vlan', 'line'],
+    minArgs: 0,
+    maxArgs: 1
+  },
   'no ipv6 unicast-routing': {
     pattern: /^no\s+ipv6\s+unicast-routing$/i,
     modes: ['config'],
@@ -2592,12 +2598,12 @@ export function checkDeviceCompatibility(commandName: string, state: any): { val
   const unsupported = (cmd: string) => `% Invalid input detected at '^' marker.\n${cmd} is not supported on this ${deviceLabel}.`;
 
   // 1. Router üzerinde Switchport komutları
-  if (deviceType === 'router' && commandName.startsWith('switchport')) {
+  if (deviceType === 'router' && (commandName.startsWith('switchport') || commandName === 'vlan' || commandName === 'no vlan')) {
     return { valid: false, error: unsupported(commandName) };
   }
 
   // 2. L2 Switch üzerinde L3 komutları (no switchport, ip routing, vs.)
-  if (deviceType === 'switchL2' && (commandName === 'no switchport' || commandName === 'ip routing')) {
+  if (deviceType === 'switchL2' && (commandName === 'no switchport' || commandName === 'ip routing' || commandName.startsWith('router ') || commandName.startsWith('ipv6 router '))) {
     return { valid: false, error: unsupported(commandName) };
   }
 

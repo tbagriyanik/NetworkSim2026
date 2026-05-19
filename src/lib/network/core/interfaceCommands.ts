@@ -59,6 +59,11 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'security wpa psk set-key': cmdSecurityWpaPsk,
   'channel': cmdChannel,
   'station-role': cmdStationRole,
+  'ssid': cmdSsid,
+  'encryption': cmdEncryption,
+  'wifi-password': cmdWifiPassword,
+  'wifi-channel': cmdWifiChannel,
+  'wifi-mode': cmdWifiMode,
   // No commands for interface
   'no description': cmdNoDescription,
   'no switchport mode': cmdNoSwitchportMode,
@@ -100,6 +105,7 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'ipv6 address': cmdIpv6Address,
   'ipv6 rip enable': cmdIpv6Rip,
   'ipv6 ospf area': cmdIpv6Ospf,
+  'ipv6 dhcp server': cmdIpv6DhcpServer,
   'no ipv6 rip enable': cmdNoIpv6Rip,
   'no ipv6 ospf area': cmdNoIpv6Ospf,
   'switchport voice': cmdSwitchportVoiceVlan,
@@ -1144,7 +1150,8 @@ function cmdSsid(state: any, input: string, ctx: any): any {
     wifi: { ...port.wifi, ssid }
   }));
 
-  return { success: true, newState: { ports: newPorts } };
+  const updatedState = { ...state, ports: newPorts };
+  return { success: true, newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) } };
 }
 
 /**
@@ -1167,7 +1174,8 @@ function cmdEncryption(state: any, input: string, ctx: any): any {
     wifi: { ...port.wifi, security }
   }));
 
-  return { success: true, newState: { ports: newPorts } };
+  const updatedState = { ...state, ports: newPorts };
+  return { success: true, newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) } };
 }
 
 /**
@@ -1190,7 +1198,8 @@ function cmdWifiPassword(state: any, input: string, ctx: any): any {
     wifi: { ...port.wifi, password }
   }));
 
-  return { success: true, newState: { ports: newPorts } };
+  const updatedState = { ...state, ports: newPorts };
+  return { success: true, newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) } };
 }
 
 /**
@@ -1213,7 +1222,8 @@ function cmdWifiChannel(state: any, input: string, ctx: any): any {
     wifi: { ...port.wifi, channel }
   }));
 
-  return { success: true, newState: { ports: newPorts } };
+  const updatedState = { ...state, ports: newPorts };
+  return { success: true, newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) } };
 }
 
 /**
@@ -1236,7 +1246,8 @@ function cmdWifiMode(state: any, input: string, ctx: any): any {
     wifi: { ...port.wifi, mode: normalizeWifiMode(mode) }
   }));
 
-  return { success: true, newState: { ports: newPorts } };
+  const updatedState = { ...state, ports: newPorts };
+  return { success: true, newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) } };
 }
 
 /**
@@ -2040,6 +2051,24 @@ function cmdNoIpv6Rip(state: any, input: string, ctx: any): any {
   });
   const newPorts = applyToSelectedPorts(state, updatePort);
   return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * IPv6 DHCP Server
+ */
+function cmdIpv6DhcpServer(state: any, input: string, ctx: any): any {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const match = input.match(/^ipv6\s+dhcp\s+server\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid command' };
+
+  const poolName = match[1];
+  const updatePort = (port: any) => ({
+    ...port,
+    ipv6DhcpServer: poolName
+  });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  const updatedState = { ...state, ports: newPorts };
+  return { success: true, newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) } };
 }
 
 /**
