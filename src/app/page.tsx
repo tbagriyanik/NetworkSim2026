@@ -588,7 +588,7 @@ export default function Home() {
     setShowOnboarding(false);
     setShowBasarilarim(false);
     if (!isExamActive) {
-        setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null);
+      setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null);
     }
     window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'escape' } }));
   }, []);
@@ -1943,9 +1943,6 @@ ${state.bannerMOTD}
 
   // Handle command using active device
   const handleCommand = useCallback(async (command: string) => {
-    // Track command for guided mode completion checking
-    setLastCommand(command);
-
     const result = await handleCommandForDevice(
       activeDeviceId,
       command,
@@ -1955,15 +1952,18 @@ ${state.bannerMOTD}
       topologyConnections
     );
 
+    setLastCommand(command);
+
     if (result?.exitSession) {
       setActiveTab('topology');
     }
+    return result;
   }, [activeDeviceId, handleCommandForDevice, topologyDevices, topologyConnections, setActiveDeviceId, setActiveDeviceType, setActiveTab, setLastCommand]);
 
   const prompt = getPrompt(state);
 
   const handleExecuteCommand = useCallback(async (deviceId: string, command: string) => {
-    return handleCommandForDevice(
+    const result = await handleCommandForDevice(
       deviceId,
       command,
       topologyDevices,
@@ -1971,7 +1971,10 @@ ${state.bannerMOTD}
       setActiveDeviceType,
       topologyConnections
     );
-  }, [handleCommandForDevice, topologyDevices, topologyConnections, setActiveDeviceId, setActiveDeviceType]);
+
+    setLastCommand(command);
+    return result;
+  }, [handleCommandForDevice, topologyDevices, topologyConnections, setActiveDeviceId, setActiveDeviceType, setLastCommand]);
 
   const handleReset = () => {
     setConfirmDialog({

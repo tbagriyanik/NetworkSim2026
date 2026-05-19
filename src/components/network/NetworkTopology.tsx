@@ -581,8 +581,19 @@ export function NetworkTopology({
     portId: string;
     point: { x: number; y: number };
   } | null>(null);
+  const connectionStartRef = useRef<{
+    deviceId: string;
+    portId: string;
+    point: { x: number; y: number };
+  } | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const mousePosRef = useRef({ x: 0, y: 0 });
+  const cancelConnectionDrawing = useCallback(() => {
+    isDrawingConnectionRef.current = false;
+    connectionStartRef.current = null;
+    setIsDrawingConnection(false);
+    setConnectionStart(null);
+  }, []);
 
   type ContextMenuMode = 'device' | 'note-edit' | 'canvas';
   type ContextMenuState = {
@@ -1174,8 +1185,7 @@ export function NetworkTopology({
         setPingResult(null);
       }
       if (isDrawingConnectionRef.current) {
-        setIsDrawingConnection(false);
-        setConnectionStart(null);
+        cancelConnectionDrawing();
       }
 
       const currentPan = panRef.current;
@@ -1216,7 +1226,7 @@ export function NetworkTopology({
       setSelectAllMode(false);
     }
     // Right click (button === 2) - handled by onContextMenu event for context menu only
-  }, [openContextMenu, pingMode]);
+  }, [openContextMenu, pingMode, cancelConnectionDrawing]);
 
   // Keep refs in sync with state on every render (no cost - just ref assignment)
   useLayoutEffect(() => {
@@ -1230,9 +1240,10 @@ export function NetworkTopology({
     isActuallyDraggingRef.current = isActuallyDragging;
     snapToGridRef.current = snapToGrid;
     isDrawingConnectionRef.current = isDrawingConnection;
+    connectionStartRef.current = connectionStart;
     // eslint-disable-next-line react-hooks/immutability
     selectedDeviceIdsRef.current = selectedDeviceIds;
-  }, [isPanning, panStart, zoom, pan, draggedDevice, dragStartPos, dragStartDevicePositions, isActuallyDragging, snapToGrid, isDrawingConnection, selectedDeviceIds]);
+  }, [isPanning, panStart, zoom, pan, draggedDevice, dragStartPos, dragStartDevicePositions, isActuallyDragging, snapToGrid, isDrawingConnection, connectionStart, selectedDeviceIds]);
 
   // Handle mouse move for panning and dragging
   // Registered ONCE (empty deps) - reads all mutable values through refs to avoid stale closures
@@ -3528,8 +3539,7 @@ export function NetworkTopology({
         }
         // Also cancel drawing connection
         if (isDrawingConnection) {
-          setIsDrawingConnection(false);
-          setConnectionStart(null);
+          cancelConnectionDrawing();
         }
         // Close palette
         if (isPaletteOpen) {
@@ -3663,7 +3673,7 @@ export function NetworkTopology({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('close-menus-broadcast', handleCloseBroadcast);
     };
-  }, [selectedDeviceIds, selectedNoteIds, deleteDevice, deleteNote, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, pingMode, showPortSelector, toggleFullscreen, isFullscreen, resetView, onFullscreenChange, isExamActive]);
+  }, [selectedDeviceIds, selectedNoteIds, deleteDevice, deleteNote, configuringDevice, cancelDeviceConfig, selectAllDevices, saveToHistory, devices, onDeviceDelete, isDrawingConnection, isPaletteOpen, handleUndo, handleRedo, copyDevice, cutDevice, pasteDevice, pingSource, pingMode, showPortSelector, toggleFullscreen, isFullscreen, resetView, onFullscreenChange, isExamActive, cancelConnectionDrawing]);
 
   // Find path between devices using BFS
   const findPath = useCallback((sourceId: string, targetId: string): string[] | null => {

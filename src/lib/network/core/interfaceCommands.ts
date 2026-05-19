@@ -822,6 +822,12 @@ function cmdIpAddress(state: any, input: string, ctx: any): any {
   if (!isValidIP(ip) || !mask || !isValidIP(mask)) {
     return { success: false, error: '% Invalid IP address format' };
   }
+  if (!isValidSubnetMask(mask)) {
+    return { success: false, error: '% Invalid subnet mask format' };
+  }
+  if (isNetworkOrBroadcastAddress(ip, mask)) {
+    return { success: false, error: '% Invalid host address (network or broadcast address)' };
+  }
 
   // VLAN interface IP assignment
   if (isVlanInterfaceName(state.currentInterface)) {
@@ -1022,6 +1028,29 @@ function prefixToSubnetMask(prefixLength: number): string | null {
     remaining -= bits;
   }
   return mask.join('.');
+}
+
+function ipToNumber(ip: string): number {
+  const parts = ip.split('.').map(Number);
+  return (((parts[0] << 24) >>> 0) + ((parts[1] << 16) >>> 0) + ((parts[2] << 8) >>> 0) + (parts[3] >>> 0)) >>> 0;
+}
+
+function isValidSubnetMask(mask: string): boolean {
+  if (!isValidIP(mask)) return false;
+  const maskNum = ipToNumber(mask);
+  // contiguous-ones mask check
+  const inv = (~maskNum) >>> 0;
+  return (inv & (inv + 1)) === 0;
+}
+
+function isNetworkOrBroadcastAddress(ip: string, mask: string): boolean {
+  const ipNum = ipToNumber(ip);
+  const maskNum = ipToNumber(mask);
+  const hostBits = (~maskNum) >>> 0;
+  // /31 and /32 have no classic network/broadcast host restriction
+  if (hostBits <= 1) return false;
+  const hostPart = ipNum & hostBits;
+  return hostPart === 0 || hostPart === hostBits;
 }
 
 function expandInterfaceRange(rangeSpec: string, state: any): string[] {
