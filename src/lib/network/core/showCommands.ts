@@ -1168,9 +1168,9 @@ function cmdShowIpProtocols(state: any, input: string, ctx: any): any {
     output += '    Gateway         Distance      Last Update\n';
     if (state.dynamicRoutes) {
       state.dynamicRoutes.forEach((route: any) => {
-         if(route.nextHop) {
-             output += `    ${route.nextHop.padEnd(15)} 110           00:00:15\n`;
-         }
+        if (route.nextHop) {
+          output += `    ${route.nextHop.padEnd(15)} 110           00:00:15\n`;
+        }
       });
     }
     output += '  Distance: (default is 110)\n';
@@ -1208,7 +1208,7 @@ function cmdShowIpOspfNeighbor(state: any, input: string, ctx: any): any {
   }
 
   let output = '\nNeighbor ID     Pri   State           Dead Time   Address         Interface\n';
-  
+
   // Simulate neighbors from dynamic routes
   if (state.dynamicRoutes && state.dynamicRoutes.length > 0) {
     const neighbors = new Set<string>();
@@ -1260,9 +1260,8 @@ function cmdShowIpOspf(state: any, input: string, ctx: any): any {
   output += ' Number of areas transit capable is 0\n';
   output += ' External flood list length 0\n';
   output += ' IETF NSF helper support enabled\n';
-  output += ' Cisco NSF helper support enabled\n';
   output += ' Reference bandwidth unit is 100 mbps\n';
-  
+
   output += '    Area BACKBONE(0)\n';
   output += '        Number of interfaces in this area is 1\n';
   output += '        Area has no authentication\n';
@@ -2253,7 +2252,7 @@ function cmdShowSpanningTreeInterface(
   const isDetail = input.toLowerCase().includes('detail');
 
   if (!interfaceName) {
-    return { success: false, error: '% Usage: show spanning-tree interface <interface> [detail]' };
+    return { success: false, error: '% Incomplete command.' };
   }
 
   const port = (state.ports || {})[interfaceName.toLowerCase()];
@@ -2467,7 +2466,7 @@ function cmdDoShow(
     } else if (subCmd.startsWith('ssh')) {
       return cmdShowSsh(state, showCommand, ctx);
     } else {
-      return { success: false, error: '% Invalid show command' };
+      return { success: false, error: "% Invalid input detected at '^' marker." };
     }
   }
 
@@ -3685,4 +3684,5 @@ function cmdShowQueuingInterface(state: any, input: string, ctx: any): any {
   output += '!\n';
   return { success: true, output };
 }
+
 

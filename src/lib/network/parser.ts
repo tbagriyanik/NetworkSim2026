@@ -742,8 +742,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     pattern: /^no\s+switchport$/i,
     modes: ['interface', 'config-if-range'],
     minArgs: 0,
-    maxArgs: 0,
-    capability: 'switching'
+    maxArgs: 0
   },
   'no switchport mode': {
     pattern: /^no\s+switchport\s+mode$/i,
@@ -2584,7 +2583,7 @@ export function checkDeviceCompatibility(commandName: string, state: any): { val
   if (deviceType === 'router' && commandName.startsWith('switchport')) {
     return {
       valid: false,
-      error: `\n% Bu cihaz bir Router'dır. Router arayüzleri 'switchport' (L2) modunda çalışmaz.\n% Router portları varsayılan olarak L3 (ip address) modundadır.\n\n% (This device is a Router. Router interfaces do not support 'switchport' commands.)`
+      error: `% Invalid input detected at '^' marker.`
     };
   }
 
@@ -2592,7 +2591,7 @@ export function checkDeviceCompatibility(commandName: string, state: any): { val
   if (deviceType === 'switchL2' && (commandName === 'no switchport' || commandName === 'ip routing')) {
     return {
       valid: false,
-      error: `\n% Bu cihaz bir Katman 2 (L2) Switch'tir (${model}).\n% L3 yönlendirme veya 'no switchport' (routed port) özelliğini desteklemez.\n% Bu özellikler için Katman 3 (L3) bir switch veya Router kullanmalısınız.\n\n% (This is a Layer 2 switch. It does not support IP routing or 'no switchport' commands.)`
+      error: `% Invalid input detected at '^' marker.`
     };
   }
 
@@ -2600,7 +2599,7 @@ export function checkDeviceCompatibility(commandName: string, state: any): { val
   if (deviceType === 'router' && commandName === 'vlan' && state.currentMode === 'config') {
     return {
       valid: false,
-      error: `\n% Router üzerinde global 'vlan' komutu kullanılmaz.\n% VLAN'lar arası yönlendirme için alt-arayüzleri (sub-interfaces) kullanın.\n% Örn: interface gi0/0.10 -> encapsulation dot1Q 10\n\n% (Routers do not use global 'vlan' commands. Use sub-interfaces for inter-VLAN routing.)`
+      error: `% Invalid input detected at '^' marker.`
     };
   }
 
@@ -2608,7 +2607,7 @@ export function checkDeviceCompatibility(commandName: string, state: any): { val
   if (deviceType === 'firewall' && (commandName.startsWith('switchport') || commandName === 'vlan')) {
     return {
       valid: false,
-      error: `\n% ASA Firewall üzerinde bu komut desteklenmez.\n% ASA arayüz yapılandırması için 'nameif', 'security-level' ve 'ip address' kullanın.\n\n% (This command is not supported on ASA Firewall. Use nameif, security-level, and ip address.)`
+      error: `% Invalid input detected at '^' marker.`
     };
   }
 

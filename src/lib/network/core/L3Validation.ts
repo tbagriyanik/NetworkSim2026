@@ -9,11 +9,23 @@ import { isLayer3Switch, isLayer2Switch } from '../switchModels';
  * Validates that a device supports routed ports (no switchport)
  * Only L3 switches and routers support routed ports
  */
-export function validateNoSwitchportSupport(switchModel: string | undefined): {
+export function validateNoSwitchportSupport(
+    switchModel: string | undefined,
+    deviceType?: string
+): {
     valid: boolean;
     error?: string;
 } {
-    if (!switchModel) return { valid: false, error: 'Switch model not specified' };
+    // If model is missing, allow known L3 device types and block others with IOS-like error.
+    if (!switchModel) {
+        if (deviceType === 'switchL3') {
+            return { valid: true };
+        }
+        return {
+            valid: false,
+            error: "% Invalid input detected at '^' marker."
+        };
+    }
 
     if (!isLayer3Switch(switchModel)) {
         const layer = isLayer2Switch(switchModel) ? 'Layer 2' : 'unknown';

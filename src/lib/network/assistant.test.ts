@@ -27,7 +27,7 @@ describe('CLI Assistant Logic', () => {
     const routerCommand = 'ip routing';
     const result = checkDeviceCompatibility(routerCommand, mockState);
     expect(result.valid).toBe(false);
-    expect(result.error).toContain('L3');
+    expect(result.error).toContain("Invalid input detected at '^' marker.");
   });
 
   it('allows compatible commands', () => {

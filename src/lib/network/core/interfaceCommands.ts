@@ -414,6 +414,11 @@ function cmdNoSwitchport(state: any, input: string, ctx: any): any {
     return { success: false, error: iosModeError() };
   }
 
+  const noSwitchportValidation = validateNoSwitchportSupport(state.switchModel, state.deviceType);
+  if (!noSwitchportValidation.valid) {
+    return { success: false, error: noSwitchportValidation.error || IOS_ERRORS.invalidInput };
+  }
+
   // Don't allow on VLAN interfaces
   if (isVlanInterfaceName(state.currentInterface)) {
     return { success: false, error: '% Invalid command on VLAN interface' };
@@ -870,7 +875,13 @@ function cmdIpAddress(state: any, input: string, ctx: any): any {
 
   // Layer 2 switch check - prevent IP assignment on physical ports
   // Apply this guard only for switch devices; routers must allow physical IP addressing.
-  const isSwitchDevice = state.deviceType === 'switchL2' || state.deviceType === 'switchL3';
+  const isSwitchDevice =
+    state.deviceType === 'switchL2' ||
+    state.deviceType === 'switchL3' ||
+    state.switchLayer === 'L2' ||
+    state.switchLayer === 'L3' ||
+    state.switchModel === 'WS-C2960-24TT-L' ||
+    state.switchModel === 'WS-C3650-24PS';
   if (isSwitchDevice && !canAssignIPToPhysicalPort(state.switchModel)) {
     const port = state.ports[state.currentInterface];
     if (port && (port.type === 'fastethernet' || port.type === 'gigabitethernet')) {

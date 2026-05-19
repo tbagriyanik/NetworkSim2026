@@ -553,7 +553,7 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
 
 /**
  * Extract CLI commands from note text and return them as a deduplicated array.
- * Detects lines that start with known Cisco IOS command verbs.
+ * Detects lines that start with known NOS command verbs.
  */
 function extractCliCommandsFromNotes(notes: any[]): string[] {
   if (!notes || !Array.isArray(notes)) return [];
