@@ -2571,8 +2571,14 @@ export function getInvalidCommandError(
  * Cihaz ve komut uyumluluğunu kontrol eder (Akıllı Yardımcı)
  */
 export function checkDeviceCompatibility(commandName: string, state: any): { valid: boolean; error?: string } {
-  const deviceType = state.deviceType || (state.isLayer3Switch ? 'switchL3' : 'switchL2');
   const model = state.switchModel || '';
+  const isModelL3 = typeof model === 'string' && model.includes('3650');
+  const isLayer3 = state.isLayer3Switch || state.switchLayer === 'L3' || isModelL3;
+  const deviceType = state.deviceType === 'router'
+    ? 'router'
+    : (state.deviceType === 'firewall'
+      ? 'firewall'
+      : (isLayer3 ? 'switchL3' : (state.deviceType || 'switchL2')));
 
   // 1. Router üzerinde Switchport komutları
   if (deviceType === 'router' && commandName.startsWith('switchport')) {

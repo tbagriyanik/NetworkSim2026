@@ -106,6 +106,14 @@ export function useProjectPersistence(options: ProjectPersistenceOptions) {
         if (value === 'fiber') return 'wireless';
         return 'straight';
       };
+      const normalizeDeviceByModel = (device: CanvasDevice): CanvasDevice => {
+        const normalizedType = normalizeDeviceType(device.type);
+        if (normalizedType === 'switchL2' || normalizedType === 'switchL3') {
+          if (device.switchModel === 'WS-C3650-24PS') return { ...device, type: 'switchL3' };
+          if (device.switchModel === 'WS-C2960-24TT-L') return { ...device, type: 'switchL2' };
+        }
+        return { ...device, type: normalizedType };
+      };
 
       if (safeDevices.length > 0) {
         const newDeviceStates = new Map<string, SwitchState>();
@@ -201,10 +209,7 @@ export function useProjectPersistence(options: ProjectPersistenceOptions) {
         const validDevices = safeTopologyDevices.filter(
           (device: CanvasDevice) => device.id && device.id.trim() !== ''
         );
-        const normalizedDevices = applyLinkLocalToUnconfiguredHosts(validDevices.map((device: CanvasDevice) => ({
-          ...device,
-          type: normalizeDeviceType(device.type),
-        })));
+        const normalizedDevices = applyLinkLocalToUnconfiguredHosts(validDevices.map((device: CanvasDevice) => normalizeDeviceByModel(device)));
         setTopologyDevices(normalizedDevices);
         setTopologyConnections(safeTopologyConnections);
         setTopologyNotes(safeTopologyNotes);
@@ -229,10 +234,7 @@ export function useProjectPersistence(options: ProjectPersistenceOptions) {
         const validDevices = safeTopologyDevices.filter(
           (device: CanvasDevice) => device.id && device.id.trim() !== ''
         );
-        const normalizedDevices = applyLinkLocalToUnconfiguredHosts(validDevices.map((device: CanvasDevice) => ({
-          ...device,
-          type: normalizeDeviceType(device.type),
-        })));
+        const normalizedDevices = applyLinkLocalToUnconfiguredHosts(validDevices.map((device: CanvasDevice) => normalizeDeviceByModel(device)));
 
         const stpSyncedDevices = normalizedDevices.map((device) => {
           const deviceState = newDeviceStates.get(device.id);
@@ -267,7 +269,15 @@ export function useProjectPersistence(options: ProjectPersistenceOptions) {
         setActiveDeviceId('');
         setSelectedDevice(null);
       }
-      setActiveDeviceType(normalizeDeviceType(typeof data.activeDeviceType === 'string' ? data.activeDeviceType : 'switchL2'));
+      const resolvedActiveDeviceType = (() => {
+        const rawType = normalizeDeviceType(typeof data.activeDeviceType === 'string' ? data.activeDeviceType : 'switchL2');
+        const activeId = typeof data.activeDeviceId === 'string' ? data.activeDeviceId : '';
+        const activeDevice = safeTopologyDevices.find((d: CanvasDevice) => d.id === activeId);
+        if (activeDevice?.switchModel === 'WS-C3650-24PS') return 'switchL3' as DeviceType;
+        if (activeDevice?.switchModel === 'WS-C2960-24TT-L') return 'switchL2' as DeviceType;
+        return rawType;
+      })();
+      setActiveDeviceType(resolvedActiveDeviceType);
       setActiveTab(resolvedActiveTab);
 
       setShowPCPanel(false);
@@ -281,7 +291,7 @@ export function useProjectPersistence(options: ProjectPersistenceOptions) {
         topologyDevices: applyLinkLocalToUnconfiguredHosts(
           (safeTopologyDevices || [])
             .filter((device: CanvasDevice) => device.id && device.id.trim() !== '')
-            .map((device: CanvasDevice) => ({ ...device, type: normalizeDeviceType(device.type) }))
+            .map((device: CanvasDevice) => normalizeDeviceByModel(device))
         ),
         topologyConnections: safeTopologyConnections,
         topologyNotes: safeTopologyNotes,
@@ -302,7 +312,7 @@ export function useProjectPersistence(options: ProjectPersistenceOptions) {
           }
           : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
         activeDeviceId: shouldKeepActiveDevice ? (typeof data.activeDeviceId === 'string' ? data.activeDeviceId : 'switch-1') : '',
-        activeDeviceType: normalizeDeviceType(typeof data.activeDeviceType === 'string' ? data.activeDeviceType : 'switchL2'),
+        activeDeviceType: resolvedActiveDeviceType,
         zoom: typeof data.zoom === 'number' ? data.zoom : 1.0,
         pan: safePan && typeof safePan.x === 'number' && typeof safePan.y === 'number' ? { x: safePan.x, y: safePan.y } : { x: 0, y: 0 },
         activeTab: resolvedActiveTab
