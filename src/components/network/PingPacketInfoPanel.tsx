@@ -360,6 +360,7 @@ export function PingPacketInfoPanel({
     // Drag support — use DraggableDialogManager
     const panelRef = React.useRef<HTMLDivElement>(null);
     const [pos, setPos] = React.useState<{ x: number; y: number } | null>(null);
+    const [isDraggingPanel, setIsDraggingPanel] = React.useState(false);
 
     // Load saved position on mount
     React.useEffect(() => {
@@ -409,6 +410,17 @@ export function PingPacketInfoPanel({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isVisible, isPaused, onPlay, onPause, onNext, onClose]);
 
+    React.useEffect(() => {
+        if (!isDraggingPanel) return;
+        const stopDragging = () => setIsDraggingPanel(false);
+        window.addEventListener('pointerup', stopDragging);
+        window.addEventListener('pointercancel', stopDragging);
+        return () => {
+            window.removeEventListener('pointerup', stopDragging);
+            window.removeEventListener('pointercancel', stopDragging);
+        };
+    }, [isDraggingPanel]);
+
     // Mobile back button support
     React.useEffect(() => {
         if (!isVisible || !isMobile) return;
@@ -448,7 +460,7 @@ export function PingPacketInfoPanel({
         <div
             ref={panelRef}
             data-draggable-id="ping-packet-info-panel"
-            className={`flex flex-col rounded-2xl overflow-hidden select-none backdrop-blur-md ${isDark
+            className={`flex flex-col rounded-2xl overflow-hidden select-none ${isDraggingPanel ? '' : 'backdrop-blur-md'} ${isDark
                 ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
                 : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
                 }`}
@@ -464,6 +476,9 @@ export function PingPacketInfoPanel({
             <div
                 className={`flex items-center justify-between px-3 py-2 border-b rounded-t-2xl ${isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing select-none'} ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
                 data-drag-handle
+                onPointerDown={() => {
+                    if (!isMobile) setIsDraggingPanel(true);
+                }}
             >
                 {/* Left: icon + title + badges */}
                 <div className="flex items-center gap-2.5">
