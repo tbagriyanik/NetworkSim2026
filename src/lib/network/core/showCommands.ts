@@ -67,6 +67,7 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show ip interface': cmdShowIpInterface,
   'show ipv6 route': cmdShowIpv6Route,
   'show ipv6 interface brief': cmdShowIpv6InterfaceBrief,
+  'show ipv6 dhcp pool': cmdShowIpv6DhcpPool,
   'show mac address-table static': cmdShowMacStatic,
   'show authentication': cmdShowAuth,
   'show sessions': cmdShowSessions,
@@ -3412,6 +3413,36 @@ function cmdShowIpv6Route(state: any, input: string, ctx: any): any {
   } else {
     output += routes.join('\n') + '\n';
   }
+
+  return { success: true, output };
+}
+
+/**
+ * Show IPv6 DHCP Pool
+ */
+function cmdShowIpv6DhcpPool(state: any, input: string, ctx: any): any {
+  const pools = state.ipv6DhcpPools || {};
+  const poolNames = Object.keys(pools);
+  if (poolNames.length === 0) {
+    return { success: true, output: '\n% No IPv6 DHCP pools configured\n' };
+  }
+
+  const match = input.match(/show\s+ipv6\s+dhcp\s+pool\s*(\S+)?/i);
+  const requestedPool = match?.[1];
+
+  let output = '\n';
+  const targetPools = requestedPool ? (pools[requestedPool] ? [requestedPool] : []) : poolNames;
+
+  if (targetPools.length === 0 && requestedPool) {
+    return { success: false, error: `% DHCPv6 pool ${requestedPool} not found` };
+  }
+
+  targetPools.forEach(name => {
+    const p = pools[name];
+    output += `DHCPv6 pool: ${name}\n`;
+    output += `  Address allocation prefix: ${p.addressPrefix || 'not set'}\n`;
+    output += `  Active clients: 0\n`;
+  });
 
   return { success: true, output };
 }

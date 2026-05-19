@@ -132,6 +132,23 @@ function cmdDhcpDomainName(state: any, input: string, ctx: any): any {
     return { success: true, newState: { dhcpPools: pools, runningConfig: buildRunningConfig(updatedState) } };
 }
 
+function cmdIpv6DhcpAddressPrefix(state: any, input: string, ctx: any): any {
+    if (state.currentMode !== 'dhcp-config') {
+        return { success: false, error: iosModeError() };
+    }
+    const match = input.match(/^address\s+prefix\s+([0-9a-fA-F:]+\/\d+)$/i);
+    if (!match) return { success: false, error: '% Invalid address prefix command' };
+
+    const poolName = state.currentIpv6DhcpPool;
+    if (!poolName) return { success: false, error: '% No active IPv6 DHCP pool' };
+
+    const pools = { ...(state.ipv6DhcpPools || {}) };
+    pools[poolName] = { ...(pools[poolName] || {}), addressPrefix: match[1] };
+
+    const updatedState = { ...state, ipv6DhcpPools: pools };
+    return { success: true, newState: { ipv6DhcpPools: pools, runningConfig: buildRunningConfig(updatedState) } };
+}
+
 export const dhcpConfigHandlers: Record<string, CommandHandler> = {
     'network': cmdDhcpNetwork,
     'dhcp-config network': cmdDhcpNetwork,
@@ -139,5 +156,6 @@ export const dhcpConfigHandlers: Record<string, CommandHandler> = {
     'dns-server': cmdDhcpDnsServer,
     'lease': cmdDhcpLease,
     'domain-name': cmdDhcpDomainName,
+    'address prefix': cmdIpv6DhcpAddressPrefix,
 };
 

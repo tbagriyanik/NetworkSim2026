@@ -271,6 +271,9 @@ export function buildRunningConfig(state: SwitchState): string[] {
             if (port.ipv6Ospf?.enabled) {
                 lines.push(` ipv6 ospf ${port.ipv6Ospf.processId} area ${port.ipv6Ospf.area}`);
             }
+            if (port.ipv6DhcpServer) {
+                lines.push(` ipv6 dhcp server ${port.ipv6DhcpServer}`);
+            }
             if (port.shutdown) {
                 lines.push(' shutdown');
             } else if (!isRoutedPort) {
@@ -367,6 +370,17 @@ export function buildRunningConfig(state: SwitchState): string[] {
             }
             if (pool.leaseTime) {
                 lines.push(` lease ${pool.leaseTime}`);
+            }
+            lines.push('!');
+        });
+    }
+
+    // IPv6 DHCP pools
+    if (state.ipv6DhcpPools && Object.keys(state.ipv6DhcpPools).length > 0) {
+        Object.entries(state.ipv6DhcpPools).forEach(([poolName, pool]) => {
+            lines.push(`ipv6 dhcp pool ${poolName}`);
+            if (pool.addressPrefix) {
+                lines.push(`  address prefix ${pool.addressPrefix}`);
             }
             lines.push('!');
         });

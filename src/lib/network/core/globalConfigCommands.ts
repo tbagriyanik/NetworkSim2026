@@ -99,6 +99,7 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'crypto key generate rsa': cmdCryptoKeyGenerateRsa,
   'ip dhcp pool': cmdIpDhcpPool,
   'no ip dhcp pool': cmdNoIpDhcpPool,
+  'ipv6 dhcp pool': cmdIpv6DhcpPool,
   'ip dhcp excluded-address': cmdIpDhcpExcludedAddress,
   'no ip dhcp excluded-address': cmdNoIpDhcpExcludedAddress,
   'cdp timer': cmdStubSuccess,
@@ -1944,6 +1945,34 @@ function cmdNoIpDhcpPool(state: any, input: string, ctx: any): any {
 
   const updatedState = { ...state, dhcpPools: pools, services };
   return { success: true, newState: { dhcpPools: pools, services, runningConfig: buildRunningConfig(updatedState) } };
+}
+
+/**
+ * ipv6 dhcp pool <name> - Enter IPv6 DHCP pool configuration mode
+ */
+function cmdIpv6DhcpPool(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: iosModeError() };
+  }
+  const match = input.match(/^ipv6\s+dhcp\s+pool\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid ipv6 dhcp pool command' };
+
+  const poolName = match[1];
+  const pools = { ...(state.ipv6DhcpPools || {}) };
+  if (!pools[poolName]) {
+    pools[poolName] = {};
+  }
+
+  const updatedState = { ...state, ipv6DhcpPools: pools };
+  return {
+    success: true,
+    newState: {
+      currentMode: 'dhcp-config',
+      currentIpv6DhcpPool: poolName,
+      ipv6DhcpPools: pools,
+      runningConfig: buildRunningConfig(updatedState)
+    }
+  };
 }
 
 /**
