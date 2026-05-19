@@ -462,7 +462,7 @@ export function PingPacketInfoPanel({
         >
             {/* Header — drag handle */}
             <div
-                className={`flex items-center justify-between px-3 py-2 border-b ${isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing select-none'} ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
+                className={`flex items-center justify-between px-3 py-2 border-b rounded-t-2xl ${isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing select-none'} ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
                 data-drag-handle
             >
                 {/* Left: icon + title + badges */}
