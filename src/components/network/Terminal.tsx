@@ -232,7 +232,7 @@ export function Terminal({
     const bootMarkers = output.filter(o => o.content === BOOT_PROGRESS_MARKER);
     return bootMarkers.length === 0 || bootMarkers.every(m => completedBootIds.has(m.id));
   }, [output, bootVersion]);
-  const isInputDisabled = isLoading || isConnectionError || !isBooted;
+  const isInputDisabled = isLoading || isConnectionError;
 
   useEffect(() => {
     if (isBooted && !isInputDisabled) {

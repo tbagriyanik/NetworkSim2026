@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Trophy, X, Clock, BookOpen, FileText, GraduationCap } from 'lucide-react';
 import { useDrag } from '@/hooks/useDrag';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { getSummary } from '@/utils/achievementRecords';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { cn } from '@/lib/utils';
@@ -46,6 +47,7 @@ interface FlatItem {
 }
 
 export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: BasarilarimPanelProps) {
+  const isMobile = useIsMobile();
   const { containerRef, handleDragStart, position, setPosition } = useDrag({
     storageKey: 'basarilarim-panel-pos',
     defaultPosition: { x: 16, y: 96 },
@@ -138,13 +140,15 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
   return (
     <div
       ref={containerRef}
-      className={cn("hidden md:block fixed animate-scale-in")}
-      style={{ bottom: `${position.y}px`, right: `${position.x}px`, zIndex }}
+      className={cn("fixed animate-scale-in")}
+      style={isMobile
+        ? { left: 8, right: 8, top: 80, bottom: 12, zIndex }
+        : { bottom: `${position.y}px`, right: `${position.x}px`, zIndex }}
     >
-      <div className={`rounded-2xl border shadow-2xl w-[340px] flex flex-col backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
+      <div className={`rounded-2xl border shadow-2xl ${isMobile ? 'w-full h-full' : 'w-[340px]'} flex flex-col backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
         <div
-          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab active:cursor-grabbing select-none shrink-0 ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
-          onPointerDown={handleDragStart}
+          className={`flex items-center justify-between px-3 py-2 border-b ${isMobile ? '' : 'cursor-grab active:cursor-grabbing'} select-none shrink-0 ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
+          onPointerDown={isMobile ? undefined : handleDragStart}
         >
           <div className="flex items-center gap-1.5">
             <Trophy className="w-4 h-4 text-amber-500" />
@@ -156,7 +160,7 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
             </button>
           </TooltipWrapper>
         </div>
-        <div className="overflow-y-auto max-h-[280px] custom-scrollbar">
+        <div className={cn("overflow-y-auto custom-scrollbar", isMobile ? "flex-1" : "max-h-[280px]")}>
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
               <Trophy className="w-8 h-8 text-slate-400 mb-2" />

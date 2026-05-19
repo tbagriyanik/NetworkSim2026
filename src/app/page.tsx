@@ -2741,12 +2741,13 @@ ${state.bannerMOTD}
       setShowAboutModal(false);
       setShowProjectPicker(false);
       setShowOnboarding(false);
+      setShowBasarilarim(false);
       window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'back' } }));
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowUnifiedDeviceModal, setShowAboutModal, setShowProjectPicker, setShowOnboarding]);
+  }, [setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowUnifiedDeviceModal, setShowAboutModal, setShowProjectPicker, setShowOnboarding, setShowBasarilarim]);
 
   // History pushState for back button tracking
   useEffect(() => {
@@ -4377,6 +4378,7 @@ ${state.bannerMOTD}
                   : "bg-white/70 border-white/70 backdrop-blur-2xl"
               )}
               data-modal-content
+              data-disable-snap="true"
               style={{
                 position: 'fixed',
                 left: !isMobile ? firewallDrag.position.x : 0,
@@ -4517,6 +4519,7 @@ ${state.bannerMOTD}
                   : "bg-white/70 border-white/70 backdrop-blur-2xl"
               )}
               data-modal-content
+              data-disable-snap="true"
               style={{
                 position: 'fixed',
                 left: !isMobile ? pcDrag.position.x : 0,
