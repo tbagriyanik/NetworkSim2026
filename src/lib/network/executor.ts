@@ -443,11 +443,28 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
 
     'end': [''],
 
-    'do': ['show', 'write', 'ping', 'telnet', 'ssh', 'traceroute', 'debug', 'undebug'],
+    'do': ['show', 'clear', 'write', 'copy', 'ping', 'telnet', 'ssh', 'traceroute', 'reload', 'debug', 'undebug', 'terminal', 'erase', 'delete', 'ip'],
     'do s': ['show', 'ssh'],
     'do sh': ['show'],
     'do sho': ['show'],
-    'do show': ['running-config', 'interfaces', 'vlan', 'version', 'ssh', 'spanning-tree', 'port-security', 'dhcp', 'ip'],
+    'do show': ['running-config', 'startup-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'ipv6', 'spanning-tree', 'port-security', 'wireless', 'ssh', 'etherchannel', 'monitor', 'udld', 'storm-control', 'sdm', 'system', 'mls', 'environment', 'inventory', 'errdisable', 'users', 'history', 'debug', 'access-lists', 'arp', 'clock', 'flash', 'boot', 'ntp', 'snmp', 'archive', 'alias', 'lldp', 'authentication'],
+    'do show ip': ['interface', 'route', 'dhcp', 'verify', 'source', 'arp', 'ospf', 'protocols'],
+    'do show ipv6': ['interface', 'route'],
+    'do show cdp': ['neighbors'],
+    'do show mac': ['address-table'],
+    'do show vlan': ['brief'],
+    'do show interfaces': ['status', 'trunk'],
+    'do show ip interface': ['brief'],
+    'do show ip dhcp': ['snooping', 'pool', 'binding'],
+    'do c': ['clear', 'copy'],
+    'do cl': ['clear'],
+    'do cle': ['clear'],
+    'do clea': ['clear'],
+    'do clear': ['arp-cache', 'mac', 'counters', 'ip'],
+    'do clear mac': ['address-table'],
+    'do co': ['copy'],
+    'do cop': ['copy'],
+    'do copy': ['running-config', 'flash:'],
     'do w': ['write'],
     'do wr': ['write'],
     'do wri': ['write'],
@@ -457,12 +474,18 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'do pi': ['ping'],
     'do pin': ['ping'],
     ...npfx('do', 'ping', ['<ip-address>', '<hostname>']),
-    'do t': ['telnet', 'traceroute'],
-    'do te': ['telnet'],
+    'do t': ['telnet', 'traceroute', 'terminal'],
+    'do te': ['telnet', 'terminal'],
     'do tel': ['telnet'],
     'do teln': ['telnet'],
     'do telne': ['telnet'],
     ...npfx('do', 'telnet', ['<ip-address>', '<hostname>']),
+    'do ter': ['terminal'],
+    'do term': ['terminal'],
+    'do termi': ['terminal'],
+    'do termin': ['terminal'],
+    'do termina': ['terminal'],
+    'do terminal': ['length', 'width', 'monitor'],
     'do tr': ['traceroute'],
     'do tra': ['traceroute'],
     'do trac': ['traceroute'],
@@ -471,6 +494,11 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...npfx('do', 'traceroute', ['<ip-address>', '<hostname>']),
     'do ss': ['ssh'],
     ...npfx('do', 'ssh', ['-l', '<ip-address>', '<hostname>']),
+    'do r': ['reload'],
+    'do re': ['reload'],
+    'do rel': ['reload'],
+    'do relo': ['reload'],
+    'do reloa': ['reload'],
     'do d': ['debug'],
     'do de': ['debug'],
     'do deb': ['debug'],
@@ -483,6 +511,18 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'do undeb': ['undebug'],
     'do undebu': ['undebug'],
     'do undebug': ['all', 'ip', 'spanning-tree', 'cdp'],
+    'do e': ['erase'],
+    'do er': ['erase'],
+    'do era': ['erase'],
+    'do eras': ['erase'],
+    'do erase': ['startup-config', 'nvram'],
+    'do i': ['ip'],
+    'do ip': ['route'],
+    'do ip r': ['route'],
+    'do ip ro': ['route'],
+    'do ip rou': ['route'],
+    'do ip rout': ['route'],
+    'do ip route': ['<network>', '<destination>'],
   },
   interface: {
     '': ['shutdown', 'no', 'speed', 'duplex', 'description', 'switchport', 'cdp', 'spanning-tree', 'channel-group', 'ip', 'ssid', 'encryption', 'wifi-password', 'channel', 'wifi-mode', 'storm-control', 'udld', 'monitor', 'power', 'exit', 'end', 'do', '?', 'help'],
@@ -585,18 +625,49 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
 
     ...pfx('exit', ['exit']),
     'end': [''],
-    ...multi('do', ['show', 'write', 'ping', 'telnet', 'ssh', 'traceroute', 'debug', 'undebug']),
-    ...npfx('do', 'show', ['running-config', 'interfaces', 'vlan', 'spanning-tree', 'port-security']),
+    ...multi('do', ['show', 'clear', 'write', 'copy', 'ping', 'telnet', 'ssh', 'traceroute', 'reload', 'debug', 'undebug', 'terminal', 'erase', 'ip']),
+    'do s': ['show', 'ssh'],
+    'do sh': ['show'],
+    'do sho': ['show'],
+    'do show': ['running-config', 'startup-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'ipv6', 'spanning-tree', 'port-security', 'wireless', 'ssh', 'etherchannel', 'monitor', 'udld', 'storm-control', 'sdm', 'system', 'mls', 'environment', 'inventory', 'errdisable', 'users', 'history', 'debug', 'access-lists', 'arp', 'clock', 'flash', 'boot', 'ntp', 'snmp', 'archive', 'alias', 'lldp', 'authentication'],
+    'do show ip': ['interface', 'route', 'dhcp', 'verify', 'source', 'arp', 'ospf', 'protocols'],
+    'do show ipv6': ['interface', 'route'],
+    'do show cdp': ['neighbors'],
+    'do show mac': ['address-table'],
+    'do show vlan': ['brief'],
+    'do show interfaces': ['status', 'trunk'],
+    'do show ip interface': ['brief'],
+    'do show ip dhcp': ['snooping', 'pool', 'binding'],
+    'do c': ['clear', 'copy'],
+    'do cl': ['clear'],
+    'do cle': ['clear'],
+    'do clea': ['clear'],
+    'do clear': ['arp-cache', 'mac', 'counters', 'ip'],
+    'do clear mac': ['address-table'],
+    'do co': ['copy'],
+    'do cop': ['copy'],
+    'do copy': ['running-config', 'flash:'],
+    'do w': ['write'],
+    'do wr': ['write'],
+    'do wri': ['write'],
+    'do writ': ['write'],
+    'do write': ['memory'],
     'do p': ['ping'],
     'do pi': ['ping'],
     'do pin': ['ping'],
     ...npfx('do', 'ping', ['<ip-address>', '<hostname>']),
-    'do t': ['telnet', 'traceroute'],
-    'do te': ['telnet'],
+    'do t': ['telnet', 'traceroute', 'terminal'],
+    'do te': ['telnet', 'terminal'],
     'do tel': ['telnet'],
     'do teln': ['telnet'],
     'do telne': ['telnet'],
     ...npfx('do', 'telnet', ['<ip-address>', '<hostname>']),
+    'do ter': ['terminal'],
+    'do term': ['terminal'],
+    'do termi': ['terminal'],
+    'do termin': ['terminal'],
+    'do termina': ['terminal'],
+    'do terminal': ['length', 'width', 'monitor'],
     'do tr': ['traceroute'],
     'do tra': ['traceroute'],
     'do trac': ['traceroute'],
@@ -605,6 +676,11 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...npfx('do', 'traceroute', ['<ip-address>', '<hostname>']),
     'do ss': ['ssh'],
     ...npfx('do', 'ssh', ['-l', '<ip-address>', '<hostname>']),
+    'do r': ['reload'],
+    'do re': ['reload'],
+    'do rel': ['reload'],
+    'do relo': ['reload'],
+    'do reloa': ['reload'],
     'do d': ['debug'],
     'do de': ['debug'],
     'do deb': ['debug'],
@@ -617,6 +693,14 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'do undeb': ['undebug'],
     'do undebu': ['undebug'],
     'do undebug': ['all', 'ip', 'spanning-tree', 'cdp'],
+    'do e': ['erase'],
+    'do er': ['erase'],
+    'do era': ['erase'],
+    'do eras': ['erase'],
+    'do erase': ['startup-config', 'nvram'],
+    'do i': ['ip'],
+    'do ip': ['route'],
+    'do ip route': ['<network>', '<destination>'],
   },
   line: {
     '': ['password', 'login', 'no', 'transport', 'exec-timeout', 'logging', 'history', 'privilege', 'exit', 'end', 'do', '?', 'help'],
@@ -651,18 +735,49 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
 
     'exit': [''],
     'end': [''],
-    ...multi('do', ['show', 'write', 'ping', 'telnet', 'ssh', 'traceroute', 'debug', 'undebug']),
-    ...npfx('do', 'show', ['running-config', 'ssh']),
+    ...multi('do', ['show', 'clear', 'write', 'copy', 'ping', 'telnet', 'ssh', 'traceroute', 'reload', 'debug', 'undebug', 'terminal', 'erase', 'ip']),
+    'do s': ['show', 'ssh'],
+    'do sh': ['show'],
+    'do sho': ['show'],
+    'do show': ['running-config', 'startup-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'ipv6', 'spanning-tree', 'port-security', 'wireless', 'ssh', 'etherchannel', 'monitor', 'udld', 'storm-control', 'sdm', 'system', 'mls', 'environment', 'inventory', 'errdisable', 'users', 'history', 'debug', 'access-lists', 'arp', 'clock', 'flash', 'boot', 'ntp', 'snmp', 'archive', 'alias', 'lldp', 'authentication'],
+    'do show ip': ['interface', 'route', 'dhcp', 'verify', 'source', 'arp', 'ospf', 'protocols'],
+    'do show ipv6': ['interface', 'route'],
+    'do show cdp': ['neighbors'],
+    'do show mac': ['address-table'],
+    'do show vlan': ['brief'],
+    'do show interfaces': ['status', 'trunk'],
+    'do show ip interface': ['brief'],
+    'do show ip dhcp': ['snooping', 'pool', 'binding'],
+    'do c': ['clear', 'copy'],
+    'do cl': ['clear'],
+    'do cle': ['clear'],
+    'do clea': ['clear'],
+    'do clear': ['arp-cache', 'mac', 'counters', 'ip'],
+    'do clear mac': ['address-table'],
+    'do co': ['copy'],
+    'do cop': ['copy'],
+    'do copy': ['running-config', 'flash:'],
+    'do w': ['write'],
+    'do wr': ['write'],
+    'do wri': ['write'],
+    'do writ': ['write'],
+    'do write': ['memory'],
     'do p': ['ping'],
     'do pi': ['ping'],
     'do pin': ['ping'],
     ...npfx('do', 'ping', ['<ip-address>', '<hostname>']),
-    'do t': ['telnet', 'traceroute'],
-    'do te': ['telnet'],
+    'do t': ['telnet', 'traceroute', 'terminal'],
+    'do te': ['telnet', 'terminal'],
     'do tel': ['telnet'],
     'do teln': ['telnet'],
     'do telne': ['telnet'],
     ...npfx('do', 'telnet', ['<ip-address>', '<hostname>']),
+    'do ter': ['terminal'],
+    'do term': ['terminal'],
+    'do termi': ['terminal'],
+    'do termin': ['terminal'],
+    'do termina': ['terminal'],
+    'do terminal': ['length', 'width', 'monitor'],
     'do tr': ['traceroute'],
     'do tra': ['traceroute'],
     'do trac': ['traceroute'],
@@ -671,6 +786,11 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...npfx('do', 'traceroute', ['<ip-address>', '<hostname>']),
     'do ss': ['ssh'],
     ...npfx('do', 'ssh', ['-l', '<ip-address>', '<hostname>']),
+    'do r': ['reload'],
+    'do re': ['reload'],
+    'do rel': ['reload'],
+    'do relo': ['reload'],
+    'do reloa': ['reload'],
     'do d': ['debug'],
     'do de': ['debug'],
     'do deb': ['debug'],
@@ -683,6 +803,14 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'do undeb': ['undebug'],
     'do undebu': ['undebug'],
     'do undebug': ['all', 'ip', 'spanning-tree', 'cdp'],
+    'do e': ['erase'],
+    'do er': ['erase'],
+    'do era': ['erase'],
+    'do eras': ['erase'],
+    'do erase': ['startup-config', 'nvram'],
+    'do i': ['ip'],
+    'do ip': ['route'],
+    'do ip route': ['<network>', '<destination>'],
   },
   vlan: {
     '': ['name', 'state', 'no', 'debug', 'undebug', 'exit', 'end', 'do', '?', 'help'],
@@ -694,8 +822,82 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...npfx('no', 'undebug', ['all', 'ip', 'spanning-tree', 'cdp']),
     ...pfx('debug', ['ip', 'spanning-tree', 'all', 'cdp', 'dhcp', 'vlan', 'port-security']),
     ...pfx('undebug', ['all', 'ip', 'spanning-tree', 'cdp']),
-    ...multi('do', ['show', 'write', 'ping', 'telnet', 'ssh', 'traceroute', 'debug', 'undebug']),
-    ...npfx('do', 'show', ['running-config', 'vlan']),
+    ...multi('do', ['show', 'clear', 'write', 'copy', 'ping', 'telnet', 'ssh', 'traceroute', 'reload', 'debug', 'undebug', 'terminal', 'erase', 'ip']),
+    'do s': ['show', 'ssh'],
+    'do sh': ['show'],
+    'do sho': ['show'],
+    'do show': ['running-config', 'startup-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'ipv6', 'spanning-tree', 'port-security', 'wireless', 'ssh', 'etherchannel', 'monitor', 'udld', 'storm-control', 'sdm', 'system', 'mls', 'environment', 'inventory', 'errdisable', 'users', 'history', 'debug', 'access-lists', 'arp', 'clock', 'flash', 'boot', 'ntp', 'snmp', 'archive', 'alias', 'lldp', 'authentication'],
+    'do show ip': ['interface', 'route', 'dhcp', 'verify', 'source', 'arp', 'ospf', 'protocols'],
+    'do show ipv6': ['interface', 'route'],
+    'do show cdp': ['neighbors'],
+    'do show mac': ['address-table'],
+    'do show vlan': ['brief'],
+    'do show interfaces': ['status', 'trunk'],
+    'do show ip interface': ['brief'],
+    'do show ip dhcp': ['snooping', 'pool', 'binding'],
+    'do c': ['clear', 'copy'],
+    'do cl': ['clear'],
+    'do cle': ['clear'],
+    'do clea': ['clear'],
+    'do clear': ['arp-cache', 'mac', 'counters', 'ip'],
+    'do clear mac': ['address-table'],
+    'do co': ['copy'],
+    'do cop': ['copy'],
+    'do copy': ['running-config', 'flash:'],
+    'do w': ['write'],
+    'do wr': ['write'],
+    'do wri': ['write'],
+    'do writ': ['write'],
+    'do write': ['memory'],
+    'do p': ['ping'],
+    'do pi': ['ping'],
+    'do pin': ['ping'],
+    ...npfx('do', 'ping', ['<ip-address>', '<hostname>']),
+    'do t': ['telnet', 'traceroute', 'terminal'],
+    'do te': ['telnet', 'terminal'],
+    'do tel': ['telnet'],
+    'do teln': ['telnet'],
+    'do telne': ['telnet'],
+    ...npfx('do', 'telnet', ['<ip-address>', '<hostname>']),
+    'do ter': ['terminal'],
+    'do term': ['terminal'],
+    'do termi': ['terminal'],
+    'do termin': ['terminal'],
+    'do termina': ['terminal'],
+    'do terminal': ['length', 'width', 'monitor'],
+    'do tr': ['traceroute'],
+    'do tra': ['traceroute'],
+    'do trac': ['traceroute'],
+    'do trace': ['traceroute'],
+    'do tracer': ['traceroute'],
+    ...npfx('do', 'traceroute', ['<ip-address>', '<hostname>']),
+    'do ss': ['ssh'],
+    ...npfx('do', 'ssh', ['-l', '<ip-address>', '<hostname>']),
+    'do r': ['reload'],
+    'do re': ['reload'],
+    'do rel': ['reload'],
+    'do relo': ['reload'],
+    'do reloa': ['reload'],
+    'do d': ['debug'],
+    'do de': ['debug'],
+    'do deb': ['debug'],
+    'do debu': ['debug'],
+    'do debug': ['ip', 'spanning-tree', 'all', 'cdp', 'dhcp', 'vlan', 'port-security'],
+    'do u': ['undebug'],
+    'do un': ['undebug'],
+    'do und': ['undebug'],
+    'do unde': ['undebug'],
+    'do undeb': ['undebug'],
+    'do undebu': ['undebug'],
+    'do undebug': ['all', 'ip', 'spanning-tree', 'cdp'],
+    'do e': ['erase'],
+    'do er': ['erase'],
+    'do era': ['erase'],
+    'do eras': ['erase'],
+    'do erase': ['startup-config', 'nvram'],
+    'do i': ['ip'],
+    'do ip': ['route'],
+    'do ip route': ['<network>', '<destination>'],
     'exit': [''],
     'end': [''],
   },
@@ -711,8 +913,82 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...npfx('no', 'undebug', ['all', 'ip', 'spanning-tree', 'cdp']),
     ...pfx('debug', ['ip', 'spanning-tree', 'all', 'cdp', 'dhcp', 'vlan', 'port-security']),
     ...pfx('undebug', ['all', 'ip', 'spanning-tree', 'cdp']),
-    ...multi('do', ['show', 'write', 'ping', 'telnet', 'ssh', 'traceroute', 'debug', 'undebug']),
-    ...npfx('do', 'show', ['running-config', 'ip']),
+    ...multi('do', ['show', 'clear', 'write', 'copy', 'ping', 'telnet', 'ssh', 'traceroute', 'reload', 'debug', 'undebug', 'terminal', 'erase', 'ip']),
+    'do s': ['show', 'ssh'],
+    'do sh': ['show'],
+    'do sho': ['show'],
+    'do show': ['running-config', 'startup-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'ipv6', 'spanning-tree', 'port-security', 'wireless', 'ssh', 'etherchannel', 'monitor', 'udld', 'storm-control', 'sdm', 'system', 'mls', 'environment', 'inventory', 'errdisable', 'users', 'history', 'debug', 'access-lists', 'arp', 'clock', 'flash', 'boot', 'ntp', 'snmp', 'archive', 'alias', 'lldp', 'authentication'],
+    'do show ip': ['interface', 'route', 'dhcp', 'verify', 'source', 'arp', 'ospf', 'protocols'],
+    'do show ipv6': ['interface', 'route'],
+    'do show cdp': ['neighbors'],
+    'do show mac': ['address-table'],
+    'do show vlan': ['brief'],
+    'do show interfaces': ['status', 'trunk'],
+    'do show ip interface': ['brief'],
+    'do show ip dhcp': ['snooping', 'pool', 'binding'],
+    'do c': ['clear', 'copy'],
+    'do cl': ['clear'],
+    'do cle': ['clear'],
+    'do clea': ['clear'],
+    'do clear': ['arp-cache', 'mac', 'counters', 'ip'],
+    'do clear mac': ['address-table'],
+    'do co': ['copy'],
+    'do cop': ['copy'],
+    'do copy': ['running-config', 'flash:'],
+    'do w': ['write'],
+    'do wr': ['write'],
+    'do wri': ['write'],
+    'do writ': ['write'],
+    'do write': ['memory'],
+    'do p': ['ping'],
+    'do pi': ['ping'],
+    'do pin': ['ping'],
+    ...npfx('do', 'ping', ['<ip-address>', '<hostname>']),
+    'do t': ['telnet', 'traceroute', 'terminal'],
+    'do te': ['telnet', 'terminal'],
+    'do tel': ['telnet'],
+    'do teln': ['telnet'],
+    'do telne': ['telnet'],
+    ...npfx('do', 'telnet', ['<ip-address>', '<hostname>']),
+    'do ter': ['terminal'],
+    'do term': ['terminal'],
+    'do termi': ['terminal'],
+    'do termin': ['terminal'],
+    'do termina': ['terminal'],
+    'do terminal': ['length', 'width', 'monitor'],
+    'do tr': ['traceroute'],
+    'do tra': ['traceroute'],
+    'do trac': ['traceroute'],
+    'do trace': ['traceroute'],
+    'do tracer': ['traceroute'],
+    ...npfx('do', 'traceroute', ['<ip-address>', '<hostname>']),
+    'do ss': ['ssh'],
+    ...npfx('do', 'ssh', ['-l', '<ip-address>', '<hostname>']),
+    'do r': ['reload'],
+    'do re': ['reload'],
+    'do rel': ['reload'],
+    'do relo': ['reload'],
+    'do reloa': ['reload'],
+    'do d': ['debug'],
+    'do de': ['debug'],
+    'do deb': ['debug'],
+    'do debu': ['debug'],
+    'do debug': ['ip', 'spanning-tree', 'all', 'cdp', 'dhcp', 'vlan', 'port-security'],
+    'do u': ['undebug'],
+    'do un': ['undebug'],
+    'do und': ['undebug'],
+    'do unde': ['undebug'],
+    'do undeb': ['undebug'],
+    'do undebu': ['undebug'],
+    'do undebug': ['all', 'ip', 'spanning-tree', 'cdp'],
+    'do e': ['erase'],
+    'do er': ['erase'],
+    'do era': ['erase'],
+    'do eras': ['erase'],
+    'do erase': ['startup-config', 'nvram'],
+    'do i': ['ip'],
+    'do ip': ['route'],
+    'do ip route': ['<network>', '<destination>'],
     ...pfx('exit', ['exit']),
     'end': [''],
   },
@@ -735,54 +1011,324 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...npfx('no', 'undebug', ['all', 'ip', 'spanning-tree', 'cdp']),
     ...pfx('debug', ['ip', 'spanning-tree', 'all', 'cdp', 'dhcp', 'vlan', 'port-security']),
     ...pfx('undebug', ['all', 'ip', 'spanning-tree', 'cdp']),
-    ...multi('do', ['show', 'write', 'ping', 'telnet', 'ssh', 'traceroute', 'debug', 'undebug']),
-    ...npfx('do', 'show', ['running-config', 'ip']),
+    ...multi('do', ['show', 'clear', 'write', 'copy', 'ping', 'telnet', 'ssh', 'traceroute', 'reload', 'debug', 'undebug', 'terminal', 'erase', 'ip']),
+    'do s': ['show', 'ssh'],
+    'do sh': ['show'],
+    'do sho': ['show'],
+    'do show': ['running-config', 'startup-config', 'interfaces', 'vlan', 'version', 'mac', 'cdp', 'ip', 'ipv6', 'spanning-tree', 'port-security', 'wireless', 'ssh', 'etherchannel', 'monitor', 'udld', 'storm-control', 'sdm', 'system', 'mls', 'environment', 'inventory', 'errdisable', 'users', 'history', 'debug', 'access-lists', 'arp', 'clock', 'flash', 'boot', 'ntp', 'snmp', 'archive', 'alias', 'lldp', 'authentication'],
+    'do show ip': ['interface', 'route', 'dhcp', 'verify', 'source', 'arp', 'ospf', 'protocols'],
+    'do show ipv6': ['interface', 'route'],
+    'do show cdp': ['neighbors'],
+    'do show mac': ['address-table'],
+    'do show vlan': ['brief'],
+    'do show interfaces': ['status', 'trunk'],
+    'do show ip interface': ['brief'],
+    'do show ip dhcp': ['snooping', 'pool', 'binding'],
+    'do c': ['clear', 'copy'],
+    'do cl': ['clear'],
+    'do cle': ['clear'],
+    'do clea': ['clear'],
+    'do clear': ['arp-cache', 'mac', 'counters', 'ip'],
+    'do clear mac': ['address-table'],
+    'do co': ['copy'],
+    'do cop': ['copy'],
+    'do copy': ['running-config', 'flash:'],
+    'do w': ['write'],
+    'do wr': ['write'],
+    'do wri': ['write'],
+    'do writ': ['write'],
+    'do write': ['memory'],
+    'do p': ['ping'],
+    'do pi': ['ping'],
+    'do pin': ['ping'],
+    ...npfx('do', 'ping', ['<ip-address>', '<hostname>']),
+    'do t': ['telnet', 'traceroute', 'terminal'],
+    'do te': ['telnet', 'terminal'],
+    'do tel': ['telnet'],
+    'do teln': ['telnet'],
+    'do telne': ['telnet'],
+    ...npfx('do', 'telnet', ['<ip-address>', '<hostname>']),
+    'do ter': ['terminal'],
+    'do term': ['terminal'],
+    'do termi': ['terminal'],
+    'do termin': ['terminal'],
+    'do termina': ['terminal'],
+    'do terminal': ['length', 'width', 'monitor'],
+    'do tr': ['traceroute'],
+    'do tra': ['traceroute'],
+    'do trac': ['traceroute'],
+    'do trace': ['traceroute'],
+    'do tracer': ['traceroute'],
+    ...npfx('do', 'traceroute', ['<ip-address>', '<hostname>']),
+    'do ss': ['ssh'],
+    ...npfx('do', 'ssh', ['-l', '<ip-address>', '<hostname>']),
+    'do r': ['reload'],
+    'do re': ['reload'],
+    'do rel': ['reload'],
+    'do relo': ['reload'],
+    'do reloa': ['reload'],
+    'do d': ['debug'],
+    'do de': ['debug'],
+    'do deb': ['debug'],
+    'do debu': ['debug'],
+    'do debug': ['ip', 'spanning-tree', 'all', 'cdp', 'dhcp', 'vlan', 'port-security'],
+    'do u': ['undebug'],
+    'do un': ['undebug'],
+    'do und': ['undebug'],
+    'do unde': ['undebug'],
+    'do undeb': ['undebug'],
+    'do undebu': ['undebug'],
+    'do undebug': ['all', 'ip', 'spanning-tree', 'cdp'],
+    'do e': ['erase'],
+    'do er': ['erase'],
+    'do era': ['erase'],
+    'do eras': ['erase'],
+    'do erase': ['startup-config', 'nvram'],
+    'do i': ['ip'],
+    'do ip': ['route'],
+    'do ip route': ['<network>', '<destination>'],
     ...pfx('exit', ['exit']),
     'end': [''],
   },
 };
 
+// Command descriptions for help system
+const commandDescriptions: Record<string, Record<string, string>> = {
+  user: {
+    'enable': 'Ayrıcalıklı moda geç (Enable privileged mode)',
+    'exit': 'Oturumu kapat (Exit session)',
+    'show': 'Cihaz bilgilerini göster (Display device information)',
+    'ping': 'Ağ bağlantısını test et (Test network connectivity)',
+    'telnet': 'Telnet ile uzak cihaza bağlan (Connect to remote device via Telnet)',
+    'ssh': 'SSH ile uzak cihaza bağlan (Connect to remote device via SSH)',
+    'traceroute': 'Hedef cihaza giden yolu göster (Display route to destination)',
+    '?': 'Yardım göster (Display help)',
+    'help': 'Yardım göster (Display help)',
+  },
+  privileged: {
+    'configure': 'Yapılandırma moduna gir (Enter configuration mode)',
+    'disable': 'Ayrıcalıklı moddan çık (Exit privileged mode)',
+    'show': 'Cihaz bilgilerini göster (Display device information)',
+    'clear': 'Önbelleği temizle (Clear cache/counters)',
+    'debug': 'Hata ayıklama etkinleştir (Enable debugging)',
+    'undebug': 'Hata ayıklamayı devre dışı bırak (Disable debugging)',
+    'terminal': 'Terminal ayarlarını yapılandır (Configure terminal settings)',
+    'write': 'Yapılandırmayı kaydet (Save configuration)',
+    'ping': 'Ağ bağlantısını test et (Test network connectivity)',
+    'telnet': 'Telnet ile uzak cihaza bağlan (Connect to remote device via Telnet)',
+    'ssh': 'SSH ile uzak cihaza bağlan (Connect to remote device via SSH)',
+    'traceroute': 'Hedef cihaza giden yolu göster (Display route to destination)',
+    'reload': 'Cihazı yeniden başlat (Reboot device)',
+    'exit': 'Oturumu kapat (Exit session)',
+    'copy': 'Dosya kopyala (Copy files)',
+    'erase': 'Dosya sil (Erase files)',
+    'delete': 'Dosya sil (Delete files)',
+    'ip': 'IP protokolü ayarları (IP protocol settings)',
+    '?': 'Yardım göster (Display help)',
+    'help': 'Yardım göster (Display help)',
+  },
+  config: {
+    'hostname': 'Cihaz adını ayarla (Set device hostname)',
+    'interface': 'Arayüz yapılandırmasına gir (Enter interface configuration)',
+    'vlan': 'VLAN yapılandırmasına gir (Enter VLAN configuration)',
+    'enable': 'Enable şifresi ayarla (Set enable password)',
+    'service': 'Hizmet ayarları (Service settings)',
+    'username': 'Kullanıcı adı oluştur (Create username)',
+    'line': 'Hat yapılandırmasına gir (Enter line configuration)',
+    'banner': 'Başlık mesajı ayarla (Set banner message)',
+    'ip': 'IP protokolü ayarları (IP protocol settings)',
+    'ipv6': 'IPv6 protokolü ayarları (IPv6 protocol settings)',
+    'crypto': 'Şifreleme ayarları (Encryption settings)',
+    'snmp-server': 'SNMP sunucusu ayarları (SNMP server settings)',
+    'ntp': 'NTP ayarları (NTP settings)',
+    'clock': 'Saat ayarları (Clock settings)',
+    'archive': 'Arşiv ayarları (Archive settings)',
+    'alias': 'Komut takma adı oluştur (Create command alias)',
+    'macro': 'Makro oluştur (Create macro)',
+    'no': 'Komutu iptal et (Negate command)',
+    'spanning-tree': 'Spanning Tree ayarları (Spanning Tree settings)',
+    'vtp': 'VLAN Trunking Protocol ayarları (VTP settings)',
+    'cdp': 'CDP ayarları (CDP settings)',
+    'exit': 'Yapılandırma modundan çık (Exit configuration mode)',
+    'end': 'Yapılandırma modundan çık (Exit configuration mode)',
+    'do': 'Ayrıcalıklı komut çalıştır (Execute privileged command)',
+    '?': 'Yardım göster (Display help)',
+    'help': 'Yardım göster (Display help)',
+  },
+  interface: {
+    'shutdown': 'Arayüzü kapat (Disable interface)',
+    'no': 'Komutu iptal et (Negate command)',
+    'speed': 'Bağlantı hızını ayarla (Set connection speed)',
+    'duplex': 'Duplex modunu ayarla (Set duplex mode)',
+    'description': 'Arayüz açıklaması ekle (Add interface description)',
+    'switchport': 'Switch portu ayarları (Switchport settings)',
+    'cdp': 'CDP ayarları (CDP settings)',
+    'spanning-tree': 'Spanning Tree ayarları (Spanning Tree settings)',
+    'channel-group': 'EtherChannel grubu ayarla (Set EtherChannel group)',
+    'ip': 'IP protokolü ayarları (IP protocol settings)',
+    'ssid': 'Kablosuz ağ adı ayarla (Set wireless network name)',
+    'encryption': 'Şifreleme türü ayarla (Set encryption type)',
+    'wifi-password': 'Kablosuz ağ şifresi ayarla (Set wireless network password)',
+    'channel': 'Kablosuz kanal ayarla (Set wireless channel)',
+    'wifi-mode': 'Kablosuz mod ayarla (Set wireless mode)',
+    'storm-control': 'Fırtına kontrolü ayarları (Storm control settings)',
+    'udld': 'UDLD ayarları (UDLD settings)',
+    'monitor': 'Port izleme ayarları (Port monitoring settings)',
+    'power': 'PoE güç ayarları (PoE power settings)',
+    'exit': 'Arayüz yapılandırmasından çık (Exit interface configuration)',
+    'end': 'Yapılandırma modundan çık (Exit configuration mode)',
+    'do': 'Ayrıcalıklı komut çalıştır (Execute privileged command)',
+    '?': 'Yardım göster (Display help)',
+    'help': 'Yardım göster (Display help)',
+  },
+  line: {
+    'password': 'Hat şifresi ayarla (Set line password)',
+    'login': 'Giriş etkinleştir (Enable login)',
+    'no': 'Komutu iptal et (Negate command)',
+    'transport': 'Taşıma protokolü ayarla (Set transport protocol)',
+    'exec-timeout': 'Oturum zaman aşımı ayarla (Set session timeout)',
+    'logging': 'Günlüğe kaydetme ayarları (Logging settings)',
+    'history': 'Komut geçmişi ayarları (Command history settings)',
+    'privilege': 'Ayrıcalık seviyesi ayarla (Set privilege level)',
+    'exit': 'Hat yapılandırmasından çık (Exit line configuration)',
+    'end': 'Yapılandırma modundan çık (Exit configuration mode)',
+    'do': 'Ayrıcalıklı komut çalıştır (Execute privileged command)',
+    '?': 'Yardım göster (Display help)',
+    'help': 'Yardım göster (Display help)',
+  },
+  vlan: {
+    'name': 'VLAN adı ayarla (Set VLAN name)',
+    'state': 'VLAN durumunu ayarla (Set VLAN state)',
+    'no': 'Komutu iptal et (Negate command)',
+    'debug': 'Hata ayıklama etkinleştir (Enable debugging)',
+    'undebug': 'Hata ayıklamayı devre dışı bırak (Disable debugging)',
+    'exit': 'VLAN yapılandırmasından çık (Exit VLAN configuration)',
+    'end': 'Yapılandırma modundan çık (Exit configuration mode)',
+    'do': 'Ayrıcalıklı komut çalıştır (Execute privileged command)',
+    '?': 'Yardım göster (Display help)',
+    'help': 'Yardım göster (Display help)',
+  },
+  'router-config': {
+    'network': 'Ağ tanımla (Define network)',
+    'router-id': 'Router kimliği ayarla (Set router ID)',
+    'passive-interface': 'Pasif arayüz ayarla (Set passive interface)',
+    'default-information': 'Varsayılan rota bilgisi (Default route information)',
+    'no': 'Komutu iptal et (Negate command)',
+    'debug': 'Hata ayıklama etkinleştir (Enable debugging)',
+    'undebug': 'Hata ayıklamayı devre dışı bırak (Disable debugging)',
+    'exit': 'Router yapılandırmasından çık (Exit router configuration)',
+    'end': 'Yapılandırma modundan çık (Exit configuration mode)',
+    'do': 'Ayrıcalıklı komut çalıştır (Execute privileged command)',
+    '?': 'Yardım göster (Display help)',
+    'help': 'Yardım göster (Display help)',
+  },
+  'dhcp-config': {
+    'network': 'DHCP ağı tanımla (Define DHCP network)',
+    'address': 'IP adresi aralığı (IP address range)',
+    'default-router': 'Varsayılan ağ geçidi (Default gateway)',
+    'dns-server': 'DNS sunucusu (DNS server)',
+    'lease': 'Kira süresi (Lease duration)',
+    'domain-name': 'Alan adı (Domain name)',
+    'no': 'Komutu iptal et (Negate command)',
+    'debug': 'Hata ayıklama etkinleştir (Enable debugging)',
+    'undebug': 'Hata ayıklamayı devre dışı bırak (Disable debugging)',
+    'exit': 'DHCP yapılandırmasından çık (Exit DHCP configuration)',
+    'end': 'Yapılandırma modundan çık (Exit configuration mode)',
+    'do': 'Ayrıcalıklı komut çalıştır (Execute privileged command)',
+    '?': 'Yardım göster (Display help)',
+    'help': 'Yardım göster (Display help)',
+  },
+};
+
 function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string): string {
   const modeCommands = commandHelp[mode] || commandHelp.user;
+  const modeDescriptions = commandDescriptions[mode] || commandDescriptions.user;
   const lower = partialInput.toLowerCase().trim();
 
   let suggestions: string[] = [];
 
-  // 1. Exact match in commandHelp tree
-  if (modeCommands[lower]) {
-    suggestions = [...modeCommands[lower]];
-  }
+  // Special handling for "do <subcommand>" — delegate to privileged mode tree
+  // e.g. "do ?" → privileged top-level, "do show ?" → privileged show subtree
+  const isDoPrefix = lower === 'do' || lower.startsWith('do ');
+  if (isDoPrefix && mode !== 'privileged' && mode !== 'user') {
+    const privilegedCommands = commandHelp['privileged'] || {};
+    // Strip the "do " prefix to get the sub-command portion
+    const subInput = lower === 'do' ? '' : lower.slice(3); // e.g. "show", "show ip", ""
 
-  // 2. Prefix match in commandHelp tree
-  if (suggestions.length === 0) {
-    for (const key of Object.keys(modeCommands)) {
-      if (key.startsWith(lower) && key !== lower) {
-        const remaining = key.substring(lower.length).trim();
-        if (remaining) {
-          const nextWord = remaining.split(' ')[0];
-          if (nextWord && !suggestions.includes(nextWord)) {
-            suggestions.push(nextWord);
+    if (subInput === '') {
+      // "do ?" → list all privileged top-level commands
+      suggestions = [...(privilegedCommands[''] || [])].filter(
+        c => !['configure', 'disable', '?', 'help'].includes(c)
+      );
+    } else {
+      // "do show ?" or "do ping ?" etc. → look up in privileged tree
+      if (privilegedCommands[subInput]) {
+        suggestions = [...privilegedCommands[subInput]];
+      } else {
+        // Prefix match in privileged tree
+        for (const key of Object.keys(privilegedCommands)) {
+          if (key.startsWith(subInput) && key !== subInput) {
+            const remaining = key.substring(subInput.length).trim();
+            if (remaining) {
+              const nextWord = remaining.split(' ')[0];
+              if (nextWord && !suggestions.includes(nextWord)) {
+                suggestions.push(nextWord);
+              }
+            }
+          }
+        }
+        // Fallback: commandPatterns in privileged mode
+        if (suggestions.length === 0) {
+          for (const [name, pattern] of Object.entries(commandPatterns)) {
+            if (!pattern.modes.includes('privileged')) continue;
+            if (!name.startsWith(subInput + ' ') && name !== subInput) continue;
+            const remaining = name.substring(subInput.length).trim();
+            if (!remaining) continue;
+            const nextWord = remaining.split(' ')[0];
+            if (nextWord && !suggestions.includes(nextWord)) {
+              suggestions.push(nextWord);
+            }
           }
         }
       }
     }
-  }
+  } else {
+    // 1. Exact match in commandHelp tree
+    if (modeCommands[lower]) {
+      suggestions = [...modeCommands[lower]];
+    }
 
-  // 3. Fallback: derive suggestions from commandPatterns for this mode
-  //    This handles "no ip ?", "do ping ?", multi-word prefixes not in commandHelp tree
-  if (suggestions.length === 0) {
-    const patternSuggestions: string[] = [];
-    for (const [name, pattern] of Object.entries(commandPatterns)) {
-      if (!pattern.modes.includes(mode)) continue;
-      if (!name.startsWith(lower + ' ') && name !== lower) continue;
-      const remaining = name.substring(lower.length).trim();
-      if (!remaining) continue;
-      const nextWord = remaining.split(' ')[0];
-      if (nextWord && !patternSuggestions.includes(nextWord)) {
-        patternSuggestions.push(nextWord);
+    // 2. Prefix match in commandHelp tree
+    if (suggestions.length === 0) {
+      for (const key of Object.keys(modeCommands)) {
+        if (key.startsWith(lower) && key !== lower) {
+          const remaining = key.substring(lower.length).trim();
+          if (remaining) {
+            const nextWord = remaining.split(' ')[0];
+            if (nextWord && !suggestions.includes(nextWord)) {
+              suggestions.push(nextWord);
+            }
+          }
+        }
       }
     }
-    suggestions = patternSuggestions;
+
+    // 3. Fallback: derive suggestions from commandPatterns for this mode
+    //    This handles "no ip ?", multi-word prefixes not in commandHelp tree
+    if (suggestions.length === 0) {
+      const patternSuggestions: string[] = [];
+      for (const [name, pattern] of Object.entries(commandPatterns)) {
+        if (!pattern.modes.includes(mode)) continue;
+        if (!name.startsWith(lower + ' ') && name !== lower) continue;
+        const remaining = name.substring(lower.length).trim();
+        if (!remaining) continue;
+        const nextWord = remaining.split(' ')[0];
+        if (nextWord && !patternSuggestions.includes(nextWord)) {
+          patternSuggestions.push(nextWord);
+        }
+      }
+      suggestions = patternSuggestions;
+    }
   }
 
   const lines: string[] = [];
@@ -792,11 +1338,42 @@ function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string):
   if (suggestions.length === 0) {
     lines.push(IOS_ERRORS.unknown);
   } else {
+    // Kategorize suggestions
+    const keywords: string[] = [];
+    const parameters: string[] = [];
+
     suggestions.forEach(cmd => {
-      if (cmd && !cmd.startsWith('<')) {
-        lines.push(`  ${cmd}`);
+      if (cmd) {
+        // Parameters are shown in angle brackets (e.g. <ip-address>)
+        if (cmd.startsWith('<') && cmd.endsWith('>')) {
+          parameters.push(cmd);
+        } else {
+          keywords.push(cmd);
+        }
       }
     });
+
+    // Display keywords first
+    if (keywords.length > 0) {
+      lines.push('  Komutlar:');
+      keywords.forEach(cmd => {
+        const description = modeDescriptions[cmd.toLowerCase()];
+        if (description) {
+          lines.push(`    ${cmd.padEnd(20)} - ${description}`);
+        } else {
+          lines.push(`    ${cmd}`);
+        }
+      });
+    }
+
+    // Display parameters separately
+    if (parameters.length > 0) {
+      if (keywords.length > 0) lines.push('');
+      lines.push('  Parametreler:');
+      parameters.forEach(param => {
+        lines.push(`    ${param}`);
+      });
+    }
   }
 
   lines.push('');
@@ -874,7 +1451,7 @@ export function getEstimatedSuggestions(
   const prefix = words.slice(0, -1).join(' ');
 
   const modeCommands = commandHelp[mode] || commandHelp.user;
-  
+
   let effectivePrefix = prefix;
   let effectiveLastWord = lastWord;
 
@@ -886,11 +1463,11 @@ export function getEstimatedSuggestions(
   }
 
   const validNextWords = new Set<string>();
-  
+
   const inferredDeviceType = state
     ? (state.deviceType === 'switch'
-        ? (state.switchLayer === 'L3' ? 'switchL3' : 'switchL2')
-        : state.deviceType || (state.switchLayer === 'FW' ? 'firewall' : state.switchLayer === 'L3' ? 'switchL3' : 'switchL2'))
+      ? (state.switchLayer === 'L3' ? 'switchL3' : 'switchL2')
+      : state.deviceType || (state.switchLayer === 'FW' ? 'firewall' : state.switchLayer === 'L3' ? 'switchL3' : 'switchL2'))
     : 'switchL2';
   const capabilities = state ? getDeviceCapabilities({ type: inferredDeviceType } as any, state.switchModel) : undefined;
 
@@ -929,7 +1506,7 @@ export function getEstimatedSuggestions(
 
   // Eğer kullanıcının yazdığı son kelime varsa, en yakınları süz
   if (effectiveLastWord) {
-    const closeMatches = cleanNextWords.filter(cmd => 
+    const closeMatches = cleanNextWords.filter(cmd =>
       cmd.startsWith(effectiveLastWord) || getLevenshteinDistance(effectiveLastWord, cmd) <= 2
     );
     if (closeMatches.length > 0) {
@@ -962,7 +1539,7 @@ function processCommandResult(
     const suggestions = getEstimatedSuggestions(input, mode, state);
     if (suggestions.length > 0) {
       const suggestionTitle = language === 'tr' ? 'Tahmini Öneriler' : 'Estimated Suggestions';
-      
+
       // Çift hata önerisi olmaması için mevcut "Bunu mu demek istediniz?" kısmını temizle
       let cleanError = result.error;
       const trIndex = cleanError.indexOf('\n\nBunu mu demek istediniz?');
@@ -1234,11 +1811,11 @@ export function executeCommand(
         : 'Layer 2 switch';
 
   if ((needsSwitching && !capabilities.switching) ||
-      (needsRouting && !capabilities.routing) ||
-      (needsFirewall && !capabilities.firewall) ||
-      (isL3OnlyCmd && !(isL3Switch || isRouter)) ||
-      (isSwitchOnlyCmd && !(isL2Switch || isL3Switch)) ||
-      (isFirewallOnlyCmd && !isFirewall)) {
+    (needsRouting && !capabilities.routing) ||
+    (needsFirewall && !capabilities.firewall) ||
+    (isL3OnlyCmd && !(isL3Switch || isRouter)) ||
+    (isSwitchOnlyCmd && !(isL2Switch || isL3Switch)) ||
+    (isFirewallOnlyCmd && !isFirewall)) {
     return processCommandResult({
       success: false,
       error: `% Invalid input detected at '^' marker.\n${commandName} is not supported on this ${deviceLabel}.`
