@@ -140,6 +140,8 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
   return (
     <div
       ref={containerRef}
+      role="dialog"
+      data-state="open"
       className={cn("fixed animate-scale-in")}
       style={isMobile
         ? { left: 8, right: 8, top: 80, bottom: 12, zIndex }
