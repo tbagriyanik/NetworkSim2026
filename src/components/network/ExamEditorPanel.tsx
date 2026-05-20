@@ -552,8 +552,10 @@ export function ExamEditorPanel({
                                           <SelectContent align="end" className="max-h-[200px]">
                                             <div className="text-[10px] font-bold opacity-50 px-2 py-1">{isTr ? 'Sık kullanılanlar' : 'Suggestions'}</div>
                                             <SelectItem value="security.consoleLine.password">security.consoleLine.password</SelectItem>
-                                            <SelectItem value="ports.fa0/1.shutdown">ports.fa0/1.shutdown</SelectItem>
-                                            <SelectItem value="ports.fa0/1.vlan">ports.fa0/1.vlan</SelectItem>
+                                            <SelectItem value="ports.gi1/0/1.shutdown">ports.gi1/0/1.shutdown (L3)</SelectItem>
+                                            <SelectItem value="ports.fa0/1.shutdown">ports.fa0/1.shutdown (L2)</SelectItem>
+                                            <SelectItem value="ports.gi1/0/1.vlan">ports.gi1/0/1.vlan (L3)</SelectItem>
+                                            <SelectItem value="ports.fa0/1.vlan">ports.fa0/1.vlan (L2)</SelectItem>
                                             <SelectItem value="vlans.10">vlans.10</SelectItem>
                                             <SelectItem value="pc.pc-1.ip">pc.pc-1.ip</SelectItem>
                                             <SelectItem value="pc.pc-2.ip">pc.pc-2.ip</SelectItem>

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { SwitchState } from '@/lib/network/types';
+import { SwitchState, Port } from '@/lib/network/types';
 import { createInitialState, createInitialRouterState, createInitialFirewallState, applyStartupConfig, buildStartupConfig } from '@/lib/network/initialState';
 import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import { executeCommand, getPrompt } from '@/lib/network/executor';
@@ -133,7 +133,52 @@ export function useDeviceManager() {
 
     const normalizedModel = model as any;
     const baseState = isRouter ? createInitialRouterState(macAddress || state.macAddress) : createInitialState(macAddress || state.macAddress, normalizedModel);
-    const mergedPorts = { ...baseState.ports, ...state.ports };
+
+    // Model changed? If so, we need to be careful about merging ports
+    const modelChanged = state.switchModel !== normalizedModel;
+
+    let mergedPorts: Record<string, Port> = {};
+
+    if (modelChanged) {
+      // If switching between L2 (Fa0/x) and L3 (Gi1/0/x), or to Firewall (Gi1/0/x)
+      // we should prefer the new model's ports but try to preserve SVI (Vlan) and Console
+
+      const newPortIds = Object.keys(baseState.ports);
+
+      // Start with the new model's default ports
+      mergedPorts = { ...baseState.ports };
+
+      // Merge only compatible or essential ports from old state
+      Object.entries(state.ports).forEach(([id, port]) => {
+        // Always preserve console and SVI (Vlan) interfaces
+        if (id === 'console' || id.toLowerCase().startsWith('vlan')) {
+          mergedPorts[id] = { ...mergedPorts[id], ...port, id }; // Keep old config but ensure ID matches
+          return;
+        }
+
+        // Preserve WLAN0 if it exists in both or we are moving to a model with WLAN
+        if (id === 'wlan0' && newPortIds.includes('wlan0')) {
+          mergedPorts[id] = { ...mergedPorts[id], ...port, id };
+          return;
+        }
+
+        // If port ID exists in new model, preserve its config
+        if (newPortIds.includes(id)) {
+          mergedPorts[id] = { ...mergedPorts[id], ...port, id };
+        }
+
+        // Subinterfaces (e.g. gi0/0.10) - preserve if parent exists
+        if (id.includes('.')) {
+          const parentId = id.split('.')[0];
+          if (newPortIds.includes(parentId)) {
+            mergedPorts[id] = port;
+          }
+        }
+      });
+    } else {
+      // Standard heal (ports missing but model is same)
+      mergedPorts = { ...baseState.ports, ...state.ports };
+    }
 
     return {
       ...state,
