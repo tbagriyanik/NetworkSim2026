@@ -33,6 +33,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -133,9 +134,11 @@ export function ExamEditorPanel({
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="w-5 h-5" />
-        </Button>
+        <TooltipWrapper title={t.close}>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </Button>
+        </TooltipWrapper>
       </div>
 
       <ScrollArea className="flex-1 min-h-0">
@@ -218,98 +221,84 @@ export function ExamEditorPanel({
               "flex items-center gap-1 p-1.5 rounded-xl border",
               isDark ? "bg-slate-900/40 border-slate-700/30" : "bg-emerald-50/50 border-emerald-100/50"
             )}>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex items-center justify-center w-8 h-8 rounded-lg text-blue-500 hover:bg-blue-500/10 transition-colors"
-                      onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'pc' }))}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
-                      </svg>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{isTr ? 'PC Ekle' : 'Add PC'}</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex items-center justify-center w-8 h-8 rounded-lg text-green-500 hover:bg-green-500/10 transition-colors"
-                      onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'switchL2' }))}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
-                      </svg>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{isTr ? 'L2 Switch Ekle' : 'Add L2 Switch'}</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex items-center justify-center w-8 h-8 rounded-lg text-violet-500 hover:bg-violet-500/10 transition-colors"
-                      onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'switchL3' }))}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
-                      </svg>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{isTr ? 'L3 Switch Ekle' : 'Add L3 Switch'}</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex items-center justify-center w-8 h-8 rounded-lg text-purple-500 hover:bg-purple-500/10 transition-colors"
-                      onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'router' }))}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="9" strokeWidth={2} />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
-                      </svg>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{isTr ? 'Router Ekle' : 'Add Router'}</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex items-center justify-center w-8 h-8 rounded-lg text-cyan-500 hover:bg-cyan-500/10 transition-colors"
-                      onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'iot' }))}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.247 7.761a6 6 0 0 1 0 8.478" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.075 4.933a10 10 0 0 1 0 14.134" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.925 19.067a10 10 0 0 1 0-14.134" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.753 16.239a6 6 0 0 1 0-8.478" />
-                        <circle strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} cx="12" cy="12" r="2" />
-                      </svg>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{isTr ? 'IoT Cihaz Ekle' : 'Add IoT'}</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex items-center justify-center w-8 h-8 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors"
-                      onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'firewall' }))}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4" />
-                      </svg>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{isTr ? 'Firewall Ekle' : 'Add Firewall'}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <TooltipWrapper title={isTr ? 'PC Ekle' : 'Add PC'}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 rounded-lg text-blue-500 hover:bg-blue-500/10 transition-colors"
+                  onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'pc' }))}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
+                  </svg>
+                </Button>
+              </TooltipWrapper>
+              <TooltipWrapper title={isTr ? 'L2 Switch Ekle' : 'Add L2 Switch'}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 rounded-lg text-green-500 hover:bg-green-500/10 transition-colors"
+                  onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'switchL2' }))}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
+                  </svg>
+                </Button>
+              </TooltipWrapper>
+              <TooltipWrapper title={isTr ? 'L3 Switch Ekle' : 'Add L3 Switch'}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 rounded-lg text-violet-500 hover:bg-violet-500/10 transition-colors"
+                  onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'switchL3' }))}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
+                  </svg>
+                </Button>
+              </TooltipWrapper>
+              <TooltipWrapper title={isTr ? 'Router Ekle' : 'Add Router'}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 rounded-lg text-purple-500 hover:bg-purple-500/10 transition-colors"
+                  onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'router' }))}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9" strokeWidth={2} />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
+                  </svg>
+                </Button>
+              </TooltipWrapper>
+              <TooltipWrapper title={isTr ? 'IoT Cihaz Ekle' : 'Add IoT'}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 rounded-lg text-cyan-500 hover:bg-cyan-500/10 transition-colors"
+                  onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'iot' }))}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.247 7.761a6 6 0 0 1 0 8.478" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.075 4.933a10 10 0 0 1 0 14.134" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.925 19.067a10 10 0 0 1 0-14.134" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.753 16.239a6 6 0 0 1 0-8.478" />
+                    <circle strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} cx="12" cy="12" r="2" />
+                  </svg>
+                </Button>
+              </TooltipWrapper>
+              <TooltipWrapper title={isTr ? 'Firewall Ekle' : 'Add Firewall'}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors"
+                  onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'firewall' }))}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4" />
+                  </svg>
+                </Button>
+              </TooltipWrapper>
             </div>
           </section>
 
@@ -386,41 +375,47 @@ export function ExamEditorPanel({
                         </div>
                       </div>
                       <div className="flex items-center gap-0.5 md:gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-slate-500 hover:text-purple-500 hover:bg-purple-500/10"
-                          disabled={index === 0}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moveTask(task.id, 'up');
-                          }}
-                        >
-                          <ChevronUp className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-slate-500 hover:text-purple-500 hover:bg-purple-500/10"
-                          disabled={index === activeExam.tasks.length - 1}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moveTask(task.id, 'down');
-                          }}
-                        >
-                          <ChevronDown className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteTask(task.id);
-                          }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                        <TooltipWrapper title={isTr ? 'Yukarı Taşı' : 'Move Up'}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-slate-500 hover:text-purple-500 hover:bg-purple-500/10"
+                            disabled={index === 0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveTask(task.id, 'up');
+                            }}
+                          >
+                            <ChevronUp className="w-4 h-4" />
+                          </Button>
+                        </TooltipWrapper>
+                        <TooltipWrapper title={isTr ? 'Aşağı Taşı' : 'Move Down'}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-slate-500 hover:text-purple-500 hover:bg-purple-500/10"
+                            disabled={index === activeExam.tasks.length - 1}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveTask(task.id, 'down');
+                            }}
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </Button>
+                        </TooltipWrapper>
+                        <TooltipWrapper title={t.delete}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteTask(task.id);
+                            }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </TooltipWrapper>
                       </div>
                     </div>
 
