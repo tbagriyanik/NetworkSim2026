@@ -139,6 +139,10 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'ip verify source': cmdIpVerifySource,
   'udld enable': cmdUdldEnable,
   'udld port': cmdUdldEnable,
+  'standby ip': cmdStandbyIp,
+  'standby priority': cmdStandbyPriority,
+  'standby ipv6': cmdStandbyIpv6,
+  'standby preempt': cmdStandbyPreempt,
 };
 
 /**
@@ -386,6 +390,90 @@ function cmdDuplex(state: any, input: string, ctx: any): any {
     success: true,
     newState: { ports: newPorts }
   };
+}
+
+/**
+ * standby <group> ip <virtual-ip>
+ */
+function cmdStandbyIp(state: any, input: string, ctx: any): any {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const match = input.match(/^standby\s+(\d+)\s+ip\s+([0-9.]+)$/i);
+  if (!match) return { success: false, error: '% Invalid standby command' };
+
+  const group = parseInt(match[1]);
+  const virtualIp = match[2];
+
+  const updatePort = (port: any) => {
+    const hsrp = port.hsrp || { groups: {} };
+    const groups = hsrp.groups || {};
+    groups[group] = { ...groups[group], virtualIp, state: 'Active' };
+    return { ...port, hsrp: { ...hsrp, groups } };
+  };
+
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * standby <group> priority <priority>
+ */
+function cmdStandbyPriority(state: any, input: string, ctx: any): any {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const match = input.match(/^standby\s+(\d+)\s+priority\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid standby command' };
+
+  const group = parseInt(match[1]);
+  const priority = parseInt(match[2]);
+
+  const updatePort = (port: any) => {
+    const hsrp = port.hsrp || { groups: {} };
+    const groups = hsrp.groups || {};
+    groups[group] = { ...groups[group], priority };
+    return { ...port, hsrp: { ...hsrp, groups } };
+  };
+
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * standby <group> ipv6 <virtual-ipv6>
+ */
+function cmdStandbyIpv6(state: any, input: string, ctx: any): any {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const match = input.match(/^standby\s+(\d+)\s+ipv6\s+([0-9a-fA-F:]+)$/i);
+  if (!match) return { success: false, error: '% Invalid standby command' };
+
+  const group = parseInt(match[1]);
+  const ipv6VirtualIp = match[2];
+
+  const updatePort = (port: any) => {
+    const hsrp = port.hsrp || { groups: {} };
+    const groups = hsrp.groups || {};
+    groups[group] = { ...groups[group], ipv6VirtualIp, state: 'Active' };
+    return { ...port, hsrp: { ...hsrp, groups } };
+  };
+
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
+function cmdStandbyPreempt(state: any, input: string, ctx: any): any {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const match = input.match(/^standby\s+(\d+)\s+preempt$/i);
+  if (!match) return { success: false, error: '% Invalid standby command' };
+
+  const group = parseInt(match[1]);
+
+  const updatePort = (port: any) => {
+    const hsrp = port.hsrp || { groups: {} };
+    const groups = hsrp.groups || {};
+    groups[group] = { ...groups[group], preempt: true };
+    return { ...port, hsrp: { ...hsrp, groups } };
+  };
+
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
 }
 
 /**

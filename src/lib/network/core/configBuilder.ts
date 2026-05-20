@@ -75,6 +75,14 @@ export function buildRunningConfig(state: SwitchState): string[] {
         lines.push('!');
     }
 
+    // IP Host
+    if (state.services?.dns?.records && state.services.dns.records.length > 0) {
+        state.services.dns.records.forEach(record => {
+            lines.push(`ip host ${record.domain} ${record.address}`);
+        });
+        lines.push('!');
+    }
+
     // IP Routing
     if (state.ipRouting) {
         lines.push('ip routing');
@@ -208,6 +216,9 @@ export function buildRunningConfig(state: SwitchState): string[] {
             }
             if (!isRouterLike) {
                 if (port.mode === 'trunk') {
+                    if (modelName.includes('3650') || modelName.includes('c3650')) {
+                        lines.push(' switchport trunk encapsulation dot1q');
+                    }
                     lines.push(' switchport mode trunk');
                 } else if (port.mode === 'dynamic-auto') {
                     lines.push(' switchport mode dynamic auto');
@@ -266,6 +277,23 @@ export function buildRunningConfig(state: SwitchState): string[] {
             }
             if (port.ipv6DhcpServer) {
                 lines.push(` ipv6 dhcp server ${port.ipv6DhcpServer}`);
+            }
+            // HSRP (Standby)
+            if (port.hsrp?.groups) {
+                Object.entries(port.hsrp.groups).forEach(([group, config]: [string, any]) => {
+                    if (config.virtualIp) {
+                        lines.push(` standby ${group} ip ${config.virtualIp}`);
+                    }
+                    if (config.ipv6VirtualIp) {
+                        lines.push(` standby ${group} ipv6 ${config.ipv6VirtualIp}`);
+                    }
+                    if (config.priority !== undefined) {
+                        lines.push(` standby ${group} priority ${config.priority}`);
+                    }
+                    if (config.preempt) {
+                        lines.push(` standby ${group} preempt`);
+                    }
+                });
             }
             if (port.shutdown) {
                 lines.push(' shutdown');

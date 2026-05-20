@@ -118,6 +118,7 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'template': cmdStubSuccess,
   'ip access-list': cmdIpAccessList,
   'no ip access-list': cmdNoIpAccessList,
+  'ip host': cmdIpHost,
 };
 
 /**
@@ -1459,17 +1460,12 @@ function cmdIpArpInspection(state: any, input: string, ctx: any): any {
 function cmdSpanningTreeVlan(state: any, input: string, ctx: any): any {
   if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
 
-  const match = input.match(/^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|priorty|root)(?:\s+(primary|secondary|\d+))?)?$/i);
+  const match = input.match(/^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|root)(?:\s+(primary|secondary|\d+))?)?$/i);
   if (!match) return { success: false, error: '% Invalid spanning-tree vlan command' };
 
   const vlanId = parseInt(match[1]);
-  let subCommand = match[2]; // 'priority', 'priorty' (typo), or 'root' or undefined
+  let subCommand = match[2]; // 'priority' or 'root' or undefined
   const value = match[3]; // priority value, 'primary', 'secondary', or undefined
-
-  // Fix typo: treat 'priorty' as 'priority'
-  if (subCommand === 'priorty') {
-    subCommand = 'priority';
-  }
 
   const lang = ctx.language || 'en';
 
@@ -2022,6 +2018,41 @@ function cmdNoIpAccessList(state: any, input: string, ctx: any): any {
   delete accessLists[aclName];
 
   return { success: true, output: `IP access-list ${aclName} removed`, newState: { accessLists } };
+}
+
+/**
+ * IP Host - DNS mapping
+ */
+function cmdIpHost(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+
+  const match = input.match(/^ip\s+host\s+(\S+)\s+(\d{1,3}(?:\.\d{1,3}){3})$/i);
+  if (!match) return { success: false, error: '% Invalid ip host command. Usage: ip host <name> <ip>' };
+
+  const hostName = match[1];
+  const ipAddress = match[2];
+
+  const services = { ...state.services };
+  if (!services.dns) services.dns = { enabled: true, records: [] };
+
+  const records = [...(services.dns.records || [])];
+  const existingIndex = records.findIndex(r => r.domain === hostName);
+  if (existingIndex >= 0) {
+    records[existingIndex] = { domain: hostName, address: ipAddress };
+  } else {
+    records.push({ domain: hostName, address: ipAddress });
+  }
+
+  services.dns.records = records;
+
+  const updatedState = { ...state, services };
+  return {
+    success: true,
+    newState: {
+      services,
+      runningConfig: buildRunningConfig(updatedState)
+    }
+  };
 }
 
 // Register new global config handlers

@@ -199,6 +199,14 @@ export interface Port {
     lastProbeTime?: number;
     bidirectionalStatus?: 'up' | 'down' | 'unknown';
   };
+  hsrp?: {
+    groups?: Record<number, {
+      virtualIp?: string;
+      priority?: number;
+      preempt?: boolean;
+      state?: 'Initial' | 'Listen' | 'Speak' | 'Standby' | 'Active';
+    }>;
+  };
 }
 
 export interface Vlan {

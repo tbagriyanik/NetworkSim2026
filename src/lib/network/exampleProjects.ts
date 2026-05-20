@@ -1836,8 +1836,8 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     {
       id: 'note-pvst',
       text: isTr
-        ? 'Amaç: PVST kullanarak her VLAN için ayrı STP instance\'ı oluşturarak load balancing sağlamak.\n\n🔧 PVST (Per-VLAN STP) ADIMLARI:\n\n1) VLAN\'LAR OLUŞTUR:\n   - Her switch\'te vlan 1, 10, 20 oluştur\n\n2) ROOT BRIDGE AYARLA:\n   - SW1: spanning-tree vlan 1 priority 24576\n   - SW2: spanning-tree vlan 10 priority 24576\n   - SW3: spanning-tree vlan 20 priority 24576\n\n3) TRUNK BAĞLANTILARI:\n   - Gi1/0/1 ve Gi1/0/2 trunk mode\n\n4) TEST:\n   - show spanning-tree vlan 1\n   - show spanning-tree vlan 10\n   - show spanning-tree vlan 20\n   - Her VLAN farklı root kullanır'
-        : '🔧 PVST (Per-VLAN STP) STEPS:\n\n1) CREATE VLANs:\n   - Create vlan 1, 10, 20 on each switch\n\n2) SET ROOT BRIDGE:\n   - SW1: spanning-tree vlan 1 priority 24576\n   - SW2: spanning-tree vlan 10 priority 24576\n   - SW3: spanning-tree vlan 20 priority 24576\n\n3) TRUNK CONNECTIONS:\n   - Gi1/0/1 and Gi1/0/2 trunk mode\n\n4) TEST:\n   - show spanning-tree vlan 1\n   - show spanning-tree vlan 10\n   - show spanning-tree vlan 20\n   - Each VLAN uses different root',
+        ? 'Amaç: PVST kullanarak her VLAN için ayrı STP instance\'ı oluşturarak load balancing sağlamak.\n\n🔧 PVST (Per-VLAN STP) ADIMLARI:\n\n1) VLAN\'LAR OLUŞTUR:\n   - Her switch\'te vlan 1, 10, 20 oluştur\n\n2) ROOT BRIDGE AYARLA:\n   - SW1: spanning-tree vlan 1 priority 24576\n   - SW2: spanning-tree vlan 10 priority 24576\n   - SW3: spanning-tree vlan 20 priority 24576\n\n3) TRUNK BAĞLANTILARI:\n   - Gi1/0/1 ve Gi1/0/2 için:\n     switchport trunk encapsulation dot1q\n     switchport mode trunk\n\n4) TEST:\n   - show spanning-tree vlan 1\n   - show spanning-tree vlan 10\n   - show spanning-tree vlan 20\n   - Her VLAN farklı root kullanır'
+        : '🔧 PVST (Per-VLAN STP) STEPS:\n\n1) CREATE VLANs:\n   - Create vlan 1, 10, 20 on each switch\n\n2) SET ROOT BRIDGE:\n   - SW1: spanning-tree vlan 1 priority 24576\n   - SW2: spanning-tree vlan 10 priority 24576\n   - SW3: spanning-tree vlan 20 priority 24576\n\n3) TRUNK CONNECTIONS:\n   - For Gi1/0/1 and Gi1/0/2:\n     switchport trunk encapsulation dot1q\n     switchport mode trunk\n\n4) TEST:\n   - show spanning-tree vlan 1\n   - show spanning-tree vlan 10\n   - show spanning-tree vlan 20\n   - Each VLAN uses different root',
       x: 150,
       y: 320,
       width: 280,
@@ -1917,6 +1917,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' no shutdown',
     '!',
     'interface range gi1/0/1-2',
+    ' switchport trunk encapsulation dot1q',
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
@@ -1994,6 +1995,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' no shutdown',
     '!',
     'interface range gi1/0/1-2',
+    ' switchport trunk encapsulation dot1q',
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',
@@ -2071,6 +2073,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ' no shutdown',
     '!',
     'interface range gi1/0/1-2',
+    ' switchport trunk encapsulation dot1q',
     ' switchport mode trunk',
     '!',
     'spanning-tree mode pvst',

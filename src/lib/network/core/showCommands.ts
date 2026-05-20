@@ -89,6 +89,8 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show ip ospf neighbor': cmdShowIpOspfNeighbor,
   'show ip ospf': cmdShowIpOspf,
   'show ip ospf interface': cmdShowIpOspfInterface,
+  'show standby': cmdShowStandby,
+  'show hosts': cmdShowHosts,
 };
 
 function isPhysicalEthernetPort(portId: string): boolean {
@@ -842,6 +844,61 @@ function cmdShowInterfaceTrunk(
   trunkPorts.forEach((portId) => {
     output += `${String(portId).padEnd(11)} ${activeVlans}\n`;
   });
+
+  output += '!\n';
+  return { success: true, output };
+}
+
+/**
+ * Show Standby - Display HSRP status
+ */
+function cmdShowStandby(state: any, input: string, ctx: any): any {
+  let output = '\n';
+  let found = false;
+
+  Object.entries(state.ports || {}).forEach(([portName, port]: [string, any]) => {
+    if (port.hsrp?.groups) {
+      found = true;
+      Object.entries(port.hsrp.groups).forEach(([groupId, config]: [string, any]) => {
+        output += `${portName} - Group ${groupId}\n`;
+        output += `  State is ${config.state || 'Active'}\n`;
+        output += `  Virtual IP address is ${config.virtualIp || 'unknown'}\n`;
+        output += `  Active virtual MAC address is 0000.0c07.ac${parseInt(groupId).toString(16).padStart(2, '0')}\n`;
+        output += `  Local virtual MAC address is 0000.0c07.ac${parseInt(groupId).toString(16).padStart(2, '0')} (v1 default)\n`;
+        output += `  Hello time 3 sec, hold time 10 sec\n`;
+        output += `  Next hello sent in 1.234 secs\n`;
+        output += `  Preemption ${config.preempt ? 'enabled' : 'disabled'}\n`;
+        output += `  Active router is local\n`;
+        output += `  Standby router is unknown\n`;
+        output += `  Priority ${config.priority ?? 100} (configured ${config.priority ?? 100})\n`;
+        output += `  Group name is "hsrp-${portName}-${groupId}" (default)\n`;
+      });
+    }
+  });
+
+  if (!found) {
+    output += '% HSRP not configured on any interface\n';
+  }
+
+  return { success: true, output };
+}
+
+/**
+ * Show Hosts - Display DNS host mapping
+ */
+function cmdShowHosts(state: any, input: string, ctx: any): any {
+  let output = '\nDefault domain is not set\n';
+  output += 'Name servers are unassigned\n\n';
+  output += 'Host                      Address\n';
+
+  const records = state.services?.dns?.records || [];
+  if (records.length === 0) {
+    output += '(No host mappings configured)\n';
+  } else {
+    records.forEach((record: any) => {
+      output += `${record.domain.padEnd(25)} ${record.address}\n`;
+    });
+  }
 
   output += '!\n';
   return { success: true, output };
