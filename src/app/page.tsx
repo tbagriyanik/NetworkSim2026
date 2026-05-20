@@ -1506,6 +1506,9 @@ ${state.bannerMOTD}
           newPcHistories.set(item.id, item.history || []);
         });
         setPcHistories(newPcHistories);
+      } else {
+        // Clear PC histories if none provided
+        setPcHistories(new Map());
       }
 
       const resolveNoteOverlap = (notes: CanvasNote[], devices: CanvasDevice[]): CanvasNote[] => {
@@ -2471,6 +2474,7 @@ ${state.bannerMOTD}
     setDeviceStates(new Map());
     setDeviceOutputs(new Map());
     setPcOutputs(new Map());
+    setPcHistories(new Map());
     setTopologyDevices([
       {
         id: 'pc-1',
@@ -3635,7 +3639,7 @@ ${state.bannerMOTD}
         } else {
           const isDhcpMissing = dhcpServerActiveCount === 0 && dhcpClientWithLeaseCount === 0;
           const dhcpSummary = isDhcpMissing
-            ? t.dhcpNotFound
+            ? ''
             : (language === 'tr'
               ? `DHCP: ${dhcpServerActiveCount} sunucu aktif, ${dhcpClientWithLeaseCount} lease`
               : `DHCP: ${dhcpServerActiveCount} active servers, ${dhcpClientWithLeaseCount} leases`);
@@ -3645,11 +3649,11 @@ ${state.bannerMOTD}
             title: t.networkRefreshed,
             dhcpMessages: [
               stpMessage
-                ? `${dhcpSummary} • ${stpMessage}`
+                ? `${dhcpSummary} • ${stpMessage}`.replace(/^ • /, stpMessage)
                 : (isDhcpMissing
-                  ? dhcpSummary
+                  ? ''
                   : `${t.noWifiDevices} • ${dhcpSummary}`)
-            ],
+            ].filter(msg => msg.trim()),
             stpMessage: '',
             portSecurityMessage: '',
             topologyMessage,

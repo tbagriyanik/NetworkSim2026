@@ -137,7 +137,7 @@ export function useDeviceManager() {
     // Model changed? If so, we need to be careful about merging ports
     const modelChanged = state.switchModel !== normalizedModel;
 
-    let mergedPorts: Record<string, Port> = {};
+    let mergedPorts: Record<string, any> = {};
 
     if (modelChanged) {
       // If switching between L2 (Fa0/x) and L3 (Gi1/0/x), or to Firewall (Gi1/0/x)
@@ -162,8 +162,15 @@ export function useDeviceManager() {
           return;
         }
 
-        // If port ID exists in new model, preserve its config
+        // If port ID exists in new model, preserve its config (but don't let old type override new model type)
         if (newPortIds.includes(id)) {
+          const oldType = (port as any).type;
+          const newType = (mergedPorts[id] as any)?.type;
+          // Skip merge if old and new states have different port types for the same numeric port
+          // This prevents WS-C2960 FastEthernet ports (fa0/x) from corrupting WS-C3650 GigabitEthernet ports (gi1/0/x)
+          if (oldType && newType && oldType !== newType && /^[a-z]+\d*\/\d+$/.test(id)) {
+            return; // Use new state's port type exclusively
+          }
           mergedPorts[id] = { ...mergedPorts[id], ...port, id };
         }
 
