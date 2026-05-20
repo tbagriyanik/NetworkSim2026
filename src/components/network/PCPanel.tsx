@@ -892,6 +892,26 @@ export function PCPanel({
   const animationFrameRef = useRef<number | null>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
 
+  // Browser window ESC key handler
+  useEffect(() => {
+    if (!httpAppContent) return;
+
+    const handleBrowserWindowEscape = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setHttpAppContent(null);
+        setHttpAppDeviceId(null);
+        inputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleBrowserWindowEscape, true);
+    return () => {
+      window.removeEventListener('keydown', handleBrowserWindowEscape, true);
+    };
+  }, [httpAppContent]);
+
   // Global Navigation handler (Escape key & Mobile Back Button)
   useEffect(() => {
     if (!isVisible) return;
@@ -6053,6 +6073,16 @@ export function PCPanel({
                 contain: 'layout style paint',
               }}
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                setHttpAppContent(null);
+                setHttpAppDeviceId(null);
+                inputRef.current?.focus();
+              }
+            }}
+            tabIndex={-1}
           >
             <div
               className={`h-full w-full rounded-2xl shadow-2xl border ${isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'} flex flex-col overflow-hidden`}

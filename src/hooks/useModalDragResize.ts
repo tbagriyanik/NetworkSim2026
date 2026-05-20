@@ -44,8 +44,8 @@ function loadModalLayout(modal: 'tasks' | 'cli' | 'pc' | 'firewall' | 'deviceUni
     if (savedPos) {
         const p = JSON.parse(savedPos);
         position = {
-            x: Math.max(0, Math.min(p.x, window.innerWidth - size.width)),
-            y: Math.max(0, Math.min(p.y, window.innerHeight - size.height)),
+            x: p.x,
+            y: p.y,
         };
     } else {
         position = {
