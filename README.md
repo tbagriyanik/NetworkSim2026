@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/badge/version-1.6.5-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%206.0%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-104000-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-99624-lightgrey)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows. TR/EN interface support.
 
@@ -11,14 +11,16 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 ---
 
-## Latest Updates (2026-05-19)
+## Latest Updates (2026-05-20)
 
 | English | Türkçe |
 | --- | --- |
+| **Browser Window ESC Close**: Web browser window closes with ESC key without affecting PC panel. | **Tarayıcı Penceresi ESC Kapatma**: Web tarayıcı penceresi ESC tuşu ile kapatılır, PC paneli etkilenmez. |
+| **Window Snap Removal**: PC, Switch, Router, and Firewall windows no longer snap to screen edges during drag/resize. | **Pencere Snap Kaldırma**: PC, Switch, Router ve Firewall pencereleri sürükleme/yeniden boyutlandırma sırasında ekran kenarlarına snap olmaz. |
+| **PC History Cleanup**: New projects and opened projects no longer inherit previous PC cmd/CLI history. | **PC Geçmiş Temizliği**: Yeni projeler ve açılan projeler artık önceki PC cmd/CLI geçmişini almaz. |
 | **Achievement System**: Badge system with trackable milestones, reward notifications, and profile progress tracking. | **Başarım Sistemi**: Takip edilebilir kilometre taşları, ödül bildirimleri ve profil ilerleme takibi ile rozet sistemi. |
 | **Exam Mode**: Teacher exam editor, project-to-exam conversion, mobile-responsive layout, and secure student distribution. | **Sınav Modu**: Öğretmen sınav düzenleyicisi, projeden sınava dönüşüm, mobil uyumlu düzen ve güvenli öğrenci dağıtımı. |
 | **Guided Mode & Tutorial Wizard**: Step-by-step guided lessons with gamification points, progress tracking, and hint system. | **Rehberli Mod ve Eğitim Sihirbazı**: Oyunlaştırma puanları, ilerleme takibi ve ipucu sistemi ile adım adım rehberli dersler. |
-| **Guided Mode Progress Fix**: Lesson progress updates immediately after terminal commands without requiring tab switch or UI refresh. | **Rehberli Mod İlerleme Düzeltmesi**: Ders ilerlemesi, terminal komutlarından sonra sekme değiştirme veya UI yenileme gerektirmeden anında güncellenir. |
 | **Intelligent CLI Assistant**: Fuzzy-matched command suggestions and device-aware subcommand hints below CLI error messages. | **Akıllı CLI Asistanı**: CLI hata mesajlarının altında bulanık eşleştirmeli komut önerileri ve cihaz bilinçli alt komut ipuçları. |
 | **Exam Import Enhancements**: Improved `.json` / `.exam` import with smarter PC IP extraction, connection parsing, and weighted scoring. | **Sınav İçe Aktarma İyileştirmeleri**: Gelişmiş `.json` / `.exam` içe aktarma ile akıllı PC IP çıkarma, bağlantı ayrıştırma ve ağırlıklı puanlama. |
 | **PC Services Persistence**: PC service configurations (DHCP, DNS, HTTP) persist across network refreshes. | **PC Servis Kalıcılığı**: PC servis yapılandırmaları (DHCP, DNS, HTTP) ağ yenilemelerinde korunur. |
@@ -122,8 +124,11 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Total Lines / Toplam Satır | 104,000+ |
-| Source Files / Kaynak Dosya | 267 |
+| Total Lines / Toplam Satır | 99,624 |
+| Source Code Lines / Kaynak Kod Satırı | 96,218 |
+| Documentation Lines / Dokümantasyon Satırı | 3,406 |
+| Source Files / Kaynak Dosya | 262 |
+| Documentation Files / Dokümantasyon Dosya | 14 |
 | Example Projects / Örnek Proje | 39 |
 | Guided Lessons / Rehberli Ders | 8 |
 | Exams / Sınav | 3 |
@@ -142,8 +147,10 @@ npm install && npm run dev
 | [doc/L3_SWITCH_CONFIGURATION.md](doc/L3_SWITCH_CONFIGURATION.md) | L3 switch configuration guide / L3 anahtar yapılandırma kılavuzu |
 | [doc/ERROR_HANDLING_GUIDE.md](doc/ERROR_HANDLING_GUIDE.md) | Error handling reference / Hata yönetimi referansı |
 | [doc/INTEGRATION_GUIDE.md](doc/INTEGRATION_GUIDE.md) | API integration guide / API entegrasyon kılavuzu |
-| [doc/FEATURE_SUMMARY_WINDOW_POSITIONS.md](doc/FEATURE_SUMMARY_WINDOW_POSITIONS.md) | Window position preservation / Penca konumu koruma |
-| [doc/WINDOW_POSITION_PRESERVATION.md](doc/WINDOW_POSITION_PRESERVATION.md) | Window position persistence details / Penca konumu kalıcılık detayları |
+| [doc/WIRELESS_CONFIGURATION_GUIDE.md](doc/WIRELESS_CONFIGURATION_GUIDE.md) | Wireless configuration guide / Kablosuz yapılandırma kılavuzu |
+| [doc/WIRELESS_FEATURE_SUMMARY.md](doc/WIRELESS_FEATURE_SUMMARY.md) | Wireless features overview / Kablosuz özellikleri özeti |
+| [doc/WIRELESS_IMPLEMENTATION_SUMMARY.md](doc/WIRELESS_IMPLEMENTATION_SUMMARY.md) | Wireless implementation details / Kablosuz uygulama detayları |
+| [doc/WIRELESS_README.md](doc/WIRELESS_README.md) | Wireless module documentation / Kablosuz modülü belgelendirmesi |
 
 ## Architecture / Mimari
 
@@ -167,7 +174,7 @@ src/
 
 ## Tech Stack / Teknoloji
 
-Next.js 16.2, React 19, TypeScript 6.0, Tailwind CSS 4, Radix UI, Zustand 5.0, Vitest
+Next.js 16.2, React 19, TypeScript 6.0, Tailwind CSS 4, Radix UI, Zustand 5.0
 
 ## License / Lisans
 
