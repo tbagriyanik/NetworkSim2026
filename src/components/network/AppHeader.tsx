@@ -223,16 +223,6 @@ export function AppHeader({
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button aria-label={t.basarilarim} className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-amber-400 hover:bg-slate-700/50' : 'text-slate-500 hover:text-amber-600')} onClick={() => setShowBasarilarim(!showBasarilarim)}>
-                        <Trophy className={`w-4 h-4 ${showBasarilarim ? 'text-amber-500' : ''}`} />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="flex items-center gap-2">
-                      <span>{t.basarilarim}</span>
-                    </TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
                       <button aria-label={t.contactTitle} className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-blue-400 hover:bg-slate-700/50' : 'text-slate-500 hover:text-blue-600')} onClick={() => setShowAboutModal(true)}>
                         <Info className="w-4 h-4" />
                       </button>
@@ -243,8 +233,19 @@ export function AppHeader({
                     </TooltipContent>
                   </Tooltip>
                 </div>
-              </div>
-              <input ref={fileInputRef} type="file" accept=".json,.exam" onChange={handleLoadProject} className="hidden" />
+              </div>                  <input ref={fileInputRef} type="file" accept=".json,.exam" onChange={handleLoadProject} className="hidden" />
+
+              {/* Achievements - always visible */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button aria-label={t.basarilarim} className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-slate-200/50", isDark ? 'text-slate-300 hover:text-amber-400 hover:bg-slate-700/50' : 'text-slate-500 hover:text-amber-600')} onClick={() => setShowBasarilarim(!showBasarilarim)}>
+                    <Trophy className={`w-4 h-4 ${showBasarilarim ? 'text-amber-500' : ''}`} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="flex items-center gap-2">
+                  <span>{t.basarilarim}</span>
+                </TooltipContent>
+              </Tooltip>
 
               {/* Settings & Theme */}
               <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'} hidden md:block`} />

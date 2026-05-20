@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardNavigation';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -69,6 +70,18 @@ export function TopologyToolbar({
   handleUndo, handleRedo,
   handleRefreshNetwork, setIsEnvironmentPanelOpen,
 }: TopologyToolbarProps) {
+  // Register Home key shortcut for reset view
+  useKeyboardShortcuts([
+    {
+      key: 'Home',
+      handler: () => {
+        setZoom(1.0);
+        setPan({ x: 0, y: 0 });
+      },
+      description: 'Reset topology view',
+    },
+  ]);
+
   return (
     <div className="fixed top-[72px] left-0 right-0 z-30 px-4 py-[5px] pt-3 border-b backdrop-blur-md bg-background/95 hidden md:flex items-center gap-3">
       {/* Reset View Button */}
@@ -92,7 +105,10 @@ export function TopologyToolbar({
             </svg>
           </Button>
         </TooltipTrigger>
-        <TooltipContent>{t.resetView}</TooltipContent>
+        <TooltipContent className="flex items-center gap-2">
+          <span>{t.resetView}</span>
+          <ShortcutBadge shortcut="Home" variant="default" />
+        </TooltipContent>
       </Tooltip>
 
       {/* Active Device Dropdown */}

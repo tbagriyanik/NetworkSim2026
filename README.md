@@ -47,7 +47,7 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 | English | Türkçe |
 | --- | --- |
-| **180+ Command Families**: Cisco-like CLI with enable mode, configure terminal, interface config, etc. | **180+ Komut Ailesi**: Cisco benzeri CLI (enable modu, configure terminal, interface config, vb.) |
+| **Command Families**: CLI with enable mode, configure terminal, interface config, etc. | **Komut Ailesi**: CLI (enable modu, configure terminal, interface config, vb.) |
 | **Context-Aware Help**: Device-aware subcommand suggestions and syntax hints | **Bağlam Duyarlı Yardım**: Cihaz bilinçli alt komut önerileri ve sözdizimi ipuçları |
 | **Fuzzy Matching**: Intelligent command matching with typo tolerance | **Bulanık Eşleştirme**: Yazım hatası toleranslı akıllı komut eşleştirme |
 | **Pipe Support**: Command output piping and filtering | **Pipe Desteği**: Komut çıktısı yönlendirme ve filtreleme |
@@ -62,7 +62,7 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | English | Türkçe |
 | --- | --- |
 | **Free Mode**: Sandbox environment — build any topology, configure freely | **Serbest Mod**: Sanal alan ortamı — dilediğiniz topolojiyi kurun, özgürce yapılandırın |
-| **Guided Mode**: 8 step-by-step tutorials with hints, scoring, and progress tracking | **Rehberli Mod**: İpuçları, puanlama ve ilerleme takibi ile 8 adım adım eğitim |
+| **Guided Mode**: Step-by-step tutorials with hints, scoring, and progress tracking | **Rehberli Mod**: İpuçları, puanlama ve ilerleme takibi ile adım adım eğitim |
 | **Exam Mode**: Teacher exam editor, project-to-exam conversion, automatic scoring, student distribution | **Sınav Modu**: Öğretmen sınav düzenleyicisi, projeden sınava dönüşüm, otomatik puanlama, öğrenci dağıtımı |
 | **Exam Import**: Smart `.json` / `.exam` file import with PC IP extraction and connection parsing | **Sınav İçe Aktarma**: PC IP çıkarma ve bağlantı ayrıştırma ile akıllı `.json` / `.exam` dosya içe aktarma |
 
@@ -83,7 +83,7 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | --- | --- |
 | **Network Canvas**: Drag & drop topology builder with visual connections | **Ağ Tuvali**: Sürükle-bırak topoloji oluşturucu, görsel bağlantılar |
 | **Device Palette**: Router, switch, PC, laptop, server, IoT, wireless device palette | **Cihaz Paleti**: Yönlendirici, anahtar, PC, dizüstü, sunucu, IoT, kablosuz cihaz paleti |
-| **CLI Terminal**: Full-featured Cisco-style terminal with syntax highlighting | **CLI Terminali**: Sözdizimi vurgulamalı, tam donanımlı Cisco tarzı terminal |
+| **CLI Terminal**: Full-featured terminal with syntax highlighting | **CLI Terminali**: Sözdizimi vurgulamalı, tam donanımlı tarzı terminal |
 | **Context Panels**: PC Panel, Firewall Panel, IoT Panel, Device Configuration Panel | **Bağlam Panelleri**: PC Paneli, Güvenlik Duvarı Paneli, IoT Paneli, Cihaz Yapılandırma Paneli |
 | **Quick Commands**: One-click common command suggestions | **Hızlı Komutlar**: Tek tıklamayla sık kullanılan komut önerileri |
 | **Mode Selector**: Easy switching between Free, Guided, and Exam modes | **Mod Seçici**: Serbest, Rehberli ve Sınav modları arasında kolay geçiş |
