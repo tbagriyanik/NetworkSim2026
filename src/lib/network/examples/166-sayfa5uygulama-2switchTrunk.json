@@ -443,13 +443,13 @@
         ],
         "commandHistory": [
           "en",
-          "show interface trunk",
+          "show interfaces trunk",
           "sh int tr",
           "show int",
           "show vlan brief",
           "ex",
           "show vlan brief",
-          "show vlan bried",
+          "show vlan brief",
           "sh vlan br",
           "do sh vlan br",
           "ex"
@@ -1425,13 +1425,13 @@
           "end"
         ],
         "commandHistory": [
-          "show interface trunk",
+          "show interfaces trunk",
           "interface trunk",
           "show",
           "interface trunk",
           "show",
           "sh vlan",
-          "sh vlabn",
+          "sh vlan",
           "ex",
           "sw acc vlan 200",
           "sw mod acc",
@@ -1455,7 +1455,7 @@
           "int gig0/1",
           "conf t",
           "sh vlan",
-          "show interface trunk",
+          "show interfaces trunk",
           "en"
         ],
         "historyIndex": -1,
@@ -2000,13 +2000,13 @@
         {
           "id": "1773600818388",
           "type": "command",
-          "content": "show vlan bried",
+          "content": "show vlan brief",
           "prompt": "SWITCH-1(config)#"
         },
         {
           "id": "1773600818388-err",
           "type": "error",
-          "content": "Translating \"show vlan bried\"...domain server (255.255.255.255)\n% Unknown command or computer name, or unable to find computer address"
+          "content": "Translating \"show vlan brief\"...domain server (255.255.255.255)\n% Unknown command or computer name, or unable to find computer address"
         },
         {
           "id": "1773600821484",
@@ -2061,7 +2061,7 @@
         {
           "id": "1773600889862",
           "type": "command",
-          "content": "show interface trunk",
+          "content": "show interfaces trunk",
           "prompt": "SWITCH-1#"
         },
         {
@@ -3153,7 +3153,7 @@
     "notes": [
       {
         "id": "trunk-note-1",
-        "text": "Amaç: 2 switch arasında trunk yapılandırması ve VLAN 100/200 erişim portları.\n\nSW-1 Konfigürasyonu:\n1) conf t\n2) vlan 100 -> name ilk\n3) vlan 200 -> name iki\n4) int fa0/1 -> switchport access vlan 100\n5) int fa0/11 -> switchport access vlan 200\n6) int gi0/1 -> switchport mode trunk\n\nSW-2 Konfigürasyonu:\n1) conf t\n2) vlan 100 -> name ilk\n3) vlan 200 -> name iki\n4) int fa0/1 -> switchport access vlan 100\n5) int fa0/11 -> switchport access vlan 200\n6) int gi0/1 -> switchport mode trunk\n\nDoğrulama:\n- show vlan brief\n- show interface trunk\n\nNot: Aynı VLAN'daki PC'ler birbirine ping atabilir (farklı switch'lerde olsa bile).",
+        "text": "Amaç: 2 switch arasında trunk yapılandırması ve VLAN 100/200 erişim portları.\n\nSW-1 Konfigürasyonu:\n1) conf t\n2) vlan 100 -> name ilk\n3) vlan 200 -> name iki\n4) int fa0/1 -> switchport access vlan 100\n5) int fa0/11 -> switchport access vlan 200\n6) int gi0/1 -> switchport mode trunk\n\nSW-2 Konfigürasyonu:\n1) conf t\n2) vlan 100 -> name ilk\n3) vlan 200 -> name iki\n4) int fa0/1 -> switchport access vlan 100\n5) int fa0/11 -> switchport access vlan 200\n6) int gi0/1 -> switchport mode trunk\n\nDoğrulama:\n- show vlan brief\n- show interfaces trunk\n\nNot: Aynı VLAN'daki PC'ler birbirine ping atabilir (farklı switch'lerde olsa bile).",
         "x": 346,
         "y": 337,
         "width": 450,

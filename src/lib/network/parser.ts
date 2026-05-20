@@ -22,6 +22,12 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'ip host': {
+    pattern: /^ip\s+host\s+(\S+)\s+([0-9.]+)$/i,
+    modes: ['config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
   'show ipv6 dhcp pool': {
     pattern: /^show\s+ipv6\s+dhcp\s+pool(?:\s+(\S+))?$/i,
     modes: ['user', 'privileged'],
@@ -295,6 +301,18 @@ export const commandPatterns: Record<string, CommandPattern> = {
     modes: ['config'],
     minArgs: 0,
     maxArgs: 2
+  },
+  'show standby': {
+    pattern: /^show\s+standby(?:\s+(\S+))?(?:\s+brief)?$/i,
+    modes: ['user', 'privileged'],
+    minArgs: 0,
+    maxArgs: 2
+  },
+  'show hosts': {
+    pattern: /^show\s+hosts$/i,
+    modes: ['user', 'privileged'],
+    minArgs: 0,
+    maxArgs: 0
   },
   'show ip protocols': {
     pattern: /^show\s+ip\s+protocols$/i,
@@ -2175,6 +2193,30 @@ export const commandPatterns: Record<string, CommandPattern> = {
   // Spanning-tree priority (port priority)
   'spanning-tree priority': {
     pattern: /^spanning-tree\s+priority\s+\d+$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'standby ip': {
+    pattern: /^standby\s+(\d+)\s+ip\s+([0-9.]+)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'standby ipv6': {
+    pattern: /^standby\s+(\d+)\s+ipv6\s+([0-9a-fA-F:]+)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'standby priority': {
+    pattern: /^standby\s+(\d+)\s+priority\s+(\d+)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'standby preempt': {
+    pattern: /^standby\s+(\d+)\s+preempt$/i,
     modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1

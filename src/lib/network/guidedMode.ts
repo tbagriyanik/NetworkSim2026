@@ -318,7 +318,7 @@ export const routerDhcpGuidedSteps: GuidedStep[] = [
     order: 5,
     title: { tr: 'IP Adresi Ata', en: 'Assign IP Address' },
     description: { tr: 'Arayüze 192.168.1.1 IP adresi atayın', en: 'Assign 192.168.1.1 IP to the interface' },
-    hint: { tr: '"ip add 192.168.1.1 255.255.255.0" yazın.', en: 'Type "ip add 192.168.1.1 255.255.255.0".' },
+    hint: { tr: '"ip address 192.168.1.1 255.255.255.0" yazın.', en: 'Type "ip address 192.168.1.1 255.255.255.0".' },
     checkType: 'config',
     checkParams: { configKey: 'interfaces.gi0/0.ip', configValue: '192.168.1.1' },
     completed: false,
