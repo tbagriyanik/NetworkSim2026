@@ -27,6 +27,7 @@ import { WifiSignalMeter, IoTSensorDisplay } from './PCPanelWidgets';
 import { expandCommandContext, DESKTOP_COMMANDS } from './pcPanel.utils';
 import { errorHandler, STORAGE_ERRORS, DHCP_ERRORS, CLIPBOARD_ERRORS, DEVICE_ERRORS } from '@/lib/errors/errorHandler';
 import { logger } from '@/lib/logger';
+import { FormInput } from '@/components/ui/FormInput';
 
 
 interface OutputLine {
@@ -103,16 +104,18 @@ export function PCPanel({
 
   // Helper to render network input fields to avoid repetition
   const renderNetworkInput = useCallback((label: string, value: string, onChange: (val: string) => void, placeholder: string, error?: string, disabled?: boolean) => (
-    <div className="space-y-1.5 flex-1">
-      <label className="text-xs font-bold text-slate-500 ml-1">{label}</label>
-      <Input
+    <div className="flex-1">
+      <FormInput
+        label={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className={cn("h-9", error && "border-rose-500")}
+        error={error}
+        showValidation
+        isValid={!error && value.length > 0}
+        className="h-9"
       />
-      {error && <p className="text-[10px] text-rose-500 mt-1 ml-1">{error}</p>}
     </div>
   ), []);
 
@@ -1957,6 +1960,23 @@ export function PCPanel({
       const data = event.data;
 
       if (!data) {
+        return;
+      }
+
+      if (data.type === 'router-admin-toast') {
+        const payload = data.payload || {};
+        const variant = payload.type === 'error' ? 'destructive' : undefined;
+        toast({
+          title: payload.type === 'error'
+            ? (language === 'tr' ? 'Hata' : 'Error')
+            : payload.type === 'success'
+              ? (language === 'tr' ? 'Başarılı' : 'Success')
+              : payload.type === 'warning'
+                ? (language === 'tr' ? 'Uyarı' : 'Warning')
+                : (language === 'tr' ? 'Bilgi' : 'Info'),
+          description: payload.message || '',
+          variant,
+        });
         return;
       }
 

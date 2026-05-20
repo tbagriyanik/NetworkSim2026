@@ -529,6 +529,18 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       .device-info {
         flex-direction: column;
         gap: 10px !important;
+        /* Custom Confirm Modal */
+        .custom-confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .custom-confirm-overlay.active { display: flex; }
+        .custom-confirm-box { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
+        .custom-confirm-box h3 { margin: 0 0 12px 0; font-size: 16px; color: #333; }
+        .custom-confirm-box p { margin: 0 0 20px 0; font-size: 14px; color: #666; }
+        .custom-confirm-actions { display: flex; gap: 10px; justify-content: center; }
+        .custom-confirm-actions button { padding: 8px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .confirm-cancel-btn { background: #e9ecef; color: #495057; }
+        .confirm-cancel-btn:hover { background: #dee2e6; }
+        .confirm-ok-btn { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; }
+        .confirm-ok-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(220,53,69,0.4); }
       }
     }
   </style>
@@ -819,12 +831,14 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       const password = document.getElementById('wifi-password')?.value || '';
       
       if (!ssid) {
-        alert('❌ ${isTurkish ? 'Lütfen bir ağ adı (SSID) girin' : 'Please enter a network name (SSID)'}');
+        const errorMessage = isTurkish ? 'Lütfen bir ağ adı (SSID) girin' : 'Please enter a network name (SSID)';
+window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, '*');
         return;
       }
       
       if (security !== 'open' && password.length < 8) {
-        alert('❌ ${isTurkish ? 'Parola en az 8 karakter olmalıdır' : 'Password must be at least 8 characters'}');
+        const errorMessage = isTurkish ? 'Parola en az 8 karakter olmalıdır' : 'Password must be at least 8 characters';
+window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, '*');
         return;
       }
       
@@ -837,7 +851,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       setTimeout(() => {
         btn.innerHTML = originalText;
         btn.style.background = '';
-        alert('✅ ${isTurkish ? 'WiFi ayarları başarıyla kaydedildi!\\n\\nDeğişiklikler hemen geçerli olacaktır.' : 'WiFi settings have been saved successfully!\\n\\nChanges will take effect immediately.'}');
+        window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'success', message: 'WiFi settings saved successfully!' } }, '*');
       }, 1000);
 
       try {
@@ -961,7 +975,13 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
         }, '*');
       } catch (err) {
         console.warn('Could not disconnect IoT device:', err);
-        alert('\u274c ${isTurkish ? 'Cihaz bağlantısı kesilemedi' : 'Failed to disconnect device'}: ' + err.message);
+        let errorMessage: string;
+        if (isTurkish) {
+          errorMessage = 'Cihaz bağlantısı kesilemedi: ' + (err as Error).message;
+        } else {
+          errorMessage = 'Failed to disconnect device: ' + (err as Error).message;
+        }
+window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, '*');
       }
     };
 
