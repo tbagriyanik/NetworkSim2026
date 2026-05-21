@@ -1977,6 +1977,12 @@ export function PCPanel({
 
   useEffect(() => {
     const handleRouterAdminMessage = (event: MessageEvent) => {
+      // Security: Validate origin to prevent cross-site scripting or data injection from malicious frames.
+      // We allow window.location.origin for same-origin messages and 'null' for local srcdoc iframes.
+      if (event.origin !== window.location.origin && event.origin !== 'null') {
+        return;
+      }
+
       const data = event.data;
 
       if (!data) {
@@ -5233,7 +5239,7 @@ export function PCPanel({
                                                 payload: {
                                                   iotDeviceId: selectedIotDeviceId
                                                 }
-                                              }, '*');
+                                              }, window.parent.location.origin);
                                             }
                                           }}
                                         >

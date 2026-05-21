@@ -832,13 +832,13 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       
       if (!ssid) {
         const errorMessage = isTurkish ? 'Lütfen bir ağ adı (SSID) girin' : 'Please enter a network name (SSID)';
-window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, '*');
+window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, window.parent.location.origin);
         return;
       }
       
       if (security !== 'open' && password.length < 8) {
         const errorMessage = isTurkish ? 'Parola en az 8 karakter olmalıdır' : 'Password must be at least 8 characters';
-window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, '*');
+window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, window.parent.location.origin);
         return;
       }
       
@@ -851,7 +851,7 @@ window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error'
       setTimeout(() => {
         btn.innerHTML = originalText;
         btn.style.background = '';
-        window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'success', message: 'WiFi settings saved successfully!' } }, '*');
+        window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'success', message: 'WiFi settings saved successfully!' } }, window.parent.location.origin);
       }, 1000);
 
       try {
@@ -868,7 +868,7 @@ window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error'
             maxClients: Number(maxClients),
             password
           }
-        }, '*');
+        }, window.parent.location.origin);
       } catch (err) {
         logger.warn('Could not sync router settings to parent:', err);
       }
@@ -956,7 +956,7 @@ window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error'
         window.parent.postMessage({
           type: 'router-admin-focus-device',
           deviceId: deviceId
-        }, '*');
+        }, window.parent.location.origin);
       } catch (err) {
         console.warn('Could not send focus device message:', err);
       }
@@ -972,7 +972,7 @@ window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error'
           payload: {
             iotDeviceId: deviceId
           }
-        }, '*');
+        }, window.parent.location.origin);
       } catch (err) {
         console.warn('Could not disconnect IoT device:', err);
         let errorMessage: string;
@@ -981,7 +981,7 @@ window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error'
         } else {
           errorMessage = 'Failed to disconnect device: ' + (err as Error).message;
         }
-window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, '*');
+window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, window.parent.location.origin);
       }
     };
 
@@ -993,7 +993,7 @@ window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error'
           payload: {
             iotDeviceId: deviceId
           }
-        }, '*');
+        }, window.parent.location.origin);
       } catch (err) {
         console.warn('Could not renew IoT device IP:', err);
         alert('❌ ${isTurkish ? 'IP yenilenemedi' : 'Failed to renew IoT device IP'}');
@@ -1038,7 +1038,7 @@ window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error'
                 password: ${jsWifiPassword},
                 channel: ${jsChannel}
               }
-            }, '*');
+            }, window.parent.location.origin);
             successCount++;
           } catch (err) {
             console.warn('Could not connect IoT device ' + deviceId + ':', err);
