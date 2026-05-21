@@ -39,13 +39,14 @@ export function sanitizeHTTPContent(input: string): string {
 }
 
 export function sanitizeInput(input: string): string {
-    let sanitized = input.replace(/[<>`]/g, '').trim();
-    // Remove "javascript:" recursively to prevent bypasses like "javas<javascript:>cript:"
-    // where inner tags are removed first, leaving behind a malicious payload.
+    // Strip HTML tags and dangerous characters first
+    let sanitized = input.replace(/<[^>]*>?/gm, '').replace(/[<>`]/g, '').trim();
+    // Remove dangerous URI schemes recursively to prevent bypasses like "javas<javascript:>cript:"
+    // where inner tags or schemes are removed first, leaving behind a malicious payload.
     let prev;
     do {
         prev = sanitized;
-        sanitized = sanitized.replace(/javascript:/gi, '');
+        sanitized = sanitized.replace(/(javascript|data|vbscript|file):/gi, '');
     } while (sanitized !== prev);
     return sanitized;
 }

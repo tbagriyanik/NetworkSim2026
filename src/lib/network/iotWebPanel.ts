@@ -94,7 +94,7 @@ export const generateIotWebPanelContent = (
           </div>
           <div class="device-status ${statusClass}">${statusText}</div>
         </div>
-        <button onclick="window.parent.postMessage({ type: 'open-iot-device', deviceId: ${jsDeviceId} }, '*')" class="connect-button">
+        <button onclick="window.parent.postMessage({ type: 'open-iot-device', deviceId: ${jsDeviceId} }, window.parent.location.origin)" class="connect-button">
           ${isTurkish ? 'Bağlan' : 'Connect'}
         </button>
       </div>
@@ -1039,23 +1039,23 @@ export const generateIotDevicePageContent = (
               statusText.className = 'status-text status-active';
               statusMessage.textContent = '${isTurkish ? 'Cihaz aktif' : 'Device is active'}';
               statusMessage.className = 'status-text status-active';
-              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: ${jsId}, active: true }, '*');
+              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: ${jsId}, active: true }, window.parent.location.origin);
             } else {
               statusText.textContent = '${isTurkish ? 'Pasif' : 'Inactive'}';
               statusText.className = 'status-text status-inactive';
               statusMessage.textContent = '${isTurkish ? 'Cihaz pasif' : 'Device is inactive'}';
               statusMessage.className = 'status-text status-inactive';
-              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: ${jsId}, active: false }, '*');
+              window.parent.postMessage({ type: 'toggle-iot-device', deviceId: ${jsId}, active: false }, window.parent.location.origin);
             }
             updateRuleList();
           }
 
           function saveRules() {
-            window.parent.postMessage({ type: 'update-iot-rules', deviceId, rules }, '*');
+            window.parent.postMessage({ type: 'update-iot-rules', deviceId, rules }, window.parent.location.origin);
           }
 
           function goBack() {
-            window.parent.postMessage({ type: 'back-to-iot-list' }, '*');
+            window.parent.postMessage({ type: 'back-to-iot-list' }, window.parent.location.origin);
           }
         </script>
       </body>
