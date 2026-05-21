@@ -5890,7 +5890,7 @@ export function PCPanel({
                           </div>
                           {/* Input Area - Fixed at bottom */}
                           {!isPcPoweredOff && (
-                            <div className={`absolute inset-x-0 bottom-0 z-20 border-t bg-muted/95 backdrop-blur-sm ${isMobile ? 'p-2' : 'p-3'}`}>
+                            <div onClick={() => inputRef.current?.focus()} className={`absolute inset-x-0 bottom-0 z-20 border-t bg-muted/95 backdrop-blur-sm ${isMobile ? 'p-2' : 'p-3'}`}>
                               <form onSubmit={(e) => { e.preventDefault(); executeCommand(); }} className="flex items-center gap-3 relative">
 
                                 {/* Context hint for password/confirm in console mode */}

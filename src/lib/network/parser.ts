@@ -2433,14 +2433,18 @@ export function getLevenshteinDistance(a: string, b: string): number {
 
 // Komut parse et
 export function parseCommand(input: string, currentMode: CommandMode, state?: any): ParsedCommand | null {
-  const capabilities = state ? getDeviceCapabilities(state, state.switchModel) : undefined;
+  const inferredDeviceType = state
+    ? (state.deviceType === 'switch'
+      ? (state.switchLayer === 'L3' ? 'switchL3' : 'switchL2')
+      : state.deviceType || (state.switchLayer === 'FW' ? 'firewall' : state.switchLayer === 'L3' ? 'switchL3' : 'switchL2'))
+    : 'switchL2';
+  const capabilities = state ? getDeviceCapabilities({ type: inferredDeviceType } as any, state.switchModel) : undefined;
   const resolvedInput = expandKeywordPrefixes(resolveAliases(input, state), currentMode, capabilities);
-  const trimmed = resolvedInput.trim();
 
-  if (!trimmed) return null;
+  if (!resolvedInput) return null;
 
   // Komut ve argümanları ayır
-  const parts = trimmed.split(/\s+/);
+  const parts = resolvedInput.split(/\s+/);
   const command = parts[0];
   const args = parts.slice(1);
   const intent = inferIntent(parts.map(p => p.toLowerCase()));
@@ -2586,7 +2590,12 @@ export function validateCommand(
 
   const input = parsed.rawInput.toLowerCase();
   const resolvedInput = resolveAliases(parsed.rawInput, state);
-  const capabilities = state ? getDeviceCapabilities(state, state.switchModel) : undefined;
+  const inferredDeviceType = state
+    ? (state.deviceType === 'switch'
+      ? (state.switchLayer === 'L3' ? 'switchL3' : 'switchL2')
+      : state.deviceType || (state.switchLayer === 'FW' ? 'firewall' : state.switchLayer === 'L3' ? 'switchL3' : 'switchL2'))
+    : 'switchL2';
+  const capabilities = state ? getDeviceCapabilities({ type: inferredDeviceType } as any, state.switchModel) : undefined;
 
   // Exact pattern match must win over prefix-tree ambiguity.
   for (const [name, pattern] of Object.entries(commandPatterns)) {

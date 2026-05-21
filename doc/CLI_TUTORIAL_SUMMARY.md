@@ -49,7 +49,7 @@
 - **Ders 27:** IPv6 Konfigürasyonu
 - **Ders 28:** Sistem Yönetimi ve Bakım
 - **Ders 29:** Komut Takma Adları ve Makrolar
-- **Ders 30:** IoT Sensör Konfigürasyonu
+- **Ders 30:** Erişim Kontrol Listeleri (ACL)
 
 ---
 
@@ -112,7 +112,7 @@
 | Dosya Boyutu | 42 KB |
 | Satır Sayısı | 1.421 |
 | Okuma Süresi | 2-3 saat |
-| Cihaz Türleri | 5 (Switch, Router, WLC, AP, IoT) |
+| Cihaz Türleri | 5 (Switch, Router, WLC, AP, PC) |
 | Zorluk Seviyeleri | 4 (Başlangıç → Çok İleri) |
 
 ---
@@ -136,7 +136,7 @@ Ders 16-23 → Güvenlik ve protokoller
 
 ### 🔴 Uzman (1 saat)
 ```
-Ders 24-30 → İleri konular ve IoT
+Ders 24-30 → İleri konular
 ```
 
 ---
@@ -184,7 +184,7 @@ Ders 24-30 → İleri konular ve IoT
 - EtherChannel
 - QoS
 - IPv6
-- IoT Sensörler
+- ACL Konfigürasyonu
 
 ---
 

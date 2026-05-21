@@ -1324,7 +1324,7 @@ export function Terminal({
           </div>
 
           {!isPoweredOff && (
-            <div className={cn(
+            <div onClick={() => inputRef.current?.focus()} className={cn(
               "absolute inset-x-0 bottom-0 z-20 border-t bg-muted/95 backdrop-blur-sm",
               isMobile ? "p-2" : "p-3"
             )}>

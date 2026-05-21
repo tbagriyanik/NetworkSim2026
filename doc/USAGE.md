@@ -71,6 +71,10 @@
 | `Shift + Arrow Keys` | Move selected device(s) faster | Seçili cihaz(lar)ı daha hızlı taşı |
 | `F1` | Open / close help panel | Yardım panelini aç / kapat |
 | `F5` | Refresh network topology | Ağ topolojisini yenile |
+| `Home` | Reset topology view | Topoloji görünümünü sıfırla |
+| `End` | Focus last element | Son öğeye odaklan |
+| `Page Up` | Scroll canvas up | Canvas'ı yukarı kaydır |
+| `Page Down` | Scroll canvas down | Canvas'ı aşağı kaydır |
 | `Double-click` | Open device panel | Cihaz panelini aç |
 
 ### Ping Packet Analysis / Ping Paket Analizi

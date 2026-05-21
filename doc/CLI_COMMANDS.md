@@ -23,6 +23,9 @@ The simulator supports **180+ commands** across multiple configuration modes.
 | `Left-click + Drag` | Pan canvas |
 | `Middle-click + Drag` | Rectangle selection |
 | `Right-click` | Open context menu |
+| `Home` | Reset topology view (zoom 1.0, center) |
+| `End` | Focus last element |
+| `Page Up` / `Page Down` | Scroll canvas vertically |
 | `Mouse Wheel` | Zoom in/out |
 | `Ctrl + Drag Device` | Snap device to grid (16px grid) |
 
@@ -160,11 +163,11 @@ The simulator supports **180+ commands** across multiple configuration modes.
 | `macro name <name>` | Define command macro |
 | `sdm prefer <template>` | Set SDM template |
 | `ip arp inspection vlan <id>` | Enable DAI on VLAN |
-| `iot sensor <type>` | Set IoT sensor type (temperature, humidity, motion, light, sound) |
-| `iot name <name>` | Set IoT device name |
-| `iot wifi ssid <ssid>` | Set IoT WiFi SSID |
-| `iot wifi password <password>` | Set IoT WiFi password |
-| `iot wifi security <type>` | Set IoT WiFi security (open, wpa, wpa2, wpa3) |
+| `access-list <id> <action> <condition>` | Create numbered ACL (1-99 standard, 100-199 extended) |
+| `ip access-group <id> {in|out}` | Apply ACL to interface |
+| `ip access-list {standard|extended} <name>` | Create named ACL |
+| `show access-lists` | Display all access lists |
+| `no access-list <id>` | Remove numbered ACL |
 
 ### Interface Configuration Commands
 | Command | Description |

@@ -540,13 +540,6 @@ export function GuidedModePanel({
           </span>
           <ChevronUp className="w-4 h-4 ml-1 opacity-60" />
         </div>
-
-        {/* Helper Text */}
-        <div className="text-center">
-          <span className="text-xs text-slate-500 dark:text-slate-400 bg-white/80 dark:bg-slate-800/80 px-2 py-1 rounded-full shadow-sm">
-            {language === 'tr' ? 'Sürüklemek için tutun' : 'Hold to drag'}
-          </span>
-        </div>
       </div>
     );
   }

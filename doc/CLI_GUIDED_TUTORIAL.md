@@ -1644,9 +1644,9 @@ ICMP echo reply received from 192.168.1.2
 
 ---
 
-### 📌 Ders 30: IoT Sensör Konfigürasyonu
+### 📌 Ders 30: Erişim Kontrol Listeleri (ACL)
 
-**Cihaz Türü:** IoT Cihazı  
+**Cihaz Türü:** Router
 **Zorluk Seviyesi:** ⭐⭐⭐ İleri
 
 #### Adım 1: Ayrıcalıklı Moda Girin
@@ -1659,48 +1659,41 @@ ICMP echo reply received from 192.168.1.2
 # configure terminal
 ```
 
-#### Adım 3: IoT Sensör Türünü Ayarla
+#### Adım 3: Standart Access-List Oluşturun
 ```
-(config)# iot sensor temperature
+(config)# access-list 1 deny host 192.168.1.10
+(config)# access-list 1 permit any
 ```
-**Beklenen Sonuç:** Sensör türü sıcaklık olarak ayarlanır
+**Beklenen Sonuç:** PC-1 (192.168.1.10) trafiğini engelleyen, diğer tüm trafiğe izin veren ACL oluşturulur
 
-#### Adım 4: IoT Cihazına Ad Ver
+#### Adım 4: ACL'i Arayüze Uygulayın
 ```
-(config)# iot name Ofis-Sıcaklık-Sensörü
+(config)# interface gi0/0
+(config-if)# ip access-group 1 out
 ```
-**Beklenen Sonuç:** Cihaza ad verilir
+**Beklenen Sonuç:** ACL 1, Gi0/0 arayüzünde outgoing yönde uygulanır
 
-#### Adım 5: WiFi SSID Ayarla
+#### Adım 5: ACL'i Görüntüleyin
 ```
-(config)# iot wifi ssid MyNetwork
+(config-if)# exit
+# show access-lists
 ```
-**Beklenen Sonuç:** WiFi SSID ayarlanır
+**Beklenen Sonuç:** Oluşturulan ACL kuralları listelenir
 
-#### Adım 6: WiFi Şifresi Ayarla
+#### Adım 6: Konfigürasyonu Kaydet
 ```
-(config)# iot wifi password MyPassword123
-```
-**Beklenen Sonuç:** WiFi şifresi ayarlanır
-
-#### Adım 7: WiFi Güvenliğini Ayarla
-```
-(config)# iot wifi security wpa2
-```
-**Beklenen Sonuç:** WiFi güvenliği WPA2 olur
-
-#### Adım 8: Konfigürasyonu Kaydet
-```
-(config)# exit
 # write memory
 ```
 
 #### 📝 Notlar
-- `iot sensor` sensör türünü belirler (temperature, humidity, motion, light, sound)
-- `iot name` cihaza ad verir
-- `iot wifi ssid` WiFi ağını belirler
-- `iot wifi password` WiFi şifresi ayarlar
-- `iot wifi security` güvenlik türünü belirler (open, wpa, wpa2, wpa3)
+- Standart ACL'ler (1-99) yalnızca kaynak IP'ye göre filtreleme yapar
+- Extended ACL'ler (100-199) kaynak/hedef IP, port ve protokole göre filtreleme yapar
+- `access-list` komutu global konfigürasyon modunda çalışır
+- `ip access-group` komutu interface konfigürasyon modunda çalışır
+- ACL'ler sıralı olarak işlenir; ilk eşleşen kural uygulanır
+- Her ACL'in sonunda `permit any` veya `deny any` ile bitmesi önerilir
+- `show access-lists` tüm ACL'leri gösterir
+- Named ACL için `ip access-list standard <isim>` kullanılır
 
 ---
 
