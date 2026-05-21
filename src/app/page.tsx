@@ -3649,7 +3649,7 @@ ${state.bannerMOTD}
             title: t.networkRefreshed,
             dhcpMessages: [
               stpMessage
-                ? `${dhcpSummary} • ${stpMessage}`.replace(/^ • /, stpMessage)
+                ? `${dhcpSummary} • ${stpMessage}`.replace(/^ • /, '')
                 : (isDhcpMissing
                   ? ''
                   : `${t.noWifiDevices} • ${dhcpSummary}`)
