@@ -8,6 +8,25 @@ Bu indeks, proje dokümantasyonunun tüm dosyalarını ve içeriklerini listeler
 
 ## 📖 Dokümantasyon Dosyaları
 
+### 0. 🎓 CLI_GUIDED_TUTORIAL.md
+**Amaç**: Tüm CLI komutlarının pratik rehberli dersleri  
+**Okuma Süresi**: 2-3 saat (tüm dersler)  
+**İçerik**:
+- 30 pratik ders (Başlangıç → İleri)
+- Adım adım örnekler
+- Her ders için beklenen sonuçlar
+- 5 pratik senaryo
+- Hızlı referans tablosu
+- Sorun giderme ipuçları
+
+**Ne Zaman Okuyacağım?**
+- CLI komutlarını öğrenmek istiyorsanız
+- Pratik örnekler istiyorsanız
+- Ağ konfigürasyonu yapmak istiyorsanız
+- Belirli bir komut hakkında bilgi istiyorsanız
+
+---
+
 ### 1. 🚀 README_IMPROVEMENTS.md
 **Amaç**: Proje özeti ve hızlı başlangıç  
 **Okuma Süresi**: 10 dakika  
@@ -126,33 +145,42 @@ Bu indeks, proje dokümantasyonunun tüm dosyalarını ve içeriklerini listeler
 
 ---
 
-## 🗺️ Okuma Haritası
-
-### 🟢 Başlangıç (Yeni Kullanıcılar)
+### 🟢 Başlangıç (Yeni Kullanıcılar - CLI Öğrenme)
 ```
-1. README_IMPROVEMENTS.md (10 min)
+1. CLI_GUIDED_TUTORIAL.md - Ders 1-5 (30 min)
    ↓
-2. QUICK_REFERENCE.md (5 min)
+2. CLI_GUIDED_TUTORIAL.md - Ders 6-10 (30 min)
    ↓
-3. Kod örneklerini deneyin
+3. Pratik Senaryoları deneyin
 ```
 
-### 🟡 Orta Seviye (Entegrasyon)
+### 🟡 Orta Seviye (CLI Komutları)
 ```
-1. INTEGRATION_GUIDE.md (20 min)
+1. CLI_GUIDED_TUTORIAL.md - Ders 11-20 (1 saat)
+   ↓
+2. CLI_GUIDED_TUTORIAL.md - Hızlı Referans Tablosu
+   ↓
+3. Ağ konfigürasyonu yapın
+```
+
+### 🟠 İleri Seviye (Tüm CLI Komutları)
+```
+1. CLI_GUIDED_TUTORIAL.md - Ders 21-30 (1 saat)
+   ↓
+2. CLI_GUIDED_TUTORIAL.md - Pratik Senaryolar
+   ↓
+3. Sorun Giderme İpuçları
+```
+
+### 🔴 Uzman Seviye (Derinlemesine)
+```
+1. CLI_GUIDED_TUTORIAL.md - Tüm Dersler (2-3 saat)
    ↓
 2. ERROR_HANDLING_GUIDE.md (30 min)
    ↓
-3. Entegrasyon yapın
-```
-
-### 🔴 İleri Seviye (Derinlemesine)
-```
-1. ERROR_HANDLING_GUIDE.md (30 min)
+3. IMPLEMENTATION_COMPLETE.md (15 min)
    ↓
-2. IMPLEMENTATION_COMPLETE.md (15 min)
-   ↓
-3. Kaynak kodları inceleyin
+4. Kaynak kodları inceleyin
 ```
 
 ---
@@ -161,6 +189,7 @@ Bu indeks, proje dokümantasyonunun tüm dosyalarını ve içeriklerini listeler
 
 ```
 Dokümantasyon/
+├── CLI_GUIDED_TUTORIAL.md          (30 pratik ders)
 ├── README_IMPROVEMENTS.md          (Proje özeti)
 ├── QUICK_REFERENCE.md              (Hızlı referans)
 ├── IMPROVEMENTS_SUMMARY.md         (İyileştirmeler özeti)
@@ -168,20 +197,35 @@ Dokümantasyon/
 ├── INTEGRATION_GUIDE.md            (Entegrasyon rehberi)
 ├── IMPLEMENTATION_COMPLETE.md      (Proje raporu)
 └── DOCUMENTATION_INDEX.md          (Bu dosya)
-
-Kod/
-├── src/lib/
-│   ├── validation/formValidation.ts
-│   ├── notifications/notificationManager.ts
-│   └── api/apiClient.ts
-└── src/components/ui/
-    ├── FormInput.tsx
-    └── ConfirmationDialog.tsx
 ```
 
 ---
 
 ## 🎯 Hızlı Bağlantılar
+
+### CLI Komutları Öğrenme
+→ CLI_GUIDED_TUTORIAL.md → "Ders 1-30"
+
+### Temel Komutlar
+→ CLI_GUIDED_TUTORIAL.md → "Temel Modu Komutları"
+
+### VLAN Yönetimi
+→ CLI_GUIDED_TUTORIAL.md → "VLAN Yönetimi"
+
+### Yönlendirme
+→ CLI_GUIDED_TUTORIAL.md → "Yönlendirme Protokolleri"
+
+### Güvenlik
+→ CLI_GUIDED_TUTORIAL.md → "Güvenlik Komutları"
+
+### Kablosuz Ağ
+→ CLI_GUIDED_TUTORIAL.md → "Kablosuz (WiFi) Komutları"
+
+### Pratik Senaryolar
+→ CLI_GUIDED_TUTORIAL.md → "Pratik Senaryolar"
+
+### Hızlı Referans
+→ CLI_GUIDED_TUTORIAL.md → "Hızlı Referans Tablosu"
 
 ### Bildirim Göster
 → QUICK_REFERENCE.md → "1️⃣ Bildirim Göster"
@@ -219,17 +263,47 @@ Kod/
 
 | Dosya | Boyut | Okuma Süresi | Bölüm Sayısı |
 |-------|-------|--------------|--------------|
+| CLI_GUIDED_TUTORIAL.md | 25 KB | 120-180 min | 30 |
 | README_IMPROVEMENTS.md | 6 KB | 10 min | 8 |
 | QUICK_REFERENCE.md | 8 KB | 5 min | 10 |
 | IMPROVEMENTS_SUMMARY.md | 7.5 KB | 10 min | 12 |
 | ERROR_HANDLING_GUIDE.md | 10.7 KB | 30 min | 15 |
 | INTEGRATION_GUIDE.md | 15 KB | 20 min | 10 |
 | IMPLEMENTATION_COMPLETE.md | 12.5 KB | 15 min | 18 |
-| **Toplam** | **59.7 KB** | **90 min** | **73** |
+| **Toplam** | **84.2 KB** | **210-240 min** | **103** |
 
 ---
 
 ## 🔍 Konu Başlıkları
+
+### CLI Komutları
+- CLI_GUIDED_TUTORIAL.md → "Tüm Dersler (1-30)"
+- CLI_GUIDED_TUTORIAL.md → "Pratik Senaryolar"
+- CLI_GUIDED_TUTORIAL.md → "Hızlı Referans Tablosu"
+
+### Temel Komutlar
+- CLI_GUIDED_TUTORIAL.md → "Temel Modu Komutları"
+- CLI_GUIDED_TUTORIAL.md → "Ayrıcalıklı Modu Komutları"
+
+### VLAN Yönetimi
+- CLI_GUIDED_TUTORIAL.md → "VLAN Yönetimi"
+- CLI_GUIDED_TUTORIAL.md → "Ders 8-10"
+
+### Yönlendirme
+- CLI_GUIDED_TUTORIAL.md → "Yönlendirme Protokolleri"
+- CLI_GUIDED_TUTORIAL.md → "Ders 11-13"
+
+### Güvenlik
+- CLI_GUIDED_TUTORIAL.md → "Güvenlik Komutları"
+- CLI_GUIDED_TUTORIAL.md → "Ders 14-16"
+
+### Kablosuz Ağ
+- CLI_GUIDED_TUTORIAL.md → "Kablosuz (WiFi) Komutları"
+- CLI_GUIDED_TUTORIAL.md → "Ders 17-18"
+
+### Hata Ayıklama
+- CLI_GUIDED_TUTORIAL.md → "Hata Ayıklama ve İzleme"
+- CLI_GUIDED_TUTORIAL.md → "Ders 19-23"
 
 ### Hata Kontrolü
 - ERROR_HANDLING_GUIDE.md → "Global Error Boundary"
@@ -267,43 +341,48 @@ Kod/
 
 ## 🎓 Öğrenme Yolu
 
-### Seviye 1: Başlangıç
-**Hedef**: Temel kavramları anlamak  
+### Seviye 1: Başlangıç (CLI Komutları)
+**Hedef**: Temel CLI komutlarını anlamak  
 **Dosyalar**:
-1. README_IMPROVEMENTS.md
-2. QUICK_REFERENCE.md
+1. CLI_GUIDED_TUTORIAL.md - Ders 1-5
+2. CLI_GUIDED_TUTORIAL.md - Ders 6-10
 
-**Süre**: 15 dakika
+**Süre**: 1 saat
 
-### Seviye 2: Orta
-**Hedef**: Bileşenleri kullanmak  
+### Seviye 2: Orta (CLI Komutları)
+**Hedef**: Orta seviye CLI komutlarını kullanmak  
 **Dosyalar**:
-1. INTEGRATION_GUIDE.md
-2. QUICK_REFERENCE.md
+1. CLI_GUIDED_TUTORIAL.md - Ders 11-20
+2. CLI_GUIDED_TUTORIAL.md - Hızlı Referans
 
-**Süre**: 25 dakika
+**Süre**: 1.5 saat
 
-### Seviye 3: İleri
-**Hedef**: Derinlemesine anlamak  
+### Seviye 3: İleri (Tüm CLI Komutları)
+**Hedef**: Tüm CLI komutlarını derinlemesine anlamak  
 **Dosyalar**:
-1. ERROR_HANDLING_GUIDE.md
-2. IMPLEMENTATION_COMPLETE.md
-3. Kaynak kodları
+1. CLI_GUIDED_TUTORIAL.md - Ders 21-30
+2. CLI_GUIDED_TUTORIAL.md - Pratik Senaryolar
+3. CLI_GUIDED_TUTORIAL.md - Sorun Giderme
 
-**Süre**: 45 dakika
+**Süre**: 1.5 saat
 
-### Seviye 4: Uzman
+### Seviye 4: Uzman (Tüm Dokümantasyon)
 **Hedef**: Özelleştirme ve genişletme  
 **Dosyalar**:
-1. Tüm dokümantasyon
-2. Kaynak kodları
-3. TypeScript tanımları
+1. CLI_GUIDED_TUTORIAL.md - Tüm Dersler
+2. ERROR_HANDLING_GUIDE.md
+3. IMPLEMENTATION_COMPLETE.md
+4. Kaynak kodları
 
-**Süre**: 2+ saat
+**Süre**: 3+ saat
 
 ---
 
 ## 🔗 İlgili Kaynaklar
+
+### CLI Komutları
+- CLI_GUIDED_TUTORIAL.md - Tüm pratik dersler
+- CLI_COMMANDS.md - Komut referansı
 
 ### Proje Dosyaları
 - `src/lib/validation/formValidation.ts` - Validasyon fonksiyonları
@@ -315,11 +394,35 @@ Kod/
 ### Harici Kaynaklar
 - [React Error Boundaries](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
 - [Form Validation Best Practices](https://www.smashingmagazine.com/2022/09/inline-validation-web-forms-ux/)
-- [Toast Notifications UX](https://www.nngroup.com/articles/toast-notification-best-practices/)
+- [Toast Notification UX](https://www.nngroup.com/articles/toast-notification-best-practices/)
 
 ---
 
 ## ❓ Sık Sorulan Sorular
+
+### S: CLI komutlarını nereden başlamalıyım?
+**C**: CLI_GUIDED_TUTORIAL.md - Ders 1'den başlayın.
+
+### S: Hızlı bir CLI komutu örneği istiyorum
+**C**: CLI_GUIDED_TUTORIAL.md - Hızlı Referans Tablosu'na bakın.
+
+### S: VLAN konfigürasyonu nasıl yapılır?
+**C**: CLI_GUIDED_TUTORIAL.md - Ders 8-10'u okuyun.
+
+### S: Yönlendirme protokollerini öğrenmek istiyorum
+**C**: CLI_GUIDED_TUTORIAL.md - Ders 11-13'ü okuyun.
+
+### S: Güvenlik komutları nelerdir?
+**C**: CLI_GUIDED_TUTORIAL.md - Ders 14-16'yı okuyun.
+
+### S: Kablosuz ağ nasıl kurulur?
+**C**: CLI_GUIDED_TUTORIAL.md - Ders 17-18'i okuyun.
+
+### S: Pratik senaryo istiyorum
+**C**: CLI_GUIDED_TUTORIAL.md - Pratik Senaryolar bölümüne bakın.
+
+### S: Sorun giderme yapacağım
+**C**: CLI_GUIDED_TUTORIAL.md - Sorun Giderme İpuçları bölümüne bakın.
 
 ### S: Nereden başlamalıyım?
 **C**: README_IMPROVEMENTS.md okuyun, sonra QUICK_REFERENCE.md'ye bakın.
@@ -343,6 +446,9 @@ Kod/
 
 ## 📞 Destek
 
+### CLI Komutları
+→ CLI_GUIDED_TUTORIAL.md
+
 ### Hızlı Sorular
 → QUICK_REFERENCE.md
 
@@ -359,6 +465,7 @@ Kod/
 
 ## ✅ Kontrol Listesi
 
+- [x] CLI Rehberli Ders oluşturuldu (30 ders)
 - [x] Dokümantasyon tamamlandı
 - [x] Kod örnekleri eklendi
 - [x] Hızlı referans oluşturuldu
@@ -371,17 +478,17 @@ Kod/
 
 ## 📅 Güncelleme Tarihi
 
-**Son Güncelleme**: 2026-05-18
-**Versiyon**: 1.2.0
+**Son Güncelleme**: 2026-05-21
+**Versiyon**: 1.3.0
 **Durum**: ✅ Tamamlandı
 
 ---
 
 ## 🎉 Sonuç
 
-Bu dokümantasyon, hata kontrolü ve UI/UX iyileştirmeleri hakkında kapsamlı bilgi sağlar. Başlangıçtan ileri seviyeye kadar tüm seviyeleri kapsar.
+Bu dokümantasyon, CLI komutlarından hata kontrolüne ve UI/UX iyileştirmelerine kadar kapsamlı bilgi sağlar. Başlangıçtan uzman seviyeye kadar tüm seviyeleri kapsar.
 
-**Başlamak için**: README_IMPROVEMENTS.md okuyun!
+**Başlamak için**: CLI_GUIDED_TUTORIAL.md - Ders 1'i okuyun!
 
 ---
 

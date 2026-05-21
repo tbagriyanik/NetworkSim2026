@@ -686,7 +686,7 @@ export const servicesGuidedSteps: GuidedStep[] = [
 // Rehberli projeleri oluştur
 export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
   const isTr = language === 'tr';
-  
+
   const projects: GuidedProject[] = [
     {
       id: 'guided-basic-switch',
@@ -862,6 +862,32 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
       },
       level: 'intermediate', isGuided: true, steps: servicesGuidedSteps, estimatedTimeMinutes: 15, difficulty: 'intermediate',
       totalPoints: servicesGuidedSteps.reduce((acc, s) => acc + (s.points || 0), 0)
+    },
+    {
+      id: 'guided-cli-lessons',
+      tag: 'CLI',
+      title: isTr ? 'CLI Rehberli Dersler (30 Ders)' : 'CLI Guided Lessons (30 Lessons)',
+      description: isTr ? 'Tüm CLI komutlarının pratik uygulaması' : 'Practical application of all CLI commands',
+      detail: isTr ? '30 adımlı kapsamlı CLI eğitimi: Temel moddan ileri konulara kadar.' : '30-step comprehensive CLI training: From basic mode to advanced topics.',
+      data: {
+        version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
+        topology: {
+          devices: [
+            { id: 'switch-1', type: 'switchL2', name: 'SW-Lab', x: 300, y: 200, ip: '', status: 'online', ports: generateSwitchPorts() as any },
+            { id: 'router-1', type: 'router', name: 'R-Lab', x: 600, y: 200, ip: '', status: 'online', ports: generateRouterPorts() as any },
+            { id: 'pc-1', type: 'pc', name: 'PC-Lab', x: 100, y: 200, ip: '192.168.1.10', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }] }
+          ],
+          connections: [
+            { id: 'c1', sourceDeviceId: 'pc-1', sourcePort: 'eth0', targetDeviceId: 'switch-1', targetPort: 'fa0/1', cableType: 'straight', active: true },
+            { id: 'c2', sourceDeviceId: 'switch-1', sourcePort: 'fa0/24', targetDeviceId: 'router-1', targetPort: 'gi0/0', cableType: 'crossover', active: true }
+          ],
+          notes: []
+        },
+        cableInfo: { connected: true, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
+        activeDeviceId: 'switch-1', activeDeviceType: 'switchL2', activeTab: 'topology', zoom: 1, pan: { x: 0, y: 0 }
+      },
+      level: 'advanced', isGuided: true, steps: cliGuidedLessons, estimatedTimeMinutes: 240, difficulty: 'intermediate',
+      totalPoints: cliGuidedLessons.reduce((acc, s) => acc + (s.points || 0), 0)
     }
   ];
 
@@ -887,7 +913,7 @@ export const checkStepCompletion = (
         return context.deviceAccessedId === step.checkParams.targetDeviceId;
       }
       return true;
-    
+
     case 'command':
       if (!step.checkParams?.commandPattern || !context.lastCommand) return false;
       const patterns = step.checkParams.commandPattern.split('|');
@@ -896,7 +922,7 @@ export const checkStepCompletion = (
         const pat = pattern.toLowerCase().trim();
         return lastCmd.startsWith(pat) || lastCmd.includes(pat);
       });
-    
+
     case 'connection':
       if (!context.topologyConnections || !context.topologyDevices) return false;
 
@@ -907,13 +933,13 @@ export const checkStepCompletion = (
             if (!conn.active) return false;
             if (step.checkParams?.cableType) {
               const cableTypeMatch = conn.cableType === step.checkParams.cableType ||
-                                    (step.checkParams.cableType === 'straight' && conn.cableType === 'copper-straight-through');
+                (step.checkParams.cableType === 'straight' && conn.cableType === 'copper-straight-through');
               if (!cableTypeMatch) return false;
             }
             const sourceMatch = conn.sourceDeviceId === required.sourceDevice &&
-                               (!required.sourcePort || conn.sourcePort === required.sourcePort);
+              (!required.sourcePort || conn.sourcePort === required.sourcePort);
             const targetMatch = conn.targetDeviceId === required.targetDevice &&
-                               (!required.targetPort || conn.targetPort === required.targetPort);
+              (!required.targetPort || conn.targetPort === required.targetPort);
             return sourceMatch && targetMatch;
           });
         });
@@ -925,22 +951,22 @@ export const checkStepCompletion = (
           if (!conn.active) return false;
           if (params.cableType) {
             const cableTypeMatch = conn.cableType === params.cableType ||
-                                  (params.cableType === 'straight' && conn.cableType === 'copper-straight-through');
+              (params.cableType === 'straight' && conn.cableType === 'copper-straight-through');
             if (!cableTypeMatch) return false;
           }
           const sourceMatch = conn.sourceDeviceId === params.sourceDevice &&
-                             conn.sourcePort === params.sourcePort;
+            conn.sourcePort === params.sourcePort;
           const targetMatch = conn.targetDeviceId === params.targetDevice &&
-                             conn.targetPort === params.targetPort;
+            conn.targetPort === params.targetPort;
           return sourceMatch && targetMatch;
         });
       }
 
       return context.topologyConnections.some((conn: any) => conn.active === true);
-    
+
     case 'config':
       if (!context.deviceState || !step.checkParams?.configKey) return false;
-      
+
       const configKey = step.checkParams.configKey;
       const configValue = step.checkParams.configValue;
 
@@ -949,8 +975,8 @@ export const checkStepCompletion = (
         const portId = parts[1];
         const property = parts[parts.length - 1];
         const port = context.deviceState.ports?.[portId] ||
-                     context.deviceState.ports?.[portId.toLowerCase()] ||
-                     context.deviceState.ports?.[portId.toUpperCase()];
+          context.deviceState.ports?.[portId.toLowerCase()] ||
+          context.deviceState.ports?.[portId.toUpperCase()];
 
         if (port) {
           if (property === 'ip' || property === 'ipAddress') return port.ipAddress === configValue;
@@ -965,7 +991,7 @@ export const checkStepCompletion = (
           if (property === 'security' && port.wifi) return port.wifi.security === configValue;
         }
       }
-      
+
       if (configKey.startsWith('vlans.')) {
         const vlanId = configKey.split('.')[1];
         const vlan = context.deviceState.vlans?.[vlanId];
@@ -1006,7 +1032,7 @@ export const checkStepCompletion = (
           );
         }
       }
-      
+
       if (configKey.startsWith('pc.')) {
         const pcId = configKey.split('.')[1];
         const pcDevice = context.topologyDevices?.find((d: any) => d.id === pcId);
@@ -1021,10 +1047,10 @@ export const checkStepCompletion = (
       if (!context.lastCommand || !step.checkParams?.toIp) return false;
       const cmd = context.lastCommand.toLowerCase().trim();
       return cmd.startsWith('ping') && cmd.includes(step.checkParams.toIp.toLowerCase());
-    
+
     case 'manual':
       return true;
-    
+
     default:
       return false;
   }
@@ -1042,3 +1068,350 @@ export const getProgressPercentage = (steps: GuidedStep[]): number => {
   if (steps.length === 0) return 0;
   return Math.round((getCompletedStepsCount(steps) / steps.length) * 100);
 };
+
+// CLI Rehberli Dersler - 30 Pratik Ders
+export const cliGuidedLessons: GuidedStep[] = [
+  // Bölüm 1: Temel Modu Komutları
+  {
+    id: 'cli-lesson-1-1',
+    order: 1,
+    title: { tr: 'Ders 1: Modu Değiştirme ve Yardım Sistemi', en: 'Lesson 1: Mode Switching and Help System' },
+    description: { tr: 'Enable/disable modları ve yardım komutlarını öğrenin', en: 'Learn enable/disable modes and help commands' },
+    hint: { tr: 'enable komutu ile ayrıcalıklı moda geçin', en: 'Use enable command to enter privileged mode' },
+    detailedInstructions: {
+      tr: ['Herhangi bir cihaza çift tıklayın', 'Terminal panelini açın', 'enable yazıp Enter\'a basın', 'disable yazıp Enter\'a basın', 'help yazıp Enter\'a basın'],
+      en: ['Double-click any device', 'Open terminal panel', 'Type enable and press Enter', 'Type disable and press Enter', 'Type help and press Enter']
+    },
+    checkType: 'command',
+    checkParams: { commandPattern: 'enable|disable|help' },
+    completed: false,
+    points: 10
+  },
+  {
+    id: 'cli-lesson-1-2',
+    order: 2,
+    title: { tr: 'Ders 2: Bağlantı Testi - Ping Komutu', en: 'Lesson 2: Connectivity Test - Ping Command' },
+    description: { tr: 'Ping komutu ile ağ bağlantısını test edin', en: 'Test network connectivity with ping command' },
+    hint: { tr: 'ping 192.168.1.2 yazıp Enter\'a basın', en: 'Type ping 192.168.1.2 and press Enter' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'ping' },
+    completed: false,
+    points: 15
+  },
+  {
+    id: 'cli-lesson-1-3',
+    order: 3,
+    title: { tr: 'Ders 3: Konfigürasyon Yönetimi', en: 'Lesson 3: Configuration Management' },
+    description: { tr: 'show running-config ve write memory komutlarını kullanın', en: 'Use show running-config and write memory commands' },
+    hint: { tr: 'show running-config yazıp konfigürasyonu görün', en: 'Type show running-config to view configuration' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'show running-config|write memory' },
+    completed: false,
+    points: 15
+  },
+  // Bölüm 2: Global Konfigürasyon
+  {
+    id: 'cli-lesson-2-1',
+    order: 4,
+    title: { tr: 'Ders 4: Cihaz Temel Ayarları', en: 'Lesson 4: Device Basic Settings' },
+    description: { tr: 'Hostname, banner ve enable secret komutlarını öğrenin', en: 'Learn hostname, banner and enable secret commands' },
+    hint: { tr: 'conf t yazıp hostname SW-Lab yazın', en: 'Type conf t then hostname SW-Lab' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'hostname|banner|enable secret' },
+    completed: false,
+    points: 15
+  },
+  {
+    id: 'cli-lesson-2-2',
+    order: 5,
+    title: { tr: 'Ders 5: DNS ve Zaman Ayarları', en: 'Lesson 5: DNS and Time Settings' },
+    description: { tr: 'DNS sunucusu ve saat dilimi ayarlarını yapılandırın', en: 'Configure DNS server and timezone settings' },
+    hint: { tr: 'ip name-server 8.8.8.8 yazın', en: 'Type ip name-server 8.8.8.8' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'ip name-server|clock timezone|ntp server' },
+    completed: false,
+    points: 15
+  },
+  // Bölüm 3: Arayüz Konfigürasyonu
+  {
+    id: 'cli-lesson-3-1',
+    order: 6,
+    title: { tr: 'Ders 6: Temel Arayüz Ayarları', en: 'Lesson 6: Basic Interface Settings' },
+    description: { tr: 'Arayüz IP adresi ve no shutdown komutlarını kullanın', en: 'Use interface IP address and no shutdown commands' },
+    hint: { tr: 'int fa0/1 yazıp no shutdown yazın', en: 'Type int fa0/1 then no shutdown' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'interface|no shutdown|ip address' },
+    completed: false,
+    points: 15
+  },
+  {
+    id: 'cli-lesson-3-2',
+    order: 7,
+    title: { tr: 'Ders 7: Arayüz Aralığı Konfigürasyonu', en: 'Lesson 7: Interface Range Configuration' },
+    description: { tr: 'Birden fazla arayüzü aynı anda yapılandırın', en: 'Configure multiple interfaces at once' },
+    hint: { tr: 'interface range fa0/1 - 5 yazın', en: 'Type interface range fa0/1 - 5' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'interface range' },
+    completed: false,
+    points: 15
+  },
+  // Bölüm 4: VLAN Yönetimi
+  {
+    id: 'cli-lesson-4-1',
+    order: 8,
+    title: { tr: 'Ders 8: VLAN Oluşturma', en: 'Lesson 8: VLAN Creation' },
+    description: { tr: 'VLAN oluşturun ve adlandırın', en: 'Create and name VLANs' },
+    hint: { tr: 'vlan 10 yazıp name SALES yazın', en: 'Type vlan 10 then name SALES' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'vlan|name' },
+    completed: false,
+    points: 15
+  },
+  {
+    id: 'cli-lesson-4-2',
+    order: 9,
+    title: { tr: 'Ders 9: Arayüzleri VLAN\'a Atama', en: 'Lesson 9: Assigning Interfaces to VLAN' },
+    description: { tr: 'Arayüzleri VLAN\'lara atayın', en: 'Assign interfaces to VLANs' },
+    hint: { tr: 'switchport access vlan 10 yazın', en: 'Type switchport access vlan 10' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'switchport access vlan' },
+    completed: false,
+    points: 15
+  },
+  {
+    id: 'cli-lesson-4-3',
+    order: 10,
+    title: { tr: 'Ders 10: Trunk Portları', en: 'Lesson 10: Trunk Ports' },
+    description: { tr: 'Trunk portlarını yapılandırın', en: 'Configure trunk ports' },
+    hint: { tr: 'switchport mode trunk yazın', en: 'Type switchport mode trunk' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'switchport mode trunk' },
+    completed: false,
+    points: 15
+  },
+  // Bölüm 5: Yönlendirme
+  {
+    id: 'cli-lesson-5-1',
+    order: 11,
+    title: { tr: 'Ders 11: Statik Yönlendirme', en: 'Lesson 11: Static Routing' },
+    description: { tr: 'Statik rotalar ekleyin', en: 'Add static routes' },
+    hint: { tr: 'ip route 192.168.2.0 255.255.255.0 192.168.1.2 yazın', en: 'Type ip route 192.168.2.0 255.255.255.0 192.168.1.2' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'ip route' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-5-2',
+    order: 12,
+    title: { tr: 'Ders 12: RIP Yönlendirmesi', en: 'Lesson 12: RIP Routing' },
+    description: { tr: 'RIP yönlendirme protokolünü yapılandırın', en: 'Configure RIP routing protocol' },
+    hint: { tr: 'router rip yazıp network 192.168.1.0 yazın', en: 'Type router rip then network 192.168.1.0' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'router rip|network' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-5-3',
+    order: 13,
+    title: { tr: 'Ders 13: OSPF Yönlendirmesi', en: 'Lesson 13: OSPF Routing' },
+    description: { tr: 'OSPF yönlendirme protokolünü yapılandırın', en: 'Configure OSPF routing protocol' },
+    hint: { tr: 'router ospf 1 yazıp router-id 1.1.1.1 yazın', en: 'Type router ospf 1 then router-id 1.1.1.1' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'router ospf|router-id' },
+    completed: false,
+    points: 20
+  },
+  // Bölüm 6: Güvenlik
+  {
+    id: 'cli-lesson-6-1',
+    order: 14,
+    title: { tr: 'Ders 14: Port Güvenliği', en: 'Lesson 14: Port Security' },
+    description: { tr: 'Port güvenliğini etkinleştirin', en: 'Enable port security' },
+    hint: { tr: 'switchport port-security yazıp sticky MAC ekleyin', en: 'Type switchport port-security then add sticky MAC' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'switchport port-security|mac-address sticky' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-6-2',
+    order: 15,
+    title: { tr: 'Ders 15: SSH Konfigürasyonu', en: 'Lesson 15: SSH Configuration' },
+    description: { tr: 'SSH\'yi yapılandırın', en: 'Configure SSH' },
+    hint: { tr: 'crypto key generate rsa yazıp ip ssh version 2 yazın', en: 'Type crypto key generate rsa then ip ssh version 2' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'crypto key generate rsa|ip ssh version' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-6-3',
+    order: 16,
+    title: { tr: 'Ders 16: Kullanıcı Yönetimi', en: 'Lesson 16: User Management' },
+    description: { tr: 'Yerel kullanıcılar oluşturun', en: 'Create local users' },
+    hint: { tr: 'username admin privilege 15 secret password yazın', en: 'Type username admin privilege 15 secret password' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'username' },
+    completed: false,
+    points: 20
+  },
+  // Bölüm 7: Kablosuz
+  {
+    id: 'cli-lesson-7-1',
+    order: 17,
+    title: { tr: 'Ders 17: WLC Konfigürasyonu', en: 'Lesson 17: WLC Configuration' },
+    description: { tr: 'Kablosuz LAN Denetleyicisini yapılandırın', en: 'Configure Wireless LAN Controller' },
+    hint: { tr: 'wlan MyNetwork 1 MySSID yazın', en: 'Type wlan MyNetwork 1 MySSID' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'wlan' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-7-2',
+    order: 18,
+    title: { tr: 'Ders 18: Access Point Konfigürasyonu', en: 'Lesson 18: Access Point Configuration' },
+    description: { tr: 'Access Point\'i yapılandırın', en: 'Configure Access Point' },
+    hint: { tr: 'station-role root yazıp SSID ayarlayın', en: 'Type station-role root and set SSID' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'station-role|ssid' },
+    completed: false,
+    points: 20
+  },
+  // Bölüm 8: Hata Ayıklama
+  {
+    id: 'cli-lesson-8-1',
+    order: 19,
+    title: { tr: 'Ders 19: Hata Ayıklama Komutları', en: 'Lesson 19: Debug Commands' },
+    description: { tr: 'Hata ayıklama komutlarını kullanın', en: 'Use debug commands' },
+    hint: { tr: 'debug ip packet yazıp undebug all yazın', en: 'Type debug ip packet then undebug all' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'debug|undebug' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-8-2',
+    order: 20,
+    title: { tr: 'Ders 20: Show Komutları', en: 'Lesson 20: Show Commands' },
+    description: { tr: 'Show komutlarını kullanarak bilgi toplayın', en: 'Gather information using show commands' },
+    hint: { tr: 'show interfaces, show ip route, show vlan yazın', en: 'Type show interfaces, show ip route, show vlan' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'show' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-8-3',
+    order: 21,
+    title: { tr: 'Ders 21: STP İzleme', en: 'Lesson 21: STP Monitoring' },
+    description: { tr: 'Spanning Tree Protokolünü izleyin', en: 'Monitor Spanning Tree Protocol' },
+    hint: { tr: 'show spanning-tree yazıp spanning-tree mode rapid-pvst yazın', en: 'Type show spanning-tree then spanning-tree mode rapid-pvst' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'spanning-tree' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-8-4',
+    order: 22,
+    title: { tr: 'Ders 22: CDP Kullanımı', en: 'Lesson 22: CDP Usage' },
+    description: { tr: 'CDP komutlarını kullanın', en: 'Use CDP commands' },
+    hint: { tr: 'show cdp neighbors yazıp cdp run yazın', en: 'Type show cdp neighbors then cdp run' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'cdp' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-8-5',
+    order: 23,
+    title: { tr: 'Ders 23: DHCP Snooping', en: 'Lesson 23: DHCP Snooping' },
+    description: { tr: 'DHCP Snooping\'i yapılandırın', en: 'Configure DHCP Snooping' },
+    hint: { tr: 'ip dhcp snooping yazıp ip dhcp snooping vlan 1,10,20 yazın', en: 'Type ip dhcp snooping then ip dhcp snooping vlan 1,10,20' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'ip dhcp snooping' },
+    completed: false,
+    points: 20
+  },
+  // Bölüm 9: İleri Konular
+  {
+    id: 'cli-lesson-9-1',
+    order: 24,
+    title: { tr: 'Ders 24: DHCP Sunucusu', en: 'Lesson 24: DHCP Server' },
+    description: { tr: 'DHCP sunucusunu yapılandırın', en: 'Configure DHCP server' },
+    hint: { tr: 'ip dhcp pool LAN yazıp network ve default-router ayarlayın', en: 'Type ip dhcp pool LAN then set network and default-router' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'ip dhcp pool|network|default-router' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-9-2',
+    order: 25,
+    title: { tr: 'Ders 25: EtherChannel', en: 'Lesson 25: EtherChannel' },
+    description: { tr: 'EtherChannel\'ı yapılandırın', en: 'Configure EtherChannel' },
+    hint: { tr: 'channel-group 1 mode active yazın', en: 'Type channel-group 1 mode active' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'channel-group' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-9-3',
+    order: 26,
+    title: { tr: 'Ders 26: QoS Konfigürasyonu', en: 'Lesson 26: QoS Configuration' },
+    description: { tr: 'QoS\'u yapılandırın', en: 'Configure QoS' },
+    hint: { tr: 'mls qos yazıp mls qos trust cos yazın', en: 'Type mls qos then mls qos trust cos' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'mls qos' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-9-4',
+    order: 27,
+    title: { tr: 'Ders 27: IPv6 Konfigürasyonu', en: 'Lesson 27: IPv6 Configuration' },
+    description: { tr: 'IPv6\'yı yapılandırın', en: 'Configure IPv6' },
+    hint: { tr: 'ipv6 unicast-routing yazıp ipv6 address ayarlayın', en: 'Type ipv6 unicast-routing then set ipv6 address' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'ipv6' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-9-5',
+    order: 28,
+    title: { tr: 'Ders 28: Sistem Yönetimi', en: 'Lesson 28: System Management' },
+    description: { tr: 'Sistem yönetimi komutlarını kullanın', en: 'Use system management commands' },
+    hint: { tr: 'show inventory, show environment, show memory yazın', en: 'Type show inventory, show environment, show memory' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'show inventory|show environment|show memory' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-9-6',
+    order: 29,
+    title: { tr: 'Ders 29: Komut Takma Adları', en: 'Lesson 29: Command Aliases' },
+    description: { tr: 'Komut takma adları oluşturun', en: 'Create command aliases' },
+    hint: { tr: 'alias exec si show interfaces yazın', en: 'Type alias exec si show interfaces' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'alias' },
+    completed: false,
+    points: 20
+  },
+  {
+    id: 'cli-lesson-9-7',
+    order: 30,
+    title: { tr: 'Ders 30: IoT Sensör Konfigürasyonu', en: 'Lesson 30: IoT Sensor Configuration' },
+    description: { tr: 'IoT sensörlerini yapılandırın', en: 'Configure IoT sensors' },
+    hint: { tr: 'iot sensor temperature yazıp iot name ve iot wifi ayarlayın', en: 'Type iot sensor temperature then set iot name and iot wifi' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'iot' },
+    completed: false,
+    points: 20
+  }
+];

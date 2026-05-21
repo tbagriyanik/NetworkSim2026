@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/badge/version-1.6.5-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%206.0%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-99624-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-101787-lightgrey)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows. TR/EN interface support.
 
@@ -124,9 +124,9 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Total Lines / Toplam Satır | 99,624 |
-| Source Code Lines / Kaynak Kod Satırı | 96,218 |
-| Documentation Lines / Dokümantasyon Satırı | 3,406 |
+| Total Lines / Toplam Satır | 101,787 |
+| Source Code Lines / Kaynak Kod Satırı | 96,618 |
+| Documentation Lines / Dokümantasyon Satırı | 5,169 |
 | Source Files / Kaynak Dosya | 262 |
 | Documentation Files / Dokümantasyon Dosya | 14 |
 | Example Projects / Örnek Proje | 39 |
@@ -141,6 +141,7 @@ npm install && npm run dev
 | [examples.md](examples.md) | Example projects with step-by-step guides / Adım adım örnek projeler |
 | [INSTALL.md](INSTALL.md) | Installation & build instructions / Kurulum & derleme talimatları |
 | [doc/USAGE.md](doc/USAGE.md) | Usage guide & keyboard shortcuts (TR/EN) / Kullanım kılavuzu & klavye kısayolları |
+| [doc/CLI_GUIDED_TUTORIAL.md](doc/CLI_GUIDED_TUTORIAL.md) | 30-lesson CLI guided tutorial with practical examples / 30 dersten oluşan pratik CLI rehberli eğitim |
 | [doc/CLI_COMMANDS.md](doc/CLI_COMMANDS.md) | CLI commands reference / CLI komut referansı |
 | [doc/QUICK_REFERENCE.md](doc/QUICK_REFERENCE.md) | Quick reference & code snippets / Hızlı referans & kod parçacıkları |
 | [doc/GOOGLE_SHEETS_SETUP.md](doc/GOOGLE_SHEETS_SETUP.md) | Google Sheets integration / Google Sheets entegrasyonu |
