@@ -1,0 +1,20 @@
+
+> network-simulator@1.6.5 dev /app
+> next dev -p 3000
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 596ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+- Experiments (use with caution):
+  · optimizePackageImports
+
+○ Compiling / ...
+ GET / 200 in 7.8s (next.js: 7.2s, application-code: 609ms)
+ GET / 200 in 817ms (next.js: 586ms, application-code: 231ms)
+ GET / 200 in 141ms (next.js: 14ms, application-code: 127ms)

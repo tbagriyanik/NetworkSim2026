@@ -1,0 +1,3 @@
+## 2025-05-22 - Optimizing topology synchronization loop
+**Learning:** Found an O(N*M*K) bottleneck in the `NetworkTopology` synchronization `useEffect`. The code was iterating over all devices (D) and all ports (P), and for each port, it was scanning the entire connections (C) array using `.some()`. For large topologies, this resulted in thousands of redundant scans per synchronization cycle.
+**Action:** Use pre-calculated `Set` or `Map` lookups (index building) before entering nested loops. Building a `Set` of connected ports takes O(C) time and allows O(1) lookups inside the O(D*P) loop, reducing total complexity to O(C + D*P).

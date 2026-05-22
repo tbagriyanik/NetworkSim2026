@@ -3219,6 +3219,24 @@ export function NetworkTopology({
   // Previously having `devices` in deps + calling setDevices caused an infinite re-render loop
   useEffect(() => {
     if (!deviceStates) return;
+
+    // BOLT: Pre-calculate maps for O(1) lookups during device/port synchronization
+    // Reducing complexity from O(D * P * C) to O(C + D * P)
+    const connectedPortKeys = new Set<string>();
+    const pcConnectionMap = new Map<string, CanvasConnection>();
+
+    connections.forEach(conn => {
+      connectedPortKeys.add(`${conn.sourceDeviceId}:${conn.sourcePort}`);
+      connectedPortKeys.add(`${conn.targetDeviceId}:${conn.targetPort}`);
+
+      if ((conn.sourceDeviceId.startsWith('pc-') || conn.sourceDeviceId.startsWith('iot-')) && conn.sourcePort === 'eth0') {
+        pcConnectionMap.set(conn.sourceDeviceId, conn);
+      }
+      if ((conn.targetDeviceId.startsWith('pc-') || conn.targetDeviceId.startsWith('iot-')) && conn.targetPort === 'eth0') {
+        pcConnectionMap.set(conn.targetDeviceId, conn);
+      }
+    });
+
     setDevices(prev => {
       if (prev.length === 0) return prev;
       let hasChanges = false;
@@ -3243,11 +3261,8 @@ export function NetworkTopology({
                 ...(simulatorPort.wifi ? { wifi: { ...simulatorPort.wifi } } : {}),
               } as typeof port;
             }
-            // Check if this port has an active connection in the topology
-            const hasActiveConnection = connections.some(
-              conn => (conn.sourceDeviceId === device.id && conn.sourcePort === port.id) ||
-                (conn.targetDeviceId === device.id && conn.targetPort === port.id)
-            );
+            // BOLT: Optimized O(1) lookup for connected ports
+            const hasActiveConnection = connectedPortKeys.has(`${device.id}:${port.id}`);
 
             // Translate simulator status → UI status
             // Simulator: 'connected' | 'notconnect' | 'disabled' | 'blocked'
@@ -3302,10 +3317,8 @@ export function NetworkTopology({
 
         // Keep PC VLAN in sync with the connected switch/router access VLAN.
         if (baseDevice.type === 'pc' || baseDevice.type === 'iot') {
-          const pcConnection = connections.find((conn) =>
-            (conn.sourceDeviceId === baseDevice.id && conn.sourcePort === 'eth0') ||
-            (conn.targetDeviceId === baseDevice.id && conn.targetPort === 'eth0')
-          );
+          // BOLT: Optimized O(1) lookup for PC connections
+          const pcConnection = pcConnectionMap.get(baseDevice.id);
 
           if (pcConnection) {
             const peerDeviceId = pcConnection.sourceDeviceId === baseDevice.id
