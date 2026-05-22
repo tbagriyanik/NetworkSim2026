@@ -714,8 +714,8 @@ export function GuidedModePanel({
         )}
 
         {/* Steps List */}
-        <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="p-2 space-y-1">
+        <ScrollArea className="flex-1 overflow-y-auto guided-steps-scrollbar">
+          <div className="p-2 space-y-1 pr-3">
             {project.steps.map((step, index) => {
               const isActive = index === currentStepIndex;
               const isCompleted = step.completed;

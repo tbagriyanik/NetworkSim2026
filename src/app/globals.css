@@ -206,6 +206,28 @@
   background: rgb(100 116 139 / 0.9);
 }
 
+/* Guided mode steps list custom scrollbar (Radix ScrollArea) */
+.guided-steps-scrollbar [data-slot="scroll-area-scrollbar"] {
+  width: 5px;
+}
+.guided-steps-scrollbar [data-slot="scroll-area-scrollbar"]:hover {
+  background: transparent;
+}
+.guided-steps-scrollbar [data-slot="scroll-area-thumb"] {
+  background: rgb(148 163 184 / 0.5);
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+.guided-steps-scrollbar [data-slot="scroll-area-thumb"]:hover {
+  background: rgb(99 102 241 / 0.6);
+}
+.dark .guided-steps-scrollbar [data-slot="scroll-area-thumb"] {
+  background: rgb(100 116 139 / 0.4);
+}
+.dark .guided-steps-scrollbar [data-slot="scroll-area-thumb"]:hover {
+  background: rgb(99 102 241 / 0.5);
+}
+
 /* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
