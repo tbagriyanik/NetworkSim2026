@@ -1434,7 +1434,7 @@ export const cliGuidedLessons: GuidedStep[] = [
     id: 'cli-lesson-9-3b',
     order: 33,
     title: { tr: 'QoS Trust', en: 'QoS Trust' },
-    description: { tr: 'Arayüzde CoS güvenini ayarlayın', en: 'Set CoS trust on interface' },
+    description: { tr: 'gi0/1 arayüzde CoS güvenini ayarlayın', en: 'Set CoS trust on interface gi0/1' },
     hint: { tr: 'switch-1: mls qos trust cos yazın', en: 'switch-1: Type mls qos trust cos' },
     checkType: 'command',
     checkParams: { commandPattern: 'mls qos trust' },
@@ -1551,7 +1551,7 @@ export const cliGuidedLessons: GuidedStep[] = [
     checkParams: { commandPattern: 'show memory' },
     completed: false,
     points: 10
-  },  {
+  }, {
     id: 'cli-lesson-8-5c',
     order: 44,
     title: { tr: 'MAC Tablosu Göster', en: 'Show MAC Table' },
