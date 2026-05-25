@@ -269,6 +269,8 @@ export interface Translations {
   guidedMode: string;
   help: string;
   hideHint: string;
+  hideAnimation: string;
+  showAnimation: string;
   highContrast: string;
   highRes: string;
   hostname: string;
@@ -919,6 +921,8 @@ const translations: Record<Language, Translations> = {
     guidedMode: 'Rehberli Ders',
     help: 'Yardım',
     hideHint: 'İpucu Gizle',
+    hideAnimation: 'Animasyonu Gizle',
+    showAnimation: 'Nasıl Yapılır? (İzle)',
     highContrast: 'Yüksek Kontrast Desteği',
     highRes: 'Yüksek Çözünürlük',
     hostname: 'Ana Bilgisayar Adı',
@@ -1567,6 +1571,8 @@ const translations: Record<Language, Translations> = {
     guidedMode: 'Guided Lesson',
     help: 'Help',
     hideHint: 'Hide Hint',
+    hideAnimation: 'Hide Animation',
+    showAnimation: 'How to do it? (Watch)',
     highContrast: 'High Contrast Support',
     highRes: 'High Resolution',
     hostname: 'Hostname',
