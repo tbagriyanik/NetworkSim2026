@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/collapsible';
 import { GuidedStep, GuidedProject, getProgressPercentage } from '@/lib/network/guidedMode';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { TutorialAnimationPlayer } from './TutorialAnimationPlayer';
 
 interface GuidedModePanelProps {
   project: GuidedProject | null;
@@ -82,6 +83,8 @@ export function GuidedModePanel({
     const saved = localStorage.getItem('guided_show_hint');
     return saved === 'true';
   });
+
+  const [showAnimation, setShowAnimation] = React.useState(true);
 
   const [expandedSteps, setExpandedSteps] = React.useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -669,6 +672,24 @@ export function GuidedModePanel({
             <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
               {currentStep.description[language]}
             </p>
+
+            {/* Animation Section */}
+            {currentStep.animationId && (
+              <div className="mb-3 space-y-2">
+                <button
+                  onClick={() => setShowAnimation(!showAnimation)}
+                  className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {showAnimation ? t.hideAnimation : t.showAnimation}
+                </button>
+                {showAnimation && (
+                  <div className="animate-in fade-in slide-in-from-top-1 duration-300">
+                    <TutorialAnimationPlayer animationId={currentStep.animationId} />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Hint Section */}
             <Collapsible open={showHint} onOpenChange={setShowHint}>

@@ -9,9 +9,11 @@ export interface GuidedStep {
   description: { tr: string; en: string };
   hint: { tr: string; en: string };
   detailedInstructions?: { tr: string[]; en: string[] };
-  checkType: 'deviceAccess' | 'command' | 'config' | 'connection' | 'ping' | 'manual';
+  animationId?: string;
+  checkType: 'deviceAccess' | 'command' | 'config' | 'connection' | 'ping' | 'manual' | 'deviceCount';
   checkParams?: {
-    deviceType?: 'switch' | 'router' | 'pc';
+    deviceType?: 'switch' | 'router' | 'pc' | 'iot' | 'firewall';
+    minCount?: number;
     commandPattern?: string;
     configKey?: string;
     configValue?: any;
@@ -46,6 +48,126 @@ export interface GuidedProject extends ExampleProject {
   startedAt?: Date;
   totalPoints?: number;
 }
+
+// 0. Cihaz Ekleme ve Bağlantı
+export const addDeviceGuidedSteps: GuidedStep[] = [
+  {
+    id: 'add-pc-step',
+    order: 1,
+    title: { tr: 'Bilgisayar Ekle', en: 'Add a Computer' },
+    description: { tr: 'Araç çubuğundan PC simgesine tıklayarak topolojiye bir bilgisayar ekleyin.', en: 'Add a computer to the topology by clicking the PC icon from the toolbar.' },
+    hint: { tr: 'Üst menüdeki bilgisayar simgesine bir kez tıklayın.', en: 'Click the computer icon in the top menu once.' },
+    animationId: 'add-pc',
+    checkType: 'deviceCount',
+    checkParams: { deviceType: 'pc', minCount: 1 },
+    completed: false,
+    points: 10
+  },
+  {
+    id: 'add-switch-step',
+    order: 2,
+    title: { tr: 'Switch Ekle', en: 'Add a Switch' },
+    description: { tr: 'Şimdi ağımıza bir Switch (anahtar) ekleyelim.', en: 'Now add a Switch to our network.' },
+    hint: { tr: 'Yeşil renkli Switch simgesine tıklayın.', en: 'Click the green Switch icon.' },
+    animationId: 'add-switch',
+    checkType: 'deviceCount',
+    checkParams: { deviceType: 'switch', minCount: 1 },
+    completed: false,
+    points: 10
+  },
+  {
+    id: 'connect-devices-step',
+    order: 3,
+    title: { tr: 'Cihazları Bağla', en: 'Connect Devices' },
+    description: { tr: 'Düz (Straight) kabloyu seçin ve PC ile Switch arasında bağlantı kurun.', en: 'Select the Straight-through cable and establish a connection between the PC and the Switch.' },
+    hint: { tr: 'Kabloyu seçin, PC\'ye tıklayın (Eth0), ardından Switch\'e tıklayın (Fa0/1).', en: 'Select the cable, click the PC (Eth0), then click the Switch (Fa0/1).' },
+    animationId: 'connect-cable',
+    checkType: 'connection',
+    checkParams: { cableType: 'straight' },
+    completed: false,
+    points: 20
+  }
+];
+
+// 0.1 PC CMD Komutları
+export const pcCmdGuidedSteps: GuidedStep[] = [
+  {
+    id: 'open-pc-cmd',
+    order: 1,
+    title: { tr: 'CMD\'yi Aç', en: 'Open CMD' },
+    description: { tr: 'Bilgisayara çift tıklayarak terminali açın ve "Command Prompt" (Komut İstemi) uygulamasına girin.', en: 'Double-click the computer to open the terminal and enter the "Command Prompt" application.' },
+    hint: { tr: 'PC üzerine çift tıklayın, ardından CMD simgesine basın.', en: 'Double-click on the PC, then press the CMD icon.' },
+    animationId: 'open-pc-cmd',
+    checkType: 'deviceAccess',
+    checkParams: { deviceType: 'pc' },
+    completed: false,
+    points: 5
+  },
+  {
+    id: 'run-ipconfig',
+    order: 2,
+    title: { tr: 'IP Yapılandırmasını Gör', en: 'View IP Config' },
+    description: { tr: 'Bilgisayarın IP adresini görmek için "ipconfig" komutunu yazın.', en: 'Type the "ipconfig" command to see the computer\'s IP address.' },
+    hint: { tr: 'Terminalde "ipconfig" yazıp Enter\'a basın.', en: 'Type "ipconfig" in the terminal and press Enter.' },
+    animationId: 'pc-ipconfig',
+    checkType: 'command',
+    checkParams: { commandPattern: 'ipconfig' },
+    completed: false,
+    points: 10
+  },
+  {
+    id: 'run-help-cmd',
+    order: 3,
+    title: { tr: 'Yardım Al', en: 'Get Help' },
+    description: { tr: 'Kullanabileceğiniz tüm komutları görmek için "help" yazın.', en: 'Type "help" to see all available commands.' },
+    hint: { tr: '"help" yazıp Enter\'a basın.', en: 'Type "help" and press Enter.' },
+    animationId: 'pc-help',
+    checkType: 'command',
+    checkParams: { commandPattern: 'help' },
+    completed: false,
+    points: 5
+  }
+];
+
+// 0.2 CLI Temelleri
+export const cliBasicsGuidedSteps: GuidedStep[] = [
+  {
+    id: 'open-switch-cli',
+    order: 1,
+    title: { tr: 'Switch CLI Aç', en: 'Open Switch CLI' },
+    description: { tr: 'Switch cihazına çift tıklayarak CLI (Komut Satırı Arayüzü) ekranına girin.', en: 'Double-click the Switch device to enter the CLI (Command Line Interface) screen.' },
+    hint: { tr: 'Switch-1 üzerine çift tıklayın.', en: 'Double-click on Switch-1.' },
+    animationId: 'open-cli',
+    checkType: 'deviceAccess',
+    checkParams: { deviceType: 'switch' },
+    completed: false,
+    points: 5
+  },
+  {
+    id: 'cli-enable-step',
+    order: 2,
+    title: { tr: 'Ayrıcalıklı Mod', en: 'Privileged Mode' },
+    description: { tr: '"enable" komutu ile ayrıcalıklı moda geçin. Bu modda ayarları görebilirsiniz.', en: 'Switch to privileged mode with the "enable" command. You can see settings in this mode.' },
+    hint: { tr: '"enable" yazın.', en: 'Type "enable".' },
+    animationId: 'cli-enable',
+    checkType: 'command',
+    checkParams: { commandPattern: 'enable' },
+    completed: false,
+    points: 10
+  },
+  {
+    id: 'cli-conf-t-step',
+    order: 3,
+    title: { tr: 'Yapılandırma Modu', en: 'Configuration Mode' },
+    description: { tr: 'Cihaz ayarlarını değiştirmek için "configure terminal" komutunu kullanın.', en: 'Use the "configure terminal" command to change device settings.' },
+    hint: { tr: '"conf t" yazın.', en: 'Type "conf t".' },
+    animationId: 'cli-config',
+    checkType: 'command',
+    checkParams: { commandPattern: 'conf' },
+    completed: false,
+    points: 10
+  }
+];
 
 // 1. Temel Switch Yapılandırma
 export const basicSwitchGuidedSteps: GuidedStep[] = [
@@ -689,6 +811,61 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
 
   const projects: GuidedProject[] = [
     {
+      id: 'guided-add-devices',
+      tag: isTr ? 'BAŞLANGIÇ' : 'BEGINNER',
+      title: isTr ? 'Cihaz Ekleme ve Bağlantı' : 'Adding Devices & Connection',
+      description: isTr ? 'Topolojiye cihaz eklemeyi ve kablo bağlamayı öğrenin' : 'Learn how to add devices and connect cables',
+      detail: isTr ? 'Sürükle-bırak cihaz ekleme ve temel ağ bağlantısı.' : 'Drag-drop device addition and basic network connection.',
+      data: {
+        version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
+        topology: { devices: [], connections: [], notes: [] },
+        cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
+        activeDeviceId: '', activeDeviceType: 'pc', activeTab: 'topology', zoom: 1, pan: { x: 0, y: 0 }
+      },
+      level: 'basic', isGuided: true, steps: addDeviceGuidedSteps, estimatedTimeMinutes: 5, difficulty: 'beginner',
+      totalPoints: addDeviceGuidedSteps.reduce((acc, s) => acc + (s.points || 0), 0)
+    },
+    {
+      id: 'guided-pc-cmd',
+      tag: 'CMD',
+      title: isTr ? 'PC CMD Komutları' : 'PC CMD Commands',
+      description: isTr ? 'PC terminalini ve temel komutları keşfedin' : 'Explore PC terminal and basic commands',
+      detail: isTr ? 'ipconfig, ping ve help komutlarının kullanımı.' : 'Using ipconfig, ping, and help commands.',
+      data: {
+        version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
+        topology: {
+          devices: [
+            { id: 'pc-1', type: 'pc', name: 'PC-1', x: 100, y: 100, ip: '192.168.1.10', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const }] }
+          ],
+          connections: [], notes: []
+        },
+        cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
+        activeDeviceId: 'pc-1', activeDeviceType: 'pc', activeTab: 'topology', zoom: 1, pan: { x: 0, y: 0 }
+      },
+      level: 'basic', isGuided: true, steps: pcCmdGuidedSteps, estimatedTimeMinutes: 5, difficulty: 'beginner',
+      totalPoints: pcCmdGuidedSteps.reduce((acc, s) => acc + (s.points || 0), 0)
+    },
+    {
+      id: 'guided-cli-basics',
+      tag: 'CLI',
+      title: isTr ? 'CLI Temelleri' : 'CLI Basics',
+      description: isTr ? 'Cisco IOS komut satırına giriş yapın' : 'Introduction to Cisco IOS command line',
+      detail: isTr ? 'Enable ve Global Config modlarına geçiş.' : 'Switching to Enable and Global Config modes.',
+      data: {
+        version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
+        topology: {
+          devices: [
+            { id: 'switch-1', type: 'switchL2', name: 'SW-1', x: 100, y: 100, ip: '', status: 'online', ports: generateSwitchPorts() as any }
+          ],
+          connections: [], notes: []
+        },
+        cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
+        activeDeviceId: 'switch-1', activeDeviceType: 'switchL2', activeTab: 'topology', zoom: 1, pan: { x: 0, y: 0 }
+      },
+      level: 'basic', isGuided: true, steps: cliBasicsGuidedSteps, estimatedTimeMinutes: 5, difficulty: 'beginner',
+      totalPoints: cliBasicsGuidedSteps.reduce((acc, s) => acc + (s.points || 0), 0)
+    },
+    {
       id: 'guided-basic-switch',
       tag: isTr ? 'Temel' : 'Basic',
       title: isTr ? 'Temel Switch Yapılandırma' : 'Basic Switch Configuration',
@@ -1047,6 +1224,18 @@ export const checkStepCompletion = (
       if (!context.lastCommand || !step.checkParams?.toIp) return false;
       const cmd = context.lastCommand.toLowerCase().trim();
       return cmd.startsWith('ping') && cmd.includes(step.checkParams.toIp.toLowerCase());
+
+    case 'deviceCount':
+      if (!context.topologyDevices || !step.checkParams?.deviceType) return false;
+      const targetType = step.checkParams.deviceType;
+      const minCount = step.checkParams.minCount || 1;
+
+      const count = context.topologyDevices.filter(d => {
+        if (targetType === 'switch') return d.type === 'switchL2' || d.type === 'switchL3';
+        return d.type === targetType;
+      }).length;
+
+      return count >= minCount;
 
     case 'manual':
       return true;
