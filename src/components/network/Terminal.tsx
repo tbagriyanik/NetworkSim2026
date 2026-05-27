@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search, Copy, Save, Trash2, Download, Settings, Wifi, Type } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { toast } from "@/hooks/use-toast";
 import { commandHelp } from '@/lib/network/executor';
 import { commandPatterns } from '@/lib/network/parser';
@@ -876,6 +877,13 @@ export function Terminal({
       return;
     }
 
+    // Terminal search shortcut
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+      e.preventDefault();
+      setSearchOpen(true);
+      return;
+    }
+
     // Handle ? for inline help
     if (e.key === '?' && !state.awaitingPassword && !confirmDialog?.show) {
       e.preventDefault();
@@ -1157,7 +1165,10 @@ export function Terminal({
             <Search className="w-4 h-4" aria-hidden="true" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>{t.search}</TooltipContent>
+        <TooltipContent className="flex items-center gap-2">
+          {t.search}
+          <ShortcutBadge shortcut="Ctrl+F" variant="primary" />
+        </TooltipContent>
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
@@ -1255,8 +1266,10 @@ export function Terminal({
               onChange={(e) => { const v = parseInt(e.target.value); setFontSize(v); try { localStorage.setItem('terminal-font-size', String(v)); } catch { } }}
               className="flex-1 h-1 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
             />
-            <Button variant="ghost" size="sm" onClick={clearTerminalView} className="h-7 text-[10px] font-black  tracking-widest text-rose-500">
-              <Trash2 className="w-3 h-3 mr-1" /> {t.clearTerminalBtn}
+            <Button variant="ghost" size="sm" onClick={clearTerminalView} className="h-7 text-[10px] font-black  tracking-widest text-rose-500 gap-1.5">
+              <Trash2 className="w-3 h-3" />
+              {t.clearTerminalBtn}
+              <ShortcutBadge shortcut="Ctrl+L" variant="danger" className="scale-75 origin-right" />
             </Button>
           </div>
         )}
