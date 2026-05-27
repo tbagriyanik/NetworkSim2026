@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio, LayoutGrid, ArrowLeft, SlidersHorizontal } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { toast } from "@/hooks/use-toast";
 import { isValidMAC, normalizeMAC, cn } from "@/lib/utils";
 import { ModernPanel } from '@/components/ui/ModernPanel';
@@ -1102,6 +1103,11 @@ export function PCPanel({
   useEffect(() => {
     if (!gameActive) return;
     const handleGameKey = (e: globalThis.KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        setSearchOpen(true);
+        return;
+      }
       if (e.key === 'Escape') {
         setGameActive(false);
         return;
@@ -3802,6 +3808,24 @@ export function PCPanel({
   }, [input, undoStack, getAutocompleteSuggestions]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    // Global terminal shortcuts
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+      e.preventDefault();
+      setSearchOpen(true);
+      return;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
+      e.preventDefault();
+      if (activeTab === 'desktop') setPcOutput([]);
+      else if (activeTab === 'terminal') setConsoleConnectionTime(Date.now());
+      setInput('');
+      setShowAutocomplete(false);
+      setAutocompleteIndex(-1);
+      setAutocompleteNavigated(false);
+      return;
+    }
+
     const autocompleteSuggestions = renderAutocompleteSuggestions;
     const canUseAutocomplete = showAutocomplete && autocompleteSuggestions.length > 0;
 
@@ -4265,8 +4289,39 @@ export function PCPanel({
                   title={internalPcHostname}
                   onClose={onClose}
                   collapsible={false}
-                  hideTitle
-                  hideHeader
+                  hideTitle={(activeTab === 'desktop' || activeTab === 'terminal') ? false : true}
+                  hideHeader={(activeTab === 'desktop' || activeTab === 'terminal') ? false : true}
+                  headerAction={(activeTab === 'desktop' || activeTab === 'terminal') ? (
+                    <div className="flex items-center gap-1">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)} className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", isDark && "text-slate-300 hover:text-slate-100")} aria-controls="search-dialog">
+                            <Search className="w-4 h-4" aria-hidden="true" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="flex items-center gap-2">
+                          {t.search}
+                          <ShortcutBadge shortcut="Ctrl+F" variant="primary" />
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={handleCopyAll} className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", isDark && "text-slate-300 hover:text-slate-100")}>
+                            <Copy className="w-4 h-4" aria-hidden="true" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t.copyToastSuccessTitle}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => setShowCmdSettings(!showCmdSettings)} className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", showCmdSettings && "bg-accent", isDark && "text-slate-300 hover:text-slate-100")}>
+                            <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{language === 'tr' ? 'Terminal Ayarları' : 'Terminal Settings'}</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  ) : undefined}
                   showHeaderOnMobile
                   noPadding
                   style={{ height: '100%' }}
@@ -5679,13 +5734,16 @@ export function PCPanel({
                               <Button
                                 variant="ghost" size="sm"
                                 onClick={() => {
-                                  if (activeTab === 'desktop') setPcOutput([]);
-                                  else setConsoleConnectionTime(Date.now());
-                                }}
-                                className="h-7 text-[10px] font-black tracking-widest text-rose-500 shrink-0"
-                              >
-                                <Trash2 className="w-3 h-3 mr-1" /> {t.clearTerminalBtn}
-                              </Button>
+                                if (activeTab === 'desktop') setPcOutput([]);
+                                else setConsoleConnectionTime(Date.now());
+                              }}
+                              className="h-7 text-[10px] font-black tracking-widest text-rose-500 shrink-0 gap-1.5"
+                              aria-label={t.clearTerminalBtn}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span>{t.clearTerminalBtn}</span>
+                              <ShortcutBadge shortcut="Ctrl+L" variant="danger" className="scale-75 origin-right" />
+                            </Button>
                             </div>
                           )}
                           {/* Output Area - Scrollable */}
