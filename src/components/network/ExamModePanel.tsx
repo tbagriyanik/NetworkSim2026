@@ -36,6 +36,7 @@ interface ExamModePanelProps {
   deviceAccessed?: 'switch' | 'router' | 'pc' | null;
   deviceAccessedId?: string | null;
   deviceState?: any;
+  deviceStates?: Map<string, any>;
   topologyConnections?: any[];
   topologyDevices?: any[];
   onCheckTasks?: (context: {
@@ -43,6 +44,7 @@ interface ExamModePanelProps {
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
     deviceState?: any;
+    deviceStates?: Map<string, any>;
     topologyConnections?: any[];
     topologyDevices?: any[];
   }) => void;
@@ -61,6 +63,7 @@ export function ExamModePanel({
   deviceAccessed,
   deviceAccessedId,
   deviceState,
+  deviceStates,
   topologyConnections,
   topologyDevices,
   onCheckTasks,
@@ -149,6 +152,7 @@ export function ExamModePanel({
           deviceAccessed,
           deviceAccessedId,
           deviceState,
+          deviceStates,
         topologyConnections,
         topologyDevices
       });

@@ -1079,6 +1079,7 @@ export const checkStepCompletion = (
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
     deviceState?: any;
+    deviceStates?: Map<string, any>;
     topologyConnections?: any[];
     topologyDevices?: any[];
   }
@@ -1093,6 +1094,12 @@ export const checkStepCompletion = (
 
     case 'command':
       if (!step.checkParams?.commandPattern || !context.lastCommand) return false;
+
+      // If targetDeviceId is specified, verify it matches the device being accessed
+      if (step.checkParams.targetDeviceId && context.deviceAccessedId !== step.checkParams.targetDeviceId) {
+        return false;
+      }
+
       const patterns = step.checkParams.commandPattern.split('|');
       const lastCmd = context.lastCommand!.toLowerCase().trim();
       return patterns.some(pattern => {
@@ -1142,7 +1149,19 @@ export const checkStepCompletion = (
       return context.topologyConnections.some((conn: any) => conn.active === true);
 
     case 'config':
-      if (!context.deviceState || !step.checkParams?.configKey) return false;
+      if (!step.checkParams?.configKey) return false;
+
+      // Determine which state to use: target device or current active device
+      let targetState = context.deviceState;
+      if (step.checkParams.targetDeviceId && context.deviceStates) {
+        targetState = context.deviceStates.get(step.checkParams.targetDeviceId) || targetState;
+      }
+
+      if (!targetState && !step.checkParams.configKey.startsWith('pc.') &&
+          !step.checkParams.configKey.startsWith('iot.') &&
+          !step.checkParams.configKey.startsWith('firewall.')) {
+        return false;
+      }
 
       const configKey = step.checkParams.configKey;
       const configValue = step.checkParams.configValue;
@@ -1151,9 +1170,9 @@ export const checkStepCompletion = (
         const parts = configKey.split('.');
         const portId = parts[1];
         const property = parts[parts.length - 1];
-        const port = context.deviceState.ports?.[portId] ||
-          context.deviceState.ports?.[portId.toLowerCase()] ||
-          context.deviceState.ports?.[portId.toUpperCase()];
+        const port = targetState?.ports?.[portId] ||
+          targetState?.ports?.[portId.toLowerCase()] ||
+          targetState?.ports?.[portId.toUpperCase()];
 
         if (port) {
           if (property === 'ip' || property === 'ipAddress') return port.ipAddress === configValue;
@@ -1171,14 +1190,14 @@ export const checkStepCompletion = (
 
       if (configKey.startsWith('vlans.')) {
         const vlanId = configKey.split('.')[1];
-        const vlan = context.deviceState.vlans?.[vlanId];
+        const vlan = targetState?.vlans?.[vlanId];
         const property = configKey.split('.').pop();
         if (property === 'name') return vlan?.name === configValue;
         return !!vlan;
       }
 
       if (configKey === 'staticRoutes') {
-        const routes = context.deviceState.staticRoutes || [];
+        const routes = targetState?.staticRoutes || [];
         if (typeof configValue === 'object' && configValue.destination) {
           return routes.some((r: any) => r.destination === configValue.destination);
         }
@@ -1186,7 +1205,7 @@ export const checkStepCompletion = (
 
       if (configKey.startsWith('dhcpPools.')) {
         const poolName = configKey.split('.')[1];
-        const pool = context.deviceState.dhcpPools?.[poolName];
+        const pool = targetState?.dhcpPools?.[poolName];
         if (!pool) return false;
         if (typeof configValue === 'object') {
           return Object.entries(configValue).every(([k, v]) => pool[k] === v);
@@ -1194,13 +1213,13 @@ export const checkStepCompletion = (
         return true;
       }
 
-      if (configKey === 'routingProtocol') return context.deviceState.routingProtocol === configValue;
+      if (configKey === 'routingProtocol') return targetState?.routingProtocol === configValue;
 
       if (configKey.startsWith('services.')) {
         const parts = configKey.split('.');
         const serviceName = parts[1];
         const property = parts[2];
-        const service = context.deviceState.services?.[serviceName];
+        const service = targetState?.services?.[serviceName];
         if (!service) return false;
         if (property === 'enabled') return service.enabled === configValue;
         if (property === 'records' && Array.isArray(configValue)) {
@@ -1218,10 +1237,36 @@ export const checkStepCompletion = (
         if (step.checkParams.subnetMask) return ipMatch && pcDevice.subnet === step.checkParams.subnetMask;
         return ipMatch;
       }
+
+      if (configKey.startsWith('iot.')) {
+        const iotId = configKey.split('.')[1];
+        const iotDevice = context.topologyDevices?.find((d: any) => d.id === iotId);
+        if (!iotDevice) return false;
+        const property = configKey.split('.').pop();
+        if (property === 'ssid') return iotDevice.wifi?.ssid === configValue;
+        if (property === 'ip') return iotDevice.ip === configValue;
+        return false;
+      }
+
+      if (configKey.startsWith('firewall.')) {
+        const fwId = configKey.split('.')[1];
+        const fwDevice = context.topologyDevices?.find((d: any) => d.id === fwId);
+        if (!fwDevice) return false;
+        const property = configKey.split('.').pop();
+        if (property === 'ip') return fwDevice.ip === configValue;
+        return false;
+      }
+
       return false;
 
     case 'ping':
       if (!context.lastCommand || !step.checkParams?.toIp) return false;
+
+      // If fromDevice is specified, verify it matches the device being accessed
+      if (step.checkParams.fromDevice && context.deviceAccessedId !== step.checkParams.fromDevice) {
+        return false;
+      }
+
       const cmd = context.lastCommand.toLowerCase().trim();
       return cmd.startsWith('ping') && cmd.includes(step.checkParams.toIp.toLowerCase());
 

@@ -7,7 +7,7 @@ export interface ExamTask {
   weight: number;
   checkType: 'deviceAccess' | 'command' | 'config' | 'connection' | 'manual';
   checkParams?: {
-    deviceType?: 'switch' | 'router' | 'pc';
+    deviceType?: 'switch' | 'router' | 'pc' | 'iot' | 'firewall';
     commandPattern?: string;
     configKey?: string;
     configValue?: any;
@@ -342,6 +342,190 @@ export const basicAclExamTasks: ExamTask[] = [
     weight: 40,
     checkType: 'command',
     checkParams: { commandPattern: 'ip access-group 10 in' },
+    completed: false
+  }
+];
+
+// Comprehensive Final Exam Tasks
+export const comprehensiveFinalExamTasks: ExamTask[] = [
+  {
+    id: 'master-conn-pc-as',
+    title: { tr: 'PC-AS1 Bağlantısı', en: 'PC-AS1 Connection' },
+    description: { tr: 'PC-1 cihazını AS-1 Switch\'inin Fa0/1 portuna bağlayın.', en: 'Connect PC-1 to Fa0/1 port of AS-1 Switch.' },
+    weight: 5,
+    checkType: 'connection',
+    checkParams: { sourceDevice: 'pc-1', targetDevice: 'as-1', targetPort: 'fa0/1', cableType: 'straight' },
+    completed: false
+  },
+  {
+    id: 'master-conn-as-ds',
+    title: { tr: 'Trunk Bağlantısı', en: 'Trunk Connection' },
+    description: { tr: 'AS-1 (Gi0/1) ile DS-1 (Gi1/0/1) arasını crossover kablo ile bağlayın.', en: 'Connect AS-1 (Gi0/1) and DS-1 (Gi1/0/1) with a crossover cable.' },
+    weight: 5,
+    checkType: 'connection',
+    checkParams: { sourceDevice: 'as-1', sourcePort: 'gi0/1', targetDevice: 'ds-1', targetPort: 'gi1/0/1', cableType: 'crossover' },
+    completed: false
+  },
+  {
+    id: 'master-conn-ds-r1',
+    title: { tr: 'Dağıtım-Yönlendirici Bağlantısı', en: 'Distribution-Router Connection' },
+    description: { tr: 'DS-1 (Gi1/0/2) ile R1 (Gi0/0) arasını crossover kablo ile bağlayın.', en: 'Connect DS-1 (Gi1/0/2) and R1 (Gi0/0) with a crossover cable.' },
+    weight: 5,
+    checkType: 'connection',
+    checkParams: { sourceDevice: 'ds-1', sourcePort: 'gi1/0/2', targetDevice: 'r-1', targetPort: 'gi0/0', cableType: 'crossover' },
+    completed: false
+  },
+  {
+    id: 'master-ds1-hostname',
+    title: { tr: 'L3 Switch Hostname', en: 'L3 Switch Hostname' },
+    description: { tr: 'L3 Switch ismini "DS-1" olarak ayarlayın.', en: 'Set L3 Switch hostname to "DS-1".' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { deviceType: 'switch', commandPattern: 'hostname DS-1' },
+    completed: false
+  },
+  {
+    id: 'master-r1-hostname',
+    title: { tr: 'Router Hostname', en: 'Router Hostname' },
+    description: { tr: 'Router ismini "R-1" olarak ayarlayın.', en: 'Set Router hostname to "R-1".' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { deviceType: 'router', commandPattern: 'hostname R-1' },
+    completed: false
+  },
+  {
+    id: 'master-vlan10-as1',
+    title: { tr: 'AS-1 VLAN 10', en: 'AS-1 VLAN 10' },
+    description: { tr: 'AS-1 üzerinde VLAN 10 oluşturun.', en: 'Create VLAN 10 on AS-1.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { deviceType: 'switch', targetDeviceId: 'as-1', commandPattern: 'vlan 10' },
+    completed: false
+  },
+  {
+    id: 'master-vlan10-assign',
+    title: { tr: 'Port VLAN Ataması', en: 'Port VLAN Assignment' },
+    description: { tr: 'AS-1 Fa0/1 portunu VLAN 10\'a atayın.', en: 'Assign AS-1 Fa0/1 port to VLAN 10.' },
+    weight: 5,
+    checkType: 'config',
+    checkParams: { targetDeviceId: 'as-1', configKey: 'ports.fa0/1.vlan', configValue: 10 },
+    completed: false
+  },
+  {
+    id: 'master-trunk-as1',
+    title: { tr: 'AS-1 Trunk', en: 'AS-1 Trunk' },
+    description: { tr: 'AS-1 Gi0/1 portunu trunk moduna alın.', en: 'Set AS-1 Gi0/1 port to trunk mode.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { deviceType: 'switch', targetDeviceId: 'as-1', commandPattern: 'switchport mode trunk' },
+    completed: false
+  },
+  {
+    id: 'master-trunk-ds1',
+    title: { tr: 'Trunk Yapılandırması (DS-1)', en: 'Trunk Configuration (DS-1)' },
+    description: { tr: 'DS-1 Gi1/0/1 portunu trunk moduna alın.', en: 'Set DS-1 Gi1/0/1 port to trunk mode.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { deviceType: 'switch', targetDeviceId: 'ds-1', commandPattern: 'switchport mode trunk' },
+    completed: false
+  },
+  {
+    id: 'master-l3-routing',
+    title: { tr: 'L3 Yönlendirme', en: 'L3 Routing' },
+    description: { tr: 'DS-1 üzerinde IP yönlendirmeyi etkinleştirin.', en: 'Enable IP routing on DS-1.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { deviceType: 'switch', targetDeviceId: 'ds-1', commandPattern: 'ip routing' },
+    completed: false
+  },
+  {
+    id: 'master-svi-vlan10',
+    title: { tr: 'SVI Yapılandırması', en: 'SVI Configuration' },
+    description: { tr: 'DS-1 interface VLAN 10\'a 192.168.10.1/24 IP atayın.', en: 'Assign 192.168.10.1/24 to interface VLAN 10 on DS-1.' },
+    weight: 5,
+    checkType: 'config',
+    checkParams: { targetDeviceId: 'ds-1', configKey: 'ports.vlan10.ipAddress', configValue: '192.168.10.1' },
+    completed: false
+  },
+  {
+    id: 'master-routed-port',
+    title: { tr: 'Routed Port', en: 'Routed Port' },
+    description: { tr: 'DS-1 Gi1/0/2 portunu "no switchport" ile routed port yapın ve 10.0.0.1 IP atayın.', en: 'Make DS-1 Gi1/0/2 a routed port using "no switchport" and assign 10.0.0.1 IP.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { deviceType: 'switch', targetDeviceId: 'ds-1', commandPattern: 'no switchport' },
+    completed: false
+  },
+  {
+    id: 'master-r1-ip',
+    title: { tr: 'Router IP Ataması', en: 'Router IP Assignment' },
+    description: { tr: 'R-1 Gi0/0 arayüzüne 10.0.0.2/30 IP adresini atayın.', en: 'Assign 10.0.0.2/30 to R-1 Gi0/0 interface.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { deviceType: 'router', targetDeviceId: 'r-1', commandPattern: 'ip address 10.0.0.2 255.255.255.252' },
+    completed: false
+  },
+  {
+    id: 'master-r1-dhcp',
+    title: { tr: 'Router DHCP Havuzu', en: 'Router DHCP Pool' },
+    description: { tr: 'R-1 üzerinde "IOT-POOL" isminde 192.168.100.0/24 ağını dağıtan bir havuz oluşturun.', en: 'Create a DHCP pool named "IOT-POOL" on R-1 distributing 192.168.100.0/24.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { deviceType: 'router', targetDeviceId: 'r-1', commandPattern: 'ip dhcp pool IOT-POOL' },
+    completed: false
+  },
+  {
+    id: 'master-wifi-ssid',
+    title: { tr: 'WiFi SSID Ayarı', en: 'WiFi SSID Config' },
+    description: { tr: 'R-1 üzerinde MasterWiFi isminde kablosuz ağ oluşturun.', en: 'Create a wireless network named MasterWiFi on R-1.' },
+    weight: 5,
+    checkType: 'config',
+    checkParams: { targetDeviceId: 'r-1', configKey: 'ports.wlan0.wifi.ssid', configValue: 'MasterWiFi' },
+    completed: false
+  },
+  {
+    id: 'master-iot-wifi',
+    title: { tr: 'IoT WiFi Bağlantısı', en: 'IoT WiFi Connection' },
+    description: { tr: 'IoT-1 cihazını MasterWiFi ağına bağlayın.', en: 'Connect IoT-1 device to MasterWiFi network.' },
+    weight: 5,
+    checkType: 'config',
+    checkParams: { configKey: 'iot.iot-1.ssid', configValue: 'MasterWiFi' },
+    completed: false
+  },
+  {
+    id: 'master-static-route',
+    title: { tr: 'Varsayılan Rota', en: 'Default Route' },
+    description: { tr: 'DS-1 üzerinde tüm trafik için R-1\'i (10.0.0.2) gateway olarak ayarlayın.', en: 'Configure R-1 (10.0.0.2) as the gateway for all traffic on DS-1.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { deviceType: 'switch', targetDeviceId: 'ds-1', commandPattern: 'ip route 0.0.0.0 0.0.0.0 10.0.0.2' },
+    completed: false
+  },
+  {
+    id: 'master-acl-restrict',
+    title: { tr: 'ACL Kısıtlaması', en: 'ACL Restriction' },
+    description: { tr: 'R-1 üzerinde 192.168.10.10 hostunun dışarı çıkmasını engelleyen ACL yazın.', en: 'Create an ACL on R-1 to block host 192.168.10.10 from going outside.' },
+    weight: 5,
+    checkType: 'command',
+    checkParams: { deviceType: 'router', targetDeviceId: 'r-1', commandPattern: 'access-list 1 deny 192.168.10.10' },
+    completed: false
+  },
+  {
+    id: 'master-fw-ip',
+    title: { tr: 'Firewall IP Yapılandırması', en: 'Firewall IP Config' },
+    description: { tr: 'Firewall-1 cihazına 10.0.0.10 IP adresini atayın.', en: 'Assign IP 10.0.0.10 to Firewall-1.' },
+    weight: 5,
+    checkType: 'config',
+    checkParams: { configKey: 'firewall.fw-1.ip', configValue: '10.0.0.10' },
+    completed: false
+  },
+  {
+    id: 'master-dns-enable',
+    title: { tr: 'DNS Servisi', en: 'DNS Service' },
+    description: { tr: 'Server-1 üzerinde DNS servisini etkinleştirin.', en: 'Enable DNS service on Server-1.' },
+    weight: 5,
+    checkType: 'config',
+    checkParams: { targetDeviceId: 'server-1', configKey: 'services.dns.enabled', configValue: true },
     completed: false
   }
 ];
@@ -706,6 +890,59 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
       isExam: true,
       tasks: basicAclExamTasks,
       durationMinutes: 20,
+      difficulty: 'advanced'
+    },
+    {
+      id: 'exam-comprehensive-master',
+      tag: isTr ? 'FİNAL' : 'FINAL',
+      title: isTr ? 'Kapsamlı Ağ Uzmanlığı Sınavı' : 'Comprehensive Network Master Exam',
+      description: isTr
+        ? 'Tüm cihaz türlerini ve protokolleri içeren ileri seviye final sınavı.'
+        : 'Advanced final exam covering all device types and protocols.',
+      detail: isTr
+        ? 'Bu sınav; L2/L3 Switchleme, Router yapılandırması, DHCP, WiFi ve ACL konularını kapsar.'
+        : 'This exam covers L2/L3 Switching, Router config, DHCP, WiFi, and ACLs.',
+      data: {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        devices: [],
+        topology: {
+          devices: [
+            { id: 'r-1', type: 'router', name: 'R1', x: 500, y: 100, status: 'online', ports: [
+              { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' },
+              { id: 'wlan0', label: 'WLAN0', status: 'disconnected', wifi: { ssid: '', mode: 'ap' } }
+            ]},
+            { id: 'ds-1', type: 'switchL3', name: 'DS1', x: 500, y: 250, status: 'online', ports: [
+              { id: 'gi1/0/1', label: 'Gi1/0/1', status: 'disconnected' },
+              { id: 'gi1/0/2', label: 'Gi1/0/2', status: 'disconnected' }
+            ]},
+            { id: 'as-1', type: 'switchL2', name: 'AS1', x: 300, y: 400, status: 'online', ports: [
+              { id: 'fa0/1', label: 'Fa0/1', status: 'disconnected' },
+              { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' }
+            ]},
+            { id: 'pc-1', type: 'pc', name: 'PC-1', x: 100, y: 400, status: 'online', ip: '', subnet: '', gateway: '', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' }] },
+            { id: 'iot-1', type: 'iot', name: 'IoT-1', x: 700, y: 100, status: 'online', ip: '', wifi: { enabled: true, ssid: '', mode: 'client' }, ports: [{ id: 'wlan0', label: 'WLAN0', status: 'disconnected' }] },
+            { id: 'fw-1', type: 'firewall', name: 'FW-1', x: 750, y: 250, status: 'online', ip: '', ports: [{ id: 'gi1/0/0', label: 'Gi1/0/0', status: 'disconnected' }] },
+            { id: 'server-1', type: 'pc', name: 'Server-1', x: 750, y: 400, status: 'online', ip: '10.0.0.100', subnet: '255.0.0.0', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' }] }
+          ],
+          connections: [],
+          notes: [
+            {
+              id: 'master-note',
+              text: isTr
+                ? '🎓 KAPSAMLI FİNAL SINAVI\n\nBu sınavda tüm ağ becerilerinizi sergilemeniz beklenmektedir.\nKablolamadan ACL yapılandırmasına kadar tüm adımları tamamlayın.'
+                : '🎓 COMPREHENSIVE FINAL EXAM\n\nYou are expected to demonstrate all your networking skills in this exam.\nComplete all steps from cabling to ACL configuration.',
+              x: 50, y: 50, width: 400, height: 120, color: '#f59e0b', font: 'verdana', fontSize: 12, opacity: 0.75
+            }
+          ]
+        },
+        activeDeviceId: 'r-1',
+        activeDeviceType: 'router'
+      } as any,
+      level: 'advanced',
+      isExam: true,
+      tasks: comprehensiveFinalExamTasks,
+      durationMinutes: 60,
       difficulty: 'advanced'
     }
   ];

@@ -4909,6 +4909,7 @@ ${state.bannerMOTD}
             deviceAccessed={showUnifiedDeviceModal ? (activeDeviceType === 'switchL2' || activeDeviceType === 'switchL3' ? 'switch' : activeDeviceType === 'router' ? 'router' : 'pc') : null}
             deviceAccessedId={showUnifiedDeviceModal ? activeDeviceId : null}
             deviceState={state}
+            deviceStates={deviceStates}
             topologyConnections={topologyConnections}
             topologyDevices={topologyDevices}
             onCheckAutoComplete={checkStepCompletionWithContext}
@@ -4927,6 +4928,7 @@ ${state.bannerMOTD}
             deviceAccessed={showUnifiedDeviceModal ? (activeDeviceType === 'switchL2' || activeDeviceType === 'switchL3' ? 'switch' : activeDeviceType === 'router' ? 'router' : 'pc') : null}
             deviceAccessedId={showUnifiedDeviceModal ? activeDeviceId : null}
             deviceState={state}
+            deviceStates={deviceStates}
             topologyConnections={topologyConnections}
             topologyDevices={topologyDevices}
             onCheckTasks={checkExamTasks}
