@@ -26,6 +26,7 @@ interface UseExamModeReturn {
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
     deviceState?: any;
+    deviceStates?: Map<string, any>;
     topologyConnections?: any[];
     topologyDevices?: any[];
   }) => void;
@@ -209,6 +210,7 @@ export function useExamMode(): UseExamModeReturn {
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
     deviceState?: any;
+    deviceStates?: Map<string, any>;
     topologyConnections?: any[];
     topologyDevices?: any[];
   }) => {
