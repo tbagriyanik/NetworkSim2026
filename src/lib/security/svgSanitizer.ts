@@ -40,6 +40,8 @@ const DANGEROUS_ATTR_PREFIXES = ['on'];
 
 const DANGEROUS_TAGS = new Set(['script', 'foreignObject', 'object', 'embed', 'iframe']);
 
+const URI_ATTRS = new Set(['href', 'xlink:href', 'src', 'action', 'formaction']);
+
 function isDangerousTag(tag: string): boolean {
   return DANGEROUS_TAGS.has(tag.toLowerCase());
 }
@@ -52,6 +54,17 @@ function isDangerousAttr(name: string): boolean {
   const lower = name.toLowerCase();
   for (const prefix of DANGEROUS_ATTR_PREFIXES) {
     if (lower.startsWith(prefix)) return true;
+  }
+  return false;
+}
+
+function isDangerousUri(value: string): boolean {
+  const sanitized = value.replace(/\s+/g, '').toLowerCase();
+  if (sanitized.includes('javascript:') ||
+      sanitized.includes('data:') ||
+      sanitized.includes('vbscript:') ||
+      sanitized.includes('file:')) {
+    return true;
   }
   return false;
 }
@@ -110,9 +123,12 @@ function sanitizeNode(node: Node): void {
 
     const attrs = Array.from(el.attributes);
     for (const attr of attrs) {
-      if (isDangerousAttr(attr.name)) {
+      const attrName = attr.name.toLowerCase();
+      if (isDangerousAttr(attrName)) {
         el.removeAttribute(attr.name);
-      } else if (!isAllowedAttr(attr.name)) {
+      } else if (!isAllowedAttr(attrName)) {
+        el.removeAttribute(attr.name);
+      } else if (URI_ATTRS.has(attrName) && isDangerousUri(attr.value)) {
         el.removeAttribute(attr.name);
       }
     }
