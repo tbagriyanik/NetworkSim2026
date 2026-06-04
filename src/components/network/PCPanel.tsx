@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio, LayoutGrid, ArrowLeft, SlidersHorizontal } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { toast } from "@/hooks/use-toast";
 import { isValidMAC, normalizeMAC, cn } from "@/lib/utils";
@@ -4293,33 +4294,45 @@ export function PCPanel({
                   hideHeader={(activeTab === 'desktop' || activeTab === 'terminal') ? false : true}
                   headerAction={(activeTab === 'desktop' || activeTab === 'terminal') ? (
                     <div className="flex items-center gap-1">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)} className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", isDark && "text-slate-300 hover:text-slate-100")} aria-controls="search-dialog">
-                            <Search className="w-4 h-4" aria-hidden="true" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="flex items-center gap-2">
+                      <TooltipWrapper title={(
+                        <div className="flex items-center gap-2">
                           {t.search}
-                          <ShortcutBadge shortcut="Ctrl+F" variant="primary" />
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={handleCopyAll} className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", isDark && "text-slate-300 hover:text-slate-100")}>
-                            <Copy className="w-4 h-4" aria-hidden="true" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{t.copyToastSuccessTitle}</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => setShowCmdSettings(!showCmdSettings)} className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", showCmdSettings && "bg-accent", isDark && "text-slate-300 hover:text-slate-100")}>
-                            <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{language === 'tr' ? 'Terminal Ayarları' : 'Terminal Settings'}</TooltipContent>
-                      </Tooltip>
+                          {!isMobile && <ShortcutBadge shortcut="Ctrl+F" variant="primary" />}
+                        </div>
+                      )}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setSearchOpen(true)}
+                          className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", isDark && "text-slate-300 hover:text-slate-100")}
+                          aria-controls="search-dialog"
+                          aria-label={t.search}
+                        >
+                          <Search className="w-4 h-4" aria-hidden="true" />
+                        </Button>
+                      </TooltipWrapper>
+                      <TooltipWrapper title={t.copy}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleCopyAll}
+                          className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", isDark && "text-slate-300 hover:text-slate-100")}
+                          aria-label={t.copy}
+                        >
+                          <Copy className="w-4 h-4" aria-hidden="true" />
+                        </Button>
+                      </TooltipWrapper>
+                      <TooltipWrapper title={language === 'tr' ? 'Terminal Ayarları' : 'Terminal Settings'}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setShowCmdSettings(!showCmdSettings)}
+                          className={cn("h-8 w-8 rounded-lg text-slate-600 hover:text-slate-900", showCmdSettings && "bg-accent", isDark && "text-slate-300 hover:text-slate-100")}
+                          aria-label={language === 'tr' ? 'Terminal Ayarları' : 'Terminal Settings'}
+                        >
+                          <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
+                        </Button>
+                      </TooltipWrapper>
                     </div>
                   ) : undefined}
                   showHeaderOnMobile
@@ -5731,19 +5744,20 @@ export function PCPanel({
                                 onChange={(e) => handleFontSizeChange(parseInt(e.target.value))}
                                 className="flex-1 h-1 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                               />
-                              <Button
-                                variant="ghost" size="sm"
-                                onClick={() => {
-                                if (activeTab === 'desktop') setPcOutput([]);
-                                else setConsoleConnectionTime(Date.now());
-                              }}
-                              className="h-7 text-[10px] font-black tracking-widest text-rose-500 shrink-0 gap-1.5"
-                              aria-label={t.clearTerminalBtn}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                              <span>{t.clearTerminalBtn}</span>
-                              <ShortcutBadge shortcut="Ctrl+L" variant="danger" className="scale-75 origin-right" />
-                            </Button>
+                              <TooltipWrapper title={t.clearTerminalBtn}>
+                                <Button
+                                  variant="ghost" size="sm"
+                                  onClick={() => {
+                                    if (activeTab === 'desktop') setPcOutput([]);
+                                    else setConsoleConnectionTime(Date.now());
+                                  }}
+                                  className="h-7 text-[10px] font-black tracking-widest text-rose-500 shrink-0 gap-1.5"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                  <span>{t.clearTerminalBtn}</span>
+                                  {!isMobile && <ShortcutBadge shortcut="Ctrl+L" variant="danger" className="scale-75 origin-right" />}
+                                </Button>
+                              </TooltipWrapper>
                             </div>
                           )}
                           {/* Output Area - Scrollable */}
