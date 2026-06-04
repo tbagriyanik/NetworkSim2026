@@ -14,3 +14,8 @@
 **Vulnerability:** Whitelist-based SVG sanitizers can still be vulnerable if they allow attributes like `href` without validating their content for dangerous URI schemes like `javascript:`.
 **Learning:** Even if a tag (like `<a>` or `<image>`) and an attribute (like `href` or `xlink:href`) are whitelisted, the *content* of that attribute must be inspected if it can trigger script execution. Attackers can use obfuscation like whitespace (`java script:`) or case variations to bypass simple string matching.
 **Prevention:** Always validate URI-bearing attributes against a blacklist of dangerous schemes, and normalize the content (lowercase, remove whitespace) before validation.
+
+## 2025-05-15 - Insufficient Origin Validation in postMessage listeners
+**Vulnerability:** Message event listeners in `src/app/page.tsx` were accepting data from any origin without validation.
+**Learning:** Global `message` event listeners must always validate the `event.origin` property before processing data, especially when using `postMessage` for cross-component or cross-frame communication. The application uses sandboxed `srcdoc` iframes for some panels, which can have an origin of `'null'`.
+**Prevention:** Always validate `event.origin` against `window.location.origin` and `'null'` at the beginning of the listener function.
