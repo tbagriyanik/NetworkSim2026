@@ -1255,7 +1255,14 @@ export const checkStepCompletion = (
         const fwDevice = context.topologyDevices?.find((d: any) => d.id === fwId);
         if (!fwDevice) return false;
         const property = configKey.split('.').pop();
-        if (property === 'ip') return fwDevice.ip === configValue;
+        if (property === 'ip') {
+          if (fwDevice.ip === configValue) return true;
+          const fwState = context.deviceStates?.get(fwId);
+          if (fwState?.ports) {
+            return Object.values(fwState.ports).some((p: any) => p.ipAddress === configValue);
+          }
+          return false;
+        }
         return false;
       }
 
