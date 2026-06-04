@@ -4,7 +4,7 @@ import React from 'react';
 import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 
 interface TooltipWrapperProps {
-    title?: string;
+    title?: React.ReactNode;
     children: React.ReactNode;
     side?: 'top' | 'right' | 'bottom' | 'left';
     delayDuration?: number;
