@@ -857,6 +857,12 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   // Listen for postMessage from WiFi admin panel to focus device in topology
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      // Security: Validate origin to prevent cross-site scripting or data injection from malicious frames.
+      // We allow window.location.origin for same-origin messages and 'null' for local srcdoc iframes.
+      if (event.origin !== window.location.origin && event.origin !== 'null') {
+        return;
+      }
+
       if (event.data && event.data.type === 'router-admin-focus-device') {
         const deviceId = event.data.deviceId;
         if (deviceId) {
