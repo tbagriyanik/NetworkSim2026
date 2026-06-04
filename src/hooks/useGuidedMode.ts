@@ -279,6 +279,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
     deviceState?: any;
+    deviceStates?: Map<string, any>;
     topologyConnections?: any[];
     topologyDevices?: any[];
   }) => {

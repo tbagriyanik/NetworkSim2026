@@ -1159,7 +1159,8 @@ export const checkStepCompletion = (
 
       if (!targetState && !step.checkParams.configKey.startsWith('pc.') &&
           !step.checkParams.configKey.startsWith('iot.') &&
-          !step.checkParams.configKey.startsWith('firewall.')) {
+          !step.checkParams.configKey.startsWith('firewall.') &&
+          !step.checkParams.configKey.startsWith('services.')) {
         return false;
       }
 
@@ -1219,7 +1220,8 @@ export const checkStepCompletion = (
         const parts = configKey.split('.');
         const serviceName = parts[1];
         const property = parts[2];
-        const service = targetState?.services?.[serviceName];
+        const service = targetState?.services?.[serviceName] ||
+          context.topologyDevices?.find((d: any) => d.id === step.checkParams?.targetDeviceId)?.services?.[serviceName];
         if (!service) return false;
         if (property === 'enabled') return service.enabled === configValue;
         if (property === 'records' && Array.isArray(configValue)) {

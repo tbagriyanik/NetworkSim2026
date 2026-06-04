@@ -45,6 +45,7 @@ interface GuidedModePanelProps {
   deviceAccessed?: 'switch' | 'router' | 'pc' | null;
   deviceAccessedId?: string | null;
   deviceState?: any;
+  deviceStates?: Map<string, any>;
   topologyConnections?: any[];
   topologyDevices?: any[];
   onCheckAutoComplete?: (context: {
@@ -52,6 +53,7 @@ interface GuidedModePanelProps {
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
     deviceState?: any;
+    deviceStates?: Map<string, any>;
     topologyConnections?: any[];
     topologyDevices?: any[];
   }) => void;
@@ -71,6 +73,7 @@ export function GuidedModePanel({
   deviceAccessed,
   deviceAccessedId,
   deviceState,
+  deviceStates,
   topologyConnections,
   topologyDevices,
   onCheckAutoComplete
@@ -166,6 +169,7 @@ export function GuidedModePanel({
           deviceAccessed,
           deviceAccessedId,
           deviceState,
+          deviceStates,
           topologyConnections,
           topologyDevices
         });

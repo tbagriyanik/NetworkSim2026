@@ -27,7 +27,7 @@ export function TooltipWrapper({
     }
 
     const child = React.isValidElement(children)
-        ? React.cloneElement(children as React.ReactElement<{ 'aria-label'?: string }>, { 'aria-label': title })
+        ? React.cloneElement(children as React.ReactElement<{ 'aria-label'?: string }>, { 'aria-label': typeof title === 'string' ? title : undefined })
         : children;
 
     return (
