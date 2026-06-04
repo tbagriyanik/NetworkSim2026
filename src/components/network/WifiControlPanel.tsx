@@ -269,41 +269,40 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     }
     
     .status-card {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
+      background: #f0f4ff;
+      border: 1px solid #d0daf0;
+      color: #1a1a2e;
       padding: 20px;
       border-radius: 10px;
       margin-bottom: 25px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      box-shadow: 0 2px 8px rgba(42, 82, 152, 0.1);
     }
     
     .status-card.disabled {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+      background: #f5f5f5;
+      border: 1px solid #e0e0e0;
+      color: #555;
+      box-shadow: none;
     }
     
     .status-info h3 {
       font-size: 16px;
       font-weight: 600;
       margin-bottom: 5px;
+      color: #1a1a2e;
     }
     
     .status-info p {
       font-size: 13px;
-      opacity: 0.95;
+      color: #444;
     }
     
     .status-badge {
-      background: rgba(255,255,255,0.2);
+      background: #2a5298;
+      color: #fff;
       padding: 8px 16px;
       border-radius: 20px;
       font-size: 12px;
@@ -529,20 +528,21 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       .device-info {
         flex-direction: column;
         gap: 10px !important;
-        /* Custom Confirm Modal */
-        .custom-confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-        .custom-confirm-overlay.active { display: flex; }
-        .custom-confirm-box { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
-        .custom-confirm-box h3 { margin: 0 0 12px 0; font-size: 16px; color: #333; }
-        .custom-confirm-box p { margin: 0 0 20px 0; font-size: 14px; color: #666; }
-        .custom-confirm-actions { display: flex; gap: 10px; justify-content: center; }
-        .custom-confirm-actions button { padding: 8px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .confirm-cancel-btn { background: #e9ecef; color: #495057; }
-        .confirm-cancel-btn:hover { background: #dee2e6; }
-        .confirm-ok-btn { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; }
-        .confirm-ok-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(220,53,69,0.4); }
       }
     }
+
+    /* Custom Confirm Modal */
+    .custom-confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+    .custom-confirm-overlay.active { display: flex; }
+    .custom-confirm-box { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
+    .custom-confirm-box h3 { margin: 0 0 12px 0; font-size: 16px; color: #333; }
+    .custom-confirm-box p { margin: 0 0 20px 0; font-size: 14px; color: #666; }
+    .custom-confirm-actions { display: flex; gap: 10px; justify-content: center; }
+    .custom-confirm-actions button { padding: 8px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .confirm-cancel-btn { background: #e9ecef; color: #495057; }
+    .confirm-cancel-btn:hover { background: #dee2e6; }
+    .confirm-ok-btn { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; }
+    .confirm-ok-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(220,53,69,0.4); }
   </style>
 </head>
 <body>
@@ -805,6 +805,8 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
   </div>
   
   <script>
+    // Language flag (resolved from server side)
+    var isTurkish = ${isTurkish};
     // Hide tooltips on mobile devices
     function hideTooltipsOnMobile() {
       if (window.innerWidth <= 600) {
@@ -870,7 +872,7 @@ window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error'
           }
         }, window.parent.location.origin);
       } catch (err) {
-        logger.warn('Could not sync router settings to parent:', err);
+        console.warn('Could not sync router settings to parent:', err);
       }
     });
     
@@ -975,12 +977,9 @@ window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error'
         }, window.parent.location.origin);
       } catch (err) {
         console.warn('Could not disconnect IoT device:', err);
-        let errorMessage: string;
-        if (isTurkish) {
-          errorMessage = 'Cihaz bağlantısı kesilemedi: ' + (err as Error).message;
-        } else {
-          errorMessage = 'Failed to disconnect device: ' + (err as Error).message;
-        }
+        var errorMessage = isTurkish
+          ? 'Cihaz bağlantısı kesilemedi: ' + (err && err.message ? err.message : String(err))
+          : 'Failed to disconnect device: ' + (err && err.message ? err.message : String(err));
 window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, window.parent.location.origin);
       }
     };
