@@ -1,15 +1,26 @@
-# 📚 Dokümantasyon - Hata Kontrolü & UI/UX İyileştirme
+# 📚 Dokümantasyon
 
-Bu klasör, hata kontrolü ve UI/UX iyileştirme projesi için tüm dokümantasyon dosyalarını içerir.
+Bu klasör, Network Simulator 2026 projesi için tüm dokümantasyon dosyalarını içerir.
 
 ## 📖 Dosyalar
 
-### 🚀 [README_IMPROVEMENTS.md](README_IMPROVEMENTS.md)
-**Proje Özeti ve Hızlı Başlangıç**
-- Hızlı başlangıç (30 saniye)
-- Tamamlanan özellikler
-- Kullanım örnekleri
-- Sonraki adımlar
+### 🎓 [CLI_GUIDED_TUTORIAL.md](CLI_GUIDED_TUTORIAL.md)
+**Tüm CLI Komutlarının Pratik Rehberli Dersleri**
+- 30 pratik ders (Başlangıç → İleri)
+- Adım adım örnekler
+- 5 pratik senaryo
+- Sorun giderme ipuçları
+
+**Okuma Süresi**: 2-3 saat
+
+---
+
+### 💻 [CLI_COMMANDS.md](CLI_COMMANDS.md)
+**Komut Satırı Komutları Rehberi**
+- 180+ CLI komutu
+- Tüm modlar
+- Klavye kısayolları
+- Komut sözdizimi
 
 **Okuma Süresi**: 10 dakika
 
@@ -23,17 +34,6 @@ Bu klasör, hata kontrolü ve UI/UX iyileştirme projesi için tüm dokümantasy
 - Yaygın hatalar ve çözümleri
 
 **Okuma Süresi**: 5 dakika
-
----
-
-### 📋 [IMPROVEMENTS_SUMMARY.md](IMPROVEMENTS_SUMMARY.md)
-**Tamamlanan İyileştirmelerin Özeti**
-- Tamamlanan görevler
-- Yeni dosyalar
-- İyileştirme metrikleri
-- Güvenlik özellikleri
-
-**Okuma Süresi**: 10 dakika
 
 ---
 
@@ -59,12 +59,55 @@ Bu klasör, hata kontrolü ve UI/UX iyileştirme projesi için tüm dokümantasy
 
 ---
 
-### ✅ [IMPLEMENTATION_COMPLETE.md](IMPLEMENTATION_COMPLETE.md)
-**Proje Tamamlama Raporu**
-- Tamamlanan görevler
-- Kod istatistikleri
-- Zaman çizelgesi
-- Kontrol listesi
+### 🖥️ [USAGE.md](USAGE.md)
+**Kullanım Kılavuzu ve Klavye Kısayolları**
+- Tuval işlemleri
+- Kablo tipleri
+- Cihaz etkileşimleri
+- CLI modları
+- Klavye kısayolları
+
+**Okuma Süresi**: 10 dakika
+
+---
+
+### 📡 [WIRELESS_CONFIGURATION_GUIDE.md](WIRELESS_CONFIGURATION_GUIDE.md)
+**Kablosuz Ağ Yapılandırma Rehberi**
+- SSID yönetimi
+- Authentication (WPA2/WPA3)
+- Radio arayüz yapılandırması
+- MAC filtreleme
+
+**Okuma Süresi**: 20 dakika
+
+---
+
+### 📡 [WIRELESS_README.md](WIRELESS_README.md)
+**Kablosuz Ağ Hızlı Başlangıç**
+- Hızlı SSID kurulumu
+- Temel radio yapılandırması
+
+**Okuma Süresi**: 5 dakika
+
+---
+
+### 🔀 [L3_SWITCH_CONFIGURATION.md](L3_SWITCH_CONFIGURATION.md)
+**Layer 3 Anahtarlama Rehberi**
+- no switchport komutu
+- ip routing yapılandırması
+- SVI durumu
+- L2 vs L3 IP davranışı
+
+**Okuma Süresi**: 15 dakika
+
+---
+
+### 🔌 [GOOGLE_SHEETS_SETUP.md](GOOGLE_SHEETS_SETUP.md)
+**Google Sheets Entegrasyonu Kurulumu**
+- Google Sheets API kurulumu
+- Kimlik doğrulama ayarları
+- Veri gönderimi yapılandırması
+- Sorun giderme
 
 **Okuma Süresi**: 15 dakika
 
@@ -81,53 +124,40 @@ Bu klasör, hata kontrolü ve UI/UX iyileştirme projesi için tüm dokümantasy
 
 ---
 
-### 🔌 [GOOGLE_SHEETS_SETUP.md](GOOGLE_SHEETS_SETUP.md)
-**Google Sheets Entegrasyonu Kurulumu**
-- Google Sheets API kurulumu
-- Kimlik doğrulama ayarları
-- Veri gönderimi yapılandırması
-- Sorun giderme
-
-**Okuma Süresi**: 15 dakika
-
----
-
-### 💻 [CLI_COMMANDS.md](CLI_COMMANDS.md)
-**Komut Satırı Komutları Rehberi**
-- Geliştirme komutları
-- Build komutları
-- Test komutları
-- Deployment komutları
-
-**Okuma Süresi**: 10 dakika
-
----
-
 ## 🎯 Okuma Haritası
 
 ### 🟢 Başlangıç (Yeni Kullanıcılar)
 ```
-1. README_IMPROVEMENTS.md (10 min)
+1. USAGE.md (10 min)
    ↓
-2. QUICK_REFERENCE.md (5 min)
+2. CLI_GUIDED_TUTORIAL.md - Ders 1-5 (30 min)
    ↓
-3. Kod örneklerini deneyin
+3. Pratik yapın
 ```
 
-### 🟡 Orta Seviye (Entegrasyon)
+### 🟡 Orta Seviye (CLI Komutları)
 ```
-1. INTEGRATION_GUIDE.md (20 min)
+1. CLI_GUIDED_TUTORIAL.md - Ders 6-15 (1 saat)
    ↓
-2. ERROR_HANDLING_GUIDE.md (30 min)
+2. CLI_COMMANDS.md (10 min)
    ↓
-3. Entegrasyon yapın
+3. Ağ konfigürasyonu yapın
 ```
 
-### 🔴 İleri Seviye (Derinlemesine)
+### 🟠 İleri Seviye (Yönlendirme & Güvenlik)
+```
+1. CLI_GUIDED_TUTORIAL.md - Ders 16-30 (1 saat)
+   ↓
+2. WIRELESS_CONFIGURATION_GUIDE.md (20 min)
+   ↓
+3. L3_SWITCH_CONFIGURATION.md (15 min)
+```
+
+### 🔴 Uzman Seviye (Derinlemesine)
 ```
 1. ERROR_HANDLING_GUIDE.md (30 min)
    ↓
-2. IMPLEMENTATION_COMPLETE.md (15 min)
+2. INTEGRATION_GUIDE.md (20 min)
    ↓
 3. Kaynak kodları inceleyin
 ```
@@ -177,18 +207,16 @@ const response = await apiClient.post('/api/contact', data);
 
 | Metrik | Değer |
 |--------|-------|
-| **Yeni Dosyalar** | 10 |
-| **Değiştirilen Dosyalar** | 3 |
-| **Toplam Satır Kodu** | 2000+ |
-| **Validasyon Fonksiyonları** | 11 |
-| **Bileşenler** | 5 |
-| **Dokümantasyon Sayfaları** | 10 |
-| **Toplam Okuma Süresi** | 120 dakika |
+| **Dokümantasyon Sayfaları** | 12 |
+| **Toplam Okuma Süresi** | ~270 dakika |
 
 ---
 
 ## ✨ Tamamlanan Özellikler
 
+✅ CLI Rehberli Ders (30 ders)  
+✅ CLI Komut Referansı (180+ komut)  
+✅ Kullanım Kılavuzu  
 ✅ Global Error Boundary  
 ✅ Form Validasyonu (11 fonksiyon)  
 ✅ Bildirim Sistemi (5 tür)  
@@ -196,6 +224,9 @@ const response = await apiClient.post('/api/contact', data);
 ✅ FormInput Bileşeni  
 ✅ ConfirmationDialog Bileşeni  
 ✅ Yükleme Durumları  
+✅ Kablosuz Ağ Yapılandırması  
+✅ L3 Anahtarlama  
+✅ Google Sheets Entegrasyonu  
 ✅ Kapsamlı Dokümantasyon  
 
 ---
@@ -221,13 +252,14 @@ const response = await apiClient.post('/api/contact', data);
 
 | Soru | Cevap |
 |------|-------|
-| Nereden başlamalıyım? | README_IMPROVEMENTS.md okuyun |
+| Nereden başlamalıyım? | USAGE.md okuyun |
 | Hızlı cevap istiyorum | QUICK_REFERENCE.md'ye bakın |
 | Kod örneği istiyorum | INTEGRATION_GUIDE.md'de var |
 | Detaylı bilgi istiyorum | ERROR_HANDLING_GUIDE.md okuyun |
-| Proje durumunu öğrenmek istiyorum | IMPLEMENTATION_COMPLETE.md okuyun |
 | Dokümantasyon haritası | DOCUMENTATION_INDEX.md okuyun |
 | Komutları öğrenmek istiyorum | CLI_COMMANDS.md okuyun |
+| Kablosuz ağ yapılandırması | WIRELESS_CONFIGURATION_GUIDE.md okuyun |
+| L3 anahtarlama | L3_SWITCH_CONFIGURATION.md okuyun |
 | Google Sheets kurulumu | GOOGLE_SHEETS_SETUP.md okuyun |
 
 ---
@@ -238,29 +270,29 @@ const response = await apiClient.post('/api/contact', data);
 - [x] Kod örnekleri eklendi
 - [x] Hızlı referans oluşturuldu
 - [x] Entegrasyon rehberi yazıldı
-- [x] Proje raporu hazırlandı
 - [x] İndeks oluşturuldu
-- [x] Dosyalar doc klasörüne taşındı
+- [x] Kullanım kılavuzu hazırlandı
+- [x] Kablosuz ağ rehberi eklendi
+- [x] L3 anahtarlama rehberi eklendi
 - [x] Google Sheets kurulumu eklendi
-- [x] CLI komutları eklendi
+- [x] Dosyalar doc klasöründe düzenlendi
 
 ---
 
 ## 📅 Bilgi
 
-**Versiyon**: 1.2.0  
-**Durum**: ✅ Tamamlandı  
-**Tarih**: 2026-05-18  
-**Toplam Boyut**: ~100 KB  
+**Versiyon**: 1.3.0  
+**Durum**: ✅ Güncel  
+**Tarih**: 2026-06-05  
 
 ---
 
 ## 🎉 Başlamak İçin
 
-1. **README_IMPROVEMENTS.md** okuyun
-2. **QUICK_REFERENCE.md** ile kod örneklerini öğrenin
-3. **INTEGRATION_GUIDE.md** ile entegrasyon yapın
-4. **CLI_COMMANDS.md** ile komutları öğrenin
+1. **USAGE.md** okuyun
+2. **CLI_GUIDED_TUTORIAL.md** ile CLI öğrenmeye başlayın
+3. **CLI_COMMANDS.md** ile komutları keşfedin
+4. **WIRELESS_CONFIGURATION_GUIDE.md** ile kablosuz ağ yapılandırın
 5. **GOOGLE_SHEETS_SETUP.md** ile Google Sheets'i yapılandırın
 
 ---
