@@ -276,7 +276,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                     className="text-sm text-blue-500 hover:underline break-all"
                   >{t.gitAddressLabel}</a>
                 </div>
-                <div>
+                <div className="text-center">
                   <a
                     href="https://tuzlamtal.meb.k12.tr"
                     target="_blank"
@@ -286,8 +286,10 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                     {t.licenseInfo}
                   </a>
                 </div>
-                <img src="/app.png" alt="Logo" width="64" height="64" className="w-16 h-16 object-contain" />
-                <div className="text-xs text-slate-500">Version: {version}</div>
+                <div className="flex justify-center">
+                  <img src="/app.png" alt="Logo" width="64" height="64" className="w-16 h-16 object-contain" />
+                </div>
+                <div className="text-xs text-slate-500 text-center">Version: {version}</div>
               </div>
             ) : activeTab === 'contact' ? (
               <div className="space-y-6">

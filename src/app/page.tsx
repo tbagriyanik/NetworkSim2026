@@ -3616,12 +3616,12 @@ ${state.bannerMOTD}
           }
           if (disconnectedPCs.length > 0) {
             wifiMessages.push(language === 'tr'
-              ? `⚠ ${disconnectedPCs.length} kablosuz istemci bağlantı yok`
+              ? `⚠ ${disconnectedPCs.length} kablosuz istemcinin bağlantısı yok`
               : `⚠ ${disconnectedPCs.length} wireless client${disconnectedPCs.length > 1 ? 's' : ''} disconnected`);
           }
           if (disconnectedAPs.length > 0) {
             wifiMessages.push(language === 'tr'
-              ? `⚠ ${disconnectedAPs.length} AP istemci yok`
+              ? `⚠ ${disconnectedAPs.length} AP'nin istemcisi yok`
               : `⚠ ${disconnectedAPs.length} AP no client${disconnectedAPs.length > 1 ? 's' : ''}`);
           }
 
@@ -3675,7 +3675,7 @@ ${state.bannerMOTD}
           const dhcpSummary = isDhcpMissing
             ? ''
             : (language === 'tr'
-              ? `DHCP: ${dhcpServerActiveCount} sunucu aktif, ${dhcpClientWithLeaseCount} lease`
+              ? `DHCP: ${dhcpServerActiveCount} sunucu aktif, ${dhcpClientWithLeaseCount} kiralama`
               : `DHCP: ${dhcpServerActiveCount} ${dhcpServerActiveCount <= 1 ? 'active server' : 'active servers'}, ${dhcpClientWithLeaseCount} ${dhcpClientWithLeaseCount <= 1 ? 'lease' : 'leases'}`);
 
           setRefreshNetworkReport({
@@ -4013,7 +4013,7 @@ ${state.bannerMOTD}
             addProjectRecord(loadedName);
             document.body.style.cursor = '';
             toast({
-              title: `"${loadedName}" ${language === 'tr' ? 'projesi yüklendi' : 'project is loaded'}`,
+              title: `"${loadedName}" ${language === 'tr' ? 'projesi yüklendi' : 'project loaded'}`,
               description: t.fileImportedSuccessfully,
             });
             setZoom(1.0);
@@ -4110,7 +4110,7 @@ ${state.bannerMOTD}
     document.body.style.cursor = '';
     toast({
       title: language === 'tr' ? 'Proje Dönüştürüldü' : 'Project Converted',
-      description: language === 'tr' ? 'Görevler otomatik olarak çıkarıldı ve Sınav Düzenleyici açıldı.' : 'Tasks were automatically extracted and Exam Editor opened.',
+      description: language === 'tr' ? 'Görevler otomatik olarak çıkarıldı ve Sınav Düzenleyici açıldı.' : 'Tasks were automatically extracted and the Exam Editor was opened.',
     });
   }, [closeExam, closeGuidedMode, language, startExamProject, loadProjectData, toggleEditor, toast]);
 
