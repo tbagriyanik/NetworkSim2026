@@ -26,6 +26,7 @@ import type { Translations } from '@/contexts/LanguageContext';
 import type { CanvasDevice, DeviceType } from '@/components/network/networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import type { CableInfo } from '@/lib/network/types';
+import useAppStore from '@/lib/store/appStore';
 
 interface TopologyToolbarProps {
   t: Translations;
@@ -70,7 +71,13 @@ export function TopologyToolbar({
   handleUndo, handleRedo,
   handleRefreshNetwork, setIsEnvironmentPanelOpen,
 }: TopologyToolbarProps) {
+  const graphicsQuality = useAppStore((state) => state.graphicsQuality);
+  const isHighQuality = graphicsQuality === 'high';
   // Register Home key shortcut for reset view
+  const toolbarGlowClass = isHighQuality
+    ? 'drop-shadow-[0_0_4px_rgba(34,211,238,0.28)] dark:drop-shadow-[0_0_4px_rgba(34,211,238,0.22)]'
+    : '';
+
   useKeyboardShortcuts([
     {
       key: 'Home',
@@ -100,7 +107,7 @@ export function TopologyToolbar({
               setPan({ x: 0, y: 0 });
             }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
           </Button>
@@ -166,7 +173,7 @@ export function TopologyToolbar({
                 </>
               ) : (
                 <>
-                  <Plus className="w-4 h-4 text-slate-500" />
+                <Plus className={`w-4 h-4 text-slate-500 ${toolbarGlowClass}`} />
                   <span className="text-sm font-bold text-slate-500">
                     {t.selectDeviceDropdown}
                   </span>
@@ -184,7 +191,7 @@ export function TopologyToolbar({
           {topologyDevices.length > 0 && (
             <div className="px-2 pb-1.5">
               <div className="relative">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+                <Search className={`absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none ${toolbarGlowClass}`} />
                 <Input
                   value={deviceSearchQuery}
                   onChange={e => setDeviceSearchQuery(e.target.value)}
@@ -198,7 +205,7 @@ export function TopologyToolbar({
                     onClick={() => setDeviceSearchQuery('')}
                     className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   >
-                    <X className="w-3 h-3" />
+                    <X className={`w-3 h-3 ${toolbarGlowClass}`} />
                   </button>
                 )}
               </div>
@@ -266,7 +273,7 @@ export function TopologyToolbar({
                 className="h-8 w-8 p-0 text-blue-500 hover:bg-blue-500/10"
                 onClick={() => { window.dispatchEvent(new CustomEvent('add-device', { detail: 'pc' })); }}
               >
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
                 </svg>
               </Button>
@@ -287,7 +294,7 @@ export function TopologyToolbar({
                   }
                 }}
               >
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
                 </svg>
               </Button>
@@ -308,7 +315,7 @@ export function TopologyToolbar({
                   }
                 }}
               >
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
                 </svg>
               </Button>
@@ -329,7 +336,7 @@ export function TopologyToolbar({
                   }
                 }}
               >
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="9" strokeWidth={2} />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
                 </svg>
@@ -351,7 +358,7 @@ export function TopologyToolbar({
                   }
                 }}
               >
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.247 7.761a6 6 0 0 1 0 8.478" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.075 4.933a10 10 0 0 1 0 14.134" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.925 19.067a10 10 0 0 1 0-14.134" />
@@ -376,7 +383,7 @@ export function TopologyToolbar({
                   }
                 }}
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <svg className={`w-6 h-6 ${toolbarGlowClass}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                   <path strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4"></path>
                 </svg>
@@ -442,7 +449,7 @@ export function TopologyToolbar({
               }
             }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 0 0 -5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0 -5.656-5.656l-1.1 1.1" />
             </svg>
           </Button>
@@ -463,7 +470,7 @@ export function TopologyToolbar({
               window.dispatchEvent(event);
             }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="Turquoise" viewBox="0 0 24 24">
+            <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="Turquoise" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </Button>
@@ -487,7 +494,7 @@ export function TopologyToolbar({
               window.dispatchEvent(event);
             }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="orange" viewBox="0 0 24 24">
+            <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="orange" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 0 0 -2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </Button>
@@ -505,7 +512,7 @@ export function TopologyToolbar({
             className="h-8 w-8 text-emerald-500 hover:bg-emerald-500/10"
             onClick={() => setIsEnvironmentPanelOpen(true)}
           >
-            <Leaf className="w-4 h-4" />
+            <Leaf className={`w-4 h-4 ${toolbarGlowClass}`} />
           </Button>
         </TooltipTrigger>
         <TooltipContent>{t.environmentSettings}</TooltipContent>
@@ -524,7 +531,7 @@ export function TopologyToolbar({
             onClick={handleUndo}
             disabled={hasHydrated && !canUndo}
           >
-            <Undo2 className={`w-4 h-4 ${!canUndo ? 'opacity-100' : ''}`} />
+            <Undo2 className={`w-4 h-4 ${toolbarGlowClass} ${!canUndo ? 'opacity-100' : ''}`} />
           </Button>
         </TooltipTrigger>
         <TooltipContent className="flex items-center gap-2">
@@ -544,7 +551,7 @@ export function TopologyToolbar({
             onClick={handleRedo}
             disabled={hasHydrated && !canRedo}
           >
-            <Redo2 className={`w-4 h-4 ${!canRedo ? 'opacity-100' : ''}`} />
+            <Redo2 className={`w-4 h-4 ${toolbarGlowClass} ${!canRedo ? 'opacity-100' : ''}`} />
           </Button>
         </TooltipTrigger>
         <TooltipContent className="flex items-center gap-2">
@@ -565,7 +572,7 @@ export function TopologyToolbar({
             className="h-8 w-8 text-pink-500 hover:bg-pink-500/10"
             onClick={handleRefreshNetwork}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </Button>

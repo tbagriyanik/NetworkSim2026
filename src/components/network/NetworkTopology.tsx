@@ -348,6 +348,8 @@ export function NetworkTopology({
   const [zoom, setZoom] = useState(zoomProp ?? DEFAULT_ZOOM);
   const [pan, setPan] = useState(panProp ?? { x: 0, y: 0 });
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 0, height: 0 });
+  const syncingZoomFromPropRef = useRef(false);
+  const syncingPanFromPropRef = useRef(false);
 
   // Update canvas dimensions on resize and mount
   useLayoutEffect(() => {
@@ -366,24 +368,34 @@ export function NetworkTopology({
   // Sync zoom and pan state from props (parent controls)
   useEffect(() => {
     if (zoomProp !== undefined && zoomProp !== zoom) {
+      syncingZoomFromPropRef.current = true;
       setZoom(zoomProp);
     }
   }, [zoomProp]);
 
   useEffect(() => {
     if (panProp !== undefined && (panProp.x !== pan.x || panProp.y !== pan.y)) {
+      syncingPanFromPropRef.current = true;
       setPan(panProp);
     }
   }, [panProp]);
 
   // Sync zoom and pan state to props (notify parent of internal changes)
   useEffect(() => {
+    if (syncingZoomFromPropRef.current) {
+      syncingZoomFromPropRef.current = false;
+      return;
+    }
     if (onZoomChange && zoom !== zoomProp) {
       onZoomChange(zoom);
     }
   }, [zoom, onZoomChange]);
 
   useEffect(() => {
+    if (syncingPanFromPropRef.current) {
+      syncingPanFromPropRef.current = false;
+      return;
+    }
     if (onPanChange && (pan.x !== panProp?.x || pan.y !== panProp?.y)) {
       onPanChange(pan);
     }
