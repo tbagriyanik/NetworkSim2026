@@ -31,6 +31,10 @@ export function AppFooter({
   topologyDevices, lastTaskEvent, showProjectPicker, showOnboarding,
   handleRefreshNetwork, setIsEnvironmentPanelOpen,
 }: AppFooterProps) {
+  const getDeviceCountLabel = (count: number) => (
+    language === 'tr' ? t.devicesCount : (count === 1 ? 'device' : 'devices')
+  );
+
   return (
     <>
       {/* Desktop Footer */}
@@ -73,7 +77,7 @@ export function AppFooter({
                       <span className="mx-1">{t.saveLabel}</span>
                       <span className={`mx-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>|</span>
                       <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                        {topologyDevices?.length || 0} {language === 'tr' ? t.devicesCount : (topologyDevices?.length === 1 ? 'device' : 'devices')}
+                        {topologyDevices?.length || 0} {getDeviceCountLabel(topologyDevices?.length || 0)}
                       </span>
                       <div className={`flex items-center gap-1 text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                         <span className="font-semibold">LeftMB</span>:{t.pan}

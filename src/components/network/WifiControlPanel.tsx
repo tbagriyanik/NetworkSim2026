@@ -53,6 +53,7 @@ export interface RouterWebConfig {
 export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
   const { wifi, deviceName, deviceIp, deviceId, connectedIotDevices = [], availableIotDevices = [], username, password, language = 'en' } = config;
   const isTurkish = language === 'tr';
+  const pluralize = (count: number, singular: string, plural: string) => (count === 1 ? singular : plural);
 
   // Sanitized versions for HTML display
   const safeDeviceName = sanitizeHTML(deviceName);
@@ -642,7 +643,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
         <div class="status-card" style="margin-bottom:20px;">
           <div class="status-info">
             <h3>${isTurkish ? 'IoT Ağı' : 'IoT Network'}</h3>
-            <p>${connectedIotDevices.length} ${isTurkish ? "cihaz bu AP'ye bağlı" : (connectedIotDevices.length === 1 ? 'device connected to this AP' : 'devices connected to this AP')}</p>
+            <p>${connectedIotDevices.length} ${isTurkish ? "cihaz bu AP'ye bağlı" : pluralize(connectedIotDevices.length, 'device connected to this AP', 'devices connected to this AP')}</p>
           </div>
           <span class="status-badge">${connectedIotDevices.filter(d => d.connected).length} ${isTurkish ? 'Aktif' : 'Active'}</span>
         </div>
@@ -773,7 +774,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
           <div class="status-card">
             <div class="status-info">
               <h3>${isTurkish ? 'Bağlı İstemciler' : 'Connected Clients'}</h3>
-              <p>${connectedIotDevices.filter(d => d.connected).length} ${isTurkish ? 'IoT cihazı' : (connectedIotDevices.filter(d => d.connected).length === 1 ? 'IoT device' : 'IoT devices')}</p>
+              <p>${connectedIotDevices.filter(d => d.connected).length} ${isTurkish ? 'IoT cihazı' : pluralize(connectedIotDevices.filter(d => d.connected).length, 'IoT device', 'IoT devices')}</p>
             </div>
             <span class="status-badge">${connectedIotDevices.length} ${isTurkish ? 'Toplam' : 'Total'}</span>
           </div>

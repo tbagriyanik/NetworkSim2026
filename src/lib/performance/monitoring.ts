@@ -72,6 +72,9 @@ class PerformanceMonitor {
 
         // Observe Paint Timing (FCP)
         if ('PerformanceObserver' in window) {
+            const supportedEntryTypes = (PerformanceObserver as any).supportedEntryTypes || [];
+            const supports = (entryType: string) => supportedEntryTypes.includes(entryType);
+
             try {
                 const paintObserver = new PerformanceObserver((list) => {
                     for (const entry of list.getEntries()) {
@@ -80,8 +83,10 @@ class PerformanceMonitor {
                         }
                     }
                 });
-                paintObserver.observe({ entryTypes: ['paint'] });
-                this.observers.set('paint', paintObserver);
+                if (supports('paint')) {
+                    paintObserver.observe({ entryTypes: ['paint'] });
+                    this.observers.set('paint', paintObserver);
+                }
             } catch (e) {
                 logger.warn('Paint observer not supported:', e);
             }
@@ -94,8 +99,10 @@ class PerformanceMonitor {
                         this.metrics.lcp = entries[entries.length - 1].startTime;
                     }
                 });
-                lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
-                this.observers.set('lcp', lcpObserver);
+                if (supports('largest-contentful-paint')) {
+                    lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+                    this.observers.set('lcp', lcpObserver);
+                }
             } catch (e) {
                 logger.warn('LCP observer not supported:', e);
             }
@@ -111,8 +118,10 @@ class PerformanceMonitor {
                         }
                     }
                 });
-                clsObserver.observe({ entryTypes: ['layout-shift'] });
-                this.observers.set('cls', clsObserver);
+                if (supports('layout-shift')) {
+                    clsObserver.observe({ entryTypes: ['layout-shift'] });
+                    this.observers.set('cls', clsObserver);
+                }
             } catch (e) {
                 logger.warn('CLS observer not supported:', e);
             }
@@ -124,8 +133,10 @@ class PerformanceMonitor {
                         this.metrics.fid = (entry as any).processingDuration;
                     }
                 });
-                fidObserver.observe({ entryTypes: ['first-input'] });
-                this.observers.set('fid', fidObserver);
+                if (supports('first-input')) {
+                    fidObserver.observe({ entryTypes: ['first-input'] });
+                    this.observers.set('fid', fidObserver);
+                }
             } catch (e) {
                 logger.warn('FID observer not supported:', e);
             }
@@ -155,8 +166,10 @@ class PerformanceMonitor {
                     }
                     this.metrics.longTaskTime = total;
                 });
-                longTaskObserver.observe({ entryTypes: ['longtask'] });
-                this.observers.set('longtask', longTaskObserver);
+                if (supports('longtask')) {
+                    longTaskObserver.observe({ entryTypes: ['longtask'] });
+                    this.observers.set('longtask', longTaskObserver);
+                }
             } catch (e) {
                 logger.warn('Long task observer not supported:', e);
             }

@@ -49,9 +49,11 @@ const nextConfig: NextConfig = {
       "connect-src 'self' ws: wss: https:",
       "worker-src 'self' blob:",
       "manifest-src 'self'",
-      "require-trusted-types-for 'script'",
-      "trusted-types default",
     ].join("; ");
+
+    const cspReportOnlyProd = process.env.NODE_ENV === "production"
+      ? `${cspReportOnly}; require-trusted-types-for 'script'; trusted-types default`
+      : cspReportOnly;
 
     return [
       {
@@ -62,7 +64,7 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Content-Security-Policy", value: csp },
-          { key: "Content-Security-Policy-Report-Only", value: cspReportOnly },
+          { key: "Content-Security-Policy-Report-Only", value: cspReportOnlyProd },
         ],
       },
     ];

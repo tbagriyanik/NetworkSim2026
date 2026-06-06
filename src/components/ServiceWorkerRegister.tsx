@@ -47,7 +47,25 @@ function sendResourcesToSW(registration: ServiceWorkerRegistration) {
 
 export function ServiceWorkerRegister() {
   useEffect(() => {
-    if (!('serviceWorker' in navigator) || typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+    // Keep dev stable: a previously installed SW can cache stale HMR chunks
+    // and break Turbopack reloads with ChunkLoadError.
+    if (process.env.NODE_ENV !== 'production') {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => registration.unregister());
+      }).catch((error) => {
+        logger.warn('Service Worker cleanup in dev failed:', error);
+      });
+
+      if ('caches' in window) {
+        caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))).catch((error) => {
+          logger.warn('Cache cleanup in dev failed:', error);
+        });
+      }
+
+      return;
+    }
 
     const register = async () => {
       try {
