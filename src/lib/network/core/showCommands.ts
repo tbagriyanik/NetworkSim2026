@@ -4,6 +4,7 @@ import { ensureDeviceStatesMap } from '../networkUtils';
 import { isRouterModel } from '../switchModels';
 import { buildRunningConfig } from './configBuilder';
 import { SwitchState, Port } from '../types';
+import { checkConnectivity } from '../connectivity';
 
 // Show komutları (show running-config, show vlan, show ip route, vs.)
 
@@ -1477,6 +1478,20 @@ function cmdShowClock(
 
   const serverIps = state.ntpServers || [];
   for (const serverIp of serverIps) {
+    // Check reachability if devices/connections are available in context
+    if (ctx.devices && ctx.connections && ctx.sourceDeviceId) {
+      const reachable = checkConnectivity(
+        ctx.sourceDeviceId,
+        serverIp,
+        ctx.devices,
+        ctx.connections,
+        ctx.deviceStates,
+        ctx.language,
+        { protocol: 'udp', port: '123' }
+      );
+      if (!reachable.success) continue;
+    }
+
     const matchedDevice = ctx.devices?.find((d) => d.ip === serverIp);
     const matchedState = matchedDevice ? ctx.deviceStates?.get(matchedDevice.id) : undefined;
     const stateNtp = matchedState?.services?.ntp;

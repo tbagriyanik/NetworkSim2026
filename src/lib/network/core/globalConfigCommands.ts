@@ -1632,21 +1632,30 @@ function cmdNtpServer(state: any, input: string, ctx: any): any {
   const now = new Date();
   const date = now.toISOString().slice(0, 10);
   const time = now.toTimeString().slice(0, 8);
+  const nextServices = {
+    ...state.services,
+    ntp: {
+      enabled: true,
+      server: match[1],
+      timezone: state.services?.ntp?.timezone || 'UTC',
+      date,
+      time,
+    },
+  };
+
+  const updatedState = {
+    ...state,
+    ntpServers: servers,
+    services: nextServices
+  };
+
   return {
     success: true,
     output: `NTP server ${match[1]} configured`,
     newState: {
       ntpServers: servers,
-      services: {
-        ...state.services,
-        ntp: {
-          enabled: true,
-          server: match[1],
-          timezone: state.services?.ntp?.timezone || 'UTC',
-          date,
-          time,
-        },
-      },
+      services: nextServices,
+      runningConfig: buildRunningConfig(updatedState)
     },
   };
 }

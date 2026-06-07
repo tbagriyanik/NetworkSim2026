@@ -255,6 +255,7 @@ export function PCPanel({
     targetDeviceId: string;
     files: Array<{ name: string; size: number; modifiedAt?: string }>;
   } | null>(null);
+  const [isFtpFilePickerOpen, setIsFtpFilePickerOpen] = useState(false);
 
   // Keep desktop CMD and console histories separate.
   const [desktopHistory, setDesktopHistory] = useState<string[]>(() => {
@@ -537,7 +538,7 @@ export function PCPanel({
   const ntpSyncState = useMemo(() => {
     const serverIp = serviceNtpServer.trim();
     if (!serviceNtpEnabled || !serverIp || !isValidIpAddress(serverIp)) return null;
-    const canReach = checkConnectivity(deviceId, serverIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'any' });
+    const canReach = checkConnectivity(deviceId, serverIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'any' });
     if (!canReach.success) return null;
     const matchedDevice = topologyDevices.find((device) => device.ip === serverIp && device.services?.ntp?.enabled);
     const matchedState = matchedDevice ? deviceStates?.get(matchedDevice.id) : undefined;
@@ -548,7 +549,7 @@ export function PCPanel({
       date: ntpService.date || serviceNtpDate || formatLocalDate(new Date()),
       time: ntpService.time || serviceNtpTime || new Date().toTimeString().slice(0, 8),
     };
-  }, [deviceStates, deviceId, formatLocalDate, isValidIpAddress, serviceNtpDate, serviceNtpEnabled, serviceNtpServer, serviceNtpTime, topologyConnections, topologyDevices, t.language]);
+  }, [deviceStates, deviceId, formatLocalDate, isValidIpAddress, serviceNtpDate, serviceNtpEnabled, serviceNtpServer, serviceNtpTime, topologyConnections, topologyDevices, language]);
 
   useEffect(() => {
     if (!ntpSyncState) {
@@ -568,7 +569,7 @@ export function PCPanel({
     const normalized = serverAddress.trim();
     if (!normalized || !isValidIpAddress(normalized)) return null;
 
-    const canReach = checkConnectivity(deviceId, normalized, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'any' });
+    const canReach = checkConnectivity(deviceId, normalized, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'any' });
     if (!canReach.success) return null;
 
     const matchedDevice = topologyDevices.find((device) => device.ip === normalized && device.services?.ntp?.enabled);
@@ -597,7 +598,7 @@ export function PCPanel({
               : 'custom'
     );
     return { date: nextDate, time: nextTime };
-  }, [deviceStates, deviceId, isValidIpAddress, topologyConnections, topologyDevices, t.language]);
+  }, [deviceStates, deviceId, isValidIpAddress, topologyConnections, topologyDevices, language]);
 
   useEffect(() => {
     if (!serviceNtpEnabled) return;
@@ -1869,9 +1870,9 @@ export function PCPanel({
   }, [topologyDevices, topologyConnections]);
 
   const canReachTargetIp = useCallback((targetIp: string, options: { protocol?: 'tcp' | 'udp' | 'icmp' | 'any'; port?: string } = { protocol: 'icmp' }) => {
-    const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', options);
+    const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', options);
     return result.success;
-  }, [deviceId, topologyDevices, topologyConnections, deviceStates, t.language]);
+  }, [deviceId, topologyDevices, topologyConnections, deviceStates, language]);
 
   const isValidIpv4 = useCallback((value: string) => validateIP(value), []);
   const isValidIpv6 = useCallback((value: string) => validateIPv6(value), []);
@@ -2297,7 +2298,7 @@ export function PCPanel({
     }
 
     // Check firewall for HTTP traffic
-    const connectivityResult = checkConnectivity(deviceId, resolvedTargetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'tcp', port: '80' });
+    const connectivityResult = checkConnectivity(deviceId, resolvedTargetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '80' });
     if (!connectivityResult.success && connectivityResult.error?.includes('firewall')) {
       setHttpAppDeviceId(null);
       setHttpAppTitle('Access Denied');
@@ -3609,8 +3610,32 @@ export function PCPanel({
     const putMatch = cmdLine.trim().match(/^(put|send|mput)\s+(.+)/i);
     if (putMatch) {
       const fileName = putMatch[2];
-      const nextFiles = [...(session.files || []), { name: fileName, size: 1024, modifiedAt: new Date().toISOString() }];
+      const newFile = { name: fileName, size: 1024, modifiedAt: new Date().toISOString() };
+      const nextFiles = [...(session.files || []), newFile];
       setFtpSession({ ...session, files: nextFiles });
+
+      // Synchronize with global topology state
+      if (session.targetDeviceId) {
+        const targetDev = topologyDevices.find(d => d.id === session.targetDeviceId);
+        if (targetDev) {
+          window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+            detail: {
+              deviceId: session.targetDeviceId,
+              config: {
+                services: {
+                  ...targetDev.services,
+                  ftp: {
+                    ...targetDev.services?.ftp,
+                    enabled: true,
+                    files: [...(targetDev.services?.ftp?.files || []), newFile]
+                  }
+                }
+              }
+            }
+          }));
+        }
+      }
+
       addLocalOutput('output', `150 Opening BINARY mode data connection for ${fileName}\n226 Transfer complete.`);
       return;
     }
@@ -3727,7 +3752,7 @@ export function PCPanel({
             return;
           }
 
-          const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'icmp' });
+          const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
           if (result.success) {
             const pingTargetDisplay = dnsResolved ? `${target} [${targetIp.toLowerCase()}]` : targetIp.toLowerCase();
 
@@ -3867,7 +3892,7 @@ export function PCPanel({
         }
 
         // Check connectivity
-        const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'tcp', port });
+        const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port });
 
         if (result.success && result.targetId) {
           // Find target device to see if it's a switch or router
@@ -3939,7 +3964,7 @@ export function PCPanel({
             return;
           }
           addLocalOutput('output', `Tracing route to ${target} over a maximum of 30 hops:\n`);
-          const result = checkConnectivity(deviceId, resolvedTarget, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'icmp' });
+          const result = checkConnectivity(deviceId, resolvedTarget, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
 
           if (result.hops && result.hops.length > 0) {
             let hopOutput = '';
@@ -3981,32 +4006,48 @@ export function PCPanel({
           60
         );
       } else if (cmd === 'ftp') {
-        const serverIp = args[0];
-        if (!serverIp) {
-          addLocalOutput('output', 'Usage: ftp <server_ip>');
+        const targetArg = args[0];
+        if (!targetArg) {
+          addLocalOutput('output', 'Usage: ftp <server_address>');
           return;
         }
-        if (!isValidIpv4(serverIp)) {
-          addLocalOutput('error', `${serverIp} is not a valid IP address.`);
-          return;
+
+        let targetIp = targetArg;
+        // Resolve hostname if not an IP
+        if (!isValidIpv4(targetArg) && !isValidIpv6(targetArg)) {
+          const namedResult = resolveDeviceNameTarget(targetArg);
+          if (namedResult) {
+            targetIp = namedResult.ip;
+          } else {
+            const dnsResult = resolveDomainWithDnsServices(targetArg);
+            if (dnsResult) {
+              targetIp = dnsResult.address;
+            } else {
+              addLocalOutput('error', `Could not resolve hostname ${targetArg}`);
+              return;
+            }
+          }
         }
-        const result = checkConnectivity(deviceId, serverIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'tcp', port: '21' });
+
+        const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '21' });
         if (!result.success) {
-          addLocalOutput('error', `Could not connect to FTP server at ${serverIp}: ${result.error || 'Destination unreachable'}`);
+          addLocalOutput('error', `Could not connect to FTP server at ${targetIp}: ${result.error || 'Destination unreachable'}`);
           return;
         }
         const targetDevice = result.targetId ? topologyDevices.find(d => d.id === result.targetId) : undefined;
         const targetState = result.targetId ? deviceStates?.get(result.targetId) : undefined;
         const ftpService = targetState?.services?.ftp || targetDevice?.services?.ftp;
         if (!ftpService?.enabled) {
-          addLocalOutput('error', `FTP service is not enabled on ${serverIp}.`);
+          addLocalOutput('error', `FTP service is not enabled on ${targetIp}.`);
           return;
         }
         const files = ftpService.files || [];
         // Start interactive FTP session
-        setFtpSession({ host: serverIp, targetDeviceId: result.targetId!, files });
-        addLocalOutput('output', `Connected to ${serverIp}.`);
+        setFtpSession({ host: targetArg, targetDeviceId: result.targetId!, files });
+        setIsFtpFilePickerOpen(true);
+        addLocalOutput('output', `Connected to ${targetArg}.`);
         addLocalOutput('output', '220 FTP server ready.');
+        addLocalOutput('success', language === 'tr' ? 'Dosya transfer ekranı açıldı.' : 'File transfer window opened.');
       } else if (cmd === 'mail') {
         const recipient = args[0];
         const subject = args.slice(1).join(' ');
@@ -4028,7 +4069,7 @@ export function PCPanel({
           addLocalOutput('error', `Could not find mail server for ${recipientDomain}.`);
           return;
         }
-        const mailResult = checkConnectivity(deviceId, deliveredDevice.ip, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'tcp', port: '25' });
+        const mailResult = checkConnectivity(deviceId, deliveredDevice.ip, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '25' });
         if (!mailResult.success) {
           addLocalOutput('error', `Could not connect to mail server at ${deliveredDevice.ip}: ${mailResult.error || 'Destination unreachable'}`);
           return;
@@ -5245,7 +5286,7 @@ export function PCPanel({
                                   <div className="flex items-center justify-between gap-3">
                                     <div>
                                       <h3 className="text-sm font-bold">
-                                        {t.language === 'tr'
+                                        {language === 'tr'
                                           ? 'DNS (Domain Name System - isim çözümleme)'
                                           : 'DNS (Domain Name System - name resolution)'}
                                       </h3>
@@ -5370,7 +5411,7 @@ export function PCPanel({
                                   <div className="flex items-center justify-between gap-3">
                                     <div>
                                       <h3 className="text-sm font-bold">
-                                        {t.language === 'tr'
+                                        {language === 'tr'
                                           ? 'HTTP (Hypertext Transfer Protocol - web içeriği)'
                                           : 'HTTP (Hypertext Transfer Protocol - web content)'}
                                       </h3>
@@ -5420,7 +5461,7 @@ export function PCPanel({
                                         <Button type="button" size="icon" variant="outline" className="h-8 w-8 text-xs font-black italic" onClick={() => applyHttpFormatting('i')}>I</Button>
                                         <Button type="button" size="icon" variant="outline" className="h-8 w-8 text-xs font-black underline" onClick={() => applyHttpFormatting('u')}>U</Button>
                                       </div>
-                                      <span className="text-[10px] text-slate-500">{t.language === 'tr' ? 'Seçili metni biçimlendir' : 'Format selected text'}</span>
+                                      <span className="text-[10px] text-slate-500">{language === 'tr' ? 'Seçili metni biçimlendir' : 'Format selected text'}</span>
                                     </div>
                                     <textarea
                                       ref={httpContentRef}
@@ -5588,7 +5629,7 @@ export function PCPanel({
                                   <div className="flex items-center justify-between gap-3">
                                     <div>
                                       <h3 className="text-sm font-bold">
-                                        {t.language === 'tr'
+                                        {language === 'tr'
                                           ? 'DHCP (Dynamic Host Configuration Protocol - otomatik IP)'
                                           : 'DHCP (Dynamic Host Configuration Protocol - auto IP)'}
                                       </h3>
@@ -6878,6 +6919,51 @@ export function PCPanel({
       </div>
 
       {/* HTTP content in-tablet viewer */}
+      {isFtpFilePickerOpen && ftpSession && (
+        <Dialog open={isFtpFilePickerOpen} onOpenChange={setIsFtpFilePickerOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {language === 'tr' ? 'FTP Dosya Yükleme' : 'FTP File Upload'}
+              </DialogTitle>
+              <DialogDescription>
+                {language === 'tr'
+                  ? `${ftpSession.host} sunucusuna yüklemek için bir dosya seçin.`
+                  : `Select a file to upload to ${ftpSession.host}.`}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className={`rounded-lg border divide-y ${isDark ? 'border-slate-800 divide-slate-800' : 'border-slate-200 divide-slate-200'}`}>
+                {[
+                  { name: 'budget.xlsx', size: 45056 },
+                  { name: 'report.pdf', size: 124000 },
+                  { name: 'image.jpg', size: 256000 },
+                  { name: 'notes.txt', size: 1024 },
+                ].map((file) => (
+                  <div key={file.name} className="flex items-center justify-between p-3">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{file.name}</span>
+                      <span className="text-xs opacity-50">{Math.round(file.size / 1024)} KB</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        handleFtpSessionCommand(`put ${file.name}`);
+                        // Optionally close modal or show success in modal
+                        // setIsFtpFilePickerOpen(false);
+                      }}
+                    >
+                      <Download className="w-4 h-4 mr-2 rotate-180" />
+                      {language === 'tr' ? 'Yükle' : 'Upload'}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {httpAppContent && (
         <div
           className="fixed inset-0 z-[999] pointer-events-auto bg-black/20"
