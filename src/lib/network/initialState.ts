@@ -260,6 +260,30 @@ export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' 
         enabled: true,
         content: '',
         fontSize: 16
+      },
+      ftp: {
+        enabled: false,
+        anonymousAccess: true,
+        rootDirectory: '/flash',
+        files: [
+          { name: 'readme.txt', size: 1280, modifiedAt: new Date().toISOString() },
+          { name: 'config.backup', size: 4096, modifiedAt: new Date().toISOString() }
+        ]
+      },
+      mail: {
+        enabled: false,
+        domain: 'local.lan',
+        smtpServer: '',
+        pop3Server: '',
+        inbox: [],
+        sent: []
+      },
+      ntp: {
+        enabled: false,
+        server: '',
+        timezone: 'UTC',
+        date: new Date().toISOString().slice(0, 10),
+        time: new Date().toTimeString().slice(0, 8)
       }
     },
     runningConfig: [
@@ -1038,6 +1062,10 @@ export const commandAliases: Record<string, string> = {
   // Write/Copy commands (Patterns now handle these natively)
   'cop': 'copy',
   'copy': 'copy',
+  'ft': 'ftp',
+  'ftp': 'ftp',
+  'ma': 'mail',
+  'mail': 'mail',
 
   // Erase commands
   'era': 'erase',

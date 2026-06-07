@@ -59,6 +59,8 @@ The simulator supports **180+ commands** across multiple configuration modes.
 | `tracert <host>` | Trace route to destination (Win style) |
 | `telnet <host> [port]` | Connect to remote device via Telnet |
 | `ssh [-l username] <host>` | Connect via SSH |
+| `ftp [host]` | Open an interactive FTP session with login prompt, file listing, get/put, and quit |
+| `mail [address]` | Open a mailbox session with login prompt, inbox listing, send flow, and quit |
 | `write memory` | Save running configuration to NVRAM |
 | `copy running-config startup-config` | Save configuration |
 | `copy running-config flash:[:filename]` | Save configuration to flash |
@@ -102,6 +104,8 @@ The simulator supports **180+ commands** across multiple configuration modes.
 | `no ip domain lookup` | Disable DNS lookup |
 | `ip http server` | Enable HTTP server |
 | `no ip http server` | Disable HTTP server |
+| `ftp` service panel | Manage FTP credentials and files in PC services |
+| `mail` service panel | Manage mail service settings in PC services |
 | `ip ssh version {1\|2}` | Set SSH version |
 | `ip ssh time-out <seconds>` | Set SSH timeout |
 | `no ip ssh time-out` | Remove SSH timeout |

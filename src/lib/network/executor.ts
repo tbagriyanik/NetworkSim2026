@@ -103,7 +103,7 @@ const multi = (char: string, completions: string[]): Record<string, string[]> =>
 
 export const commandHelp: Record<string, Record<string, string[]>> = {
   'user': {
-    '': ['enable', 'help', 'ping', 'show', 'telnet'],
+    '': ['enable', 'ftp', 'help', 'mail', 'ping', 'show', 'telnet'],
     ...pfx('enable', ['enable']),
     ...pfx('help', ['help']),
     ...pfx('ping', ['ping']),
@@ -122,7 +122,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'show vlan': ['brief'],
   },
   'privileged': {
-    '': ['clear', 'clock', 'configure', 'copy', 'debug', 'delete', 'disable', 'disconnect', 'erase', 'exit', 'help', 'more', 'no', 'ping', 'reload', 'resume', 'setup', 'show', 'ssh', 'suspend', 'telnet', 'terminal', 'test', 'traceroute', 'undebug', 'write'],
+    '': ['clear', 'clock', 'configure', 'copy', 'debug', 'delete', 'disable', 'disconnect', 'erase', 'exit', 'ftp', 'help', 'mail', 'more', 'no', 'ping', 'reload', 'resume', 'setup', 'show', 'ssh', 'suspend', 'telnet', 'terminal', 'test', 'traceroute', 'undebug', 'write'],
     ...pfx('clear', ['arp-cache', 'counters', 'interface', 'line', 'mac']),
     'clear mac': ['address-table'],
     ...pfx('clock', ['set']),
@@ -1008,6 +1008,14 @@ export function executeCommand(
     return handlePasswordInput(state, input, language);
   }
 
+  if (state.ftpSession) {
+    return handleFtpSessionCommand(state, input, language, { devices, connections, deviceStates, sourceDeviceId });
+  }
+
+  if (state.mailSession) {
+    return handleMailSessionCommand(state, input, language, { devices, connections, deviceStates, sourceDeviceId });
+  }
+
   let cmdToProcess = input.trim();
   let pipeFilter: { type: 'include' | 'exclude' | 'begin' | 'section'; query: string } | null = null;
   const lowerInput = cmdToProcess.toLowerCase();
@@ -1782,6 +1790,167 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
       passwordContext: state.passwordContext
     }
   };
+}
+
+function findDeviceByHost(ctx: { devices?: CanvasDevice[]; deviceStates?: Map<string, SwitchState> }, host: string) {
+  const normalized = host.trim().toLowerCase();
+  const devices = ctx.devices || [];
+  const direct = devices.find(device =>
+    device.ip === host ||
+    device.name.toLowerCase() === normalized ||
+    device.id.toLowerCase() === normalized
+  );
+  if (direct) return direct;
+  return devices.find(device =>
+    (device.ip || '').toLowerCase() === normalized ||
+    device.name.toLowerCase().includes(normalized) ||
+    device.id.toLowerCase().includes(normalized)
+  );
+}
+
+function formatBytes(bytes: number) {
+  if (bytes >= 1024 * 1024) return `${Math.max(1, Math.round(bytes / (1024 * 1024)))} MB`;
+  if (bytes >= 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${Math.max(1, bytes)} B`;
+}
+
+function handleFtpSessionCommand(
+  state: SwitchState,
+  input: string,
+  language: 'tr' | 'en',
+  ctx: { devices?: CanvasDevice[]; connections?: CanvasConnection[]; deviceStates?: Map<string, SwitchState>; sourceDeviceId?: string }
+): CommandResult {
+  const session = state.ftpSession;
+  if (!session) return { success: false, error: IOS_ERRORS.unknown };
+  const target = session.targetDeviceId ? ctx.devices?.find(d => d.id === session.targetDeviceId) : findDeviceByHost(ctx, session.host);
+  const targetState = session.targetDeviceId ? ctx.deviceStates?.get(session.targetDeviceId) : target ? ctx.deviceStates?.get(target.id) : undefined;
+  const ftp = targetState?.services?.ftp;
+  const cmd = input.trim();
+  const lower = cmd.toLowerCase();
+
+  if (session.stage === 'username') {
+    const username = cmd || 'anonymous';
+    if (ftp?.anonymousAccess && username.toLowerCase() === 'anonymous') {
+      return {
+        success: true,
+        output: `Password: \nWelcome to FTP server ${session.host}\nftp> `,
+        newState: { ftpSession: { ...session, stage: 'ready', username, targetDeviceId: target?.id } }
+      };
+    }
+    return {
+      success: true,
+      output: 'Password: ',
+      newState: { ftpSession: { ...session, stage: 'password', username, targetDeviceId: target?.id } }
+    };
+  }
+
+  if (session.stage === 'password') {
+    const valid = !!ftp && (cmd === (ftp.password || '') || (ftp.anonymousAccess && (session.username || '').toLowerCase() === 'anonymous'));
+    if (!valid) {
+      return {
+        success: false,
+        output: '\nLogin failed.\nName required.\nftp> ',
+        newState: { ftpSession: undefined }
+      };
+    }
+    return {
+      success: true,
+      output: `\nConnected to ${session.host}\nftp> `,
+      newState: { ftpSession: { ...session, stage: 'ready', targetDeviceId: target?.id } }
+    };
+  }
+
+  const files = Array.isArray(ftp?.files) ? [...ftp.files] : [];
+  if (lower === 'quit' || lower === 'bye' || lower === 'exit') {
+    return { success: true, output: '\n221 Goodbye.\n', newState: { ftpSession: undefined } };
+  }
+  if (lower === 'help' || lower === '?') {
+    return { success: true, output: 'Commands: ls, dir, get <file>, put <file>, delete <file>, quit\nftp> ' };
+  }
+  if (lower === 'ls' || lower === 'dir') {
+    const list = files.length
+      ? files.map(file => `${file.name.padEnd(18)} ${formatBytes(file.size)}`).join('\n')
+      : '(empty)';
+    return { success: true, output: `\n${list}\nftp> ` };
+  }
+  const getMatch = cmd.match(/^(get|recv|mget)\s+(\S+)$/i);
+  if (getMatch) {
+    const file = files.find(entry => entry.name.toLowerCase() === getMatch[2].toLowerCase());
+    if (!file) return { success: false, output: '550 File not found.\nftp> ' };
+    return { success: true, output: `\n150 Opening BINARY mode data connection for ${file.name} (${formatBytes(file.size)})\n226 Transfer complete.\nftp> ` };
+  }
+  const putMatch = cmd.match(/^(put|send|mput)\s+(\S+)$/i);
+  if (putMatch) {
+    const nextFiles = [...files, { name: putMatch[2], size: 1024, modifiedAt: new Date().toISOString() }];
+    if (targetState && target) {
+      const updatedDeviceStates = new Map(ctx.deviceStates || []);
+      updatedDeviceStates.set(target.id, {
+        ...targetState,
+        services: {
+          ...(targetState.services || {}),
+          ftp: {
+            ...(targetState.services?.ftp || {}),
+            enabled: !!targetState.services?.ftp?.enabled,
+            files: nextFiles
+          }
+        }
+      });
+      return { success: true, output: `\n150 Opening BINARY mode data connection for ${putMatch[2]}\n226 Transfer complete.\nftp> `, deviceStates: updatedDeviceStates };
+    }
+    return { success: true, output: `\n150 Opening BINARY mode data connection for ${putMatch[2]}\n226 Transfer complete.\nftp> ` };
+  }
+  return { success: true, output: `\n200 Command okay.\nftp> ` };
+}
+
+function handleMailSessionCommand(
+  state: SwitchState,
+  input: string,
+  language: 'tr' | 'en',
+  ctx: { devices?: CanvasDevice[]; connections?: CanvasConnection[]; deviceStates?: Map<string, SwitchState>; sourceDeviceId?: string }
+): CommandResult {
+  const session = state.mailSession;
+  if (!session) return { success: false, error: IOS_ERRORS.unknown };
+  const target = session.targetDeviceId ? ctx.devices?.find(d => d.id === session.targetDeviceId) : findDeviceByHost(ctx, session.domain || session.address);
+  const targetState = session.targetDeviceId ? ctx.deviceStates?.get(session.targetDeviceId) : target ? ctx.deviceStates?.get(target.id) : undefined;
+  const mail = targetState?.services?.mail;
+  const cmd = input.trim();
+  const lower = cmd.toLowerCase();
+
+  if (session.stage === 'password') {
+    const valid = !!mail && (!mail.password || cmd === mail.password);
+    if (!valid) {
+      return { success: false, output: '\nAuthentication failed.\n', newState: { mailSession: undefined } };
+    }
+    return { success: true, output: `\nMailbox opened for ${session.address}\nmail> `, newState: { mailSession: { ...session, stage: 'ready', targetDeviceId: target?.id } } };
+  }
+
+  if (lower === 'quit' || lower === 'exit') return { success: true, output: '\n221 Closing mailbox.\n', newState: { mailSession: undefined } };
+  if (lower === 'inbox') {
+    const inbox = Array.isArray(mail?.inbox) ? mail.inbox : [];
+    const list = inbox.length
+      ? inbox.map((msg, idx) => `${idx + 1}. From: ${msg.from} | Subject: ${msg.subject}`).join('\n')
+      : '(inbox empty)';
+    return { success: true, output: `\n${list}\nmail> ` };
+  }
+  const sendMatch = cmd.match(/^send\s+(\S+)\s+(.+)$/i);
+  if (sendMatch) {
+    const recipient = sendMatch[1];
+    const subject = sendMatch[2];
+    const timestamp = new Date().toISOString();
+    const delivered = ctx.devices?.map(device => ({ device, state: ctx.deviceStates?.get(device.id) })).find(entry => entry.state?.services?.mail?.username === recipient.split('@')[0] || entry.state?.services?.mail?.domain === recipient.split('@')[1]);
+    if (delivered?.device && delivered.state) {
+      const inbox = [...(delivered.state.services?.mail?.inbox || []), { from: session.address, subject, body: subject, timestamp }];
+      const sent = [...(mail?.sent || []), { to: recipient, subject, body: subject, timestamp }];
+      const updated = new Map(ctx.deviceStates || []);
+      updated.set(delivered.device.id, { ...delivered.state, services: { ...(delivered.state.services || {}), mail: { ...(delivered.state.services?.mail || {}), enabled: !!delivered.state.services?.mail?.enabled, inbox } } });
+      if (targetState && target) {
+        updated.set(target.id, { ...targetState, services: { ...(targetState.services || {}), mail: { ...(targetState.services?.mail || {}), enabled: !!targetState.services?.mail?.enabled, sent } } });
+      }
+      return { success: true, output: '\n250 Message accepted for delivery.\nmail> ', deviceStates: updated };
+    }
+    return { success: false, output: '\n550 Recipient mailbox unavailable.\nmail> ' };
+  }
+  return { success: true, output: '\nCommands: inbox, send <to> <subject>, quit\nmail> ' };
 }
 
 // --- Placeholder command handlers map ---

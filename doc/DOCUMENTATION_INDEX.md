@@ -531,6 +531,9 @@ doc/
 ### Kullanım
 → USAGE.md
 
+### PC Servisleri
+→ SERVICE_FEATURES.md
+
 ---
 
 ## ✅ Kontrol Listesi
@@ -544,6 +547,7 @@ doc/
 - [x] Kablosuz ağ dokümantasyonu eklendi
 - [x] L3 anahtarlama dokümantasyonu eklendi
 - [x] Google Sheets kurulumu eklendi
+- [x] PC servisleri ve CLI servis komutları güncellendi
 - [x] İndeks oluşturuldu
 
 ---

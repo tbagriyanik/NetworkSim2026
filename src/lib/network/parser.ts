@@ -1813,6 +1813,18 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'ftp': {
+    pattern: /^ftp(?:\s+(\S+))?$/i,
+    modes: ['user', 'privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'mail': {
+    pattern: /^mail(?:\s+(\S+))?$/i,
+    modes: ['user', 'privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
   'copy startup-config running-config': {
     pattern: /^copy\s+startup-config\s+running-config$/i,
     modes: ['privileged'],

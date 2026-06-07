@@ -101,12 +101,41 @@ export interface CanvasDevice {
       enabled: boolean;
       records: Array<{ domain: string; address: string }>;
     };
+    ftp?: {
+      enabled: boolean;
+      username?: string;
+      password?: string;
+      rootDirectory?: string;
+      anonymousAccess?: boolean;
+      files?: Array<{
+        name: string;
+        size: number;
+        modifiedAt?: string;
+      }>;
+    };
     http?: {
       enabled: boolean;
       mode?: 'simple' | 'iot';
       username?: string;
       password?: string;
       content: string;
+    };
+    mail?: {
+      enabled: boolean;
+      smtpServer?: string;
+      pop3Server?: string;
+      domain?: string;
+      username?: string;
+      password?: string;
+      inbox?: Array<{ from: string; subject: string; body: string; timestamp?: string }>;
+      sent?: Array<{ to: string; subject: string; body: string; timestamp?: string }>;
+    };
+    ntp?: {
+      enabled: boolean;
+      server?: string;
+      timezone?: string;
+      date?: string;
+      time?: string;
     };
     dhcp?: {
       enabled: boolean;

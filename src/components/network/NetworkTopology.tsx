@@ -8379,7 +8379,13 @@ export function NetworkTopology({
                             {dev.services.dhcp?.enabled && (
                               <span className="px-1.5 py-0.5 rounded-md bg-purple-500/20 text-purple-500 text-[9px] font-black tracking-widest border border-purple-500/20">DHCP</span>
                             )}
-                            {(!dev.services.http?.enabled && !dev.services.dns?.enabled && !dev.services.dhcp?.enabled) && (
+                            {dev.services.ftp?.enabled && (
+                              <span className="px-1.5 py-0.5 rounded-md bg-cyan-500/20 text-cyan-500 text-[9px] font-black tracking-widest border border-cyan-500/20">FTP</span>
+                            )}
+                            {dev.services.mail?.enabled && (
+                              <span className="px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-500 text-[9px] font-black tracking-widest border border-rose-500/20">MAIL</span>
+                            )}
+                            {(!dev.services.http?.enabled && !dev.services.dns?.enabled && !dev.services.dhcp?.enabled && !dev.services.ftp?.enabled && !dev.services.mail?.enabled) && (
                               <span className="text-[9px] opacity-40 italic">{isTR ? 'Servis yok' : 'No services'}</span>
                             )}
                           </div>
@@ -8421,6 +8427,32 @@ export function NetworkTopology({
                               {dev.services.http.content && (
                                 <div className="text-[8px] opacity-50 mt-1 truncate">{dev.services.http.content.substring(0, 50)}...</div>
                               )}
+                            </div>
+                          )}
+
+                          {dev.services.ftp?.enabled && (
+                            <div className="mt-2 pt-2 border-t border-white/5">
+                              <div className="text-[9px] flex justify-between items-center">
+                                <span className="opacity-60 uppercase tracking-wider">FTP Server</span>
+                                <span className="text-cyan-500 text-[9px] font-bold">✓ {isTR ? 'Aktif' : 'Active'}</span>
+                              </div>
+                              <div className="text-[8px] opacity-50 mt-1">
+                                {dev.services.ftp.anonymousAccess
+                                  ? (isTR ? 'Anonim erişim açık' : 'Anonymous access enabled')
+                                  : (isTR ? 'Kullanıcı girişi gerekli' : 'User login required')}
+                              </div>
+                            </div>
+                          )}
+
+                          {dev.services.mail?.enabled && (
+                            <div className="mt-2 pt-2 border-t border-white/5">
+                              <div className="text-[9px] flex justify-between items-center">
+                                <span className="opacity-60 uppercase tracking-wider">MAIL Server</span>
+                                <span className="text-rose-500 text-[9px] font-bold">✓ {isTR ? 'Aktif' : 'Active'}</span>
+                              </div>
+                              <div className="text-[8px] opacity-50 mt-1 truncate">
+                                {dev.services.mail.domain || 'local.lan'}
+                              </div>
                             </div>
                           )}
                         </div>

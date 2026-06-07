@@ -31,7 +31,7 @@
 
 | Device / Cihaz | Panel / How to open / Nasıl açılır |
 |---|---|
-| **PC** | Double-click → CMD, Services (DHCP/DNS/HTTP), WiFi, IoT tabs |
+| **PC** | Double-click → CMD, Services (DHCP/DNS/HTTP/FTP/Mail/NTP), WiFi, IoT tabs |
 | **Switch / Router** | Double-click → CLI terminal (full IOS-style) |
 | **L3 Switch** | Same as Switch + `ip routing` for Layer 3 |
 | **Firewall** | Dedicated panel with drag-drop rule builder |
@@ -107,6 +107,8 @@
 | `telnet <host> [port]` | Telnet connection | Telnet bağlantısı |
 | `ssh [-l user] <host>` | SSH connection | SSH bağlantısı |
 | `curl` / `wget <url>` | View web page | Web sayfası görüntüle |
+| `ftp` | FTP session / FTP oturumu |
+| `mail` | Mail command / Mail komutu |
 | `arp -a` | ARP table | ARP tablosu |
 | `hostname` | Computer name | Bilgisayar adı |
 | `dir` | Directory listing | Dosya listesi |

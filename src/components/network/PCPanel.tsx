@@ -138,7 +138,7 @@ export function PCPanel({
   useEffect(() => {
     activeTabRef.current = activeTab;
   }, [activeTab]);
-  const [activeServiceTab, setActiveServiceTab] = useState<'dns' | 'http' | 'dhcp'>('dns');
+  const [activeServiceTab, setActiveServiceTab] = useState<'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp'>('dns');
   const tabletHistoryRef = useRef<PCActiveTab[]>(['home']);
   const tabletHistoryIndexRef = useRef(0);
   const isInternalTabletNavRef = useRef(false);
@@ -322,6 +322,40 @@ export function PCPanel({
   const [editingDnsIndex, setEditingDnsIndex] = useState<number | null>(null);
   const [serviceHttpEnabled, setServiceHttpEnabled] = useState(deviceFromTopology?.services?.http?.enabled ?? false);
   const [serviceHttpContent, setServiceHttpContent] = useState(deviceFromTopology?.services?.http?.content || 'Merhaba Dünya!');
+  const [serviceFtpEnabled, setServiceFtpEnabled] = useState(deviceFromTopology?.services?.ftp?.enabled ?? false);
+  const [serviceFtpUsername, setServiceFtpUsername] = useState(deviceFromTopology?.services?.ftp?.username || 'ftpuser');
+  const [serviceFtpPassword, setServiceFtpPassword] = useState(deviceFromTopology?.services?.ftp?.password || 'ftp123');
+  const [showFtpPassword, setShowFtpPassword] = useState(false);
+  const [serviceFtpRootDirectory, setServiceFtpRootDirectory] = useState(deviceFromTopology?.services?.ftp?.rootDirectory || '/flash');
+  const [serviceFtpAnonymousAccess, setServiceFtpAnonymousAccess] = useState(deviceFromTopology?.services?.ftp?.anonymousAccess ?? true);
+  const [serviceFtpFiles, setServiceFtpFiles] = useState(deviceFromTopology?.services?.ftp?.files || [
+    { name: 'readme.txt', size: 1280, modifiedAt: new Date().toISOString() },
+  ]);
+  const [serviceMailEnabled, setServiceMailEnabled] = useState(deviceFromTopology?.services?.mail?.enabled ?? false);
+  const [serviceMailDomain, setServiceMailDomain] = useState(deviceFromTopology?.services?.mail?.domain || 'local.lan');
+  const [serviceMailSmtpServer, setServiceMailSmtpServer] = useState(deviceFromTopology?.services?.mail?.smtpServer || '');
+  const [serviceMailPop3Server, setServiceMailPop3Server] = useState(deviceFromTopology?.services?.mail?.pop3Server || '');
+  const [serviceMailUsername, setServiceMailUsername] = useState(deviceFromTopology?.services?.mail?.username || 'user');
+  const [serviceMailPassword, setServiceMailPassword] = useState(deviceFromTopology?.services?.mail?.password || 'mail123');
+  const [showMailPassword, setShowMailPassword] = useState(false);
+  const [serviceMailInbox, setServiceMailInbox] = useState(deviceFromTopology?.services?.mail?.inbox || []);
+  const [serviceMailSent, setServiceMailSent] = useState(deviceFromTopology?.services?.mail?.sent || []);
+  const [serviceNtpEnabled, setServiceNtpEnabled] = useState(deviceFromTopology?.services?.ntp?.enabled ?? false);
+  const [serviceNtpServer, setServiceNtpServer] = useState(deviceFromTopology?.services?.ntp?.server || '');
+  const [serviceNtpServerError, setServiceNtpServerError] = useState('');
+  const [serviceNtpServerPreset, setServiceNtpServerPreset] = useState<'pool.ntp.org' | 'time.google.com' | 'time.cloudflare.com' | 'local-clock' | 'custom'>(
+    (deviceFromTopology?.services?.ntp?.server === 'pool.ntp.org'
+      ? 'pool.ntp.org'
+      : deviceFromTopology?.services?.ntp?.server === 'time.google.com'
+        ? 'time.google.com'
+        : deviceFromTopology?.services?.ntp?.server === 'time.cloudflare.com'
+          ? 'time.cloudflare.com'
+          : deviceFromTopology?.services?.ntp?.server === 'local-clock'
+            ? 'local-clock'
+            : 'custom')
+  );
+  const [serviceNtpDate, setServiceNtpDate] = useState(deviceFromTopology?.services?.ntp?.date || new Date().toISOString().slice(0, 10));
+  const [serviceNtpTime, setServiceNtpTime] = useState(deviceFromTopology?.services?.ntp?.time || new Date().toTimeString().slice(0, 8));
   const [serviceDhcpEnabled, setServiceDhcpEnabled] = useState(deviceFromTopology?.services?.dhcp?.enabled ?? false);
   const [serviceDhcpPools, setServiceDhcpPools] = useState<DhcpPoolConfig[]>(deviceFromTopology?.services?.dhcp?.pools || []);
   const isDhcpEditingRef = useRef(false); // Track if user is actively editing DHCP pools
@@ -449,6 +483,74 @@ export function PCPanel({
     },
     [topologyDevices, pcIP, pcSubnet, pcGateway, wifiEnabled, wifiSSID, deviceId, topologyConnections]
   );
+
+  const formatFullDateTime = useCallback((date: Date) => {
+    try {
+      return new Intl.DateTimeFormat(language === 'tr' ? 'tr-TR' : 'en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }).format(date);
+    } catch {
+      return date.toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US');
+    }
+  }, [language]);
+
+  const ntpPanelTime = useMemo(() => {
+    if (!serviceNtpEnabled) return currentTime;
+    const date = serviceNtpDate || currentTime.toISOString().slice(0, 10);
+    const time = serviceNtpTime || currentTime.toTimeString().slice(0, 8);
+    const combined = new Date(`${date}T${time}`);
+    return Number.isNaN(combined.getTime()) ? currentTime : combined;
+  }, [currentTime, serviceNtpDate, serviceNtpEnabled, serviceNtpTime]);
+
+  const ntpServerSuggestions = useMemo(() => ([
+    { value: 'pool.ntp.org', label: 'pool.ntp.org' },
+    { value: 'time.google.com', label: 'time.google.com' },
+    { value: 'time.cloudflare.com', label: 'time.cloudflare.com' },
+    { value: 'local-clock', label: language === 'tr' ? 'Yerel Saat' : 'Local Clock' },
+  ]), [language]);
+
+  const isValidIpAddress = useCallback((value: string) => {
+    const parts = value.trim().split('.');
+    return parts.length === 4 && parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) >= 0 && Number(part) <= 255);
+  }, []);
+
+  const applyNtpServerTime = useCallback((serverAddress: string) => {
+    const normalized = serverAddress.trim();
+    if (!normalized || !isValidIpAddress(normalized)) return null;
+
+    const matchedDevice = topologyDevices.find((device) => device.ip === normalized && device.services?.ntp?.enabled);
+    const matchedState = matchedDevice ? deviceStates?.get(matchedDevice.id) : undefined;
+    const ntpService = matchedState?.services?.ntp || matchedDevice?.services?.ntp;
+    if (!ntpService?.enabled) return null;
+
+    const nextDate = ntpService.date || new Date().toISOString().slice(0, 10);
+    const nextTime = ntpService.time || new Date().toTimeString().slice(0, 8);
+    const syncedDateTime = new Date(`${nextDate}T${nextTime}`);
+    if (!Number.isNaN(syncedDateTime.getTime())) {
+      setCurrentTime(syncedDateTime);
+    }
+    setServiceNtpDate(nextDate);
+    setServiceNtpTime(nextTime);
+    setServiceNtpServerPreset(
+      normalized === 'pool.ntp.org'
+        ? 'pool.ntp.org'
+        : normalized === 'time.google.com'
+          ? 'time.google.com'
+          : normalized === 'time.cloudflare.com'
+            ? 'time.cloudflare.com'
+            : normalized === 'local-clock'
+              ? 'local-clock'
+              : 'custom'
+    );
+    return { date: nextDate, time: nextTime };
+  }, [deviceStates, isValidIpAddress, topologyDevices]);
+
   const [selectedIotDeviceId, setSelectedIotDeviceId] = useState<string>('');
   const selectedIotDevice = useMemo(
     () => iotDevices.find((d) => d.id === selectedIotDeviceId) || null,
@@ -561,6 +663,37 @@ export function PCPanel({
       setServiceDnsRecords(deviceFromTopology?.services?.dns?.records || []);
       setServiceHttpEnabled(deviceFromTopology?.services?.http?.enabled ?? false);
       setServiceHttpContent(deviceFromTopology?.services?.http?.content || 'Merhaba Dünya!');
+      setServiceFtpEnabled(deviceFromTopology?.services?.ftp?.enabled ?? false);
+      setServiceFtpUsername(deviceFromTopology?.services?.ftp?.username || 'ftpuser');
+      setServiceFtpPassword(deviceFromTopology?.services?.ftp?.password || 'ftp123');
+      setServiceFtpRootDirectory(deviceFromTopology?.services?.ftp?.rootDirectory || '/flash');
+      setServiceFtpAnonymousAccess(deviceFromTopology?.services?.ftp?.anonymousAccess ?? true);
+      setServiceFtpFiles(deviceFromTopology?.services?.ftp?.files || [
+        { name: 'readme.txt', size: 1280, modifiedAt: new Date().toISOString() },
+      ]);
+      setServiceMailEnabled(deviceFromTopology?.services?.mail?.enabled ?? false);
+      setServiceMailDomain(deviceFromTopology?.services?.mail?.domain || 'local.lan');
+      setServiceMailSmtpServer(deviceFromTopology?.services?.mail?.smtpServer || '');
+      setServiceMailPop3Server(deviceFromTopology?.services?.mail?.pop3Server || '');
+      setServiceMailUsername(deviceFromTopology?.services?.mail?.username || 'user');
+      setServiceMailPassword(deviceFromTopology?.services?.mail?.password || 'mail123');
+      setServiceMailInbox(deviceFromTopology?.services?.mail?.inbox || []);
+      setServiceMailSent(deviceFromTopology?.services?.mail?.sent || []);
+      setServiceNtpEnabled(deviceFromTopology?.services?.ntp?.enabled ?? false);
+      setServiceNtpServer(deviceFromTopology?.services?.ntp?.server || '');
+      setServiceNtpServerPreset(
+        deviceFromTopology?.services?.ntp?.server === 'pool.ntp.org'
+          ? 'pool.ntp.org'
+          : deviceFromTopology?.services?.ntp?.server === 'time.google.com'
+            ? 'time.google.com'
+            : deviceFromTopology?.services?.ntp?.server === 'time.cloudflare.com'
+              ? 'time.cloudflare.com'
+              : deviceFromTopology?.services?.ntp?.server === 'local-clock'
+                ? 'local-clock'
+                : 'custom'
+      );
+      setServiceNtpDate(deviceFromTopology?.services?.ntp?.date || new Date().toISOString().slice(0, 10));
+      setServiceNtpTime(deviceFromTopology?.services?.ntp?.time || new Date().toTimeString().slice(0, 8));
       setServiceDhcpEnabled(deviceFromTopology?.services?.dhcp?.enabled ?? false);
       setServiceDhcpPools(deviceFromTopology?.services?.dhcp?.pools || []);
 
@@ -672,6 +805,30 @@ export function PCPanel({
                 enabled: serviceHttpEnabled,
                 content: serviceHttpContent || 'Merhaba Dünya!'
               },
+              ftp: {
+                enabled: serviceFtpEnabled,
+                username: serviceFtpUsername,
+                password: serviceFtpPassword,
+                rootDirectory: serviceFtpRootDirectory,
+                anonymousAccess: serviceFtpAnonymousAccess,
+                files: serviceFtpFiles
+              },
+              mail: {
+                enabled: serviceMailEnabled,
+                domain: serviceMailDomain,
+                smtpServer: serviceMailSmtpServer,
+                pop3Server: serviceMailPop3Server,
+                username: serviceMailUsername,
+                password: serviceMailPassword,
+                inbox: serviceMailInbox,
+                sent: serviceMailSent
+              },
+              ntp: {
+                enabled: serviceNtpEnabled,
+                server: serviceNtpServer,
+                date: serviceNtpDate,
+                time: serviceNtpTime
+              },
               dhcp: {
                 enabled: serviceDhcpEnabled,
                 pools: serviceDhcpPools
@@ -690,14 +847,36 @@ export function PCPanel({
         }
       }));
     }
-  }, [internalPcHostname, ipConfigMode, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, deviceId, topologyDevices]);
+  }, [internalPcHostname, ipConfigMode, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceFtpEnabled, serviceFtpUsername, serviceFtpPassword, serviceFtpRootDirectory, serviceFtpAnonymousAccess, serviceFtpFiles, serviceMailEnabled, serviceMailDomain, serviceMailSmtpServer, serviceMailPop3Server, serviceMailUsername, serviceMailPassword, serviceMailInbox, serviceMailSent, serviceNtpEnabled, serviceNtpServer, serviceNtpDate, serviceNtpTime, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, deviceId, topologyDevices]);
 
   const dispatchDeviceConfig = useCallback((config: Partial<CanvasDevice>) => {
     if (!deviceId) return;
+    const nextConfig: Partial<CanvasDevice> = { ...config };
+    if (config.services) {
+      nextConfig.services = {
+        ...(deviceFromTopology?.services || {}),
+        ...config.services,
+        ftp: {
+          ...(deviceFromTopology?.services?.ftp || {}),
+          ...(config.services.ftp || {}),
+          enabled: config.services.ftp?.enabled ?? deviceFromTopology?.services?.ftp?.enabled ?? false,
+        },
+        mail: {
+          ...(deviceFromTopology?.services?.mail || {}),
+          ...(config.services.mail || {}),
+          enabled: config.services.mail?.enabled ?? deviceFromTopology?.services?.mail?.enabled ?? false,
+        },
+        ntp: {
+          ...(deviceFromTopology?.services?.ntp || {}),
+          ...(config.services.ntp || {}),
+          enabled: config.services.ntp?.enabled ?? deviceFromTopology?.services?.ntp?.enabled ?? false,
+        },
+      };
+    }
     window.dispatchEvent(new CustomEvent('update-topology-device-config', {
-      detail: { deviceId, config }
+      detail: { deviceId, config: nextConfig }
     }));
-  }, [deviceId]);
+  }, [deviceId, deviceFromTopology?.services]);
 
   const saveIotConfig = useCallback((showToast: boolean = true) => {
     if (!selectedIotDeviceId) return;
@@ -754,6 +933,68 @@ export function PCPanel({
     pcIpRef.current = pcIP;
   }, [pcIP]);
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      dispatchDeviceConfig({
+        services: {
+          dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+          http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+          ftp: {
+            enabled: serviceFtpEnabled,
+            username: serviceFtpUsername,
+            password: serviceFtpPassword,
+            rootDirectory: serviceFtpRootDirectory,
+            anonymousAccess: serviceFtpAnonymousAccess,
+          },
+          mail: {
+            enabled: serviceMailEnabled,
+            domain: serviceMailDomain,
+            smtpServer: serviceMailSmtpServer,
+            pop3Server: serviceMailPop3Server,
+            username: serviceMailUsername,
+            password: serviceMailPassword,
+            inbox: serviceMailInbox,
+            sent: serviceMailSent,
+          },
+          ntp: {
+            enabled: serviceNtpEnabled,
+            server: serviceNtpServer,
+            date: serviceNtpDate,
+            time: serviceNtpTime,
+          },
+          dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools },
+        },
+      });
+    }, 250);
+
+    return () => clearTimeout(handler);
+  }, [
+    dispatchDeviceConfig,
+    serviceDnsEnabled,
+    serviceDnsRecords,
+    serviceHttpEnabled,
+    serviceHttpContent,
+    serviceFtpEnabled,
+    serviceFtpUsername,
+    serviceFtpPassword,
+    serviceFtpRootDirectory,
+    serviceFtpAnonymousAccess,
+    serviceMailEnabled,
+    serviceMailDomain,
+    serviceMailSmtpServer,
+    serviceMailPop3Server,
+    serviceMailUsername,
+    serviceMailPassword,
+    serviceMailInbox,
+    serviceMailSent,
+    serviceNtpEnabled,
+    serviceNtpServer,
+    serviceNtpDate,
+    serviceNtpTime,
+    serviceDhcpEnabled,
+    serviceDhcpPools,
+  ]);
+
   // Trigger sync on change (debounced) - uses ref to avoid circular dependency
   // DISABLED: This effect was causing infinite loop with topology updates
   // Manual sync is now triggered by specific user actions instead
@@ -768,7 +1009,7 @@ export function PCPanel({
       syncToGlobalRef.current();
     }, 500);
     return () => clearTimeout(handler);
-  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, internalPcHostname, ipConfigMode, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel]);
+  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, internalPcHostname, ipConfigMode, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceFtpEnabled, serviceFtpUsername, serviceFtpPassword, serviceFtpRootDirectory, serviceFtpAnonymousAccess, serviceFtpFiles, serviceMailEnabled, serviceMailDomain, serviceMailSmtpServer, serviceMailPop3Server, serviceMailUsername, serviceMailPassword, serviceMailInbox, serviceMailSent, serviceNtpEnabled, serviceNtpServer, serviceNtpDate, serviceNtpTime, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel]);
   */
 
   // Local output for Desktop (Local) - initialize from prop if available
@@ -1774,7 +2015,7 @@ export function PCPanel({
     return `${recordType}: ${chain.join(' -> ')}`;
   }, [isValidIpv4, language, serviceDnsRecords]);
 
-  const serviceTabClass = (tab: 'dns' | 'http' | 'dhcp') => cn(
+  const serviceTabClass = (tab: 'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp') => cn(
     'relative inline-flex items-center gap-2 rounded-t-lg border border-b-0 px-4 py-2.5 text-xs font-semibold transition-all duration-200 ease-out focus-ring-animate',
     activeServiceTab === tab
       ? isDark
@@ -1785,7 +2026,7 @@ export function PCPanel({
         : 'bg-slate-100/80 text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-50'
   );
 
-  const getServiceTabIcon = (tab: 'dns' | 'http' | 'dhcp') => {
+  const getServiceTabIcon = (tab: 'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp') => {
     switch (tab) {
       case 'dns':
         return <Globe className="w-3.5 h-3.5" />;
@@ -1793,6 +2034,12 @@ export function PCPanel({
         return <Globe className="w-3.5 h-3.5" />;
       case 'dhcp':
         return <Network className="w-3.5 h-3.5" />;
+      case 'ftp':
+        return <Download className="w-3.5 h-3.5" />;
+      case 'mail':
+        return <Settings className="w-3.5 h-3.5" />;
+      case 'ntp':
+        return <History className="w-3.5 h-3.5" />;
     }
   };
 
@@ -4202,12 +4449,19 @@ export function PCPanel({
                     <TooltipContent>{language === 'tr' ? 'Hızlı ayarlar' : 'Quick settings'}</TooltipContent>
                   </Tooltip>
                 )}
-                <div className={cn(
-                  "rounded-full px-2 py-1 md:px-3 md:py-2 text-[10px] md:text-[11px] font-mono font-semibold tracking-wide",
-                  isDark ? "bg-white/5 text-cyan-200" : "bg-slate-100 text-cyan-800"
-                )}>
-                  {formatTime(currentTime)}
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={cn(
+                      "rounded-full px-2 py-1 md:px-3 md:py-2 text-[10px] md:text-[11px] font-mono font-semibold tracking-wide cursor-default",
+                      isDark ? "bg-white/5 text-cyan-200" : "bg-slate-100 text-cyan-800"
+                    )}>
+                      {formatTime(ntpPanelTime)}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="rounded-md px-2.5 py-1">
+                    {formatFullDateTime(ntpPanelTime)}
+                  </TooltipContent>
+                </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -4667,6 +4921,64 @@ export function PCPanel({
                               }, "8.8.8.8", errors.dns)}
                             </div>
 
+                            <div className={`mt-4 rounded-xl border p-4 space-y-3 ${isDark ? 'border-slate-800 bg-slate-950/40' : 'border-slate-200 bg-white'}`}>
+                              <div>
+                                <h3 className="text-sm font-bold">NTP Server</h3>
+                                <p className={`text-xs ${isDark ? 'text-slate-200' : 'text-slate-500'}`}>
+                                  {language === 'tr' ? 'NTP sunucusunu girin. IP doğruysa saat sunucudan alınır.' : 'Enter the NTP server. If the IP is valid, time is pulled from the server.'}
+                                </p>
+                              </div>
+                              <FormInput
+                                label={language === 'tr' ? 'NTP sunucu IP' : 'NTP server IP'}
+                                value={serviceNtpServer}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setServiceNtpServer(value);
+                                  const trimmedValue = value.trim();
+                                  const isValid = !trimmedValue || isValidIpAddress(trimmedValue);
+                                  setServiceNtpServerError(
+                                    !trimmedValue
+                                      ? ''
+                                      : isValid
+                                        ? ''
+                                        : (language === 'tr' ? 'Geçersiz IP adresi' : 'Invalid IP address')
+                                  );
+                                  setServiceNtpServerPreset(
+                                    value === 'pool.ntp.org'
+                                      ? 'pool.ntp.org'
+                                      : value === 'time.google.com'
+                                        ? 'time.google.com'
+                                        : value === 'time.cloudflare.com'
+                                          ? 'time.cloudflare.com'
+                                          : value === 'local-clock'
+                                            ? 'local-clock'
+                                            : 'custom'
+                                  );
+                                  const syncedTime = applyNtpServerTime(value);
+                                  dispatchDeviceConfig({
+                                    services: {
+                                      ntp: {
+                                        enabled: serviceNtpEnabled,
+                                        server: value,
+                                        date: syncedTime?.date || serviceNtpDate,
+                                        time: syncedTime?.time || serviceNtpTime
+                                      }
+                                    }
+                                  });
+                                }}
+                                placeholder="192.168.1.20"
+                                aria-label={language === 'tr' ? 'NTP sunucu IP' : 'NTP server IP'}
+                                error={serviceNtpServerError}
+                                showValidation
+                                isValid={!!serviceNtpServer.trim() && !serviceNtpServerError}
+                              />
+                              <div className={`rounded-lg border p-3 text-xs ${isDark ? 'border-slate-800 bg-slate-950 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
+                                {language === 'tr'
+                                  ? 'Sunucu geçerli bir IP ise client tarih ve saati o NTP sunucusundan okunur.'
+                                  : 'If the server is a valid IP, the client date and time are read from that NTP server.'}
+                              </div>
+                            </div>
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 pt-2 border-t border-slate-800/10 dark:border-slate-800/50">
                               {renderNetworkInput(language === 'tr' ? 'IPv6 Adresi' : 'IPv6 Address', pcIPv6, (newIPv6) => {
                                 setPcIPv6(newIPv6);
@@ -4690,7 +5002,7 @@ export function PCPanel({
                         >
                           {/* Inner Tabs for Services - Modern Style */}
                           <div className={`flex items-end gap-1 px-4 pt-3 border-b ${isDark ? 'border-slate-700/50 bg-gradient-to-b from-slate-900/20 to-transparent' : 'border-slate-200 bg-gradient-to-b from-slate-50/50 to-transparent'}`}>
-                            {(['dns', 'http', 'dhcp'] as const).map((tab) => (
+                            {(['dns', 'http', 'dhcp', 'ftp', 'mail', 'ntp'] as const).map((tab) => (
                               <button
                                 key={tab}
                                 onClick={() => setActiveServiceTab(tab)}
@@ -4703,7 +5015,10 @@ export function PCPanel({
                                 <span className="uppercase tracking-wide">{tab}</span>
                                 {((tab === 'dns' && serviceDnsEnabled) ||
                                   (tab === 'http' && serviceHttpEnabled) ||
-                                  (tab === 'dhcp' && serviceDhcpEnabled)) && (
+                                  (tab === 'dhcp' && serviceDhcpEnabled) ||
+                                  (tab === 'ftp' && serviceFtpEnabled) ||
+                                  (tab === 'mail' && serviceMailEnabled) ||
+                                  (tab === 'ntp' && serviceNtpEnabled)) && (
                                     <span className={cn(
                                       'w-2 h-2 rounded-full animate-pulse',
                                       isDark ? 'bg-emerald-400' : 'bg-emerald-500'
@@ -4744,6 +5059,8 @@ export function PCPanel({
                                             services: {
                                               dns: { enabled, records: serviceDnsRecords },
                                               http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                              ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
+                                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
                                               dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
                                             }
                                           });
@@ -4785,6 +5102,8 @@ export function PCPanel({
                                           services: {
                                             dns: { enabled: serviceDnsEnabled, records: newRecords },
                                             http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                            ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
+                                            mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
                                             dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
                                           }
                                         });
@@ -4819,6 +5138,8 @@ export function PCPanel({
                                               services: {
                                                 dns: { enabled: serviceDnsEnabled, records: newRecords },
                                                 http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                                ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
+                                                mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
                                                 dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
                                               }
                                             });
@@ -4863,6 +5184,8 @@ export function PCPanel({
                                             services: {
                                               dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
                                               http: { enabled, content: serviceHttpContent },
+                                              ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
+                                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
                                               dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
                                             }
                                           });
@@ -4906,6 +5229,188 @@ export function PCPanel({
                                         <span dangerouslySetInnerHTML={{ __html: sanitizeHTTPContent(serviceHttpContent || 'Merhaba Dünya!') }} />
                                       </div>
                                     )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {activeServiceTab === 'ftp' && (
+                              <div className="p-3">
+                                <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                      <h3 className="text-sm font-bold">FTP (File Transfer Protocol - dosya aktarımı)</h3>
+                                      <p className={`text-xs ${isDark ? 'text-slate-200' : 'text-slate-500'}`}>
+                                        {language === 'tr' ? 'Basit FTP sunucu ayarları.' : 'Basic FTP server settings.'}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceFtpEnabled ? 'bg-cyan-500/15 text-cyan-600 border border-cyan-500/30' : 'bg-slate-200 text-slate-500 border border-slate-300'}`}>
+                                        {serviceFtpEnabled ? 'ON' : 'OFF'}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={serviceFtpEnabled}
+                                        onClick={() => {
+                                          const enabled = !serviceFtpEnabled;
+                                          setServiceFtpEnabled(enabled);
+                                          dispatchDeviceConfig({
+                                            services: {
+                                              dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+                                              http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                              ftp: { enabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
+                                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                              dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                                            }
+                                          });
+                                        }}
+                                        className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60 ${serviceFtpEnabled ? 'bg-cyan-500/90 border-cyan-400' : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')}`}
+                                      >
+                                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${serviceFtpEnabled ? 'translate-x-8' : 'translate-x-1'}`} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <Input value={serviceFtpUsername} onChange={(e) => setServiceFtpUsername(e.target.value)} placeholder="Username" />
+                                    <div className="relative">
+                                      <Input
+                                        value={serviceFtpPassword}
+                                        onChange={(e) => setServiceFtpPassword(e.target.value)}
+                                        placeholder="Password"
+                                        type={showFtpPassword ? 'text' : 'password'}
+                                        className="pr-10"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => setShowFtpPassword((prev) => !prev)}
+                                        className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700"
+                                        aria-label={showFtpPassword ? 'Hide FTP password' : 'Show FTP password'}
+                                      >
+                                        {showFtpPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                      </button>
+                                    </div>
+                                    <Input value={serviceFtpRootDirectory} onChange={(e) => setServiceFtpRootDirectory(e.target.value)} placeholder="/flash" />
+                                    <label className="flex items-center gap-2 text-xs">
+                                      <input type="checkbox" checked={serviceFtpAnonymousAccess} onChange={(e) => setServiceFtpAnonymousAccess(e.target.checked)} />
+                                      {language === 'tr' ? 'Anonim erişim' : 'Anonymous access'}
+                                    </label>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div className="text-xs font-bold uppercase tracking-wider opacity-60">
+                                      {language === 'tr' ? 'Dosya Listesi' : 'File List'}
+                                    </div>
+                                    <div className={`rounded-lg border divide-y ${isDark ? 'border-slate-800 divide-slate-800' : 'border-slate-200 divide-slate-200'}`}>
+                                      {(serviceFtpFiles.length > 0 ? serviceFtpFiles : []).map((file) => (
+                                        <div key={file.name} className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+                                          <div className="min-w-0">
+                                            <div className="font-mono truncate">{file.name}</div>
+                                            <div className="opacity-50">
+                                              {file.size} B{file.modifiedAt ? ` · ${new Date(file.modifiedAt).toLocaleString()}` : ''}
+                                            </div>
+                                          </div>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => {
+                                              const nextFiles = serviceFtpFiles.filter((f) => f.name !== file.name);
+                                              setServiceFtpFiles(nextFiles);
+                                              dispatchDeviceConfig({
+                                                services: {
+                                                  dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+                                                  http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                                  ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess, files: nextFiles },
+                                                  mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                                  ntp: { enabled: serviceNtpEnabled, server: serviceNtpServer, date: serviceNtpDate, time: serviceNtpTime },
+                                                  dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                                                }
+                                              });
+                                            }}
+                                          >
+                                            {language === 'tr' ? 'Sil' : 'Delete'}
+                                          </Button>
+                                        </div>
+                                      ))}
+                                      {serviceFtpFiles.length === 0 && (
+                                        <div className="px-3 py-3 text-xs opacity-50">
+                                          {language === 'tr' ? 'Dosya yok' : 'No files'}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {activeServiceTab === 'mail' && (
+                              <div className="p-3">
+                                <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                      <h3 className="text-sm font-bold">Mail Server</h3>
+                                      <p className={`text-xs ${isDark ? 'text-slate-200' : 'text-slate-500'}`}>
+                                        {language === 'tr' ? 'SMTP ve POP3 için basit posta sunucusu.' : 'Simple mail service for SMTP and POP3.'}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceMailEnabled ? 'bg-rose-500/15 text-rose-600 border border-rose-500/30' : 'bg-slate-200 text-slate-500 border border-slate-300'}`}>
+                                        {serviceMailEnabled ? 'ON' : 'OFF'}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={serviceMailEnabled}
+                                        onClick={() => {
+                                          const enabled = !serviceMailEnabled;
+                                          setServiceMailEnabled(enabled);
+                                          dispatchDeviceConfig({
+                                            services: {
+                                              dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+                                              http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                              ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
+                                              mail: { enabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                              dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                                            }
+                                          });
+                                        }}
+                                        className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/60 ${serviceMailEnabled ? 'bg-rose-500/90 border-rose-400' : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')}`}
+                                      >
+                                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${serviceMailEnabled ? 'translate-x-8' : 'translate-x-1'}`} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <Input value={serviceMailDomain} onChange={(e) => setServiceMailDomain(e.target.value)} placeholder="local.lan" />
+                                    <Input value={serviceMailUsername} onChange={(e) => setServiceMailUsername(e.target.value)} placeholder="user" />
+                                    <div className="relative">
+                                      <Input
+                                        value={serviceMailPassword}
+                                        onChange={(e) => setServiceMailPassword(e.target.value)}
+                                        placeholder="mail123"
+                                        type={showMailPassword ? 'text' : 'password'}
+                                        className="pr-10"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => setShowMailPassword((prev) => !prev)}
+                                        className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700"
+                                        aria-label={showMailPassword ? 'Hide mail password' : 'Show mail password'}
+                                      >
+                                        {showMailPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                      </button>
+                                    </div>
+                                    <Input value={serviceMailSmtpServer} onChange={(e) => setServiceMailSmtpServer(e.target.value)} placeholder="SMTP server" />
+                                    <Input value={serviceMailPop3Server} onChange={(e) => setServiceMailPop3Server(e.target.value)} placeholder="POP3 server" />
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className={`rounded-lg border p-3 ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-200 bg-slate-50'}`}>
+                                      <div className="text-xs font-bold mb-2">{language === 'tr' ? 'Gelen Kutusu' : 'Inbox'}</div>
+                                      <div className="text-[10px] opacity-60">{serviceMailInbox.length} {language === 'tr' ? 'mesaj' : 'messages'}</div>
+                                    </div>
+                                    <div className={`rounded-lg border p-3 ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-200 bg-slate-50'}`}>
+                                      <div className="text-xs font-bold mb-2">{language === 'tr' ? 'Gönderilenler' : 'Sent'}</div>
+                                      <div className="text-[10px] opacity-60">{serviceMailSent.length} {language === 'tr' ? 'mesaj' : 'messages'}</div>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -5052,6 +5557,67 @@ export function PCPanel({
                                         </div>
                                       </div>
                                     ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {activeServiceTab === 'ntp' && (
+                              <div className="p-3">
+                                <div className={`rounded-xl border p-4 space-y-4 ${isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                      <h3 className="text-sm font-bold">NTP Client</h3>
+                                      <p className={`text-xs ${isDark ? 'text-slate-200' : 'text-slate-500'}`}>
+                                        {language === 'tr' ? 'Hizmeti aç/kapa ve tarih/saat ayarlayın.' : 'Toggle the service and set the date/time.'}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceNtpEnabled ? 'bg-indigo-500/15 text-indigo-600 border border-indigo-500/30' : 'bg-slate-200 text-slate-500 border border-slate-300'}`}>
+                                        {serviceNtpEnabled ? 'ON' : 'OFF'}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={serviceNtpEnabled}
+                                        onClick={() => {
+                                          const enabled = !serviceNtpEnabled;
+                                          setServiceNtpEnabled(enabled);
+                                          dispatchDeviceConfig({
+                                            services: {
+                                              dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+                                              http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                              ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
+                                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                              ntp: { enabled, server: serviceNtpServer, date: serviceNtpDate, time: serviceNtpTime },
+                                              dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                                            }
+                                          });
+                                        }}
+                                        className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 ${serviceNtpEnabled ? 'bg-indigo-500/90 border-indigo-400' : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300')}`}
+                                      >
+                                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${serviceNtpEnabled ? 'translate-x-8' : 'translate-x-1'}`} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <Input
+                                      type="date"
+                                      value={serviceNtpDate}
+                                      onChange={(e) => setServiceNtpDate(e.target.value)}
+                                      aria-label={language === 'tr' ? 'NTP tarih' : 'NTP date'}
+                                    />
+                                    <Input
+                                      type="time"
+                                      value={serviceNtpTime}
+                                      onChange={(e) => setServiceNtpTime(e.target.value)}
+                                      aria-label={language === 'tr' ? 'NTP saat' : 'NTP time'}
+                                    />
+                                  </div>
+                                  <div className={`rounded-lg border p-3 text-xs ${isDark ? 'border-slate-800 bg-slate-950 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
+                                    {language === 'tr'
+                                      ? 'Takvim ve saat bu sekmede düzenlenir. NTP sunucusu IP ayarları altında seçilir.'
+                                      : 'Date and time are configured here. The NTP server is selected under IP settings.'}
                                   </div>
                                 </div>
                               </div>

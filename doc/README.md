@@ -91,6 +91,20 @@ Bu klasör, Network Simulator 2026 projesi için tüm dokümantasyon dosyaların
 
 ---
 
+### 📦 Yeni Servis Özellikleri
+- PC Services panelinde `FTP`, `Mail` ve `NTP`
+- FTP dosya listesi ve silme desteği
+- FTP/Mail parola alanlarında göster/gizle ikonu
+- CLI içinde `ftp` ve `mail` komutları
+- Komut tamamlama içinde `ftp` ve `mail`
+
+### 🕒 NTP ve Saat
+- PC ayarlarında NTP sonucu seçimi
+- NTP zaman kaynağına göre PC saat senkronu
+- Saat alanında tam tarih ve saat tooltip'i
+
+---
+
 ### 🔀 [L3_SWITCH_CONFIGURATION.md](L3_SWITCH_CONFIGURATION.md)
 **Layer 3 Anahtarlama Rehberi**
 - no switchport komutu

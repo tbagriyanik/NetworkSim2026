@@ -17,6 +17,8 @@ export const privilegedHandlers: Record<string, CommandHandler> = {
     'copy running-config startup-config': cmdCopyRunningStartup,
     'copy running-config flash': cmdCopyRunningFlash,
     'copy flash startup-config': cmdCopyFlashStartup,
+    'ftp': cmdFtp,
+    'mail': cmdMail,
     'erase startup-config': cmdEraseStartupConfig,
     'erase nvram': cmdEraseNvram,
     'reload': cmdReload,
@@ -894,6 +896,58 @@ function cmdSuspend(state: any, input: string, ctx: any): any {
  */
 function cmdCopyTftp(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Error opening tftp://255.255.255.255/config (Timed out)' };
+}
+
+function cmdFtp(state: any, input: string, ctx: any): any {
+    const lang = ctx.language || 'en';
+    const host = input.split(/\s+/).slice(1).join(' ').trim();
+    if (!host) {
+        return {
+            success: true,
+            output: lang === 'tr'
+                ? 'FTP oturumu hazır. Kullanım: ftp <host>'
+                : 'FTP session ready. Usage: ftp <host>'
+        };
+    }
+    return {
+        success: true,
+        output: lang === 'tr'
+            ? `ftp ${host}\nName (${host}:): `
+            : `ftp ${host}\nName (${host}:): `,
+        newState: {
+            ftpSession: {
+                host,
+                stage: 'username'
+            }
+        }
+    };
+}
+
+function cmdMail(state: any, input: string, ctx: any): any {
+    const lang = ctx.language || 'en';
+    const address = input.split(/\s+/).slice(1).join(' ').trim();
+    if (!address) {
+        return {
+            success: true,
+            output: lang === 'tr'
+                ? 'Mail komutu hazır. Kullanım: mail <address>'
+                : 'Mail command ready. Usage: mail <address>'
+        };
+    }
+    return {
+        success: true,
+        output: lang === 'tr'
+            ? `mail ${address}\nPassword: `
+            : `mail ${address}\nPassword: `,
+        newState: {
+            mailSession: {
+                address,
+                stage: 'password',
+                username: address.split('@')[0] || address,
+                domain: address.includes('@') ? address.split('@')[1] : undefined
+            }
+        }
+    };
 }
 
 /**

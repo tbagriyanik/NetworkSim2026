@@ -278,6 +278,20 @@ export interface SwitchState {
   sshSessions?: { user: string; source: string; state: string }[];
   sshLastUser?: string;
   sshLastSource?: string;
+  ftpSession?: {
+    host: string;
+    stage: 'username' | 'password' | 'ready';
+    username?: string;
+    remoteIp?: string;
+    targetDeviceId?: string;
+  };
+  mailSession?: {
+    address: string;
+    stage: 'password' | 'ready';
+    username: string;
+    domain?: string;
+    targetDeviceId?: string;
+  };
   // Reload confirmation state
   awaitingReloadConfirm?: boolean;
   bootTime: number;
@@ -326,7 +340,7 @@ export interface SwitchState {
   ipv6DhcpPools?: Record<string, {
     addressPrefix?: string;
   }>;
-  // Services (DHCP, DNS, HTTP)
+  // Services (DHCP, DNS, HTTP, FTP, Mail)
   services?: {
     dhcp?: {
       enabled: boolean;
@@ -343,10 +357,39 @@ export interface SwitchState {
       enabled: boolean;
       records?: { domain: string; address: string }[];
     };
+    ftp?: {
+      enabled: boolean;
+      username?: string;
+      password?: string;
+      rootDirectory?: string;
+      anonymousAccess?: boolean;
+      files?: Array<{
+        name: string;
+        size: number;
+        modifiedAt?: string;
+      }>;
+    };
     http?: {
       enabled: boolean;
       content?: string;
       fontSize: number;
+    };
+    mail?: {
+      enabled: boolean;
+      smtpServer?: string;
+      pop3Server?: string;
+      domain?: string;
+      username?: string;
+      password?: string;
+      inbox?: Array<{ from: string; subject: string; body: string; timestamp?: string }>;
+      sent?: Array<{ to: string; subject: string; body: string; timestamp?: string }>;
+    };
+    ntp?: {
+      enabled: boolean;
+      server?: string;
+      timezone?: string;
+      date?: string;
+      time?: string;
     };
   };
   spanningTreePriority?: number;
