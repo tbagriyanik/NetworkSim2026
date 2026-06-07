@@ -32,6 +32,8 @@ export const DESKTOP_COMMANDS = [
     'tracert',
     'telnet',
     'ssh',
+    'ftp',
+    'mail',
     'netstat',
     'nbtstat',
     'getmac',

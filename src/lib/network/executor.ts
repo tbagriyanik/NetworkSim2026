@@ -1937,7 +1937,7 @@ function handleMailSessionCommand(
     const recipient = sendMatch[1];
     const subject = sendMatch[2];
     const timestamp = new Date().toISOString();
-    const delivered = ctx.devices?.map(device => ({ device, state: ctx.deviceStates?.get(device.id) })).find(entry => entry.state?.services?.mail?.username === recipient.split('@')[0] || entry.state?.services?.mail?.domain === recipient.split('@')[1]);
+    const delivered = ctx.devices?.map(device => ({ device, state: ctx.deviceStates?.get(device.id) })).find(entry => entry.state?.services?.mail?.username === recipient.split('@')[0] && entry.state?.services?.mail?.domain === recipient.split('@')[1]);
     if (delivered?.device && delivered.state) {
       const inbox = [...(delivered.state.services?.mail?.inbox || []), { from: session.address, subject, body: subject, timestamp }];
       const sent = [...(mail?.sent || []), { to: recipient, subject, body: subject, timestamp }];

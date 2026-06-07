@@ -310,6 +310,7 @@ export interface SwitchState {
   mlsQosEnabled?: boolean;
   dhcpSnoopingEnabled?: boolean;
   ntpServers?: string[];
+  systemClock?: { time: string; day: string; month: string; year: string };
   ipv6Enabled?: boolean;
   ipRouting: boolean;
   spanningTreeVlans?: Record<string, { priority?: string; enabled?: boolean }>;
@@ -376,8 +377,6 @@ export interface SwitchState {
     };
     mail?: {
       enabled: boolean;
-      smtpServer?: string;
-      pop3Server?: string;
       domain?: string;
       username?: string;
       password?: string;

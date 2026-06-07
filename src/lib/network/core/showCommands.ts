@@ -1461,10 +1461,46 @@ function cmdShowIpOspf(state: SwitchState, input: string, _ctx: CommandContext):
  * Show Clock
  */
 function cmdShowClock(
-  _state: SwitchState,
+  state: SwitchState,
   _input: string,
-  _ctx: CommandContext
+  ctx: CommandContext
 ): any {
+  const serverIps = state.ntpServers || [];
+  for (const serverIp of serverIps) {
+    const matchedDevice = ctx.devices?.find((d) => d.ip === serverIp);
+    const matchedState = matchedDevice ? ctx.deviceStates?.get(matchedDevice.id) : undefined;
+    const stateNtp = matchedState?.services?.ntp;
+    const ntpService = stateNtp?.enabled ? stateNtp : matchedDevice?.services?.ntp;
+    if (ntpService?.enabled && ntpService.date && ntpService.time) {
+      const [y, m, d] = ntpService.date.split('-');
+      const formattedDate = `${d}.${m}.${y}`;
+      return {
+        success: true,
+        output: `\n*${ntpService.time} UTC ${formattedDate}\n`
+      };
+    }
+    // Fallback to server device's system clock if NTP service not available
+    if (matchedState?.systemClock) {
+      const { time, day, month, year } = matchedState.systemClock;
+      const monthMap: Record<string, string> = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
+      const mm = monthMap[month] || month;
+      return {
+        success: true,
+        output: `\n*${time} UTC ${day}.${mm}.${year}\n`
+      };
+    }
+  }
+
+  if (state.systemClock) {
+    const { time, day, month, year } = state.systemClock as { time: string; day: string; month: string; year: string };
+    const monthMap: Record<string, string> = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
+    const mm = monthMap[month] || month;
+    return {
+      success: true,
+      output: `\n*${time} UTC ${day}.${mm}.${year}\n`
+    };
+  }
+
   const now = new Date();
   return {
     success: true,
@@ -3693,8 +3729,29 @@ function cmdShowSessions(_state: SwitchState, _input: string, _ctx: CommandConte
 /**
  * Show NTP
  */
-function cmdShowNtp(_state: SwitchState, _input: string, _ctx: CommandContext): any {
-  return { success: true, output: '\nNTP is not enabled.\n' };
+function cmdShowNtp(state: SwitchState, _input: string, ctx: CommandContext): any {
+  const servers = state.ntpServers || [];
+  if (servers.length === 0) {
+    return { success: true, output: '\nNTP is not enabled.\n' };
+  }
+
+  let output = '\nClock is synchronized, stratum 2, reference is .GPS.\n';
+  output += ' actual frequency: 0.0000 Hz, precision: 2**10\n';
+  output += ' reference time: ...\n';
+  output += ' clock offset: 0.0000 msec, root delay: 1.23 msec\n';
+  output += ' root dispersion: 3.45 msec, peer dispersion: 0.00 msec\n';
+  output += ' loopfilter state: \'CTRL\' (Normal), drift: 0.00000000 s/s\n';
+  output += ' system poll interval: 64 s, last update: 10 sec ago\n';
+  output += `\n  NTP servers configured:\n\n`;
+
+  for (const ip of servers) {
+    const matchedDevice = ctx.devices?.find((d) => d.ip === ip);
+    const isReachable = matchedDevice ? true : false;
+    output += `  ${ip} ${isReachable ? '... reachable, syncing' : '... unreachable'}\n`;
+  }
+
+  output += '\n';
+  return { success: true, output };
 }
 
 /**

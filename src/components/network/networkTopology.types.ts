@@ -122,8 +122,6 @@ export interface CanvasDevice {
     };
     mail?: {
       enabled: boolean;
-      smtpServer?: string;
-      pop3Server?: string;
       domain?: string;
       username?: string;
       password?: string;

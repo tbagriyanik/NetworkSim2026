@@ -643,6 +643,34 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
   // Currently active device in terminal
 
+  const isValidIpv4Address = useCallback((value: string) => {
+    const parts = value.trim().split('.');
+    return parts.length === 4 && parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) >= 0 && Number(part) <= 255);
+  }, []);
+
+  const formatLocalDate = useCallback((date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  const advanceNtpDateTime = useCallback((dateValue?: string, timeValue?: string) => {
+    const fallback = new Date();
+    const baseDate = dateValue || formatLocalDate(fallback);
+    const baseTime = timeValue || fallback.toTimeString().slice(0, 8);
+    const next = new Date(`${baseDate}T${baseTime}`);
+    if (Number.isNaN(next.getTime())) return {
+      date: baseDate,
+      time: baseTime,
+    };
+    next.setSeconds(next.getSeconds() + 1);
+    return {
+      date: formatLocalDate(next),
+      time: next.toTimeString().slice(0, 8),
+    };
+  }, [formatLocalDate]);
+
   useEffect(() => {
     const interval = window.setInterval(() => {
       setTopologyDevices((prev) => networkLogic.applyIotAutomationPass(prev));
@@ -650,6 +678,53 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
     return () => window.clearInterval(interval);
   }, [networkLogic.applyIotAutomationPass, setTopologyDevices]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setTopologyDevices((prevDevices) => {
+        const nextDevices = prevDevices.map((device) => ({ ...device }));
+
+        for (const device of nextDevices) {
+          const ntp = device.services?.ntp;
+          if (!ntp?.enabled) continue;
+
+          const serverIp = ntp.server?.trim();
+          const upstreamDevice = serverIp && isValidIpv4Address(serverIp)
+            ? nextDevices.find((candidate) => candidate.ip === serverIp && candidate.services?.ntp?.enabled)
+            : undefined;
+          const upstreamNtp = upstreamDevice?.services?.ntp;
+
+          if (upstreamNtp?.enabled) {
+            device.services = {
+              ...(device.services || {}),
+              ntp: {
+                ...ntp,
+                enabled: true,
+                date: upstreamNtp.date || formatLocalDate(new Date()),
+                time: upstreamNtp.time || new Date().toTimeString().slice(0, 8),
+              },
+            };
+            continue;
+          }
+
+          const nextTime = advanceNtpDateTime(ntp.date, ntp.time);
+          device.services = {
+            ...(device.services || {}),
+            ntp: {
+              ...ntp,
+              enabled: true,
+              date: nextTime.date,
+              time: nextTime.time,
+            },
+          };
+        }
+
+        return nextDevices;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [advanceNtpDateTime, formatLocalDate, isValidIpv4Address, setTopologyDevices]);
 
   // Function to update device configuration
   const updateDeviceConfig = useCallback((deviceId: string, config: any) => {
@@ -745,6 +820,27 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
         updatedState.runningConfig = buildRunningConfig(updatedState);
         const next = new Map(prev);
         next.set(deviceId, updatedState);
+        return next;
+      });
+    }
+
+    // Sync NTP services from topology to deviceStates
+    if (config.services?.ntp) {
+      setDeviceStates((prev) => {
+        const state = prev.get(deviceId);
+        if (!state) return prev;
+        const next = new Map(prev);
+        next.set(deviceId, {
+          ...state,
+          services: {
+            ...state.services,
+            ntp: {
+              ...state.services?.ntp,
+              ...config.services.ntp,
+              enabled: config.services.ntp.enabled ?? state.services?.ntp?.enabled ?? false,
+            },
+          },
+        });
         return next;
       });
     }
@@ -3499,7 +3595,7 @@ ${state.bannerMOTD}
       duplicateMacCount = Array.from(macOwners.values()).filter((owners) => owners.length > 1).length;
 
       iotProcessedDevices.forEach((device) => {
-        if ((device.type !== 'pc' && device.type !== 'iot') || !device.gateway || !isValidIpv4(device.ip) || !isValidIpv4(device.subnet)) return;
+        if ((device.type !== 'pc' && device.type !== 'iot') || !device.gateway || !isValidIpv4(device.ip) || !isValidIpv4(device.subnet || '')) return;
         const gateway = device.gateway || '';
         if (!isValidIpv4(gateway) || gateway === '0.0.0.0') {
           invalidGatewayCount++;

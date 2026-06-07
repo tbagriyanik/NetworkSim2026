@@ -105,7 +105,16 @@ export function PCPanel({
   const isDesktop = useIsDesktop();
 
   // Helper to render network input fields to avoid repetition
-  const renderNetworkInput = useCallback((label: string, value: string, onChange: (val: string) => void, placeholder: string, error?: string, disabled?: boolean) => (
+  const renderNetworkInput = useCallback((
+    label: string,
+    value: string,
+    onChange: (val: string) => void,
+    placeholder: string,
+    error?: string,
+    disabled?: boolean,
+    onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void,
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
+  ) => (
     <div className="flex-1">
       <FormInput
         label={label}
@@ -117,6 +126,8 @@ export function PCPanel({
         showValidation
         isValid={!error && value.length > 0}
         className="h-9"
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
       />
     </div>
   ), []);
@@ -205,11 +216,6 @@ export function PCPanel({
   });
   const [showCmdSettings, setShowCmdSettings] = useState(false);
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   const handleFontSizeChange = (val: number) => {
     setFontSize(val);
     try {
@@ -242,6 +248,13 @@ export function PCPanel({
   const [isConsoleConnected, setIsConsoleConnected] = useState(false);
   const [connectedDeviceId, setConnectedDeviceId] = useState<string | null>(null);
   const [consoleConnectionTime, setConsoleConnectionTime] = useState<number>(0);
+
+  // FTP session state (interactive ftp> mode on PC desktop)
+  const [ftpSession, setFtpSession] = useState<{
+    host: string;
+    targetDeviceId: string;
+    files: Array<{ name: string; size: number; modifiedAt?: string }>;
+  } | null>(null);
 
   // Keep desktop CMD and console histories separate.
   const [desktopHistory, setDesktopHistory] = useState<string[]>(() => {
@@ -323,18 +336,12 @@ export function PCPanel({
   const [serviceHttpEnabled, setServiceHttpEnabled] = useState(deviceFromTopology?.services?.http?.enabled ?? false);
   const [serviceHttpContent, setServiceHttpContent] = useState(deviceFromTopology?.services?.http?.content || 'Merhaba Dünya!');
   const [serviceFtpEnabled, setServiceFtpEnabled] = useState(deviceFromTopology?.services?.ftp?.enabled ?? false);
-  const [serviceFtpUsername, setServiceFtpUsername] = useState(deviceFromTopology?.services?.ftp?.username || 'ftpuser');
-  const [serviceFtpPassword, setServiceFtpPassword] = useState(deviceFromTopology?.services?.ftp?.password || 'ftp123');
-  const [showFtpPassword, setShowFtpPassword] = useState(false);
-  const [serviceFtpRootDirectory, setServiceFtpRootDirectory] = useState(deviceFromTopology?.services?.ftp?.rootDirectory || '/flash');
-  const [serviceFtpAnonymousAccess, setServiceFtpAnonymousAccess] = useState(deviceFromTopology?.services?.ftp?.anonymousAccess ?? true);
+
   const [serviceFtpFiles, setServiceFtpFiles] = useState(deviceFromTopology?.services?.ftp?.files || [
     { name: 'readme.txt', size: 1280, modifiedAt: new Date().toISOString() },
   ]);
   const [serviceMailEnabled, setServiceMailEnabled] = useState(deviceFromTopology?.services?.mail?.enabled ?? false);
   const [serviceMailDomain, setServiceMailDomain] = useState(deviceFromTopology?.services?.mail?.domain || 'local.lan');
-  const [serviceMailSmtpServer, setServiceMailSmtpServer] = useState(deviceFromTopology?.services?.mail?.smtpServer || '');
-  const [serviceMailPop3Server, setServiceMailPop3Server] = useState(deviceFromTopology?.services?.mail?.pop3Server || '');
   const [serviceMailUsername, setServiceMailUsername] = useState(deviceFromTopology?.services?.mail?.username || 'user');
   const [serviceMailPassword, setServiceMailPassword] = useState(deviceFromTopology?.services?.mail?.password || 'mail123');
   const [showMailPassword, setShowMailPassword] = useState(false);
@@ -520,13 +527,52 @@ export function PCPanel({
     return parts.length === 4 && parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) >= 0 && Number(part) <= 255);
   }, []);
 
+  const formatLocalDate = useCallback((date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  const ntpSyncState = useMemo(() => {
+    const serverIp = serviceNtpServer.trim();
+    if (!serviceNtpEnabled || !serverIp || !isValidIpAddress(serverIp)) return null;
+    const canReach = checkConnectivity(deviceId, serverIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'any' });
+    if (!canReach.success) return null;
+    const matchedDevice = topologyDevices.find((device) => device.ip === serverIp && device.services?.ntp?.enabled);
+    const matchedState = matchedDevice ? deviceStates?.get(matchedDevice.id) : undefined;
+    const stateNtp = matchedState?.services?.ntp;
+    const ntpService = stateNtp?.enabled ? stateNtp : matchedDevice?.services?.ntp;
+    if (!ntpService?.enabled) return null;
+    return {
+      date: ntpService.date || serviceNtpDate || formatLocalDate(new Date()),
+      time: ntpService.time || serviceNtpTime || new Date().toTimeString().slice(0, 8),
+    };
+  }, [deviceStates, deviceId, formatLocalDate, isValidIpAddress, serviceNtpDate, serviceNtpEnabled, serviceNtpServer, serviceNtpTime, topologyConnections, topologyDevices, t.language]);
+
+  useEffect(() => {
+    if (!ntpSyncState) {
+      const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+      return () => clearInterval(timer);
+    }
+
+    const next = new Date(`${ntpSyncState.date}T${ntpSyncState.time}`);
+    if (!Number.isNaN(next.getTime())) {
+      setCurrentTime(next);
+    }
+  }, [ntpSyncState]);
+
   const applyNtpServerTime = useCallback((serverAddress: string) => {
     const normalized = serverAddress.trim();
     if (!normalized || !isValidIpAddress(normalized)) return null;
 
+    const canReach = checkConnectivity(deviceId, normalized, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'any' });
+    if (!canReach.success) return null;
+
     const matchedDevice = topologyDevices.find((device) => device.ip === normalized && device.services?.ntp?.enabled);
     const matchedState = matchedDevice ? deviceStates?.get(matchedDevice.id) : undefined;
-    const ntpService = matchedState?.services?.ntp || matchedDevice?.services?.ntp;
+    const stateNtp = matchedState?.services?.ntp;
+    const ntpService = stateNtp?.enabled ? stateNtp : matchedDevice?.services?.ntp;
     if (!ntpService?.enabled) return null;
 
     const nextDate = ntpService.date || new Date().toISOString().slice(0, 10);
@@ -549,7 +595,53 @@ export function PCPanel({
               : 'custom'
     );
     return { date: nextDate, time: nextTime };
-  }, [deviceStates, isValidIpAddress, topologyDevices]);
+  }, [deviceStates, deviceId, isValidIpAddress, topologyConnections, topologyDevices, t.language]);
+
+  useEffect(() => {
+    if (!serviceNtpEnabled) return;
+
+    const timer = setInterval(() => {
+      setServiceNtpDate((prevDate) => {
+        const startDate = prevDate || new Date().toISOString().slice(0, 10);
+        const startTime = ntpTimeRef.current || new Date().toTimeString().slice(0, 8);
+        const next = new Date(`${startDate}T${startTime}`);
+        if (Number.isNaN(next.getTime())) return prevDate;
+        next.setSeconds(next.getSeconds() + 1);
+        const nextDate = formatLocalDate(next);
+        const nextTime = next.toTimeString().slice(0, 8);
+        setServiceNtpTime(nextTime);
+        setCurrentTime(next);
+        return nextDate;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [formatLocalDate, serviceNtpEnabled]);
+
+  const lastSyncedServerRef = useRef<string>('');
+  const lastSyncedServerDataRef = useRef<string>('');
+  const ntpTimeRef = useRef(serviceNtpTime);
+  // eslint-disable-next-line react-hooks/refs, react-hooks/immutability
+  ntpTimeRef.current = serviceNtpTime;
+
+  useEffect(() => {
+    const serverIp = serviceNtpServer.trim();
+    if (!serverIp || !isValidIpAddress(serverIp)) return;
+
+    const matchedDevice = topologyDevices.find((device) => device.ip === serverIp && device.services?.ntp?.enabled);
+    const matchedState = matchedDevice ? deviceStates?.get(matchedDevice.id) : undefined;
+    const stateNtp = matchedState?.services?.ntp;
+    const ntpService = stateNtp?.enabled ? stateNtp : matchedDevice?.services?.ntp;
+
+    const currentServerData = JSON.stringify({ ip: serverIp, date: ntpService?.date, time: ntpService?.time, enabled: ntpService?.enabled, connections: topologyConnections });
+
+    if (lastSyncedServerRef.current === serverIp && lastSyncedServerDataRef.current === currentServerData) return;
+
+    lastSyncedServerRef.current = serverIp;
+    lastSyncedServerDataRef.current = currentServerData;
+
+    void applyNtpServerTime(serverIp);
+  }, [applyNtpServerTime, isValidIpAddress, serviceNtpServer, topologyConnections, topologyDevices, deviceStates]);
 
   const [selectedIotDeviceId, setSelectedIotDeviceId] = useState<string>('');
   const selectedIotDevice = useMemo(
@@ -664,17 +756,11 @@ export function PCPanel({
       setServiceHttpEnabled(deviceFromTopology?.services?.http?.enabled ?? false);
       setServiceHttpContent(deviceFromTopology?.services?.http?.content || 'Merhaba Dünya!');
       setServiceFtpEnabled(deviceFromTopology?.services?.ftp?.enabled ?? false);
-      setServiceFtpUsername(deviceFromTopology?.services?.ftp?.username || 'ftpuser');
-      setServiceFtpPassword(deviceFromTopology?.services?.ftp?.password || 'ftp123');
-      setServiceFtpRootDirectory(deviceFromTopology?.services?.ftp?.rootDirectory || '/flash');
-      setServiceFtpAnonymousAccess(deviceFromTopology?.services?.ftp?.anonymousAccess ?? true);
       setServiceFtpFiles(deviceFromTopology?.services?.ftp?.files || [
         { name: 'readme.txt', size: 1280, modifiedAt: new Date().toISOString() },
       ]);
       setServiceMailEnabled(deviceFromTopology?.services?.mail?.enabled ?? false);
       setServiceMailDomain(deviceFromTopology?.services?.mail?.domain || 'local.lan');
-      setServiceMailSmtpServer(deviceFromTopology?.services?.mail?.smtpServer || '');
-      setServiceMailPop3Server(deviceFromTopology?.services?.mail?.pop3Server || '');
       setServiceMailUsername(deviceFromTopology?.services?.mail?.username || 'user');
       setServiceMailPassword(deviceFromTopology?.services?.mail?.password || 'mail123');
       setServiceMailInbox(deviceFromTopology?.services?.mail?.inbox || []);
@@ -807,17 +893,11 @@ export function PCPanel({
               },
               ftp: {
                 enabled: serviceFtpEnabled,
-                username: serviceFtpUsername,
-                password: serviceFtpPassword,
-                rootDirectory: serviceFtpRootDirectory,
-                anonymousAccess: serviceFtpAnonymousAccess,
                 files: serviceFtpFiles
               },
               mail: {
                 enabled: serviceMailEnabled,
                 domain: serviceMailDomain,
-                smtpServer: serviceMailSmtpServer,
-                pop3Server: serviceMailPop3Server,
                 username: serviceMailUsername,
                 password: serviceMailPassword,
                 inbox: serviceMailInbox,
@@ -847,7 +927,7 @@ export function PCPanel({
         }
       }));
     }
-  }, [internalPcHostname, ipConfigMode, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceFtpEnabled, serviceFtpUsername, serviceFtpPassword, serviceFtpRootDirectory, serviceFtpAnonymousAccess, serviceFtpFiles, serviceMailEnabled, serviceMailDomain, serviceMailSmtpServer, serviceMailPop3Server, serviceMailUsername, serviceMailPassword, serviceMailInbox, serviceMailSent, serviceNtpEnabled, serviceNtpServer, serviceNtpDate, serviceNtpTime, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, deviceId, topologyDevices]);
+  }, [internalPcHostname, ipConfigMode, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceFtpEnabled, serviceFtpFiles, serviceMailEnabled, serviceMailDomain, serviceMailUsername, serviceMailPassword, serviceMailInbox, serviceMailSent, serviceNtpEnabled, serviceNtpServer, serviceNtpDate, serviceNtpTime, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, deviceId, topologyDevices]);
 
   const dispatchDeviceConfig = useCallback((config: Partial<CanvasDevice>) => {
     if (!deviceId) return;
@@ -877,6 +957,43 @@ export function PCPanel({
       detail: { deviceId, config: nextConfig }
     }));
   }, [deviceId, deviceFromTopology?.services]);
+
+  const validateIpField = useCallback((ip: string) => {
+    if (validateIP(ip)) {
+      const duplicateDevices = topologyDevices.filter(d => d.id !== deviceId && d.ip === ip);
+      if (duplicateDevices.length > 0) {
+        const names = duplicateDevices.map(d => d.name || d.id).join(', ');
+        setErrors(prev => ({ ...prev, ip: language === 'tr' ? `Bu IP adresi zaten ${names} tarafından kullanılıyor` : `This IP address is already used by ${names}` }));
+      } else {
+        setErrors(prev => { const { ip: _, ...rest } = prev; return rest; });
+      }
+      let updatedSubnet = pcSubnet;
+      const firstOctet = ip.split('.')[0];
+      if (firstOctet) {
+        const octetNum = parseInt(firstOctet, 10);
+        if (!isNaN(octetNum)) {
+          let autoSubnet = '255.255.255.0';
+          if (octetNum >= 1 && octetNum <= 126) autoSubnet = '255.0.0.0';
+          else if (octetNum >= 128 && octetNum <= 191) autoSubnet = '255.255.0.0';
+          else if (octetNum >= 192 && octetNum <= 223) autoSubnet = '255.255.255.0';
+          updatedSubnet = autoSubnet;
+          setPcSubnet(autoSubnet);
+        }
+      }
+      dispatchDeviceConfig({ ip, subnet: updatedSubnet, ipConfigMode: 'static' });
+    } else {
+      setErrors(prev => ({ ...prev, ip: language === 'tr' ? 'Geçersiz IP adresi' : 'Invalid IP address' }));
+    }
+  }, [topologyDevices, deviceId, language, pcSubnet, dispatchDeviceConfig]);
+
+  const validateSubnetField = useCallback((subnet: string) => {
+    if (subnet && !validateIP(subnet)) {
+      setErrors(prev => ({ ...prev, subnet: language === 'tr' ? 'Geçersiz alt ağ maskesi' : 'Invalid subnet mask' }));
+    } else {
+      setErrors(prev => { const { subnet: _, ...rest } = prev; return rest; });
+    }
+    dispatchDeviceConfig({ subnet, ipConfigMode: 'static' });
+  }, [language, dispatchDeviceConfig]);
 
   const saveIotConfig = useCallback((showToast: boolean = true) => {
     if (!selectedIotDeviceId) return;
@@ -941,16 +1058,10 @@ export function PCPanel({
           http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
           ftp: {
             enabled: serviceFtpEnabled,
-            username: serviceFtpUsername,
-            password: serviceFtpPassword,
-            rootDirectory: serviceFtpRootDirectory,
-            anonymousAccess: serviceFtpAnonymousAccess,
           },
           mail: {
             enabled: serviceMailEnabled,
             domain: serviceMailDomain,
-            smtpServer: serviceMailSmtpServer,
-            pop3Server: serviceMailPop3Server,
             username: serviceMailUsername,
             password: serviceMailPassword,
             inbox: serviceMailInbox,
@@ -975,14 +1086,8 @@ export function PCPanel({
     serviceHttpEnabled,
     serviceHttpContent,
     serviceFtpEnabled,
-    serviceFtpUsername,
-    serviceFtpPassword,
-    serviceFtpRootDirectory,
-    serviceFtpAnonymousAccess,
     serviceMailEnabled,
     serviceMailDomain,
-    serviceMailSmtpServer,
-    serviceMailPop3Server,
     serviceMailUsername,
     serviceMailPassword,
     serviceMailInbox,
@@ -1009,7 +1114,7 @@ export function PCPanel({
       syncToGlobalRef.current();
     }, 500);
     return () => clearTimeout(handler);
-  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, internalPcHostname, ipConfigMode, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceFtpEnabled, serviceFtpUsername, serviceFtpPassword, serviceFtpRootDirectory, serviceFtpAnonymousAccess, serviceFtpFiles, serviceMailEnabled, serviceMailDomain, serviceMailSmtpServer, serviceMailPop3Server, serviceMailUsername, serviceMailPassword, serviceMailInbox, serviceMailSent, serviceNtpEnabled, serviceNtpServer, serviceNtpDate, serviceNtpTime, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel]);
+  }, [pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, internalPcHostname, ipConfigMode, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceFtpEnabled, serviceFtpFiles, serviceMailEnabled, serviceMailDomain, serviceMailSmtpServer, serviceMailPop3Server, serviceMailUsername, serviceMailPassword, serviceMailInbox, serviceMailSent, serviceNtpEnabled, serviceNtpServer, serviceNtpDate, serviceNtpTime, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel]);
   */
 
   // Local output for Desktop (Local) - initialize from prop if available
@@ -3469,6 +3574,46 @@ export function PCPanel({
     }
   };
 
+  const handleFtpSessionCommand = useCallback((cmdLine: string) => {
+    const session = ftpSession;
+    if (!session) return;
+    const cmd = cmdLine.trim().toLowerCase();
+    if (cmd === 'quit' || cmd === 'bye' || cmd === 'exit') {
+      addLocalOutput('output', '221 Goodbye.');
+      setFtpSession(null);
+      return;
+    }
+    if (cmd === 'help' || cmd === '?') {
+      addLocalOutput('output', 'Commands: ls, dir, get <file>, quit, bye, exit');
+      return;
+    }
+    if (cmd === 'ls' || cmd === 'dir') {
+      const files = session.files;
+      if (!files || files.length === 0) {
+        addLocalOutput('output', '(empty)');
+      } else {
+        const list = files.map(f => `${f.name.padEnd(20)} ${(f.size || 0).toString().padStart(8)} bytes`).join('\n');
+        addLocalOutput('output', list);
+      }
+      return;
+    }
+    const getMatch = cmdLine.trim().match(/^(get|recv|mget)\s+(.+)/i);
+    if (getMatch) {
+      const fileName = getMatch[2];
+      addLocalOutput('output', `150 Opening BINARY mode data connection for ${fileName}\n226 Transfer complete.`);
+      return;
+    }
+    const putMatch = cmdLine.trim().match(/^(put|send|mput)\s+(.+)/i);
+    if (putMatch) {
+      const fileName = putMatch[2];
+      const nextFiles = [...(session.files || []), { name: fileName, size: 1024, modifiedAt: new Date().toISOString() }];
+      setFtpSession({ ...session, files: nextFiles });
+      addLocalOutput('output', `150 Opening BINARY mode data connection for ${fileName}\n226 Transfer complete.`);
+      return;
+    }
+    addLocalOutput('output', '200 Command okay.');
+  }, [ftpSession, addLocalOutput]);
+
   const executeCommand = async (cmdToExecute?: string) => {
     const command = (cmdToExecute || input).trim();
     if (!command) return;
@@ -3497,9 +3642,15 @@ export function PCPanel({
     setAutocompleteIndex(-1);
     setAutocompleteNavigated(false);
     if (activeTabRef.current === 'desktop') {
-      addLocalOutput('command', command);
       const parts = command.split(' ');
       const cmd = parts[0].toLowerCase();
+      // FTP session mode: route all input (except 'ftp') to FTP handler
+      if (ftpSession && cmd !== 'ftp') {
+        addLocalOutput('command', command, 'ftp>');
+        handleFtpSessionCommand(command);
+        return;
+      }
+      addLocalOutput('command', command);
       const normalizedCmd = cmd
         .replace(/ı/g, 'i')
         .replace(/İ/g, 'i')
@@ -3826,8 +3977,79 @@ export function PCPanel({
           `Physical Address    Transport Name\n=================== ============================================\n${mac.padEnd(19)} \\Device\\Tcpip_{${deviceId.toUpperCase()}}`,
           60
         );
+      } else if (cmd === 'ftp') {
+        const serverIp = args[0];
+        if (!serverIp) {
+          addLocalOutput('output', 'Usage: ftp <server_ip>');
+          return;
+        }
+        if (!isValidIpv4(serverIp)) {
+          addLocalOutput('error', `${serverIp} is not a valid IP address.`);
+          return;
+        }
+        const result = checkConnectivity(deviceId, serverIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'tcp', port: '21' });
+        if (!result.success) {
+          addLocalOutput('error', `Could not connect to FTP server at ${serverIp}: ${result.error || 'Destination unreachable'}`);
+          return;
+        }
+        const targetDevice = result.targetId ? topologyDevices.find(d => d.id === result.targetId) : undefined;
+        const targetState = result.targetId ? deviceStates?.get(result.targetId) : undefined;
+        const ftpService = targetState?.services?.ftp || targetDevice?.services?.ftp;
+        if (!ftpService?.enabled) {
+          addLocalOutput('error', `FTP service is not enabled on ${serverIp}.`);
+          return;
+        }
+        const files = ftpService.files || [];
+        // Start interactive FTP session
+        setFtpSession({ host: serverIp, targetDeviceId: result.targetId!, files });
+        addLocalOutput('output', `Connected to ${serverIp}.`);
+        addLocalOutput('output', '220 FTP server ready.');
+      } else if (cmd === 'mail') {
+        const recipient = args[0];
+        const subject = args.slice(1).join(' ');
+        if (!recipient || !subject) {
+          addLocalOutput('output', 'Usage: mail <recipient@domain> <subject and message>');
+          return;
+        }
+        const recipientDomain = recipient.includes('@') ? recipient.split('@')[1] : '';
+        const recipientUser = recipient.includes('@') ? recipient.split('@')[0] : '';
+        if (!recipientDomain) {
+          addLocalOutput('error', 'Invalid email address format.');
+          return;
+        }
+        const deliveredDevice = topologyDevices.find(d => {
+          const s = d.services;
+          return s?.mail?.enabled && s.mail.username === recipientUser && s.mail.domain === recipientDomain;
+        });
+        if (!deliveredDevice) {
+          addLocalOutput('error', `Could not find mail server for ${recipientDomain}.`);
+          return;
+        }
+        const mailResult = checkConnectivity(deviceId, deliveredDevice.ip, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), t.language as 'tr' | 'en', { protocol: 'tcp', port: '25' });
+        if (!mailResult.success) {
+          addLocalOutput('error', `Could not connect to mail server at ${deliveredDevice.ip}: ${mailResult.error || 'Destination unreachable'}`);
+          return;
+        }
+        const newInboxEntry = { from: `${internalPcHostname}@${pcIP || 'local'}`, subject, body: subject, timestamp: new Date().toISOString() };
+        const existingInbox = deliveredDevice.services?.mail?.inbox || [];
+        window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+          detail: {
+            deviceId: deliveredDevice.id,
+            config: {
+              services: {
+                mail: {
+                  enabled: true,
+                  domain: deliveredDevice.services?.mail?.domain || recipientDomain,
+                  username: deliveredDevice.services?.mail?.username || recipientUser,
+                  inbox: [...existingInbox, newInboxEntry]
+                }
+              }
+            }
+          }
+        }));
+        addLocalOutput('success', `Mail sent to ${recipient}.`);
       } else if (cmd === 'help' || cmd === '?') {
-        addLocalOutput('output', `Available commands: ipconfig, ping, tracert, traceroute, telnet, ssh, netstat, nbtstat, getmac, nslookup, curl, wget, arp, hostname, dir, ver, cls, exit, quit, snake`);
+        addLocalOutput('output', `Available commands: ipconfig, ping, tracert, traceroute, telnet, ssh, ftp, mail, netstat, nbtstat, getmac, nslookup, curl, wget, arp, hostname, dir, ver, cls, exit, quit, snake`);
       } else if (cmd === 'cls') {
         setPcOutput([]);
       } else if (cmd === 'exit' || cmd === 'quit') {
@@ -4880,35 +5102,19 @@ export function PCPanel({
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
                               {renderNetworkInput(language === 'tr' ? 'IP Adresi' : 'IP Address', pcIP, (newIp) => {
                                 setPcIP(newIp);
-                                if (validateIP(newIp)) {
-                                  const duplicateDevices = topologyDevices.filter(d => d.id !== deviceId && d.ip === newIp);
-                                  if (duplicateDevices.length > 0) {
-                                    const names = duplicateDevices.map(d => d.name || d.id).join(', ');
-                                    setErrors(prev => ({ ...prev, ip: language === 'tr' ? `Bu IP adresi zaten ${names} tarafından kullanılıyor` : `This IP address is already used by ${names}` }));
-                                  } else {
-                                    setErrors(prev => { const { ip, ...rest } = prev; return rest; });
-                                  }
-                                  let updatedSubnet = pcSubnet;
-                                  const firstOctet = newIp.split('.')[0];
-                                  if (firstOctet) {
-                                    const octetNum = parseInt(firstOctet, 10);
-                                    if (!isNaN(octetNum)) {
-                                      let autoSubnet = '255.255.255.0';
-                                      if (octetNum === 10) autoSubnet = '255.0.0.0';
-                                      else if (octetNum === 192) autoSubnet = '255.255.255.0';
-                                      else if (octetNum === 169) autoSubnet = '255.255.0.0';
-                                      updatedSubnet = autoSubnet;
-                                      setPcSubnet(autoSubnet);
-                                    }
-                                  }
-                                  setTimeout(() => dispatchDeviceConfig({ ip: newIp, subnet: updatedSubnet, ipConfigMode: 'static' }), 500);
-                                }
-                              }, "192.168.1.100", errors.ip, ipConfigMode === 'dhcp')}
+                                setErrors(prev => { const { ip, ...rest } = prev; return rest; });
+                              }, "192.168.1.100", errors.ip, ipConfigMode === 'dhcp',
+                                (e) => validateIpField(e.currentTarget.value),
+                                (e) => { if (e.key === 'Enter') validateIpField(e.currentTarget.value); }
+                              )}
 
                               {renderNetworkInput(language === 'tr' ? 'Alt Ağ Maskesi' : 'Subnet Mask', pcSubnet, (newSubnet) => {
                                 setPcSubnet(newSubnet);
-                                setTimeout(() => dispatchDeviceConfig({ subnet: newSubnet, ipConfigMode: 'static' }), 500);
-                              }, "255.255.255.0", errors.subnet, ipConfigMode === 'dhcp')}
+                                setErrors(prev => { const { subnet: _, ...rest } = prev; return rest; });
+                              }, "255.255.255.0", errors.subnet, ipConfigMode === 'dhcp',
+                                (e) => validateSubnetField(e.currentTarget.value),
+                                (e) => { if (e.key === 'Enter') validateSubnetField(e.currentTarget.value); }
+                              )}
 
                               {renderNetworkInput(language === 'tr' ? 'Ağ Geçidi' : 'Gateway', pcGateway, (newGateway) => {
                                 setPcGateway(newGateway);
@@ -5059,8 +5265,8 @@ export function PCPanel({
                                             services: {
                                               dns: { enabled, records: serviceDnsRecords },
                                               http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
-                                              ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
-                                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                              ftp: { enabled: serviceFtpEnabled },
+                                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
                                               dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
                                             }
                                           });
@@ -5102,8 +5308,8 @@ export function PCPanel({
                                           services: {
                                             dns: { enabled: serviceDnsEnabled, records: newRecords },
                                             http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
-                                            ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
-                                            mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                            ftp: { enabled: serviceFtpEnabled },
+                                            mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
                                             dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
                                           }
                                         });
@@ -5138,8 +5344,8 @@ export function PCPanel({
                                               services: {
                                                 dns: { enabled: serviceDnsEnabled, records: newRecords },
                                                 http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
-                                                ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
-                                                mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                                ftp: { enabled: serviceFtpEnabled },
+                                                mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
                                                 dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
                                               }
                                             });
@@ -5184,8 +5390,8 @@ export function PCPanel({
                                             services: {
                                               dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
                                               http: { enabled, content: serviceHttpContent },
-                                              ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
-                                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                              ftp: { enabled: serviceFtpEnabled },
+                                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
                                               dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
                                             }
                                           });
@@ -5259,8 +5465,8 @@ export function PCPanel({
                                             services: {
                                               dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
                                               http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
-                                              ftp: { enabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
-                                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                              ftp: { enabled },
+                                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
                                               dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
                                             }
                                           });
@@ -5271,31 +5477,7 @@ export function PCPanel({
                                       </button>
                                     </div>
                                   </div>
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <Input value={serviceFtpUsername} onChange={(e) => setServiceFtpUsername(e.target.value)} placeholder="Username" />
-                                    <div className="relative">
-                                      <Input
-                                        value={serviceFtpPassword}
-                                        onChange={(e) => setServiceFtpPassword(e.target.value)}
-                                        placeholder="Password"
-                                        type={showFtpPassword ? 'text' : 'password'}
-                                        className="pr-10"
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => setShowFtpPassword((prev) => !prev)}
-                                        className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700"
-                                        aria-label={showFtpPassword ? 'Hide FTP password' : 'Show FTP password'}
-                                      >
-                                        {showFtpPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                      </button>
-                                    </div>
-                                    <Input value={serviceFtpRootDirectory} onChange={(e) => setServiceFtpRootDirectory(e.target.value)} placeholder="/flash" />
-                                    <label className="flex items-center gap-2 text-xs">
-                                      <input type="checkbox" checked={serviceFtpAnonymousAccess} onChange={(e) => setServiceFtpAnonymousAccess(e.target.checked)} />
-                                      {language === 'tr' ? 'Anonim erişim' : 'Anonymous access'}
-                                    </label>
-                                  </div>
+
                                   <div className="space-y-2">
                                     <div className="text-xs font-bold uppercase tracking-wider opacity-60">
                                       {language === 'tr' ? 'Dosya Listesi' : 'File List'}
@@ -5319,8 +5501,8 @@ export function PCPanel({
                                                 services: {
                                                   dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
                                                   http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
-                                                  ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess, files: nextFiles },
-                                                  mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                                  ftp: { enabled: serviceFtpEnabled, files: nextFiles },
+                                                  mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
                                                   ntp: { enabled: serviceNtpEnabled, server: serviceNtpServer, date: serviceNtpDate, time: serviceNtpTime },
                                                   dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
                                                 }
@@ -5349,7 +5531,7 @@ export function PCPanel({
                                     <div>
                                       <h3 className="text-sm font-bold">Mail Server</h3>
                                       <p className={`text-xs ${isDark ? 'text-slate-200' : 'text-slate-500'}`}>
-                                        {language === 'tr' ? 'SMTP ve POP3 için basit posta sunucusu.' : 'Simple mail service for SMTP and POP3.'}
+                                        {language === 'tr' ? 'Basit posta sunucusu.' : 'Simple mail service.'}
                                       </p>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
@@ -5367,8 +5549,8 @@ export function PCPanel({
                                             services: {
                                               dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
                                               http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
-                                              ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
-                                              mail: { enabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                              ftp: { enabled: serviceFtpEnabled },
+                                              mail: { enabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
                                               dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
                                             }
                                           });
@@ -5380,27 +5562,8 @@ export function PCPanel({
                                     </div>
                                   </div>
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <Input value={serviceMailDomain} onChange={(e) => setServiceMailDomain(e.target.value)} placeholder="local.lan" />
                                     <Input value={serviceMailUsername} onChange={(e) => setServiceMailUsername(e.target.value)} placeholder="user" />
-                                    <div className="relative">
-                                      <Input
-                                        value={serviceMailPassword}
-                                        onChange={(e) => setServiceMailPassword(e.target.value)}
-                                        placeholder="mail123"
-                                        type={showMailPassword ? 'text' : 'password'}
-                                        className="pr-10"
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => setShowMailPassword((prev) => !prev)}
-                                        className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700"
-                                        aria-label={showMailPassword ? 'Hide mail password' : 'Show mail password'}
-                                      >
-                                        {showMailPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                      </button>
-                                    </div>
-                                    <Input value={serviceMailSmtpServer} onChange={(e) => setServiceMailSmtpServer(e.target.value)} placeholder="SMTP server" />
-                                    <Input value={serviceMailPop3Server} onChange={(e) => setServiceMailPop3Server(e.target.value)} placeholder="POP3 server" />
+                                    <Input value={serviceMailDomain} onChange={(e) => setServiceMailDomain(e.target.value)} placeholder="local.lan" />
                                   </div>
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className={`rounded-lg border p-3 ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-200 bg-slate-50'}`}>
@@ -5587,8 +5750,8 @@ export function PCPanel({
                                             services: {
                                               dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
                                               http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
-                                              ftp: { enabled: serviceFtpEnabled, username: serviceFtpUsername, password: serviceFtpPassword, rootDirectory: serviceFtpRootDirectory, anonymousAccess: serviceFtpAnonymousAccess },
-                                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, smtpServer: serviceMailSmtpServer, pop3Server: serviceMailPop3Server, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                              ftp: { enabled: serviceFtpEnabled },
+                                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
                                               ntp: { enabled, server: serviceNtpServer, date: serviceNtpDate, time: serviceNtpTime },
                                               dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
                                             }
@@ -6436,7 +6599,7 @@ export function PCPanel({
                                         </span>
                                       )}
                                       <span className="shrink-0 opacity-40 select-none font-geist-mono">
-                                        {activeTab === 'desktop' ? `${internalPcHostname} C:\>` : (line.prompt || '>')}
+                                        {activeTab === 'desktop' ? (line.prompt || `${internalPcHostname} C:\>`) : (line.prompt || '>')}
                                       </span>
                                       <span className={isDark ? "text-slate-100" : "text-slate-900"}>{highlightText(line.content)}</span>
                                     </div>
@@ -6556,7 +6719,7 @@ export function PCPanel({
                                     ? 'text-amber-400'
                                     : 'text-primary'
                                     }`}>
-                                    {activeTab === 'desktop' ? `${internalPcHostname} C:\>` : (() => {
+                                    {activeTab === 'desktop' ? (ftpSession ? 'ftp>' : `${internalPcHostname} C:\>`) : (() => {
                                       if (consoleNeedsPassword) return 'Password:';
                                       if (!connectedDeviceId || !deviceStates) return '>';
                                       const state = ensureDeviceStatesMap(deviceStates).get(connectedDeviceId);

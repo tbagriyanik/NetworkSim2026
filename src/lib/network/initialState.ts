@@ -273,8 +273,6 @@ export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' 
       mail: {
         enabled: false,
         domain: 'local.lan',
-        smtpServer: '',
-        pop3Server: '',
         inbox: [],
         sent: []
       },
