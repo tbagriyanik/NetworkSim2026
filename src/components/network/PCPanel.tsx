@@ -559,6 +559,8 @@ export function PCPanel({
     const next = new Date(`${ntpSyncState.date}T${ntpSyncState.time}`);
     if (!Number.isNaN(next.getTime())) {
       setCurrentTime(next);
+      setServiceNtpDate(ntpSyncState.date);
+      setServiceNtpTime(ntpSyncState.time);
     }
   }, [ntpSyncState]);
 
@@ -599,6 +601,7 @@ export function PCPanel({
 
   useEffect(() => {
     if (!serviceNtpEnabled) return;
+    if (ntpSyncState) return;
 
     const timer = setInterval(() => {
       setServiceNtpDate((prevDate) => {
@@ -616,7 +619,7 @@ export function PCPanel({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [formatLocalDate, serviceNtpEnabled]);
+  }, [formatLocalDate, ntpSyncState, serviceNtpEnabled]);
 
   const lastSyncedServerRef = useRef<string>('');
   const lastSyncedServerDataRef = useRef<string>('');
@@ -5767,13 +5770,29 @@ export function PCPanel({
                                     <Input
                                       type="date"
                                       value={serviceNtpDate}
-                                      onChange={(e) => setServiceNtpDate(e.target.value)}
+                                      onChange={(e) => {
+                                        const newDate = e.target.value;
+                                        setServiceNtpDate(newDate);
+                                        dispatchDeviceConfig({
+                                          services: {
+                                            ntp: { enabled: serviceNtpEnabled, server: serviceNtpServer, date: newDate, time: serviceNtpTime }
+                                          }
+                                        });
+                                      }}
                                       aria-label={language === 'tr' ? 'NTP tarih' : 'NTP date'}
                                     />
                                     <Input
                                       type="time"
                                       value={serviceNtpTime}
-                                      onChange={(e) => setServiceNtpTime(e.target.value)}
+                                      onChange={(e) => {
+                                        const newTime = e.target.value;
+                                        setServiceNtpTime(newTime);
+                                        dispatchDeviceConfig({
+                                          services: {
+                                            ntp: { enabled: serviceNtpEnabled, server: serviceNtpServer, date: serviceNtpDate, time: newTime }
+                                          }
+                                        });
+                                      }}
                                       aria-label={language === 'tr' ? 'NTP saat' : 'NTP time'}
                                     />
                                   </div>

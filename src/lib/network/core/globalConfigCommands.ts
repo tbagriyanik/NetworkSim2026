@@ -1629,7 +1629,26 @@ function cmdNtpServer(state: any, input: string, ctx: any): any {
   if (!match) return { success: false, error: '% Invalid ntp server command' };
   const servers = [...(state.ntpServers || [])];
   if (!servers.includes(match[1])) servers.push(match[1]);
-  return { success: true, output: `NTP server ${match[1]} configured`, newState: { ntpServers: servers } };
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10);
+  const time = now.toTimeString().slice(0, 8);
+  return {
+    success: true,
+    output: `NTP server ${match[1]} configured`,
+    newState: {
+      ntpServers: servers,
+      services: {
+        ...state.services,
+        ntp: {
+          enabled: true,
+          server: match[1],
+          timezone: state.services?.ntp?.timezone || 'UTC',
+          date,
+          time,
+        },
+      },
+    },
+  };
 }
 
 /**

@@ -89,6 +89,14 @@ export function buildRunningConfig(state: SwitchState): string[] {
         lines.push('!');
     }
 
+    // NTP Server
+    if (state.ntpServers && state.ntpServers.length > 0) {
+        state.ntpServers.forEach(server => {
+            lines.push(`ntp server ${server}`);
+        });
+        lines.push('!');
+    }
+
     // IoT Config
     if (state.iotConfig) {
         if (state.iotConfig.sensorType) lines.push(`iot sensor ${state.iotConfig.sensorType}`);

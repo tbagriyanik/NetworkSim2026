@@ -1465,12 +1465,22 @@ function cmdShowClock(
   _input: string,
   ctx: CommandContext
 ): any {
+  const localNtp = state.services?.ntp;
+  if (localNtp?.enabled && localNtp.date && localNtp.time) {
+    const [y, m, d] = localNtp.date.split('-');
+    const formattedDate = `${d}.${m}.${y}`;
+    return {
+      success: true,
+      output: `\n*${localNtp.time} UTC ${formattedDate}\n`
+    };
+  }
+
   const serverIps = state.ntpServers || [];
   for (const serverIp of serverIps) {
     const matchedDevice = ctx.devices?.find((d) => d.ip === serverIp);
     const matchedState = matchedDevice ? ctx.deviceStates?.get(matchedDevice.id) : undefined;
     const stateNtp = matchedState?.services?.ntp;
-    const ntpService = stateNtp?.enabled ? stateNtp : matchedDevice?.services?.ntp;
+    const ntpService = matchedDevice?.services?.ntp?.enabled ? matchedDevice.services.ntp : (stateNtp?.enabled ? stateNtp : undefined);
     if (ntpService?.enabled && ntpService.date && ntpService.time) {
       const [y, m, d] = ntpService.date.split('-');
       const formattedDate = `${d}.${m}.${y}`;

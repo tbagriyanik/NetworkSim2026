@@ -648,6 +648,9 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     return parts.length === 4 && parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) >= 0 && Number(part) <= 255);
   }, []);
 
+  const deviceStatesRef = useRef(deviceStates);
+  useEffect(() => { deviceStatesRef.current = deviceStates; }, [deviceStates]);
+
   const formatLocalDate = useCallback((date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -682,15 +685,21 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   useEffect(() => {
     const interval = window.setInterval(() => {
       setTopologyDevices((prevDevices) => {
-        const nextDevices = prevDevices.map((device) => ({ ...device }));
+        const devices = prevDevices.map((device) => {
+          const devState = deviceStatesRef.current.get(device.id);
+          if (devState?.services?.ntp?.enabled && !device.services?.ntp?.enabled) {
+            return { ...device, services: { ...device.services, ntp: devState.services.ntp } };
+          }
+          return { ...device };
+        });
 
-        for (const device of nextDevices) {
+        for (const device of devices) {
           const ntp = device.services?.ntp;
           if (!ntp?.enabled) continue;
 
           const serverIp = ntp.server?.trim();
           const upstreamDevice = serverIp && isValidIpv4Address(serverIp)
-            ? nextDevices.find((candidate) => candidate.ip === serverIp && candidate.services?.ntp?.enabled)
+            ? devices.find((candidate) => candidate.ip === serverIp && candidate.services?.ntp?.enabled)
             : undefined;
           const upstreamNtp = upstreamDevice?.services?.ntp;
 
@@ -719,7 +728,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
           };
         }
 
-        return nextDevices;
+        return devices;
       });
     }, 1000);
 
@@ -824,23 +833,35 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
       });
     }
 
-    // Sync NTP services from topology to deviceStates
+    // Sync NTP services from topology to deviceStates (Switch/Router)
     if (config.services?.ntp) {
       setDeviceStates((prev) => {
         const state = prev.get(deviceId);
         if (!state) return prev;
-        const next = new Map(prev);
-        next.set(deviceId, {
+        const ntpServer = config.services!.ntp!.server;
+        // Update ntpServers array so buildStartupConfig / applyStartupConfig
+        // can restore the NTP server after a page refresh
+        let ntpServers = state.ntpServers ? [...state.ntpServers] : [];
+        if (ntpServer && !ntpServers.includes(ntpServer)) {
+          ntpServers = [ntpServer];
+        } else if (ntpServer) {
+          ntpServers = [ntpServer]; // keep only the latest server
+        }
+        const updatedState = {
           ...state,
+          ntpServers,
           services: {
             ...state.services,
             ntp: {
               ...state.services?.ntp,
-              ...config.services.ntp,
-              enabled: config.services.ntp.enabled ?? state.services?.ntp?.enabled ?? false,
+              ...config.services!.ntp,
+              enabled: config.services!.ntp!.enabled ?? state.services?.ntp?.enabled ?? false,
             },
           },
-        });
+        };
+        updatedState.runningConfig = buildRunningConfig(updatedState);
+        const next = new Map(prev);
+        next.set(deviceId, updatedState);
         return next;
       });
     }
@@ -4656,7 +4677,6 @@ ${state.bannerMOTD}
                   : "bg-white/70 border-white/70 backdrop-blur-2xl"
               )}
               data-modal-content
-              data-disable-snap="true"
               style={{
                 position: 'fixed',
                 left: !isMobile ? pcDrag.position.x : 0,

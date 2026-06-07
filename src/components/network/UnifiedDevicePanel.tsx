@@ -133,7 +133,6 @@ export function UnifiedDevicePanel({
                     isDark ? "bg-slate-950/80 border-slate-800" : "bg-white border-slate-200"
                 )}
                 data-modal-content
-                data-disable-snap="true"
                 style={{
                     position: 'fixed',
                     left: isMobile ? 0 : modalPosition.x,
