@@ -565,7 +565,19 @@ export function PCPanel({
 
   const ntpSyncState = useMemo(() => {
     const serverIp = serviceNtpServer.trim();
-    if (!serviceNtpEnabled || !serverIp || !isValidIpAddress(serverIp)) return null;
+    if (!serviceNtpEnabled || !serverIp) return null;
+
+    // local-clock: use real system time
+    if (serverIp === 'local-clock') {
+      const now = new Date();
+      return {
+        date: now.toISOString().slice(0, 10),
+        time: now.toTimeString().slice(0, 8),
+        realtime: true,
+      };
+    }
+
+    if (!isValidIpAddress(serverIp)) return null;
     const canReach = checkConnectivity(deviceId, serverIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'any' });
     if (!canReach.success) return null;
     const matchedDevice = topologyDevices.find((device) => device.ip === serverIp && device.services?.ntp?.enabled);
@@ -573,11 +585,15 @@ export function PCPanel({
     const stateNtp = matchedState?.services?.ntp;
     const ntpService = stateNtp?.enabled ? stateNtp : matchedDevice?.services?.ntp;
     if (!ntpService?.enabled) return null;
+
+    // NTP server is reachable – always return real current time for stable sync
+    const now = new Date();
     return {
-      date: ntpService.date || serviceNtpDate || formatLocalDate(new Date()),
-      time: ntpService.time || serviceNtpTime || new Date().toTimeString().slice(0, 8),
+      date: now.toISOString().slice(0, 10),
+      time: now.toTimeString().slice(0, 8),
+      realtime: true,
     };
-  }, [deviceStates, deviceId, formatLocalDate, isValidIpAddress, serviceNtpDate, serviceNtpEnabled, serviceNtpServer, serviceNtpTime, topologyConnections, topologyDevices, language]);
+  }, [deviceStates, deviceId, isValidIpAddress, serviceNtpEnabled, serviceNtpServer, topologyConnections, topologyDevices, language]);
 
   useEffect(() => {
     if (!ntpSyncState) {
@@ -585,11 +601,17 @@ export function PCPanel({
       return () => clearInterval(timer);
     }
 
-    const next = new Date(`${ntpSyncState.date}T${ntpSyncState.time}`);
+    if (ntpSyncState?.realtime) {
+      // NTP server is synced – tick every second with real time
+      const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+      return () => clearInterval(timer);
+    }
+
+    const next = new Date(`${ntpSyncState!.date}T${ntpSyncState!.time}`);
     if (!Number.isNaN(next.getTime())) {
       setCurrentTime(next);
-      setServiceNtpDate(ntpSyncState.date);
-      setServiceNtpTime(ntpSyncState.time);
+      setServiceNtpDate(ntpSyncState!.date);
+      setServiceNtpTime(ntpSyncState!.time);
     }
   }, [ntpSyncState]);
 
@@ -4389,7 +4411,7 @@ export function PCPanel({
   }, [input, undoStack, redoStack]);
 
   const handleInputChange = useCallback((newValue: string) => {
-    // Intercept '?' for immediate help in terminal mode (IOS style)
+    // Intercept '?' for immediate help in terminal mode (NOS style)
     if (activeTab === 'terminal' && isConsoleConnected && newValue.endsWith('?') && !consoleNeedsPassword && !consoleConfirmDialog?.show) {
       const partialCommand = newValue.slice(0, -1);
       setUndoStack([...undoStack, input]);

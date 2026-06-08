@@ -165,7 +165,7 @@ function getSwitchDisplayProfile(state: SwitchState) {
       isL3: true,
       isRouter: true,
       bootImage: 'router-software.bin',
-      softwareImage: 'Network Simulator IOS Software, Version 1.0',
+      softwareImage: 'Network Simulator nOS Software, Version 1.0',
       rom: 'Router boot loader',
       bootldr: 'Router Boot Loader',
       systemImage: 'flash:router-software.bin',
@@ -1486,22 +1486,16 @@ function cmdShowClock(
     const matchedState = matchedDevice ? ctx.deviceStates?.get(matchedDevice.id) : undefined;
     const stateNtp = matchedState?.services?.ntp;
     const ntpService = matchedDevice?.services?.ntp?.enabled ? matchedDevice.services.ntp : (stateNtp?.enabled ? stateNtp : undefined);
-    if (ntpService?.enabled && ntpService.date && ntpService.time) {
-      const [y, m, d] = ntpService.date.split('-');
-      const formattedDate = `${d}.${m}.${y}`;
+    if (ntpService?.enabled) {
+      // NTP server is reachable and enabled – return real current time (stable sync)
+      const now = new Date();
+      const time = now.toTimeString().slice(0, 8);
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
       return {
         success: true,
-        output: `\n*${ntpService.time} UTC ${formattedDate}\n`
-      };
-    }
-    // Fallback to server device's system clock if NTP service not available
-    if (matchedState?.systemClock) {
-      const { time, day, month, year } = matchedState.systemClock;
-      const monthMap: Record<string, string> = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
-      const mm = monthMap[month] || month;
-      return {
-        success: true,
-        output: `\n*${time} UTC ${day}.${mm}.${year}\n`
+        output: `\n*${time} UTC ${day}.${month}.${year}\n`
       };
     }
   }
@@ -1532,6 +1526,7 @@ function cmdShowClock(
     output: `\n*${now.toTimeString().split(' ')[0]} UTC ${now.toLocaleDateString()}\n`
   };
 }
+
 
 /**
  * Show Flash

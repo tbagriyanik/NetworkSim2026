@@ -180,7 +180,7 @@ ICMP echo reply received from 192.168.1.2
 ```
 # show version
 ```
-**Beklenen Sonuç:** Cihaz modeli, IOS sürümü ve diğer bilgiler görüntülenir
+**Beklenen Sonuç:** Cihaz modeli, NOS sürümü ve diğer bilgiler görüntülenir
 
 #### Adım 4: Konfigürasyonu Kaydet
 ```

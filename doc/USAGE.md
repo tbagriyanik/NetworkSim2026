@@ -32,7 +32,7 @@
 | Device / Cihaz | Panel / How to open / Nasıl açılır |
 |---|---|
 | **PC** | Double-click → CMD, Services (DHCP/DNS/HTTP/FTP/Mail/NTP), WiFi, IoT tabs |
-| **Switch / Router** | Double-click → CLI terminal (full IOS-style) |
+| **Switch / Router** | Double-click → CLI terminal (full NOS-style) |
 | **L3 Switch** | Same as Switch + `ip routing` for Layer 3 |
 | **Firewall** | Dedicated panel with drag-drop rule builder |
 | **IoT** | Web-based sensor/actuator management panel |

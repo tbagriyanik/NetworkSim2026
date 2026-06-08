@@ -2634,7 +2634,7 @@ export function validateCommand(
       if (!compatibility.valid) {
         return {
           valid: false,
-          reason: 'unknown-command', // IOS gibi 'invalid' yerine cihaz uyumsuzluğunu belirtiyoruz
+          reason: 'unknown-command', // nOS gibi 'invalid' yerine cihaz uyumsuzluğunu belirtiyoruz
           error: compatibility.error
         };
       }

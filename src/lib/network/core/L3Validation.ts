@@ -16,7 +16,7 @@ export function validateNoSwitchportSupport(
     valid: boolean;
     error?: string;
 } {
-    // If model is missing, allow known L3 device types and block others with IOS-like error.
+    // If model is missing, allow known L3 device types and block others with nOS-like error.
     if (!switchModel) {
         if (deviceType === 'switchL3' || deviceType === 'router') {
             return { valid: true };
