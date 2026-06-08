@@ -4113,16 +4113,25 @@ export function PCPanel({
           addLocalOutput('error', `Could not connect to FTP server at ${targetIp}: ${result.error || 'Destination unreachable'}`);
           return;
         }
-        const targetDevice = result.targetId ? topologyDevices.find(d => d.id === result.targetId) : undefined;
-        const targetState = result.targetId ? deviceStates?.get(result.targetId) : undefined;
-        const ftpService = targetState?.services?.ftp || targetDevice?.services?.ftp;
+        const targetDevice = result.targetId
+          ? topologyDevices.find(d => d.id === result.targetId)
+          : topologyDevices.find(d => d.ip === targetIp);
+        const deviceByIp = topologyDevices.find(d => d.ip === targetIp);
+        const targetState = (targetDevice?.id || deviceByIp?.id)
+          ? deviceStates?.get(targetDevice?.id || deviceByIp!.id)
+          : undefined;
+        const ftpService =
+          targetState?.services?.ftp ||
+          targetDevice?.services?.ftp ||
+          deviceByIp?.services?.ftp;
         if (!ftpService?.enabled) {
           addLocalOutput('error', `FTP service is not enabled on ${targetIp}.`);
           return;
         }
         const files = ftpService.files || [];
+        const resolvedDeviceId = result.targetId || targetDevice?.id || deviceByIp?.id || '';
         // Start interactive FTP session
-        setFtpSession({ host: targetArg, targetDeviceId: result.targetId!, files });
+        setFtpSession({ host: targetArg, targetDeviceId: resolvedDeviceId, files });
         setIsFtpFilePickerOpen(true);
         addLocalOutput('output', `Connected to ${targetArg}.`);
         addLocalOutput('output', '220 FTP server ready.');
