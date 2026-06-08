@@ -77,17 +77,37 @@ export function FirewallPanel({
     enabled: true
   });
 
-  const services = useMemo(() => [
-    { name: 'DNS', port: '53', protocol: 'udp' },
-    { name: 'FTP', port: '21', protocol: 'tcp' },
-    { name: 'HTTP', port: '80', protocol: 'tcp' },
-    { name: 'HTTPS', port: '443', protocol: 'tcp' },
-    { name: 'ICMP', port: '*', protocol: 'icmp' },
-    { name: 'NTP', port: '123', protocol: 'udp' },
-    { name: 'SMTP', port: '25', protocol: 'tcp' },
-    { name: 'SSH', port: '22', protocol: 'tcp' },
-    { name: 'TELNET', port: '23', protocol: 'tcp' },
-  ].sort((a, b) => a.name.localeCompare(b.name)), []);
+  const dropdownOptions = useMemo(() => {
+    return [
+      { label: t.language === 'tr' ? 'Herhangi' : 'Any', value: 'any', protocol: 'any', port: '*' },
+      { label: 'TCP', value: 'tcp', protocol: 'tcp', port: '*' },
+      { label: 'UDP', value: 'udp', protocol: 'udp', port: '*' },
+      { label: 'ICMP (*)', value: 'icmp', protocol: 'icmp', port: '*' },
+      { label: 'DNS (53)', value: 'dns', protocol: 'udp', port: '53' },
+      { label: 'FTP (21)', value: 'ftp', protocol: 'tcp', port: '21' },
+      { label: 'HTTP (80)', value: 'http', protocol: 'tcp', port: '80' },
+      { label: 'HTTPS (443)', value: 'https', protocol: 'tcp', port: '443' },
+      { label: 'NTP (123)', value: 'ntp', protocol: 'udp', port: '123' },
+      { label: 'SMTP (25)', value: 'smtp', protocol: 'tcp', port: '25' },
+      { label: 'SSH (22)', value: 'ssh', protocol: 'tcp', port: '22' },
+      { label: 'TELNET (23)', value: 'telnet', protocol: 'tcp', port: '23' },
+    ].sort((a, b) => a.label.localeCompare(b.label));
+  }, [t.language]);
+
+  const currentSelectValue = useMemo(() => {
+    const serviceMatch = dropdownOptions.find(opt =>
+      opt.protocol === newRule.protocol &&
+      opt.port === newRule.port &&
+      opt.port !== '*'
+    );
+    if (serviceMatch) return serviceMatch.value;
+
+    const protocolMatch = dropdownOptions.find(opt =>
+      opt.protocol === newRule.protocol &&
+      opt.port === '*'
+    );
+    return protocolMatch ? protocolMatch.value : 'any';
+  }, [newRule.protocol, newRule.port, dropdownOptions]);
 
   const handleAddRule = useCallback((overrideRule?: Partial<FirewallRule>) => {
     const rule: FirewallRule = {
@@ -235,11 +255,11 @@ export function FirewallPanel({
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Protokol' : 'Protocol'}</label>
                     <Select
-                      value={newRule.protocol}
+                      value={currentSelectValue}
                       onValueChange={(v: any) => {
-                        const service = services.find(s => s.name.toLowerCase() === v);
-                        if (service) {
-                          setNewRule({ ...newRule, protocol: service.protocol as any, port: service.port });
+                        const option = dropdownOptions.find(opt => opt.value === v);
+                        if (option) {
+                          setNewRule({ ...newRule, protocol: option.protocol as any, port: option.port });
                         } else {
                           setNewRule({ ...newRule, protocol: v });
                         }
@@ -250,13 +270,9 @@ export function FirewallPanel({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="any">{t.language === 'tr' ? 'Herhangi' : 'Any'}</SelectItem>
-                        <SelectItem value="tcp">TCP</SelectItem>
-                        <SelectItem value="udp">UDP</SelectItem>
-                        <SelectItem value="icmp">ICMP</SelectItem>
-                        {services.map(s => (
-                          <SelectItem key={s.name} value={s.name.toLowerCase()}>
-                            {s.name} ({s.port})
+                        {dropdownOptions.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
