@@ -925,13 +925,81 @@ function cmdFtp(state: any, input: string, ctx: any): any {
 
 function cmdMail(state: any, input: string, ctx: any): any {
     const lang = ctx.language || 'en';
-    const address = input.split(/\s+/).slice(1).join(' ').trim();
+    const parts = input.trim().split(/\s+/);
+    
+    // Direct sending: mail <address> <subject> [body...]
+    if (parts.length > 2) {
+        const address = parts[1];
+        const subject = parts[2];
+        const body = parts.slice(3).join(' ') || subject;
+        
+        const recipient = address.split('@')[0];
+        const domain = address.includes('@') ? address.split('@')[1] : address;
+        
+        const delivered = ctx.devices?.map((device: any) => ({ device, state: ctx.deviceStates?.get(device.id) }))
+            .find((entry: any) => {
+                const mail = entry.state?.services?.mail;
+                if (!mail?.enabled) return false;
+                if (mail.username === recipient && mail.domain === domain) return true;
+                const isIpMatch = entry.device.ip === domain || Object.values(entry.state?.ports || {}).some((p: any) => p.ipAddress === domain);
+                const isNameMatch = entry.device.name === recipient || entry.state?.hostname === recipient;
+                return isIpMatch && isNameMatch;
+            });
+            
+        if (delivered?.device && delivered.state) {
+            const timestamp = new Date().toISOString();
+            const sourceMail = state.services?.mail;
+            // Best effort to get source IP, fallback to hostname
+            const sourceIp = Object.values(state.ports || {}).map((p: any) => p.ipAddress).find(ip => !!ip) || 'local';
+            const sourceAddress = sourceMail?.username && sourceMail?.domain 
+                ? `${sourceMail.username}@${sourceMail.domain}` 
+                : `${state.hostname}@${sourceIp}`;
+                
+            let currentInbox = delivered.state.services?.mail?.inbox || [];
+            if (typeof window !== 'undefined') {
+              try {
+                const storedInbox = window.localStorage.getItem(`mail_inbox_${delivered.device.id}`);
+                if (storedInbox) currentInbox = JSON.parse(storedInbox);
+              } catch(e) {}
+            }
+            const inbox = [{ from: sourceAddress, subject, body, timestamp }, ...currentInbox];
+            if (typeof window !== 'undefined') window.localStorage.setItem(`mail_inbox_${delivered.device.id}`, JSON.stringify(inbox));
+
+            let currentSent = sourceMail?.sent || [];
+            if (ctx.sourceDeviceId && typeof window !== 'undefined') {
+              try {
+                const storedSent = window.localStorage.getItem(`mail_sent_${ctx.sourceDeviceId}`);
+                if (storedSent) currentSent = JSON.parse(storedSent);
+              } catch(e) {}
+            }
+            const sent = [{ to: address, subject, body, timestamp }, ...currentSent];
+            if (ctx.sourceDeviceId && typeof window !== 'undefined') window.localStorage.setItem(`mail_sent_${ctx.sourceDeviceId}`, JSON.stringify(sent));
+            
+            const updated = new Map(ctx.deviceStates || []);
+            updated.set(delivered.device.id, { 
+                ...delivered.state, 
+                services: { ...(delivered.state.services || {}), mail: { ...(delivered.state.services?.mail || {}), enabled: !!delivered.state.services?.mail?.enabled, inbox } } 
+            });
+            const newSenderState = { 
+                ...state, 
+                services: { ...(state.services || {}), mail: { ...(state.services?.mail || {}), enabled: !!state.services?.mail?.enabled, sent } } 
+            };
+            if (ctx.sourceDeviceId) {
+                updated.set(ctx.sourceDeviceId, newSenderState);
+            }
+            return { success: true, output: '\n250 Message accepted for delivery.\n', deviceStates: updated, newState: newSenderState };
+        }
+        return { success: false, output: '\n550 Recipient mailbox unavailable.\n' };
+    }
+
+    // Interactive session: mail <address>
+    const address = parts.slice(1).join(' ').trim();
     if (!address) {
         return {
             success: true,
             output: lang === 'tr'
-                ? 'Mail komutu hazır. Kullanım: mail <address>'
-                : 'Mail command ready. Usage: mail <address>'
+                ? 'Mail komutu hazır. Kullanım: mail <address> [konu] [mesaj]'
+                : 'Mail command ready. Usage: mail <address> [subject] [message]'
         };
     }
     return {

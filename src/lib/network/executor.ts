@@ -1937,16 +1937,47 @@ function handleMailSessionCommand(
     const recipient = sendMatch[1];
     const subject = sendMatch[2];
     const timestamp = new Date().toISOString();
-    const delivered = ctx.devices?.map(device => ({ device, state: ctx.deviceStates?.get(device.id) })).find(entry => entry.state?.services?.mail?.username === recipient.split('@')[0] && entry.state?.services?.mail?.domain === recipient.split('@')[1]);
+    const delivered = ctx.devices?.map(device => ({ device, state: ctx.deviceStates?.get(device.id) })).find(entry => {
+      const mail = entry.state?.services?.mail;
+      if (!mail?.enabled) return false;
+      const reqUser = recipient.split('@')[0];
+      const reqDomain = recipient.split('@')[1] || recipient;
+      if (mail.username === reqUser && mail.domain === reqDomain) return true;
+      const isIpMatch = entry.device.ip === reqDomain || Object.values(entry.state?.ports || {}).some((p: any) => p.ipAddress === reqDomain);
+      const isNameMatch = entry.device.name === reqUser || entry.state?.hostname === reqUser;
+      return isIpMatch && isNameMatch;
+    });
     if (delivered?.device && delivered.state) {
-      const inbox = [...(delivered.state.services?.mail?.inbox || []), { from: session.address, subject, body: subject, timestamp }];
-      const sent = [...(mail?.sent || []), { to: recipient, subject, body: subject, timestamp }];
-      const updated = new Map(ctx.deviceStates || []);
-      updated.set(delivered.device.id, { ...delivered.state, services: { ...(delivered.state.services || {}), mail: { ...(delivered.state.services?.mail || {}), enabled: !!delivered.state.services?.mail?.enabled, inbox } } });
-      if (targetState && target) {
-        updated.set(target.id, { ...targetState, services: { ...(targetState.services || {}), mail: { ...(targetState.services?.mail || {}), enabled: !!targetState.services?.mail?.enabled, sent } } });
+      let currentInbox = delivered.state.services?.mail?.inbox || [];
+      if (typeof window !== 'undefined') {
+        try {
+          const storedInbox = window.localStorage.getItem(`mail_inbox_${delivered.device.id}`);
+          if (storedInbox) currentInbox = JSON.parse(storedInbox);
+        } catch(e) {}
       }
-      return { success: true, output: '\n250 Message accepted for delivery.\nmail> ', deviceStates: updated };
+      const inbox = [{ from: session.address, subject, body: subject, timestamp }, ...currentInbox];
+      if (typeof window !== 'undefined') window.localStorage.setItem(`mail_inbox_${delivered.device.id}`, JSON.stringify(inbox));
+
+      const sourceMail = state.services?.mail;
+      let currentSent = sourceMail?.sent || [];
+      if (ctx.sourceDeviceId && typeof window !== 'undefined') {
+        try {
+          const storedSent = window.localStorage.getItem(`mail_sent_${ctx.sourceDeviceId}`);
+          if (storedSent) currentSent = JSON.parse(storedSent);
+        } catch(e) {}
+      }
+      const sent = [{ to: recipient, subject, body: subject, timestamp }, ...currentSent];
+      if (ctx.sourceDeviceId && typeof window !== 'undefined') window.localStorage.setItem(`mail_sent_${ctx.sourceDeviceId}`, JSON.stringify(sent));
+
+      const updated = new Map(ctx.deviceStates || []);
+      // Update recipient's inbox
+      updated.set(delivered.device.id, { ...delivered.state, services: { ...(delivered.state.services || {}), mail: { ...(delivered.state.services?.mail || {}), enabled: !!delivered.state.services?.mail?.enabled, inbox } } });
+      // Update sender's sent box
+      const newSenderState = { ...state, services: { ...(state.services || {}), mail: { ...(state.services?.mail || {}), enabled: !!state.services?.mail?.enabled, sent } } };
+      if (ctx.sourceDeviceId) {
+        updated.set(ctx.sourceDeviceId, newSenderState);
+      }
+      return { success: true, output: '\n250 Message accepted for delivery.\nmail> ', deviceStates: updated, newState: newSenderState };
     }
     return { success: false, output: '\n550 Recipient mailbox unavailable.\nmail> ' };
   }

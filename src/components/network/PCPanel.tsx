@@ -346,8 +346,36 @@ export function PCPanel({
   const [serviceMailUsername, setServiceMailUsername] = useState(deviceFromTopology?.services?.mail?.username || 'user');
   const [serviceMailPassword, setServiceMailPassword] = useState(deviceFromTopology?.services?.mail?.password || 'mail123');
   const [showMailPassword, setShowMailPassword] = useState(false);
-  const [serviceMailInbox, setServiceMailInbox] = useState(deviceFromTopology?.services?.mail?.inbox || []);
-  const [serviceMailSent, setServiceMailSent] = useState(deviceFromTopology?.services?.mail?.sent || []);
+  const [serviceMailInbox, setServiceMailInbox] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`mail_inbox_${deviceId}`);
+        if (stored) return JSON.parse(stored);
+      } catch (e) {}
+    }
+    return deviceFromTopology?.services?.mail?.inbox || [];
+  });
+  const [serviceMailSent, setServiceMailSent] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`mail_sent_${deviceId}`);
+        if (stored) return JSON.parse(stored);
+      } catch (e) {}
+    }
+    return deviceFromTopology?.services?.mail?.sent || [];
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`mail_inbox_${deviceId}`, JSON.stringify(serviceMailInbox));
+    }
+  }, [serviceMailInbox, deviceId]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`mail_sent_${deviceId}`, JSON.stringify(serviceMailSent));
+    }
+  }, [serviceMailSent, deviceId]);
   const [serviceNtpEnabled, setServiceNtpEnabled] = useState(deviceFromTopology?.services?.ntp?.enabled ?? false);
   const [serviceNtpServer, setServiceNtpServer] = useState(deviceFromTopology?.services?.ntp?.server || '');
   const [serviceNtpServerError, setServiceNtpServerError] = useState('');
@@ -767,8 +795,19 @@ export function PCPanel({
       setServiceMailDomain(deviceFromTopology?.services?.mail?.domain || 'local.lan');
       setServiceMailUsername(deviceFromTopology?.services?.mail?.username || 'user');
       setServiceMailPassword(deviceFromTopology?.services?.mail?.password || 'mail123');
-      setServiceMailInbox(deviceFromTopology?.services?.mail?.inbox || []);
-      setServiceMailSent(deviceFromTopology?.services?.mail?.sent || []);
+      
+      let inboxFromStorage = null;
+      let sentFromStorage = null;
+      if (typeof window !== 'undefined') {
+        try {
+          const storedInbox = localStorage.getItem(`mail_inbox_${deviceId}`);
+          if (storedInbox) inboxFromStorage = JSON.parse(storedInbox);
+          const storedSent = localStorage.getItem(`mail_sent_${deviceId}`);
+          if (storedSent) sentFromStorage = JSON.parse(storedSent);
+        } catch(e) {}
+      }
+      setServiceMailInbox(inboxFromStorage || deviceFromTopology?.services?.mail?.inbox || []);
+      setServiceMailSent(sentFromStorage || deviceFromTopology?.services?.mail?.sent || []);
       setServiceNtpEnabled(deviceFromTopology?.services?.ntp?.enabled ?? false);
       setServiceNtpServer(deviceFromTopology?.services?.ntp?.server || '');
       setServiceNtpServerPreset(
@@ -4093,7 +4132,20 @@ export function PCPanel({
           return;
         }
         const newInboxEntry = { from: `${internalPcHostname}@${pcIP || 'local'}`, subject, body: subject, timestamp: new Date().toISOString() };
-        const existingInbox = deliveredDevice.services?.mail?.inbox || [];
+        let existingInbox = deliveredDevice.services?.mail?.inbox || [];
+        if (typeof window !== 'undefined') {
+          try {
+            const stored = localStorage.getItem(`mail_inbox_${deliveredDevice.id}`);
+            if (stored) existingInbox = JSON.parse(stored);
+          } catch(e) {}
+        }
+        const updatedInbox = [newInboxEntry, ...existingInbox];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`mail_inbox_${deliveredDevice.id}`, JSON.stringify(updatedInbox));
+        }
+        const newSentEntry = { to: recipient, subject, body: subject, timestamp: new Date().toISOString() };
+
+        // Update recipient inbox
         window.dispatchEvent(new CustomEvent('update-topology-device-config', {
           detail: {
             deviceId: deliveredDevice.id,
@@ -4103,12 +4155,33 @@ export function PCPanel({
                   enabled: true,
                   domain: deliveredDevice.services?.mail?.domain || recipientDomain,
                   username: deliveredDevice.services?.mail?.username || recipientUser,
-                  inbox: [...existingInbox, newInboxEntry]
+                  inbox: updatedInbox
                 }
               }
             }
           }
         }));
+
+        // Update sender sent box
+        setServiceMailSent((prev: any[]) => [newSentEntry, ...prev]);
+        window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+          detail: {
+            deviceId: deviceId,
+            config: {
+              services: {
+                mail: {
+                  enabled: serviceMailEnabled,
+                  domain: serviceMailDomain,
+                  username: serviceMailUsername,
+                  password: serviceMailPassword,
+                  inbox: serviceMailInbox,
+                  sent: [newSentEntry, ...serviceMailSent]
+                }
+              }
+            }
+          }
+        }));
+
         addLocalOutput('success', `Mail sent to ${recipient}.`);
       } else if (cmd === 'help' || cmd === '?') {
         addLocalOutput('output', `Available commands: ipconfig, ping, tracert, traceroute, telnet, ssh, ftp, mail, netstat, nbtstat, getmac, nslookup, curl, wget, arp, hostname, dir, ver, cls, exit, quit, snake`);
@@ -5628,13 +5701,85 @@ export function PCPanel({
                                     <Input value={serviceMailDomain} onChange={(e) => setServiceMailDomain(e.target.value)} placeholder="local.lan" />
                                   </div>
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className={`rounded-lg border p-3 ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-200 bg-slate-50'}`}>
-                                      <div className="text-xs font-bold mb-2">{language === 'tr' ? 'Gelen Kutusu' : 'Inbox'}</div>
-                                      <div className="text-[10px] opacity-60">{serviceMailInbox.length} {language === 'tr' ? 'mesaj' : 'messages'}</div>
+                                    <div className={`rounded-lg border flex flex-col ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-200 bg-slate-50'}`}>
+                                      <div className="p-3 border-b flex items-center justify-between">
+                                        <div className="text-xs font-bold">{language === 'tr' ? 'Gelen Kutusu' : 'Inbox'}</div>
+                                        <div className="text-[10px] opacity-60">{serviceMailInbox.length} {language === 'tr' ? 'mesaj' : serviceMailInbox.length === 1 ? 'message' : 'messages'}</div>
+                                      </div>
+                                      <div className="flex-1 p-2 max-h-48 overflow-y-auto custom-scrollbar space-y-2">
+                                        {serviceMailInbox.length === 0 ? (
+                                          <div className="text-[10px] text-center opacity-50 italic py-4">{language === 'tr' ? 'Kutu boş' : 'Inbox empty'}</div>
+                                        ) : (
+                                          serviceMailInbox.map((msg, idx) => (
+                                            <div key={idx} className={`p-2 rounded border text-[10px] flex items-start justify-between gap-2 ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-white'}`}>
+                                              <div className="min-w-0">
+                                                <div className="font-bold truncate" title={msg.from}>{msg.from}</div>
+                                                <div className="truncate opacity-80" title={msg.subject}>{msg.subject}</div>
+                                                {msg.timestamp && <div className="text-[8px] opacity-50 mt-1">{new Date(msg.timestamp).toLocaleString()}</div>}
+                                              </div>
+                                              <button
+                                                title={language === 'tr' ? 'Sil' : 'Delete'}
+                                                onClick={() => {
+                                                  const updated = serviceMailInbox.filter((_, i) => i !== idx);
+                                                  setServiceMailInbox(updated);
+                                                  dispatchDeviceConfig({
+                                                    services: {
+                                                      dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+                                                      http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                                      ftp: { enabled: serviceFtpEnabled },
+                                                      mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: updated, sent: serviceMailSent },
+                                                      dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                                                    }
+                                                  });
+                                                }}
+                                                className="p-1 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                              >
+                                                <Trash2 className="w-3 h-3" />
+                                              </button>
+                                            </div>
+                                          ))
+                                        )}
+                                      </div>
                                     </div>
-                                    <div className={`rounded-lg border p-3 ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-200 bg-slate-50'}`}>
-                                      <div className="text-xs font-bold mb-2">{language === 'tr' ? 'Gönderilenler' : 'Sent'}</div>
-                                      <div className="text-[10px] opacity-60">{serviceMailSent.length} {language === 'tr' ? 'mesaj' : 'messages'}</div>
+                                    <div className={`rounded-lg border flex flex-col ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-200 bg-slate-50'}`}>
+                                      <div className="p-3 border-b flex items-center justify-between">
+                                        <div className="text-xs font-bold">{language === 'tr' ? 'Gönderilenler' : 'Sent'}</div>
+                                        <div className="text-[10px] opacity-60">{serviceMailSent.length} {language === 'tr' ? 'mesaj' : serviceMailSent.length === 1 ? 'message' : 'messages'}</div>
+                                      </div>
+                                      <div className="flex-1 p-2 max-h-48 overflow-y-auto custom-scrollbar space-y-2">
+                                        {serviceMailSent.length === 0 ? (
+                                          <div className="text-[10px] text-center opacity-50 italic py-4">{language === 'tr' ? 'Kutu boş' : 'Sent empty'}</div>
+                                        ) : (
+                                          serviceMailSent.map((msg, idx) => (
+                                            <div key={idx} className={`p-2 rounded border text-[10px] flex items-start justify-between gap-2 ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-white'}`}>
+                                              <div className="min-w-0">
+                                                <div className="font-bold truncate" title={msg.to}>{msg.to}</div>
+                                                <div className="truncate opacity-80" title={msg.subject}>{msg.subject}</div>
+                                                {msg.timestamp && <div className="text-[8px] opacity-50 mt-1">{new Date(msg.timestamp).toLocaleString()}</div>}
+                                              </div>
+                                              <button
+                                                title={language === 'tr' ? 'Sil' : 'Delete'}
+                                                onClick={() => {
+                                                  const updated = serviceMailSent.filter((_, i) => i !== idx);
+                                                  setServiceMailSent(updated);
+                                                  dispatchDeviceConfig({
+                                                    services: {
+                                                      dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+                                                      http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                                      ftp: { enabled: serviceFtpEnabled },
+                                                      mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: updated },
+                                                      dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                                                    }
+                                                  });
+                                                }}
+                                                className="p-1 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                              >
+                                                <Trash2 className="w-3 h-3" />
+                                              </button>
+                                            </div>
+                                          ))
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
