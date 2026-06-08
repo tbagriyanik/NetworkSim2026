@@ -289,18 +289,26 @@ export function FirewallPanel({
                   <Zap className="w-3 h-3 text-amber-500" />
                   <span className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Hızlı Servisler' : 'Quick Services'}</span>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] px-1" onClick={() => addServiceRule('http')} disabled={isDevicePoweredOff}>HTTP</Button>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] px-1" onClick={() => addServiceRule('https')} disabled={isDevicePoweredOff}>HTTPS</Button>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] px-1" onClick={() => addServiceRule('ftp')} disabled={isDevicePoweredOff}>FTP</Button>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] px-1" onClick={() => addServiceRule('ssh')} disabled={isDevicePoweredOff}>SSH</Button>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] px-1" onClick={() => addServiceRule('telnet')} disabled={isDevicePoweredOff}>TELNET</Button>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] px-1" onClick={() => addServiceRule('smtp')} disabled={isDevicePoweredOff}>SMTP</Button>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] px-1" onClick={() => addServiceRule('dns')} disabled={isDevicePoweredOff}>DNS</Button>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] px-1" onClick={() => addServiceRule('ntp')} disabled={isDevicePoweredOff}>NTP</Button>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] px-1" onClick={() => addServiceRule('icmp')} disabled={isDevicePoweredOff}>ICMP</Button>
-                  <Button variant="destructive" size="sm" className="h-7 text-[10px] px-1" onClick={() => addServiceRule('deny-all')} disabled={isDevicePoweredOff}>DENY ALL</Button>
-                </div>
+                <Select
+                  disabled={isDevicePoweredOff}
+                  onValueChange={(v) => addServiceRule(v)}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder={t.language === 'tr' ? 'Servis seçin...' : 'Select service...'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="http">HTTP (80)</SelectItem>
+                    <SelectItem value="https">HTTPS (443)</SelectItem>
+                    <SelectItem value="ftp">FTP (21)</SelectItem>
+                    <SelectItem value="ssh">SSH (22)</SelectItem>
+                    <SelectItem value="telnet">TELNET (23)</SelectItem>
+                    <SelectItem value="smtp">SMTP (25)</SelectItem>
+                    <SelectItem value="dns">DNS (53)</SelectItem>
+                    <SelectItem value="ntp">NTP (123)</SelectItem>
+                    <SelectItem value="icmp">ICMP (*)</SelectItem>
+                    <SelectItem value="deny-all" className="text-red-500 font-bold">DENY ALL</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
