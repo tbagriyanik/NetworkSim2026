@@ -7362,24 +7362,27 @@ export function NetworkTopology({
             className={`fixed bottom-[60px] right-[10px] items-center gap-1 px-2 py-1 rounded-lg liquid-glass-strong ${isDark ? 'bg-slate-800/90' : 'bg-white/90'
               } shadow-lg flex z-40`}
           >
-            <button
-              onClick={() => setZoom((z) => {
-                const newZoom = Math.max(MIN_ZOOM, z - 0.25);
-                if (!canvasRef.current) return newZoom;
-                const rect = canvasRef.current.getBoundingClientRect();
-                const cursorX = rect.width / 2;
-                const cursorY = rect.height / 2;
-                setPan(prevPan => ({
-                  x: cursorX - (cursorX - prevPan.x) * (newZoom / z),
-                  y: cursorY - (cursorY - prevPan.y) * (newZoom / z)
-                }));
-                return newZoom;
-              })}
-              className={`w-7 h-7 flex items-center justify-center rounded ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                }`}
-            >
-              −
-            </button>
+            <TooltipWrapper title={<div className="flex items-center gap-2"><span>{t.zoomOut}</span><ShortcutBadge shortcut="-" variant="primary" /></div>}>
+              <button
+                aria-label={t.zoomOut}
+                onClick={() => setZoom((z) => {
+                  const newZoom = Math.max(MIN_ZOOM, z - 0.25);
+                  if (!canvasRef.current) return newZoom;
+                  const rect = canvasRef.current.getBoundingClientRect();
+                  const cursorX = rect.width / 2;
+                  const cursorY = rect.height / 2;
+                  setPan(prevPan => ({
+                    x: cursorX - (cursorX - prevPan.x) * (newZoom / z),
+                    y: cursorY - (cursorY - prevPan.y) * (newZoom / z)
+                  }));
+                  return newZoom;
+                })}
+                className={`w-7 h-7 flex items-center justify-center rounded ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                  }`}
+              >
+                −
+              </button>
+            </TooltipWrapper>
             <button
               type="button"
               onClick={resetView}
@@ -7395,24 +7398,27 @@ export function NetworkTopology({
             >
               {Math.round(zoom * 100)}%
             </button>
-            <button
-              onClick={() => setZoom((z) => {
-                const newZoom = Math.min(MAX_ZOOM, z + 0.25);
-                if (!canvasRef.current) return newZoom;
-                const rect = canvasRef.current.getBoundingClientRect();
-                const cursorX = rect.width / 2;
-                const cursorY = rect.height / 2;
-                setPan(prevPan => ({
-                  x: cursorX - (cursorX - prevPan.x) * (newZoom / z),
-                  y: cursorY - (cursorY - prevPan.y) * (newZoom / z)
-                }));
-                return newZoom;
-              })}
-              className={`w-7 h-7 flex items-center justify-center rounded ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
-                }`}
-            >
-              +
-            </button>
+            <TooltipWrapper title={<div className="flex items-center gap-2"><span>{t.zoomIn}</span><ShortcutBadge shortcut="+" variant="primary" /></div>}>
+              <button
+                aria-label={t.zoomIn}
+                onClick={() => setZoom((z) => {
+                  const newZoom = Math.min(MAX_ZOOM, z + 0.25);
+                  if (!canvasRef.current) return newZoom;
+                  const rect = canvasRef.current.getBoundingClientRect();
+                  const cursorX = rect.width / 2;
+                  const cursorY = rect.height / 2;
+                  setPan(prevPan => ({
+                    x: cursorX - (cursorX - prevPan.x) * (newZoom / z),
+                    y: cursorY - (cursorY - prevPan.y) * (newZoom / z)
+                  }));
+                  return newZoom;
+                })}
+                className={`w-7 h-7 flex items-center justify-center rounded ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                  }`}
+              >
+                +
+              </button>
+            </TooltipWrapper>
             <div className={`w-px h-5 ${isDark ? 'bg-slate-600' : 'bg-slate-300'} mx-1`} />
             <Tooltip>
               <TooltipTrigger asChild>
