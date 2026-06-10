@@ -4,6 +4,7 @@ import type { CanvasDevice, DeviceType } from '@/components/network/networkTopol
 import type { Translations } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Link2, RefreshCw, Leaf } from 'lucide-react';
+import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 
 interface AppFooterProps {
   t: Translations;
@@ -52,13 +53,18 @@ export function AppFooter({
           <div className="flex items-center justify-between gap-4">
             {/* Save Status */}
             <div className="flex items-center gap-3">
-              <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDark ? 'bg-zinc-900/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
-                }`}>
-                <span className={`w-2 h-2 rounded-full ${hasUnsavedChanges ? 'bg-amber-500' : 'bg-emerald-500'
-                  }`} />
-                {lastSaveTime && (
-                  <span className={`text-[11px] ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
-                    {t.lastSavedAt + lastSaveTime}
+              <TooltipWrapper title={hasUnsavedChanges ? t.unsaved : t.saved}>
+                <div
+                  role="status"
+                  aria-label={hasUnsavedChanges ? t.unsaved : t.saved}
+                  className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDark ? 'bg-zinc-900/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                    }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${hasUnsavedChanges ? 'bg-amber-500' : 'bg-emerald-500'
+                    }`} />
+                  {lastSaveTime && (
+                    <span className={`text-[11px] ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
+                      {t.lastSavedAt + lastSaveTime}
                     {projectName !== 'Untitled' && (
                       <>
                         <span className={`mx-1.5 ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>•</span>
@@ -66,8 +72,9 @@ export function AppFooter({
                       </>
                     )}
                   </span>
-                )}
-              </div>
+                  )}
+                </div>
+              </TooltipWrapper>
 
               {/* Quick Hints */}
               <div className={`hidden md:flex items-center gap-2 whitespace-nowrap`}>

@@ -249,13 +249,16 @@ export function AppHeader({
 
               {/* Settings & Theme */}
               <div className={`w-px h-4 mx-1 ${isDark ? 'bg-slate-700' : 'bg-slate-300'} hidden md:block`} />
-              <button
-                onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
-                className={cn("text-[10px] font-bold h-7 px-1.5 flex items-center gap-1 rounded transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-purple-300' : 'text-slate-700 hover:text-purple-700')}
-              >
-                <Languages className="w-3.5 h-3.5" />
-                {language.toUpperCase()}
-              </button>
+              <TooltipWrapper title={language === 'tr' ? 'Switch to English' : 'Türkçe\'ye Geç'}>
+                <button
+                  aria-label={language === 'tr' ? 'Switch to English' : 'Türkçe\'ye Geç'}
+                  onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
+                  className={cn("text-[10px] font-bold h-7 px-1.5 flex items-center gap-1 rounded transition-all ui-hover-surface", isDark ? 'text-slate-300 hover:text-purple-300' : 'text-slate-700 hover:text-purple-700')}
+                >
+                  <Languages className="w-3.5 h-3.5" />
+                  {language.toUpperCase()}
+                </button>
+              </TooltipWrapper>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
