@@ -338,6 +338,7 @@ export interface Translations {
   modeVlanLabel: string;
   model: string;
   motionYes: string;
+  motionNo: string;
   navigation: string;
   networkRefreshed: string;
   networkStatusUpdated: string;
@@ -990,6 +991,7 @@ const translations: Record<Language, Translations> = {
     modeVlanLabel: 'VLAN Yapılandırma',
     model: 'Model',
     motionYes: 'Hareket Var',
+    motionNo: 'Hareket Yok',
     navigation: 'Navigasyon',
     networkRefreshed: 'Ağ Yenilendi',
     networkStatusUpdated: 'Ağ Durumu',
@@ -1640,6 +1642,7 @@ const translations: Record<Language, Translations> = {
     modeVlanLabel: 'VLAN Config',
     model: 'Model',
     motionYes: 'Motion Yes',
+    motionNo: 'Motion No',
     navigation: 'Navigation',
     networkRefreshed: 'Network Refreshed',
     networkStatusUpdated: 'Network Status',

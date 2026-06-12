@@ -1210,12 +1210,16 @@ export function PCPanel({
       if (httpAppContent) return;
 
       const target = event.target as HTMLElement;
-      // Don't close if clicking a portal (like Select dropdown, tooltips, etc.)
+      // Don't close if clicking a portal (like Select dropdown, tooltips, etc.) or detached element
       if (
+        !target ||
+        !document.body.contains(target) ||
         target?.closest('[data-radix-portal]') ||
         target?.closest('[role="listbox"]') ||
         target?.closest('.radix-select-content') ||
-        target?.closest('.radix-popper-content')
+        target?.closest('.radix-popper-content') ||
+        target?.closest('[data-radix-select-viewport]') ||
+        target?.closest('[data-radix-select-content]')
       ) {
         return;
       }

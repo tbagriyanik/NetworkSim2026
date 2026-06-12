@@ -127,8 +127,14 @@ export function ExamModePanel({
   const [hasDragged, setHasDragged] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const dragCleanupTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-finish when time expires
+  useEffect(() => {
+    return () => {
+      if (dragCleanupTimerRef.current) clearTimeout(dragCleanupTimerRef.current);
+    };
+  }, []);
   useEffect(() => {
     if (timeLeft !== null && timeLeft <= 0 && !isFinishedState && onFinish) {
       setHasAutoFinished(true);
@@ -196,7 +202,7 @@ export function ExamModePanel({
       const handleMouseUp = () => {
         setIsDragging(false);
         dragRef.current = null;
-        setTimeout(() => setHasDragged(false), 100);
+        dragCleanupTimerRef.current = setTimeout(() => setHasDragged(false), 100);
       };
 
       window.addEventListener('mousemove', handleMouseMove);
@@ -204,6 +210,10 @@ export function ExamModePanel({
       return () => {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
+        if (animationFrameRef.current !== null) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
       };
     }
   }, [isDragging]);

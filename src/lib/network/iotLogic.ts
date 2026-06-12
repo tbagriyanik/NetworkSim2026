@@ -13,7 +13,7 @@ const getSensorReading = (sensor: string, environment: EnvironmentSettings): num
     case 'sound':
       return 40 + Math.random() * 10;
     case 'motion':
-      return Math.random() > 0.5 ? 1 : 0;
+      return 0; // Controlled by proximity in NetworkTopology
     default:
       return 0;
   }
@@ -40,6 +40,9 @@ const getRuleSensorReading = (
   }
 
   const sensorType = sensorDevice.iot?.sensorType || fallbackSensorType;
+  if (sensorType === 'motion') {
+    return sensorDevice.iot?.value ? 1 : 0;
+  }
   return getSensorReading(sensorType, environment);
 };
 

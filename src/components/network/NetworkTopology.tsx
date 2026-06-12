@@ -345,6 +345,33 @@ export function NetworkTopology({
     return () => clearInterval(interval);
   }, []);
 
+  // Motion detection state update logic
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDevices((prev) => {
+        let changed = false;
+        const next = prev.map((device) => {
+          if (device.type === 'iot' && device.iot?.sensorType === 'motion') {
+            const dWidth = getDeviceWidth(device.type);
+            const dHeight = getDeviceHeight(device.type, device.ports?.length || 0);
+            const dx = mousePosRef.current.x - device.x - (dWidth / 2);
+            const dy = mousePosRef.current.y - device.y - (dHeight / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const isDetected = distance < 75;
+
+            if (device.iot.value !== isDetected) {
+              changed = true;
+              return { ...device, iot: { ...device.iot, value: isDetected } };
+            }
+          }
+          return device;
+        });
+        return changed ? next : prev;
+      });
+    }, 250);
+    return () => clearInterval(interval);
+  }, [setDevices]);
+
   const [zoom, setZoom] = useState(zoomProp ?? DEFAULT_ZOOM);
   const [pan, setPan] = useState(panProp ?? { x: 0, y: 0 });
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 0, height: 0 });
@@ -1290,6 +1317,17 @@ export function NetworkTopology({
     const CANVAS_H_M = VIRTUAL_CANVAS_HEIGHT_MOBILE;
 
     const handleMouseMove = (e: globalThis.MouseEvent) => {
+      // Always update mouse position ref for motion detection and other proximity features
+      if (canvasRef.current) {
+        const rect = canvasRectRef.current ?? canvasRef.current.getBoundingClientRect();
+        const currentPan = panRef.current;
+        const currentZoom = zoomRef.current;
+        mousePosRef.current = {
+          x: (e.clientX - rect.left - currentPan.x) / currentZoom,
+          y: (e.clientY - rect.top - currentPan.y) / currentZoom,
+        };
+      }
+
       if (isPanningRef.current) {
         // Track velocity for momentum
         const now = Date.now();
@@ -3128,11 +3166,16 @@ export function NetworkTopology({
       case 'sound':
         return `${Math.floor(40 + Math.random() * 40)} dB`;
       case 'motion':
-        return t.motionYes;
+        const deviceWidth = getDeviceWidth(device.type);
+        const deviceHeight = getDeviceHeight(device.type, device.ports?.length || 0);
+        const dx = mousePosRef.current.x - device.x - (deviceWidth / 2);
+        const dy = mousePosRef.current.y - device.y - (deviceHeight / 2);
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < 75 ? t.motionYes : t.motionNo;
       default:
         return '-';
     }
-  }, [language, environment, getIotOpenCloseStatus, t.passive]);
+  }, [language, environment, getIotOpenCloseStatus, t.passive, t.motionYes, t.motionNo]);
 
   const getLivePortVlanText = useCallback((deviceId: string, portId: string) => {
     const device = deviceMap.get(deviceId);

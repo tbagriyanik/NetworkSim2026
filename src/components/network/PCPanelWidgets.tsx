@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { CanvasDevice } from './networkTopology.types';
 
 /** PC monitor icon */
@@ -85,6 +85,11 @@ export const IoTSensorDisplay = ({
     const isActive = device.iot?.collaborationEnabled ?? true;
     const deviceIcon = getDeviceIcon(device);
 
+    const latestValueRef = useRef(device.iot?.value);
+    useEffect(() => {
+        latestValueRef.current = device.iot?.value;
+    }, [device.iot?.value]);
+
     useEffect(() => {
         // Only show sensor data for input devices
         if (isActuator || !device?.iot?.sensorType || !device.iot?.collaborationEnabled) {
@@ -111,26 +116,29 @@ export const IoTSensorDisplay = ({
             return (seed - 1) / 2147483646;
         };
 
-        const points: number[] = [];
-        let currentVal = baseValue;
-        for (let i = 0; i < 300; i++) {
-            if (sensorType === 'motion') {
-                points.push(pseudoRandom() > 0.8 ? 1 : 0);
-            } else {
-                const walk = (pseudoRandom() - 0.5) * maxDelta;
-                currentVal += walk;
-                if (currentVal > baseValue + maxDelta * 5) currentVal -= Math.abs(walk);
-                if (currentVal < baseValue - maxDelta * 5) currentVal += Math.abs(walk);
-                points.push(currentVal);
+        setHistory(prev => {
+            if (prev.length === 300) return prev;
+            const points: number[] = [];
+            let currentVal = baseValue;
+            for (let i = 0; i < 300; i++) {
+                if (sensorType === 'motion') {
+                    points.push(latestValueRef.current ? 1 : 0);
+                } else {
+                    const walk = (pseudoRandom() - 0.5) * maxDelta;
+                    currentVal += walk;
+                    if (currentVal > baseValue + maxDelta * 5) currentVal -= Math.abs(walk);
+                    if (currentVal < baseValue - maxDelta * 5) currentVal += Math.abs(walk);
+                    points.push(currentVal);
+                }
             }
-        }
-        setHistory(points);
+            return points;
+        });
 
         const interval = setInterval(() => {
             setHistory(prev => {
                 let nextVal = 0;
                 if (sensorType === 'motion') {
-                    nextVal = Math.random() > 0.8 ? 1 : 0;
+                    nextVal = latestValueRef.current ? 1 : 0;
                 } else {
                     const walk = (Math.random() - 0.5) * maxDelta;
                     const lastVal = prev[prev.length - 1] ?? baseValue;
@@ -140,7 +148,7 @@ export const IoTSensorDisplay = ({
                 }
                 return [...prev.slice(1), nextVal];
             });
-        }, 1000);
+        }, 250);
 
         return () => clearInterval(interval);
     }, [device.id, device.iot?.sensorType, device.iot?.collaborationEnabled, environment, isActuator]);
