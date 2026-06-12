@@ -2892,7 +2892,9 @@ ${state.bannerMOTD}
       setShowMobileMenu(false);
       setConfirmDialog(null);
       setSaveDialog(null);
-      setShowPCPanel(false);
+      if (!showPCPanel) {
+        setShowPCPanel(false);
+      }
       setShowRouterPanel(false);
       setShowUnifiedDeviceModal(false);
       setShowAboutModal(false);
@@ -2904,7 +2906,7 @@ ${state.bannerMOTD}
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowUnifiedDeviceModal, setShowAboutModal, setShowProjectPicker, setShowOnboarding, setShowBasarilarim]);
+  }, [showPCPanel, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowUnifiedDeviceModal, setShowAboutModal, setShowProjectPicker, setShowOnboarding, setShowBasarilarim]);
 
   // History pushState for back button tracking
   useEffect(() => {
@@ -3867,7 +3869,9 @@ ${state.bannerMOTD}
       }
 
       if (e.key === 'Escape') {
-        closeEscLikeWindows();
+        if (!showPCPanel) {
+          closeEscLikeWindows();
+        }
       }
 
       // Ctrl Shortcuts
@@ -4724,7 +4728,7 @@ ${state.bannerMOTD}
                 </DialogHeader>
                 <div className="flex-1 overflow-hidden rounded-b-2xl">
                   <PCPanel
-                    key={`pc-panel-${showPCDeviceId}`}
+                    key="pc-panel"
                     className="h-full min-h-0"
                     deviceId={showPCDeviceId}
                     cableInfo={cableInfo}

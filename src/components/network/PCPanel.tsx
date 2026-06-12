@@ -1219,7 +1219,11 @@ export function PCPanel({
         target?.closest('.radix-select-content') ||
         target?.closest('.radix-popper-content') ||
         target?.closest('[data-radix-select-viewport]') ||
-        target?.closest('[data-radix-select-content]')
+        target?.closest('[data-radix-select-content]') ||
+        target?.closest('[data-radix-select-trigger]') ||
+        target?.closest('[role="combobox"]') ||
+        target?.closest('[data-state="open"]') ||
+        target?.closest('[role="dialog"]')
       ) {
         return;
       }
