@@ -345,30 +345,37 @@ export function NetworkTopology({
     return () => clearInterval(interval);
   }, []);
 
-  // Motion detection state update logic
+  // Motion/Sound detection state update logic
   useEffect(() => {
     const interval = setInterval(() => {
       setDevices((prev) => {
         let changed = false;
         const next = prev.map((device) => {
-          if (device.type === 'iot' && device.iot?.sensorType === 'motion') {
+          if (device.type === 'iot' && (device.iot?.sensorType === 'motion' || device.iot?.sensorType === 'sound')) {
             const dWidth = getDeviceWidth(device.type);
             const dHeight = getDeviceHeight(device.type, device.ports?.length || 0);
             const dx = mousePosRef.current.x - device.x - (dWidth / 2);
             const dy = mousePosRef.current.y - device.y - (dHeight / 2);
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const isDetected = distance < 75;
 
-            if (device.iot.value !== isDetected) {
+            let newValue: number | boolean = false;
+            
+            if (device.iot.sensorType === 'motion') {
+              newValue = distance < 75;
+            } else if (device.iot.sensorType === 'sound') {
+              newValue = distance < 150 ? Math.round(120 * (1 - distance / 150)) : 0;
+            }
+
+            if (device.iot.value !== newValue) {
               changed = true;
-              return { ...device, iot: { ...device.iot, value: isDetected } };
+              return { ...device, iot: { ...device.iot, value: newValue } };
             }
           }
           return device;
         });
         return changed ? next : prev;
       });
-    }, 250);
+    }, 100); // Increased frequency to 100ms for smoother dB transitions
     return () => clearInterval(interval);
   }, [setDevices]);
 
@@ -5084,6 +5091,27 @@ export function NetworkTopology({
                     style={{ pointerEvents: 'none' }}
                   />
                 )}
+                {device.iot?.sensorType === 'sound' && (
+                  <>
+                    <defs>
+                      <radialGradient id={`soundGradient-${device.id}`}>
+                        <stop offset="0%" stopColor="#ef4444" stopOpacity={Math.min(0.8, (Number(device.iot?.value) || 0) / 120)} />
+                        <stop offset="50%" stopColor="#ef4444" stopOpacity={Math.min(0.4, (Number(device.iot?.value) || 0) / 240)} />
+                        <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+                      </radialGradient>
+                    </defs>
+                    <circle
+                      cx={deviceWidth / 2}
+                      cy={deviceHeight / 2}
+                      r={150}
+                      fill={`url(#soundGradient-${device.id})`}
+                      stroke="rgba(239, 68, 68, 0.6)"
+                      strokeWidth="2"
+                      strokeDasharray="4 2"
+                      style={{ pointerEvents: 'none' }}
+                    />
+                  </>
+                )}
                 <path d={`M -4 -4 L ${deviceWidth + 4 - 10} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight + 4} L 6 ${deviceHeight + 4} Q -4 ${deviceHeight + 4} -4 ${deviceHeight + 4 - 10} L -4 -4 Z`} fill="none" stroke="#f97316" strokeWidth="4" opacity="0.5" filter="url(#selectionGlowFilter)" className="selection-glow" />
                 <path d={`M -4 -4 L ${deviceWidth + 4 - 10} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight + 4} L 6 ${deviceHeight + 4} Q -4 ${deviceHeight + 4} -4 ${deviceHeight + 4 - 10} L -4 -4 Z`} fill="none" stroke="#f97316" strokeWidth="2" opacity="0.35" className="selection-glow-outer" />
               </>
@@ -5101,18 +5129,34 @@ export function NetworkTopology({
           </>
         )}
         
-        {/* Radius indicator for motion sensors when not selected */}
-        {!isSelected && device.type === 'iot' && device.iot?.sensorType === 'motion' && (
-          <circle
-            cx={deviceWidth / 2}
-            cy={deviceHeight / 2}
-            r={75}
-            fill={isDark ? 'rgba(6, 182, 212, 0.05)' : 'rgba(6, 182, 212, 0.05)'}
-            stroke={isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.1)'}
-            strokeWidth="1"
-            strokeDasharray="4 2"
-            style={{ pointerEvents: 'none' }}
-          />
+        {/* Radius indicator for motion/sound sensors when not selected */}
+        {device.type === 'iot' && (
+          <>
+            {device.iot?.sensorType === 'motion' && !isSelected && (
+              <circle
+                cx={deviceWidth / 2}
+                cy={deviceHeight / 2}
+                r={75}
+                fill={isDark ? 'rgba(6, 182, 212, 0.05)' : 'rgba(6, 182, 212, 0.05)'}
+                stroke={isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.1)'}
+                strokeWidth="1"
+                strokeDasharray="4 2"
+                style={{ pointerEvents: 'none' }}
+              />
+            )}
+            {device.iot?.sensorType === 'sound' && (
+              <circle
+                cx={deviceWidth / 2}
+                cy={deviceHeight / 2}
+                r={150}
+                fill={`url(#soundGradient-${device.id})`}
+                stroke={isDark ? 'rgba(34, 197, 94, 0.3)' : 'rgba(34, 197, 94, 0.3)'}
+                strokeWidth="1"
+                strokeDasharray="4 2"
+                style={{ pointerEvents: 'none' }}
+              />
+            )}
+          </>
         )}
 
 

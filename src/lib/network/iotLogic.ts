@@ -76,12 +76,11 @@ export const processIotRules = (
 
         if (conditionMet) {
           // Parse action: can be "ON", "OFF", or "deviceId:ON", "deviceId:OFF"
-          const [targetId, targetAction] = action.includes(':')
-            ? action.split(':')
-            : [device.id, action];
-          const finalAction = targetAction || action;
+          const parts = action.split(':');
+          const targetId = parts.length === 2 ? parts[0] : device.id;
+          const finalAction = parts.length === 2 ? parts[1] : parts[0];
 
-          // Find target device
+          // Find target device in the whole network
           const targetDevice = devices.find(d => d.id === targetId);
           if (!targetDevice || targetDevice.type !== 'iot') return;
 
@@ -95,12 +94,12 @@ export const processIotRules = (
             updateDevice(targetId, {
               iot: { ...targetDevice.iot!, value: true }
             });
-            deviceUpdated = true; // Mark that a device was updated
+            deviceUpdated = true;
           } else if (finalAction === 'OFF' && isCurrentlyPoweredOn) {
             updateDevice(targetId, {
-              iot: { ...targetDevice.iot!, value: false }
+              iot: { ...targetDevice.iot!, value: false } // Force boolean false
             });
-            deviceUpdated = true; // Mark that a device was updated
+            deviceUpdated = true;
           }
         }
       });

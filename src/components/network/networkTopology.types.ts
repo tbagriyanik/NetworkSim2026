@@ -175,7 +175,8 @@ export interface CanvasDevice {
       enabled: boolean;
     }>;
     value?: number | boolean; // Current value/state of the device
-  };
+    history?: number[]; // History of values for the sensor
+    };
   firewallRules?: FirewallRule[];
 }
 
