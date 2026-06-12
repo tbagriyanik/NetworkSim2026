@@ -50,7 +50,7 @@ export interface RouterWebConfig {
  * Generates a WiFi Control Panel HTML for router/switch admin interface
  * Styled like a typical router web admin page (e.g., 192.168.1.1)
  */
-export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
+export function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string = 'wireless'): string {
   const { wifi, deviceName, deviceIp, deviceId, connectedIotDevices = [], availableIotDevices = [], username, password, language = 'en' } = config;
   const isTurkish = language === 'tr';
   const pluralize = (count: number, singular: string, plural: string) => (count === 1 ? singular : plural);
@@ -560,14 +560,14 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     </div>
     
     <div class="nav-tabs">
-      <div class="nav-tab active" onclick="showTab('wireless')">📶 ${isTurkish ? 'Kablosuz' : 'Wireless'}</div>
-      <div class="nav-tab" onclick="showTab('iot')">🛜 ${isTurkish ? 'IoT Cihazları' : 'IoT Devices'}</div>
-      <div class="nav-tab" onclick="showTab('status')">📊 ${isTurkish ? 'Durum' : 'Status'}</div>
-      <div class="nav-tab" onclick="showTab('advanced')">⚙️ ${isTurkish ? 'Gelişmiş' : 'Advanced'}</div>
+      <div class="nav-tab${activeTab === 'wireless' ? ' active' : ''}" onclick="showTab('wireless')">📶 ${isTurkish ? 'Kablosuz' : 'Wireless'}</div>
+      <div class="nav-tab${activeTab === 'iot' ? ' active' : ''}" onclick="showTab('iot')">🛜 ${isTurkish ? 'IoT Cihazları' : 'IoT Devices'}</div>
+      <div class="nav-tab${activeTab === 'status' ? ' active' : ''}" onclick="showTab('status')">📊 ${isTurkish ? 'Durum' : 'Status'}</div>
+      <div class="nav-tab${activeTab === 'advanced' ? ' active' : ''}" onclick="showTab('advanced')">⚙️ ${isTurkish ? 'Gelişmiş' : 'Advanced'}</div>
     </div>
     
     <!-- Wireless Tab -->
-    <div id="wireless-tab" class="content">
+    <div id="wireless-tab" class="content" style="display:${activeTab === 'wireless' ? 'block' : 'none'};">
       <div class="toggle-switch">
         <div>
           <h3>${isTurkish ? 'Kablosuz Radyo' : 'Wireless Radio'}</h3>
@@ -637,7 +637,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
     </div>
       
     <!-- IoT Devices Tab -->
-      <div id="iot-tab" class="content" style="display:none;">
+      <div id="iot-tab" class="content" style="display:${activeTab === 'iot' ? 'block' : 'none'};">
         <h2 class="panel-title" style="margin-bottom:20px;">🛜 ${isTurkish ? 'Bağlı IoT Cihazları' : 'Connected IoT Devices'}</h2>
         
         <div class="status-card" style="margin-bottom:20px;">
@@ -657,7 +657,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
             const safeIotIp = sanitizeHTML(device.ip || '');
             const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
             return `
-            <div class="iot-device-card connected" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:1px solid #e9ecef;cursor:pointer;" onclick="focusDeviceInTopology(${jsIotId})">
+            <div class="iot-device-card connected" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:1px solid #e9ecef;cursor:pointer;">
               <div style="display:flex;align-items:center;gap:12px;">               
                 <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, ${device.isWired ? '#22c55e 0%, #16a34a 100%' : '#16cbf9 0%, #0ea5e9 100%'});display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
                   ${device.isWired ? '🔌' : '🛜'}
@@ -702,9 +702,9 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
             const safeIotId = sanitizeHTML(device.id);
             const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
             return `
-            <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:2px solid #e9ecef;cursor:pointer;transition:all 0.3s;" onclick="event.stopPropagation(); focusDeviceInTopology(${jsIotId}); toggleIotDeviceSelection(${jsIotId})">
+            <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:2px solid #e9ecef;cursor:pointer;transition:all 0.3s;" onclick="event.stopPropagation(); toggleIotDeviceSelection(${jsIotId})">
               <div style="display:flex;align-items:center;gap:12px;">
-                <input type="checkbox" class="iot-checkbox" data-device-id="${safeIotId}" style="width:20px;height:20px;cursor:pointer;" onclick="event.stopPropagation(); focusDeviceInTopology(${jsIotId}); toggleIotDeviceSelection(${jsIotId})">
+                <input type="checkbox" class="iot-checkbox" data-device-id="${safeIotId}" style="width:20px;height:20px;cursor:pointer;" onclick="event.stopPropagation(); toggleIotDeviceSelection(${jsIotId})">
                 <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
                   🛜
                 </div>
@@ -726,9 +726,9 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
             const safeIotId = sanitizeHTML(device.id);
             const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
             return `
-            <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:2px solid #e9ecef;cursor:pointer;transition:all 0.3s;" onclick="event.stopPropagation(); focusDeviceInTopology(${jsIotId}); toggleIotDeviceSelection(${jsIotId})">
+            <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:2px solid #e9ecef;cursor:pointer;transition:all 0.3s;" onclick="event.stopPropagation(); toggleIotDeviceSelection(${jsIotId})">
               <div style="display:flex;align-items:center;gap:12px;">
-                <input type="checkbox" class="iot-checkbox" data-device-id="${safeIotId}" style="width:20px;height:20px;cursor:pointer;" onclick="event.stopPropagation(); focusDeviceInTopology(${jsIotId}); toggleIotDeviceSelection(${jsIotId})">
+                <input type="checkbox" class="iot-checkbox" data-device-id="${safeIotId}" style="width:20px;height:20px;cursor:pointer;" onclick="event.stopPropagation(); toggleIotDeviceSelection(${jsIotId})">
                 <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
                   🛜
                 </div>
@@ -761,7 +761,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       </div>
       
       <!-- Status Tab -->
-      <div id="status-tab" class="content" style="display:none;">
+      <div id="status-tab" class="content" style="display:${activeTab === 'status' ? 'block' : 'none'};">
         <h2 class="panel-title">${isTurkish ? 'Ağ Durumu' : 'Network Status'}</h2>
         <div class="grid-2" style="margin-bottom:20px;">
           <div class="status-card">
@@ -791,7 +791,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig): string {
       </div>
       
       <!-- Advanced Tab -->
-      <div id="advanced-tab" class="content" style="display:none;">
+      <div id="advanced-tab" class="content" style="display:${activeTab === 'advanced' ? 'block' : 'none'};">
         <h2 class="panel-title">${isTurkish ? 'Gelişmiş Ayarlar' : 'Advanced Settings'}</h2>
         <p style="color:#6c757d;margin-bottom:20px;">${isTurkish ? 'İleri düzey kullanıcılar için gelişmiş yapılandırma seçenekleri.' : 'Advanced configuration options for power users.'}</p>
         <div style="background:#fff3cd;padding:15px;border-radius:10px;border:1px solid #ffc107;">
@@ -925,6 +925,8 @@ window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error'
           el.classList.remove('active');
         }
       });
+      // Notify parent to remember active tab on refresh
+      try { window.parent.postMessage({ type: 'router-admin-tab-change', tab: tabName }, '*'); } catch(e) {}
     }
     window.showTab = showTab;
     
@@ -1132,7 +1134,7 @@ export function getRouterWifiConfig(device: CanvasDevice, state?: SwitchState): 
 /**
  * Generate router admin page content for HTTP access
  */
-export function generateRouterAdminPage(device: CanvasDevice, language: string, state?: SwitchState, connectedIotDevices?: ConnectedIoTDevice[], availableIotDevices?: AvailableIoTDevice[], username?: string, password?: string): string {
+export function generateRouterAdminPage(device: CanvasDevice, language: string, state?: SwitchState, connectedIotDevices?: ConnectedIoTDevice[], availableIotDevices?: AvailableIoTDevice[], username?: string, password?: string, activeTab?: string): string {
   const interfaceIp = state?.ports ? Object.values(state.ports).find((p: any) => p?.ipAddress && !p.shutdown)?.ipAddress : undefined;
   const config: RouterWebConfig = {
     wifi: getRouterWifiConfig(device, state),
@@ -1147,5 +1149,5 @@ export function generateRouterAdminPage(device: CanvasDevice, language: string, 
     language: language,
   };
 
-  return generateWifiControlPanelHTML(config);
+  return generateWifiControlPanelHTML(config, activeTab);
 }

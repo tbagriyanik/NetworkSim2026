@@ -1199,6 +1199,7 @@ export function PCPanel({
   const [httpAppUrl, setHttpAppUrl] = useState<string>('');
   const [httpAppTitle, setHttpAppTitle] = useState<string>('HTTP Page');
   const [httpAppDeviceId, setHttpAppDeviceId] = useState<string | null>(null);
+  const routerActiveTabRef = useRef<string>('wireless');
   const [showUrlSuggestions, setShowUrlSuggestions] = useState<boolean>(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number>(-1);
 
@@ -2465,6 +2466,12 @@ export function PCPanel({
         return;
       }
 
+      // Track which tab is active in the router admin page
+      if (data.type === 'router-admin-tab-change') {
+        routerActiveTabRef.current = data.tab || 'wireless';
+        return;
+      }
+
       // For WiFi save operations, require httpAppDeviceId match
       const isRouterSpecificMessage = data.type === 'router-admin-save-wifi';
       if (isRouterSpecificMessage && httpAppDeviceId && data.deviceId && data.deviceId !== httpAppDeviceId) {
@@ -2668,7 +2675,7 @@ export function PCPanel({
             const runtimeState = deviceStates?.get(httpAppDeviceId);
             const connectedIot = getConnectedIotDevices(httpAppDeviceId);
             const availableIot = getAvailableIotDevices(httpAppDeviceId);
-            const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot);
+            const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot, undefined, undefined, routerActiveTabRef.current);
             setHttpAppContent(refreshed);
           }
         }
@@ -2759,7 +2766,7 @@ export function PCPanel({
             const runtimeState = deviceStates?.get(httpAppDeviceId);
             const connectedIot = getConnectedIotDevices(httpAppDeviceId);
             const availableIot = getAvailableIotDevices(httpAppDeviceId);
-            const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot);
+            const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot, undefined, undefined, routerActiveTabRef.current);
             setHttpAppContent(refreshed);
           }
         }
@@ -2773,7 +2780,7 @@ export function PCPanel({
             const runtimeState = deviceStates?.get(httpAppDeviceId);
             const connectedIot = getConnectedIotDevices(httpAppDeviceId);
             const availableIot = getAvailableIotDevices(httpAppDeviceId);
-            const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot);
+            const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot, undefined, undefined, routerActiveTabRef.current);
             setHttpAppContent(refreshed);
           }
         }
@@ -2867,7 +2874,7 @@ export function PCPanel({
     const runtimeState = deviceStates?.get(httpAppDeviceId);
     const connectedIot = getConnectedIotDevices(httpAppDeviceId);
     const availableIot = getAvailableIotDevices(httpAppDeviceId);
-    const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot);
+    const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot, undefined, undefined, routerActiveTabRef.current);
     setHttpAppContent(refreshed);
   }, [httpAppDeviceId, topologyDevices, deviceStates, getConnectedIotDevices, getAvailableIotDevices]);
 
