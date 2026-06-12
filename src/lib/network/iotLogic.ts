@@ -11,7 +11,7 @@ const getSensorReading = (sensor: string, environment: EnvironmentSettings): num
     case 'light':
       return environment.light;
     case 'sound':
-      return 40 + Math.random() * 10;
+      return 0;
     case 'motion':
       return 0; // Controlled by proximity in NetworkTopology
     default:
@@ -22,9 +22,21 @@ const getSensorReading = (sensor: string, environment: EnvironmentSettings): num
 const getRuleSensorReading = (
   sensorReference: string,
   devices: CanvasDevice[],
-  environment: EnvironmentSettings
+  environment: EnvironmentSettings,
+  currentDeviceId?: string
 ): number => {
   if (!sensorReference.startsWith('iot:')) {
+    if (currentDeviceId) {
+      const currentDevice = devices.find(d => d.id === currentDeviceId);
+      if (currentDevice?.type === 'iot' && currentDevice.iot?.sensorType === sensorReference) {
+        if (sensorReference === 'motion') {
+          return currentDevice.iot?.value ? 1 : 0;
+        }
+        if (sensorReference === 'sound') {
+          return (currentDevice.iot?.value as number) ?? 0;
+        }
+      }
+    }
     return getSensorReading(sensorReference, environment);
   }
 
@@ -42,6 +54,9 @@ const getRuleSensorReading = (
   const sensorType = sensorDevice.iot?.sensorType || fallbackSensorType;
   if (sensorType === 'motion') {
     return sensorDevice.iot?.value ? 1 : 0;
+  }
+  if (sensorType === 'sound') {
+    return (sensorDevice.iot?.value as number) ?? 0;
   }
   return getSensorReading(sensorType, environment);
 };
@@ -65,7 +80,7 @@ export const processIotRules = (
         const [sensor, operator, thresholdStr] = condition.split(' ');
         const threshold = parseFloat(thresholdStr);
 
-        const sensorValue = getRuleSensorReading(sensor, devices, environment);
+        const sensorValue = getRuleSensorReading(sensor, devices, environment, device.id);
 
         let conditionMet = false;
         switch (operator) {

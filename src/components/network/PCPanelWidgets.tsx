@@ -123,6 +123,8 @@ export const IoTSensorDisplay = ({
             for (let i = 0; i < 300; i++) {
                 if (sensorType === 'motion') {
                     points.push(latestValueRef.current ? 1 : 0);
+                } else if (sensorType === 'sound') {
+                    points.push((latestValueRef.current as number) ?? 0);
                 } else {
                     const walk = (pseudoRandom() - 0.5) * maxDelta;
                     currentVal += walk;
@@ -139,6 +141,8 @@ export const IoTSensorDisplay = ({
                 let nextVal = 0;
                 if (sensorType === 'motion') {
                     nextVal = latestValueRef.current ? 1 : 0;
+                } else if (sensorType === 'sound') {
+                    nextVal = (latestValueRef.current as number) ?? 0;
                 } else {
                     const walk = (Math.random() - 0.5) * maxDelta;
                     const lastVal = prev[prev.length - 1] ?? baseValue;

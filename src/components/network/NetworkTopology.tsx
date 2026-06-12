@@ -359,7 +359,7 @@ export function NetworkTopology({
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             let newValue: number | boolean = false;
-            
+
             if (device.iot.sensorType === 'motion') {
               newValue = distance < 75;
             } else if (device.iot.sensorType === 'sound') {
@@ -1812,7 +1812,7 @@ export function NetworkTopology({
       // Update parent component with the first selected device
       const firstSelectedDevice = deviceMap.get(newSelectedIds[0]);
       if (firstSelectedDevice && newSelectedIds.length > 0) {
-        onDeviceSelect(firstSelectedDevice.type === 'router' ? 'router' : firstSelectedDevice.type, newSelectedIds[0], undefined, firstSelectedDevice.name);
+        onDeviceSelect(firstSelectedDevice.type, newSelectedIds[0], undefined, firstSelectedDevice.name);
       }
 
       setSelectedDeviceIds(newSelectedIds);
@@ -3171,7 +3171,9 @@ export function NetworkTopology({
       case 'light':
         return `${(baseLight + lightFluctuation).toFixed(0)} lx`;
       case 'sound':
-        return `${Math.floor(40 + Math.random() * 40)} dB`;
+        // Ses sensörü: device.iot.value'dan gerçek dB değerini al
+        const sounddB = typeof device.iot?.value === 'number' ? device.iot.value : 0;
+        return `${sounddB} dB`;
       case 'motion':
         const deviceWidth = getDeviceWidth(device.type);
         const deviceHeight = getDeviceHeight(device.type, device.ports?.length || 0);
@@ -5091,27 +5093,6 @@ export function NetworkTopology({
                     style={{ pointerEvents: 'none' }}
                   />
                 )}
-                {device.iot?.sensorType === 'sound' && (
-                  <>
-                    <defs>
-                      <radialGradient id={`soundGradient-${device.id}`}>
-                        <stop offset="0%" stopColor="#ef4444" stopOpacity={Math.min(0.8, (Number(device.iot?.value) || 0) / 120)} />
-                        <stop offset="50%" stopColor="#ef4444" stopOpacity={Math.min(0.4, (Number(device.iot?.value) || 0) / 240)} />
-                        <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
-                      </radialGradient>
-                    </defs>
-                    <circle
-                      cx={deviceWidth / 2}
-                      cy={deviceHeight / 2}
-                      r={150}
-                      fill={`url(#soundGradient-${device.id})`}
-                      stroke="rgba(239, 68, 68, 0.6)"
-                      strokeWidth="2"
-                      strokeDasharray="4 2"
-                      style={{ pointerEvents: 'none' }}
-                    />
-                  </>
-                )}
                 <path d={`M -4 -4 L ${deviceWidth + 4 - 10} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight + 4} L 6 ${deviceHeight + 4} Q -4 ${deviceHeight + 4} -4 ${deviceHeight + 4 - 10} L -4 -4 Z`} fill="none" stroke="#f97316" strokeWidth="4" opacity="0.5" filter="url(#selectionGlowFilter)" className="selection-glow" />
                 <path d={`M -4 -4 L ${deviceWidth + 4 - 10} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight + 4} L 6 ${deviceHeight + 4} Q -4 ${deviceHeight + 4} -4 ${deviceHeight + 4 - 10} L -4 -4 Z`} fill="none" stroke="#f97316" strokeWidth="2" opacity="0.35" className="selection-glow-outer" />
               </>
@@ -5128,11 +5109,11 @@ export function NetworkTopology({
             )}
           </>
         )}
-        
-        {/* Radius indicator for motion/sound sensors when not selected */}
+
+        {/* Radius indicator for motion/sound sensors - ALWAYS visible */}
         {device.type === 'iot' && (
           <>
-            {device.iot?.sensorType === 'motion' && !isSelected && (
+            {device.iot?.sensorType === 'motion' && (
               <circle
                 cx={deviceWidth / 2}
                 cy={deviceHeight / 2}
@@ -5145,16 +5126,28 @@ export function NetworkTopology({
               />
             )}
             {device.iot?.sensorType === 'sound' && (
-              <circle
-                cx={deviceWidth / 2}
-                cy={deviceHeight / 2}
-                r={150}
-                fill={`url(#soundGradient-${device.id})`}
-                stroke={isDark ? 'rgba(34, 197, 94, 0.3)' : 'rgba(34, 197, 94, 0.3)'}
-                strokeWidth="1"
-                strokeDasharray="4 2"
-                style={{ pointerEvents: 'none' }}
-              />
+              <>
+                {/* Dynamic sound radius based on measured dB value */}
+                {(() => {
+                  const dBValue = typeof device.iot?.value === 'number' ? device.iot.value : 0;
+                  // Normalize dB value (0-120 dB) to radius (50-200px)
+                  const radius = Math.min(150, 50 + (dBValue / 120) * 100);
+                  const opacity = 0.1 + (dBValue / 120) * 0.3; // 0.1 to 0.4
+
+                  return (
+                    <circle
+                      cx={deviceWidth / 2}
+                      cy={deviceHeight / 2}
+                      r={radius}
+                      fill={isDark ? `rgba(34, 197, 94, ${opacity * 0.5})` : `rgba(34, 197, 94, ${opacity * 0.3})`}
+                      stroke={isDark ? `rgba(34, 197, 94, ${opacity})` : `rgba(34, 197, 94, ${opacity * 0.8})`}
+                      strokeWidth="1"
+                      strokeDasharray="4 2"
+                      style={{ pointerEvents: 'none' }}
+                    />
+                  );
+                })()}
+              </>
             )}
           </>
         )}
