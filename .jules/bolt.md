@@ -9,3 +9,7 @@
 ## 2026-06-05 - O(V+C) Network Connectivity Simulation
 **Learning:** The `checkConnectivity` function was performing multiple $O(N)$ and $O(C)$ scans inside its BFS loop and helper functions, leading to $O(V \times E \times N)$ complexity. Specifically, helper functions like `isPortShutdown` were calling `devices.find` repeatedly.
 **Action:** Transition from array scans to index-based lookups. Pre-calculate `ipMap` and `adjList` once at the start of simulation. Pass pre-resolved device and connection objects through the call stack to helper functions to ensure $O(1)$ access. This ensures simulation performance scales linearly with topology size $O(V+C)$.
+
+## 2026-06-06 - WeakMap Caching for Immutable State Conversion
+**Learning:** The application frequently converts a plain object Record (immutable Zustand state) to a Map for O(1) lookups in connectivity hot paths. This conversion was happening thousands of times per interaction frame, leading to excessive O(N) overhead and garbage collection pressure.
+**Action:** Use a `WeakMap` to cache the Map representation of the Record. Since Record references are stable in immutable state until a change occurs, we can reuse the pre-built Map instance. This transforms subsequent resolutions into O(1) operations and eliminates redundant memory allocations.
