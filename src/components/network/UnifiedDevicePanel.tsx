@@ -171,13 +171,29 @@ export function UnifiedDevicePanel({
                             </Tabs>
 
                             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 justify-center px-1 sm:px-4">
-                                <div className={cn(
-                                    "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium max-w-full truncate",
-                                    isDark ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-100 border-slate-200 text-slate-600"
-                                )}>
-                                    <div className={cn("w-2 h-2 rounded-full shrink-0", isOffline ? "bg-red-500" : "bg-green-500")} />
-                                    <span className="truncate">{deviceName}</span>
-                                    <span className="opacity-50 text-[10px] uppercase">{deviceType}</span>
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className={cn(
+                                        "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium max-w-full truncate",
+                                        isDark ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-100 border-slate-200 text-slate-600"
+                                    )}>
+                                        <div className={cn("w-2 h-2 rounded-full shrink-0", isOffline ? "bg-red-500" : "bg-green-500")} />
+                                        <span className="truncate">{deviceName}</span>
+                                        <span className="opacity-50 text-[10px] uppercase">{deviceType}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-[10px] sm:text-xs">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="opacity-60">{t.deviceStatus}:</span>
+                                            <span className={cn("font-semibold", isOffline ? "text-red-500" : "text-green-500")}>
+                                                {isOffline ? 'PASİF' : 'AKTİF'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="opacity-60">{t.powerStatus}:</span>
+                                            <span className={cn("font-semibold", isOffline ? "text-red-500" : "text-green-500")}>
+                                                {isOffline ? 'KAPALI' : 'AÇIK'}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

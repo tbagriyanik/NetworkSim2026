@@ -171,6 +171,7 @@ export interface Translations {
   deviceInformation: string;
   deviceName: string;
   deviceNameLabel: string;
+  deviceStatus: string;
   deviceOff: string;
   deviceTasksAndConfig: string;
   devices: string;
@@ -430,6 +431,7 @@ export interface Translations {
   power: string;
   powerOff: string;
   powerOn: string;
+  powerStatus: string;
   pressEnterToConfirm: string;
   processing: string;
   progress: string;
@@ -824,6 +826,7 @@ const translations: Record<Language, Translations> = {
     deviceInformation: 'Cihaz Bilgileri',
     deviceName: 'Cihaz Adı',
     deviceNameLabel: 'Cihaz Adı',
+    deviceStatus: 'Cihaz Durumu',
     deviceOff: 'Cihaz Kapalı',
     deviceTasksAndConfig: 'Cihaz görevleri ve yapılandırma görevleri',
     devices: 'Cihazlar',
@@ -1083,6 +1086,7 @@ const translations: Record<Language, Translations> = {
     power: 'Güç',
     powerOff: 'Gücü Kapat',
     powerOn: 'Gücü Aç',
+    powerStatus: 'Güç Durumu',
     pressEnterToConfirm: 'Devam etmek için Enter\'a basın',
     processing: 'İşleniyor...',
     progress: 'İlerleme',
@@ -1475,6 +1479,7 @@ const translations: Record<Language, Translations> = {
     deviceInformation: 'Device Information',
     deviceName: 'Device Name',
     deviceNameLabel: 'Device Name',
+    deviceStatus: 'Device Status',
     deviceOff: 'Device Off',
     deviceTasksAndConfig: 'Device tasks and configuration tasks',
     devices: 'Devices',
@@ -1734,6 +1739,7 @@ const translations: Record<Language, Translations> = {
     power: 'Power',
     powerOff: 'Power Off',
     powerOn: 'Power On',
+    powerStatus: 'Power Status',
     pressEnterToConfirm: 'Press Enter to confirm',
     processing: 'Processing...',
     progress: 'Progress',

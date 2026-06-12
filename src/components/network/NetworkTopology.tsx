@@ -5828,7 +5828,7 @@ export function NetworkTopology({
                 );
               case 'sound':
                 return (
-                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#a855f7' : '#9333ea'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
+                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#d8b4fe' : '#9333ea'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                     <tspan x={deviceWidth / 2} dy="0">Sound:</tspan>
                     <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                   </text>
