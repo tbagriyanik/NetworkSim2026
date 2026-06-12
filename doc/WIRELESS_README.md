@@ -154,5 +154,5 @@ Sorularınız veya sorunlarınız için:
 ---
 
 **Versiyon:** 1.0
-**Tarih:** 2026-05-20
+**Tarih:** 2026-06-12
 **Durum:** ✅ Hazır

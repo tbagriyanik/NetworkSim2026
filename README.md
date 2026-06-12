@@ -1,9 +1,9 @@
 # Network Simulator 2026
 
-![Version](https://img.shields.io/badge/version-1.6.6-blue)
+![Version](https://img.shields.io/badge/version-1.7.0-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%206.0%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-108740-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-102111-lightgrey)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows. TR/EN interface support.
 
@@ -11,10 +11,19 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 ---
 
-## Latest Updates (2026-05-20)
+## Latest Updates
 
 | English | Türkçe |
 | --- | --- |
+| **FTP Services**: FTP client/server configuration, file upload, and file transfer simulation across devices. | **FTP Servisleri**: FTP istemci/sunucu yapılandırması, dosya yükleme ve cihazlar arası dosya aktarım simülasyonu. |
+| **NTP Time Sync**: NTP server/client configuration for network-wide time synchronization. | **NTP Zaman Senkronizasyonu**: Ağ genelinde zaman senkronizasyonu için NTP sunucu/istemci yapılandırması. |
+| **Mail Services**: Email sending, receiving, and mailbox simulation within the network topology. | **Mail Servisleri**: Ağ topolojisi içinde e-posta gönderme, alma ve posta kutusu simülasyonu. |
+| **Firewall Service Integration**: Firewall rules with integrated service selection for traffic filtering. | **Güvenlik Duvarı Servis Entegrasyonu**: Trafik filtreleme için entegre servis seçimli güvenlik duvarı kuralları. |
+| **Wireless Dashboard**: Dedicated wireless device home page with SSID and security management. | **Kablosuz Gösterge Paneli**: SSID ve güvenlik yönetimi ile özel kablosuz cihaz ana sayfası. |
+| **IoT Panel Tabs**: Tabbed IoT device panel for managing sensors, actuators, and device settings. | **IoT Panel Sekmeleri**: Sensörler, aktüatörler ve cihaz ayarlarını yönetmek için sekmeli IoT cihaz paneli. |
+| **Sensor Enhancements**: Motion sensor radius visualization, mouse-adjustable sound sensor range, lamp icon. | **Sensör Geliştirmeleri**: Hareket sensörü yarıçap görselleştirmesi, fare ayarlanabilir ses sensörü menzili, lamba simgesi. |
+| **Window Resizable Notes**: Resizable windows with collapsible sections and note-taking capability. | **Pencere Notları**: Daraltılabilir bölümler ve not alma özelliği ile yeniden boyutlandırılabilir pencereler. |
+| **API Rate Limiting**: Contact form API rate limiting for improved security and abuse prevention. | **API Hız Sınırlama**: Gelişmiş güvenlik ve kötüye kullanım önleme için iletişim formu API hız sınırlaması. |
 | **Browser Window ESC Close**: Web browser window closes with ESC key without affecting PC panel. | **Tarayıcı Penceresi ESC Kapatma**: Web tarayıcı penceresi ESC tuşu ile kapatılır, PC paneli etkilenmez. |
 | **Window Snap Removal**: PC, Switch, Router, and Firewall windows no longer snap to screen edges during drag/resize. | **Pencere Snap Kaldırma**: PC, Switch, Router ve Firewall pencereleri sürükleme/yeniden boyutlandırma sırasında ekran kenarlarına snap olmaz. |
 | **PC History Cleanup**: New projects and opened projects no longer inherit previous PC cmd/CLI history. | **PC Geçmiş Temizliği**: Yeni projeler ve açılan projeler artık önceki PC cmd/CLI geçmişini almaz. |
@@ -40,6 +49,9 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | **Firewall / ACL**: Access control lists, firewall rules, traffic filtering | **Güvenlik Duvarı / ACL**: Erişim kontrol listeleri, güvenlik duvarı kuralları, trafik filtreleme |
 | **DHCP**: DHCP server & client configuration, address pools, lease management | **DHCP**: DHCP sunucu ve istemci yapılandırması, adres havuzları, kira yönetimi |
 | **DNS**: DNS configuration, name resolution | **DNS**: DNS yapılandırması, ad çözümleme |
+| **FTP**: FTP server & client, file upload, file transfer simulation | **FTP**: FTP sunucu ve istemci, dosya yükleme, dosya aktarım simülasyonu |
+| **NTP**: NTP server & client, time synchronization across devices | **NTP**: NTP sunucu ve istemci, cihazlar arası zaman senkronizasyonu |
+| **Mail**: SMTP/IMAP simulation, email send/receive, mailbox management | **Mail**: SMTP/IMAP simülasyonu, e-posta gönderme/alma, posta kutusu yönetimi |
 | **ARP**: ARP table management, MAC-to-IP resolution | **ARP**: ARP tablosu yönetimi, MAC-IP çözümleme |
 | **Link-Local**: Automatic link-local addressing (169.254.x.x) | **Link-Yerel**: Otomatik link-yerel adresleme (169.254.x.x) |
 | **Connectivity Testing**: Ping, traceroute, extended ping | **Bağlantı Testi**: Ping, traceroute, genişletilmiş ping |
@@ -125,10 +137,10 @@ npm install && npm run dev
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
 | Total Lines / Toplam Satır | 108,740 |
-| Source Code Lines / Kaynak Kod Satırı | 102,545 |
-| Documentation Lines / Dokümantasyon Satırı | 4,410 |
+| Source Code Lines / Kaynak Kod Satırı | 102,111 |
+| Documentation Lines / Dokümantasyon Satırı | 6,697 |
 | Other Documentation MD / Diğer Doküman MD | 1,785 |
-| Source Files / Kaynak Dosya | 270 |
+| Source Files / Kaynak Dosya | 271 |
 | Documentation Files / Dokümantasyon Dosya | 16 |
 | Example Projects / Örnek Proje | 40 |
 | Guided Lessons / Rehberli Ders | 12 |
