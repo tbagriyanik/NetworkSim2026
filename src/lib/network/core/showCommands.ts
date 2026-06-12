@@ -1482,22 +1482,16 @@ function cmdShowClock(
       if (!reachable.success) continue;
     }
 
-    const matchedDevice = ctx.devices?.find((d) => d.ip === serverIp);
-    const matchedState = matchedDevice ? ctx.deviceStates?.get(matchedDevice.id) : undefined;
-    const stateNtp = matchedState?.services?.ntp;
-    const ntpService = matchedDevice?.services?.ntp?.enabled ? matchedDevice.services.ntp : (stateNtp?.enabled ? stateNtp : undefined);
-    if (ntpService?.enabled) {
-      // NTP server is reachable and enabled – return real current time (stable sync)
-      const now = new Date();
-      const time = now.toTimeString().slice(0, 8);
-      const day = String(now.getDate()).padStart(2, '0');
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const year = now.getFullYear();
-      return {
-        success: true,
-        output: `\n*${time} UTC ${day}.${month}.${year}\n`
-      };
-    }
+    // NTP server reachable – return synced time
+    const now = new Date();
+    const time = now.toTimeString().slice(0, 8);
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    return {
+      success: true,
+      output: `\n*${time} UTC ${day}.${month}.${year}\n`
+    };
   }
 
   const localNtp = state.services?.ntp;

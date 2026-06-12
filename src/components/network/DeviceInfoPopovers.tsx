@@ -200,7 +200,10 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
                     {pc?.services?.mail?.enabled && (
                       <span className="px-1 py-0.5 rounded bg-rose-500/20 text-rose-500 text-xs font-bold border border-rose-500/20">MAIL</span>
                     )}
-                    {!pc?.services?.http?.enabled && !pc?.services?.dns?.enabled && !pc?.services?.dhcp?.enabled && !pc?.services?.ftp?.enabled && !pc?.services?.mail?.enabled && (
+                    {pc?.services?.ntp?.enabled && (
+                      <span className="px-1 py-0.5 rounded bg-indigo-500/20 text-indigo-500 text-xs font-bold border border-indigo-500/20">NTP</span>
+                    )}
+                    {!pc?.services?.http?.enabled && !pc?.services?.dns?.enabled && !pc?.services?.dhcp?.enabled && !pc?.services?.ftp?.enabled && !pc?.services?.mail?.enabled && !pc?.services?.ntp?.enabled && (
                       <span className="text-xs opacity-40 italic">{t.none}</span>
                     )}
                   </div>

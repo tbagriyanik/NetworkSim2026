@@ -2790,6 +2790,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       enabled: true,
       records: [
         { domain: 'www.lab.local', address: '192.168.1.20' },
+        { domain: 'web.lab.local', address: '192.168.1.20' },
         { domain: 'ftp.lab.local', address: '192.168.1.40' },
         { domain: 'mail.lab.local', address: '192.168.1.50' }
       ]

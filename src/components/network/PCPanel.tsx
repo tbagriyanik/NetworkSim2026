@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio, LayoutGrid, ArrowLeft, SlidersHorizontal } from 'lucide-react';
+import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio, LayoutGrid, ArrowLeft, SlidersHorizontal, Reply, Send } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
@@ -376,6 +376,8 @@ export function PCPanel({
       localStorage.setItem(`mail_sent_${deviceId}`, JSON.stringify(serviceMailSent));
     }
   }, [serviceMailSent, deviceId]);
+  const [replyTo, setReplyTo] = useState<any>(null);
+  const [replyBody, setReplyBody] = useState('');
   const [serviceNtpEnabled, setServiceNtpEnabled] = useState(deviceFromTopology?.services?.ntp?.enabled ?? false);
   const [serviceNtpServer, setServiceNtpServer] = useState(deviceFromTopology?.services?.ntp?.server || '');
   const [serviceNtpServerError, setServiceNtpServerError] = useState('');
@@ -580,20 +582,14 @@ export function PCPanel({
     if (!isValidIpAddress(serverIp)) return null;
     const canReach = checkConnectivity(deviceId, serverIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'any' });
     if (!canReach.success) return null;
-    const matchedDevice = topologyDevices.find((device) => device.ip === serverIp && device.services?.ntp?.enabled);
-    const matchedState = matchedDevice ? deviceStates?.get(matchedDevice.id) : undefined;
-    const stateNtp = matchedState?.services?.ntp;
-    const ntpService = stateNtp?.enabled ? stateNtp : matchedDevice?.services?.ntp;
-    if (!ntpService?.enabled) return null;
 
-    // NTP server is reachable – always return real current time for stable sync
     const now = new Date();
     return {
       date: now.toISOString().slice(0, 10),
       time: now.toTimeString().slice(0, 8),
       realtime: true,
     };
-  }, [deviceStates, deviceId, isValidIpAddress, serviceNtpEnabled, serviceNtpServer, topologyConnections, topologyDevices, language]);
+  }, [deviceId, isValidIpAddress, serviceNtpEnabled, serviceNtpServer, topologyConnections, topologyDevices, language]);
 
   useEffect(() => {
     if (!ntpSyncState) {
@@ -622,14 +618,9 @@ export function PCPanel({
     const canReach = checkConnectivity(deviceId, normalized, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'any' });
     if (!canReach.success) return null;
 
-    const matchedDevice = topologyDevices.find((device) => device.ip === normalized && device.services?.ntp?.enabled);
-    const matchedState = matchedDevice ? deviceStates?.get(matchedDevice.id) : undefined;
-    const stateNtp = matchedState?.services?.ntp;
-    const ntpService = stateNtp?.enabled ? stateNtp : matchedDevice?.services?.ntp;
-    if (!ntpService?.enabled) return null;
-
-    const nextDate = ntpService.date || new Date().toISOString().slice(0, 10);
-    const nextTime = ntpService.time || new Date().toTimeString().slice(0, 8);
+    const now = new Date();
+    const nextDate = now.toISOString().slice(0, 10);
+    const nextTime = now.toTimeString().slice(0, 8);
     const syncedDateTime = new Date(`${nextDate}T${nextTime}`);
     if (!Number.isNaN(syncedDateTime.getTime())) {
       setCurrentTime(syncedDateTime);
@@ -648,7 +639,7 @@ export function PCPanel({
               : 'custom'
     );
     return { date: nextDate, time: nextTime };
-  }, [deviceStates, deviceId, isValidIpAddress, topologyConnections, topologyDevices, language]);
+  }, [deviceId, isValidIpAddress, topologyConnections, topologyDevices, language]);
 
   useEffect(() => {
     if (!serviceNtpEnabled) return;
@@ -682,12 +673,7 @@ export function PCPanel({
     const serverIp = serviceNtpServer.trim();
     if (!serverIp || !isValidIpAddress(serverIp)) return;
 
-    const matchedDevice = topologyDevices.find((device) => device.ip === serverIp && device.services?.ntp?.enabled);
-    const matchedState = matchedDevice ? deviceStates?.get(matchedDevice.id) : undefined;
-    const stateNtp = matchedState?.services?.ntp;
-    const ntpService = stateNtp?.enabled ? stateNtp : matchedDevice?.services?.ntp;
-
-    const currentServerData = JSON.stringify({ ip: serverIp, date: ntpService?.date, time: ntpService?.time, enabled: ntpService?.enabled, connections: topologyConnections });
+    const currentServerData = JSON.stringify({ ip: serverIp, connections: topologyConnections });
 
     if (lastSyncedServerRef.current === serverIp && lastSyncedServerDataRef.current === currentServerData) return;
 
@@ -4066,7 +4052,18 @@ export function PCPanel({
         if (!target) {
           addLocalOutput('output', `Usage: ${cmd} <target_name_or_address>`);
         } else {
-          const resolvedTarget = resolveDeviceNameTarget(target)?.ip || target;
+          let resolvedTarget = target;
+          if (!isValidIpv4(target) && !isValidIpv6(target)) {
+            const namedResult = resolveDeviceNameTarget(target);
+            if (namedResult) {
+              resolvedTarget = namedResult.ip;
+            } else {
+              const dnsResult = resolveDomainWithDnsServices(target);
+              if (dnsResult) {
+                resolvedTarget = dnsResult.address;
+              }
+            }
+          }
           if (isLoopbackTarget(resolvedTarget)) {
             await addMultilineOutput('output', `Tracing route to 127.0.0.1 over a maximum of 30 hops:\n\n  1    <1 ms    <1 ms    <1 ms  localhost [127.0.0.1]\n\nTrace complete.`, 80);
             return;
@@ -4182,14 +4179,9 @@ export function PCPanel({
         const deliveredDevice = topologyDevices.find(d => {
           const s = d.services;
           return s?.mail?.enabled && s.mail.username === recipientUser && s.mail.domain === recipientDomain;
-        });
+        }) || topologyDevices.find(d => d.ip === recipientDomain) || topologyDevices.find(d => (d.name === recipientUser || d.id === recipientUser) && d.ip === recipientDomain);
         if (!deliveredDevice) {
           addLocalOutput('error', `Could not find mail server for ${recipientDomain}.`);
-          return;
-        }
-        const mailResult = checkConnectivity(deviceId, deliveredDevice.ip, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '25' });
-        if (!mailResult.success) {
-          addLocalOutput('error', `Could not connect to mail server at ${deliveredDevice.ip}: ${mailResult.error || 'Destination unreachable'}`);
           return;
         }
         const newInboxEntry = { from: `${internalPcHostname}@${pcIP || 'local'}`, subject, body: subject, timestamp: new Date().toISOString() };
@@ -4213,7 +4205,7 @@ export function PCPanel({
             config: {
               services: {
                 mail: {
-                  enabled: true,
+                  enabled: deliveredDevice.services?.mail?.enabled ?? false,
                   domain: deliveredDevice.services?.mail?.domain || recipientDomain,
                   username: deliveredDevice.services?.mail?.username || recipientUser,
                   inbox: updatedInbox
@@ -5773,30 +5765,42 @@ export function PCPanel({
                                         ) : (
                                           serviceMailInbox.map((msg, idx) => (
                                             <div key={idx} className={`p-2 rounded border text-[10px] flex items-start justify-between gap-2 ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-white'}`}>
-                                              <div className="min-w-0">
+                                              <div className="min-w-0 flex-1">
                                                 <div className="font-bold truncate" title={msg.from}>{msg.from}</div>
                                                 <div className="truncate opacity-80" title={msg.subject}>{msg.subject}</div>
                                                 {msg.timestamp && <div className="text-[8px] opacity-50 mt-1">{new Date(msg.timestamp).toLocaleString()}</div>}
                                               </div>
-                                              <button
-                                                title={language === 'tr' ? 'Sil' : 'Delete'}
-                                                onClick={() => {
-                                                  const updated = serviceMailInbox.filter((_, i) => i !== idx);
-                                                  setServiceMailInbox(updated);
-                                                  dispatchDeviceConfig({
-                                                    services: {
-                                                      dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
-                                                      http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
-                                                      ftp: { enabled: serviceFtpEnabled },
-                                                      mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: updated, sent: serviceMailSent },
-                                                      dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
-                                                    }
-                                                  });
-                                                }}
-                                                className="p-1 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
-                                              >
-                                                <Trash2 className="w-3 h-3" />
-                                              </button>
+                                              <div className="flex items-center gap-1 flex-shrink-0">
+                                                <button
+                                                  title={language === 'tr' ? 'Yanıtla' : 'Reply'}
+                                                  onClick={() => {
+                                                    setReplyTo(msg);
+                                                    setReplyBody('');
+                                                  }}
+                                                  className={`p-1 rounded transition-colors ${replyTo === msg ? (isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-600') : 'text-slate-400 hover:text-cyan-500 hover:bg-cyan-500/20'}`}
+                                                >
+                                                  <Reply className="w-3 h-3" />
+                                                </button>
+                                                <button
+                                                  title={language === 'tr' ? 'Sil' : 'Delete'}
+                                                  onClick={() => {
+                                                    const updated = serviceMailInbox.filter((_, i) => i !== idx);
+                                                    setServiceMailInbox(updated);
+                                                    dispatchDeviceConfig({
+                                                      services: {
+                                                        dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+                                                        http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                                        ftp: { enabled: serviceFtpEnabled },
+                                                        mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: updated, sent: serviceMailSent },
+                                                        dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                                                      }
+                                                    });
+                                                  }}
+                                                  className="p-1 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                                >
+                                                  <Trash2 className="w-3 h-3" />
+                                                </button>
+                                              </div>
                                             </div>
                                           ))
                                         )}
@@ -5843,6 +5847,110 @@ export function PCPanel({
                                       </div>
                                     </div>
                                   </div>
+
+                                  {replyTo && (
+                                    <div className={`border-t pt-3 mt-2 ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+                                      <div className="flex items-center justify-between mb-2">
+                                        <div className="text-xs font-bold">{language === 'tr' ? 'Yanıtla' : 'Reply'}</div>
+                                        <button
+                                          onClick={() => { setReplyTo(null); setReplyBody(''); }}
+                                          className={`text-[10px] p-1 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-colors`}
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                      <div className="text-[10px] mb-1">
+                                        <span className="opacity-60">{language === 'tr' ? 'Alıcı' : 'To'}:</span> {replyTo.from}
+                                      </div>
+                                      <div className="text-[10px] mb-2">
+                                        <span className="opacity-60">{language === 'tr' ? 'Konu' : 'Subject'}:</span> Re: {replyTo.subject}
+                                      </div>
+                                      <textarea
+                                        value={replyBody}
+                                        onChange={(e) => setReplyBody(e.target.value)}
+                                        placeholder={language === 'tr' ? 'Mesajınızı yazın...' : 'Type your message...'}
+                                        rows={3}
+                                        className={`w-full text-xs p-2 rounded border resize-none focus:outline-none focus:ring-1 ${isDark ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-cyan-500/50' : 'bg-white border-slate-300 text-slate-800 focus:ring-cyan-500/50'}`}
+                                      />
+                                      <div className="flex gap-2 mt-2">
+                                        <button
+                                          onClick={() => {
+                                            if (!replyTo.from || !replyBody.trim()) return;
+                                            const senderIp = replyTo.from.includes('@') ? replyTo.from.split('@')[1] : '';
+                                            const targetDevice = topologyDevices.find((d: any) => d.ip === senderIp);
+                                            if (!targetDevice) {
+                                              addLocalOutput('error', language === 'tr' ? 'Alıcı cihaz bulunamadı.' : 'Target device not found.');
+                                              return;
+                                            }
+                                            const subject = `Re: ${replyTo.subject}`;
+                                            const newInboxEntry = { from: `${serviceMailUsername}@${serviceMailDomain}`, subject, body: replyBody, timestamp: new Date().toISOString() };
+                                            let existingInbox = targetDevice.services?.mail?.inbox || [];
+                                            if (typeof window !== 'undefined') {
+                                              try {
+                                                const stored = localStorage.getItem(`mail_inbox_${targetDevice.id}`);
+                                                if (stored) existingInbox = JSON.parse(stored);
+                                              } catch (e) {}
+                                            }
+                                            const updatedInbox = [newInboxEntry, ...existingInbox];
+                                            if (typeof window !== 'undefined') {
+                                              localStorage.setItem(`mail_inbox_${targetDevice.id}`, JSON.stringify(updatedInbox));
+                                            }
+                                            const newSentEntry = { to: replyTo.from, subject, body: replyBody, timestamp: new Date().toISOString() };
+
+                                            window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+                                              detail: {
+                                                deviceId: targetDevice.id,
+                                                config: {
+                                                  services: {
+                                                    mail: {
+                                                      enabled: targetDevice.services?.mail?.enabled ?? false,
+                                                      domain: targetDevice.services?.mail?.domain || serviceMailDomain,
+                                                      username: targetDevice.services?.mail?.username || serviceMailUsername,
+                                                      inbox: updatedInbox
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }));
+
+                                            setServiceMailSent((prev: any[]) => [newSentEntry, ...prev]);
+                                            window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+                                              detail: {
+                                                deviceId: deviceId,
+                                                config: {
+                                                  services: {
+                                                    mail: {
+                                                      enabled: serviceMailEnabled,
+                                                      domain: serviceMailDomain,
+                                                      username: serviceMailUsername,
+                                                      password: serviceMailPassword,
+                                                      inbox: serviceMailInbox,
+                                                      sent: [newSentEntry, ...serviceMailSent]
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }));
+
+                                            addLocalOutput('success', language === 'tr' ? 'Yanıt gönderildi.' : 'Reply sent.');
+                                            setReplyTo(null);
+                                            setReplyBody('');
+                                          }}
+                                          disabled={!replyBody.trim()}
+                                          className={`flex items-center gap-1 px-3 py-1.5 rounded text-[10px] font-bold transition-colors ${replyBody.trim() ? 'bg-cyan-500/90 text-white hover:bg-cyan-600' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+                                        >
+                                          <Send className="w-3 h-3" />
+                                          {language === 'tr' ? 'Gönder' : 'Send'}
+                                        </button>
+                                        <button
+                                          onClick={() => { setReplyTo(null); setReplyBody(''); }}
+                                          className={`px-3 py-1.5 rounded text-[10px] font-bold transition-colors ${isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
+                                        >
+                                          {language === 'tr' ? 'İptal' : 'Cancel'}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             )}
