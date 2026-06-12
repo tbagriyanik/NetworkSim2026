@@ -5072,6 +5072,18 @@ export function NetworkTopology({
               </>
             ) : device.type === 'iot' ? (
               <>
+                {device.iot?.sensorType === 'motion' && (
+                  <circle
+                    cx={deviceWidth / 2}
+                    cy={deviceHeight / 2}
+                    r={75}
+                    fill={isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.1)'}
+                    stroke={isDark ? 'rgba(6, 182, 212, 0.3)' : 'rgba(6, 182, 212, 0.2)'}
+                    strokeWidth="1"
+                    strokeDasharray="4 2"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                )}
                 <path d={`M -4 -4 L ${deviceWidth + 4 - 10} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight + 4} L 6 ${deviceHeight + 4} Q -4 ${deviceHeight + 4} -4 ${deviceHeight + 4 - 10} L -4 -4 Z`} fill="none" stroke="#f97316" strokeWidth="4" opacity="0.5" filter="url(#selectionGlowFilter)" className="selection-glow" />
                 <path d={`M -4 -4 L ${deviceWidth + 4 - 10} -4 Q ${deviceWidth + 4} -4 ${deviceWidth + 4} 6 L ${deviceWidth + 4} ${deviceHeight + 4} L 6 ${deviceHeight + 4} Q -4 ${deviceHeight + 4} -4 ${deviceHeight + 4 - 10} L -4 -4 Z`} fill="none" stroke="#f97316" strokeWidth="2" opacity="0.35" className="selection-glow-outer" />
               </>
@@ -5088,6 +5100,21 @@ export function NetworkTopology({
             )}
           </>
         )}
+        
+        {/* Radius indicator for motion sensors when not selected */}
+        {!isSelected && device.type === 'iot' && device.iot?.sensorType === 'motion' && (
+          <circle
+            cx={deviceWidth / 2}
+            cy={deviceHeight / 2}
+            r={75}
+            fill={isDark ? 'rgba(6, 182, 212, 0.05)' : 'rgba(6, 182, 212, 0.05)'}
+            stroke={isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.1)'}
+            strokeWidth="1"
+            strokeDasharray="4 2"
+            style={{ pointerEvents: 'none' }}
+          />
+        )}
+
 
         {device.type === 'iot' && iotGlowColor && (
           <path
@@ -5669,7 +5696,7 @@ export function NetworkTopology({
         <text
           x={deviceWidth / 2}
           y={58}
-          fill={isSelected ? '#f97316' : isDark ? '#f1f5f9' : '#1e293b'}
+          fill={isSelected ? (isDark ? '#fb923c' : '#f97316') : isDark ? '#f1f5f9' : '#1e293b'}
           fontSize="10"
           textAnchor="middle"
           fontWeight={isSelected ? '800' : 'bold'}
@@ -5717,7 +5744,7 @@ export function NetworkTopology({
             const isPassive = device.iot?.collaborationEnabled === false;
             if (isPassive) {
               return (
-                <text x={deviceWidth / 2} y={70} fill={isDark ? '#94a3b8' : '#64748b'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(1px 1px 0px rgba(0,0,0,1))">
+                <text x={deviceWidth / 2} y={70} fill={isDark ? '#94a3b8' : '#64748b'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                   <tspan x={deviceWidth / 2} dy="6">{t.passive}</tspan>
                 </text>
               );
@@ -5733,7 +5760,7 @@ export function NetworkTopology({
               const isActive = device.iot?.value ?? false;
               const statusColor = isActive ? (isDark ? '#fbbf24' : '#f59e0b') : (isDark ? '#94a3b8' : '#64748b');
               return (
-                <text x={deviceWidth / 2} y={70} fill={statusColor} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(1px 1px 0px rgba(0,0,0,1))">
+                <text x={deviceWidth / 2} y={70} fill={statusColor} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                   <tspan x={deviceWidth / 2} dy="6">{value}</tspan>
                 </text>
               );
@@ -5743,42 +5770,42 @@ export function NetworkTopology({
             switch (sensorType) {
               case 'temperature':
                 return (
-                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#3cf916' : '#0c9849'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(1px 1px 0px rgba(0,0,0,1))">
+                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#3cf916' : '#0c9849'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                     <tspan x={deviceWidth / 2} dy="0">{t.temperature}:</tspan>
                     <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                   </text>
                 );
               case 'humidity':
                 return (
-                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#3b82f6' : '#2563eb'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(1px 1px 0px rgba(0,0,0,1))">
+                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#3b82f6' : '#2563eb'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                     <tspan x={deviceWidth / 2} dy="0">{t.humidity}:</tspan>
                     <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                   </text>
                 );
               case 'light':
                 return (
-                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#eab308' : '#ca8a04'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(1px 1px 0px rgba(0,0,0,1))">
+                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#eab308' : '#ca8a04'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                     <tspan x={deviceWidth / 2} dy="0">{t.lightLevel}:</tspan>
                     <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                   </text>
                 );
               case 'sound':
                 return (
-                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#a855f7' : '#9333ea'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(1px 1px 0px rgba(0,0,0,1))">
+                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#a855f7' : '#9333ea'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                     <tspan x={deviceWidth / 2} dy="0">Sound:</tspan>
                     <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                   </text>
                 );
               case 'motion':
                 return (
-                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#22c55e' : '#16a34a'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(1px 1px 0px rgba(0,0,0,1))">
+                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#22c55e' : '#16a34a'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                     <tspan x={deviceWidth / 2} dy="0">Motion:</tspan>
                     <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                   </text>
                 );
               default:
                 return (
-                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#fb923c' : '#ea580c'} fontSize="9" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(1px 1px 0px rgba(0,0,0,1))">
+                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#fb923c' : '#ea580c'} fontSize="9" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                     {value}
                   </text>
                 );
