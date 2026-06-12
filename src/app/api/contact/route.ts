@@ -58,7 +58,7 @@ function validateContactData(data: any): { valid: boolean; errors: string[] } {
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>> {
   try {
     // Rate limiting: 5 submissions per hour per IP
-    const ip = req.ip || req.headers.get('x-forwarded-for') || 'unknown';
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
     const { allowed, remaining, resetTime } = isRateLimited(
       `contact_${ip}`,
       5,
