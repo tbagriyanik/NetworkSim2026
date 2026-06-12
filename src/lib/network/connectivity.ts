@@ -192,6 +192,7 @@ export function getWirelessSignalStrength(
   deviceStates?: Map<string, SwitchState>
 ): number {
   if (!device) return 0;
+  // BOLT: Resolve safeDeviceStates once outside loops
   const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const pcWifi = getDeviceWifiConfig(device, safeDeviceStates);
   if (!pcWifi || !pcWifi.enabled || !pcWifi.ssid) return 0;
@@ -202,7 +203,8 @@ export function getWirelessSignalStrength(
 
   devices.forEach(dev => {
     if (dev.id === device.id) return;
-    const apWifi = getDeviceWifiConfig(dev, deviceStates);
+    // BOLT: Use pre-resolved safeDeviceStates
+    const apWifi = getDeviceWifiConfig(dev, safeDeviceStates);
     if (!apWifi || apWifi.mode !== 'ap' || !apWifi.enabled) return;
     if (!apWifi.ssid || apWifi.ssid.toLowerCase() !== targetSsid) return;
     const dx = (device.x || 0) - (dev.x || 0);
@@ -230,6 +232,7 @@ export function getWirelessDistance(
   deviceStates?: Map<string, SwitchState>
 ): number {
   if (!device) return Infinity;
+  // BOLT: Resolve safeDeviceStates once outside loops
   const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const pcWifi = getDeviceWifiConfig(device, safeDeviceStates);
   if (!pcWifi || !pcWifi.enabled || !pcWifi.ssid) return Infinity;
@@ -240,7 +243,8 @@ export function getWirelessDistance(
 
   devices.forEach(dev => {
     if (dev.id === device.id) return;
-    const apWifi = getDeviceWifiConfig(dev, deviceStates);
+    // BOLT: Use pre-resolved safeDeviceStates
+    const apWifi = getDeviceWifiConfig(dev, safeDeviceStates);
     if (!apWifi || apWifi.mode !== 'ap' || !apWifi.enabled) return;
     if (!apWifi.ssid || apWifi.ssid.toLowerCase() !== targetSsid) return;
     const dx = (device.x || 0) - (dev.x || 0);
@@ -492,13 +496,15 @@ export function checkConnectivity(
     const apDevices = devices.filter(d => isSwitchDeviceType(d.type) || d.type === 'router');
     // Get PC/IoT devices that have WiFi configured - check both device.wifi and deviceStates
     const pcDevices = devices.filter(d => {
-      const wifi = getDeviceWifiConfig(d, deviceStates);
+      // BOLT: Use pre-resolved safeDeviceStates
+      const wifi = getDeviceWifiConfig(d, safeDeviceStates);
       // PC/IoT must have wifi with a non-empty ssid and must be in client mode (not ap)
       return (d.type === 'pc' || d.type === 'iot') && !!wifi && wifi.enabled && !!wifi.ssid && (wifi.mode === 'client' || wifi.mode === 'sta');
     });
 
     for (const pc of pcDevices) {
-      const pcWifi = getDeviceWifiConfig(pc, deviceStates);
+      // BOLT: Use pre-resolved safeDeviceStates
+      const pcWifi = getDeviceWifiConfig(pc, safeDeviceStates);
       if (!pcWifi || !pcWifi.enabled || !pcWifi.ssid || (pcWifi.mode !== 'client' && pcWifi.mode !== 'sta')) continue;
 
       const targetSsid = pcWifi.ssid.toLowerCase();
@@ -506,7 +512,8 @@ export function checkConnectivity(
 
       for (const ap of apDevices) {
         // Check AP in deviceStates first
-        const apState = deviceStates.get(ap.id);
+        // BOLT: Use pre-resolved safeDeviceStates
+        const apState = safeDeviceStates.get(ap.id);
         const wlan = apState?.ports['wlan0'];
         let apWifi = wlan?.wifi;
 
@@ -639,8 +646,9 @@ export function checkConnectivity(
     const sourceState = deviceStates.get(sourceId);
     if (sourceState) {
       // Check if source and target are in same subnet
-      const sourceIp = getPrimaryDeviceIp(sourceId, devices, deviceStates, false, sourceDeviceForArp);
-      const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, deviceStates, sourceDeviceForArp) || '255.255.255.0';
+      // BOLT: Use pre-resolved safeDeviceStates
+      const sourceIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, false, sourceDeviceForArp);
+      const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, safeDeviceStates, sourceDeviceForArp) || '255.255.255.0';
       const targetSubnet = targetDevice.subnet || '255.255.255.0';
 
       if (isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet)) {
@@ -739,15 +747,17 @@ export function checkConnectivity(
           const srcDevice = deviceMap.get(currentId);
           const dstDevice = deviceMap.get(neighborId);
 
-          const isSrcShutdown = isPortShutdown(currentId, srcPortId, devices, deviceStates, srcDevice);
-          const isDstShutdown = isPortShutdown(neighborId, dstPortId, devices, deviceStates, dstDevice);
+          // BOLT: Use pre-resolved safeDeviceStates
+          const isSrcShutdown = isPortShutdown(currentId, srcPortId, devices, safeDeviceStates, srcDevice);
+          const isDstShutdown = isPortShutdown(neighborId, dstPortId, devices, safeDeviceStates, dstDevice);
           const isSrcPoweredOff = !isDevicePoweredOn(srcDevice);
           const isDstPoweredOff = !isDevicePoweredOn(dstDevice);
 
           // Check STP blocking state using VLAN-specific STP calculation
           // In PVST, each VLAN has its own STP instance with potentially different root bridges
-          const isSrcSTPBlocking = getVlanSpecificSTPBlocking(currentId, srcPortId, sourceVlan, connections, deviceStates, conn);
-          const isDstSTPBlocking = getVlanSpecificSTPBlocking(neighborId, dstPortId, sourceVlan, connections, deviceStates, conn);
+          // BOLT: Use pre-resolved safeDeviceStates
+          const isSrcSTPBlocking = getVlanSpecificSTPBlocking(currentId, srcPortId, sourceVlan, connections, safeDeviceStates, conn);
+          const isDstSTPBlocking = getVlanSpecificSTPBlocking(neighborId, dstPortId, sourceVlan, connections, safeDeviceStates, conn);
 
           // Validate cable type for this physical link (e.g. console vs ethernet, straight vs crossover).
           const isCableOk = isConnectionCableCompatible(conn, srcDevice, dstDevice);
@@ -818,7 +828,8 @@ export function checkConnectivity(
   const sourceDeviceForSubnet = deviceMap.get(sourceId);
   if (sourceDeviceForSubnet && targetDevice) {
     const isTargetIpv6 = resolvedTargetIp.includes(':');
-    const sourceIp = getPrimaryDeviceIp(sourceId, devices, deviceStates, isTargetIpv6);
+    // BOLT: Use pre-resolved safeDeviceStates
+    const sourceIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, isTargetIpv6);
     const isSourceIpv6 = sourceIp.includes(':');
 
     let isInSameSubnet = false;
@@ -826,7 +837,8 @@ export function checkConnectivity(
       // Find prefix length for source
       let prefixLength = 64;
       if (deviceStates) {
-        const state = deviceStates.get(sourceId);
+        // BOLT: Use pre-resolved safeDeviceStates
+        const state = safeDeviceStates.get(sourceId);
         if (state) {
           for (const pId in state.ports) {
             if (state.ports[pId].ipv6Address === sourceIp) {
@@ -838,7 +850,8 @@ export function checkConnectivity(
       }
       isInSameSubnet = isIpv6InNetwork(resolvedTargetIp, sourceIp, prefixLength);
     } else if (!isTargetIpv6 && !isSourceIpv6) {
-      const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, deviceStates) || sourceDeviceForSubnet.subnet || '255.255.255.0';
+      // BOLT: Use pre-resolved safeDeviceStates
+      const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, safeDeviceStates) || sourceDeviceForSubnet.subnet || '255.255.255.0';
       isInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);
     }
 
@@ -852,7 +865,8 @@ export function checkConnectivity(
       // Find the first L3 device in the path (the one that will actually route the packet)
       for (const deviceId of path) {
         const device = deviceMap.get(deviceId);
-        const state = deviceStates?.get(deviceId);
+        // BOLT: Use pre-resolved safeDeviceStates
+        const state = safeDeviceStates.get(deviceId);
         if ((device?.type === 'router' || device?.type === 'switchL3') && state?.ipRouting) {
           // Check if this router has a route to the destination network
           const routingTable = getRoutingTable(deviceId, safeDeviceStates);
@@ -881,7 +895,8 @@ export function checkConnectivity(
         // Find all routers in the topology
         const routers = devices.filter(d => (d.type === 'router' || d.type === 'switchL3'));
         for (const router of routers) {
-          const routerState = deviceStates?.get(router.id);
+          // BOLT: Use pre-resolved safeDeviceStates
+          const routerState = safeDeviceStates.get(router.id);
           if (routerState?.ipRouting) {
             // Check if router has a route to destination
             const routingTable = getRoutingTable(router.id, safeDeviceStates);
@@ -937,7 +952,8 @@ export function checkConnectivity(
       const sw = isSwitchDeviceType(a.type) ? a : isSwitchDeviceType(b.type) ? b : null;
       if (pc && sw) {
         const swPortId = conn.sourceDeviceId === sw.id ? conn.sourcePort : conn.targetPort;
-        const swState = deviceStates.get(sw.id);
+        // BOLT: Use pre-resolved safeDeviceStates
+        const swState = safeDeviceStates.get(sw.id);
         const swPort = swState?.ports?.[swPortId];
         const swVlan = getPortVlan(swPort);
         const pcVlan = Number(pc.vlan || 1);
@@ -955,7 +971,8 @@ export function checkConnectivity(
 
         // Check port security on switch port
         if (swPort?.portSecurity?.enabled && pc.macAddress) {
-          const violation = checkPortSecurityViolation(sw.id, swPortId, pc.macAddress, deviceStates);
+          // BOLT: Use pre-resolved safeDeviceStates
+          const violation = checkPortSecurityViolation(sw.id, swPortId, pc.macAddress, safeDeviceStates);
           if (violation) {
             // Track violation for React state update
             portSecurityViolations.push({
@@ -1014,8 +1031,9 @@ export function checkConnectivity(
 
       const aPortId = conn.sourceDeviceId === aId ? conn.sourcePort : conn.targetPort;
       const bPortId = conn.sourceDeviceId === bId ? conn.sourcePort : conn.targetPort;
-      const aPort = deviceStates.get(aId)?.ports?.[aPortId];
-      const bPort = deviceStates.get(bId)?.ports?.[bPortId];
+      // BOLT: Use pre-resolved safeDeviceStates
+      const aPort = safeDeviceStates.get(aId)?.ports?.[aPortId];
+      const bPort = safeDeviceStates.get(bId)?.ports?.[bPortId];
       const aIsTrunk = aPort?.mode === 'trunk';
       const bIsTrunk = bPort?.mode === 'trunk';
 
@@ -1039,7 +1057,8 @@ export function checkConnectivity(
       const deviceId = path[i];
       const device = deviceMap.get(deviceId);
       if (device && isSwitchDeviceType(device.type)) {
-        const switchState = deviceStates.get(deviceId);
+        // BOLT: Use pre-resolved safeDeviceStates
+        const switchState = safeDeviceStates.get(deviceId);
         if (!switchState) continue;
 
         const prevDeviceId = path[i - 1];
@@ -1067,7 +1086,8 @@ export function checkConnectivity(
               let hasL3RouterInPath = false;
               for (const pathDeviceId of path) {
                 const pathDevice = deviceMap.get(pathDeviceId);
-                const pathState = deviceStates?.get(pathDeviceId);
+                // BOLT: Use pre-resolved safeDeviceStates
+                const pathState = safeDeviceStates.get(pathDeviceId);
                 if ((pathDevice?.type === 'router' || pathDevice?.type === 'switchL3') && pathState?.ipRouting) {
                   hasL3RouterInPath = true;
                   break;
@@ -1097,7 +1117,8 @@ export function checkConnectivity(
     const getDeviceVlanForIp = (deviceId: string, ip: string): number | null => {
       const device = deviceMap.get(deviceId);
       if (!device) return null;
-      const state = deviceStates.get(deviceId);
+      // BOLT: Use pre-resolved safeDeviceStates
+      const state = safeDeviceStates.get(deviceId);
       if (!state) return (device.type === 'pc' || device.type === 'iot') ? Number(device.vlan || 1) : 1;
 
       if (device.type === 'pc' || device.type === 'iot') return getDeviceVlan(device, state);
@@ -1120,7 +1141,8 @@ export function checkConnectivity(
       return getDeviceVlan(device, state);
     };
 
-    const sourceIp = getPrimaryDeviceIp(sourceId, devices, deviceStates);
+    // BOLT: Use pre-resolved safeDeviceStates
+    const sourceIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates);
     const sourceVlan = sourceIp ? getDeviceVlanForIp(sourceId, sourceIp) : null;
     const targetVlan = getDeviceVlanForIp(targetDevice.id, resolvedTargetIp);
 
@@ -1138,7 +1160,8 @@ export function checkConnectivity(
         let hasL3RouterInPath = false;
         for (const pathDeviceId of path) {
           const pathDevice = deviceMap.get(pathDeviceId);
-          const pathState = deviceStates?.get(pathDeviceId);
+          // BOLT: Use pre-resolved safeDeviceStates
+          const pathState = safeDeviceStates.get(pathDeviceId);
           if ((pathDevice?.type === 'router' || pathDevice?.type === 'switchL3') && pathState?.ipRouting) {
             hasL3RouterInPath = true;
             break;
@@ -1164,14 +1187,16 @@ export function checkConnectivity(
   // 6. Layer 3 Routing Logic - Check if routing is possible between different subnets/VLANs
   let l3ConnectivityPossible = false;
   if (deviceStates) {
-    const sourceState = deviceStates.get(sourceId);
+    // BOLT: Use pre-resolved safeDeviceStates
+    const sourceState = safeDeviceStates.get(sourceId);
 
     // Check if source has routing capability and a route to target
     const isTargetIpv6 = resolvedTargetIp.includes(':');
     const sourceHasRouting = isTargetIpv6 ? (sourceState?.ipv6Enabled || sourceState?.ipRouting) : sourceState?.ipRouting;
     
     if (sourceHasRouting) {
-      const sourceRoutes = getRoutingTable(sourceId, deviceStates);
+      // BOLT: Use pre-resolved safeDeviceStates
+      const sourceRoutes = getRoutingTable(sourceId, safeDeviceStates);
       const route = findRoute(resolvedTargetIp, sourceRoutes);
 
       if (route) {
@@ -1182,15 +1207,17 @@ export function checkConnectivity(
     if (!l3ConnectivityPossible) {
       // Check if there's a router in the path that can route between VLANs
       for (const deviceId of path) {
-        const state = deviceStates.get(deviceId);
+        // BOLT: Use pre-resolved safeDeviceStates
+        const state = safeDeviceStates.get(deviceId);
         const device = deviceMap.get(deviceId);
         const hasRouting = isTargetIpv6 ? (state?.ipv6Enabled || state?.ipRouting) : state?.ipRouting;
 
         if (hasRouting && (device?.type === 'router' || device?.type === 'switchL3')) {
           // Router in path - check if it has routes to both source and target networks
-          const routes = getRoutingTable(deviceId, deviceStates);
+          // BOLT: Use pre-resolved safeDeviceStates
+          const routes = getRoutingTable(deviceId, safeDeviceStates);
           // Get source IP from device data
-          const srcIp = getPrimaryDeviceIp(sourceId, devices, deviceStates, isTargetIpv6);
+          const srcIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, isTargetIpv6);
           const sourceRoute = findRoute(srcIp, routes);
           const targetRoute = findRoute(resolvedTargetIp, routes);
 
@@ -1221,7 +1248,8 @@ export function checkConnectivity(
   const basicConnectivityPossible = !deviceStates && !routingRequired;
 
   // 7. Firewall Logic - Check rules for any firewalls in the path
-  const sourceIpForFirewall = getPrimaryDeviceIp(sourceId, devices, deviceStates);
+  // BOLT: Use pre-resolved safeDeviceStates
+  const sourceIpForFirewall = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates);
   for (const stepDeviceId of path) {
     const device = deviceMap.get(stepDeviceId);
     if (device?.type === 'firewall') {
@@ -1283,7 +1311,8 @@ export function checkConnectivity(
 
   if (!l2ConnectivityPossible && !l3ConnectivityPossible && !basicConnectivityPossible) {
       // If we got here and no connectivity was confirmed, double check management IPs
-      if (!getPrimaryDeviceIp(sourceId, devices, deviceStates) && !isManagementIpSet(sourceId, deviceStates)) {
+      // BOLT: Use pre-resolved safeDeviceStates
+      if (!getPrimaryDeviceIp(sourceId, devices, safeDeviceStates) && !isManagementIpSet(sourceId, safeDeviceStates)) {
         return { success: false, hops: [], hopIds: [], error: 'Source has no IP address.' };
       }
   }
@@ -1305,6 +1334,7 @@ export function checkDeviceConnectivity(
   deviceStates?: Map<string, SwitchState>,
   options?: { protocol?: 'tcp' | 'udp' | 'icmp' | 'any'; port?: string }
 ): { success: boolean; hops: string[]; hopIds: string[]; targetId?: string; error?: string } {
+  // BOLT: Use pre-resolved safeDeviceStates
   const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const deviceMap = new Map<string, CanvasDevice>();
   for (const d of devices) {
@@ -1318,10 +1348,12 @@ export function checkDeviceConnectivity(
   }
 
   let resolvedTargetIp = targetDevice.ip;
-  const sourcePrimaryIp = getPrimaryDeviceIp(sourceId, devices, deviceStates);
-  const sourcePrimarySubnet = getSubnetForDeviceIp(sourceId, sourcePrimaryIp, devices, deviceStates) || '255.255.255.0';
+  // BOLT: Use pre-resolved safeDeviceStates
+  const sourcePrimaryIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates);
+  const sourcePrimarySubnet = getSubnetForDeviceIp(sourceId, sourcePrimaryIp, devices, safeDeviceStates) || '255.255.255.0';
   if (!resolvedTargetIp && deviceStates) {
-    const targetState = deviceStates.get(targetId);
+    // BOLT: Use pre-resolved safeDeviceStates
+    const targetState = safeDeviceStates.get(targetId);
     if (targetState) {
       for (const pId in targetState.ports) {
         if (targetState.ports[pId].ipAddress) {
@@ -1341,7 +1373,8 @@ export function checkDeviceConnectivity(
     return { success: false, hops: [], hopIds: [], error: 'Request timed out.' };
   }
 
-  return checkConnectivity(sourceId, targetIp, devices, connections, deviceStates, undefined, options);
+  // BOLT: Pass pre-resolved safeDeviceStates
+  return checkConnectivity(sourceId, targetIp, devices, connections, safeDeviceStates, undefined, options);
 }
 
 /**
@@ -1356,6 +1389,8 @@ export function getPingDiagnostics(
   language: 'tr' | 'en' = 'tr',
   options?: { protocol?: 'tcp' | 'udp' | 'icmp' | 'any'; port?: string }
 ): { success: boolean; reasons: string[] } {
+  // BOLT: Resolve safeDeviceStates once
+  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const reasons: string[] = [];
   const deviceMap = new Map<string, CanvasDevice>();
   const ipMap = new Map<string, string>(); // IP -> deviceId
@@ -1408,7 +1443,8 @@ export function getPingDiagnostics(
   // 2. Check source has IP address (IPv4 or IPv6)
   let sourceIp = sourceDevice.ip || sourceDevice.ipv6 || '';
   if (!sourceIp && deviceStates) {
-    const state = deviceStates.get(sourceId);
+    // BOLT: Use pre-resolved safeDeviceStates
+    const state = safeDeviceStates.get(sourceId);
     if (state) {
       for (const pId in state.ports) {
         const port = state.ports[pId];
@@ -1465,7 +1501,8 @@ export function getPingDiagnostics(
   }
 
   // 7. Check physical connectivity
-  const result = checkConnectivity(sourceId, resolvedTargetIp, devices, connections, deviceStates, language, options);
+  // BOLT: Use pre-resolved safeDeviceStates
+  const result = checkConnectivity(sourceId, resolvedTargetIp, devices, connections, safeDeviceStates, language, options);
   if (!result.success) {
     if (result.error) {
       reasons.push(result.error);
@@ -1479,7 +1516,8 @@ export function getPingDiagnostics(
   const sourceConn = connections.find(c => c.sourceDeviceId === sourceId || c.targetDeviceId === sourceId);
   if (sourceConn) {
     const sourcePortId = sourceConn.sourceDeviceId === sourceId ? sourceConn.sourcePort : sourceConn.targetPort;
-    if (isPortShutdown(sourceId, sourcePortId, devices, deviceStates)) {
+    // BOLT: Use pre-resolved safeDeviceStates
+    if (isPortShutdown(sourceId, sourcePortId, devices, safeDeviceStates)) {
       reasons.push(`Kaynak interface kapalı: ${sourcePortId}`);
       return { success: false, reasons };
     }
@@ -1488,7 +1526,8 @@ export function getPingDiagnostics(
   const targetConn = connections.find(c => c.sourceDeviceId === targetDevice.id || c.targetDeviceId === targetDevice.id);
   if (targetConn) {
     const targetPortId = targetConn.sourceDeviceId === targetDevice.id ? targetConn.targetPort : targetConn.sourcePort;
-    if (isPortShutdown(targetDevice.id, targetPortId, devices, deviceStates)) {
+    // BOLT: Use pre-resolved safeDeviceStates
+    if (isPortShutdown(targetDevice.id, targetPortId, devices, safeDeviceStates)) {
       reasons.push(`Hedef interface kapalı: ${targetPortId}`);
       return { success: false, reasons };
     }
@@ -1500,7 +1539,8 @@ export function getPingDiagnostics(
     let hasL3RouterInPath = false;
     for (const pathDeviceId of result.hopIds) {
       const pathDevice = deviceMap.get(pathDeviceId);
-      const pathState = deviceStates?.get(pathDeviceId);
+      // BOLT: Use pre-resolved safeDeviceStates
+      const pathState = safeDeviceStates.get(pathDeviceId);
       if ((pathDevice?.type === 'router' || pathDevice?.type === 'switchL3') && pathState?.ipRouting) {
         hasL3RouterInPath = true;
         break;
@@ -1520,7 +1560,8 @@ export function getPingDiagnostics(
 
     // If source is a router/L3-switch, it must have ip routing enabled
     if (isSourceL3Capable) {
-      const sourceState = deviceStates?.get(sourceId);
+      // BOLT: Use pre-resolved safeDeviceStates
+      const sourceState = safeDeviceStates.get(sourceId);
       if (!sourceState?.ipRouting) {
         reasons.push(language === 'tr' ? 'Kaynak cihazda IP routing etkin değil' : 'IP routing is not enabled on the source device');
         return { success: false, reasons };
@@ -1531,7 +1572,8 @@ export function getPingDiagnostics(
     let hasL3RouterInPath = false;
     for (const pathDeviceId of result.hopIds) {
       const pathDevice = deviceMap.get(pathDeviceId);
-      const pathState = deviceStates?.get(pathDeviceId);
+      // BOLT: Use pre-resolved safeDeviceStates
+      const pathState = safeDeviceStates.get(pathDeviceId);
       if ((pathDevice?.type === 'router' || pathDevice?.type === 'switchL3') && pathState?.ipRouting) {
         hasL3RouterInPath = true;
         break;
