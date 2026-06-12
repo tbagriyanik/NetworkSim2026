@@ -171,29 +171,13 @@ export function UnifiedDevicePanel({
                             </Tabs>
 
                             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 justify-center px-1 sm:px-4">
-                                <div className="flex flex-col items-center gap-1">
-                                    <div className={cn(
-                                        "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium max-w-full truncate",
-                                        isDark ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-100 border-slate-200 text-slate-600"
-                                    )}>
-                                        <div className={cn("w-2 h-2 rounded-full shrink-0", isOffline ? "bg-red-500" : "bg-green-500")} />
-                                        <span className="truncate">{deviceName}</span>
-                                        <span className="opacity-50 text-[10px] uppercase">{deviceType}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-[10px] sm:text-xs">
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="opacity-60">{t.deviceStatus}:</span>
-                                            <span className={cn("font-semibold", isOffline ? "text-red-500" : "text-green-500")}>
-                                                {isOffline ? 'PASİF' : 'AKTİF'}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="opacity-60">{t.powerStatus}:</span>
-                                            <span className={cn("font-semibold", isOffline ? "text-red-500" : "text-green-500")}>
-                                                {isOffline ? 'KAPALI' : 'AÇIK'}
-                                            </span>
-                                        </div>
-                                    </div>
+                                <div className={cn(
+                                    "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium max-w-full truncate",
+                                    isDark ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-100 border-slate-200 text-slate-600"
+                                )}>
+                                    <div className={cn("w-2 h-2 rounded-full shrink-0", isOffline ? "bg-red-500" : "bg-green-500")} />
+                                    <span className="truncate">{deviceName}</span>
+                                    <span className="opacity-50 text-[10px] uppercase">{deviceType}</span>
                                 </div>
                             </div>
 
@@ -339,22 +323,14 @@ export function UnifiedDevicePanel({
                     {/* Resize handles - hidden on mobile */}
                     {!isMobile && (
                         <>
-                            <div
-                                className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize select-none touch-none hover:bg-primary/20 z-20"
-                                onPointerDown={(e) => handleResizeStart(e, 'w', 'deviceUnified')}
-                            />
-                            <div
-                                className="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize select-none touch-none hover:bg-primary/20 z-20"
-                                onPointerDown={(e) => handleResizeStart(e, 'e', 'deviceUnified')}
-                            />
-                            <div
-                                className="absolute left-0 bottom-0 right-0 h-1.5 cursor-ns-resize select-none touch-none hover:bg-primary/20 z-20"
-                                onPointerDown={(e) => handleResizeStart(e, 's', 'deviceUnified')}
-                            />
-                            <div
-                                className="absolute right-0 bottom-0 w-6 h-6 cursor-se-resize select-none touch-none flex items-center justify-center text-slate-400 hover:text-primary z-30"
-                                onPointerDown={(e) => handleResizeStart(e, 'se', 'deviceUnified')}
-                            >
+                            <div className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize select-none touch-none hover:bg-primary/20 z-20" onPointerDown={(e) => handleResizeStart(e, 'w', 'deviceUnified')} />
+                            <div className="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize select-none touch-none hover:bg-primary/20 z-20" onPointerDown={(e) => handleResizeStart(e, 'e', 'deviceUnified')} />
+                            <div className="absolute left-0 top-0 right-0 h-1.5 cursor-ns-resize select-none touch-none hover:bg-primary/20 z-20" onPointerDown={(e) => handleResizeStart(e, 'n', 'deviceUnified')} />
+                            <div className="absolute left-0 bottom-0 right-0 h-1.5 cursor-ns-resize select-none touch-none hover:bg-primary/20 z-20" onPointerDown={(e) => handleResizeStart(e, 's', 'deviceUnified')} />
+                            <div className="absolute left-0 top-0 w-5 h-5 cursor-nw-resize select-none touch-none z-30" onPointerDown={(e) => handleResizeStart(e, 'nw', 'deviceUnified')} />
+                            <div className="absolute right-0 top-0 w-5 h-5 cursor-ne-resize select-none touch-none z-30" onPointerDown={(e) => handleResizeStart(e, 'ne', 'deviceUnified')} />
+                            <div className="absolute left-0 bottom-0 w-5 h-5 cursor-sw-resize select-none touch-none z-30" onPointerDown={(e) => handleResizeStart(e, 'sw', 'deviceUnified')} />
+                            <div className="absolute right-0 bottom-0 w-5 h-5 cursor-se-resize select-none touch-none flex items-center justify-center text-slate-400 hover:text-primary z-30" onPointerDown={(e) => handleResizeStart(e, 'se', 'deviceUnified')}>
                                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                                     <path d="M11 5L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

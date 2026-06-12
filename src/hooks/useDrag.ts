@@ -102,7 +102,8 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
         const saved = localStorage.getItem(storageKey);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+          if (typeof parsed.x === 'number' && typeof parsed.y === 'number' && isFinite(parsed.x) && isFinite(parsed.y)) {
+            if (disableSnap) return parsed;
             const vw = window.innerWidth;
             const vh = window.innerHeight;
             const approxW = mode === 'drag-resize' ? (defaultSize?.width || 800) : 280;
@@ -311,27 +312,35 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
         if (ds.type === 'resize') {
           finalW = parseInt(ds.element.style.width) || ds.startW;
           finalH = parseInt(ds.element.style.height) || ds.startH;
+          finalX = parseInt(ds.element.style.left) ?? ds.startPosX;
+          finalY = parseInt(ds.element.style.top) ?? ds.startPosY;
         }
 
         // Clamp position to viewport
-        const margin = 16;
-        const elRect = ds.element.getBoundingClientRect();
-        const elW = elRect.width || 200;
-        const elH = elRect.height || 100;
-        let clampedX: number, clampedY: number;
-        if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
-          // finalX is `right`, finalY is `bottom`
-          clampedX = Math.max(0, Math.min(finalX, window.innerWidth - elW));
-          // For bottom-origin panels: limit bottom offset so panel top never goes above safe header area.
-          const maxBottom = Math.max(0, window.innerHeight - elH - TOP_SAFE_OFFSET);
-          clampedY = Math.max(0, Math.min(finalY, maxBottom));
-        } else {
-          clampedX = Math.max(margin - elW, Math.min(finalX, window.innerWidth - margin));
-          clampedY = Math.max(TOP_SAFE_OFFSET, Math.min(finalY, window.innerHeight - margin));
+        let clampedX: number = isFinite(finalX) ? finalX : ds.startPosX;
+        let clampedY: number = isFinite(finalY) ? finalY : ds.startPosY;
+        let elW = 200, elH = 100;
+        if (!ds.disableSnap) {
+          const margin = 16;
+          const elRect = ds.element.getBoundingClientRect();
+          elW = elRect.width || 200;
+          elH = elRect.height || 100;
+          if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
+            // finalX is `right`, finalY is `bottom`
+            clampedX = Math.max(0, Math.min(finalX, window.innerWidth - elW));
+            // For bottom-origin panels: limit bottom offset so panel top never goes above safe header area.
+            const maxBottom = Math.max(0, window.innerHeight - elH - TOP_SAFE_OFFSET);
+            clampedY = Math.max(0, Math.min(finalY, maxBottom));
+          } else {
+            clampedX = Math.max(margin - elW, Math.min(finalX, window.innerWidth - margin));
+            clampedY = Math.max(TOP_SAFE_OFFSET, Math.min(finalY, window.innerHeight - margin));
+          }
+          // Snap to edges
+          const snapped = snapToEdge(clampedX, clampedY, elW, elH, ds.disableSnap);
+          clampedX = snapped.x;
+          clampedY = snapped.y;
         }
-        // Snap to edges
-        const snapped = snapToEdge(clampedX, clampedY, elW, elH, ds.disableSnap);
-        const finalPos = { x: snapped.x, y: snapped.y };
+        const finalPos = { x: clampedX, y: clampedY };
         const finalSize = { width: Math.max(ds.minSize.width, finalW), height: Math.max(ds.minSize.height, finalH) };
 
         setPosition(finalPos);
@@ -475,15 +484,23 @@ export function GlobalDragManager() {
       document.body.style.userSelect = '';
       const finalLeft = state.offsetX + state.deltaX;
       const finalTop = state.offsetY + state.deltaY;
-      const margin = 16;
-      const rect = state.el.getBoundingClientRect();
-      const clampedLeft = Math.max(margin - rect.width, Math.min(finalLeft, window.innerWidth - margin));
-      const clampedTop = Math.max(TOP_SAFE_OFFSET, Math.min(finalTop, window.innerHeight - margin));
       const disableSnap = state.el.getAttribute('data-disable-snap') === 'true';
-      const snapped = snapToEdge(clampedLeft, clampedTop, rect.width, rect.height, disableSnap);
+      let clampedLeft: number, clampedTop: number;
+      if (disableSnap) {
+        clampedLeft = finalLeft;
+        clampedTop = finalTop;
+      } else {
+        const margin = 16;
+        const rect = state.el.getBoundingClientRect();
+        clampedLeft = Math.max(margin - rect.width, Math.min(finalLeft, window.innerWidth - margin));
+        clampedTop = Math.max(TOP_SAFE_OFFSET, Math.min(finalTop, window.innerHeight - margin));
+        const snapped = snapToEdge(clampedLeft, clampedTop, rect.width, rect.height, disableSnap);
+        clampedLeft = snapped.x;
+        clampedTop = snapped.y;
+      }
       state.el.style.position = 'fixed';
-      state.el.style.left = `${snapped.x}px`;
-      state.el.style.top = `${snapped.y}px`;
+      state.el.style.left = `${clampedLeft}px`;
+      state.el.style.top = `${clampedTop}px`;
       if (state.id) {
         try { localStorage.setItem(`draggable_position_${state.id}`, JSON.stringify({ x: clampedLeft, y: clampedTop })); } catch { }
       }

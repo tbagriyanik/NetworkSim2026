@@ -690,7 +690,8 @@ export function NetworkTopology({
   const draggedNoteIdRef = useRef<string | null>(null);
   const resizingNoteIdRef = useRef<string | null>(null);
   const noteDragStartRef = useRef<{ x: number; y: number } | null>(null);
-  const noteResizeStartRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
+  const noteResizeStartRef = useRef<{ x: number; y: number; width: number; height: number; noteX: number; noteY: number } | null>(null);
+  const noteResizeDirectionRef = useRef<string>('se');
 
   // Undo/Redo — managed by useCanvasHistory hook
   const {
@@ -2547,7 +2548,8 @@ export function NetworkTopology({
   const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
   const [resizingNoteId, setResizingNoteId] = useState<string | null>(null);
   const [noteDragStart, setNoteDragStart] = useState<{ x: number; y: number } | null>(null);
-  const [noteResizeStart, setNoteResizeStart] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [noteResizeStart, setNoteResizeStart] = useState<{ x: number; y: number; width: number; height: number; noteX: number; noteY: number } | null>(null);
+  const [noteResizeDirection, setNoteResizeDirection] = useState<string>('se');
 
   // All refs are now updated in useEffect to avoid accessing refs during render
   // This keeps refs fresh for event handlers without violating React rules
@@ -2559,6 +2561,7 @@ export function NetworkTopology({
     resizingNoteIdRef.current = resizingNoteId;
     noteDragStartRef.current = noteDragStart;
     noteResizeStartRef.current = noteResizeStart;
+    noteResizeDirectionRef.current = noteResizeDirection;
     isPanningRef.current = isPanning;
     panStartRef.current = panStart;
     zoomRef.current = zoom;
@@ -2926,7 +2929,7 @@ export function NetworkTopology({
   }, [notes, saveToHistory, setSelectedNoteIds]);
 
   // Handle note resize start
-  const handleNoteResizeStart = useCallback((e: ReactMouseEvent, noteId: string) => {
+  const handleNoteResizeStart = useCallback((e: ReactMouseEvent, noteId: string, direction: string = 'se') => {
     e.stopPropagation();
     if (!canvasRef.current) return;
 
@@ -2935,11 +2938,12 @@ export function NetworkTopology({
 
     saveToHistory();
     setResizingNoteId(noteId);
-    setNoteResizeStart({ x: e.clientX, y: e.clientY, width: note.width, height: note.height });
+    setNoteResizeDirection(direction);
+    setNoteResizeStart({ x: e.clientX, y: e.clientY, width: note.width, height: note.height, noteX: note.x, noteY: note.y });
     setSelectedNoteIds([noteId]);
   }, [notes, saveToHistory, setSelectedNoteIds]);
 
-  const handleNoteResizeTouchStart = useCallback((e: React.TouchEvent, noteId: string) => {
+  const handleNoteResizeTouchStart = useCallback((e: React.TouchEvent, noteId: string, direction: string = 'se') => {
     e.stopPropagation();
     if (!canvasRef.current || e.touches.length !== 1) return;
 
@@ -2949,7 +2953,8 @@ export function NetworkTopology({
 
     saveToHistory();
     setResizingNoteId(noteId);
-    setNoteResizeStart({ x: touch.clientX, y: touch.clientY, width: note.width, height: note.height });
+    setNoteResizeDirection(direction);
+    setNoteResizeStart({ x: touch.clientX, y: touch.clientY, width: note.width, height: note.height, noteX: note.x, noteY: note.y });
     setSelectedNoteIds([noteId]);
   }, [notes, saveToHistory, setSelectedNoteIds]);
 
@@ -2984,19 +2989,26 @@ export function NetworkTopology({
 
         animationFrameId = requestAnimationFrame(() => {
           const currentZoom = zoomRef.current;
+          const dir = noteResizeDirectionRef.current;
+          const dx = (e.clientX - noteResizeStartRef.current!.x) / currentZoom;
+          const dy = (e.clientY - noteResizeStartRef.current!.y) / currentZoom;
+          const origW = noteResizeStartRef.current!.width;
+          const origH = noteResizeStartRef.current!.height;
+          let newW = origW, newH = origH, newX: number | undefined, newY: number | undefined;
 
-          const deltaX = (e.clientX - noteResizeStartRef.current!.x) / currentZoom;
-          const deltaY = (e.clientY - noteResizeStartRef.current!.y) / currentZoom;
-
-          const newWidth = Math.max(150, noteResizeStartRef.current!.width + deltaX);
-          const newHeight = Math.max(100, noteResizeStartRef.current!.height + deltaY);
+          if (dir.includes('e')) newW = Math.max(150, origW + dx);
+          if (dir.includes('w')) { newW = Math.max(150, origW - dx); newX = noteResizeStartRef.current!.noteX + (origW - newW); }
+          if (dir.includes('s')) newH = Math.max(100, origH + dy);
+          if (dir.includes('n')) { newH = Math.max(100, origH - dy); newY = noteResizeStartRef.current!.noteY + (origH - newH); }
 
           setNotes((prev) =>
-            prev.map((n) =>
-              n.id === resizingNoteIdRef.current
-                ? { ...n, width: newWidth, height: newHeight }
-                : n
-            )
+            prev.map((n) => {
+              if (n.id !== resizingNoteIdRef.current) return n;
+              const updated: any = { ...n, width: newW, height: newH };
+              if (newX !== undefined) updated.x = newX;
+              if (newY !== undefined) updated.y = newY;
+              return updated;
+            })
           );
         });
       }
@@ -3031,19 +3043,26 @@ export function NetworkTopology({
 
         animationFrameId = requestAnimationFrame(() => {
           const currentZoom = zoomRef.current;
+          const dir = noteResizeDirectionRef.current;
+          const dx = (touch.clientX - noteResizeStartRef.current!.x) / currentZoom;
+          const dy = (touch.clientY - noteResizeStartRef.current!.y) / currentZoom;
+          const origW = noteResizeStartRef.current!.width;
+          const origH = noteResizeStartRef.current!.height;
+          let newW = origW, newH = origH, newX: number | undefined, newY: number | undefined;
 
-          const deltaX = (touch.clientX - noteResizeStartRef.current!.x) / currentZoom;
-          const deltaY = (touch.clientY - noteResizeStartRef.current!.y) / currentZoom;
-
-          const newWidth = Math.max(150, noteResizeStartRef.current!.width + deltaX);
-          const newHeight = Math.max(100, noteResizeStartRef.current!.height + deltaY);
+          if (dir.includes('e')) newW = Math.max(150, origW + dx);
+          if (dir.includes('w')) { newW = Math.max(150, origW - dx); newX = noteResizeStartRef.current!.noteX + (origW - newW); }
+          if (dir.includes('s')) newH = Math.max(100, origH + dy);
+          if (dir.includes('n')) { newH = Math.max(100, origH - dy); newY = noteResizeStartRef.current!.noteY + (origH - newH); }
 
           setNotes((prev) =>
-            prev.map((n) =>
-              n.id === resizingNoteIdRef.current
-                ? { ...n, width: newWidth, height: newHeight }
-                : n
-            )
+            prev.map((n) => {
+              if (n.id !== resizingNoteIdRef.current) return n;
+              const updated: any = { ...n, width: newW, height: newH };
+              if (newX !== undefined) updated.x = newX;
+              if (newY !== undefined) updated.y = newY;
+              return updated;
+            })
           );
         });
       }
@@ -3055,6 +3074,7 @@ export function NetworkTopology({
       setNoteDragStart(null);
       setResizingNoteId(null);
       setNoteResizeStart(null);
+      setNoteResizeDirection('se');
     };
 
     const handleTouchEnd = () => {
@@ -3063,6 +3083,7 @@ export function NetworkTopology({
       setNoteDragStart(null);
       setResizingNoteId(null);
       setNoteResizeStart(null);
+      setNoteResizeDirection('se');
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
@@ -7269,30 +7290,25 @@ export function NetworkTopology({
                                 onTopologyChange(devices, connections, notes);
                               }
                             }}
-                            className="w-full h-full min-h-full px-2 py-1 bg-transparent outline-none resize-none overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words touch-manipulation"
+                            className="w-full h-full min-h-full px-2 py-1 bg-transparent outline-none resize-none overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words touch-manipulation custom-scrollbar"
                             style={{ fontSize: note.fontSize, lineHeight: 1.35, color: '#000000' }}
                           />
                         </div>
 
-                        {/* Resize Handle - Bottom Right */}
-                        <div
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id);
-                          }}
-                          onTouchStart={(e) => {
-                            e.preventDefault();
-                            handleNoteResizeTouchStart(e, note.id);
-                          }}
-                          className="absolute right-1 bottom-1 z-10 w-4 h-4 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity touch-manipulation"
-                        >
-                          <TooltipWrapper title={t.resizeLabel}>
-                            <svg viewBox="0 0 12 12" className="w-full h-full text-black">
-                              <path d="M4 12 L12 4" stroke="currentColor" strokeWidth="1" />
-                              <path d="M7 12 L12 7" stroke="currentColor" strokeWidth="1" />
-                              <path d="M10 12 L12 10" stroke="currentColor" strokeWidth="1" />
-                            </svg>
-                          </TooltipWrapper>
+                        {/* Resize Handles */}
+                        <div className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize opacity-0 hover:opacity-40 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id, 'w'); }} onTouchStart={(e) => { e.preventDefault(); handleNoteResizeTouchStart(e, note.id, 'w'); }} />
+                        <div className="absolute right-0 top-0 bottom-0 w-1 cursor-ew-resize opacity-0 hover:opacity-40 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id, 'e'); }} onTouchStart={(e) => { e.preventDefault(); handleNoteResizeTouchStart(e, note.id, 'e'); }} />
+                        <div className="absolute left-0 top-0 right-0 h-1 cursor-ns-resize opacity-0 hover:opacity-40 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id, 'n'); }} onTouchStart={(e) => { e.preventDefault(); handleNoteResizeTouchStart(e, note.id, 'n'); }} />
+                        <div className="absolute left-0 bottom-0 right-0 h-1 cursor-ns-resize opacity-0 hover:opacity-40 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id, 's'); }} onTouchStart={(e) => { e.preventDefault(); handleNoteResizeTouchStart(e, note.id, 's'); }} />
+                        <div className="absolute left-0 top-0 w-4 h-4 cursor-nw-resize opacity-0 hover:opacity-40 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id, 'nw'); }} onTouchStart={(e) => { e.preventDefault(); handleNoteResizeTouchStart(e, note.id, 'nw'); }} />
+                        <div className="absolute right-0 top-0 w-4 h-4 cursor-ne-resize opacity-0 hover:opacity-40 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id, 'ne'); }} onTouchStart={(e) => { e.preventDefault(); handleNoteResizeTouchStart(e, note.id, 'ne'); }} />
+                        <div className="absolute left-0 bottom-0 w-4 h-4 cursor-sw-resize opacity-0 hover:opacity-40 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id, 'sw'); }} onTouchStart={(e) => { e.preventDefault(); handleNoteResizeTouchStart(e, note.id, 'sw'); }} />
+                        <div className="absolute right-1 bottom-1 z-10 w-4 h-4 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity touch-manipulation" onMouseDown={(e) => { e.preventDefault(); handleNoteResizeStart(e as unknown as ReactMouseEvent, note.id, 'se'); }} onTouchStart={(e) => { e.preventDefault(); handleNoteResizeTouchStart(e, note.id, 'se'); }}>
+                          <svg viewBox="0 0 12 12" className="w-full h-full text-black">
+                            <path d="M4 12 L12 4" stroke="currentColor" strokeWidth="1" />
+                            <path d="M7 12 L12 7" stroke="currentColor" strokeWidth="1" />
+                            <path d="M10 12 L12 10" stroke="currentColor" strokeWidth="1" />
+                          </svg>
                         </div>
                       </div>
                     </foreignObject>

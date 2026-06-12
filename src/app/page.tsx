@@ -4639,18 +4639,13 @@ ${state.bannerMOTD}
                 {/* Resize handles - hidden on mobile */}
                 {!isMobile && (
                   <>
-                    <div
-                      className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-red-500/10"
-                      onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'w', 'firewall')}
-                    />
-                    <div
-                      className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-red-500/20"
-                      onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'e', 'firewall')}
-                    />
-                    <div
-                      className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-red-500/20"
-                      onPointerDown={(e) => firewallDrag.handleResizeStart(e, 's', 'firewall')}
-                    />
+                    <div className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-red-500/10" onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'w', 'firewall')} />
+                    <div className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-red-500/20" onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'e', 'firewall')} />
+                    <div className="absolute -top-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-t-lg bg-transparent hover:bg-red-500/20" onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'n', 'firewall')} />
+                    <div className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-red-500/20" onPointerDown={(e) => firewallDrag.handleResizeStart(e, 's', 'firewall')} />
+                    <div className="absolute -left-[5px] -top-[5px] z-20 h-[10px] w-[10px] cursor-nw-resize select-none touch-none bg-transparent hover:bg-red-500/20" onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'nw', 'firewall')} />
+                    <div className="absolute -right-[5px] -top-[5px] z-20 h-[10px] w-[10px] cursor-ne-resize select-none touch-none bg-transparent hover:bg-red-500/20" onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'ne', 'firewall')} />
+                    <div className="absolute -left-[5px] -bottom-[5px] z-20 h-[10px] w-[10px] cursor-sw-resize select-none touch-none bg-transparent hover:bg-red-500/20" onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'sw', 'firewall')} />
                     <TooltipWrapper title={t.resizeAction}>
                       <div
                         className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-red-500/30 hover:text-white flex items-center justify-center"
@@ -4751,18 +4746,13 @@ ${state.bannerMOTD}
                 {/* Resize handles - hidden on mobile */}
                 {!isMobile && (
                   <>
-                    <div
-                      className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10"
-                      onPointerDown={(e) => pcDrag.handleResizeStart(e, 'w', 'pc')}
-                    />
-                    <div
-                      className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20"
-                      onPointerDown={(e) => pcDrag.handleResizeStart(e, 'e', 'pc')}
-                    />
-                    <div
-                      className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20"
-                      onPointerDown={(e) => pcDrag.handleResizeStart(e, 's', 'pc')}
-                    />
+                    <div className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-cyan-500/10" onPointerDown={(e) => pcDrag.handleResizeStart(e, 'w', 'pc')} />
+                    <div className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-cyan-500/20" onPointerDown={(e) => pcDrag.handleResizeStart(e, 'e', 'pc')} />
+                    <div className="absolute -top-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-t-lg bg-transparent hover:bg-cyan-500/20" onPointerDown={(e) => pcDrag.handleResizeStart(e, 'n', 'pc')} />
+                    <div className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-cyan-500/20" onPointerDown={(e) => pcDrag.handleResizeStart(e, 's', 'pc')} />
+                    <div className="absolute -left-[5px] -top-[5px] z-20 h-[10px] w-[10px] cursor-nw-resize select-none touch-none bg-transparent hover:bg-cyan-500/20" onPointerDown={(e) => pcDrag.handleResizeStart(e, 'nw', 'pc')} />
+                    <div className="absolute -right-[5px] -top-[5px] z-20 h-[10px] w-[10px] cursor-ne-resize select-none touch-none bg-transparent hover:bg-cyan-500/20" onPointerDown={(e) => pcDrag.handleResizeStart(e, 'ne', 'pc')} />
+                    <div className="absolute -left-[5px] -bottom-[5px] z-20 h-[10px] w-[10px] cursor-sw-resize select-none touch-none bg-transparent hover:bg-cyan-500/20" onPointerDown={(e) => pcDrag.handleResizeStart(e, 'sw', 'pc')} />
                     <TooltipWrapper title={t.resizeAction}>
                       <div
                         className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"

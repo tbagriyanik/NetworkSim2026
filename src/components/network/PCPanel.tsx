@@ -1304,10 +1304,11 @@ export function PCPanel({
 
   const dragStateRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const resizeStateRef = useRef<{
-    side: 'left' | 'right' | 'bottom';
+    side: 'left' | 'right' | 'bottom' | 'top' | 'se' | 'sw' | 'ne' | 'nw';
     startX: number;
     startY: number;
     originX: number;
+    originY: number;
     originW: number;
     originH: number;
   } | null>(null);
@@ -1322,6 +1323,7 @@ export function PCPanel({
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
+        setHttpAppUrl('');
         setHttpAppContent(null);
         setHttpAppDeviceId(null);
         inputRef.current?.focus();
@@ -2332,6 +2334,7 @@ export function PCPanel({
 
     // Handle special IoT Web Panel URL
     if (rawTarget === 'http://iot-panel' || rawTarget === 'iot-panel') {
+      setHttpAppUrl(displayUrl);
       setHttpAppContent(generateIotWebPanelContent(iotDevices, language, undefined, undefined, topologyConnections));
       setHttpAppTitle(language === 'tr' ? 'IoT Web Paneli' : 'IoT Web Panel');
       setHttpAppDeviceId(null);
@@ -2350,6 +2353,7 @@ export function PCPanel({
         const sensorType = targetDevice.iot?.sensorType || 'temperature';
         const dataFlowDirection = targetDevice.iot?.dataFlowDirection || (kind === 'sensor' ? 'input' : 'output');
         const iotDevicePage = generateIotDevicePageContent(targetDevice.id, targetDevice.name || targetDevice.id, language, isActive, isPoweredOff, kind, rules, sensorType, iotDevices, dataFlowDirection, topologyDevices);
+        setHttpAppUrl(displayUrl);
         setHttpAppContent(iotDevicePage);
         setHttpAppTitle(`${targetDevice.name || targetDevice.id} ${language === 'tr' ? 'Yönetimi' : 'Management'}`);
         setHttpAppDeviceId(targetDevice.id);
@@ -2892,34 +2896,40 @@ export function PCPanel({
           const dy = event.clientY - dragState.startY;
           setBrowserWindow((prev) => ({
             ...prev,
-            x: Math.max(0, dragState.originX + dx),
-            y: Math.max(0, dragState.originY + dy),
+            x: dragState.originX + dx,
+            y: dragState.originY + dy,
           }));
         } else if (resizeStateRef.current) {
           const state = resizeStateRef.current;
           const dx = event.clientX - state.startX;
           const dy = event.clientY - state.startY;
           setBrowserWindow((prev) => {
-            if (state.side === 'bottom') {
-              return {
-                ...prev,
-                height: Math.max(260, state.originH + dy),
-              };
+            const minW = 420, minH = 260;
+            if (state.side === 'bottom') return { ...prev, height: Math.max(minH, state.originH + dy) };
+            if (state.side === 'right') return { ...prev, width: Math.max(minW, state.originW + dx) };
+            if (state.side === 'top') {
+              const nh = Math.max(minH, state.originH - dy);
+              return { ...prev, height: nh, y: Math.max(0, state.originY - (nh - state.originH)) };
             }
-            if (state.side === 'right') {
-              return {
-                ...prev,
-                width: Math.max(420, state.originW + dx),
-              };
+            if (state.side === 'left') {
+              const nw = Math.max(minW, state.originW - dx);
+              return { ...prev, width: nw, x: Math.max(0, state.originX - (nw - state.originW)) };
             }
-
-            const nextWidth = Math.max(420, state.originW - dx);
-            const widthDiff = nextWidth - state.originW;
-            return {
-              ...prev,
-              width: nextWidth,
-              x: Math.max(0, state.originX - widthDiff),
-            };
+            if (state.side === 'se') return { ...prev, width: Math.max(minW, state.originW + dx), height: Math.max(minH, state.originH + dy) };
+            if (state.side === 'sw') {
+              const nw = Math.max(minW, state.originW - dx);
+              return { ...prev, width: nw, x: Math.max(0, state.originX - (nw - state.originW)), height: Math.max(minH, state.originH + dy) };
+            }
+            if (state.side === 'ne') {
+              const nh = Math.max(minH, state.originH - dy);
+              return { ...prev, width: Math.max(minW, state.originW + dx), height: nh, y: Math.max(0, state.originY - (nh - state.originH)) };
+            }
+            if (state.side === 'nw') {
+              const nwW = Math.max(minW, state.originW - dx);
+              const nwH = Math.max(minH, state.originH - dy);
+              return { ...prev, width: nwW, x: Math.max(0, state.originX - (nwW - state.originW)), height: nwH, y: Math.max(0, state.originY - (nwH - state.originH)) };
+            }
+            return prev;
           });
         }
       });
@@ -6087,8 +6097,14 @@ export function PCPanel({
                                   onClick={() => {
                                     navigateToProgram('desktop');
                                     setTimeout(() => {
-                                      setInput('curl 192.168.1.1');
-                                      void executeCommand('curl 192.168.1.1');
+                                      const apDevice = topologyDevices.find(d =>
+                                        (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3') &&
+                                        d.services?.http?.enabled &&
+                                        (d.wifi?.ssid === wifiSSID || d.ports?.some(p => p.wifi?.ssid === wifiSSID))
+                                      );
+                                      const targetIp = apDevice?.ip || '192.168.1.1';
+                                      setInput(`curl ${targetIp}`);
+                                      void executeCommand(`curl ${targetIp}`);
                                     }, 300);
                                   }}
                                 >
@@ -6369,8 +6385,14 @@ export function PCPanel({
                                   onClick={() => {
                                     navigateToProgram('desktop');
                                     setTimeout(() => {
-                                      setInput('curl 192.168.1.1');
-                                      void executeCommand('curl 192.168.1.1');
+                                      const apDevice = topologyDevices.find(d =>
+                                        (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3') &&
+                                        d.services?.http?.enabled &&
+                                        (d.wifi?.ssid === wifiSSID || d.ports?.some(p => p.wifi?.ssid === wifiSSID))
+                                      );
+                                      const targetIp = apDevice?.ip || '192.168.1.1';
+                                      setInput(`curl ${targetIp}`);
+                                      void executeCommand(`curl ${targetIp}`);
                                     }, 300);
                                   }}
                                 >
@@ -7218,7 +7240,9 @@ export function PCPanel({
           className="fixed inset-0 z-[999] pointer-events-auto bg-black/20"
           onClick={(e) => {
             e.stopPropagation();
+            setHttpAppUrl('');
             setHttpAppContent(null);
+            setHttpAppDeviceId(null);
             inputRef.current?.focus();
           }}
         >
@@ -7247,6 +7271,7 @@ export function PCPanel({
               if (e.key === 'Escape') {
                 e.preventDefault();
                 e.stopPropagation();
+                setHttpAppUrl('');
                 setHttpAppContent(null);
                 setHttpAppDeviceId(null);
                 inputRef.current?.focus();
@@ -7363,6 +7388,7 @@ export function PCPanel({
                   size="icon"
                   variant="outline"
                   onClick={() => {
+                    setHttpAppUrl('');
                     setHttpAppContent(null);
                     setHttpAppDeviceId(null);
                     inputRef.current?.focus();
@@ -7382,54 +7408,14 @@ export function PCPanel({
                   style={{ display: 'block' }}
                 />
               </div>
-              <div
-                className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                  resizeStateRef.current = {
-                    side: 'left',
-                    startX: e.clientX,
-                    startY: e.clientY,
-                    originX: browserWindow.x,
-                    originW: browserWindow.width,
-                    originH: browserWindow.height,
-                  };
-                }}
-              />
-              <div
-                className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                  resizeStateRef.current = {
-                    side: 'right',
-                    startX: e.clientX,
-                    startY: e.clientY,
-                    originX: browserWindow.x,
-                    originW: browserWindow.width,
-                    originH: browserWindow.height,
-                  };
-                }}
-              />
-              <div
-                className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize select-none touch-none"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                  resizeStateRef.current = {
-                    side: 'bottom',
-                    startX: e.clientX,
-                    startY: e.clientY,
-                    originX: browserWindow.x,
-                    originW: browserWindow.width,
-                    originH: browserWindow.height,
-                  };
-                }}
-              />
+              <div className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); resizeStateRef.current = { side: 'left', startX: e.clientX, startY: e.clientY, originX: browserWindow.x, originY: browserWindow.y, originW: browserWindow.width, originH: browserWindow.height }; }} />
+              <div className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize select-none touch-none" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); resizeStateRef.current = { side: 'right', startX: e.clientX, startY: e.clientY, originX: browserWindow.x, originY: browserWindow.y, originW: browserWindow.width, originH: browserWindow.height }; }} />
+              <div className="absolute left-0 right-0 top-0 h-2 cursor-ns-resize select-none touch-none" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); resizeStateRef.current = { side: 'top', startX: e.clientX, startY: e.clientY, originX: browserWindow.x, originY: browserWindow.y, originW: browserWindow.width, originH: browserWindow.height }; }} />
+              <div className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize select-none touch-none" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); resizeStateRef.current = { side: 'bottom', startX: e.clientX, startY: e.clientY, originX: browserWindow.x, originY: browserWindow.y, originW: browserWindow.width, originH: browserWindow.height }; }} />
+              <div className="absolute left-0 top-0 w-4 h-4 cursor-nw-resize select-none touch-none" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); resizeStateRef.current = { side: 'nw', startX: e.clientX, startY: e.clientY, originX: browserWindow.x, originY: browserWindow.y, originW: browserWindow.width, originH: browserWindow.height }; }} />
+              <div className="absolute right-0 top-0 w-4 h-4 cursor-ne-resize select-none touch-none" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); resizeStateRef.current = { side: 'ne', startX: e.clientX, startY: e.clientY, originX: browserWindow.x, originY: browserWindow.y, originW: browserWindow.width, originH: browserWindow.height }; }} />
+              <div className="absolute left-0 bottom-0 w-4 h-4 cursor-sw-resize select-none touch-none" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); resizeStateRef.current = { side: 'sw', startX: e.clientX, startY: e.clientY, originX: browserWindow.x, originY: browserWindow.y, originW: browserWindow.width, originH: browserWindow.height }; }} />
+              <div className="absolute right-0 bottom-0 w-4 h-4 cursor-se-resize select-none touch-none" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); resizeStateRef.current = { side: 'se', startX: e.clientX, startY: e.clientY, originX: browserWindow.x, originY: browserWindow.y, originW: browserWindow.width, originH: browserWindow.height }; }} />
             </div>
           </div>
         </div>
