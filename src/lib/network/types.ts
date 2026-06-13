@@ -213,6 +213,7 @@ export interface Port {
       state?: 'Initial' | 'Listen' | 'Speak' | 'Standby' | 'Active';
     }>;
   };
+  natSide?: 'inside' | 'outside';
 }
 
 export interface Vlan {
@@ -442,6 +443,24 @@ export interface SwitchState {
   currentSsid?: string;
   currentRadio?: string;
   execAliases?: Record<string, string>;
+  // NAT configuration
+  natPools?: Record<string, { startIp: string; endIp: string; netmask: string }>;
+  natStaticTranslations?: Array<{ localIp: string; globalIp: string }>;
+  natDynamicRules?: Array<{ aclId: string; poolName?: string; overload?: boolean; interface?: string }>;
+  natTranslations?: Array<{
+    protocol: string;
+    localIp: string;
+    localPort: number;
+    globalIp: string;
+    globalPort: number;
+    remoteIp?: string;
+    remotePort?: number;
+    type?: 'static' | 'dynamic';
+    timeout?: number;
+  }>;
+  // OSPF areas
+  ospfAreas?: number[];
+  isAbr?: boolean;
   // IoT specific configuration
   iotConfig?: {
     sensorType?: string;

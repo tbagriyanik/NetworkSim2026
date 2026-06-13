@@ -95,6 +95,8 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show ip ospf interface': cmdShowIpOspfInterface,
   'show standby': cmdShowStandby,
   'show hosts': cmdShowHosts,
+  'show ip nat translations': cmdShowIpNatTranslations,
+  'show ip nat statistics': cmdShowIpNatStatistics,
 };
 
 function isPhysicalEthernetPort(portId: string): boolean {
@@ -882,6 +884,59 @@ function cmdShowStandby(state: SwitchState, input: string, _ctx: CommandContext)
 }
 
 /**
+ * Show IP NAT Translations
+ */
+function cmdShowIpNatTranslations(state: SwitchState, input: string, _ctx: CommandContext): any {
+  let output = '\nPro Inside global      Inside local       Outside local      Outside global\n';
+  const translations = state.natTranslations || [];
+  const staticTranslations = state.natStaticTranslations || [];
+
+  staticTranslations.forEach(t => {
+    output += `--- ${t.globalIp.padEnd(18)} ${t.localIp.padEnd(18)} ---                ---\n`;
+  });
+
+  translations.forEach(t => {
+    const proto = t.protocol || 'tcp';
+    output += `${proto.toLowerCase().padEnd(3)} ${t.globalIp}:${t.globalPort}`.padEnd(23);
+    output += ` ${t.localIp}:${t.localPort}`.padEnd(19);
+    output += ` ${t.remoteIp || '---'}:${t.remotePort || '---'}`.padEnd(19);
+    output += ` ${t.remoteIp || '---'}:${t.remotePort || '---'}\n`;
+  });
+
+  if (staticTranslations.length === 0 && translations.length === 0) {
+    output = '\n% No NAT translations active\n';
+  }
+
+  return { success: true, output };
+}
+
+/**
+ * Show IP NAT Statistics
+ */
+function cmdShowIpNatStatistics(state: SwitchState, input: string, _ctx: CommandContext): any {
+  let output = '\nTotal active translations: ' + (state.natTranslations?.length || 0) + ' (0 static, 0 dynamic; 0 extended)\n';
+  output += 'Peak translations: 0, occurred 00:00:00 ago\n';
+  output += 'Outside interfaces:\n';
+  Object.keys(state.ports).forEach(pId => {
+    if (state.ports[pId].natSide === 'outside') output += `  ${pId}\n`;
+  });
+  output += 'Inside interfaces:\n';
+  Object.keys(state.ports).forEach(pId => {
+    if (state.ports[pId].natSide === 'inside') output += `  ${pId}\n`;
+  });
+  output += 'Hits: 0  Misses: 0\n';
+  output += 'CEF Translated packets: 0, CEF Punted packets: 0\n';
+  output += 'Expired translations: 0\n';
+  output += 'Dynamic mappings:\n';
+  (state.natDynamicRules || []).forEach(r => {
+    output += `-- Inside Source\n`;
+    output += `   access-list ${r.aclId} interface ${r.interface || 'pool ' + r.poolName} refcount 0\n`;
+  });
+
+  return { success: true, output };
+}
+
+/**
  * Show Hosts - Display DNS host mapping
  */
 function cmdShowHosts(state: SwitchState, input: string, _ctx: CommandContext): any {
@@ -1267,8 +1322,7 @@ function cmdShowIpRoute(
     }
   }
 
-  // Static routes - convert subnet mask to CIDR notation
-  // Support both 'mask' and 'subnetMask', 'network' and 'destination' property names
+  // Static routes
   if (!filter || filter === 'static') {
     if (state.staticRoutes && state.staticRoutes.length > 0) {
       state.staticRoutes.forEach((route) => {
@@ -1293,7 +1347,14 @@ function cmdShowIpRoute(
         let code = 'R';
         let ad = 120;
         let protocol = 'rip';
-        if (state.routingProtocol === 'ospf') { code = 'O'; ad = 110; protocol = 'ospf'; }
+        if (state.routingProtocol === 'ospf') {
+          const myAreas = (state.dynamicRoutes || []).map(r => r.area).filter(a => a !== undefined);
+          if (state.ospfAreas) state.ospfAreas.forEach(a => myAreas.push(a));
+          const isInterArea = route.area !== undefined && !myAreas.includes(route.area);
+          code = isInterArea ? 'O IA' : 'O';
+          ad = 110;
+          protocol = 'ospf';
+        }
         else if (state.routingProtocol === 'eigrp') { code = 'D'; ad = 90; protocol = 'eigrp'; }
         else if (state.routingProtocol === 'bgp') { code = 'B'; ad = 20; protocol = 'bgp'; }
 
@@ -1326,11 +1387,17 @@ function cmdShowIpProtocols(state: SwitchState, input: string, _ctx: CommandCont
   if (state.routingProtocol === 'ospf') {
     const processId = state.ospfProcessId || 1;
     const routerId = state.ospfRouterId || state.ip || '192.168.1.1';
+    const areas = new Set<number>();
+    if (state.dynamicRoutes) state.dynamicRoutes.forEach(r => { if (r.area !== undefined) areas.add(r.area); });
+    if (state.ospfAreas) state.ospfAreas.forEach(a => areas.add(a));
+    const areaCount = areas.size || 1;
+
     output += `Routing Protocol is "ospf ${processId}"\n`;
     output += '  Outgoing update filter list for all interfaces is not set\n';
     output += '  Incoming update filter list for all interfaces is not set\n';
     output += `  Router ID ${routerId}\n`;
-    output += '  Number of areas in this router is 1. 1 normal 0 stub 0 nssa\n';
+    if (state.isAbr) output += '  It is an area border router\n';
+    output += `  Number of areas in this router is ${areaCount}. ${areaCount} normal 0 stub 0 nssa\n`;
     output += '  Maximum path: 4\n';
     output += '  Routing for Networks:\n';
     if (state.dynamicRoutes && state.dynamicRoutes.length > 0) {
@@ -1417,7 +1484,13 @@ function cmdShowIpOspf(state: SwitchState, input: string, _ctx: CommandContext):
 
   const processId = state.ospfProcessId || 1;
   const routerId = state.ospfRouterId || state.ip || '192.168.1.1';
+  const areas = new Set<number>();
+  if (state.dynamicRoutes) state.dynamicRoutes.forEach(r => { if (r.area !== undefined) areas.add(r.area); });
+  if (state.ospfAreas) state.ospfAreas.forEach(a => areas.add(a));
+  const areaCount = areas.size || 1;
+
   let output = `\n Routing Process "ospf ${processId}" with ID ${routerId}\n`;
+  if (state.isAbr) output += ' It is an area border router\n';
   output += ' Start time: 00:00:01.000, Time elapsed: 00:02:15.000\n';
   output += ' Supports only single TOS(TOS0) routes\n';
   output += ' Supports opaque LSA\n';
@@ -1436,13 +1509,26 @@ function cmdShowIpOspf(state: SwitchState, input: string, _ctx: CommandContext):
   output += ' Number of opaque AS LSA 0. Checksum Sum 0x000000\n';
   output += ' Number of DCbitless external and opaque AS LSA 0\n';
   output += ' Number of DoNotAge external and opaque AS LSA 0\n';
-  output += ' Number of areas in this router is 1. 1 normal 0 stub 0 nssa\n';
+  output += ` Number of areas in this router is ${areaCount}. ${areaCount} normal 0 stub 0 nssa\n`;
   output += ' Number of areas transit capable is 0\n';
   output += ' External flood list length 0\n';
   output += ' IETF NSF helper support enabled\n';
   output += ' Reference bandwidth unit is 100 mbps\n';
 
-  output += '    Area BACKBONE(0)\n';
+  Array.from(areas).forEach(area => {
+    output += `    Area ${area === 0 ? 'BACKBONE(0)' : area}\n`;
+    output += `        Number of interfaces in this area is 1\n`;
+    output += `        Area has no authentication\n`;
+    output += `        SPF algorithm last executed 00:01:15.000 ago\n`;
+    output += `        SPF algorithm executed 2 times\n`;
+    output += `        Area ranges are\n`;
+  });
+
+  if (areas.size === 0) {
+    output += '    Area BACKBONE(0)\n';
+    output += '        Number of interfaces in this area is 1\n';
+    output += '        Area has no authentication\n';
+  }
   output += '        Number of interfaces in this area is 1\n';
   output += '        Area has no authentication\n';
   output += '        SPF algorithm last executed 00:01:15.000 ago\n';
