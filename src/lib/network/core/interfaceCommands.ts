@@ -143,6 +143,8 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'standby priority': cmdStandbyPriority,
   'standby ipv6': cmdStandbyIpv6,
   'standby preempt': cmdStandbyPreempt,
+  'ip nat inside': cmdIpNatInside,
+  'ip nat outside': cmdIpNatOutside,
 };
 
 /**
@@ -2478,6 +2480,24 @@ function cmdSwitchportPortSecurityAgingTime(state: any, input: string, ctx: any)
     success: true,
     newState: { ports: newPorts }
   };
+}
+
+/**
+ * IP NAT Inside
+ */
+function cmdIpNatInside(state: any, input: string, ctx: any): any {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, natSide: 'inside' }));
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * IP NAT Outside
+ */
+function cmdIpNatOutside(state: any, input: string, ctx: any): any {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, natSide: 'outside' }));
+  return { success: true, newState: { ports: newPorts } };
 }
 
 /**

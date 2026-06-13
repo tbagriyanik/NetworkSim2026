@@ -172,6 +172,9 @@ The simulator supports **180+ commands** across multiple configuration modes.
 | `ip access-list {standard|extended} <name>` | Create named ACL |
 | `show access-lists` | Display all access lists |
 | `no access-list <id>` | Remove numbered ACL |
+| `ip nat inside source {static <local> <global> | list <acl> {pool <name> | interface <intf>} [overload]}` | Configure NAT |
+| `ip nat pool <name> <start> <end> {netmask <mask} | prefix-length <len>}` | Define NAT pool |
+| `no ip nat ...` | Remove NAT configuration |
 
 ### Interface Configuration Commands
 | Command | Description |
@@ -209,6 +212,12 @@ The simulator supports **180+ commands** across multiple configuration modes.
 | `ip address <ip> <mask>` | Assign IP address |
 | `ip address <ip>/<prefix>` | Assign IP with CIDR notation |
 | `no ip address` | Remove IP address |
+| `ip nat {inside | outside}` | Set interface NAT side |
+| `no ip nat {inside | outside}` | Remove NAT side |
+| `standby <group> ip <virtual-ip>` | Configure HSRP virtual IP |
+| `standby <group> priority <prio>` | Set HSRP priority |
+| `standby <group> preempt` | Enable HSRP preemption |
+| `no standby <group> ...` | Remove HSRP configuration |
 | `ip default-gateway <ip>` | Set default gateway (interface) |
 | `no ip default-gateway` | Remove default gateway (interface) |
 | `ip helper-address <ip>` | Set DHCP relay |
@@ -283,7 +292,7 @@ The simulator supports **180+ commands** across multiple configuration modes.
 ### Router Configuration Commands (RIP/OSPF)
 | Command | Description |
 |---------|-------------|
-| `network <ip> [wildcard] area <id>` | Add network to routing |
+| `network <ip> [wildcard] area <id>` | Add network to OSPF area |
 | `network <ip>` | Add RIP network |
 | `router-id <ip>` | Set router ID |
 | `passive-interface <intf>` | Set passive interface |
@@ -358,6 +367,10 @@ The simulator supports **180+ commands** across multiple configuration modes.
 | `show diagnostic` | Display diagnostic results |
 | `show lldp` | Display LLDP neighbors |
 | `show authentication` | Display auth sessions |
+| `show ip nat translations` | Display active NAT translations |
+| `show ip nat statistics` | Display NAT statistics |
+| `show ip ospf` | Display OSPF information and ABR status |
+| `show standby [brief]` | Display HSRP status |
 
 ## Command Modes
 - **User Mode** (`>`) - Basic monitoring commands

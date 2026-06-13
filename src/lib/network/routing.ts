@@ -112,14 +112,15 @@ function buildRoutingTable(
   const state = deviceStates.get(deviceId);
   if (!state) return routes;
 
-  // Connected routes (directly connected networks)
+  // 1. Connected routes (directly connected networks)
   for (const [portId, port] of Object.entries(state.ports)) {
     if (port.ipAddress && port.subnetMask) {
       routes.push({
         destination: getNetworkAddress(port.ipAddress, port.subnetMask),
         subnetMask: port.subnetMask,
         nextHop: portId, // Directly connected
-        type: 'connected'
+        type: 'connected',
+        metric: 0
       });
     }
     if (port.ipv6Address && port.ipv6Prefix) {
@@ -127,12 +128,28 @@ function buildRoutingTable(
         destination: port.ipv6Address,
         prefixLength: port.ipv6Prefix,
         nextHop: portId,
-        type: 'connected'
+        type: 'connected',
+        metric: 0
       });
+    }
+
+    // HSRP/VRRP virtual IPs (connected routes if Active)
+    if (port.hsrp?.groups) {
+      for (const [_, group] of Object.entries(port.hsrp.groups)) {
+        if (group.state === 'Active' && group.virtualIp) {
+          routes.push({
+            destination: group.virtualIp,
+            subnetMask: '255.255.255.255', // Host route
+            nextHop: portId,
+            type: 'connected',
+            metric: 0
+          });
+        }
+      }
     }
   }
 
-  // Static routes
+  // 2. Static routes
   if (state.staticRoutes) {
     routes.push(...state.staticRoutes);
   }
@@ -140,12 +157,67 @@ function buildRoutingTable(
     routes.push(...state.ipv6StaticRoutes);
   }
 
-  // Dynamic routes (simplified OSPF/RIP)
+  // 3. Dynamic routes (Learned or configured)
   if (state.dynamicRoutes) {
     routes.push(...state.dynamicRoutes);
   }
   if (state.ipv6DynamicRoutes) {
     routes.push(...state.ipv6DynamicRoutes);
+  }
+
+  // 4. Multi-area OSPF simplified learning logic
+  if (state.routingProtocol === 'ospf') {
+    // Get my areas
+    const myAreas = new Set<number>();
+    if (state.dynamicRoutes) {
+      state.dynamicRoutes.forEach(r => { if (r.area !== undefined) myAreas.add(r.area); });
+    }
+    if (state.ospfAreas) state.ospfAreas.forEach(a => myAreas.add(a));
+
+    // Learn from other OSPF routers
+    deviceStates.forEach((otherState, otherId) => {
+      if (otherId === deviceId) return;
+      if (otherState.routingProtocol !== 'ospf') return;
+
+      const otherAreas = new Set<number>();
+      if (otherState.dynamicRoutes) {
+        otherState.dynamicRoutes.forEach(r => { if (r.area !== undefined) otherAreas.add(r.area); });
+      }
+      if (otherState.ospfAreas) otherState.ospfAreas.forEach(a => otherAreas.add(a));
+
+      // Check for common area
+      let commonArea: number | undefined;
+      for (const area of myAreas) {
+        if (otherAreas.has(area)) {
+          commonArea = area;
+          break;
+        }
+      }
+
+      // If common area found OR one is ABR (simplified)
+      if (commonArea !== undefined || state.isAbr || otherState.isAbr) {
+        // Learn their connected networks
+        for (const [_, otherPort] of Object.entries(otherState.ports)) {
+          if (otherPort.ipAddress && otherPort.subnetMask && !otherPort.shutdown) {
+            const dest = getNetworkAddress(otherPort.ipAddress, otherPort.subnetMask);
+
+            // Don't learn if already have it as connected or static
+            if (routes.some(r => r.destination === dest && (r.type === 'connected' || r.type === 'static'))) continue;
+
+            const isInterArea = commonArea === undefined;
+
+            routes.push({
+              destination: dest,
+              subnetMask: otherPort.subnetMask,
+              nextHop: otherPort.ipAddress, // Simplified
+              type: 'dynamic',
+              metric: isInterArea ? 110 : 10,
+              area: commonArea
+            });
+          }
+        }
+      }
+    });
   }
 
   return routes;
@@ -398,50 +470,16 @@ export function removeStaticRoute(
  */
 export function getRoutingTable(
   deviceId: string,
-  deviceStates: Map<string, SwitchState>
+  deviceStates: Map<string, SwitchState>,
+  devices?: CanvasDevice[],
+  connections?: CanvasConnection[]
 ): Route[] {
   const state = deviceStates.get(deviceId);
   if (!state) return [];
 
-  const routes: Route[] = [];
-
-  // Connected routes
-  for (const [portId, port] of Object.entries(state.ports)) {
-    if (port.ipAddress && port.subnetMask) {
-      routes.push({
-        destination: getNetworkAddress(port.ipAddress, port.subnetMask),
-        subnetMask: port.subnetMask,
-        nextHop: portId,
-        metric: 0,
-        type: 'connected'
-      });
-    }
-    if (port.ipv6Address && port.ipv6Prefix) {
-      routes.push({
-        destination: port.ipv6Address,
-        prefixLength: port.ipv6Prefix,
-        nextHop: portId,
-        metric: 0,
-        type: 'connected'
-      });
-    }
-  }
-
-  // Static routes
-  if (state.staticRoutes) {
-    routes.push(...state.staticRoutes);
-  }
-  if (state.ipv6StaticRoutes) {
-    routes.push(...state.ipv6StaticRoutes);
-  }
-
-  // Dynamic routes
-  if (state.dynamicRoutes) {
-    routes.push(...state.dynamicRoutes);
-  }
-  if (state.ipv6DynamicRoutes) {
-    routes.push(...state.ipv6DynamicRoutes);
-  }
+  const routes = (devices && connections)
+    ? buildRoutingTable(deviceId, devices, connections, deviceStates)
+    : buildBasicRoutingTable(state);
 
   return routes.sort((a, b) => {
     // Sort by type priority: connected < static < dynamic
@@ -452,4 +490,51 @@ export function getRoutingTable(
     // Then by metric
     return (a.metric || 0) - (b.metric || 0);
   });
+}
+
+/**
+ * Build a basic routing table from just the device state (no topology)
+ */
+function buildBasicRoutingTable(state: SwitchState): Route[] {
+  const routes: Route[] = [];
+
+  // 1. Connected routes
+  for (const [portId, port] of Object.entries(state.ports)) {
+    if (port.ipAddress && port.subnetMask && !port.shutdown) {
+      routes.push({
+        destination: getNetworkAddress(port.ipAddress, port.subnetMask),
+        subnetMask: port.subnetMask,
+        nextHop: portId,
+        type: 'connected',
+        metric: 0
+      });
+    }
+
+    // HSRP/VRRP virtual IPs (connected routes if Active)
+    if (port.hsrp?.groups) {
+      for (const [_, group] of Object.entries(port.hsrp.groups)) {
+        if (group.state === 'Active' && group.virtualIp) {
+          routes.push({
+            destination: group.virtualIp,
+            subnetMask: '255.255.255.255',
+            nextHop: portId,
+            type: 'connected',
+            metric: 0
+          });
+        }
+      }
+    }
+  }
+
+  // 2. Static routes
+  if (state.staticRoutes) {
+    routes.push(...state.staticRoutes);
+  }
+
+  // 3. Dynamic routes
+  if (state.dynamicRoutes) {
+    routes.push(...state.dynamicRoutes);
+  }
+
+  return routes;
 }

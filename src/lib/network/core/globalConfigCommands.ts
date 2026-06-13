@@ -125,6 +125,9 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'iot sensor': cmdIotSensor,
   'iot name': cmdIotName,
   'iot wifi': cmdIotWifi,
+  'ip nat pool': cmdIpNatPool,
+  'ip nat inside source static': cmdIpNatInsideSourceStatic,
+  'ip nat inside source list': cmdIpNatInsideSourceList,
 };
 
 /**
@@ -2239,6 +2242,62 @@ function cmdIotName(state: any, input: string, ctx: any): any {
     output: `IoT device name set to ${name}`,
     newState: { iotConfig, runningConfig: buildRunningConfig(updatedState) }
   };
+}
+
+/**
+ * ip nat pool <name> <start> <end> netmask <mask>
+ */
+function cmdIpNatPool(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^ip\s+nat\s+pool\s+(\S+)\s+([0-9.]+)\s+([0-9.]+)\s+netmask\s+([0-9.]+)$/i);
+  if (!match) return { success: false, error: '% Invalid NAT pool command' };
+
+  const [_, name, startIp, endIp, netmask] = match;
+  const pools = { ...(state.natPools || {}) };
+  pools[name] = { startIp, endIp, netmask };
+
+  return { success: true, newState: { natPools: pools } };
+}
+
+/**
+ * ip nat inside source static <local> <global>
+ */
+function cmdIpNatInsideSourceStatic(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^ip\s+nat\s+inside\s+source\s+static\s+([0-9.]+)\s+([0-9.]+)$/i);
+  if (!match) return { success: false, error: '% Invalid static NAT command' };
+
+  const [_, localIp, globalIp] = match;
+  const staticTranslations = [...(state.natStaticTranslations || [])];
+  staticTranslations.push({ localIp, globalIp });
+
+  return { success: true, newState: { natStaticTranslations: staticTranslations } };
+}
+
+/**
+ * ip nat inside source list <acl> {pool <name> | interface <name>} overload
+ */
+function cmdIpNatInsideSourceList(state: any, input: string, ctx: any): any {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+
+  const interfaceMatch = input.match(/^ip\s+nat\s+inside\s+source\s+list\s+(\d+)\s+interface\s+(\S+)\s+overload$/i);
+  if (interfaceMatch) {
+    const [_, aclId, iface] = interfaceMatch;
+    const dynamicRules = [...(state.natDynamicRules || [])];
+    dynamicRules.push({ aclId, interface: iface, overload: true });
+    return { success: true, newState: { natDynamicRules: dynamicRules } };
+  }
+
+  const poolMatch = input.match(/^ip\s+nat\s+inside\s+source\s+list\s+(\d+)\s+pool\s+(\S+)(?:\s+overload)?$/i);
+  if (poolMatch) {
+    const [_, aclId, poolName] = poolMatch;
+    const overload = input.toLowerCase().includes('overload');
+    const dynamicRules = [...(state.natDynamicRules || [])];
+    dynamicRules.push({ aclId, poolName, overload });
+    return { success: true, newState: { natDynamicRules: dynamicRules } };
+  }
+
+  return { success: false, error: '% Invalid dynamic NAT command' };
 }
 
 /**

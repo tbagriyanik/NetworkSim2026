@@ -728,6 +728,10 @@ export function checkConnectivity(
   // Determine source device VLAN for STP calculation
   const sourceVlan = getFallbackVlanFromPath(sourceId);
 
+  // Initialize traversal IPs for NAT simulation
+  let currentSourceIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, resolvedTargetIp.includes(':'));
+  let currentTargetIp = resolvedTargetIp;
+
   while (queue.length > 0) {
     const currentId = queue.shift()!;
     if (currentId === targetDevice.id) break;
@@ -1247,11 +1251,133 @@ export function checkConnectivity(
   // Fallback for simple topologies without advanced device states
   const basicConnectivityPossible = !deviceStates && !routingRequired;
 
-  // 7. Firewall Logic - Check rules for any firewalls in the path
+  // 7. ACL, NAT & Firewall Logic - Check rules for any firewalls or ACLs in the path
   // BOLT: Use pre-resolved safeDeviceStates
-  const sourceIpForFirewall = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates);
-  for (const stepDeviceId of path) {
+  for (let i = 0; i < path.length; i++) {
+    const stepDeviceId = path[i];
+    const state = safeDeviceStates.get(stepDeviceId);
     const device = deviceMap.get(stepDeviceId);
+
+    if (state) {
+      const prevDeviceId = i > 0 ? path[i - 1] : null;
+      const nextDeviceId = i < path.length - 1 ? path[i + 1] : null;
+
+      const ingressConn = prevDeviceId ? pathConnections.get(`${prevDeviceId}-${stepDeviceId}`) : null;
+      const egressConn = nextDeviceId ? pathConnections.get(`${stepDeviceId}-${nextDeviceId}`) : null;
+
+      const ingressPortId = ingressConn ? (ingressConn.sourceDeviceId === stepDeviceId ? ingressConn.sourcePort : ingressConn.targetPort) : null;
+      const egressPortId = egressConn ? (egressConn.sourceDeviceId === stepDeviceId ? egressConn.sourcePort : egressConn.targetPort) : null;
+
+      const ingressPort = ingressPortId ? state.ports[ingressPortId] : null;
+      const egressPort = egressPortId ? state.ports[egressPortId] : null;
+
+      // 7.1. Check Inbound ACLs
+      if (ingressPort?.accessGroupIn) {
+        const aclResult = evaluateAcl(
+          ingressPort.accessGroupIn,
+          state,
+          currentSourceIp,
+          currentTargetIp,
+          options?.protocol,
+          options?.port
+        );
+        if (aclResult === 'deny') {
+          return {
+            success: false,
+            hops: hopNames.slice(0, i + 1),
+            hopIds: path.slice(0, i + 1),
+            targetId: targetDevice.id,
+            error: language === 'tr'
+              ? `Paket ${device?.name} ingress port ${ingressPortId} ACL kuralı nedeniyle engellendi.`
+              : `Packet blocked by inbound ACL on ${device?.name} interface ${ingressPortId}.`
+          };
+        }
+      }
+
+      // 7.1.5 NAT Logic (Inside -> Outside or Outside -> Inside)
+      if (ingressPort?.natSide && egressPort?.natSide && ingressPort.natSide !== egressPort.natSide) {
+        if (ingressPort.natSide === 'inside' && egressPort.natSide === 'outside') {
+          // Source NAT (Inside -> Outside)
+          let translated = false;
+
+          // 1. Static NAT
+          if (state.natStaticTranslations) {
+            const staticEntry = state.natStaticTranslations.find(t => t.localIp === currentSourceIp);
+            if (staticEntry) {
+              currentSourceIp = staticEntry.globalIp;
+              translated = true;
+            }
+          }
+
+          // 2. Dynamic PAT (Overload) / Pool
+          if (!translated && state.natDynamicRules) {
+            for (const rule of state.natDynamicRules) {
+              const aclResult = evaluateAcl(rule.aclId, state, currentSourceIp, currentTargetIp, options?.protocol, options?.port);
+              if (aclResult === 'permit') {
+                if (rule.overload && rule.interface) {
+                  const outPort = state.ports[rule.interface];
+                  if (outPort?.ipAddress) {
+                    currentSourceIp = outPort.ipAddress;
+                    translated = true;
+                    break;
+                  }
+                } else if (rule.poolName && state.natPools?.[rule.poolName]) {
+                  currentSourceIp = state.natPools[rule.poolName].startIp;
+                  translated = true;
+                  break;
+                }
+              }
+            }
+          }
+        } else if (ingressPort.natSide === 'outside' && egressPort.natSide === 'inside') {
+          // Destination NAT (Outside -> Inside) - Typically for return traffic or port forwarding
+          let translated = false;
+
+          // 1. Static NAT (Outside -> Inside)
+          if (state.natStaticTranslations) {
+            const staticEntry = state.natStaticTranslations.find(t => t.globalIp === currentTargetIp);
+            if (staticEntry) {
+              currentTargetIp = staticEntry.localIp;
+              translated = true;
+            }
+          }
+
+          // 2. Check Translation Table (Return traffic)
+          if (!translated && state.natTranslations) {
+            const entry = state.natTranslations.find(t => t.globalIp === currentTargetIp && t.remoteIp === currentSourceIp);
+            if (entry) {
+              currentTargetIp = entry.localIp;
+              translated = true;
+            }
+          }
+        }
+      }
+
+      // 7.2. Check Outbound ACLs
+      if (egressPort?.accessGroupOut) {
+        const aclResult = evaluateAcl(
+          egressPort.accessGroupOut,
+          state,
+          currentSourceIp,
+          currentTargetIp,
+          options?.protocol,
+          options?.port
+        );
+        if (aclResult === 'deny') {
+          return {
+            success: false,
+            hops: hopNames.slice(0, i + 1),
+            hopIds: path.slice(0, i + 1),
+            targetId: targetDevice.id,
+            error: language === 'tr'
+              ? `Paket ${device?.name} egress port ${egressPortId} ACL kuralı nedeniyle engellendi.`
+              : `Packet blocked by outbound ACL on ${device?.name} interface ${egressPortId}.`
+          };
+        }
+      }
+    }
+
+    // 7.3. Legacy Firewall Logic
     if (device?.type === 'firewall') {
       const rules = device.firewallRules || [];
       const enabledRules = rules.filter(r => r.enabled);
@@ -1259,29 +1385,20 @@ export function checkConnectivity(
 
       // Evaluate enabled rules in order
       for (const rule of enabledRules) {
-        const sourceMatch = rule.sourceIp === '*' || rule.sourceIp === 'any' || rule.sourceIp === sourceIpForFirewall;
-        const targetMatch = rule.targetIp === '*' || rule.targetIp === 'any' || rule.targetIp === resolvedTargetIp;
+        const sourceMatch = rule.sourceIp === '*' || rule.sourceIp === 'any' || rule.sourceIp === currentSourceIp;
+        const targetMatch = rule.targetIp === '*' || rule.targetIp === 'any' || rule.targetIp === currentTargetIp;
 
         // Protocol matching
         const requestedProtocol = options?.protocol || 'any';
-        // protocolMatch is true if:
-        // 1. Requested is 'any' (checking general reachability)
-        // 2. Rule protocol is 'any' (wildcard rule)
-        // 3. Exact protocol match
         const protocolMatch = requestedProtocol === 'any' || rule.protocol === 'any' || rule.protocol === requestedProtocol;
 
         // Port matching
         let portMatch = true;
         if (rule.port !== '*' && rule.port !== 'any') {
-          // If we requested a specific port, it must match the rule's port
           if (options?.port && options.port !== '*') {
             portMatch = rule.port === options.port;
           }
-          // If the rule specifies a port, but the request doesn't (requested any),
-          // we consider it a match for the purpose of "is any communication possible".
           else if (requestedProtocol !== 'any') {
-            // If requesting a protocol that has ports (TCP/UDP) but no specific port,
-            // and the rule has a port, it's NOT a match because the rule is more specific.
             if (requestedProtocol === 'tcp' || requestedProtocol === 'udp') {
               portMatch = false;
             }
@@ -1290,7 +1407,6 @@ export function checkConnectivity(
 
         if (sourceMatch && targetMatch && protocolMatch && portMatch) {
           allowed = rule.action === 'allow';
-          // Stop at first matching rule
           break;
         }
       }
@@ -1298,8 +1414,8 @@ export function checkConnectivity(
       if (!allowed) {
         return {
           success: false,
-          hops: hopNames.slice(0, path.indexOf(stepDeviceId) + 1),
-          hopIds: path.slice(0, path.indexOf(stepDeviceId) + 1),
+          hops: hopNames.slice(0, i + 1),
+          hopIds: path.slice(0, i + 1),
           targetId: targetDevice.id,
           error: language === 'tr'
             ? `Paket firewall (${device.name}) kuralı nedeniyle engellendi.`
@@ -1692,6 +1808,115 @@ function isManagementIpSet(deviceId: string, deviceStates?: Map<string, SwitchSt
   const state = safeDeviceStates.get(deviceId);
   if (!state) return false;
   return Object.values(state.ports).some(port => !!port.ipAddress);
+}
+
+/**
+ * Evaluate Cisco-style ACL (Standard or Extended)
+ */
+export function evaluateAcl(
+  aclId: string,
+  state: SwitchState,
+  sourceIp: string,
+  targetIp: string,
+  protocol: string = 'any',
+  port: string = 'any'
+): 'permit' | 'deny' | 'none' {
+  const rules = state.accessLists?.[aclId];
+  if (!rules || rules.length === 0) return 'none';
+
+  const aclNum = parseInt(aclId);
+  const isExtended = (aclNum >= 100 && aclNum <= 199) || isNaN(aclNum); // Named ACLs often treated as extended in simulation
+
+  for (const rule of rules) {
+    const parts = rule.trim().split(/\s+/);
+    const action = parts[0].toLowerCase() as 'permit' | 'deny';
+    const body = parts.slice(1);
+
+    if (!isExtended && aclNum < 100) {
+      // Standard ACL: [permit|deny] <source> [wildcard]
+      let srcIp = body[0];
+      let srcWildcard = '0.0.0.0';
+      if (srcIp === 'any') {
+        srcIp = '0.0.0.0';
+        srcWildcard = '255.255.255.255';
+      } else if (srcIp === 'host') {
+        srcIp = body[1];
+        srcWildcard = '0.0.0.0';
+      } else if (body[1] && /^\d+\./.test(body[1])) {
+        srcWildcard = body[1];
+      }
+
+      if (matchIpWithWildcard(sourceIp, srcIp, srcWildcard)) {
+        return action;
+      }
+    } else {
+      // Extended ACL: [permit|deny] <protocol> <source> [src-wildcard] <destination> [dst-wildcard] [eq <port>]
+      let currentIdx = 0;
+      const ruleProto = body[currentIdx++]?.toLowerCase();
+
+      // Protocol match
+      if (ruleProto !== 'ip' && ruleProto !== protocol && protocol !== 'any') {
+        continue;
+      }
+
+      // Match source
+      let srcIp = body[currentIdx++];
+      let srcWildcard = '0.0.0.0';
+      if (srcIp === 'host') {
+        srcIp = body[currentIdx++];
+      } else if (srcIp === 'any') {
+        srcIp = '0.0.0.0';
+        srcWildcard = '255.255.255.255';
+      } else {
+        if (body[currentIdx] && /^\d+\./.test(body[currentIdx])) {
+          srcWildcard = body[currentIdx++];
+        }
+      }
+
+      if (!matchIpWithWildcard(sourceIp, srcIp, srcWildcard)) continue;
+
+      // Match destination
+      let dstIp = body[currentIdx++];
+      let dstWildcard = '0.0.0.0';
+      if (dstIp === 'host') {
+        dstIp = body[currentIdx++];
+      } else if (dstIp === 'any') {
+        dstIp = '0.0.0.0';
+        dstWildcard = '255.255.255.255';
+      } else {
+        if (body[currentIdx] && /^\d+\./.test(body[currentIdx])) {
+          dstWildcard = body[currentIdx++];
+        }
+      }
+
+      if (!matchIpWithWildcard(targetIp, dstIp, dstWildcard)) continue;
+
+      // Match port (optional)
+      if (body[currentIdx] === 'eq') {
+        const rulePort = body[currentIdx + 1];
+        if (port !== 'any' && port !== rulePort) continue;
+      }
+
+      return action;
+    }
+  }
+
+  return 'deny'; // Implicit deny
+}
+
+/**
+ * Match IP with Cisco-style wildcard mask (inverse mask)
+ */
+function matchIpWithWildcard(ip: string, ruleIp: string, wildcard: string): boolean {
+  try {
+    const ipNum = ipToNumber(ip);
+    const ruleIpNum = ipToNumber(ruleIp);
+    const wildcardNum = ipToNumber(wildcard);
+    const mask = (~wildcardNum) >>> 0;
+    return (ipNum & mask) === (ruleIpNum & mask);
+  } catch {
+    return false;
+  }
 }
 
 function isDevicePoweredOn(device: CanvasDevice | undefined): boolean {
