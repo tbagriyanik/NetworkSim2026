@@ -825,12 +825,51 @@ function cmdClockSet(state: any, input: string, ctx: any): any {
     const match = input.match(/^clock\s+set\s+(\d{1,2}:\d{1,2}:\d{1,2})\s+(\d{1,2})\s+(\w+)\s+(\d{4})$/i);
     if (!match) return { success: false, error: '% Invalid input' };
 
-    const [, time, day, month, year] = match;
+    const [, time, day, monthStr, year] = match;
+    
+    // Parse month string to number (0-11)
+    const monthMap: Record<string, number> = {
+        january: 0, jan: 0,
+        february: 1, feb: 1,
+        march: 2, mar: 2,
+        april: 3, apr: 3,
+        may: 4,
+        june: 5, jun: 5,
+        july: 6, jul: 6,
+        august: 7, aug: 7,
+        september: 8, sep: 8, sept: 8,
+        october: 9, oct: 9,
+        november: 10, nov: 10,
+        december: 11, dec: 11
+    };
+    const month = monthMap[monthStr.toLowerCase()];
+    if (month === undefined) return { success: false, error: '% Invalid month' };
+
+    // Parse time (hh:mm:ss)
+    const [hours, minutes, seconds] = time.split(':').map(Number);
+    
+    // Create configured date object
+    const configuredDate = new Date(Number(year), month, Number(day), hours, minutes, seconds);
+    // Get real current time
+    const realDate = new Date();
+    // Calculate offset in milliseconds
+    const timeOffset = configuredDate.getTime() - realDate.getTime();
+
+    // Update services.ntp.timeOffset
+    const nextServices = {
+        ...state.services,
+        ntp: {
+            ...state.services?.ntp,
+            timeOffset
+        }
+    };
+
     return {
         success: true,
         output: '',
         newState: {
-            systemClock: { time, day, month, year }
+            systemClock: { time, day, month: monthStr, year },
+            services: nextServices
         }
     };
 }

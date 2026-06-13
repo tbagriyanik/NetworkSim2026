@@ -389,6 +389,7 @@ export interface SwitchState {
       timezone?: string;
       date?: string;
       time?: string;
+      timeOffset?: number; // Time offset in milliseconds from real system time
     };
   };
   spanningTreePriority?: number;

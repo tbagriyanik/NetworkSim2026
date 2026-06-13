@@ -1480,9 +1480,30 @@ function cmdShowClock(
         { protocol: 'udp', port: '123' }
       );
       if (!reachable.success) continue;
+
+      // Get NTP server's state to retrieve time offset
+      let timeOffset = 0;
+      if (reachable.targetId && ctx.deviceStates) {
+        const serverState = ctx.deviceStates.get(reachable.targetId);
+        if (serverState?.services?.ntp?.timeOffset !== undefined) {
+          timeOffset = serverState.services.ntp.timeOffset;
+        }
+      }
+
+      // NTP server reachable – return synced time with offset applied
+      const now = new Date();
+      const adjustedTime = new Date(now.getTime() + timeOffset);
+      const time = adjustedTime.toTimeString().slice(0, 8);
+      const day = String(adjustedTime.getDate()).padStart(2, '0');
+      const month = String(adjustedTime.getMonth() + 1).padStart(2, '0');
+      const year = adjustedTime.getFullYear();
+      return {
+        success: true,
+        output: `\n*${time} UTC ${day}.${month}.${year}\n`
+      };
     }
 
-    // NTP server reachable – return synced time
+    // Fallback without offset if no devices/connections
     const now = new Date();
     const time = now.toTimeString().slice(0, 8);
     const day = String(now.getDate()).padStart(2, '0');
@@ -1495,13 +1516,28 @@ function cmdShowClock(
   }
 
   const localNtp = state.services?.ntp;
-  if (localNtp?.enabled && localNtp.date && localNtp.time) {
-    const [y, m, d] = localNtp.date.split('-');
-    const formattedDate = `${d}.${m}.${y}`;
-    return {
-      success: true,
-      output: `\n*${localNtp.time} UTC ${formattedDate}\n`
-    };
+  if (localNtp?.enabled) {
+    if (localNtp.timeOffset !== undefined) {
+      // Use real time with offset if available
+      const now = new Date();
+      const adjustedTime = new Date(now.getTime() + localNtp.timeOffset);
+      const time = adjustedTime.toTimeString().slice(0, 8);
+      const day = String(adjustedTime.getDate()).padStart(2, '0');
+      const month = String(adjustedTime.getMonth() + 1).padStart(2, '0');
+      const year = adjustedTime.getFullYear();
+      return {
+        success: true,
+        output: `\n*${time} UTC ${day}.${month}.${year}\n`
+      };
+    } else if (localNtp.date && localNtp.time) {
+      // Fall back to static date/time if no offset
+      const [y, m, d] = localNtp.date.split('-');
+      const formattedDate = `${d}.${m}.${y}`;
+      return {
+        success: true,
+        output: `\n*${localNtp.time} UTC ${formattedDate}\n`
+      };
+    }
   }
 
   if (state.systemClock) {
