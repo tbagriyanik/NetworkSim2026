@@ -1,23 +1,21 @@
 import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { executeCommand, getPrompt } from '@/lib/network/executor';
-import { SwitchState } from '@/lib/network/types';
 import { createInitialState } from '@/lib/network/initialState';
 
-// NOTE: This in-memory state is intentional for the demo API endpoint.
-// In a serverless environment each cold start resets the state.
-// The primary simulation runs client-side; this API is a secondary interface.
-let switchState: SwitchState = createInitialState();
+/**
+ * REFACTOR: This API is now stateless.
+ * State management must be handled by the caller (client-side).
+ * Module-level global state was removed to prevent multi-user session interference.
+ */
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { command, state } = body;
 
-    // Eğer state gönderildiyse, onu kullan
-    if (state) {
-      switchState = state;
-    }
+    // Use provided state or fallback to initial
+    let currentState = state || createInitialState();
 
     if (!command) {
       return NextResponse.json({
@@ -26,20 +24,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Komutu çalıştır
-    const result = executeCommand(switchState, command);
+    const result = executeCommand(currentState, command);
 
     // State'i güncelle
+    let updatedState = currentState;
     if (result.success && result.newState) {
-      switchState = {
-        ...switchState,
+      updatedState = {
+        ...currentState,
         ...result.newState
       };
     }
 
     // Komut geçmişine ekle
     if (command.trim() && !command.trim().startsWith('?')) {
-      switchState.commandHistory = [
-        ...switchState.commandHistory.slice(-49), // Son 50 komut
+      updatedState.commandHistory = [
+        ...(updatedState.commandHistory || []).slice(-49), // Son 50 komut
         command.trim()
       ];
     }
@@ -48,8 +47,8 @@ export async function POST(request: NextRequest) {
       success: result.success,
       output: result.output,
       error: result.error,
-      state: switchState,
-      prompt: getPrompt(switchState)
+      state: updatedState,
+      prompt: getPrompt(updatedState)
     });
 
   } catch (error) {
@@ -61,20 +60,21 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  // Mevcut state'i getir
+  // Return initial state for the demo
+  const initialState = createInitialState();
   return NextResponse.json({
-    state: switchState,
-    prompt: getPrompt(switchState)
+    state: initialState,
+    prompt: getPrompt(initialState)
   });
 }
 
-// State sıfırlama
+// State sıfırlama (returns initial state)
 export async function DELETE() {
-  switchState = createInitialState();
+  const initialState = createInitialState();
   return NextResponse.json({
     success: true,
     message: 'Switch durumu sıfırlandı',
-    state: switchState,
-    prompt: getPrompt(switchState)
+    state: initialState,
+    prompt: getPrompt(initialState)
   });
 }

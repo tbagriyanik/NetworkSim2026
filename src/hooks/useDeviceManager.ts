@@ -36,43 +36,36 @@ export function useDeviceManager() {
 
   const [deviceOutputs, setDeviceOutputs] = useState<Map<string, TerminalOutput[]>>(() => new Map());
 
-  const [pcOutputs, setPcOutputs] = useState<Map<string, PCOutputLine[]>>(() => {
+  const [pcOutputs, setPcOutputs] = useState<Map<string, PCOutputLine[]>>(new Map());
+  const [pcHistories, setPcHistories] = useState<Map<string, string[]>>(new Map());
+
+  // Handle initial hydration from localStorage safely to avoid SSR mismatches
+  useEffect(() => {
     try {
       const savedData = localStorage.getItem('netsim_autosave');
       if (savedData) {
         const projectData = JSON.parse(savedData);
+
         if (projectData.pcOutputs && Array.isArray(projectData.pcOutputs)) {
           const newPcOutputs = new Map<string, PCOutputLine[]>();
           projectData.pcOutputs.forEach((item: { id: string; outputs: PCOutputLine[] }) => {
             newPcOutputs.set(item.id, item.outputs || []);
           });
-          return newPcOutputs;
+          setPcOutputs(newPcOutputs);
         }
-      }
-    } catch {
-      // ignore
-    }
-    return new Map();
-  });
 
-  const [pcHistories, setPcHistories] = useState<Map<string, string[]>>(() => {
-    try {
-      const savedData = localStorage.getItem('netsim_autosave');
-      if (savedData) {
-        const projectData = JSON.parse(savedData);
         if (projectData.pcHistories && Array.isArray(projectData.pcHistories)) {
           const newPcHistories = new Map<string, string[]>();
           projectData.pcHistories.forEach((item: { id: string; history: string[] }) => {
             newPcHistories.set(item.id, item.history || []);
           });
-          return newPcHistories;
+          setPcHistories(newPcHistories);
         }
       }
     } catch {
       // ignore
     }
-    return new Map();
-  });
+  }, []);
 
   const [isLoading, setIsLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ show: boolean; message: string; action: string; onConfirm: () => void; } | null>(null);
@@ -263,14 +256,15 @@ export function useDeviceManager() {
         setDeviceStates(prev => new Map(prev).set(deviceId, reloadedState));
 
         // Show a short loading line before boot outputs (small loading animation)
-        (async () => {
+        const runBootSequence = async () => {
           setDeviceOutputs(prev => new Map(prev).set(deviceId, [
             { id: `loading-${reloadedState.macAddress}`, type: 'output', content: 'Initializing system...' }
           ]));
           await sleep(600);
+          if (!isMounted.current) return;
 
           const bootInfo = getBootMessage(isRouter ? 'router' : resolveSwitchBootType(reloadedState.switchModel), reloadedState.switchModel, language);
-          const bootTs = Date.now();
+          const bootTs = 1715600000000; // Deterministic timestamp for boot progress tracking
           const bootOutputs: TerminalOutput[] = [
             { id: `boot-1-${reloadedState.macAddress}`, type: 'output', content: bootInfo.boot1 },
             { id: `boot-2-${reloadedState.macAddress}`, type: 'output', content: bootInfo.boot2 },
@@ -281,7 +275,8 @@ export function useDeviceManager() {
           ];
 
           setDeviceOutputs(prev => new Map(prev).set(deviceId, bootOutputs));
-        })();
+        };
+        runBootSequence();
       } else {
         // Power off: keep saved state so configuration survives future power cycles
         // Only clear the visible terminal output.

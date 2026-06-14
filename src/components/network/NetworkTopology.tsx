@@ -39,20 +39,18 @@ const PingPacketInfoPanel = dynamic(
   { ssr: false }
 );
 
-const allocatedMacAddresses = new Set<string>();
-const generateMacAddress = (): string => {
+const generateMacAddress = (seed?: number): string => {
   const chars = '0123456789ABCDEF';
-  while (true) {
-    let hex = '';
-    for (let i = 0; i < 12; i++) {
-      hex += chars[Math.floor(Math.random() * 16)];
-    }
-    const mac = `${hex.slice(0, 4)}.${hex.slice(4, 8)}.${hex.slice(8, 12)}`;
-    if (!allocatedMacAddresses.has(mac)) {
-      allocatedMacAddresses.add(mac);
-      return mac;
-    }
+  let hex = '';
+  // Simple deterministic generation if seed is provided, else random
+  // For hydration safety, we prefer a passed seed when possible
+  for (let i = 0; i < 12; i++) {
+    const idx = seed !== undefined
+      ? (seed + i) % 16
+      : Math.floor(Math.random() * 16);
+    hex += chars[idx];
   }
+  return `${hex.slice(0, 4)}.${hex.slice(4, 8)}.${hex.slice(8, 12)}`;
 };
 
 // Drag item from palette
@@ -254,7 +252,7 @@ export function NetworkTopology({
       id: 'pc-1',
       type: 'pc',
       name: 'PC-1',
-      macAddress: generateMacAddress(),
+      macAddress: generateMacAddress(1),
       ip: '192.168.1.10',
       x: 100,
       y: 150,
@@ -268,7 +266,7 @@ export function NetworkTopology({
       id: 'switch-1',
       type: 'switchL2',
       name: 'Switch-1',
-      macAddress: generateMacAddress(),
+      macAddress: generateMacAddress(2),
       ip: '',
       x: 300,
       y: 150,

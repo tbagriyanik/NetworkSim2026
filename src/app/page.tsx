@@ -326,14 +326,23 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   const [showContent, setShowContent] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSaveTime, setLastSaveTime] = useState<string | null>(null);
-  const [projectName, setProjectName] = useState<string>(
-    typeof window !== 'undefined' && localStorage.getItem('lastProjectName') || 'Untitled'
-  );
+  const [projectName, setProjectName] = useState<string>('Untitled');
+
+  // Load project name from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedName = localStorage.getItem('lastProjectName');
+      if (savedName) setProjectName(savedName);
+    } catch { /* ignore */ }
+  }, []);
   const [projectSearchQuery, setProjectSearchQuery] = useState('');
   const [showBasarilarim, setShowBasarilarim] = useState(false);
 
   // Track session start time for achievement records
-  const sessionStartRef = useRef(Date.now());
+  const sessionStartRef = useRef(1715600000000);
+  useEffect(() => {
+    sessionStartRef.current = Date.now();
+  }, []);
 
   // Which overlay panel is on top — last clicked wins
   const [focusedOverlay, setFocusedOverlay] = useState<'refresh' | 'packet' | 'pc-info' | 'router-info' | 'switch-info'>('packet');
