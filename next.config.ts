@@ -15,9 +15,9 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react"],
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
-  reactStrictMode: false,
+  reactStrictMode: true,
   devIndicators: false,
   async headers() {
     const csp = [
@@ -70,7 +70,7 @@ const nextConfig: NextConfig = {
     ];
   },
   env: {
-    NEXT_PUBLIC_GIT_COMMIT_COUNT: String(countInt < 1000 ? 1190 : countInt),
+    NEXT_PUBLIC_GIT_COMMIT_COUNT: String(countInt),
   },
 };
 

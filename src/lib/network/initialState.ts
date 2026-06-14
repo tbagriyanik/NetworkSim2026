@@ -2,8 +2,6 @@
 import { SwitchState, Port, Vlan, SecurityConfig, CommandMode, StartupConfig } from './types';
 import { getSwitchLayer } from './switchModels';
 
-const allocatedMacAddresses = new Set<string>();
-
 function formatMacFromNumber(value: number): string {
   const base = value.toString(16).padStart(12, '0').toUpperCase();
   return `${base.slice(0, 4)}.${base.slice(4, 8)}.${base.slice(8, 12)}`;
@@ -13,32 +11,22 @@ function normalizeMacCandidate(mac: string): string {
   return mac.replace(/[^0-9A-Fa-f]/g, '').toUpperCase().padStart(12, '0').slice(0, 12);
 }
 
-function generateUniqueMacAddress(preferredSeed: number): string {
-  let candidate = preferredSeed;
-  while (allocatedMacAddresses.has(formatMacFromNumber(candidate))) {
-    candidate += 1;
-  }
-  const mac = formatMacFromNumber(candidate);
-  allocatedMacAddresses.add(mac);
-  return mac;
-}
-
-function reserveMacAddress(mac?: string): string {
-  if (!mac) return generateUniqueMacAddress(0x001100000000);
+/**
+ * Reservasyon artık global state (Set) kullanmıyor.
+ * Deterministic sonuçlar üretir. Uniqueness sorumluluğu artık çağırana ait veya
+ * parametre olarak gelen macAddress üzerinden yürütülür.
+ */
+function reserveMacAddress(mac?: string, defaultBase: number = 0x001100000000): string {
+  if (!mac) return formatMacFromNumber(defaultBase);
   const normalized = normalizeMacCandidate(mac);
-  if (!normalized) return generateUniqueMacAddress(0x001100000000);
-  const formatted = formatMacFromNumber(parseInt(normalized, 16));
-  if (allocatedMacAddresses.has(formatted)) {
-    return generateUniqueMacAddress(parseInt(normalized, 16) + 1);
-  }
-  allocatedMacAddresses.add(formatted);
-  return formatted;
+  if (!normalized) return formatMacFromNumber(defaultBase);
+  return formatMacFromNumber(parseInt(normalized, 16));
 }
 
 // 24 FastEthernet + configurable GigabitEthernet ports oluştur
 function createInitialPorts(gigabitPortCount: number = 2, baseMac?: string, hasWireless: boolean = false): Record<string, Port> {
   const ports: Record<string, Port> = {};
-  const switchBaseMac = baseMac || generateUniqueMacAddress(0x001100000000); // Switch base MAC range
+  const switchBaseMac = baseMac || formatMacFromNumber(0x001100000000); // Switch base MAC range
 
   // Console port
   ports['console'] = {
@@ -130,7 +118,7 @@ function createInitialPorts(gigabitPortCount: number = 2, baseMac?: string, hasW
 // Firewall için başlangıç portları oluştur
 function createInitialFirewallPorts(baseMac?: string): Record<string, Port> {
   const ports: Record<string, Port> = {};
-  const firewallBaseMac = baseMac || generateUniqueMacAddress(0x00A000000000); // Firewall base MAC range
+  const firewallBaseMac = baseMac || formatMacFromNumber(0x00A000000000); // Firewall base MAC range
 
   // Console port
   ports['console'] = {
@@ -229,7 +217,13 @@ function createInitialMacTable(): { mac: string; vlan: number; port: string; typ
 }
 
 // Ana başlangıç durumu
-export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' | 'WS-C3650-24PS' = 'WS-C2960-24TT-L'): SwitchState {
+export function createInitialState(
+  mac?: string,
+  switchModel: 'WS-C2960-24TT-L' | 'WS-C3650-24PS' = 'WS-C2960-24TT-L',
+  options: { bootTime?: number; now?: Date } = {}
+): SwitchState {
+  const { bootTime = 1715600000000, now = new Date(1715600000000) } = options;
+
   // Switch modeline göre Layer belirle
   const switchLayer = getSwitchLayer(switchModel as any);
   const macAddress = reserveMacAddress(mac);
@@ -251,7 +245,7 @@ export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' 
     switchLayer,
     currentMode: 'user',
     consoleAuthenticated: false,
-    bootTime: Date.now(),
+    bootTime,
     ports,
     vlans,
     security: createInitialSecurity(),
@@ -266,8 +260,8 @@ export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' 
         anonymousAccess: true,
         rootDirectory: '/flash',
         files: [
-          { name: 'readme.txt', size: 1280, modifiedAt: new Date().toISOString() },
-          { name: 'config.backup', size: 4096, modifiedAt: new Date().toISOString() }
+          { name: 'readme.txt', size: 1280, modifiedAt: now.toISOString() },
+          { name: 'config.backup', size: 4096, modifiedAt: now.toISOString() }
         ]
       },
       mail: {
@@ -280,8 +274,8 @@ export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' 
         enabled: false,
         server: '',
         timezone: 'UTC',
-        date: new Date().toISOString().slice(0, 10),
-        time: new Date().toTimeString().slice(0, 8)
+        date: now.toISOString().slice(0, 10),
+        time: now.toTimeString().slice(0, 8)
       }
     },
     runningConfig: [
@@ -324,7 +318,7 @@ export function createInitialState(mac?: string, switchModel: 'WS-C2960-24TT-L' 
 // Router için başlangıç portları oluştur
 function createInitialRouterPorts(baseMac?: string): Record<string, Port> {
   const ports: Record<string, Port> = {};
-  const routerBaseMac = baseMac || generateUniqueMacAddress(0x005000000000); // Router base MAC range
+  const routerBaseMac = baseMac || formatMacFromNumber(0x005000000000); // Router base MAC range
 
   // Console port
   ports['console'] = {
@@ -393,8 +387,12 @@ function createInitialRouterPorts(baseMac?: string): Record<string, Port> {
 }
 
 // Router için başlangıç durumu
-export function createInitialRouterState(mac?: string): SwitchState {
-  const macAddress = reserveMacAddress(mac);
+export function createInitialRouterState(
+  mac?: string,
+  options: { bootTime?: number } = {}
+): SwitchState {
+  const { bootTime = 1715600000000 } = options;
+  const macAddress = reserveMacAddress(mac, 0x005000000000);
   const ports = createInitialRouterPorts(macAddress);
   const vlans = createInitialVlans();
 
@@ -406,7 +404,7 @@ export function createInitialRouterState(mac?: string): SwitchState {
     deviceType: 'router',
     currentMode: 'user',
     consoleAuthenticated: false,
-    bootTime: Date.now(),
+    bootTime,
     ipRouting: true,
     ports,
     vlans,
@@ -448,8 +446,12 @@ export function createInitialRouterState(mac?: string): SwitchState {
 }
 
 // Firewall için başlangıç durumu
-export function createInitialFirewallState(mac?: string): SwitchState {
-  const macAddress = reserveMacAddress(mac);
+export function createInitialFirewallState(
+  mac?: string,
+  options: { bootTime?: number } = {}
+): SwitchState {
+  const { bootTime = 1715600000000 } = options;
+  const macAddress = reserveMacAddress(mac, 0x00A000000000);
   const ports = createInitialFirewallPorts(macAddress);
   const vlans = createInitialVlans();
 
@@ -461,7 +463,7 @@ export function createInitialFirewallState(mac?: string): SwitchState {
     deviceType: 'firewall',
     currentMode: 'user',
     consoleAuthenticated: false,
-    bootTime: Date.now(),
+    bootTime,
     ipRouting: true,
     ports,
     vlans,

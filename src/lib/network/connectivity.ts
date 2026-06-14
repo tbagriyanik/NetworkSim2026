@@ -873,7 +873,7 @@ export function checkConnectivity(
         const state = safeDeviceStates.get(deviceId);
         if ((device?.type === 'router' || device?.type === 'switchL3') && state?.ipRouting) {
           // Check if this router has a route to the destination network
-          const routingTable = getRoutingTable(deviceId, safeDeviceStates);
+          const routingTable = getRoutingTable(deviceId, safeDeviceStates, devices, connections);
           const route = findRoute(resolvedTargetIp, routingTable);
           if (route) {
             hasL3Gateway = true;
@@ -903,7 +903,7 @@ export function checkConnectivity(
           const routerState = safeDeviceStates.get(router.id);
           if (routerState?.ipRouting) {
             // Check if router has a route to destination
-            const routingTable = getRoutingTable(router.id, safeDeviceStates);
+            const routingTable = getRoutingTable(router.id, safeDeviceStates, devices, connections);
             const route = findRoute(resolvedTargetIp, routingTable);
             if (!route) continue; // Skip routers without proper route
 
@@ -1200,7 +1200,7 @@ export function checkConnectivity(
     
     if (sourceHasRouting) {
       // BOLT: Use pre-resolved safeDeviceStates
-      const sourceRoutes = getRoutingTable(sourceId, safeDeviceStates);
+      const sourceRoutes = getRoutingTable(sourceId, safeDeviceStates, devices, connections);
       const route = findRoute(resolvedTargetIp, sourceRoutes);
 
       if (route) {
@@ -1219,7 +1219,7 @@ export function checkConnectivity(
         if (hasRouting && (device?.type === 'router' || device?.type === 'switchL3')) {
           // Router in path - check if it has routes to both source and target networks
           // BOLT: Use pre-resolved safeDeviceStates
-          const routes = getRoutingTable(deviceId, safeDeviceStates);
+          const routes = getRoutingTable(deviceId, safeDeviceStates, devices, connections);
           // Get source IP from device data
           const srcIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, isTargetIpv6);
           const sourceRoute = findRoute(srcIp, routes);

@@ -1397,6 +1397,7 @@ export function Terminal({
                   </span>
                   <input
                     ref={inputRef}
+                    data-terminal-input
                     type={state.awaitingPassword || localPasswordPrompt ? 'password' : 'text'}
                     value={input}
                     onChange={(e) => handleInputChange(e.target.value)}
