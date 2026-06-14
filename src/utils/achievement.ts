@@ -15,12 +15,12 @@ export function getStudentProgress(studentId: string): StudentProgress {
     try {
         const stored = localStorage.getItem(`${STORAGE_KEY}_${studentId}`);
         if (stored) {
-            const parsed = JSON.parse(stored);
+            const parsed = JSON.parse(stored) as StudentProgress;
             return {
                 ...parsed,
                 lastActivityDate: new Date(parsed.lastActivityDate),
                 createdAt: new Date(parsed.createdAt),
-                achievements: parsed.achievements.map((a: any) => ({
+                achievements: parsed.achievements.map((a) => ({
                     ...a,
                     unlockedAt: a.unlockedAt ? new Date(a.unlockedAt) : undefined,
                 })),
