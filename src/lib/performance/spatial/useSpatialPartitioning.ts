@@ -70,7 +70,7 @@ export function useSpatialPartitioning(
             // Assign connections
             const nodeMap = new Map(nodes.map(n => [n.id, n]));
             connections.forEach(conn => {
-                partitionerRef.current!.assignConnection(
+                partitionerRef.current?.assignConnection(
                     {
                         id: conn.id,
                         sourceNodeId: conn.sourceDeviceId,

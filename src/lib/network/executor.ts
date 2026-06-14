@@ -1947,7 +1947,7 @@ function handleMailSessionCommand(
         try {
           const storedInbox = window.localStorage.getItem(`mail_inbox_${delivered.device.id}`);
           if (storedInbox) currentInbox = JSON.parse(storedInbox);
-        } catch(e) {}
+        } catch(_e) {}
       }
       const inbox = [{ from: session.address, subject, body: subject, timestamp }, ...currentInbox];
       if (typeof window !== 'undefined') window.localStorage.setItem(`mail_inbox_${delivered.device.id}`, JSON.stringify(inbox));
@@ -1958,7 +1958,7 @@ function handleMailSessionCommand(
         try {
           const storedSent = window.localStorage.getItem(`mail_sent_${ctx.sourceDeviceId}`);
           if (storedSent) currentSent = JSON.parse(storedSent);
-        } catch(e) {}
+        } catch(_e) {}
       }
       const sent = [{ to: recipient, subject, body: subject, timestamp }, ...currentSent];
       if (ctx.sourceDeviceId && typeof window !== 'undefined') window.localStorage.setItem(`mail_sent_${ctx.sourceDeviceId}`, JSON.stringify(sent));

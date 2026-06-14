@@ -868,7 +868,7 @@ export function PCPanel({
           if (storedInbox) inboxFromStorage = JSON.parse(storedInbox);
           const storedSent = localStorage.getItem(`mail_sent_${deviceId}`);
           if (storedSent) sentFromStorage = JSON.parse(storedSent);
-        } catch(e) {}
+        } catch(_e) {}
       }
       setServiceMailInbox(inboxFromStorage || deviceFromTopology?.services?.mail?.inbox || []);
       setServiceMailSent(sentFromStorage || deviceFromTopology?.services?.mail?.sent || []);
@@ -4270,7 +4270,7 @@ export function PCPanel({
           try {
             const stored = localStorage.getItem(`mail_inbox_${deliveredDevice.id}`);
             if (stored) existingInbox = JSON.parse(stored);
-          } catch(e) {}
+          } catch(_e) {}
         }
         const updatedInbox = [newInboxEntry, ...existingInbox];
         if (typeof window !== 'undefined') {

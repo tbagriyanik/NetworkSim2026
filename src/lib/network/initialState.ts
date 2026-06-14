@@ -1,5 +1,5 @@
 // Network Switch Initial State
-import { SwitchState, Port, Vlan, SecurityConfig, CommandMode, StartupConfig } from './types';
+import { SwitchState, Port, Vlan, SecurityConfig, CommandMode, StartupConfig, SwitchModel } from './types';
 import { getSwitchLayer } from './switchModels';
 
 function formatMacFromNumber(value: number): string {
@@ -225,7 +225,7 @@ export function createInitialState(
   const { bootTime = 1715600000000, now = new Date(1715600000000) } = options;
 
   // Switch modeline göre Layer belirle
-  const switchLayer = getSwitchLayer(switchModel as any);
+  const switchLayer = getSwitchLayer(switchModel);
   const macAddress = reserveMacAddress(mac);
   const ports = createInitialPorts(switchLayer === 'L3' ? 4 : 2, macAddress, switchLayer === 'L3');
   const vlans = createInitialVlans();
@@ -241,7 +241,7 @@ export function createInitialState(
   return {
     hostname: 'Switch',
     macAddress,
-    switchModel: switchModel as any,
+    switchModel: switchModel,
     switchLayer,
     currentMode: 'user',
     consoleAuthenticated: false,
@@ -399,7 +399,7 @@ export function createInitialRouterState(
   return {
     hostname: 'Router',
     macAddress,
-    switchModel: 'ISR4451-X' as any,
+    switchModel: 'ISR4451-X' as SwitchModel,
     switchLayer: 'L3',
     deviceType: 'router',
     currentMode: 'user',
@@ -458,7 +458,7 @@ export function createInitialFirewallState(
   return {
     hostname: 'asa',
     macAddress,
-    switchModel: 'ASA-5506-X' as any,
+    switchModel: 'ASA-5506-X' as SwitchModel,
     switchLayer: 'FW',
     deviceType: 'firewall',
     currentMode: 'user',

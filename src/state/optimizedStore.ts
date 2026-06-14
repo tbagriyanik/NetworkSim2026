@@ -11,15 +11,15 @@ import { subscribeWithSelector, devtools, persist } from 'zustand/middleware';
 import { shallow } from 'zustand/shallow';
 import { useMemo, useCallback, useRef, useEffect } from 'react';
 // Simple debounce implementation
-const debounce = <T extends (...args: any[]) => void>(
-    func: T,
+const debounce = <T extends unknown[]>(
+    func: (...args: T) => void,
     delay: number
-): T => {
+): ((...args: T) => void) => {
     let timeoutId: NodeJS.Timeout;
-    return ((...args: Parameters<T>) => {
+    return (...args: T) => {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => func(...args), delay);
-    }) as T;
+    };
 };
 
 // ============================================================================
@@ -236,11 +236,11 @@ const selectDeviceClusters = createMemoizedSelector((state: NetworkState) => {
 // Debounced Actions
 // ============================================================================
 
-const createDebouncedAction = <T extends (...args: any[]) => void>(
-    action: T,
+const createDebouncedAction = <T extends unknown[]>(
+    action: (...args: T) => void,
     delay: number
-): T => {
-    return debounce(action, delay) as T;
+): ((...args: T) => void) => {
+    return debounce(action, delay);
 };
 
 // ============================================================================
@@ -324,7 +324,7 @@ const createOptimizedNetworkStore = () => {
 
                         removeDevice: (id) => {
                             set((state) => {
-                                const { [id]: removed, ...remainingDevices } = state.devices;
+                                const { [id]: _removed, ...remainingDevices } = state.devices;
                                 const relatedConnections = Object.values(state.connections).filter(
                                     conn => conn.sourceDeviceId === id || conn.targetDeviceId === id
                                 );
@@ -424,7 +424,7 @@ const createOptimizedNetworkStore = () => {
 
                         removeConnection: (id) => {
                             set((state) => {
-                                const { [id]: removed, ...remainingConnections } = state.connections;
+                                const { [id]: _removed, ...remainingConnections } = state.connections;
                                 return {
                                     connections: remainingConnections,
                                     selectedConnectionIds: new Set([...state.selectedConnectionIds].filter(connId => connId !== id)),
@@ -643,7 +643,7 @@ const createOptimizedNetworkStore = () => {
 // Store Instance
 // ============================================================================
 
-export const useNetworkStore = createOptimizedNetworkStore() as any;
+export const useNetworkStore = createOptimizedNetworkStore();
 
 // ============================================================================
 // Optimized Hooks
@@ -760,12 +760,10 @@ export const useStateDebugger = () => {
 };
 
 export const useLogStateChanges = () => {
-    const store = useNetworkStore();
-
     useEffect(() => {
-        const unsubscribe = (store as any).subscribe(
-            (state: any) => state,
-            (state: any, prevState: any) => {
+        const unsubscribe = useNetworkStore.subscribe(
+            (state: NetworkStore) => state,
+            (state: NetworkStore, prevState: NetworkStore) => {
                 logger.debug('State Change: Previous:', prevState);
                 logger.debug('State Change: Current:', state);
                 logger.debug('State Change: Changes:', {
@@ -780,7 +778,7 @@ export const useLogStateChanges = () => {
         );
 
         return unsubscribe;
-    }, [store]);
+    }, []);
 };
 
 // ============================================================================

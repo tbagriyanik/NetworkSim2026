@@ -1,6 +1,8 @@
 // Rehberli Ders (Guided Lesson) - Adım adım öğrenme sistemi
 import { ExampleProject } from './exampleProjects';
 import { generateSwitchPorts, generateRouterPorts } from '@/components/network/networkTopology.portGenerators';
+import type { CanvasConnection, CanvasDevice } from '@/components/network/networkTopology.types';
+import type { SwitchState, Route, Port } from './types';
 
 export interface GuidedStep {
   id: string;
@@ -16,7 +18,7 @@ export interface GuidedStep {
     minCount?: number;
     commandPattern?: string;
     configKey?: string;
-    configValue?: any;
+    configValue?: unknown;
     cableType?: 'straight' | 'crossover' | 'console';
     sourceDevice?: string;
     sourcePort?: string;
@@ -855,7 +857,7 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
           devices: [
-            { id: 'switch-1', type: 'switchL2', name: 'SW-1', x: 100, y: 100, ip: '', status: 'online', ports: generateSwitchPorts() as any }
+            { id: 'switch-1', type: 'switchL2', name: 'SW-1', x: 100, y: 100, ip: '', status: 'online', ports: generateSwitchPorts() }
           ],
           connections: [], notes: []
         },
@@ -875,7 +877,7 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
           devices: [
-            { id: 'switch-1', type: 'switchL2', name: 'Switch-1', x: 300, y: 200, ip: '', status: 'online', ports: generateSwitchPorts() as any },
+            { id: 'switch-1', type: 'switchL2', name: 'Switch-1', x: 300, y: 200, ip: '', status: 'online', ports: generateSwitchPorts() },
             { id: 'pc-1', type: 'pc', name: 'PC-1', x: 100, y: 200, ip: '', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const }] }
           ],
           connections: [], notes: []
@@ -896,7 +898,7 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
           devices: [
-            { id: 'switch-1', type: 'switchL2', name: 'Switch', x: 400, y: 200, ip: '', status: 'online', ports: generateSwitchPorts() as any },
+            { id: 'switch-1', type: 'switchL2', name: 'Switch', x: 400, y: 200, ip: '', status: 'online', ports: generateSwitchPorts() },
             { id: 'pc-1', type: 'pc', name: 'PC0', x: 150, y: 100, ip: '', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const }] },
             { id: 'pc-2', type: 'pc', name: 'PC1', x: 150, y: 300, ip: '', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const }] }
           ],
@@ -917,7 +919,7 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
       data: {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
-          devices: [{ id: 'switch-1', type: 'switchL2', name: 'Switch-1', x: 300, y: 200, ip: '', status: 'online', ports: generateSwitchPorts() as any }],
+          devices: [{ id: 'switch-1', type: 'switchL2', name: 'Switch-1', x: 300, y: 200, ip: '', status: 'online', ports: generateSwitchPorts() }],
           connections: [], notes: []
         },
         cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
@@ -936,7 +938,7 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
           devices: [
-            { id: 'router-1', type: 'router', name: 'R1', x: 400, y: 200, ip: '', status: 'online', ports: generateRouterPorts() as any },
+            { id: 'router-1', type: 'router', name: 'R1', x: 400, y: 200, ip: '', status: 'online', ports: generateRouterPorts() },
             { id: 'pc-1', type: 'pc', name: 'PC1', x: 150, y: 200, ip: '', status: 'online', ipConfigMode: 'dhcp', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }] }
           ],
           connections: [{ id: 'c1', sourceDeviceId: 'pc-1', sourcePort: 'eth0', targetDeviceId: 'router-1', targetPort: 'gi0/0', cableType: 'crossover', active: true }],
@@ -985,7 +987,7 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
       data: {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
-          devices: [{ id: 'switch-1', type: 'switchL2', name: 'SW-Sec', x: 300, y: 200, ip: '', status: 'online', ports: generateSwitchPorts() as any }],
+          devices: [{ id: 'switch-1', type: 'switchL2', name: 'SW-Sec', x: 300, y: 200, ip: '', status: 'online', ports: generateSwitchPorts() }],
           connections: [], notes: []
         },
         cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
@@ -1003,7 +1005,7 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
       data: {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
-          devices: [{ id: 'router-1', type: 'router', name: 'R1', x: 300, y: 200, ip: '', status: 'online', ports: generateRouterPorts() as any }],
+          devices: [{ id: 'router-1', type: 'router', name: 'R1', x: 300, y: 200, ip: '', status: 'online', ports: generateRouterPorts() }],
           connections: [], notes: []
         },
         cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'router' },
@@ -1025,7 +1027,7 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
             { id: 'server-1', type: 'pc', name: 'Server-Web', x: 400, y: 100, ip: '192.168.1.10', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }] },
             { id: 'dns-server-1', type: 'pc', name: 'DNS-Server', x: 600, y: 100, ip: '192.168.1.5', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }] },
             { id: 'pc-1', type: 'pc', name: 'PC1', x: 100, y: 300, ip: '192.168.1.20', dns: '192.168.1.5', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }] },
-            { id: 'sw-1', type: 'switchL2', name: 'SW1', x: 400, y: 250, ip: '', status: 'online', ports: generateSwitchPorts() as any }
+            { id: 'sw-1', type: 'switchL2', name: 'SW1', x: 400, y: 250, ip: '', status: 'online', ports: generateSwitchPorts() }
           ],
           connections: [
             { id: 'c1', sourceDeviceId: 'pc-1', sourcePort: 'eth0', targetDeviceId: 'sw-1', targetPort: 'fa0/1', cableType: 'straight', active: true },
@@ -1050,8 +1052,8 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
           devices: [
-            { id: 'switch-1', type: 'switchL2', name: 'SW-Lab', x: 300, y: 200, ip: '', status: 'online', ports: generateSwitchPorts() as any },
-            { id: 'router-1', type: 'router', name: 'R-Lab', x: 600, y: 200, ip: '', status: 'online', ports: generateRouterPorts() as any },
+            { id: 'switch-1', type: 'switchL2', name: 'SW-Lab', x: 300, y: 200, ip: '', status: 'online', ports: generateSwitchPorts() },
+            { id: 'router-1', type: 'router', name: 'R-Lab', x: 600, y: 200, ip: '', status: 'online', ports: generateRouterPorts() },
             { id: 'pc-1', type: 'pc', name: 'PC-Lab', x: 100, y: 200, ip: '192.168.1.10', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }] }
           ],
           connections: [
@@ -1078,10 +1080,10 @@ export const checkStepCompletion = (
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
-    deviceState?: any;
-    deviceStates?: Map<string, any>;
-    topologyConnections?: any[];
-    topologyDevices?: any[];
+    deviceState?: SwitchState;
+    deviceStates?: Map<string, SwitchState>;
+    topologyConnections?: CanvasConnection[];
+    topologyDevices?: CanvasDevice[];
   }
 ): boolean => {
   switch (step.checkType) {
@@ -1101,7 +1103,7 @@ export const checkStepCompletion = (
       }
 
       const patterns = step.checkParams.commandPattern.split('|');
-      const lastCmd = context.lastCommand!.toLowerCase().trim();
+      const lastCmd = context.lastCommand.toLowerCase().trim();
       return patterns.some(pattern => {
         const pat = pattern.toLowerCase().trim();
         return lastCmd.startsWith(pat) || lastCmd.includes(pat);
@@ -1113,11 +1115,11 @@ export const checkStepCompletion = (
       if (step.checkParams?.connections) {
         const requiredConnections = step.checkParams.connections;
         return requiredConnections.every(required => {
-          return context.topologyConnections!.some((conn: any) => {
+          return context.topologyConnections!.some((conn: CanvasConnection) => {
             if (!conn.active) return false;
             if (step.checkParams?.cableType) {
               const cableTypeMatch = conn.cableType === step.checkParams.cableType ||
-                (step.checkParams.cableType === 'straight' && conn.cableType === 'copper-straight-through');
+                (step.checkParams.cableType === 'straight' && (conn.cableType as any) === 'copper-straight-through');
               if (!cableTypeMatch) return false;
             }
             const sourceMatch = conn.sourceDeviceId === required.sourceDevice &&
@@ -1131,11 +1133,11 @@ export const checkStepCompletion = (
 
       if (step.checkParams?.sourceDevice && step.checkParams?.targetDevice) {
         const params = step.checkParams;
-        return context.topologyConnections.some((conn: any) => {
+        return context.topologyConnections.some((conn: CanvasConnection) => {
           if (!conn.active) return false;
           if (params.cableType) {
             const cableTypeMatch = conn.cableType === params.cableType ||
-              (params.cableType === 'straight' && conn.cableType === 'copper-straight-through');
+              (params.cableType === 'straight' && (conn.cableType as any) === 'copper-straight-through');
             if (!cableTypeMatch) return false;
           }
           const sourceMatch = conn.sourceDeviceId === params.sourceDevice &&
@@ -1146,7 +1148,7 @@ export const checkStepCompletion = (
         });
       }
 
-      return context.topologyConnections.some((conn: any) => conn.active === true);
+      return context.topologyConnections.some((conn: CanvasConnection) => conn.active === true);
 
     case 'config':
       if (!step.checkParams?.configKey) return false;
@@ -1191,7 +1193,7 @@ export const checkStepCompletion = (
 
       if (configKey.startsWith('vlans.')) {
         const vlanId = configKey.split('.')[1];
-        const vlan = targetState?.vlans?.[vlanId];
+        const vlan = targetState?.vlans?.[vlanId as any];
         const property = configKey.split('.').pop();
         if (property === 'name') return vlan?.name === configValue;
         return !!vlan;
@@ -1199,8 +1201,8 @@ export const checkStepCompletion = (
 
       if (configKey === 'staticRoutes') {
         const routes = targetState?.staticRoutes || [];
-        if (typeof configValue === 'object' && configValue.destination) {
-          return routes.some((r: any) => r.destination === configValue.destination);
+        if (typeof configValue === 'object' && configValue !== null && (configValue as any).destination) {
+          return routes.some((r: Route) => r.destination === (configValue as any).destination);
         }
       }
 
@@ -1209,7 +1211,7 @@ export const checkStepCompletion = (
         const pool = targetState?.dhcpPools?.[poolName];
         if (!pool) return false;
         if (typeof configValue === 'object') {
-          return Object.entries(configValue).every(([k, v]) => pool[k] === v);
+          return Object.entries(configValue as any).every(([k, v]) => (pool as any)[k] === v);
         }
         return true;
       }
@@ -1220,20 +1222,20 @@ export const checkStepCompletion = (
         const parts = configKey.split('.');
         const serviceName = parts[1];
         const property = parts[2];
-        const service = targetState?.services?.[serviceName] ||
-          context.topologyDevices?.find((d: any) => d.id === step.checkParams?.targetDeviceId)?.services?.[serviceName];
+        const service = (targetState?.services as any)?.[serviceName] ||
+          (context.topologyDevices?.find((d: CanvasDevice) => d.id === step.checkParams?.targetDeviceId)?.services as any)?.[serviceName];
         if (!service) return false;
         if (property === 'enabled') return service.enabled === configValue;
         if (property === 'records' && Array.isArray(configValue)) {
           return configValue.every(req =>
-            service.records?.some((r: any) => r.domain === req.domain && r.address === req.address)
+            service.records?.some((r: { domain: string; address: string }) => r.domain === req.domain && r.address === req.address)
           );
         }
       }
 
       if (configKey.startsWith('pc.')) {
         const pcId = configKey.split('.')[1];
-        const pcDevice = context.topologyDevices?.find((d: any) => d.id === pcId);
+        const pcDevice = context.topologyDevices?.find((d: CanvasDevice) => d.id === pcId);
         if (!pcDevice) return false;
         const ipMatch = pcDevice.ip === configValue;
         if (step.checkParams.subnetMask) return ipMatch && pcDevice.subnet === step.checkParams.subnetMask;
@@ -1242,7 +1244,7 @@ export const checkStepCompletion = (
 
       if (configKey.startsWith('iot.')) {
         const iotId = configKey.split('.')[1];
-        const iotDevice = context.topologyDevices?.find((d: any) => d.id === iotId);
+        const iotDevice = context.topologyDevices?.find((d: CanvasDevice) => d.id === iotId);
         if (!iotDevice) return false;
         const property = configKey.split('.').pop();
         if (property === 'ssid') return iotDevice.wifi?.ssid === configValue;
@@ -1252,14 +1254,14 @@ export const checkStepCompletion = (
 
       if (configKey.startsWith('firewall.')) {
         const fwId = configKey.split('.')[1];
-        const fwDevice = context.topologyDevices?.find((d: any) => d.id === fwId);
+        const fwDevice = context.topologyDevices?.find((d: CanvasDevice) => d.id === fwId);
         if (!fwDevice) return false;
         const property = configKey.split('.').pop();
         if (property === 'ip') {
           if (fwDevice.ip === configValue) return true;
           const fwState = context.deviceStates?.get(fwId);
           if (fwState?.ports) {
-            return Object.values(fwState.ports).some((p: any) => p.ipAddress === configValue);
+            return Object.values(fwState.ports).some((p: Port) => p.ipAddress === configValue);
           }
           return false;
         }

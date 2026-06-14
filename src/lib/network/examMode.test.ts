@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateExamFromProject } from './examMode';
+import { generateExamFromProject, ProjectData } from './examMode';
 
 describe('generateExamFromProject', () => {
   it('should generate an exam with tasks from project data', () => {
@@ -38,7 +38,7 @@ describe('generateExamFromProject', () => {
       }
     };
 
-    const exam = generateExamFromProject(projectData, 'en');
+    const exam = generateExamFromProject(projectData as unknown as ProjectData, 'en');
 
     expect(exam.isExam).toBe(true);
     expect(exam.tasks.length).toBeGreaterThan(0);
@@ -79,7 +79,7 @@ describe('generateExamFromProject', () => {
       topology: { devices: [], connections: [] }
     };
 
-    const exam = generateExamFromProject(projectData, 'en');
+    const exam = generateExamFromProject(projectData as unknown as ProjectData, 'en');
 
     expect(exam.tasks.some(t => t.checkParams?.configKey === 'dhcpPools.LAN.network')).toBe(true);
     expect(exam.tasks.some(t => t.checkParams?.configKey === 'services.dns.enabled')).toBe(true);
@@ -97,7 +97,7 @@ describe('generateExamFromProject', () => {
       topology: { devices: [], connections: [] }
     };
 
-    const exam = generateExamFromProject(projectData, 'en');
+    const exam = generateExamFromProject(projectData as unknown as ProjectData, 'en');
 
     // Completed non-connection task should be filtered out
     expect(exam.tasks.some(t => t.id === 't2')).toBe(false);
@@ -147,7 +147,7 @@ describe('generateExamFromProject', () => {
       }
     };
 
-    const exam = generateExamFromProject(projectData, 'en');
+    const exam = generateExamFromProject(projectData as unknown as ProjectData, 'en');
 
     // Should only have one connection task (for the inactive connection)
     const connectionTasks = exam.tasks.filter(t => t.checkType === 'connection');
@@ -171,7 +171,7 @@ describe('generateExamFromProject', () => {
       }
     };
 
-    const exam = generateExamFromProject(projectData, 'en');
+    const exam = generateExamFromProject(projectData as unknown as ProjectData, 'en');
 
     // Should have extracted CLI commands from notes
     const commandTasks = exam.tasks.filter(t => t.checkType === 'command' && t.id.startsWith('task-note-cmd'));
@@ -214,7 +214,7 @@ describe('generateExamFromProject', () => {
       topology: { devices: [], connections: [] }
     };
 
-    const exam = generateExamFromProject(projectData, 'en');
+    const exam = generateExamFromProject(projectData as unknown as ProjectData, 'en');
 
     // Security tasks
     expect(exam.tasks.some(t => t.checkParams?.commandPattern === 'enable secret')).toBe(true);
@@ -258,7 +258,7 @@ describe('generateExamFromProject', () => {
       }
     };
 
-    const exam = generateExamFromProject(projectData, 'en');
+    const exam = generateExamFromProject(projectData as unknown as ProjectData, 'en');
 
     // Turkish instruction text should not be extracted as commands
     const commandTasks = exam.tasks.filter(t => t.checkType === 'command' && t.id.startsWith('task-note-cmd'));
@@ -291,7 +291,7 @@ describe('generateExamFromProject', () => {
       }
     };
 
-    const exam = generateExamFromProject(projectData, 'en');
+    const exam = generateExamFromProject(projectData as unknown as ProjectData, 'en');
 
     const pc1ConfigTask = exam.tasks.find(t => t.checkParams?.configKey === 'pc.pc-1.ip');
     expect(pc1ConfigTask).toBeDefined();
@@ -322,7 +322,7 @@ describe('generateExamFromProject', () => {
       }
     };
 
-    const exam = generateExamFromProject(projectData, 'en');
+    const exam = generateExamFromProject(projectData as unknown as ProjectData, 'en');
 
     // Should create PC IP config tasks from notes
     const pc1Task = exam.tasks.find(t => t.checkParams?.configKey === 'pc.pc-1.ip');
@@ -369,7 +369,7 @@ describe('generateExamFromProject', () => {
       }
     };
 
-    const exam = generateExamFromProject(projectData, 'en');
+    const exam = generateExamFromProject(projectData as unknown as ProjectData, 'en');
 
     // High priority tasks (routing, security) should have higher weight than simple hostname tasks
     const routingTask = exam.tasks.find(t => t.checkParams?.commandPattern === 'ip routing');
@@ -382,7 +382,7 @@ describe('generateExamFromProject', () => {
     const highPriorityTasks = [routingTask, staticRouteTask, secretTask, encryptionTask].filter(Boolean);
     if (hostnameTask && highPriorityTasks.length > 0) {
       highPriorityTasks.forEach(hpTask => {
-        expect(hpTask!.weight).toBeGreaterThanOrEqual(hostnameTask.weight);
+        expect((hpTask as NonNullable<typeof hpTask>).weight).toBeGreaterThanOrEqual(hostnameTask.weight);
       });
     }
 

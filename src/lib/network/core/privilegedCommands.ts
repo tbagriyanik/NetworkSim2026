@@ -1098,7 +1098,7 @@ function cmdMail(state: any, input: string, ctx: any): any {
               try {
                 const storedInbox = window.localStorage.getItem(`mail_inbox_${delivered.device.id}`);
                 if (storedInbox) currentInbox = JSON.parse(storedInbox);
-              } catch(e) {}
+              } catch(_e) {}
             }
             const inbox = [{ from: sourceAddress, subject, body, timestamp }, ...currentInbox];
             if (typeof window !== 'undefined') window.localStorage.setItem(`mail_inbox_${delivered.device.id}`, JSON.stringify(inbox));
@@ -1108,7 +1108,7 @@ function cmdMail(state: any, input: string, ctx: any): any {
               try {
                 const storedSent = window.localStorage.getItem(`mail_sent_${ctx.sourceDeviceId}`);
                 if (storedSent) currentSent = JSON.parse(storedSent);
-              } catch(e) {}
+              } catch(_e) {}
             }
             const sent = [{ to: address, subject, body, timestamp }, ...currentSent];
             if (ctx.sourceDeviceId && typeof window !== 'undefined') window.localStorage.setItem(`mail_sent_${ctx.sourceDeviceId}`, JSON.stringify(sent));

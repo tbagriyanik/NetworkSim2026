@@ -1,5 +1,100 @@
 import { ExampleProject } from './exampleProjects';
 
+export interface NoteItem {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  font: string;
+  fontSize: number;
+  opacity: number;
+}
+
+export interface DevicePort {
+  id: string;
+  label: string;
+  status: string;
+  ipAddress?: string;
+  mode?: 'access' | 'trunk' | 'routed';
+  vlan?: number;
+  description?: string;
+  wifi?: { ssid: string; mode: string };
+  portSecurity?: { enabled: boolean };
+  isSubinterface?: boolean;
+}
+
+export interface DeviceState {
+  hostname?: string;
+  ports?: Record<string, DevicePort>;
+  dhcpPools?: Record<string, { network: string }>;
+  services?: {
+    dns?: { enabled: boolean; records?: Array<{ domain: string; address: string }> };
+  };
+  security?: {
+    enableSecret?: string;
+    consoleLine?: { password: string };
+    vtyLines?: { password: string };
+    servicePasswordEncryption?: boolean;
+    users?: Array<{ username: string }>;
+  };
+  staticRoutes?: Array<{ destination: string; prefixLength: number }>;
+  ipRouting?: boolean;
+  routingProtocol?: 'rip' | 'ospf';
+  vtp?: { mode: string };
+}
+
+export interface ProjectDevice {
+  id: string;
+  type: string;
+  name?: string;
+  ip?: string;
+  subnet?: string;
+  gateway?: string;
+  macAddress?: string;
+  status?: string;
+  ports?: Array<{ id: string; label: string; status: string }>;
+  state?: DeviceState;
+}
+
+export interface TopologyData {
+  devices: ProjectDevice[];
+  connections: Array<{
+    sourceDeviceId: string;
+    sourcePort: string;
+    targetDeviceId: string;
+    targetPort: string;
+    cableType: string;
+    active?: boolean;
+  }>;
+  notes?: NoteItem[];
+}
+
+export interface ProjectData {
+  version?: string;
+  timestamp?: string;
+  devices?: ProjectDevice[];
+  deviceOutputs?: unknown[];
+  pcOutputs?: unknown[];
+  pcHistories?: unknown[];
+  topology?: TopologyData;
+  cableInfo?: {
+    connected: boolean;
+    cableType: string;
+    sourceDevice: string;
+    targetDevice: string;
+  };
+  activeDeviceId?: string;
+  activeDeviceType?: string;
+  activeTab?: string;
+  zoom?: number;
+  pan?: { x: number; y: number };
+  tasks?: ExamTask[];
+  steps?: ExamTask[];
+}
+
 export interface ExamTask {
   id: string;
   title: { tr: string; en: string };
@@ -10,7 +105,7 @@ export interface ExamTask {
     deviceType?: 'switch' | 'router' | 'pc' | 'iot' | 'firewall';
     commandPattern?: string;
     configKey?: string;
-    configValue?: any;
+    configValue?: unknown;
     cableType?: 'straight' | 'crossover' | 'console';
     sourceDevice?: string;
     sourcePort?: string;
@@ -42,7 +137,7 @@ export interface ExamProject extends ExampleProject {
  */
 const EXAM_KEY = 'SENTINEL_EXAM_SECURE_KEY_2024';
 
-export function encryptExamData(data: any): string {
+export function encryptExamData(data: unknown): string {
   const json = JSON.stringify(data);
   let result = '';
   for (let i = 0; i < json.length; i++) {
@@ -51,7 +146,7 @@ export function encryptExamData(data: any): string {
   return btoa(encodeURIComponent(result));
 }
 
-export function decryptExamData(encrypted: string): any {
+export function decryptExamData(encrypted: string): unknown {
   try {
     const decoded = decodeURIComponent(atob(encrypted));
     let result = '';
@@ -550,7 +645,7 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
         devices: [],
         topology: { devices: [], connections: [] },
         activeTab: 'topology'
-      } as any,
+      } as unknown as ExampleProject['data'],
       level: 'basic',
       isExam: true,
       isCustom: true,
@@ -748,7 +843,7 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
         activeTab: 'topology',
         zoom: 1,
         pan: { x: 0, y: 0 }
-      } as any,
+      } as unknown as ExampleProject['data'],
       level: 'intermediate',
       isExam: true,
       tasks: routingBasicsExamTasks,
@@ -796,7 +891,7 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
         },
         activeDeviceId: 'l3-1',
         activeDeviceType: 'switchL3'
-      } as any,
+      } as unknown as ExampleProject['data'],
       level: 'advanced',
       isExam: true,
       tasks: l3SwitchDhcpExamTasks,
@@ -948,11 +1043,11 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
   ];
 };
 
-/**
- * Extract CLI commands from note text and return them as a deduplicated array.
- * Detects lines that start with known NOS command verbs.
- */
-function extractCliCommandsFromNotes(notes: any[]): string[] {
+  /**
+   * Extract CLI commands from note text and return them as a deduplicated array.
+   * Detects lines that start with known NOS command verbs.
+   */
+  function extractCliCommandsFromNotes(notes: NoteItem[]): string[] {
   if (!notes || !Array.isArray(notes)) return [];
 
   const reservedVlanIds = new Set([1002, 1003, 1004, 1005]);
@@ -1045,7 +1140,7 @@ interface NotePcConfig {
   dns?: string;
 }
 
-function extractPcConfigsFromNotes(notes: any[]): NotePcConfig[] {
+function extractPcConfigsFromNotes(notes: NoteItem[]): NotePcConfig[] {
   if (!notes || !Array.isArray(notes)) return [];
   const configs: NotePcConfig[] = [];
   const seen = new Set<string>();
@@ -1114,7 +1209,7 @@ interface NoteConnectionInfo {
   targetPort?: string;
 }
 
-function extractConnectionsFromNotes(notes: any[]): NoteConnectionInfo[] {
+function extractConnectionsFromNotes(notes: NoteItem[]): NoteConnectionInfo[] {
   if (!notes || !Array.isArray(notes)) return [];
   const connections: NoteConnectionInfo[] = [];
   const seen = new Set<string>();
@@ -1162,7 +1257,7 @@ function extractConnectionsFromNotes(notes: any[]): NoteConnectionInfo[] {
  * Analyzes connections, hostnames, IP configs, and VLANs.
  * Also extracts CLI commands from topology notes.
  */
-export function generateExamFromProject(projectData: any, language: 'tr' | 'en'): ExamProject {
+export function generateExamFromProject(projectData: ProjectData, language: 'tr' | 'en'): ExamProject {
   const isTr = language === 'tr';
   let tasks: ExamTask[] = [];
 
@@ -1171,14 +1266,14 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
   if (sourceItems.length > 0) {
     const seenItems = new Set<string>();
     tasks = sourceItems
-      .filter((item: any) => {
+      .filter((item: ExamTask) => {
         if (item.completed || item.checkType === 'connection') return false;
         const key = `${item.checkType}-${JSON.stringify(item.checkParams)}`;
         if (seenItems.has(key)) return false;
         seenItems.add(key);
         return true;
       })
-      .map((item: any) => ({
+      .map((item: ExamTask) => ({
         ...item,
         id: item.id || `task-${Date.now()}-${Math.random()}`,
         completed: false,
@@ -1186,7 +1281,7 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
       }));
   }
 
-  const addDeviceTask = (deviceId: string, title: { tr: string; en: string }, desc: { tr: string; en: string }, type: ExamTask['checkType'], params: any) => {
+  const addDeviceTask = (deviceId: string, title: { tr: string; en: string }, desc: { tr: string; en: string }, type: ExamTask['checkType'], params: ExamTask['checkParams']) => {
     // Deduplication - don't add the same task twice
     const isDuplicate = tasks.some(t =>
       t.checkType === type &&
@@ -1207,7 +1302,7 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
 
   // 1. Hostname Tasks
   if (Array.isArray(projectData.devices)) {
-    projectData.devices.forEach((d: any) => {
+    projectData.devices.forEach((d: ProjectDevice) => {
       if (d.state?.hostname && d.state.hostname !== 'Switch' && d.state.hostname !== 'Router' && d.state.hostname !== 'L3-Switch') {
         addDeviceTask(d.id,
           { tr: `${d.id} Hostname Ayarı`, en: `${d.id} Hostname Config` },
@@ -1220,10 +1315,10 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
   }
 
   // 2. Physical Connection Tasks - skip already-active connections
-  if (projectData.topology?.connections?.length > 0) {
-    projectData.topology.connections
-      .filter((conn: any) => !conn.active)
-      .forEach((conn: any) => {
+  if ((projectData.topology?.connections?.length ?? 0) > 0) {
+    projectData.topology!.connections
+      .filter((conn: { sourceDeviceId: string; sourcePort: string; targetDeviceId: string; targetPort: string; cableType: string; active?: boolean; }) => !conn.active)
+      .forEach((conn: { sourceDeviceId: string; sourcePort: string; targetDeviceId: string; targetPort: string; cableType: string; active?: boolean; }) => {
         addDeviceTask(conn.sourceDeviceId,
           { tr: 'Fiziksel Bağlantı', en: 'Physical Connection' },
           {
@@ -1236,14 +1331,14 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
             sourcePort: conn.sourcePort,
             targetDevice: conn.targetDeviceId,
             targetPort: conn.targetPort,
-            cableType: conn.cableType
+            cableType: conn.cableType as 'straight' | 'crossover' | 'console'
           }
         );
       });
   }
 
   // 2b. Connection tasks extracted from notes
-  const noteConnections = extractConnectionsFromNotes(projectData.topology?.notes);
+  const noteConnections = extractConnectionsFromNotes(projectData.topology?.notes ?? []);
   noteConnections.forEach(conn => {
     addDeviceTask(conn.sourceDevice,
       { tr: 'Fiziksel Bağlantı (Not)', en: 'Physical Connection (Note)' },
@@ -1262,8 +1357,8 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
   });
 
   // 3. PC IP Configuration Tasks from Topology Devices
-  if (projectData.topology?.devices?.length > 0) {
-    projectData.topology.devices.forEach((d: any) => {
+  if ((projectData.topology?.devices?.length ?? 0) > 0) {
+    projectData.topology!.devices!.forEach((d: ProjectDevice) => {
       if (d.type === 'pc' && d.ip && d.ip !== '') {
         addDeviceTask(d.id,
           { tr: `${d.name || d.id} IP Yapılandırması`, en: `${d.name || d.id} IP Configuration` },
@@ -1283,10 +1378,10 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
   }
 
   // 3b. PC IP Configuration Tasks from Notes
-  const notePcConfigs = extractPcConfigsFromNotes(projectData.topology?.notes);
+  const notePcConfigs = extractPcConfigsFromNotes(projectData.topology?.notes ?? []);
   notePcConfigs.forEach(pcConfig => {
     // Only add if a topology device with this id exists and has matching ip
-    const topoDevice = projectData.topology?.devices?.find((d: any) =>
+    const topoDevice = projectData.topology?.devices?.find((d: ProjectDevice) =>
       d.id === pcConfig.deviceId || d.id === pcConfig.deviceId
     );
     if (topoDevice && topoDevice.ip && topoDevice.ip !== '') {
@@ -1311,10 +1406,10 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
 
   // 4. VLAN & Interface Tasks (Simplified)
   if (Array.isArray(projectData.devices)) {
-    projectData.devices.forEach((d: any) => {
+    projectData.devices.forEach((d: ProjectDevice) => {
       // Interface IPs (Router/L3 Switch) & WLAN
       if (d.state?.ports) {
-        Object.values(d.state.ports).forEach((p: any) => {
+        Object.values(d.state.ports).forEach((p: DevicePort) => {
           if (p.ipAddress && p.ipAddress !== '0.0.0.0' && !p.isSubinterface) {
             addDeviceTask(d.id,
               { tr: `${p.id} IP Yapılandırması`, en: `${p.id} IP Configuration` },
@@ -1373,8 +1468,8 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
             { configKey: 'services.dns.enabled', configValue: true }
           );
 
-          if (s.dns.records?.length > 0) {
-            s.dns.records.forEach((rec: any) => {
+          if ((s.dns.records?.length ?? 0) > 0) {
+            s.dns.records!.forEach((rec: { domain: string; address: string }) => {
               addDeviceTask(d.id,
                 { tr: `DNS Kaydı: ${rec.domain}`, en: `DNS Record: ${rec.domain}` },
                 { tr: `${rec.domain} alan adını ${rec.address} IP adresine yönlendirin.`, en: `Add DNS record for ${rec.domain} pointing to ${rec.address}.` },
@@ -1384,14 +1479,13 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
             });
           }
         }
-
       }
     });
   }
 
   // 5. Comprehensive Device Configuration Tasks (Security, Routing, Ports)
   if (Array.isArray(projectData.devices)) {
-    projectData.devices.forEach((d: any) => {
+    projectData.devices.forEach((d: ProjectDevice) => {
       if (!d.state) return;
 
       // Security: enable secret
@@ -1435,8 +1529,8 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
       }
 
       // Security: local users
-      if (d.state.security?.users?.length > 0) {
-        d.state.security.users.forEach((u: any) => {
+      if ((d.state.security?.users?.length ?? 0) > 0) {
+        d.state.security!.users!.forEach((u: { username: string }) => {
           addDeviceTask(d.id,
             { tr: `Kullanıcı: ${u.username}`, en: `User: ${u.username}` },
             { tr: `${d.id} üzerinde "${u.username}" kullanıcısını oluşturun.`, en: `Create user "${u.username}" on ${d.id}.` },
@@ -1447,8 +1541,8 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
       }
 
       // Static Routes
-      if (d.state.staticRoutes?.length > 0) {
-        d.state.staticRoutes.forEach((r: any) => {
+      if ((d.state.staticRoutes?.length ?? 0) > 0) {
+        d.state.staticRoutes!.forEach((r: { destination: string; prefixLength: number }) => {
           addDeviceTask(d.id,
             { tr: `Statik Rota: ${r.destination}`, en: `Static Route: ${r.destination}` },
             { tr: `${d.id} üzerinde ${r.destination}/${r.prefixLength} ağına statik rota ekleyin.`, en: `Add static route to ${r.destination}/${r.prefixLength} on ${d.id}.` },
@@ -1488,7 +1582,7 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
 
       // Port configurations
       if (d.state.ports) {
-        Object.values(d.state.ports).forEach((p: any) => {
+        Object.values(d.state.ports).forEach((p: DevicePort) => {
           // Trunk port
           if (p.mode === 'trunk') {
             addDeviceTask(d.id,
@@ -1554,7 +1648,7 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
   }
 
   // 6. CLI Commands from Notes
-  const noteCommands = extractCliCommandsFromNotes(projectData.topology?.notes);
+  const noteCommands = extractCliCommandsFromNotes(projectData.topology?.notes ?? []);
   noteCommands.forEach(cmd => {
     addDeviceTask('note-cmd',
       { tr: `Komut: ${cmd}`, en: `Command: ${cmd}` },
@@ -1594,16 +1688,16 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
       'password-encryption', 'password encryption',
     ];
 
-    let highCount = 0, mediumCount = 0, normalCount = 0;
+    let _highCount = 0, _mediumCount = 0, _normalCount = 0;
 
     tasks.forEach(t => {
       const text = `${t.title.tr} ${t.title.en} ${t.checkParams?.commandPattern || ''} ${t.checkParams?.configKey || ''}`;
       const isHigh = highPriorityPatterns.some(p => text.includes(p));
       const isMedium = mediumPriorityPatterns.some(p => text.includes(p));
 
-      if (isHigh) { t.weight = 3; highCount++; }
-      else if (isMedium) { t.weight = 2; mediumCount++; }
-      else { t.weight = 1; normalCount++; }
+      if (isHigh) { t.weight = 3; _highCount++; }
+      else if (isMedium) { t.weight = 2; _mediumCount++; }
+      else { t.weight = 1; _normalCount++; }
     });
 
     // Calculate total raw weight and scale to 100
@@ -1642,7 +1736,7 @@ export function generateExamFromProject(projectData: any, language: 'tr' | 'en')
     tasks,
     durationMinutes: 30,
     difficulty: 'intermediate',
-    data: projectData
+    data: projectData as unknown as import('./exampleProjects').ExampleProject['data']
   };
 }
 

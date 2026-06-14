@@ -73,7 +73,7 @@ export class SpatialPartitioner {
                 connectionIds: [],
             });
         }
-        return this.cells.get(key)!;
+        return this.cells.get(key) as SpatialCell;
     }
 
     /**
@@ -89,8 +89,8 @@ export class SpatialPartitioner {
             ([_, c]) => c.nodeIds.includes(node.id)
         )?.[0];
         if (oldKey && oldKey !== cellKey) {
-            const oldCell = this.cells.get(oldKey)!;
-            oldCell.nodeIds = oldCell.nodeIds.filter(id => id !== node.id);
+        const oldCell = this.cells.get(oldKey) as SpatialCell;
+        oldCell.nodeIds = oldCell.nodeIds.filter((id: string) => id !== node.id);
         }
 
         // Add to new cell

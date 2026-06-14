@@ -638,7 +638,7 @@ export function ExamEditorPanel({
                                       <label className="text-[9px] font-bold opacity-50 uppercase ml-1">{isTr ? 'Değer' : 'Value'}</label>
                                       <div className="flex gap-1">
                                         <Input
-                                          value={task.checkParams?.configValue || ''}
+                                          value={String(task.checkParams?.configValue ?? '')}
                                           onChange={(e) => updateTask(task.id, {
                                             checkParams: { ...task.checkParams, configValue: e.target.value }
                                           })}

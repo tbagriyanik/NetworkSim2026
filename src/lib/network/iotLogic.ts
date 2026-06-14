@@ -107,12 +107,12 @@ export const processIotRules = (
 
           if (finalAction === 'ON' && !isCurrentlyPoweredOn) {
             updateDevice(targetId, {
-              iot: { ...targetDevice.iot!, value: true }
+              iot: { ...(targetDevice.iot as any), value: true }
             });
             deviceUpdated = true;
           } else if (finalAction === 'OFF' && isCurrentlyPoweredOn) {
             updateDevice(targetId, {
-              iot: { ...targetDevice.iot!, value: false } // Force boolean false
+              iot: { ...(targetDevice.iot as any), value: false } // Force boolean false
             });
             deviceUpdated = true;
           }

@@ -444,7 +444,9 @@ export const cmdMacFilter: CommandHandler = (state, input, ctx) => {
         };
     }
 
-    const filter = state.wirelessRadios[state.currentRadio].macFilter!;
+    const macF = state.wirelessRadios[state.currentRadio].macFilter;
+    if (!macF) return { success: false, output: 'MAC filter not configured' };
+    const filter = macF;
     if (action === 'allow') {
         if (!filter.allowList.includes(macAddress)) {
             filter.allowList.push(macAddress);

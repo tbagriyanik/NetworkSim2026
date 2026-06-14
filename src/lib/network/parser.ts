@@ -2514,7 +2514,7 @@ function ensureCommandTree(mode: CommandMode, capabilities?: any): CommandTreeNo
     let current = root;
     for (const token of tokens) {
       if (!current.children.has(token)) current.children.set(token, createNode());
-      current = current.children.get(token)!;
+      current = current.children.get(token) as CommandTreeNode;
     }
     current.terminalPatterns.push(patternName);
   }
@@ -2693,7 +2693,7 @@ export function getInvalidCommandError(
     // Mevcut mod için geçerli komutların ilk kelimelerini topla
     const validFirstWords = new Set<string>();
     Object.entries(commandPatterns).forEach(([name, pattern]) => {
-      if (pattern.modes.includes(currentMode!)) {
+      if (pattern.modes.includes(currentMode)) {
         validFirstWords.add(name.split(/\s+/)[0]);
       }
     });

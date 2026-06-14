@@ -184,7 +184,7 @@ function sanitizePersistedState(input: Record<string, unknown> | undefined): Par
     const safe: Partial<AppState> = {};
 
     if (isValidTopologyState(input?.topology as Record<string, unknown> | undefined)) {
-        const top = input!.topology as Record<string, unknown>;
+        const top = (input as NonNullable<typeof input>).topology as Record<string, unknown>;
         safe.topology = {
             devices: (top.devices as unknown[]).filter(isValidCanvasDevice),
             connections: (top.connections as unknown[]).filter(isValidCanvasConnection),
@@ -214,7 +214,7 @@ function sanitizePersistedState(input: Record<string, unknown> | undefined): Par
     }
 
     if (isValidDeviceStates(input?.deviceStates as Record<string, unknown> | undefined)) {
-        safe.deviceStates = input!.deviceStates as DeviceStates;
+        safe.deviceStates = (input as NonNullable<typeof input>).deviceStates as DeviceStates;
     } else {
         safe.deviceStates = initialDeviceStates;
     }

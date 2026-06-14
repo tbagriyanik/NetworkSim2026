@@ -546,7 +546,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       mode: 'ap'
     }
   };
-  iotWifiR1State.ports['wlan0'].wifi!.mode = 'ap';
+  if (iotWifiR1State.ports['wlan0'].wifi) iotWifiR1State.ports['wlan0'].wifi.mode = 'ap';
 
   // Add DHCP service for WiFi clients
   iotWifiR1State.services = {
@@ -869,7 +869,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       mode: 'ap'
     }
   };
-  greenhouseR1State.ports['wlan0'].wifi!.mode = 'ap';
+  if (greenhouseR1State.ports['wlan0'].wifi) greenhouseR1State.ports['wlan0'].wifi.mode = 'ap';
 
   // Add DHCP service for greenhouse WiFi clients
   greenhouseR1State.services = {
@@ -995,7 +995,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
       mode: 'ap'
     }
   };
-  wifiR1State.ports['wlan0'].wifi!.mode = 'ap';
+  if (wifiR1State.ports['wlan0'].wifi) wifiR1State.ports['wlan0'].wifi.mode = 'ap';
 
   // Add DHCP service to R1 for WiFi clients
   wifiR1State.services = {

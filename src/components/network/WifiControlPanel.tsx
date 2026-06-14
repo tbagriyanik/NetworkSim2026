@@ -922,7 +922,7 @@ window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error'
         }
       });
       // Notify parent to remember active tab on refresh
-      try { window.parent.postMessage({ type: 'router-admin-tab-change', tab: tabName }, '*'); } catch(e) {}
+      try { window.parent.postMessage({ type: 'router-admin-tab-change', tab: tabName }, '*'); } catch(_e) {}
     }
     window.showTab = showTab;
     
