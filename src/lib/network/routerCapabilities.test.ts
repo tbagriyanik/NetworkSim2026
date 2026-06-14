@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { isRouterModel, isLayer2Switch, isLayer3Switch } from './switchModels';
 import { getDeviceCapabilities } from './capabilities';
+import type { DeviceType } from '@/components/network/networkTopology.types';
 
 describe('Router Identification and Capabilities', () => {
   const routerModels = ['ISR4451-X', 'C1900', 'C2900', 'C7200', 'ASR1001'];
@@ -31,7 +32,7 @@ describe('Router Identification and Capabilities', () => {
 
   it('should provide routing capability for routers', () => {
     routerModels.forEach(model => {
-      const caps = getDeviceCapabilities({ type: 'router' } as any, model);
+      const caps = getDeviceCapabilities({ type: 'router' as DeviceType }, model);
       expect(caps.routing).toBe(true);
     });
   });

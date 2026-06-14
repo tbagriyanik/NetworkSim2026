@@ -99,6 +99,14 @@ export function useSpatialPartitioning(
                 }))
             );
         }
+
+        // Invalidate culling result and recalculate if viewport exists
+        // This ensures newly added connections/devices are visible immediately
+        if (viewportRef.current && cullerRef.current) {
+            setCullingResult(cullerRef.current.cull(viewportRef.current));
+        } else {
+            setCullingResult(null);
+        }
     }, [devices, connections, cellSize, margin, enabled]);
 
     // Update viewport and perform culling

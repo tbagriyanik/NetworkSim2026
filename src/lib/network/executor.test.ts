@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { SwitchState, CommandMode } from './types';
 import { getPrompt } from './executor';
 
@@ -30,41 +30,41 @@ vi.mock('@/components/network/networkTopology.types', () => ({
 
 describe('Executor Core Functions', () => {
   describe('getPrompt', () => {
-    const baseState: SwitchState = {
+    const baseState = {
       hostname: 'SW1',
       macAddress: '00:11:22:33:44:55',
-      switchModel: 'WS-C2960-24TT-L',
-      switchLayer: 'L2',
-      currentMode: 'user',
+      switchModel: 'WS-C2960-24TT-L' as const,
+      switchLayer: 'L2' as const,
+      currentMode: 'user' as const,
       ports: {}
-    } as any;
+    } as const;
 
     it('should generate user EXEC mode prompt', () => {
-      const state: SwitchState = { ...baseState, currentMode: 'user' };
+      const state = { ...baseState, currentMode: 'user' } as unknown as SwitchState;
       const result = getPrompt(state);
       expect(result).toBe('SW1>');
     });
 
     it('should generate privileged EXEC mode prompt', () => {
-      const state: SwitchState = { ...baseState, currentMode: 'privileged' };
+      const state = { ...baseState, currentMode: 'privileged' } as unknown as SwitchState;
       const result = getPrompt(state);
       expect(result).toBe('SW1#');
     });
 
     it('should generate configuration mode prompt', () => {
-      const state: SwitchState = { ...baseState, currentMode: 'config' };
+      const state = { ...baseState, currentMode: 'config' } as unknown as SwitchState;
       const result = getPrompt(state);
       expect(result).toBe('SW1(config)#');
     });
 
     it('should generate interface configuration mode prompt', () => {
-      const state: SwitchState = { ...baseState, currentMode: 'interface' };
+      const state = { ...baseState, currentMode: 'interface' } as unknown as SwitchState;
       const result = getPrompt(state);
       expect(result).toBe('SW1(config-if)#');
     });
 
     it('should use default hostname when not set', () => {
-      const state: SwitchState = { ...baseState, hostname: '' };
+      const state = { ...baseState, hostname: '' } as unknown as SwitchState;
       const result = getPrompt(state);
       expect(result).toBe('Switch>');
     });
@@ -78,7 +78,7 @@ describe('Executor Core Functions', () => {
       ];
 
       modes.forEach((mode, index) => {
-        const state: SwitchState = { ...baseState, currentMode: mode };
+        const state = { ...baseState, currentMode: mode } as unknown as SwitchState;
         const result = getPrompt(state);
         expect(result).toBe(expectedPrompts[index]);
       });

@@ -1,8 +1,9 @@
 // Network Command Parser
-import { CommandMode, ParsedCommand, CommandValidationResult } from './types';
+import { CommandMode, ParsedCommand, CommandValidationResult, SwitchState } from './types';
 import { commandAliases } from './initialState';
 import { IOS_ERRORS, iosModeError } from "./core/iosErrors";
-import { getDeviceCapabilities } from './capabilities';
+import { getDeviceCapabilities, type DeviceCapabilities } from './capabilities';
+import type { DeviceType } from '@/components/network/networkTopology.types';
 
 // Komut yapıları
 interface CommandPattern {
@@ -2361,7 +2362,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
 };
 
 // Komut alias'larını çöz - Gelişmiş versiyon
-export function resolveAliases(input: string, state?: any): string {
+export function resolveAliases(input: string, state?: Partial<SwitchState>): string {
   const trimmed = input.trim().toLowerCase();
 
   // Önce kullanıcı tanımlı exec alias'larını kontrol et (runtime)
@@ -2445,13 +2446,13 @@ export function getLevenshteinDistance(a: string, b: string): number {
 }
 
 // Komut parse et
-export function parseCommand(input: string, currentMode: CommandMode, state?: any): ParsedCommand | null {
+export function parseCommand(input: string, currentMode: CommandMode, state?: Partial<SwitchState>): ParsedCommand | null {
   const inferredDeviceType = state
     ? (state.deviceType === 'switch'
       ? (state.switchLayer === 'L3' ? 'switchL3' : 'switchL2')
       : state.deviceType || (state.switchLayer === 'FW' ? 'firewall' : state.switchLayer === 'L3' ? 'switchL3' : 'switchL2'))
     : 'switchL2';
-  const capabilities = state ? getDeviceCapabilities({ type: inferredDeviceType } as any, state.switchModel) : undefined;
+  const capabilities = state ? getDeviceCapabilities({ type: inferredDeviceType as DeviceType }, state.switchModel) : undefined;
   const resolvedInput = expandKeywordPrefixes(resolveAliases(input, state), currentMode, capabilities);
 
   if (!resolvedInput) return null;
@@ -2497,7 +2498,7 @@ function isKeywordToken(token: string): boolean {
   return /^[a-z0-9-]+$/i.test(token);
 }
 
-function ensureCommandTree(mode: CommandMode, capabilities?: any): CommandTreeNode {
+function ensureCommandTree(mode: CommandMode, capabilities?: DeviceCapabilities): CommandTreeNode {
   // If we have specific capabilities, we don't cache since trees might differ per device
   const root = createNode();
 
@@ -2526,7 +2527,7 @@ function tokenize(input: string): string[] {
   return input.trim().toLowerCase().split(/\s+/).filter(Boolean);
 }
 
-export function expandKeywordPrefixes(input: string, currentMode: CommandMode, capabilities?: any): string {
+export function expandKeywordPrefixes(input: string, currentMode: CommandMode, capabilities?: DeviceCapabilities): string {
   const rawTokens = input.trim().split(/\s+/).filter(Boolean);
   if (rawTokens.length === 0) return input;
 
@@ -2557,7 +2558,7 @@ export function expandKeywordPrefixes(input: string, currentMode: CommandMode, c
   return expanded.join(' ');
 }
 
-function resolveByCommandTree(input: string, currentMode: CommandMode, capabilities?: any): { kind: 'ok' | 'ambiguous' | 'incomplete'; candidates?: string[]; failedTokenIndex?: number } {
+function resolveByCommandTree(input: string, currentMode: CommandMode, capabilities?: DeviceCapabilities): { kind: 'ok' | 'ambiguous' | 'incomplete'; candidates?: string[]; failedTokenIndex?: number } {
   const tokens = tokenize(input);
   if (tokens.length === 0) return { kind: 'ok' };
 
@@ -2603,7 +2604,7 @@ function resolveByCommandTree(input: string, currentMode: CommandMode, capabilit
 export function validateCommand(
   parsed: ParsedCommand,
   currentMode: CommandMode,
-  state?: any
+  state?: Partial<SwitchState>
 ): CommandValidationResult {
 
   const resolvedInput = resolveAliases(parsed.rawInput, state);
@@ -2612,7 +2613,7 @@ export function validateCommand(
       ? (state.switchLayer === 'L3' ? 'switchL3' : 'switchL2')
       : state.deviceType || (state.switchLayer === 'FW' ? 'firewall' : state.switchLayer === 'L3' ? 'switchL3' : 'switchL2'))
     : 'switchL2';
-  const capabilities = state ? getDeviceCapabilities({ type: inferredDeviceType } as any, state.switchModel) : undefined;
+  const capabilities = state ? getDeviceCapabilities({ type: inferredDeviceType as DeviceType }, state.switchModel) : undefined;
 
   // Exact pattern match must win over prefix-tree ambiguity.
   for (const [name, pattern] of Object.entries(commandPatterns)) {
@@ -2676,7 +2677,7 @@ function getModeError(input: string, currentMode: CommandMode): string {
 // Geçersiz komut hatası
 export function getInvalidCommandError(
   input: string,
-  failedTokenIndexOrState?: number | any,
+  failedTokenIndexOrState?: number | Partial<SwitchState>,
   currentMode?: CommandMode
 ): string {
   let failedTokenIndex: number | undefined = undefined;
@@ -2724,7 +2725,7 @@ export function getInvalidCommandError(
 /**
  * Cihaz ve komut uyumluluğunu kontrol eder (Akıllı Yardımcı)
  */
-export function checkDeviceCompatibility(commandName: string, state: any): { valid: boolean; error?: string } {
+export function checkDeviceCompatibility(commandName: string, state: Partial<SwitchState>): { valid: boolean; error?: string } {
   const model = state.switchModel || '';
   const isModelL3 = typeof model === 'string' && model.includes('3650');
   const isLayer3 = state.isLayer3Switch || state.switchLayer === 'L3' || isModelL3;
