@@ -1,8 +1,9 @@
 import { iosModeError } from './iosErrors';
-import type { CommandHandler } from './commandTypes';
+import type { CommandHandler, CommandContext } from './commandTypes';
 import { showHandlers } from './showCommands';
 import { privilegedHandlers } from './privilegedCommands';
 import { parseCommand, validateCommand } from '../parser';
+import type { SwitchState, CommandResult } from '../types';
 
 // Sistem ve oturum komutları (enable, configure terminal, ping, reload, debug, vs.)
 
@@ -19,10 +20,10 @@ export const systemHandlers: Record<string, CommandHandler> = {
  * Enable - Enter privileged mode
  */
 function cmdEnable(
-  state: any,
+  state: SwitchState,
   _input: string,
-  _ctx: any
-): any {
+  _ctx: CommandContext
+): CommandResult {
   // Check if already in privileged mode
   if (state.currentMode === 'privileged') {
     return { success: true, output: '' };
@@ -74,10 +75,10 @@ function cmdEnable(
  * Disable - Return to user mode
  */
 function cmdDisable(
-  state: any,
+  state: SwitchState,
   _input: string,
-  _ctx: any
-): any {
+  _ctx: CommandContext
+): CommandResult {
   if (state.currentMode !== 'privileged') {
     return { success: false, error: iosModeError() };
   }
@@ -94,10 +95,10 @@ function cmdDisable(
  * Configure Terminal - Enter global configuration mode
  */
 function cmdConfigureTerminal(
-  state: any,
+  state: SwitchState,
   _input: string,
-  _ctx: any
-): any {
+  _ctx: CommandContext
+): CommandResult {
   if (state.currentMode !== 'privileged') {
     return { success: false, error: iosModeError() };
   }
@@ -114,10 +115,10 @@ function cmdConfigureTerminal(
  * Exit - Exit current mode
  */
 function cmdExit(
-  state: any,
+  state: SwitchState,
   _input: string,
-  _ctx: any
-): any {
+  _ctx: CommandContext
+): CommandResult {
   switch (state.currentMode) {
     case 'interface':
       return {

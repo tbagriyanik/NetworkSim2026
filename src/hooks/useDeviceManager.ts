@@ -898,9 +898,10 @@ export function useDeviceManager() {
         }
 
         if (result.telnetTarget && topologyDevices) {
-          const targetDevice = topologyDevices.find(d => d.ip === result.telnetTarget);
+          const telnetTarget = result.telnetTarget;
+          const targetDevice = topologyDevices.find(d => d.ip === telnetTarget.host);
           if (targetDevice && targetDevice.type !== 'pc') {
-            newOutputs.push({ id: `${now}-telnet`, type: 'output', content: ` Open\n\n**** Connected to ${targetDevice.name} (${result.telnetTarget}) via VTY ****\n`, timestamp: now });
+            newOutputs.push({ id: `${now}-telnet`, type: 'output', content: ` Open\n\n**** Connected to ${targetDevice.name} (${telnetTarget.host}) via VTY ****\n`, timestamp: now });
             const targetType = targetDevice.type;
             getOrCreateDeviceState(targetDevice.id, targetType, targetDevice.name);
             getOrCreateDeviceOutputs(targetDevice.id);

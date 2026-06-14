@@ -1,8 +1,8 @@
 import { iosModeError } from './iosErrors';
-import type { CommandHandler } from './commandTypes';
+import type { CommandHandler, CommandContext } from './commandTypes';
 import { checkConnectivity, getWirelessDistance } from '../connectivity';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
-import { SwitchState } from '../types';
+import { SwitchState, CommandResult } from '../types';
 import { clearArpCache } from '../arp';
 import { clearMacTable, clearDynamicMacEntries, clearStaticMacEntries } from '../macLearning';
 
@@ -75,7 +75,7 @@ function generatePingLatencies(distance: number): { min: number; avg: number; ma
 /**
  * Ping - Test connectivity
  */
-function cmdPing(state: any, input: string, ctx: any): any {
+function cmdPing(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -188,7 +188,7 @@ function cmdPing(state: any, input: string, ctx: any): any {
 /**
  * Telnet - Connect to remote device
  */
-function cmdTelnet(state: any, input: string, ctx: any): any {
+function cmdTelnet(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
     // Allow telnet from both user and privileged modes
     if (state.currentMode !== 'user' && state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
@@ -222,22 +222,22 @@ function cmdTelnet(state: any, input: string, ctx: any): any {
             };
         }
 
-        // Check target device configuration
-        const targetDeviceId = connectivity.targetId;
-        const targetState = ctx.deviceStates?.get(targetDeviceId);
+            // Check target device configuration
+            if (!connectivity.targetId) return { success: false, error: '% Target device not found' };
+            const targetState = ctx.deviceStates?.get(connectivity.targetId);
 
-        if (targetState) {
-            const transportInput = targetState.security?.vtyLines?.transportInput || [];
-            const isTelnetActive = transportInput.includes('all') || transportInput.includes('telnet');
+            if (targetState) {
+                const transportInput = targetState.security?.vtyLines?.transportInput || [];
+                const isTelnetActive = transportInput.includes('all') || transportInput.includes('telnet');
 
-            if (!isTelnetActive) {
-                return {
-                    success: false,
-                    output: `Connecting to ${host}...`,
-                    error: `% Connection refused by remote host`
-                };
+                if (!isTelnetActive) {
+                    return {
+                        success: false,
+                        output: `Connecting to ${host}...`,
+                        error: `% Connection refused by remote host`
+                    };
+                }
             }
-        }
     }
 
     return {

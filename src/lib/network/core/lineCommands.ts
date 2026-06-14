@@ -1,5 +1,6 @@
 import { iosModeError } from './iosErrors';
-import type { CommandHandler } from './commandTypes';
+import type { CommandHandler, CommandContext } from './commandTypes';
+import type { SwitchState, CommandResult } from '../types';
 
 // Line (console/vty) komutları (line console, password, login, transport input, vs.)
 
@@ -36,7 +37,7 @@ export const lineHandlers: Record<string, CommandHandler> = {
 /**
  * Line Console
  */
-function cmdLineConsole(state: any, input: string, _ctx: any): any {
+function cmdLineConsole(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') {
     return { success: false, error: iosModeError() };
   }
@@ -58,7 +59,7 @@ function cmdLineConsole(state: any, input: string, _ctx: any): any {
 /**
  * Line VTY
  */
-function cmdLineVty(state: any, input: string, _ctx: any): any {
+function cmdLineVty(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') {
     return { success: false, error: iosModeError() };
   }
@@ -80,7 +81,7 @@ function cmdLineVty(state: any, input: string, _ctx: any): any {
 /**
  * Password - Set line password
  */
-function cmdPassword(state: any, input: string, _ctx: any): any {
+function cmdPassword(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'line' || !state.currentLine) {
     return { success: false, error: iosModeError() };
   }
@@ -113,7 +114,7 @@ function cmdPassword(state: any, input: string, _ctx: any): any {
 /**
  * Login - Enable password checking on line
  */
-function cmdLogin(state: any, input: string, _ctx: any): any {
+function cmdLogin(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'line' || !state.currentLine) {
     return { success: false, error: iosModeError() };
   }
@@ -144,7 +145,7 @@ function cmdLogin(state: any, input: string, _ctx: any): any {
 /**
  * No Login - Disable password checking on line
  */
-function cmdNoLogin(state: any, _input: string, _ctx: any): any {
+function cmdNoLogin(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'line' || !state.currentLine) {
     return { success: false, error: iosModeError() };
   }

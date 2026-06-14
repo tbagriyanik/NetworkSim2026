@@ -260,6 +260,7 @@ export interface SwitchState {
   runningConfig: string[];
   commandHistory: string[];
   historyIndex: number;
+  debugs?: Record<string, boolean>;
   bannerMOTD?: string;
   bannerLogin?: string;
   bannerExec?: string;
@@ -328,6 +329,10 @@ export interface SwitchState {
   autoSummary?: boolean;           // Auto-summary for routing protocols
   eigrpAs?: string;                // EIGRP AS number
   bgpAs?: string;                  // BGP AS number
+  bgpNeighbors?: { ip: string; as: string }[];  // BGP neighbor configurations
+  passiveInterfaces?: string[];    // Interfaces that should not send updates
+  routerId?: string;               // Router identifier (for routing)
+  defaultInformation?: string;     // Default route information configuration
   // DHCP pool CLI config (ip dhcp pool <name>)
   currentDhcpPool?: string;
   dhcpPools?: Record<string, {
@@ -511,12 +516,16 @@ export interface CommandResult {
   confirmationMessage?: string;      // Onay mesajı
   confirmationAction?: string;       // Onay sonrası yapılacak işlem
   requiresReloadConfirm?: boolean;   // Reload sonrası Enter ile onay gerekiyor mu?
-  telnetTarget?: string;             // Telnet bağlantı hedef IP
+  telnetTarget?: { host: string; port: string };  // Telnet bağlantı hedefi
   reloadDevice?: boolean;            // Cihazı sıfırla
-  saveFlashConfig?: boolean;         // running-config'i flash'a kaydet
-  flashFilename?: string;            // flash dosya adı (örn: running-config)
-  restoreFlashConfig?: boolean;      // flash'tan startup-config'e geri yükle
-  flashSourceFilename?: string;      // kaynak flash dosya adı
+  saveFlashConfig?: boolean;  // running-config'i flash'a kaydet
+  flashFilename?: string;  // flash dosya adı (örn: running-config)
+  restoreFlashConfig?: boolean;  // flash'tan startup-config'e geri yükle
+  flashSourceFilename?: string;  // kaynak flash dosya adı
+  triggerPingAnimation?: string;  // Animatör başlatmak için hedef cihaz ID'si
+  exitSession?: boolean;  // Oturum sonlandırma bayrağı
+  requiresTelnetPassword?: boolean;  // Telnet için şifre gerekiyor mu?
+  sourceDeviceId?: string;             // Telnet bağlantı hedef IP
 }
 
 export interface ParsedCommand {

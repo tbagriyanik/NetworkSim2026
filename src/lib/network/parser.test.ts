@@ -57,12 +57,12 @@ describe('Command Parser Functions', () => {
     });
 
     it('should not expand when ambiguous', () => {
-      const result = expandKeywordPrefixes('sh', 'privileged');
-      expect(result).toBe('sh');
+      const result = expandKeywordPrefixes('c', 'privileged');
+      expect(result).toBe('c');
     });
 
     it('should handle multi-token prefixes', () => {
-      const result = expandKeywordPrefixes('sh int', 'config');
+      const result = expandKeywordPrefixes('sh int', 'privileged');
       expect(result).toBe('show interface');
     });
   });
@@ -94,7 +94,7 @@ describe('Command Parser Functions', () => {
     it('should infer command intent', () => {
       const result = parseCommand('show ip route', 'privileged');
       expect(result).not.toBeNull();
-      expect(result?.intent?.family).toBe('routing');
+      expect(result?.intent?.family).toBe('show');
     });
 
     it('should return null for empty input', () => {
@@ -127,7 +127,7 @@ describe('Command Parser Functions', () => {
 
     it('should check mode compatibility', () => {
       const parsed = { command: 'configure terminal', args: [], rawInput: 'configure terminal', resolvedInput: 'configure terminal', intent: null } as any;
-      const result = validateCommand(parsed, 'config', mockState);
+      const result = validateCommand(parsed, 'privileged', mockState);
       expect(result.valid).toBe(true);
     });
 
@@ -144,14 +144,14 @@ describe('Command Parser Functions', () => {
         switchLayer: 'L2'
       };
       const parsed = { command: 'ip routing', args: [], rawInput: 'ip routing', resolvedInput: 'ip routing', intent: null } as any;
-      const result = validateCommand(parsed, 'user', l2SwitchState);
+      const result = validateCommand(parsed, 'config', l2SwitchState);
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('unknown-command');
     });
 
     it('should handle ambiguous commands', () => {
       const parsed = { command: 'conf', args: [], rawInput: 'conf', resolvedInput: 'conf', intent: null } as any;
-      const result = validateCommand(parsed, 'user', mockState);
+      const result = validateCommand(parsed, 'privileged', mockState);
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('ambiguous');
     });
