@@ -305,6 +305,9 @@ export function expandIpv6(address: string): string {
  * Check if IPv6 address is in network
  */
 export function isIpv6InNetwork(address: string, network: string, prefixLength: number): boolean {
+  if (!address || !network || !isIpv6(address) || !isIpv6(network)) {
+    return false;
+  }
   try {
     const fullAddress = expandIpv6(address).split(':').map(p => parseInt(p, 16));
     const fullNetwork = expandIpv6(network).split(':').map(p => parseInt(p, 16));
@@ -333,7 +336,17 @@ export function ipToNumber(ip: string): number {
   if (!ip) {
     throw new Error('IP address is undefined or empty');
   }
-  return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
+  const octets = ip.split('.');
+  if (octets.length !== 4) {
+    throw new Error('Invalid IP address format');
+  }
+  for (const octetStr of octets) {
+    const octet = parseInt(octetStr, 10);
+    if (isNaN(octet) || octet < 0 || octet > 255) {
+      throw new Error('Invalid octet value');
+    }
+  }
+  return octets.reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
 }
 
 /**

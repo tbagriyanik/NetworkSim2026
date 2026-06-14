@@ -1581,11 +1581,13 @@ export function getPingDiagnostics(
   }
 
   // 5. Check subnet compatibility (IPv4 only — IPv6 routing handled separately)
+  let isSourceInSameSubnet = true;
+  let isTargetInSameSubnet = true;
   if (!isTargetIpv6) {
     const sourceSubnet = sourceDevice.subnet || '255.255.255.0';
     const targetSubnet = targetDevice.subnet || '255.255.255.0';
-    const isSourceInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);
-    const isTargetInSameSubnet = isIpInSubnet(resolvedTargetIp, sourceIp, targetSubnet);
+    isSourceInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);
+    isTargetInSameSubnet = isIpInSubnet(resolvedTargetIp, sourceIp, targetSubnet);
     if (!isSourceInSameSubnet && !isTargetInSameSubnet) {
       reasons.push(`Subnet uyumsuzluğu: Kaynak ${sourceIp}/${sourceSubnet}, Hedef ${resolvedTargetIp}/${targetSubnet}. Router ile routing gerekli.`);
       return { success: false, reasons };
@@ -1659,7 +1661,7 @@ export function getPingDiagnostics(
   }
 
   // 10. Check routing if different subnets (only when routing is relevant)
-  if (!isTargetIpv6) {
+  if (!isTargetIpv6 && !isSourceInSameSubnet) {
     const sourceDeviceObj = sourceDevice;
     const isSourceL3Capable = sourceDeviceObj?.type === 'router' || sourceDeviceObj?.type === 'switchL3';
 

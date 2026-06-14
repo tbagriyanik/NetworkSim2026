@@ -2534,7 +2534,7 @@ export function expandKeywordPrefixes(input: string, currentMode: CommandMode, c
   const expanded = [...rawTokens];
 
   for (let i = 0; i < rawTokens.length; i++) {
-    const token = rawTokens[i].toLowerCase();
+    const token = expanded[i].toLowerCase();
     const matches: Array<{ keyword: string; child: CommandTreeNode }> = [];
     for (const node of frontier) {
       for (const [keyword, child] of node.children.entries()) {
@@ -2543,8 +2543,15 @@ export function expandKeywordPrefixes(input: string, currentMode: CommandMode, c
     }
     if (matches.length === 0) break;
     const uniqueKeywords = Array.from(new Set(matches.map(m => m.keyword)));
-    if (uniqueKeywords.length === 1) expanded[i] = uniqueKeywords[0];
-    frontier = matches.map(m => m.child);
+    if (uniqueKeywords.length === 1) {
+      expanded[i] = uniqueKeywords[0];
+      const matched = matches.find(m => m.keyword === uniqueKeywords[0]);
+      if (matched) {
+        frontier = [matched.child];
+      }
+    } else {
+      frontier = matches.map(m => m.child);
+    }
   }
 
   return expanded.join(' ');
