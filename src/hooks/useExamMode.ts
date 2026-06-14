@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { ExamProject, getExamProjects, encryptExamData } from '@/lib/network/examMode';
+import { ExamProject, getExamProjects, encryptExamData, generateExamIntegrityHash, verifyExamIntegrity } from '@/lib/network/examMode';
 import { checkStepCompletion } from '@/lib/network/guidedMode';
 
 interface UseExamModeReturn {
@@ -40,11 +40,9 @@ export function useExamMode(): UseExamModeReturn {
   const [activeExam, setActiveExam] = useState<ExamProject | null>(null);
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
   // Load from localStorage after mount
   useEffect(() => {
-    setTimeout(() => setIsMounted(true), 0);
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -57,6 +55,16 @@ export function useExamMode(): UseExamModeReturn {
             completedAt: t.completedAt ? new Date(t.completedAt) : undefined
           }));
         }
+        // Verify integrity before loading
+        if (parsed.integrityHash) {
+          const tempProject = { ...parsed };
+          if (!verifyExamIntegrity(tempProject as ExamProject)) {
+            console.error('Exam integrity compromised! Resetting exam...');
+            // Tampering detected, don't load the saved state
+            localStorage.removeItem(STORAGE_KEY);
+            return;
+          }
+        }
         setTimeout(() => setActiveExam(parsed), 0);
       } catch (e) {
         console.error('Failed to load exam state', e);
@@ -66,27 +74,30 @@ export function useExamMode(): UseExamModeReturn {
 
   // Save to localStorage
   useEffect(() => {
-    if (!isMounted) return;
     if (activeExam) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(activeExam));
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
-  }, [activeExam, isMounted]);
+  }, [activeExam]);
 
   const startExam = useCallback((project: ExamProject) => {
-    setActiveExam({
+    const newExam: ExamProject = {
       ...project,
       tasks: project.tasks.map(t => ({ ...t, completed: false, completedAt: undefined })),
       startedAt: new Date()
-    });
+    };
+    newExam.integrityHash = generateExamIntegrityHash(newExam);
+    setActiveExam(newExam);
     setIsPanelMinimized(false);
   }, []);
 
   const finishExam = useCallback(() => {
     setActiveExam(prev => {
       if (!prev || prev.finishedAt) return prev;
-      return { ...prev, finishedAt: new Date() };
+      const updated: ExamProject = { ...prev, finishedAt: new Date() };
+      updated.integrityHash = generateExamIntegrityHash(updated);
+      return updated;
     });
     setIsPanelMinimized(false);
   }, []);
@@ -111,43 +122,51 @@ export function useExamMode(): UseExamModeReturn {
   const addTask = useCallback((task: any) => {
     setActiveExam(prev => {
       if (!prev) return null;
-      return {
+      const updated: ExamProject = {
         ...prev,
         tasks: [...prev.tasks, { ...task, id: `task-${Date.now()}`, completed: false }]
       };
+      updated.integrityHash = generateExamIntegrityHash(updated);
+      return updated;
     });
   }, []);
 
   const updateTask = useCallback((id: string, updates: any) => {
     setActiveExam(prev => {
       if (!prev) return null;
-      return {
+      const updated: ExamProject = {
         ...prev,
         tasks: prev.tasks.map(t => t.id === id ? { ...t, ...updates } : t)
       };
+      updated.integrityHash = generateExamIntegrityHash(updated);
+      return updated;
     });
   }, []);
 
   const deleteTask = useCallback((id: string) => {
     setActiveExam(prev => {
       if (!prev) return null;
-      return {
+      const updated: ExamProject = {
         ...prev,
         tasks: prev.tasks.filter(t => t.id !== id)
       };
+      updated.integrityHash = generateExamIntegrityHash(updated);
+      return updated;
     });
   }, []);
 
   const updateExamMeta = useCallback((updates: Partial<ExamProject>) => {
     setActiveExam(prev => {
       if (!prev) return null;
-      return { ...prev, ...updates };
+      const updated: ExamProject = { ...prev, ...updates };
+      updated.integrityHash = generateExamIntegrityHash(updated);
+      return updated;
     });
   }, []);
 
   const moveTask = useCallback((id: string, direction: 'up' | 'down') => {
     setActiveExam(prev => {
-      if (!prev) return null;
+      if (!prev) return prev;
       const index = prev.tasks.findIndex(t => t.id === id);
       if (index === -1) return prev;
       if (direction === 'up' && index === 0) return prev;
@@ -157,7 +176,9 @@ export function useExamMode(): UseExamModeReturn {
       const targetIndex = direction === 'up' ? index - 1 : index + 1;
       [newTasks[index], newTasks[targetIndex]] = [newTasks[targetIndex], newTasks[index]];
 
-      return { ...prev, tasks: newTasks };
+      const updated: ExamProject = { ...prev, tasks: newTasks };
+      updated.integrityHash = generateExamIntegrityHash(updated);
+      return updated;
     });
   }, []);
 
@@ -168,13 +189,15 @@ export function useExamMode(): UseExamModeReturn {
       const baseWeight = Math.floor(100 / count);
       const remainder = 100 % count;
 
-      return {
+      const updated: ExamProject = {
         ...prev,
         tasks: prev.tasks.map((t, i) => ({
           ...t,
           weight: i < remainder ? baseWeight + 1 : baseWeight
         }))
       };
+      updated.integrityHash = generateExamIntegrityHash(updated);
+      return updated;
     });
   }, []);
 
@@ -230,7 +253,12 @@ export function useExamMode(): UseExamModeReturn {
     });
 
     if (changed) {
-      setActiveExam(prev => prev ? { ...prev, tasks: updatedTasks } : null);
+      setActiveExam(prev => {
+        if (!prev) return null;
+        const updated: ExamProject = { ...prev, tasks: updatedTasks };
+        updated.integrityHash = generateExamIntegrityHash(updated);
+        return updated;
+      });
     }
   }, [activeExam]);
 

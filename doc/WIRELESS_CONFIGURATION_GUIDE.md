@@ -233,7 +233,7 @@ Radio Configurations:
 ### 1. Güçlü Şifre Kullanın
 - En az 12 karakter uzunluğunda
 - Büyük harf, küçük harf, sayı ve özel karakterler içerin
-- Örnek: `Okul2024!Wifi#Secure`
+- Örnek: `Okul2026!Wifi#Secure`
 
 ### 2. WPA2 veya WPA3 Kullanın
 - WPA2 minimum güvenlik standardı

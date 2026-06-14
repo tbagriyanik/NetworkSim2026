@@ -397,8 +397,8 @@ export function getPersonalBests(studentId: string): PersonalBest[] {
     try {
         const stored = localStorage.getItem(`${PERSONAL_BEST_STORAGE_KEY}_${studentId}`);
         if (stored) {
-            const parsed = JSON.parse(stored);
-            return parsed.map((pb: any) => ({
+            const parsed = JSON.parse(stored) as PersonalBest[];
+            return parsed.map((pb) => ({
                 ...pb,
                 achievedAt: new Date(pb.achievedAt),
             }));
@@ -514,7 +514,7 @@ export function getRandomMessage(context: keyof typeof ENCOURAGING_MESSAGES): st
 export function createFeedbackMessage(
     type: FeedbackMessage['type'],
     context: string,
-    data?: Record<string, any>
+    data?: Record<string, unknown>
 ): FeedbackMessage {
     const messages: Record<FeedbackMessage['type'], { title: string; message: string }> = {
         success: {
@@ -542,7 +542,7 @@ export function createFeedbackMessage(
     return {
         type,
         ...messages[type],
-        action: data?.action,
+        action: data?.action as string | undefined,
     };
 }
 

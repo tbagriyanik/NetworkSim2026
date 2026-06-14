@@ -129,13 +129,14 @@ export interface ExamProject extends ExampleProject {
   startedAt?: Date;
   finishedAt?: Date;
   isCustom?: boolean; // True if created by a teacher
+  integrityHash?: string; // Tamper-proof integrity hash
 }
 
 /**
  * Security utilities for Exam files
  * Obfuscates the JSON content to prevent students from reading task requirements
  */
-const EXAM_KEY = 'SENTINEL_EXAM_SECURE_KEY_2024';
+const EXAM_KEY = 'SENTINEL_EXAM_SECURE_KEY_2026';
 
 export function encryptExamData(data: unknown): string {
   const json = JSON.stringify(data);
@@ -158,6 +159,55 @@ export function decryptExamData(encrypted: string): unknown {
     console.error('Failed to decrypt exam data', e);
     return null;
   }
+}
+
+/**
+ * Generate integrity hash for exam project
+ * Hashes critical fields that shouldn't be tampered with
+ */
+export function generateExamIntegrityHash(project: ExamProject): string {
+  const criticalData = {
+    id: project.id,
+    durationMinutes: project.durationMinutes,
+    tasks: project.tasks.map(t => ({
+      id: t.id,
+      weight: t.weight,
+      completed: t.completed,
+      completedAt: t.completedAt ? t.completedAt.getTime() : null
+    })),
+    startedAt: project.startedAt ? project.startedAt.getTime() : null,
+    finishedAt: project.finishedAt ? project.finishedAt.getTime() : null
+  };
+  
+  const json = JSON.stringify(criticalData);
+  let hash = 0;
+  for (let i = 0; i < json.length; i++) {
+    const char = json.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  // XOR with our key to make it more secure
+  let result = '';
+  const hashStr = Math.abs(hash).toString(16);
+  for (let i = 0; i < hashStr.length; i++) {
+    result += String.fromCharCode(hashStr.charCodeAt(i) ^ EXAM_KEY.charCodeAt(i % EXAM_KEY.length));
+  }
+  return btoa(encodeURIComponent(result));
+}
+
+/**
+ * Verify if exam project integrity is intact
+ * Returns true if no tampering detected
+ */
+export function verifyExamIntegrity(project: ExamProject): boolean {
+  if (!project.integrityHash) return false;
+  
+  // Create a copy without the integrityHash to generate the hash
+  const projectCopy = { ...project, integrityHash: undefined };
+  const generatedHash = generateExamIntegrityHash(projectCopy as ExamProject);
+  
+  return generatedHash === project.integrityHash;
 }
 
 // Exam tasks - Basic Connectivity Exam

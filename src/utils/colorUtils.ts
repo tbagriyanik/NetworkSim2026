@@ -303,15 +303,23 @@ export function getPaletteColor(
         if (!color) return '#000000';
     }
 
-    if (!modification) return color;
-
-    if (modification === 'lighten') return lighten(color, 20);
-    if (modification === 'darken') return darken(color, 20);
-    if (typeof modification === 'number') {
-        return modification > 0 ? lighten(color, modification) : darken(color, Math.abs(modification));
+    if (!modification) {
+        return color as string;
     }
 
-    return color;
+    if (modification === 'lighten') {
+        return lighten(color as string, 20);
+    }
+    if (modification === 'darken') {
+        return darken(color as string, 20);
+    }
+    if (typeof modification === 'number') {
+        return modification > 0 
+            ? lighten(color as string, modification) 
+            : darken(color as string, Math.abs(modification));
+    }
+
+    return color as string;
 }
 
 /**

@@ -5,7 +5,9 @@ import {
   GuidedProject, 
   checkStepCompletion,
   getGuidedProjects,
-  getCompletedStepsCount
+  getCompletedStepsCount,
+  generateGuidedIntegrityHash,
+  verifyGuidedIntegrity
 } from '@/lib/network/guidedMode';
 
 interface UseGuidedModeReturn {
@@ -82,17 +84,27 @@ export function useGuidedMode(): UseGuidedModeReturn {
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
   const [lastCompletedStep, setLastCompletedStep] = useState<string | null>(null);
   const [isCurrentStepReady, setIsCurrentStepReady] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
   // Load from localStorage after mount (client-side only)
   useEffect(() => {
-    setTimeout(() => setIsMounted(true), 0);
     const savedProject = localStorage.getItem(STORAGE_KEY);
     const savedStepIndex = localStorage.getItem(`${STORAGE_KEY}_stepIndex`);
     const savedMinimized = localStorage.getItem(`${STORAGE_KEY}_minimized`);
 
     if (savedProject) {
-      setTimeout(() => setActiveProject(deserializeProject(savedProject)), 0);
+      const deserialized = deserializeProject(savedProject);
+      if (deserialized) {
+        // Verify integrity before loading
+        if (deserialized.integrityHash && !verifyGuidedIntegrity(deserialized)) {
+          console.error('Guided mode integrity compromised! Resetting progress...');
+          // Tampering detected, don't load the saved state
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(`${STORAGE_KEY}_stepIndex`);
+          localStorage.removeItem(`${STORAGE_KEY}_minimized`);
+          return;
+        }
+        setTimeout(() => setActiveProject(deserialized), 0);
+      }
     }
     if (savedStepIndex) {
       setTimeout(() => setCurrentStepIndex(parseInt(savedStepIndex, 10)), 0);
@@ -104,23 +116,20 @@ export function useGuidedMode(): UseGuidedModeReturn {
 
   // Save to localStorage whenever state changes (only after mount)
   useEffect(() => {
-    if (!isMounted) return;
     if (activeProject) {
       localStorage.setItem(STORAGE_KEY, serializeProject(activeProject));
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
-  }, [activeProject, isMounted]);
+  }, [activeProject]);
 
   useEffect(() => {
-    if (!isMounted) return;
     localStorage.setItem(`${STORAGE_KEY}_stepIndex`, currentStepIndex.toString());
-  }, [currentStepIndex, isMounted]);
+  }, [currentStepIndex]);
 
   useEffect(() => {
-    if (!isMounted) return;
     localStorage.setItem(`${STORAGE_KEY}_minimized`, isPanelMinimized.toString());
-  }, [isPanelMinimized, isMounted]);
+  }, [isPanelMinimized]);
 
   const isGuidedModeActive = activeProject !== null;
 
@@ -175,6 +184,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
       steps: project.steps.map(s => ({ ...s, completed: false, completedAt: undefined })),
       startedAt: new Date()
     };
+    freshProject.integrityHash = generateGuidedIntegrityHash(freshProject);
     setActiveProject(freshProject);
     setCurrentStepIndex(0);
     setIsPanelMinimized(false);
@@ -196,10 +206,12 @@ export function useGuidedMode(): UseGuidedModeReturn {
         s.id === stepId ? { ...s, completed: true, completedAt: new Date() } : s
       );
 
-      return {
+      const updated: GuidedProject = {
         ...prev,
         steps: updatedSteps
       };
+      updated.integrityHash = generateGuidedIntegrityHash(updated);
+      return updated;
     });
 
     setLastCompletedStep(stepId);
@@ -231,10 +243,12 @@ export function useGuidedMode(): UseGuidedModeReturn {
       // Move current index to the uncompleted step
       setCurrentStepIndex(stepIndex);
       
-      return {
+      const updated: GuidedProject = {
         ...prev,
         steps: updatedSteps
       };
+      updated.integrityHash = generateGuidedIntegrityHash(updated);
+      return updated;
     });
 
     setLastCompletedStep(null);

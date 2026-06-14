@@ -49,6 +49,7 @@ export interface GuidedProject extends ExampleProject {
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   startedAt?: Date;
   totalPoints?: number;
+  integrityHash?: string; // Tamper-proof integrity hash
 }
 
 // 0. Cihaz Ekleme ve Bağlantı
@@ -1072,6 +1073,57 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
 
   return projects;
 };
+
+const GUIDED_KEY = 'GUIDED_MODE_SECURITY_KEY_2026';
+
+/**
+ * Generate integrity hash for guided project
+ * Hashes critical fields that shouldn't be tampered with
+ */
+export function generateGuidedIntegrityHash(project: GuidedProject): string {
+  const criticalData = {
+    id: project.id,
+    estimatedTimeMinutes: project.estimatedTimeMinutes,
+    steps: project.steps.map(s => ({
+      id: s.id,
+      points: s.points,
+      completed: s.completed,
+      completedAt: s.completedAt ? s.completedAt.getTime() : null
+    })),
+    startedAt: project.startedAt ? project.startedAt.getTime() : null,
+    totalPoints: project.totalPoints
+  };
+  
+  const json = JSON.stringify(criticalData);
+  let hash = 0;
+  for (let i = 0; i < json.length; i++) {
+    const char = json.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  // XOR with our key to make it more secure
+  let result = '';
+  const hashStr = Math.abs(hash).toString(16);
+  for (let i = 0; i < hashStr.length; i++) {
+    result += String.fromCharCode(hashStr.charCodeAt(i) ^ GUIDED_KEY.charCodeAt(i % GUIDED_KEY.length));
+  }
+  return btoa(encodeURIComponent(result));
+}
+
+/**
+ * Verify if guided project integrity is intact
+ * Returns true if no tampering detected
+ */
+export function verifyGuidedIntegrity(project: GuidedProject): boolean {
+  if (!project.integrityHash) return false;
+  
+  // Create a copy without the integrityHash to generate the hash
+  const projectCopy = { ...project, integrityHash: undefined };
+  const generatedHash = generateGuidedIntegrityHash(projectCopy as GuidedProject);
+  
+  return generatedHash === project.integrityHash;
+}
 
 // Rehberli ders hook için yardımcı fonksiyonlar
 export const checkStepCompletion = (
