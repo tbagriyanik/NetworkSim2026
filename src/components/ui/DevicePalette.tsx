@@ -73,13 +73,7 @@ export function DevicePalette({
             icon: 'shield',
             description: 'Network Firewall',
             details: 'Protects networks by filtering incoming and outgoing traffic',
-        },
-        loadbalancer: {
-            label: 'Load Balancer',
-            icon: 'activity',
-            description: 'Load Balancer',
-            details: 'Distributes network traffic across multiple servers',
-        },
+        }
     };
 
     // Filter devices based on search query and available types

@@ -1,5 +1,6 @@
 import { IOS_ERRORS, iosModeError } from './iosErrors';
 import type { CommandHandler } from './commandTypes';
+import type { SwitchState } from '../types';
 import { normalizePortId } from '../initialState';
 import { canAssignIPToPhysicalPort, isLayer3Switch } from '../switchModels';
 import { buildRunningConfig } from './configBuilder';
@@ -10,7 +11,7 @@ import {
 } from './L3Validation';
 
 // Helper function to check if in interface mode (single or range)
-function isInInterfaceMode(state: any): boolean {
+function isInInterfaceMode(state: SwitchState): boolean {
   return state.currentMode === 'interface' || state.currentMode === 'config-if-range';
 }
 

@@ -190,6 +190,9 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
       }
     }
     if (state.security.consoleLine?.login) config += ` login\\n`;
+    if (state.security.consoleLine?.execTimeout) {
+      config += ` exec-timeout ${state.security.consoleLine.execTimeout.minutes} ${state.security.consoleLine.execTimeout.seconds}\\n`;
+    }
     config += `!\\n`;
 
     config += `line vty 0 4\\n`;
@@ -203,6 +206,9 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
     }
     if (state.security.vtyLines?.transportInput && state.security.vtyLines.transportInput.length > 0 && state.security.vtyLines.transportInput[0] !== 'all') {
       config += ` transport input ${state.security.vtyLines.transportInput.join(' ')}\\n`;
+    }
+    if (state.security.vtyLines?.execTimeout) {
+      config += ` exec-timeout ${state.security.vtyLines.execTimeout.minutes} ${state.security.vtyLines.execTimeout.seconds}\\n`;
     }
     config += `line vty 5 15\\n`;
     config += ` login\\n`;

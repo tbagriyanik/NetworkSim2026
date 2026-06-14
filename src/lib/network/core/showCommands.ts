@@ -2159,15 +2159,25 @@ export function calculatePVST(
             port.spanningTree.instances = {};
           }
 
+          const roleMap: Record<string, 'root' | 'designated' | 'alternate' | 'backup' | 'disabled'> = {
+            'Root': 'root',
+            'Desg': 'designated',
+            'Altn': 'alternate',
+            'Backup': 'backup',
+            'Dis': 'disabled'
+          };
+          
+          const portStpRole = roleMap[stpInfo.role] || 'designated';
+          
           port.spanningTree.instances[vlanId] = {
-            role: stpInfo.role as any,
+            role: portStpRole,
             state: portStpState
           };
 
           // For backward compatibility (especially for UI port indicators), use VLAN 1
           // Skip blocking for EtherChannel member ports - they should stay connected
           if (vlanId === 1 && !port.channelGroup) {
-            port.spanningTree.role = stpInfo.role as any;
+            port.spanningTree.role = portStpRole;
             port.spanningTree.state = portStpState;
             port.status = port.shutdown ? 'disabled' : (stpInfo.state === 'BLK' ? 'blocked' : 'connected');
           }

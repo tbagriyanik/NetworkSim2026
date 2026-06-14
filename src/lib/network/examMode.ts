@@ -136,25 +136,46 @@ export interface ExamProject extends ExampleProject {
  * Security utilities for Exam files
  * Obfuscates the JSON content to prevent students from reading task requirements
  */
-const EXAM_KEY = 'SENTINEL_EXAM_SECURE_KEY_2026';
+// Key'i karakter kodları şeklinde tutarak daha zor okunur hale getiriyoruz
+const EXAM_KEY_BYTES = Uint8Array.from([
+  83, 69, 78, 84, 73, 78, 69, 76, 95, 69, 88, 65, 77, 95, 83, 69, 67, 85, 82, 69, 95, 75, 69, 89, 95, 50, 48, 50, 54, 95, 83, 85, 80, 69, 82, 83, 69, 67, 85, 82, 69, 68
+]);
+
+// UTF-8 string'i Uint8Array'a dönüştüren yardımcı fonksiyon
+function stringToUint8Array(str: string): Uint8Array {
+  const encoder = new TextEncoder();
+  return encoder.encode(str);
+}
+
+// Uint8Array'i hex string'e dönüştüren yardımcı fonksiyon
+function uint8ArrayToHex(buffer: Uint8Array): string {
+  return Array.from(buffer, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+// XOR şifrelemesi için yardımcı fonksiyon
+function xorBytes(data: Uint8Array, key: Uint8Array): Uint8Array {
+  const result = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    result[i] = data[i] ^ key[i % key.length];
+  }
+  return result;
+}
 
 export function encryptExamData(data: unknown): string {
   const json = JSON.stringify(data);
-  let result = '';
-  for (let i = 0; i < json.length; i++) {
-    result += String.fromCharCode(json.charCodeAt(i) ^ EXAM_KEY.charCodeAt(i % EXAM_KEY.length));
-  }
-  return btoa(encodeURIComponent(result));
+  const bytes = stringToUint8Array(json);
+  const xored = xorBytes(bytes, EXAM_KEY_BYTES);
+  // Base64 URL safe encode (standart base64 de iş görür)
+  return btoa(String.fromCharCode(...xored));
 }
 
 export function decryptExamData(encrypted: string): unknown {
   try {
-    const decoded = decodeURIComponent(atob(encrypted));
-    let result = '';
-    for (let i = 0; i < decoded.length; i++) {
-      result += String.fromCharCode(decoded.charCodeAt(i) ^ EXAM_KEY.charCodeAt(i % EXAM_KEY.length));
-    }
-    return JSON.parse(result);
+    const decoded = atob(encrypted);
+    const bytes = Uint8Array.from(decoded.split('').map(c => c.charCodeAt(0)));
+    const xored = xorBytes(bytes, EXAM_KEY_BYTES);
+    const json = new TextDecoder().decode(xored);
+    return JSON.parse(json);
   } catch (e) {
     console.error('Failed to decrypt exam data', e);
     return null;
@@ -180,20 +201,9 @@ export function generateExamIntegrityHash(project: ExamProject): string {
   };
   
   const json = JSON.stringify(criticalData);
-  let hash = 0;
-  for (let i = 0; i < json.length; i++) {
-    const char = json.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  
-  // XOR with our key to make it more secure
-  let result = '';
-  const hashStr = Math.abs(hash).toString(16);
-  for (let i = 0; i < hashStr.length; i++) {
-    result += String.fromCharCode(hashStr.charCodeAt(i) ^ EXAM_KEY.charCodeAt(i % EXAM_KEY.length));
-  }
-  return btoa(encodeURIComponent(result));
+  const bytes = stringToUint8Array(json);
+  const xored = xorBytes(bytes, EXAM_KEY_BYTES);
+  return uint8ArrayToHex(xored);
 }
 
 /**
@@ -693,6 +703,10 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
         version: '1.0',
         timestamp: new Date().toISOString(),
         devices: [],
+        deviceOutputs: [],
+        pcOutputs: [],
+        pcHistories: [],
+        cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
         topology: { devices: [], connections: [] },
         activeTab: 'topology'
       } as unknown as ExampleProject['data'],
@@ -914,12 +928,18 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
         version: '1.0',
         timestamp: new Date().toISOString(),
         devices: [],
+        deviceOutputs: [],
+        pcOutputs: [],
+        pcHistories: [],
+        cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
         topology: {
           devices: [
             {
               id: 'l3-1',
               type: 'switchL3',
               name: 'L3-Switch',
+              ip: '',
+              subnet: '',
               x: 400,
               y: 200,
               status: 'online',
@@ -937,10 +957,14 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
               ]
             }
           ],
-          connections: []
+          connections: [],
+          notes: []
         },
         activeDeviceId: 'l3-1',
-        activeDeviceType: 'switchL3'
+        activeDeviceType: 'switchL3',
+        activeTab: 'topology',
+        zoom: 1,
+        pan: { x: 0, y: 0 }
       } as unknown as ExampleProject['data'],
       level: 'advanced',
       isExam: true,
@@ -962,12 +986,18 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
         version: '1.0',
         timestamp: new Date().toISOString(),
         devices: [],
+        deviceOutputs: [],
+        pcOutputs: [],
+        pcHistories: [],
+        cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
         topology: {
           devices: [
             {
               id: 'switch-1',
               type: 'switchL2',
               name: 'SW1',
+              ip: '',
+              subnet: '',
               x: 200,
               y: 200,
               status: 'online',
@@ -979,6 +1009,8 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
               id: 'switch-2',
               type: 'switchL2',
               name: 'SW2',
+              ip: '',
+              subnet: '',
               x: 500,
               y: 200,
               status: 'online',
@@ -987,11 +1019,15 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
               ]
             }
           ],
-          connections: []
+          connections: [],
+          notes: []
         },
         activeDeviceId: 'switch-1',
-        activeDeviceType: 'switchL2'
-      } as any,
+        activeDeviceType: 'switchL2',
+        activeTab: 'topology',
+        zoom: 1,
+        pan: { x: 0, y: 0 }
+      },
       level: 'intermediate',
       isExam: true,
       tasks: vlanTrunkingExamTasks,
@@ -1012,12 +1048,18 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
         version: '1.0',
         timestamp: new Date().toISOString(),
         devices: [],
+        deviceOutputs: [],
+        pcOutputs: [],
+        pcHistories: [],
+        cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
         topology: {
           devices: [
             {
               id: 'router-1',
               type: 'router',
               name: 'R1',
+              ip: '',
+              subnet: '',
               x: 400,
               y: 200,
               status: 'online',
@@ -1026,11 +1068,15 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
               ]
             }
           ],
-          connections: []
+          connections: [],
+          notes: []
         },
         activeDeviceId: 'router-1',
-        activeDeviceType: 'router'
-      } as any,
+        activeDeviceType: 'router',
+        activeTab: 'topology',
+        zoom: 1,
+        pan: { x: 0, y: 0 }
+      },
       level: 'advanced',
       isExam: true,
       tasks: basicAclExamTasks,
@@ -1051,23 +1097,27 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
         version: '1.0',
         timestamp: new Date().toISOString(),
         devices: [],
+        deviceOutputs: [],
+        pcOutputs: [],
+        pcHistories: [],
+        cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
         topology: {
           devices: [
-            { id: 'r-1', type: 'router', name: 'R1', x: 500, y: 100, status: 'online', ports: [
+            { id: 'r-1', type: 'router', name: 'R1', ip: '', subnet: '', x: 500, y: 100, status: 'online', ports: [
               { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' },
-              { id: 'wlan0', label: 'WLAN0', status: 'disconnected', wifi: { ssid: '', mode: 'ap' } }
+              { id: 'wlan0', label: 'WLAN0', status: 'disconnected', wifi: { ssid: '', mode: 'ap', security: 'open', channel: '2.4GHz' } }
             ]},
-            { id: 'ds-1', type: 'switchL3', name: 'DS1', x: 500, y: 250, status: 'online', ports: [
+            { id: 'ds-1', type: 'switchL3', name: 'DS1', ip: '', subnet: '', x: 500, y: 250, status: 'online', ports: [
               { id: 'gi1/0/1', label: 'Gi1/0/1', status: 'disconnected' },
               { id: 'gi1/0/2', label: 'Gi1/0/2', status: 'disconnected' }
             ]},
-            { id: 'as-1', type: 'switchL2', name: 'AS1', x: 300, y: 400, status: 'online', ports: [
+            { id: 'as-1', type: 'switchL2', name: 'AS1', ip: '', subnet: '', x: 300, y: 400, status: 'online', ports: [
               { id: 'fa0/1', label: 'Fa0/1', status: 'disconnected' },
               { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' }
             ]},
             { id: 'pc-1', type: 'pc', name: 'PC-1', x: 100, y: 400, status: 'online', ip: '', subnet: '', gateway: '', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' }] },
-            { id: 'iot-1', type: 'iot', name: 'IoT-1', x: 700, y: 100, status: 'online', ip: '', wifi: { enabled: true, ssid: '', mode: 'client' }, ports: [{ id: 'wlan0', label: 'WLAN0', status: 'disconnected' }] },
-            { id: 'fw-1', type: 'firewall', name: 'FW-1', x: 750, y: 250, status: 'online', ip: '', ports: [{ id: 'gi1/0/0', label: 'Gi1/0/0', status: 'disconnected' }] },
+            { id: 'iot-1', type: 'iot', name: 'IoT-1', x: 700, y: 100, status: 'online', ip: '', wifi: { enabled: true, ssid: '', mode: 'client', security: 'open', channel: '2.4GHz' }, ports: [{ id: 'wlan0', label: 'WLAN0', status: 'disconnected' }] },
+            { id: 'fw-1', type: 'firewall', name: 'FW-1', x: 750, y: 250, status: 'online', ip: '', subnet: '', ports: [{ id: 'gi1/0/0', label: 'Gi1/0/0', status: 'disconnected' }] },
             { id: 'server-1', type: 'pc', name: 'Server-1', x: 750, y: 400, status: 'online', ip: '10.0.0.100', subnet: '255.0.0.0', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' }] }
           ],
           connections: [],
@@ -1082,8 +1132,11 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
           ]
         },
         activeDeviceId: 'r-1',
-        activeDeviceType: 'router'
-      } as any,
+        activeDeviceType: 'router',
+        activeTab: 'topology',
+        zoom: 1,
+        pan: { x: 0, y: 0 }
+      },
       level: 'advanced',
       isExam: true,
       tasks: comprehensiveFinalExamTasks,

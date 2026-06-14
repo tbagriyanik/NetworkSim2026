@@ -33,7 +33,6 @@ export const DEVICE_ICONS = {
     iot: 'Smartphone',
     wireless: 'Wifi',
     firewall: 'Shield',
-    loadbalancer: 'Zap',
     server: 'Server',
     database: 'Database',
     cloud: 'Cloud',

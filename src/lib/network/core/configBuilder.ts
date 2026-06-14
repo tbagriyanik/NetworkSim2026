@@ -197,7 +197,7 @@ export function buildRunningConfig(state: SwitchState): string[] {
             }
         } else {
             // Regular (Ethernet) interface
-            const isRoutedPort = port.mode === 'routed' || (port as any).isRoutedPort;
+            const isRoutedPort = port.mode === 'routed' || port.isRoutedPort;
             const isRouterInterface = isRouterLike;
             if (isRoutedPort) {
                 lines.push(' no switchport');
@@ -213,11 +213,11 @@ export function buildRunningConfig(state: SwitchState): string[] {
                     lines.push(` duplex ${port.duplex}`);
                 }
             }
-            if ((port as any).stpCost !== undefined) {
-                lines.push(` spanning-tree cost ${(port as any).stpCost}`);
+            if (port.stpCost !== undefined) {
+                lines.push(` spanning-tree cost ${port.stpCost}`);
             }
-            if ((port as any).stpPriority !== undefined) {
-                lines.push(` spanning-tree priority ${(port as any).stpPriority}`);
+            if (port.stpPriority !== undefined) {
+                lines.push(` spanning-tree priority ${port.stpPriority}`);
             }
             if (port.spanningTree?.portfast) {
                 lines.push(' spanning-tree portfast');
@@ -239,7 +239,7 @@ export function buildRunningConfig(state: SwitchState): string[] {
                     lines.push(' switchport mode dot1q-tunnel');
                 } else if (port.mode === 'access') {
                     lines.push(' switchport mode access');
-                    const vlanId = Number((port as any).accessVlan || port.vlan || 1);
+                    const vlanId = Number(port.accessVlan || port.vlan || 1);
                     if (vlanId !== 1) {
                         lines.push(` switchport access vlan ${vlanId}`);
                     }
@@ -363,7 +363,7 @@ export function buildRunningConfig(state: SwitchState): string[] {
         (state.dynamicRoutes || []).forEach(r => {
             if (r.type === 'dynamic') lines.push(`  network ${r.destination} mask ${r.subnetMask}`);
         });
-        ((state as any).bgpNeighbors || []).forEach((n: any) => {
+        (state.bgpNeighbors || []).forEach((n: { ip: string; as: string }) => {
             lines.push(`  neighbor ${n.ip} remote-as ${n.as}`);
         });
         lines.push('!');
@@ -430,6 +430,9 @@ export function buildRunningConfig(state: SwitchState): string[] {
     if (state.security.consoleLine.login) {
         lines.push(' login');
     }
+    if (state.security.consoleLine.execTimeout) {
+        lines.push(` exec-timeout ${state.security.consoleLine.execTimeout.minutes} ${state.security.consoleLine.execTimeout.seconds}`);
+    }
     lines.push('!');
 
     // line vty 0 15
@@ -449,6 +452,9 @@ export function buildRunningConfig(state: SwitchState): string[] {
         state.security.vtyLines.transportInput[0] !== 'all'
     ) {
         lines.push(` transport input ${state.security.vtyLines.transportInput.join(' ')}`);
+    }
+    if (state.security.vtyLines.execTimeout) {
+        lines.push(` exec-timeout ${state.security.vtyLines.execTimeout.minutes} ${state.security.vtyLines.execTimeout.seconds}`);
     }
     lines.push('!');
 

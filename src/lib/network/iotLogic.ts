@@ -97,22 +97,22 @@ export const processIotRules = (
 
           // Find target device in the whole network
           const targetDevice = devices.find(d => d.id === targetId);
-          if (!targetDevice || targetDevice.type !== 'iot') return;
+          if (!targetDevice || targetDevice.type !== 'iot' || !targetDevice.iot) return;
 
-          if (targetDevice.status === 'offline' || targetDevice.iot?.collaborationEnabled === false) {
+          if (targetDevice.status === 'offline' || targetDevice.iot.collaborationEnabled === false) {
             return;
           }
 
-          const isCurrentlyPoweredOn = targetDevice.iot?.value ?? false;
+          const isCurrentlyPoweredOn = targetDevice.iot.value ?? false;
 
           if (finalAction === 'ON' && !isCurrentlyPoweredOn) {
             updateDevice(targetId, {
-              iot: { ...(targetDevice.iot as any), value: true }
+              iot: { ...targetDevice.iot, value: true }
             });
             deviceUpdated = true;
           } else if (finalAction === 'OFF' && isCurrentlyPoweredOn) {
             updateDevice(targetId, {
-              iot: { ...(targetDevice.iot as any), value: false } // Force boolean false
+              iot: { ...targetDevice.iot, value: false }
             });
             deviceUpdated = true;
           }

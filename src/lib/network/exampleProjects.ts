@@ -1876,7 +1876,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw1.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['GI1/0/3', 'GI1/0/1', 'GI1/0/2'] };
   stpPvstSw1.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['GI1/0/4', 'GI1/0/1', 'GI1/0/2'] };
   stpPvstSw1.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['GI1/0/5', 'GI1/0/1', 'GI1/0/2'] };
-  (stpPvstSw1 as any).spanningTreeVlans = {
+  stpPvstSw1.spanningTreeVlans = {
     '1': { priority: '24576' },
     '10': { priority: '32768' },
     '20': { priority: '32768' }
@@ -1954,7 +1954,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw2.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['GI1/0/3', 'GI1/0/1', 'GI1/0/2'] };
   stpPvstSw2.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['GI1/0/4', 'GI1/0/1', 'GI1/0/2'] };
   stpPvstSw2.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['GI1/0/5', 'GI1/0/1', 'GI1/0/2'] };
-  (stpPvstSw2 as any).spanningTreeVlans = {
+  stpPvstSw2.spanningTreeVlans = {
     '1': { priority: '32768' },
     '10': { priority: '24576' },
     '20': { priority: '32768' }
@@ -2032,7 +2032,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   stpPvstSw3.vlans[1] = { id: 1, name: 'default', status: 'active', ports: ['GI1/0/3', 'GI1/0/1', 'GI1/0/2'] };
   stpPvstSw3.vlans[10] = { id: 10, name: 'VLAN10', status: 'active', ports: ['GI1/0/4', 'GI1/0/1', 'GI1/0/2'] };
   stpPvstSw3.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['GI1/0/5', 'GI1/0/1', 'GI1/0/2'] };
-  (stpPvstSw3 as any).spanningTreeVlans = {
+  stpPvstSw3.spanningTreeVlans = {
     '1': { priority: '32768' },
     '10': { priority: '32768' },
     '20': { priority: '24576' }
@@ -2823,7 +2823,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         ? '<h1>Laboratuvar Web Sayfası</h1><p>HTTP servisi çalışıyor!</p>'
         : '<h1>Lab Web Page</h1><p>HTTP service is running!</p>',
     }
-  } as any;
+  };
 
   // Configure DHCP Service
   servicesLabDevices[2].services = {
@@ -2838,7 +2838,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         maxUsers: 50
       }]
     }
-  } as any;
+  };
 
   // Configure FTP Service
   servicesLabDevices[3].services = {

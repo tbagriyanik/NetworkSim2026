@@ -36,7 +36,6 @@
     --color-device-switch: var(--color-primary-orange);
     --color-device-iot: var(--color-primary-purple);
     --color-device-firewall: var(--color-primary-red);
-    --color-device-loadbalancer: var(--color-primary-blue);
 
     /* Device Status Colors */
     --color-status-online: var(--color-primary-green);
@@ -339,10 +338,6 @@
 
 .device-firewall {
     color: var(--color-device-firewall);
-}
-
-.device-loadbalancer {
-    color: var(--color-device-loadbalancer);
 }
 
 /* Device status color utilities */

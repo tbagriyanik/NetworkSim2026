@@ -191,10 +191,10 @@ function cmdExit(
  * End - Return to privileged mode from any sub-mode
  */
 function cmdEnd(
-  state: any,
+  state: SwitchState,
   _input: string,
-  _ctx: any
-): any {
+  _ctx: CommandContext
+): CommandResult {
   // Handle all sub-modes and return to privileged
   switch (state.currentMode) {
     case 'interface':
@@ -212,8 +212,7 @@ function cmdEnd(
           currentLine: undefined,
           currentVlan: undefined,
           currentDhcpPool: undefined,
-          ospfProcessId: undefined,
-          ripEnabled: undefined
+          ospfProcessId: undefined
         }
       };
     case 'config':
@@ -224,8 +223,7 @@ function cmdEnd(
           currentInterface: undefined,
           currentLine: undefined,
           currentVlan: undefined,
-          ospfProcessId: undefined,
-          ripEnabled: undefined
+          ospfProcessId: undefined
         }
       };
     default:

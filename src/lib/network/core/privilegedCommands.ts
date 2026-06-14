@@ -135,7 +135,9 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
             let output = `\nType escape sequence to abort.\n`;
             output += `Sending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n`;
             const debugLines: string[] = [];
-            const sourceIp = (ctx.deviceStates?.get(ctx.sourceDeviceId || '') as any)?.ipAddress || '0.0.0.0';
+            const devices = (ctx.devices || []) as CanvasDevice[];
+            const sourceDevice = ctx.sourceDeviceId ? devices.find(d => d.id === ctx.sourceDeviceId) : undefined;
+            const sourceIp = sourceDevice?.ip || '0.0.0.0';
             if (state.debugs?.['ip icmp'] || state.debugs?.['ip packet']) {
                 debugLines.push(`*Mar  1 00:00:00.001: ICMP: echo request sent, src ${sourceIp}, dst ${host}`);
                 debugLines.push(`*Mar  1 00:00:00.004: ICMP: echo reply rcvd, src ${host}, dst ${sourceIp}`);
@@ -144,8 +146,6 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
                 debugLines.push(`*Mar  1 00:00:00.002: SW_VLAN-PACKET: frame forwarded across ${Math.max(0, connectivity.hops.length - 1)} hop(s)`);
             }
             const successCount = parseInt(count, 10) || 5;
-            const devices = (ctx.devices || []) as CanvasDevice[];
-            const sourceDevice = ctx.sourceDeviceId ? devices.find(d => d.id === ctx.sourceDeviceId) : undefined;
             const targetDevice = connectivity.targetId ? devices.find(d => d.id === connectivity.targetId) : undefined;
 
             const srcDist = getWirelessDistance(sourceDevice, devices, ctx.deviceStates);
@@ -251,7 +251,7 @@ function cmdTelnet(state: SwitchState, input: string, ctx: CommandContext): Comm
 /**
  * SSH - Connect to remote device via SSH
  */
-function cmdSsh(state: any, input: string, ctx: any): any {
+function cmdSsh(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
     // Allow ssh from both user and privileged modes
     if (state.currentMode !== 'user' && state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
@@ -303,7 +303,7 @@ function cmdSsh(state: any, input: string, ctx: any): any {
 
         // Check target device configuration
         const targetDeviceId = connectivity.targetId;
-        const targetState = ctx.deviceStates?.get(targetDeviceId);
+        const targetState = targetDeviceId ? ctx.deviceStates?.get(targetDeviceId) : undefined;
 
         if (targetState) {
             const transportInput = targetState.security?.vtyLines?.transportInput || [];
@@ -342,7 +342,7 @@ function cmdSsh(state: any, input: string, ctx: any): any {
 /**
  * Write Memory - Save configuration
  */
-function cmdWriteMemory(state: any, _input: string, _ctx: any): any {
+function cmdWriteMemory(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -357,7 +357,7 @@ function cmdWriteMemory(state: any, _input: string, _ctx: any): any {
 /**
  * Copy Running-Config Startup-Config
  */
-function cmdCopyRunningStartup(state: any, _input: string, _ctx: any): any {
+function cmdCopyRunningStartup(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -372,7 +372,7 @@ function cmdCopyRunningStartup(state: any, _input: string, _ctx: any): any {
 /**
  * Copy Running-Config Flash:
  */
-function cmdCopyRunningFlash(state: any, input: string, _ctx: any): any {
+function cmdCopyRunningFlash(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -396,7 +396,7 @@ function cmdCopyRunningFlash(state: any, input: string, _ctx: any): any {
 /**
  * Copy Flash: Startup-Config
  */
-function cmdCopyFlashStartup(state: any, input: string, _ctx: any): any {
+function cmdCopyFlashStartup(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -436,7 +436,7 @@ function cmdCopyFlashStartup(state: any, input: string, _ctx: any): any {
 /**
  * Erase Startup-Config
  */
-function cmdEraseStartupConfig(state: any, _input: string, _ctx: any): any {
+function cmdEraseStartupConfig(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -454,7 +454,7 @@ function cmdEraseStartupConfig(state: any, _input: string, _ctx: any): any {
 /**
  * Erase NVRAM
  */
-function cmdEraseNvram(state: any, _input: string, _ctx: any): any {
+function cmdEraseNvram(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -472,7 +472,7 @@ function cmdEraseNvram(state: any, _input: string, _ctx: any): any {
 /**
  * Reload - Reboot device
  */
-function cmdReload(state: any, _input: string, _ctx: any): any {
+function cmdReload(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -486,7 +486,7 @@ function cmdReload(state: any, _input: string, _ctx: any): any {
 /**
  * IP Route - Add static route
  */
-function cmdIpRoute(state: any, input: string, _ctx: any): any {
+function cmdIpRoute(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -518,7 +518,7 @@ function cmdIpRoute(state: any, input: string, _ctx: any): any {
 /**
  * No IP Route - Remove static route
  */
-function cmdNoIpRoute(state: any, input: string, _ctx: any): any {
+function cmdNoIpRoute(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -552,7 +552,7 @@ function cmdNoIpRoute(state: any, input: string, _ctx: any): any {
 /**
  * Debug - Enable debugging
  */
-function cmdDebug(state: any, input: string, _ctx: any): any {
+function cmdDebug(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -576,7 +576,7 @@ function cmdDebug(state: any, input: string, _ctx: any): any {
 /**
  * Undebug All
  */
-function cmdUndebugAll(state: any, _input: string, _ctx: any): any {
+function cmdUndebugAll(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -592,7 +592,7 @@ function cmdUndebugAll(state: any, _input: string, _ctx: any): any {
 /**
  * Traceroute - Trace route to destination (Unix/Linux style)
  */
-function cmdTraceroute(state: any, input: string, ctx: any): any {
+function cmdTraceroute(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -686,7 +686,7 @@ function cmdTraceroute(state: any, input: string, ctx: any): any {
 /**
  * Terminal - Set terminal parameters
  */
-function cmdTerminal(_state: any, input: string, _ctx: any): any {
+function cmdTerminal(_state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
     const match = input.match(/^terminal\s+(length|width|monitor|no\s+monitor)\s*(\d*)$/i);
     if (!match) return { success: false, error: '% Invalid terminal command' };
     const param = match[1].toLowerCase();
@@ -699,7 +699,7 @@ function cmdTerminal(_state: any, input: string, _ctx: any): any {
 /**
  * Clear ARP Cache
  */
-function cmdClearArpCache(_state: any, _input: string, ctx: any): any {
+function cmdClearArpCache(_state: SwitchState, _input: string, ctx: CommandContext): CommandResult {
     const deviceId = ctx.sourceDeviceId;
     const deviceStates = ctx.deviceStates;
 
@@ -713,7 +713,7 @@ function cmdClearArpCache(_state: any, _input: string, ctx: any): any {
 /**
  * Clear MAC Address-Table
  */
-function cmdClearMacAddressTable(_state: any, input: string, ctx: any): any {
+function cmdClearMacAddressTable(_state: SwitchState, input: string, ctx: CommandContext): CommandResult {
     const deviceId = ctx.sourceDeviceId;
     const deviceStates = ctx.deviceStates;
     const args = input.trim().split(/\s+/).slice(2); // Skip "clear mac address-table"
@@ -737,7 +737,7 @@ function cmdClearMacAddressTable(_state: any, input: string, ctx: any): any {
 /**
  * Clear Counters
  */
-function cmdClearCounters(state: any, input: string, _ctx: any): any {
+function cmdClearCounters(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
     // Parse input to see if specific interface is mentioned
     const match = input.match(/clear\s+counters\s+(?:interface\s+)?(\S+)?/i);
     const interfaceName = match?.[1];
@@ -810,7 +810,7 @@ function cmdClearCounters(state: any, input: string, _ctx: any): any {
 /**
  * Undebug (alias for undebug all)
  */
-function cmdUndebug(_state: any, _input: string, _ctx: any): any {
+function cmdUndebug(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     return {
         success: true,
         output: 'All possible debugging has been turned off',
@@ -821,7 +821,7 @@ function cmdUndebug(_state: any, _input: string, _ctx: any): any {
 /**
  * Clock Set
  */
-function cmdClockSet(state: any, input: string, _ctx: any): any {
+function cmdClockSet(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
     const match = input.match(/^clock\s+set\s+(\d{1,2}:\d{1,2}:\d{1,2})\s+(\d{1,2})\s+(\w+)\s+(\d{4})$/i);
     if (!match) return { success: false, error: '% Invalid input' };
 
@@ -881,7 +881,7 @@ function cmdClockSet(state: any, input: string, _ctx: any): any {
 /**
  * Help command
  */
-function cmdHelp(_state: any, _input: string, ctx: any): any {
+function cmdHelp(_state: SwitchState, _input: string, ctx: CommandContext): CommandResult {
     const lang = ctx?.language || 'en';
     const output = lang === 'tr'
         ? '\nYardım sistemi:\n  Komut tamamlama için TAB tuşunu kullanın\n  Komut yardımı için ? kullanın\n  Örnek: show ?\n'
@@ -892,7 +892,7 @@ function cmdHelp(_state: any, _input: string, ctx: any): any {
 /**
  * Setup command
  */
-function cmdSetup(_state: any, _input: string, _ctx: any): any {
+function cmdSetup(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     return {
         success: true,
         output: '\n--- System Configuration Dialog ---\n\nWould you like to enter the initial configuration dialog? [yes/no]: \n% Aborting setup.'
@@ -902,42 +902,42 @@ function cmdSetup(_state: any, _input: string, _ctx: any): any {
 /**
  * Test command
  */
-function cmdTest(_state: any, _input: string, _ctx: any): any {
+function cmdTest(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     return { success: true, output: '\n% Diagnostic test completed successfully.\n' };
 }
 
 /**
  * More command
  */
-function cmdMore(_state: any, _input: string, _ctx: any): any {
+function cmdMore(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     return { success: true, output: '\n% File display not supported in this version.\n' };
 }
 
 /**
  * Disconnect command
  */
-function cmdDisconnect(_state: any, _input: string, _ctx: any): any {
+function cmdDisconnect(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     return { success: true, output: '\n% No active sessions to disconnect.\n' };
 }
 
 /**
  * Resume command
  */
-function cmdResume(_state: any, _input: string, _ctx: any): any {
+function cmdResume(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     return { success: true, output: '\n% No suspended sessions to resume.\n' };
 }
 
 /**
  * Suspend command
  */
-function cmdSuspend(_state: any, _input: string, _ctx: any): any {
+function cmdSuspend(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     return { success: true, output: '\n% Suspend not supported in this session.\n' };
 }
 
 /**
  * Copy TFTP command
  */
-function cmdCopyTftp(state: any, input: string, ctx: any): any {
+function cmdCopyTftp(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }
@@ -1036,7 +1036,7 @@ function cmdCopyTftp(state: any, input: string, ctx: any): any {
     };
 }
 
-function cmdFtp(_state: any, input: string, ctx: any): any {
+function cmdFtp(_state: SwitchState, input: string, ctx: CommandContext): CommandResult {
     const lang = ctx.language || 'en';
     const host = input.split(/\s+/).slice(1).join(' ').trim();
     if (!host) {
@@ -1061,7 +1061,7 @@ function cmdFtp(_state: any, input: string, ctx: any): any {
     };
 }
 
-function cmdMail(state: any, input: string, ctx: any): any {
+function cmdMail(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
     const lang = ctx.language || 'en';
     const parts = input.trim().split(/\s+/);
     
@@ -1159,7 +1159,7 @@ function cmdMail(state: any, input: string, ctx: any): any {
 /**
  * Copy Startup-Config Running-Config
  */
-function cmdCopyStartupRunning(_state: any, _input: string, _ctx: any): any {
+function cmdCopyStartupRunning(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     return {
         success: true,
         output: 'Destination filename [running-config]?\n[OK]\n'
@@ -1169,21 +1169,21 @@ function cmdCopyStartupRunning(_state: any, _input: string, _ctx: any): any {
 /**
  * Clear Line
  */
-function cmdClearLine(_state: any, _input: string, _ctx: any): any {
+function cmdClearLine(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     return { success: true, output: '[confirm]\n' };
 }
 
 /**
  * Clear Interface
  */
-function cmdClearInterface(_state: any, _input: string, _ctx: any): any {
+function cmdClearInterface(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
     return { success: true, output: '[confirm]\n' };
 }
 
 /**
  * Delete VLAN database file
  */
-function cmdDeleteVlanDat(state: any, _input: string, ctx: any): any {
+function cmdDeleteVlanDat(state: SwitchState, _input: string, ctx: CommandContext): CommandResult {
     if (state.currentMode !== 'privileged') {
         return { success: false, error: iosModeError() };
     }

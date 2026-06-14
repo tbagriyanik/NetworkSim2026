@@ -135,7 +135,6 @@ export const DEVICE_TYPE_COLORS: Record<string, string> = {
     switch: COLOR_PALETTE.primary.orange,
     iot: COLOR_PALETTE.primary.purple,
     firewall: COLOR_PALETTE.primary.red,
-    loadbalancer: COLOR_PALETTE.primary.blue,
 };
 
 /**
@@ -206,7 +205,7 @@ export const MODE_FEATURES = {
         maxDevices: 50,
     },
     advanced: {
-        deviceTypes: ['pc', 'router', 'switch', 'iot', 'firewall', 'loadbalancer'],
+        deviceTypes: ['pc', 'router', 'switch', 'iot', 'firewall'],
         advancedSettings: true,
         guidedModeDefault: false,
         maxDevices: 200,

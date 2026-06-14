@@ -6,7 +6,7 @@
 /**
  * Device type enumeration
  */
-export type DeviceType = 'pc' | 'router' | 'switch' | 'iot' | 'firewall' | 'loadbalancer';
+export type DeviceType = 'pc' | 'router' | 'switch' | 'iot' | 'firewall';
 
 /**
  * Device status enumeration

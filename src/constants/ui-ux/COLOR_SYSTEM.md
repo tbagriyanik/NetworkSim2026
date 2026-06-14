@@ -92,7 +92,6 @@ All colors are available as CSS variables for easy application:
 --color-device-switch
 --color-device-iot
 --color-device-firewall
---color-device-loadbalancer
 
 /* Status */
 --color-status-online

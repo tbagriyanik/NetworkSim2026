@@ -8,6 +8,7 @@ export interface CommandContext {
   connections?: CanvasConnection[];
   deviceStates: Map<string, SwitchState>;
   sourceDeviceId?: string;
+  skipConfirm?: boolean;
 }
 
 // Tüm komut handler'ları için standart imza

@@ -1,7 +1,7 @@
 'use client';
 import { iosModeError } from './iosErrors';
 
-import type { CommandHandler, CommandContext } from './commandTypes';
+import type { CommandHandler } from './commandTypes';
 import type { SwitchState, CommandResult } from '../types';
 
 // Router config commands (router ospf, router rip, etc.)
@@ -106,7 +106,7 @@ function cmdNoRouterNetwork(state: SwitchState, input: string): CommandResult {
     if (!match) return { success: false, error: '% Invalid no network command' };
 
     const network = match[1];
-    const dynamicRoutes = (state.dynamicRoutes || []).filter((r: any) => r.destination !== network);
+    const dynamicRoutes = (state.dynamicRoutes || []).filter((r: { destination: string }) => r.destination !== network);
 
     return {
         success: true,
@@ -122,7 +122,7 @@ function cmdNoNeighborRemoteAs(state: SwitchState, input: string): CommandResult
     if (!match) return { success: false, error: '% Invalid no neighbor command' };
 
     const neighborIp = match[1];
-    const bgpNeighbors = (state.bgpNeighbors || []).filter((n: any) => n.ip !== neighborIp);
+    const bgpNeighbors = (state.bgpNeighbors || []).filter((n: { ip: string }) => n.ip !== neighborIp);
 
     return {
         success: true,
@@ -138,7 +138,7 @@ function cmdNoPassiveInterface(state: SwitchState, input: string): CommandResult
     if (!match) return { success: false, error: '% Invalid no passive-interface command' };
 
     const iface = match[1];
-    const passiveInterfaces = (state.passiveInterfaces || []).filter((p: any) => p !== iface);
+    const passiveInterfaces = (state.passiveInterfaces || []).filter((p: string) => p !== iface);
 
     return {
         success: true,
@@ -193,7 +193,7 @@ function cmdPassiveInterface(state: SwitchState, input: string): CommandResult {
 /**
  * neighbor remote-as - Configure BGP neighbor
  */
-function cmdNeighborRemoteAs(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+function cmdNeighborRemoteAs(state: SwitchState, input: string): CommandResult {
     if (state.routingProtocol !== 'bgp') {
         return { success: false, error: iosModeError() };
     }
@@ -203,7 +203,7 @@ function cmdNeighborRemoteAs(state: SwitchState, input: string, _ctx: CommandCon
 
     const [_, neighborIp, remoteAs] = match;
     const bgpNeighbors = state.bgpNeighbors || [];
-    const newNeighbors = [...bgpNeighbors.filter((n: any) => n.ip !== neighborIp), { ip: neighborIp, as: remoteAs }];
+    const newNeighbors = [...bgpNeighbors.filter((n: { ip: string }) => n.ip !== neighborIp), { ip: neighborIp, as: remoteAs }];
 
     return {
         success: true,
@@ -215,7 +215,7 @@ function cmdNeighborRemoteAs(state: SwitchState, input: string, _ctx: CommandCon
 /**
  * no auto-summary
  */
-function cmdNoAutoSummary(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+function cmdNoAutoSummary(_state: SwitchState, _input: string): CommandResult {
     return {
         success: true,
         newState: { autoSummary: false }
@@ -225,7 +225,7 @@ function cmdNoAutoSummary(_state: SwitchState, _input: string, _ctx: CommandCont
 /**
  * default-information - Control distribution of default route
  */
-function cmdDefaultInformation(_state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+function cmdDefaultInformation(_state: SwitchState, input: string): CommandResult {
     const match = input.match(/^default-information\s+(originate|always)$/i);
     if (!match) {
         return { success: false, error: '% Invalid default-information command' };

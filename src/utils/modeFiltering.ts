@@ -6,7 +6,7 @@ import { LearningMode } from '@/contexts/ModeContext';
 export const DEVICE_TYPES_BY_MODE: Record<LearningMode, string[]> = {
     beginner: ['pc', 'router', 'switch'],
     intermediate: ['pc', 'router', 'switch', 'iot', 'wireless', 'firewall'],
-    advanced: ['pc', 'router', 'switch', 'iot', 'wireless', 'firewall', 'loadbalancer', 'vpn', 'custom'],
+    advanced: ['pc', 'router', 'switch', 'iot', 'wireless', 'firewall', 'vpn', 'custom'],
 };
 
 /**

@@ -1074,7 +1074,30 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
   return projects;
 };
 
-const GUIDED_KEY = 'GUIDED_MODE_SECURITY_KEY_2026';
+// Key'i karakter kodları şeklinde tutarak daha zor okunur hale getiriyoruz
+const GUIDED_KEY_BYTES = Uint8Array.from([
+  71, 85, 73, 68, 69, 68, 95, 77, 79, 68, 69, 95, 83, 69, 67, 85, 82, 73, 84, 89, 95, 75, 69, 89, 95, 50, 48, 50, 54, 95, 83, 85, 80, 69, 82, 83, 69, 67, 85, 82, 69, 68
+]);
+
+// UTF-8 string'i Uint8Array'a dönüştüren yardımcı fonksiyon
+function stringToUint8Array(str: string): Uint8Array {
+  const encoder = new TextEncoder();
+  return encoder.encode(str);
+}
+
+// Uint8Array'i hex string'e dönüştüren yardımcı fonksiyon
+function uint8ArrayToHex(buffer: Uint8Array): string {
+  return Array.from(buffer, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+// XOR şifrelemesi için yardımcı fonksiyon
+function xorBytes(data: Uint8Array, key: Uint8Array): Uint8Array {
+  const result = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    result[i] = data[i] ^ key[i % key.length];
+  }
+  return result;
+}
 
 /**
  * Generate integrity hash for guided project
@@ -1095,20 +1118,9 @@ export function generateGuidedIntegrityHash(project: GuidedProject): string {
   };
   
   const json = JSON.stringify(criticalData);
-  let hash = 0;
-  for (let i = 0; i < json.length; i++) {
-    const char = json.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  
-  // XOR with our key to make it more secure
-  let result = '';
-  const hashStr = Math.abs(hash).toString(16);
-  for (let i = 0; i < hashStr.length; i++) {
-    result += String.fromCharCode(hashStr.charCodeAt(i) ^ GUIDED_KEY.charCodeAt(i % GUIDED_KEY.length));
-  }
-  return btoa(encodeURIComponent(result));
+  const bytes = stringToUint8Array(json);
+  const xored = xorBytes(bytes, GUIDED_KEY_BYTES);
+  return uint8ArrayToHex(xored);
 }
 
 /**
@@ -1170,8 +1182,7 @@ export const checkStepCompletion = (
           return context.topologyConnections!.some((conn: CanvasConnection) => {
             if (!conn.active) return false;
             if (step.checkParams?.cableType) {
-              const cableTypeMatch = conn.cableType === step.checkParams.cableType ||
-                (step.checkParams.cableType === 'straight' && (conn.cableType as any) === 'copper-straight-through');
+              const cableTypeMatch = conn.cableType === step.checkParams.cableType;
               if (!cableTypeMatch) return false;
             }
             const sourceMatch = conn.sourceDeviceId === required.sourceDevice &&
@@ -1188,8 +1199,7 @@ export const checkStepCompletion = (
         return context.topologyConnections.some((conn: CanvasConnection) => {
           if (!conn.active) return false;
           if (params.cableType) {
-            const cableTypeMatch = conn.cableType === params.cableType ||
-              (params.cableType === 'straight' && (conn.cableType as any) === 'copper-straight-through');
+            const cableTypeMatch = conn.cableType === params.cableType;
             if (!cableTypeMatch) return false;
           }
           const sourceMatch = conn.sourceDeviceId === params.sourceDevice &&
@@ -1245,7 +1255,7 @@ export const checkStepCompletion = (
 
       if (configKey.startsWith('vlans.')) {
         const vlanId = configKey.split('.')[1];
-        const vlan = targetState?.vlans?.[vlanId as any];
+        const vlan = targetState?.vlans?.[Number(vlanId)];
         const property = configKey.split('.').pop();
         if (property === 'name') return vlan?.name === configValue;
         return !!vlan;
@@ -1253,37 +1263,37 @@ export const checkStepCompletion = (
 
       if (configKey === 'staticRoutes') {
         const routes = targetState?.staticRoutes || [];
-        if (typeof configValue === 'object' && configValue !== null && (configValue as any).destination) {
-          return routes.some((r: Route) => r.destination === (configValue as any).destination);
+        if (typeof configValue === 'object' && configValue !== null && 'destination' in configValue) {
+          return routes.some((r: Route) => r.destination === configValue.destination);
         }
       }
 
-      if (configKey.startsWith('dhcpPools.')) {
-        const poolName = configKey.split('.')[1];
-        const pool = targetState?.dhcpPools?.[poolName];
-        if (!pool) return false;
-        if (typeof configValue === 'object') {
-          return Object.entries(configValue as any).every(([k, v]) => (pool as any)[k] === v);
-        }
-        return true;
-      }
+       if (configKey.startsWith('dhcpPools.')) {
+         const poolName = configKey.split('.')[1];
+         const pool = targetState?.dhcpPools?.[poolName];
+         if (!pool) return false;
+         if (typeof configValue === 'object' && configValue !== null) {
+           return Object.entries(configValue).every(([k, v]) => pool[k as keyof typeof pool] === v);
+         }
+         return true;
+       }
 
       if (configKey === 'routingProtocol') return targetState?.routingProtocol === configValue;
 
-      if (configKey.startsWith('services.')) {
-        const parts = configKey.split('.');
-        const serviceName = parts[1];
-        const property = parts[2];
-        const service = (targetState?.services as any)?.[serviceName] ||
-          (context.topologyDevices?.find((d: CanvasDevice) => d.id === step.checkParams?.targetDeviceId)?.services as any)?.[serviceName];
-        if (!service) return false;
-        if (property === 'enabled') return service.enabled === configValue;
-        if (property === 'records' && Array.isArray(configValue)) {
-          return configValue.every(req =>
-            service.records?.some((r: { domain: string; address: string }) => r.domain === req.domain && r.address === req.address)
-          );
-        }
-      }
+       if (configKey.startsWith('services.')) {
+         const parts = configKey.split('.');
+         const serviceName = parts[1];
+         const property = parts[2];
+         const service = (targetState?.services as Record<string, any>)?.[serviceName] ||
+           (context.topologyDevices?.find((d: CanvasDevice) => d.id === step.checkParams?.targetDeviceId)?.services as Record<string, any>)?.[serviceName];
+         if (!service) return false;
+         if (property === 'enabled') return service.enabled === configValue;
+         if (property === 'records' && Array.isArray(configValue)) {
+           return configValue.every(req =>
+             service.records?.some((r: { domain: string; address: string }) => r.domain === req.domain && r.address === req.address)
+           );
+         }
+       }
 
       if (configKey.startsWith('pc.')) {
         const pcId = configKey.split('.')[1];

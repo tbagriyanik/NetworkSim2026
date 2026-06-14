@@ -3,7 +3,6 @@
  * Provides functions for color manipulation, contrast checking, and accessibility compliance
  */
 
-import type { ColorPalette } from '@/types/ui-ux';
 import { COLOR_PALETTE, CONTRAST_RATIOS } from '@/constants/ui-ux';
 
 /**
@@ -297,30 +296,32 @@ export function getPaletteColor(
     modification?: 'lighten' | 'darken' | number
 ): string {
     const parts = colorPath.split('.');
-    let color = COLOR_PALETTE as ColorPalette;
+    let color: any = COLOR_PALETTE;
 
     for (const part of parts) {
-        color = color[part];
+        color = color?.[part];
         if (!color) return '#000000';
     }
 
+    const finalColor = typeof color === 'string' ? color : '#000000';
+
     if (!modification) {
-        return color as string;
+        return finalColor;
     }
 
     if (modification === 'lighten') {
-        return lighten(color as string, 20);
+        return lighten(finalColor, 20);
     }
     if (modification === 'darken') {
-        return darken(color as string, 20);
+        return darken(finalColor, 20);
     }
     if (typeof modification === 'number') {
         return modification > 0 
-            ? lighten(color as string, modification) 
-            : darken(color as string, Math.abs(modification));
+            ? lighten(finalColor, modification) 
+            : darken(finalColor, Math.abs(modification));
     }
 
-    return color as string;
+    return finalColor;
 }
 
 /**

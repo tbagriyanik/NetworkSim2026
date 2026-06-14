@@ -195,12 +195,14 @@ function createInitialSecurity(): SecurityConfig {
     consoleLine: {
       password: undefined,
       login: false,
-      transportInput: ['all']
+      transportInput: ['all'],
+      execTimeout: { minutes: 10, seconds: 0 }
     },
     vtyLines: {
       password: undefined,
       login: false,
-      transportInput: ['all']
+      transportInput: ['all'],
+      execTimeout: { minutes: 10, seconds: 0 }
     }
   };
 }
@@ -540,15 +542,15 @@ export function applyStartupConfig(baseState: SwitchState, startup: StartupConfi
       name: savedPort.name,
       vlan: savedPort.vlan,
       mode: savedPort.mode,
-      voiceVlan: (savedPort as any).voiceVlan ?? (basePort as any).voiceVlan ?? 'none',
+      voiceVlan: savedPort.voiceVlan ?? basePort.voiceVlan ?? 'none',
       duplex: savedPort.duplex,
       speed: savedPort.speed,
       shutdown: savedPort.shutdown,
       type: savedPort.type,
       allowedVlans: savedPort.allowedVlans,
-      channelGroup: (savedPort as any).channelGroup,
-      channelMode: (savedPort as any).channelMode,
-      channelProtocol: (savedPort as any).channelProtocol,
+      channelGroup: savedPort.channelGroup,
+      channelMode: savedPort.channelMode,
+      channelProtocol: savedPort.channelProtocol,
       portSecurity: savedPort.portSecurity,
       ipAddress: savedPort.ipAddress,
       subnetMask: savedPort.subnetMask,
@@ -575,8 +577,8 @@ export function applyStartupConfig(baseState: SwitchState, startup: StartupConfi
     spanningTreeMode: startup.spanningTreeMode,
     vtpMode: startup.vtpMode,
     vtpDomain: startup.vtpDomain,
-    vtpPassword: (startup as any).vtpPassword,
-    vtpRevision: (startup as any).vtpRevision ?? baseState.vtpRevision ?? 0,
+    vtpPassword: startup.vtpPassword,
+    vtpRevision: startup.vtpRevision ?? baseState.vtpRevision ?? 0,
     mlsQosEnabled: startup.mlsQosEnabled,
     dhcpSnoopingEnabled: startup.dhcpSnoopingEnabled,
     ntpServers: startup.ntpServers ? [...startup.ntpServers] : undefined,
@@ -590,7 +592,7 @@ export function applyStartupConfig(baseState: SwitchState, startup: StartupConfi
               server: startup.ntpServers[0],
             }
           : {}),
-        timeOffset: (startup as any).ntpTimeOffset,
+        timeOffset: startup.ntpTimeOffset,
       },
     },
     ipv6Enabled: startup.ipv6Enabled,

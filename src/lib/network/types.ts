@@ -228,6 +228,12 @@ export interface LineConfig {
   login: boolean;
   loginLocal?: boolean;
   transportInput: ('ssh' | 'telnet' | 'all' | 'none')[];
+  loggingSynchronous?: boolean;
+  historySize?: number;
+  exec?: boolean;
+  autocommand?: string;
+  privilegeLevel?: number;
+  execTimeout?: { minutes: number; seconds: number };
 }
 
 export interface SecurityConfig {
@@ -248,7 +254,7 @@ export interface SwitchState {
   macAddress: string; // Unique base MAC address for the device
   switchModel: SwitchModel; // Switch model (L2 or L3)
   switchLayer: SwitchLayer; // Layer 2 or Layer 3
-  deviceType?: 'pc' | 'router' | 'switch' | 'iot' | 'firewall' | 'loadbalancer'; // Device type for identification
+  deviceType?: 'pc' | 'router' | 'switch' | 'iot' | 'firewall' ; // Device type for identification
   currentMode: CommandMode;
   currentInterface?: string;
   selectedInterfaces?: string[];  // interface range için çoklu port seçimi
@@ -494,6 +500,8 @@ export interface StartupConfig {
   spanningTreeMode?: 'pvst' | 'rapid-pvst' | 'mst';
   vtpMode?: 'server' | 'client' | 'transparent' | 'off';
   vtpDomain?: string;
+  vtpPassword?: string;
+  vtpRevision?: number;
   mlsQosEnabled?: boolean;
   dhcpSnoopingEnabled?: boolean;
   ntpServers?: string[];
@@ -518,13 +526,18 @@ export interface CommandResult {
   requiresReloadConfirm?: boolean;   // Reload sonrası Enter ile onay gerekiyor mu?
   telnetTarget?: { host: string; port: string };  // Telnet bağlantı hedefi
   reloadDevice?: boolean;            // Cihazı sıfırla
+  saveConfig?: boolean;  // running-config'i startup-config'e kaydet
   saveFlashConfig?: boolean;  // running-config'i flash'a kaydet
   flashFilename?: string;  // flash dosya adı (örn: running-config)
   restoreFlashConfig?: boolean;  // flash'tan startup-config'e geri yükle
   flashSourceFilename?: string;  // kaynak flash dosya adı
+  eraseConfig?: boolean;  // startup-config'i sil
+  deleteVlanDat?: boolean;  // vlan.dat dosyasını sil
   triggerPingAnimation?: string;  // Animatör başlatmak için hedef cihaz ID'si
   exitSession?: boolean;  // Oturum sonlandırma bayrağı
   requiresTelnetPassword?: boolean;  // Telnet için şifre gerekiyor mu?
+  requiresSshPassword?: boolean;  // SSH için şifre gerekiyor mu?
+  sshTarget?: { host: string; username?: string; port: number };  // SSH bağlantı hedefi
   sourceDeviceId?: string;             // Telnet bağlantı hedef IP
 }
 

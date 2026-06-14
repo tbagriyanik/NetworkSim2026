@@ -47,7 +47,6 @@ export function useColors() {
             switch: COLOR_PALETTE.primary.orange,
             iot: COLOR_PALETTE.primary.purple,
             firewall: COLOR_PALETTE.primary.red,
-            loadbalancer: COLOR_PALETTE.primary.blue,
         };
 
         return colorMap[deviceType] || COLOR_PALETTE.primary.blue;
