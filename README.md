@@ -5,7 +5,7 @@
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Total Lines](https://img.shields.io/badge/total--lines-102111-lightgrey)
 
-A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows. TR/EN interface support.
+A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
 
 **Live app:** [network2026.vercel.app](https://network2026.vercel.app)
 
