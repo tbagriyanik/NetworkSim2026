@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 
-import { SwitchState, CableInfo } from '@/lib/network/types';
+import { SwitchState, CableInfo, Port } from '@/lib/network/types';
 import { useDeviceManager } from '@/hooks/useDeviceManager';
 import { useNetworkLogic } from '@/hooks/useNetworkLogic';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
@@ -18,7 +18,7 @@ import { useDeviceSelection } from '@/hooks/useDeviceSelection';
 import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes, useZoom, usePan, useActiveTab, useEnvironment } from '@/lib/store/appStore';
 import { cn, normalizeMAC } from '@/lib/utils';
 import { logger } from '@/lib/logger';
-import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, CanvasPortStatus } from '@/components/network/networkTopology.types';
+import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, CanvasPortStatus, FirewallRule } from '@/components/network/networkTopology.types';
 import { getPrompt } from '@/lib/network/executor';
 import { formatErrorForUser, errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
@@ -71,7 +71,7 @@ import {
 } from '@/lib/network/taskDefinitions';
 import { exampleProjects, type ExampleProject, type ExampleProjectLevel } from '@/lib/network/exampleProjects';
 import { getGuidedProjects, type GuidedProject } from '@/lib/network/guidedMode';
-import { getExamProjects, type ExamProject, generateExamFromProject } from '@/lib/network/examMode';
+import { getExamProjects, type ExamProject, type ProjectData, generateExamFromProject } from '@/lib/network/examMode';
 import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import { performanceMonitor } from '@/lib/performance/monitoring';
 import { useGuidedMode } from '@/hooks/useGuidedMode';
@@ -113,7 +113,7 @@ interface TabDefinition {
   id: TabType;
   labelKey: keyof Translations;
   icon: React.ReactNode;
-  tasks: any[];
+  tasks: readonly unknown[];
   color: string;
   showFor: DeviceType[];
 }
@@ -430,7 +430,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   const prevAllDoneRef = useRef(false);
   useEffect(() => {
     if (activeGuidedProject && isAllCompleted && !prevAllDoneRef.current) {
-      const lessonName = typeof activeGuidedProject.title === 'string' ? activeGuidedProject.title : (activeGuidedProject.title as any)?.tr || (activeGuidedProject.title as any)?.en || 'Guided Lesson';
+      const lessonName = typeof activeGuidedProject.title === 'string' ? activeGuidedProject.title : (activeGuidedProject.title as { tr?: string; en?: string })?.tr || (activeGuidedProject.title as { tr?: string; en?: string })?.en || 'Guided Lesson';
       addGuidedLessonRecord(lessonName, currentPoints, totalPoints);
     }
     prevAllDoneRef.current = !!isAllCompleted;
@@ -440,7 +440,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   useEffect(() => {
     const prev = prevGuidedRef.current;
     if (prev && !activeGuidedProject && prev.steps.every(s => s.completed)) {
-      const lessonName = typeof prev.title === 'string' ? prev.title : (prev.title as any)?.tr || (prev.title as any)?.en || 'Guided Lesson';
+      const lessonName = typeof prev.title === 'string' ? prev.title : (prev.title as { tr?: string; en?: string })?.tr || (prev.title as { tr?: string; en?: string })?.en || 'Guided Lesson';
       const earned = prev.steps.filter(s => s.completed).reduce((sum, s) => sum + (s.points || 0), 0);
       const total = prev.steps.reduce((sum, s) => sum + (s.points || 0), 0);
       addGuidedLessonRecord(lessonName, earned, total);
@@ -452,7 +452,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   useEffect(() => {
     if (isExamFinished && activeExam) {
       const maxScore = activeExam.tasks.reduce((sum, t) => sum + t.weight, 0);
-      const examName = typeof activeExam.title === 'string' ? activeExam.title : (activeExam.title as any)?.tr || (activeExam.title as any)?.en || 'Exam';
+      const examName = typeof activeExam.title === 'string' ? activeExam.title : (activeExam.title as { tr?: string; en?: string })?.tr || (activeExam.title as { tr?: string; en?: string })?.en || 'Exam';
       addExamRecord(examName, examScore, maxScore || 100);
     }
   }, [isExamFinished, activeExam, examScore]);
@@ -533,7 +533,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
   // Navigation hook (provides history management, device selection, focus)
   const nav = useAppNavigation({
-    setActiveTab: (tab) => setActiveTab(tab as any),
+    setActiveTab: (tab: TabType) => setActiveTab(tab),
     setActiveDeviceId,
     setActiveDeviceType,
     setSelectedDevice,
@@ -593,7 +593,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     const intervalId = window.setInterval(() => {
       const metrics = performanceMonitor.getMetrics();
       const thresholdStatus = performanceMonitor.checkThresholds();
-      (window as any).__netsimPerformance = {
+      (window as unknown as { __netsimPerformance?: unknown }).__netsimPerformance = {
         metrics,
         thresholdStatus,
         timestamp: Date.now(),
@@ -716,27 +716,28 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   }, [advanceNtpDateTime, formatLocalDate, isValidIpv4Address, setTopologyDevices]);
 
   // Function to update device configuration
-  const updateDeviceConfig = useCallback((deviceId: string, config: any) => {
+  const updateDeviceConfig = useCallback((deviceId: string, config: Record<string, unknown>) => {
+    const c = config as Partial<CanvasDevice>;
     // Update topology devices using functional update to avoid stale closure
     setTopologyDevices(prev =>
       prev.map((d) =>
         d.id === deviceId
           ? {
             ...d,
-            ...config,
-            iot: config.iot ? { ...d.iot, ...config.iot } : d.iot,
+            ...c,
+            iot: c.iot ? { ...d.iot, ...c.iot } : d.iot,
           }
           : d
       )
     );
 
     // Update deviceStates (CLI hostname)
-    if (config.name) {
+    if (c.name) {
       setDeviceStates((prev) => {
         const state = prev.get(deviceId);
         if (state) {
           const next = new Map(prev);
-          next.set(deviceId, { ...state, hostname: config.name });
+          next.set(deviceId, { ...state, hostname: c.name as string });
           return next;
         }
         return prev;
@@ -744,10 +745,11 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     }
 
     // Keep router/switch wlan0 runtime state in sync with web-admin WiFi saves
-    if (config.wifi) {
+    if (c.wifi) {
       setDeviceStates((prev) => {
         const state = prev.get(deviceId);
         if (!state || !state.ports?.['wlan0']) return prev;
+        const wifi = c.wifi as NonNullable<CanvasDevice['wifi']>;
         const next = new Map(prev);
         next.set(deviceId, {
           ...state,
@@ -755,14 +757,14 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             ...state.ports,
             wlan0: {
               ...state.ports['wlan0'],
-              shutdown: !config.wifi.enabled,
+              shutdown: !wifi.enabled,
               wifi: {
-                ssid: config.wifi.ssid || '',
-                security: config.wifi.security || 'open',
-                password: config.wifi.password || '',
-                channel: config.wifi.channel || '2.4GHz',
+                ssid: wifi.ssid || '',
+                security: wifi.security || 'open',
+                password: wifi.password || '',
+                channel: wifi.channel || '2.4GHz',
                 // Keep selected mode even when disabled; shutdown controls operational state.
-                mode: config.wifi.mode || 'ap',
+                mode: wifi.mode || 'ap',
               },
             },
           },
@@ -772,7 +774,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     }
 
     // Handle IoT device disconnect - clear IP and WiFi state
-    if (config.ip === '' && config.wifi?.enabled === false) {
+    if (c.ip === '' && c.wifi?.enabled === false) {
       setDeviceStates((prev) => {
         const state = prev.get(deviceId);
         if (!state) return prev;
@@ -798,13 +800,13 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
       });
     }
 
-    if (config.firewallRules) {
+    if (c.firewallRules) {
       setDeviceStates((prev) => {
         const state = prev.get(deviceId);
         if (!state) return prev;
         const updatedState = {
           ...state,
-          firewallRules: config.firewallRules,
+          firewallRules: c.firewallRules as FirewallRule[],
         };
         updatedState.runningConfig = buildRunningConfig(updatedState);
         const next = new Map(prev);
@@ -814,11 +816,11 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     }
 
     // Sync NTP services from topology to deviceStates (Switch/Router)
-    if (config.services?.ntp) {
+    if (c.services?.ntp) {
       setDeviceStates((prev) => {
         const state = prev.get(deviceId);
         if (!state) return prev;
-        const ntpServer = config.services!.ntp!.server;
+        const ntpServer = (c.services as CanvasDevice['services'])?.ntp?.server;
         // Update ntpServers array so buildStartupConfig / applyStartupConfig
         // can restore the NTP server after a page refresh
         let ntpServers = state.ntpServers ? [...state.ntpServers] : [];
@@ -834,8 +836,8 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             ...state.services,
             ntp: {
               ...state.services?.ntp,
-              ...config.services!.ntp,
-              enabled: config.services!.ntp!.enabled ?? state.services?.ntp?.enabled ?? false,
+              ...(c.services as CanvasDevice['services'])?.ntp,
+               enabled: (c.services as CanvasDevice['services'])?.ntp?.enabled ?? state.services?.ntp?.enabled ?? false,
             },
           },
         };
@@ -849,13 +851,13 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
   // Listen for device config updates from PCPanel
   useEffect(() => {
-    const handleDeviceUpdate = (event: any) => {
+    const handleDeviceUpdate = (event: CustomEvent<{ deviceId: string; config: Record<string, unknown> }>) => {
       const { deviceId, config } = event.detail;
       updateDeviceConfig(deviceId, config);
     };
 
-    window.addEventListener('update-topology-device-config', handleDeviceUpdate);
-    return () => window.removeEventListener('update-topology-device-config', handleDeviceUpdate);
+    window.addEventListener('update-topology-device-config', handleDeviceUpdate as EventListener);
+    return () => window.removeEventListener('update-topology-device-config', handleDeviceUpdate as EventListener);
   }, [updateDeviceConfig]);
 
   useEffect(() => {
@@ -878,7 +880,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     return () => window.removeEventListener('trigger-open-firewall', handleTriggerOpenFirewall);
   }, [topologyDevices, t.language]);
   useEffect(() => {
-    const handleAddDevice = (event: any) => {
+    const handleAddDevice = (event: CustomEvent<{ device: CanvasDevice }>) => {
       const { device } = event.detail;
       if (!device) return;
 
@@ -901,7 +903,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
         setDeviceStates(prev => {
           const next = new Map(prev);
           // Create initial IoT device state with minimal required fields
-          const iotState: any = {
+          const iotState: Record<string, unknown> = {
             hostname: device.name,
             macAddress: device.macAddress || '00-00-00-00-00-00',
             switchModel: 'WS-C2960-24TT-L',
@@ -941,14 +943,14 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             },
             macAddressTable: [],
           };
-          next.set(device.id, iotState);
+          next.set(device.id, iotState as unknown as SwitchState);
           return next;
         });
       }
     };
 
-    window.addEventListener('add-topology-device', handleAddDevice);
-    return () => window.removeEventListener('add-topology-device', handleAddDevice);
+    window.addEventListener('add-topology-device', handleAddDevice as EventListener);
+    return () => window.removeEventListener('add-topology-device', handleAddDevice as EventListener);
   }, []); // Actions from useAppStore are stable, and functional updates avoid stale data issues.
 
   // Listen for postMessage from WiFi admin panel to focus device in topology
@@ -1426,7 +1428,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
           let outputs = item.outputs || [];
 
           // If banner is in state but not in outputs, prepend it (only for switches/routers)
-          const stateItem = safeDevices.find((d: any) => d.id === item.id);
+          const stateItem = safeDevices.find((d: { id: string; state?: SwitchState }) => d.id === item.id);
           if (stateItem?.state?.bannerMOTD && !outputs.some(o => o.content?.includes(stateItem.state.bannerMOTD))) {
             outputs = [
               {
@@ -1717,14 +1719,14 @@ ${state.bannerMOTD}
 
       // Restore exam state if present (for teacher mode editing)
       if (data.examData && typeof data.examData === 'object') {
-        const exam = data.examData as any;
-        startExamProject({
+        const exam = data.examData as { id: string; title: string | { tr: string; en: string }; tasks: unknown[]; durationMinutes: number; difficulty: string; isCustom: boolean };
+        startExamProject(({
           ...exam,
           isExam: true,
-          data: projectData, // The project itself is the template
+          data: projectData,
           tag: 'EDIT',
           description: { tr: 'Düzenleniyor...', en: 'Editing...' }
-        });
+        }) as unknown as ExamProject);
       }
 
       // Close all overlay panels when loading a project
@@ -1886,7 +1888,7 @@ ${state.bannerMOTD}
               }
               return line;
             });
-            setPcOutputs(prev => new Map(prev).set(deviceToRenew.id, updatedOut as any));
+            setPcOutputs(prev => new Map(prev).set(deviceToRenew.id, updatedOut as unknown as PCOutputLine[]));
           }
         }
       }
@@ -1917,7 +1919,7 @@ ${state.bannerMOTD}
             const lease = assignDhcpLeaseForPc(pc, currentTopology) || buildLinkLocalLease(pc, currentTopology);
 
             if (lease) {
-              const { ip: newIp, subnet, gateway, dns } = lease as any;
+              const { ip: newIp, subnet, gateway, dns } = lease as { ip: string; subnet: string; gateway: string; dns: string };
               if (!newIp.startsWith('169.254.')) {
                 assignments.push({ name: pc.name || pc.id, ip: newIp });
               }
@@ -1946,7 +1948,7 @@ ${state.bannerMOTD}
                     }
                     return line;
                   });
-                  setPcOutputs(prev => new Map(prev).set(pc.id, updatedOut as any));
+                  setPcOutputs(prev => new Map(prev).set(pc.id, updatedOut as unknown as PCOutputLine[]));
                 }
               }
             }
@@ -2019,7 +2021,7 @@ ${state.bannerMOTD}
       setActiveDeviceId,
       setActiveDeviceType,
       topologyConnections
-    );
+    ) as { exitSession?: boolean };
 
     setLastCommand(command);
 
@@ -2252,14 +2254,14 @@ ${state.bannerMOTD}
       if (iotOutput) {
         // Filter out password-prompt type which is not compatible with PCOutputLine
         const filteredOutput = iotOutput.filter(o => o.type !== 'password-prompt');
-        adjustedPcOutputs.set(iotId, filteredOutput as any);
+        adjustedPcOutputs.set(iotId, filteredOutput as unknown as PCOutputLine[]);
         adjustedDeviceOutputs.delete(iotId);
       }
     });
 
     // Optimization: Limit terminal outputs to last 100 lines to reduce file size
     const MAX_SAVED_OUTPUT_LINES = 100;
-    const trimOutputs = (outputs: any[]) => {
+    const trimOutputs = <T,>(outputs: T[]): T[] => {
       if (outputs.length <= MAX_SAVED_OUTPUT_LINES) return outputs;
       return outputs.slice(-MAX_SAVED_OUTPUT_LINES);
     };
@@ -2396,7 +2398,7 @@ ${state.bannerMOTD}
       const iotOutput = deviceOutputs.get(iotId);
       if (iotOutput) {
         const filteredOutput = iotOutput.filter(o => o.type !== 'password-prompt');
-        adjustedPcOutputs.set(iotId, filteredOutput as any);
+        adjustedPcOutputs.set(iotId, filteredOutput as unknown as PCOutputLine[]);
         adjustedDeviceOutputs.delete(iotId);
       }
     });
@@ -2931,8 +2933,8 @@ ${state.bannerMOTD}
           type: device.type,
           ip: firstValue(device.ip, portIp),
           mac: firstValue(device.macAddress, state?.macAddress, portMac),
-          gateway: firstValue(device.gateway, state?.defaultGateway),
-          ipv6: firstValue(device.ipv6, portIpv6),
+          gateway: device.gateway || state?.defaultGateway || '0.0.0.0',
+          ipv6: device.ipv6 || portIpv6 || '::',
           services: getOpenServices(device, state),
         };
       });
@@ -3092,6 +3094,7 @@ ${state.bannerMOTD}
     let dhcpClientNoLeaseCount = 0;
     let duplicateIpCount = 0;
     let duplicateMacCount = 0;
+    let duplicateIpv6Count = 0;
     let subnetMismatchCount = 0;
     let invalidGatewayCount = 0;
     let disconnectedLinkCount = 0;
@@ -3238,7 +3241,7 @@ ${state.bannerMOTD}
                   }
                   return line;
                 });
-                setPcOutputs(prev => new Map(prev).set(pc.id, updatedOut as any));
+                setPcOutputs(prev => new Map(prev).set(pc.id, updatedOut as unknown as PCOutputLine[]));
               }
             }
           }
@@ -3386,13 +3389,13 @@ ${state.bannerMOTD}
         const topologyPools = device.services?.dhcp?.pools || [];
         const runtimePools = state?.services?.dhcp?.pools || [];
         const cliPoolEntries = Object.values(state?.dhcpPools || {});
-        const cliPools = cliPoolEntries.map((pool: any) => {
-          const networkPrefix = (pool?.network || '').split('.').slice(0, 3).join('.');
+        const cliPools = cliPoolEntries.map((pool: Record<string, unknown>) => {
+          const networkPrefix = ((pool?.network as string) || '').split('.').slice(0, 3).join('.');
           return {
-            startIp: pool?.startIp || (networkPrefix ? `${networkPrefix}.100` : ''),
+            startIp: (pool?.startIp as string) || (networkPrefix ? `${networkPrefix}.100` : ''),
             maxUsers: Number(pool?.maxUsers || 50),
           };
-        }).filter((p: any) => p.startIp);
+        }).filter((p: Record<string, unknown>) => p.startIp);
         const poolCount = topologyPools.length + runtimePools.length + cliPools.length;
         const dhcpEnabled = !!(device.services?.dhcp?.enabled || state?.services?.dhcp?.enabled || cliPoolEntries.length > 0);
 
@@ -3403,7 +3406,7 @@ ${state.bannerMOTD}
 
         topologyPools.forEach((p) => allDhcpPools.push({ startIp: p.startIp, maxUsers: Number(p.maxUsers || 50) }));
         runtimePools.forEach((p) => allDhcpPools.push({ startIp: p.startIp, maxUsers: Number(p.maxUsers || 50) }));
-        cliPools.forEach((p: any) => allDhcpPools.push({ startIp: p.startIp, maxUsers: Number(p.maxUsers || 50) }));
+        cliPools.forEach((p: Record<string, unknown>) => allDhcpPools.push({ startIp: p.startIp as string, maxUsers: Number(p.maxUsers || 50) }));
       });
 
       iotProcessedDevices.forEach((device) => {
@@ -3423,7 +3426,8 @@ ${state.bannerMOTD}
 
       const ipOwners = new Map<string, string[]>();
       const macOwners = new Map<string, string[]>();
-      const rememberIdentity = (deviceName: string, ip?: string, mac?: string) => {
+      const ipv6Owners = new Map<string, string[]>();
+      const rememberIdentity = (deviceName: string, ip?: string, mac?: string, ipv6?: string) => {
         if (ip && isValidIpv4(ip)) {
           const owners = ipOwners.get(ip) || [];
           owners.push(deviceName);
@@ -3437,18 +3441,25 @@ ${state.bannerMOTD}
             macOwners.set(normalized, owners);
           }
         }
+        if (ipv6 && ipv6.trim()) {
+          const normalized = ipv6.trim().toLowerCase();
+          const owners = ipv6Owners.get(normalized) || [];
+          owners.push(deviceName);
+          ipv6Owners.set(normalized, owners);
+        }
       };
 
       iotProcessedDevices.forEach((device) => {
         const state = portSecurityUpdatedStates.get(device.id);
         const deviceName = device.name || device.id;
-        rememberIdentity(deviceName, device.ip, device.macAddress);
-        Object.values(state?.ports || {}).forEach((port: any) => {
-          rememberIdentity(`${deviceName}:${String(port?.id || '')}`, port?.ipAddress, port?.macAddress);
+        rememberIdentity(deviceName, device.ip, device.macAddress, device.ipv6);
+        Object.values(state?.ports || {}).forEach((port: Port) => {
+          rememberIdentity(`${deviceName}:${String(port?.id || '')}`, port?.ipAddress, port?.macAddress, port?.ipv6Address);
         });
       });
       duplicateIpCount = Array.from(ipOwners.values()).filter((owners) => owners.length > 1).length;
       duplicateMacCount = Array.from(macOwners.values()).filter((owners) => owners.length > 1).length;
+      duplicateIpv6Count = Array.from(ipv6Owners.values()).filter((owners) => owners.length > 1).length;
 
       iotProcessedDevices.forEach((device) => {
         if ((device.type !== 'pc' && device.type !== 'iot') || !device.gateway || !isValidIpv4(device.ip) || !isValidIpv4(device.subnet || '')) return;
@@ -3536,17 +3547,7 @@ ${state.bannerMOTD}
         const topologyMessage = invalidCount > 0
           ? `${language === 'tr' ? t.topologyInvalidConnections.replace('X', String(invalidCount)) : `Topology: ${invalidCount} ${invalidCount === 1 ? 'invalid connection disabled' : 'invalid connections disabled'}`}`
           : '';
-        const duplicateIpDetails = Array.from(ipOwners.entries())
-          .filter(([, owners]) => owners.length > 1)
-          .map(([ip, owners]) => `${ip}: ${owners.join(', ')}`)
-          .join('\n');
         const validationMessages = [
-          duplicateIpCount > 0
-            ? (language === 'tr'
-              ? `⚠ Yinelenen IP (${duplicateIpCount}):\n${duplicateIpDetails}`
-              : `⚠ Duplicate IP (${duplicateIpCount}):\n${duplicateIpDetails}`)
-            : '',
-          duplicateMacCount > 0 ? (language === 'tr' ? `⚠ Yinelenen MAC: ${duplicateMacCount}` : `⚠ Duplicate MAC: ${duplicateMacCount}`) : '',
           subnetMismatchCount > 0 ? (language === 'tr' ? `⚠ Alt ağ uyumsuzluğu: ${subnetMismatchCount}` : `⚠ Subnet mismatch: ${subnetMismatchCount}`) : '',
           invalidGatewayCount > 0 ? (language === 'tr' ? `⚠ Geçersiz ağ geçidi: ${invalidGatewayCount}` : `⚠ Invalid gateway: ${invalidGatewayCount}`) : '',
           disconnectedLinkCount > 0 ? (language === 'tr' ? `⚠ Kopuk bağlantı: ${disconnectedLinkCount}` : `⚠ Disconnected link: ${disconnectedLinkCount}`) : '',
@@ -3584,6 +3585,50 @@ ${state.bannerMOTD}
               description: wifiMessages.join('\n'),
               duration: 4000,
             });
+          }
+
+          // Individual conflict toasts (staggered to respect TOAST_LIMIT=1)
+          let conflictToastDelay = 0;
+          const showConflictToast = (title: string, description: string) => {
+            if (conflictToastDelay === 0) {
+              toast({ title, description, duration: 4500, variant: 'destructive' });
+            } else {
+              setTimeout(() => toast({ title, description, duration: 4500, variant: 'destructive' }), conflictToastDelay);
+            }
+            conflictToastDelay += 5000;
+          };
+
+          if (duplicateIpCount > 0) {
+            const dupIpDesc = Array.from(ipOwners.entries())
+              .filter(([, owners]) => owners.length > 1)
+              .map(([ip, owners]) => `${ip}: ${owners.join(', ')}`)
+              .join('\n');
+            showConflictToast(
+              language === 'tr' ? `IP Çakışması (${duplicateIpCount})` : `IP Conflict (${duplicateIpCount})`,
+              dupIpDesc
+            );
+          }
+
+          if (duplicateMacCount > 0) {
+            const dupMacDesc = Array.from(macOwners.entries())
+              .filter(([, owners]) => owners.length > 1)
+              .map(([mac, owners]) => `${mac}: ${owners.join(', ')}`)
+              .join('\n');
+            showConflictToast(
+              language === 'tr' ? `MAC Çakışması (${duplicateMacCount})` : `MAC Conflict (${duplicateMacCount})`,
+              dupMacDesc
+            );
+          }
+
+          if (duplicateIpv6Count > 0) {
+            const dupIpv6Desc = Array.from(ipv6Owners.entries())
+              .filter(([, owners]) => owners.length > 1)
+              .map(([ipv6, owners]) => `${ipv6}: ${owners.join(', ')}`)
+              .join('\n');
+            showConflictToast(
+              language === 'tr' ? `IPv6 Çakışması (${duplicateIpv6Count})` : `IPv6 Conflict (${duplicateIpv6Count})`,
+              dupIpv6Desc
+            );
           }
 
           if (validationMessages.length > 0) {
@@ -3893,7 +3938,7 @@ ${state.bannerMOTD}
         // Perform PVST calculation for all devices
         // We pick an arbitrary device as source for the calculation context, 
         // calculatePVST handles the global update.
-        const firstSwitch = updatedDevices.find((d: any) => d.type === 'switchL2' || d.type === 'switchL3');
+        const firstSwitch = updatedDevices.find((d: CanvasDevice) => d.type === 'switchL2' || d.type === 'switchL3');
         if (!firstSwitch) return;
 
         const firstSwitchState = deviceStates.get(firstSwitch.id);
@@ -3936,22 +3981,23 @@ ${state.bannerMOTD}
       reader.onload = (e) => {
         try {
           const content = e.target?.result as string;
-          let projectData: any;
+          let projectData: unknown;
 
           // Try decrypting as exam file first if extension matches
           if (file.name.endsWith('.exam')) {
             projectData = decryptExamData(content);
             if (projectData) {
+              const exam = projectData as ExamProject;
               setIsExamLoadedFromFile(true);
               closeGuidedMode();
-              startExamProject(projectData);
-              loadProjectData(projectData.data);
+              startExamProject(exam);
+              loadProjectData(exam.data);
               setHasUnsavedChanges(false);
-              setProjectName(projectData.title.en);
+              setProjectName((exam.title as unknown as { en: string }).en);
               document.body.style.cursor = '';
               toast({
                 title: language === 'tr' ? 'Sınav Modu Başlatıldı' : 'Exam Mode Started',
-                description: projectData.title[language === 'tr' ? 'tr' : 'en'],
+                description: (exam.title as unknown as { tr: string; en: string })[language === 'tr' ? 'tr' : 'en'],
               });
               return;
             }
@@ -4012,7 +4058,7 @@ ${state.bannerMOTD}
     doLoad();
   }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode, closeExam, setProjectName, hasUnsavedChanges, handleSaveProject, setSaveDialog, t.unsavedChangesConfirm, startExamProject]);
 
-  const applyExampleProject = useCallback((projectData: any, exampleId?: string) => {
+  const applyExampleProject = useCallback((projectData: unknown, exampleId?: string) => {
     loadProjectData(projectData);
     setRefreshNetworkReport(null);
     let loadedTitle = projectName;
@@ -4054,11 +4100,11 @@ ${state.bannerMOTD}
     startExamProject(project);
   }, [startExamProject, closeGuidedMode]);
 
-  const handleConvertProjectToExam = useCallback((projectData: any) => {
+  const handleConvertProjectToExam = useCallback((projectData: unknown) => {
     document.body.style.cursor = 'wait';
     closeExam();
     closeGuidedMode();
-    const exam = generateExamFromProject(projectData, language);
+    const exam = generateExamFromProject(projectData as ProjectData, language);
     startExamProject(exam);
     loadProjectData(projectData);
     toggleEditor(true);
@@ -4393,7 +4439,7 @@ ${state.bannerMOTD}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <DialogTitle className={cn("font-semibold truncate", isDark ? 'text-white' : 'text-slate-900')}>
-                        {isTR ? 'Firewall' : 'Firewall'} - {topologyDevices?.find((d: any) => d.id === activeFirewallId)?.name || activeFirewallId}
+                        {isTR ? 'Firewall' : 'Firewall'} - {topologyDevices?.find((d: CanvasDevice) => d.id === activeFirewallId)?.name || activeFirewallId}
                       </DialogTitle>
                     </div>
                     <div className="flex items-center gap-1">
@@ -4441,7 +4487,7 @@ ${state.bannerMOTD}
                 <div className="flex-1 overflow-y-auto rounded-b-2xl p-4 custom-scrollbar">
                   {activeFirewallId && (
                     <FirewallPanel
-                      device={topologyDevices.find(d => d.id === activeFirewallId)!}
+                      device={topologyDevices.find(d => d.id === activeFirewallId) as CanvasDevice}
                       t={t}
                       theme={theme}
                       isDevicePoweredOff={topologyDevices.find(d => d.id === activeFirewallId)?.status === 'offline'}
@@ -4450,7 +4496,7 @@ ${state.bannerMOTD}
                       }}
                       deviceStates={deviceStates}
                       deviceOutputs={deviceOutputs}
-                      onExecuteCommand={(cmd) => handleExecuteCommand(activeFirewallId!, cmd)}
+                      onExecuteCommand={(cmd) => handleExecuteCommand(activeFirewallId as string, cmd)}
                       onUpdateHistory={handleUpdateHistory}
                       setConfirmDialog={setConfirmDialog}
                       confirmDialog={confirmDialog}
@@ -4528,7 +4574,7 @@ ${state.bannerMOTD}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
                       <DialogTitle className={isDark ? 'text-white font-semibold' : 'text-slate-900 font-semibold'}>
-                        {t.pcTerminal} - {topologyDevices?.find((d: any) => d.id === showPCDeviceId)?.name || showPCDeviceId}
+                        {t.pcTerminal} - {topologyDevices?.find((d: CanvasDevice) => d.id === showPCDeviceId)?.name || showPCDeviceId}
                       </DialogTitle>
                     </div>
                     <div className="flex items-center gap-1">
@@ -4684,7 +4730,7 @@ ${state.bannerMOTD}
                   {/* PC Info Popover - Bottom Right Mini Panel */}
                   {activeDeviceId && (activeDeviceId.startsWith('pc-') || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'pc') && topologyDevices && topologyDevices.find(d => d.id === activeDeviceId) && (
                     <PCInfoPopover
-                      pc={topologyDevices.find(d => d.id === activeDeviceId)!}
+                      pc={topologyDevices.find(d => d.id === activeDeviceId) as CanvasDevice}
                       t={t}
                       language={language}
                       isDark={isDark}
@@ -4708,7 +4754,7 @@ ${state.bannerMOTD}
                   {/* Router Info Popover - Bottom Right Mini Panel */}
                   {activeDeviceId && (activeDeviceId.startsWith('router-') || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'router') && topologyDevices && (
                     <RouterInfoPopover
-                      router={topologyDevices.find(d => d.id === activeDeviceId)!}
+                      router={topologyDevices.find(d => d.id === activeDeviceId) as CanvasDevice}
                       routerState={deviceStates.get(activeDeviceId)}
                       t={t}
                       language={language}

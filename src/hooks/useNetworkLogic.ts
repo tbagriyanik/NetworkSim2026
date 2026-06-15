@@ -177,7 +177,7 @@ export function useNetworkLogic(
                 targetPort: 'wlan0',
                 cableType: 'wireless',
                 active: true
-              } as any);
+              } as CanvasConnection);
             }
           }
         });

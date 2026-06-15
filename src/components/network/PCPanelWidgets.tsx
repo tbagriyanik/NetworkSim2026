@@ -71,7 +71,7 @@ export const IoTSensorDisplay = ({
     isDark,
 }: {
     device: CanvasDevice;
-    environment: any;
+    environment: { temperature?: number; humidity?: number; light?: number };
     language: string;
     isDark: boolean;
 }) => {

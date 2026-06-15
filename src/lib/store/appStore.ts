@@ -71,7 +71,7 @@ interface TopologyState {
 
 interface DeviceStates {
     switchStates: Record<string, SwitchState>;
-    pcOutputs: Record<string, any[]>;
+    pcOutputs: Record<string, string[]>;
 }
 
 interface AppState {
@@ -107,8 +107,8 @@ interface AppState {
     // Device state management
     setSwitchState: (deviceId: string, state: SwitchState) => void;
     getSwitchState: (deviceId: string) => SwitchState | undefined;
-    setPCOutput: (deviceId: string, output: any[]) => void;
-    getPCOutput: (deviceId: string) => any[];
+    setPCOutput: (deviceId: string, output: string[]) => void;
+    getPCOutput: (deviceId: string) => string[];
 
     // UI actions
     setActiveTab: (tab: 'topology' | 'cmd' | 'terminal' | 'tasks') => void;
@@ -361,7 +361,7 @@ const createActions = (set: (partial: Partial<AppState> | ((state: AppState) => 
 
     getSwitchState: (deviceId: string) => get().deviceStates.switchStates[deviceId],
 
-    setPCOutput: (deviceId: string, output: any[]) =>
+    setPCOutput: (deviceId: string, output: string[]) =>
         set({
             deviceStates: {
                 ...get().deviceStates,

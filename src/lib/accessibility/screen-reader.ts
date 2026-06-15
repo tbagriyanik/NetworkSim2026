@@ -42,8 +42,9 @@ class LiveRegionManager {
      * Create or get a live region
      */
     getOrCreateRegion(id: string, config: LiveRegionConfig): HTMLElement {
-        if (this.regions.has(id)) {
-            return this.regions.get(id)!;
+        const existing = this.regions.get(id);
+        if (existing) {
+            return existing;
         }
 
         const region = document.createElement('div');

@@ -31,18 +31,18 @@ interface ExamModePanelProps {
   lastCommand?: string;
   deviceAccessed?: 'switch' | 'router' | 'pc' | null;
   deviceAccessedId?: string | null;
-  deviceState?: any;
-  deviceStates?: Map<string, any>;
-  topologyConnections?: any[];
-  topologyDevices?: any[];
+  deviceState?: unknown;
+  deviceStates?: Map<string, unknown>;
+  topologyConnections?: unknown[];
+  topologyDevices?: unknown[];
   onCheckTasks?: (context: {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
-    deviceState?: any;
-    deviceStates?: Map<string, any>;
-    topologyConnections?: any[];
-    topologyDevices?: any[];
+    deviceState?: unknown;
+    deviceStates?: Map<string, unknown>;
+    topologyConnections?: unknown[];
+    topologyDevices?: unknown[];
   }) => void;
   onOpenEditor?: () => void;
 }
@@ -83,7 +83,7 @@ export function ExamModePanel({
     const limitSec = project.durationMinutes * 60;
 
     const update = (nowMs: number = Date.now()) => {
-      const diff = Math.floor((nowMs - new Date(project.startedAt!).getTime()) / 1000);
+      const diff = Math.floor((nowMs - new Date(project.startedAt as unknown as string | number).getTime()) / 1000);
       setElapsedSeconds(diff);
       setTimeLimit(Math.max(0, limitSec - diff));
     };

@@ -41,18 +41,18 @@ interface GuidedModePanelProps {
   lastCommand?: string;
   deviceAccessed?: 'switch' | 'router' | 'pc' | null;
   deviceAccessedId?: string | null;
-  deviceState?: any;
-  deviceStates?: Map<string, any>;
-  topologyConnections?: any[];
-  topologyDevices?: any[];
+  deviceState?: unknown;
+  deviceStates?: Map<string, unknown>;
+  topologyConnections?: unknown[];
+  topologyDevices?: unknown[];
   onCheckAutoComplete?: (context: {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
-    deviceState?: any;
-    deviceStates?: Map<string, any>;
-    topologyConnections?: any[];
-    topologyDevices?: any[];
+    deviceState?: unknown;
+    deviceStates?: Map<string, unknown>;
+    topologyConnections?: unknown[];
+    topologyDevices?: unknown[];
   }) => void;
 }
 
@@ -111,7 +111,7 @@ export function GuidedModePanel({
   useEffect(() => {
     if (!project?.startedAt) return;
     const update = () => {
-      setElapsedSeconds(Math.floor((Date.now() - new Date(project.startedAt!).getTime()) / 1000));
+      setElapsedSeconds(Math.floor((Date.now() - new Date(project.startedAt as unknown as string | number).getTime()) / 1000));
     };
     update();
     const id = setInterval(update, 1000);
@@ -394,8 +394,8 @@ export function GuidedModePanel({
 
   // Listen for step completion event from useGuidedMode
   useEffect(() => {
-    const handleStepCompleted = (e: any) => {
-      const points = e.detail?.points || 0;
+    const handleStepCompleted = (e: Event) => {
+      const points = (e as CustomEvent<{ points: number }>).detail?.points || 0;
       if (points > 0) {
         toast({
           title: language === 'tr' ? `+${points} ${t.pointsEarned}!` : `+${points} ${t.pointsEarned}!`,

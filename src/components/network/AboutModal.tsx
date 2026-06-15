@@ -35,7 +35,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('help');
   const version = process.env.NEXT_PUBLIC_GIT_COMMIT_COUNT;
   const isDark = theme === 'dark';
-  const lang = (t as any).language || 'en';
+  const lang = (t as unknown as Record<string, string>).language || 'en';
   const isTR = lang === 'tr';
 
   // Help content data - memoized to prevent infinite loops
@@ -386,7 +386,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                           <button
                             key={type.id}
                             type="button"
-                            onClick={() => setContactData(prev => ({ ...prev, type: type.id as any }))}
+                            onClick={() => setContactData(prev => ({ ...prev, type: type.id as 'bug' | 'suggestion' | 'other' }))}
                             className={cn(
                               "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-md border transition-all font-medium text-sm",
                               contactData.type === type.id

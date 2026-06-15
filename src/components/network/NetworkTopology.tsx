@@ -254,7 +254,7 @@ export function NetworkTopology({
     topologyConnections.forEach(conn => {
       const pair = [conn.sourceDeviceId, conn.targetDeviceId].sort().join(':');
       if (!groupMap.has(pair)) groupMap.set(pair, []);
-      groupMap.get(pair)!.push(conn.id);
+      groupMap.get(pair)?.push(conn.id);
     });
 
     // Assign indices and totals
@@ -306,7 +306,7 @@ export function NetworkTopology({
       setDevices((prev) => {
         let changed = false;
         const next = prev.map((device) => {
-          if (device.type === 'iot' && (device.iot?.sensorType === 'motion' || device.iot?.sensorType === 'sound')) {
+          if (device.type === 'iot' && device.status !== 'offline' && device.iot?.collaborationEnabled !== false && (device.iot?.sensorType === 'motion' || device.iot?.sensorType === 'sound')) {
             const dWidth = getDeviceWidth(device.type);
             const dHeight = getDeviceHeight(device.type, device.ports?.length || 0);
             const dx = mousePosRef.current.x - device.x - (dWidth / 2);
@@ -735,7 +735,7 @@ export function NetworkTopology({
   const deviceCounterRef = useRef<{ pc: number; iot: number; switch: number; router: number; firewall: number }>({ pc: 0, iot: 0, switch: 0, router: 0, firewall: 0 });
   const getCounterKey = useCallback((type: DeviceType | string): 'pc' | 'iot' | 'switch' | 'router' | 'firewall' => {
     if (type === 'switchL2' || type === 'switchL3' || type === 'switch') return 'switch';
-    if (type === 'pc' || type === 'router' || type === 'firewall') return type as any;
+    if (type === 'pc' || type === 'router' || type === 'firewall') return type as 'pc' | 'router' | 'firewall';
     if (type === 'iot') return 'iot';
     return 'pc';
   }, []);
@@ -1150,7 +1150,7 @@ export function NetworkTopology({
     const targetEl = e.target as HTMLElement;
     const isOnDevice = !!targetEl.closest('[data-device-id]');
     const isOnNote = !!targetEl.closest('[data-note-id]');
-    const isOnEditable = targetEl.tagName === 'TEXTAREA' || targetEl.tagName === 'INPUT' || (targetEl as any).isContentEditable;
+    const isOnEditable = targetEl.tagName === 'TEXTAREA' || targetEl.tagName === 'INPUT' || targetEl.isContentEditable;
 
     if (e.button === 0 && !isOnDevice && !isOnNote && !isOnEditable) {
       // Left click on empty canvas - PAN start
@@ -1499,7 +1499,7 @@ export function NetworkTopology({
         if (!isOnDevice && !isOnNote && !isOnMenu) {
           setSelectedDeviceIds([]);
           selectedDeviceIdsRef.current = [];
-          if (onDeviceSelect) onDeviceSelect(null as any, null as any, undefined, null as any);
+          if (onDeviceSelect) onDeviceSelect(null as unknown as DeviceType, null as unknown as string | undefined, undefined, null as unknown as string | undefined);
           setSelectedNoteIds([]);
           setPingMode(false);
           setPingSource(null);
@@ -2856,15 +2856,17 @@ export function NetworkTopology({
       if (draggedNoteIdRef.current && noteDragStartRef.current) {
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
+        const dragStart = noteDragStartRef.current;
+        const draggedNoteId = draggedNoteIdRef.current;
         animationFrameId = requestAnimationFrame(() => {
           const currentZoom = zoomRef.current;
 
-          const deltaX = (e.clientX - noteDragStartRef.current!.x) / currentZoom;
-          const deltaY = (e.clientY - noteDragStartRef.current!.y) / currentZoom;
+          const deltaX = (e.clientX - dragStart.x) / currentZoom;
+          const deltaY = (e.clientY - dragStart.y) / currentZoom;
 
           setNotes((prev) =>
             prev.map((n) =>
-              n.id === draggedNoteIdRef.current
+              n.id === draggedNoteId
                 ? { ...n, x: n.x + deltaX, y: n.y + deltaY }
                 : n
             )
@@ -2875,24 +2877,25 @@ export function NetworkTopology({
       } else if (resizingNoteIdRef.current && noteResizeStartRef.current) {
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
+        const resizeStart = noteResizeStartRef.current;
+        const dir = noteResizeDirectionRef.current;
         animationFrameId = requestAnimationFrame(() => {
           const currentZoom = zoomRef.current;
-          const dir = noteResizeDirectionRef.current;
-          const dx = (e.clientX - noteResizeStartRef.current!.x) / currentZoom;
-          const dy = (e.clientY - noteResizeStartRef.current!.y) / currentZoom;
-          const origW = noteResizeStartRef.current!.width;
-          const origH = noteResizeStartRef.current!.height;
+          const dx = (e.clientX - resizeStart.x) / currentZoom;
+          const dy = (e.clientY - resizeStart.y) / currentZoom;
+          const origW = resizeStart.width;
+          const origH = resizeStart.height;
           let newW = origW, newH = origH, newX: number | undefined, newY: number | undefined;
 
           if (dir.includes('e')) newW = Math.max(150, origW + dx);
-          if (dir.includes('w')) { newW = Math.max(150, origW - dx); newX = noteResizeStartRef.current!.noteX + (origW - newW); }
+          if (dir.includes('w')) { newW = Math.max(150, origW - dx); newX = resizeStart.noteX + (origW - newW); }
           if (dir.includes('s')) newH = Math.max(100, origH + dy);
-          if (dir.includes('n')) { newH = Math.max(100, origH - dy); newY = noteResizeStartRef.current!.noteY + (origH - newH); }
+          if (dir.includes('n')) { newH = Math.max(100, origH - dy); newY = resizeStart.noteY + (origH - newH); }
 
           setNotes((prev) =>
             prev.map((n) => {
               if (n.id !== resizingNoteIdRef.current) return n;
-              const updated: any = { ...n, width: newW, height: newH };
+              const updated: CanvasNote = { ...n, width: newW, height: newH };
               if (newX !== undefined) updated.x = newX;
               if (newY !== undefined) updated.y = newY;
               return updated;
@@ -2910,15 +2913,17 @@ export function NetworkTopology({
       if (draggedNoteIdRef.current && noteDragStartRef.current) {
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
+        const dragStart = noteDragStartRef.current;
+        const draggedNoteId = draggedNoteIdRef.current;
         animationFrameId = requestAnimationFrame(() => {
           const currentZoom = zoomRef.current;
 
-          const deltaX = (touch.clientX - noteDragStartRef.current!.x) / currentZoom;
-          const deltaY = (touch.clientY - noteDragStartRef.current!.y) / currentZoom;
+          const deltaX = (touch.clientX - dragStart.x) / currentZoom;
+          const deltaY = (touch.clientY - dragStart.y) / currentZoom;
 
           setNotes((prev) =>
             prev.map((n) =>
-              n.id === draggedNoteIdRef.current
+              n.id === draggedNoteId
                 ? { ...n, x: n.x + deltaX, y: n.y + deltaY }
                 : n
             )
@@ -2929,24 +2934,25 @@ export function NetworkTopology({
       } else if (resizingNoteIdRef.current && noteResizeStartRef.current) {
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
+        const resizeStart = noteResizeStartRef.current;
+        const dir = noteResizeDirectionRef.current;
         animationFrameId = requestAnimationFrame(() => {
           const currentZoom = zoomRef.current;
-          const dir = noteResizeDirectionRef.current;
-          const dx = (touch.clientX - noteResizeStartRef.current!.x) / currentZoom;
-          const dy = (touch.clientY - noteResizeStartRef.current!.y) / currentZoom;
-          const origW = noteResizeStartRef.current!.width;
-          const origH = noteResizeStartRef.current!.height;
+          const dx = (touch.clientX - resizeStart.x) / currentZoom;
+          const dy = (touch.clientY - resizeStart.y) / currentZoom;
+          const origW = resizeStart.width;
+          const origH = resizeStart.height;
           let newW = origW, newH = origH, newX: number | undefined, newY: number | undefined;
 
           if (dir.includes('e')) newW = Math.max(150, origW + dx);
-          if (dir.includes('w')) { newW = Math.max(150, origW - dx); newX = noteResizeStartRef.current!.noteX + (origW - newW); }
+          if (dir.includes('w')) { newW = Math.max(150, origW - dx); newX = resizeStart.noteX + (origW - newW); }
           if (dir.includes('s')) newH = Math.max(100, origH + dy);
-          if (dir.includes('n')) { newH = Math.max(100, origH - dy); newY = noteResizeStartRef.current!.noteY + (origH - newH); }
+          if (dir.includes('n')) { newH = Math.max(100, origH - dy); newY = resizeStart.noteY + (origH - newH); }
 
           setNotes((prev) =>
             prev.map((n) => {
               if (n.id !== resizingNoteIdRef.current) return n;
-              const updated: any = { ...n, width: newW, height: newH };
+              const updated: CanvasNote = { ...n, width: newW, height: newH };
               if (newX !== undefined) updated.x = newX;
               if (newY !== undefined) updated.y = newY;
               return updated;
@@ -3031,7 +3037,7 @@ export function NetworkTopology({
 
     if (!otherPort) return 1;
     if (hasPortMode(otherPort) && otherPort.mode === 'trunk') return 'Trunk';
-    return Number((otherPort as any).accessVlan || otherPort.vlan || 1);
+    return Number(otherPort.accessVlan || otherPort.vlan || 1);
   }, [connections, getLivePort]);
 
   const getIotDeviceStatus = useCallback((device: CanvasDevice) => {
@@ -3061,6 +3067,10 @@ export function NetworkTopology({
     // Controllable devices use open/close state, not sensor measurements
     if (kind === 'lamp' || kind === 'heater' || kind === 'cooler') {
       return getIotOpenCloseStatus(device);
+    }
+
+    if (device.status === 'offline') {
+      return language === 'tr' ? 'Kapalı' : 'Off';
     }
 
     if (device.iot?.collaborationEnabled === false) {
@@ -3112,11 +3122,11 @@ export function NetworkTopology({
       const peerPort = getLivePort(peerDeviceId, peerPortId);
       if (!peerPort) return '1';
       if (hasPortMode(peerPort) && peerPort.mode === 'trunk') return 'Trunk';
-      return String((peerPort as any).accessVlan || peerPort.vlan || 1);
+      return String(peerPort.accessVlan || peerPort.vlan || 1);
     }
 
     if (hasPortMode(livePort) && livePort.mode === 'trunk') return 'Trunk';
-    return String((livePort as any).accessVlan || livePort.vlan || 1);
+    return String(livePort.accessVlan || livePort.vlan || 1);
   }, [connections, devices, getLivePort]);
 
   const showPortTooltip = useCallback((e: ReactMouseEvent | MouseEvent, deviceId: string, portId: string) => {
@@ -3247,7 +3257,7 @@ export function NetworkTopology({
           if (simulatorPort) {
             // Skip wlan ports from status sync - they are managed separately
             if (port.id.toLowerCase().startsWith('wlan')) {
-              const wifiChanged = JSON.stringify((port as any).wifi) !== JSON.stringify(simulatorPort.wifi);
+              const wifiChanged = JSON.stringify(port.wifi) !== JSON.stringify(simulatorPort.wifi);
               const shutdownChanged = port.shutdown !== simulatorPort.shutdown;
               if (!wifiChanged && !shutdownChanged) return port;
               portChanged = true;
@@ -3276,10 +3286,10 @@ export function NetworkTopology({
               ...port,
               status: uiStatus,
               vlan: simulatorPort.vlan ?? port.vlan,
-              accessVlan: simulatorPort.accessVlan ?? (port as any).accessVlan,
+              accessVlan: simulatorPort.accessVlan ?? port.accessVlan,
               mode: simulatorPort.mode ?? port.mode,
               name: simulatorPort.name ?? port.name,
-              description: simulatorPort.description ?? (port as any).description,
+              description: simulatorPort.description ?? port.description,
               speed: simulatorPort.speed ?? port.speed,
               duplex: simulatorPort.duplex ?? port.duplex,
               shutdown: simulatorPort.shutdown ?? port.shutdown,
@@ -3291,16 +3301,16 @@ export function NetworkTopology({
             const changed =
               nextPort.status !== port.status ||
               nextPort.vlan !== port.vlan ||
-              nextPort.accessVlan !== (port as any).accessVlan ||
+              nextPort.accessVlan !== port.accessVlan ||
               nextPort.mode !== port.mode ||
               nextPort.name !== port.name ||
-              (nextPort as any).description !== (port as any).description ||
+              nextPort.description !== port.description ||
               nextPort.speed !== port.speed ||
               nextPort.duplex !== port.duplex ||
               nextPort.shutdown !== port.shutdown ||
               nextPort.ipAddress !== port.ipAddress ||
               nextPort.subnetMask !== port.subnetMask ||
-              JSON.stringify((nextPort as any).wifi) !== JSON.stringify((port as any).wifi);
+              JSON.stringify(nextPort.wifi) !== JSON.stringify(port.wifi);
             if (changed) {
               portChanged = true;
               hasChanges = true;
@@ -3509,8 +3519,8 @@ export function NetworkTopology({
 
   // Handle key events: ESC to close context menu, DELETE to remove devices, Ctrl+A to select all
   useEffect(() => {
-    const handleCloseBroadcast = (e: any) => {
-      const source = e.detail?.source;
+    const handleCloseBroadcast = (e: Event) => {
+      const source = (e as CustomEvent)?.detail?.source;
       if (source && source !== 'topology') {
         setContextMenu(null);
         if (source === 'escape') {
@@ -3703,7 +3713,7 @@ export function NetworkTopology({
     visited.add(sourceId);
 
     while (queue.length > 0) {
-      const current = queue.shift()!;
+      const current = queue.shift() as { deviceId: string; path: string[] };
 
       // Find all connected devices
       for (const conn of connections) {
@@ -3763,14 +3773,14 @@ export function NetworkTopology({
             const isSTPBlocked = isSourceSTPBlocked || isTargetSTPBlocked;
 
             if (isCompatible && isUp && !isSTPBlocked) {
-              const newPath = [...current.path, nextDeviceId!];
+              const newPath = [...current.path, nextDeviceId];
 
               if (nextDeviceId === targetId) {
                 return newPath;
               }
 
-              visited.add(nextDeviceId!);
-              queue.push({ deviceId: nextDeviceId!, path: newPath });
+              visited.add(nextDeviceId);
+              queue.push({ deviceId: nextDeviceId, path: newPath });
             }
           }
         }
@@ -4473,20 +4483,20 @@ export function NetworkTopology({
 
   // Listen for global ping animation trigger
   useEffect(() => {
-    const handlePingTrigger = (event: any) => {
-      const { sourceId, targetId } = event.detail;
+    const handlePingTrigger = (event: Event) => {
+      const { sourceId, targetId } = (event as CustomEvent).detail as { sourceId: string; targetId: string };
       if (sourceId && targetId) {
         startPingAnimation(sourceId, targetId);
       }
     };
-    window.addEventListener('trigger-ping-animation', handlePingTrigger);
-    return () => window.removeEventListener('trigger-ping-animation', handlePingTrigger);
+    window.addEventListener('trigger-ping-animation', handlePingTrigger as EventListener);
+    return () => window.removeEventListener('trigger-ping-animation', handlePingTrigger as EventListener);
   }, [startPingAnimation]);
 
   // Listen for device power toggle events — cancel active ping if a device in the path is turned off
   useEffect(() => {
-    const handlePowerToggle = (event: any) => {
-      const { deviceId, nextStatus } = event.detail;
+    const handlePowerToggle = (event: Event) => {
+      const { deviceId, nextStatus } = (event as CustomEvent).detail as { deviceId: string; nextStatus: string };
       if (nextStatus === 'offline' && pingPathRef.current.includes(deviceId)) {
         cancelPingDueToInterruptionRef.current(
           isTR ? 'Cihaz kapatıldığı için ping iptal edildi.' : 'Ping cancelled because a device was powered off.'
@@ -4832,8 +4842,8 @@ export function NetworkTopology({
           </>
         )}
 
-        {/* Radius indicator for motion/sound sensors - ALWAYS visible */}
-        {device.type === 'iot' && (
+        {/* Radius indicator for motion/sound sensors */}
+        {device.type === 'iot' && device.status !== 'offline' && device.iot?.collaborationEnabled !== false && (
           <>
             {device.iot?.sensorType === 'motion' && (
               <circle
@@ -4849,12 +4859,10 @@ export function NetworkTopology({
             )}
             {device.iot?.sensorType === 'sound' && (
               <>
-                {/* Dynamic sound radius based on measured dB value */}
                 {(() => {
                   const dBValue = typeof device.iot?.value === 'number' ? device.iot.value : 0;
-                  // Normalize dB value (0-120 dB) to radius (50-200px)
                   const radius = Math.min(150, 50 + (dBValue / 120) * 100);
-                  const opacity = 0.1 + (dBValue / 120) * 0.3; // 0.1 to 0.4
+                  const opacity = 0.1 + (dBValue / 120) * 0.3;
 
                   return (
                     <circle
@@ -5500,7 +5508,15 @@ export function NetworkTopology({
         )}
         {device.type === 'iot' && (
           (() => {
+            const isPoweredOff = device.status === 'offline';
             const isPassive = device.iot?.collaborationEnabled === false;
+            if (isPoweredOff) {
+              return (
+                <text x={deviceWidth / 2} y={70} fill={isDark ? '#94a3b8' : '#64748b'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
+                  <tspan x={deviceWidth / 2} dy="6">{language === 'tr' ? 'Kapalı' : 'Off'}</tspan>
+                </text>
+              );
+            }
             if (isPassive) {
               return (
                 <text x={deviceWidth / 2} y={70} fill={isDark ? '#94a3b8' : '#64748b'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
@@ -6803,7 +6819,7 @@ export function NetworkTopology({
                         onClick={(e) => {
                           e.stopPropagation();
                           setContextMenu(null);
-                          if ((e as any).shiftKey) {
+                          if (e.shiftKey) {
                             setSelectedNoteIds((prev) => prev.includes(note.id) ? prev.filter(id => id !== note.id) : [...prev, note.id]);
                           } else {
                             setSelectedNoteIds([note.id]);
@@ -7913,10 +7929,11 @@ export function NetworkTopology({
             setPortSelectorStep('target');
           } else {
             // Complete connection
+            const srcPort = selectedSourcePort as { deviceId: string; portId: string };
             const newConnection: CanvasConnection = {
               id: `conn-${Date.now()}`,
-              sourceDeviceId: selectedSourcePort!.deviceId,
-              sourcePort: selectedSourcePort!.portId,
+              sourceDeviceId: srcPort.deviceId,
+              sourcePort: srcPort.portId,
               targetDeviceId: deviceId,
               targetPort: portId,
               cableType: cableInfo.cableType,
@@ -7928,11 +7945,11 @@ export function NetworkTopology({
             // Update port status
             setDevices((prev) =>
               prev.map((d) => {
-                if (d.id === selectedSourcePort!.deviceId) {
+                if (d.id === srcPort.deviceId) {
                   return {
                     ...d,
                     ports: d.ports.map((p) =>
-                      p.id === selectedSourcePort!.portId ? { ...p, status: 'connected' as const } : p
+                      p.id === srcPort.portId ? { ...p, status: 'connected' as const } : p
                     ),
                   };
                 }
@@ -7949,7 +7966,7 @@ export function NetworkTopology({
             );
 
             // Update cable info
-            const sourceDevice = deviceMap.get(selectedSourcePort!.deviceId);
+            const sourceDevice = deviceMap.get(srcPort.deviceId);
             const targetDevice = deviceMap.get(deviceId);
             if (sourceDevice && targetDevice) {
               onCableChange({

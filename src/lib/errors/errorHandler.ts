@@ -8,7 +8,7 @@ export interface ErrorInfo {
     recoverable: boolean;
     recoverySteps?: string[];
     timestamp: number;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
 }
 
 export interface RecoveryFeedback {
@@ -25,7 +25,7 @@ export class ApplicationError extends Error {
     severity: 'info' | 'warning' | 'error' | 'critical';
     recoverable: boolean;
     recoverySteps?: string[];
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
 
     constructor(
         code: string,
@@ -35,7 +35,7 @@ export class ApplicationError extends Error {
             severity?: 'info' | 'warning' | 'error' | 'critical';
             recoverable?: boolean;
             recoverySteps?: string[];
-            context?: Record<string, any>;
+            context?: Record<string, unknown>;
         }
     ) {
         super(message);
@@ -67,7 +67,7 @@ export class ErrorHandler {
     private maxErrors = 100;
     private listeners: Set<(error: ErrorInfo) => void> = new Set();
 
-    logError(error: Error | ApplicationError, context?: Record<string, any>) {
+    logError(error: Error | ApplicationError, context?: Record<string, unknown>) {
         let errorInfo: ErrorInfo;
 
         if (error instanceof ApplicationError) {
@@ -148,7 +148,7 @@ export const errorHandler = new ErrorHandler();
 
 export function useErrorHandler() {
     return {
-        logError: (error: Error | ApplicationError, context?: Record<string, any>) =>
+        logError: (error: Error | ApplicationError, context?: Record<string, unknown>) =>
             errorHandler.logError(error, context),
         getErrors: () => errorHandler.getErrors(),
         getErrorsByCode: (code: string) => errorHandler.getErrorsByCode(code),
@@ -178,7 +178,7 @@ export function formatErrorForUser(error: Error | ApplicationError, fallbackMess
 
 // Common error definitions
 export const COMMON_ERRORS = {
-    NETWORK_ERROR: (context?: Record<string, any>) =>
+    NETWORK_ERROR: (context?: Record<string, unknown>) =>
         new ApplicationError(
             'NETWORK_ERROR',
             'Network request failed',
@@ -191,7 +191,7 @@ export const COMMON_ERRORS = {
             }
         ),
 
-    VALIDATION_ERROR: (field: string, context?: Record<string, any>) =>
+    VALIDATION_ERROR: (field: string, context?: Record<string, unknown>) =>
         new ApplicationError(
             'VALIDATION_ERROR',
             `Validation failed for field: ${field}`,
@@ -203,7 +203,7 @@ export const COMMON_ERRORS = {
             }
         ),
 
-    PERMISSION_ERROR: (context?: Record<string, any>) =>
+    PERMISSION_ERROR: (context?: Record<string, unknown>) =>
         new ApplicationError(
             'PERMISSION_ERROR',
             'Permission denied',
@@ -215,7 +215,7 @@ export const COMMON_ERRORS = {
             }
         ),
 
-    NOT_FOUND_ERROR: (resource: string, context?: Record<string, any>) =>
+    NOT_FOUND_ERROR: (resource: string, context?: Record<string, unknown>) =>
         new ApplicationError(
             'NOT_FOUND_ERROR',
             `Resource not found: ${resource}`,
@@ -227,7 +227,7 @@ export const COMMON_ERRORS = {
             }
         ),
 
-    STATE_CORRUPTION_ERROR: (context?: Record<string, any>) =>
+    STATE_CORRUPTION_ERROR: (context?: Record<string, unknown>) =>
         new ApplicationError(
             'STATE_CORRUPTION_ERROR',
             'Application state is corrupted',
@@ -243,7 +243,7 @@ export const COMMON_ERRORS = {
 
 // Domain-specific error codes for Network Simulator
 export const CLI_ERRORS = {
-    COMMAND_NOT_FOUND: (command: string, context?: Record<string, any>) =>
+    COMMAND_NOT_FOUND: (command: string, context?: Record<string, unknown>) =>
         new ApplicationError(
             'CLI_COMMAND_NOT_FOUND',
             `Command not found: ${command}`,
@@ -256,7 +256,7 @@ export const CLI_ERRORS = {
             }
         ),
 
-    INVALID_MODE: (command: string, currentMode: string, context?: Record<string, any>) =>
+    INVALID_MODE: (command: string, currentMode: string, context?: Record<string, unknown>) =>
         new ApplicationError(
             'CLI_INVALID_MODE',
             `Invalid command for mode: ${currentMode}`,
@@ -269,7 +269,7 @@ export const CLI_ERRORS = {
             }
         ),
 
-    INCOMPLETE_COMMAND: (context?: Record<string, any>) =>
+    INCOMPLETE_COMMAND: (context?: Record<string, unknown>) =>
         new ApplicationError(
             'CLI_INCOMPLETE_COMMAND',
             'Incomplete command',
@@ -282,7 +282,7 @@ export const CLI_ERRORS = {
             }
         ),
 
-    AUTHENTICATION_FAILED: (context?: Record<string, any>) =>
+    AUTHENTICATION_FAILED: (context?: Record<string, unknown>) =>
         new ApplicationError(
             'CLI_AUTH_FAILED',
             'Authentication failed',
@@ -297,7 +297,7 @@ export const CLI_ERRORS = {
 };
 
 export const DEVICE_ERRORS = {
-    DEVICE_OFFLINE: (deviceName: string, context?: Record<string, any>) =>
+    DEVICE_OFFLINE: (deviceName: string, context?: Record<string, unknown>) =>
         new ApplicationError(
             'DEVICE_OFFLINE',
             `Device is offline: ${deviceName}`,
@@ -310,7 +310,7 @@ export const DEVICE_ERRORS = {
             }
         ),
 
-    DEVICE_NOT_FOUND: (deviceId: string, context?: Record<string, any>) =>
+    DEVICE_NOT_FOUND: (deviceId: string, context?: Record<string, unknown>) =>
         new ApplicationError(
             'DEVICE_NOT_FOUND',
             `Device not found: ${deviceId}`,
@@ -322,7 +322,7 @@ export const DEVICE_ERRORS = {
             }
         ),
 
-    PORT_UNAVAILABLE: (portName: string, context?: Record<string, any>) =>
+    PORT_UNAVAILABLE: (portName: string, context?: Record<string, unknown>) =>
         new ApplicationError(
             'PORT_UNAVAILABLE',
             `Port is unavailable: ${portName}`,
@@ -335,7 +335,7 @@ export const DEVICE_ERRORS = {
             }
         ),
 
-    CONNECTION_FAILED: (source: string, target: string, context?: Record<string, any>) =>
+    CONNECTION_FAILED: (source: string, target: string, context?: Record<string, unknown>) =>
         new ApplicationError(
             'CONNECTION_FAILED',
             `Connection failed: ${source} -> ${target}`,
@@ -350,7 +350,7 @@ export const DEVICE_ERRORS = {
 };
 
 export const STORAGE_ERRORS = {
-    SAVE_FAILED: (context?: Record<string, any>) =>
+    SAVE_FAILED: (context?: Record<string, unknown>) =>
         new ApplicationError(
             'STORAGE_SAVE_FAILED',
             'Failed to save data',
@@ -363,7 +363,7 @@ export const STORAGE_ERRORS = {
             }
         ),
 
-    LOAD_FAILED: (context?: Record<string, any>) =>
+    LOAD_FAILED: (context?: Record<string, unknown>) =>
         new ApplicationError(
             'STORAGE_LOAD_FAILED',
             'Failed to load data',
@@ -375,7 +375,7 @@ export const STORAGE_ERRORS = {
             }
         ),
 
-    LOCAL_STORAGE_UNAVAILABLE: (context?: Record<string, any>) =>
+    LOCAL_STORAGE_UNAVAILABLE: (context?: Record<string, unknown>) =>
         new ApplicationError(
             'STORAGE_UNAVAILABLE',
             'Local storage is unavailable',
@@ -390,7 +390,7 @@ export const STORAGE_ERRORS = {
 };
 
 export const DHCP_ERRORS = {
-    LEASE_FAILED: (context?: Record<string, any>) =>
+    LEASE_FAILED: (context?: Record<string, unknown>) =>
         new ApplicationError(
             'DHCP_LEASE_FAILED',
             'DHCP lease acquisition failed',
@@ -403,7 +403,7 @@ export const DHCP_ERRORS = {
             }
         ),
 
-    POOL_EXHAUSTED: (context?: Record<string, any>) =>
+    POOL_EXHAUSTED: (context?: Record<string, unknown>) =>
         new ApplicationError(
             'DHCP_POOL_EXHAUSTED',
             'DHCP pool exhausted',
@@ -418,7 +418,7 @@ export const DHCP_ERRORS = {
 };
 
 export const CLIPBOARD_ERRORS = {
-    COPY_FAILED: (context?: Record<string, any>) =>
+    COPY_FAILED: (context?: Record<string, unknown>) =>
         new ApplicationError(
             'CLIPBOARD_COPY_FAILED',
             'Failed to copy to clipboard',
@@ -431,7 +431,7 @@ export const CLIPBOARD_ERRORS = {
             }
         ),
 
-    PASTE_FAILED: (context?: Record<string, any>) =>
+    PASTE_FAILED: (context?: Record<string, unknown>) =>
         new ApplicationError(
             'CLIPBOARD_PASTE_FAILED',
             'Failed to paste from clipboard',

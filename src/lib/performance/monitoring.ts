@@ -72,7 +72,7 @@ class PerformanceMonitor {
 
         // Observe Paint Timing (FCP)
         if ('PerformanceObserver' in window) {
-            const supportedEntryTypes = (PerformanceObserver as any).supportedEntryTypes || [];
+            const supportedEntryTypes = (PerformanceObserver as unknown as { supportedEntryTypes: string[] }).supportedEntryTypes || [];
             const supports = (entryType: string) => supportedEntryTypes.includes(entryType);
 
             try {
@@ -112,8 +112,8 @@ class PerformanceMonitor {
                 let clsValue = 0;
                 const clsObserver = new PerformanceObserver((list) => {
                     for (const entry of list.getEntries()) {
-                        if (!(entry as any).hadRecentInput) {
-                            clsValue += (entry as any).value;
+                        if (!(entry as unknown as { hadRecentInput: boolean }).hadRecentInput) {
+                            clsValue += (entry as unknown as { value: number }).value;
                             this.metrics.cls = clsValue;
                         }
                     }
@@ -130,7 +130,7 @@ class PerformanceMonitor {
             try {
                 const fidObserver = new PerformanceObserver((list) => {
                     for (const entry of list.getEntries()) {
-                        this.metrics.fid = (entry as any).processingDuration;
+                        this.metrics.fid = (entry as unknown as { processingDuration: number }).processingDuration;
                     }
                 });
                 if (supports('first-input')) {
@@ -144,14 +144,14 @@ class PerformanceMonitor {
             // Observe interaction timing (INP approximation)
             try {
                 const inpObserver = new PerformanceObserver((list) => {
-                    for (const entry of list.getEntries() as any[]) {
+                    for (const entry of list.getEntries() as unknown as PerformanceEntry[]) {
                         const duration = Number(entry.duration || 0);
                         if (duration > 0) {
                             this.metrics.inp = Math.max(this.metrics.inp ?? 0, duration);
                         }
                     }
                 });
-                inpObserver.observe({ type: 'event', buffered: true, durationThreshold: 16 } as any);
+                inpObserver.observe({ type: 'event', buffered: true, durationThreshold: 16 } as PerformanceObserverInit);
                 this.observers.set('inp', inpObserver);
             } catch (e) {
                 logger.warn('INP observer not supported:', e);
@@ -215,7 +215,7 @@ class PerformanceMonitor {
 
     updateMemoryUsage() {
         if ('memory' in performance) {
-            this.metrics.memoryUsage = (performance as any).memory.usedJSHeapSize;
+            this.metrics.memoryUsage = (performance as unknown as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize;
         }
     }
 

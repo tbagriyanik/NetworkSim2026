@@ -47,10 +47,10 @@ export function createTabSpecificStorage() {
   });
 }
 
-export function getAllTabData(): Record<string, any> {
+export function getAllTabData(): Record<string, unknown> {
   if (typeof window === 'undefined') return {};
   
-  const tabData: Record<string, any> = {};
+  const tabData: Record<string, unknown> = {};
   const prefix = TAB_STORAGE_PREFIX;
   
   for (let i = 0; i < localStorage.length; i++) {

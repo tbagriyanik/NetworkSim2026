@@ -1131,7 +1131,7 @@ export function getRouterWifiConfig(device: CanvasDevice, state?: SwitchState): 
  * Generate router admin page content for HTTP access
  */
 export function generateRouterAdminPage(device: CanvasDevice, language: string, state?: SwitchState, connectedIotDevices?: ConnectedIoTDevice[], availableIotDevices?: AvailableIoTDevice[], username?: string, password?: string, activeTab?: string): string {
-  const interfaceIp = state?.ports ? Object.values(state.ports).find((p: any) => p?.ipAddress && !p.shutdown)?.ipAddress : undefined;
+  const interfaceIp = state?.ports ? Object.values(state.ports).find((p) => p?.ipAddress && !p.shutdown)?.ipAddress : undefined;
   const config: RouterWebConfig = {
     wifi: getRouterWifiConfig(device, state),
     deviceName: device.name,

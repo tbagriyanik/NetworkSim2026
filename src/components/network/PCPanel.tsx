@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect, KeyboardEvent, useCallback, useMemo, type CSSProperties } from 'react';
 import { useEnvironment } from '@/lib/store/appStore';
-import { CableInfo, SwitchState } from '@/lib/network/types';
+import { CableInfo, Port, SwitchState } from '@/lib/network/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { TerminalOutput } from './Terminal';
-import type { CanvasDevice } from './networkTopology.types';
+import type { CanvasDevice, CanvasConnection } from './networkTopology.types';
 import { checkConnectivity, getWirelessSignalStrength, getWirelessDistance, getDeviceWifiConfig } from '@/lib/network/connectivity';
 import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { Button } from '@/components/ui/button';
@@ -70,7 +70,7 @@ interface PCPanelProps {
   pcOutputs?: Map<string, OutputLine[]>;
   pcHistories?: Map<string, string[]>;
   onUpdatePCHistory?: (deviceId: string, history: string[]) => void;
-  onExecuteDeviceCommand?: (deviceId: string, command: string) => Promise<any>;
+  onExecuteDeviceCommand?: (deviceId: string, command: string) => Promise<unknown>;
   onNavigate?: (program: string) => void;
   onDeleteDevice?: (deviceId: string) => void;
 }
@@ -336,7 +336,7 @@ export function PCPanel({
   const [serviceMailDomain, setServiceMailDomain] = useState(deviceFromTopology?.services?.mail?.domain || 'local.lan');
   const [serviceMailUsername, setServiceMailUsername] = useState(deviceFromTopology?.services?.mail?.username || 'user');
   const [serviceMailPassword, setServiceMailPassword] = useState(deviceFromTopology?.services?.mail?.password || 'mail123');
-  const [serviceMailInbox, setServiceMailInbox] = useState<any[]>(() => {
+  const [serviceMailInbox, setServiceMailInbox] = useState<Array<{ from: string; subject: string; body: string; timestamp?: string }>>(() => {
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem(`mail_inbox_${deviceId}`);
@@ -345,7 +345,7 @@ export function PCPanel({
     }
     return deviceFromTopology?.services?.mail?.inbox || [];
   });
-  const [serviceMailSent, setServiceMailSent] = useState<any[]>(() => {
+  const [serviceMailSent, setServiceMailSent] = useState<Array<{ to: string; subject: string; body: string; timestamp?: string }>>(() => {
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem(`mail_sent_${deviceId}`);
@@ -366,7 +366,7 @@ export function PCPanel({
       localStorage.setItem(`mail_sent_${deviceId}`, JSON.stringify(serviceMailSent));
     }
   }, [serviceMailSent, deviceId]);
-  const [replyTo, setReplyTo] = useState<any>(null);
+  const [replyTo, setReplyTo] = useState<{ from: string; subject: string; body: string; timestamp?: string } | null>(null);
   const [replyBody, setReplyBody] = useState('');
   const [serviceNtpEnabled, setServiceNtpEnabled] = useState(deviceFromTopology?.services?.ntp?.enabled ?? false);
   const [serviceNtpServer, setServiceNtpServer] = useState(deviceFromTopology?.services?.ntp?.server || '');
@@ -565,7 +565,7 @@ export function PCPanel({
     }
 
     if (!isValidIpAddress(serverIp)) return null;
-    const canReach = checkConnectivity(deviceId, serverIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'any' });
+    const canReach = checkConnectivity(deviceId, serverIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'any' });
     if (!canReach.success) return null;
 
     let serverDate = '';
@@ -647,7 +647,7 @@ export function PCPanel({
     const normalized = serverAddress.trim();
     if (!normalized || !isValidIpAddress(normalized)) return null;
 
-    const canReach = checkConnectivity(deviceId, normalized, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'any' });
+    const canReach = checkConnectivity(deviceId, normalized, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'any' });
     if (!canReach.success) return null;
 
     let serverDate = '';
@@ -921,12 +921,14 @@ export function PCPanel({
   }, [iotDevices, selectedIotDeviceId]);
 
   useEffect(() => {
-    if (!selectedIotDevice) return;
-    setTimeout(() => setIotSensorType(selectedIotDevice.iot?.sensorType || 'temperature'), 0);
-    setTimeout(() => setIotKind(selectedIotDevice.iot?.kind || 'sensor'), 0);
-    setTimeout(() => setIotCollaborationEnabled(!!selectedIotDevice.iot?.collaborationEnabled), 0);
-    setTimeout(() => setIotDataStore(selectedIotDevice.iot?.dataStore || ''), 0);
-  }, [selectedIotDevice]);
+    if (!selectedIotDeviceId) return;
+    const device = iotDevices.find((d) => d.id === selectedIotDeviceId);
+    if (!device) return;
+    setIotSensorType(device.iot?.sensorType || 'temperature');
+    setIotKind(device.iot?.kind || 'sensor');
+    setIotCollaborationEnabled(!!device.iot?.collaborationEnabled);
+    setIotDataStore(device.iot?.dataStore || '');
+  }, [selectedIotDeviceId]);
 
   // When tablet powers on or opens, navigate to initial or home screen
   const initialNavDoneRef = useRef(false);
@@ -1226,7 +1228,7 @@ export function PCPanel({
   // Local output for Desktop (Local) - initialize from prop if available
   const getInitialPcOutput = (): OutputLine[] => {
     if (pcOutputs?.has(deviceId)) {
-      return pcOutputs.get(deviceId)!;
+      return pcOutputs.get(deviceId) as OutputLine[];
     }
     return [{
       id: '1',
@@ -1316,7 +1318,7 @@ export function PCPanel({
   // Regenerate IoT panel content when dependencies change
   useEffect(() => {
     if (!httpAppDeviceId && (httpAppUrl === 'iot-panel' || httpAppUrl === 'http://iot-panel')) {
-      const iotPanelContent = generateIotWebPanelContent(iotDevices, language, undefined, undefined, topologyConnections);
+      const iotPanelContent = generateIotWebPanelContent(iotDevices, language, undefined, undefined, topologyConnections as unknown as { sourceDeviceId: string; targetDeviceId: string }[]);
       setTimeout(() => setHttpAppContent(iotPanelContent), 0);
     }
   }, [iotDevices, topologyConnections, language, httpAppUrl, httpAppDeviceId]);
@@ -1442,7 +1444,7 @@ export function PCPanel({
   // Sync pcOutput when deviceId changes or pcOutputs prop updates
   useEffect(() => {
     if (pcOutputs?.has(deviceId)) {
-      setTimeout(() => setPcOutput(pcOutputs.get(deviceId)!), 0);
+      setTimeout(() => setPcOutput(pcOutputs.get(deviceId) ?? []), 0);
     } else {
       setTimeout(() => setPcOutput([{
         id: '1',
@@ -1613,7 +1615,7 @@ export function PCPanel({
   const activeConsoleOutput = useMemo(() => {
     if (!isConsoleConnected || !connectedDeviceId) return [];
     const allOutput = deviceOutputs?.get(connectedDeviceId) || [];
-    return allOutput.filter((line: any) => (line.timestamp || 0) >= consoleConnectionTime);
+    return allOutput.filter((line: TerminalOutput) => (line.timestamp || 0) >= consoleConnectionTime);
   }, [isConsoleConnected, connectedDeviceId, deviceOutputs, consoleConnectionTime]);
 
   // Auto-focus input when visible, tab changes, or command completes
@@ -1637,7 +1639,7 @@ export function PCPanel({
 
   const handleCopyAll = useCallback(async () => {
     try {
-      const lines = (activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line: any) => {
+      const lines = (activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line: OutputLine | TerminalOutput) => {
         if (line.type === 'command') return `${activeTab === 'desktop' ? 'C:\\>' : (line.prompt || '>')}${line.content}`;
         return line.content;
       });
@@ -1681,7 +1683,7 @@ export function PCPanel({
     // Don't show confirm dialog if password is still being entered
     if (consoleNeedsPassword) return null;
     const output = deviceOutputs?.get(connectedDeviceId) || [];
-    const confirmLine = output.find((line: any) => line.type === 'output' && /\[confirm\]/i.test(line.content));
+    const confirmLine = output.find((line: TerminalOutput) => line.type === 'output' && /\[confirm\]/i.test(line.content));
     if (confirmLine) {
       return { show: true, message: confirmLine.content };
     }
@@ -1717,7 +1719,7 @@ export function PCPanel({
         .map((d) => d.ip)
         .filter((ip): ip is string => !!ip && isIpv4(ip) && ip !== '0.0.0.0' && ip !== '169.254.0.0');
       const fromStates = Array.from(deviceStates?.values() || [])
-        .flatMap((s) => Object.values(s.ports || {}).map((p: any) => p?.ipAddress))
+        .flatMap((s) => Object.values(s.ports || {}).map((p: Port) => (p as { ipAddress?: string }).ipAddress))
         .filter((ip): ip is string => !!ip && isIpv4(ip) && ip !== '0.0.0.0' && ip !== '169.254.0.0');
       return Array.from(new Set([...fromDevices, ...fromStates]));
     };
@@ -1738,7 +1740,7 @@ export function PCPanel({
     }
 
     const mode = getCommandMode();
-    const { candidates, currentWord: ctxCurrentWord } = expandCommandContext(mode as any, value);
+    const { candidates, currentWord: ctxCurrentWord } = expandCommandContext(mode, value);
     const suggestions = candidates.filter(
       (opt: string) => opt !== '?' && opt.toLowerCase().startsWith(ctxCurrentWord)
     );
@@ -1778,7 +1780,7 @@ export function PCPanel({
 
   const buildCompletedInput = useCallback((selected: string) => {
     const mode = getCommandMode();
-    const { contextTokens } = expandCommandContext(mode as any, input);
+    const { contextTokens } = expandCommandContext(mode, input);
     const prefix = contextTokens.join(' ');
     return prefix ? `${prefix} ${selected}` : selected;
   }, [input, getCommandMode]);
@@ -1981,7 +1983,7 @@ export function PCPanel({
   }, [topologyDevices, topologyConnections]);
 
   const canReachTargetIp = useCallback((targetIp: string, options: { protocol?: 'tcp' | 'udp' | 'icmp' | 'any'; port?: string } = { protocol: 'icmp' }) => {
-    const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', options);
+    const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', options);
     return result.success;
   }, [deviceId, topologyDevices, topologyConnections, deviceStates, language]);
 
@@ -2013,7 +2015,7 @@ export function PCPanel({
     return isValidIpv4(pcGateway);
   }, [pcGateway, pcIP, pcSubnet]);
 
-  const getPortAccessVlan = useCallback((port: any) => Number(port?.accessVlan || port?.vlan || 1), []);
+  const getPortAccessVlan = useCallback((port: { accessVlan?: unknown; vlan?: unknown } | null | undefined) => Number(port?.accessVlan || port?.vlan || 1), []);
 
   const getPeerPortVlan = useCallback((ownerDeviceId: string, ownerPortId: string) => {
     const connection = topologyConnections.find((conn) =>
@@ -2189,7 +2191,7 @@ export function PCPanel({
           const hasIp = topoDev?.ip === pcDNS || topoDev?.ipv6 === pcDNS || Object.values(state.ports).some(p => p.ipAddress === pcDNS || p.ipv6Address === pcDNS);
 
           if (hasIp) {
-            dnsServerDevice = topoDev || { id, name: state.hostname, ip: pcDNS } as any;
+            dnsServerDevice = topoDev || { id, name: state.hostname, ip: pcDNS } as unknown as CanvasDevice;
             records = state.services?.dns?.records || [];
             break;
           }
@@ -2208,7 +2210,7 @@ export function PCPanel({
       if (visited.has(currentDomain)) return null;
       visited.add(currentDomain);
 
-      const record = (records || []).find((r: any) => r.domain.toLowerCase() === currentDomain);
+      const record = (records || []).find((r: { domain: string }) => r.domain.toLowerCase() === currentDomain);
       if (!record) return null;
 
       const value = record.address.trim().toLowerCase();
@@ -2321,7 +2323,7 @@ export function PCPanel({
         const topoDevice = topologyDevices.find(d => d.id === stateId);
         if (!topoDevice || (topoDevice.type !== 'router' && topoDevice.type !== 'switchL2' && topoDevice.type !== 'switchL3')) continue;
         const ports = state.ports || {};
-        const match = Object.values(ports).find((port: any) => port?.ipAddress === target || port?.ipv6Address?.toLowerCase() === normalizedTarget);
+        const match = Object.values(ports).find((port: { ipAddress?: string; ipv6Address?: string }) => port?.ipAddress === target || port?.ipv6Address?.toLowerCase() === normalizedTarget);
         if (match) {
           const matchIp = match.ipv6Address && normalizedTarget === match.ipv6Address.toLowerCase() ? match.ipv6Address : (match.ipAddress || target);
           if (canReachTargetIp(matchIp, { protocol: 'tcp', port: '80' })) {
@@ -2357,7 +2359,7 @@ export function PCPanel({
         const topoDevice = topologyDevices.find(d => d.id === stateId);
         if (!topoDevice || (topoDevice.type !== 'router' && topoDevice.type !== 'switchL2' && topoDevice.type !== 'switchL3')) continue;
         const ports = state.ports || {};
-        const match = Object.values(ports).find((port: any) => port?.ipAddress === dnsResult.address || port?.ipv6Address?.toLowerCase() === dnsResult.address.toLowerCase());
+        const match = Object.values(ports).find((port: { ipAddress?: string; ipv6Address?: string }) => port?.ipAddress === dnsResult.address || port?.ipv6Address?.toLowerCase() === dnsResult.address.toLowerCase());
         if (match) {
           const matchIp = match.ipv6Address && dnsResult.address.toLowerCase() === match.ipv6Address.toLowerCase() ? match.ipv6Address : (match.ipAddress || dnsResult.address);
           if (canReachTargetIp(matchIp, { protocol: 'tcp', port: '80' })) {
@@ -2389,7 +2391,7 @@ export function PCPanel({
     // Handle special IoT Web Panel URL
     if (rawTarget === 'http://iot-panel' || rawTarget === 'iot-panel') {
       setHttpAppUrl(displayUrl);
-      setHttpAppContent(generateIotWebPanelContent(iotDevices, language, undefined, undefined, topologyConnections));
+      setHttpAppContent(generateIotWebPanelContent(iotDevices, language, undefined, undefined, topologyConnections as unknown as { sourceDeviceId: string; targetDeviceId: string }[]));
       setHttpAppTitle(language === 'tr' ? 'IoT Web Paneli' : 'IoT Web Panel');
       setHttpAppDeviceId(null);
       return;
@@ -2460,7 +2462,7 @@ export function PCPanel({
     }
 
     // Check firewall for HTTP traffic
-    const connectivityResult = checkConnectivity(deviceId, resolvedTargetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '80' });
+    const connectivityResult = checkConnectivity(deviceId, resolvedTargetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '80' });
     if (!connectivityResult.success && connectivityResult.error?.includes('firewall')) {
       setHttpAppDeviceId(null);
       setHttpAppTitle('Access Denied');
@@ -2819,7 +2821,7 @@ export function PCPanel({
             if ((conn.sourceDeviceId === httpAppDeviceId && conn.targetDeviceId === iotDeviceId) ||
               (conn.targetDeviceId === httpAppDeviceId && conn.sourceDeviceId === iotDeviceId)) {
               window.dispatchEvent(new CustomEvent('delete-topology-connection', {
-                detail: { connectionId: (conn as any).id }
+                detail: { connectionId: (conn as CanvasConnection).id }
               }));
             }
           });
@@ -3081,8 +3083,8 @@ export function PCPanel({
     if (sourceDevice.status === 'offline' || targetDevice.status === 'offline') return false;
 
     // DHCP discover can also traverse an implicit Wi-Fi link.
-    const sourceWifi = getDeviceWifiConfig(sourceDevice as any, deviceStates);
-    const targetWifi = getDeviceWifiConfig(targetDevice as any, deviceStates);
+    const sourceWifi = getDeviceWifiConfig(sourceDevice, deviceStates);
+    const targetWifi = getDeviceWifiConfig(targetDevice, deviceStates);
     if (
       sourceDevice.type === 'pc' &&
       sourceWifi?.enabled &&
@@ -3092,7 +3094,7 @@ export function PCPanel({
       targetWifi.mode === 'ap' &&
       targetWifi.ssid &&
       sourceWifi.ssid.toLowerCase() === targetWifi.ssid.toLowerCase() &&
-      getWirelessSignalStrength(sourceDevice as any, topologyDevices as any, deviceStates) > 0
+      getWirelessSignalStrength(sourceDevice, topologyDevices, deviceStates) > 0
     ) {
       return true;
     }
@@ -3101,7 +3103,7 @@ export function PCPanel({
     const visited = new Set<string>([deviceId]);
 
     while (queue.length > 0) {
-      const current = queue.shift()!;
+      const current = queue.shift() as string;
       if (current === targetDeviceId) return true;
 
       const neighbors = topologyConnections
@@ -3303,7 +3305,7 @@ export function PCPanel({
           // Check DHCP pools from both runtime services mirror and raw CLI state.
           // Some flows may have dhcpPools populated while services mirror is stale.
           const mirroredPools = state.services?.dhcp?.pools || [];
-          const cliPools = Object.entries(state.dhcpPools || {}).map(([poolName, pool]: [string, any]) => {
+          const cliPools = Object.entries(state.dhcpPools || {}).map(([poolName, pool]: [string, { network?: string; subnetMask?: string; startIp?: string; defaultRouter?: string; dnsServer?: string; maxUsers?: number | string }]) => {
             const networkBase = typeof pool?.network === 'string' ? pool.network : '';
             const networkPrefix = networkBase.split('.').slice(0, 3).join('.');
             const fallbackStart = networkPrefix ? `${networkPrefix}.100` : '192.168.1.100';
@@ -3319,8 +3321,8 @@ export function PCPanel({
           });
           const dhcpPools = [...mirroredPools];
           for (const pool of cliPools) {
-            if (!dhcpPools.some((p: any) => p.poolName === pool.poolName)) {
-              dhcpPools.push(pool as any);
+            if (!dhcpPools.some((p: DhcpPoolConfig) => p.poolName === pool.poolName)) {
+              dhcpPools.push(pool);
             }
           }
           if (dhcpPools.length === 0) continue;
@@ -3473,7 +3475,7 @@ export function PCPanel({
         if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3')) continue;
 
         const mirroredPools = state.services?.dhcp?.pools || [];
-        const cliPools = Object.entries(state.dhcpPools || {}).map(([poolName, pool]: [string, any]) => {
+        const cliPools = Object.entries(state.dhcpPools || {}).map(([poolName, pool]: [string, { network?: string; subnetMask?: string; startIp?: string; defaultRouter?: string; dnsServer?: string; maxUsers?: number | string }]) => {
           const networkBase = typeof pool?.network === 'string' ? pool.network : '';
           const networkPrefix = networkBase.split('.').slice(0, 3).join('.');
           const fallbackStart = networkPrefix ? `${networkPrefix}.100` : '192.168.1.100';
@@ -3489,8 +3491,8 @@ export function PCPanel({
         });
         const dhcpPools = [...mirroredPools];
         for (const pool of cliPools) {
-          if (!dhcpPools.some((p: any) => p.poolName === pool.poolName)) {
-            dhcpPools.push(pool as any);
+          if (!dhcpPools.some((p: DhcpPoolConfig) => p.poolName === pool.poolName)) {
+            dhcpPools.push(pool);
           }
         }
         if (dhcpPools.length === 0) continue;
@@ -3769,7 +3771,7 @@ export function PCPanel({
                 ftp: {
                   ...targetDev.services?.ftp,
                   enabled: true,
-                  files: [...((targetDev.services?.ftp?.files || []).filter((f: any) => f.name !== fileName)), newFile]
+                  files: [...((targetDev.services?.ftp?.files || []).filter((f: { name: string }) => f.name !== fileName)), newFile]
                 }
               }
             }
@@ -3928,7 +3930,7 @@ export function PCPanel({
             return;
           }
 
-          const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
+          const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
           if (result.success) {
             const pingTargetDisplay = dnsResolved ? `${target} [${targetIp.toLowerCase()}]` : targetIp.toLowerCase();
 
@@ -3970,7 +3972,7 @@ export function PCPanel({
         if (!targetDomain) {
           addLocalOutput('output', 'Usage: nslookup <domain>');
         } else if (resolveDeviceNameTarget(targetDomain)) {
-          const resolved = resolveDeviceNameTarget(targetDomain)!;
+          const resolved = resolveDeviceNameTarget(targetDomain) as { ip: string; label: string };
           await addMultilineOutput(
             'output',
             `Server: local-device\nAddress: 127.0.0.1\n\nName: ${targetDomain}\nAddress: ${resolved.ip}`,
@@ -4066,7 +4068,7 @@ export function PCPanel({
         }
 
         // Check connectivity
-        const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port });
+        const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port });
 
         if (result.success && result.targetId) {
           // Find target device to see if it's a switch or router
@@ -4100,14 +4102,14 @@ export function PCPanel({
 
             // Give it a tiny delay for the user to see the "Connected" message before switching
             setTimeout(() => {
-              setConnectedDeviceId(result.targetId!);
+              setConnectedDeviceId(result.targetId as string);
               setConsoleConnectionTime(Date.now());
               setIsConsoleConnected(true);
 
               // Trigger remote VTY session bootstrap so password/login policy is applied.
               if (onExecuteDeviceCommand) {
                 void onExecuteDeviceCommand(
-                  result.targetId!,
+                  result.targetId as string,
                   isSsh ? `__SSH_CONNECT__:${username}` : '__TELNET_CONNECT__'
                 );
               }
@@ -4149,7 +4151,7 @@ export function PCPanel({
             return;
           }
           addLocalOutput('output', `Tracing route to ${target} over a maximum of 30 hops:\n`);
-          const result = checkConnectivity(deviceId, resolvedTarget, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
+          const result = checkConnectivity(deviceId, resolvedTarget, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
 
           if (result.hops && result.hops.length > 0) {
             let hopOutput = '';
@@ -4214,7 +4216,7 @@ export function PCPanel({
           }
         }
 
-        const result = checkConnectivity(deviceId, targetIp, topologyDevices as any, topologyConnections as any, deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '21' });
+        const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '21' });
         if (!result.success) {
           addLocalOutput('error', `Could not connect to FTP server at ${targetIp}: ${result.error || 'Destination unreachable'}`);
           return;
@@ -4224,7 +4226,7 @@ export function PCPanel({
           : topologyDevices.find(d => d.ip === targetIp);
         const deviceByIp = topologyDevices.find(d => d.ip === targetIp);
         const targetState = (targetDevice?.id || deviceByIp?.id)
-          ? deviceStates?.get(targetDevice?.id || deviceByIp!.id)
+          ? deviceStates?.get((targetDevice?.id || deviceByIp?.id)!)
           : undefined;
         const ftpService =
           targetDevice?.services?.ftp?.enabled ? targetDevice.services.ftp :
@@ -4296,7 +4298,7 @@ export function PCPanel({
         }));
 
         // Update sender sent box
-        setServiceMailSent((prev: any[]) => [newSentEntry, ...prev]);
+        setServiceMailSent((prev) => [newSentEntry, ...prev]);
         window.dispatchEvent(new CustomEvent('update-topology-device-config', {
           detail: {
             deviceId: deviceId,
@@ -4471,7 +4473,7 @@ export function PCPanel({
       matches = DESKTOP_COMMANDS.filter(opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord));
     } else {
       const mode = getCommandMode();
-      const context = expandCommandContext(mode as any, value);
+      const context = expandCommandContext(mode, value);
       contextTokens = context.contextTokens;
       matches = context.candidates.filter(opt => opt !== '?' && opt.toLowerCase().startsWith(context.currentWord));
     }
@@ -5954,7 +5956,7 @@ export function PCPanel({
                                           onClick={() => {
                                             if (!replyTo.from || !replyBody.trim()) return;
                                             const senderIp = replyTo.from.includes('@') ? replyTo.from.split('@')[1] : '';
-                                            const targetDevice = topologyDevices.find((d: any) => d.ip === senderIp);
+                                            const targetDevice = topologyDevices.find((d: CanvasDevice) => d.ip === senderIp);
                                             if (!targetDevice) {
                                               addLocalOutput('error', language === 'tr' ? 'Alıcı cihaz bulunamadı.' : 'Target device not found.');
                                               return;
@@ -5990,7 +5992,7 @@ export function PCPanel({
                                               }
                                             }));
 
-                                            setServiceMailSent((prev: any[]) => [newSentEntry, ...prev]);
+                                            setServiceMailSent((prev) => [newSentEntry, ...prev]);
                                             window.dispatchEvent(new CustomEvent('update-topology-device-config', {
                                               detail: {
                                                 deviceId: deviceId,
@@ -6355,8 +6357,8 @@ export function PCPanel({
                                     value={`${iotKind}:${iotSensorType}`}
                                     onValueChange={(v) => {
                                       const [kind, sensor] = v.split(':');
-                                      setIotKind(kind as any);
-                                      setIotSensorType(sensor as any);
+                                      setIotKind(kind as 'cooler' | 'lamp' | 'heater' | 'sensor');
+                                      setIotSensorType(sensor as 'temperature' | 'sound' | 'motion' | 'humidity' | 'light');
                                     }}
                                   >
                                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -6708,8 +6710,8 @@ export function PCPanel({
                                 </label>
                                 <Select
                                   value={wifiSecurity}
-                                  onValueChange={(val) => {
-                                    const security = val as any;
+                                  onValueChange={(val: string) => {
+                                    const security = val as 'open' | 'wpa' | 'wpa2' | 'wpa3';
                                     setWifiSecurity(security);
                                     dispatchDeviceConfig({
                                       wifi: {
@@ -6783,8 +6785,8 @@ export function PCPanel({
                                 </label>
                                 <Select
                                   value={wifiChannel}
-                                  onValueChange={(val) => {
-                                    const channel = val as any;
+                                  onValueChange={(val: string) => {
+                                    const channel = val as '2.4GHz' | '5GHz';
                                     setWifiChannel(channel);
                                     dispatchDeviceConfig({
                                       wifi: {
@@ -6931,7 +6933,7 @@ export function PCPanel({
                                 <div className="text-xs">
                                   {isConsoleConnected && connectedDeviceId ? (
                                     <span className="text-emerald-500 font-medium">
-                                      {t.physicalConnectionDetected} {topologyDevices.find((d: any) => d.id === connectedDeviceId)?.name || connectedDeviceId}
+                                      {t.physicalConnectionDetected} {topologyDevices.find((d: CanvasDevice) => d.id === connectedDeviceId)?.name || connectedDeviceId}
                                     </span>
                                   ) : (
                                     <span className={isDark ? 'text-slate-200' : 'text-slate-600'}>{t.noConsoleCableDetected}</span>

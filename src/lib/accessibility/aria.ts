@@ -442,8 +442,8 @@ export function generateLiveRegionARIA(options: {
  */
 export function ariaAttributesToHTMLAttributes(
     ariaAttrs: ARIAAttributes
-): Record<string, any> {
-    const htmlAttrs: Record<string, any> = {};
+): Record<string, unknown> {
+    const htmlAttrs: Record<string, unknown> = {};
 
     Object.entries(ariaAttrs).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {

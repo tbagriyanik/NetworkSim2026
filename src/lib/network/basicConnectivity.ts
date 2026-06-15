@@ -43,11 +43,13 @@ export function checkBasicL2Connectivity(
   for (const conn of connections) {
     if (conn.active === false) continue;
 
-    if (!adjList.has(conn.sourceDeviceId)) adjList.set(conn.sourceDeviceId, []);
-    adjList.get(conn.sourceDeviceId)!.push(conn.targetDeviceId);
+    const srcList = adjList.get(conn.sourceDeviceId);
+    if (srcList) srcList.push(conn.targetDeviceId);
+    else adjList.set(conn.sourceDeviceId, [conn.targetDeviceId]);
 
-    if (!adjList.has(conn.targetDeviceId)) adjList.set(conn.targetDeviceId, []);
-    adjList.get(conn.targetDeviceId)!.push(conn.sourceDeviceId);
+    const tgtList = adjList.get(conn.targetDeviceId);
+    if (tgtList) tgtList.push(conn.sourceDeviceId);
+    else adjList.set(conn.targetDeviceId, [conn.sourceDeviceId]);
   }
 
   // Simple BFS pathfinding for L2 connectivity
@@ -56,7 +58,8 @@ export function checkBasicL2Connectivity(
   const parent = new Map<string, string>();
 
   while (queue.length > 0) {
-    const currentId = queue.shift()!;
+    const currentId = queue.shift();
+    if (!currentId) break;
     if (currentId === targetDevice.id) break;
 
     const neighbors = adjList.get(currentId) || [];

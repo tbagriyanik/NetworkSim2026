@@ -31,7 +31,7 @@ describe('Connectivity Functions', () => {
       ip: '192.168.1.10',
       vlan: 10,
       ports: [{ id: 'eth0', status: 'connected' }]
-    } as any;
+    } as unknown as CanvasDevice;
 
     const pc2: CanvasDevice = {
       id: 'PC2',
@@ -40,14 +40,14 @@ describe('Connectivity Functions', () => {
       ip: '192.168.1.20',
       vlan: 10,
       ports: [{ id: 'eth0', status: 'connected' }]
-    } as any;
+    } as unknown as CanvasDevice;
 
     const sw1: CanvasDevice = {
       id: 'SW1',
       name: 'SW1',
       type: 'switchL2',
       ports: []
-    } as any;
+    } as unknown as CanvasDevice;
 
     const connections: CanvasConnection[] = [
       {
@@ -58,7 +58,7 @@ describe('Connectivity Functions', () => {
         targetPort: 'fa0/1',
         cableType: 'straight',
         active: true
-      } as any,
+      } as unknown as CanvasConnection,
       {
         id: 'c2',
         sourceDeviceId: 'PC2',
@@ -67,7 +67,7 @@ describe('Connectivity Functions', () => {
         targetPort: 'fa0/2',
         cableType: 'straight',
         active: true
-      } as any
+      } as unknown as CanvasConnection
     ];
 
     const sw1State: SwitchState = {
@@ -81,7 +81,7 @@ describe('Connectivity Functions', () => {
         'fa0/1': { id: 'fa0/1', vlan: 10, mode: 'access', shutdown: false },
         'fa0/2': { id: 'fa0/2', vlan: 10, mode: 'access', shutdown: false }
       }
-    } as any;
+    } as unknown as SwitchState;
 
     const deviceStates = new Map([['SW1', sw1State]]);
 
@@ -98,7 +98,7 @@ describe('Connectivity Functions', () => {
         ip: '192.168.1.30',
         vlan: 20,
         ports: [{ id: 'eth0', status: 'connected' }]
-      } as any;
+      } as unknown as CanvasDevice;
 
       const connectionsWithPc3 = [
         ...connections,
@@ -110,7 +110,7 @@ describe('Connectivity Functions', () => {
           targetPort: 'fa0/3',
           cableType: 'straight',
           active: true
-        } as any
+        } as unknown as CanvasConnection
       ];
 
       const sw1StateWithPc3: SwitchState = {
@@ -119,7 +119,7 @@ describe('Connectivity Functions', () => {
           ...sw1State.ports,
           'fa0/3': { id: 'fa0/3', vlan: 20, mode: 'access', shutdown: false }
         }
-      } as any;
+      } as unknown as SwitchState;
 
       const deviceStatesWithPc3 = new Map([['SW1', sw1StateWithPc3]]);
 
@@ -138,7 +138,7 @@ describe('Connectivity Functions', () => {
           { id: '1', sourceIp: '192.168.1.10', targetIp: '192.168.1.20', protocol: 'tcp', port: '80', action: 'deny', enabled: true },
           { id: '2', sourceIp: 'any', targetIp: 'any', protocol: 'any', port: 'any', action: 'allow', enabled: true }
         ]
-      } as any;
+      } as unknown as CanvasDevice;
 
       const connectionsWithFw: CanvasConnection[] = [
         {
@@ -149,7 +149,7 @@ describe('Connectivity Functions', () => {
           targetPort: 'ge0/0',
           cableType: 'straight',
           active: true
-        } as any,
+        } as unknown as CanvasConnection,
         {
           id: 'c2',
           sourceDeviceId: 'FW1',
@@ -158,7 +158,7 @@ describe('Connectivity Functions', () => {
           targetPort: 'eth0',
           cableType: 'straight',
           active: true
-        } as any
+        } as unknown as CanvasConnection
       ];
 
       const fwState: SwitchState = {
@@ -173,7 +173,7 @@ describe('Connectivity Functions', () => {
           'ge0/1': { id: 'ge0/1', shutdown: false }
         },
         firewallRules: firewall.firewallRules
-      } as any;
+      } as unknown as SwitchState;
 
       const fwDeviceStates = new Map([['FW1', fwState]]);
 
@@ -193,7 +193,7 @@ describe('Connectivity Functions', () => {
       vlan: 10,
       status: 'online',
       ports: []
-    } as any;
+    } as unknown as CanvasDevice;
 
     const pc2: CanvasDevice = {
       id: 'PC2',
@@ -204,14 +204,14 @@ describe('Connectivity Functions', () => {
       vlan: 10,
       status: 'online',
       ports: []
-    } as any;
+    } as unknown as CanvasDevice;
 
     const sw1: CanvasDevice = {
       id: 'SW1',
       name: 'SW1',
       type: 'switchL2',
       ports: []
-    } as any;
+    } as unknown as CanvasDevice;
 
     const connections: CanvasConnection[] = [
       {
@@ -222,7 +222,7 @@ describe('Connectivity Functions', () => {
         targetPort: 'fa0/1',
         cableType: 'straight',
         active: true
-      } as any,
+      } as unknown as CanvasConnection,
       {
         id: 'c2',
         sourceDeviceId: 'SW1',
@@ -231,7 +231,7 @@ describe('Connectivity Functions', () => {
         targetPort: 'eth0',
         cableType: 'straight',
         active: true
-      } as any
+      } as unknown as CanvasConnection
     ];
 
     const sw1State: SwitchState = {
@@ -245,7 +245,7 @@ describe('Connectivity Functions', () => {
         'fa0/1': { id: 'fa0/1', vlan: 10, mode: 'access', shutdown: false },
         'fa0/2': { id: 'fa0/2', vlan: 10, mode: 'access', shutdown: false }
       }
-    } as any;
+    } as unknown as SwitchState;
 
     const deviceStates = new Map([['SW1', sw1State]]);
 
@@ -264,7 +264,7 @@ describe('Connectivity Functions', () => {
         subnet: '255.255.255.0',
         status: 'online',
         ports: []
-      } as any;
+      } as unknown as CanvasDevice;
 
       const result = getPingDiagnostics('PC1', '10.0.0.10', [pc1, pc3, sw1], connections, deviceStates);
       expect(result.success).toBe(false);
@@ -295,7 +295,7 @@ describe('Connectivity Functions', () => {
       accessLists: {
         '1': ['permit 192.168.1.10 0.0.0.0', 'deny 192.168.1.20 0.0.0.0']
       }
-    } as any;
+    } as unknown as SwitchState;
 
     const sw1StateExtendedAcl: SwitchState = {
       id: 'SW1',
@@ -307,7 +307,7 @@ describe('Connectivity Functions', () => {
       accessLists: {
         '100': ['permit ip host 192.168.1.10 host 192.168.1.20', 'deny ip host 192.168.1.20 host 192.168.1.10']
       }
-    } as any;
+    } as unknown as SwitchState;
 
     it('should permit traffic matching standard ACL rule', () => {
       const result = evaluateAcl('1', sw1StateStandardAcl, '192.168.1.10', '192.168.1.20');

@@ -14,7 +14,7 @@ export const generateIotWebPanelContent = (
   language: string,
   routerId?: string,
   routerSsid?: string,
-  topologyConnections?: any[],
+  topologyConnections?: { sourceDeviceId: string; targetDeviceId: string; from?: string; to?: string }[],
 ): string => {
   const isTurkish = language === 'tr';
 

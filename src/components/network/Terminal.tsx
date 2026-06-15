@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, KeyboardEvent, useCallback, useMemo, ClipboardEvent } from 'react';
-import { SwitchState } from '@/lib/network/types';
+import { SwitchState, CommandMode } from '@/lib/network/types';
 import { Translations } from '@/contexts/LanguageContext';
 import { getDeviceWifiConfig, getWirelessSignalStrength } from '@/lib/network/connectivity';
 import { Button } from '@/components/ui/button';
@@ -68,7 +68,7 @@ interface TerminalProps {
   deviceName: string;
   prompt: string;
   state: SwitchState;
-  onCommand: (command: string) => Promise<void>;
+  onCommand: (command: string) => Promise<unknown>;
   onClear: () => void;
   output: TerminalOutput[];
   isLoading: boolean;
@@ -487,7 +487,7 @@ export function Terminal({
     if (candidates.length === 0 && contextKey) {
       const patternCandidates: string[] = [];
       for (const [name, pattern] of Object.entries(commandPatterns)) {
-        if (!pattern.modes.includes(mode as any)) continue;
+        if (!pattern.modes.includes(mode as CommandMode)) continue;
         const nameLower = name.toLowerCase();
         const prefix = contextKey + ' ';
         if (!nameLower.startsWith(prefix)) continue;
@@ -787,7 +787,7 @@ export function Terminal({
         .map((d) => d.ip)
         .filter((ip): ip is string => !!ip && isIpv4(ip) && ip !== '0.0.0.0' && ip !== '169.254.0.0');
       const fromStates = Array.from(deviceStates?.values() || [])
-        .flatMap((s) => Object.values(s.ports || {}).map((p: any) => p?.ipAddress))
+        .flatMap((s) => Object.values(s.ports || {}).map((p) => p?.ipAddress))
         .filter((ip): ip is string => !!ip && isIpv4(ip) && ip !== '0.0.0.0' && ip !== '169.254.0.0');
       return Array.from(new Set([...fromDevices, ...fromStates]));
     };

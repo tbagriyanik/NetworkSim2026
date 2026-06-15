@@ -557,8 +557,8 @@ export function applyStartupConfig(baseState: SwitchState, startup: StartupConfi
       ipv6Address: savedPort.ipv6Address,
       ipv6Prefix: savedPort.ipv6Prefix,
       // Preserve wifi config so AP settings survive power cycles and reloads
-      wifi: (savedPort as any).wifi ?? (basePort as any).wifi,
-      status: (savedPort as any).status ?? basePort.status,
+      wifi: savedPort.wifi ?? basePort.wifi,
+      status: savedPort.status ?? basePort.status,
     };
   });
 

@@ -22,7 +22,7 @@ interface NetworkTopologyContextMenuProps {
   canRedo: boolean;
   isExamActive?: boolean;
   onClose: () => void;
-  onUpdateNoteStyle: (id: string, style: any) => void;
+  onUpdateNoteStyle: (id: string, style: Partial<CanvasNote>) => void;
   onDuplicateNote: (id: string) => void;
   onPasteNotes: (x: number, y: number) => void;
   onUndo: () => void;
@@ -182,7 +182,7 @@ export default function NetworkTopologyContextMenu({
               return (
                 <button
                   key={c}
-                  onClick={() => { onUpdateNoteStyle(contextMenu.noteId!, { color: c }); onClose(); }}
+                  onClick={() => { if (contextMenu.noteId) onUpdateNoteStyle(contextMenu.noteId, { color: c }); onClose(); }}
                   className={`w-4 h-4 rounded border ${note?.color === c ? 'ring-2 ring-cyan-500' : 'border-black/10'}`}
                   style={{ background: gradientMap[c] || c, outline: note?.color === c ? '2px solid cyan' : 'none' }}
                   title={c}
@@ -199,7 +199,7 @@ export default function NetworkTopologyContextMenu({
               {noteFonts.map((f) => (
                 <button
                   key={f}
-                  onClick={() => { onUpdateNoteStyle(contextMenu.noteId!, { font: f }); onClose(); }}
+                  onClick={() => { if (contextMenu.noteId) onUpdateNoteStyle(contextMenu.noteId, { font: f }); onClose(); }}
                   className={`px-2 py-1 rounded text-left text-[11px] ${note?.font === f
                     ? (isDark ? 'bg-slate-600 text-white border-cyan-500 border' : 'bg-slate-200 text-black border-cyan-500 border')
                     : (isDark ? 'hover:bg-slate-700 text-slate-200 hover:text-cyan-400' : 'hover:bg-slate-100 text-slate-700 hover:text-cyan-600')
@@ -220,7 +220,7 @@ export default function NetworkTopologyContextMenu({
               {NOTE_FONT_SIZES.map((s) => (
                 <button
                   key={s}
-                  onClick={() => { onUpdateNoteStyle(contextMenu.noteId!, { fontSize: s }); onClose(); }}
+                  onClick={() => { if (contextMenu.noteId) onUpdateNoteStyle(contextMenu.noteId, { fontSize: s }); onClose(); }}
                   className={`px-2 py-1 rounded text-[11px] ${note?.fontSize === s
                     ? (isDark ? 'bg-slate-600 text-white border-cyan-500 border' : 'bg-slate-200 text-black border-cyan-500 border')
                     : (isDark ? 'hover:bg-slate-700 text-slate-200 hover:text-cyan-400' : 'hover:bg-slate-100 text-slate-700 hover:text-cyan-600')
@@ -240,7 +240,7 @@ export default function NetworkTopologyContextMenu({
               {NOTE_OPACITY.map((o) => (
                 <button
                   key={o}
-                  onClick={() => { onUpdateNoteStyle(contextMenu.noteId!, { opacity: o }); onClose(); }}
+                  onClick={() => { if (contextMenu.noteId) onUpdateNoteStyle(contextMenu.noteId, { opacity: o }); onClose(); }}
                   className={`px-2 py-1 rounded text-[11px] ${note?.opacity === o
                     ? (isDark ? 'bg-slate-600 text-white border-cyan-500 border' : 'bg-slate-200 text-black border-cyan-500 border')
                     : (isDark ? 'hover:bg-slate-700 text-slate-200 hover:text-cyan-400' : 'hover:bg-slate-100 text-slate-700 hover:text-cyan-600')
@@ -255,7 +255,7 @@ export default function NetworkTopologyContextMenu({
             {renderMenuItem({
               label: t.duplicateLabel,
               icon: 'copy',
-              onClick: () => { onDuplicateNote(contextMenu.noteId!); onClose(); }
+              onClick: () => { if (contextMenu.noteId) onDuplicateNote(contextMenu.noteId); onClose(); }
             })}
           </div>
         </div>
@@ -318,8 +318,8 @@ export default function NetworkTopologyContextMenu({
           {(() => {
             const device = devices.find((d) => d.id === contextMenu.deviceId);
             const canPaste = !!onPasteDevice && clipboardLength > 0;
-            const hasSelection = selectedDeviceIds.includes(contextMenu.deviceId!);
-            const targets = hasSelection ? selectedDeviceIds : [contextMenu.deviceId!];
+            const hasSelection = selectedDeviceIds.includes(contextMenu.deviceId);
+            const targets = hasSelection ? selectedDeviceIds : [contextMenu.deviceId];
             const isRouterOrSwitch = device && (device.type === 'router' || device.type === 'switchL2' || device.type === 'switchL3');
             return (
               <>
@@ -333,7 +333,7 @@ export default function NetworkTopologyContextMenu({
                 {isRouterOrSwitch && onOpenTasks && renderMenuItem({
                   label: t.tasks,
                   icon: 'tasks',
-                  onClick: () => { onOpenTasks(contextMenu.deviceId!); onClose(); },
+                  onClick: () => { if (contextMenu.deviceId) onOpenTasks(contextMenu.deviceId); onClose(); },
                   disabled: !device
                 })}
                 <div className="my-1 border-t border-slate-200/20" />
@@ -382,7 +382,7 @@ export default function NetworkTopologyContextMenu({
                   label: t.ping,
                   icon: 'ping',
                   shortcut: 'P',
-                  onClick: () => { onStartPing(contextMenu.deviceId!); onClose(); },
+                  onClick: () => { if (contextMenu.deviceId) onStartPing(contextMenu.deviceId); onClose(); },
                   disabled: !device
                 })}
                 {renderMenuItem({

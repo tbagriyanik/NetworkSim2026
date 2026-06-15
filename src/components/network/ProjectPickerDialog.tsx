@@ -28,7 +28,7 @@ interface ProjectPickerDialogProps {
   getAvailableProjects: (lang: 'tr' | 'en') => GuidedProject[];
   getAvailableExams: (lang: 'tr' | 'en') => ExamProject[];
   resetToEmptyProject: () => void;
-  applyExampleProject: (data: any, exampleId?: string) => void;
+  applyExampleProject: (data: unknown, exampleId?: string) => void;
   startGuidedProject: (project: GuidedProject) => void;
   startExamProject: (project: ExamProject) => void;
   loadProjectData: (data: unknown) => boolean;
@@ -36,7 +36,7 @@ interface ProjectPickerDialogProps {
   setPan: (pan: { x: number; y: number }) => void;
   closeProjectPicker: () => void;
   onOpenFile: () => void;
-  onConvertProjectToExam: (projectData: any) => void;
+  onConvertProjectToExam: (projectData: unknown) => void;
 }
 
 export function ProjectPickerDialog({
@@ -75,7 +75,7 @@ export function ProjectPickerDialog({
       });
     } else if (projectPickerTab === 'exam') {
       const q = projectSearchQuery.trim().toLowerCase();
-      const examProjects = getAvailableExams(language).filter((ep: any) => ep.id !== 'exam-template-blank');
+      const examProjects = getAvailableExams(language).filter((ep: ExamProject) => ep.id !== 'exam-template-blank');
       examProjects.forEach((ep) => {
         const match = q === '' ||
           ep.title.toLowerCase().includes(q) ||
@@ -185,7 +185,7 @@ export function ProjectPickerDialog({
                   size='sm'
                   className={`flex-1 md:flex-initial flex items-center gap-2 text-xs px-3 py-1.5 h-8 ${isDark ? 'text-rose-300 border-rose-700/50 hover:bg-rose-900/30 hover:text-rose-300' : 'text-rose-600 border-rose-300 hover:bg-rose-50 hover:text-rose-700'}`}
                   onClick={() => {
-                    const examTemplate = getAvailableExams(language).find((ep: any) => ep.id === 'exam-template-blank');
+                    const examTemplate = getAvailableExams(language).find((ep: ExamProject) => ep.id === 'exam-template-blank');
                     if (examTemplate) {
                       closeProjectPicker();
                       startExamProject(examTemplate);
@@ -312,7 +312,7 @@ export function ProjectPickerDialog({
                     }
                     const q = projectSearchQuery.trim().toLowerCase();
                     // Search example projects first
-                    let firstProject: any = null;
+                    let firstProject: ExampleProject | null = null;
                     for (const level of exampleLevelOrder) {
                       const projects = groupedExampleProjects[level] || [];
                       const filtered = projects.filter(project =>
@@ -346,7 +346,7 @@ export function ProjectPickerDialog({
                     // If still not found, search exams
                     if (!firstProject) {
                       const exam = getAvailableExams(language)
-                        .filter((proj: any) => proj.id !== 'exam-template-blank')
+                        .filter((proj: ExamProject) => proj.id !== 'exam-template-blank')
                         .find(proj =>
                           proj.title.toLowerCase().includes(q) ||
                           proj.description.toLowerCase().includes(q) ||

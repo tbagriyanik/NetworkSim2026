@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { ExamProject, getExamProjects, encryptExamData, generateExamIntegrityHash, verifyExamIntegrity } from '@/lib/network/examMode';
-import { checkStepCompletion } from '@/lib/network/guidedMode';
+import { ExamProject, type ExamTask, getExamProjects, encryptExamData, generateExamIntegrityHash, verifyExamIntegrity } from '@/lib/network/examMode';
+import { checkStepCompletion, type GuidedStep } from '@/lib/network/guidedMode';
 
 interface UseExamModeReturn {
   activeExam: ExamProject | null;
@@ -14,21 +14,21 @@ interface UseExamModeReturn {
   togglePanelMinimize: () => void;
   expandPanel: () => void;
   toggleEditor: (open?: boolean) => void;
-  addTask: (task: any) => void;
-  updateTask: (id: string, updates: any) => void;
+  addTask: (task: unknown) => void;
+  updateTask: (id: string, updates: unknown) => void;
   deleteTask: (id: string) => void;
   updateExamMeta: (updates: Partial<ExamProject>) => void;
   moveTask: (id: string, direction: 'up' | 'down') => void;
   smartBalanceWeights: () => void;
-  exportExamFile: (projectData: any) => void;
+  exportExamFile: (projectData: unknown) => void;
   checkTasks: (context: {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
-    deviceState?: any;
-    deviceStates?: Map<string, any>;
-    topologyConnections?: any[];
-    topologyDevices?: any[];
+    deviceState?: unknown;
+    deviceStates?: Map<string, unknown>;
+    topologyConnections?: unknown[];
+    topologyDevices?: unknown[];
   }) => void;
   currentScore: number;
   getAvailableExams: (language: 'tr' | 'en') => ExamProject[];
@@ -50,9 +50,9 @@ export function useExamMode(): UseExamModeReturn {
         if (parsed.startedAt) parsed.startedAt = new Date(parsed.startedAt);
         if (parsed.finishedAt) parsed.finishedAt = new Date(parsed.finishedAt);
         if (parsed.tasks) {
-          parsed.tasks = parsed.tasks.map((t: any) => ({
-            ...t,
-            completedAt: t.completedAt ? new Date(t.completedAt) : undefined
+          parsed.tasks = parsed.tasks.map((t: unknown) => ({
+            ...(t as Record<string, unknown>),
+            completedAt: (t as Record<string, unknown>).completedAt ? new Date((t as Record<string, unknown>).completedAt as string) : undefined
           }));
         }
         // Verify integrity before loading
@@ -119,24 +119,24 @@ export function useExamMode(): UseExamModeReturn {
     setIsEditorOpen(prev => open !== undefined ? open : !prev);
   }, []);
 
-  const addTask = useCallback((task: any) => {
+  const addTask = useCallback((task: unknown) => {
     setActiveExam(prev => {
       if (!prev) return null;
       const updated: ExamProject = {
         ...prev,
-        tasks: [...prev.tasks, { ...task, id: `task-${Date.now()}`, completed: false }]
+        tasks: [...prev.tasks, { ...(task as Record<string, unknown>), id: `task-${Date.now()}`, completed: false } as ExamTask]
       };
       updated.integrityHash = generateExamIntegrityHash(updated);
       return updated;
     });
   }, []);
 
-  const updateTask = useCallback((id: string, updates: any) => {
+  const updateTask = useCallback((id: string, updates: unknown) => {
     setActiveExam(prev => {
       if (!prev) return null;
       const updated: ExamProject = {
         ...prev,
-        tasks: prev.tasks.map(t => t.id === id ? { ...t, ...updates } : t)
+        tasks: prev.tasks.map(t => t.id === id ? { ...t, ...(updates as Record<string, unknown>) } : t)
       };
       updated.integrityHash = generateExamIntegrityHash(updated);
       return updated;
@@ -201,7 +201,7 @@ export function useExamMode(): UseExamModeReturn {
     });
   }, []);
 
-  const exportExamFile = useCallback((projectData: any) => {
+  const exportExamFile = useCallback((projectData: unknown) => {
     if (!activeExam) return;
 
     const examData = {
@@ -232,10 +232,10 @@ export function useExamMode(): UseExamModeReturn {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
-    deviceState?: any;
-    deviceStates?: Map<string, any>;
-    topologyConnections?: any[];
-    topologyDevices?: any[];
+    deviceState?: unknown;
+    deviceStates?: Map<string, unknown>;
+    topologyConnections?: unknown[];
+    topologyDevices?: unknown[];
   }) => {
     if (!activeExam || activeExam.finishedAt) return;
 
@@ -244,7 +244,7 @@ export function useExamMode(): UseExamModeReturn {
       if (task.completed) return task;
 
       // reuse checkStepCompletion logic from guided mode
-      const isCompleted = checkStepCompletion(task as any, context);
+      const isCompleted = checkStepCompletion(task as unknown as GuidedStep, context as unknown as Parameters<typeof checkStepCompletion>[1]);
       if (isCompleted) {
         changed = true;
         return { ...task, completed: true, completedAt: new Date() };

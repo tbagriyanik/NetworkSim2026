@@ -65,7 +65,7 @@ export function sanitizeObject<T>(value: T): T {
     }
 
     if (Array.isArray(value)) {
-        return value.map(item => sanitizeObject(item)) as any;
+        return value.map(item => sanitizeObject(item)) as unknown as T;
     }
 
     if (value !== null && typeof value === 'object') {
@@ -74,9 +74,9 @@ export function sanitizeObject<T>(value: T): T {
             return value;
         }
 
-        const result: Record<string, any> = {};
+        const result: Record<string, unknown> = {};
 
-        Object.entries(value as Record<string, any>).forEach(([key, entry]) => {
+        Object.entries(value as Record<string, unknown>).forEach(([key, entry]) => {
             const sanitizedKey = sanitizeInput(key);
             // Skip keys that could be used for prototype pollution
             if (!DANGEROUS_KEYS.has(sanitizedKey.toLowerCase())) {
@@ -137,7 +137,7 @@ export function validateURL(url: string): boolean {
     }
 }
 
-export function escapeJSON(obj: any): string {
+export function escapeJSON(obj: unknown): string {
     return JSON.stringify(sanitizeObject(obj))
         .replace(/\\/g, '\\\\')
         .replace(/"/g, '\\"')
@@ -151,7 +151,7 @@ export function escapeJSON(obj: any): string {
  * Prevents XSS by escaping <, >, &, and ' to their unicode equivalents.
  * Unicode escaping ensures characters are interpreted correctly in both HTML and JS contexts.
  */
-export function safeJSONForHTML(data: any): string {
+export function safeJSONForHTML(data: unknown): string {
     return JSON.stringify(data)
         .replace(/</g, '\\u003c')
         .replace(/>/g, '\\u003e')
@@ -167,7 +167,7 @@ export function safeParseJSON<T>(value: string, fallback: T): T {
     }
 }
 
-export function validateConfigData(config: Record<string, any>): {
+export function validateConfigData(config: Record<string, unknown>): {
     valid: boolean;
     errors: string[];
 } {
@@ -179,22 +179,22 @@ export function validateConfigData(config: Record<string, any>): {
     }
 
     // Validate IP if present
-    if (config.ip && !validateIPAddress(config.ip)) {
+    if (config.ip && !validateIPAddress(config.ip as string)) {
         errors.push('Invalid IP address format');
     }
 
     // Validate subnet if present
-    if (config.subnet && !validateSubnetMask(config.subnet)) {
+    if (config.subnet && !validateSubnetMask(config.subnet as string)) {
         errors.push('Invalid subnet mask format');
     }
 
     // Validate gateway if present
-    if (config.gateway && !validateIPAddress(config.gateway)) {
+    if (config.gateway && !validateIPAddress(config.gateway as string)) {
         errors.push('Invalid gateway IP address format');
     }
 
     // Validate DNS if present
-    if (config.dns && !validateIPAddress(config.dns)) {
+    if (config.dns && !validateIPAddress(config.dns as string)) {
         errors.push('Invalid DNS IP address format');
     }
 
@@ -206,7 +206,7 @@ export function validateConfigData(config: Record<string, any>): {
 
 export function secureLocalStorage() {
     return {
-        setItem: (key: string, value: any) => {
+        setItem: (key: string, value: unknown) => {
             try {
                 const sanitizedKey = sanitizeInput(key);
                 const serialized = JSON.stringify(value);

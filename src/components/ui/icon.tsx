@@ -260,7 +260,7 @@ export const Icon = React.forwardRef<SVGSVGElement, IconProps>(
         ref
     ) => {
         // Get the icon component from lucide-react
-        const IconComponent = (LucideIcons as any)[name];
+        const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<{ ref?: React.Ref<SVGSVGElement>; size?: number; strokeWidth?: number; className?: string }>>)[name];
 
         if (!IconComponent) {
             logger.warn(`Icon "${name}" not found in lucide-react`);
@@ -273,7 +273,7 @@ export const Icon = React.forwardRef<SVGSVGElement, IconProps>(
 
         return (
             <IconComponent
-                ref={ref}
+                ref={ref as React.Ref<SVGSVGElement>}
                 size={pixelSize}
                 strokeWidth={strokeWidth}
                 className={cn(

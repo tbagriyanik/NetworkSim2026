@@ -291,7 +291,7 @@ export function buildRunningConfig(state: SwitchState): string[] {
             }
             // HSRP (Standby)
             if (port.hsrp?.groups) {
-                Object.entries(port.hsrp.groups).forEach(([group, config]: [string, any]) => {
+                Object.entries(port.hsrp.groups).forEach(([group, config]: [string, { virtualIp?: string; ipv6VirtualIp?: string; priority?: number; preempt?: boolean; state?: string }]) => {
                     if (config.virtualIp) {
                         lines.push(` standby ${group} ip ${config.virtualIp}`);
                     }

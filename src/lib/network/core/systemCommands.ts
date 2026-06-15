@@ -3,7 +3,7 @@ import type { CommandHandler, CommandContext } from './commandTypes';
 import { showHandlers } from './showCommands';
 import { privilegedHandlers } from './privilegedCommands';
 import { parseCommand, validateCommand } from '../parser';
-import type { SwitchState, CommandResult } from '../types';
+import type { SwitchState, CommandResult, CommandMode } from '../types';
 
 // Sistem ve oturum komutları (enable, configure terminal, ping, reload, debug, vs.)
 
@@ -236,11 +236,11 @@ function cmdEnd(
  * Do - Execute privileged commands from config mode
  */
 function cmdDo(
-  state: any,
+  state: SwitchState,
   input: string,
-  ctx: any
-): any {
-  const withOriginalMode = (result: any) => {
+  ctx: CommandContext
+): CommandResult {
+  const withOriginalMode = (result: CommandResult) => {
     if (result?.newState) result.newState = { ...result.newState, currentMode: originalMode };
     else result.newState = { currentMode: originalMode };
     return result;
@@ -263,7 +263,7 @@ function cmdDo(
   const originalMode = state.currentMode;
 
   // Temporarily change mode to privileged for execution
-  const privilegedState = { ...state, currentMode: 'privileged' };
+  const privilegedState = { ...state, currentMode: 'privileged' as CommandMode };
 
   // Route to appropriate handler based on command type
 

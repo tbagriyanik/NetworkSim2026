@@ -635,13 +635,13 @@ export const NetworkCanvas = React.memo(React.forwardRef<HTMLDivElement, Network
                         key={device.id}
                         data-device-id={device.id}
                         transform={`translate(${x}, ${y})`}
-                        onMouseDown={(e) => handleDeviceDragStart(e as any, device.id)}
-                        onMouseMove={(e) => handleDeviceDragMove(e as any)}
+                        onMouseDown={(e) => handleDeviceDragStart(e as unknown as React.MouseEvent, device.id)}
+                        onMouseMove={(e) => handleDeviceDragMove(e as unknown as React.MouseEvent)}
                         onMouseUp={handleDeviceDragEnd}
                         onMouseEnter={() => setHoveredDeviceId(device.id)}
                         onMouseLeave={() => setHoveredDeviceId(null)}
-                        onClick={(e) => handleDeviceClick(e as any, device.id)}
-                        onDoubleClick={(e) => handleDeviceDoubleClick(e as any, device.id)}
+                        onClick={(e) => handleDeviceClick(e as unknown as React.MouseEvent, device.id)}
+                        onDoubleClick={(e) => handleDeviceDoubleClick(e as unknown as React.MouseEvent, device.id)}
                         className={cn(styles.deviceGroup, {
                             [styles.selected]: isSelected,
                             [styles.dragging]: isDragging,
@@ -693,7 +693,7 @@ export const NetworkCanvas = React.memo(React.forwardRef<HTMLDivElement, Network
                             viewBox="0 0 24 24"
                         >
                             <DeviceIcon
-                                type={device.type as any}
+                                type={device.type}
                                 size="100%"
                                 color={isSelected ? COLORS.selected : (hasCollision ? COLORS.collision : COLORS.text)}
                             />

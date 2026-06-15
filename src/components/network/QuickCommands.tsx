@@ -90,7 +90,7 @@ export function QuickCommands({ currentMode, onExecuteCommand, t, theme, languag
               <Tooltip key={cmd.command}>
                 <TooltipTrigger asChild>
                   <Button
-                    variant={cmd.color as any}
+                    variant={cmd.color as "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "glass-primary" | "glass-secondary" | "glass-success" | "glass-danger" | "glass-warning" | "glass-indigo"}
                     size="sm"
                     onClick={() => onExecuteCommand(cmd.command)}
                     className={cn(

@@ -221,6 +221,8 @@ export interface Vlan {
   name: string;
   status: 'active' | 'suspend';
   ports: string[];
+  ipAddress?: string;
+  subnetMask?: string;
 }
 
 export interface LineConfig {
@@ -261,7 +263,7 @@ export interface SwitchState {
   currentLine?: string;
   currentVlan?: number;
   ports: Record<string, Port>;
-  vlans: Record<number, Vlan>;
+  vlans: Record<string, Vlan>;
   security: SecurityConfig;
   runningConfig: string[];
   commandHistory: string[];
@@ -445,6 +447,7 @@ export interface SwitchState {
   }>;
   ip?: string; // Device management/primary IP
   ospfProcessId?: string;
+  ospfv3ProcessId?: string;
   ospfRouterId?: string;
   sshTimeout?: number;
   sshAuthenticationRetries?: number;
@@ -478,13 +481,23 @@ export interface SwitchState {
     name?: string;
     wifiSsid?: string;
   };
+  // SDM / Reload
+  sdmPreferConfigured?: boolean;
+  sdmTemplate?: string;
+  reloaded?: boolean;
+  // Spanning-tree global per-VLAN enabled
+  spanningTreeEnabled?: boolean;
+  // ARP inspection
+  arpInspectionEnabled?: boolean;
+  // Spanning-tree portfast default (global)
+  spanningTreePortfastDefault?: boolean;
 }
 
 export interface StartupConfig {
   hostname: string;
   version?: string;
   ports: Record<string, Port>;
-  vlans: Record<number, Vlan>;
+  vlans: Record<string, Vlan>;
   security: SecurityConfig;
   spanningTree?: {
     mode: string;
@@ -516,6 +529,7 @@ export interface CommandResult {
   error?: string;
   newState?: Partial<SwitchState>;
   deviceStates?: Map<string, SwitchState>; // Cross-device state updates (e.g., port security violations)
+  updatedDeviceStates?: Map<string, SwitchState>; // Cross-device state updates (e.g., STP recalculation)
   modeChange?: CommandMode;
   requiresPassword?: boolean;        // Şifre gerekiyor mu?
   passwordPrompt?: string;           // Şifre istemi metni

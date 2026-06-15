@@ -1175,11 +1175,12 @@ export const checkStepCompletion = (
 
     case 'connection':
       if (!context.topologyConnections || !context.topologyDevices) return false;
+      const conns = context.topologyConnections;
 
       if (step.checkParams?.connections) {
         const requiredConnections = step.checkParams.connections;
         return requiredConnections.every(required => {
-          return context.topologyConnections!.some((conn: CanvasConnection) => {
+          return conns.some((conn: CanvasConnection) => {
             if (!conn.active) return false;
             if (step.checkParams?.cableType) {
               const cableTypeMatch = conn.cableType === step.checkParams.cableType;
@@ -1196,7 +1197,7 @@ export const checkStepCompletion = (
 
       if (step.checkParams?.sourceDevice && step.checkParams?.targetDevice) {
         const params = step.checkParams;
-        return context.topologyConnections.some((conn: CanvasConnection) => {
+        return conns.some((conn: CanvasConnection) => {
           if (!conn.active) return false;
           if (params.cableType) {
             const cableTypeMatch = conn.cableType === params.cableType;
@@ -1284,8 +1285,8 @@ export const checkStepCompletion = (
          const parts = configKey.split('.');
          const serviceName = parts[1];
          const property = parts[2];
-         const service = (targetState?.services as Record<string, any>)?.[serviceName] ||
-           (context.topologyDevices?.find((d: CanvasDevice) => d.id === step.checkParams?.targetDeviceId)?.services as Record<string, any>)?.[serviceName];
+         const service = ((targetState?.services as Record<string, unknown>)?.[serviceName] ||
+            (context.topologyDevices?.find((d: CanvasDevice) => d.id === step.checkParams?.targetDeviceId)?.services as Record<string, unknown>)?.[serviceName]) as { enabled?: boolean; records?: { domain: string; address: string }[] } | undefined;
          if (!service) return false;
          if (property === 'enabled') return service.enabled === configValue;
          if (property === 'records' && Array.isArray(configValue)) {

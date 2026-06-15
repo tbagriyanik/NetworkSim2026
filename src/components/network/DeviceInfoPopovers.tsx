@@ -267,8 +267,8 @@ export function RouterInfoPopover({ router, routerState, t, isDark, onClose, onF
   const wifiEnabled = routerState?.ports?.['wlan0']?.wifi?.mode === 'ap' || router?.wifi?.enabled;
   const wifiConfig = routerState?.ports?.['wlan0']?.wifi || router?.wifi;
   const ipAddresses = ports
-    .filter((p: any) => p.ipAddress && !p.shutdown)
-    .map((p: any) => `${p.id}: ${p.ipAddress}${p.subnetMask ? `/${p.subnetMask}` : ''}`)
+    .filter((p) => p.ipAddress && !p.shutdown)
+    .map((p) => `${p.id}: ${p.ipAddress}${p.subnetMask ? `/${p.subnetMask}` : ''}`)
     .slice(0, 3);
 
   return (

@@ -7,7 +7,7 @@ import { getModePrompt } from './initialState';
 import { ensureDeviceStatesMap } from './networkUtils';
 import { encryptMd5Password, decryptType7Password } from './crypto';
 import { IOS_ERRORS, iosModeError } from './core/iosErrors';
-import type { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
+import type { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 
 /**
  * Generate CLI prompt string based on current switch state
@@ -822,7 +822,7 @@ export function getEstimatedSuggestions(
       ? (state.switchLayer === 'L3' ? 'switchL3' : 'switchL2')
       : state.deviceType || (state.switchLayer === 'FW' ? 'firewall' : state.switchLayer === 'L3' ? 'switchL3' : 'switchL2'))
     : 'switchL2';
-  const capabilities = state ? getDeviceCapabilities({ type: inferredDeviceType } as any, state.switchModel) : undefined;
+  const capabilities = state ? getDeviceCapabilities({ type: inferredDeviceType as DeviceType } as Pick<CanvasDevice, 'type'>, state.switchModel) : undefined;
 
   // 1. commandHelp ağacından sonraki kelimeleri al
   if (effectivePrefix && modeCommands[effectivePrefix]) {
@@ -1123,7 +1123,7 @@ export function executeCommand(
   const inferredDeviceType = state.deviceType === 'switch'
     ? (state.switchLayer === 'L3' ? 'switchL3' : 'switchL2')
     : (state.deviceType || (state.switchLayer === 'FW' ? 'firewall' : state.switchLayer === 'L3' ? 'switchL3' : 'switchL2'));
-  const capabilities = getDeviceCapabilities({ type: inferredDeviceType as any } as any, state.switchModel);
+  const capabilities = getDeviceCapabilities({ type: inferredDeviceType as DeviceType } as Pick<CanvasDevice, 'type'>, state.switchModel);
 
   const requiresSwitching = [
     'vlan', 'no vlan', 'switchport', 'spanning-tree', 'vtp', 'show vlan',
@@ -1937,7 +1937,7 @@ function handleMailSessionCommand(
       const reqUser = recipient.split('@')[0];
       const reqDomain = recipient.split('@')[1] || recipient;
       if (mail.username === reqUser && mail.domain === reqDomain) return true;
-      const isIpMatch = entry.device.ip === reqDomain || Object.values(entry.state?.ports || {}).some((p: any) => p.ipAddress === reqDomain);
+      const isIpMatch = entry.device.ip === reqDomain || Object.values(entry.state?.ports || {}).some((p: { ipAddress?: string }) => p.ipAddress === reqDomain);
       const isNameMatch = entry.device.name === reqUser || entry.state?.hostname === reqUser;
       return isIpMatch && isNameMatch;
     });

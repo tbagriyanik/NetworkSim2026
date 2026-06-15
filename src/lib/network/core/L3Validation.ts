@@ -4,6 +4,7 @@
  */
 
 import { isLayer3Switch, isLayer2Switch } from '../switchModels';
+import { SwitchState, Port } from '../types';
 
 /**
  * Validates that a device supports routed ports (no switchport)
@@ -44,7 +45,7 @@ export function validateNoSwitchportSupport(
  */
 export function validateIpRoutingSupport(
     switchModel: string | undefined,
-    currentState: any
+    currentState: SwitchState
 ): {
     valid: boolean;
     error?: string;
@@ -83,7 +84,7 @@ export function validateIpRoutingSupport(
  * in that VLAN is connected and active (not shutdown)
  */
 export function validateSviStatus(
-    state: any,
+    state: SwitchState,
     vlanId: number
 ): {
     valid: boolean;
@@ -108,7 +109,7 @@ export function validateSviStatus(
     let hasAnyPorts = false;
 
     for (const [portId, portData] of Object.entries(state.ports || {})) {
-        const port = portData as any;
+        const port = portData as Port;
 
         // Skip VLAN interfaces themselves
         if (port.type === 'vlan') continue;
@@ -159,7 +160,7 @@ export function validateSviStatus(
 /**
  * Validates that IP routing is actually enabled before using VLAN routing
  */
-export function validateIpRoutingEnabled(state: any): {
+export function validateIpRoutingEnabled(state: SwitchState): {
     valid: boolean;
     error?: string;
 } {
@@ -179,7 +180,7 @@ export function validateIpRoutingEnabled(state: any): {
  * For L3 switches, IP can be used for routing between VLANs
  */
 export function getIpAddressPurpose(
-    state: any,
+    state: SwitchState,
     interfaceName: string | undefined
 ): {
     purpose: 'management' | 'routing' | 'both' | 'unknown';
@@ -224,7 +225,7 @@ export function getIpAddressPurpose(
  * Validates switch prerequisites for L3 configuration
  * Checks that device is proper type and configured correctly
  */
-export function validateL3SwitchPrerequisites(state: any): {
+export function validateL3SwitchPrerequisites(state: SwitchState): {
     valid: boolean;
     prerequisites: {
         isL3Switch: boolean;
@@ -249,7 +250,7 @@ export function validateL3SwitchPrerequisites(state: any): {
     const sdmConfigured = !!state.sdmPreferConfigured;
 
     const hasActivePorts = Object.values(state.ports || {})
-        .filter((port: any) => !port.shutdown && port.type !== 'vlan')
+        .filter((port: Port) => !port.shutdown && port.type !== 'vlan')
         .length > 0;
     if (!hasActivePorts) {
         errors.push('No active physical ports available');

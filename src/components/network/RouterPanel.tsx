@@ -137,7 +137,7 @@ export function RouterPanel({
     }
   };
 
-  const getPortLEDColorClass = (port: Port | any): string => {
+  const getPortLEDColorClass = (port: Port): string => {
     // Handle both Port (from routerState) and CanvasPort (from topology)
     const isShutdown = port.shutdown ?? false;
     const status = port.status ?? 'notconnect';
@@ -394,7 +394,7 @@ export function RouterPanel({
                     )}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={cn("w-3 h-3 rounded-full", getPortLEDColorClass(port))} />
+                      <div className={cn("w-3 h-3 rounded-full", getPortLEDColorClass(port as Port))} />
                       <div>
                         <p className="font-medium">{port.id}</p>
                         {port.description && (
@@ -437,7 +437,7 @@ export function RouterPanel({
                     )}>
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold flex items-center gap-2">
-                          {(wifiConfig as any).enabled || wifiConfig.mode === 'ap' ? (
+                          {(wifiConfig as { enabled?: boolean }).enabled || wifiConfig.mode === 'ap' ? (
                             <Wifi className="w-4 h-4 text-green-500" />
                           ) : (
                             <WifiOff className="w-4 h-4 text-gray-500" />
@@ -446,11 +446,11 @@ export function RouterPanel({
                         </h3>
                         <span className={cn(
                           "px-2 py-1 rounded text-xs font-medium",
-                          (wifiConfig as any).enabled || wifiConfig.mode === 'ap'
+                          (wifiConfig as { enabled?: boolean }).enabled || wifiConfig.mode === 'ap'
                             ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                             : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
                         )}>
-                          {(wifiConfig as any).enabled || wifiConfig.mode === 'ap'
+                          {(wifiConfig as { enabled?: boolean }).enabled || wifiConfig.mode === 'ap'
                             ? t.active
                             : t.suspended
                           }

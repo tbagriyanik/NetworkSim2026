@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Trash2, CheckCircle2, XCircle, GripVertical, Terminal as TerminalIcon, Filter } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { Translations } from '@/contexts/LanguageContext';
-import { Terminal } from './Terminal';
+import { Terminal, type TerminalOutput } from './Terminal';
 import { SwitchState } from '@/lib/network/types';
 import { getPrompt } from '@/lib/network/executor';
 
@@ -21,11 +21,11 @@ interface FirewallPanelProps {
   onUpdateRules: (rules: FirewallRule[]) => void;
   isDevicePoweredOff?: boolean;
   deviceStates: Map<string, SwitchState>;
-  deviceOutputs: Map<string, any[]>;
-  onExecuteCommand: (command: string) => Promise<void>;
+  deviceOutputs: Map<string, TerminalOutput[]>;
+  onExecuteCommand: (command: string) => Promise<unknown>;
   onUpdateHistory: (deviceId: string, history: string[]) => void;
-  setConfirmDialog: (dialog: any) => void;
-  confirmDialog: any;
+  setConfirmDialog: (dialog: { show: boolean; message: string; action: string; onConfirm: () => void } | null) => void;
+  confirmDialog: { show: boolean; message: string; action: string; onConfirm: () => void } | null;
   onClose?: () => void;
   topologyDevices?: CanvasDevice[];
   activeTab?: 'console' | 'settings';
@@ -61,7 +61,7 @@ export function FirewallPanel({
       currentMode: 'user',
       ports: {},
       security: { consoleLine: {}, vtyLines: {} }
-    } as any;
+    } as SwitchState;
   }, [deviceStates, device.id]);
 
   const output = useMemo(() => {
@@ -260,12 +260,12 @@ export function FirewallPanel({
                     <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Protokol' : 'Protocol'}</label>
                     <Select
                       value={currentSelectValue}
-                      onValueChange={(v: any) => {
+                      onValueChange={(v: string) => {
                         const option = dropdownOptions.find(opt => opt.value === v);
                         if (option) {
-                          setNewRule({ ...newRule, protocol: option.protocol as any, port: option.port });
+                          setNewRule({ ...newRule, protocol: option.protocol as 'tcp' | 'udp' | 'icmp' | 'any', port: option.port });
                         } else {
-                          setNewRule({ ...newRule, protocol: v });
+                          setNewRule({ ...newRule, protocol: v as 'tcp' | 'udp' | 'icmp' | 'any' });
                         }
                       }}
                       disabled={isDevicePoweredOff}
@@ -286,7 +286,7 @@ export function FirewallPanel({
                     <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Eylem' : 'Action'}</label>
                     <Select
                       value={newRule.action}
-                      onValueChange={(v: any) => setNewRule({ ...newRule, action: v })}
+                      onValueChange={(v: string) => setNewRule({ ...newRule, action: v as 'allow' | 'deny' })}
                       disabled={isDevicePoweredOff}
                     >
                       <SelectTrigger className="h-8 text-xs">

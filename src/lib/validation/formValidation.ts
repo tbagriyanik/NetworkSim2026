@@ -166,8 +166,8 @@ export const validateSubnetMask = (subnet: string): ValidationError | null => {
 
 // Batch validation
 export const validateForm = (
-    data: Record<string, any>,
-    validators: Record<string, (value: any) => ValidationError | null>
+    data: Record<string, unknown>,
+    validators: Record<string, (value: unknown) => ValidationError | null>
 ): ValidationResult => {
     const errors: ValidationError[] = [];
 

@@ -1,6 +1,6 @@
 import { IOS_ERRORS, iosModeError } from './iosErrors';
-import type { CommandHandler } from './commandTypes';
-import type { SwitchState } from '../types';
+import type { CommandHandler, CommandContext } from './commandTypes';
+import type { SwitchState, CommandResult, Port, SpeedMode, DuplexMode, EtherChannelMode } from '../types';
 import { normalizePortId } from '../initialState';
 import { canAssignIPToPhysicalPort, isLayer3Switch } from '../switchModels';
 import { buildRunningConfig } from './configBuilder';
@@ -143,7 +143,7 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
 /**
  * Interface - Enter interface configuration mode
  */
-function cmdInterface(state: any, input: string, _ctx: any): any {
+function cmdInterface(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') {
     return { success: false, error: iosModeError() };
   }
@@ -187,9 +187,11 @@ function cmdInterface(state: any, input: string, _ctx: any): any {
         name: `Vlan${vlanId}`,
         type: 'vlan',
         vlan: vlanId,
-        status: 'up',
+        status: 'notconnect',
         shutdown: false,
-        mode: 'routed'
+        mode: 'routed',
+        duplex: 'auto',
+        speed: 'auto'
       };
     }
     if (!newVlans[vlanId]) {
@@ -246,9 +248,11 @@ function cmdInterface(state: any, input: string, _ctx: any): any {
       name: `${normalized}`,
       type: normalized.startsWith('fa') ? 'fastethernet' : 'gigabitethernet',
       vlan: parseInt(subinterfaceNum) || 1,
-      status: 'up',
+      status: 'notconnect',
       shutdown: false,
       mode: 'routed',
+      duplex: 'auto',
+      speed: 'auto',
       isSubinterface: true,
       parentInterface: baseInterface
     };
@@ -268,7 +272,7 @@ function cmdInterface(state: any, input: string, _ctx: any): any {
 /**
  * Shutdown - Administratively disable interface
  */
-function cmdShutdown(state: any, _input: string, ctx: any): any {
+function cmdShutdown(state: SwitchState, _input: string, ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -286,27 +290,27 @@ function cmdShutdown(state: any, _input: string, ctx: any): any {
     };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, shutdown: true }));
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, shutdown: true }));
 
   // Recalculate STP states for all devices in the topology after shutdown
   const updatedCurrentState = { ...state, ports: newPorts };
-  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId);
+  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId!);
 
   // Return the new ports for the current device and the updated states for all switches
-  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId);
+  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId!);
   const finalPorts = myUpdatedState ? myUpdatedState.ports : newPorts;
 
   return {
     success: true,
     newState: { ports: finalPorts },
-    updatedDeviceStates: allUpdatedStates
+    deviceStates: allUpdatedStates
   };
 }
 
 /**
  * No Shutdown - Enable interface
  */
-function cmdNoShutdown(state: any, _input: string, ctx: any): any {
+function cmdNoShutdown(state: SwitchState, _input: string, ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -324,27 +328,27 @@ function cmdNoShutdown(state: any, _input: string, ctx: any): any {
     };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, shutdown: false }));
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, shutdown: false }));
 
   // Recalculate STP states for all devices in the topology after no shutdown
   const updatedCurrentState = { ...state, ports: newPorts };
-  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId);
+  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId!);
 
   // Return the new ports for the current device and the updated states for all switches
-  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId);
+  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId!);
   const finalPorts = myUpdatedState ? myUpdatedState.ports : newPorts;
 
   return {
     success: true,
     newState: { ports: finalPorts },
-    updatedDeviceStates: allUpdatedStates
+    deviceStates: allUpdatedStates
   };
 }
 
 /**
  * Speed - Set interface speed
  */
-function cmdSpeed(state: any, input: string, ctx: any): any {
+function cmdSpeed(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -354,22 +358,22 @@ function cmdSpeed(state: any, input: string, ctx: any): any {
     return { success: false, error: '% Invalid speed value (10, 100, 1000, 10000, auto)' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, speed: match[1].toLowerCase() }));
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, speed: match[1].toLowerCase() as SpeedMode }));
   const updatedCurrentState = { ...state, ports: newPorts };
-  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId);
-  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId);
+  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId!);
+  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId!);
 
   return {
     success: true,
     newState: myUpdatedState || { ports: newPorts },
-    updatedDeviceStates: allUpdatedStates
+    deviceStates: allUpdatedStates
   };
 }
 
 /**
  * Duplex - Set duplex mode
  */
-function cmdDuplex(state: any, input: string, _ctx: any): any {
+function cmdDuplex(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -379,7 +383,7 @@ function cmdDuplex(state: any, input: string, _ctx: any): any {
     return { success: false, error: '% Invalid duplex value (half, full, auto)' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, duplex: match[1].toLowerCase() }));
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, duplex: match[1].toLowerCase() as DuplexMode }));
 
   return {
     success: true,
@@ -390,7 +394,7 @@ function cmdDuplex(state: any, input: string, _ctx: any): any {
 /**
  * standby <group> ip <virtual-ip>
  */
-function cmdStandbyIp(state: any, input: string, _ctx: any): any {
+function cmdStandbyIp(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
   const match = input.match(/^standby\s+(\d+)\s+ip\s+([0-9.]+)$/i);
   if (!match) return { success: false, error: '% Invalid standby command' };
@@ -398,7 +402,7 @@ function cmdStandbyIp(state: any, input: string, _ctx: any): any {
   const group = parseInt(match[1]);
   const virtualIp = match[2];
 
-  const updatePort = (port: any) => {
+  const updatePort = (port: Port) => {
     const hsrp = port.hsrp || { groups: {} };
     const groups = hsrp.groups || {};
     groups[group] = { ...groups[group], virtualIp, state: 'Active' };
@@ -412,7 +416,7 @@ function cmdStandbyIp(state: any, input: string, _ctx: any): any {
 /**
  * standby <group> priority <priority>
  */
-function cmdStandbyPriority(state: any, input: string, _ctx: any): any {
+function cmdStandbyPriority(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
   const match = input.match(/^standby\s+(\d+)\s+priority\s+(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid standby command' };
@@ -420,7 +424,7 @@ function cmdStandbyPriority(state: any, input: string, _ctx: any): any {
   const group = parseInt(match[1]);
   const priority = parseInt(match[2]);
 
-  const updatePort = (port: any) => {
+  const updatePort = (port: Port) => {
     const hsrp = port.hsrp || { groups: {} };
     const groups = hsrp.groups || {};
     groups[group] = { ...groups[group], priority };
@@ -434,7 +438,7 @@ function cmdStandbyPriority(state: any, input: string, _ctx: any): any {
 /**
  * standby <group> ipv6 <virtual-ipv6>
  */
-function cmdStandbyIpv6(state: any, input: string, _ctx: any): any {
+function cmdStandbyIpv6(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
   const match = input.match(/^standby\s+(\d+)\s+ipv6\s+([0-9a-fA-F:]+)$/i);
   if (!match) return { success: false, error: '% Invalid standby command' };
@@ -442,10 +446,11 @@ function cmdStandbyIpv6(state: any, input: string, _ctx: any): any {
   const group = parseInt(match[1]);
   const ipv6VirtualIp = match[2];
 
-  const updatePort = (port: any) => {
+  const updatePort = (port: Port) => {
     const hsrp = port.hsrp || { groups: {} };
     const groups = hsrp.groups || {};
-    groups[group] = { ...groups[group], ipv6VirtualIp, state: 'Active' };
+    (groups[group] as Record<string, unknown>).ipv6VirtualIp = ipv6VirtualIp;
+    (groups[group] as Record<string, unknown>).state = 'Active';
     return { ...port, hsrp: { ...hsrp, groups } };
   };
 
@@ -453,14 +458,14 @@ function cmdStandbyIpv6(state: any, input: string, _ctx: any): any {
   return { success: true, newState: { ports: newPorts } };
 }
 
-function cmdStandbyPreempt(state: any, input: string, _ctx: any): any {
+function cmdStandbyPreempt(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
   const match = input.match(/^standby\s+(\d+)\s+preempt$/i);
   if (!match) return { success: false, error: '% Invalid standby command' };
 
   const group = parseInt(match[1]);
 
-  const updatePort = (port: any) => {
+  const updatePort = (port: Port) => {
     const hsrp = port.hsrp || { groups: {} };
     const groups = hsrp.groups || {};
     groups[group] = { ...groups[group], preempt: true };
@@ -474,7 +479,7 @@ function cmdStandbyPreempt(state: any, input: string, _ctx: any): any {
 /**
  * Description - Set interface description
  */
-function cmdDescription(state: any, input: string, _ctx: any): any {
+function cmdDescription(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -484,7 +489,7 @@ function cmdDescription(state: any, input: string, _ctx: any): any {
     return { success: false, error: '% Invalid description command' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, description: match[1] }));
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, description: match[1] }));
 
   return {
     success: true,
@@ -495,7 +500,7 @@ function cmdDescription(state: any, input: string, _ctx: any): any {
 /**
  * No Switchport - Convert physical port to routed port (L3 switch only)
  */
-function cmdNoSwitchport(state: any, _input: string, _ctx: any): any {
+function cmdNoSwitchport(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -515,7 +520,7 @@ function cmdNoSwitchport(state: any, _input: string, _ctx: any): any {
     return { success: false, error: '% Invalid command on WLAN interface' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => {
+  const newPorts = applyToSelectedPorts(state, (port: Port) => {
     // Convert port from L2 switchport mode to L3 routed mode
     return {
       ...port,
@@ -551,7 +556,7 @@ function cmdNoSwitchport(state: any, _input: string, _ctx: any): any {
 /**
  * Switchport Mode - access | trunk | dynamic auto | dynamic desirable | dot1q-tunnel
  */
-function cmdSwitchportMode(state: any, input: string, ctx: any): any {
+function cmdSwitchportMode(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -571,26 +576,26 @@ function cmdSwitchportMode(state: any, input: string, ctx: any): any {
       : state.currentInterface ? [state.currentInterface] : [];
     const missingEncapsulation = targetPorts.some((portId: string) => {
       const port = state.ports?.[portId];
-      return !port?.trunkEncapsulation || port.trunkEncapsulation !== 'dot1q';
+      return !port?.encapsulation || (port.encapsulation as string) !== 'dot1q';
     });
     if (missingEncapsulation) {
       return { success: false, error: "% Command rejected: The interface does not support trunking. Use 'switchport trunk encapsulation dot1q' first." };
     }
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, mode: normalizedMode }));
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, mode: normalizedMode }));
   const updatedCurrentState = {
     ...state,
     ports: newPorts,
   };
 
-  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId);
-  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId);
+  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId!);
+  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId!);
 
   return {
     success: true,
     newState: myUpdatedState || { ports: newPorts },
-    updatedDeviceStates: allUpdatedStates
+    deviceStates: allUpdatedStates
   };
 }
 
@@ -600,7 +605,7 @@ function cmdSwitchportMode(state: any, input: string, ctx: any): any {
 /**
  * Switchport Access VLAN
  */
-function cmdSwitchportAccessVlan(state: any, input: string, ctx: any): any {
+function cmdSwitchportAccessVlan(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -665,20 +670,20 @@ function cmdSwitchportAccessVlan(state: any, input: string, ctx: any): any {
     vlans: newVlans
   };
 
-  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId);
-  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId);
+  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId!);
+  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId!);
 
   return {
     success: true,
     newState: myUpdatedState || { ports: newPorts, vlans: newVlans },
-    updatedDeviceStates: allUpdatedStates
+    deviceStates: allUpdatedStates
   };
 }
 
 /**
  * Switchport Trunk Native VLAN
  */
-function cmdSwitchportTrunkNativeVlan(state: any, input: string, _ctx: any): any {
+function cmdSwitchportTrunkNativeVlan(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -688,7 +693,7 @@ function cmdSwitchportTrunkNativeVlan(state: any, input: string, _ctx: any): any
     return { success: false, error: '% Invalid VLAN ID' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, nativeVlan: match[1] }));
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, nativeVlan: parseInt(match[1]) }));
 
   return {
     success: true,
@@ -699,7 +704,7 @@ function cmdSwitchportTrunkNativeVlan(state: any, input: string, _ctx: any): any
 /**
  * Switchport Trunk Allowed VLAN
  */
-function cmdSwitchportTrunkAllowedVlan(state: any, input: string, _ctx: any): any {
+function cmdSwitchportTrunkAllowedVlan(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -711,8 +716,9 @@ function cmdSwitchportTrunkAllowedVlan(state: any, input: string, _ctx: any): an
 
   const vlanSpec = match[1].trim();
   const keywordMatch = vlanSpec.match(/^(add|remove|except)\s+(.+)$/i);
-  const currentVlans = (state.currentPort?.allowedVlans === 'all' || state.currentPort?.allowedVlans === undefined)
-    ? 'all' : (typeof state.currentPort?.allowedVlans === 'string' ? state.currentPort.allowedVlans : '1');
+  const currentPort = state.currentInterface ? state.ports[state.currentInterface] : undefined;
+  const currentVlans = (currentPort?.allowedVlans === 'all' || currentPort?.allowedVlans === undefined)
+    ? 'all' : (typeof currentPort?.allowedVlans === 'string' ? currentPort.allowedVlans : '1');
 
   let newAllowed: string;
   if (keywordMatch) {
@@ -740,7 +746,7 @@ function cmdSwitchportTrunkAllowedVlan(state: any, input: string, _ctx: any): an
     newAllowed = vlanSpec;
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, allowedVlans: newAllowed }));
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, allowedVlans: newAllowed as unknown as number[] | 'all' }));
 
   return {
     success: true,
@@ -751,16 +757,16 @@ function cmdSwitchportTrunkAllowedVlan(state: any, input: string, _ctx: any): an
 /**
  * Switchport Port-Security
  */
-function cmdSwitchportPortSecurity(state: any, _input: string, _ctx: any): any {
+function cmdSwitchportPortSecurity(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
 
   const newPorts = { ...state.ports };
-  if (!newPorts[state.currentInterface].portSecurity) {
-    newPorts[state.currentInterface].portSecurity = {};
+  if (!newPorts[state.currentInterface!].portSecurity) {
+    newPorts[state.currentInterface!].portSecurity = { enabled: true };
   }
-  newPorts[state.currentInterface].portSecurity.enabled = true;
+  newPorts[state.currentInterface!].portSecurity!.enabled = true;
 
   return {
     success: true,
@@ -771,7 +777,7 @@ function cmdSwitchportPortSecurity(state: any, _input: string, _ctx: any): any {
 /**
  * Switchport Port-Security Maximum
  */
-function cmdSwitchportPortSecurityMaximum(state: any, input: string, _ctx: any): any {
+function cmdSwitchportPortSecurityMaximum(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -782,10 +788,10 @@ function cmdSwitchportPortSecurityMaximum(state: any, input: string, _ctx: any):
   }
 
   const newPorts = { ...state.ports };
-  if (!newPorts[state.currentInterface].portSecurity) {
-    newPorts[state.currentInterface].portSecurity = {};
+  if (!newPorts[state.currentInterface!].portSecurity) {
+    newPorts[state.currentInterface!].portSecurity = { enabled: false };
   }
-  newPorts[state.currentInterface].portSecurity.maxAddresses = parseInt(match[1]);
+  newPorts[state.currentInterface!].portSecurity!.maxAddresses = parseInt(match[1]);
 
   return {
     success: true,
@@ -796,7 +802,7 @@ function cmdSwitchportPortSecurityMaximum(state: any, input: string, _ctx: any):
 /**
  * Switchport Port-Security Violation
  */
-function cmdSwitchportPortSecurityViolation(state: any, input: string, _ctx: any): any {
+function cmdSwitchportPortSecurityViolation(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -807,10 +813,10 @@ function cmdSwitchportPortSecurityViolation(state: any, input: string, _ctx: any
   }
 
   const newPorts = { ...state.ports };
-  if (!newPorts[state.currentInterface].portSecurity) {
-    newPorts[state.currentInterface].portSecurity = {};
+  if (!newPorts[state.currentInterface!].portSecurity) {
+    newPorts[state.currentInterface!].portSecurity = { enabled: false };
   }
-  newPorts[state.currentInterface].portSecurity.violationAction = match[1].toLowerCase();
+  newPorts[state.currentInterface!].portSecurity!.violationAction = match[1].toLowerCase() as 'shutdown' | 'restrict' | 'protect';
 
   return {
     success: true,
@@ -821,16 +827,16 @@ function cmdSwitchportPortSecurityViolation(state: any, input: string, _ctx: any
 /**
  * Switchport Port-Security MAC-Address Sticky
  */
-function cmdSwitchportPortSecuritySticky(state: any, _input: string, _ctx: any): any {
+function cmdSwitchportPortSecuritySticky(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
 
   const newPorts = { ...state.ports };
-  if (!newPorts[state.currentInterface].portSecurity) {
-    newPorts[state.currentInterface].portSecurity = {};
+  if (!newPorts[state.currentInterface!].portSecurity) {
+    newPorts[state.currentInterface!].portSecurity = { enabled: false };
   }
-  newPorts[state.currentInterface].portSecurity.sticky = true;
+  newPorts[state.currentInterface!].portSecurity!.sticky = true;
 
   return {
     success: true,
@@ -841,16 +847,16 @@ function cmdSwitchportPortSecuritySticky(state: any, _input: string, _ctx: any):
 /**
  * Spanning-Tree Portfast
  */
-function cmdSpanningTreePortfast(state: any, _input: string, _ctx: any): any {
+function cmdSpanningTreePortfast(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
 
   const newPorts = { ...state.ports };
-  if (!newPorts[state.currentInterface].spanningTree) {
-    newPorts[state.currentInterface].spanningTree = {};
+  if (!newPorts[state.currentInterface!].spanningTree) {
+    newPorts[state.currentInterface!].spanningTree = {};
   }
-  newPorts[state.currentInterface].spanningTree.portfast = true;
+  newPorts[state.currentInterface!].spanningTree!.portfast = true;
 
   return {
     success: true,
@@ -861,16 +867,16 @@ function cmdSpanningTreePortfast(state: any, _input: string, _ctx: any): any {
 /**
  * Spanning-Tree BPDU Guard
  */
-function cmdSpanningTreeBpduguard(state: any, _input: string, _ctx: any): any {
+function cmdSpanningTreeBpduguard(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
 
   const newPorts = { ...state.ports };
-  if (!newPorts[state.currentInterface].spanningTree) {
-    newPorts[state.currentInterface].spanningTree = {};
+  if (!newPorts[state.currentInterface!].spanningTree) {
+    newPorts[state.currentInterface!].spanningTree = {};
   }
-  newPorts[state.currentInterface].spanningTree.bpduguard = true;
+  newPorts[state.currentInterface!].spanningTree!.bpduguard = true;
 
   return {
     success: true,
@@ -881,7 +887,7 @@ function cmdSpanningTreeBpduguard(state: any, _input: string, _ctx: any): any {
 /**
  * IP Address - Assign IP to routed port or VLAN interface
  */
-function cmdIpAddress(state: any, input: string, _ctx: any): any {
+function cmdIpAddress(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
@@ -894,7 +900,7 @@ function cmdIpAddress(state: any, input: string, _ctx: any): any {
   const isDhcp = input.toLowerCase().endsWith('dhcp');
 
   if (isDhcp) {
-    const newPorts = applyToSelectedPorts(state, (port: any) => ({
+    const newPorts = applyToSelectedPorts(state, (port: Port) => ({
       ...port,
       ipConfigMode: 'dhcp',
       ipAddress: undefined,
@@ -958,8 +964,8 @@ function cmdIpAddress(state: any, input: string, _ctx: any): any {
   // Layer 2 switch check - prevent IP assignment on physical ports
   // Apply this guard only for switch devices; routers must allow physical IP addressing.
   const isSwitchDevice =
-    (state.deviceType === 'switchL2' ||
-      state.deviceType === 'switchL3' ||
+    ((state.deviceType as string) === 'switchL2' ||
+      (state.deviceType as string) === 'switchL3' ||
       state.switchLayer === 'L2' ||
       state.switchLayer === 'L3' ||
       state.switchModel === 'WS-C2960-24TT-L' ||
@@ -990,7 +996,7 @@ function cmdIpAddress(state: any, input: string, _ctx: any): any {
   }
 
   // Physical routed port IP assignment (Layer 3 switch or router)
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     ipAddress: ip,
     subnetMask: mask,
@@ -1011,7 +1017,7 @@ function cmdIpAddress(state: any, input: string, _ctx: any): any {
 /**
  * No IP Address - Remove IP from interface
  */
-function cmdNoIpAddress(state: any, _input: string, _ctx: any): any {
+function cmdNoIpAddress(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
@@ -1037,7 +1043,7 @@ function cmdNoIpAddress(state: any, _input: string, _ctx: any): any {
   }
 
   // Fiziksel port'tan IP kaldırma
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, ipAddress: undefined, subnetMask: undefined, mode: 'access' }));
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, ipAddress: undefined, subnetMask: undefined, mode: 'access' }));
 
   const updatedState = { ...state, ports: newPorts };
   return {
@@ -1049,7 +1055,7 @@ function cmdNoIpAddress(state: any, _input: string, _ctx: any): any {
 /**
  * IP Default-Gateway - Configured from interface mode
  */
-function cmdIpDefaultGateway(state: any, input: string, _ctx: any): any {
+function cmdIpDefaultGateway(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
@@ -1068,7 +1074,7 @@ function cmdIpDefaultGateway(state: any, input: string, _ctx: any): any {
 /**
  * No IP Default-Gateway - Configured from interface mode
  */
-function cmdNoIpDefaultGateway(state: any, _input: string, _ctx: any): any {
+function cmdNoIpDefaultGateway(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
@@ -1130,7 +1136,7 @@ function isNetworkOrBroadcastAddress(ip: string, mask: string): boolean {
   return hostPart === 0 || hostPart === hostBits;
 }
 
-function expandInterfaceRange(rangeSpec: string, state: any): string[] {
+function expandInterfaceRange(rangeSpec: string, state: SwitchState): string[] {
   const normalized = rangeSpec.replace(/\s+/g, '').toLowerCase();
 
   // Handle comma-separated ranges: fa0/1,3,6 or fa0/1-4,7-9
@@ -1184,7 +1190,7 @@ function expandInterfaceRange(rangeSpec: string, state: any): string[] {
   return allPorts;
 }
 
-function applyToSelectedPorts(state: any, updater: (port: any) => any) {
+function applyToSelectedPorts(state: SwitchState, updater: (port: Port) => Port) {
   const newPorts = { ...state.ports };
   const targets = Array.isArray(state.selectedInterfaces) && state.selectedInterfaces.length > 0
     ? state.selectedInterfaces
@@ -1204,7 +1210,7 @@ function applyToSelectedPorts(state: any, updater: (port: any) => any) {
 /**
  * SSID - Set Wireless SSID
  */
-function cmdSsid(state: any, input: string, _ctx: any): any {
+function cmdSsid(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
@@ -1216,9 +1222,9 @@ function cmdSsid(state: any, input: string, _ctx: any): any {
   if (!match) return { success: false, error: '% Invalid SSID' };
 
   const ssid = match[1].trim();
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
-    wifi: { ...port.wifi, ssid }
+    wifi: { ...port.wifi!, ssid }
   }));
 
   const updatedState = { ...state, ports: newPorts };
@@ -1228,7 +1234,7 @@ function cmdSsid(state: any, input: string, _ctx: any): any {
 /**
  * Encryption - Set Wireless Security
  */
-function cmdEncryption(state: any, input: string, _ctx: any): any {
+function cmdEncryption(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
@@ -1239,10 +1245,10 @@ function cmdEncryption(state: any, input: string, _ctx: any): any {
   const match = input.match(/^encryption\s+(open|wpa|wpa2|wpa3)$/i);
   if (!match) return { success: false, error: '% Invalid encryption (open, wpa, wpa2, wpa3)' };
 
-  const security = match[1].toLowerCase();
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const security = match[1].toLowerCase() as 'open' | 'wpa' | 'wpa2' | 'wpa3';
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
-    wifi: { ...port.wifi, security }
+    wifi: { ...port.wifi!, security }
   }));
 
   const updatedState = { ...state, ports: newPorts };
@@ -1253,7 +1259,7 @@ function cmdEncryption(state: any, input: string, _ctx: any): any {
 /**
  * WLAN - Create WLAN configuration (WLC only)
  */
-function cmdWlan(state: any, input: string, _ctx: any): any {
+function cmdWlan(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   const match = input.match(/^wlan\s+(\S+)\s+(\d+)\s+(\S+)$/i);
   if (!match) {
     return { success: false, error: '% Invalid WLAN command. Usage: wlan <name> <id> <ssid>' };
@@ -1272,7 +1278,7 @@ function cmdWlan(state: any, input: string, _ctx: any): any {
   if (newPorts['wlan0']) {
     newPorts['wlan0'] = {
       ...newPorts['wlan0'],
-      wifi: { ...newPorts['wlan0'].wifi, ssid }
+      wifi: { ...newPorts['wlan0'].wifi!, ssid }
     };
   }
 
@@ -1282,7 +1288,7 @@ function cmdWlan(state: any, input: string, _ctx: any): any {
 /**
  * Security WPA PSK Set-Key - Set WPA password (WLC only)
  */
-function cmdSecurityWpaPsk(state: any, input: string, _ctx: any): any {
+function cmdSecurityWpaPsk(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   const match = input.match(/^security\s+wpa\s+psk\s+set-key\s+ascii\s+0\s+(.+)$/i);
   if (!match) {
     return { success: false, error: '% Invalid security command. Usage: security wpa psk set-key ascii 0 <password>' };
@@ -1295,7 +1301,7 @@ function cmdSecurityWpaPsk(state: any, input: string, _ctx: any): any {
   if (newPorts['wlan0']) {
     newPorts['wlan0'] = {
       ...newPorts['wlan0'],
-      wifi: { ...newPorts['wlan0'].wifi, password, security: 'wpa2' }
+      wifi: { ...newPorts['wlan0'].wifi!, password, security: 'wpa2' }
     };
   }
 
@@ -1305,7 +1311,7 @@ function cmdSecurityWpaPsk(state: any, input: string, _ctx: any): any {
 /**
  * Channel - Set RF channel (WLC only)
  */
-function cmdChannel(state: any, input: string, _ctx: any): any {
+function cmdChannel(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   const match = input.match(/^channel\s+(\d+)$/i);
   if (!match) {
     return { success: false, error: '% Invalid channel command. Usage: channel <num>' };
@@ -1319,7 +1325,7 @@ function cmdChannel(state: any, input: string, _ctx: any): any {
   if (newPorts['wlan0']) {
     newPorts['wlan0'] = {
       ...newPorts['wlan0'],
-      wifi: { ...newPorts['wlan0'].wifi, channel }
+      wifi: { ...newPorts['wlan0'].wifi!, channel }
     };
   }
 
@@ -1329,7 +1335,7 @@ function cmdChannel(state: any, input: string, _ctx: any): any {
 /**
  * Station-Role - Set AP mode (AP only)
  */
-function cmdStationRole(state: any, input: string, _ctx: any): any {
+function cmdStationRole(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   const match = input.match(/^station-role\s+root$/i);
   if (!match) {
     return { success: false, error: '% Invalid station-role command. Usage: station-role root' };
@@ -1340,7 +1346,7 @@ function cmdStationRole(state: any, input: string, _ctx: any): any {
   if (newPorts['wlan0']) {
     newPorts['wlan0'] = {
       ...newPorts['wlan0'],
-      wifi: { ...newPorts['wlan0'].wifi, mode: 'ap' }
+      wifi: { ...newPorts['wlan0'].wifi!, mode: 'ap' }
     };
   }
 
@@ -1350,12 +1356,12 @@ function cmdStationRole(state: any, input: string, _ctx: any): any {
 /**
  * No Description - Clear interface description
  */
-function cmdNoDescription(state: any, _input: string, _ctx: any): any {
+function cmdNoDescription(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     description: ''
   }));
@@ -1366,12 +1372,12 @@ function cmdNoDescription(state: any, _input: string, _ctx: any): any {
 /**
  * No Switchport Mode - Reset switchport mode
  */
-function cmdNoSwitchportMode(state: any, _input: string, _ctx: any): any {
+function cmdNoSwitchportMode(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     mode: 'access'
   }));
@@ -1382,7 +1388,7 @@ function cmdNoSwitchportMode(state: any, _input: string, _ctx: any): any {
 /**
  * No Switchport Access VLAN - Reset access VLAN
  */
-function cmdNoSwitchportAccessVlan(state: any, _input: string, _ctx: any): any {
+function cmdNoSwitchportAccessVlan(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
@@ -1434,12 +1440,12 @@ function cmdNoSwitchportAccessVlan(state: any, _input: string, _ctx: any): any {
 /**
  * No Switchport Port-Security - Disable port security
  */
-function cmdNoSwitchportPortSecurity(state: any, _input: string, _ctx: any): any {
+function cmdNoSwitchportPortSecurity(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     portSecurity: undefined
   }));
@@ -1450,12 +1456,12 @@ function cmdNoSwitchportPortSecurity(state: any, _input: string, _ctx: any): any
 /**
  * No CDP Enable - Disable CDP on interface
  */
-function cmdNoCdpEnable(state: any, _input: string, _ctx: any): any {
+function cmdNoCdpEnable(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     cdpEnabled: false
   }));
@@ -1466,12 +1472,12 @@ function cmdNoCdpEnable(state: any, _input: string, _ctx: any): any {
 /**
  * No Channel-Group - Remove EtherChannel
  */
-function cmdNoChannelGroup(state: any, _input: string, _ctx: any): any {
+function cmdNoChannelGroup(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     channelGroup: undefined,
     channelProtocol: undefined
@@ -1483,12 +1489,12 @@ function cmdNoChannelGroup(state: any, _input: string, _ctx: any): any {
 /**
  * No UDLD - Disable UDLD on interface
  */
-function cmdNoUdld(state: any, _input: string, _ctx: any): any {
+function cmdNoUdld(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     udldEnabled: false
   }));
@@ -1499,12 +1505,12 @@ function cmdNoUdld(state: any, _input: string, _ctx: any): any {
 /**
  * No IP Proxy-ARP - Disable proxy ARP
  */
-function cmdNoIpProxyArp(state: any, _input: string, _ctx: any): any {
+function cmdNoIpProxyArp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     ipProxyArp: false
   }));
@@ -1515,12 +1521,12 @@ function cmdNoIpProxyArp(state: any, _input: string, _ctx: any): any {
 /**
  * No Keepalive - Disable keepalive
  */
-function cmdNoKeepalive(state: any, _input: string, _ctx: any): any {
+function cmdNoKeepalive(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     keepalive: false
   }));
@@ -1531,7 +1537,7 @@ function cmdNoKeepalive(state: any, _input: string, _ctx: any): any {
 /**
  * No Name - Clear VLAN name (only valid in vlan mode)
  */
-function cmdNoName(state: any, _input: string, _ctx: any): any {
+function cmdNoName(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'vlan') {
     return { success: false, error: '% Invalid command. no name is only valid in VLAN configuration mode.\nUsage: vlan <id> -> no name' };
   }
@@ -1549,12 +1555,12 @@ function cmdNoName(state: any, _input: string, _ctx: any): any {
 /**
  * No Spanning-Tree - Disable spanning-tree on interface
  */
-function cmdNoSpanningTree(state: any, _input: string, _ctx: any): any {
+function cmdNoSpanningTree(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     spanningTreeEnabled: false
   }));
@@ -1565,7 +1571,7 @@ function cmdNoSpanningTree(state: any, _input: string, _ctx: any): any {
 /**
  * Debug - Enable debug
  */
-function cmdDebug(state: any, input: string, _ctx: any): any {
+function cmdDebug(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'privileged') {
     return { success: false, error: iosModeError() };
   }
@@ -1581,7 +1587,7 @@ function cmdDebug(state: any, input: string, _ctx: any): any {
 /**
  * No Debug - Disable debug
  */
-function cmdNoDebug(state: any, input: string, _ctx: any): any {
+function cmdNoDebug(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'privileged' && state.currentMode !== 'config') {
     return { success: false, error: iosModeError() };
   }
@@ -1602,7 +1608,7 @@ function cmdNoDebug(state: any, input: string, _ctx: any): any {
 /**
  * Monitor Session - Configure port monitoring
  */
-function cmdMonitorSession(state: any, input: string, _ctx: any): any {
+function cmdMonitorSession(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') {
     return { success: false, error: iosModeError() };
   }
@@ -1618,7 +1624,7 @@ function cmdMonitorSession(state: any, input: string, _ctx: any): any {
 /**
  * No Monitor Session - Remove port monitoring
  */
-function cmdNoMonitorSession(state: any, input: string, _ctx: any): any {
+function cmdNoMonitorSession(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') {
     return { success: false, error: iosModeError() };
   }
@@ -1634,7 +1640,7 @@ function cmdNoMonitorSession(state: any, input: string, _ctx: any): any {
 /**
  * Access-List - Configure ACL
  */
-function cmdAccessList(state: any, input: string, _ctx: any): any {
+function cmdAccessList(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') {
     return { success: false, error: iosModeError() };
   }
@@ -1670,7 +1676,7 @@ function cmdAccessList(state: any, input: string, _ctx: any): any {
 /**
  * No Access-List - Remove ACL
  */
-function cmdNoAccessList(state: any, input: string, _ctx: any): any {
+function cmdNoAccessList(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') {
     return { success: false, error: iosModeError() };
   }
@@ -1694,7 +1700,7 @@ function cmdNoAccessList(state: any, input: string, _ctx: any): any {
 /**
  * IP Access-Group - Apply ACL to interface
  */
-function cmdIpAccessGroup(state: any, input: string, _ctx: any): any {
+function cmdIpAccessGroup(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -1705,7 +1711,7 @@ function cmdIpAccessGroup(state: any, input: string, _ctx: any): any {
   const [_, aclName, direction] = match;
   const prop = direction.toLowerCase() === 'in' ? 'accessGroupIn' : 'accessGroupOut';
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     [prop]: aclName
   }));
@@ -1720,7 +1726,7 @@ function cmdIpAccessGroup(state: any, input: string, _ctx: any): any {
 /**
  * No IP Access-Group
  */
-function cmdNoIpAccessGroup(state: any, input: string, _ctx: any): any {
+function cmdNoIpAccessGroup(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -1731,7 +1737,7 @@ function cmdNoIpAccessGroup(state: any, input: string, _ctx: any): any {
   const direction = match[2];
   const prop = direction.toLowerCase() === 'in' ? 'accessGroupIn' : 'accessGroupOut';
 
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     [prop]: undefined
   }));
@@ -1745,7 +1751,7 @@ function cmdNoIpAccessGroup(state: any, input: string, _ctx: any): any {
 /**
  * Channel-Group - Assign interface to EtherChannel
  */
-function cmdChannelGroup(state: any, input: string, _ctx: any): any {
+function cmdChannelGroup(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
   }
@@ -1756,25 +1762,25 @@ function cmdChannelGroup(state: any, input: string, _ctx: any): any {
   }
 
   const group = parseInt(match[1]);
-  const mode = match[2].toLowerCase();
+  const mode = match[2].toLowerCase() as EtherChannelMode;
 
-  const updatePort = (port: any) => ({ ...port, channelGroup: group, channelMode: mode });
+  const updatePort = (port: Port) => ({ ...port, channelGroup: group, channelMode: mode });
 
   if (state.selectedInterfaces?.length) {
-    return { success: true, newState: applyToSelectedPorts(state, updatePort) };
+    return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
   }
 
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
 
   const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {} as Port);
   return { success: true, output: `Channel-group ${group} mode ${mode} configured`, newState: { ports: newPorts } };
 }
 
 /**
  * IP Helper-Address - Set DHCP relay address
  */
-function cmdIpHelperAddress(state: any, input: string, _ctx: any): any {
+function cmdIpHelperAddress(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
   }
@@ -1788,10 +1794,10 @@ function cmdIpHelperAddress(state: any, input: string, _ctx: any): any {
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
 
   const newPorts = { ...state.ports };
-  const port = newPorts[state.currentInterface] || {};
-  const helpers: string[] = [...(port.helperAddresses || [])];
+  const port = newPorts[state.currentInterface] || {} as Port;
+  const helpers: string[] = [...((port as unknown as Record<string, unknown>).helperAddresses as string[] || [])];
   if (!helpers.includes(helperIp)) helpers.push(helperIp);
-  newPorts[state.currentInterface] = { ...port, helperAddresses: helpers };
+  newPorts[state.currentInterface] = { ...port, helperAddresses: helpers } as Port;
 
   return { success: true, output: `Helper address ${helperIp} added`, newState: { ports: newPorts } };
 }
@@ -1799,7 +1805,7 @@ function cmdIpHelperAddress(state: any, input: string, _ctx: any): any {
 /**
  * No IP Helper-Address - Remove DHCP relay address
  */
-function cmdNoIpHelperAddress(state: any, input: string, _ctx: any): any {
+function cmdNoIpHelperAddress(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
   }
@@ -1812,8 +1818,8 @@ function cmdNoIpHelperAddress(state: any, input: string, _ctx: any): any {
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
 
   const newPorts = { ...state.ports };
-  const port = newPorts[state.currentInterface] || {};
-  newPorts[state.currentInterface] = { ...port, helperAddresses: [] };
+  const port = newPorts[state.currentInterface] || {} as Port;
+  newPorts[state.currentInterface] = { ...port, helperAddresses: [] } as Port;
 
   return { success: true, output: 'Helper address(es) removed', newState: { ports: newPorts } };
 }
@@ -1821,12 +1827,12 @@ function cmdNoIpHelperAddress(state: any, input: string, _ctx: any): any {
 /**
  * Switchport Nonegotiate - Disable DTP negotiation
  */
-function cmdSwitchportNonegotiate(state: any, _input: string, _ctx: any): any {
+function cmdSwitchportNonegotiate(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
   }
 
-  const updatePort = (port: any) => ({ ...port, nonegotiate: true });
+  const updatePort = (port: Port) => ({ ...port, nonegotiate: true });
 
   if (state.selectedInterfaces?.length) {
     return { success: true, newState: applyToSelectedPorts(state, updatePort) };
@@ -1842,7 +1848,7 @@ function cmdSwitchportNonegotiate(state: any, _input: string, _ctx: any): any {
 /**
  * Switchport Voice VLAN - Set voice VLAN
  */
-function cmdSwitchportVoiceVlan(state: any, input: string, _ctx: any): any {
+function cmdSwitchportVoiceVlan(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
   }
@@ -1853,7 +1859,7 @@ function cmdSwitchportVoiceVlan(state: any, input: string, _ctx: any): any {
   }
 
   const vlanId = parseInt(match[1]);
-  const updatePort = (port: any) => ({ ...port, voiceVlan: vlanId });
+  const updatePort = (port: Port) => ({ ...port, voiceVlan: vlanId });
 
   if (state.selectedInterfaces?.length) {
     return { success: true, newState: applyToSelectedPorts(state, updatePort) };
@@ -1869,7 +1875,7 @@ function cmdSwitchportVoiceVlan(state: any, input: string, _ctx: any): any {
 /**
  * CDP Enable - Enable CDP on interface
  */
-function cmdCdpEnable(state: any, _input: string, _ctx: any): any {
+function cmdCdpEnable(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
   }
@@ -1878,7 +1884,7 @@ function cmdCdpEnable(state: any, _input: string, _ctx: any): any {
     return { success: false, error: '% CDP is not enabled globally. Use "cdp run" first.' };
   }
 
-  const updatePort = (port: any) => ({ ...port, cdpEnabled: true });
+  const updatePort = (port: Port) => ({ ...port, cdpEnabled: true });
 
   if (state.selectedInterfaces?.length) {
     return { success: true, newState: applyToSelectedPorts(state, updatePort) };
@@ -1894,12 +1900,12 @@ function cmdCdpEnable(state: any, _input: string, _ctx: any): any {
 /**
  * Spanning-Tree BPDUGuard Disable
  */
-function cmdSpanningTreeBpduguardDisable(state: any, _input: string, _ctx: any): any {
+function cmdSpanningTreeBpduguardDisable(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
   }
 
-  const updatePort = (port: any) => ({ ...port, bpduguard: false });
+  const updatePort = (port: Port) => ({ ...port, bpduguard: false });
 
   if (state.selectedInterfaces?.length) {
     return { success: true, newState: applyToSelectedPorts(state, updatePort) };
@@ -1915,7 +1921,7 @@ function cmdSpanningTreeBpduguardDisable(state: any, _input: string, _ctx: any):
 /**
  * Spanning-Tree Cost - Set STP path cost
  */
-function cmdSpanningTreeCost(state: any, input: string, ctx: any): any {
+function cmdSpanningTreeCost(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
   }
@@ -1926,7 +1932,7 @@ function cmdSpanningTreeCost(state: any, input: string, ctx: any): any {
   }
 
   const cost = parseInt(match[1]);
-  const updatePort = (port: any) => ({ ...port, stpCost: cost });
+  const updatePort = (port: Port) => ({ ...port, stpCost: cost });
 
   let newPorts;
   if (state.selectedInterfaces?.length) {
@@ -1938,32 +1944,32 @@ function cmdSpanningTreeCost(state: any, input: string, ctx: any): any {
   }
 
   const updatedCurrentState = { ...state, ports: newPorts };
-  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId);
-  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId);
+  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId!);
+  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId!);
 
   return {
     success: true,
     output: `STP cost set to ${cost}`,
     newState: myUpdatedState || { ports: newPorts },
-    updatedDeviceStates: allUpdatedStates
+    deviceStates: allUpdatedStates
   };
 }
 
 /**
  * Stub Success
  */
-function cmdStubSuccess(_state: any, _input: string, _ctx: any): any {
+function cmdStubSuccess(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   return { success: true };
 }
 
 /**
  * IPv6 Address
  */
-function cmdIpv6Address(state: any, input: string, _ctx: any): any {
+function cmdIpv6Address(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
   const match = input.match(/^ipv6\s+address\s+([0-9a-fA-F:]+)\/(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid IPv6 address' };
-  const updatePort = (port: any) => ({ ...port, ipv6Address: match[1], ipv6Prefix: parseInt(match[2]) });
+  const updatePort = (port: Port) => ({ ...port, ipv6Address: match[1], ipv6Prefix: parseInt(match[2]) });
   const newPorts = applyToSelectedPorts(state, updatePort);
   return { success: true, newState: { ports: newPorts } };
 }
@@ -1971,13 +1977,13 @@ function cmdIpv6Address(state: any, input: string, _ctx: any): any {
 /**
  * IPv6 RIP Enable
  */
-function cmdIpv6Rip(state: any, input: string, _ctx: any): any {
+function cmdIpv6Rip(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
   const match = input.match(/^ipv6\s+rip\s+(\S+)\s+enable$/i);
   if (!match) return { success: false, error: '% Invalid command' };
 
   const processName = match[1];
-  const updatePort = (port: any) => ({
+  const updatePort = (port: Port) => ({
     ...port,
     ipv6Rip: { enabled: true, processName }
   });
@@ -2006,14 +2012,14 @@ function cmdIpv6Rip(state: any, input: string, _ctx: any): any {
 /**
  * IPv6 OSPF Area
  */
-function cmdIpv6Ospf(state: any, input: string, _ctx: any): any {
+function cmdIpv6Ospf(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
   const match = input.match(/^ipv6\s+ospf\s+(\d+)\s+area\s+(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid command' };
 
   const processId = match[1];
   const area = match[2];
-  const updatePort = (port: any) => ({
+  const updatePort = (port: Port) => ({
     ...port,
     ipv6Ospf: { enabled: true, processId, area }
   });
@@ -2043,9 +2049,9 @@ function cmdIpv6Ospf(state: any, input: string, _ctx: any): any {
 /**
  * No IPv6 RIP
  */
-function cmdNoIpv6Rip(state: any, _input: string, _ctx: any): any {
+function cmdNoIpv6Rip(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
-  const updatePort = (port: any) => ({
+  const updatePort = (port: Port) => ({
     ...port,
     ipv6Rip: { enabled: false }
   });
@@ -2056,13 +2062,13 @@ function cmdNoIpv6Rip(state: any, _input: string, _ctx: any): any {
 /**
  * IPv6 DHCP Server
  */
-function cmdIpv6DhcpServer(state: any, input: string, _ctx: any): any {
+function cmdIpv6DhcpServer(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
   const match = input.match(/^ipv6\s+dhcp\s+server\s+(\S+)$/i);
   if (!match) return { success: false, error: '% Invalid command' };
 
   const poolName = match[1];
-  const updatePort = (port: any) => ({
+  const updatePort = (port: Port) => ({
     ...port,
     ipv6DhcpServer: poolName
   });
@@ -2074,9 +2080,9 @@ function cmdIpv6DhcpServer(state: any, input: string, _ctx: any): any {
 /**
  * No IPv6 OSPF
  */
-function cmdNoIpv6Ospf(state: any, _input: string, _ctx: any): any {
+function cmdNoIpv6Ospf(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
-  const updatePort = (port: any) => ({
+  const updatePort = (port: Port) => ({
     ...port,
     ipv6Ospf: { enabled: false }
   });
@@ -2087,7 +2093,7 @@ function cmdNoIpv6Ospf(state: any, _input: string, _ctx: any): any {
 /**
  * Spanning-Tree Priority - Set STP port priority
  */
-function cmdSpanningTreePriority(state: any, input: string, _ctx: any): any {
+function cmdSpanningTreePriority(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
   }
@@ -2102,7 +2108,7 @@ function cmdSpanningTreePriority(state: any, input: string, _ctx: any): any {
     return { success: false, error: '% Priority must be a multiple of 16 between 0 and 240' };
   }
 
-  const updatePort = (port: any) => ({ ...port, stpPriority: priority });
+  const updatePort = (port: Port) => ({ ...port, stpPriority: priority });
 
   if (state.selectedInterfaces?.length) {
     return { success: true, newState: applyToSelectedPorts(state, updatePort) };
@@ -2120,11 +2126,11 @@ function cmdSpanningTreePriority(state: any, input: string, _ctx: any): any {
 /**
  * Switchport Trunk Encapsulation
  */
-function cmdSwitchportTrunkEncapsulation(state: any, input: string, _ctx: any): any {
+function cmdSwitchportTrunkEncapsulation(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^switchport\s+trunk\s+encapsulation\s+(dot1q|isl|negotiate)$/i);
   if (!match) return { success: false, error: '% Invalid encapsulation command' };
-  const updatePort = (port: any) => ({ ...port, trunkEncapsulation: match[1].toLowerCase() });
+  const updatePort = (port: Port) => ({ ...port, trunkEncapsulation: match[1].toLowerCase() });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2135,22 +2141,22 @@ function cmdSwitchportTrunkEncapsulation(state: any, input: string, _ctx: any): 
 /**
  * Encapsulation dot1Q (subinterface)
  */
-function cmdEncapsulationDot1q(state: any, input: string, _ctx: any): any {
+function cmdEncapsulationDot1q(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^encapsulation\s+dot1[qQ]\s+(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid encapsulation command' };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = { ...(newPorts[state.currentInterface] || {}), dot1qVlan: parseInt(match[1]) };
+  newPorts[state.currentInterface] = { ...(newPorts[state.currentInterface] || {} as Port), dot1qVlan: parseInt(match[1]) } as Port;
   return { success: true, output: `Encapsulation dot1Q VLAN ${match[1]} configured`, newState: { ports: newPorts } };
 }
 
 /**
  * Switchport Protected
  */
-function cmdSwitchportProtected(state: any, _input: string, _ctx: any): any {
+function cmdSwitchportProtected(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const updatePort = (port: any) => ({ ...port, protected: true });
+  const updatePort = (port: Port) => ({ ...port, protected: true });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2161,11 +2167,11 @@ function cmdSwitchportProtected(state: any, _input: string, _ctx: any): any {
 /**
  * Switchport Block (unicast/multicast)
  */
-function cmdSwitchportBlock(state: any, input: string, _ctx: any): any {
+function cmdSwitchportBlock(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^switchport\s+block\s+(unicast|multicast)$/i);
   if (!match) return { success: false, error: '% Invalid switchport block command' };
-  const updatePort = (port: any) => ({ ...port, [`block${match[1]}`]: true });
+  const updatePort = (port: Port) => ({ ...port, [`block${match[1]}`]: true });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2176,17 +2182,17 @@ function cmdSwitchportBlock(state: any, input: string, _ctx: any): any {
 /**
  * Switchport Port-Security MAC-Address (static)
  */
-function cmdSwitchportPortSecurityMacAddress(state: any, input: string, _ctx: any): any {
+function cmdSwitchportPortSecurityMacAddress(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
 
   // Check if it's the sticky variant
   if (/^switchport\s+port-security\s+mac-address\s+sticky$/i.test(input)) {
     if (!state.currentInterface) return { success: false, error: '% No interface selected' };
     const newPorts = { ...state.ports };
-    if (!newPorts[state.currentInterface].portSecurity) {
-      newPorts[state.currentInterface].portSecurity = {};
+    if (!newPorts[state.currentInterface!].portSecurity) {
+      newPorts[state.currentInterface!].portSecurity = { enabled: false };
     }
-    newPorts[state.currentInterface].portSecurity.sticky = true;
+    newPorts[state.currentInterface!].portSecurity!.sticky = true;
     return { success: true, newState: { ports: newPorts } };
   }
 
@@ -2204,37 +2210,37 @@ function cmdSwitchportPortSecurityMacAddress(state: any, input: string, _ctx: an
 /**
  * Storm-Control
  */
-function cmdStormControl(state: any, input: string, _ctx: any): any {
+function cmdStormControl(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^storm-control\s+(broadcast|multicast|unicast)\s+level\s+([\d.]+)(?:\s+([\d.]+))?$/i);
   if (!match) return { success: false, error: '% Invalid storm-control command. Use: storm-control {broadcast|multicast|unicast} level <rising> [falling]' };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = { ...(newPorts[state.currentInterface] || {}), stormControl: { type: match[1], rising: match[2], falling: match[3] } };
+  newPorts[state.currentInterface] = { ...(newPorts[state.currentInterface] || {} as Port), stormControl: { type: match[1], rising: match[2], falling: match[3] } as unknown as Port['stormControl'] } as Port;
   return { success: true, output: `Storm-control ${match[1]} level ${match[2]} configured`, newState: { ports: newPorts } };
 }
 
 /**
  * Storm-Control Action
  */
-function cmdStormControlAction(state: any, input: string, _ctx: any): any {
+function cmdStormControlAction(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^storm-control\s+action\s+(shutdown|trap)$/i);
   if (!match) return { success: false, error: '% Invalid storm-control action command' };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = { ...(newPorts[state.currentInterface] || {}), stormControlAction: match[1] };
+  newPorts[state.currentInterface] = { ...(newPorts[state.currentInterface] || {} as Port), stormControlAction: match[1] } as Port;
   return { success: true, output: `Storm-control action ${match[1]} configured`, newState: { ports: newPorts } };
 }
 
 /**
  * MLS QoS Trust
  */
-function cmdMlsQosTrust(state: any, input: string, _ctx: any): any {
+function cmdMlsQosTrust(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^mls\s+qos\s+trust\s+(cos|dscp|ip-precedence)$/i);
   if (!match) return { success: false, error: '% Invalid mls qos trust command' };
-  const updatePort = (port: any) => ({ ...port, qosTrust: match[1] });
+  const updatePort = (port: Port) => ({ ...port, qosTrust: match[1] });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2245,11 +2251,11 @@ function cmdMlsQosTrust(state: any, input: string, _ctx: any): any {
 /**
  * MLS QoS CoS
  */
-function cmdMlsQosCos(state: any, input: string, _ctx: any): any {
+function cmdMlsQosCos(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^mls\s+qos\s+cos\s+(\d)$/i);
   if (!match) return { success: false, error: '% Invalid mls qos cos command' };
-  const updatePort = (port: any) => ({ ...port, qosCos: parseInt(match[1]) });
+  const updatePort = (port: Port) => ({ ...port, qosCos: parseInt(match[1]) });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2260,9 +2266,9 @@ function cmdMlsQosCos(state: any, input: string, _ctx: any): any {
 /**
  * IP DHCP Snooping Trust
  */
-function cmdIpDhcpSnoopingTrust(state: any, _input: string, _ctx: any): any {
+function cmdIpDhcpSnoopingTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const updatePort = (port: any) => ({ ...port, dhcpSnoopingTrust: true });
+  const updatePort = (port: Port) => ({ ...port, dhcpSnoopingTrust: true });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2273,9 +2279,9 @@ function cmdIpDhcpSnoopingTrust(state: any, _input: string, _ctx: any): any {
 /**
  * No IP DHCP Snooping Trust
  */
-function cmdNoIpDhcpSnoopingTrust(state: any, _input: string, _ctx: any): any {
+function cmdNoIpDhcpSnoopingTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const updatePort = (port: any) => ({ ...port, dhcpSnoopingTrust: false });
+  const updatePort = (port: Port) => ({ ...port, dhcpSnoopingTrust: false });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2286,9 +2292,9 @@ function cmdNoIpDhcpSnoopingTrust(state: any, _input: string, _ctx: any): any {
 /**
  * IP ARP Inspection Trust
  */
-function cmdIpArpInspectionTrust(state: any, _input: string, _ctx: any): any {
+function cmdIpArpInspectionTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const updatePort = (port: any) => ({ ...port, arpInspectionTrust: true });
+  const updatePort = (port: Port) => ({ ...port, arpInspectionTrust: true });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2299,9 +2305,9 @@ function cmdIpArpInspectionTrust(state: any, _input: string, _ctx: any): any {
 /**
  * No IP ARP Inspection Trust
  */
-function cmdNoIpArpInspectionTrust(state: any, _input: string, _ctx: any): any {
+function cmdNoIpArpInspectionTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const updatePort = (port: any) => ({ ...port, arpInspectionTrust: false });
+  const updatePort = (port: Port) => ({ ...port, arpInspectionTrust: false });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2312,11 +2318,11 @@ function cmdNoIpArpInspectionTrust(state: any, _input: string, _ctx: any): any {
 /**
  * Bandwidth
  */
-function cmdBandwidth(state: any, input: string, _ctx: any): any {
+function cmdBandwidth(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^bandwidth\s+(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid bandwidth command' };
-  const updatePort = (port: any) => ({ ...port, bandwidth: parseInt(match[1]) });
+  const updatePort = (port: Port) => ({ ...port, bandwidth: parseInt(match[1]) });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2327,12 +2333,12 @@ function cmdBandwidth(state: any, input: string, _ctx: any): any {
 /**
  * Delay
  */
-function cmdDelay(state: any, input: string, _ctx: any): any {
+function cmdDelay(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^delay\s+(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid delay command' };
   const delayValue = parseInt(match[1]);
-  const updatePort = (port: any) => ({ ...port, delay: delayValue });
+  const updatePort = (port: Port) => ({ ...port, delay: delayValue });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2343,7 +2349,7 @@ function cmdDelay(state: any, input: string, _ctx: any): any {
 /**
  * MTU
  */
-function cmdMtu(state: any, input: string, _ctx: any): any {
+function cmdMtu(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^mtu\s+(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid MTU command' };
@@ -2351,7 +2357,7 @@ function cmdMtu(state: any, input: string, _ctx: any): any {
   if (mtuValue < 68 || mtuValue > 65535) {
     return { success: false, error: '% MTU must be between 68 and 65535' };
   }
-  const updatePort = (port: any) => ({ ...port, mtu: mtuValue });
+  const updatePort = (port: Port) => ({ ...port, mtu: mtuValue });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2362,11 +2368,11 @@ function cmdMtu(state: any, input: string, _ctx: any): any {
 /**
  * Keepalive
  */
-function cmdKeepalive(state: any, input: string, _ctx: any): any {
+function cmdKeepalive(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^keepalive(?:\s+(\d+))?$/i);
   const interval = match?.[1] ? parseInt(match[1]) : 10;
-  const updatePort = (port: any) => ({ ...port, keepalive: interval });
+  const updatePort = (port: Port) => ({ ...port, keepalive: interval });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2377,9 +2383,9 @@ function cmdKeepalive(state: any, input: string, _ctx: any): any {
 /**
  * IP Proxy-ARP (enable)
  */
-function cmdIpProxyArp(state: any, _input: string, _ctx: any): any {
+function cmdIpProxyArp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const updatePort = (port: any) => ({ ...port, proxyArp: true });
+  const updatePort = (port: Port) => ({ ...port, proxyArp: true });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2390,10 +2396,10 @@ function cmdIpProxyArp(state: any, _input: string, _ctx: any): any {
 /**
  * IP Verify Source
  */
-function cmdIpVerifySource(state: any, input: string, _ctx: any): any {
+function cmdIpVerifySource(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const hasPortSecurity = input.includes('port-security');
-  const updatePort = (port: any) => ({
+  const updatePort = (port: Port) => ({
     ...port,
     ipVerifySource: true,
     ipVerifySourcePortSecurity: hasPortSecurity || port.ipVerifySourcePortSecurity
@@ -2408,9 +2414,9 @@ function cmdIpVerifySource(state: any, input: string, _ctx: any): any {
 /**
  * UDLD Enable / Port
  */
-function cmdUdldEnable(state: any, _input: string, _ctx: any): any {
+function cmdUdldEnable(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const updatePort = (port: any) => ({ ...port, udld: true });
+  const updatePort = (port: Port) => ({ ...port, udld: { enabled: true, ...(port.udld ? { mode: port.udld.mode } : {}) } });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
@@ -2421,7 +2427,7 @@ function cmdUdldEnable(state: any, _input: string, _ctx: any): any {
 /**
  * Switchport Port-Security Aging Time
  */
-function cmdSwitchportPortSecurityAgingTime(state: any, input: string, _ctx: any): any {
+function cmdSwitchportPortSecurityAgingTime(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -2432,14 +2438,14 @@ function cmdSwitchportPortSecurityAgingTime(state: any, input: string, _ctx: any
   }
 
   const newPorts = { ...state.ports };
-  if (!newPorts[state.currentInterface].portSecurity) {
-    newPorts[state.currentInterface].portSecurity = {};
+  if (!newPorts[state.currentInterface!].portSecurity) {
+    newPorts[state.currentInterface!].portSecurity = { enabled: false };
   }
-  if (!newPorts[state.currentInterface].portSecurity.aging) {
-    newPorts[state.currentInterface].portSecurity.aging = {};
+  if (!newPorts[state.currentInterface!].portSecurity!.aging) {
+    newPorts[state.currentInterface!].portSecurity!.aging = {};
   }
-  newPorts[state.currentInterface].portSecurity.aging.time = parseInt(match[1]);
-  newPorts[state.currentInterface].portSecurity.aging.enabled = true;
+  newPorts[state.currentInterface!].portSecurity!.aging!.time = parseInt(match[1]);
+  newPorts[state.currentInterface!].portSecurity!.aging!.enabled = true;
 
   return {
     success: true,
@@ -2450,25 +2456,25 @@ function cmdSwitchportPortSecurityAgingTime(state: any, input: string, _ctx: any
 /**
  * IP NAT Inside
  */
-function cmdIpNatInside(state: any, _input: string, _ctx: any): any {
+function cmdIpNatInside(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, natSide: 'inside' }));
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, natSide: 'inside' }));
   return { success: true, newState: { ports: newPorts } };
 }
 
 /**
  * IP NAT Outside
  */
-function cmdIpNatOutside(state: any, _input: string, _ctx: any): any {
+function cmdIpNatOutside(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
-  const newPorts = applyToSelectedPorts(state, (port: any) => ({ ...port, natSide: 'outside' }));
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, natSide: 'outside' }));
   return { success: true, newState: { ports: newPorts } };
 }
 
 /**
  * Switchport Port-Security Aging Type
  */
-function cmdSwitchportPortSecurityAgingType(state: any, input: string, _ctx: any): any {
+function cmdSwitchportPortSecurityAgingType(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
   }
@@ -2479,14 +2485,14 @@ function cmdSwitchportPortSecurityAgingType(state: any, input: string, _ctx: any
   }
 
   const newPorts = { ...state.ports };
-  if (!newPorts[state.currentInterface].portSecurity) {
-    newPorts[state.currentInterface].portSecurity = {};
+  if (!newPorts[state.currentInterface!].portSecurity) {
+    newPorts[state.currentInterface!].portSecurity = { enabled: false };
   }
-  if (!newPorts[state.currentInterface].portSecurity.aging) {
-    newPorts[state.currentInterface].portSecurity.aging = {};
+  if (!newPorts[state.currentInterface!].portSecurity!.aging) {
+    newPorts[state.currentInterface!].portSecurity!.aging = {};
   }
-  newPorts[state.currentInterface].portSecurity.aging.type = match[1].toLowerCase() as 'absolute' | 'inactivity';
-  newPorts[state.currentInterface].portSecurity.aging.enabled = true;
+  newPorts[state.currentInterface!].portSecurity!.aging!.type = match[1].toLowerCase() as 'absolute' | 'inactivity';
+  newPorts[state.currentInterface!].portSecurity!.aging!.enabled = true;
 
   return {
     success: true,

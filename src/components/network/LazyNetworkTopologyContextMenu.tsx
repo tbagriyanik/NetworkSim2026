@@ -23,7 +23,7 @@ interface LazyNetworkTopologyContextMenuProps {
     canRedo: boolean;
     isExamActive?: boolean;
     onClose: () => void;
-    onUpdateNoteStyle: (id: string, style: any) => void;
+    onUpdateNoteStyle: (id: string, style: Partial<CanvasNote>) => void;
     onNoteCut: (id: string) => void;
     onNoteCopy: (id: string) => void;
     onNotePaste: (id: string) => void;

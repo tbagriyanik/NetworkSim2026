@@ -16,7 +16,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
-import type { DeviceType } from './networkTopology.types';
+import type { DeviceType, CanvasDevice, CanvasConnection } from './networkTopology.types';
+import type { SwitchState } from '@/lib/network/types';
+import type { TerminalOutput } from './Terminal';
+import type { Translations } from '@/contexts/LanguageContext';
+import type { TaskDefinition, TaskContext } from '@/lib/network/taskDefinitions';
+
 
 const Terminal = dynamic(() => import('./Terminal').then(m => m.Terminal), { ssr: false });
 const PortPanel = dynamic(() => import('./PortPanel').then(m => m.PortPanel), { ssr: false });
@@ -31,30 +36,30 @@ interface UnifiedDevicePanelProps {
     onTabChange: (tab: 'console' | 'settings') => void;
     deviceId: string;
     deviceType: DeviceType;
-    deviceStates: Map<string, any>;
-    topologyDevices: any[];
-    topologyConnections: any[];
-    handleCommand: (command: string) => Promise<void>;
+    deviceStates: Map<string, SwitchState>;
+    topologyDevices: CanvasDevice[];
+    topologyConnections: CanvasConnection[];
+    handleCommand: (command: string) => Promise<unknown>;
     handleClearTerminal: () => void;
     toggleDevicePower: (deviceId: string) => void;
     handleUpdateHistory: (deviceId: string, history: string[]) => void;
-    confirmDialog: any;
-    setConfirmDialog: (dialog: any) => void;
-    t: any;
+    confirmDialog: { show: boolean; message?: string; onConfirm: () => void } | null;
+    setConfirmDialog: (dialog: { show: boolean; message: string; action: string; onConfirm: () => void } | null) => void;
+    t: Translations;
     theme: string;
     language: string;
     isDark: boolean;
     isExecutingCommand: boolean;
-    output: any[];
+    output: TerminalOutput[];
     prompt: string;
-    state: any;
-    activeDeviceTasks: any[];
-    taskContext: any;
+    state: SwitchState;
+    activeDeviceTasks: TaskDefinition[];
+    taskContext: TaskContext;
     // Position/Size from parent hook
     modalPosition: ModalPosition;
     modalSize: ModalSize;
-    handlePointerDown: (e: React.PointerEvent, modalType: any) => void;
-    handleResizeStart: (e: React.PointerEvent, direction: any, modalType: any) => void;
+    handlePointerDown: (e: React.PointerEvent, modalType: string) => void;
+    handleResizeStart: (e: React.PointerEvent, direction: string, modalType: string) => void;
 }
 
 export function UnifiedDevicePanel({
@@ -155,7 +160,7 @@ export function UnifiedDevicePanel({
                         onPointerDown={(e) => handlePointerDown(e, 'deviceUnified')}
                     >
                         <div className="flex items-center gap-2 px-2 py-1.5 sm:justify-between sm:px-4 sm:py-2">
-                            <Tabs value={activeTab} onValueChange={(v: any) => onTabChange(v)} className="min-w-0 flex-1 sm:flex-none sm:w-auto">
+                            <Tabs value={activeTab} onValueChange={(v: string) => onTabChange(v as 'console' | 'settings')} className="min-w-0 flex-1 sm:flex-none sm:w-auto">
                                 <TabsList className={cn("h-9 p-1 w-full sm:w-auto overflow-x-auto", isDark ? "bg-slate-800" : "bg-slate-100")}>
                                     <TabsTrigger value="console" className="flex items-center gap-1.5 px-2 sm:px-3 h-7 whitespace-nowrap text-xs sm:text-sm">
                                         <TerminalIcon className="w-3.5 h-3.5" />
@@ -271,7 +276,7 @@ export function UnifiedDevicePanel({
                                                     deviceModel={deviceModel}
                                                     deviceId={deviceId}
                                                     onTogglePower={toggleDevicePower}
-                                                    onExecuteCommand={handleCommand}
+                                                    onExecuteCommand={handleCommand as (command: string) => Promise<void>}
                                                     t={t}
                                                     theme={theme}
                                                     activeDeviceType={deviceType}

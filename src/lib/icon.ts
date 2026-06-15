@@ -19,21 +19,21 @@ export function getIconSize(size: keyof typeof ICON_SIZES | number): number {
  * Get device icon name by device type
  */
 export function getDeviceIconName(deviceType: string): string {
-    return (DEVICE_ICONS as any)[deviceType] || 'HelpCircle';
+    return (DEVICE_ICONS as Record<string, string>)[deviceType] || 'HelpCircle';
 }
 
 /**
  * Get action icon name by action type
  */
 export function getActionIconName(action: string): string {
-    return (ACTION_ICONS as any)[action] || 'HelpCircle';
+    return (ACTION_ICONS as Record<string, string>)[action] || 'HelpCircle';
 }
 
 /**
  * Get status icon name by status type
  */
 export function getStatusIconName(status: string): string {
-    return (STATUS_ICONS as any)[status] || 'HelpCircle';
+    return (STATUS_ICONS as Record<string, string>)[status] || 'HelpCircle';
 }
 
 /**
@@ -154,7 +154,7 @@ export function getIconByCategory(
         status: STATUS_ICONS,
     };
 
-    const map = maps[category] as any;
+    const map = maps[category] as Record<string, string>;
     return map[name] || null;
 }
 

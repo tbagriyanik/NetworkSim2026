@@ -223,13 +223,13 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
 
         return (
             <Component
-                ref={ref as any}
+                ref={ref as never}
                 className={cn(variantStyles[variant], className)}
                 {...props}
             />
         );
     }
-);
+) as React.ForwardRefExoticComponent<Omit<TextProps, 'ref'> & React.RefAttributes<HTMLDivElement>>;
 Text.displayName = 'Text';
 
 /**
@@ -275,7 +275,7 @@ export const ResponsiveTypography = React.forwardRef<
 
         return (
             <Component
-                ref={ref as any}
+                ref={ref as never}
                 className={cn(
                     variantStyles[variant],
                     mobileClass,

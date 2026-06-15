@@ -293,7 +293,7 @@ export const dhcpTasks: TaskDefinition[] = [
     checkFn: (state) => {
       const pools = Object.values(state.dhcpPools || {});
       const servicePools = state.services?.dhcp?.pools || [];
-      return pools.some(p => p.defaultRouter) || servicePools.some((p: any) => p.defaultGateway);
+      return pools.some(p => p.defaultRouter) || servicePools.some((p: { defaultGateway?: string }) => p.defaultGateway);
     },
   },
   {
@@ -305,7 +305,7 @@ export const dhcpTasks: TaskDefinition[] = [
     checkFn: (state) => {
       const pools = Object.values(state.dhcpPools || {});
       const servicePools = state.services?.dhcp?.pools || [];
-      return pools.some(p => p.dnsServer) || servicePools.some((p: any) => p.dnsServer);
+      return pools.some(p => p.dnsServer) || servicePools.some((p: { dnsServer?: string }) => p.dnsServer);
     },
   },
   {

@@ -296,14 +296,15 @@ export function getPaletteColor(
     modification?: 'lighten' | 'darken' | number
 ): string {
     const parts = colorPath.split('.');
-    let color: any = COLOR_PALETTE;
+    let value: unknown = COLOR_PALETTE;
 
     for (const part of parts) {
-        color = color?.[part];
-        if (!color) return '#000000';
+        if (!value || typeof value !== 'object') return '#000000';
+        value = (value as Record<string, unknown>)[part];
+        if (!value) return '#000000';
     }
 
-    const finalColor = typeof color === 'string' ? color : '#000000';
+    const finalColor = typeof value === 'string' ? value : '#000000';
 
     if (!modification) {
         return finalColor;

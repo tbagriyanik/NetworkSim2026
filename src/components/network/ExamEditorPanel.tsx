@@ -47,8 +47,8 @@ interface ExamEditorPanelProps {
   updateExamMeta: (updates: Partial<ExamProject>) => void;
   moveTask: (id: string, direction: 'up' | 'down') => void;
   smartBalanceWeights: () => void;
-  exportExamFile: (projectData: any) => void;
-  projectData: any;
+  exportExamFile: (projectData: unknown) => void;
+  projectData: unknown;
   isDark: boolean;
 }
 
@@ -77,7 +77,7 @@ export function ExamEditorPanel({
   const totalWeight = activeExam.tasks.reduce((sum, t) => sum + (t.weight || 0), 0);
 
   const topologyDevices: { id: string; name: string; type: string; ports: { id: string; label: string }[] }[] =
-    projectData?.topology?.devices?.map((d: any) => ({
+    (projectData as { topology?: { devices?: { id: string; name: string; type: string; ports: { id: string; label: string }[] }[] } })?.topology?.devices?.map((d) => ({
       id: d.id,
       name: d.name,
       type: d.type,
@@ -187,7 +187,7 @@ export function ExamEditorPanel({
                   </label>
                   <Select
                     value={activeExam.difficulty}
-                    onValueChange={(v: any) => updateExamMeta({ difficulty: v })}
+                    onValueChange={(v: string) => updateExamMeta({ difficulty: v as 'beginner' | 'intermediate' | 'advanced' })}
                   >
                     <SelectTrigger className="h-9">
                       <SelectValue />
@@ -536,7 +536,7 @@ export function ExamEditorPanel({
 
                             <Select
                               value={task.checkType}
-                              onValueChange={(val: any) => updateTask(task.id, { checkType: val })}
+                              onValueChange={(val: string) => updateTask(task.id, { checkType: val as 'config' | 'command' | 'manual' | 'deviceAccess' | 'connection' })}
                             >
                               <SelectTrigger className="h-8 text-xs">
                                 <SelectValue />
@@ -685,8 +685,8 @@ export function ExamEditorPanel({
                                     const isValidTargetDevice = targetDeviceOptions.some(d => d.id === targetDeviceId);
                                     const selectedSourcePort = task.checkParams?.sourcePort;
                                     const selectedTargetPort = task.checkParams?.targetPort;
-                                    const isValidSourcePort = sourcePorts.some((p: any) => p.id === selectedSourcePort);
-                                    const isValidTargetPort = targetPorts.some((p: any) => p.id === selectedTargetPort);
+                                    const isValidSourcePort = sourcePorts.some((p) => p.id === selectedSourcePort);
+                                    const isValidTargetPort = targetPorts.some((p) => p.id === selectedTargetPort);
 
                                     return (
                                       <>
@@ -754,7 +754,7 @@ export function ExamEditorPanel({
                                                       : (isTr ? 'Önce kaynak cihaz seçin' : 'Select source device first')}
                                                   </SelectItem>
                                                 )}
-                                                {sourcePorts.map((p: any) => (
+                                                {sourcePorts.map((p) => (
                                                   <SelectItem key={p.id} value={p.id}>{p.label || p.id}</SelectItem>
                                                 ))}
                                               </SelectContent>
@@ -805,7 +805,7 @@ export function ExamEditorPanel({
                                                       : (isTr ? 'Önce hedef cihaz seçin' : 'Select target device first')}
                                                   </SelectItem>
                                                 )}
-                                                {targetPorts.map((p: any) => (
+                                                {targetPorts.map((p) => (
                                                   <SelectItem key={p.id} value={p.id}>{p.label || p.id}</SelectItem>
                                                 ))}
                                               </SelectContent>

@@ -20,7 +20,7 @@ export interface UseSpatialPartitioningResult {
     visibleConnectionIds: string[];
     updateViewport: (viewport: ViewportState) => void;
     invalidateCache: () => void;
-    getStats: () => any;
+    getStats: () => Record<string, number> | null;
 }
 
 /**

@@ -133,16 +133,16 @@ export function createBreakpointQuery(breakpoint: 'mobile' | 'tablet' | 'desktop
  * Responsive style object for CSS-in-JS
  */
 export interface ResponsiveStyles {
-    mobile?: Record<string, any>;
-    tablet?: Record<string, any>;
-    desktop?: Record<string, any>;
+    mobile?: Record<string, unknown>;
+    tablet?: Record<string, unknown>;
+    desktop?: Record<string, unknown>;
 }
 
 /**
  * Convert responsive styles to CSS-in-JS object with media queries
  */
-export function createResponsiveStyles(styles: ResponsiveStyles): Record<string, any> {
-    const result: Record<string, any> = {};
+export function createResponsiveStyles(styles: ResponsiveStyles): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
 
     if (styles.mobile) {
         Object.assign(result, styles.mobile);

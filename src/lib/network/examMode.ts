@@ -1461,7 +1461,7 @@ export function generateExamFromProject(projectData: ProjectData, language: 'tr'
 
   // 3. PC IP Configuration Tasks from Topology Devices
   if ((projectData.topology?.devices?.length ?? 0) > 0) {
-    projectData.topology!.devices!.forEach((d: ProjectDevice) => {
+    projectData.topology?.devices?.forEach((d: ProjectDevice) => {
       if (d.type === 'pc' && d.ip && d.ip !== '') {
         addDeviceTask(d.id,
           { tr: `${d.name || d.id} IP Yapılandırması`, en: `${d.name || d.id} IP Configuration` },
@@ -1544,7 +1544,7 @@ export function generateExamFromProject(projectData: ProjectData, language: 'tr'
 
       // DHCP Pools
       if (d.state?.dhcpPools) {
-        Object.entries(d.state.dhcpPools).forEach(([name, pool]: [string, any]) => {
+        Object.entries(d.state.dhcpPools).forEach(([name, pool]: [string, { network: string }]) => {
           addDeviceTask(d.id,
             { tr: `DHCP Havuzu: ${name}`, en: `DHCP Pool: ${name}` },
             {
@@ -1842,4 +1842,8 @@ export function generateExamFromProject(projectData: ProjectData, language: 'tr'
     data: projectData as unknown as import('./exampleProjects').ExampleProject['data']
   };
 }
+
+
+
+
 

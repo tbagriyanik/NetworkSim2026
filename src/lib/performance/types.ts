@@ -23,7 +23,7 @@ export interface VirtualListConfig {
     height?: number | string;
 }
 
-export interface VirtualListItem<T = any> {
+export interface VirtualListItem<T = unknown> {
     index: number;
     data: T;
     style: React.CSSProperties;
@@ -116,7 +116,7 @@ export interface WebVitalsThresholds {
 export interface LazyLoadConfig {
     fallback?: React.ReactNode;
     ssr?: boolean;
-    loading?: React.ComponentType<any>;
+    loading?: React.ComponentType<unknown>;
 }
 
 export interface LazyLoadState {
@@ -218,7 +218,7 @@ export interface ConnectionRenderConfig {
 export interface StateUpdateBatch {
     updates: Array<{
         key: string;
-        value: any;
+        value: unknown;
         timestamp: number;
     }>;
     batchId: string;
@@ -227,5 +227,5 @@ export interface StateUpdateBatch {
 
 export interface SelectorConfig {
     memoize?: boolean;
-    equalityFn?: (a: any, b: any) => boolean;
+    equalityFn?: (a: unknown, b: unknown) => boolean;
 }

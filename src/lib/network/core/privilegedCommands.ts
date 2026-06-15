@@ -2,7 +2,7 @@ import { iosModeError } from './iosErrors';
 import type { CommandHandler, CommandContext } from './commandTypes';
 import { checkConnectivity, getWirelessDistance } from '../connectivity';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
-import { SwitchState, CommandResult } from '../types';
+import type { SwitchState, CommandResult, Port, Route } from '../types';
 import { clearArpCache } from '../arp';
 import { clearMacTable, clearDynamicMacEntries, clearStaticMacEntries } from '../macLearning';
 
@@ -107,7 +107,7 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
 
             connectivity.portSecurityViolations.forEach(violation => {
                 if (violation.action === 'shutdown') {
-                    const deviceState = updatedDeviceStates!.get(violation.deviceId);
+                    const deviceState = updatedDeviceStates?.get(violation.deviceId);
                     if (deviceState) {
                         const updatedPorts = { ...deviceState.ports };
                         const port = updatedPorts[violation.portId];
@@ -121,7 +121,7 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
                                     violations: (port.portSecurity.violations || 0) + 1
                                 } : undefined
                             };
-                            updatedDeviceStates!.set(violation.deviceId, {
+                            updatedDeviceStates?.set(violation.deviceId, {
                                 ...deviceState,
                                 ports: updatedPorts
                             });
@@ -502,7 +502,7 @@ function cmdIpRoute(state: SwitchState, input: string, _ctx: CommandContext): Co
     const newStaticRoutes = [...(state.staticRoutes || [])];
     // Remove existing route to same destination if exists
     const filteredRoutes = newStaticRoutes.filter(
-        (route: any) => !(route.destination === network && route.subnetMask === mask)
+            (route: Route) => !(route.destination === network && route.subnetMask === mask)
     );
     filteredRoutes.push({ destination: network, subnetMask: mask, nextHop, metric, type: 'static' });
 
@@ -534,12 +534,12 @@ function cmdNoIpRoute(state: SwitchState, input: string, _ctx: CommandContext): 
     if (nextHop) {
         // Remove specific route
         newStaticRoutes = (state.staticRoutes || []).filter(
-            (route: any) => !(route.destination === network && route.subnetMask === mask && route.nextHop === nextHop)
+            (route: Route) => !(route.destination === network && route.subnetMask === mask && route.nextHop === nextHop)
         );
     } else {
         // Remove all routes for this network/mask
         newStaticRoutes = (state.staticRoutes || []).filter(
-            (route: any) => !(route.destination === network && route.subnetMask === mask)
+        (route: Route) => !(route.destination === network && route.subnetMask === mask)
         );
     }
 
@@ -983,9 +983,9 @@ function cmdCopyTftp(state: SwitchState, input: string, ctx: CommandContext): Co
     }
 
     // Verify target exists in topology and has FTP service enabled
-    let targetDevice: any;
+    let targetDevice: CanvasDevice | undefined;
     if (Array.isArray(ctx.devices)) {
-        targetDevice = ctx.devices.find((d: any) => d.ip === targetIp);
+        targetDevice = ctx.devices.find((d: CanvasDevice) => d.ip === targetIp);
         if (!targetDevice) {
             return { success: false, error: `% Error opening tftp://${targetIp}/${filename} (Timed out)` };
         }
@@ -1013,7 +1013,7 @@ function cmdCopyTftp(state: SwitchState, input: string, ctx: CommandContext): Co
                             ftp: {
                                 ...(targetDevice.services?.ftp || {}),
                                 enabled: true,
-                                files: [...((targetDevice.services?.ftp?.files || []).filter((f: any) => f.name !== filename)), newFile]
+                                files: [...((targetDevice.services?.ftp?.files || []).filter((f: { name: string }) => f.name !== filename)), newFile]
                             }
                         }
                     }
@@ -1074,12 +1074,12 @@ function cmdMail(state: SwitchState, input: string, ctx: CommandContext): Comman
         const recipient = address.split('@')[0];
         const domain = address.includes('@') ? address.split('@')[1] : address;
         
-        const delivered = ctx.devices?.map((device: any) => ({ device, state: ctx.deviceStates?.get(device.id) }))
-            .find((entry: any) => {
+        const delivered = ctx.devices?.map((device: CanvasDevice) => ({ device, state: ctx.deviceStates?.get(device.id) }))
+            .find((entry: { device: CanvasDevice; state: SwitchState | undefined }) => {
                 const mail = entry.state?.services?.mail;
                 if (!mail?.enabled) return false;
                 if (mail.username === recipient && mail.domain === domain) return true;
-                const isIpMatch = entry.device.ip === domain || Object.values(entry.state?.ports || {}).some((p: any) => p.ipAddress === domain);
+                const isIpMatch = entry.device.ip === domain || Object.values(entry.state?.ports || {}).some((p: Port) => p.ipAddress === domain);
                 const isNameMatch = entry.device.name === recipient || entry.state?.hostname === recipient;
                 return isIpMatch && isNameMatch;
             });
@@ -1088,7 +1088,7 @@ function cmdMail(state: SwitchState, input: string, ctx: CommandContext): Comman
             const timestamp = new Date().toISOString();
             const sourceMail = state.services?.mail;
             // Best effort to get source IP, fallback to hostname
-            const sourceIp = Object.values(state.ports || {}).map((p: any) => p.ipAddress).find(ip => !!ip) || 'local';
+            const sourceIp = Object.values(state.ports || {}).map((p: Port) => p.ipAddress).find(ip => !!ip) || 'local';
             const sourceAddress = sourceMail?.username && sourceMail?.domain 
                 ? `${sourceMail.username}@${sourceMail.domain}` 
                 : `${state.hostname}@${sourceIp}`;
@@ -1191,8 +1191,8 @@ function cmdDeleteVlanDat(state: SwitchState, _input: string, ctx: CommandContex
     // Check if this is a confirmation (skipConfirm is passed from useDeviceManager)
     if (ctx?.skipConfirm) {
         // Actually delete the VLANs
-        const newPorts: any = {};
-        Object.entries(state.ports || {}).forEach(([portId, port]: [string, any]) => {
+        const newPorts: Record<string, Port> = {};
+        Object.entries(state.ports || {}).forEach(([portId, port]: [string, Port]) => {
             newPorts[portId] = {
                 ...port,
                 accessVlan: 1,

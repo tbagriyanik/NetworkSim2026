@@ -1088,7 +1088,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
         }
       ]
     }
-  } as any;
+  } as SwitchState['services'];
   routerDhcpR1.runningConfig = [
     '!',
     'hostname R1',

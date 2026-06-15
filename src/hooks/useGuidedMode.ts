@@ -33,9 +33,9 @@ interface UseGuidedModeReturn {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
-    deviceState?: any;
-    topologyConnections?: any[];
-    topologyDevices?: any[];
+    deviceState?: unknown;
+    topologyConnections?: unknown[];
+    topologyDevices?: unknown[];
   }) => void;
   
   // Step readiness check
@@ -64,9 +64,9 @@ const deserializeProject = (json: string): GuidedProject | null => {
     // Convert date strings back to Date objects
     if (parsed.startedAt) parsed.startedAt = new Date(parsed.startedAt);
     if (parsed.steps) {
-      parsed.steps = parsed.steps.map((step: any) => ({
-        ...step,
-        completedAt: step.completedAt ? new Date(step.completedAt) : undefined
+      parsed.steps = parsed.steps.map((step: unknown) => ({
+        ...(step as Record<string, unknown>),
+        completedAt: (step as Record<string, unknown>).completedAt ? new Date((step as Record<string, unknown>).completedAt as string) : undefined
       }));
     }
     return parsed;
@@ -290,10 +290,10 @@ export function useGuidedMode(): UseGuidedModeReturn {
     lastCommand?: string;
     deviceAccessed?: 'switch' | 'router' | 'pc' | null;
     deviceAccessedId?: string | null;
-    deviceState?: any;
-    deviceStates?: Map<string, any>;
-    topologyConnections?: any[];
-    topologyDevices?: any[];
+    deviceState?: unknown;
+    deviceStates?: Map<string, unknown>;
+    topologyConnections?: unknown[];
+    topologyDevices?: unknown[];
   }) => {
     if (!activeProject) {
       setIsCurrentStepReady(false);
@@ -306,7 +306,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
       return;
     }
 
-    const shouldComplete = checkStepCompletion(currentStep, context);
+    const shouldComplete = checkStepCompletion(currentStep, context as Parameters<typeof checkStepCompletion>[1]);
     setIsCurrentStepReady(shouldComplete);
     
     if (shouldComplete) {

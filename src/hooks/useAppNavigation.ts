@@ -2,6 +2,8 @@
 
 import { useCallback, useRef, useEffect } from 'react';
 import type { CanvasDevice, DeviceType } from '@/components/network/networkTopology.types';
+import type { SwitchState } from '@/lib/network/types';
+import type { TerminalOutput } from '@/components/network/Terminal';
 
 type TabType = 'topology' | 'cmd' | 'terminal' | 'tasks';
 
@@ -14,8 +16,8 @@ interface UseAppNavigationOptions {
   setPan: (pan: { x: number; y: number }) => void;
   topologyDevices: CanvasDevice[];
   getOrCreatePCOutputs: (deviceId: string, devices: CanvasDevice[]) => void;
-  getOrCreateDeviceState: (deviceId: string, type: DeviceType, name?: string, mac?: string, model?: string) => any;
-  getOrCreateDeviceOutputs: (deviceId: string, state: any) => any[];
+  getOrCreateDeviceState: (deviceId: string, type: DeviceType, name?: string, mac?: string, model?: string) => SwitchState;
+  getOrCreateDeviceOutputs: (deviceId: string, state: SwitchState) => TerminalOutput[];
 }
 
 export function useAppNavigation(options: UseAppNavigationOptions) {

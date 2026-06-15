@@ -124,7 +124,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
       const portUpper = port.id.toUpperCase().replace('FA', 'FastEthernet').replace('GI', 'GigabitEthernet');
       config += `interface ${portUpper}\\n`;
 
-      if ((port as any).description || port.name) config += ` description ${((port as any).description || port.name)}\\n`;
+      if (port.description || port.name) config += ` description ${(port.description || port.name)}\\n`;
 
       // Switchport mode
       if (port.mode === 'trunk') {
@@ -134,7 +134,7 @@ export function ConfigPanel({ state, onExecuteCommand, isDevicePoweredOff = fals
         }
       } else {
         config += ` switchport mode access\\n`;
-        const vlanId = Number((port as any).accessVlan || port.vlan || 1);
+        const vlanId = Number(port.accessVlan || port.vlan || 1);
         if (vlanId !== 1) config += ` switchport access vlan ${vlanId}\\n`;
       }
 

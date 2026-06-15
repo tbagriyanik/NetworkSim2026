@@ -36,7 +36,7 @@ describe('useExamMode - moveTask', () => {
       ],
       durationMinutes: 10,
       difficulty: 'beginner',
-      data: {} as any
+      data: {}
     };
 
     act(() => {

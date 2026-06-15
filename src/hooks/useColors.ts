@@ -29,14 +29,14 @@ export function useColors() {
     // Get the appropriate color palette based on theme
     const getColor = (colorPath: string): string => {
         const parts = colorPath.split('.');
-        let color: any = COLOR_PALETTE;
+        let color: unknown = COLOR_PALETTE;
 
         for (const part of parts) {
-            color = color[part];
+            color = (color as Record<string, unknown>)[part];
             if (!color) return '#000000';
         }
 
-        return color;
+        return color as string;
     };
 
     // Get device type color

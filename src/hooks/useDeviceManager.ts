@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { SwitchState } from '@/lib/network/types';
+import { SwitchState, SwitchModel, Port, CommandResult } from '@/lib/network/types';
 import { createInitialState, createInitialRouterState, createInitialFirewallState, applyStartupConfig, buildStartupConfig } from '@/lib/network/initialState';
 import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import { executeCommand, getPrompt } from '@/lib/network/executor';
@@ -122,13 +122,13 @@ export function useDeviceManager() {
   const ensureSwitchModelConsistency = useCallback((state: SwitchState, model?: string, macAddress?: string, isRouter?: boolean): SwitchState => {
     if (!model) return state;
 
-    const normalizedModel = model as any;
-    const baseState = isRouter ? createInitialRouterState(macAddress || state.macAddress) : createInitialState(macAddress || state.macAddress, normalizedModel);
+    const normalizedModel = model as string;
+    const baseState = isRouter ? createInitialRouterState(macAddress || state.macAddress) : createInitialState(macAddress || state.macAddress, normalizedModel as 'WS-C2960-24TT-L' | 'WS-C3650-24PS');
 
     // Model changed? If so, we need to be careful about merging ports
     const modelChanged = state.switchModel !== normalizedModel;
 
-    let mergedPorts: Record<string, any> = {};
+    let mergedPorts: Record<string, Port> = {} as Record<string, Port>;
 
     if (modelChanged) {
       // If switching between L2 (Fa0/x) and L3 (Gi1/0/x), or to Firewall (Gi1/0/x)
@@ -155,8 +155,8 @@ export function useDeviceManager() {
 
         // If port ID exists in new model, preserve its config (but don't let old type override new model type)
         if (newPortIds.includes(id)) {
-          const oldType = (port as any).type;
-          const newType = (mergedPorts[id] as any)?.type;
+          const oldType = port.type;
+          const newType = mergedPorts[id]?.type;
           // Skip merge if old and new states have different port types for the same numeric port
           // This prevents WS-C2960 FastEthernet ports (fa0/x) from corrupting WS-C3650 GigabitEthernet ports (gi1/0/x)
           if (oldType && newType && oldType !== newType && /^[a-z]+\d*\/\d+$/.test(id)) {
@@ -180,7 +180,7 @@ export function useDeviceManager() {
 
     return {
       ...state,
-      switchModel: normalizedModel,
+      switchModel: normalizedModel as SwitchModel,
       switchLayer: baseState.switchLayer,
       ports: mergedPorts,
       version: {
@@ -214,7 +214,7 @@ export function useDeviceManager() {
 
         // Get the switch model from existing state or default. L3 switches should start as 3650.
         const switchModel = existingState?.switchModel || incomingModel || (isRouter || isSwitchL3 ? 'WS-C3650-24PS' : 'WS-C2960-24TT-L');
-        const baseState = isRouter ? createInitialRouterState() : createInitialState(undefined, switchModel as any);
+        const baseState = isRouter ? createInitialRouterState() : createInitialState(undefined, switchModel as 'WS-C2960-24TT-L' | 'WS-C3650-24PS');
 
         // Get existing state to preserve saved configuration and identity
         const startupConfig = existingState?.startupConfig;
@@ -225,7 +225,7 @@ export function useDeviceManager() {
           ...baseState,
           hostname,
           macAddress: existingState?.macAddress || baseState.macAddress,
-          switchModel: switchModel as any,
+          switchModel: switchModel as SwitchModel,
           switchLayer: baseState.switchLayer,
           version: existingState?.version || baseState.version,
           flashFiles: existingState?.flashFiles || {},
@@ -309,7 +309,7 @@ export function useDeviceManager() {
       } else if (deviceType === 'router') {
         deviceState = createInitialRouterState(initialMac);
       } else {
-        deviceState = createInitialState(initialMac, model as any);
+        deviceState = createInitialState(initialMac, model as 'WS-C2960-24TT-L' | 'WS-C3650-24PS');
       }
 
       const hostname = initialHostname || defaultName;
@@ -394,7 +394,7 @@ export function useDeviceManager() {
         deviceState = updatedState;
       }
     }
-    return deviceState!;
+    return deviceState as SwitchState;
   }, [deviceStates, ensureSwitchModelConsistency]);
 
   const getOrCreateDeviceOutputs = useCallback((deviceId: string, deviceStateArg?: SwitchState): TerminalOutput[] => {
@@ -431,7 +431,7 @@ export function useDeviceManager() {
 
       const bootInfo = getBootMessage(inferredDeviceType, state?.switchModel, language);
       const fallbackSwitchModel = state?.switchModel || deviceStates.get(deviceId)?.switchModel;
-      const fallbackState = state || (isRouter ? createInitialRouterState() : createInitialState(undefined, fallbackSwitchModel as any));
+      const fallbackState = state || (isRouter ? createInitialRouterState() : createInitialState(undefined, fallbackSwitchModel as 'WS-C2960-24TT-L' | 'WS-C3650-24PS'));
       const suffix = fallbackState?.macAddress || deviceId;
 
       const newBootMessages: TerminalOutput[] = [
@@ -453,7 +453,7 @@ export function useDeviceManager() {
       const finalOutputs = outputs;
       setTimeout(() => {
         if (isMounted.current) {
-          setDeviceOutputs(prev => new Map(prev).set(deviceId, finalOutputs!));
+          setDeviceOutputs(prev => new Map(prev).set(deviceId, finalOutputs as TerminalOutput[]));
         }
       }, 0);
     }
@@ -472,7 +472,7 @@ export function useDeviceManager() {
       const finalOutputs = outputs;
       setTimeout(() => {
         if (isMounted.current) {
-          setPcOutputs(prev => new Map(prev).set(deviceId, finalOutputs!));
+          setPcOutputs(prev => new Map(prev).set(deviceId, finalOutputs as PCOutputLine[]));
         }
       }, 0);
     }
@@ -487,7 +487,7 @@ export function useDeviceManager() {
     setActiveDeviceType: (type: DeviceType) => void,
     topologyConnections: CanvasConnection[] | null = null,
     skipConfirm = false
-  ): Promise<any> {
+  ): Promise<unknown> {
     // Handle cancellation token
     if (command === '__CANCEL__') {
       setIsLoading(false);
@@ -531,7 +531,7 @@ export function useDeviceManager() {
         deviceId
       );
 
-      const { requiresConfirmation, confirmationMessage, confirmationAction, success, newState, error, triggerPingAnimation, deviceStates: resultDeviceStates, updatedDeviceStates } = result as any;
+      const { requiresConfirmation, confirmationMessage, confirmationAction, success, newState, error, triggerPingAnimation, deviceStates: resultDeviceStates, updatedDeviceStates } = result as CommandResult;
       const trimmedCommand = command.trim().toLowerCase();
       const isInternalCommand = command === '__CONSOLE_CONNECT__';
 
@@ -587,7 +587,7 @@ export function useDeviceManager() {
         if (updatedDeviceStates && updatedDeviceStates instanceof Map) {
           setDeviceStates(prev => {
             const next = new Map(prev);
-            updatedDeviceStates.forEach((state: any, id: string) => {
+            updatedDeviceStates.forEach((state, id: string) => {
               next.set(id, state);
             });
             return next;
@@ -688,7 +688,7 @@ export function useDeviceManager() {
             return next;
           });
         }
-        if ((result as any).saveConfig) {
+        if (result.saveConfig) {
           setDeviceStates(prev => {
             const next = new Map(prev);
             const current = next.get(deviceId);
@@ -711,8 +711,8 @@ export function useDeviceManager() {
             variant: "default"
           });
         }
-        if ((result as any).saveFlashConfig) {
-          const flashFilename = ((result as any).flashFilename || 'running-config').trim();
+        if (result.saveFlashConfig) {
+          const flashFilename = (result.flashFilename || 'running-config').trim();
           setDeviceStates(prev => {
             const next = new Map(prev);
             const current = next.get(deviceId);
@@ -738,8 +738,8 @@ export function useDeviceManager() {
             variant: "default"
           });
         }
-        if ((result as any).restoreFlashConfig) {
-          const sourceFilename = ((result as any).flashSourceFilename || 'running-config').trim();
+        if (result.restoreFlashConfig) {
+          const sourceFilename = (result.flashSourceFilename || 'running-config').trim();
           const currentState = deviceStates.get(deviceId);
           const startupFromFlash = currentState?.flashStartupConfigs?.[sourceFilename];
           const restored = !!(currentState && startupFromFlash);
@@ -777,7 +777,7 @@ export function useDeviceManager() {
             });
           }
         }
-        if ((result as any).eraseConfig) {
+        if (result.eraseConfig) {
           setDeviceStates(prev => {
             const next = new Map(prev);
             const current = next.get(deviceId);
@@ -809,7 +809,7 @@ export function useDeviceManager() {
 
           setDeviceOutputs(prev => new Map(prev).set(deviceId, []));
         }
-        if ((result as any).deleteVlanDat) {
+        if (result.deleteVlanDat) {
           setDeviceStates(prev => {
             const next = new Map(prev);
             const current = next.get(deviceId);
@@ -818,11 +818,11 @@ export function useDeviceManager() {
                 ...current,
                 vlans: { '1': { id: 1, name: 'default', status: 'active', ports: [] } },
                 ports: Object.fromEntries(
-                  Object.entries(current.ports || {}).map(([key, port]: [string, any]) => [
+                  Object.entries(current.ports || {}).map(([key, port]: [string, Port]) => [
                     key,
                     { ...port, vlan: port.vlan !== undefined ? 1 : undefined }
                   ])
-                )
+                ) as Record<string, Port>
               });
             }
             return next;

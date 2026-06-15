@@ -18,7 +18,7 @@ describe('CCNA Features: ACL Logic', () => {
         'deny ip any any'
       ]
     }
-  } as any;
+  } as unknown as SwitchState;
 
   it('should correctly evaluate standard ACLs', () => {
     expect(evaluateAcl('1', mockState, '192.168.1.5', '10.0.0.1')).toBe('permit');
@@ -53,7 +53,7 @@ describe('CCNA Features: HSRP/VRRP Logic', () => {
           }
         }
       }
-    } as any;
+    } as unknown as SwitchState;
 
     const deviceStates = new Map([['R1', activeState]]);
     const routes = getRoutingTable('R1', deviceStates);
@@ -78,7 +78,7 @@ describe('CCNA Features: HSRP/VRRP Logic', () => {
           }
         }
       }
-    } as any;
+    } as unknown as SwitchState;
 
     const deviceStates = new Map([['R2', standbyState]]);
     const routes = getRoutingTable('R2', deviceStates);
@@ -89,9 +89,9 @@ describe('CCNA Features: HSRP/VRRP Logic', () => {
 });
 
 describe('CCNA Features: Multi-Area OSPF Logic', () => {
-  const r1: CanvasDevice = { id: 'R1', name: 'R1', type: 'router', ip: '10.0.0.1' } as any;
-  const r2: CanvasDevice = { id: 'R2', name: 'R2', type: 'router', ip: '10.0.0.2' } as any;
-  const conn: CanvasConnection = { id: 'c1', sourceDeviceId: 'R1', targetDeviceId: 'R2', sourcePort: 'gi0/0', targetPort: 'gi0/0' } as any;
+  const r1: CanvasDevice = { id: 'R1', name: 'R1', type: 'router', ip: '10.0.0.1' } as unknown as CanvasDevice;
+  const r2: CanvasDevice = { id: 'R2', name: 'R2', type: 'router', ip: '10.0.0.2' } as unknown as CanvasDevice;
+  const conn: CanvasConnection = { id: 'c1', sourceDeviceId: 'R1', targetDeviceId: 'R2', sourcePort: 'gi0/0', targetPort: 'gi0/0' } as unknown as CanvasConnection;
 
   const r1State: SwitchState = {
     id: 'R1',
@@ -101,7 +101,7 @@ describe('CCNA Features: Multi-Area OSPF Logic', () => {
     ports: {
       'gi0/0': { ipAddress: '10.0.0.1', subnetMask: '255.255.255.0', shutdown: false }
     }
-  } as any;
+  } as unknown as SwitchState;
 
   const r2State: SwitchState = {
     id: 'R2',
@@ -110,7 +110,7 @@ describe('CCNA Features: Multi-Area OSPF Logic', () => {
     ports: {
       'gi0/1': { ipAddress: '192.168.2.1', subnetMask: '255.255.255.0', shutdown: false }
     }
-  } as any;
+  } as unknown as SwitchState;
 
   it('should discover inter-area routes between OSPF routers', () => {
     const deviceStates = new Map([

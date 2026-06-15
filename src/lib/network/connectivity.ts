@@ -557,11 +557,13 @@ export function checkConnectivity(
   for (const conn of connections) {
     if (conn.active === false) continue;
 
-    if (!adjList.has(conn.sourceDeviceId)) adjList.set(conn.sourceDeviceId, []);
-    adjList.get(conn.sourceDeviceId)!.push({ neighborId: conn.targetDeviceId, conn });
+    const srcList = adjList.get(conn.sourceDeviceId);
+    if (srcList) srcList.push({ neighborId: conn.targetDeviceId, conn });
+    else adjList.set(conn.sourceDeviceId, [{ neighborId: conn.targetDeviceId, conn }]);
 
-    if (!adjList.has(conn.targetDeviceId)) adjList.set(conn.targetDeviceId, []);
-    adjList.get(conn.targetDeviceId)!.push({ neighborId: conn.sourceDeviceId, conn });
+    const tgtList = adjList.get(conn.targetDeviceId);
+    if (tgtList) tgtList.push({ neighborId: conn.sourceDeviceId, conn });
+    else adjList.set(conn.targetDeviceId, [{ neighborId: conn.sourceDeviceId, conn }]);
   }
 
   // 0. Resolve hostname to IP if necessary
@@ -725,7 +727,8 @@ export function checkConnectivity(
   let currentTargetIp = resolvedTargetIp;
 
   while (queue.length > 0) {
-    const currentId = queue.shift()!;
+    const currentId = queue.shift();
+    if (!currentId) break;
     if (currentId === targetDevice.id) break;
 
     // BOLT: Use pre-calculated adjacency list for O(1) neighbor lookup

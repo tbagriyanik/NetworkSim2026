@@ -3,7 +3,7 @@
  * Provides centralized API request handling with retry logic and error management
  */
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;
@@ -14,7 +14,7 @@ export interface ApiResponse<T = any> {
 export interface ApiRequestOptions {
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
     headers?: Record<string, string>;
-    body?: any;
+    body?: unknown;
     timeout?: number;
     retries?: number;
     retryDelay?: number;
@@ -25,7 +25,7 @@ export class ApiError extends Error {
         public code: string,
         public status: number,
         message: string,
-        public details?: any
+        public details?: unknown
     ) {
         super(message);
         this.name = 'ApiError';
@@ -41,7 +41,7 @@ class ApiClient {
     /**
      * Make API request with error handling and retry logic
      */
-    async request<T = any>(
+    async request<T = unknown>(
         endpoint: string,
         options: ApiRequestOptions = {}
     ): Promise<ApiResponse<T>> {
@@ -139,16 +139,16 @@ class ApiClient {
     /**
      * GET request
      */
-    async get<T = any>(endpoint: string, options?: Omit<ApiRequestOptions, 'method' | 'body'>) {
+    async get<T = unknown>(endpoint: string, options?: Omit<ApiRequestOptions, 'method' | 'body'>) {
         return this.request<T>(endpoint, { ...options, method: 'GET' });
     }
 
     /**
      * POST request
      */
-    async post<T = any>(
+    async post<T = unknown>(
         endpoint: string,
-        body?: any,
+        body?: unknown,
         options?: Omit<ApiRequestOptions, 'method' | 'body'>
     ) {
         return this.request<T>(endpoint, { ...options, method: 'POST', body });
@@ -157,9 +157,9 @@ class ApiClient {
     /**
      * PUT request
      */
-    async put<T = any>(
+    async put<T = unknown>(
         endpoint: string,
-        body?: any,
+        body?: unknown,
         options?: Omit<ApiRequestOptions, 'method' | 'body'>
     ) {
         return this.request<T>(endpoint, { ...options, method: 'PUT', body });
@@ -168,16 +168,16 @@ class ApiClient {
     /**
      * DELETE request
      */
-    async delete<T = any>(endpoint: string, options?: Omit<ApiRequestOptions, 'method' | 'body'>) {
+    async delete<T = unknown>(endpoint: string, options?: Omit<ApiRequestOptions, 'method' | 'body'>) {
         return this.request<T>(endpoint, { ...options, method: 'DELETE' });
     }
 
     /**
      * PATCH request
      */
-    async patch<T = any>(
+    async patch<T = unknown>(
         endpoint: string,
-        body?: any,
+        body?: unknown,
         options?: Omit<ApiRequestOptions, 'method' | 'body'>
     ) {
         return this.request<T>(endpoint, { ...options, method: 'PATCH', body });

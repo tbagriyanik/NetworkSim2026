@@ -11,7 +11,7 @@ import type { NetworkState, DeviceConfig, Connection, DeviceType, ConnectionType
 // Types
 // ============================================================================
 
-const VALID_DEVICE_TYPES = new Set(['pc', 'router', 'switch', 'switchL2', 'switchL3', 'iot', 'firewall', 'loadbalancer']);
+const VALID_DEVICE_TYPES = new Set(['pc', 'router', 'switch', 'switchL2', 'switchL3', 'iot', 'firewall']);
 
 function isValidMACAddress(mac: unknown): boolean {
     if (typeof mac !== 'string') return false;
@@ -158,7 +158,7 @@ export const deserializeNetworkState = (jsonString: string): ParseResult => {
                 ipv6: rawNetwork?.ipv6 && typeof rawNetwork.ipv6 === 'string' ? rawNetwork.ipv6 as string : undefined,
                 subnet: rawNetwork?.subnet && typeof rawNetwork.subnet === 'string' ? rawNetwork.subnet as string : undefined,
                 gateway: rawNetwork?.gateway && typeof rawNetwork.gateway === 'string' ? rawNetwork.gateway as string : undefined,
-                dns: Array.isArray(rawNetwork?.dns) ? rawNetwork!.dns as string[] : undefined,
+                dns: rawNetwork && Array.isArray(rawNetwork.dns) ? rawNetwork.dns as string[] : undefined,
                 dhcp: rawNetwork?.dhcp && typeof rawNetwork.dhcp === 'object' ? rawNetwork.dhcp as DeviceConfig['network']['dhcp'] : undefined,
             };
 
