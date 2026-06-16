@@ -153,6 +153,7 @@ const REFRESH_DEVICE_TYPE_LABELS: Record<DeviceType, string> = {
   pc: 'PC',
   iot: 'IoT',
   firewall: 'Firewall',
+  wlc: 'WLC',
 };
 
 const REFRESH_DEVICE_TYPE_ORDER: DeviceType[] = ['router', 'switchL3', 'switchL2', 'pc', 'iot', 'firewall'];

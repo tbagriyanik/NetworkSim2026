@@ -22,11 +22,12 @@ interface PortSelectorProps {
   onClose: () => void;
 }
 
-const CABLE_COLORS = {
+const CABLE_COLORS: Record<string, { primary: string; bg: string; text: string; border: string }> = {
   straight: { primary: '#3b82f6', bg: 'bg-blue-500', text: 'text-blue-400', border: 'border-blue-500/30' },
   crossover: { primary: '#f97316', bg: 'bg-orange-500', text: 'text-orange-400', border: 'border-orange-500/30' },
   console: { primary: '#06b6d4', bg: 'bg-cyan-500', text: 'text-cyan-400', border: 'border-cyan-500/30' },
   wireless: { primary: '#a855f7', bg: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500/30' },
+  serial: { primary: '#84cc16', bg: 'bg-lime-500', text: 'text-lime-400', border: 'border-lime-500/30' },
 };
 
 export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSelectorProps) {

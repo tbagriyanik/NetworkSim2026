@@ -125,3 +125,77 @@ describe('CCNA Features: Multi-Area OSPF Logic', () => {
     expect(interAreaRoute?.type).toBe('dynamic');
   });
 });
+
+describe('CCNA Features: EIGRP Routing Logic', () => {
+  const r1: CanvasDevice = { id: 'R1', name: 'R1', type: 'router', ip: '10.0.0.1' } as unknown as CanvasDevice;
+  const r2: CanvasDevice = { id: 'R2', name: 'R2', type: 'router', ip: '10.0.0.2' } as unknown as CanvasDevice;
+  const conn: CanvasConnection = { id: 'c1', sourceDeviceId: 'R1', targetDeviceId: 'R2', sourcePort: 'gi0/0', targetPort: 'gi0/0' } as unknown as CanvasConnection;
+
+  const r1State: SwitchState = {
+    id: 'R1',
+    routingProtocol: 'eigrp',
+    eigrpAs: '100',
+    ports: {
+      'gi0/0': {
+        ipAddress: '10.0.0.1',
+        subnetMask: '255.255.255.0',
+        shutdown: false,
+        bandwidth: 100_000,
+        delay: 1_000
+      },
+      'gi0/1': {
+        ipAddress: '192.168.1.1',
+        subnetMask: '255.255.255.0',
+        shutdown: false,
+        bandwidth: 100_000,
+        delay: 1_000
+      }
+    },
+    dynamicRoutes: [
+      { destination: '10.0.0.0', subnetMask: '0.0.0.255', nextHop: 'directly connected', metric: 1, type: 'dynamic' },
+      { destination: '192.168.1.0', subnetMask: '0.0.0.255', nextHop: 'directly connected', metric: 1, type: 'dynamic' }
+    ]
+  } as unknown as SwitchState;
+
+  const r2State: SwitchState = {
+    id: 'R2',
+    routingProtocol: 'eigrp',
+    eigrpAs: '100',
+    ports: {
+      'gi0/0': {
+        ipAddress: '10.0.0.2',
+        subnetMask: '255.255.255.0',
+        shutdown: false,
+        bandwidth: 100_000,
+        delay: 1_000
+      },
+      'gi0/1': {
+        ipAddress: '192.168.2.1',
+        subnetMask: '255.255.255.0',
+        shutdown: false,
+        bandwidth: 10_000,
+        delay: 100_000
+      }
+    },
+    dynamicRoutes: [
+      { destination: '10.0.0.0', subnetMask: '0.0.0.255', nextHop: 'directly connected', metric: 1, type: 'dynamic' },
+      { destination: '192.168.2.0', subnetMask: '0.0.0.255', nextHop: 'directly connected', metric: 1, type: 'dynamic' }
+    ]
+  } as unknown as SwitchState;
+
+  it('should learn EIGRP routes with bandwidth and delay metric', () => {
+    const deviceStates = new Map([
+      ['R1', r1State],
+      ['R2', r2State]
+    ]);
+
+    const r1Routes = getRoutingTable('R1', deviceStates, [r1, r2], [conn]);
+    const learnedRoute = r1Routes.find(r => r.destination === '192.168.2.0');
+
+    expect(learnedRoute).toBeDefined();
+    expect(learnedRoute?.type).toBe('dynamic');
+    expect(learnedRoute?.nextHop).toBe('10.0.0.2');
+    expect(learnedRoute?.metric).toBe(2_867_200);
+  });
+});
+

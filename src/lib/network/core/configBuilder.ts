@@ -168,10 +168,16 @@ export function buildRunningConfig(state: SwitchState): string[] {
             return;
         }
 
+        const isSerial = port.type === 'serial';
         const isWlan = normalizedPortId.startsWith('wlan');
-        const portUpper = isWlan
-            ? portId.toUpperCase()
-            : portId.toUpperCase().replace('FA', 'FastEthernet').replace('GI', 'GigabitEthernet');
+        let portUpper: string;
+        if (isSerial) {
+            portUpper = portId.toUpperCase().replace(/^S(\d+)\/(\d+)\/(\d+)$/, 'Serial$1/$2/$3');
+        } else if (isWlan) {
+            portUpper = portId.toUpperCase();
+        } else {
+            portUpper = portId.toUpperCase().replace('FA', 'FastEthernet').replace('GI', 'GigabitEthernet');
+        }
 
         lines.push(`interface ${portUpper}`);
 
@@ -189,6 +195,30 @@ export function buildRunningConfig(state: SwitchState): string[] {
                 if (port.wifi.security && port.wifi.security !== 'open') {
                     lines.push(` encryption ${port.wifi.security}`);
                 }
+            }
+            if (!port.shutdown) {
+                lines.push(' no shutdown');
+            } else {
+                lines.push(' shutdown');
+            }
+        } else if (isSerial) {
+            // Serial interface config
+            const serialEnc = port.serialEncapsulation || 'hdlc';
+            lines.push(` encapsulation ${serialEnc}`);
+            if (port.clockRate && port.dce) {
+                lines.push(` clock rate ${port.clockRate}`);
+            }
+            if (serialEnc === 'ppp' && port.pppAuth && port.pppAuth !== 'none') {
+                lines.push(` ppp authentication ${port.pppAuth}`);
+                if (port.pppPapUsername && port.pppPapPassword) {
+                    lines.push(` ppp pap sent-username ${port.pppPapUsername} password 0 ${port.pppPapPassword}`);
+                }
+            }
+            if (port.bandwidth) {
+                lines.push(` bandwidth ${port.bandwidth}`);
+            }
+            if (port.ipAddress && port.subnetMask) {
+                lines.push(` ip address ${port.ipAddress} ${port.subnetMask}`);
             }
             if (!port.shutdown) {
                 lines.push(' no shutdown');
@@ -357,6 +387,13 @@ export function buildRunningConfig(state: SwitchState): string[] {
                 lines.push(`  network ${r.destination} ${wildcardMask} area ${r.metric || 0}`);
             }
         });
+        lines.push('!');
+    } else if (state.routingProtocol === 'eigrp') {
+        lines.push(`router eigrp ${state.eigrpAs || '1'}`);
+        (state.dynamicRoutes || []).forEach(r => {
+            if (r.type === 'dynamic' && r.destination && r.subnetMask) lines.push(`  network ${r.destination} ${r.subnetMask}`);
+        });
+        if (state.autoSummary === false) lines.push(' no auto-summary');
         lines.push('!');
     } else if (state.routingProtocol === 'bgp') {
         lines.push(`router bgp ${state.bgpAs || '65000'}`);

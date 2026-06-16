@@ -1148,6 +1148,7 @@ export function executeCommand(
   const isL3Switch = state.switchModel === 'WS-C3650-24PS';
   const isL2Switch = state.switchModel === 'WS-C2960-24TT-L';
   const isRouter = state.deviceType === 'router' || (!isFirewall && !state.deviceType?.startsWith('switch') && capabilities.routing);
+  const isWLC = state.deviceType === 'wlc' || state.switchModel === 'AIR-CT2504-K9';
 
   const l3OnlyCommands = [
     'show ip route', 'show ipv6 route', 'show ip protocols', 'show ip ospf', 'show ip ospf neighbor',
@@ -1163,20 +1164,29 @@ export function executeCommand(
   const isL3OnlyCmd = l3OnlyCommands.some(prefix => commandName === prefix || commandName.startsWith(`${prefix} `));
   const isSwitchOnlyCmd = switchOnlyCommands.some(prefix => commandName === prefix || commandName.startsWith(`${prefix} `));
   const isFirewallOnlyCmd = firewallOnlyCommands.some(prefix => commandName === prefix || commandName.startsWith(`${prefix} `));
+  const wlcOnlyCommands = [
+    'show wlan summary', 'show ap summary', 'show ap config', 'show ap join statistics',
+    'show ap join stats', 'ap name', 'ap auth-mac', 'ap rf-channel'
+  ];
+  const isWlcOnlyCmd = wlcOnlyCommands.some(prefix => commandName === prefix || commandName.startsWith(`${prefix} `));
+
   const deviceLabel = isFirewall
     ? 'firewall'
-    : isRouter
-      ? 'router'
-      : isL3Switch
-        ? 'Layer 3 switch'
-        : 'Layer 2 switch';
+    : isWLC
+      ? 'Wireless LAN Controller'
+      : isRouter
+        ? 'router'
+        : isL3Switch
+          ? 'Layer 3 switch'
+          : 'Layer 2 switch';
 
   if ((needsSwitching && !capabilities.switching) ||
     (needsRouting && !capabilities.routing) ||
     (needsFirewall && !capabilities.firewall) ||
-    (isL3OnlyCmd && !(isL3Switch || isRouter)) ||
+    (isL3OnlyCmd && !(isL3Switch || isRouter || isWLC)) ||
     (isSwitchOnlyCmd && !(isL2Switch || isL3Switch)) ||
-    (isFirewallOnlyCmd && !isFirewall)) {
+    (isFirewallOnlyCmd && !isFirewall) ||
+    (isWlcOnlyCmd && !isWLC)) {
     return processCommandResult({
       success: false,
       error: `% Invalid input detected at '^' marker.\n${commandName} is not supported on this ${deviceLabel}.`

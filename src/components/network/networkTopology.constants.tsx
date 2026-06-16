@@ -21,6 +21,7 @@ export const DEVICE_ICON_COLORS = {
   switch: '#22c55e',
   router: '#a855f7',
   firewall: '#ef4444',
+  wlc: '#f59e0b',
 } as const;
 
 export const DEVICE_ICONS = {
@@ -65,6 +66,13 @@ export const DEVICE_ICONS = {
       <path strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4" />
     </svg>
   ),
+  wlc: (
+    <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke={DEVICE_ICON_COLORS.wlc} viewBox="0 0 24 24" strokeWidth={1.5}>
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
+      <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.3" />
+    </svg>
+  ),
 };
 
 export const CABLE_COLORS: Record<CableType | 'error', { primary: string; bg: string; text: string; border: string }> = {
@@ -72,6 +80,7 @@ export const CABLE_COLORS: Record<CableType | 'error', { primary: string; bg: st
   crossover: { primary: '#f97316', bg: 'bg-orange-500', text: 'text-orange-400', border: 'border-orange-500/30' },
   console: { primary: '#06b6d4', bg: 'bg-cyan-500', text: 'text-cyan-400', border: 'border-cyan-500/30' },
   wireless: { primary: '#a855f7', bg: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500/30' },
+  serial: { primary: '#84cc16', bg: 'bg-lime-500', text: 'text-lime-400', border: 'border-lime-500/30' },
   error: { primary: '#ec4899', bg: 'bg-pink-500', text: 'text-pink-400', border: 'border-pink-500/30' },
 };
 

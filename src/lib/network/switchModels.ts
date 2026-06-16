@@ -1,7 +1,7 @@
 // Switch Model Definitions and Utilities
 
-export type SwitchModel = 'WS-C2960-24TT-L' | 'WS-C3650-24PS' | 'ASA-5506-X';
-export type SwitchLayer = 'L2' | 'L3' | 'FW';
+export type SwitchModel = 'WS-C2960-24TT-L' | 'WS-C3650-24PS' | 'ASA-5506-X' | 'AIR-CT2504-K9';
+export type SwitchLayer = 'L2' | 'L3' | 'FW' | 'WLC';
 
 export interface SwitchModelInfo {
     model: SwitchModel;
@@ -57,6 +57,23 @@ export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
             'Site-to-Site and Remote Access VPN',
             'Advanced Malware Protection'
         ]
+    },
+    'AIR-CT2504-K9': {
+        model: 'AIR-CT2504-K9',
+        name: 'Cisco 2504 Wireless LAN Controller',
+        layer: 'WLC',
+        ports: 5, // 4 GE + 1 Console + 1 Service
+        description: 'Wireless LAN Controller - 4 GigabitEthernet ports, supports up to 75 APs',
+        features: [
+            'Centralized Wireless Management',
+            'CAPWAP Protocol Support',
+            'Lightweight AP Management',
+            'RF Management',
+            'WLAN Configuration',
+            'Mobility Groups',
+            '802.1X Authentication',
+            'Rogue AP Detection'
+        ]
     }
 };
 
@@ -93,9 +110,15 @@ export function isRouterModel(model: string | undefined): boolean {
     return m.includes('ISR') || m.includes('4451') || m.includes('1900') || m.includes('2900') || m.includes('ASR') || m.includes('7200');
 }
 
+export function isWLCModel(model: string | undefined): boolean {
+    if (!model) return false;
+    const m = model.toUpperCase();
+    return m.includes('AIR-CT') || m === 'AIR-CT2504-K9';
+}
+
 export function canAssignIPToPhysicalPort(model: SwitchModel | string | undefined): boolean {
     if (!model) return true; // Default to allowing IP assignment if model is unknown (for routers)
-    return isLayer3Switch(model) || model === 'ASA-5506-X' || isRouterModel(model);
+    return isLayer3Switch(model) || model === 'ASA-5506-X' || isRouterModel(model) || isWLCModel(model);
 }
 
 export function getAvailableSwitchModels(): SwitchModel[] {

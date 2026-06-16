@@ -362,8 +362,32 @@ function createInitialRouterPorts(baseMac?: string): Record<string, Port> {
     };
   }
 
+  // Serial interfaces (WAN)
+  for (let i = 0; i <= 2; i++) {
+    const serialPortId = `s0/${i}/0`;
+    const serialMacNumber = parseInt(routerBaseMac.replace(/\./g, ''), 16) + 5 + i;
+    ports[serialPortId] = {
+      id: serialPortId,
+      name: i === 0 ? 'Serial WAN' : '',
+      status: 'notconnect',
+      vlan: 1,
+      mode: 'routed',
+      voiceVlan: 'none',
+      duplex: 'full',
+      speed: 'auto',
+      shutdown: true,
+      type: 'serial',
+      serialEncapsulation: 'hdlc',
+      clockRate: 2000000,
+      dce: i === 0,
+      bandwidth: 1544,
+      macAddress: formatMacFromNumber(serialMacNumber),
+      isRoutedPort: true,
+    };
+  }
+
   // WLAN interface
-  const wlanMac = formatMacFromNumber(parseInt(routerBaseMac.replace(/\./g, ''), 16) + 4);
+  const wlanMac = formatMacFromNumber(parseInt(routerBaseMac.replace(/\./g, ''), 16) + 10);
   ports['wlan0'] = {
     id: 'wlan0',
     name: 'WLAN',
@@ -501,6 +525,136 @@ export function createInitialFirewallState(
       uptime: '1 day, 2 hours, 15 minutes'
     },
     macAddressTable: [],
+    vtpRevision: 0
+  };
+}
+
+// WLC için başlangıç portları oluştur
+function createInitialWLCPorts(baseMac?: string): Record<string, Port> {
+  const ports: Record<string, Port> = {};
+  const wlcBaseMac = baseMac || formatMacFromNumber(0x00C000000000);
+
+  // Console port
+  ports['console'] = {
+    id: 'console',
+    name: 'Console',
+    status: 'notconnect',
+    vlan: 1,
+    mode: 'access',
+    duplex: 'auto',
+    speed: 'auto',
+    shutdown: false,
+    type: 'fastethernet'
+  };
+
+  // GigabitEthernet 0/0 - 0/3 (WLC management + AP connectivity)
+  for (let i = 0; i <= 3; i++) {
+    const portId = `gi0/${i}`;
+    const portMacNumber = parseInt(wlcBaseMac.replace(/\./g, ''), 16) + i;
+    const portMac = formatMacFromNumber(portMacNumber);
+    ports[portId] = {
+      id: portId,
+      name: i === 0 ? 'Management' : i === 1 ? 'AP-Manager' : '',
+      status: 'notconnect',
+      vlan: 1,
+      mode: 'routed',
+      duplex: 'auto',
+      speed: 'auto',
+      shutdown: false,
+      type: 'gigabitethernet',
+      macAddress: portMac,
+      isRoutedPort: true,
+    };
+  }
+
+  // Service port
+  ports['service'] = {
+    id: 'service',
+    name: 'Service Port',
+    status: 'notconnect',
+    vlan: 1,
+    mode: 'access',
+    duplex: 'auto',
+    speed: 'auto',
+    shutdown: false,
+    type: 'fastethernet',
+    macAddress: formatMacFromNumber(parseInt(wlcBaseMac.replace(/\./g, ''), 16) + 4),
+  };
+
+  return ports;
+}
+
+// WLC için başlangıç durumu
+export function createInitialWLCState(
+  mac?: string,
+  options: { bootTime?: number } = {}
+): SwitchState {
+  const { bootTime = 1715600000000 } = options;
+  const macAddress = reserveMacAddress(mac, 0x00C000000000);
+  const ports = createInitialWLCPorts(macAddress);
+  const vlans = createInitialVlans();
+
+  return {
+    hostname: 'WLC',
+    macAddress,
+    switchModel: 'AIR-CT2504-K9' as SwitchModel,
+    switchLayer: 'WLC',
+    deviceType: 'wlc',
+    currentMode: 'user',
+    consoleAuthenticated: false,
+    bootTime,
+    ipRouting: true,
+    ports,
+    vlans,
+    security: createInitialSecurity(),
+    services: {
+      http: {
+        enabled: true,
+        content: '',
+        fontSize: 16
+      },
+      dhcp: {
+        enabled: true,
+        pools: []
+      },
+      ntp: {
+        enabled: false,
+        server: '',
+        timezone: 'UTC',
+        date: new Date(bootTime).toISOString().slice(0, 10),
+        time: new Date(bootTime).toTimeString().slice(0, 8)
+      }
+    },
+    runningConfig: [
+      '!',
+      'hostname WLC',
+      '!',
+      'interface GigabitEthernet0/0',
+      ' ip address 192.168.1.1 255.255.255.0',
+      ' no shutdown',
+      '!',
+      'interface GigabitEthernet0/1',
+      ' no shutdown',
+      '!',
+      'line con 0',
+      'line vty 0 4',
+      ' login',
+      '!',
+      'end'
+    ],
+    commandHistory: [],
+    historyIndex: -1,
+    bannerMOTD: 'Cisco Wireless LAN Controller\n',
+    version: {
+      nosVersion: '8.5.105.0',
+      modelName: 'Cisco 2504 WLC',
+      serialNumber: 'WLC2504ABCD',
+      uptime: '3 days, 2 hours, 30 minutes'
+    },
+    macAddressTable: [],
+    arpCache: [],
+    wlcAps: {},
+    wlcWlans: {},
     vtpRevision: 0
   };
 }
@@ -654,6 +808,18 @@ export function normalizePortId(input: string): string | null {
   const asaMatch = lower.match(/^(?:gi|gig|gigabit|gigabitethernet)(\d+)\/(\d+)$/);
   if (asaMatch && asaMatch[1] === '1') {
     return `gi${asaMatch[1]}/${asaMatch[2]}`;
+  }
+
+  // Serial interface: S0/0/0, Serial0/0/0, S0/0/1, etc.
+  const serialMatch = lower.match(/^(?:serial|s)(\d+)\/(\d+)\/(\d+)$/);
+  if (serialMatch) {
+    return `s${serialMatch[1]}/${serialMatch[2]}/${serialMatch[3]}`;
+  }
+
+  // Two-part serial: S0/0
+  const serialTwoPart = lower.match(/^(?:serial|s)(\d+)\/(\d+)$/);
+  if (serialTwoPart) {
+    return `s${serialTwoPart[1]}/${serialTwoPart[2]}/0`;
   }
 
   // Wlan0 formatını kabul et

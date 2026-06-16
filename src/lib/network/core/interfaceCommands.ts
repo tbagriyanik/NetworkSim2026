@@ -130,6 +130,12 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'mtu': cmdMtu,
   'switchport trunk encapsulation': cmdSwitchportTrunkEncapsulation,
   'encapsulation dot1q': cmdEncapsulationDot1q,
+  'encapsulation hdlc': cmdEncapsulationHdlc,
+  'encapsulation ppp': cmdEncapsulationPpp,
+  'clock rate': cmdClockRate,
+  'ppp authentication pap': cmdPppAuthPap,
+  'ppp authentication chap': cmdPppAuthChap,
+  'ppp pap sent-username': cmdPppPapSentUsername,
   'switchport protected': cmdSwitchportProtected,
   'switchport block': cmdSwitchportBlock,
   'switchport port-security mac-address': cmdSwitchportPortSecurityMacAddress,
@@ -2122,6 +2128,103 @@ function cmdEncapsulationDot1q(state: SwitchState, input: string, _ctx: CommandC
   const newPorts = { ...state.ports };
   newPorts[state.currentInterface] = { ...(newPorts[state.currentInterface] || {} as Port), dot1qVlan: parseInt(match[1]) } as Port;
   return { success: true, output: `Encapsulation dot1Q VLAN ${match[1]} configured`, newState: { ports: newPorts } };
+}
+
+/**
+ * Encapsulation HDLC - Set serial encapsulation to HDLC (default)
+ */
+function cmdEncapsulationHdlc(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const port = state.ports[state.currentInterface];
+  if (port?.type !== 'serial') return { success: false, error: '% HDLC encapsulation is only supported on serial interfaces' };
+  const updatePort = (p: Port) => ({ ...p, serialEncapsulation: 'hdlc' as const, encapsulation: 'hdlc' as const });
+  if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'Encapsulation set to HDLC', newState: { ports: newPorts } };
+}
+
+/**
+ * Encapsulation PPP - Set serial encapsulation to PPP
+ */
+function cmdEncapsulationPpp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const port = state.ports[state.currentInterface];
+  if (port?.type !== 'serial') return { success: false, error: '% PPP encapsulation is only supported on serial interfaces' };
+  const updatePort = (p: Port) => ({ ...p, serialEncapsulation: 'ppp' as const, encapsulation: 'ppp' as const });
+  if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'Encapsulation set to PPP', newState: { ports: newPorts } };
+}
+
+/**
+ * Clock Rate - Set DCE clock rate on serial interface
+ */
+function cmdClockRate(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const match = input.match(/^clock\s+rate\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid clock rate command' };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const port = state.ports[state.currentInterface];
+  if (port?.type !== 'serial') return { success: false, error: '% Clock rate is only supported on serial interfaces' };
+  const rate = parseInt(match[1]);
+  const updatePort = (p: Port) => ({ ...p, clockRate: rate, dce: true });
+  if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: `Clock rate set to ${rate} bps`, newState: { ports: newPorts } };
+}
+
+/**
+ * PPP Authentication PAP - Set PPP PAP authentication
+ */
+function cmdPppAuthPap(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const port = state.ports[state.currentInterface];
+  if (port?.type !== 'serial') return { success: false, error: '% PPP authentication is only supported on serial interfaces' };
+  const updatePort = (p: Port) => ({ ...p, pppAuth: 'pap' as const });
+  if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'PPP PAP authentication enabled', newState: { ports: newPorts } };
+}
+
+/**
+ * PPP Authentication CHAP - Set PPP CHAP authentication
+ */
+function cmdPppAuthChap(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const port = state.ports[state.currentInterface];
+  if (port?.type !== 'serial') return { success: false, error: '% PPP authentication is only supported on serial interfaces' };
+  const updatePort = (p: Port) => ({ ...p, pppAuth: 'chap' as const });
+  if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'PPP CHAP authentication enabled', newState: { ports: newPorts } };
+}
+
+/**
+ * PPP PAP Sent-Username - Set PPP PAP credentials
+ */
+function cmdPppPapSentUsername(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const match = input.match(/^ppp\s+pap\s+sent-username\s+(\S+)\s+password\s+0\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid command. Usage: ppp pap sent-username <username> password 0 <password>' };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const port = state.ports[state.currentInterface];
+  if (port?.type !== 'serial') return { success: false, error: '% PPP commands are only supported on serial interfaces' };
+  const username = match[1];
+  const password = match[2];
+  const updatePort = (p: Port) => ({ ...p, pppPapUsername: username, pppPapPassword: password, pppAuth: 'pap' as const });
+  if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: `PPP PAP sent-username ${username} configured`, newState: { ports: newPorts } };
 }
 
 /**

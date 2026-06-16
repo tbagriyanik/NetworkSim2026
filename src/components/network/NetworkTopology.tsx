@@ -93,6 +93,13 @@ const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
       <path strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4" />
     </svg>
   ),
+  wlc: (
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#f59e0b" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
+      <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.3" />
+    </svg>
+  ),
 };
 
 const isSwitchDeviceType = (type: DeviceType) => type === 'switchL2' || type === 'switchL3';
@@ -4980,7 +4987,7 @@ export function NetworkTopology({
             rx={8}
             fill={deviceFill}
             stroke={isDark
-              ? (device.type === 'pc' ? '#3b82f6' : device.type === 'iot' ? '#f97316' : device.type === 'firewall' ? '#ef4444' : isSwitchDeviceType(device.type) ? '#22c55e' : '#a855f7')
+              ? ((device.type as string) === 'pc' ? '#3b82f6' : (device.type as string) === 'iot' ? '#f97316' : (device.type as string) === 'firewall' ? '#ef4444' : isSwitchDeviceType(device.type) ? '#22c55e' : (device.type as string) === 'wlc' ? '#f59e0b' : '#a855f7')
               : '#cbd5e1'}
             strokeWidth={1.5}
             className={isDragging ? '' : 'transition-all duration-150'}

@@ -840,6 +840,42 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
     // Capability omitted - used by both routers and switches
   },
+  'encapsulation hdlc': {
+    pattern: /^encapsulation\s+hdlc$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'encapsulation ppp': {
+    pattern: /^encapsulation\s+ppp$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'clock rate': {
+    pattern: /^clock\s+rate\s+(\d+)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'ppp authentication pap': {
+    pattern: /^ppp\s+authentication\s+pap$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'ppp authentication chap': {
+    pattern: /^ppp\s+authentication\s+chap$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'ppp pap sent-username': {
+    pattern: /^ppp\s+pap\s+sent-username\s+(\S+)\s+password\s+0\s+(\S+)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 2,
+    maxArgs: 2
+  },
   'switchport nonegotiate': {
     pattern: /^switchport\s+nonegotiate$/i,
     modes: ['interface', 'config-if-range'],

@@ -34,7 +34,7 @@ export interface Port {
   duplex: DuplexMode;
   speed: SpeedMode;
   shutdown: boolean;
-  type: 'fastethernet' | 'gigabitethernet' | 'vlan';
+  type: 'fastethernet' | 'gigabitethernet' | 'vlan' | 'serial';
   previousStatus?: PortStatus;  // shutdown öncesi durum (no shutdown için)
   ipAddress?: string;           // For L3 ports or SVI
   subnetMask?: string;
@@ -101,7 +101,7 @@ export interface Port {
   adminStatus?: 'up' | 'down';     // Admin status (from config: shutdown/no shutdown)
   operStatus?: 'up' | 'down';      // Operational status (actual port state)
   lineProtocol?: 'up' | 'down';    // Line protocol status
-  encapsulation?: 'isl' | '802.1q' | 'native' | 'dot1q-tunnel'; // Trunk encapsulation type
+  encapsulation?: 'isl' | '802.1q' | 'native' | 'dot1q-tunnel' | 'hdlc' | 'ppp'; // Encapsulation type (trunk or WAN serial)
   // QoS & Performance properties
   qos?: {
     enabled: boolean;
@@ -214,6 +214,14 @@ export interface Port {
     }>;
   };
   natSide?: 'inside' | 'outside';
+  // Serial interface properties (WAN)
+  serialEncapsulation?: 'hdlc' | 'ppp';
+  clockRate?: number;       // Clock rate in bps (DCE side)
+  dce?: boolean;            // Whether this serial port is DCE
+  pppAuth?: 'pap' | 'chap' | 'none';  // PPP authentication type
+  pppPapUsername?: string;
+  pppPapPassword?: string;
+  lapGroup?: number;        // Lightweight AP group (WLC)
 }
 
 export interface Vlan {
@@ -248,15 +256,15 @@ export interface SecurityConfig {
   vtyLines: LineConfig;
 }
 
-export type SwitchModel = 'WS-C2960-24TT-L' | 'WS-C3650-24PS' | 'ASA-5506-X';
-export type SwitchLayer = 'L2' | 'L3' | 'FW';
+export type SwitchModel = 'WS-C2960-24TT-L' | 'WS-C3650-24PS' | 'ASA-5506-X' | 'AIR-CT2504-K9';
+export type SwitchLayer = 'L2' | 'L3' | 'FW' | 'WLC';
 
 export interface SwitchState {
   hostname: string;
   macAddress: string; // Unique base MAC address for the device
   switchModel: SwitchModel; // Switch model (L2 or L3)
   switchLayer: SwitchLayer; // Layer 2 or Layer 3
-  deviceType?: 'pc' | 'router' | 'switch' | 'iot' | 'firewall' ; // Device type for identification
+  deviceType?: 'pc' | 'router' | 'switch' | 'iot' | 'firewall' | 'wlc'; // Device type for identification
   currentMode: CommandMode;
   currentInterface?: string;
   selectedInterfaces?: string[];  // interface range için çoklu port seçimi
@@ -481,6 +489,30 @@ export interface SwitchState {
     name?: string;
     wifiSsid?: string;
   };
+  // WLC-specific state
+  wlcAps?: Record<string, {
+    name: string;
+    macAddress: string;
+    ipAddress?: string;
+    status: 'joined' | 'disconnected' | 'downloading';
+    model?: string;
+    apGroup?: string;
+    wlans?: number[];
+    rfChannel?: number;
+    power?: string;
+    uptime?: string;
+  }>;
+  wlcWlans?: Record<string, {
+    id: number;
+    name: string;
+    ssid: string;
+    status: 'enabled' | 'disabled';
+    security: 'open' | 'wpa2' | 'wpa3';
+    password?: string;
+    vlan?: number;
+    apGroups?: string[];
+  }>;
+  currentApName?: string;  // Current AP being configured
   // SDM / Reload
   sdmPreferConfigured?: boolean;
   sdmTemplate?: string;
@@ -576,13 +608,13 @@ export interface CommandValidationResult {
 }
 
 // Kablo Tipleri
-export type CableType = 'straight' | 'crossover' | 'console' | 'wireless';
+export type CableType = 'straight' | 'crossover' | 'console' | 'wireless' | 'serial';
 
 export interface CableInfo {
   connected: boolean;
   cableType: CableType;
-  sourceDevice: 'pc' | 'iot' | 'switchL2' | 'switchL3' | 'router' | 'firewall';
-  targetDevice: 'pc' | 'iot' | 'switchL2' | 'switchL3' | 'router' | 'firewall';
+  sourceDevice: 'pc' | 'iot' | 'switchL2' | 'switchL3' | 'router' | 'firewall' | 'wlc';
+  targetDevice: 'pc' | 'iot' | 'switchL2' | 'switchL3' | 'router' | 'firewall' | 'wlc';
   sourcePort?: string;  // Port ID (e.g., 'eth0', 'com1', 'console', 'fa0/1')
   targetPort?: string;  // Port ID
 }
@@ -599,7 +631,7 @@ export const CABLE_COMPATIBILITY: Record<string, CableType[]> = {
   'router-pc': ['straight', 'crossover'],
   'switch-router': ['straight', 'crossover'],
   'router-switch': ['straight', 'crossover'],
-  'router-router': ['straight', 'crossover'],
+  'router-router': ['straight', 'crossover', 'serial'],
   'pc-pc': ['crossover'],
   'pc-iot': ['crossover'],
   'iot-pc': ['crossover'],
@@ -614,6 +646,14 @@ export const CABLE_COMPATIBILITY: Record<string, CableType[]> = {
   'firewall-pc': ['straight', 'crossover'],
   'pc-firewall': ['straight', 'crossover'],
   'firewall-firewall': ['crossover'],
+  'router-serial': ['serial'],
+  'serial-router': ['serial'],
+  'wlc-switch': ['straight', 'crossover'],
+  'switch-wlc': ['straight', 'crossover'],
+  'wlc-router': ['straight', 'crossover'],
+  'router-wlc': ['straight', 'crossover'],
+  'wlc-pc': ['straight', 'crossover'],
+  'pc-wlc': ['straight', 'crossover'],
 };
 
 // Console portu olup olmadığını kontrol et
@@ -644,7 +684,7 @@ export function isCableCompatible(cable: CableInfo): boolean {
   }
 
   // Normal Ethernet bağlantıları için standart kurallar
-  const normalize = (t: CableInfo['sourceDevice']): 'pc' | 'switch' | 'router' | 'firewall' =>
+  const normalize = (t: CableInfo['sourceDevice']): 'pc' | 'switch' | 'router' | 'firewall' | 'wlc' =>
     t === 'switchL2' || t === 'switchL3'
       ? 'switch'
       : t === 'iot'
@@ -661,6 +701,7 @@ export function getCableTypeName(type: CableType, lang: 'tr' | 'en'): string {
     crossover: { tr: 'Çapraz Kablo', en: 'Crossover' },
     console: { tr: 'Konsol Kablosu', en: 'Console Cable' },
     wireless: { tr: 'Kablosuz Bağlantı', en: 'Wireless Connection' },
+    serial: { tr: 'Seri Kablo', en: 'Serial Cable' },
   };
   return names[type][lang];
 }

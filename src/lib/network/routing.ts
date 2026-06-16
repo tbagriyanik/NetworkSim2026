@@ -232,7 +232,114 @@ function buildRoutingTable(
     });
   }
 
+  // 5. EIGRP simplified metric-based learning logic
+  if (state.routingProtocol === 'eigrp' && state.eigrpAs) {
+    deviceStates.forEach((otherState, otherId) => {
+      if (otherId === deviceId) return;
+      if (otherState.routingProtocol !== 'eigrp' || otherState.eigrpAs !== state.eigrpAs) return;
+
+      const otherNetworks = getEigrpNetworkStatements(otherState);
+      const linkPorts = findLinkPorts(deviceId, otherId, _connections);
+
+      for (const [_, otherPort] of Object.entries(otherState.ports)) {
+        if (!otherPort.ipAddress || !otherPort.subnetMask || otherPort.shutdown) continue;
+
+        const destination = getNetworkAddress(otherPort.ipAddress, otherPort.subnetMask);
+        if (!matchesEigrpNetwork(destination, otherNetworks)) continue;
+        if (routes.some(r => r.destination === destination && (r.type === 'connected' || r.type === 'static'))) continue;
+
+        const nextHop = linkPorts ? otherState.ports[linkPorts.targetPortId]?.ipAddress : otherPort.ipAddress;
+        const metric = calculateEigrpRouteMetric(state.ports[linkPorts?.sourcePortId || ''], otherPort, otherState.ports[linkPorts?.targetPortId || '']);
+
+        routes.push({
+          destination,
+          subnetMask: otherPort.subnetMask,
+          nextHop: nextHop || otherPort.ipAddress,
+          type: 'dynamic',
+          metric
+        });
+      }
+    });
+  }
+
   return routes;
+}
+
+function getEigrpNetworkStatements(state: SwitchState): EigrpNetworkStatement[] {
+  return (state.dynamicRoutes || [])
+    .filter((route): route is Route & { subnetMask: string } => !!route.destination && !!route.subnetMask)
+    .map(route => ({
+      destination: route.destination,
+      wildcardMask: route.subnetMask
+    }));
+}
+
+function matchesEigrpNetwork(ip: string, networks: EigrpNetworkStatement[]): boolean {
+  if (networks.length === 0) return true;
+  return networks.some(network => isIpInWildcard(ip, network.destination, network.wildcardMask));
+}
+
+function isIpInWildcard(ip: string, network: string, wildcardMask: string): boolean {
+  try {
+    const ipNum = ipToNumber(ip);
+    const networkNum = ipToNumber(network);
+    const wildcardNum = ipToNumber(wildcardMask);
+    const subnetNum = (~wildcardNum) >>> 0;
+
+    return (ipNum & subnetNum) === (networkNum & subnetNum);
+  } catch {
+    return false;
+  }
+}
+
+function findLinkPorts(sourceId: string, targetId: string, connections: CanvasConnection[]): LinkPorts | null {
+  const connection = connections.find(conn =>
+    conn.active !== false &&
+    ((conn.sourceDeviceId === sourceId && conn.targetDeviceId === targetId) ||
+      (conn.sourceDeviceId === targetId && conn.targetDeviceId === sourceId))
+  );
+
+  if (!connection) return null;
+
+  return {
+    sourcePortId: connection.sourceDeviceId === sourceId ? connection.sourcePort : connection.targetPort,
+    targetPortId: connection.sourceDeviceId === sourceId ? connection.targetPort : connection.sourcePort
+  };
+}
+
+function calculateEigrpRouteMetric(
+  sourcePort: Port | undefined,
+  destinationPort: Port | undefined,
+  neighborPort: Port | undefined
+): number {
+  const bandwidth = Math.min(
+    getPortBandwidthKbps(sourcePort),
+    getPortBandwidthKbps(destinationPort),
+    getPortBandwidthKbps(neighborPort)
+  );
+  const delay = getPortDelayMicroseconds(sourcePort) + getPortDelayMicroseconds(destinationPort) + getPortDelayMicroseconds(neighborPort);
+
+  return calculateEigrpMetric(bandwidth, delay);
+}
+
+function calculateEigrpMetric(bandwidthKbps: number, delayMicroseconds: number): number {
+  const safeBandwidth = Math.max(1, bandwidthKbps);
+  const bandwidthComponent = Math.floor(EIGRP_BANDWIDTH_REFERENCE / safeBandwidth);
+  const delayComponent = Math.floor(delayMicroseconds / 10);
+
+  return EIGRP_METRIC_SCALE * (bandwidthComponent + delayComponent);
+}
+
+function getPortBandwidthKbps(port: Port | undefined): number {
+  if (port?.bandwidth) return port.bandwidth;
+  if (port?.type === 'gigabitethernet') return 1_000_000;
+  return 100_000;
+}
+
+function getPortDelayMicroseconds(port: Port | undefined): number {
+  if (port?.delay !== undefined) return port.delay;
+  if (port?.type === 'gigabitethernet') return 10;
+  return 100;
 }
 
 /**
@@ -415,7 +522,7 @@ function findPathToNextHop(
   nextHop: string,
   devices: CanvasDevice[],
   connections: CanvasConnection[],
-  _deviceStates: Map<string, SwitchState>
+  deviceStates: Map<string, SwitchState>
 ): { success: boolean; hops: string[] } {
   // Simplified path finding - in reality, this would be more complex
   // For now, assume we can reach the next hop if it's directly connected
@@ -428,12 +535,19 @@ function findPathToNextHop(
     const neighborId = conn.sourceDeviceId === sourceId ? conn.targetDeviceId : conn.sourceDeviceId;
     const neighborDevice = devices.find(d => d.id === neighborId);
 
-    if (neighborDevice && (neighborDevice.ip === nextHop || neighborDevice.ipv6 === nextHop || neighborDevice.name === nextHop)) {
+    if (neighborDevice && (neighborDevice.ip === nextHop || neighborDevice.ipv6 === nextHop || neighborDevice.name === nextHop || deviceHasIp(neighborId, nextHop, deviceStates))) {
       return { success: true, hops: [neighborDevice.name] };
     }
   }
 
   return { success: false, hops: [] };
+}
+
+function deviceHasIp(deviceId: string, ip: string, deviceStates: Map<string, SwitchState>): boolean {
+  const state = deviceStates.get(deviceId);
+  if (!state) return false;
+
+  return Object.values(state.ports).some(port => port.ipAddress === ip || port.ipv6Address === ip);
 }
 
 /**
