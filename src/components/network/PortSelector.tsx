@@ -105,7 +105,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
               {language === 'tr' ? 'Kablo Tipi' : 'Cable Type'}
             </div>
             <div className="flex gap-1 p-1 rounded-md bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 w-fit">
-              {(['straight', 'crossover', 'console', 'wireless'] as CableType[]).map((type, index) => {
+              {(['straight', 'crossover', 'console', 'serial'] as CableType[]).map((type, index, arr) => {
                 const typeLabel = getCableTypeLabel(type, language);
                 return (
                   <button
@@ -116,7 +116,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
                       : isDark
                         ? 'text-slate-400 hover:text-white hover:bg-slate-700 rounded-sm'
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-sm'
-                      } ${index === 0 ? 'rounded-l-sm' : index === 3 ? 'rounded-r-sm' : 'rounded-none'}`}
+                      } ${index === 0 ? 'rounded-l-sm' : index === arr.length - 1 ? 'rounded-r-sm' : 'rounded-none'}`}
                   >
                     {type === 'straight' ? (
                       <Cable className="w-3 h-3" />
@@ -124,6 +124,12 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
                       <Strikethrough className="w-3 h-3" />
                     ) : type === 'console' ? (
                       <Usb className="w-3 h-3" />
+                    ) : type === 'serial' ? (
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" />
+                        <circle cx="9" cy="12" r="1" fill="currentColor" />
+                        <circle cx="15" cy="12" r="1" fill="currentColor" />
+                      </svg>
                     ) : (
                       <Usb className="w-3 h-3" />
                     )}

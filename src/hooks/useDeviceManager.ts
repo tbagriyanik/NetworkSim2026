@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { SwitchState, SwitchModel, Port, CommandResult } from '@/lib/network/types';
-import { createInitialState, createInitialRouterState, createInitialFirewallState, applyStartupConfig, buildStartupConfig } from '@/lib/network/initialState';
+import { createInitialState, createInitialRouterState, createInitialFirewallState, createInitialWLCState, applyStartupConfig, buildStartupConfig } from '@/lib/network/initialState';
 import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import { executeCommand, getPrompt } from '@/lib/network/executor';
 import type { TerminalOutput } from '@/components/network/Terminal';
@@ -298,16 +298,18 @@ export function useDeviceManager() {
     }
 
     let deviceState = deviceStates.get(deviceId);
-    const defaultName = deviceType === 'router' ? 'Router' : (deviceType === 'firewall' ? 'asa' : (deviceType === 'iot' ? 'IoT' : 'Switch'));
+    const defaultName = deviceType === 'router' ? 'Router' : deviceType === 'firewall' ? 'asa' : deviceType === 'iot' ? 'IoT' : deviceType === 'wlc' ? 'WLC' : 'Switch';
 
     if (!deviceState) {
-      // Use the provided switchModel, default to L2 for switches, L3 for routers, or ASA for firewall
-      const model = switchModel || (deviceType === 'router' ? 'WS-C3650-24PS' : deviceType === 'switchL3' ? 'WS-C3650-24PS' : (deviceType === 'firewall' ? 'ASA-5506-X' : 'WS-C2960-24TT-L'));
+      // Use the provided switchModel, default to L2 for switches, L3 for routers, ASA for firewall, or AIR-CT2504-K9 for WLC
+      const model = switchModel || (deviceType === 'router' ? 'WS-C3650-24PS' : deviceType === 'switchL3' ? 'WS-C3650-24PS' : deviceType === 'firewall' ? 'ASA-5506-X' : deviceType === 'wlc' ? 'AIR-CT2504-K9' : 'WS-C2960-24TT-L');
 
       if (deviceType === 'firewall') {
         deviceState = createInitialFirewallState(initialMac);
       } else if (deviceType === 'router') {
         deviceState = createInitialRouterState(initialMac);
+      } else if (deviceType === 'wlc') {
+        deviceState = createInitialWLCState(initialMac);
       } else {
         deviceState = createInitialState(initialMac, model as 'WS-C2960-24TT-L' | 'WS-C3650-24PS');
       }
@@ -349,7 +351,7 @@ export function useDeviceManager() {
     } else {
       // Update existing device state if switchModel is provided and differs
       if (switchModel && deviceState.switchModel !== switchModel) {
-        const updatedState = ensureSwitchModelConsistency(deviceState, switchModel, initialMac, deviceType === 'router');
+        const updatedState = ensureSwitchModelConsistency(deviceState, switchModel, initialMac, deviceType === 'router' || deviceType === 'wlc');
         setTimeout(() => {
           if (isMounted.current) {
             setDeviceStates(prev => new Map(prev).set(deviceId, updatedState));
@@ -359,7 +361,7 @@ export function useDeviceManager() {
       }
 
       if (!deviceState.switchModel) {
-        const fallbackModel = switchModel || (deviceType === 'router' ? 'WS-C3650-24PS' : deviceType === 'switchL3' ? 'WS-C3650-24PS' : 'WS-C2960-24TT-L');
+        const fallbackModel = switchModel || (deviceType === 'router' ? 'WS-C3650-24PS' : deviceType === 'switchL3' ? 'WS-C3650-24PS' : deviceType === 'wlc' ? 'AIR-CT2504-K9' : 'WS-C2960-24TT-L');
         const updatedState = ensureSwitchModelConsistency(deviceState, fallbackModel, initialMac, deviceType === 'router');
         setTimeout(() => {
           if (isMounted.current) {

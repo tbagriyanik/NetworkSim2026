@@ -157,6 +157,12 @@ export const PORT_COLORS = {
     shutdown: '#ef4444',
     blocked: '#ec4899',  // Pink for STP blocked
   },
+  serial: {
+    connected: '#84cc16',
+    disconnected: '#65a30d',
+    shutdown: '#ef4444',
+    blocked: '#ec4899',
+  },
 } as const;
 
 // Device status colors

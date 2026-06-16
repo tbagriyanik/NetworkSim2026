@@ -32,12 +32,13 @@ export const isSwitchDevice = (type: string): boolean =>
 export const isRouterDevice = (type: string): boolean => type === 'router';
 
 // Port type detection
-export type PortType = 'ethernet' | 'console' | 'gigabit' | 'unknown';
+export type PortType = 'ethernet' | 'console' | 'gigabit' | 'serial' | 'unknown';
 
 export const getPortType = (portId: string): PortType => {
   const lower = portId.toLowerCase();
   if (lower === 'console') return 'console';
   if (lower.startsWith('gi')) return 'gigabit';
   if (lower.startsWith('fa') || lower.startsWith('eth')) return 'ethernet';
+  if (lower.startsWith('s') && !lower.startsWith('service')) return 'serial';
   return 'unknown';
 };

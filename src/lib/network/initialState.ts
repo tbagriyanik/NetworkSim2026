@@ -644,10 +644,10 @@ export function createInitialWLCState(
     ],
     commandHistory: [],
     historyIndex: -1,
-    bannerMOTD: 'Cisco Wireless LAN Controller\n',
+    bannerMOTD: 'Wireless LAN Controller\n',
     version: {
       nosVersion: '8.5.105.0',
-      modelName: 'Cisco 2504 WLC',
+      modelName: 'AIR-CT2504 WLC',
       serialNumber: 'WLC2504ABCD',
       uptime: '3 days, 2 hours, 30 minutes'
     },

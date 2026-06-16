@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { TooltipWrapper } from "@/components/ui/TooltipWrapper";
 import { ShortcutBadge } from "@/components/ui/ShortcutBadge";
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, NetworkTopologyProps } from './networkTopology.types';
-import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts } from './networkTopology.portGenerators';
+import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts, generateWLCPorts } from './networkTopology.portGenerators';
 import { useCanvasHistory } from '@/hooks/useCanvasHistory';
 import { ConnectionLine } from './ConnectionLine';
 import { DeviceNode } from './DeviceNode';
@@ -739,10 +739,10 @@ export function NetworkTopology({
   }, []);
 
   // Refs
-  const deviceCounterRef = useRef<{ pc: number; iot: number; switch: number; router: number; firewall: number }>({ pc: 0, iot: 0, switch: 0, router: 0, firewall: 0 });
-  const getCounterKey = useCallback((type: DeviceType | string): 'pc' | 'iot' | 'switch' | 'router' | 'firewall' => {
+  const deviceCounterRef = useRef<{ pc: number; iot: number; switch: number; router: number; firewall: number; wlc: number }>({ pc: 0, iot: 0, switch: 0, router: 0, firewall: 0, wlc: 0 });
+  const getCounterKey = useCallback((type: DeviceType | string): 'pc' | 'iot' | 'switch' | 'router' | 'firewall' | 'wlc' => {
     if (type === 'switchL2' || type === 'switchL3' || type === 'switch') return 'switch';
-    if (type === 'pc' || type === 'router' || type === 'firewall') return type as 'pc' | 'router' | 'firewall';
+    if (type === 'pc' || type === 'router' || type === 'firewall' || type === 'wlc') return type as 'pc' | 'router' | 'firewall' | 'wlc';
     if (type === 'iot') return 'iot';
     return 'pc';
   }, []);
@@ -2380,7 +2380,7 @@ export function NetworkTopology({
   }, [devices, deviceStates]);
 
   // Add device from palette button
-  const addDevice = useCallback((type: 'pc' | 'iot' | 'switch' | 'router' | 'firewall', layer?: 'L2' | 'L3') => {
+  const addDevice = useCallback((type: 'pc' | 'iot' | 'switch' | 'router' | 'firewall' | 'wlc', layer?: 'L2' | 'L3') => {
     if (isExamActive && !isExamEditorOpen) return;
     saveToHistory();
     deviceCounterRef.current[type]++;
@@ -2427,7 +2427,7 @@ export function NetworkTopology({
       x: spawnX,
       y: spawnY,
       status: 'online',
-      switchModel: type === 'switch' ? switchModel : undefined,
+      switchModel: type === 'switch' ? switchModel : type === 'wlc' ? 'AIR-CT2504-K9' as const : undefined,
       ports:
         type === 'pc' || type === 'iot'
           ? [
@@ -2441,13 +2441,15 @@ export function NetworkTopology({
                 { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const },
                 { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
               ]
-              : generateRouterPorts(),
+              : type === 'wlc'
+                ? generateWLCPorts()
+                : generateRouterPorts(),
       iot: type === 'iot'
         ? { sensorType: 'temperature', collaborationEnabled: false, dataStore: '' }
         : undefined,
       wifi: type === 'iot'
         ? { enabled: true, ssid: '', security: 'open', password: '', channel: '2.4GHz', mode: 'client' }
-        : (type === 'router' || (type === 'switch' && switchLayer === 'L3'))
+        : (type === 'router' || type === 'wlc' || (type === 'switch' && switchLayer === 'L3'))
           ? { enabled: false, ssid: 'Network-AP', security: 'open', password: '', channel: '2.4GHz', mode: 'ap' }
           : undefined,
     };
@@ -3212,7 +3214,7 @@ export function NetworkTopology({
   // Sync device counters with current devices to prevent ID collisions
   useEffect(() => {
     if (devices.length > 0) {
-      const counters = { pc: 0, iot: 0, switch: 0, router: 0, firewall: 0 };
+      const counters = { pc: 0, iot: 0, switch: 0, router: 0, firewall: 0, wlc: 0 };
       devices.forEach(d => {
         const match = d.id.match(/^(\w+)-(\d+)$/);
         if (match) {
@@ -4593,14 +4595,35 @@ export function NetworkTopology({
       };
     }
 
+    // Router/WLC: Gi ports row 0, Console+Serial ports row 1
+    let actualCol: number;
+    let actualRow: number;
+    if (device.type === 'router' || device.type === 'wlc') {
+      const filteredPorts = device.ports.filter(p => p.id !== 'wlan0' && !p.id.startsWith('service'));
+      const portIdLower = portId.toLowerCase();
+      const giPorts = filteredPorts.filter(p => p.id.toLowerCase().startsWith('gi'));
+      const otherPorts = filteredPorts.filter(p => !p.id.toLowerCase().startsWith('gi'));
+      const isGi = portIdLower.startsWith('gi');
+      if (isGi) {
+        actualCol = giPorts.findIndex(p => p.id === portId);
+        actualRow = 0;
+      } else {
+        actualCol = otherPorts.findIndex(p => p.id === portId);
+        actualRow = 1;
+      }
+    } else {
+      actualCol = col;
+      actualRow = row;
+    }
+
     const portSpacing = PORT_SPACING;
     const rowSpacing = PORT_SPACING;
     const startX = PORT_START_X;
     const startY = PORT_START_Y;
 
     return {
-      x: device.x + startX + col * portSpacing,
-      y: device.y + startY + row * rowSpacing
+      x: device.x + startX + actualCol * portSpacing,
+      y: device.y + startY + actualRow * rowSpacing
     };
   }, [getDeviceCenter]);
 
@@ -5682,126 +5705,94 @@ export function NetworkTopology({
             );
           })
         ) : (
-          // Switch/Router - wrap 8 ports per row for wider device
-          device.type === 'router' ? (
-            // Router: wrap 8 ports per row
-            device.ports.filter(p => p.id !== 'wlan0').map((port, idx) => {
-              const portsPerRow = 8;
-              const col = idx % portsPerRow;
-              const row = Math.floor(idx / portsPerRow);
-              // Adjust port spacing for wider device (130px)
+          // Switch/Router/WLC - wrap 8 ports per row for wider device
+          device.type === 'router' || device.type === 'wlc' ? (
+            // Router/WLC: Gi ports row 0, Console+Serial ports row 1
+            (() => {
+              const filteredPorts = device.ports.filter(p => p.id !== 'wlan0' && !p.id.startsWith('service'));
+              const giPorts = filteredPorts.filter(p => p.id.toLowerCase().startsWith('gi'));
+              const otherPorts = filteredPorts.filter(p => !p.id.toLowerCase().startsWith('gi'));
               const portSpacing = 14;
               const rowSpacing = 14;
               const startX = 14;
               const startY = 80;
-              const portX = startX + col * portSpacing;
-              const portY = startY + row * rowSpacing;
-              const isConnected = port.status === 'connected';
-              const isShutdown = port.shutdown;
-              const isDeviceOffline = device.status === 'offline';
 
-              // Determine port type
-              const portId = port.id.toLowerCase();
-              const isConsole = portId === 'console';
-              const isGigabit = portId.startsWith('gi'); // GigabitEthernet
-              const isFastEthernet = portId.startsWith('fa'); // FastEthernet
+              const renderPort = (port: typeof filteredPorts[0], col: number, row: number) => {
+                const portX = startX + col * portSpacing;
+                const portY = startY + row * rowSpacing;
+                const isConnected = port.status === 'connected';
+                const isShutdown = port.shutdown;
+                const isDeviceOffline = device.status === 'offline';
 
-              // Extract port number - remove leading zeros
-              const portNum = port.label.replace(/\D/g, '');
-              const displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
+                const portId = port.id.toLowerCase();
+                const isConsole = portId === 'console';
+                const isGigabit = portId.startsWith('gi');
+                const isFastEthernet = portId.startsWith('fa');
+                const isSerial = portId.startsWith('s') && !portId.startsWith('service');
 
-              // Check STP state for router ports from deviceStates
-              const deviceState = deviceStates?.get(device.id);
-              const simulatorPort = deviceState?.ports?.[port.id];
-              const isSTPBlocked = simulatorPort?.spanningTree?.state === 'blocking' || simulatorPort?.spanningTree?.role === 'alternate';
-
-              // Determine device VLAN - only apply STP blocking color for VLAN 1
-              const deviceVlan = device.vlan || simulatorPort?.accessVlan || simulatorPort?.vlan || 1;
-              const isVlan1 = deviceVlan === 1;
-
-              // Port colors:
-              // Console: Turquoise, Fa: Blue, Gi: Orange
-              // STP Blocked (VLAN 1 only): Pink
-              // Shutdown or device offline: Red
-              // Not connected: Gray
-              let portFill: string;
-              let portStroke: string;
-
-              if (isShutdown || isDeviceOffline) {
-                // Güç kapalı - içi kırmızı, çerçeve gri
-                portFill = '#ef4444';
-                portStroke = '#4b5563';
-              } else if (isSTPBlocked && isVlan1) {
-                // STP Bloke - Pembe renk (sadece VLAN 1 için)
-                portFill = '#ec4899';  // Pink-500
-                portStroke = '#f472b6';  // Pink-400
-              } else if (isConnected) {
-                // Güç açık ve bağlı - içi mavi, çerçeve açık mavi
-                if (isConsole) {
-                  portFill = '#06b6d4';
-                  portStroke = '#67e8f9';
-                } else if (isGigabit) {
-                  portFill = '#f97316';
-                  portStroke = '#fdba74';
-                } else if (isFastEthernet) {
-                  portFill = '#3b82f6';
-                  portStroke = '#60a5fa';
-                } else {
-                  portFill = '#3b82f6';
-                  portStroke = '#60a5fa';
+                const portNum = port.label.replace(/\D/g, '');
+                let displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
+                if (isSerial) {
+                  const parts = portId.split('/');
+                  displayNum = parts.length >= 3 ? `${parts[1]}/${parts[2]}` : parseInt(portNum, 10).toString();
                 }
-              } else {
-                // Güç açık ama bağlı değil - içi mavi, çerçeve gri
-                if (isConsole) {
-                  portFill = '#06b6d4';
+
+                const deviceState = deviceStates?.get(device.id);
+                const simulatorPort = deviceState?.ports?.[port.id];
+                const isSTPBlocked = simulatorPort?.spanningTree?.state === 'blocking' || simulatorPort?.spanningTree?.role === 'alternate';
+                const deviceVlan = device.vlan || simulatorPort?.accessVlan || simulatorPort?.vlan || 1;
+                const isVlan1 = deviceVlan === 1;
+
+                let portFill: string;
+                let portStroke: string;
+
+                if (isShutdown || isDeviceOffline) {
+                  portFill = '#ef4444';
                   portStroke = '#4b5563';
-                } else if (isGigabit) {
-                  portFill = '#f97316';
-                  portStroke = '#4b5563';
-                } else if (isFastEthernet) {
-                  portFill = '#3b82f6';
-                  portStroke = '#4b5563';
+                } else if (isSTPBlocked && isVlan1) {
+                  portFill = '#ec4899';
+                  portStroke = '#f472b6';
+                } else if (isConnected) {
+                  if (isConsole) { portFill = '#06b6d4'; portStroke = '#67e8f9'; }
+                  else if (isGigabit) { portFill = '#f97316'; portStroke = '#fdba74'; }
+                  else if (isFastEthernet) { portFill = '#3b82f6'; portStroke = '#60a5fa'; }
+                  else if (isSerial) { portFill = '#84cc16'; portStroke = '#bef264'; }
+                  else { portFill = '#3b82f6'; portStroke = '#60a5fa'; }
                 } else {
-                  portFill = '#3b82f6';
-                  portStroke = '#4b5563';
+                  if (isConsole) { portFill = '#06b6d4'; portStroke = '#4b5563'; }
+                  else if (isGigabit) { portFill = '#f97316'; portStroke = '#4b5563'; }
+                  else if (isFastEthernet) { portFill = '#3b82f6'; portStroke = '#4b5563'; }
+                  else if (isSerial) { portFill = '#84cc16'; portStroke = '#4b5563'; }
+                  else { portFill = '#3b82f6'; portStroke = '#4b5563'; }
                 }
-              }
+
+                return (
+                  <g
+                    key={port.id}
+                    transform={`translate(${portX}, ${portY})`}
+                    style={{ cursor: isDraggingInteractionDisabled ? 'default' : 'pointer', pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all' }}
+                    onMouseEnter={(e) => handlePortHover(e, device.id, port.id)}
+                    onMouseLeave={handlePortMouseLeave}
+                  >
+                    <circle r={10} fill="transparent" style={{ pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all', cursor: isDraggingInteractionDisabled ? 'default' : 'pointer' }}
+                      onMouseDown={(e) => { e.stopPropagation(); }}
+                      onClick={(e) => { e.stopPropagation(); handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id); }}
+                    />
+                    <circle r={6} fill={portFill} stroke={isShutdown || isDeviceOffline || isConnected ? portStroke : '#4b5563'} strokeWidth={isShutdown || isDeviceOffline || isConnected ? 2 : 1} style={{ pointerEvents: 'none' }} />
+                    <text y={1} fill="#fff" fontSize="6" textAnchor="middle" dominantBaseline="middle" style={{ userSelect: 'none', pointerEvents: 'none' }}>
+                      {displayNum}
+                    </text>
+                  </g>
+                );
+              };
 
               return (
-                <g
-                  key={port.id}
-                  transform={`translate(${portX}, ${portY})`}
-                  style={{ cursor: isDraggingInteractionDisabled ? 'default' : 'pointer', pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all' }}
-                  onMouseEnter={(e) => handlePortHover(e, device.id, port.id)}
-                  onMouseLeave={handlePortMouseLeave}
-                >
-                  {/* Larger invisible hitbox for easier clicking */}
-                  <circle
-                    r={10}
-                    fill="transparent"
-                    style={{ pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all', cursor: isDraggingInteractionDisabled ? 'default' : 'pointer' }}
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePortClick(e as unknown as ReactMouseEvent, device.id, port.id);
-                    }}
-                  />
-                  {/* Visible port circle */}
-                  <circle
-                    r={6}
-                    fill={portFill}
-                    stroke={isShutdown || isDeviceOffline || isConnected ? portStroke : '#4b5563'}
-                    strokeWidth={isShutdown || isDeviceOffline || isConnected ? 2 : 1}
-                    style={{ pointerEvents: 'none' }}
-                  />
-                  <text y={1} fill="#fff" fontSize="6" textAnchor="middle" dominantBaseline="middle" style={{ userSelect: 'none', pointerEvents: 'none' }}>
-                    {displayNum}
-                  </text>
-                </g>
+                <>
+                  {giPorts.map((port, idx) => renderPort(port, idx, 0))}
+                  {otherPorts.map((port, idx) => renderPort(port, idx, 1))}
+                </>
               );
-            })
+            })()
           ) : (
             // Switch: wrap 8 ports per row
             device.ports.filter(p => !p.id.startsWith('vlan') && p.id !== 'wlan0').map((port, idx) => {
@@ -6133,14 +6124,34 @@ export function NetworkTopology({
                         {isTR ? 'Firewall' : 'Firewall'}
                       </span>
                     </button>
+                    <button
+                      onClick={() => { addDevice('wlc'); setIsPaletteOpen(false); }}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700 hover:border-amber-500/50' : 'bg-slate-50 border-slate-200 active:bg-slate-100 hover:border-amber-500/50'
+                        }`}
+                    >
+                      <div className='text-amber-500'>
+                        {DEVICE_ICONS['wlc']}
+                      </div>
+                      <span className="text-xs font-bold text-center">
+                        {isTR ? 'WLC' : 'WLC'}
+                      </span>
+                    </button>
                   </div>
                 </div>
 
                 {/* Cables Section - Button Group with Color Coding */}
                 <div className="space-y-3">
                   <p className="text-[10px] font-bold tracking-widest text-slate-500 ml-1 uppercase">{t.cableTypes}</p>
-                  <div className={`flex flex-col gap-2 rounded-xl border p-2 ${isDark ? 'border-slate-700/50 bg-slate-800/30' : 'border-slate-200 bg-slate-50/50'}`}>
-                    {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
+                  <div className={`flex sm:flex-row flex-col gap-2 rounded-xl border p-2 ${isDark ? 'border-slate-700/50 bg-slate-800/30' : 'border-slate-200 bg-slate-50/50'}`}>
+                    {(['straight', 'crossover', 'serial', 'console'] as CableType[]).map((type) => {
+                      const colorMap: Record<string, { active: string; inactive: string; hover: string }> = {
+                        straight: { active: 'text-blue-400', inactive: 'text-blue-500', hover: 'hover:text-blue-400' },
+                        crossover: { active: 'text-orange-400', inactive: 'text-orange-500', hover: 'hover:text-orange-400' },
+                        serial: { active: 'text-lime-400', inactive: 'text-lime-500', hover: 'hover:text-lime-400' },
+                        console: { active: 'text-cyan-400', inactive: 'text-cyan-500', hover: 'hover:text-cyan-400' },
+                      };
+                      const c = colorMap[type] || colorMap.console;
+                      return (
                       <button
                         key={type}
                         onClick={() => { onCableChange({ ...cableInfo, cableType: type }); setIsPaletteOpen(false); }}
@@ -6150,34 +6161,36 @@ export function NetworkTopology({
                             ? isDark ? 'bg-slate-700/80 border border-slate-600' : 'bg-white border border-slate-200 shadow-sm'
                             : 'border border-transparent'
                           }
-                            ${type === 'straight'
-                            ? (cableInfo.cableType === type ? 'text-blue-400' : 'text-blue-500 hover:text-blue-400')
-                            : type === 'crossover'
-                              ? (cableInfo.cableType === type ? 'text-orange-400' : 'text-orange-500 hover:text-orange-400')
-                              : (cableInfo.cableType === type ? 'text-cyan-400' : 'text-cyan-500 hover:text-cyan-400')
-                          }`}
+                            ${cableInfo.cableType === type ? c.active : `${c.inactive} ${c.hover}`}`}
                       >
                         <div className={`p-2 rounded-md ${cableInfo.cableType === type ? (isDark ? 'bg-slate-800' : 'bg-slate-50') : ''}`}>
                           {type === 'straight' ? (
                             <Cable className="w-5 h-5" />
                           ) : type === 'crossover' ? (
                             <Strikethrough className="w-5 h-5" />
+                          ) : type === 'serial' ? (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" />
+                              <circle cx="9" cy="12" r="1" fill="currentColor" />
+                              <circle cx="15" cy="12" r="1" fill="currentColor" />
+                            </svg>
                           ) : (
                             <Usb className="w-5 h-5" />
                           )}
                         </div>
                         <div className="flex flex-col items-start">
                           <span className="text-xs font-bold capitalize">
-                            {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : t.console}
+                            {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : type === 'serial' ? (isTR ? 'Seri' : 'Serial') : t.console}
                           </span>
                           <span className="text-[9px] opacity-60">
                             {type === 'straight' ? (isTR ? 'Standart ethernet bağlantısı' : 'Standard ethernet connection') :
                               type === 'crossover' ? (isTR ? 'Benzer cihazlar arası' : 'Between similar devices') :
-                                (isTR ? 'Yönetim konsol bağlantısı' : 'Management console connection')}
+                                type === 'serial' ? (isTR ? 'Seri WAN bağlantısı' : 'Serial WAN connection') :
+                                  (isTR ? 'Yönetim konsol bağlantısı' : 'Management console connection')}
                           </span>
                         </div>
                       </button>
-                    ))}
+                    )})}
                   </div>
                 </div>
                 <div className="h-4" />

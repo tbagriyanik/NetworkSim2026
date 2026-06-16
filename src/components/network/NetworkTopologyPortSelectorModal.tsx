@@ -32,6 +32,7 @@ export function NetworkTopologyPortSelectorModal({
   onSelectPort,
 }: NetworkTopologyPortSelectorModalProps) {
   const { t, language } = useLanguage();
+  const isTR = language === 'tr';
 
   if (!isOpen) return null;
 
@@ -72,7 +73,15 @@ export function NetworkTopologyPortSelectorModal({
                 {t.cableType.toUpperCase()}:
               </span>
               <div className={`flex items-center rounded-lg border overflow-hidden ${isDark ? 'bg-slate-800/50 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
-                {(['straight', 'crossover', 'console'] as CableType[]).map((type) => (
+                {(['straight', 'crossover', 'serial', 'console'] as CableType[]).map((type) => {
+                  const colorMap: Record<string, { active: string; inactive: string }> = {
+                    straight: { active: 'text-blue-400', inactive: 'text-blue-500 hover:text-blue-400' },
+                    crossover: { active: 'text-orange-400', inactive: 'text-orange-500 hover:text-orange-400' },
+                    serial: { active: 'text-lime-400', inactive: 'text-lime-500 hover:text-lime-400' },
+                    console: { active: 'text-cyan-400', inactive: 'text-cyan-500 hover:text-cyan-400' },
+                  };
+                  const c = colorMap[type] || colorMap.console;
+                  return (
                   <button
                     key={type}
                     onClick={() => onCableTypeChange(type)}
@@ -82,23 +91,24 @@ export function NetworkTopologyPortSelectorModal({
                         ? isDark ? 'bg-slate-700/80' : 'bg-slate-200/80'
                         : ''
                       }
-                      ${type === 'straight'
-                        ? (cableType === type ? 'text-blue-400' : 'text-blue-500 hover:text-blue-400')
-                        : type === 'crossover'
-                          ? (cableType === type ? 'text-orange-400' : 'text-orange-500 hover:text-orange-400')
-                          : (cableType === type ? 'text-cyan-400' : 'text-cyan-500 hover:text-cyan-400')
-                      }`}
+                      ${cableType === type ? c.active : c.inactive}`}
                   >
                     {type === 'straight' ? (
                       <Cable className="w-4 h-4" />
                     ) : type === 'crossover' ? (
                       <Strikethrough className="w-4 h-4" />
+                    ) : type === 'serial' ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" />
+                        <circle cx="9" cy="12" r="1" fill="currentColor" />
+                        <circle cx="15" cy="12" r="1" fill="currentColor" />
+                      </svg>
                     ) : (
                       <Usb className="w-4 h-4" />
                     )}
-                    {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : t.console}
+                    {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : type === 'serial' ? (isTR ? 'Seri' : 'Serial') : t.console}
                   </button>
-                ))}
+                )})}
               </div>
             </div>
 

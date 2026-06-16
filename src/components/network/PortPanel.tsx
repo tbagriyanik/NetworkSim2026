@@ -107,6 +107,10 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
     .filter(p => p.type === 'gigabitethernet' && p.id !== 'vlan1' && !p.id.startsWith('wlan'))
     .sort(sortPorts);
 
+  const serialPorts = Object.values(ports)
+    .filter(p => p.type === 'serial')
+    .sort(sortPorts);
+
   const consolePort = Object.values(ports).find(p => p.id.toLowerCase() === 'console');
 
   const systemLedColor: PortLEDColor = isDevicePoweredOff
@@ -394,6 +398,15 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
                       {renderPort(consolePort)}
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {serialPorts.length > 0 && (
+              <div className={`pt-2 border-t ${isDark ? 'border-slate-700' : 'border-slate-300'}`}>
+                <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'} mb-2`}>{t.language === 'tr' ? 'Seri Portlar' : 'Serial Ports'}</div>
+                <div className="flex gap-2 justify-center items-start flex-wrap">
+                  {serialPorts.map(renderPort)}
                 </div>
               </div>
             )}

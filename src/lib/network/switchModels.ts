@@ -60,7 +60,7 @@ export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
     },
     'AIR-CT2504-K9': {
         model: 'AIR-CT2504-K9',
-        name: 'Cisco 2504 Wireless LAN Controller',
+        name: 'AIR-CT2504 Wireless LAN Controller',
         layer: 'WLC',
         ports: 5, // 4 GE + 1 Console + 1 Service
         description: 'Wireless LAN Controller - 4 GigabitEthernet ports, supports up to 75 APs',

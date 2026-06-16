@@ -27,6 +27,18 @@ export function generateL3SwitchPorts(): CanvasPort[] {
     return ports;
 }
 
+/** Generates WLC ports: 4x GigabitEthernet + Service + Console */
+export function generateWLCPorts(): CanvasPort[] {
+    return [
+        { id: 'console', label: 'Console', status: 'disconnected' as const },
+        { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const },
+        { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
+        { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const },
+        { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const },
+        { id: 'service', label: 'Service', status: 'disconnected' as const },
+    ];
+}
+
 /** Generates router ports: 4x GigabitEthernet + WLAN0 with per-port MAC addresses */
 export function generateRouterPorts(): CanvasPort[] {
     // Generate base MAC for router ports
@@ -42,6 +54,9 @@ export function generateRouterPorts(): CanvasPort[] {
         { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const, macAddress: formatMacFromNumber(baseMacNumber + 1) },
         { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const, macAddress: formatMacFromNumber(baseMacNumber + 2) },
         { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const, macAddress: formatMacFromNumber(baseMacNumber + 3) },
+        { id: 's0/0/0', label: 'S0/0/0', status: 'disconnected' as const, macAddress: formatMacFromNumber(baseMacNumber + 5) },
+        { id: 's0/1/0', label: 'S0/1/0', status: 'disconnected' as const, macAddress: formatMacFromNumber(baseMacNumber + 6) },
+        { id: 's0/2/0', label: 'S0/2/0', status: 'disconnected' as const, macAddress: formatMacFromNumber(baseMacNumber + 7) },
         { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, shutdown: true },
     ];
 }
