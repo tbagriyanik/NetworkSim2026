@@ -66,7 +66,7 @@ export function DraggableDialogManager() {
             if ('setPointerCapture' in dialog && e instanceof PointerEvent) {
                 try {
                     dialog.setPointerCapture((e as PointerEvent).pointerId);
-                } catch (err) {
+                } catch (_err) {
                     // Ignore if not a PointerEvent
                 }
             }
@@ -127,7 +127,7 @@ export function DraggableDialogManager() {
                         `${STORAGE_PREFIX}${dragState.dialogId}`,
                         JSON.stringify({ x: finalLeft, y: finalTop })
                     );
-                } catch (e) {
+                } catch (_e) {
                     // Ignore storage errors
                 }
             }

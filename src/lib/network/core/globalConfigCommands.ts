@@ -7,7 +7,7 @@ import type { CanvasDevice } from '@/components/network/networkTopology.types';
 import { buildRunningConfig } from './configBuilder';
 import { canAssignIPToPhysicalPort, isLayer3Switch } from '../switchModels';
 import { encryptMd5Password, encryptType7Password } from '../crypto';
-import { calculatePVST } from './showCommands';
+import { getPvstUpdate } from './commandHelpers';
 import { getDeviceCapabilities } from '../capabilities';
 import { validateIpRoutingSupport } from './L3Validation';
 
@@ -540,8 +540,9 @@ function cmdVlan(state: SwitchState, input: string, ctx: CommandContext): Comman
     currentVlan: parseInt(vlanId, 10)
   };
 
-  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId!);
-  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId!);
+  const pvst = getPvstUpdate(updatedCurrentState, ctx);
+  if ('error' in pvst) return pvst.error;
+  const { allUpdatedStates, myUpdatedState } = pvst;
 
   return {
     success: true,
@@ -586,8 +587,9 @@ function cmdNoVlan(state: SwitchState, input: string, ctx: CommandContext): Comm
     vtpRevision: nextVtpRevision,
   };
 
-  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId!);
-  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId!);
+  const pvst = getPvstUpdate(updatedCurrentState, ctx);
+  if ('error' in pvst) return pvst.error;
+  const { allUpdatedStates, myUpdatedState } = pvst;
 
   return {
     success: true,
@@ -1270,8 +1272,9 @@ function cmdNoSpanningTree(state: SwitchState, input: string, ctx: CommandContex
       spanningTreeVlans: updatedVlans
     };
 
-    const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId!);
-    const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId!);
+    const pvst = getPvstUpdate(updatedCurrentState, ctx);
+    if ('error' in pvst) return pvst.error;
+    const { allUpdatedStates, myUpdatedState } = pvst;
 
     return {
       success: true,
@@ -1501,8 +1504,9 @@ function cmdSpanningTreeVlan(state: SwitchState, input: string, ctx: CommandCont
     spanningTreeVlans: updatedVlans
   };
 
-  const allUpdatedStates = calculatePVST(updatedCurrentState, ctx, ctx.sourceDeviceId!);
-  const myUpdatedState = allUpdatedStates.get(ctx.sourceDeviceId!);
+  const pvst = getPvstUpdate(updatedCurrentState, ctx);
+  if ('error' in pvst) return pvst.error;
+  const { allUpdatedStates, myUpdatedState } = pvst;
 
   return {
     success: true,

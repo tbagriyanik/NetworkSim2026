@@ -439,7 +439,7 @@ export function PCPanel({
               }
               if (sameSubnet) return true;
             }
-          } catch (err) {
+          } catch (_err) {
             // Invalid IP format, skip silently - this is expected for malformed IPs
             if (process.env.NODE_ENV === 'development') {
               errorHandler.logError(new Error('IP validation failed'), { deviceId: device.id, ip: device.ip, pcIP, pcSubnet });
@@ -932,7 +932,6 @@ export function PCPanel({
       setIotDataStore(device.iot?.dataStore || '');
     }, 0);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIotDeviceId]);
 
   // When tablet powers on or opens, navigate to initial or home screen
@@ -4230,8 +4229,9 @@ export function PCPanel({
           ? topologyDevices.find(d => d.id === result.targetId)
           : topologyDevices.find(d => d.ip === targetIp);
         const deviceByIp = topologyDevices.find(d => d.ip === targetIp);
-        const targetState = (targetDevice?.id || deviceByIp?.id)
-          ? deviceStates?.get((targetDevice?.id || deviceByIp?.id)!)
+        const targetDeviceId = targetDevice?.id || deviceByIp?.id;
+        const targetState = targetDeviceId
+          ? deviceStates?.get(targetDeviceId)
           : undefined;
         const ftpService =
           targetDevice?.services?.ftp?.enabled ? targetDevice.services.ftp :
@@ -5374,7 +5374,7 @@ export function PCPanel({
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
                               {renderNetworkInput(language === 'tr' ? 'IP Adresi' : 'IP Address', pcIP, (newIp) => {
                                 setPcIP(newIp);
-                                setErrors(prev => { const { ip, ...rest } = prev; return rest; });
+                                setErrors(prev => { const { ip: _ip, ...rest } = prev; return rest; });
                               }, "192.168.1.100", errors.ip, ipConfigMode === 'dhcp',
                                 (e) => validateIpField(e.currentTarget.value),
                                 (e) => { if (e.key === 'Enter') validateIpField(e.currentTarget.value); }

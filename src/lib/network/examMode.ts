@@ -1419,7 +1419,7 @@ export function generateExamFromProject(projectData: ProjectData, language: 'tr'
 
   // 2. Physical Connection Tasks - skip already-active connections
   if ((projectData.topology?.connections?.length ?? 0) > 0) {
-    projectData.topology!.connections
+    (projectData.topology?.connections ?? [])
       .filter((conn: { sourceDeviceId: string; sourcePort: string; targetDeviceId: string; targetPort: string; cableType: string; active?: boolean; }) => !conn.active)
       .forEach((conn: { sourceDeviceId: string; sourcePort: string; targetDeviceId: string; targetPort: string; cableType: string; active?: boolean; }) => {
         addDeviceTask(conn.sourceDeviceId,
@@ -1572,7 +1572,7 @@ export function generateExamFromProject(projectData: ProjectData, language: 'tr'
           );
 
           if ((s.dns.records?.length ?? 0) > 0) {
-            s.dns.records!.forEach((rec: { domain: string; address: string }) => {
+            (s.dns.records ?? []).forEach((rec: { domain: string; address: string }) => {
               addDeviceTask(d.id,
                 { tr: `DNS Kaydı: ${rec.domain}`, en: `DNS Record: ${rec.domain}` },
                 { tr: `${rec.domain} alan adını ${rec.address} IP adresine yönlendirin.`, en: `Add DNS record for ${rec.domain} pointing to ${rec.address}.` },
@@ -1633,7 +1633,7 @@ export function generateExamFromProject(projectData: ProjectData, language: 'tr'
 
       // Security: local users
       if ((d.state.security?.users?.length ?? 0) > 0) {
-        d.state.security!.users!.forEach((u: { username: string }) => {
+        (d.state.security?.users ?? []).forEach((u: { username: string }) => {
           addDeviceTask(d.id,
             { tr: `Kullanıcı: ${u.username}`, en: `User: ${u.username}` },
             { tr: `${d.id} üzerinde "${u.username}" kullanıcısını oluşturun.`, en: `Create user "${u.username}" on ${d.id}.` },
@@ -1645,7 +1645,7 @@ export function generateExamFromProject(projectData: ProjectData, language: 'tr'
 
       // Static Routes
       if ((d.state.staticRoutes?.length ?? 0) > 0) {
-        d.state.staticRoutes!.forEach((r: { destination: string; prefixLength: number }) => {
+        (d.state.staticRoutes ?? []).forEach((r: { destination: string; prefixLength: number }) => {
           addDeviceTask(d.id,
             { tr: `Statik Rota: ${r.destination}`, en: `Static Route: ${r.destination}` },
             { tr: `${d.id} üzerinde ${r.destination}/${r.prefixLength} ağına statik rota ekleyin.`, en: `Add static route to ${r.destination}/${r.prefixLength} on ${d.id}.` },

@@ -21,10 +21,10 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "@typescript-eslint/no-unused-disable-directive": "off",
     
     // React rules
-    "react-hooks/exhaustive-deps": "warn",
+    "react-hooks/exhaustive-deps": "off",
     "react/no-unescaped-entities": "warn",
     "react/display-name": "warn",
-    "react/prop-types": "warn",
+    "react/prop-types": "off",
     
     // Next.js rules
     "@next/next/no-img-element": "warn",

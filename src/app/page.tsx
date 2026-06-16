@@ -1199,7 +1199,6 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
     const skeletonTimer = setTimeout(() => {
       setShowSkeleton(false);
-      null
     }, skeletonMs);
 
     return () => {
@@ -3083,7 +3082,6 @@ ${state.bannerMOTD}
       return { devices: nextDevices, states: nextStates };
     };
 
-    let refreshCount = 0;
     const disconnectedPCs: string[] = [];
     const disconnectedAPs: string[] = [];
     const connectedWirelessClients: string[] = [];
@@ -3141,7 +3139,6 @@ ${state.bannerMOTD}
           isWirelessMatch(device, ap)
         );
 
-        refreshCount++;
         if (matchedAp) {
           connectedWirelessClients.push(device.name || device.id);
           return {
@@ -3185,7 +3182,6 @@ ${state.bannerMOTD}
         } else {
           disconnectedAPs.push(ap.name || ap.id);
         }
-        refreshCount++;
       });
 
       // 3. VTP propagation (server -> client over trunk)
