@@ -558,7 +558,7 @@ doc/
 ## 📅 Güncelleme Tarihi
 
 **Son Güncelleme**: 2026-06-12
-**Versiyon**: 1.7.0
+**Versiyon**: 1.8.0
 **Durum**: ✅ Güncel
 
 ---

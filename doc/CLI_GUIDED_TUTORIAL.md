@@ -1838,5 +1838,5 @@ ICMP echo reply received from 192.168.1.2
 ---
 
 **Son Güncelleme:** Haziran 2026  
-**Versiyon:** 1.7.0
+**Versiyon:** 1.8.0
 
