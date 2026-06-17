@@ -31,8 +31,7 @@ export function NetworkTopologyPortSelectorModal({
   onCableTypeChange,
   onSelectPort,
 }: NetworkTopologyPortSelectorModalProps) {
-  const { t, language } = useLanguage();
-  const isTR = language === 'tr';
+  const { t } = useLanguage();
 
   if (!isOpen) return null;
 
@@ -82,29 +81,30 @@ export function NetworkTopologyPortSelectorModal({
                   };
                   const c = colorMap[type] || colorMap.console;
                   return (
-                  <button
-                    key={type}
-                    onClick={() => onCableTypeChange(type)}
-                    className={`h-8 px-3 flex items-center gap-1.5 transition-all text-xs font-bold
+                    <button
+                      key={type}
+                      onClick={() => onCableTypeChange(type)}
+                      className={`h-8 px-3 flex items-center gap-1.5 transition-all text-xs font-bold
                       ${isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-200/50'}
                       ${cableType === type
-                        ? isDark ? 'bg-slate-700/80' : 'bg-slate-200/80'
-                        : ''
-                      }
+                          ? isDark ? 'bg-slate-700/80' : 'bg-slate-200/80'
+                          : ''
+                        }
                       ${cableType === type ? c.active : c.inactive}`}
-                  >
-                    {type === 'straight' ? (
-                      <Cable className="w-4 h-4" />
-                    ) : type === 'crossover' ? (
-                      <LineSquiggle className="w-4 h-4" />
-                    ) : type === 'serial' ? (
-                      <Plug className="w-4 h-4" />
-                    ) : (
-                      <TrendingUpDown className="w-4 h-4" />
-                    )}
-                    {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : type === 'serial' ? (isTR ? 'Seri' : 'Serial') : t.console}
-                  </button>
-                )})}
+                    >
+                      {type === 'straight' ? (
+                        <Cable className="w-4 h-4" />
+                      ) : type === 'crossover' ? (
+                        <LineSquiggle className="w-4 h-4" />
+                      ) : type === 'serial' ? (
+                        <Plug className="w-4 h-4" />
+                      ) : (
+                        <TrendingUpDown className="w-4 h-4" />
+                      )}
+                      {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : type === 'serial' ? t.serial : t.console}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
@@ -146,7 +146,7 @@ export function NetworkTopologyPortSelectorModal({
                     </span>
                   </div>
                   <div className={`text-xs font-bold tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                    {device.ports.filter(p => p.status === 'disconnected').length} {language === 'tr' ? t.freePorts : (device.ports.filter(p => p.status === 'disconnected').length <= 1 ? 'free port' : 'free ports')}
+                    {device.ports.filter(p => p.status === 'disconnected').length} {device.ports.filter(p => p.status === 'disconnected').length <= 1 ? t.freePortSingular : t.freePortPlural}
                   </div>
                 </div>
 

@@ -31,7 +31,7 @@ const CABLE_COLORS: Record<string, { primary: string; bg: string; text: string; 
 };
 
 export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSelectorProps) {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -86,8 +86,8 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
               )}
               <h3 className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
                 {step === 'source'
-                  ? (language === 'tr' ? 'Başlangıç Portu Seçin' : 'Select Source Port')
-                  : (language === 'tr' ? 'Hedef Portu Seçin' : 'Select Target Port')
+                  ? t.selectSourcePort
+                  : t.selectTargetPort
                 }
               </h3>
             </div>
@@ -102,7 +102,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
           {/* Cable Type Selector - Toolbar Button Group */}
           <div className="mt-2">
             <div className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'} mb-1.5`}>
-              {language === 'tr' ? 'Kablo Tipi' : 'Cable Type'}
+              {t.cableType}
             </div>
             <div className="flex gap-1 p-1 rounded-md bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 w-fit">
               {(['straight', 'crossover', 'console', 'serial'] as CableType[]).map((type, index, arr) => {
@@ -161,7 +161,7 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
                     {device.name}
                   </span>
                   <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    ({availablePorts.length} {language === 'tr' ? 'boşta' : 'avail'})
+                    ({availablePorts.length} {t.portsAvailable})
                   </span>
                 </div>
 
@@ -195,8 +195,8 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
         <div className={`relative px-3 py-2 border-t ${isDark ? 'border-slate-700/70' : 'border-slate-200/80'} text-center`}>
           <p className={`text-[9px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             {step === 'source'
-              ? (language === 'tr' ? 'Bağlantıyı başlatacak portu seçin' : 'Select the port to start connection from')
-              : (language === 'tr' ? 'Bağlantıyı tamamlayacak portu seçin' : 'Select the port to complete connection')
+              ? t.selectStartConnectionPort
+              : t.selectCompleteConnectionPort
             }
           </p>
         </div>

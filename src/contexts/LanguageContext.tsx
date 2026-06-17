@@ -658,6 +658,26 @@ export interface Translations {
   basarilarimEmpty: string;
   sessionDuration: string;
   guidedLesson: string;
+  sensorSound: string;
+  sensorMotion: string;
+  zoomLevel: string;
+  toggleGridSnapping: string;
+  selectStartConnectionPort: string;
+  selectCompleteConnectionPort: string;
+  portsAvailable: string;
+  freePortSingular: string;
+  freePortPlural: string;
+  securityKey: string;
+  helloWorld: string;
+  invalidIpAddress: string;
+  invalidSubnetMaskMsg: string;
+  ipAlreadyInUse: string;
+  iotSaved: string;
+  iotSavedDescription: string;
+  httpManagementPage: string;
+  iotWebPanel: string;
+  deviceManagement: string;
+  httpPageOpened: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -665,7 +685,7 @@ const translations: Record<Language, Translations> = {
     about: 'Yardım',
     aboutIntro: 'Bu uygulama, ağ teknolojilerini ve terminal komutlarını öğrenmek isteyenler için tasarlanmış interaktif bir simülasyon aracıdır.',
     aboutTitle: 'Hakkında',
-    accessDenied: '% Erişim reddedildi',
+    accessDenied: 'Erişim reddedildi',
     accessibility: 'Erişilebilirlik',
     active: 'Aktif',
     activePorts: 'Aktif Portlar',
@@ -717,9 +737,9 @@ const translations: Record<Language, Translations> = {
     basicCommands: 'Temel komutlar',
     basicHint: 'Temel komutlar ve ilk topoloji adımları',
     bathroom: 'Banyo',
-    bedroom: 'Yatak',
+    bedroom: 'Yatak Odası',
     beginner: 'Başlangıç',
-    blocked: 'Engelli',
+    blocked: 'Engellenen',
     bootInitializing: 'Donanım başlatılıyor...',
     bootLoading: 'Sistem yükleniyor...',
     bootReady: 'Hazır!',
@@ -740,7 +760,7 @@ const translations: Record<Language, Translations> = {
     clearTerminalBtn: 'Temizle',
     clearTerminalConfirm: 'Terminal çıktısı temizlenecek. Devam etmek istiyor musunuz?',
     cli: 'CLI',
-    cliInterface: 'Command Line Interface',
+    cliInterface: 'Komut Satırı Arayüzü',
     cliTerminal: 'CLI Terminal',
     clickIconsToRun: 'Program çalıştırmak için simgeleri tıklayınız',
     clientsLeased: 'X istemci kiraladı',
@@ -840,7 +860,7 @@ const translations: Record<Language, Translations> = {
     dhcpEnabled: 'DHCP Etkin',
     dhcpFailureDescription: 'DHCP sunucusu bulunamadı.',
     dhcpFailureTitle: 'DHCP ataması başarısız',
-    dhcpNoLease: 'istemci kiralama alamadı',
+    dhcpNoLease: 'İstemci kiralama alamadı',
     dhcpNoPool: 'sunucuda havuz yok',
     dhcpNotFound: 'DHCP bulunamadı',
     dhcpPoolConfig: 'DHCP havuzu yapılandırması bulunmuyor.',
@@ -849,7 +869,7 @@ const translations: Record<Language, Translations> = {
     dhcpPoolLabel: 'DHCP Havuzu',
     dhcpPoolMaxUsersPlaceholder: 'Maksimum Kullanıcı',
     dhcpPoolNamePlaceholder: 'Havuz Adı',
-    dhcpPoolStartIpPlaceholder: 'Start IP',
+    dhcpPoolStartIpPlaceholder: 'Başlangıç IP',
     dhcpPoolSubnetPlaceholder: 'Alt Ağ Maskesi',
     dhcpPoolsDescription: 'DHCP havuzlarını ekle, düzenle ve sil.',
     dhcpSuccessDescription: 'DHCP ile {ip} atandı.',
@@ -1046,7 +1066,7 @@ const translations: Record<Language, Translations> = {
     overview: 'Genel Bakış',
     pan: 'Kaydır',
     passive: 'PASİF',
-    passwordEncryption: 'Şifre Şifreleme',
+    passwordEncryption: 'Parola Şifreleme',
     paste: 'Yapıştır',
     pcAccessDenied: 'Adrese doğrudan erişim yok.',
     pcCableError: 'Ağ kablosu bağlı değil.',
@@ -1302,7 +1322,7 @@ const translations: Record<Language, Translations> = {
     wifiSsid: 'SSID',
     wifiStatus: 'WiFi Durumu',
     wirelessClientsConnected: 'X kablosuz istemci bağlandı',
-    wirelessClientsDisconnected: 'X kablosuz istemci bağlantı yok',
+    wirelessClientsDisconnected: 'X kablosuz istemci bağlantısı kesildi',
     wireless: 'Kablosuz',
     serial: 'Seri',
     serialCable: 'Seri Kablo',
@@ -1315,12 +1335,32 @@ const translations: Record<Language, Translations> = {
     basarilarimEmpty: 'Henüz kayıt bulunmuyor. Rehberli dersleri tamamlayarak, sınavlara girerek ve projeler kaydederek başarılarınızı burada görebilirsiniz.',
     sessionDuration: 'Oturum Süresi',
     guidedLesson: 'Rehberli Ders',
+    sensorSound: 'Ses',
+    sensorMotion: 'Hareket',
+    zoomLevel: 'Yakınlaştırma Seviyesi',
+    toggleGridSnapping: 'Izgaraya Yapıştırmayı Aç/Kapat',
+    selectStartConnectionPort: 'Bağlantıyı başlatacak portu seçin',
+    selectCompleteConnectionPort: 'Bağlantıyı tamamlayacak portu seçin',
+    portsAvailable: 'boşta',
+    freePortSingular: 'boş port',
+    freePortPlural: 'boş port',
+    securityKey: 'Güvenlik Anahtarı',
+    helloWorld: 'Merhaba Dünya!',
+    invalidIpAddress: 'Geçersiz IP adresi',
+    invalidSubnetMaskMsg: 'Geçersiz alt ağ maskesi',
+    ipAlreadyInUse: 'Bu IP adresi zaten {names} tarafından kullanılıyor',
+    iotSaved: 'IoT kaydedildi',
+    iotSavedDescription: 'Seçili IoT nesnesi güncellendi.',
+    httpManagementPage: 'HTTP Yönetim Sayfası',
+    iotWebPanel: 'IoT Web Paneli',
+    deviceManagement: 'Yönetimi',
+    httpPageOpened: 'HTTP sayfası yeni pencerede açıldı.',
   },
   en: {
     about: 'Help',
     aboutIntro: 'This application is an interactive simulation tool designed for those who want to learn network technologies and terminal commands.',
     aboutTitle: 'About',
-    accessDenied: '% Access denied',
+    accessDenied: 'Access denied',
     accessibility: 'Accessibility',
     active: 'Active',
     activePorts: 'Active Ports',
@@ -1495,14 +1535,14 @@ const translations: Record<Language, Translations> = {
     dhcpEnabled: 'DHCP Enabled',
     dhcpFailureDescription: 'No DHCP server found.',
     dhcpFailureTitle: 'DHCP assignment failed',
-    dhcpNoLease: 'client could not get lease',
+    dhcpNoLease: 'Client could not get lease',
     dhcpNoPool: 'no pool on server',
     dhcpNotFound: 'No DHCP found',
     dhcpPoolConfig: 'No DHCP pool configuration found.',
     dhcpPoolDnsPlaceholder: 'DNS Server',
     dhcpPoolGatewayPlaceholder: 'Default Gateway',
     dhcpPoolLabel: 'DHCP Pool',
-    dhcpPoolMaxUsersPlaceholder: 'Max User',
+    dhcpPoolMaxUsersPlaceholder: 'Max Users',
     dhcpPoolNamePlaceholder: 'Pool Name',
     dhcpPoolStartIpPlaceholder: 'Start IP',
     dhcpPoolSubnetPlaceholder: 'Subnet Mask',
@@ -1970,6 +2010,26 @@ const translations: Record<Language, Translations> = {
     basarilarimEmpty: 'No records yet. Complete guided lessons, take exams, and save projects to see your achievements here.',
     sessionDuration: 'Session Duration',
     guidedLesson: 'Guided Lesson',
+    sensorSound: 'Sound',
+    sensorMotion: 'Motion',
+    zoomLevel: 'Zoom Level',
+    toggleGridSnapping: 'Toggle Grid Snapping',
+    selectStartConnectionPort: 'Select the port to start connection from',
+    selectCompleteConnectionPort: 'Select the port to complete connection',
+    portsAvailable: 'avail',
+    freePortSingular: 'free port',
+    freePortPlural: 'free ports',
+    securityKey: 'Security Key',
+    helloWorld: 'Hello World!',
+    invalidIpAddress: 'Invalid IP address',
+    invalidSubnetMaskMsg: 'Invalid subnet mask',
+    ipAlreadyInUse: 'This IP address is already used by {names}',
+    iotSaved: 'IoT saved',
+    iotSavedDescription: 'Selected IoT object updated.',
+    httpManagementPage: 'HTTP Management Page',
+    iotWebPanel: 'IoT Web Panel',
+    deviceManagement: 'Management',
+    httpPageOpened: 'HTTP page opened in a new window.',
   }
 };
 

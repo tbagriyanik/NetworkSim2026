@@ -325,7 +325,7 @@ export function PCPanel({
   const [dnsFormDomain, setDnsFormDomain] = useState('');
   const [dnsFormAddress, setDnsFormAddress] = useState('');
   const [serviceHttpEnabled, setServiceHttpEnabled] = useState(deviceFromTopology?.services?.http?.enabled ?? false);
-  const [serviceHttpContent, setServiceHttpContent] = useState(deviceFromTopology?.services?.http?.content || 'Merhaba Dünya!');
+  const [serviceHttpContent, setServiceHttpContent] = useState(deviceFromTopology?.services?.http?.content || t.helloWorld);
   const [serviceFtpEnabled, setServiceFtpEnabled] = useState(deviceFromTopology?.services?.ftp?.enabled ?? false);
 
   const [serviceFtpFiles, setServiceFtpFiles] = useState(deviceFromTopology?.services?.ftp?.files || [
@@ -849,7 +849,7 @@ export function PCPanel({
       setServiceDnsEnabled(deviceFromTopology?.services?.dns?.enabled ?? false);
       setServiceDnsRecords(deviceFromTopology?.services?.dns?.records || []);
       setServiceHttpEnabled(deviceFromTopology?.services?.http?.enabled ?? false);
-      setServiceHttpContent(deviceFromTopology?.services?.http?.content || 'Merhaba Dünya!');
+      setServiceHttpContent(deviceFromTopology?.services?.http?.content || t.helloWorld);
       setServiceFtpEnabled(deviceFromTopology?.services?.ftp?.enabled ?? false);
       setServiceFtpFiles(deviceFromTopology?.services?.ftp?.files || [
         { name: 'readme.txt', size: 1280, modifiedAt: new Date().toISOString() },
@@ -1000,7 +1000,7 @@ export function PCPanel({
               },
               http: {
                 enabled: serviceHttpEnabled,
-                content: serviceHttpContent || 'Merhaba Dünya!'
+                content: serviceHttpContent || t.helloWorld
               },
               ftp: {
                 enabled: serviceFtpEnabled,
@@ -1074,7 +1074,7 @@ export function PCPanel({
       const duplicateDevices = topologyDevices.filter(d => d.id !== deviceId && d.ip === ip);
       if (duplicateDevices.length > 0) {
         const names = duplicateDevices.map(d => d.name || d.id).join(', ');
-        setErrors(prev => ({ ...prev, ip: language === 'tr' ? `Bu IP adresi zaten ${names} tarafından kullanılıyor` : `This IP address is already used by ${names}` }));
+        setErrors(prev => ({ ...prev, ip: t.ipAlreadyInUse.replace('{names}', names) }));
       } else {
         setErrors(prev => { const { ip: _, ...rest } = prev; return rest; });
       }
@@ -1093,13 +1093,13 @@ export function PCPanel({
       }
       dispatchDeviceConfig({ ip, subnet: updatedSubnet, ipConfigMode: 'static' });
     } else {
-      setErrors(prev => ({ ...prev, ip: language === 'tr' ? 'Geçersiz IP adresi' : 'Invalid IP address' }));
+      setErrors(prev => ({ ...prev, ip: t.invalidIpAddress }));
     }
   }, [topologyDevices, deviceId, language, pcSubnet, dispatchDeviceConfig]);
 
   const validateSubnetField = useCallback((subnet: string) => {
     if (subnet && !validateIP(subnet)) {
-      setErrors(prev => ({ ...prev, subnet: language === 'tr' ? 'Geçersiz alt ağ maskesi' : 'Invalid subnet mask' }));
+      setErrors(prev => ({ ...prev, subnet: t.invalidSubnetMaskMsg }));
     } else {
       setErrors(prev => { const { subnet: _, ...rest } = prev; return rest; });
     }
@@ -1129,8 +1129,8 @@ export function PCPanel({
     }));
     if (showToast) {
       toast({
-        title: language === 'tr' ? 'IoT kaydedildi' : 'IoT saved',
-        description: language === 'tr' ? 'Seçili IoT nesnesi güncellendi.' : 'Selected IoT object updated.',
+        title: t.iotSaved,
+        description: t.iotSavedDescription,
       });
     }
   }, [selectedIotDeviceId, selectedIotDevice, iotSensorType, iotKind, iotCollaborationEnabled, iotDataStore, language]);
@@ -1854,15 +1854,13 @@ export function PCPanel({
       const safe = sanitizeHTTPContent(content || '') || ' ';
       const withLineBreaks = safe.replace(/\r?\n/g, '<br />');
       setHttpAppContent(withLineBreaks.trim() ? withLineBreaks : '<em>No HTTP content</em>');
-      setHttpAppTitle(language === 'tr' ? 'HTTP Yönetim Sayfası' : 'HTTP Management Page');
+      setHttpAppTitle(t.httpManagementPage);
 
       // Terminalde bilgilendir
       setPcOutput(prev => [...prev, {
         id: Math.random().toString(36).substr(2, 9),
         type: 'success',
-        content: language === 'tr'
-          ? 'HTTP sayfası yeni pencerede açıldı.'
-          : 'HTTP page opened in a new window.'
+        content: t.httpPageOpened
       }]);
       setTimeout(() => {
         if (outputRef.current) outputRef.current.scrollTop = outputRef.current.scrollHeight;
@@ -2395,7 +2393,7 @@ export function PCPanel({
     if (rawTarget === 'http://iot-panel' || rawTarget === 'iot-panel') {
       setHttpAppUrl(displayUrl);
       setHttpAppContent(generateIotWebPanelContent(iotDevices, language, undefined, undefined, topologyConnections as unknown as { sourceDeviceId: string; targetDeviceId: string }[]));
-      setHttpAppTitle(language === 'tr' ? 'IoT Web Paneli' : 'IoT Web Panel');
+      setHttpAppTitle(t.iotWebPanel);
       setHttpAppDeviceId(null);
       return;
     }
@@ -2414,7 +2412,7 @@ export function PCPanel({
         const iotDevicePage = generateIotDevicePageContent(targetDevice.id, targetDevice.name || targetDevice.id, language, isActive, isPoweredOff, kind, rules, sensorType, iotDevices, dataFlowDirection, topologyDevices);
         setHttpAppUrl(displayUrl);
         setHttpAppContent(iotDevicePage);
-        setHttpAppTitle(`${targetDevice.name || targetDevice.id} ${language === 'tr' ? 'Yönetimi' : 'Management'}`);
+        setHttpAppTitle(`${targetDevice.name || targetDevice.id} ${t.deviceManagement}`);
         setHttpAppDeviceId(targetDevice.id);
       }
       return;
@@ -2508,7 +2506,7 @@ export function PCPanel({
         : 'HTTP page opened in a new window.');
     } else {
       setHttpAppDeviceId(null);
-      addLocalOutput('html', httpServer.services?.http?.content || 'Merhaba Dünya!');
+      addLocalOutput('html', httpServer.services?.http?.content || t.helloWorld);
     }
   }, [addLocalOutput, deviceStates, findHttpServerByTarget, getAvailableIotDevices, getConnectedIotDevices, hasGatewayForTarget, isLoopbackTarget, isValidIpv4, isValidIpv6, language, normalizeLookupTarget, pcDNS, resolveDeviceNameTarget, t, iotDevices, topologyDevices, generateIotWebPanelContent, generateIotDevicePageContent, httpAppDeviceId, topologyConnections, pcIPv6]);
 
@@ -5671,7 +5669,7 @@ export function PCPanel({
                                       ref={httpContentRef}
                                       value={serviceHttpContent}
                                       onChange={(e) => setServiceHttpContent(e.target.value)}
-                                      placeholder="Merhaba Dünya!"
+                                      placeholder={t.helloWorld}
                                       rows={6}
                                       className={`w-full rounded-lg border px-3 py-2 text-sm font-mono resize-y ${isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-700'}`}
                                     />
@@ -5680,7 +5678,7 @@ export function PCPanel({
                                         className={`text-xs rounded-lg px-3 py-2 overflow-hidden ${isDark ? 'bg-slate-950 border border-slate-800 text-slate-200' : 'bg-slate-50 border border-slate-200 text-slate-700'}`}
                                         style={{ contain: 'layout style paint', willChange: 'auto' }}
                                       >
-                                        <span dangerouslySetInnerHTML={{ __html: sanitizeHTTPContent(serviceHttpContent || 'Merhaba Dünya!') }} />
+                                        <span dangerouslySetInnerHTML={{ __html: sanitizeHTTPContent(serviceHttpContent || t.helloWorld) }} />
                                       </div>
                                     )}
                                   </div>
@@ -6744,7 +6742,7 @@ export function PCPanel({
                                           }
                                         });
                                       }}
-                                      placeholder="Security Key"
+                                      placeholder={t.securityKey}
                                       disabled={!wifiEnabled}
                                       className="bg-background pr-9"
                                     />

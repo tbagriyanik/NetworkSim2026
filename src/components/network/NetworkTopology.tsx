@@ -5305,7 +5305,7 @@ export function NetworkTopology({
                     transform="translate(2, 0) scale(0.9)"
                     filter="url(#wifiIconShadow)"
                     style={{ cursor: 'pointer' }}
-                    aria-label={language === 'tr' ? 'WiFi durumu' : 'WiFi status'}
+                    aria-label={t.wifiStatus}
                   >
                     {/* Invisible rect for easier hover */}
                     <rect x="0" y="5" width="24" height="20" fill="transparent" />
@@ -5529,7 +5529,7 @@ export function NetworkTopology({
                 saveToHistory();
                 togglePowerDevices([device.id]);
               }}
-              aria-label={isPoweredOff ? (language === 'tr' ? 'Gücü aç' : 'Power on') : (language === 'tr' ? 'Gücü kapat' : 'Power off')}
+              aria-label={isPoweredOff ? t.powerOn : t.powerOff}
             >
               {/* Background circle - adjusted Y for routers */}
               <circle
@@ -5727,14 +5727,14 @@ export function NetworkTopology({
               case 'sound':
                 return (
                   <text x={deviceWidth / 2} y={70} fill={isDark ? '#d8b4fe' : '#9333ea'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
-                    <tspan x={deviceWidth / 2} dy="0">Sound:</tspan>
+                    <tspan x={deviceWidth / 2} dy="0">{t.sensorSound}:</tspan>
                     <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                   </text>
                 );
               case 'motion':
                 return (
                   <text x={deviceWidth / 2} y={70} fill={isDark ? '#22c55e' : '#16a34a'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
-                    <tspan x={deviceWidth / 2} dy="0">Motion:</tspan>
+                    <tspan x={deviceWidth / 2} dy="0">{t.sensorMotion}:</tspan>
                     <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                   </text>
                 );
@@ -6179,7 +6179,7 @@ export function NetworkTopology({
                         {DEVICE_ICONS['switch']}
                       </div>
                       <span className="text-xs font-bold text-center">
-                        {isTR ? 'L2 Switch' : 'L2 Switch'}
+                        L2 Switch
                       </span>
                     </button>
                     <button
@@ -6193,7 +6193,7 @@ export function NetworkTopology({
                         </svg>
                       </div>
                       <span className="text-xs font-bold text-center">
-                        {isTR ? 'L3 Switch' : 'L3 Switch'}
+                        L3 Switch
                       </span>
                     </button>
                     <button
@@ -6217,7 +6217,7 @@ export function NetworkTopology({
                         {DEVICE_ICONS['iot']}
                       </div>
                       <span className="text-xs font-bold text-center">
-                        {isTR ? 'IoT' : 'IoT'}
+                        IoT
                       </span>
                     </button>
                     <button
@@ -6229,7 +6229,7 @@ export function NetworkTopology({
                         {DEVICE_ICONS['firewall']}
                       </div>
                       <span className="text-xs font-bold text-center">
-                        {isTR ? 'Firewall' : 'Firewall'}
+                        Firewall
                       </span>
                     </button>
                     <button
@@ -6241,7 +6241,7 @@ export function NetworkTopology({
                         {DEVICE_ICONS['wlc']}
                       </div>
                       <span className="text-xs font-bold text-center">
-                        {isTR ? 'WLC' : 'WLC'}
+                        WLC
                       </span>
                     </button>
                   </div>
@@ -8388,7 +8388,7 @@ export function NetworkTopology({
 
                           {dev.services?.dhcp?.pools && dev.services.dhcp.pools.length > 0 && (
                             <div className="space-y-1 mt-2 pt-2 border-t border-white/5">
-                              <div className="text-[9px] font-bold opacity-30 uppercase tracking-wider">{isTR ? 'DHCP Pool' : 'DHCP Pool'}</div>
+                              <div className="text-[9px] font-bold opacity-30 uppercase tracking-wider">DHCP Pool</div>
                               {dev.services.dhcp.pools.map((pool, idx) => (
                                 <div key={idx} className="text-[9px] space-y-0.5 bg-purple-500/10 rounded p-1.5">
                                   <div className="flex justify-between"><span className="opacity-50">Pool:</span><span className="font-mono">{pool.poolName}</span></div>
@@ -8418,7 +8418,7 @@ export function NetworkTopology({
                             <div className="mt-2 pt-2 border-t border-white/5">
                               <div className="text-[9px] flex justify-between items-center">
                                 <span className="opacity-60 uppercase tracking-wider">{isTR ? 'HTTP Sunucu' : 'HTTP Server'}</span>
-                                <span className="text-green-500 text-[9px] font-bold">✓ {isTR ? 'Aktif' : 'Active'}</span>
+                                <span className="text-green-500 text-[9px] font-bold">✓ {t.active}</span>
                               </div>
                               {dev.services.http.content && (
                                 <div className="text-[8px] opacity-50 mt-1 truncate">{dev.services.http.content.substring(0, 50)}...</div>
@@ -8430,7 +8430,7 @@ export function NetworkTopology({
                             <div className="mt-2 pt-2 border-t border-white/5">
                               <div className="text-[9px] flex justify-between items-center">
                                 <span className="opacity-60 uppercase tracking-wider">FTP Server</span>
-                                <span className="text-cyan-500 text-[9px] font-bold">✓ {isTR ? 'Aktif' : 'Active'}</span>
+                                <span className="text-cyan-500 text-[9px] font-bold">✓ {t.active}</span>
                               </div>
                               <div className="text-[8px] opacity-50 mt-1">
                                 {dev.services.ftp.anonymousAccess
@@ -8444,7 +8444,7 @@ export function NetworkTopology({
                             <div className="mt-2 pt-2 border-t border-white/5">
                               <div className="text-[9px] flex justify-between items-center">
                                 <span className="opacity-60 uppercase tracking-wider">MAIL Server</span>
-                                <span className="text-rose-500 text-[9px] font-bold">✓ {isTR ? 'Aktif' : 'Active'}</span>
+                                <span className="text-rose-500 text-[9px] font-bold">✓ {t.active}</span>
                               </div>
                               <div className="text-[8px] opacity-50 mt-1 truncate">
                                 {dev.services.mail.domain || 'local.lan'}
