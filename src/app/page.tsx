@@ -3835,6 +3835,8 @@ ${state.bannerMOTD}
       }
 
       if (e.key === 'Enter') {
+        // Skip if already handled by canvas (e.g., multi-select → last device)
+        if (e.defaultPrevented) return;
         // Don't handle Enter when any modal/panel is open
         if (showUnifiedDeviceModal || showAboutModal || showPCPanel || showFirewallPanel || showRouterPanel || showProjectPicker || showOnboarding || !!confirmDialog?.show || !!saveDialog?.show) {
           return;

@@ -2290,9 +2290,13 @@ export function NetworkTopology({
           break;
         case 'Enter':
           e.preventDefault();
-          if (selectedDeviceIds.length === 1) {
-            const selectedDevice = deviceMap.get(selectedDeviceIds[0]);
+          if (selectedDeviceIds.length > 0) {
+            const lastId = selectedDeviceIds[selectedDeviceIds.length - 1];
+            const selectedDevice = deviceMap.get(lastId);
             if (selectedDevice) {
+              if (selectedDeviceIds.length > 1) {
+                setSelectedDeviceIds([lastId]);
+              }
               handleDeviceDoubleClick(selectedDevice);
             }
           }
@@ -6485,9 +6489,13 @@ export function NetworkTopology({
               }
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && selectedDeviceIds.length === 1) {
-                const selectedDevice = deviceMap.get(selectedDeviceIds[0]);
+              if (e.key === 'Enter' && selectedDeviceIds.length > 0) {
+                const lastId = selectedDeviceIds[selectedDeviceIds.length - 1];
+                const selectedDevice = deviceMap.get(lastId);
                 if (selectedDevice) {
+                  if (selectedDeviceIds.length > 1) {
+                    setSelectedDeviceIds([lastId]);
+                  }
                   handleDeviceDoubleClick(selectedDevice);
                 }
               }

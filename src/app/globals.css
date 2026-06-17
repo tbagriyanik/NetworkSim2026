@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "../styles/colors.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -310,6 +309,32 @@
 }
 
 .custom-scrollbar {
+  scrollbar-width: thin;
+  -ms-overflow-style: auto;
+}
+
+/* Help panel scrollbar - 5px */
+.help-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.help-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(71 85 105 / 0.65);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background-clip: content-box;
+  transition: background 0.2s;
+}
+.help-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(71 85 105 / 0.85);
+}
+.dark .help-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(100 116 139 / 0.7);
+}
+.dark .help-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(100 116 139 / 0.9);
+}
+.help-scrollbar {
   scrollbar-width: thin;
   -ms-overflow-style: auto;
 }

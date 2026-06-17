@@ -1,13 +1,13 @@
-import { Breakpoint, breakpoints as CENTRAL_BREAKPOINTS } from '@/lib/design-tokens';
+'use client';
+
+import type { Breakpoint } from '@/lib/design-tokens';
+import { breakpoints as CENTRAL_BREAKPOINTS } from '@/lib/design-tokens';
 
 export interface ResponsiveValue<T> {
     mobile?: T;
     tablet?: T;
     desktop?: T;
 }
-
-// Re-export ResponsiveGridValue for convenience
-export type { ResponsiveGridValue } from './grid';
 
 export interface LayoutRegion {
     height?: ResponsiveValue<number>;
@@ -86,7 +86,6 @@ export function getResponsiveValue<T>(
         if (breakpoint === 'desktop' && responsiveValue.desktop !== undefined) {
             return responsiveValue.desktop;
         }
-        // Fallback to desktop value if available
         return responsiveValue.desktop;
     }
     return value as T;
