@@ -20,7 +20,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { DeviceIcon } from '@/components/network/DeviceIcon';
-import { ChevronDown, Plus, Undo2, Redo2, Search, X, Cable, Strikethrough, Usb, Leaf } from 'lucide-react';
+import { ChevronDown, Plus, Undo2, Redo2, Search, X, Cable, LineSquiggle, Leaf, Plug, TrendingUpDown } from 'lucide-react';
 import type { Translations } from '@/contexts/LanguageContext';
 import type { CanvasDevice, DeviceType } from '@/components/network/networkTopology.types';
 import type { SwitchState, CableType, CableInfo } from '@/lib/network/types';
@@ -442,15 +442,11 @@ export function TopologyToolbar({
                 {type === 'straight' ? (
                   <Cable className="w-4 h-4" />
                 ) : type === 'crossover' ? (
-                  <Strikethrough className="w-4 h-4" />
+                  <LineSquiggle className="w-4 h-4" />
                 ) : type === 'serial' ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" />
-                    <circle cx="9" cy="12" r="1" fill="currentColor" />
-                    <circle cx="15" cy="12" r="1" fill="currentColor" />
-                  </svg>
+                  <Plug className="w-4 h-4" />
                 ) : (
-                  <Usb className="w-4 h-4" />
+                  <TrendingUpDown className="w-4 h-4" />
                 )}
               </Button>
             </TooltipTrigger>

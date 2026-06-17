@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Cable, Strikethrough, Usb } from 'lucide-react';
+import { X, Cable, LineSquiggle, Plug, TrendingUpDown } from 'lucide-react';
 import { CableType, CableInfo, getCableTypeLabel } from '@/lib/network/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -121,17 +121,13 @@ export function PortSelector({ devices, cableInfo, onConnect, onClose }: PortSel
                     {type === 'straight' ? (
                       <Cable className="w-3 h-3" />
                     ) : type === 'crossover' ? (
-                      <Strikethrough className="w-3 h-3" />
+                      <LineSquiggle className="w-3 h-3" />
                     ) : type === 'console' ? (
-                      <Usb className="w-3 h-3" />
+                      <TrendingUpDown className="w-3 h-3" />
                     ) : type === 'serial' ? (
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" />
-                        <circle cx="9" cy="12" r="1" fill="currentColor" />
-                        <circle cx="15" cy="12" r="1" fill="currentColor" />
-                      </svg>
+                      <Plug className="w-3 h-3" />
                     ) : (
-                      <Usb className="w-3 h-3" />
+                      <TrendingUpDown className="w-3 h-3" />
                     )}
                     {typeLabel}
                   </button>
