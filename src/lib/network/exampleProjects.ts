@@ -50,7 +50,7 @@ const defaultCableInfo: CableInfo = {
 
 const normalizeDeviceType = (type: string): CanvasDevice['type'] => {
   if (type === 'switch') return 'switchL2';
-  if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'iot' || type === 'router' || type === 'firewall') return type;
+  if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'iot' || type === 'router' || type === 'firewall' || type === 'wlc') return type;
   throw new Error(`Invalid device type: ${type}`);
 };
 

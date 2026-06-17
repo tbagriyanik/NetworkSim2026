@@ -24,7 +24,7 @@ import { formatErrorForUser, errorHandler, STORAGE_ERRORS } from '@/lib/errors/e
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
 import { safeParse, safeStringify } from '@/lib/network/serialization';
 import { calculatePVST } from '@/lib/network/core/showCommands';
-import { createInitialState, createInitialRouterState, createInitialFirewallState } from '@/lib/network/initialState';
+import { createInitialState, createInitialRouterState, createInitialFirewallState, createInitialWLCState } from '@/lib/network/initialState';
 import type { TerminalOutput } from '@/components/network/Terminal';
 import { BOOT_PROGRESS_MARKER } from '@/components/network/Terminal';
 import {
@@ -1777,6 +1777,8 @@ ${state.bannerMOTD}
       return true;
     } catch (error) {
       errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'loadProjectData', error: String(error) }));
+      // Clear corrupted autosave data to prevent repeated failures
+      try { localStorage.removeItem('netsim_autosave'); } catch { /* ignore */ }
       toast({
         variant: 'destructive',
         title: t.invalidProject,
@@ -4079,6 +4081,11 @@ ${state.bannerMOTD}
         freshDeviceStates.push({
           id: device.id,
           state: createInitialFirewallState(device.macAddress)
+        });
+      } else if (device.type === 'wlc') {
+        freshDeviceStates.push({
+          id: device.id,
+          state: createInitialWLCState(device.macAddress)
         });
       }
     });

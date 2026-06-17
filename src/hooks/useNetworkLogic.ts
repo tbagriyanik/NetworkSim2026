@@ -24,7 +24,7 @@ export function useNetworkLogic(
 
   const normalizeDeviceType = useCallback((type: string): DeviceType => {
     if (type === 'switch') return 'switchL2';
-    if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'iot' || type === 'router' || type === 'firewall') return type;
+    if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'iot' || type === 'router' || type === 'firewall' || type === 'wlc') return type;
     throw new Error(`Unknown device type: ${type}`);
   }, []);
 

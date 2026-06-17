@@ -80,6 +80,7 @@ export function useDeviceManager() {
     const isRouter = deviceType === 'router';
     const isFirewall = deviceType === 'firewall' || switchModel?.includes('ASA');
     const isL3Switch = deviceType === 'switchL3' || switchModel?.includes('3650');
+    const isWLC = deviceType === 'wlc' || switchModel?.includes('AIR-CT');
 
     if (isFirewall) {
       return {
@@ -97,6 +98,16 @@ export function useDeviceManager() {
         boot2: `ISR4451/K9 platform with 4096 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded, GOXR initialization\nReading all bootflash vectors\nPOST: CPU PCIe port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n`,
         boot3: `\nBooting flash:c1900-universalk9-mz.SPA.154-3.M.bin...OK!\nExtracting files from flash:c1900-universalk9-mz.SPA.154-3.M.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n`,
         initMessage: language === 'tr' ? 'Sistem başlatılıyor' : 'Initializing system'
+      };
+    }
+
+    if (isWLC) {
+      const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
+      return {
+        boot1: `\n\nSystem Bootstrap\nTechnical Support: http://yunus.sf.net\nCopyright (c) 1996-2026 by Network Systems, Inc.\n`,
+        boot2: `AIR-CT2504 platform with 2097152 K bytes of memory\n\n${syslog}\nLoad/bootstrap symbols loaded\nReading all bootflash vectors\nPOST: CPU PCIe port Check PASS\nCPU memory test . . . . . . . . . . . . . OK\nBoard initialization completed\nInitializing flash file system\n`,
+        boot3: `\nBooting flash:CT2504-k9-8-0-125-0.bin...OK!\nExtracting files from flash:CT2504-k9-8-0-125-0.bin...\n  ########## [OK]\n  0 bytes remaining in flash device\n`,
+        initMessage: language === 'tr' ? 'WLC başlatılıyor' : 'WLC is starting'
       };
     }
 
@@ -211,14 +222,15 @@ export function useDeviceManager() {
         const existingState = deviceStates.get(deviceId);
         const isRouter = deviceType === 'router' || deviceId.includes('router') || existingState?.switchLayer === 'L3';
         const isSwitchL3 = deviceType === 'switchL3' || existingState?.switchLayer === 'L3' || existingState?.switchModel === 'WS-C3650-24PS';
+        const isWLC = deviceType === 'wlc' || deviceId.includes('wlc') || existingState?.switchLayer === 'WLC';
 
         // Get the switch model from existing state or default. L3 switches should start as 3650.
-        const switchModel = existingState?.switchModel || incomingModel || (isRouter || isSwitchL3 ? 'WS-C3650-24PS' : 'WS-C2960-24TT-L');
-        const baseState = isRouter ? createInitialRouterState() : createInitialState(undefined, switchModel as 'WS-C2960-24TT-L' | 'WS-C3650-24PS');
+        const switchModel = existingState?.switchModel || incomingModel || (isWLC ? 'AIR-CT2504-K9' : isRouter || isSwitchL3 ? 'WS-C3650-24PS' : 'WS-C2960-24TT-L');
+        const baseState = isRouter ? createInitialRouterState() : isWLC ? createInitialWLCState() : createInitialState(undefined, switchModel as 'WS-C2960-24TT-L' | 'WS-C3650-24PS');
 
         // Get existing state to preserve saved configuration and identity
         const startupConfig = existingState?.startupConfig;
-        const defaultHostname = isRouter ? 'Router' : 'Switch';
+        const defaultHostname = isRouter ? 'Router' : isWLC ? 'WLC' : 'Switch';
         const hostname = startupConfig ? (existingState?.hostname || defaultHostname) : defaultHostname;
 
         const baseIdentityState: SwitchState = {
@@ -261,7 +273,7 @@ export function useDeviceManager() {
           await sleep(600);
           if (!isMounted.current) return;
 
-          const bootInfo = getBootMessage(isRouter ? 'router' : resolveSwitchBootType(reloadedState.switchModel), reloadedState.switchModel, language);
+          const bootInfo = getBootMessage(isWLC ? 'wlc' : isRouter ? 'router' : resolveSwitchBootType(reloadedState.switchModel), reloadedState.switchModel, language);
           const bootTs = 1715600000000; // Deterministic timestamp for boot progress tracking
           const bootOutputs: TerminalOutput[] = [
             { id: `boot-1-${reloadedState.macAddress}`, type: 'output', content: bootInfo.boot1 },
@@ -423,17 +435,20 @@ export function useDeviceManager() {
       const state = deviceStateArg || deviceStates.get(deviceId);
       const isRouter = deviceId.includes('router');
       const isFirewall = deviceId.includes('firewall') || state?.switchLayer === 'FW';
+      const isWLC = deviceId.includes('wlc') || state?.switchLayer === 'WLC';
       const inferredDeviceType: Exclude<DeviceType, 'pc'> = isFirewall
         ? 'firewall'
         : isRouter
           ? 'router'
-          : state?.switchLayer === 'L3'
-            ? 'switchL3'
-            : 'switchL2';
+          : isWLC
+            ? 'wlc'
+            : state?.switchLayer === 'L3'
+              ? 'switchL3'
+              : 'switchL2';
 
       const bootInfo = getBootMessage(inferredDeviceType, state?.switchModel, language);
       const fallbackSwitchModel = state?.switchModel || deviceStates.get(deviceId)?.switchModel;
-      const fallbackState = state || (isRouter ? createInitialRouterState() : createInitialState(undefined, fallbackSwitchModel as 'WS-C2960-24TT-L' | 'WS-C3650-24PS'));
+      const fallbackState = state || (isRouter ? createInitialRouterState() : isWLC ? createInitialWLCState() : createInitialState(undefined, fallbackSwitchModel as 'WS-C2960-24TT-L' | 'WS-C3650-24PS'));
       const suffix = fallbackState?.macAddress || deviceId;
 
       const newBootMessages: TerminalOutput[] = [
@@ -871,7 +886,8 @@ export function useDeviceManager() {
           };
           setDeviceStates(prev => new Map(prev).set(deviceId, reloadedState));
           const isRouter = deviceId.includes('router');
-          const bootInfo = getBootMessage(isRouter ? 'router' : resolveSwitchBootType(reloadedState.switchModel), reloadedState.switchModel, language);
+          const isWLC = deviceId.includes('wlc');
+          const bootInfo = getBootMessage(isWLC ? 'wlc' : isRouter ? 'router' : resolveSwitchBootType(reloadedState.switchModel), reloadedState.switchModel, language);
           const mac = reloadedState.macAddress;
           const bootTs = Date.now();
           // Clear screen immediately (sync), then show boot sequence after delay

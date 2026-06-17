@@ -214,7 +214,7 @@ export function useAppNavigation(options: UseAppNavigationOptions) {
     }
 
     if (tabId === 'terminal') {
-      if (deviceObj && (deviceObj.type === 'router' || deviceObj.type === 'switchL2' || deviceObj.type === 'switchL3')) {
+      if (deviceObj && (deviceObj.type === 'router' || deviceObj.type === 'switchL2' || deviceObj.type === 'switchL3' || deviceObj.type === 'wlc')) {
         const deviceState = getOrCreateDeviceState(activeDeviceId, deviceObj.type, deviceObj.name, deviceObj.macAddress, deviceObj.switchModel);
         getOrCreateDeviceOutputs(activeDeviceId, deviceState);
       }

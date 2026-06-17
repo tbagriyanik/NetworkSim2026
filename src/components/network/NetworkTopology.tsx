@@ -2558,6 +2558,7 @@ export function NetworkTopology({
       else if (deviceType === 'router') addDevice('router');
       else if (deviceType === 'iot') addDevice('iot');
       else if (deviceType === 'firewall') addDevice('firewall');
+      else if (deviceType === 'wlc') addDevice('wlc');
     };
     const handleTogglePingMode = () => {
       setPingMode(m => !m);
@@ -4604,12 +4605,23 @@ export function NetworkTopology({
       const giPorts = filteredPorts.filter(p => p.id.toLowerCase().startsWith('gi'));
       const otherPorts = filteredPorts.filter(p => !p.id.toLowerCase().startsWith('gi'));
       const isGi = portIdLower.startsWith('gi');
-      if (isGi) {
-        actualCol = giPorts.findIndex(p => p.id === portId);
+      if (device.type === 'wlc') {
+        // WLC: all ports in single row, console after gi ports
+        if (isGi) {
+          actualCol = giPorts.findIndex(p => p.id === portId);
+        } else {
+          actualCol = giPorts.length + otherPorts.findIndex(p => p.id === portId);
+        }
         actualRow = 0;
       } else {
-        actualCol = otherPorts.findIndex(p => p.id === portId);
-        actualRow = 1;
+        // Router: gi ports row 0, other ports row 1
+        if (isGi) {
+          actualCol = giPorts.findIndex(p => p.id === portId);
+          actualRow = 0;
+        } else {
+          actualCol = otherPorts.findIndex(p => p.id === portId);
+          actualRow = 1;
+        }
       }
     } else {
       actualCol = col;
@@ -5707,7 +5719,6 @@ export function NetworkTopology({
         ) : (
           // Switch/Router/WLC - wrap 8 ports per row for wider device
           device.type === 'router' || device.type === 'wlc' ? (
-            // Router/WLC: Gi ports row 0, Console+Serial ports row 1
             (() => {
               const filteredPorts = device.ports.filter(p => p.id !== 'wlan0' && !p.id.startsWith('service'));
               const giPorts = filteredPorts.filter(p => p.id.toLowerCase().startsWith('gi'));
@@ -5786,6 +5797,12 @@ export function NetworkTopology({
                 );
               };
 
+              if (device.type === 'wlc') {
+                // WLC: all ports in single row, console after gi ports
+                const orderedPorts = [...giPorts, ...otherPorts];
+                return <>{orderedPorts.map((port, idx) => renderPort(port, idx, 0))}</>;
+              }
+              // Router: gi ports row 0, other ports row 1
               return (
                 <>
                   {giPorts.map((port, idx) => renderPort(port, idx, 0))}
