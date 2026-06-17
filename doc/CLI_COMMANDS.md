@@ -1,6 +1,6 @@
 # 💻 Network CLI Commands Reference
 
-The simulator supports **180+ commands** across multiple configuration modes.
+The simulator supports **200+ commands** across multiple configuration modes.
 
 ## Keyboard Shortcuts
 
@@ -255,10 +255,31 @@ The simulator supports **180+ commands** across multiple configuration modes.
 
 | Command | Description | Device Type |
 |---------|-------------|-------------|
-| `wlan <name> <id> <ssid>` | Create WLAN configuration | WLC only |
-| `security wpa psk set-key ascii 0 <password>` | Set WPA password | WLC only |
-| `channel <num>` | Set RF channel | WLC only |
-| `station-role root` | Set AP mode | AP only |
+| `dot11 ssid <name>` | Create/enter dot11 SSID config | WLC/AP |
+| `wlan <name> <id> <ssid>` | Create WLAN profile | WLC only |
+| `wlan shutdown` | Disable WLAN | WLC only |
+| `no wlan shutdown` | Enable WLAN (undo shutdown) | WLC only |
+| `ap name <name>` | Configure AP name | WLC only |
+| `ap auth-mac <mac>` | Add MAC auth filter for AP join | WLC only |
+| `ap rf-channel <num>` | Set AP RF channel | WLC only |
+| `ap dot11 5-ghz <cmd>` | Configure 5 GHz radio on AP | WLC only |
+| `authentication open` | Set open authentication (in ssid-config) | WLC/AP |
+| `authentication shared` | Set shared key auth (in ssid-config) | WLC/AP |
+| `mbssid` | Enable MBSSID (in ssid-config) | WLC/AP |
+| `no mbssid` | Disable MBSSID (in ssid-config) | WLC/AP |
+| `guest-mode` | Enable guest mode (in ssid-config) | WLC/AP |
+| `no guest-mode` | Disable guest mode (in ssid-config) | WLC/AP |
+| `ssid <name>` | Set SSID name (in dot11-config) | WLC/AP |
+| `no ssid` | Remove SSID (in dot11-config) | WLC/AP |
+| `station-role root` | Set AP to root mode | WLC/AP |
+| `channel <num>` | Set RF channel (in dot11-config) | WLC/AP |
+| `no channel` | Reset to auto channel selection | WLC/AP |
+| `speed <rate>` | Set basic data rate (in dot11-config) | WLC/AP |
+| `power local <val>` | Set local power level (in dot11-config) | WLC/AP |
+| `power client <val>` | Set client power level (in dot11-config) | WLC/AP |
+| `world-mode dot11d {1\|-1}` | Enable 802.11d world mode (in dot11-config) | WLC/AP |
+| `security wpa psk set-key ascii 0 <password>` | Set WPA PSK key | WLC/AP |
+| `no security wpa psk` | Remove WPA PSK key | WLC/AP |
 | `show wlan summary` | Display WLAN summary | WLC only |
 | `show ap summary` | Display AP summary | WLC only |
 
@@ -289,6 +310,21 @@ The simulator supports **180+ commands** across multiple configuration modes.
 | `access-class <n> {in\|out}` | Apply ACL to line |
 | `lockable` | Enable line locking |
 
+### Serial / WAN Interface Commands
+> **Note**: These commands are valid on serial interfaces (e.g., `Serial0/0/0`, `Serial0/1/0`). DCE/DTE detection is automatic based on the cable connection.
+
+| Command | Description |
+|---------|-------------|
+| `encapsulation hdlc` | Set HDLC encapsulation (default) |
+| `encapsulation ppp` | Set PPP encapsulation |
+| `no encapsulation` | Reset to default encapsulation |
+| `clock rate <bps>` | Set clock rate on DCE interface |
+| `no clock rate` | Remove clock rate setting |
+| `ppp authentication {chap\|pap}` | Enable PPP authentication |
+| `no ppp authentication` | Disable PPP authentication |
+| `ppp pap sent-username <name> password <pass>` | Set PAP credentials |
+| `bandwidth <kbps>` | Set serial bandwidth |
+
 ### Router Configuration Commands (RIP/OSPF)
 | Command | Description |
 |---------|-------------|
@@ -297,6 +333,53 @@ The simulator supports **180+ commands** across multiple configuration modes.
 | `router-id <ip>` | Set router ID |
 | `passive-interface <intf>` | Set passive interface |
 | `default-information {originate\|always}` | Control default route |
+
+### Router Configuration Commands (EIGRP)
+| Command | Description |
+|---------|-------------|
+| `network <ip> [wildcard]` | Advertise network via EIGRP |
+| `no network <ip> [wildcard]` | Remove EIGRP network |
+| `eigrp router-id <ip>` | Set EIGRP router ID |
+| `passive-interface <intf>` | Suppress routing updates |
+| `no passive-interface <intf>` | Enable routing updates |
+
+### Router Configuration Commands (BGP)
+| Command | Description |
+|---------|-------------|
+| `bgp router-id <ip>` | Set BGP router ID |
+| `network <ip> mask <mask>` | Advertise network via BGP |
+| `no network <ip> mask <mask>` | Remove BGP network |
+| `neighbor <ip> remote-as <asn>` | Configure BGP neighbor |
+| `no neighbor <ip>` | Remove BGP neighbor |
+
+### IPv6 Routing (RIPng / OSPFv3)
+| Command | Description |
+|---------|-------------|
+| `ipv6 router rip <name>` | Enter RIPng config mode |
+| `ipv6 router ospf <id>` | Enter OSPFv3 config mode |
+| `ipv6 ospf <id> area <area>` | Enable OSPFv3 on interface |
+| `ipv6 rip <name> enable` | Enable RIPng on interface |
+
+### IoT CLI Commands
+> **Note**: These commands are available in global config mode on IoT-capable devices.
+
+| Command | Description |
+|---------|-------------|
+| `iot sensor <name> pin <n>` | Configure sensor on pin |
+| `iot actuator <name> pin <n>` | Configure actuator on pin |
+| `iot threshold <name> <value>` | Set sensor threshold |
+| `no iot sensor <name>` | Remove sensor config |
+| `no iot actuator <name>` | Remove actuator config |
+| `iot display <text>` | Send text to IoT display |
+
+### Firewall Configuration Commands
+| Command | Description |
+|---------|-------------|
+| `security-level <0-100>` | Set interface security level |
+| `nameif <name>` | Set interface name |
+| `no nameif` | Remove interface name |
+| `same-security-traffic permit inter-interface` | Permit traffic between same-security interfaces |
+| `no same-security-traffic permit inter-interface` | Deny same-security traffic |
 
 ### DHCP Pool Configuration Commands (`dhcp-config` mode)
 | Command | Description |
@@ -376,11 +459,13 @@ The simulator supports **180+ commands** across multiple configuration modes.
 - **User Mode** (`>`) - Basic monitoring commands
 - **Privileged Mode** (`#`) - All show/debug commands
 - **Config Mode** `(config)#` - Global configuration
-- **Interface Mode** `(config-if)#` - Interface configuration
-- **Line Mode** `(config-line)#` - Line configuration
+- **Interface Mode** `(config-if)#` - Interface configuration (Ethernet, Serial, VLAN)
+- **Line Mode** `(config-line)#` - Line configuration (console, VTY)
 - **VLAN Mode** `(config-vlan)#` - VLAN configuration
-- **Router Config Mode** `(config-router)#` - Routing protocol config
+- **Router Config Mode** `(config-router)#` - Routing protocol config (OSPF, RIP, EIGRP, BGP)
 - **DHCP Pool Mode** `(dhcp-config)#` - DHCP pool configuration
+- **SSID Config Mode** `(config-ssid)#` - SSID security parameters (authentication, guest-mode, mbssid)
+- **Dot11 Config Mode** `(config-dot11)#` - Wireless radio/dot11 interface configuration (channel, speed, power, station-role)
 
 ## Features
 - **Tab Completion**: Auto-complete commands with TAB

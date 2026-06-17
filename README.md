@@ -1,9 +1,9 @@
 # Network Simulator 2026
 
-![Version](https://img.shields.io/badge/version-1.7.1-blue)
+![Version](https://img.shields.io/badge/version-1.8.0-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%206.0%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-98951-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-105000-lightgrey)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
 
@@ -33,6 +33,12 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | **Intelligent CLI Assistant**: Fuzzy-matched command suggestions and device-aware subcommand hints below CLI error messages. | **Akıllı CLI Asistanı**: CLI hata mesajlarının altında bulanık eşleştirmeli komut önerileri ve cihaz bilinçli alt komut ipuçları. |
 | **Exam Import Enhancements**: Improved `.json` / `.exam` import with smarter PC IP extraction, connection parsing, and weighted scoring. | **Sınav İçe Aktarma İyileştirmeleri**: Gelişmiş `.json` / `.exam` içe aktarma ile akıllı PC IP çıkarma, bağlantı ayrıştırma ve ağırlıklı puanlama. |
 | **PC Services Persistence**: PC service configurations (DHCP, DNS, HTTP) persist across network refreshes. | **PC Servis Kalıcılığı**: PC servis yapılandırmaları (DHCP, DNS, HTTP) ağ yenilemelerinde korunur. |
+| **WLC & AP Management**: Wireless LAN Controller with Lightweight AP support, dot11 WLAN config, AP join, auth-mac filtering. | **WLC ve AP Yönetimi**: Hafif AP desteği ile Kablosuz LAN Denetleyicisi, dot11 WLAN yapılandırması, AP katılımı, auth-mac filtreleme. |
+| **Serial / WAN Interfaces**: HDLC and PPP encapsulation, clock rate, PAP/CHAP authentication, DCE/DTE detection. | **Seri / WAN Arayüzleri**: HDLC ve PPP kapsülleme, saat hızı, PAP/CHAP kimlik doğrulama, DCE/DTE tespiti. |
+| **Advanced Routing**: EIGRP (named/config), BGP (basic), OSPFv3 (IPv6), RIPng (IPv6), route redistribution. | **Gelişmiş Yönlendirme**: EIGRP (adlandırılmış/yapılandırma), BGP (temel), OSPFv3 (IPv6), RIPng (IPv6), rota yeniden dağıtımı. |
+| **IoT & Firewall CLI**: Complete CLI command sets for IoT sensor/actuator management and firewall rule/policy configuration. | **IoT ve Güvenlik Duvarı CLI**: IoT sensör/aktüatör yönetimi ve güvenlik duvarı kural/politika yapılandırması için eksiksiz CLI komut setleri. |
+| **Help System Overhaul**: 150+ CLI commands documented in bilingual help panel, organized by device context (switch, router, wireless, WLC, IoT, firewall). | **Yardım Sistemi Revizyonu**: Cihaz bağlamına göre düzenlenmiş 150+ CLI komutunun iki dilli yardım panelinde belgelenmesi. |
+| **Canvas Drag Smoothness**: Eliminated position jitter during device drag by using fresh DOM rect per frame and disabling SVG transitions during movement. | **Kanvas Sürükleme Pürüzsüzlüğü**: Hareket sırasında kare başına taze DOM rect kullanımı ve SVG geçişlerinin devre dışı bırakılmasıyla cihaz sürüklemede konum titremesi giderildi. |
 
 ---
 
@@ -44,9 +50,9 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | --- | --- |
 | **Switching**: VLAN, STP, trunk/access ports, MAC learning, switchport security | **Anahtarlama**: VLAN, STP, trunk/access portları, MAC öğrenmesi, switchport güvenliği |
 | **Routing**: Static routes, OSPF, RIP, EIGRP, inter-VLAN routing, L3 switching, default routes | **Yönlendirme**: Statik rotalar, OSPF, RIP, EIGRP, VLAN'lar arası yönlendirme, L3 anahtarlama, varsayılan rotalar |
-| **Wireless**: WLAN configuration, SSID management, wireless security | **Kablosuz**: WLAN yapılandırması, SSID yönetimi, kablosuz güvenlik |
-| **IoT**: Device management, IoT web panel, sensor/actuator integration | **IoT**: Cihaz yönetimi, IoT web paneli, sensör/aktüatör entegrasyonu |
-| **Firewall / ACL**: Access control lists, firewall rules, traffic filtering | **Güvenlik Duvarı / ACL**: Erişim kontrol listeleri, güvenlik duvarı kuralları, trafik filtreleme |
+| **Wireless**: WLAN configuration, SSID management, wireless security, WLC/AP management, dot11 commands | **Kablosuz**: WLAN yapılandırması, SSID yönetimi, kablosuz güvenlik, WLC/AP yönetimi, dot11 komutları |
+| **IoT**: Device management, IoT web panel, sensor/actuator integration, IoT CLI commands | **IoT**: Cihaz yönetimi, IoT web paneli, sensör/aktüatör entegrasyonu, IoT CLI komutları |
+| **Firewall / ACL**: Access control lists, firewall rules, traffic filtering, firewall CLI commands | **Güvenlik Duvarı / ACL**: Erişim kontrol listeleri, güvenlik duvarı kuralları, trafik filtreleme, güvenlik duvarı CLI komutları |
 | **DHCP**: DHCP server & client configuration, address pools, lease management | **DHCP**: DHCP sunucu ve istemci yapılandırması, adres havuzları, kira yönetimi |
 | **DNS**: DNS configuration, name resolution | **DNS**: DNS yapılandırması, ad çözümleme |
 | **FTP**: FTP server & client, file upload, file transfer simulation | **FTP**: FTP sunucu ve istemci, dosya yükleme, dosya aktarım simülasyonu |
@@ -67,8 +73,9 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | **Pipe Support**: Command output piping and filtering | **Pipe Desteği**: Komut çıktısı yönlendirme ve filtreleme |
 | **VLAN Commands**: VLAN creation, assignment, trunk configuration | **VLAN Komutları**: VLAN oluşturma, atama, trunk yapılandırması |
 | **Interface Commands**: IP addressing, description, admin state, speed/duplex | **Arayüz Komutları**: IP adresleme, açıklama, yönetsel durum, hız/duplex |
-| **Routing Protocol Commands**: OSPF, RIP, EIGRP configuration | **Yönlendirme Protokolü Komutları**: OSPF, RIP, EIGRP yapılandırması |
-| **Show Commands**: Running-config, startup-config, interfaces, VLAN, ARP, routing tables | **Show Komutları**: Running-config, startup-config, arayüzler, VLAN, ARP, yönlendirme tabloları |
+| **Routing Protocol Commands**: OSPF, RIP, EIGRP, BGP, OSPFv3, RIPng configuration | **Yönlendirme Protokolü Komutları**: OSPF, RIP, EIGRP, BGP, OSPFv3, RIPng yapılandırması |
+| **Serial / WAN Commands**: HDLC, PPP, clock rate, PAP/CHAP authentication, DCE/DTE detection | **Seri / WAN Komutları**: HDLC, PPP, saat hızı, PAP/CHAP kimlik doğrulama, DCE/DTE tespiti |
+| **Show Commands**: Running-config, startup-config, interfaces, VLAN, ARP, routing tables, DHCP leases, NTP status, IoT status, WLAN status | **Show Komutları**: Running-config, startup-config, arayüzler, VLAN, ARP, yönlendirme tabloları, DHCP kiralamaları, NTP durumu, IoT durumu, WLAN durumu |
 | **CLI History**: Command history navigation with up/down arrows | **Komut Geçmişi**: Yukarı/aşağı ok tuşları ile komut geçmişi gezintisi |
 
 ### 🎮 Modes / Modlar
@@ -145,7 +152,7 @@ npm install && npm run dev
 | Example Projects / Örnek Proje | 40 |
 | Guided Lessons / Rehberli Ders | 12 |
 | Exams / Sınav | 6 |
-| CLI Command Families / CLI Komut Ailesi | 180+ |
+| CLI Command Families / CLI Komut Ailesi | 200+ |
 
 ## Documentation / Dokümantasyon
 

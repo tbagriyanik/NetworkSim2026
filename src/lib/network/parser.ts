@@ -2893,20 +2893,45 @@ Mevcut komutlar:
   line console 0            - Console hattı konfigürasyonu
   line vty <start> <end>    - VTY hattı konfigürasyonu
   banner motd #<mesaj>#     - MOTD banner ayarla
+  banner login #<mesaj>#    - Login banner ayarla
   ip default-gateway <ip>   - Varsayılan ağ geçidi
   ip domain-name <name>     - Domain adı
+  ip domain-lookup          - DNS aramayı etkinleştir
+  no ip domain-lookup       - DNS aramayı devre dışı bırak
   ip dhcp snooping          - DHCP snooping'i etkinleştir
   ip dhcp snooping vlan <vlan> - DHCP snooping VLAN ayarla
   ip arp inspection vlan <vlan> - ARP inspection VLAN ayarla
+  ip routing                - IP yönlendirmeyi etkinleştir (L3)
+  ipv6 unicast-routing      - IPv6 yönlendirmeyi etkinleştir
+  ip dhcp pool <ad>         - DHCP havuzu oluştur
+  no ip dhcp pool <ad>      - DHCP havuzunu sil
+  ip dhcp excluded-address <ip> - DHCP dışı adres
+  ip access-list <isim>     - ACL oluştur
+  ip host <isim> <ip>       - Host eşlemesi tanımla
   spanning-tree mode <mode> - STP modu ayarla
+  spanning-tree vlan <id> priority <p> - VLAN STP önceliği
   vtp mode <mode>           - VTP modu ayarla
   vtp domain <name>         - VTP domain ayarla
   cdp run                   - CDP'yi etkinleştir
   no cdp run                - CDP'yi devre dışı bırak
   router rip                - RIP yönlendirme etkinleştir
   router ospf <id>          - OSPF yönlendirmesini etkinleştir
-  no router rip             - RIP yönlendirme devre dışı
-  no router ospf            - OSPF yönlendirmesini devre dışı bırak
+  router eigrp <as>         - EIGRP yönlendirmesini etkinleştir
+  router bgp <as>           - BGP yönlendirmesini etkinleştir
+  no router rip/ospf/eigrp/bgp - Yönlendirmeyi devre dışı bırak
+  ipv6 router rip <tag>     - IPv6 RIP yönlendirmesi
+  ipv6 router ospf <id>     - IPv6 OSPF yönlendirmesi
+  ip route <net> <mask> <ip> - Statik rota ekle
+  ipv6 route <net>/<pref> <ip> - IPv6 statik rota
+  ntp server <ip>           - NTP sunucusu ayarla
+  iot sensor <isim>         - IoT sensör tanımla (lamp, cooler, heater, smoke, motion, vs.)
+  no iot sensor <isim>      - IoT sensörü sil
+  iot name <isim>           - IoT cihazını adlandır
+  iot wifi <ssid>           - IoT'yi Wi-Fi ağına bağla
+  ap name <isim>            - Access Point adlandır
+  ap auth-mac <mac>         - AP MAC yetkilendirmesi
+  ap rf-channel <num>       - AP RF kanalı ayarla
+  dot11 ssid <isim>         - Kablosuz SSID yapılandırması
   exit                      - Privileged mode'a dön
   end                       - Privileged mode'a dön
   do <command>              - Privileged komutlarını çalıştır
@@ -2935,24 +2960,51 @@ Mevcut komutlar:
   switchport port-security maximum <n> - Max MAC adresi
   switchport port-security violation <mode> - İhlal modu
   switchport port-security mac-address <mac> - Statik MAC
+  switchport port-security mac-address sticky - Sticky MAC
   switchport port-security aging time <min> - Aging süresi (dakika)
   switchport port-security aging type <type> - Aging tipi (absolute/inactivity)
+  switchport port-security aging type <type> - Aging tipi
   switchport voice vlan <id>       - Voice VLAN
+  switchport block multicast      - Multicast blokla
+  switchport protected            - Korumalı port
   ip dhcp snooping trust   - DHCP snooping trust port
   ip arp inspection trust  - ARP inspection trust port
   ip verify source         - IP source guard etkinleştir
   ip verify source port-security - IP source guard + port security
+  ip helper-address <ip>   - DHCP relay (broadcast forwarding)
+  ip nat inside            - NAT iç arayüz
+  ip nat outside           - NAT dış arayüz
   cdp enable               - CDP'yi etkinleştir (port)
   no cdp enable            - CDP'yi devre dışı bırak (port)
-  channel-group <id> mode <mode>   - EtherChannel
+  channel-group <id> mode <mode> - EtherChannel
+  encapsulation hdlc       - HDLC kapsülleme (seri)
+  encapsulation ppp        - PPP kapsülleme (seri)
+  clock rate <bps>         - Saat hızı (DCE seri)
+  ppp authentication {pap|chap} - PPP kimlik doğrulama
+  ppp pap sent-username <u> <p> - PAP kullanıcı bilgisi
+  nameif <isim>            - Arayüz adı (Firewall)
+  security-level <0-100>   - Güvenlik seviyesi (Firewall)
   spanning-tree portfast   - PortFast etkinleştir
   spanning-tree bpduguard enable - BPDU Guard etkinleştir
+  spanning-tree bpduguard disable - BPDU Guard devre dışı
+  spanning-tree cost <c>   - STP port maliyeti
   storm-control broadcast level <rate> - Storm control
   power inline <auto|static|never> - PoE kontrolü
+  bandwidth <kbps>         - Bant genişliği
+  delay <tens-of-us>       - Gecikme değeri
+  mls qos trust {cos|dscp} - QoS güven
+  no ip proxy-arp          - Proxy ARP kapat
+  no keepalive             - Keepalive kapat
+  load-interval <sn>       - Yük aralığı
+  carrier-delay <ms>       - Taşıyıcı gecikmesi
   wlan <name> <id> <ssid>  - WLAN oluştur (WLC only)
   security wpa psk set-key ascii 0 <pass> - WPA şifresi ayarla (WLC only)
-  channel <num>             - RF kanalı ayarla (WLC only)
-  station-role root        - AP modu ayarla (AP only)
+  channel <num>             - RF kanalı ayarla (WLC/AP)
+  station-role <root|repeater|client> - AP modu ayarla
+  encryption mode ciphers <aes|tkip> - Şifreleme (dot11)
+  ssid <isim>               - SSID bağla (dot11)
+  power local <mw>          - İletim gücü (dot11)
+  mac-filter                - MAC filtre (dot11)
   exit                      - Config mode'a dön
   end                       - Privileged mode'a dön
 
@@ -3109,11 +3161,24 @@ Available commands:
     show arp              - Show ARP table
   write memory       - Save configuration
   copy run start     - Save configuration (alternative)
+  copy run flash:    - Save to flash
+  copy run tftp:     - Upload config to TFTP
+  copy tftp: run     - Download config from TFTP
+  copy flash: start  - Restore from flash
   delete flash:      - Delete files from flash memory
   ping <ip>          - Ping
   traceroute <ip>    - Trace route
   telnet <ip>        - Telnet connection
+  ssh -l <user> <ip> - SSH connection
+  ftp <host>         - FTP connection
   reload             - Reload switch
+  clear arp-cache    - Clear ARP cache
+  clear mac address-table - Clear MAC table
+  clear counters     - Clear interface counters
+  clear line <n>     - Clear line
+  clear interface <type/n> - Reset interface counters
+  terminal monitor   - Monitor log messages
+  terminal length <0-512> - Set terminal page length
   exit               - Return to user EXEC mode
 
 Shortcuts:
@@ -3130,47 +3195,76 @@ Shortcuts:
   cop run sta = copy running-config startup-config
 `,
     config: `
-    Available commands:
-    hostname <name>           - Change switch name
-    interface <port>          - Enter interface configuration
+Available commands:
+  hostname <name>           - Change hostname
+  interface <port>          - Enter interface configuration
     Ethernet                - Ethernet IEEE 802.3
     FastEthernet            - FastEthernet IEEE 802.3
     GigabitEthernet        - GigabitEthernet IEEE 802.3z
     Port-channel            - Ethernet Channel of interfaces
     Vlan                    - Catalyst Vlans
-    interface range <ports>   - Select multiple interfaces
-    vlan <id>                 - Enter VLAN configuration
-    no vlan <id>              - Delete VLAN
-    enable secret <password>  - Enable password (encrypted)
-    enable password <password> - Enable password (plain text)
-    service password-encryption - Encrypt passwords
-    username <name> password <password> - Create user
-    line console 0            - Console line configuration
-    line vty <start> <end>    - VTY line configuration
-    banner motd #<message>#   - Set MOTD banner
-    ip default-gateway <ip>   - Default gateway
-    ip domain-name <name>     - Domain name
-    ip dhcp snooping          - Enable DHCP snooping
-    ip dhcp snooping vlan <vlan> - DHCP snooping on VLAN
-    ip arp inspection vlan <vlan> - ARP inspection on VLAN
-    spanning-tree mode <mode> - Set STP mode
-    vtp mode <mode>           - Set VTP mode
-    vtp domain <name>         - Set VTP domain
-    cdp run                   - Enable CDP
-    no cdp run                - Disable CDP   
-    exit                      - Return to privileged mode
-    end                       - Return to privileged mode
-    do <command>              - Run privileged commands
+  interface range <ports>   - Select multiple interfaces
+  vlan <id>                 - Enter VLAN configuration
+  no vlan <id>              - Delete VLAN
+  enable secret <password>  - Enable password (encrypted)
+  enable password <password> - Enable password (plain text)
+  service password-encryption - Encrypt passwords
+  username <name> password <password> - Create user
+  line console 0            - Console line configuration
+  line vty <start> <end>    - VTY line configuration
+  banner motd #<message>#   - Set MOTD banner
+  banner login #<message>#  - Set login banner
+  ip default-gateway <ip>   - Default gateway
+  ip domain-name <name>     - Domain name
+  ip domain-lookup          - Enable DNS lookup
+  no ip domain-lookup       - Disable DNS lookup
+  ip dhcp snooping          - Enable DHCP snooping
+  ip dhcp snooping vlan <vlan> - DHCP snooping on VLAN
+  ip arp inspection vlan <vlan> - ARP inspection on VLAN
+  ip routing                - Enable IP routing (L3)
+  ipv6 unicast-routing      - Enable IPv6 routing
+  ip dhcp pool <name>       - Create DHCP pool
+  no ip dhcp pool <name>    - Remove DHCP pool
+  ip dhcp excluded-address <ip> - Exclude address from DHCP
+  ip access-list <name>     - Create access-list
+  ip host <name> <ip>       - Define host mapping
+  spanning-tree mode <mode> - Set STP mode
+  spanning-tree vlan <id> priority <p> - VLAN STP priority
+  vtp mode <mode>           - Set VTP mode
+  vtp domain <name>         - Set VTP domain
+  cdp run                   - Enable CDP globally
+  no cdp run                - Disable CDP globally
+  router rip                - Enable RIP routing
+  router ospf <id>          - Enable OSPF routing
+  router eigrp <as>         - Enable EIGRP routing
+  router bgp <as>           - Enable BGP routing
+  no router rip/ospf/eigrp/bgp - Disable routing protocol
+  ipv6 router rip <tag>     - Enable IPv6 RIP
+  ipv6 router ospf <id>     - Enable IPv6 OSPF
+  ip route <net> <mask> <gw> - Add static route
+  ipv6 route <net>/<pref> <gw> - Add IPv6 static route
+  ntp server <ip>           - Set NTP server
+  iot sensor <name>         - Define IoT sensor (lamp, cooler, heater, smoke, motion, etc.)
+  no iot sensor <name>      - Remove IoT sensor
+  iot name <name>           - Name the IoT device
+  iot wifi <ssid>           - Connect IoT to Wi-Fi
+  ap name <name>            - Name the Access Point
+  ap auth-mac <mac>         - AP MAC authorization
+  ap rf-channel <num>       - Set AP RF channel
+  dot11 ssid <name>         - Enter wireless SSID config
+  exit                      - Return to privileged mode
+  end                       - Return to privileged mode
+  do <command>              - Run privileged commands
 
-    Shortcuts:
-    int fa0/1   = interface FastEthernet0/1
-    int gi0/1   = interface GigabitEthernet0/1
-    int r fa0/1-24 = interface range FastEthernet0/1-24
-    en sec      = enable secret
-    ser pass    = service password-encryption
-    ban mot     = banner motd
-    ip def      = ip default-gateway
-    `,
+Shortcuts:
+  int fa0/1   = interface FastEthernet0/1
+  int gi0/1   = interface GigabitEthernet0/1
+  int r fa0/1-24 = interface range FastEthernet0/1-24
+  en sec      = enable secret
+  ser pass    = service password-encryption
+  ban mot     = banner motd
+  ip def      = ip default-gateway
+`,
     interface: `
 Available commands:
   shutdown                  - Disable port
@@ -3186,24 +3280,50 @@ Available commands:
   switchport port-security maximum <n> - Max MAC addresses
   switchport port-security violation <mode> - Violation mode
   switchport port-security mac-address <mac> - Static MAC
+  switchport port-security mac-address sticky - Sticky MAC
   switchport port-security aging time <min> - Aging time (minutes)
-  switchport port-security aging type <type> - Aging type (absolute/inactivity)
+  switchport port-security aging type <type> - Aging type
   switchport voice vlan <id>       - Voice VLAN
+  switchport block multicast      - Block multicast
+  switchport protected            - Protected port
   ip dhcp snooping trust   - DHCP snooping trust port
   ip arp inspection trust  - ARP inspection trust port
   ip verify source         - Enable IP source guard
   ip verify source port-security - IP source guard + port security
+  ip helper-address <ip>   - DHCP relay (broadcast forwarding)
+  ip nat inside            - NAT inside interface
+  ip nat outside           - NAT outside interface
   cdp enable               - Enable CDP (port)
   no cdp enable            - Disable CDP (port)
-  channel-group <id> mode <mode>   - EtherChannel
+  channel-group <id> mode <mode> - EtherChannel
+  encapsulation hdlc       - HDLC encapsulation (serial)
+  encapsulation ppp        - PPP encapsulation (serial)
+  clock rate <bps>         - Clock rate (DCE serial)
+  ppp authentication {pap|chap} - PPP authentication
+  ppp pap sent-username <u> <p> - PAP credentials
+  nameif <name>            - Interface name (Firewall)
+  security-level <0-100>   - Security level (Firewall)
   spanning-tree portfast   - Enable PortFast
   spanning-tree bpduguard enable - Enable BPDU Guard
+  spanning-tree bpduguard disable - Disable BPDU Guard
+  spanning-tree cost <c>   - STP port cost
   storm-control broadcast level <rate> - Storm control
   power inline <auto|static|never> - PoE control
+  bandwidth <kbps>         - Bandwidth
+  delay <tens-of-us>       - Delay value
+  mls qos trust {cos|dscp} - QoS trust
+  no ip proxy-arp          - Disable proxy ARP
+  no keepalive             - Disable keepalive
+  load-interval <sec>      - Load interval
+  carrier-delay <ms>       - Carrier delay
   wlan <name> <id> <ssid>  - Create WLAN (WLC only)
   security wpa psk set-key ascii 0 <pass> - Set WPA password (WLC only)
-  channel <num>             - Set RF channel (WLC only)
-  station-role root        - Set AP mode (AP only)
+  channel <num>             - Set RF channel (WLC/AP)
+  station-role <root|repeater|client> - Set AP role
+  encryption mode ciphers <aes|tkip> - Encryption (dot11)
+  ssid <name>               - Bind SSID (dot11)
+  power local <mw>          - Transmit power (dot11)
+  mac-filter                - MAC filter (dot11)
   exit                      - Return to config mode
   end                       - Return to privileged mode
 
@@ -3310,20 +3430,23 @@ Available commands:
     'ssid-config': `
 Available commands:
   authentication <open|shared|network-eap> - Authentication type
-  authentication key-management wpa version <2|3> - WPA version
-  wpa-psk ascii <password>    - WPA pre-shared key
-  guest-mode                  - Enable guest mode
+  authentication key-management wpa version <1|2> - WPA key management
+  wpa-psk ascii <password>       - WPA pre-shared key (ASCII)
+  guest-mode                  - Broadcast SSID (Beacon)
+  no guest-mode               - Stop broadcasting SSID
   exit                        - Return to config mode
   end                         - Return to privileged mode
 `,
     'dot11-config': `
 Available commands:
   encryption mode ciphers <aes-ccm|tkip|aes-tkip> - Encryption cipher
-  ssid <ssid-name>            - SSID binding
-  channel <channel>           - Radio channel
-  power <full|half|quarter|eighth|dBm> - Transmit power
-  station-role <root|repeater|client> - Station role
-  mac-filter <allow|deny> <MAC> - MAC address filter
+  ssid <ssid-name>            - Bind SSID to interface
+  no ssid <ssid-name>         - Remove SSID binding
+  channel <channel>           - Set radio channel
+  power local <mw>            - Set transmit power (mW)
+  station-role <root|repeater|client> - Set station role
+  mac-filter                  - Enable MAC filtering
+  no mac-filter               - Disable MAC filtering
   exit                        - Return to config mode
   end                         - Return to privileged mode
 `

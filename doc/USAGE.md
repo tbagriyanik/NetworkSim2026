@@ -48,6 +48,9 @@
 | `Switch(config-vlan)#` | VLAN | VLAN config (`name`, `state`) |
 | `Switch(config-router)#` | Router | RIP/OSPF config (`network`, `router-id`) |
 | `Switch(dhcp-config)#` | DHCP Pool | DHCP config (`network`, `default-router`) |
+| `Switch(config-ssid)#` | SSID Config | SSID security (`authentication`, `guest-mode`, `mbssid`) |
+| `Switch(config-dot11)#` | Dot11 Wireless | Wireless radio (`channel`, `speed`, `station-role`, `power`) |
+| `WLC(config-wlan)#` | WLAN Config | WLAN profile (`wlan`, `security`, `shutdown`) |
 | `PC>` | CMD | Windows-style commands (`ipconfig`, `ping`, `nslookup`) |
 
 ---

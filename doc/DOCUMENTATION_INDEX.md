@@ -29,8 +29,9 @@ Bu indeks, Network Simulator 2026 projesinin tüm dokümantasyon dosyalarını v
 **Amaç**: CLI komut referansı  
 **Okuma Süresi**: 15 dakika  
 **İçerik**:
-- 180+ CLI komutu
-- Tüm modlar (User EXEC, Privileged, Global, Interface, VLAN, Routing)
+- 200+ CLI komutu
+- Tüm modlar (User EXEC, Privileged, Global, Interface, VLAN, Routing, SSID, Dot11, WLAN, DHCP)
+- Seri/WAN, IoT, güvenlik duvarı komutları
 - Klavye kısayolları
 - Komut sözdizimi
 

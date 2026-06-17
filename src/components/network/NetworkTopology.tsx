@@ -1343,7 +1343,7 @@ export function NetworkTopology({
 
           dragAnimationFrameRef.current = requestAnimationFrame(() => {
             if (!canvasRef.current) { dragAnimationFrameRef.current = null; return; }
-            const rect = canvasRectRef.current ?? canvasRef.current.getBoundingClientRect();
+            const rect = canvasRef.current.getBoundingClientRect();
             const currentPan = panRef.current;
             const currentZoom = zoomRef.current;
             const currentDragStartPos = dragStartPosRef.current;
@@ -6411,7 +6411,7 @@ export function NetworkTopology({
                 style={{
                   transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                   transformOrigin: '0 0',
-                  transition: isPanning ? 'none' : 'transform 0.05s linear',
+                  transition: (isPanning || isActuallyDragging) ? 'none' : 'transform 0.05s linear',
                 }}
               >
                 {/* Clip path for canvas boundaries */}
