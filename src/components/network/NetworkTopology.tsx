@@ -565,6 +565,11 @@ export function NetworkTopology({
   const lastMouseMoveTimeRef = useRef<number>(0);
   const lastMouseMovePosRef = useRef({ x: 0, y: 0 });
 
+  // ─── Direct DOM pan transform ref (bypass React re-renders during pan) ───
+  const svgContentGroupRef = useRef<SVGGElement | null>(null);
+  // Tracks the latest pan values written directly to DOM during pan; synced to React state on mouseUp
+  const pendingPanRef = useRef<{ x: number; y: number } | null>(null);
+
   // ─── Touch performance refs ───
   const isTouchDraggingRef = useRef(false);
   const touchDraggedDeviceRef = useRef<CanvasDevice | null>(null);
@@ -1058,8 +1063,11 @@ export function NetworkTopology({
 
   const handleZoomWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
+    // Use refs for fresh values (pan state may be stale during direct DOM pan writes)
+    const currentZoom = zoomRef.current;
+    const currentPan = panRef.current;
     const zoomDelta = e.deltaY * -0.001; // Reverse direction and adjust sensitivity
-    let newZoom = zoom + zoomDelta;
+    let newZoom = currentZoom + zoomDelta;
 
     // Clamp to min/max zoom
     newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
@@ -1074,14 +1082,22 @@ export function NetworkTopology({
     const cursorY = e.clientY - rect.top;
 
     // Keep the canvas point under the cursor fixed while zooming
-    const canvasCursorX = (cursorX - pan.x) / zoom;
-    const canvasCursorY = (cursorY - pan.y) / zoom;
+    const canvasCursorX = (cursorX - currentPan.x) / currentZoom;
+    const canvasCursorY = (cursorY - currentPan.y) / currentZoom;
 
-    setPan({
+    const newPan = {
       x: cursorX - canvasCursorX * newZoom,
       y: cursorY - canvasCursorY * newZoom
-    });
-  }, [zoom, pan]);
+    };
+
+    // Write transform directly to DOM for instant feedback, then sync React state
+    const g = svgContentGroupRef.current;
+    if (g) {
+      g.style.transform = `translate(${newPan.x}px, ${newPan.y}px) scale(${newZoom})`;
+    }
+    setPan(newPan);
+    setZoom(newZoom);
+  }, []);  // Empty deps - uses only refs, stable for the lifetime of the component
 
 
   // Context menu auto-close removed - should stay open per user request
@@ -1182,6 +1198,11 @@ export function NetworkTopology({
       panStartRef.current = ps;
       setIsPanning(true);
       isPanningRef.current = true;
+      // PERFORMANCE: Hint browser that transform will change during pan (promotes to GPU layer)
+      if (svgContentGroupRef.current) {
+        svgContentGroupRef.current.style.willChange = 'transform';
+        svgContentGroupRef.current.style.transition = 'none';
+      }
       setContextMenu(null);
       return;
     } else if (e.button === 1 && !isOnEditable) {
@@ -1268,10 +1289,22 @@ export function NetworkTopology({
         lastMouseMovePosRef.current = { x: e.clientX, y: e.clientY };
 
         // Throttle pan with RAF for smooth rendering
+        // PERFORMANCE: Write transform directly to DOM to bypass React re-render on every frame.
+        // The full React state (setPan) is only synced on mouseUp.
         if (panAnimationFrameRef.current !== null) return;
         const ps = panStartRef.current;
         panAnimationFrameRef.current = requestAnimationFrame(() => {
-          setPan({ x: e.clientX - ps.x, y: e.clientY - ps.y });
+          const newPanX = e.clientX - ps.x;
+          const newPanY = e.clientY - ps.y;
+          // Write directly to the SVG <g> element's transform (no React re-render)
+          const g = svgContentGroupRef.current;
+          if (g) {
+            g.style.transform = `translate(${newPanX}px, ${newPanY}px) scale(${zoomRef.current})`;
+          }
+          // Store pending pan for sync to React state on mouseUp
+          pendingPanRef.current = { x: newPanX, y: newPanY };
+          // Also update panRef so other code that reads it gets fresh values
+          panRef.current = { x: newPanX, y: newPanY };
           panAnimationFrameRef.current = null;
         });
       } else if (isSelectingRef.current && canvasRef.current) {
@@ -1519,6 +1552,17 @@ export function NetworkTopology({
 
       setIsPanning(false);
       isPanningRef.current = false;
+      // PERFORMANCE: Sync the final pan value from direct DOM writes back to React state.
+      // During panning, we wrote directly to svgContentGroupRef.current.style.transform to avoid
+      // re-rendering the entire component on every mouse move frame.
+      if (pendingPanRef.current) {
+        setPan(pendingPanRef.current);
+        pendingPanRef.current = null;
+      }
+      // Remove will-change hint after pan ends to free GPU memory
+      if (svgContentGroupRef.current) {
+        svgContentGroupRef.current.style.willChange = '';
+      }
       setDraggedDevice(null);
       draggedDeviceRef.current = null;
       setDragStartPos(null);
@@ -1992,19 +2036,30 @@ export function NetworkTopology({
 
     if (e.touches.length === 1) {
       const touch = e.touches[0];
+      const currentPan = panRef.current;
       setTouchStart({ x: touch.clientX, y: touch.clientY });
       setIsPanning(true);
-      setPanStart({ x: touch.clientX - pan.x, y: touch.clientY - pan.y });
+      const ps = { x: touch.clientX - currentPan.x, y: touch.clientY - currentPan.y };
+      setPanStart(ps);
+      panStartRef.current = ps;
+      isPanningRef.current = true;
+      // Hint browser for GPU acceleration during touch pan
+      if (svgContentGroupRef.current) {
+        svgContentGroupRef.current.style.willChange = 'transform';
+        svgContentGroupRef.current.style.transition = 'none';
+      }
 
       // Start long-press to open context menu
       const timer = setTimeout(() => {
         openContextMenu(touch.clientX, touch.clientY, null);
         setLongPressTimer(null);
         setIsPanning(false);
+        isPanningRef.current = false;
       }, LONG_PRESS_DURATION);
       setLongPressTimer(timer);
     } else if (e.touches.length === 2) {
       setIsPanning(false);
+      isPanningRef.current = false;
       // Pinch start - track initial distance and center
       const a = e.touches[0];
       const b = e.touches[1];
@@ -2014,7 +2069,7 @@ export function NetworkTopology({
         y: (a.clientY + b.clientY) / 2
       });
     }
-  }, [longPressTimer, pan, getDistance]);
+  }, [longPressTimer, getDistance]);  // Removed pan dep - uses panRef.current instead
 
   const handleTouchMove = useCallback((e: ReactTouchEvent) => {
     if (!canvasRef.current) return;
@@ -2026,9 +2081,18 @@ export function NetworkTopology({
       setLongPressTimer(null);
     }
 
-    if (e.touches.length === 1 && isPanning) {
+    if (e.touches.length === 1 && isPanningRef.current) {
+      // PERFORMANCE: Write transform directly to DOM during touch pan to bypass React re-renders
       const touch = e.touches[0];
-      setPan({ x: touch.clientX - panStart.x, y: touch.clientY - panStart.y });
+      const ps = panStartRef.current;
+      const newPanX = touch.clientX - ps.x;
+      const newPanY = touch.clientY - ps.y;
+      const g = svgContentGroupRef.current;
+      if (g) {
+        g.style.transform = `translate(${newPanX}px, ${newPanY}px) scale(${zoomRef.current})`;
+      }
+      pendingPanRef.current = { x: newPanX, y: newPanY };
+      panRef.current = { x: newPanX, y: newPanY };
     } else if (e.touches.length === 2 && lastTouchDistance !== null && lastTouchCenter !== null) {
       const a = e.touches[0];
       const b = e.touches[1];
@@ -2040,36 +2104,49 @@ export function NetworkTopology({
       };
 
       // Calculate zoom factor with smoothing
+      const currentZoom = zoomRef.current;
+      const currentPan = panRef.current;
       const zoomFactor = newDistance / lastTouchDistance;
-      let newZoom = zoom * zoomFactor;
+      let newZoom = currentZoom * zoomFactor;
       newZoom = Math.max(MIN_ZOOM, Math.min(newZoom, MAX_ZOOM));
 
-      if (Math.abs(newZoom - zoom) > 0.01) {
+      if (Math.abs(newZoom - currentZoom) > 0.01) {
         // Adjust pan to zoom relative to the gesture center
         const rect = canvasRef.current.getBoundingClientRect();
         const cursorX = newCenter.x - rect.left;
         const cursorY = newCenter.y - rect.top;
 
-        const deltaX = cursorX - (cursorX - pan.x) * (newZoom / zoom);
-        const deltaY = cursorY - (cursorY - pan.y) * (newZoom / zoom);
+        const deltaX = cursorX - (cursorX - currentPan.x) * (newZoom / currentZoom);
+        const deltaY = cursorY - (cursorY - currentPan.y) * (newZoom / currentZoom);
 
         // Also add the pan movement of the center point itself
         const panDeltaX = newCenter.x - lastTouchCenter.x;
         const panDeltaY = newCenter.y - lastTouchCenter.y;
 
+        const newPan = { x: deltaX + panDeltaX, y: deltaY + panDeltaY };
         setZoom(newZoom);
-        setPan({ x: deltaX + panDeltaX, y: deltaY + panDeltaY });
+        setPan(newPan);
+        // Also write to DOM directly for immediate feedback
+        const g = svgContentGroupRef.current;
+        if (g) {
+          g.style.transform = `translate(${newPan.x}px, ${newPan.y}px) scale(${newZoom})`;
+        }
       } else {
         // If zoom didn't change (hit limits), at least we can pan
         const panDeltaX = newCenter.x - lastTouchCenter.x;
         const panDeltaY = newCenter.y - lastTouchCenter.y;
-        setPan(prev => ({ x: prev.x + panDeltaX, y: prev.y + panDeltaY }));
+        const newPan = { x: currentPan.x + panDeltaX, y: currentPan.y + panDeltaY };
+        setPan(newPan);
+        const g = svgContentGroupRef.current;
+        if (g) {
+          g.style.transform = `translate(${newPan.x}px, ${newPan.y}px) scale(${zoomRef.current})`;
+        }
       }
 
       setLastTouchDistance(newDistance);
       setLastTouchCenter(newCenter);
     }
-  }, [isPanning, panStart, longPressTimer, pan, zoom, lastTouchDistance, lastTouchCenter, getDistance]);
+  }, [longPressTimer, lastTouchDistance, lastTouchCenter, getDistance]);  // Removed isPanning, panStart, pan, zoom deps
 
   const handleTouchEnd = useCallback((e: globalThis.TouchEvent | ReactTouchEvent) => {
     // Clear long-press timer
@@ -2085,15 +2162,29 @@ export function NetworkTopology({
       setLastTouchCenter(null);
       setTouchStart(null);
       setIsPanning(false);
+      isPanningRef.current = false;
+      // PERFORMANCE: Sync pending pan from direct DOM writes back to React state
+      if (pendingPanRef.current) {
+        setPan(pendingPanRef.current);
+        pendingPanRef.current = null;
+      }
+      // Remove will-change hint
+      if (svgContentGroupRef.current) {
+        svgContentGroupRef.current.style.willChange = '';
+      }
     } else if (touchesLength === 1) {
       // Revert to panning with one finger if the other is lifted
       const touch = (e as ReactTouchEvent).touches[0];
       setIsPanning(true);
-      setPanStart({ x: touch.clientX - pan.x, y: touch.clientY - pan.y });
+      isPanningRef.current = true;
+      const currentPan = panRef.current;
+      const ps = { x: touch.clientX - currentPan.x, y: touch.clientY - currentPan.y };
+      setPanStart(ps);
+      panStartRef.current = ps;
       setLastTouchDistance(null);
       setLastTouchCenter(null);
     }
-  }, [longPressTimer, pan]);
+  }, [longPressTimer]);  // Removed pan dep - uses panRef.current
 
   // Handle Wheel Event for Zooming
   useEffect(() => {
@@ -3466,7 +3557,7 @@ export function NetworkTopology({
       const hostname = generateUniqueHostname(baseName, reservedHostnames);
       const generatedIp = type === 'pc' || type === 'iot' ? generateUniqueLinkLocalIp(reservedIps) : '';
       const generatedIpv6 = type === 'pc' || type === 'iot' ? generateUniqueLinkLocalIpv6(reservedIpv6s) : '';
-      
+
       if (generatedIp) {
         reservedIps.push(generatedIp);
       }
@@ -6126,7 +6217,7 @@ export function NetworkTopology({
                         {DEVICE_ICONS['iot']}
                       </div>
                       <span className="text-xs font-bold text-center">
-                        {isTR ? 'IoT Ekle' : 'Add IoT'}
+                        {isTR ? 'IoT' : 'IoT'}
                       </span>
                     </button>
                     <button
@@ -6169,41 +6260,42 @@ export function NetworkTopology({
                       };
                       const c = colorMap[type] || colorMap.console;
                       return (
-                      <button
-                        key={type}
-                        onClick={() => { onCableChange({ ...cableInfo, cableType: type }); setIsPaletteOpen(false); }}
-                        className={`flex items-center gap-3 p-3 rounded-lg transition-all
+                        <button
+                          key={type}
+                          onClick={() => { onCableChange({ ...cableInfo, cableType: type }); setIsPaletteOpen(false); }}
+                          className={`flex items-center gap-3 p-3 rounded-lg transition-all
                             ${isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-200/50'}
                             ${cableInfo.cableType === type
-                            ? isDark ? 'bg-slate-700/80 border border-slate-600' : 'bg-white border border-slate-200 shadow-sm'
-                            : 'border border-transparent'
-                          }
+                              ? isDark ? 'bg-slate-700/80 border border-slate-600' : 'bg-white border border-slate-200 shadow-sm'
+                              : 'border border-transparent'
+                            }
                             ${cableInfo.cableType === type ? c.active : `${c.inactive} ${c.hover}`}`}
-                      >
-                        <div className={`p-2 rounded-md ${cableInfo.cableType === type ? (isDark ? 'bg-slate-800' : 'bg-slate-50') : ''}`}>
-                          {type === 'straight' ? (
-                            <Cable className="w-5 h-5" />
-                          ) : type === 'crossover' ? (
-                            <LineSquiggle className="w-5 h-5" />
-                          ) : type === 'serial' ? (
-                            <Plug className="w-5 h-5" />
-                          ) : (
-                            <TrendingUpDown className="w-5 h-5" />
-                          )}
-                        </div>
-                        <div className="flex flex-col items-start">
-                          <span className="text-xs font-bold capitalize">
-                            {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : type === 'serial' ? (isTR ? 'Seri' : 'Serial') : t.console}
-                          </span>
-                          <span className="text-[9px] opacity-60">
-                            {type === 'straight' ? (isTR ? 'Standart ethernet bağlantısı' : 'Standard ethernet connection') :
-                              type === 'crossover' ? (isTR ? 'Benzer cihazlar arası' : 'Between similar devices') :
-                                type === 'serial' ? (isTR ? 'Seri WAN bağlantısı' : 'Serial WAN connection') :
-                                  (isTR ? 'Yönetim konsol bağlantısı' : 'Management console connection')}
-                          </span>
-                        </div>
-                      </button>
-                    )})}
+                        >
+                          <div className={`p-2 rounded-md ${cableInfo.cableType === type ? (isDark ? 'bg-slate-800' : 'bg-slate-50') : ''}`}>
+                            {type === 'straight' ? (
+                              <Cable className="w-5 h-5" />
+                            ) : type === 'crossover' ? (
+                              <LineSquiggle className="w-5 h-5" />
+                            ) : type === 'serial' ? (
+                              <Plug className="w-5 h-5" />
+                            ) : (
+                              <TrendingUpDown className="w-5 h-5" />
+                            )}
+                          </div>
+                          <div className="flex flex-col items-start">
+                            <span className="text-xs font-bold capitalize">
+                              {type === 'straight' ? t.straight : type === 'crossover' ? t.crossover : type === 'serial' ? (isTR ? 'Seri' : 'Serial') : t.console}
+                            </span>
+                            <span className="text-[9px] opacity-60">
+                              {type === 'straight' ? (isTR ? 'Standart ethernet bağlantısı' : 'Standard ethernet connection') :
+                                type === 'crossover' ? (isTR ? 'Benzer cihazlar arası' : 'Between similar devices') :
+                                  type === 'serial' ? (isTR ? 'Seri WAN bağlantısı' : 'Serial WAN connection') :
+                                    (isTR ? 'Yönetim konsol bağlantısı' : 'Management console connection')}
+                            </span>
+                          </div>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
                 <div className="h-4" />
@@ -6408,6 +6500,7 @@ export function NetworkTopology({
               className="block select-none print:w-full print:h-auto print:block"
             >
               <g
+                ref={svgContentGroupRef}
                 style={{
                   transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                   transformOrigin: '0 0',
