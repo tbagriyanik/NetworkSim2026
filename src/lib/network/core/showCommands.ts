@@ -89,6 +89,7 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show mac access-lists': cmdShowMacAcl,
   'show controllers': cmdShowControllers,
   'show diagnostic': cmdShowDiag,
+  'show privilege': cmdShowPrivilege,
   'show lldp': cmdShowLldp,
   'show banner motd': cmdShowBannerMotd,
   'show alias': cmdShowAlias,
@@ -4065,6 +4066,14 @@ function cmdShowControllers(state: SwitchState, input: string, ctx: CommandConte
  */
 function cmdShowDiag(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   return { success: true, output: '\nDiagnostic results: PASS\n' };
+}
+
+/**
+ * Show Privilege
+ */
+function cmdShowPrivilege(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const level = state.currentMode === 'privileged' ? 15 : 1;
+  return { success: true, output: `\nCurrent privilege level is ${level}\n` };
 }
 
 /**

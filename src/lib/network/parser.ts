@@ -1818,6 +1818,12 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 2
   },
+  'show privilege': {
+    pattern: /^show\s+(privilege|privileges)$/i,
+    modes: ['user', 'privileged'],
+    minArgs: 0,
+    maxArgs: 0
+  },
 
   // Kaydetme komutları
   'write memory': {
