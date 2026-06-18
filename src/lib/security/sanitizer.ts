@@ -39,6 +39,7 @@ export function sanitizeHTTPContent(input: string): string {
 }
 
 export function sanitizeInput(input: string): string {
+    if (typeof input !== 'string') return '';
     // Strip HTML tags and dangerous characters first
     let sanitized = input.replace(/<[^>]*>?/gm, '').replace(/[<>`]/g, '').trim();
     // Remove dangerous URI schemes recursively to prevent bypasses like "javas<javascript:>cript:"
