@@ -168,6 +168,9 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
     if (e.button !== 0) return;
     const target = e.target as HTMLElement;
     if (target.tagName === 'BUTTON' || target.closest('button')) return;
+    if (target.tagName === 'A' || target.closest('a')) return;
+    if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA') return;
+    if (target.closest('[role="button"]')) return;
 
     e.preventDefault();
     e.stopPropagation();

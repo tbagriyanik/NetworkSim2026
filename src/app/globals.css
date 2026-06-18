@@ -58,22 +58,6 @@
   animation-delay: 0.75s;
 }
 
-/* Composited SVG circle animations (GPU-accelerated) */
-@keyframes led-opacity {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 0.95; }
-}
-
-@keyframes led-ring-scale {
-  0%, 100% { transform: scale(0.75); }
-  50% { transform: scale(1.75); }
-}
-
-@keyframes led-ring-opacity {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0; }
-}
-
 @keyframes cable-source-scale {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.333); }
@@ -97,16 +81,6 @@
 @keyframes ping-glow-opacity-low {
   0%, 100% { opacity: 0.08; }
   50% { opacity: 0.2; }
-}
-
-.animate-led-opacity {
-  will-change: opacity;
-  animation: led-opacity 2s ease-in-out infinite;
-}
-
-.animate-led-ring {
-  will-change: transform, opacity;
-  animation: led-ring-scale 2s ease-in-out infinite, led-ring-opacity 2s ease-in-out infinite;
 }
 
 .animate-cable-source {

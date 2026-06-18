@@ -52,13 +52,12 @@ export function SwitchInfoPopover({ router, routerState, t, isDark, onClose, top
   const connectedPorts = topologyConnections?.filter(conn => conn.sourceDeviceId === router.id || conn.targetDeviceId === router.id).length || 0;
 
   return (
-    <div ref={containerRef} className={cn("hidden md:block absolute animate-scale-in")}
+    <div ref={containerRef} className={cn("hidden md:block fixed animate-scale-in")}
       style={{ bottom: `${position.y}px`, right: `${position.x}px`, zIndex }}
-      onPointerDown={onFocus}>
+      onPointerDown={(e) => { onFocus(); handleDragStart(e); }}>
       <div className={`rounded-2xl overflow-hidden border shadow-2xl min-w-[200px] max-w-[280px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
         <div
-          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab active:cursor-grabbing select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
-          onPointerDown={handleDragStart}
+          className={`flex items-center justify-between px-3 py-2 border-b select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
         >
           <div className="flex items-center gap-1.5">
             <SwitchIcon className="w-3.5 h-3.5 text-purple-500" />
@@ -94,18 +93,17 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
   return (
     <div
       ref={containerRef}
-      className={cn("hidden md:block absolute animate-scale-in")}
+      className={cn("hidden md:block fixed animate-scale-in")}
       style={{
         bottom: `${position.y}px`,
         right: `${position.x}px`,
         zIndex
       }}
-      onPointerDown={onFocus}
+      onPointerDown={(e) => { onFocus(); handleDragStart(e); }}
     >
       <div className={`rounded-2xl overflow-hidden border shadow-2xl min-w-[200px] max-w-[260px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
         <div
-          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab active:cursor-grabbing select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
-          onPointerDown={handleDragStart}
+          className={`flex items-center justify-between px-3 py-2 border-b select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
         >
           <div className="flex items-center gap-1.5">
             <Monitor className="w-3.5 h-3.5 text-blue-500" />
@@ -274,18 +272,17 @@ export function RouterInfoPopover({ router, routerState, t, isDark, onClose, onF
   return (
     <div
       ref={containerRef}
-      className={cn("hidden md:block absolute animate-scale-in")}
+      className={cn("hidden md:block fixed animate-scale-in")}
       style={{
         bottom: `${position.y}px`,
         right: `${position.x}px`,
         zIndex
       }}
-      onPointerDown={onFocus}
+      onPointerDown={(e) => { onFocus(); handleDragStart(e); }}
     >
       <div className={`rounded-2xl overflow-hidden border shadow-2xl min-w-[200px] max-w-[280px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
         <div
-          className={`flex items-center justify-between px-3 py-2 border-b cursor-grab active:cursor-grabbing select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
-          onPointerDown={handleDragStart}
+          className={`flex items-center justify-between px-3 py-2 border-b select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
         >
           <div className="flex items-center gap-1.5">
             {router.type.startsWith('switch') ? <SwitchIcon isL3={router.type === 'switchL3'} className="w-3.5 h-3.5 text-purple-500" /> : <RouterIcon className="w-3.5 h-3.5 text-purple-500" />}

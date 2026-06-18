@@ -5602,38 +5602,6 @@ export function NetworkTopology({
           </g>
         </g>
 
-        {/* Status LED indicator - high graphics only */}
-        {graphicsQuality === 'high' && (
-          <g style={{ pointerEvents: 'none' }}>
-            <circle
-              cx={6}
-              cy={deviceHeight - 6}
-              r={3.5}
-              fill={isPoweredOff ? '#ef4444' : hasError ? '#ef4444' : '#22c55e'}
-              opacity={isPoweredOff ? 0.5 : 0.95}
-              className={!isPoweredOff && !hasError ? 'animate-led-opacity' : undefined}
-              style={{
-                filter: isPoweredOff
-                  ? 'none'
-                  : `drop-shadow(0 0 3px ${hasError ? '#ef4444' : '#22c55e'})`
-              }}
-            />
-            {!isPoweredOff && !hasError && (
-              <circle
-                cx={6}
-                cy={deviceHeight - 6}
-                r={4}
-                fill="none"
-                stroke="#22c55e"
-                strokeWidth="1"
-                opacity="0.3"
-                className="animate-led-ring"
-                style={{ transformOrigin: `${6}px ${deviceHeight - 6}px` }}
-              />
-            )}
-          </g>
-        )}
-
         {/* Power Status Icon with Lightning - Clickable with Tooltip */}
         <Tooltip>
           <TooltipTrigger asChild>
