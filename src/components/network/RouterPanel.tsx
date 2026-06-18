@@ -178,7 +178,7 @@ export function RouterPanel({
         onEscapeKeyDown={(e) => e.preventDefault()}
         data-modal-content
         style={{
-          position: 'fixed',
+          position: 'absolute',
           left: isMobile ? 0 : modalPosition.x,
           top: isMobile ? 0 : modalPosition.y,
           width: isMobile ? '100vw' : `${modalSize.width}px`,

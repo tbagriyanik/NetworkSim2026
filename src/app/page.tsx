@@ -4654,7 +4654,7 @@ ${state.bannerMOTD}
               )}
               data-modal-content
               style={{
-                position: 'fixed',
+                position: 'absolute',
                 left: !isMobile ? pcDrag.position.x : 0,
                 top: !isMobile ? pcDrag.position.y : 0,
                 width: !isMobile ? `${pcDrag.size.width}px` : '100vw',
@@ -4794,7 +4794,7 @@ ${state.bannerMOTD}
                   />
                 )}
                 {/* Network Topology fills remaining space */}
-                <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0 overflow-hidden">
+                <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0 overflow-hidden relative">
                   <NetworkTopology
                     key={topologyKey}
                     cableInfo={cableInfo}

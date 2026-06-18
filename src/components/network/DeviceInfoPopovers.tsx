@@ -52,7 +52,7 @@ export function SwitchInfoPopover({ router, routerState, t, isDark, onClose, top
   const connectedPorts = topologyConnections?.filter(conn => conn.sourceDeviceId === router.id || conn.targetDeviceId === router.id).length || 0;
 
   return (
-    <div ref={containerRef} className={cn("hidden md:block fixed animate-scale-in")}
+    <div ref={containerRef} className={cn("hidden md:block absolute animate-scale-in")}
       style={{ bottom: `${position.y}px`, right: `${position.x}px`, zIndex }}
       onPointerDown={onFocus}>
       <div className={`rounded-2xl overflow-hidden border shadow-2xl min-w-[200px] max-w-[280px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
@@ -94,7 +94,7 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
   return (
     <div
       ref={containerRef}
-      className={cn("hidden md:block fixed animate-scale-in")}
+      className={cn("hidden md:block absolute animate-scale-in")}
       style={{
         bottom: `${position.y}px`,
         right: `${position.x}px`,
@@ -274,7 +274,7 @@ export function RouterInfoPopover({ router, routerState, t, isDark, onClose, onF
   return (
     <div
       ref={containerRef}
-      className={cn("hidden md:block fixed animate-scale-in")}
+      className={cn("hidden md:block absolute animate-scale-in")}
       style={{
         bottom: `${position.y}px`,
         right: `${position.x}px`,
