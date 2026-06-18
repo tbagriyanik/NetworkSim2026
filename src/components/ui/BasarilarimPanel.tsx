@@ -51,7 +51,7 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
   const { containerRef, handleDragStart, position, setPosition } = useDrag({
     storageKey: 'basarilarim-panel-pos',
     defaultPosition: { x: 16, y: 96 },
-    origin: 'bottom-right',
+    origin: 'bottom-left',
   });
 
   const [refreshKey, setRefreshKey] = useState(0);
@@ -145,7 +145,7 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
       className={cn("fixed animate-scale-in")}
       style={isMobile
         ? { left: 8, right: 8, top: 80, bottom: 12, zIndex }
-        : { bottom: `${position.y}px`, right: `${position.x}px`, zIndex }}
+        : { bottom: `${position.y}px`, left: `${position.x}px`, zIndex }}
     >
       <div className={`rounded-2xl overflow-hidden border shadow-2xl ${isMobile ? 'w-full h-full' : 'w-[340px]'} flex flex-col backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
         <div
@@ -166,25 +166,25 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
               <Trophy className="w-8 h-8 text-slate-400 mb-2" />
-              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.basarilarimEmpty}</p>
+              <p className={`text-xs text-center ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.basarilarimEmpty}</p>
             </div>
           ) : (
             <div className="p-2 space-y-1">
               {items.map((item, i) => {
                 const Icon = IconMap[item.type];
                 return (
-                  <div key={`${item.type}-${i}`} className={`flex items-start gap-2 p-2 rounded-lg ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'} transition-colors`}>
+                    <div key={`${item.type}-${i}`} className={`flex items-start gap-2 p-2 rounded-lg text-center ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'} transition-colors`}>
                     <div className={`mt-0.5 ${item.iconColor}`}>
                       <Icon className="w-3.5 h-3.5" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1">
+                    <div className="flex-1 min-w-0 text-center">
+                      <div className="flex items-center justify-center gap-1">
                         <span className={`text-[11px] font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.label}</span>
                         {item.date && (
                           <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{formatDate(item.date, language)}</span>
                         )}
                       </div>
-                      <span className={`text-xs truncate block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{item.detail}</span>
+                      <span className={`text-xs truncate block text-center ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{item.detail}</span>
                       {item.scoreText && (
                         <span className={`text-[10px] font-mono font-semibold ${item.iconColor}`}>{item.scoreText}</span>
                       )}

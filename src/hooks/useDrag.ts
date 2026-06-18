@@ -8,7 +8,7 @@ export interface DragPosition { x: number; y: number }
 export interface DragSize { width: number; height: number }
 
 type DragMode = 'drag-only' | 'drag-resize';
-type OriginCorner = 'top-left' | 'bottom-right';
+type OriginCorner = 'top-left' | 'bottom-right' | 'bottom-left';
 
 const SNAP_THRESHOLD = 30;
 const TOP_SAFE_OFFSET = 128; // Keep floating panels below fixed header + toolbar
@@ -106,7 +106,7 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
             const approxW = mode === 'drag-resize' ? (defaultSize?.width || 800) : 280;
             const approxH = mode === 'drag-resize' ? (defaultSize?.height || 600) : 120;
             const margin = 16;
-            if (origin === 'bottom-right') {
+            if (origin === 'bottom-right' || origin === 'bottom-left') {
               return {
                 x: Math.max(0, Math.min(parsed.x, vw - approxW)),
                 y: Math.max(0, Math.min(parsed.y, vh - approxH)),
@@ -268,6 +268,12 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
             liveDragPosRef.current = { x: newX, y: newY };
             el.style.right = `${newX}px`;
             el.style.bottom = `${newY}px`;
+          } else if (ds2.mode === 'drag-only' && ds2.origin === 'bottom-left') {
+            const newX = ds2.startPosX + dx;
+            const newY = ds2.startPosY - dy;
+            liveDragPosRef.current = { x: newX, y: newY };
+            el.style.left = `${newX}px`;
+            el.style.bottom = `${newY}px`;
           } else {
             const newX = ds2.startPosX + dx;
             const newY = ds2.startPosY + dy;
@@ -326,7 +332,7 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
           const elRect = ds.element.getBoundingClientRect();
           elW = elRect.width || 200;
           elH = elRect.height || 100;
-          if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
+          if ((ds.origin === 'bottom-right' || ds.origin === 'bottom-left') && ds.mode === 'drag-only') {
             clampedX = Math.max(0, Math.min(finalX, window.innerWidth - elW));
             const maxBottom = Math.max(0, window.innerHeight - elH - TOP_SAFE_OFFSET);
             clampedY = Math.max(0, Math.min(finalY, maxBottom));
@@ -342,6 +348,9 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
         // Commit immediately, no settle animation
         if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
           ds.element.style.right = `${clampedX}px`;
+          ds.element.style.bottom = `${clampedY}px`;
+        } else if (ds.origin === 'bottom-left' && ds.mode === 'drag-only') {
+          ds.element.style.left = `${clampedX}px`;
           ds.element.style.bottom = `${clampedY}px`;
         } else {
           ds.element.style.left = `${clampedX}px`;

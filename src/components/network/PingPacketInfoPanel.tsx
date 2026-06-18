@@ -48,7 +48,6 @@ interface PingPacketInfoPanelProps {
     sourceIp?: string;
     targetIp?: string;
 }
-
 const tr = {
     title: 'Paket Analizi',
     hop: 'Hop',
@@ -353,24 +352,19 @@ export function PingPacketInfoPanel({
     const t = language === 'tr' ? tr : en;
 
     const panelRef = useRef<HTMLDivElement>(null);
-    const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-
-    // Load saved position on mount
-    useEffect(() => {
-        if (typeof window === 'undefined' || isMobile) return;
+    const [pos, setPos] = useState<{ x: number; y: number } | null>(() => {
+        if (typeof window === 'undefined' || isMobile) return null;
         try {
             const saved = localStorage.getItem('draggable_position_ping-packet-info-panel');
             if (saved) {
                 const parsed = JSON.parse(saved);
                 if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-                    setPos({ x: parsed.x, y: parsed.y });
-                    return;
+                    return { x: parsed.x, y: parsed.y };
                 }
             }
         } catch { }
-        // Default position: centered horizontally, near bottom
-        setPos({ x: Math.max(16, (window.innerWidth - 780) / 2), y: window.innerHeight - 400 });
-    }, [isMobile]);
+        return { x: Math.max(16, (window.innerWidth - 780) / 2), y: window.innerHeight - 400 };
+    });
 
     const dragState = useRef<{
         startX: number; startY: number;
