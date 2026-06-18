@@ -37,21 +37,101 @@
 }
 
 .ping-envelope {
+  will-change: opacity;
   animation: pulse-subtle 2s ease-in-out infinite;
   transition: all 0.2s ease;
 }
 
+.iot-sound-pulse {
+  will-change: transform, opacity;
+  animation: sound-pulse 2s ease-in-out infinite;
+}
+
 .iot-motion-ping {
+  will-change: transform, opacity;
   animation: motion-ping 1.5s ease-out infinite;
 }
 
 .iot-motion-ping-delayed {
+  will-change: transform, opacity;
   animation: motion-ping 1.5s ease-out infinite;
   animation-delay: 0.75s;
 }
 
-.iot-sound-pulse {
-  animation: sound-pulse 2s ease-in-out infinite;
+/* Composited SVG circle animations (GPU-accelerated) */
+@keyframes led-opacity {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.95; }
+}
+
+@keyframes led-ring-scale {
+  0%, 100% { transform: scale(0.75); }
+  50% { transform: scale(1.75); }
+}
+
+@keyframes led-ring-opacity {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0; }
+}
+
+@keyframes cable-source-scale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.333); }
+}
+
+@keyframes cable-end-scale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+
+@keyframes ping-trail-opacity {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.45; }
+}
+
+@keyframes ping-glow-opacity {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.35; }
+}
+
+@keyframes ping-glow-opacity-low {
+  0%, 100% { opacity: 0.08; }
+  50% { opacity: 0.2; }
+}
+
+.animate-led-opacity {
+  will-change: opacity;
+  animation: led-opacity 2s ease-in-out infinite;
+}
+
+.animate-led-ring {
+  will-change: transform, opacity;
+  animation: led-ring-scale 2s ease-in-out infinite, led-ring-opacity 2s ease-in-out infinite;
+}
+
+.animate-cable-source {
+  will-change: transform;
+  animation: cable-source-scale 1.5s ease-in-out infinite;
+}
+
+.animate-cable-end {
+  will-change: transform;
+  animation: cable-end-scale 1.5s ease-in-out infinite;
+}
+
+.animate-ping-trail {
+  will-change: opacity;
+  animation: ping-trail-opacity 1.5s ease-in-out infinite;
+}
+
+.animate-ping-glow {
+  will-change: opacity;
+  animation: ping-glow-opacity 1.5s ease-in-out infinite;
+}
+
+.animate-ping-glow-low {
+  will-change: opacity;
+  animation: ping-glow-opacity-low 1.5s ease-in-out infinite;
 }
 
 .ping-element {
@@ -473,7 +553,7 @@ button,
 
 /* Smooth scroll behavior for all scrollable containers */
 @media (prefers-reduced-motion: no-preference) {
-  html {
+  * {
     scroll-behavior: smooth;
   }
 }
@@ -841,6 +921,7 @@ body.graphics-low *::before,
 body.graphics-low *::after {
   animation: none !important;
   transition: none !important;
+  scroll-behavior: auto !important;
 }
 
 body.graphics-low {

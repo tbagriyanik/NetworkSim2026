@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useIsMobile } from '@/hooks/use-breakpoint';
 import { SwitchState, Port } from '@/lib/network/types';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -33,6 +34,10 @@ interface RouterPanelProps {
   onClose: () => void;
   topologyDevices?: CanvasDevice[];
   deviceStates?: Map<string, SwitchState>;
+  modalPosition?: { x: number; y: number };
+  modalSize?: { width: number; height: number };
+  handlePointerDown?: (e: React.PointerEvent, id: string) => void;
+  handleResizeStart?: (e: React.PointerEvent, direction: string, id: string) => void;
 }
 
 interface DhcpPoolInfo {
@@ -50,10 +55,15 @@ export function RouterPanel({
   isVisible,
   onClose,
   topologyDevices = [],
-  deviceStates
+  deviceStates,
+  modalPosition = { x: 0, y: 0 },
+  modalSize = { width: 896, height: 600 },
+  handlePointerDown,
+  handleResizeStart,
 }: RouterPanelProps) {
   const { t, language } = useLanguage();
   const { theme } = useTheme();
+  const isMobile = useIsMobile();
   const isDark = theme === 'dark';
 
   const [activeTab, setActiveTab] = useState<'overview' | 'ports' | 'wifi' | 'dhcp'>('overview');
@@ -158,8 +168,36 @@ export function RouterPanel({
     <Dialog open={isVisible} onOpenChange={(open) => {
       if (!open) onClose();
     }} modal={false}>
-      <DialogContent className="max-w-4xl max-h-[80vh] p-0" showCloseButton={false} onPointerDownOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="p-4 border-b">
+      <DialogContent
+        className={cn(
+          "p-0 flex flex-col top-auto left-auto translate-x-0 translate-y-0 liquid-glass-light",
+          isDark ? "bg-slate-950/80 border-white/10" : "bg-white/70 border-white/70"
+        )}
+        showCloseButton={false}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        data-modal-content
+        style={{
+          position: 'fixed',
+          left: isMobile ? 0 : modalPosition.x,
+          top: isMobile ? 0 : modalPosition.y,
+          width: isMobile ? '100vw' : `${modalSize.width}px`,
+          height: isMobile ? '100vh' : `${modalSize.height}px`,
+          maxWidth: 'none',
+          maxHeight: isMobile ? '100vh' : '80vh',
+          borderRadius: isMobile ? 0 : '1rem',
+          borderWidth: 3,
+        }}
+      >
+        <div className="relative flex flex-col h-full overflow-hidden rounded-2xl shadow-2xl">
+        <DialogHeader
+          className={cn(
+            "p-4 border-b cursor-grab active:cursor-grabbing select-none touch-none min-h-[52px]",
+            isDark ? "border-white/10 bg-slate-900/75" : "border-white/70 bg-white/80"
+          )}
+          data-modal-header
+          onPointerDown={(e) => handlePointerDown?.(e, 'router')}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Tooltip>
@@ -584,6 +622,24 @@ export function RouterPanel({
             )}
           </div>
         </ScrollArea>
+          {/* Resize handles */}
+          {!isMobile && handleResizeStart && (
+            <>
+              <div className="absolute left-0 top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none bg-transparent hover:bg-purple-500/10" onPointerDown={(e) => handleResizeStart(e, 'w', 'router')} />
+              <div className="absolute -right-[5px] top-0 bottom-0 w-[10px] cursor-ew-resize select-none touch-none rounded-r-lg bg-transparent hover:bg-purple-500/20" onPointerDown={(e) => handleResizeStart(e, 'e', 'router')} />
+              <div className="absolute -top-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-t-lg bg-transparent hover:bg-purple-500/20" onPointerDown={(e) => handleResizeStart(e, 'n', 'router')} />
+              <div className="absolute -bottom-[5px] left-[10px] right-8 z-20 h-[10px] cursor-ns-resize select-none touch-none rounded-b-lg bg-transparent hover:bg-purple-500/20" onPointerDown={(e) => handleResizeStart(e, 's', 'router')} />
+              <div className="absolute -left-[5px] -top-[5px] z-20 h-[10px] w-[10px] cursor-nw-resize select-none touch-none bg-transparent hover:bg-purple-500/20" onPointerDown={(e) => handleResizeStart(e, 'nw', 'router')} />
+              <div className="absolute -right-[5px] -top-[5px] z-20 h-[10px] w-[10px] cursor-ne-resize select-none touch-none bg-transparent hover:bg-purple-500/20" onPointerDown={(e) => handleResizeStart(e, 'ne', 'router')} />
+              <div className="absolute -left-[5px] -bottom-[5px] z-20 h-[10px] w-[10px] cursor-sw-resize select-none touch-none bg-transparent hover:bg-purple-500/20" onPointerDown={(e) => handleResizeStart(e, 'sw', 'router')} />
+              <div className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-purple-400/30 bg-purple-500/30 text-purple-100/80 hover:bg-purple-500/30 hover:text-white flex items-center justify-center" onPointerDown={(e) => handleResizeStart(e, 'se', 'router')}>
+                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M6 13L13 6" /><path d="M9.5 13L13 9.5" /><path d="M12.5 13L13 12.5" />
+                </svg>
+              </div>
+            </>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

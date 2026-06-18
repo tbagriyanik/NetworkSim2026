@@ -27,7 +27,7 @@ import { useEnvironment } from '@/lib/store/appStore';
 import { Plus, Power, Trash2, Monitor, Network, Laptop, X, Cable, LineSquiggle, Plug, TrendingUpDown } from "lucide-react";
 import { normalizeMAC } from '@/lib/utils';
 import { getDeviceWidth, getDeviceHeight } from './networkTopology.helpers';
-import { CABLE_COLORS, DRAG_THRESHOLD, LONG_PRESS_DURATION, VIRTUAL_CANVAS_WIDTH_MOBILE, VIRTUAL_CANVAS_HEIGHT_MOBILE, VIRTUAL_CANVAS_WIDTH_DESKTOP, VIRTUAL_CANVAS_HEIGHT_DESKTOP, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM, NOTE_COLORS, NOTE_FONTS_DESKTOP as NOTE_FONTS, NOTE_FONT_SIZES, NOTE_OPACITY as NOTE_OPACITY_OPTIONS, PC_PORT_SPACING, PORT_SPACING, PORT_START_X, PORT_START_Y, PORT_COLORS, STATUS_COLORS } from './networkTopology.constants';
+import { CABLE_COLORS, DRAG_THRESHOLD, LONG_PRESS_DURATION, VIRTUAL_CANVAS_WIDTH_MOBILE, VIRTUAL_CANVAS_HEIGHT_MOBILE, VIRTUAL_CANVAS_WIDTH_DESKTOP, VIRTUAL_CANVAS_HEIGHT_DESKTOP, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM, NOTE_COLORS, NOTE_FONTS_DESKTOP as NOTE_FONTS, NOTE_FONT_SIZES, NOTE_OPACITY as NOTE_OPACITY_OPTIONS, PC_PORT_SPACING, PORT_SPACING, PORT_START_X, PORT_START_Y, PORT_COLORS, STATUS_COLORS, MOMENTUM_THRESHOLD, MOMENTUM_DECAY, MOMENTUM_MIN_SPEED } from './networkTopology.constants';
 import { errorHandler, CLIPBOARD_ERRORS } from '@/lib/errors/errorHandler';
 import { buildHopPacketInfos } from './PingPacketInfoPanel';
 import { logger } from '@/lib/logger';
@@ -561,6 +561,7 @@ export function NetworkTopology({
   const snapToGridRef = useRef(true);
   const isDrawingConnectionRef = useRef(false);
   const panAnimationFrameRef = useRef<number | null>(null);
+  const momentumAnimationFrameRef = useRef<number | null>(null);
   const velocityRef = useRef({ x: 0, y: 0 });
   const lastMouseMoveTimeRef = useRef<number>(0);
   const lastMouseMovePosRef = useRef({ x: 0, y: 0 });
@@ -1478,6 +1479,10 @@ export function NetworkTopology({
         cancelAnimationFrame(mousePosAnimationFrameRef.current);
         mousePosAnimationFrameRef.current = null;
       }
+      if (momentumAnimationFrameRef.current) {
+        cancelAnimationFrame(momentumAnimationFrameRef.current);
+        momentumAnimationFrameRef.current = null;
+      }
 
       // Right-click context menu handled by onContextMenu event only
 
@@ -1559,8 +1564,41 @@ export function NetworkTopology({
         setPan(pendingPanRef.current);
         pendingPanRef.current = null;
       }
-      // Remove will-change hint after pan ends to free GPU memory
-      if (svgContentGroupRef.current) {
+
+      // MOMENTUM SCROLL: Smooth inertia effect on pan release
+      if (!isActuallyDraggingRef.current && !document.body.classList.contains('graphics-low')) {
+        const vel = velocityRef.current;
+        const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
+        if (speed > MOMENTUM_THRESHOLD && svgContentGroupRef.current) {
+          const g = svgContentGroupRef.current;
+          g.style.willChange = 'transform';
+          let mVelX = vel.x;
+          let mVelY = vel.y;
+          let mPanX = panRef.current.x;
+          let mPanY = panRef.current.y;
+          const animateMomentum = () => {
+            mVelX *= MOMENTUM_DECAY;
+            mVelY *= MOMENTUM_DECAY;
+            mPanX += mVelX;
+            mPanY += mVelY;
+            g.style.transform = `translate(${mPanX}px, ${mPanY}px) scale(${zoomRef.current})`;
+            panRef.current = { x: mPanX, y: mPanY };
+            const remainingSpeed = Math.sqrt(mVelX * mVelX + mVelY * mVelY);
+            if (remainingSpeed > MOMENTUM_MIN_SPEED) {
+              momentumAnimationFrameRef.current = requestAnimationFrame(animateMomentum);
+            } else {
+              momentumAnimationFrameRef.current = null;
+              setPan({ x: mPanX, y: mPanY });
+              g.style.willChange = '';
+            }
+          };
+          momentumAnimationFrameRef.current = requestAnimationFrame(animateMomentum);
+        }
+      }
+      velocityRef.current = { x: 0, y: 0 };
+
+      // Remove will-change hint after pan/momentum ends
+      if (!momentumAnimationFrameRef.current && svgContentGroupRef.current) {
         svgContentGroupRef.current.style.willChange = '';
       }
       setDraggedDevice(null);
@@ -1604,6 +1642,7 @@ export function NetworkTopology({
       if (dragAnimationFrameRef.current) cancelAnimationFrame(dragAnimationFrameRef.current);
       if (panAnimationFrameRef.current) cancelAnimationFrame(panAnimationFrameRef.current);
       if (mousePosAnimationFrameRef.current) cancelAnimationFrame(mousePosAnimationFrameRef.current);
+      if (momentumAnimationFrameRef.current) cancelAnimationFrame(momentumAnimationFrameRef.current);
     };
   }, []);
   // Global touch event handlers for device dragging on mobile
@@ -4929,6 +4968,7 @@ export function NetworkTopology({
         transform={`translate(${device.x}, ${device.y})`}
         className={`${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isDragging ? 'opacity-80' : ''}`}
         data-device-id={device.id}
+        style={{ transition: isActuallyDragging ? 'none' : 'transform 0.12s ease-out' }}
       >
         {/* Selection glow effect */}
         {isSelected && (
@@ -5531,16 +5571,13 @@ export function NetworkTopology({
               r={3.5}
               fill={isPoweredOff ? '#ef4444' : hasError ? '#ef4444' : '#22c55e'}
               opacity={isPoweredOff ? 0.5 : 0.95}
+              className={!isPoweredOff && !hasError ? 'animate-led-opacity' : undefined}
               style={{
                 filter: isPoweredOff
                   ? 'none'
                   : `drop-shadow(0 0 3px ${hasError ? '#ef4444' : '#22c55e'})`
               }}
-            >
-              {!isPoweredOff && !hasError && (
-                <animate attributeName="opacity" values="0.6;0.95;0.6" dur="2s" repeatCount="indefinite" />
-              )}
-            </circle>
+            />
             {!isPoweredOff && !hasError && (
               <circle
                 cx={6}
@@ -5550,10 +5587,9 @@ export function NetworkTopology({
                 stroke="#22c55e"
                 strokeWidth="1"
                 opacity="0.3"
-              >
-                <animate attributeName="r" values="3;7;3" dur="2s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite" />
-              </circle>
+                className="animate-led-ring"
+                style={{ transformOrigin: `${6}px ${deviceHeight - 6}px` }}
+              />
             )}
           </g>
         )}
@@ -6115,10 +6151,9 @@ export function NetworkTopology({
           r={12}
           fill={CABLE_COLORS[cableInfo.cableType].primary}
           opacity="0.15"
-          className="pointer-events-none"
-        >
-          <animate attributeName="r" values="12;16;12" dur="1.5s" repeatCount="indefinite" />
-        </circle>
+          className="pointer-events-none animate-cable-source"
+          style={{ transformOrigin: `${source.x}px ${source.y}px` }}
+        />
 
         {/* End point circle */}
         <circle
@@ -6127,10 +6162,9 @@ export function NetworkTopology({
           r={8}
           fill={CABLE_COLORS[cableInfo.cableType].primary}
           opacity="0.4"
-          className="pointer-events-none"
-        >
-          <animate attributeName="r" values="8;10;8" dur="1.5s" repeatCount="indefinite" />
-        </circle>
+          className="pointer-events-none animate-cable-end"
+          style={{ transformOrigin: `${mousePos.x}px ${mousePos.y}px` }}
+        />
 
         {/* Kablo tipi göstergesi */}
         <g transform={`translate(${(source.x + mousePos.x) / 2}, ${(source.y + mousePos.y) / 2 - 20})`}>
@@ -7348,20 +7382,17 @@ export function NetworkTopology({
                             const opacity = Math.max(0, 0.4 - i * 0.07);
                             const radius = Math.max(1.5, 5 - i * 0.7);
                             return (
-                              <circle
-                                key={i}
-                                cx={tx}
-                                cy={ty}
-                                r={radius}
-                                fill="#06b6d4"
-                                opacity={opacity}
-                                filter={i === 0 ? 'url(#packetGlow)' : undefined}
-                                style={{ pointerEvents: 'none' }}
-                              >
-                                {i === 0 && (
-                                  <animate attributeName="opacity" values="0.25;0.45;0.25" dur="1.5s" repeatCount="indefinite" />
-                                )}
-                              </circle>
+                            <circle
+                              key={i}
+                              cx={tx}
+                              cy={ty}
+                              r={radius}
+                              fill="#06b6d4"
+                              opacity={opacity}
+                              filter={i === 0 ? 'url(#packetGlow)' : undefined}
+                              className={i === 0 ? 'animate-ping-trail' : undefined}
+                              style={{ pointerEvents: 'none' }}
+                            />
                             );
                           })
                         )}
@@ -7373,13 +7404,9 @@ export function NetworkTopology({
                         >
                           {/* Glow highlight */}
                           {graphicsQuality === 'high' ? (
-                            <circle cx="0" cy="0" r="16" fill="#06b6d4" opacity="0.2" filter="url(#packetGlow)">
-                              <animate attributeName="opacity" values="0.15;0.35;0.15" dur="1.5s" repeatCount="indefinite" />
-                            </circle>
+                            <circle cx="0" cy="0" r="16" fill="#06b6d4" opacity="0.2" filter="url(#packetGlow)" className="animate-ping-glow" />
                           ) : (
-                            <circle cx="0" cy="0" r="14" fill="#06b6d4" opacity="0.1">
-                              <animate attributeName="opacity" values="0.08;0.2;0.08" dur="1.5s" repeatCount="indefinite" />
-                            </circle>
+                            <circle cx="0" cy="0" r="14" fill="#06b6d4" opacity="0.1" className="animate-ping-glow-low" />
                           )}
                           <rect x="-10" y="-7" width="20" height="14" rx="2" fill="#06b6d4" stroke="#0891b2" strokeWidth="1.5" />
                           <path d="M-8 -3 L0 4 L8 -3" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

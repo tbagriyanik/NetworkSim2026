@@ -1057,6 +1057,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   const pcDrag = useDrag({ mode: 'drag-resize', storageKey: 'pc-modal-position', defaultSize: { width: 800, height: 600 }, disableSnap: true });
   const firewallDrag = useDrag({ mode: 'drag-resize', storageKey: 'firewall-modal-position', defaultSize: { width: 600, height: 500 }, disableSnap: true });
   const unifiedDrag = useDrag({ mode: 'drag-resize', storageKey: 'unified-modal-position', defaultSize: { width: 1200, height: 700 }, disableSnap: true });
+  const routerDrag = useDrag({ mode: 'drag-resize', storageKey: 'router-modal-position', defaultSize: { width: 896, height: 600 }, disableSnap: true });
 
   // Get current state helper
   const getCurrentState = useCallback((): ProjectState => ({
@@ -4466,7 +4467,7 @@ ${state.bannerMOTD}
           </AlertDialog>
 
           {/* Unified Device Panel (CLI + Tasks) */}
-          {showUnifiedDeviceModal && <UnifiedDevicePanel
+          <UnifiedDevicePanel
             isOpen={showUnifiedDeviceModal}
             onOpenChange={setShowUnifiedDeviceModal}
             activeTab={unifiedDeviceActiveTab}
@@ -4496,10 +4497,10 @@ ${state.bannerMOTD}
             modalSize={unifiedDrag.size}
             handlePointerDown={unifiedDrag.handlePointerDown}
             handleResizeStart={unifiedDrag.handleResizeStart}
-          />}
+          />
 
           {/* Firewall Configuration Modal */}
-          {showFirewallPanel && <Dialog open={showFirewallPanel} onOpenChange={(open) => {
+          <Dialog open={showFirewallPanel} onOpenChange={(open) => {
             setShowFirewallPanel(open);
             if (!open) setFirewallActiveTab('console');
           }} modal={false}>
@@ -4638,10 +4639,10 @@ ${state.bannerMOTD}
                 )}
               </div>
             </DialogContent>
-          </Dialog>}
+          </Dialog>
 
           {/* PC Terminal Modal */}
-          {showPCPanel && <Dialog open={showPCPanel} onOpenChange={setShowPCPanel} modal={false}>
+          <Dialog open={showPCPanel} onOpenChange={setShowPCPanel} modal={false}>
             <DialogContent
               showCloseButton={false}
               onEscapeKeyDown={(e) => e.preventDefault()}
@@ -4670,7 +4671,7 @@ ${state.bannerMOTD}
               )}>
                 <DialogHeader
                   className={cn(
-                    "p-3 sm:p-4 border-b cursor-grab active:cursor-grabbing select-none touch-none sticky top-0 z-10 backdrop-blur-xl",
+                    "p-3 sm:p-4 border-b cursor-grab active:cursor-grabbing select-none touch-none sticky top-0 z-10 backdrop-blur-xl min-h-[48px]",
                     isDark ? "border-white/10 bg-slate-900/75" : "border-white/70 bg-white/80"
                   )}
                   data-modal-header
@@ -4745,16 +4746,20 @@ ${state.bannerMOTD}
                 )}
               </div>
             </DialogContent>
-          </Dialog>}
+          </Dialog>
 
           {/* Router Info Panel Modal */}
-          {showRouterPanel && <RouterPanel
+          <RouterPanel
             deviceId={showRouterDeviceId}
             isVisible={showRouterPanel}
             onClose={() => setShowRouterPanel(false)}
             topologyDevices={topologyDevices || undefined}
             deviceStates={deviceStates}
-          />}
+            modalPosition={routerDrag.position}
+            modalSize={routerDrag.size}
+            handlePointerDown={routerDrag.handlePointerDown}
+            handleResizeStart={routerDrag.handleResizeStart}
+          />
 
           {/* Main Content - Fits between header and footer with scroll */}
           <main className={`overflow-hidden flex flex-col min-h-0 h-[calc(100vh-44px)] pt-[72px] ${activeTab === 'topology' ? 'md:pt-[130px]' : 'md:pt-[72px]'}`}>

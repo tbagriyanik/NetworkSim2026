@@ -201,6 +201,8 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
     const modalElement = (e.currentTarget as HTMLElement).closest('[data-modal-content]') as HTMLElement;
     if (!modalElement) return;
 
+    modalElement.style.transition = 'none';
+
     const pos = positionRef.current;
     dragRef.current = {
       active: true, id, type: 'drag', mode: 'drag-resize', origin,
@@ -251,14 +253,15 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
             const newX = ds2.startPosX - dx;
             const newY = ds2.startPosY - dy;
             liveDragPosRef.current = { x: newX, y: newY };
-            el.style.transform = `translate(${dx}px, ${dy}px)`;
+            el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
           } else {
             const newX = ds2.startPosX + dx;
             const newY = ds2.startPosY + dy;
             liveDragPosRef.current = { x: newX, y: newY };
-            el.style.transform = `translate(${dx}px, ${dy}px)`;
+            el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
           }
           el.style.willChange = 'transform';
+          el.style.contain = 'layout style';
           el.style.transition = 'none';
         } else if (ds2.type === 'resize' && ds2.direction) {
           const dx2 = e.clientX - ds2.startX;
@@ -271,6 +274,7 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
           if (ds2.direction.includes('n')) { newH = Math.max(ds2.minSize.height, ds2.startH - dy2); newY = ds2.startPosY + (ds2.startH - newH); }
 
           el.style.willChange = 'width, height, left, top';
+          el.style.contain = 'layout style paint';
           el.style.width = `${newW}px`;
           el.style.height = `${newH}px`;
           el.style.left = `${newX}px`;
@@ -287,30 +291,17 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
 
       if (ds.element) {
         ds.element.style.willChange = '';
-        ds.element.style.transition = '';
         ds.element.style.cursor = '';
-        ds.element.style.transform = '';
+        ds.element.style.contain = '';
 
-        let finalX: number, finalY: number;
+        const livePos = liveDragPosRef.current;
+        const finalX = livePos?.x ?? ds.startPosX;
+        const finalY = livePos?.y ?? ds.startPosY;
         let finalW = ds.startW, finalH = ds.startH;
-
-        if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
-          finalX = liveDragPosRef.current?.x ?? ds.startPosX;
-          finalY = liveDragPosRef.current?.y ?? ds.startPosY;
-          ds.element.style.right = `${finalX}px`;
-          ds.element.style.bottom = `${finalY}px`;
-        } else {
-          finalX = liveDragPosRef.current?.x ?? ds.startPosX;
-          finalY = liveDragPosRef.current?.y ?? ds.startPosY;
-          ds.element.style.left = `${finalX}px`;
-          ds.element.style.top = `${finalY}px`;
-        }
 
         if (ds.type === 'resize') {
           finalW = parseInt(ds.element.style.width) || ds.startW;
           finalH = parseInt(ds.element.style.height) || ds.startH;
-          finalX = parseInt(ds.element.style.left) ?? ds.startPosX;
-          finalY = parseInt(ds.element.style.top) ?? ds.startPosY;
         }
 
         // Clamp position to viewport
@@ -323,20 +314,48 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
           elW = elRect.width || 200;
           elH = elRect.height || 100;
           if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
-            // finalX is `right`, finalY is `bottom`
             clampedX = Math.max(0, Math.min(finalX, window.innerWidth - elW));
-            // For bottom-origin panels: limit bottom offset so panel top never goes above safe header area.
             const maxBottom = Math.max(0, window.innerHeight - elH - TOP_SAFE_OFFSET);
             clampedY = Math.max(0, Math.min(finalY, maxBottom));
           } else {
             clampedX = Math.max(margin - elW, Math.min(finalX, window.innerWidth - margin));
             clampedY = Math.max(TOP_SAFE_OFFSET, Math.min(finalY, window.innerHeight - margin));
           }
-          // Snap to edges
           const snapped = snapToEdge(clampedX, clampedY, elW, elH, ds.disableSnap);
           clampedX = snapped.x;
           clampedY = snapped.y;
         }
+
+        // Smooth settle: animate transform from current offset to final clamped offset,
+        // then commit left/top and clear transform after animation completes
+        if (ds.type === 'drag') {
+          const settleDx = clampedX - ds.startPosX;
+          const settleDy = clampedY - ds.startPosY;
+          ds.element.style.transition = 'transform 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+          ds.element.style.transform = `translate3d(${settleDx}px, ${settleDy}px, 0)`;
+          const commitElement = ds.element;
+          setTimeout(() => {
+            if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
+              commitElement.style.right = `${clampedX}px`;
+              commitElement.style.bottom = `${clampedY}px`;
+            } else {
+              commitElement.style.left = `${clampedX}px`;
+              commitElement.style.top = `${clampedY}px`;
+            }
+            commitElement.style.transform = '';
+            commitElement.style.transition = '';
+          }, 200);
+        } else {
+          // Resize: snap immediately (transform not used during resize)
+          if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
+            ds.element.style.right = `${clampedX}px`;
+            ds.element.style.bottom = `${clampedY}px`;
+          } else {
+            ds.element.style.left = `${clampedX}px`;
+            ds.element.style.top = `${clampedY}px`;
+          }
+        }
+
         const finalPos = { x: clampedX, y: clampedY };
         const finalSize = { width: Math.max(ds.minSize.width, finalW), height: Math.max(ds.minSize.height, finalH) };
 
@@ -475,8 +494,6 @@ export function GlobalDragManager() {
       if (state.animFrame !== null) { cancelAnimationFrame(state.animFrame); state.animFrame = null; }
       if (!state.active || !state.el) { state.active = false; return; }
       state.el.style.willChange = '';
-      state.el.style.transition = '';
-      state.el.style.transform = 'none';
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       const finalLeft = state.offsetX + state.deltaX;
@@ -495,9 +512,25 @@ export function GlobalDragManager() {
         clampedLeft = snapped.x;
         clampedTop = snapped.y;
       }
-      state.el.style.position = 'fixed';
-      state.el.style.left = `${clampedLeft}px`;
-      state.el.style.top = `${clampedTop}px`;
+      // Smooth settle: animate transform from current drag offset to final clamped offset
+      if (state.deltaX !== 0 || state.deltaY !== 0) {
+        state.el.style.transition = 'transform 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        state.el.style.transform = `translate3d(${clampedLeft - state.offsetX}px, ${clampedTop - state.offsetY}px, 0)`;
+        const commitEl = state.el;
+        setTimeout(() => {
+          commitEl.style.position = 'fixed';
+          commitEl.style.left = `${clampedLeft}px`;
+          commitEl.style.top = `${clampedTop}px`;
+          commitEl.style.transform = '';
+          commitEl.style.transition = '';
+        }, 200);
+      } else {
+        state.el.style.position = 'fixed';
+        state.el.style.left = `${clampedLeft}px`;
+        state.el.style.top = `${clampedTop}px`;
+        state.el.style.transform = '';
+        state.el.style.transition = '';
+      }
       if (state.id) {
         try { localStorage.setItem(`draggable_position_${state.id}`, JSON.stringify({ x: clampedLeft, y: clampedTop })); } catch { }
       }

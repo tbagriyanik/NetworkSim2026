@@ -132,6 +132,7 @@ export function ModernPanel({
                 panelRef.current.style.width = `${newWidth}px`;
                 panelRef.current.style.height = `${newHeight}px`;
                 panelRef.current.style.willChange = 'width, height';
+                panelRef.current.style.contain = 'layout style paint';
             });
         };
 
@@ -156,6 +157,7 @@ export function ModernPanel({
                 setWidth(finalWidth);
                 setHeight(finalHeight);
                 panelRef.current.style.willChange = '';
+                panelRef.current.style.contain = '';
             }
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
@@ -226,13 +228,10 @@ export function ModernPanel({
                 const deltaX = moveEvent.clientX - dragStateRef.current.startX;
                 const deltaY = moveEvent.clientY - dragStateRef.current.startY;
 
-                const newLeft = dragStateRef.current.startLeft + deltaX;
-                const newTop = dragStateRef.current.startTop + deltaY;
-
-                // Direct DOM update with batched style changes
-                panelRef.current.style.left = `${newLeft}px`;
-                panelRef.current.style.top = `${newTop}px`;
-                panelRef.current.style.willChange = 'left, top';
+                // Use GPU-accelerated transform for smooth drag
+                panelRef.current.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+                panelRef.current.style.willChange = 'transform';
+                panelRef.current.style.contain = 'layout style paint';
             });
         };
 
@@ -253,6 +252,23 @@ export function ModernPanel({
 
             if (panelRef.current) {
                 panelRef.current.style.willChange = '';
+                panelRef.current.style.contain = '';
+                const el = panelRef.current;
+                const startLeft = dragStateRef.current.startLeft;
+                const startTop = dragStateRef.current.startTop;
+                const finalLeft = startLeft + (upEvent.clientX - dragStateRef.current.startX);
+                const finalTop = startTop + (upEvent.clientY - dragStateRef.current.startY);
+                // Smooth settle: animate transform to final offset, then commit left/top
+                const settleDx = finalLeft - startLeft;
+                const settleDy = finalTop - startTop;
+                el.style.transition = 'transform 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                el.style.transform = `translate3d(${settleDx}px, ${settleDy}px, 0)`;
+                setTimeout(() => {
+                    el.style.left = `${finalLeft}px`;
+                    el.style.top = `${finalTop}px`;
+                    el.style.transform = '';
+                    el.style.transition = '';
+                }, 200);
             }
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
