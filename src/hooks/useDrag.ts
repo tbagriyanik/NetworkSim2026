@@ -170,8 +170,14 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
     if (target.tagName === 'BUTTON' || target.closest('button')) return;
 
     e.preventDefault();
+    e.stopPropagation();
     const el = containerRef.current;
     if (!el) return;
+
+    // Capture pointer if this is a pointer event
+    if ('setPointerCapture' in (e as React.PointerEvent) && (e as React.PointerEvent).pointerId) {
+      el.setPointerCapture((e as React.PointerEvent).pointerId);
+    }
 
     const pos = positionRef.current;
     dragRef.current = {
@@ -183,7 +189,7 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
       disableSnap,
     };
 
-    el.style.cursor = 'grabbing';
+    document.body.style.cursor = 'grabbing';
     el.style.transition = 'none';
     el.style.willChange = origin === 'top-left' ? 'left, top' : 'bottom, right';
     setIsDragging(true);
@@ -202,6 +208,7 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
     if (!modalElement) return;
 
     modalElement.style.transition = 'none';
+    document.body.style.cursor = 'grabbing';
 
     const pos = positionRef.current;
     dragRef.current = {
@@ -240,13 +247,17 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
       const ds = dragRef.current;
       if (!ds?.active || !ds.element) return;
 
+      // Capture coordinates immediately
+      const clientX = e.clientX;
+      const clientY = e.clientY;
+
       if (animFrameRef.current !== null) cancelAnimationFrame(animFrameRef.current);
       animFrameRef.current = requestAnimationFrame(() => {
         const ds2 = dragRef.current;
         if (!ds2?.active || !ds2.element) return;
         const el = ds2.element;
-        const dx = e.clientX - ds2.startX;
-        const dy = e.clientY - ds2.startY;
+        const dx = clientX - ds2.startX;
+        const dy = clientY - ds2.startY;
 
         if (ds2.type === 'drag') {
           if (ds2.mode === 'drag-only' && ds2.origin === 'bottom-right') {
@@ -264,8 +275,8 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
           el.style.contain = 'layout style';
           el.style.transition = 'none';
         } else if (ds2.type === 'resize' && ds2.direction) {
-          const dx2 = e.clientX - ds2.startX;
-          const dy2 = e.clientY - ds2.startY;
+          const dx2 = clientX - ds2.startX;
+          const dy2 = clientY - ds2.startY;
           let newW = ds2.startW, newH = ds2.startH, newX = ds2.startPosX, newY = ds2.startPosY;
 
           if (ds2.direction.includes('e')) newW = Math.max(ds2.minSize.width, ds2.startW + dx2);
@@ -291,8 +302,8 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
 
       if (ds.element) {
         ds.element.style.willChange = '';
-        ds.element.style.cursor = '';
         ds.element.style.contain = '';
+        document.body.style.cursor = '';
 
         const livePos = liveDragPosRef.current;
         const finalX = livePos?.x ?? ds.startPosX;

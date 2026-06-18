@@ -131,42 +131,81 @@ function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
       ? { x: Math.max(16, (window.innerWidth - 320) / 2), y: Math.max(HEADER_SAFE_TOP, (window.innerHeight - 340) / 2) }
       : { x: 100, y: 100 };
   });
-  const dragRef = useRef<{ startX: number; startY: number; startPosX: number; startPosY: number } | null>(null);
+  const [transform, setTransform] = useState<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
+  const dragRef = useRef<{ startX: number; startY: number; startPosX: number; startPosY: number; pointerId: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const handleDragStart = useCallback((e: React.MouseEvent) => {
+  const clamp = (x: number, y: number) => {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    return {
+      x: Math.max(0, Math.min(x, vw - 320)),
+      y: Math.max(HEADER_SAFE_TOP, Math.min(y, vh - 200)),
+    };
+  };
+
+  const handleDragStart = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
-    dragRef.current = { startX: e.clientX, startY: e.clientY, startPosX: pos.x, startPosY: pos.y };
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'grabbing';
+    e.stopPropagation();
+    if (e.button && e.button !== 0) return; // Only left mouse button
 
-    const clamp = (x: number, y: number) => {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      return {
-        x: Math.max(0, Math.min(x, vw - 320)),
-        y: Math.max(HEADER_SAFE_TOP, Math.min(y, vh - 200)),
-      };
-    };
-    const onMove = (ev: MouseEvent) => {
+    containerRef.current?.setPointerCapture(e.pointerId);
+    dragRef.current = { startX: e.clientX, startY: e.clientY, startPosX: pos.x, startPosY: pos.y, pointerId: e.pointerId };
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'grabbing';
+      containerRef.current.style.transition = 'none';
+      containerRef.current.style.willChange = 'transform';
+    }
+    document.body.style.userSelect = 'none';
+  }, [pos]);
+
+  useEffect(() => {
+    const handleMove = (ev: PointerEvent) => {
       if (!dragRef.current) return;
-      setPos(clamp(
-        dragRef.current.startPosX + ev.clientX - dragRef.current.startX,
-        dragRef.current.startPosY + ev.clientY - dragRef.current.startY,
-      ));
+      const dx = ev.clientX - dragRef.current.startX;
+      const dy = ev.clientY - dragRef.current.startY;
+      setTransform({ dx, dy });
+      if (containerRef.current) {
+        containerRef.current.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+      }
     };
-    const onUp = () => {
-      if (dragRef.current) {
-        setPos(prev => clamp(prev.x, prev.y));
+
+    const handleUp = () => {
+      if (dragRef.current && containerRef.current) {
+        const finalX = dragRef.current.startPosX + (transform.dx || 0);
+        const finalY = dragRef.current.startPosY + (transform.dy || 0);
+        const clamped = clamp(finalX, finalY);
+        setPos(clamped);
+
+        // Smooth settle animation
+        containerRef.current.style.transition = 'transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        containerRef.current.style.transform = `translate3d(0, 0, 0)`;
+
+        setTimeout(() => {
+          if (containerRef.current) {
+            containerRef.current.style.transform = '';
+            containerRef.current.style.transition = '';
+            containerRef.current.style.willChange = '';
+            containerRef.current.style.cursor = '';
+          }
+        }, 150);
       }
       dragRef.current = null;
       document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
     };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp, { once: true });
-  }, [pos]);
+
+    if (dragRef.current) {
+      window.addEventListener('pointermove', handleMove, { passive: true });
+      window.addEventListener('pointerup', handleUp);
+    }
+
+    return () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+    };
+  }, [transform]);
 
   useEffect(() => {
     try { localStorage.setItem('draggable_position_packet-popup', JSON.stringify(pos)); } catch { }
@@ -175,25 +214,26 @@ function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
   const p = info;
   return (
     <div
+      ref={containerRef}
       style={{ position: 'fixed', left: pos.x, top: pos.y, zIndex: 9999 }}
       onClick={e => e.stopPropagation()}
     >
       <div className={`rounded-xl border w-80 backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
         <div
           className={`flex items-center justify-between px-3 py-2 border-b cursor-grab active:cursor-grabbing select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
-          onMouseDown={handleDragStart}
+          onPointerDown={handleDragStart}
         >
           <h3 className={`font-semibold text-sm ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
             {language === 'tr' ? `Paket İçeriği — Hop ${hopIndex + 1}` : `Packet Contents — Hop ${hopIndex + 1}`}
           </h3>
           <button
             onClick={onClose}
-            className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
+            className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0 pointer-events-auto"
           >
             <X className="w-3 h-3 text-white pointer-events-none" />
           </button>
         </div>
-        <div className={`px-4 py-3 space-y-2 text-xs font-mono ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+        <div className={`px-4 py-3 space-y-2 text-xs font-mono pointer-events-none ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
           <div><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>L2:</span> {p.layer2}</div>
           <div><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>L3:</span> {p.layer3}</div>
           <div><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>L4:</span> {p.layer4}</div>
@@ -7382,17 +7422,17 @@ export function NetworkTopology({
                             const opacity = Math.max(0, 0.4 - i * 0.07);
                             const radius = Math.max(1.5, 5 - i * 0.7);
                             return (
-                            <circle
-                              key={i}
-                              cx={tx}
-                              cy={ty}
-                              r={radius}
-                              fill="#06b6d4"
-                              opacity={opacity}
-                              filter={i === 0 ? 'url(#packetGlow)' : undefined}
-                              className={i === 0 ? 'animate-ping-trail' : undefined}
-                              style={{ pointerEvents: 'none' }}
-                            />
+                              <circle
+                                key={i}
+                                cx={tx}
+                                cy={ty}
+                                r={radius}
+                                fill="#06b6d4"
+                                opacity={opacity}
+                                filter={i === 0 ? 'url(#packetGlow)' : undefined}
+                                className={i === 0 ? 'animate-ping-trail' : undefined}
+                                style={{ pointerEvents: 'none' }}
+                              />
                             );
                           })
                         )}
