@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger';
 import { isRateLimited } from '@/lib/security/rateLimiter';
+import { sanitizeObject } from '@/lib/security/sanitizer';
 import { NextRequest, NextResponse } from 'next/server';
 
 interface ContactFormData {
@@ -24,24 +25,31 @@ interface ApiResponse {
 function validateContactData(data: Partial<ContactFormData>): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!data.name || data.name.trim().length === 0) {
+  if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
     errors.push('Name is required');
+  } else if (data.name.length > 100) {
+    errors.push('Name must be less than 100 characters');
   }
 
   if (!data.email || typeof data.email !== 'string') {
     errors.push('Email is required');
   } else {
+    if (data.email.length > 255) {
+      errors.push('Email must be less than 255 characters');
+    }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
       errors.push('Invalid email format');
     }
   }
 
-  if (!data.message || typeof data.message !== 'string' || data.message.trim().length === 0) {
-    errors.push('Message is required');
+  if (data.type && (typeof data.type !== 'string' || data.type.length > 50)) {
+    errors.push('Invalid contact type');
   }
 
-  if (data.message && data.message.length > 5000) {
+  if (!data.message || typeof data.message !== 'string' || data.message.trim().length === 0) {
+    errors.push('Message is required');
+  } else if (data.message.length > 5000) {
     errors.push('Message must be less than 5000 characters');
   }
 
@@ -86,7 +94,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>>
     // Parse request body
     let body: Partial<ContactFormData>;
     try {
-      body = await req.json();
+      const rawBody = await req.json();
+      body = sanitizeObject(rawBody);
     } catch {
       return NextResponse.json(
         {
@@ -111,7 +120,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>>
       );
     }
 
-    const { name, email, type, message, timestamp, userAgent } = body as ContactFormData;
+    const { name, email, type, message } = body as ContactFormData;
+    const timestamp = new Date().toISOString();
+    const userAgent = req.headers.get('user-agent') || 'unknown';
 
     // Get submission endpoint from environment
     const CONTACT_SUBMISSION_URL = process.env.GOOGLE_SHEETS_CONTACT_URL;
