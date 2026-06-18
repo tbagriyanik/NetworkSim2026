@@ -3432,7 +3432,9 @@ function cmdShowAccessLists(state: SwitchState, input: string, _ctx: CommandCont
       Object.entries(state.accessLists || {}).forEach(([aclId, rules]: [string, string[]]) => {
         if (filterAcl && aclId !== filterAcl) return;
 
-        output += `Standard IP access list ${aclId}\n`;
+        const isNamed = isNaN(Number(aclId));
+        const aclType = isNamed ? (state.namedAclTypes?.[aclId] || 'standard') : (parseInt(aclId) >= 100 ? 'extended' : 'standard');
+        output += `${aclType === 'extended' ? 'Extended' : 'Standard'} IP access list ${aclId}\n`;
         rules.forEach((rule: string, ruleIndex: number) => {
           // Parse rule format: "seq permit|deny <conditions>"
           const seqMatch = rule.match(/^(\d+)\s+(.+)$/);

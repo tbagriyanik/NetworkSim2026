@@ -566,9 +566,52 @@ function cmdDebug(state: SwitchState, input: string, _ctx: CommandContext): Comm
     const newDebugs = { ...(state.debugs || {}) };
     newDebugs[debugType] = true;
 
+    let output = `${debugType} debugging is on\n`;
+
+    // Realistic IOS debug output for common debug types
+    const lower = debugType.toLowerCase();
+    if (lower === 'ip routing' || lower === 'ip routing table') {
+        output += `\nRT: adding route 0.0.0.0/0 via ${state.ip || '192.168.1.1'}, ${Object.keys(state.ports || {}).find(p => state.ports?.[p]?.ipAddress) || 'gi0/0'}\n`;
+        output += `RT: interface gi0/0 joined routing domain, routes updated\n`;
+        output += `RT: add 10.0.0.0/8 via 10.0.0.1, gi0/1, connected, [0/0]\n`;
+        output += `RT: add ${state.ip || '192.168.1.0'}/24 via ${state.ip || '192.168.1.1'}, gi0/0, connected, [0/0]\n`;
+        if (state.dynamicRoutes && state.dynamicRoutes.length > 0) {
+            state.dynamicRoutes.slice(0, 3).forEach(r => {
+                output += `RT: add ${r.destination} via ${r.nextHop || 'directly connected'}, ${r.interface || 'gi0/0'}, ${r.type || 'dynamic'}, [110/2]\n`;
+            });
+        }
+        output += `\n%OSPF-5-ADJCHG: Process 1, Nbr 10.0.0.1 on gi0/1 from LOADING to FULL, Loading Done\n`;
+        output += `ip routing debugging is on\n`;
+    } else if (lower === 'ip ospf' || lower === 'ip ospf events') {
+        output += `\nOSPF: Rcv hello from 10.0.0.1 area 0 from gi0/1\n`;
+        output += `OSPF: End of hello processing\n`;
+        output += `OSPF: Send hello to 224.0.0.5 area 0 on gi0/1\n`;
+        output += `OSPF: Rcv hello from 10.0.0.2 area 0 from gi0/0\n`;
+        output += `OSPF: 2 Way Communication to 10.0.0.2 on gi0/0, state 2WAY\n`;
+        output += `OSPF: Send hello to 224.0.0.5 area 0 on gi0/0\n`;
+        output += `OSPF: Neighbor change event on interface gi0/1\n`;
+        output += `OSPF: DR/BDR election on gi0/1\n`;
+        output += `OSPF: Elect BDR 10.0.0.1\n`;
+        output += `OSPF: Elect DR 10.0.0.2\n`;
+        output += `OSPF: End of hello processing\n`;
+        output += `\n%OSPF-5-ADJCHG: Process 1, Nbr 10.0.0.1 on gi0/1 from LOADING to FULL, Loading Done\n`;
+        output += `ip ospf events debugging is on\n`;
+    } else if (lower === 'ip ospf adj') {
+        output += `\nOSPF: Rcv DBD from 10.0.0.1 on gi0/1 seq 0x1A2B opt 0x52 flag 0x7 len 32\n`;
+        output += `OSPF: Rcv DBD from 10.0.0.2 on gi0/0 seq 0x1A2C opt 0x52 flag 0x1 len 32\n`;
+        output += `OSPF: Send DBD to 10.0.0.1 on gi0/1 seq 0x1A2D opt 0x52 flag 0x0 len 32\n`;
+        output += `OSPF: Nbr 10.0.0.1 has state 0x8 (FULL), neighbor state changed\n`;
+        output += `ip ospf adj debugging is on\n`;
+    } else if (lower === 'ip packet') {
+        output += `\nIP: s=10.0.0.1 (gi0/1) d=192.168.1.100 (gi0/0) len 100, rcvd 3\n`;
+        output += `IP: s=192.168.1.100 (gi0/0) d=8.8.8.8 (gi0/1) len 40, forward\n`;
+        output += `IP: s=10.0.0.2 (gi0/0) d=192.168.1.101 (gi0/0) len 64, rcvd 3\n`;
+        output += `ip packet debugging is on\n`;
+    }
+
     return {
         success: true,
-        output: `${debugType} debugging is on`,
+        output,
         newState: { debugs: newDebugs }
     };
 }

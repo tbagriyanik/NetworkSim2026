@@ -2025,12 +2025,15 @@ function cmdIpAccessList(state: SwitchState, input: string, _ctx: CommandContext
   const match = input.match(/^ip\s+access-list\s+(standard|extended)\s+(\S+)$/i);
   if (!match) return { success: false, error: '% Invalid ip access-list command' };
 
-  const aclType = match[1].toLowerCase();
+  const aclTypeRaw = match[1].toLowerCase();
+  const aclType = aclTypeRaw === 'extended' ? 'extended' as const : 'standard' as const;
   const aclName = match[2];
   const accessLists = { ...(state.accessLists || {}) };
+  const namedAclTypes = { ...(state.namedAclTypes || {}) };
   if (!accessLists[aclName]) {
     accessLists[aclName] = [];
   }
+  namedAclTypes[aclName] = aclType;
 
   if (aclType === 'extended') {
     return {
@@ -2039,7 +2042,8 @@ function cmdIpAccessList(state: SwitchState, input: string, _ctx: CommandContext
       newState: {
         currentMode: 'config-ext-nacl',
         currentExtendedAcl: aclName,
-        accessLists
+        accessLists,
+        namedAclTypes
       }
     };
   }
@@ -2050,7 +2054,8 @@ function cmdIpAccessList(state: SwitchState, input: string, _ctx: CommandContext
     newState: {
       currentMode: 'config-std-nacl',
       currentNamedAcl: aclName,
-      accessLists
+      accessLists,
+      namedAclTypes
     }
   };
 }

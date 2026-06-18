@@ -467,6 +467,7 @@ export interface SwitchState {
   dhcpOption82?: boolean;
   dhcpSnoopingVlans?: string[];
   accessLists?: Record<string, string[]>;
+  namedAclTypes?: Record<string, 'standard' | 'extended'>;  // Track named ACL types for display
   currentNamedAcl?: string;  // Current named standard ACL being configured
   currentExtendedAcl?: string;  // Current named extended ACL being configured
   aclMatchCounters?: Record<string, Record<string, number>>;  // ACL name → rule index → match count
