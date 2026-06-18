@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CanvasDevice, CanvasConnection } from './networkTopology.types';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { X } from 'lucide-react';
-import { useDrag } from '@/hooks/useDrag';
 
 export interface HopPacketInfo {
     hopIndex: number;
@@ -353,12 +352,97 @@ export function PingPacketInfoPanel({
 }: PingPacketInfoPanelProps) {
     const t = language === 'tr' ? tr : en;
 
-    const { containerRef, handleDragStart, position } = useDrag({
-        storageKey: 'draggable_position_ping-packet-info-panel',
-        defaultPosition: { x: 16, y: 72 },
-        origin: 'top-left',
-        disableSnap: true,
-    });
+    const panelRef = useRef<HTMLDivElement>(null);
+    const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+
+    // Load saved position on mount
+    useEffect(() => {
+        if (typeof window === 'undefined' || isMobile) return;
+        try {
+            const saved = localStorage.getItem('draggable_position_ping-packet-info-panel');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+                    setPos({ x: parsed.x, y: parsed.y });
+                    return;
+                }
+            }
+        } catch { }
+        // Default position: centered horizontally, near bottom
+        setPos({ x: Math.max(16, (window.innerWidth - 780) / 2), y: window.innerHeight - 400 });
+    }, [isMobile]);
+
+    const dragState = useRef<{
+        startX: number; startY: number;
+        startPosX: number; startPosY: number;
+    } | null>(null);
+
+    const [isDragging, setIsDragging] = useState(false);
+
+    const onHeaderPointerDown = useCallback((e: React.PointerEvent) => {
+        if (isMobile) return;
+        if (e.button !== 0) return;
+        const target = e.target as HTMLElement;
+        if (target.closest('button')) return;
+
+        e.preventDefault();
+        const el = panelRef.current;
+        if (!el) return;
+        el.setPointerCapture(e.pointerId);
+
+        const currentPos = pos ?? { x: 16, y: 72 };
+        dragState.current = {
+            startX: e.clientX, startY: e.clientY,
+            startPosX: currentPos.x, startPosY: currentPos.y,
+        };
+        document.body.style.userSelect = 'none';
+        setIsDragging(true);
+        onFocus?.();
+    }, [isMobile, pos, onFocus]);
+
+    const onPointerMove = useCallback((e: PointerEvent) => {
+        const ds = dragState.current;
+        if (!ds) return;
+        const el = panelRef.current;
+        if (!el) return;
+        const dx = e.clientX - ds.startX;
+        const dy = e.clientY - ds.startY;
+        el.style.left = `${ds.startPosX + dx}px`;
+        el.style.top = `${ds.startPosY + dy}px`;
+        el.style.transition = 'none';
+    }, []);
+
+    const onPointerUp = useCallback(() => {
+        const ds = dragState.current;
+        if (!ds) return;
+        const el = panelRef.current;
+        if (!el) return;
+        const finalX = parseFloat(el.style.left) || ds.startPosX;
+        const finalY = parseFloat(el.style.top) || ds.startPosY;
+        const rect = el.getBoundingClientRect();
+        const clampedX = Math.max(0, Math.min(finalX, window.innerWidth - rect.width));
+        const clampedY = Math.max(0, Math.min(finalY, window.innerHeight - rect.height));
+        el.style.left = `${clampedX}px`;
+        el.style.top = `${clampedY}px`;
+        el.style.transition = '';
+        document.body.style.userSelect = '';
+        dragState.current = null;
+        setIsDragging(false);
+        setPos({ x: clampedX, y: clampedY });
+        try { localStorage.setItem('draggable_position_ping-packet-info-panel', JSON.stringify({ x: clampedX, y: clampedY })); } catch { }
+    }, []);
+
+    useEffect(() => {
+        if (!isDragging) return;
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointercancel', onPointerUp);
+        return () => {
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            window.removeEventListener('pointercancel', onPointerUp);
+        };
+    }, [isDragging, onPointerMove, onPointerUp]);
 
     // Show packet tables when paused or done — derived directly from props, no local state
     const showPacketTables = isPaused || success !== null;
@@ -414,14 +498,14 @@ export function PingPacketInfoPanel({
 
     const posStyle: React.CSSProperties = isMobile
         ? { position: 'fixed', bottom: 72, left: 12, right: 12, top: 'auto', transform: 'none' }
-        : { position: 'fixed', left: position.x, top: position.y, bottom: 'auto', transform: 'none' };
+        : { position: 'fixed', left: pos?.x ?? 16, top: pos?.y ?? 72, bottom: 'auto', transform: 'none' };
 
     const isGlass = graphicsQuality === 'high';
     const resolvedZIndex = zIndex ?? 9999;
 
     return (
         <div
-            ref={containerRef}
+            ref={panelRef}
             className={`flex flex-col rounded-2xl overflow-hidden select-none backdrop-blur-md ${isDark
                 ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
                 : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
@@ -436,13 +520,9 @@ export function PingPacketInfoPanel({
         >
             {/* Header — drag handle */}
             <div
-                className={`flex items-center justify-between px-3 py-2 border-b rounded-t-2xl ${isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing select-none'} ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
-                onPointerDown={(e) => {
-                    if (!isMobile) {
-                        onFocus?.();
-                        handleDragStart(e);
-                    }
-                }}
+                className={`flex items-center justify-between px-3 py-2 border-b rounded-t-2xl ${isMobile ? 'cursor-default' : (isDragging ? 'cursor-grabbing' : 'cursor-grab') + ' select-none'} ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
+                style={{ touchAction: 'none' }}
+                onPointerDown={onHeaderPointerDown}
             >
                 {/* Left: icon + title + badges */}
                 <div className="flex items-center gap-2.5">
