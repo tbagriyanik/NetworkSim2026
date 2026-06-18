@@ -194,7 +194,6 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
 
     document.body.style.cursor = 'grabbing';
     el.style.transition = 'none';
-    el.style.willChange = origin === 'top-left' ? 'left, top' : 'bottom, right';
     setIsDragging(true);
   }, [origin, storageKey]);
 
@@ -267,15 +266,15 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
             const newX = ds2.startPosX - dx;
             const newY = ds2.startPosY - dy;
             liveDragPosRef.current = { x: newX, y: newY };
-            el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+            el.style.right = `${newX}px`;
+            el.style.bottom = `${newY}px`;
           } else {
             const newX = ds2.startPosX + dx;
             const newY = ds2.startPosY + dy;
             liveDragPosRef.current = { x: newX, y: newY };
-            el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+            el.style.left = `${newX}px`;
+            el.style.top = `${newY}px`;
           }
-          el.style.willChange = 'transform';
-          el.style.contain = 'layout style';
           el.style.transition = 'none';
         } else if (ds2.type === 'resize' && ds2.direction) {
           const dx2 = clientX - ds2.startX;
@@ -340,35 +339,16 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
           clampedY = snapped.y;
         }
 
-        // Smooth settle: animate transform from current offset to final clamped offset,
-        // then commit left/top and clear transform after animation completes
-        if (ds.type === 'drag') {
-          const settleDx = clampedX - ds.startPosX;
-          const settleDy = clampedY - ds.startPosY;
-          ds.element.style.transition = 'transform 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-          ds.element.style.transform = `translate3d(${settleDx}px, ${settleDy}px, 0)`;
-          const commitElement = ds.element;
-          setTimeout(() => {
-            if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
-              commitElement.style.right = `${clampedX}px`;
-              commitElement.style.bottom = `${clampedY}px`;
-            } else {
-              commitElement.style.left = `${clampedX}px`;
-              commitElement.style.top = `${clampedY}px`;
-            }
-            commitElement.style.transform = '';
-            commitElement.style.transition = '';
-          }, 200);
+        // Commit immediately, no settle animation
+        if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
+          ds.element.style.right = `${clampedX}px`;
+          ds.element.style.bottom = `${clampedY}px`;
         } else {
-          // Resize: snap immediately (transform not used during resize)
-          if (ds.origin === 'bottom-right' && ds.mode === 'drag-only') {
-            ds.element.style.right = `${clampedX}px`;
-            ds.element.style.bottom = `${clampedY}px`;
-          } else {
-            ds.element.style.left = `${clampedX}px`;
-            ds.element.style.top = `${clampedY}px`;
-          }
+          ds.element.style.left = `${clampedX}px`;
+          ds.element.style.top = `${clampedY}px`;
         }
+        ds.element.style.transform = '';
+        ds.element.style.transition = '';
 
         const finalPos = { x: clampedX, y: clampedY };
         const finalSize = { width: Math.max(ds.minSize.width, finalW), height: Math.max(ds.minSize.height, finalH) };
