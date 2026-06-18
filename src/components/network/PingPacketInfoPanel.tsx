@@ -2,6 +2,7 @@ import React from 'react';
 import { CanvasDevice, CanvasConnection } from './networkTopology.types';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { X } from 'lucide-react';
+import { useDrag } from '@/hooks/useDrag';
 
 export interface HopPacketInfo {
     hopIndex: number;
@@ -328,9 +329,6 @@ function MobilePacketTables({ currentInfo, prevInfo, macChanged, ttlChanged, isD
     );
 }
 
-const PING_PANEL_STORAGE_KEY = 'draggable_position_ping-packet-info-panel';
-const HEADER_SAFE_TOP = 72;
-
 export function PingPacketInfoPanel({
     isVisible,
     isPaused,
@@ -355,32 +353,12 @@ export function PingPacketInfoPanel({
 }: PingPacketInfoPanelProps) {
     const t = language === 'tr' ? tr : en;
 
-    // Drag support — use DraggableDialogManager
-    const panelRef = React.useRef<HTMLDivElement>(null);
-    const [pos, setPos] = React.useState<{ x: number; y: number } | null>(null);
-    const [isDraggingPanel, setIsDraggingPanel] = React.useState(false);
-
-    // Load saved position on mount
-    React.useEffect(() => {
-        if (typeof window === 'undefined' || isMobile) return;
-        try {
-            const saved = localStorage.getItem(PING_PANEL_STORAGE_KEY);
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (parsed.x !== undefined && parsed.y !== undefined) {
-                    const vw = window.innerWidth;
-                    const vh = window.innerHeight;
-                    const margin = 16;
-                    setTimeout(() => setPos({
-                        x: Math.max(margin - 780, Math.min(parsed.x, vw - margin)),
-                        y: Math.max(HEADER_SAFE_TOP, Math.min(parsed.y, vh - margin)),
-                    }), 0);
-                }
-            }
-        } catch (_e) {
-            // Ignore parse errors
-        }
-    }, [isMobile]);
+    const { containerRef, handleDragStart, position } = useDrag({
+        storageKey: 'draggable_position_ping-packet-info-panel',
+        defaultPosition: { x: 16, y: 72 },
+        origin: 'top-left',
+        disableSnap: true,
+    });
 
     // Show packet tables when paused or done — derived directly from props, no local state
     const showPacketTables = isPaused || success !== null;
@@ -407,22 +385,6 @@ export function PingPacketInfoPanel({
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isVisible, isPaused, onPlay, onPause, onNext, onClose]);
-
-    React.useEffect(() => {
-        if (!isDraggingPanel) return;
-        const stopDragging = () => {
-            setIsDraggingPanel(false);
-            if (panelRef.current) {
-                panelRef.current.style.cursor = '';
-            }
-        };
-        window.addEventListener('pointerup', stopDragging);
-        window.addEventListener('pointercancel', stopDragging);
-        return () => {
-            window.removeEventListener('pointerup', stopDragging);
-            window.removeEventListener('pointercancel', stopDragging);
-        };
-    }, [isDraggingPanel]);
 
     // Mobile back button support
     React.useEffect(() => {
@@ -452,18 +414,15 @@ export function PingPacketInfoPanel({
 
     const posStyle: React.CSSProperties = isMobile
         ? { position: 'fixed', bottom: 72, left: 12, right: 12, top: 'auto', transform: 'none' }
-        : pos
-            ? { position: 'fixed', left: pos.x, top: pos.y, bottom: 'auto', transform: 'none' }
-            : { position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)' };
+        : { position: 'fixed', left: position.x, top: position.y, bottom: 'auto', transform: 'none' };
 
     const isGlass = graphicsQuality === 'high';
     const resolvedZIndex = zIndex ?? 9999;
 
     return (
         <div
-            ref={panelRef}
-            data-draggable-id="ping-packet-info-panel"
-            className={`flex flex-col rounded-2xl overflow-hidden select-none ${isDraggingPanel ? '' : 'backdrop-blur-md'} ${isDark
+            ref={containerRef}
+            className={`flex flex-col rounded-2xl overflow-hidden select-none backdrop-blur-md ${isDark
                 ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
                 : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
                 }`}
@@ -478,11 +437,10 @@ export function PingPacketInfoPanel({
             {/* Header — drag handle */}
             <div
                 className={`flex items-center justify-between px-3 py-2 border-b rounded-t-2xl ${isMobile ? 'cursor-default' : 'cursor-grab active:cursor-grabbing select-none'} ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
-                data-drag-handle
                 onPointerDown={(e) => {
                     if (!isMobile) {
-                        (e.currentTarget as HTMLElement).style.cursor = 'grabbing';
-                        setIsDraggingPanel(true);
+                        onFocus?.();
+                        handleDragStart(e);
                     }
                 }}
             >
