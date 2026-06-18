@@ -5522,6 +5522,42 @@ export function NetworkTopology({
           </g>
         </g>
 
+        {/* Status LED indicator - high graphics only */}
+        {graphicsQuality === 'high' && (
+          <g style={{ pointerEvents: 'none' }}>
+            <circle
+              cx={6}
+              cy={deviceHeight - 6}
+              r={3.5}
+              fill={isPoweredOff ? '#ef4444' : hasError ? '#ef4444' : '#22c55e'}
+              opacity={isPoweredOff ? 0.5 : 0.95}
+              style={{
+                filter: isPoweredOff
+                  ? 'none'
+                  : `drop-shadow(0 0 3px ${hasError ? '#ef4444' : '#22c55e'})`
+              }}
+            >
+              {!isPoweredOff && !hasError && (
+                <animate attributeName="opacity" values="0.6;0.95;0.6" dur="2s" repeatCount="indefinite" />
+              )}
+            </circle>
+            {!isPoweredOff && !hasError && (
+              <circle
+                cx={6}
+                cy={deviceHeight - 6}
+                r={4}
+                fill="none"
+                stroke="#22c55e"
+                strokeWidth="1"
+                opacity="0.3"
+              >
+                <animate attributeName="r" values="3;7;3" dur="2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite" />
+              </circle>
+            )}
+          </g>
+        )}
+
         {/* Power Status Icon with Lightning - Clickable with Tooltip */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -6339,7 +6375,7 @@ export function NetworkTopology({
                 zIndex: 1000,
                 pointerEvents: 'auto'
               }}
-              className={`px-3 py-1.5 rounded-xl shadow-2xl flex items-center gap-2 selection-toolbar ${isDark ? 'bg-slate-800/95 text-white border border-slate-700' : 'bg-white text-slate-900 border border-slate-200'
+              className={`px-3 py-1.5 rounded-xl shadow-2xl flex items-center gap-2 selection-toolbar panel-ambient-glow ${isDark ? 'bg-slate-800/95 text-white border border-slate-700' : 'bg-white text-slate-900 border border-slate-200'
                 } backdrop-blur-md`}
               onClick={(e) => {
                 e.stopPropagation();
@@ -6922,6 +6958,7 @@ export function NetworkTopology({
                         getPortPosition={getPortPosition}
                         CABLE_COLORS={CABLE_COLORS}
                         zoom={zoom}
+                        graphicsQuality={graphicsQuality}
                       />
                     );
                   })}
@@ -7285,8 +7322,50 @@ export function NetworkTopology({
                     const envelopeX = bezierX + (tangentDy / tangentLen * 20);
                     const envelopeY = bezierY + (-tangentDx / tangentLen * 20);
 
+                    const getBezierPoint = (t: number) => {
+                      const mt = 1 - t;
+                      return {
+                        x: mt * mt * mt * source.x + 3 * mt * mt * t * controlPoint1.x + 3 * mt * t * t * controlPoint2.x + t * t * t * target.x,
+                        y: mt * mt * mt * source.y + 3 * mt * mt * t * controlPoint1.y + 3 * mt * t * t * controlPoint2.y + t * t * t * target.y,
+                      };
+                    };
+
                     return (
                       <g key="ping-animation" opacity={0.9}>
+
+                        {/* Packet trail - fading circles behind envelope in high graphics */}
+                        {graphicsQuality === 'high' && (
+                          [0.03, 0.06, 0.09, 0.12, 0.15].map((offset, i) => {
+                            const trailT = progressVal - offset;
+                            if (trailT < 0) return null;
+                            const pt = getBezierPoint(trailT);
+                            const mtT = 1 - trailT;
+                            const tDx = -3 * mtT * mtT * source.x + 3 * (mtT * mtT - 2 * mtT * trailT) * controlPoint1.x + 3 * (2 * mtT * trailT - trailT * trailT) * controlPoint2.x + 3 * trailT * trailT * target.x;
+                            const tDy = -3 * mtT * mtT * source.y + 3 * (mtT * mtT - 2 * mtT * trailT) * controlPoint1.y + 3 * (2 * mtT * trailT - trailT * trailT) * controlPoint2.y + 3 * trailT * trailT * target.y;
+                            const tLen = Math.sqrt(tDx * tDx + tDy * tDy) || 1;
+                            const tx = pt.x + (tDy / tLen * 20);
+                            const ty = pt.y + (-tDx / tLen * 20);
+                            const opacity = Math.max(0, 0.4 - i * 0.07);
+                            const radius = Math.max(1.5, 5 - i * 0.7);
+                            return (
+                              <circle
+                                key={i}
+                                cx={tx}
+                                cy={ty}
+                                r={radius}
+                                fill="#06b6d4"
+                                opacity={opacity}
+                                filter={i === 0 ? 'url(#packetGlow)' : undefined}
+                                style={{ pointerEvents: 'none' }}
+                              >
+                                {i === 0 && (
+                                  <animate attributeName="opacity" values="0.25;0.45;0.25" dur="1.5s" repeatCount="indefinite" />
+                                )}
+                              </circle>
+                            );
+                          })
+                        )}
+
                         <g
                           transform={`translate(${envelopeX}, ${envelopeY})`}
                           className="cursor-pointer"
@@ -7357,7 +7436,7 @@ export function NetworkTopology({
           {/* Zoom Controls - Mobile Float - Above Footer */}
           <div
             className={`fixed bottom-[60px] right-[10px] items-center gap-1 px-2 py-1 rounded-lg liquid-glass-strong ${isDark ? 'bg-slate-800/90' : 'bg-white/90'
-              } shadow-lg flex z-40`}
+              } shadow-lg flex z-40 panel-ambient-glow`}
           >
             <TooltipWrapper title={<div className="flex items-center gap-2"><span>{t.zoomOut}</span><ShortcutBadge shortcut="-" variant="primary" /></div>}>
               <button
@@ -7590,6 +7669,9 @@ export function NetworkTopology({
                     <feMergeNode in="blur" />
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
+                </filter>
+                <filter id="connectionGlowFilter" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="1.5" result="blur" />
                 </filter>
               </defs>
 

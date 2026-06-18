@@ -18,6 +18,7 @@ interface ConnectionLineProps {
   showAnimation?: boolean;
   showLabel?: boolean;
   zoom?: number;
+  graphicsQuality?: 'high' | 'low';
 }
 
 export const ConnectionLine = memo(function ConnectionLine({
@@ -35,7 +36,8 @@ export const ConnectionLine = memo(function ConnectionLine({
   onMouseLeave,
   showAnimation = true,
   showLabel = true,
-  zoom = 1 // Default zoom level
+  zoom = 1, // Default zoom level
+  graphicsQuality = 'high'
 }: ConnectionLineProps) {
   // Get port positions for more accurate connection lines
   const source = getPortPosition(sourceDevice, connection.sourcePort);
@@ -161,12 +163,28 @@ export const ConnectionLine = memo(function ConnectionLine({
         className="pointer-events-none"
         vectorEffect="non-scaling-stroke"
         style={{
-          filter: isHovered ?
+          filter: isHovered || (graphicsQuality === 'high' && isEffectivelyActive) ?
             'drop-shadow(0 0 2px ' + color + ') drop-shadow(0 0 4px ' + color + ')' :
             'none',
           transition: 'all 0.2s ease'
         }}
       />
+
+      {/* Ambient glow for active connections in high graphics mode */}
+      {graphicsQuality === 'high' && isEffectivelyActive && !isHovered && (
+        <path
+          d={pathD}
+          stroke={color}
+          strokeWidth={2.5}
+          fill="none"
+          className="pointer-events-none"
+          vectorEffect="non-scaling-stroke"
+          style={{
+            opacity: 0.01,
+            filter: 'url(#connectionGlowFilter)',
+          }}
+        />
+      )}
 
       {/* Animated data flow - only for compatible cables and NOT during dragging */}
       {showAnimation && isEffectivelyActive && !isDragging && (
