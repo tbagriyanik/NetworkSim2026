@@ -1471,8 +1471,6 @@ function cmdShowIpOspfNeighbor(state: SwitchState, _input: string, _ctx: Command
     const neighborMap = new Map<string, { address: string; intf: string; routerId: string }>();
     state.dynamicRoutes.forEach((r) => {
       if (r.nextHop && !neighborMap.has(r.nextHop)) {
-        // Generate a realistic Router ID based on next-hop
-        const nextHopParts = r.nextHop.split('.');
         const routerId = `10.0.0.${Math.floor(Math.random() * 254) + 1}`;
         const address = r.nextHop;
         const intf = r.interface || 'FastEthernet0/0';
@@ -3418,8 +3416,6 @@ function cmdShowIpArpInspection(_state: SwitchState, _input: string, _ctx: Comma
  */
 function cmdShowAccessLists(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   const hasClassicAcls = !!state.accessLists && Object.keys(state.accessLists).length > 0;
-  const hasNamedAcls = hasClassicAcls && Object.keys(state.accessLists).some(k => isNaN(Number(k)));
-  const hasNumberedAcls = hasClassicAcls && Object.keys(state.accessLists).some(k => !isNaN(Number(k)));
   const firewallRules = Array.isArray(state.firewallRules) ? state.firewallRules : [];
   const hasFirewallAcls = firewallRules.length > 0;
 

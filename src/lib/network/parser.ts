@@ -3170,6 +3170,16 @@ Mevcut komutlar:
   mac-filter <allow|deny> <MAC> - MAC adres filtresi
   exit                        - Config mode'a dön
   end                         - Privileged mode'a dön
+`,
+  'config-std-nacl': `
+Mevcut komutlar (Named Standart ACL):
+  permit <kaynak>          - İzin verilen kaynak ekle
+  deny <kaynak>            - Reddedilen kaynak ekle
+  no permit <kaynak>       - İzin verilen kaynak kaldır
+  no deny <kaynak>         - Reddedilen kaynak kaldır
+  exit                     - Global config mode'a dön
+  end                      - Privileged EXEC mode'a dön
+  do <komut>               - Ayrıcalıklı komut çalıştır
 `
   };
 
@@ -3492,6 +3502,16 @@ Available commands:
   no mac-filter               - Disable MAC filtering
   exit                        - Return to config mode
   end                         - Return to privileged mode
+`,
+  'config-std-nacl': `
+Available commands (Named Standard ACL):
+  permit <source>          - Add permit source
+  deny <source>            - Add deny source
+  no permit <source>       - Remove permit source
+  no deny <source>         - Remove deny source
+  exit                     - Return to global config mode
+  end                      - Return to privileged EXEC mode
+  do <command>             - Execute privileged command
 `
   };
 
