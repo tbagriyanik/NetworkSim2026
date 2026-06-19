@@ -296,6 +296,28 @@ export function NetworkTopology({
 
   const topologyConnections = useTopologyConnections();
 
+  // BOLT: Memoize map of device ID to its connections for O(1) lookups in renderDevice
+  const deviceToConnectionsMap = useMemo(() => {
+    const map = new Map<string, CanvasConnection[]>();
+    topologyConnections.forEach(conn => {
+      const addConn = (deviceId: string) => {
+        const list = map.get(deviceId);
+        if (list) {
+          list.push(conn);
+        } else {
+          map.set(deviceId, [conn]);
+        }
+      };
+
+      addConn(conn.sourceDeviceId);
+      // Avoid duplicate entry if device connects to itself
+      if (conn.targetDeviceId !== conn.sourceDeviceId) {
+        addConn(conn.targetDeviceId);
+      }
+    });
+    return map;
+  }, [topologyConnections]);
+
   // BOLT: Pre-calculate connection metadata (total and index for parallel cables)
   // This reduces O(C^2) operations in the render loop to O(C) pre-calculation + O(1) lookups.
   const connectionMeta = useMemo(() => {
@@ -444,6 +466,10 @@ export function NetworkTopology({
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>(activeDeviceId ? [activeDeviceId] : []);
+
+  // BOLT: Memoize set of selected device IDs for O(1) membership checks
+  const selectedDeviceSet = useMemo(() => new Set(selectedDeviceIds), [selectedDeviceIds]);
+
   const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
   const [snapToGrid] = useState(true); // Snap-to-grid toggle
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -472,6 +498,10 @@ export function NetworkTopology({
     { cellSize: 256, margin: 100, enabled: true }
   );
 
+  // BOLT: Memoize visibility sets for O(1) lookups during filtering
+  const visibleDeviceSet = useMemo(() => new Set(visibleDeviceIds), [visibleDeviceIds]);
+  const visibleConnectionSet = useMemo(() => new Set(visibleConnectionIds), [visibleConnectionIds]);
+
   const { visibleDevices, visibleConnections, visibleNotes } = useMemo(() => {
     // If not active, or no dimensions, return all items to prevent them from disappearing
     // when calculating visibility while the container has 0 width/height.
@@ -496,8 +526,9 @@ export function NetworkTopology({
     const margin = 100; // Extra margin to prevent pop-in
 
     // Filter devices and connections using spatial partitioning results
-    const vDevices = devices.filter(d => visibleDeviceIds.includes(d.id));
-    const vConnections = connections.filter(c => visibleConnectionIds.includes(c.id));
+    // BOLT: Use visibleDeviceSet and visibleConnectionSet for O(1) culling checks
+    const vDevices = devices.filter(d => visibleDeviceSet.has(d.id));
+    const vConnections = connections.filter(c => visibleConnectionSet.has(c.id));
 
     // Simple viewport culling for notes (not in spatial partitioner)
     const vNotes = notes.filter(note => {
@@ -532,11 +563,12 @@ export function NetworkTopology({
     return [...visibleDevices].sort((a, b) => {
       if (a.id === activeDeviceId) return 1;
       if (b.id === activeDeviceId) return -1;
-      if (selectedDeviceIds.includes(a.id) && !selectedDeviceIds.includes(b.id)) return 1;
-      if (!selectedDeviceIds.includes(a.id) && selectedDeviceIds.includes(b.id)) return -1;
+      // BOLT: Use selectedDeviceSet for O(1) membership checks during sorting
+      if (selectedDeviceSet.has(a.id) && !selectedDeviceSet.has(b.id)) return 1;
+      if (!selectedDeviceSet.has(a.id) && selectedDeviceSet.has(b.id)) return -1;
       return 0;
     });
-  }, [visibleDevices, activeDeviceId, selectedDeviceIds]);
+  }, [visibleDevices, activeDeviceId, selectedDeviceSet]);
 
   // Sync internal selection with prop from parent
   useEffect(() => {
@@ -4924,9 +4956,11 @@ export function NetworkTopology({
 
   // Render device
   const renderDevice = (device: CanvasDevice, isDragging: boolean = false) => {
-    const isSelected = selectedDeviceIds.includes(device.id);
+    // BOLT: Use selectedDeviceSet for O(1) membership check
+    const isSelected = selectedDeviceSet.has(device.id);
     // Check if device has any connections
-    const deviceConnections = connections.filter(c => c.sourceDeviceId === device.id || c.targetDeviceId === device.id);
+    // BOLT: Use pre-calculated deviceToConnectionsMap for O(1) lookup instead of O(C) filter
+    const deviceConnections = deviceToConnectionsMap.get(device.id) || [];
     const hasConnection = deviceConnections.length > 0;
     const hasError = deviceConnections.some(conn => {
       const source = deviceMap.get(conn.sourceDeviceId);

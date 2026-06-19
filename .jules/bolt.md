@@ -1,0 +1,3 @@
+## 2025-05-15 - [NetworkTopology.tsx] O(D * C) bottleneck in render loop
+**Learning:** In the `NetworkTopology.tsx` component, the `renderDevice` function was performing an $O(C)$ filtering operation (`connections.filter`) on every call. Since this is called for every visible device ($D$) on every render (and IoT updates trigger renders every 250ms), this resulted in $O(D \cdot C)$ complexity per frame. Additionally, repeated `.includes()` checks on `selectedDeviceIds` added unnecessary overhead.
+**Action:** Replace $O(C)$ filter with $O(1)$ Map lookup by pre-calculating `deviceToConnectionsMap`. Use `Set` for `selectedDeviceIds`, `visibleDeviceIds`, and `visibleConnectionIds` to provide $O(1)$ membership checks.
