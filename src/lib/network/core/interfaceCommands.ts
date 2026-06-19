@@ -80,7 +80,6 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'no udld': cmdNoUdld,
   'no ip proxy-arp': cmdNoIpProxyArp,
   'no keepalive': cmdNoKeepalive,
-  'no name': cmdNoName,
   'no spanning-tree': cmdNoSpanningTree,
   // Debug and monitor
   'debug': cmdDebug,
@@ -1536,24 +1535,6 @@ function cmdNoKeepalive(state: SwitchState, _input: string, _ctx: CommandContext
   }));
 
   return { success: true, newState: { ports: newPorts } };
-}
-
-/**
- * No Name - Clear VLAN name (only valid in vlan mode)
- */
-function cmdNoName(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  if (state.currentMode !== 'vlan') {
-    return { success: false, error: '% Invalid command. no name is only valid in VLAN configuration mode.\nUsage: vlan <id> -> no name' };
-  }
-
-  const newVlans = { ...state.vlans };
-  const currentVlanId = state.currentVlan;
-  if (currentVlanId && newVlans[currentVlanId]) {
-    newVlans[currentVlanId] = { ...newVlans[currentVlanId], name: `VLAN${currentVlanId}` };
-    return { success: true, newState: { vlans: newVlans } };
-  }
-
-  return { success: false, error: '% VLAN not found' };
 }
 
 /**

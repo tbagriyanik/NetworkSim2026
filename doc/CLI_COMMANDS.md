@@ -28,8 +28,6 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `Page Up` / `Page Down` | Scroll canvas vertically |
 | `Mouse Wheel` | Zoom in/out |
 | `Ctrl + Drag Device` | Snap device to grid (16px grid) |
-| `Ctrl+Z` | Undo last action (canvas operation) |
-| `Ctrl+Y` | Redo last action (canvas operation) |
 
 ### Device Operations
 | Shortcut | Action |
@@ -280,7 +278,6 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `encapsulation dot1q <vlan>` | Set 802.1Q encapsulation on subinterface |
 | `standby <group> ipv6 <ip>` | Configure HSRP for IPv6 |
 | `ip arp inspection limit <pps>` | Set ARP inspection rate limit |
-| `no name` | Remove interface name (VLAN) |
 | `ipv6 address <ip>/<prefix>` | Assign IPv6 address |
 | `ipv6 rip <name> enable` | Enable RIPng on interface |
 | `ipv6 ospf <id> area <area>` | Enable OSPFv3 on interface |
@@ -420,10 +417,12 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `no neighbor <ip>` | Remove BGP neighbor |
 
 ### IPv6 Routing (RIPng / OSPFv3)
+> **Note**: Unlike IPv4, RIPng and OSPFv3 do not use `network` statements under router config mode. Routing protocol participation is enabled directly on interfaces via `ipv6 rip <name> enable` and `ipv6 ospf <id> area <area>` (see Interface Commands).
+
 | Command | Description |
 |---------|-------------|
-| `ipv6 router rip <name>` | Enter RIPng config mode |
-| `ipv6 router ospf <id>` | Enter OSPFv3 config mode |
+| `ipv6 router rip <name>` | Enter RIPng config mode (optional; for router-specific settings) |
+| `ipv6 router ospf <id>` | Enter OSPFv3 config mode (optional; for router-specific settings) |
 | `no ipv6 router rip <name>` | Disable RIPng |
 | `no ipv6 router ospf <id>` | Disable OSPFv3 |
 

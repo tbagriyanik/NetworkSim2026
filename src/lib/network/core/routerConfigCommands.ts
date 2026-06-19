@@ -29,6 +29,14 @@ export const routerConfigHandlers: Record<string, CommandHandler> = {
  * Note: This command is only available in router-config mode via routerConfigHandlers
  */
 export function cmdRouterNetwork(state: SwitchState, input: string): CommandResult {
+    // IPv6 routing protocols (RIPng/OSPFv3) do not use network statements
+    if (state.routingProtocol === 'ripng' || state.routingProtocol === 'ospfv3') {
+        return {
+            success: false,
+            error: '% Invalid command. IPv6 routing protocols (RIPng/OSPFv3) do not use network statements.\nEnable routing on interfaces: interface <id> -> ipv6 rip <name> enable / ipv6 ospf <id> area <area>'
+        };
+    }
+
     // Check if EIGRP network (network + wildcard)
     if (state.routingProtocol === 'eigrp') {
         const eigrpMatch = input.match(/^network\s+([0-9.]+)\s+([0-9.]+)$/i);
@@ -102,6 +110,12 @@ export function cmdRouterNetwork(state: SwitchState, input: string): CommandResu
  * no network - Remove network from routing process
  */
 function cmdNoRouterNetwork(state: SwitchState, input: string): CommandResult {
+    if (state.routingProtocol === 'ripng' || state.routingProtocol === 'ospfv3') {
+        return {
+            success: false,
+            error: '% Invalid command. IPv6 routing protocols (RIPng/OSPFv3) do not use network statements.'
+        };
+    }
     const match = input.match(/^no\s+network\s+([0-9.]+)(?:\s+[0-9.]+)?(?:\s+area\s+\d+)?$/i);
     if (!match) return { success: false, error: '% Invalid no network command' };
 
