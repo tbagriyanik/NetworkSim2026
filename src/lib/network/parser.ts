@@ -2461,6 +2461,176 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
 
+  // ── Interface NAT commands ────────────────────────────────────────────────
+  'ip nat inside': {
+    pattern: /^ip\s+nat\s+inside$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'ip nat outside': {
+    pattern: /^ip\s+nat\s+outside$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+
+  // ── Interface MTU ─────────────────────────────────────────────────────────
+  'mtu': {
+    pattern: /^mtu\s+(\d+)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+
+  // ── Router config negation commands ──────────────────────────────────────
+  'no network': {
+    pattern: /^no\s+network\s+(.+)$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no passive-interface': {
+    pattern: /^no\s+passive-interface\s+(\S+)$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no router-id': {
+    pattern: /^no\s+router-id$/i,
+    modes: ['router-config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no neighbor': {
+    pattern: /^no\s+neighbor\s+([0-9.]+)(?:\s+remote-as(?:\s+\d+)?)?$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 2
+  },
+  'no neighbor remote-as': {
+    pattern: /^no\s+neighbor\s+([0-9.]+)\s+remote-as(?:\s+\d+)?$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 2
+  },
+
+  // ── DHCP config negation commands ────────────────────────────────────────
+  'no default-router': {
+    pattern: /^no\s+default-router(?:\s+\d+\.\d+\.\d+\.\d+)?$/i,
+    modes: ['dhcp-config'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'no dns-server': {
+    pattern: /^no\s+dns-server(?:\s+(?:[0-9.]+|[0-9a-fA-F:]+))?$/i,
+    modes: ['dhcp-config'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'no domain-name': {
+    pattern: /^no\s+domain-name(?:\s+\S+)?$/i,
+    modes: ['dhcp-config'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'no address prefix': {
+    pattern: /^no\s+address\s+prefix\s+([0-9a-fA-F:]+\/\d+)$/i,
+    modes: ['dhcp-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+
+  // ── NAT configuration commands ───────────────────────────────────────────
+  'ip nat pool': {
+    pattern: /^ip\s+nat\s+pool\s+(\S+)\s+(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)\s+(netmask\s+\d+\.\d+\.\d+\.\d+|prefix-length\s+\d+)$/i,
+    modes: ['config'],
+    minArgs: 4,
+    maxArgs: 4
+  },
+  'ip nat inside source static': {
+    pattern: /^ip\s+nat\s+inside\s+source\s+static\s+(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)$/i,
+    modes: ['config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'ip nat inside source list': {
+    pattern: /^ip\s+nat\s+inside\s+source\s+list\s+(\S+)\s+(pool\s+\S+|interface\s+\S+)(?:\s+overload)?$/i,
+    modes: ['config'],
+    minArgs: 2,
+    maxArgs: 3
+  },
+
+  // ── Additional show commands ─────────────────────────────────────────────
+  'show running-config interface': {
+    pattern: /^show\s+(?:running-config|run|running)\s+interface\s+(\S+)$/i,
+    modes: ['privileged'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'show spanning-tree interface': {
+    pattern: /^show\s+spanning-tree\s+interface\s+(\S+)$/i,
+    modes: ['user', 'privileged'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'show ip nat translations': {
+    pattern: /^show\s+ip\s+nat\s+translations$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'show ip nat statistics': {
+    pattern: /^show\s+ip\s+nat\s+statistics$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'show policy-map interface': {
+    pattern: /^show\s+policy-map\s+interface\s+(\S+)$/i,
+    modes: ['privileged'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'show qos interface': {
+    pattern: /^show\s+qos\s+interface\s+(\S+)$/i,
+    modes: ['privileged'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'show queuing interface': {
+    pattern: /^show\s+queuing\s+interface\s+(\S+)$/i,
+    modes: ['privileged'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+
+  // ── Wireless / WLC show commands ────────────────────────────────────────
+  'dot11 ssid binding': {
+    pattern: /^ssid\s+(\S+)$/i,
+    modes: ['dot11-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'show ap config': {
+    pattern: /^show\s+ap\s+config(?:\s+(.+))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'show ap join statistics': {
+    pattern: /^show\s+ap\s+join\s+statistics$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'show ap join stats': {
+    pattern: /^show\s+ap\s+join\s+stats$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+
   // ── End of Configuration ──────────────────────────────────────────────────
 };
 

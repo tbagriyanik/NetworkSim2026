@@ -4,18 +4,18 @@ import { encryptMd5Password, encryptType7Password, decryptType7Password } from '
 describe('Crypto Module', () => {
   describe('encryptMd5Password', () => {
     it('should produce consistent hash with given salt', () => {
-      const result = encryptMd5Password('cisco', 'abcdefgh');
+      const result = encryptMd5Password('password', 'abcdefgh');
       expect(result).toMatch(/^\$1\$abcdefgh\$[a-f0-9]{32}$/);
     });
 
     it('should produce different hashes with different salts', () => {
-      const h1 = encryptMd5Password('cisco', 'aaaaaaaa');
-      const h2 = encryptMd5Password('cisco', 'bbbbbbbb');
+      const h1 = encryptMd5Password('password', 'aaaaaaaa');
+      const h2 = encryptMd5Password('password', 'bbbbbbbb');
       expect(h1).not.toBe(h2);
     });
 
     it('should return a string starting with $1$', () => {
-      const result = encryptMd5Password('cisco');
+      const result = encryptMd5Password('password');
       expect(result.startsWith('$1$')).toBe(true);
     });
 
@@ -27,9 +27,9 @@ describe('Crypto Module', () => {
 
   describe('encryptType7Password', () => {
     it('should produce non-empty encrypted string', () => {
-      const result = encryptType7Password('cisco');
+      const result = encryptType7Password('password');
       expect(result.length).toBeGreaterThan(0);
-      expect(result).not.toBe('cisco');
+      expect(result).not.toBe('password');
     });
 
     it('should encrypt empty string to empty string', () => {
@@ -40,7 +40,7 @@ describe('Crypto Module', () => {
 
   describe('decryptType7Password', () => {
     it('should decrypt to original password', () => {
-      const original = 'cisco123';
+      const original = 'password123';
       const encrypted = encryptType7Password(original);
       const decrypted = decryptType7Password(encrypted);
       expect(decrypted).toBe(original);

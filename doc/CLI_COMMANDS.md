@@ -2,15 +2,13 @@
 
 The simulator supports **280+ commands** across multiple configuration modes.
 
-> **⚠️ Simulator-Specific Commands**: Some commands in this reference are specific to this browser-based simulator and do not exist in real Cisco IOS. These are marked with *(simulator-specific, PC only)* and are designed for PC service management (FTP, mail) and other simulator-specific features.
+> **⚠️ Simulator-Specific Commands**: Some commands in this reference are specific to this browser-based simulator and do not exist in real IOS. These are marked with *(simulator-specific, PC only)* and are designed for PC service management (FTP, mail) and other simulator-specific features.
 
 ## Keyboard Shortcuts
 
 ### General Navigation
 | Shortcut | Action |
 |----------|--------|
-| `Ctrl+Z` | Undo last action |
-| `Ctrl+Y` | Redo last action |
 | `Ctrl+A` | Select all devices |
 | `Escape` | Cancel current operation / Close modal |
 | `Tab` | Auto-complete command in CLI |
@@ -30,6 +28,8 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `Page Up` / `Page Down` | Scroll canvas vertically |
 | `Mouse Wheel` | Zoom in/out |
 | `Ctrl + Drag Device` | Snap device to grid (16px grid) |
+| `Ctrl+Z` | Undo last action (canvas operation) |
+| `Ctrl+Y` | Redo last action (canvas operation) |
 
 ### Device Operations
 | Shortcut | Action |
@@ -126,8 +126,8 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `no ip host <name>` | Remove static host mapping |
 | `ip http server` | Enable HTTP server |
 | `no ip http server` | Disable HTTP server |
-| `ftp` service panel | Manage FTP credentials and files in PC services *(simulator-specific, PC only)* |
-| `mail` service panel | Manage mail service settings in PC services *(simulator-specific, PC only)* |
+| `ftp` service panel *(simulator-specific, PC only)* | Manage FTP credentials and files in PC services |
+| `mail` service panel *(simulator-specific, PC only)* | Manage mail service settings in PC services |
 | `ip ssh version {1\|2}` | Set SSH version |
 | `ip ssh time-out <seconds>` | Set SSH timeout |
 | `no ip ssh time-out` | Remove SSH timeout |
@@ -438,7 +438,7 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `domain-name <name>` | Set domain name for clients |
 
 ### IoT CLI Commands
-> **Note**: These commands are available in global config mode on IoT-capable devices.
+> **Note**: These commands are simulator-specific and do not exist in real IOS. They are designed for IoT device simulation within this simulator and are available in global config mode on IoT-capable devices.
 
 | Command | Description |
 |---------|-------------|
