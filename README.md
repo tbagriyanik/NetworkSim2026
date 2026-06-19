@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/badge/version-1.8.0-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%206.0%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-93067-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-81,523-lightgrey)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
 
@@ -27,7 +27,7 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | **Browser Window ESC Close**: Web browser window closes with ESC key without affecting PC panel. | **Tarayıcı Penceresi ESC Kapatma**: Web tarayıcı penceresi ESC tuşu ile kapatılır, PC paneli etkilenmez. |
 | **Window Snap Removal**: PC, Switch, Router, and Firewall windows no longer snap to screen edges during drag/resize. | **Pencere Snap Kaldırma**: PC, Switch, Router ve Firewall pencereleri sürükleme/yeniden boyutlandırma sırasında ekran kenarlarına snap olmaz. |
 | **PC History Cleanup**: New projects and opened projects no longer inherit previous PC cmd/CLI history. | **PC Geçmiş Temizliği**: Yeni projeler ve açılan projeler artık önceki PC cmd/CLI geçmişini almaz. |
-| **Achievement System**: Badge system with trackable milestones, reward notifications, and profile progress tracking. | **Başarım Sistemi**: Takip edilebilir kilometre taşları, ödül bildirimleri ve profil ilerleme takibi ile rozet sistemi. |
+| **Achievement System**: Activity tracking for projects, guided lessons, and exams with session duration logging. | **Başarım Sistemi**: Projeler, rehberli dersler ve sınavlar için aktivite takibi ile oturum süresi günlüğü. |
 | **Exam Mode**: Teacher exam editor, project-to-exam conversion, mobile-responsive layout, and secure student distribution. | **Sınav Modu**: Öğretmen sınav düzenleyicisi, projeden sınava dönüşüm, mobil uyumlu düzen ve güvenli öğrenci dağıtımı. |
 | **Guided Mode & Tutorial Wizard**: Step-by-step guided lessons with gamification points, progress tracking, and hint system. | **Rehberli Mod ve Eğitim Sihirbazı**: Oyunlaştırma puanları, ilerleme takibi ve ipucu sistemi ile adım adım rehberli dersler. |
 | **Intelligent CLI Assistant**: Fuzzy-matched command suggestions and device-aware subcommand hints below CLI error messages. | **Akıllı CLI Asistanı**: CLI hata mesajlarının altında bulanık eşleştirmeli komut önerileri ve cihaz bilinçli alt komut ipuçları. |
@@ -91,10 +91,8 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 | English | Türkçe |
 | --- | --- |
-| **Achievement System**: Unlockable badges for completing tasks and milestones | **Başarım Sistemi**: Görevleri ve kilometre taşlarını tamamlayarak kazanılan rozetler |
-| **Progress Tracking**: Visual progress bars and completion stats per achievement | **İlerleme Takibi**: Her başarım için görsel ilerleme çubukları ve tamamlanma istatistikleri |
-| **Reward Notifications**: Toast notifications when achievements are unlocked | **Ödül Bildirimleri**: Başarım kazanıldığında toast bildirimleri |
-| **Profile Panel**: Achievement profile showing all badges and progress | **Profil Paneli**: Tüm rozetleri ve ilerlemeyi gösteren başarım profili |
+| **Activity Tracking**: Session duration, completed projects, guided lessons, and exam history | **Aktivite Takibi**: Oturum süresi, tamamlanan projeler, rehberli dersler ve sınav geçmişi |
+| **Achievement Panel**: Visual display of tracked activities with timestamps and scores | **Başarım Paneli**: Zaman damgaları ve puanlarla takip edilen aktivitelerin görsel görüntülenmesi |
 | **Gamification Points**: Points earned through tasks, lessons, and challenges | **Oyunlaştırma Puanları**: Görevler, dersler ve zorluklar aracılığıyla kazanılan puanlar |
 | **Example Projects**: Pre-built example projects with guides | **Örnek Projeler**: Kılavuzlarla birlikte önceden oluşturulmuş örnek proje |
 
@@ -143,16 +141,13 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Total Lines / Toplam Satır | 117,255 |
-| Source Code Lines / Kaynak Kod Satırı | 93,067 |
-| Documentation Lines / Dokümantasyon Satırı | 4,525 |
-| Other Documentation MD / Diğer Doküman MD | 1,826 |
+| Total Lines / Toplam Satır | 81,523 |
 | Source Files / Kaynak Dosya | 172 |
 | Documentation Files / Dokümantasyon Dosya | 13 |
 | Example Projects / Örnek Proje | 40 |
 | Guided Lessons / Rehberli Ders | 12 |
 | Exams / Sınav | 6 |
-| CLI Command Families / CLI Komut Ailesi | 200+ |
+| CLI Commands / CLI Komutları | 280+ |
 
 ## Documentation / Dokümantasyon
 
@@ -174,19 +169,27 @@ npm install && npm run dev
 ```
 src/
 ├── app/                  # Next.js App Router — pages & layouts
+│   ├── api/             # API routes (contact, etc.)
+│   ├── [id]/            # Dynamic routes
+│   ├── layout.tsx       # Root layout
+│   ├── page.tsx         # Home page
+│   └── globals.css      # Global styles & design tokens
 ├── components/           # React components
 │   ├── ui/              # Reusable UI (cards, dialogs, panels, inputs)
 │   └── network/         # Network-specific (Terminal, Topology, PCPanel)
+├── contexts/            # React contexts (theme, mode, language)
 ├── hooks/               # Custom React hooks
 ├── lib/
-│   └── network/         # Network simulation engine
-│       └── core/        # CLI command implementations
-├── store/               # Zustand state management
-├── types/               # TypeScript type definitions
-├── utils/               # Utilities (achievements, gamification)
-├── constants/           # Constants & configuration
-├── styles/              # CSS & design tokens
-└── contexts/            # React contexts (theme, mode, language)
+│   ├── design-tokens/  # Design tokens (colors, typography, spacing, animations)
+│   ├── store/          # Zustand state management (appStore.ts)
+│   ├── network/         # Network simulation engine
+│   │   ├── core/        # CLI command implementations
+│   │   └── examples/    # Example project JSON files
+│   ├── security/        # Security utilities (sanitization, rate limiting)
+│   ├── performance/     # Performance optimization (spatial partitioning)
+│   └── storage/         # Storage utilities (window position management)
+├── utils/               # Utilities (achievement records tracking)
+└── tests/               # Test files
 ```
 
 ## Tech Stack / Teknoloji

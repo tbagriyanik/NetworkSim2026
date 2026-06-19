@@ -2,6 +2,8 @@
 
 The simulator supports **280+ commands** across multiple configuration modes.
 
+> **⚠️ Simulator-Specific Commands**: Some commands in this reference are specific to this browser-based simulator and do not exist in real Cisco IOS. These are marked with *(simulator-specific, PC only)* and are designed for PC service management (FTP, mail) and other simulator-specific features.
+
 ## Keyboard Shortcuts
 
 ### General Navigation
@@ -57,9 +59,9 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `ping <host> [size] [count]` | Test connectivity to host with ICMP |
 | `traceroute <host>` | Trace route to destination |
 | `telnet <host> [port]` | Connect to remote device via Telnet |
-| `ssh [-l username] <host>` | Connect via SSH |
-| `ftp [host]` | Open an interactive FTP session with login prompt, file listing, get/put, and quit |
-| `mail [address]` | Open a mailbox session with login prompt, inbox listing, send flow, and quit |
+| `ssh -l <username> <host>` | Connect via SSH (with username) |
+| `ftp [host]` | Open an interactive FTP session with login prompt, file listing, get/put, and quit *(simulator-specific, PC only)* |
+| `mail [address]` | Open a mailbox session with login prompt, inbox listing, send flow, and quit *(simulator-specific, PC only)* |
 | `write memory` | Save running configuration to NVRAM |
 | `copy running-config startup-config` | Save configuration |
 | `copy running-config flash:[:filename]` | Save configuration to flash |
@@ -82,10 +84,6 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `disconnect` | Disconnect network connection |
 | `resume <n>` | Resume a suspended session |
 | `suspend` | Suspend current session (Ctrl+Z) |
-| `ip route <network> <mask> <next-hop>` | Add static IPv4 route |
-| `no ip route <network> <mask|next-hop>` | Remove static IPv4 route |
-| `ipv6 route <prefix>/<len> <next-hop>` | Add static IPv6 route |
-| `no ipv6 route <prefix>/<len> [next-hop]` | Remove static IPv6 route |
 | `debug <type>` | Enable debugging (requires argument, e.g., `debug ip packet`) |
 | `no debug <type>` | Disable specific debugging |
 | `no debug all` | Disable all debugging |
@@ -102,6 +100,7 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `clear interface <name>` | Clear interface counters |
 | `do <command>` | Execute privileged command from config mode |
 | `help` | Display help system information |
+| `show access-lists` | Display all access lists |
 
 ### Global Configuration Commands
 | Command | Description |
@@ -127,8 +126,8 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `no ip host <name>` | Remove static host mapping |
 | `ip http server` | Enable HTTP server |
 | `no ip http server` | Disable HTTP server |
-| `ftp` service panel | Manage FTP credentials and files in PC services |
-| `mail` service panel | Manage mail service settings in PC services |
+| `ftp` service panel | Manage FTP credentials and files in PC services *(simulator-specific, PC only)* |
+| `mail` service panel | Manage mail service settings in PC services *(simulator-specific, PC only)* |
 | `ip ssh version {1\|2}` | Set SSH version |
 | `ip ssh time-out <seconds>` | Set SSH timeout |
 | `no ip ssh time-out` | Remove SSH timeout |
@@ -203,13 +202,15 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `policy-map <name>` | Create QoS policy map |
 | `template <name>` | Enter template configuration mode |
 | `access-list <id> <action> <condition>` | Create numbered ACL (1-99 standard, 100-199 extended) |
-| `ip access-group <id> {in|out}` | Apply ACL to interface |
 | `ip access-list {standard|extended} <name>` | Create named ACL |
-| `show access-lists` | Display all access lists |
 | `no access-list <id>` | Remove numbered ACL |
 | `ip nat inside source {static <local> <global> | list <acl> {pool <name> | interface <intf>} [overload]}` | Configure NAT |
 | `ip nat pool <name> <start> <end> {netmask <mask} | prefix-length <len>}` | Define NAT pool |
 | `no ip nat ...` | Remove NAT configuration |
+| `ip route <network> <mask> <next-hop>` | Add static IPv4 route |
+| `no ip route <network> <mask> <next-hop>` | Remove static IPv4 route (exact match required) |
+| `ipv6 route <prefix>/<len> <next-hop>` | Add static IPv6 route |
+| `no ipv6 route <prefix>/<len> [next-hop]` | Remove static IPv6 route |
 
 ### Interface Configuration Commands
 | Command | Description |
@@ -244,8 +245,7 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `spanning-tree cost <cost>` | Set STP cost |
 | `spanning-tree priority <prio>` | Set STP priority |
 | `no spanning-tree` | Disable spanning-tree on interface |
-| `ip address <ip> <mask>` | Assign IP address |
-| `ip address <ip>/<prefix>` | Assign IP with CIDR notation |
+| `ip address <ip> <mask>` | Assign IP address with subnet mask |
 | `no ip address` | Remove IP address |
 | `ip nat {inside | outside}` | Set interface NAT side |
 | `no ip nat {inside | outside}` | Remove NAT side |
@@ -298,6 +298,8 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `load-interval <sec>` | Set load statistics interval |
 | `mls qos trust {cos\|dscp}` | Set QoS trust state |
 | `mls qos cos <val>` | Set default CoS value |
+| `ip access-group <id> {in|out}` | Apply IPv4 ACL to interface |
+| `ipv6 traffic-filter <name> {in|out}` | Apply IPv6 ACL to interface |
 
 ### Wireless (WiFi) Commands
 > **Note**: These commands are only valid on Wireless LAN Controllers (WLC) or autonomous Access Points (AP). They are NOT supported on switches.
@@ -328,9 +330,8 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `power local <val>` | Set local power level (in dot11-config) | WLC/AP |
 | `power client <val>` | Set client power level (in dot11-config) | WLC/AP |
 | `world-mode dot11d {1\|-1}` | Enable 802.11d world mode (in dot11-config) | WLC/AP |
-| `security wpa psk set-key ascii 0 <password>` | Set WPA PSK key | WLC/AP |
+| `security wpa psk set-key ascii 0 <password>` | Set WPA PSK key (dot11-config) | WLC/AP |
 | `no security wpa psk` | Remove WPA PSK key | WLC/AP |
-| `wpa-psk <password>` | Set WPA pre-shared key (dot11-config) | WLC/AP |
 | `encryption mode ciphers {tkip\|aes\|tkip aes}` | Set encryption cipher (dot11-config) | WLC/AP |
 | `mac-filter` | Enable MAC filter (dot11-config) | WLC/AP |
 | `interface dot11radio <n>` | Enter dot11 radio interface config | WLC/AP |
@@ -428,8 +429,6 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `ipv6 router ospf <id>` | Enter OSPFv3 config mode |
 | `no ipv6 router rip <name>` | Disable RIPng |
 | `no ipv6 router ospf <id>` | Disable OSPFv3 |
-| `ipv6 ospf <id> area <area>` | Enable OSPFv3 on interface |
-| `ipv6 rip <name> enable` | Enable RIPng on interface |
 
 ### IPv6 DHCP Pool Configuration Commands (`ipv6-dhcp-config` mode)
 | Command | Description |
@@ -485,8 +484,8 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `show interfaces` | Display all interfaces |
 | `show interfaces trunk` | Display trunk interface information |
 | `show interface <name>` | Display specific interface |
-| `show ip interface brief` | Display IP interface summary |
-| `show ip interface` | Display IP interface summary (alias) |
+| `show ip interface brief` | Display IP interface summary (single-line IP and status overview) |
+| `show ip interface` | Display detailed IP interface information (MTU, ACL, NAT, BGP rules, and other L3 features) |
 | `show ip protocols` | Display routing protocol configuration |
 | `show ip ssh` | Display SSH configuration and status |
 | `show ip source binding` | Display IP source guard bindings |
