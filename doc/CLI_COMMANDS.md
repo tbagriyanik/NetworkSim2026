@@ -434,20 +434,6 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `dns-server <ipv6>` | Set DNS server for clients |
 | `domain-name <name>` | Set domain name for clients |
 
-### IoT CLI Commands
-> **Note**: These commands are simulator-specific and do not exist in real IOS. They are designed for IoT device simulation within this simulator and are available in global config mode on IoT-capable devices.
-
-| Command | Description |
-|---------|-------------|
-| `iot sensor <name> pin <n>` | Configure sensor on pin |
-| `iot actuator <name> pin <n>` | Configure actuator on pin |
-| `iot threshold <name> <value>` | Set sensor threshold |
-| `no iot sensor <name>` | Remove sensor config |
-| `no iot actuator <name>` | Remove actuator config |
-| `iot name <name>` | Set IoT device name |
-| `iot wifi <ssid> [password]` | Configure IoT WiFi connection |
-| `iot display <text>` | Send text to IoT display |
-
 ### Firewall Configuration Commands
 > **Note**: These commands are valid on **Cisco ASA / Firewall devices only**. They are not available on Cisco IOS routers or switches.
 

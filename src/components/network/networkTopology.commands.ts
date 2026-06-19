@@ -211,13 +211,6 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       title: isTR ? 'IoT (Nesnelerin İnterneti)' : 'IoT (Internet of Things)',
       type: 'commands',
       cmds: [
-        ['iot sensor <name>', isTR ? 'IoT sensör/servis tanımla (ör: lamp, cooler, heater, motion, smoke, servo, gas, temp, distance, ldr, rain, rfid, pir)' : 'Define IoT sensor/service (e.g. lamp, cooler, heater, motion, smoke, servo, gas, temp, distance, ldr, rain, rfid, pir)', '(config)#'],
-        ['no iot sensor <name>', isTR ? 'IoT sensörünü sil' : 'Remove IoT sensor', '(config)#'],
-        ['iot name <name>', isTR ? 'IoT cihazına isim ver' : 'Name the IoT device', '(config)#'],
-        ['iot wifi <ssid>', isTR ? 'IoT\'yi Wi-Fi ağına bağla' : 'Connect IoT to Wi-Fi network', '(config)#'],
-        ['no iot wifi', isTR ? 'IoT Wi-Fi bağlantısını kes' : 'Disconnect IoT from Wi-Fi', '(config)#'],
-        ['show iot sensors', isTR ? 'IoT sensörlerini listele' : 'List IoT sensors', '#'],
-        ['show iot status', isTR ? 'IoT cihaz durumunu göster' : 'Show IoT device status', '#'],
       ]
     },
     {
@@ -526,8 +519,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['show redundancy', isTR ? 'Yedeklilik durumu' : 'Show redundancy status', '#'],
         ['show controllers <type/n>', isTR ? 'Denetleyici durumu' : 'Show controller status', '#'],
         ['show banner motd', isTR ? 'MOTD banner mesajı' : 'Show MOTD banner', '#'],
-        ['show iot sensors', isTR ? 'IoT sensör listesi' : 'Show IoT sensors', '#'],
-        ['show iot status', isTR ? 'IoT cihaz durumu' : 'Show IoT device status', '#'],
+
       ]
     },
     {

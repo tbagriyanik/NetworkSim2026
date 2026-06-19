@@ -128,9 +128,7 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'ip host': cmdIpHost,
   'no ip host': cmdNoIpHost,
   'no ipv6 dhcp pool': cmdNoIpv6DhcpPool,
-  'iot sensor': cmdIotSensor,
-  'iot name': cmdIotName,
-  'iot wifi': cmdIotWifi,
+
   'ip nat pool': cmdIpNatPool,
   'ip nat inside source static': cmdIpNatInsideSourceStatic,
   'ip nat inside source list': cmdIpNatInsideSourceList,
@@ -2368,42 +2366,6 @@ function cmdNoAliasExec(state: SwitchState, input: string, _ctx: CommandContext)
   };
 }
 
-// IoT Handlers
-
-/**
- * iot sensor <type>
- */
-function cmdIotSensor(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
-  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
-  const match = input.match(/^iot\s+sensor\s+(.+)$/i);
-  if (!match) return { success: false, error: '% Incomplete command' };
-  const type = match[1];
-  const iotConfig = { ...(state.iotConfig || {}), sensorType: type };
-  const updatedState = { ...state, iotConfig };
-  return {
-    success: true,
-    output: `IoT sensor type set to ${type}`,
-    newState: { iotConfig, runningConfig: buildRunningConfig(updatedState) }
-  };
-}
-
-/**
- * iot name <name>
- */
-function cmdIotName(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
-  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
-  const match = input.match(/^iot\s+name\s+(.+)$/i);
-  if (!match) return { success: false, error: '% Incomplete command' };
-  const name = match[1];
-  const iotConfig = { ...(state.iotConfig || {}), name };
-  const updatedState = { ...state, iotConfig };
-  return {
-    success: true,
-    output: `IoT device name set to ${name}`,
-    newState: { iotConfig, runningConfig: buildRunningConfig(updatedState) }
-  };
-}
-
 /**
  * ip nat pool <name> <start> <end> netmask <mask>
  */
@@ -2458,23 +2420,6 @@ function cmdIpNatInsideSourceList(state: SwitchState, input: string, _ctx: Comma
   }
 
   return { success: false, error: '% Invalid dynamic NAT command' };
-}
-
-/**
- * iot wifi <ssid>
- */
-function cmdIotWifi(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
-  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
-  const match = input.match(/^iot\s+wifi\s+(.+)$/i);
-  if (!match) return { success: false, error: '% Incomplete command' };
-  const ssid = match[1];
-  const iotConfig = { ...(state.iotConfig || {}), wifiSsid: ssid };
-  const updatedState = { ...state, iotConfig };
-  return {
-    success: true,
-    output: `IoT wifi SSID set to ${ssid}`,
-    newState: { iotConfig, runningConfig: buildRunningConfig(updatedState) }
-  };
 }
 
 // Register new global config handlers

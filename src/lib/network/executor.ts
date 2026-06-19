@@ -159,7 +159,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...pfx('write', ['memory']),
   },
   'config': {
-    '': ['access-list', 'alias', 'ap', 'archive', 'banner', 'cdp', 'channel', 'class-map', 'clock', 'crypto', 'default', 'do', 'dot11', 'enable', 'end', 'errdisable', 'exit', 'hostname', 'interface', 'iot', 'ip', 'ipv6', 'line', 'mac', 'macro', 'mls', 'monitor', 'no', 'ntp', 'policy-map', 'router', 'sdm', 'security', 'service', 'snmp-server', 'spanning-tree', 'station-role', 'system', 'template', 'username', 'vlan', 'vtp', 'wlan'],
+    '': ['access-list', 'alias', 'ap', 'archive', 'banner', 'cdp', 'channel', 'class-map', 'clock', 'crypto', 'default', 'do', 'dot11', 'enable', 'end', 'errdisable', 'exit',         'hostname', 'interface', 'ip', 'ipv6', 'line', 'mac', 'macro', 'mls', 'monitor', 'no', 'ntp', 'policy-map', 'router', 'sdm', 'security', 'service', 'snmp-server', 'spanning-tree', 'station-role', 'system', 'template', 'username', 'vlan', 'vtp', 'wlan'],
     ...pfx('banner', ['exec', 'login', 'motd']),
     ...pfx('cdp', ['holdtime', 'run', 'timer']),
     ...pfx('clock', ['timezone']),
@@ -174,7 +174,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...pfx('errdisable', ['recovery']),
     'errdisable recovery': ['cause'],
     ...pfx('interface', ['dot11radio', 'range']),
-    ...pfx('iot', ['sensor', 'name', 'wifi']),
+
     ...pfx('ip', ['access-list', 'arp', 'default-gateway', 'dhcp', 'domain', 'domain-lookup', 'domain-name', 'host', 'http', 'name-server', 'nat', 'route', 'routing', 'ssh']),
     'ip arp': ['inspection'],
     'ip dhcp': ['excluded-address', 'pool', 'snooping'],

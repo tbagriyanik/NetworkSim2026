@@ -2442,25 +2442,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  'iot sensor': {
-    pattern: /^iot\s+sensor\s+(.+)$/i,
-    modes: ['config'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'iot name': {
-    pattern: /^iot\s+name\s+(.+)$/i,
-    modes: ['config'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'iot wifi': {
-    pattern: /^iot\s+wifi\s+(.+)$/i,
-    modes: ['config'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-
+  
   // ── Interface NAT commands ────────────────────────────────────────────────
   'ip nat inside': {
     pattern: /^ip\s+nat\s+inside$/i,
@@ -3161,10 +3143,6 @@ Mevcut komutlar:
   ip route <net> <mask> <ip> - Statik rota ekle
   ipv6 route <net>/<pref> <ip> - IPv6 statik rota
   ntp server <ip>           - NTP sunucusu ayarla
-  iot sensor <isim>         - IoT sensör tanımla (lamp, cooler, heater, smoke, motion, vs.)
-  no iot sensor <isim>      - IoT sensörü sil
-  iot name <isim>           - IoT cihazını adlandır
-  iot wifi <ssid>           - IoT'yi Wi-Fi ağına bağla
   ap name <isim>            - Access Point adlandır
   ap auth-mac <mac>         - AP MAC yetkilendirmesi
   ap rf-channel <num>       - AP RF kanalı ayarla
@@ -3501,10 +3479,6 @@ Available commands:
   ip route <net> <mask> <gw> - Add static route
   ipv6 route <net>/<pref> <gw> - Add IPv6 static route
   ntp server <ip>           - Set NTP server
-  iot sensor <name>         - Define IoT sensor (lamp, cooler, heater, smoke, motion, etc.)
-  no iot sensor <name>      - Remove IoT sensor
-  iot name <name>           - Name the IoT device
-  iot wifi <ssid>           - Connect IoT to Wi-Fi
   ap name <name>            - Name the Access Point
   ap auth-mac <mac>         - AP MAC authorization
   ap rf-channel <num>       - Set AP RF channel
