@@ -83,7 +83,7 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `configure replace <url>` | Replace running config with file |
 | `disconnect` | Disconnect network connection |
 | `resume <n>` | Resume a suspended session |
-| `suspend` | Suspend current session (Ctrl+Z) |
+| `suspend` | Suspend current Telnet/SSH session (Ctrl+Shift+6 then X) |
 | `debug <type>` | Enable debugging (requires argument, e.g., `debug ip packet`) |
 | `no debug <type>` | Disable specific debugging |
 | `no debug all` | Disable all debugging |
@@ -208,7 +208,7 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `ip nat pool <name> <start> <end> {netmask <mask} | prefix-length <len>}` | Define NAT pool |
 | `no ip nat ...` | Remove NAT configuration |
 | `ip route <network> <mask> <next-hop>` | Add static IPv4 route |
-| `no ip route <network> <mask> <next-hop>` | Remove static IPv4 route (exact match required) |
+| `no ip route <network> <mask> [next-hop]` | Remove static IPv4 route (next-hop optional if single route) |
 | `ipv6 route <prefix>/<len> <next-hop>` | Add static IPv6 route |
 | `no ipv6 route <prefix>/<len> [next-hop]` | Remove static IPv6 route |
 
@@ -261,8 +261,6 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `no cdp enable` | Disable CDP on interface |
 | `channel-group <n> mode {on\|active\|passive}` | Configure EtherChannel |
 | `no channel-group` | Remove from channel |
-| `access-list <acl>` | Apply access list |
-| `no access-list` | Remove access list |
 | `debug` / `no debug` | Interface debugging |
 | `monitor session <n>` | Configure SPAN/RSPAN |
 | `no monitor session` | Remove monitoring |
@@ -452,6 +450,8 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `iot display <text>` | Send text to IoT display |
 
 ### Firewall Configuration Commands
+> **Note**: These commands are valid on **Cisco ASA / Firewall devices only**. They are not available on Cisco IOS routers or switches.
+
 | Command | Description |
 |---------|-------------|
 | `security-level <0-100>` | Set interface security level |

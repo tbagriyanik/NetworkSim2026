@@ -911,9 +911,9 @@ function cmdIpAddress(state: SwitchState, input: string, _ctx: CommandContext): 
     return { success: false, error: '% No interface selected' };
   }
 
-  const match = input.match(/^ip\s+address\s+(?:(\d{1,3}(?:\.\d{1,3}){3})(?:\s+(\d{1,3}(?:\.\d{1,3}){3})|\/(\d|[12]\d|3[0-2]))|dhcp)$/i);
+  const match = input.match(/^ip\s+address\s+(?:(\d{1,3}(?:\.\d{1,3}){3})(?:\s+(\d{1,3}(?:\.\d{1,3}){3}))|dhcp)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid input: ip address <ip> <mask> or ip address <ip>/<prefix> or ip address dhcp' };
+    return { success: false, error: '% Invalid input: ip address <ip> <mask> or ip address dhcp' };
   }
 
   const isDhcp = input.toLowerCase().endsWith('dhcp');
@@ -934,8 +934,8 @@ function cmdIpAddress(state: SwitchState, input: string, _ctx: CommandContext): 
     };
   }
 
-  const [, ip, dottedMask, prefixLength] = match;
-  const mask = dottedMask || prefixToSubnetMask(parseInt(prefixLength, 10));
+  const [, ip, dottedMask] = match;
+  const mask = dottedMask;
 
   if (!isValidIP(ip) || !mask || !isValidIP(mask)) {
     return { success: false, error: '% Invalid IP address format' };
@@ -1117,21 +1117,6 @@ function isValidIP(ip: string): boolean {
   return true;
 }
 
-function prefixToSubnetMask(prefixLength: number): string | null {
-  if (!Number.isInteger(prefixLength) || prefixLength < 0 || prefixLength > 32) {
-    return null;
-  }
-
-  const mask = [0, 0, 0, 0];
-  let remaining = prefixLength;
-  for (let i = 0; i < 4; i++) {
-    const bits = Math.min(8, Math.max(0, remaining));
-    mask[i] = bits === 0 ? 0 : (0xff << (8 - bits)) & 0xff;
-    remaining -= bits;
-  }
-  return mask.join('.');
-}
-
 function ipToNumber(ip: string): number {
   const parts = ip.split('.').map(Number);
   return (((parts[0] << 24) >>> 0) + ((parts[1] << 16) >>> 0) + ((parts[2] << 8) >>> 0) + (parts[3] >>> 0)) >>> 0;
@@ -1308,9 +1293,9 @@ function cmdWlan(state: SwitchState, input: string, _ctx: CommandContext): Comma
  * Security WPA PSK Set-Key - Set WPA password (WLC only)
  */
 function cmdSecurityWpaPsk(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
-  const match = input.match(/^security\s+wpa\s+psk\s+set-key\s+ascii\s+0\s+(.+)$/i);
+  const match = input.match(/^security\s+wpa\s+psk\s+set-key\s+ascii\s+(?:0|7)\s+(.+)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid security command. Usage: security wpa psk set-key ascii 0 <password>' };
+    return { success: false, error: '% Invalid security command. Usage: security wpa psk set-key ascii {0|7} <password>' };
   }
 
   const password = match[1];

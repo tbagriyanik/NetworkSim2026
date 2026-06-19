@@ -1090,7 +1090,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     capability: 'routing'
   },
   'security wpa psk set-key': {
-    pattern: /^security\s+wpa\s+psk\s+set-key\s+ascii\s+0\s+(.+)$/i,
+    pattern: /^security\s+wpa\s+psk\s+set-key\s+ascii\s+(?:0|7)\s+(.+)$/i,
     modes: ['config'],
     minArgs: 5,
     maxArgs: 5,
@@ -1111,7 +1111,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
     capability: 'routing'
   },
   'ip address': {
-    pattern: /^ip\s+address\s+(?:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?:\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|\/(\d|[12]\d|3[0-2]))(\s+secondary)?|dhcp)$/i,
+    pattern: /^ip\s+address\s+(?:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?:\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))(\s+secondary)?|dhcp)$/i,
     modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 3
