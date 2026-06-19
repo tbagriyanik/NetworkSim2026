@@ -90,8 +90,7 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'monitor session': cmdMonitorSession,
   'no monitor session': cmdNoMonitorSession,
   // Access-list
-  'access-list': cmdAccessList,
-  'no access-list': cmdNoAccessList,
+  
   'ip access-group': cmdIpAccessGroup,
   'no ip access-group': cmdNoIpAccessGroup,
   // EtherChannel

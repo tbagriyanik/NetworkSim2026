@@ -22,8 +22,6 @@ export const privilegedHandlers: Record<string, CommandHandler> = {
     'erase startup-config': cmdEraseStartupConfig,
     'erase nvram': cmdEraseNvram,
     'reload': cmdReload,
-    'ip route': cmdIpRoute,
-    'no ip route': cmdNoIpRoute,
     'debug': cmdDebug,
     'undebug all': cmdUndebugAll,
     'delete flash:vlan.dat': cmdDeleteVlanDat,

@@ -299,7 +299,6 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `mls qos trust {cos\|dscp}` | Set QoS trust state |
 | `mls qos cos <val>` | Set default CoS value |
 | `ip access-group <id> {in|out}` | Apply IPv4 ACL to interface |
-| `ipv6 traffic-filter <name> {in|out}` | Apply IPv6 ACL to interface |
 
 ### Wireless (WiFi) Commands
 > **Note**: These commands are only valid on Wireless LAN Controllers (WLC) or autonomous Access Points (AP). They are NOT supported on switches.
