@@ -1,6 +1,6 @@
 # 💻 Network CLI Commands Reference
 
-The simulator supports **280+ commands** across multiple configuration modes.
+The simulator supports **400+ commands** across multiple configuration modes.
 
 > **⚠️ Simulator-Specific Commands**: Some commands in this reference are specific to this browser-based simulator and do not exist in real IOS. These are marked with *(simulator-specific, PC only)* and are designed for PC service management (FTP, mail) and other simulator-specific features.
 
