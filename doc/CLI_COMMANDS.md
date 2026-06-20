@@ -104,6 +104,7 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | Command | Description |
 |---------|-------------|
 | `hostname <name>` | Set device hostname |
+| `no hostname` | Reset hostname to default (Switch) |
 | `vlan <id>` | Create/enter VLAN configuration |
 | `no vlan <id>` | Delete VLAN |
 | `name <name>` | Set VLAN name (in vlan mode) |

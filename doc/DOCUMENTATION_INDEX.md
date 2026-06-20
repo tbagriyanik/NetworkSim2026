@@ -29,7 +29,7 @@ Bu indeks, Network Simulator 2026 projesinin tüm dokümantasyon dosyalarını v
 **Amaç**: CLI komut referansı  
 **Okuma Süresi**: 15 dakika  
 **İçerik**:
-- 200+ CLI komutu
+- 450+ CLI komutu
 - Tüm modlar (User EXEC, Privileged, Global, Interface, VLAN, Routing, SSID, Dot11, WLAN, DHCP)
 - Seri/WAN, IoT, güvenlik duvarı komutları
 - Klavye kısayolları
@@ -252,6 +252,7 @@ doc/
 ├── WIRELESS_README.md              (Kablosuz hızlı başlangıç)
 ├── L3_SWITCH_CONFIGURATION.md      (L3 anahtarlama)
 ├── GOOGLE_SHEETS_SETUP.md          (Google Sheets)
+├── NETWORK_SIMULATOR_KITAPCIK.md   (Eğitim kitapçığı)
 ├── README.md                       (Doküman ana sayfası)
 └── DOCUMENTATION_INDEX.md          (Bu dosya)
 ```
@@ -332,7 +333,8 @@ doc/
 | GOOGLE_SHEETS_SETUP.md | — | 15 min |
 | DOCUMENTATION_INDEX.md | — | 10 min |
 | SERVICE_FEATURES.md | — | 10 min |
-| **Toplam (13 dosya)** | — | **~280-355 min** |
+| NETWORK_SIMULATOR_KITAPCIK.md | — | 60 min |
+| **Toplam (14 dosya)** | — | **~340-415 min** |
 
 ---
 
@@ -542,7 +544,7 @@ doc/
 ## ✅ Kontrol Listesi
 
 - [x] CLI Rehberli Ders oluşturuldu (30 ders)
-- [x] CLI Komut Referansı oluşturuldu (180+ komut)
+- [x] CLI Komut Referansı oluşturuldu (450+ komut)
 - [x] Kullanım Kılavuzu hazırlandı
 - [x] Hızlı referans oluşturuldu
 - [x] Entegrasyon rehberi yazıldı
@@ -557,7 +559,7 @@ doc/
 
 ## 📅 Güncelleme Tarihi
 
-**Son Güncelleme**: 2026-06-12
+**Son Güncelleme**: 2026-06-20
 **Versiyon**: 1.8.0
 **Durum**: ✅ Güncel
 

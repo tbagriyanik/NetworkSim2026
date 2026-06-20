@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/badge/version-1.8.0-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%206.0%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-81,523-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-94,779-lightgrey)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
 
@@ -39,6 +39,9 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | **IoT & Firewall CLI**: Complete CLI command sets for IoT sensor/actuator management and firewall rule/policy configuration. | **IoT ve Güvenlik Duvarı CLI**: IoT sensör/aktüatör yönetimi ve güvenlik duvarı kural/politika yapılandırması için eksiksiz CLI komut setleri. |
 | **Help System Overhaul**: 150+ CLI commands documented in bilingual help panel, organized by device context (switch, router, wireless, WLC, IoT, firewall). | **Yardım Sistemi Revizyonu**: Cihaz bağlamına göre düzenlenmiş 150+ CLI komutunun iki dilli yardım panelinde belgelenmesi. |
 | **Canvas Drag Smoothness**: Eliminated position jitter during device drag by using fresh DOM rect per frame and disabling SVG transitions during movement. | **Kanvas Sürükleme Pürüzsüzlüğü**: Hareket sırasında kare başına taze DOM rect kullanımı ve SVG geçişlerinin devre dışı bırakılmasıyla cihaz sürüklemede konum titremesi giderildi. |
+| **Turkish Training Booklet**: Comprehensive Turkish language training booklet covering networking fundamentals, CLI, routing, WAN, wireless, and security. | **Türkçe Eğitim Kitapçığı**: Ağ temelleri, CLI, yönlendirme, WAN, kablosuz ve güvenlik konularını kapsayan kapsamlı Türkçe eğitim kitapçığı. |
+| **Serial Encapsulation**: HDLC and PPP encapsulation mismatch detection during connectivity checks. | **Seri Kapsülleme**: Bağlantı kontrolleri sırasında HDLC ve PPP kapsülleme uyumsuzluğu tespiti. |
+| **No Hostname Command**: Reset device hostname to default with `no hostname` command. | **No Hostname Komutu**: `no hostname` komutu ile cihaz hostname'ini varsayılana sıfırlama. |
 
 ---
 
@@ -141,13 +144,12 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Total Lines / Toplam Satır | 81,523 |
-| Source Files / Kaynak Dosya | 172 |
-| Documentation Files / Dokümantasyon Dosya | 13 |
+| Total Lines / Toplam Satır | 94,779 |
+| Source Files / Kaynak Dosya | 179 |
+| Documentation Files / Dokümantasyon Dosya | 16+ |
 | Example Projects / Örnek Proje | 40 |
-| Guided Lessons / Rehberli Ders | 12 |
-| Exams / Sınav | 6 |
-| CLI Commands / CLI Komutları | 280+ |
+| Guided Lessons / Rehberli Ders | 30 |
+| CLI Commands / CLI Komutları | 450+ |
 
 ## Documentation / Dokümantasyon
 
@@ -163,6 +165,7 @@ npm install && npm run dev
 | [doc/L3_SWITCH_CONFIGURATION.md](doc/L3_SWITCH_CONFIGURATION.md) | Layer 3 switching guide / L3 anahtarlama rehberi |
 | [doc/GOOGLE_SHEETS_SETUP.md](doc/GOOGLE_SHEETS_SETUP.md) | Google Sheets integration / Google Sheets entegrasyonu |
 | [doc/DOCUMENTATION_INDEX.md](doc/DOCUMENTATION_INDEX.md) | Documentation index & reading map / Dokümantasyon indeksi & okuma haritası |
+| [doc/NETWORK_SIMULATOR_KITAPCIK.md](doc/NETWORK_SIMULATOR_KITAPCIK.md) | Comprehensive Turkish training booklet / Kapsamlı Türkçe eğitim kitapçığı |
 
 ## Architecture / Mimari
 

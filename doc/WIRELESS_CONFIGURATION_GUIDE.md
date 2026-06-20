@@ -299,5 +299,5 @@ Radio Configurations:
 
 ---
 
-**Son Güncelleme:** 2026-06-12
+**Son Güncelleme:** 2026-06-20
 **Versiyon:** 1.8.0

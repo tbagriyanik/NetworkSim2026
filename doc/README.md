@@ -17,7 +17,7 @@ Bu klasör, Network Simulator 2026 projesi için tüm dokümantasyon dosyaların
 
 ### 💻 [CLI_COMMANDS.md](CLI_COMMANDS.md)
 **Komut Satırı Komutları Rehberi**
-- 180+ CLI komutu
+- 450+ CLI komutu
 - Tüm modlar
 - Klavye kısayolları
 - Komut sözdizimi
@@ -149,6 +149,19 @@ Bu klasör, Network Simulator 2026 projesi için tüm dokümantasyon dosyaların
 
 ---
 
+### 📘 [NETWORK_SIMULATOR_KITAPCIK.md](NETWORK_SIMULATOR_KITAPCIK.md)
+**Kapsamlı Türkçe Eğitim Kitapçığı**
+- Ağ temelleri
+- CLI komutları
+- Yönlendirme protokolleri
+- WAN teknolojileri
+- Kablosuz ağlar
+- Güvenlik
+
+**Okuma Süresi**: 60 dakika
+
+---
+
 ## 🎯 Okuma Haritası
 
 ### 🟢 Başlangıç (Yeni Kullanıcılar)
@@ -232,15 +245,15 @@ const response = await apiClient.post('/api/contact', data);
 
 | Metrik | Değer |
 |--------|-------|
-| **Dokümantasyon Sayfaları** | 13 |
-| **Toplam Okuma Süresi** | ~270 dakika |
+| **Dokümantasyon Sayfaları** | 14 |
+| **Toplam Okuma Süresi** | ~300 dakika |
 
 ---
 
 ## ✨ Tamamlanan Özellikler
 
 ✅ CLI Rehberli Ders (30 ders)  
-✅ CLI Komut Referansı (180+ komut)  
+✅ CLI Komut Referansı (450+ komut)  
 ✅ Kullanım Kılavuzu  
 ✅ Global Error Boundary  
 ✅ Form Validasyonu (11 fonksiyon)  
@@ -264,6 +277,8 @@ const response = await apiClient.post('/api/contact', data);
 ✅ Sınav Modu  
 ✅ Rehberli Mod ve Eğitim Sihirbazı  
 ✅ Akıllı CLI Asistanı  
+✅ Kapsamlı Türkçe Eğitim Kitapçığı  
+✅ Seri Kapsülleme (HDLC/PPP) Kontrolü  
 
 ---
 
@@ -319,7 +334,7 @@ const response = await apiClient.post('/api/contact', data);
 
 **Versiyon**: 1.8.0  
 **Durum**: ✅ Güncel  
-**Tarih**: 2026-06-12  
+**Tarih**: 2026-06-20  
 
 ---
 
