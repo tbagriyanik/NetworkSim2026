@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LayoutProvider } from '@/contexts/LayoutContext';
 import { FeatureFlagProvider } from '@/contexts/FeatureFlagContext';
 import { ModeProvider } from '@/contexts/ModeContext';
+import { RoomProvider } from '@/contexts/RoomContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { GlobalDragManager } from '@/hooks/useDrag';
@@ -19,13 +20,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <LayoutProvider>
             <FeatureFlagProvider>
               <ModeProvider>
-                <TooltipProvider delayDuration={0}>
-                  <SidebarProvider>
-                    <GlobalDragManager />
-                    {children}
-                    <Toaster />
-                  </SidebarProvider>
-                </TooltipProvider>
+                <RoomProvider>
+                  <TooltipProvider delayDuration={0}>
+                    <SidebarProvider>
+                      <GlobalDragManager />
+                      {children}
+                      <Toaster />
+                    </SidebarProvider>
+                  </TooltipProvider>
+                </RoomProvider>
               </ModeProvider>
             </FeatureFlagProvider>
           </LayoutProvider>

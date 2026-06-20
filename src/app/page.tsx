@@ -50,7 +50,7 @@ const NetworkTopology = dynamic(
   { ssr: false }
 );
 
-import { Network, Monitor, X, Power, Filter, RefreshCw } from "lucide-react";
+import { Network, Monitor, X, Power, Filter, RefreshCw, Users } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { TooltipWrapper } from "@/components/ui/TooltipWrapper";
 import { useLanguage, Translations } from '@/contexts/LanguageContext';
@@ -86,6 +86,8 @@ import { AppFooter } from '@/components/network/AppFooter';
 import { TopologyToolbar } from '@/components/network/TopologyToolbar';
 import { AppSkeleton } from '@/components/ui/AppSkeleton';
 import { AppErrorBoundary } from '@/components/ui/AppErrorBoundary';
+import { useRoom } from '@/contexts/RoomContext';
+import { useRoomSync } from '@/hooks/useRoomSync';
 
 
 const PCPanel = dynamic(() => import('@/components/network/PCPanel').then((m) => m.PCPanel));
@@ -99,6 +101,8 @@ const FirewallPanel = dynamic(() => import('@/components/network/FirewallPanel')
 const EnvironmentSettingsPanel = dynamic(() => import('@/components/network/EnvironmentSettingsPanel').then((m) => m.EnvironmentSettingsPanel));
 const OnboardingDialog = dynamic(() => import('@/components/network/OnboardingDialog').then((m) => m.OnboardingDialog));
 const ExamEditorPanel = dynamic(() => import('@/components/network/ExamEditorPanel').then((m) => m.ExamEditorPanel));
+const RoomJoinDialog = dynamic(() => import('@/components/RoomJoinDialog').then((m) => m.RoomJoinDialog));
+const TeacherRoomPanel = dynamic(() => import('@/components/TeacherRoomPanel').then((m) => m.TeacherRoomPanel));
 
 type TabType = 'topology' | 'cmd' | 'terminal' | 'tasks';
 
@@ -1291,7 +1295,21 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   // Calculate max possible score
   const maxScore = activeDeviceTasks.reduce((acc, task) => acc + task.weight, 0);
 
-
+  // Room sync data
+  const completedTaskCount = activeDeviceTasks.filter(t => getTaskStatus(t, state, taskContext)).length;
+  const totalTaskCount = activeDeviceTasks.length;
+  const currentTaskName = activeDeviceTasks.length > 0
+    ? activeDeviceTasks.find(t => !getTaskStatus(t, state, taskContext))?.name[language] ?? activeDeviceTasks[activeDeviceTasks.length - 1].name[language]
+    : '';
+  const { studentRoomCode, studentDisplayName, setShowRoomJoinDialog, setShowTeacherPanel } = useRoom();
+  useRoomSync({
+    roomCode: studentRoomCode,
+    displayName: studentDisplayName,
+    currentTask: currentTaskName,
+    completedTasks: completedTaskCount,
+    totalTasks: totalTaskCount,
+    projectFile: projectName !== 'Untitled' ? projectName : undefined,
+  });
 
   const { normalizeDeviceType, isValidIpv4, isSameSubnetByMask,
     buildLinkLocalLease, assignDhcpLeaseForPc, applyLinkLocalToUnconfiguredHosts,
@@ -4793,6 +4811,27 @@ ${state.bannerMOTD}
                     setIsEnvironmentPanelOpen={setIsEnvironmentPanelOpen}
                   />
                 )}
+
+                {/* Room Controls — floating buttons above footer */}
+                <div className="fixed bottom-16 left-3 z-30 flex gap-1.5">
+                  <button
+                    onClick={() => setShowRoomJoinDialog(true)}
+                    className="flex items-center gap-1.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg px-2.5 py-1.5 text-xs font-medium shadow-lg hover:bg-white/90 dark:hover:bg-slate-800/90 transition-all"
+                    title="Öğrenci katıl"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Öğrenci Katıl</span>
+                  </button>
+                  <button
+                    onClick={() => setShowTeacherPanel(true)}
+                    className="flex items-center gap-1.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg px-2.5 py-1.5 text-xs font-medium shadow-lg hover:bg-white/90 dark:hover:bg-slate-800/90 transition-all"
+                    title="Öğretmen paneli"
+                  >
+                    <Monitor className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Öğretmen Paneli</span>
+                  </button>
+                </div>
+
                 {/* Network Topology fills remaining space */}
                 <div ref={topologyContainerRef} className="flex-1 w-full h-full min-h-0 overflow-hidden relative">
                   <NetworkTopology
@@ -5079,6 +5118,9 @@ ${state.bannerMOTD}
               isDark={isDark}
             />
           )}
+
+          <RoomJoinDialog />
+          <TeacherRoomPanel />
         </div>
       </div>
     </AppErrorBoundary>
