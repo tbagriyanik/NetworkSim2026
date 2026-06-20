@@ -36,6 +36,8 @@ export async function updateStudent(
     lastSeen: Date.now(),
   };
 
+  if (!existing.joinedAt) existing.joinedAt = Date.now();
+
   room.students[studentId] = { ...existing, ...data, lastSeen: Date.now() };
   await kv.set(key, room, { ex: ROOM_TTL });
   return room.students[studentId];

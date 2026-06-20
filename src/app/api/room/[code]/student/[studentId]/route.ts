@@ -22,11 +22,18 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { displayName, currentTask, completedTasks, totalTasks } = body;
+    const { displayName, currentTask, completedTasks, totalTasks, projectFile } = body;
 
     if (displayName !== undefined && (typeof displayName !== 'string' || displayName.length > 100)) {
       return NextResponse.json(
         { success: false, error: 'Invalid display name', code: 'INVALID_NAME' },
+        { status: 400 },
+      );
+    }
+
+    if (projectFile !== undefined && (typeof projectFile !== 'string' || projectFile.length > 200)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid project file name', code: 'INVALID_PROJECT_FILE' },
         { status: 400 },
       );
     }
@@ -50,6 +57,7 @@ export async function PATCH(
       currentTask,
       completedTasks,
       totalTasks,
+      projectFile,
     });
 
     if (!student) {

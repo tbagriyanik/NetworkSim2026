@@ -678,6 +678,28 @@ export interface Translations {
   iotWebPanel: string;
   deviceManagement: string;
   httpPageOpened: string;
+  roomJoinTitle: string;
+  roomJoinDesc: string;
+  roomJoinedTo: string;
+  roomJoinedAs: string;
+  roomLeave: string;
+  roomCodePlaceholder: string;
+  roomNamePlaceholder: string;
+  roomJoinBtn: string;
+  roomTeacherPanel: string;
+  roomCreateBtn: string;
+  roomOr: string;
+  roomExistingPlaceholder: string;
+  roomWatchBtn: string;
+  roomClose: string;
+  roomCode: string;
+  roomStudents: string;
+  roomConnError: string;
+  roomWaiting: string;
+  roomNoStudents: string;
+  roomDuration: string;
+  roomStudentJoin: string;
+  roomTeacherOpen: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -1355,6 +1377,28 @@ const translations: Record<Language, Translations> = {
     iotWebPanel: 'IoT Web Paneli',
     deviceManagement: 'Yönetimi',
     httpPageOpened: 'HTTP sayfası yeni pencerede açıldı.',
+    roomJoinTitle: 'Odaya Katıl',
+    roomJoinDesc: 'Öğretmeninizin verdiği oda kodunu girerek sınıf takibine katılın.',
+    roomJoinedTo: 'odasına',
+    roomJoinedAs: 'olarak katıldınız.',
+    roomLeave: 'Odadan Ayrıl',
+    roomCodePlaceholder: 'Oda kodu (ör: AG7X2)',
+    roomNamePlaceholder: 'Adınız',
+    roomJoinBtn: 'Katıl',
+    roomTeacherPanel: 'Öğretmen Paneli',
+    roomCreateBtn: 'Yeni Oda Oluştur',
+    roomOr: 'veya',
+    roomExistingPlaceholder: 'Mevcut oda kodu',
+    roomWatchBtn: 'İzle',
+    roomClose: 'Kapat',
+    roomCode: 'Oda Kodu',
+    roomStudents: 'öğrenci',
+    roomConnError: 'Bağlantı hatası',
+    roomWaiting: 'Bekliyor...',
+    roomNoStudents: 'Henüz öğrenci bağlanmadı.',
+    roomDuration: 'dk',
+    roomStudentJoin: 'Öğrenci Katıl',
+    roomTeacherOpen: 'Öğretmen Paneli',
   },
   en: {
     about: 'Help',
@@ -2030,6 +2074,28 @@ const translations: Record<Language, Translations> = {
     iotWebPanel: 'IoT Web Panel',
     deviceManagement: 'Management',
     httpPageOpened: 'HTTP page opened in a new window.',
+    roomJoinTitle: 'Join Room',
+    roomJoinDesc: 'Enter the room code given by your teacher to join class tracking.',
+    roomJoinedTo: 'room',
+    roomJoinedAs: 'joined as',
+    roomLeave: 'Leave Room',
+    roomCodePlaceholder: 'Room code (e.g. AG7X2)',
+    roomNamePlaceholder: 'Your name',
+    roomJoinBtn: 'Join',
+    roomTeacherPanel: 'Teacher Panel',
+    roomCreateBtn: 'Create New Room',
+    roomOr: 'or',
+    roomExistingPlaceholder: 'Existing room code',
+    roomWatchBtn: 'Watch',
+    roomClose: 'Close',
+    roomCode: 'Room Code',
+    roomStudents: 'students',
+    roomConnError: 'Connection error',
+    roomWaiting: 'Waiting...',
+    roomNoStudents: 'No students connected yet.',
+    roomDuration: 'min',
+    roomStudentJoin: 'Student Join',
+    roomTeacherOpen: 'Teacher Panel',
   }
 };
 
