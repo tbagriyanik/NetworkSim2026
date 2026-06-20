@@ -30,7 +30,7 @@ KV_REST_API_TOKEN=<your-token>
 ## 2. Paketler
 
 ```bash
-npm install @vercel/kv
+npm install @upstash/redis
 ```
 
 ---
@@ -133,7 +133,7 @@ Oturum bilgileri `localStorage`'da saklanır:
 | **Doğrulama yok** | `studentId` localStorage UUID'sidir, gerçek hesap değildir |
 | **4 saat TTL** | Redis key'leri 4 saat sonra otomatik silinir, her yazımda yenilenir |
 | **Sunucu doğrulaması** | Minimal: alan uzunluğu, sayısal sınırlar. Sahte veri gönderilebilir |
-| **@vercel/kv** | Vercel dışında `ioredis` vb. ile değiştirilebilir — sadece `roomStore.ts` etkilenir |
+| **@upstash/redis** | Doğrudan Upstash Redis bağlantısı — `roomStore.ts` içinde `KV_REST_API_URL` ve `KV_REST_API_TOKEN` env değişkenlerini kullanır |
 
 ---
 
