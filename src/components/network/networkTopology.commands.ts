@@ -137,7 +137,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
     {
       id: 'examples-dhcp',
       icon: Lightbulb,
-      title: isTR ? '├ûrnek: DHCP Sunucusu' : 'Example: DHCP Server',
+      title: isTR ? 'Örnek: DHCP Sunucusu' : 'Example: DHCP Server',
       type: 'examples',
       cmds: [
         ['ip dhcp pool MY_POOL', isTR ? '1. DHCP havuzu oluştur' : '1. Create DHCP pool', '(config)#'],
@@ -151,7 +151,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
     {
       id: 'examples-wifi',
       icon: Wifi,
-      title: isTR ? '├ûrnek: Wi-Fi Ayarları' : 'Example: Wi-Fi Setup',
+      title: isTR ? 'Örnek: Wi-Fi Ayarları' : 'Example: Wi-Fi Setup',
       type: 'examples',
       cmds: [
         ['dot11 ssid MY_WIFI', isTR ? '1. SSID yapılandırmasına gir' : '1. Enter SSID config', '(config)#'],
@@ -166,7 +166,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
     {
       id: 'examples-vlan',
       icon: Layers,
-      title: isTR ? '├ûrnek: VLAN & Trunk' : 'Example: VLAN & Trunk',
+      title: isTR ? 'Örnek: VLAN & Trunk' : 'Example: VLAN & Trunk',
       type: 'examples',
       cmds: [
         ['vlan 10', isTR ? '1. VLAN 10 oluştur' : '1. Create VLAN 10', '(config)#'],
@@ -314,7 +314,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['ip access-group <id> {in|out}', isTR ? 'ACL uygula' : 'Apply ACL', '(config-if)#'],
         ['ip nat {inside|outside}', isTR ? 'NAT tarafı seç' : 'Set NAT side', '(config-if)#'],
         ['standby <g> ip <vip>', isTR ? 'HSRP Virtual IP' : 'HSRP Virtual IP', '(config-if)#'],
-        ['standby <g> priority <p>', isTR ? 'HSRP ├ûnceliği' : 'HSRP Priority', '(config-if)#'],
+        ['standby <g> priority <p>', isTR ? 'HSRP Önceliği' : 'HSRP Priority', '(config-if)#'],
         ['monitor session <n>', isTR ? 'SPAN/RSPAN' : 'Configure SPAN/RSPAN', '(config-if)#'],
       ]
     },
@@ -437,7 +437,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       title: isTR ? 'Show Komutları' : 'Show Commands',
       type: 'commands',
       cmds: [
-        ['show', isTR ? '├ûzet bilgi' : 'Display summary', '#'],
+        ['show', isTR ? 'Özet bilgi' : 'Display summary', '#'],
         ['show running-config', isTR ? 'Çalışan yapılandırma' : 'Running config', '#'],
         ['show startup-config', isTR ? 'Başlangıç yapılandırması' : 'Startup config', '#'],
         ['show version', isTR ? 'Sistem bilgisi' : 'System version', '#'],
