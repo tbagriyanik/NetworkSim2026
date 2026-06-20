@@ -9,6 +9,7 @@ interface UseRoomSyncOptions {
   completedTasks: number;
   totalTasks: number;
   projectFile?: string;
+  durationMinutes?: number;
 }
 
 export function useRoomSync({
@@ -18,6 +19,7 @@ export function useRoomSync({
   completedTasks,
   totalTasks,
   projectFile,
+  durationMinutes,
 }: UseRoomSyncOptions) {
   const studentIdRef = useRef<string>('');
   const lastPayloadRef = useRef<string>('');
@@ -35,7 +37,7 @@ export function useRoomSync({
       }
     }
 
-    const payload = JSON.stringify({ currentTask, completedTasks, totalTasks, projectFile });
+    const payload = JSON.stringify({ currentTask, completedTasks, totalTasks, projectFile, durationMinutes });
     if (payload === lastPayloadRef.current) return;
     lastPayloadRef.current = payload;
 
@@ -44,7 +46,7 @@ export function useRoomSync({
         const res = await fetch(`/api/room/${roomCode}/student/${studentIdRef.current}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ displayName, currentTask, completedTasks, totalTasks, projectFile }),
+          body: JSON.stringify({ displayName, currentTask, completedTasks, totalTasks, projectFile, durationMinutes }),
         });
         if (res.status === 404) {
           lastPayloadRef.current = '';
@@ -55,5 +57,5 @@ export function useRoomSync({
     }, 5000);
 
     return () => clearTimeout(timeoutId);
-  }, [roomCode, displayName, currentTask, completedTasks, totalTasks, projectFile]);
+  }, [roomCode, displayName, currentTask, completedTasks, totalTasks, projectFile, durationMinutes]);
 }

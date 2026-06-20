@@ -22,7 +22,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { displayName, currentTask, completedTasks, totalTasks, projectFile } = body;
+    const { displayName, currentTask, completedTasks, totalTasks, projectFile, durationMinutes } = body;
 
     if (displayName !== undefined && (typeof displayName !== 'string' || displayName.length > 100)) {
       return NextResponse.json(
@@ -52,12 +52,20 @@ export async function PATCH(
       );
     }
 
+    if (durationMinutes !== undefined && (typeof durationMinutes !== 'number' || durationMinutes < 1 || durationMinutes > 600)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid duration minutes value', code: 'INVALID_DURATION' },
+        { status: 400 },
+      );
+    }
+
     const student = await updateStudent(code.toUpperCase(), studentId, {
       displayName,
       currentTask,
       completedTasks,
       totalTasks,
       projectFile,
+      durationMinutes,
     });
 
     if (!student) {

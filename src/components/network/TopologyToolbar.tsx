@@ -20,7 +20,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { DeviceIcon } from '@/components/network/DeviceIcon';
-import { ChevronDown, Plus, Undo2, Redo2, Search, X, Cable, LineSquiggle, Leaf, Plug, TrendingUpDown } from 'lucide-react';
+import { ChevronDown, Plus, Undo2, Redo2, Search, X, Cable, LineSquiggle, Leaf, Plug, TrendingUpDown, Users, Monitor } from 'lucide-react';
 import type { Translations } from '@/contexts/LanguageContext';
 import type { CanvasDevice, DeviceType } from '@/components/network/networkTopology.types';
 import type { SwitchState, CableType, CableInfo } from '@/lib/network/types';
@@ -49,6 +49,8 @@ interface TopologyToolbarProps {
   handleRedo: () => void;
   handleRefreshNetwork: () => void;
   setIsEnvironmentPanelOpen: (v: boolean) => void;
+  onOpenStudentJoin?: () => void;
+  onOpenTeacherPanel?: () => void;
 }
 
 function truncateWithEllipsis(text: string, maxLength: number) {
@@ -68,6 +70,7 @@ export function TopologyToolbar({
   handleDeviceSelectFromMenu,
   handleUndo, handleRedo,
   handleRefreshNetwork, setIsEnvironmentPanelOpen,
+  onOpenStudentJoin, onOpenTeacherPanel,
 }: TopologyToolbarProps) {
   const graphicsQuality = useAppStore((state) => state.graphicsQuality);
   const isHighQuality = graphicsQuality === 'high';
@@ -608,6 +611,41 @@ export function TopologyToolbar({
           <ShortcutBadge shortcut="F5" variant="danger" />
         </TooltipContent>
       </Tooltip>
+
+      <div className="ml-auto flex items-center gap-1">
+        {onOpenStudentJoin && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                aria-label={t.roomStudentJoin}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={onOpenStudentJoin}
+              >
+                <Users className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t.roomStudentJoin}</TooltipContent>
+          </Tooltip>
+        )}
+        {onOpenTeacherPanel && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                aria-label={t.roomTeacherOpen}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={onOpenTeacherPanel}
+              >
+                <Monitor className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t.roomTeacherOpen}</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
     </div>
   );
 }

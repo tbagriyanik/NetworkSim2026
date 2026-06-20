@@ -7,6 +7,7 @@ export interface StudentProgress {
   joinedAt: number;
   lastSeen: number;
   projectFile?: string;
+  durationMinutes?: number;
 }
 
 export interface RoomData {

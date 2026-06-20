@@ -692,11 +692,13 @@ export interface Translations {
   roomExistingPlaceholder: string;
   roomWatchBtn: string;
   roomClose: string;
+  roomExit: string;
   roomCode: string;
   roomStudents: string;
   roomConnError: string;
   roomWaiting: string;
   roomNoStudents: string;
+  roomTimeUp: string;
   roomDuration: string;
   roomStudentJoin: string;
   roomTeacherOpen: string;
@@ -1391,11 +1393,13 @@ const translations: Record<Language, Translations> = {
     roomExistingPlaceholder: 'Mevcut oda kodu',
     roomWatchBtn: 'İzle',
     roomClose: 'Kapat',
+    roomExit: 'Çıkış',
     roomCode: 'Oda Kodu',
     roomStudents: 'öğrenci',
     roomConnError: 'Bağlantı hatası',
     roomWaiting: 'Bekliyor...',
     roomNoStudents: 'Henüz öğrenci bağlanmadı.',
+    roomTimeUp: 'Süre Bitti',
     roomDuration: 'dk',
     roomStudentJoin: 'Öğrenci Katıl',
     roomTeacherOpen: 'Öğretmen Paneli',
@@ -2088,11 +2092,13 @@ const translations: Record<Language, Translations> = {
     roomExistingPlaceholder: 'Existing room code',
     roomWatchBtn: 'Watch',
     roomClose: 'Close',
+    roomExit: 'Exit',
     roomCode: 'Room Code',
     roomStudents: 'students',
     roomConnError: 'Connection error',
     roomWaiting: 'Waiting...',
     roomNoStudents: 'No students connected yet.',
+    roomTimeUp: 'Time Up',
     roomDuration: 'min',
     roomStudentJoin: 'Student Join',
     roomTeacherOpen: 'Teacher Panel',

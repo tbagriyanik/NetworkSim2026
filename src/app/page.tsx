@@ -1309,6 +1309,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     completedTasks: completedTaskCount,
     totalTasks: totalTaskCount,
     projectFile: projectName !== 'Untitled' ? projectName : undefined,
+    durationMinutes: activeExam?.durationMinutes,
   });
 
   const { normalizeDeviceType, isValidIpv4, isSameSubnetByMask,
@@ -4809,11 +4810,13 @@ ${state.bannerMOTD}
                     handleRedo={handleRedo}
                     handleRefreshNetwork={handleRefreshNetwork}
                     setIsEnvironmentPanelOpen={setIsEnvironmentPanelOpen}
+                    onOpenStudentJoin={() => setShowRoomJoinDialog(true)}
+                    onOpenTeacherPanel={() => setShowTeacherPanel(true)}
                   />
                 )}
 
-                {/* Room Controls — floating buttons above footer */}
-                <div className="fixed bottom-16 left-3 z-30 flex gap-1.5">
+                {/* Room Controls — floating buttons above footer (mobile only) */}
+                <div className="fixed bottom-16 left-3 z-30 flex gap-1.5 md:hidden">
                   <button
                     onClick={() => setShowRoomJoinDialog(true)}
                     className="flex items-center gap-1.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg px-2.5 py-1.5 text-xs font-medium shadow-lg hover:bg-white/90 dark:hover:bg-slate-800/90 transition-all"

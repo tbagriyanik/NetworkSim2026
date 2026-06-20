@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Copy, Check } from 'lucide-react';
+import { Copy, Check, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRoomStudents } from '@/hooks/useRoomStudents';
@@ -48,7 +48,7 @@ function RoomMonitor({ roomCode, onClose }: { roomCode: string; onClose: () => v
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopy}>
             {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
           </Button>
-          <button onClick={onClose} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">{t.roomClose}</button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose}><LogOut className="w-3 h-3" /></Button>
         </div>
       </div>
 
@@ -65,6 +65,9 @@ function RoomMonitor({ roomCode, onClose }: { roomCode: string; onClose: () => v
                 <span className="ml-1 text-[10px] text-muted-foreground/60 tabular-nums">
                   {Math.floor((now - s.joinedAt) / 60000)}{t.roomDuration}
                 </span>
+                {s.durationMinutes && now - s.joinedAt > s.durationMinutes * 60000 && (
+                  <Badge variant="destructive" className="ml-1 text-[9px] h-3.5 px-1">{t.roomTimeUp}</Badge>
+                )}
               </span>
               <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">{s.completedTasks}/{s.totalTasks}</span>
               <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums w-8 text-right">{Math.round(progress)}%</span>
