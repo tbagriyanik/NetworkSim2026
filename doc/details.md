@@ -17,7 +17,7 @@
 | **PC History Cleanup**: New projects and opened projects no longer inherit previous PC cmd/CLI history. | **PC Geçmiş Temizliği**: Yeni projeler ve açılan projeler artık önceki PC cmd/CLI geçmişini almaz. |
 | **Achievement System**: Activity tracking for projects, guided lessons, and exams with session duration logging. | **Başarım Sistemi**: Projeler, rehberli dersler ve sınavlar için aktivite takibi ile oturum süresi günlüğü. |
 | **Exam Mode**: Teacher exam editor, project-to-exam conversion, mobile-responsive layout, and secure student distribution. | **Sınav Modu**: Öğretmen sınav düzenleyicisi, projeden sınava dönüşüm, mobil uyumlu düzen ve güvenli öğrenci dağıtımı. |
-| **Guided Mode & Tutorial Wizard**: Step-by-step guided lessons with gamification points, progress tracking, and hint system. | **Rehberli Mod ve Eğitim Sihirbazı**: Oyunlaştırma puanları, ilerleme takibi ve ipucu sistemi ile adım adım rehberli dersler. |
+| **Guided Mode & Tutorial Wizard**: Step-by-step guided lessons with points, progress tracking, and hint system. | **Rehberli Mod ve Eğitim Sihirbazı**: Kazanılan puanları, ilerleme takibi ve ipucu sistemi ile adım adım rehberli dersler. |
 | **Intelligent CLI Assistant**: Fuzzy-matched command suggestions and device-aware subcommand hints below CLI error messages. | **Akıllı CLI Asistanı**: CLI hata mesajlarının altında bulanık eşleştirmeli komut önerileri ve cihaz bilinçli alt komut ipuçları. |
 | **Exam Import Enhancements**: Improved `.json` / `.exam` import with smarter PC IP extraction, connection parsing, and weighted scoring. | **Sınav İçe Aktarma İyileştirmeleri**: Gelişmiş `.json` / `.exam` içe aktarma ile akıllı PC IP çıkarma, bağlantı ayrıştırma ve ağırlıklı puanlama. |
 | **PC Services Persistence**: PC service configurations (DHCP, DNS, HTTP) persist across network refreshes. | **PC Servis Kalıcılığı**: PC servis yapılandırmaları (DHCP, DNS, HTTP) ağ yenilemelerinde korunur. |
@@ -92,13 +92,12 @@
 | **Exam Mode**: Teacher exam editor, project-to-exam conversion, automatic scoring, student distribution | **Sınav Modu**: Öğretmen sınav düzenleyicisi, projeden sınava dönüşüm, otomatik puanlama, öğrenci dağıtımı |
 | **Exam Import**: Smart `.json` / `.exam` file import with PC IP extraction and connection parsing | **Sınav İçe Aktarma**: PC IP çıkarma ve bağlantı ayrıştırma ile akıllı `.json` / `.exam` dosya içe aktarma |
 
-### 🏆 Gamification / Oyunlaştırma
+### 🏆 Activity / Aktiviteler
 
 | English | Türkçe |
 | --- | --- |
 | **Activity Tracking**: Session duration, completed projects, guided lessons, and exam history | **Aktivite Takibi**: Oturum süresi, tamamlanan projeler, rehberli dersler ve sınav geçmişi |
 | **Achievement Panel**: Visual display of tracked activities with timestamps and scores | **Başarım Paneli**: Zaman damgaları ve puanlarla takip edilen aktivitelerin görsel görüntülenmesi |
-| **Gamification Points**: Points earned through tasks, lessons, and challenges | **Oyunlaştırma Puanları**: Görevler, dersler ve zorluklar aracılığıyla kazanılan puanlar |
 | **Example Projects**: Pre-built example projects with guides | **Örnek Projeler**: Kılavuzlarla birlikte önceden oluşturulmuş örnek proje |
 
 ### 🧩 UI & UX
