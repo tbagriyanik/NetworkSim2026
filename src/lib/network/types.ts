@@ -569,7 +569,7 @@ export interface CommandResult {
   output?: string;
   error?: string;
   realismLevel?: 'real' | 'stub' | 'sim-only';
-  hint?: string;
+  hint?: string | { tr: string; en: string };
   newState?: Partial<SwitchState>;
   deviceStates?: Map<string, SwitchState>; // Cross-device state updates (e.g., port security violations)
   updatedDeviceStates?: Map<string, SwitchState>; // Cross-device state updates (e.g., STP recalculation)

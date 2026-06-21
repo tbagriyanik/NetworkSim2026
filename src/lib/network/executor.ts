@@ -1,5 +1,6 @@
 // Network Command Executor (refactored with handler map)
 import { SwitchState, CommandMode, CommandResult, Port } from './types';
+import useAppStore from '../store/appStore';
 import { parseCommand, validateCommand, commandPatterns, getLevenshteinDistance, expandKeywordPrefixes, resolveAliases } from './parser';
 import { getDeviceCapabilities } from './capabilities';
 import { isRouterModel } from './switchModels';
@@ -476,7 +477,6 @@ const commandDescriptions: Record<string, Record<string, string>> = {
     'encapsulation': 'Kapsülleme türünü ayarla (Set encapsulation type)',
     'clock': 'Saat hızı ayarları (Clock rate settings)',
     'ppp': 'PPP ayarları (PPP settings)',
-    'udld': 'UDLD ayarları (UDLD settings)',
     'keepalive': 'Keepalive süresini ayarla (Set keepalive interval)',
     'exit': 'Arayüz yapılandırmasından çık (Exit interface configuration)',
     'end': 'Yapılandırma modundan çık (Exit configuration mode)',

@@ -26,7 +26,7 @@ export interface TerminalOutput {
   content: string;
   prompt?: string;
   realismLevel?: 'real' | 'stub' | 'sim-only';
-  hint?: string;
+  hint?: string | { tr: string; en: string };
   timestamp?: number;
 }
 
@@ -84,6 +84,7 @@ interface TerminalProps {
   t: Translations;
   theme: string;
   language: string;
+  helpLevel?: 'beginner' | 'intermediate' | 'exam';
   onUpdateHistory?: (deviceId: string, history: string[]) => void;
   confirmDialog?: { show: boolean; message?: string; onConfirm: () => void } | null;
   setConfirmDialog?: (dialog: { show: boolean; message: string; action: string; onConfirm: () => void } | null) => void;
@@ -135,9 +136,9 @@ export function Terminal({
   });
 
   // State for displaying output
-  const [displayedLines, setDisplayedLines] = useState<Array<{ id: string, type: string, content: string, prompt?: string, realismLevel?: 'real' | 'stub' | 'sim-only', hint?: string }>>(() => {
+  const [displayedLines, setDisplayedLines] = useState<Array<{ id: string, type: string, content: string, prompt?: string, realismLevel?: 'real' | 'stub' | 'sim-only', hint?: string | { tr: string; en: string } }>>(() => {
     // Initialize from output on mount to show history when terminal opens
-    const initialLines: Array<{ id: string, type: string, content: string, prompt?: string, realismLevel?: 'real' | 'stub' | 'sim-only', hint?: string }> = [];
+    const initialLines: Array<{ id: string, type: string, content: string, prompt?: string, realismLevel?: 'real' | 'stub' | 'sim-only', hint?: string | { tr: string; en: string } }> = [];
     if (output && output.length > 0) {
       output.forEach((outputItem) => {
         if (!outputItem || !outputItem.id) return;
@@ -375,7 +376,7 @@ export function Terminal({
       isInitializedRef.current = true;
       // If displayedLines is empty but output has content, process it
       if (displayedLines.length === 0 && output.length > 0) {
-        const newLines: Array<{ id: string; type: string; content: string; prompt?: string; realismLevel?: 'real' | 'stub' | 'sim-only'; hint?: string }> = [];
+        const newLines: Array<{ id: string; type: string; content: string; prompt?: string; realismLevel?: 'real' | 'stub' | 'sim-only'; hint?: string | { tr: string; en: string } }> = [];
         output.forEach((outputItem) => {
           if (!outputItem || !outputItem.id) return;
           processedOutputIdsRef.current.add(outputItem.id);
@@ -426,7 +427,7 @@ export function Terminal({
       cancelOutputRef.current = false;
     }
 
-    const newLinesBatch: Array<{ id: string; type: string; content: string; prompt?: string; realismLevel?: 'real' | 'stub' | 'sim-only'; hint?: string }> = [];
+    const newLinesBatch: Array<{ id: string; type: string; content: string; prompt?: string; realismLevel?: 'real' | 'stub' | 'sim-only'; hint?: string | { tr: string; en: string } }> = [];
 
     for (const outputItem of output) {
       if (!outputItem || !outputItem.id) continue;
@@ -457,10 +458,10 @@ export function Terminal({
       }
     }
 
-    if (newLines.length > 0) {
+    if (newLinesBatch.length > 0) {
       setDisplayedLines(prev => {
         const existingIds = new Set(prev.map(l => l.id));
-        const toAdd = newLines.filter(l => !existingIds.has(l.id));
+        const toAdd = newLinesBatch.filter(l => !existingIds.has(l.id));
         return toAdd.length > 0 ? [...prev, ...toAdd] : prev;
       });
     }
@@ -1344,7 +1345,7 @@ export function Terminal({
                               <span className="font-black uppercase tracking-tighter mr-1 opacity-70">
                                 {language === 'tr' ? 'Eğitici Not:' : 'Learning Note:'}
                               </span>
-                              {line.hint}
+                              {typeof line.hint === 'string' ? line.hint : (language === 'tr' ? line.hint?.tr : line.hint?.en)}
                             </div>
                           </div>
                         )}

@@ -406,7 +406,11 @@ function cmdNoShutdown(state: SwitchState, _input: string, ctx: CommandContext):
     success: true,
     output: `%LINK-3-UPDOWN: Interface ${portName}, changed state to up\n%LINEPROTO-5-UPDOWN: Line protocol on Interface ${portName}, changed state to up\n`,
     newState: { ports: finalPorts },
-    deviceStates: allUpdatedStates
+    deviceStates: allUpdatedStates,
+    hint: {
+      tr: '💡 Gerçek dünyada: "no shutdown" komutu arayüzü fiziksel olarak aktif hale getirir. Yeni cihazlarda portlar genelde "shutdown" durumundadır.',
+      en: '💡 In the real world: The "no shutdown" command physically activates the interface. On new devices, ports are usually in "shutdown" state by default.'
+    }
   };
 }
 
@@ -432,14 +436,7 @@ function cmdSpeed(state: SwitchState, input: string, ctx: CommandContext): Comma
   return {
     success: true,
     newState: myUpdatedState || { ports: newPorts },
-    deviceStates: allUpdatedStates,
-    hint: normalizedMode === 'access' ? {
-      tr: '💡 Gerçek dünyada: Access portlar genelde PC, IP Telefon veya yazıcı gibi uç cihazlara bağlanır.',
-      en: '💡 In the real world: Access ports are typically connected to end devices like PCs, IP Phones, or printers.'
-    } : normalizedMode === 'trunk' ? {
-      tr: '💡 Gerçek dünyada: Trunk portlar üzerinden birden fazla VLAN trafiği taşınabilir, genelde switchler arası bağlantıda kullanılır.',
-      en: '💡 In the real world: Trunk ports can carry traffic for multiple VLANs, typically used for inter-switch connections.'
-    } : undefined
+    deviceStates: allUpdatedStates
   };
 }
 
@@ -670,10 +667,13 @@ function cmdSwitchportMode(state: SwitchState, input: string, ctx: CommandContex
     success: true,
     newState: myUpdatedState || { ports: newPorts },
     deviceStates: allUpdatedStates,
-    hint: {
-      tr: '💡 Gerçek dünyada: "no shutdown" komutu arayüzü fiziksel olarak aktif hale getirir. Yeni cihazlarda portlar genelde "shutdown" durumundadır.',
-      en: '💡 In the real world: The "no shutdown" command physically activates the interface. On new devices, ports are usually in "shutdown" state by default.'
-    }
+    hint: normalizedMode === 'access' ? {
+      tr: '💡 Gerçek dünyada: Access portlar genelde PC, IP Telefon veya yazıcı gibi uç cihazlara bağlanır.',
+      en: '💡 In the real world: Access ports are typically connected to end devices like PCs, IP Phones, or printers.'
+    } : normalizedMode === 'trunk' ? {
+      tr: '💡 Gerçek dünyada: Trunk portlar üzerinden birden fazla VLAN trafiği taşınabilir, genelde switchler arası bağlantıda kullanılır.',
+      en: '💡 In the real world: Trunk ports can carry traffic for multiple VLANs, typically used for inter-switch connections.'
+    } : undefined
   };
 }
 
