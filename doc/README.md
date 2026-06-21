@@ -279,6 +279,18 @@ const response = await apiClient.post('/api/contact', data);
 ✅ Akıllı CLI Asistanı  
 ✅ Kapsamlı Türkçe Eğitim Kitapçığı  
 ✅ Seri Kapsülleme (HDLC/PPP) Kontrolü  
+✅ Oda Takip Sistemi (Room Tracking)  
+✅ Google Sheets Entegrasyonu  
+✅ ACL Standard & Extended  
+✅ NAT Static/Dynamic/PAT  
+✅ OSPF Multi-Area (Area 0/10/20)  
+✅ EIGRP Dinamik Yönlendirme  
+✅ HSRP Yedeklilik  
+✅ IPv6 Adresleme, DHCPv6 & OSPFv3  
+✅ 2 L3 Switch VLAN Routing  
+✅ STP PVST Load Balancing  
+✅ RIP Dinamik Yönlendirme  
+✅ All Services Lab (DNS, HTTP, DHCP, FTP, MAIL, NTP)  
 
 ---
 
@@ -334,7 +346,7 @@ const response = await apiClient.post('/api/contact', data);
 
 **Versiyon**: 1.9.0  
 **Durum**: ✅ Güncel  
-**Tarih**: 2026-06-20  
+**Tarih**: 2026-06-21  
 
 ---
 

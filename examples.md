@@ -798,7 +798,7 @@ PC'ler üzerinde çalışan temel ağ servislerinin bir arada bulunduğu kapsaml
 
 ## Advanced Level
 
-### 40. Inter-VLAN Routing (L3 Switch)
+### 23. Inter-VLAN Routing (L3 Switch)
 **ID:** `l3-routing`  
 **Tag:** L3 ROUTING  
 **Description:** L3 switch üzerinde dört VLAN arası routing aktiftir.  
@@ -855,7 +855,7 @@ L3 switch üzerinde dört VLAN arası routing aktiftir.
    - show ip route (routing tablosunu gör)
    - Tüm PC'ler birbirine ping atabilir
 
-### 40. Static Routing Lab
+### 24. Static Routing Lab
 **ID:** `static-routing`  
 **Tag:** ROUTING  
 **Description:** İki router arası statik yönlendirme ile farklı subnetler arası iletişim.  
@@ -912,7 +912,7 @@ L3 switch üzerinde dört VLAN arası routing aktiftir.
    - show ip route (statik rotaları gör)
    - PC-1 ping 192.168.20.10 (PC-2)
 
-### 40. EtherChannel Lab
+### 25. EtherChannel Lab
 **ID:** `etherchannel`  
 **Tag:** ETHERCHANNEL  
 **Description:** LACP ile birden fazla link tek bir mantıksal bağlantıda birleştirilir.  
@@ -971,7 +971,7 @@ LACP ile birden fazla link tek bir mantıksal bağlantıda birleştirilir.
    - show spanning-tree (STP durumunu kontrol et)
    - PC-1 ping 192.168.10.11 (PC-2)
 
-### 40. STP Redundant Links
+### 26. STP Redundant Links
 **ID:** `stp-redundant`  
 **Tag:** STP  
 **Description:** Rapid-PVST redundant linklerde loop önlemek için STP kullanır.  
@@ -1031,7 +1031,7 @@ Rapid-PVST redundant linklerde loop önlemek için STP kullanır.
 
 ⚠️ Not: Ağı Yenile (F5)
 
-### 40. STP Triangle Topology
+### 27. STP Triangle Topology
 **ID:** `stp-triangle`  
 **Tag:** STP  
 **Description:** Üç switch triangle topolojisinde STP bir portu bloke eder.  
@@ -1075,7 +1075,7 @@ Rapid-PVST redundant linklerde loop önlemek için STP kullanır.
 
 ⚠️ Not: Ağı Yenile (F5)
 
-### 40. Campus Network
+### 28. Campus Network
 **ID:** `campus-network`  
 **Tag:** CAMPUS  
 **Description:** Core router iki access switch arası routing sağlar.  
@@ -1140,7 +1140,7 @@ Core router iki access switch arası routing sağlar.
 6. **Test:**
    - PC-1 ping 192.168.20.10 (PC-2)
 
-### 40. STP 3 Switch PVST
+### 29. STP 3 Switch PVST
 **ID:** `stp-3switch-pvst`  
 **Tag:** STP  
 **Description:** PVST ile her VLAN için farklı root bridge yük dengelemesi sağlanır.  
@@ -1173,7 +1173,7 @@ PVST ile her VLAN için farklı root bridge yük dengelemesi sağlanır.
    - show spanning-tree vlan 20
    - Her VLAN farklı root kullanır
 
-### 40. 2 L3 Switch VLAN (AG1/AG2)
+### 30. 2 L3 Switch VLAN (AG1/AG2)
 **ID:** `l3-switch-2vlan`  
 **Tag:** L3 VLAN  
 **Description:** İki L3 switch SVI gateway ile VLAN 10 ve 20 arası routing sağlar.  
@@ -1232,7 +1232,7 @@ PVST ile her VLAN için farklı root bridge yük dengelemesi sağlanır.
 5. **Test:**
    - Tüm PC'ler birbirine ping atabilir
 
-### 40. L3 Switch Static Routing
+### 31. L3 Switch Static Routing
 **ID:** `static-l3-routing`  
 **Tag:** STATIK ROUTING  
 **Description:** Multilayer switchler ve router statik rotalarla ağlar arası iletişim sağlar.  
@@ -1296,7 +1296,7 @@ Multilayer switchler ve router statik rotalarla ağlar arası iletişim sağlar.
    - show ip route (statik rotaları gör)
    - PC'ler arası ping testi
 
-### 40. RIP Dynamic Routing
+### 32. RIP Dynamic Routing
 **ID:** `rip-dynamic-routing`  
 **Tag:** RIP ROUTING  
 **Description:** RIP dinamik yönlendirme protokolü otomatik route öğrenimi sağlar.  
@@ -1360,7 +1360,7 @@ RIP dinamik yönlendirme protokolü otomatik route öğrenimi sağlar.
    - show ip route (dinamik rotaları gör)
    - PC0 ping 192.168.3.10 (PC2)
 
-### 40. ACL Extended 
+### 33. ACL Extended 
 **ID:** `acl-extended-basic`  
 **Tag:** ACL  
 **Description:** Extended ACL ile protokol/port bazlı filtreleme.  
@@ -1386,7 +1386,7 @@ Extended ACL ile protokol/port bazlı filtreleme.
    - Ping ve diğer trafik türleri engellenmeli.
     - `show access-lists` ile sayaçları kontrol edin.
 
-### 40. NAT Dynamic 
+### 34. NAT Dynamic 
 **ID:** `nat-dynamic-basic`  
 **Tag:** NAT  
 **Description:** NAT havuzu ile dinamik çeviri.  
@@ -1408,7 +1408,7 @@ NAT havuzu ile dinamik çeviri.
    - İç istemcilerden dış ağa trafik oluşturun.
    - `show ip nat translations` ve `show ip nat statistics` komutlarını kontrol edin.
 
-### 40. NAT PAT 
+### 35. NAT PAT 
 **ID:** `nat-pat-basic`  
 **Tag:** NAT  
 **Description:** PAT (NAT overload) ile çoktan-bire çeviri.  
@@ -1431,7 +1431,7 @@ PAT (NAT overload) ile çoktan-bire çeviri.
    - Birden fazla PC’den eşzamanlı web/ping testi yapın.
    - `show ip nat translations` içinde port bazlı eşleşmeleri görün.
 
-### 40. HSRP Redundancy 
+### 36. HSRP Redundancy 
 **ID:** `hsrp-redundancy-basic`  
 **Tag:** HSRP  
 **Description:** Varsayılan ağ geçidi yedekliliği için HSRP.  
@@ -1455,7 +1455,7 @@ Varsayılan ağ geçidi yedekliliği için HSRP.
    - Primary arayüzünü kapatıp gateway erişimini test edin.
    - `show standby brief` ile active/standby durumlarını doğrulayın.
 
-### 40. OSPF Multi-Area 
+### 37. OSPF Multi-Area (1)
 **ID:** `ospf-multi-area-1`  
 **Tag:** OSPF  
 **Description:** Area 0 ve Area 10 ile çok alanlı OSPF.  
@@ -1480,7 +1480,7 @@ Area 0 ve Area 10 ile çok alanlı OSPF.
    - `show ip route ospf`
    - Farklı alanlardaki istemciler arası ping testi.
 
-### 40. OSPF Multi-Area 
+### 38. OSPF Multi-Area (2)
 **ID:** `ospf-multi-area-2`  
 **Tag:** OSPF  
 **Description:** ABR üzerinden farklı OSPF alanlarının omurgaya bağlanması.  
@@ -1503,7 +1503,7 @@ ABR üzerinden farklı OSPF alanlarının omurgaya bağlanması.
    - Stub area’dan dış alanlara erişimi doğrulayın.
    - Routing tablosunda özet rota davranışını kontrol edin.
 
-### 40. EIGRP Basic 
+### 39. EIGRP Basic 
 **ID:** `eigrp-basic-1`  
 **Tag:** EIGRP  
 **Description:** Temel EIGRP komutları ile dinamik yönlendirme kurulumu.  
@@ -1547,13 +1547,13 @@ IPv6 adresleme, DHCPv6 havuzları ve OSPFv3 dinamik yönlendirme.
 
 ## Summary
 
-| Level | Count |
+| Level / Seviye | Count / Adet |
 |-------|-------|
-| Basic | 9 |
-| Intermediate | 13 |
-| Advanced | 18 |
+| Basic / Temel | 9 |
+| Intermediate / Orta | 13 |
+| Advanced / İleri | 18 |
 | **Total Examples** | **40** |
-| **Total Code Lines** | **15,650** |
+| **Total Project Lines (src/)** | **95,941** |
 
 ## Getting Started
 

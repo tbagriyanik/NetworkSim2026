@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/badge/version-1.9.0-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2%20|%20React%2019%20|%20TypeScript%206.0%20|%20Tailwind%204-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-94,779-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-95,941-lightgrey)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
 
@@ -21,12 +21,13 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Total Lines / Toplam Satır | 94,779 |
-| Source Files / Kaynak Dosya | 179 |
-| Documentation Files / Dokümantasyon Dosya | 16+ |
+| Total Lines / Toplam Satır (src/) | 95,941 |
+| Source Files / Kaynak Dosya | 191 |
+| Documentation Files / Dokümantasyon Dosya | 16 |
 | Example Projects / Örnek Proje | 40 |
-| Guided Lessons / Rehberli Ders | 30 |
-| CLI Commands / CLI Komutları | 400+ |
+| Guided Lessons / Rehberli Ders | 12 |
+| Exams / Sınavlar | 6 |
+| CLI Commands / CLI Komutları | 450+ |
 
 ## Documentation / Dokümantasyon
 
@@ -36,8 +37,8 @@ npm install && npm run dev
 | [examples.md](examples.md) | Example projects with step-by-step guides / Adım adım örnek projeler |
 | [INSTALL.md](INSTALL.md) | Installation & build instructions / Kurulum & derleme talimatları |
 | [doc/USAGE.md](doc/USAGE.md) | Usage guide & keyboard shortcuts (TR/EN) / Kullanım kılavuzu & klavye kısayolları |
-| [doc/CLI_GUIDED_TUTORIAL.md](doc/CLI_GUIDED_TUTORIAL.md) | 30-lesson CLI guided tutorial (incl. ACL) / 30 dersten oluşan pratik CLI rehberli eğitim (ACL dahil) |
-| [doc/CLI_COMMANDS.md](doc/CLI_COMMANDS.md) | CLI commands reference / CLI komut referansı |
+| [doc/CLI_GUIDED_TUTORIAL.md](doc/CLI_GUIDED_TUTORIAL.md) | 30-lesson CLI guided tutorial (incl. ACL, NAT, OSPF, EIGRP) / 30 derslik CLI rehberli eğitim |
+| [doc/CLI_COMMANDS.md](doc/CLI_COMMANDS.md) | 450+ CLI commands reference / 450+ CLI komut referansı |
 | [doc/QUICK_REFERENCE.md](doc/QUICK_REFERENCE.md) | Quick reference & code snippets / Hızlı referans & kod parçacıkları |
 | [doc/WIRELESS_CONFIGURATION_GUIDE.md](doc/WIRELESS_CONFIGURATION_GUIDE.md) | Wireless network configuration / Kablosuz ağ yapılandırma |
 | [doc/L3_SWITCH_CONFIGURATION.md](doc/L3_SWITCH_CONFIGURATION.md) | Layer 3 switching guide / L3 anahtarlama rehberi |
@@ -45,6 +46,9 @@ npm install && npm run dev
 | [doc/ROOM_TRACKING_SETUP.md](doc/ROOM_TRACKING_SETUP.md) | Room tracking system setup / Oda takip sistemi kurulumu |
 | [doc/DOCUMENTATION_INDEX.md](doc/DOCUMENTATION_INDEX.md) | Documentation index & reading map / Dokümantasyon indeksi & okuma haritası |
 | [doc/NETWORK_SIMULATOR_KITAPCIK.md](doc/NETWORK_SIMULATOR_KITAPCIK.md) | Comprehensive Turkish training booklet / Kapsamlı Türkçe eğitim kitapçığı |
+| [doc/SERVICE_FEATURES.md](doc/SERVICE_FEATURES.md) | PC service features (FTP, Mail, NTP, DNS, HTTP, DHCP) / PC servis özellikleri |
+| [doc/ERROR_HANDLING_GUIDE.md](doc/ERROR_HANDLING_GUIDE.md) | Error handling guide / Hata kontrol rehberi |
+| [doc/INTEGRATION_GUIDE.md](doc/INTEGRATION_GUIDE.md) | Integration guide / Entegrasyon rehberi |
 
 ## Architecture / Mimari
 

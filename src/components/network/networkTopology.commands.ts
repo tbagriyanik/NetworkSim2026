@@ -205,15 +205,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['Virtual Local Area Network', isTR ? 'VLAN, fiziksel bir yerel ağı mantıksal olarak daha küçük parçalara bölen teknolojidir. Aynı switch üzerindeki kullanıcıları farklı VLAN\'lara ayırarak güvenliği artırabilir ve ağ trafiğini (broadcast) optimize edebilirsiniz. Farklı VLAN\'lar arasındaki iletişim için bir Router veya L3 Switch gerekir.' : 'VLAN is a technology that logically partitions a physical LAN into smaller segments. By placing users on the same switch into different VLANs, you can improve security and optimize network traffic (broadcast). Communication between different VLANs requires a Router or L3 Switch.'],
       ]
     },
-    {
-      id: 'iot',
-      icon: Cpu,
-      title: isTR ? 'IoT (Nesnelerin İnterneti)' : 'IoT (Internet of Things)',
-      type: 'commands',
-      cmds: [
-      ]
-    },
-    {
+{
       id: 'firewall',
       icon: Shield,
       title: isTR ? 'Güvenlik Duvarı (ASA/Firewall)' : 'Firewall (ASA)',

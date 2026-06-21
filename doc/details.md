@@ -31,6 +31,15 @@
 | **Serial Encapsulation**: HDLC and PPP encapsulation mismatch detection during connectivity checks. | **Seri Kapsülleme**: Bağlantı kontrolleri sırasında HDLC ve PPP kapsülleme uyumsuzluğu tespiti. |
 | **No Hostname Command**: Reset device hostname to default with `no hostname` command. | **No Hostname Komutu**: `no hostname` komutu ile cihaz hostname'ini varsayılana sıfırlama. |
 | **Room Tracking System**: Real-time teacher-student progress monitoring via room codes and Vercel KV persistence. | **Oda Takip Sistemi**: Oda kodları ve Vercel KV kalıcılığı ile gerçek zamanlı öğretmen-öğrenci ilerleme takibi. |
+| **ACL Standard & Extended**: Standard and extended access control lists for traffic filtering and security policies. | **ACL Standard ve Extended**: Trafik filtreleme ve güvenlik politikaları için standart ve genişletilmiş erişim kontrol listeleri. |
+| **NAT (Static/Dynamic/PAT)**: Network Address Translation — static one-to-one, dynamic pool, and PAT overload. | **NAT (Static/Dynamic/PAT)**: Ağ Adresi Çevirisi — statik birebir, dinamik havuz ve PAT overload. |
+| **HSRP Redundancy**: Hot Standby Router Protocol for default gateway redundancy and failover. | **HSRP Yedeklilik**: Varsayılan ağ geçidi yedekliliği ve arıza geçişi için HSRP. |
+| **OSPF Multi-Area**: Multi-area OSPF with Area 0, Area 10, Area 20, and stub area configuration. | **OSPF Multi-Area**: Area 0, Area 10, Area 20 ve stub alan yapılandırması ile çok alanlı OSPF. |
+| **EIGRP Dynamic Routing**: Enhanced Interior Gateway Routing Protocol with named/config mode. | **EIGRP Dinamik Yönlendirme**: Adlandırılmış/yapılandırma modu ile Gelişmiş İç Ağ Geçidi Yönlendirme Protokolü. |
+| **IPv6 Advanced Lab**: IPv6 addressing, DHCPv6 pools, OSPFv3 dynamic routing for next-gen networking. | **IPv6 Gelişmiş Laboratuvar**: IPv6 adresleme, DHCPv6 havuzları, yeni nesil ağlar için OSPFv3 dinamik yönlendirme. |
+| **All Services Lab**: Comprehensive lab with DNS, HTTP, DHCP, FTP, MAIL, and NTP services running on PCs. | **Tüm Servisler Laboratuvarı**: PC'lerde çalışan DNS, HTTP, DHCP, FTP, MAIL ve NTP servislerini içeren kapsamlı laboratuvar. |
+| **Google Sheets Integration**: Contact form data stored in Google Sheets via Apps Script API. | **Google Sheets Entegrasyonu**: Apps Script API aracılığıyla iletişim formu verilerinin Google Sheets'te saklanması. |
+| **Redis / KV Storage**: Upstash Redis for room tracking session persistence and real-time sync. | **Redis / KV Depolama**: Oda takibi oturum kalıcılığı ve gerçek zamanlı senkronizasyon için Upstash Redis. |
 
 ---
 
@@ -41,10 +50,13 @@
 | English | Türkçe |
 | --- | --- |
 | **Switching**: VLAN, STP, trunk/access ports, MAC learning, switchport security | **Anahtarlama**: VLAN, STP, trunk/access portları, MAC öğrenmesi, switchport güvenliği |
-| **Routing**: Static routes, OSPF, RIP, EIGRP, inter-VLAN routing, L3 switching, default routes | **Yönlendirme**: Statik rotalar, OSPF, RIP, EIGRP, VLAN'lar arası yönlendirme, L3 anahtarlama, varsayılan rotalar |
+| **Routing**: Static routes, OSPF (multi-area), RIP, EIGRP, BGP, inter-VLAN routing, L3 switching, default routes, route redistribution | **Yönlendirme**: Statik rotalar, OSPF (çok alanlı), RIP, EIGRP, BGP, VLAN'lar arası yönlendirme, L3 anahtarlama, varsayılan rotalar, rota yeniden dağıtımı |
+| **NAT**: Static NAT, Dynamic NAT pool, PAT overload | **NAT**: Statik NAT, Dinamik NAT havuzu, PAT overload |
+| **HSRP**: Hot Standby Router Protocol for gateway redundancy | **HSRP**: Ağ geçidi yedekliliği için HSRP |
+| **IPv6**: IPv6 addressing, DHCPv6, OSPFv3, RIPng | **IPv6**: IPv6 adresleme, DHCPv6, OSPFv3, RIPng |
 | **Wireless**: WLAN configuration, SSID management, wireless security, WLC/AP management, dot11 commands | **Kablosuz**: WLAN yapılandırması, SSID yönetimi, kablosuz güvenlik, WLC/AP yönetimi, dot11 komutları |
 | **IoT**: Device management, IoT web panel, sensor/actuator integration, IoT CLI commands | **IoT**: Cihaz yönetimi, IoT web paneli, sensör/aktüatör entegrasyonu, IoT CLI komutları |
-| **Firewall / ACL**: Access control lists, firewall rules, traffic filtering, firewall CLI commands | **Güvenlik Duvarı / ACL**: Erişim kontrol listeleri, güvenlik duvarı kuralları, trafik filtreleme, güvenlik duvarı CLI komutları |
+| **Firewall / ACL**: Standard & Extended ACLs, firewall rules, traffic filtering, firewall CLI commands | **Güvenlik Duvarı / ACL**: Standard ve Extended ACL'ler, güvenlik duvarı kuralları, trafik filtreleme, güvenlik duvarı CLI komutları |
 | **DHCP**: DHCP server & client configuration, address pools, lease management | **DHCP**: DHCP sunucu ve istemci yapılandırması, adres havuzları, kira yönetimi |
 | **DNS**: DNS configuration, name resolution | **DNS**: DNS yapılandırması, ad çözümleme |
 | **FTP**: FTP server & client, file upload, file transfer simulation | **FTP**: FTP sunucu ve istemci, dosya yükleme, dosya aktarım simülasyonu |
@@ -121,5 +133,8 @@
 | **Error Handling**: Comprehensive error handling and user feedback | **Hata Yönetimi**: Kapsamlı hata yönetimi ve kullanıcı geri bildirimi |
 | **Performance Monitoring**: Canvas optimization and bundle optimization | **Performans İzleme**: Tuval optimizasyonu ve paket optimizasyonu |
 | **Animation System**: Smooth transitions and micro-interactions | **Animasyon Sistemi**: Pürüzsüz geçişler ve mikro etkileşimler |
+| **PDF Export**: Generate exam/result PDFs using jspdf | **PDF Çıktısı**: jspdf ile sınav/sonuç PDF'i oluşturma |
+| **Redis / KV**: Upstash Redis for room tracking session persistence | **Redis / KV**: Oda takibi oturum kalıcılığı için Upstash Redis |
+| **Google Sheets API**: Contact form data export to Google Sheets | **Google Sheets API**: İletişim formu verilerinin Google Sheets'e aktarımı |
 
 ---

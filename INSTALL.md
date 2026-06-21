@@ -37,23 +37,30 @@ Tarayıcıda açın: [http://localhost:3000](http://localhost:3000)
 ## 📦 Yüklü Paketler
 
 ### Core Dependencies
-- **Next.js 16** - React framework
+- **Next.js 16.2** - React framework
 - **React 19** - UI library
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
+- **TypeScript 6.0** - Type safety
+- **Tailwind CSS 4** - Styling
+- **jspdf** - PDF generation
 
 ### UI Components
 - **shadcn/ui** - Component library
-- **Radix UI** - Headless UI components
+- **Radix UI** - Headless UI components (@radix-ui/react-*)
 - **Lucide React** - Icons
 
 ### State Management
-- **Zustand** - State management
+- **Zustand 5.0** - State management
 - **React Context** - Global context
 
 ### Utilities
 - **clsx** - Conditional classnames
 - **class-variance-authority** - CSS class variants
+- **tailwind-merge** - Tailwind class merging
+- **tailwindcss-animate** - Animation utilities
+- **isomorphic-dompurify** - HTML sanitization
+
+### Database & Storage
+- **@upstash/redis** - Redis for room tracking & session management
 
 ## 🔧 Yapılandırma
 
@@ -134,12 +141,14 @@ doc/                 # Project documentation
 ### Network Simulator
 - ✅ Cihaz yönetimi (PC, Switch, Router, Firewall, IoT)
 - ✅ Bağlantı yönetimi (Straight, Crossover, Console, WiFi)
-- ✅ VLAN konfigürasyonu
-- ✅ IP routing (IPv4/IPv6) — RIP, OSPF, OSPFv3, static
+- ✅ VLAN konfigürasyonu (access, trunk, native, VTP)
+- ✅ IP routing (IPv4/IPv6) — RIP, OSPF, OSPFv3, EIGRP, static
 - ✅ Ping ve connectivity kontrol
 - ✅ Akıllı CLI Terminal Öneri Sistemi (typo algılaması + komut önerileri)
-- ✅ Firewall/Dynamic Access Control Lists
-- ✅ DHCP havuz yönetimi
+- ✅ Firewall/Dynamic Access Control Lists (Standard & Extended ACL)
+- ✅ DHCP / DHCPv6 havuz yönetimi
+- ✅ NAT (Static, Dynamic, PAT/Overload)
+- ✅ HSRP yedeklilik
 
 ### Sınav Modu (Exam Mode)
 - ✅ Öğretmen tarafı sınav oluşturma ve düzenleme editörü
@@ -181,6 +190,13 @@ doc/                 # Project documentation
 - ✅ Turkish/English support
 - ✅ Offline storage
 - ✅ Canlı uygulama: network2026.vercel.app
+- ✅ Oda takip sistemi (öğrenci oturum takibi)
+- ✅ Google Sheets entegrasyonu
+- ✅ OSPF Multi-Area (Area 0/10/20)
+- ✅ STP PVST yük dengeleme
+- ✅ 2 L3 Switch VLAN Routing
+- ✅ All Services Lab (DNS, HTTP, DHCP, FTP, MAIL, NTP)
+- ✅ IPv6 + DHCPv6 + OSPFv3
 
 ## 📖 Belgelendirme
 
@@ -188,10 +204,16 @@ Detaylı belgelendirme `doc/` klasöründe bulunur:
 
 - **README.md** - Dokümantasyon giriş sayfası
 - **USAGE.md** - Kullanım kılavuzu ve klavye kısayolları (TR/EN)
-- **CLI_COMMANDS.md** - CLI komut referansı
+- **CLI_GUIDED_TUTORIAL.md** - 30 derslik CLI rehberli eğitim (ACL, NAT, OSPF, EIGRP dahil)
+- **CLI_COMMANDS.md** - 450+ CLI komut referansı
 - **L3_SWITCH_CONFIGURATION.md** - L3 Switch yapılandırma rehberi
 - **QUICK_REFERENCE.md** - Hızlı referans ve kod parçacıkları
+- **WIRELESS_CONFIGURATION_GUIDE.md** - Kablosuz ağ yapılandırma rehberi
 - **GOOGLE_SHEETS_SETUP.md** - Google Sheets entegrasyonu kurulumu
+- **ROOM_TRACKING_SETUP.md** - Oda takip sistemi kurulumu
+- **SERVICE_FEATURES.md** - PC servis özellikleri (FTP, Mail, NTP, DNS, HTTP, DHCP)
+- **ERROR_HANDLING_GUIDE.md** - Hata kontrol rehberi
+- **INTEGRATION_GUIDE.md** - Entegrasyon rehberi
 - **DOCUMENTATION_INDEX.md** - Dokümantasyon haritası
 
 ## 🚀 Deployment
