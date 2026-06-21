@@ -311,10 +311,10 @@ export function AppHeader({
                     <span className="font-bold">{language === 'tr' ? 'Yardım Seviyesi' : 'Help Level'}</span>
                     <span className="text-[10px] opacity-80">
                       {helpLevel === 'beginner'
-                        ? (language === 'tr' ? '🟢 Başlangıç (Full İpucu)' : '🟢 Beginner (Full Hints)')
+                        ? (language === 'tr' ? '🟢 Başlangıç (Tam İpucu)' : '🟢 Beginner (Full Hints)')
                         : helpLevel === 'intermediate'
-                        ? (language === 'tr' ? '🟡 Orta (Sadece Hata İpucu)' : '🟡 Intermediate (Errors Only)')
-                        : (language === 'tr' ? '🔴 Sınav (Hiç İpucu Yok)' : '🔴 Exam (No Hints)')}
+                          ? (language === 'tr' ? '🟡 Orta (Sadece Hata İpucu)' : '🟡 Intermediate (Errors Only)')
+                          : (language === 'tr' ? '🔴 Uzman (Hiç İpucu Yok)' : '🔴 Advanced (No Hints)')}
                     </span>
                   </div>
                 </TooltipContent>

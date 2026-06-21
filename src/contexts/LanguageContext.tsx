@@ -680,6 +680,7 @@ export interface Translations {
   httpPageOpened: string;
   roomJoinTitle: string;
   roomJoinDesc: string;
+  roomJoinedListDesc: string;
   roomJoinedTo: string;
   roomJoinedAs: string;
   roomLeave: string;
@@ -700,8 +701,15 @@ export interface Translations {
   roomNoStudents: string;
   roomTimeUp: string;
   roomDuration: string;
+  roomDurationLabel: string;
   roomStudentJoin: string;
   roomTeacherOpen: string;
+  roomExportPDF: string;
+  roomSortName: string;
+  roomSortScore: string;
+  roomTaskFile: string;
+  roomTeacherNameLabel: string;
+  roomTeacherNameSave: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -1381,6 +1389,7 @@ const translations: Record<Language, Translations> = {
     httpPageOpened: 'HTTP sayfası yeni pencerede açıldı.',
     roomJoinTitle: 'Odaya Katıl',
     roomJoinDesc: 'Öğretmeninizin verdiği oda kodunu girerek sınıf takibine katılın.',
+    roomJoinedListDesc: 'Odadaki diğer katılımcılar:',
     roomJoinedTo: 'odasına',
     roomJoinedAs: 'olarak katıldınız.',
     roomLeave: 'Odadan Ayrıl',
@@ -1401,8 +1410,15 @@ const translations: Record<Language, Translations> = {
     roomNoStudents: 'Henüz öğrenci bağlanmadı.',
     roomTimeUp: 'Süre Bitti',
     roomDuration: 'dk',
-    roomStudentJoin: 'Öğrenci Katıl',
-    roomTeacherOpen: 'Öğretmen Paneli',
+    roomDurationLabel: 'Süre',
+    roomStudentJoin: 'Öğrenci Olarak Katıl',
+    roomTeacherOpen: 'Öğretmen',
+    roomExportPDF: 'PDF Aktar',
+    roomSortName: 'Öğrenci Adı',
+    roomSortScore: 'Puan',
+    roomTaskFile: 'Dosya',
+    roomTeacherNameLabel: 'Adınız',
+    roomTeacherNameSave: 'Kaydet',
   },
   en: {
     about: 'Help',
@@ -2080,6 +2096,7 @@ const translations: Record<Language, Translations> = {
     httpPageOpened: 'HTTP page opened in a new window.',
     roomJoinTitle: 'Join Room',
     roomJoinDesc: 'Enter the room code given by your teacher to join class tracking.',
+    roomJoinedListDesc: 'Other participants in the room:',
     roomJoinedTo: 'room',
     roomJoinedAs: 'joined as',
     roomLeave: 'Leave Room',
@@ -2100,8 +2117,15 @@ const translations: Record<Language, Translations> = {
     roomNoStudents: 'No students connected yet.',
     roomTimeUp: 'Time Up',
     roomDuration: 'min',
+    roomDurationLabel: 'Duration',
     roomStudentJoin: 'Student Join',
     roomTeacherOpen: 'Teacher Panel',
+    roomExportPDF: 'Export PDF',
+    roomSortName: 'Student Name',
+    roomSortScore: 'Score',
+    roomTaskFile: 'File',
+    roomTeacherNameLabel: 'Your Name',
+    roomTeacherNameSave: 'Save',
   }
 };
 

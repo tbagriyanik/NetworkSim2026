@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Copy, Check, X, LogOut } from 'lucide-react';
+import { Copy, Check, X, LogOut, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRoomStudents } from '@/hooks/useRoomStudents';
 import { Badge } from '@/components/ui/badge';
 import { useRoom } from '@/contexts/RoomContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+type SortField = 'name' | 'duration' | 'tasks' | 'score';
+type SortDir = 'asc' | 'desc';
 
 function generateRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -21,6 +24,8 @@ function RoomMonitor({ roomCode, onClose }: { roomCode: string; onClose: () => v
   const { t } = useLanguage();
   const [now, setNow] = useState(() => Date.now());
   const [copied, setCopied] = useState(false);
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 10000);
@@ -35,7 +40,76 @@ function RoomMonitor({ roomCode, onClose }: { roomCode: string; onClose: () => v
     } catch {}
   };
 
+  const toAscii = (s: string) => s.replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/İ/g, 'I').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
+
+  const handleExportPDF = async () => {
+    const { default: jsPDF } = await import('jspdf');
+    const pdf = new jsPDF('landscape', 'mm', 'a4');
+    const margin = 10;
+    const colW = [60, 30, 35, 50];
+    const rows = [[t.roomSortName, t.roomDurationLabel, t.roomSortScore, t.roomTaskFile]];
+    sortedStudents.forEach(s => {
+      const pct = s.totalTasks > 0 ? Math.round((s.completedTasks / s.totalTasks) * 100) : 0;
+      const dur = Math.floor((now - s.joinedAt) / 60000);
+      const tasks = s.projectFile ? `${s.completedTasks}/${s.totalTasks} (${s.projectFile})` : `${s.completedTasks}/${s.totalTasks}`;
+      rows.push([s.displayName, `${dur} dk`, `%${pct}`, tasks]);
+    });
+    let y = margin;
+    const lineH = 7;
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8);
+    let x = margin;
+    rows[0].forEach((h, i) => {
+      pdf.text(toAscii(h), x, y);
+      x += colW[i];
+    });
+    y += lineH;
+    pdf.setFont('helvetica', 'normal');
+    for (let r = 1; r < rows.length; r++) {
+      x = margin;
+      for (let c = 0; c < rows[r].length; c++) {
+        pdf.text(toAscii(rows[r][c]), x, y);
+        x += colW[c];
+      }
+      y += lineH;
+    }
+    pdf.save(`oda-${roomCode}-ogrenciler.pdf`);
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedStudents = [...students].sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    let cmp = 0;
+    if (sortField === 'name') cmp = a.displayName.localeCompare(b.displayName);
+    else if (sortField === 'duration') cmp = a.joinedAt - b.joinedAt;
+    else if (sortField === 'tasks') cmp = a.completedTasks - b.completedTasks || a.totalTasks - b.totalTasks;
+    else if (sortField === 'score') {
+      const aPct = a.totalTasks > 0 ? a.completedTasks / a.totalTasks : 0;
+      const bPct = b.totalTasks > 0 ? b.completedTasks / b.totalTasks : 0;
+      cmp = aPct - bPct;
+    }
+    return cmp * dir;
+  });
+
   const totalStudents = students.length;
+
+  const thClass = (field: SortField) =>
+    `text-[10px] font-semibold px-1.5 py-1 text-left cursor-pointer select-none whitespace-nowrap hover:bg-muted/60 transition-colors ${
+      sortField === field ? 'text-primary' : 'text-muted-foreground'
+    }`;
+
+  const sortIcon = (field: SortField) => {
+    if (sortField !== field) return null;
+    return <span className="ml-0.5">{sortDir === 'asc' ? '▲' : '▼'}</span>;
+  };
 
   return (
     <div className="space-y-2">
@@ -45,6 +119,9 @@ function RoomMonitor({ roomCode, onClose }: { roomCode: string; onClose: () => v
           <Badge variant="default" className="text-[10px] h-4 px-1.5">{totalStudents}</Badge>
         </div>
         <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleExportPDF} title={t.roomExportPDF}>
+            <FileDown className="w-3 h-3" />
+          </Button>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopy}>
             {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
           </Button>
@@ -54,29 +131,50 @@ function RoomMonitor({ roomCode, onClose }: { roomCode: string; onClose: () => v
 
       {error && <p className="text-xs text-destructive">{t.roomConnError}</p>}
 
-      <div className="space-y-1 max-h-[calc(85vh-10rem)] overflow-y-auto">
-        {students.map(s => {
-          const progress = s.totalTasks > 0 ? (s.completedTasks / s.totalTasks) * 100 : 0;
-          return (
-            <div key={s.studentId} className="flex items-center gap-2 rounded-lg border bg-muted/30 px-2.5 py-1.5">
-              <span className="text-xs font-medium truncate min-w-0 flex-1">
-                {s.displayName}
-                {s.projectFile && <span className="ml-1 text-[10px] text-muted-foreground">({s.projectFile})</span>}
-                <span className="ml-1 text-[10px] text-muted-foreground/60 tabular-nums">
-                  {Math.floor((now - s.joinedAt) / 60000)}{t.roomDuration}
-                </span>
-                {s.durationMinutes && now - s.joinedAt > s.durationMinutes * 60000 && (
-                  <Badge variant="destructive" className="ml-1 text-[9px] h-3.5 px-1">{t.roomTimeUp}</Badge>
-                )}
-              </span>
-              <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">{s.completedTasks}/{s.totalTasks}</span>
-              <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums w-8 text-right">{Math.round(progress)}%</span>
-              <div className="h-1 w-12 overflow-hidden rounded-full bg-muted shrink-0">
-                <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
-              </div>
-            </div>
-          );
-        })}
+      <div className="max-h-[calc(85vh-14rem)] overflow-y-auto">
+        <table className="w-full border-collapse text-xs">
+          <thead className="sticky top-0 bg-background dark:bg-slate-950 z-10">
+            <tr className="border-b border-border">
+              <th className={thClass('name')} onClick={() => handleSort('name')}>{t.roomSortName}{sortIcon('name')}</th>
+              <th className={thClass('duration')} onClick={() => handleSort('duration')}>{t.roomDurationLabel}{sortIcon('duration')}</th>
+              <th className={`${thClass('score')} text-right`} onClick={() => handleSort('score')}>{t.roomSortScore}{sortIcon('score')}</th>
+              <th className={thClass('tasks')} onClick={() => handleSort('tasks')}>{t.roomTaskFile}{sortIcon('tasks')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedStudents.map(s => {
+              const progress = s.totalTasks > 0 ? (s.completedTasks / s.totalTasks) * 100 : 0;
+              const duration = Math.floor((now - s.joinedAt) / 60000);
+              return (
+                <tr key={s.studentId} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                  <td className="px-1.5 py-1.5">
+                    <span className="font-medium truncate block max-w-[120px]" title={s.displayName}>
+                      {s.displayName}
+                    </span>
+                  </td>
+                  <td className="px-1.5 py-1.5 tabular-nums text-muted-foreground">
+                    {duration} {t.roomDuration}
+                    {s.durationMinutes && duration > s.durationMinutes && (
+                      <span className="ml-1 text-[9px] text-destructive font-semibold">{t.roomTimeUp}</span>
+                    )}
+                  </td>
+                  <td className="px-1.5 py-1.5 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <span className="tabular-nums font-medium w-8 text-right">{Math.round(progress)}%</span>
+                      <div className="h-1.5 w-10 overflow-hidden rounded-full bg-muted shrink-0">
+                        <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-1.5 py-1.5 tabular-nums text-muted-foreground">
+                    <span>{s.completedTasks}/{s.totalTasks}</span>
+                    {s.projectFile && <span className="ml-1 text-[9px] text-muted-foreground/60">({s.projectFile})</span>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
         {totalStudents === 0 && (
           <p className="py-4 text-center text-[11px] text-muted-foreground">{t.roomNoStudents}</p>
         )}
@@ -88,10 +186,16 @@ function RoomMonitor({ roomCode, onClose }: { roomCode: string; onClose: () => v
 export function TeacherRoomPanel() {
   const { showTeacherPanel, setShowTeacherPanel } = useRoom();
   const { t } = useLanguage();
-  const [roomCodeInput, setRoomCodeInput] = useState('');
+  const [roomCodeInput, setRoomCodeInput] = useState(() => localStorage.getItem('teacher-room-code') || '');
   const [activeCode, setActiveCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [teacherName, setTeacherName] = useState(() => localStorage.getItem('teacher-display-name') || '');
+  const [teacherNameInput, setTeacherNameInput] = useState(() => localStorage.getItem('teacher-display-name') || '');
+
+  useEffect(() => {
+    if (activeCode) localStorage.setItem('teacher-room-code', activeCode);
+  }, [activeCode]);
 
   const handleCreate = async () => {
     const code = generateRoomCode();
@@ -119,6 +223,14 @@ export function TeacherRoomPanel() {
 
   const handleJoinMonitor = () => {
     if (roomCodeInput.trim().length >= 4) setActiveCode(roomCodeInput.trim().toUpperCase());
+  };
+
+  const handleSaveName = () => {
+    const name = teacherNameInput.trim();
+    if (name) {
+      setTeacherName(name);
+      localStorage.setItem('teacher-display-name', name);
+    }
   };
 
   useEffect(() => {
@@ -155,6 +267,22 @@ export function TeacherRoomPanel() {
         <div className="p-4 space-y-4">
           {!activeCode ? (
             <>
+              {!teacherName && (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={teacherNameInput}
+                    onChange={e => setTeacherNameInput(e.target.value)}
+                    placeholder={t.roomTeacherNameLabel}
+                    maxLength={50}
+                    className="flex-1"
+                    onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); }}
+                  />
+                  <Button variant="outline" size="sm" onClick={handleSaveName} disabled={!teacherNameInput.trim()}>
+                    {t.roomTeacherNameSave}
+                  </Button>
+                </div>
+              )}
+
               {error && <p className="text-xs text-destructive text-center font-bold mb-2">{error}</p>}
               <Button onClick={handleCreate} className="w-full" disabled={isLoading}>
                 {isLoading ? '...' : t.roomCreateBtn}
