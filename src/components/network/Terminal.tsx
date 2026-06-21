@@ -25,6 +25,8 @@ export interface TerminalOutput {
   type: 'command' | 'output' | 'error' | 'success' | 'password-prompt';
   content: string;
   prompt?: string;
+  realismLevel?: 'real' | 'stub' | 'sim-only';
+  hint?: string | { tr: string; en: string };
   timestamp?: number;
 }
 
@@ -82,6 +84,7 @@ interface TerminalProps {
   t: Translations;
   theme: string;
   language: string;
+  helpLevel?: 'beginner' | 'intermediate' | 'exam';
   onUpdateHistory?: (deviceId: string, history: string[]) => void;
   confirmDialog?: { show: boolean; message?: string; onConfirm: () => void } | null;
   setConfirmDialog?: (dialog: { show: boolean; message: string; action: string; onConfirm: () => void } | null) => void;
@@ -112,6 +115,7 @@ export function Terminal({
   t,
   theme,
   language,
+  helpLevel = 'beginner',
   onUpdateHistory,
   confirmDialog,
   setConfirmDialog,
@@ -132,9 +136,9 @@ export function Terminal({
   });
 
   // State for displaying output
-  const [displayedLines, setDisplayedLines] = useState<Array<{ id: string, type: string, content: string, prompt?: string }>>(() => {
+  const [displayedLines, setDisplayedLines] = useState<Array<{ id: string, type: string, content: string, prompt?: string, realismLevel?: 'real' | 'stub' | 'sim-only', hint?: string | { tr: string; en: string } }>>(() => {
     // Initialize from output on mount to show history when terminal opens
-    const initialLines: Array<{ id: string, type: string, content: string, prompt?: string }> = [];
+    const initialLines: Array<{ id: string, type: string, content: string, prompt?: string, realismLevel?: 'real' | 'stub' | 'sim-only', hint?: string | { tr: string; en: string } }> = [];
     if (output && output.length > 0) {
       output.forEach((outputItem) => {
         if (!outputItem || !outputItem.id) return;
@@ -145,7 +149,9 @@ export function Terminal({
               id: `${outputItem.id}-line-${index}`,
               type: outputItem.type,
               content: line,
-              prompt: index === 0 ? outputItem.prompt : ''
+              prompt: index === 0 ? outputItem.prompt : '',
+              realismLevel: index === lines.length - 1 ? outputItem.realismLevel : undefined,
+              hint: index === lines.length - 1 ? outputItem.hint : undefined
             });
           });
         } else {
@@ -153,7 +159,9 @@ export function Terminal({
             id: outputItem.id,
             type: outputItem.type,
             content: outputItem.content,
-            prompt: outputItem.prompt
+            prompt: outputItem.prompt,
+            realismLevel: outputItem.realismLevel,
+            hint: outputItem.hint
           });
         }
       });
@@ -368,7 +376,7 @@ export function Terminal({
       isInitializedRef.current = true;
       // If displayedLines is empty but output has content, process it
       if (displayedLines.length === 0 && output.length > 0) {
-        const newLines: Array<{ id: string; type: string; content: string; prompt?: string }> = [];
+        const newLines: Array<{ id: string; type: string; content: string; prompt?: string; realismLevel?: 'real' | 'stub' | 'sim-only'; hint?: string | { tr: string; en: string } }> = [];
         output.forEach((outputItem) => {
           if (!outputItem || !outputItem.id) return;
           processedOutputIdsRef.current.add(outputItem.id);
@@ -379,7 +387,9 @@ export function Terminal({
                 id: `${outputItem.id}-line-${index}`,
                 type: outputItem.type,
                 content: line,
-                prompt: index === 0 ? outputItem.prompt : ''
+                prompt: index === 0 ? outputItem.prompt : '',
+                realismLevel: index === lines.length - 1 ? outputItem.realismLevel : undefined,
+                hint: index === lines.length - 1 ? outputItem.hint : undefined
               });
             });
           } else {
@@ -387,7 +397,9 @@ export function Terminal({
               id: outputItem.id,
               type: outputItem.type,
               content: outputItem.content,
-              prompt: outputItem.prompt
+              prompt: outputItem.prompt,
+              realismLevel: outputItem.realismLevel,
+              hint: outputItem.hint
             });
           }
         });
@@ -415,7 +427,7 @@ export function Terminal({
       cancelOutputRef.current = false;
     }
 
-    const newLines: Array<{ id: string; type: string; content: string; prompt?: string }> = [];
+    const newLinesBatch: Array<{ id: string; type: string; content: string; prompt?: string; realismLevel?: 'real' | 'stub' | 'sim-only'; hint?: string | { tr: string; en: string } }> = [];
 
     for (const outputItem of output) {
       if (!outputItem || !outputItem.id) continue;
@@ -425,27 +437,31 @@ export function Terminal({
       if (outputItem.content && outputItem.content.includes('\n')) {
         const lines = outputItem.content.split('\n');
         lines.forEach((line, index) => {
-          newLines.push({
+          newLinesBatch.push({
             id: `${outputItem.id}-line-${index}`,
             type: outputItem.type,
             content: line,
-            prompt: index === 0 ? outputItem.prompt : ''
+            prompt: index === 0 ? outputItem.prompt : '',
+            realismLevel: index === lines.length - 1 ? outputItem.realismLevel : undefined,
+            hint: index === lines.length - 1 ? outputItem.hint : undefined
           });
         });
       } else {
-        newLines.push({
+        newLinesBatch.push({
           id: outputItem.id,
           type: outputItem.type,
           content: outputItem.content,
-          prompt: outputItem.prompt
+          prompt: outputItem.prompt,
+          realismLevel: outputItem.realismLevel,
+          hint: outputItem.hint
         });
       }
     }
 
-    if (newLines.length > 0) {
+    if (newLinesBatch.length > 0) {
       setDisplayedLines(prev => {
         const existingIds = new Set(prev.map(l => l.id));
-        const toAdd = newLines.filter(l => !existingIds.has(l.id));
+        const toAdd = newLinesBatch.filter(l => !existingIds.has(l.id));
         return toAdd.length > 0 ? [...prev, ...toAdd] : prev;
       });
     }
@@ -1300,16 +1316,40 @@ export function Terminal({
                         <span className={isDark ? "text-slate-100" : "text-slate-900"}>{highlightCommand(line.content)}</span>
                       </div>
                     ) : (
-                      <div className={cn(
-                        "whitespace-pre-wrap break-words overflow-hidden",
-                        line.type === 'error' ? "text-rose-500" : (line.type === 'success' ? "text-emerald-500" : (isDark ? "text-slate-300" : "text-slate-700"))
-                      )}>
-                        {line.content === BOOT_PROGRESS_MARKER
-                          ? (completedBootIds.has(line.id)
-                            ? <span className={`font-mono font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{'#'.repeat(10)} {t.bootReady}</span>
-                            : <BootProgressBar key={line.id} id={line.id} isDark={isDark} readyText={t.bootReady} onDone={(id) => { completedBootIds.add(id); setBootVersion(v => v + 1); }} />)
-                          : highlightText(line.content)}
-                      </div>
+                      <>
+                        <div className={cn(
+                          "whitespace-pre-wrap break-words overflow-hidden flex items-start gap-2",
+                          line.type === 'error' ? "text-rose-500" :
+                          (line.type === 'success' ?
+                            (line.realismLevel === 'stub' ? "text-amber-500" :
+                             line.realismLevel === 'sim-only' ? "text-blue-500" : "text-emerald-500")
+                            : (isDark ? "text-slate-300" : "text-slate-700"))
+                        )}>
+                          {line.realismLevel === 'stub' && <span className="shrink-0 mt-1">⚠️</span>}
+                          {line.realismLevel === 'sim-only' && <span className="shrink-0 mt-1">ℹ️</span>}
+                          <div className="flex-1">
+                            {line.content === BOOT_PROGRESS_MARKER
+                              ? (completedBootIds.has(line.id)
+                                ? <span className={`font-mono font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{'#'.repeat(10)} {t.bootReady}</span>
+                                : <BootProgressBar key={line.id} id={line.id} isDark={isDark} readyText={t.bootReady} onDone={(id) => { completedBootIds.add(id); setBootVersion(v => v + 1); }} />)
+                              : highlightText(line.content)}
+                          </div>
+                        </div>
+                        {line.hint && (helpLevel === 'beginner' || (helpLevel === 'intermediate' && line.type === 'error')) && (
+                          <div className={cn(
+                            "mt-1 mb-2 p-2 rounded-lg border flex gap-2 animate-in zoom-in-95 duration-300",
+                            isDark ? "bg-cyan-500/5 border-cyan-500/20 text-cyan-200" : "bg-cyan-50 border-cyan-200 text-cyan-800"
+                          )}>
+                            <span className="shrink-0">💡</span>
+                            <div className="text-[11px] leading-relaxed">
+                              <span className="font-black uppercase tracking-tighter mr-1 opacity-70">
+                                {language === 'tr' ? 'Eğitici Not:' : 'Learning Note:'}
+                              </span>
+                              {typeof line.hint === 'string' ? line.hint : (language === 'tr' ? line.hint?.tr : line.hint?.en)}
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}
@@ -1329,7 +1369,7 @@ export function Terminal({
             )}>
               <form onSubmit={handleFormSubmit} className="flex items-center gap-3 relative">
                 {/* Contextual hint above input for confirm/reload states */}
-                {(confirmDialog?.show || isReloadConfirmationPending) && (
+                {(confirmDialog?.show || isReloadConfirmationPending) && helpLevel !== 'exam' && (
                   <div className="absolute -top-7 left-4 right-4 text-[10px] font-black tracking-widest text-amber-400 animate-pulse">
                     {confirmDialog?.show
                       ? (confirmDialog.message || t.pressEnterToConfirm)
