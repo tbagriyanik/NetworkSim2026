@@ -2119,7 +2119,7 @@ const translations: Record<Language, Translations> = {
     roomDuration: 'min',
     roomDurationLabel: 'Duration',
     roomStudentJoin: 'Student Join',
-    roomTeacherOpen: 'Teacher Panel',
+    roomTeacherOpen: 'Teacher',
     roomExportPDF: 'Export PDF',
     roomSortName: 'Student Name',
     roomSortScore: 'Score',
