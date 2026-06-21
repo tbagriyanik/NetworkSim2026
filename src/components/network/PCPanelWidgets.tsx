@@ -164,7 +164,7 @@ export const IoTSensorDisplay = ({
         const statusText = isActive
             ? (language === 'tr' ? 'AÇIK' : 'ON')
             : (language === 'tr' ? 'KAPALI' : 'OFF');
-        const statusColor = isActive ? 'text-emerald-500' : 'text-slate-400';
+        const statusColor = isActive ? 'text-emerald-500' : 'text-secondary-400';
         
         // Special handling for lamp devices: use distinct on/off visuals
         const displayIcon = device.iot?.kind === 'lamp' 
@@ -173,15 +173,15 @@ export const IoTSensorDisplay = ({
 
         return (
             <div className="space-y-4">
-                <div className={`p-4 rounded-lg border-l-4 ${isDark ? 'bg-slate-800 border-emerald-500' : 'bg-emerald-50 border-emerald-500'}`}>
+                <div className={`p-4 rounded-lg border-l-4 ${isDark ? 'bg-secondary-800 border-emerald-500' : 'bg-emerald-50 border-emerald-500'}`}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="text-xs text-slate-500 mb-1">
+                            <div className="text-xs text-secondary-500 mb-1">
                                 {language === 'tr' ? 'Cihaz Durumu' : 'Device Status'}
                             </div>
                             <div className={`text-2xl font-bold ${statusColor}`}>{statusText}</div>
                         </div>
-                        <div className={`p-3 rounded-full ${isDark ? 'bg-slate-700' : 'bg-white'}`}>
+                        <div className={`p-3 rounded-full ${isDark ? 'bg-secondary-700' : 'bg-white'}`}>
                             <span className={`text-4xl transition-all duration-300 ${isActive ? 'opacity-100 drop-shadow-sm' : 'opacity-40 grayscale'}`}>
                                 {displayIcon}
                             </span>
@@ -244,27 +244,27 @@ export const IoTSensorDisplay = ({
 
     return (
         <div className="space-y-4">
-            <div className={`p-4 rounded-lg border-l-4 ${isDark ? 'bg-slate-800 border-cyan-500' : 'bg-cyan-50 border-cyan-500'}`}>
+            <div className={`p-4 rounded-lg border-l-4 ${isDark ? 'bg-secondary-800 border-accent-500' : 'bg-accent-50 border-accent-500'}`}>
                 <div className="flex items-center justify-between">
                     <div>
-                        <div className="text-xs text-slate-500 mb-1">
+                        <div className="text-xs text-secondary-500 mb-1">
                             {language === 'tr' ? 'Anlık Sensör Değeri' : 'Live Sensor Value'}
                         </div>
-                        <div className="text-2xl font-bold text-cyan-500">{displayStr}</div>
+                        <div className="text-2xl font-bold text-accent-500">{displayStr}</div>
                     </div>
-                    <div className={`p-3 rounded-full ${isDark ? 'bg-slate-700' : 'bg-white'}`}>
+                    <div className={`p-3 rounded-full ${isDark ? 'bg-secondary-700' : 'bg-white'}`}>
                         <span className="text-2xl">{deviceIcon}</span>
                     </div>
                 </div>
             </div>
 
-            <div className={`p-4 rounded-lg ${isDark ? 'bg-slate-800/50' : 'bg-slate-100/50'}`}>
+            <div className={`p-4 rounded-lg ${isDark ? 'bg-secondary-800/50' : 'bg-secondary-100/50'}`}>
                 <div className="flex justify-between items-end mb-2">
-                    <div className="text-xs font-semibold text-slate-500">
+                    <div className="text-xs font-semibold text-secondary-500">
                         {language === 'tr' ? 'Son 5 Dakika (300sn) Geçmişi' : 'Last 5 Minutes History'}
                     </div>
                     {!isPassive && (
-                        <div className="text-xs text-cyan-500/80 font-mono">
+                        <div className="text-xs text-accent-500/80 font-mono">
                             {latestVal.toFixed(isDigital ? 0 : 1)}{' '}
                             {isDigital ? '' : (sensorType === 'temperature' ? '°C' : sensorType === 'humidity' ? '%' : sensorType === 'light' ? 'lx' : 'dB')}
                         </div>

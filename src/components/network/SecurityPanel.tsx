@@ -68,16 +68,16 @@ export function SecurityPanel({ security, t, theme, isDevicePoweredOff = false }
     }
   ];
 
-  const cardBg = isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
-  const innerBg = isDark ? 'bg-slate-900' : 'bg-slate-100';
-  const itemBg = isDark ? 'bg-slate-900' : 'bg-slate-50';
-  const textPrimary = isDark ? 'text-white' : 'text-slate-900';
-  const textSecondary = isDark ? 'text-slate-400' : 'text-slate-600';
-  const textMuted = isDark ? 'text-slate-500' : 'text-slate-400';
+  const cardBg = isDark ? 'bg-secondary-800 border-secondary-700' : 'bg-white border-secondary-200';
+  const innerBg = isDark ? 'bg-secondary-900' : 'bg-secondary-100';
+  const itemBg = isDark ? 'bg-secondary-900' : 'bg-secondary-50';
+  const textPrimary = isDark ? 'text-white' : 'text-secondary-900';
+  const textSecondary = isDark ? 'text-secondary-400' : 'text-secondary-600';
+  const textMuted = isDark ? 'text-secondary-500' : 'text-secondary-400';
 
   return (
     <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
-      <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
+      <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-secondary-800/50 bg-secondary-800/20' : 'border-secondary-200 bg-secondary-50'}`}>
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="text-orange-400 text-base sm:text-lg flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -100,7 +100,7 @@ export function SecurityPanel({ security, t, theme, isDevicePoweredOff = false }
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 transition-all duration-300 ${item.enabled ? 'bg-green-500 shadow-[0_0_2px_rgba(34,197,94,0.2)]' : 'bg-red-500 shadow-[0_0_2px_rgba(239,68,68,0.2)]'
+                <div className={`w-2 h-2 rounded-full flex-shrink-0 transition-all duration-300 ${item.enabled ? 'bg-success-500 shadow-[0_0_2px_rgba(34,197,94,0.2)]' : 'bg-error-500 shadow-[0_0_2px_rgba(239,68,68,0.2)]'
                   } ${item.enabled ? 'animate-pulse' : ''}`} />
                 <div className="min-w-0">
                   <div className={`text-xs sm:text-sm ${textPrimary} truncate transition-colors`}>{item.name}</div>
@@ -110,8 +110,8 @@ export function SecurityPanel({ security, t, theme, isDevicePoweredOff = false }
               <Badge
                 variant={item.enabled ? 'default' : 'destructive'}
                 className={`text-xs flex-shrink-0 ml-1 transition-all duration-300 ${item.enabled
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'
-                  : 'hover:bg-red-500/20'
+                  ? 'bg-success-500/20 text-success-400 border border-success-500/30 hover:bg-success-500/30'
+                  : 'hover:bg-error-500/20'
                   }`}
               >
                 {item.enabled ? t.on : t.off}

@@ -135,7 +135,7 @@ export function UnifiedDevicePanel({
                 onEscapeKeyDown={(e) => e.preventDefault()}
                 className={cn(
                     "p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0 liquid-glass-light",
-                    isDark ? "bg-slate-950/80 border-slate-800" : "bg-white border-slate-200"
+                    isDark ? "bg-secondary-950/80 border-secondary-800" : "bg-white border-secondary-200"
                 )}
                 data-modal-content
                 style={{
@@ -156,14 +156,14 @@ export function UnifiedDevicePanel({
                     <DialogHeader
                         className={cn(
                             "p-0 border-b cursor-grab active:cursor-grabbing select-none touch-none sticky top-0 z-10",
-                            isDark ? "border-slate-800 bg-slate-900/90" : "border-slate-100 bg-white"
+                            isDark ? "border-secondary-800 bg-secondary-900/90" : "border-secondary-100 bg-white"
                         )}
                         data-modal-header
                         onPointerDown={(e) => handlePointerDown(e, 'deviceUnified')}
                     >
                         <div className="flex items-center gap-2 px-2 py-1.5 sm:justify-between sm:px-4 sm:py-2">
                             <Tabs value={activeTab} onValueChange={(v: string) => onTabChange(v as 'console' | 'settings')} className="min-w-0 flex-1 sm:flex-none sm:w-auto">
-                                <TabsList className={cn("h-9 p-1 w-full sm:w-auto overflow-x-auto", isDark ? "bg-slate-800" : "bg-slate-100")}>
+                                <TabsList className={cn("h-9 p-1 w-full sm:w-auto overflow-x-auto", isDark ? "bg-secondary-800" : "bg-secondary-100")}>
                                     <TabsTrigger value="console" className="flex items-center gap-1.5 px-2 sm:px-3 h-7 whitespace-nowrap text-xs sm:text-sm">
                                         <TerminalIcon className="w-3.5 h-3.5" />
                                         <span>{t.cliInterface}</span>
@@ -178,9 +178,9 @@ export function UnifiedDevicePanel({
                             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 justify-center px-1 sm:px-4">
                                 <div className={cn(
                                     "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium max-w-full truncate",
-                                    isDark ? "bg-slate-800/50 border-slate-700 text-slate-300" : "bg-slate-100 border-slate-200 text-slate-600"
+                                    isDark ? "bg-secondary-800/50 border-secondary-700 text-secondary-300" : "bg-secondary-100 border-secondary-200 text-secondary-600"
                                 )}>
-                                    <div className={cn("w-2 h-2 rounded-full shrink-0", isOffline ? "bg-red-500" : "bg-green-500")} />
+                                    <div className={cn("w-2 h-2 rounded-full shrink-0", isOffline ? "bg-error-500" : "bg-success-500")} />
                                     <span className="truncate">{deviceName}</span>
                                     <span className="opacity-50 text-[10px] uppercase">{deviceType}</span>
                                 </div>
@@ -191,7 +191,7 @@ export function UnifiedDevicePanel({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-7 w-7 hover:bg-red-500 hover:text-white dark:hover:bg-red-600 transition-colors"
+                                    className="h-7 w-7 hover:bg-error-500 hover:text-white dark:hover:bg-error-600 transition-colors"
                                     title={t.language === 'tr' ? 'Kapat' : 'Close'}
                                     onClick={() => onOpenChange(false)}
                                 >
@@ -333,7 +333,7 @@ export function UnifiedDevicePanel({
                             <div className="absolute left-0 top-0 w-5 h-5 cursor-nw-resize select-none touch-none z-30" onPointerDown={(e) => handleResizeStart(e, 'nw', 'deviceUnified')} />
                             <div className="absolute right-0 top-0 w-5 h-5 cursor-ne-resize select-none touch-none z-30" onPointerDown={(e) => handleResizeStart(e, 'ne', 'deviceUnified')} />
                             <div className="absolute left-0 bottom-0 w-5 h-5 cursor-sw-resize select-none touch-none z-30" onPointerDown={(e) => handleResizeStart(e, 'sw', 'deviceUnified')} />
-                            <div className="absolute right-0 bottom-0 w-5 h-5 cursor-se-resize select-none touch-none flex items-center justify-center text-slate-400 hover:text-primary z-30" onPointerDown={(e) => handleResizeStart(e, 'se', 'deviceUnified')}>
+                            <div className="absolute right-0 bottom-0 w-5 h-5 cursor-se-resize select-none touch-none flex items-center justify-center text-secondary-400 hover:text-primary z-30" onPointerDown={(e) => handleResizeStart(e, 'se', 'deviceUnified')}>
                                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                                     <path d="M11 5L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

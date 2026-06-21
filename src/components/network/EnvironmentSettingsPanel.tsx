@@ -54,8 +54,8 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
             className={cn(
               'h-8 px-3 flex items-center gap-1.5 transition-all',
               isDark
-                ? 'text-emerald-400 hover:text-emerald-300 hover:bg-slate-700/50'
-                : 'text-emerald-600 hover:text-emerald-700 hover:bg-slate-200/50'
+                ? 'text-emerald-400 hover:text-emerald-300 hover:bg-secondary-700/50'
+                : 'text-emerald-600 hover:text-emerald-700 hover:bg-secondary-200/50'
             )}
           >
             <Leaf className="w-4 h-4" />
@@ -69,16 +69,16 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
         overlayClassName="bg-transparent"
         className={cn(
           'w-[320px] p-0 overflow-y-auto custom-scrollbar',
-          isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
+          isDark ? 'bg-secondary-900 border-secondary-700' : 'bg-white border-secondary-200'
         )}
       >
         <SheetHeader className={cn(
           'p-4 border-b',
-          isDark ? 'border-slate-700' : 'border-slate-200'
+          isDark ? 'border-secondary-700' : 'border-secondary-200'
         )}>
           <SheetTitle className={cn(
             'text-lg font-bold flex items-center gap-2',
-            isDark ? 'text-slate-100' : 'text-slate-900'
+            isDark ? 'text-secondary-100' : 'text-secondary-900'
           )}>
             <Leaf className="w-5 h-5 text-emerald-400" />
             {t.environmentSettings}
@@ -90,7 +90,7 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
           <div className="space-y-3">
             <label className={cn(
               'text-sm font-semibold flex items-center gap-2',
-              isDark ? 'text-slate-200' : 'text-slate-700'
+              isDark ? 'text-secondary-200' : 'text-secondary-700'
             )}>
               <Home className="w-4 h-4" />
               {t.environmentBackground}
@@ -107,8 +107,8 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
                         ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
                         : 'bg-emerald-50 border-emerald-200 text-emerald-700'
                       : isDark
-                        ? 'bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
-                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                        ? 'bg-secondary-800 border-secondary-600 text-secondary-300 hover:bg-secondary-700'
+                        : 'bg-secondary-50 border-secondary-200 text-secondary-600 hover:bg-secondary-100'
                   )}
                 >
                   {option.icon}
@@ -124,7 +124,7 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
           <div className="space-y-3">
             <label className={cn(
               'text-sm font-semibold flex items-center gap-2',
-              isDark ? 'text-slate-200' : 'text-slate-700'
+              isDark ? 'text-secondary-200' : 'text-secondary-700'
             )}>
               <Thermometer className="w-4 h-4 text-orange-400" />
               {t.temperature}
@@ -138,7 +138,7 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
                 onChange={(e) => handleTemperatureChange(Number(e.target.value))}
                 className={cn(
                   'w-full h-2 rounded-lg appearance-none cursor-pointer',
-                  isDark ? 'bg-slate-700' : 'bg-slate-200'
+                  isDark ? 'bg-secondary-700' : 'bg-secondary-200'
                 )}
                 style={{
                   background: `linear-gradient(to right,
@@ -150,7 +150,7 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
               />
               <div className={cn(
                 'flex justify-between text-xs',
-                isDark ? 'text-slate-500' : 'text-slate-400'
+                isDark ? 'text-secondary-500' : 'text-secondary-400'
               )}>
                 <span>-20{t.celsius}</span>
                 <span className={cn(
@@ -168,9 +168,9 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
           <div className="space-y-3">
             <label className={cn(
               'text-sm font-semibold flex items-center gap-2',
-              isDark ? 'text-slate-200' : 'text-slate-700'
+              isDark ? 'text-secondary-200' : 'text-secondary-700'
             )}>
-              <Droplets className="w-4 h-4 text-blue-400" />
+              <Droplets className="w-4 h-4 text-primary-400" />
               {t.humidity}
             </label>
             <div className="space-y-2">
@@ -182,7 +182,7 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
                 onChange={(e) => handleHumidityChange(Number(e.target.value))}
                 className={cn(
                   'w-full h-2 rounded-lg appearance-none cursor-pointer',
-                  isDark ? 'bg-slate-700' : 'bg-slate-200'
+                  isDark ? 'bg-secondary-700' : 'bg-secondary-200'
                 )}
                 style={{
                   background: `linear-gradient(to right, 
@@ -194,12 +194,12 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
               />
               <div className={cn(
                 'flex justify-between text-xs',
-                isDark ? 'text-slate-500' : 'text-slate-400'
+                isDark ? 'text-secondary-500' : 'text-secondary-400'
               )}>
                 <span>0{t.percent}</span>
                 <span className={cn(
                   'font-bold text-base',
-                  isDark ? 'text-blue-400' : 'text-blue-600'
+                  isDark ? 'text-primary-400' : 'text-primary-600'
                 )}>
                   {environment?.humidity ?? 50}{t.percent}
                 </span>
@@ -212,7 +212,7 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
           <div className="space-y-3">
             <label className={cn(
               'text-sm font-semibold flex items-center gap-2',
-              isDark ? 'text-slate-200' : 'text-slate-700'
+              isDark ? 'text-secondary-200' : 'text-secondary-700'
             )}>
               <Sun className="w-4 h-4 text-yellow-400" />
               {t.lightLevel}
@@ -226,7 +226,7 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
                 onChange={(e) => handleLightChange(Number(e.target.value))}
                 className={cn(
                   'w-full h-2 rounded-lg appearance-none cursor-pointer',
-                  isDark ? 'bg-slate-700' : 'bg-slate-200'
+                  isDark ? 'bg-secondary-700' : 'bg-secondary-200'
                 )}
                 style={{
                   background: `linear-gradient(to right, 
@@ -238,7 +238,7 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
               />
               <div className={cn(
                 'flex justify-between text-xs',
-                isDark ? 'text-slate-500' : 'text-slate-400'
+                isDark ? 'text-secondary-500' : 'text-secondary-400'
               )}>
                 <span>0{t.percent}</span>
                 <span className={cn(
@@ -256,19 +256,19 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
           <div className={cn(
             'p-4 rounded-xl border',
             isDark
-              ? 'bg-slate-800/50 border-slate-600'
-              : 'bg-slate-50 border-slate-200'
+              ? 'bg-secondary-800/50 border-secondary-600'
+              : 'bg-secondary-50 border-secondary-200'
           )}>
             <div className={cn(
               'text-xs font-medium mb-3',
-              isDark ? 'text-slate-300' : 'text-slate-600'
+              isDark ? 'text-secondary-300' : 'text-secondary-600'
             )}>
               {t.environmentSettings}
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className={cn(
                 'p-2 rounded-lg',
-                isDark ? 'bg-slate-700/50' : 'bg-white'
+                isDark ? 'bg-secondary-700/50' : 'bg-white'
               )}>
                 <Thermometer className={cn(
                   'w-4 h-4 mx-auto mb-1',
@@ -276,29 +276,29 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
                 )} />
                 <span className={cn(
                   'text-xs font-bold',
-                  isDark ? 'text-slate-100' : 'text-slate-700'
+                  isDark ? 'text-secondary-100' : 'text-secondary-700'
                 )}>
                   {environment?.temperature ?? 22}{t.celsius}
                 </span>
               </div>
               <div className={cn(
                 'p-2 rounded-lg',
-                isDark ? 'bg-slate-700/50' : 'bg-white'
+                isDark ? 'bg-secondary-700/50' : 'bg-white'
               )}>
                 <Droplets className={cn(
                   'w-4 h-4 mx-auto mb-1',
-                  isDark ? 'text-blue-300' : 'text-blue-500'
+                  isDark ? 'text-primary-300' : 'text-primary-500'
                 )} />
                 <span className={cn(
                   'text-xs font-bold',
-                  isDark ? 'text-slate-100' : 'text-slate-700'
+                  isDark ? 'text-secondary-100' : 'text-secondary-700'
                 )}>
                   {environment?.humidity ?? 50}{t.percent}
                 </span>
               </div>
               <div className={cn(
                 'p-2 rounded-lg',
-                isDark ? 'bg-slate-700/50' : 'bg-white'
+                isDark ? 'bg-secondary-700/50' : 'bg-white'
               )}>
                 <Sun className={cn(
                   'w-4 h-4 mx-auto mb-1',
@@ -306,7 +306,7 @@ export function EnvironmentSettingsPanel({ isOpen, onOpenChange }: EnvironmentSe
                 )} />
                 <span className={cn(
                   'text-xs font-bold',
-                  isDark ? 'text-slate-100' : 'text-slate-700'
+                  isDark ? 'text-secondary-100' : 'text-secondary-700'
                 )}>
                   {environment?.light ?? 70}{t.percent}
                 </span>

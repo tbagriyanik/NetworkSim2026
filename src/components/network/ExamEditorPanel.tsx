@@ -110,13 +110,13 @@ export function ExamEditorPanel({
       className={cn(
         "fixed inset-y-0 right-0 w-full sm:w-[500px] md:w-[550px] lg:w-[600px] max-w-[100vw] z-[100] shadow-2xl flex flex-col transition-all duration-300 transform liquid-glass-light",
         isOpen ? "translate-x-0" : "translate-x-full",
-        isDark ? "border-l border-slate-800" : "border-l border-slate-200"
+        isDark ? "border-l border-secondary-800" : "border-l border-secondary-200"
       )}
     >
       {/* Header */}
       <div className={cn(
         "p-4 border-b flex items-center justify-between",
-        isDark ? "bg-slate-950/50 border-slate-800" : "bg-slate-50 border-slate-200"
+        isDark ? "bg-secondary-950/50 border-secondary-800" : "bg-secondary-50 border-secondary-200"
       )}>
         <div className="flex items-center gap-2">
           <div className="p-2 bg-purple-500/10 rounded-lg">
@@ -144,7 +144,7 @@ export function ExamEditorPanel({
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold flex items-center gap-2">
-                <Settings className="w-4 h-4 text-blue-500" />
+                <Settings className="w-4 h-4 text-primary-500" />
                 {isTr ? 'Genel Bilgiler' : 'General Info'}
               </h3>
               <Badge variant={totalWeight === 100 ? "default" : "destructive"} className="text-[10px]">
@@ -216,13 +216,13 @@ export function ExamEditorPanel({
             </div>
             <div className={cn(
               "flex items-center gap-1 p-1.5 rounded-xl border",
-              isDark ? "bg-slate-900/40 border-slate-700/30" : "bg-emerald-50/50 border-emerald-100/50"
+              isDark ? "bg-secondary-900/40 border-secondary-700/30" : "bg-emerald-50/50 border-emerald-100/50"
             )}>
               <TooltipWrapper title={isTr ? 'PC Ekle' : 'Add PC'}>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-8 h-8 rounded-lg text-blue-500 hover:bg-blue-500/10 transition-colors"
+                  className="w-8 h-8 rounded-lg text-primary-500 hover:bg-primary-500/10 transition-colors"
                   onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'pc' }))}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -234,7 +234,7 @@ export function ExamEditorPanel({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-8 h-8 rounded-lg text-green-500 hover:bg-green-500/10 transition-colors"
+                  className="w-8 h-8 rounded-lg text-success-500 hover:bg-success-500/10 transition-colors"
                   onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'switchL2' }))}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -271,7 +271,7 @@ export function ExamEditorPanel({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-8 h-8 rounded-lg text-cyan-500 hover:bg-cyan-500/10 transition-colors"
+                  className="w-8 h-8 rounded-lg text-accent-500 hover:bg-accent-500/10 transition-colors"
                   onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'iot' }))}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -287,7 +287,7 @@ export function ExamEditorPanel({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-8 h-8 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors"
+                  className="w-8 h-8 rounded-lg text-error-500 hover:bg-error-500/10 transition-colors"
                   onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'firewall' }))}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -331,7 +331,7 @@ export function ExamEditorPanel({
             {activeExam.tasks.length === 0 ? (
               <div className={cn(
                 "p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center",
-                isDark ? "border-slate-800 bg-slate-900/50" : "border-slate-100 bg-slate-50/50"
+                isDark ? "border-secondary-800 bg-secondary-900/50" : "border-secondary-100 bg-secondary-50/50"
               )}>
                 <AlertCircle className="w-8 h-8 opacity-20 mb-2" />
                 <p className="text-xs font-medium opacity-40">
@@ -383,7 +383,7 @@ export function ExamEditorPanel({
                     }}
                     className={cn(
                       "overflow-hidden transition-all duration-200",
-                      isDark ? "bg-slate-800/40 border-slate-700" : "bg-white border-slate-200",
+                      isDark ? "bg-secondary-800/40 border-secondary-700" : "bg-white border-secondary-200",
                       expandedTaskId === task.id ? "ring-1 ring-purple-500/50" : "",
                       draggedTaskId === task.id ? "opacity-40" : "",
                       touchDragInfo?.id === task.id && "ring-2 ring-purple-500 border-purple-500 scale-[1.02] shadow-xl z-10"
@@ -395,7 +395,7 @@ export function ExamEditorPanel({
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div
-                          className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing text-slate-400 hover:text-purple-500 touch-none"
+                          className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing text-secondary-400 hover:text-purple-500 touch-none"
                           onTouchStart={() => {
                             setTouchDragInfo({ id: task.id, startIndex: index, currentIndex: index });
                           }}
@@ -420,7 +420,7 @@ export function ExamEditorPanel({
                           <GripVertical className="w-4 h-4" />
                           <span className="text-[10px] font-black opacity-30 select-none">:::</span>
                         </div>
-                        <div className="w-6 h-6 rounded-full bg-slate-500/10 flex items-center justify-center text-[10px] font-bold">
+                        <div className="w-6 h-6 rounded-full bg-secondary-500/10 flex items-center justify-center text-[10px] font-bold">
                           {index + 1}
                         </div>
                         <div className="min-w-0">
@@ -442,7 +442,7 @@ export function ExamEditorPanel({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-slate-500 hover:text-purple-500 hover:bg-purple-500/10"
+                            className="h-7 w-7 text-secondary-500 hover:text-purple-500 hover:bg-purple-500/10"
                             disabled={index === 0}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -456,7 +456,7 @@ export function ExamEditorPanel({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-slate-500 hover:text-purple-500 hover:bg-purple-500/10"
+                            className="h-7 w-7 text-secondary-500 hover:text-purple-500 hover:bg-purple-500/10"
                             disabled={index === activeExam.tasks.length - 1}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -483,7 +483,7 @@ export function ExamEditorPanel({
                     </div>
 
                     {expandedTaskId === task.id && (
-                      <CardContent className="p-3 pt-0 border-t border-slate-700/30 space-y-3">
+                      <CardContent className="p-3 pt-0 border-t border-secondary-700/30 space-y-3">
                         <div className="grid gap-3 pt-3">
                           <div className="grid grid-cols-3 gap-2">
                             <div className="col-span-2 space-y-1">
@@ -552,7 +552,7 @@ export function ExamEditorPanel({
                             {/* Dynamic Params based on checkType */}
                             <div className={cn(
                               "p-2 rounded-lg border space-y-2",
-                              isDark ? "bg-slate-950/30 border-slate-700/50" : "bg-slate-50 border-slate-200"
+                              isDark ? "bg-secondary-950/30 border-secondary-700/50" : "bg-secondary-50 border-secondary-200"
                             )}>
                               {task.checkType === 'command' && (
                                 <div className="space-y-1">
@@ -869,7 +869,7 @@ export function ExamEditorPanel({
                                 </div>
                               )}
                               <div className="flex items-center gap-1.5 mt-1">
-                                <Info className="w-3 h-3 text-blue-500 opacity-60" />
+                                <Info className="w-3 h-3 text-primary-500 opacity-60" />
                                 <p className="text-[9px] opacity-50 leading-tight">
                                   {isTr ? 'Bu değerler topolojideki cihaz ID\'leri ile eşleşmelidir.' : 'These values must match device IDs in the topology.'}
                                 </p>
@@ -890,7 +890,7 @@ export function ExamEditorPanel({
       {/* Footer Actions */}
       <div className={cn(
         "p-4 border-t mt-auto flex flex-col gap-3",
-        isDark ? "bg-slate-950/80 border-slate-800" : "bg-slate-50 border-slate-200"
+        isDark ? "bg-secondary-950/80 border-secondary-800" : "bg-secondary-50 border-secondary-200"
       )}>
         <div className="flex gap-2">
           <div className="flex-1">

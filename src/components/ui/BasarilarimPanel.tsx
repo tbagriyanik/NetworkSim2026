@@ -73,7 +73,7 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
         label: t.sessionDuration,
         date: '',
         detail: formatDuration(summary.totalSessionSeconds),
-        iconColor: 'text-blue-500',
+        iconColor: 'text-primary-500',
       });
     }
 
@@ -83,7 +83,7 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
         label: t.projectSaved,
         date: p.lastDate,
         detail: p.name,
-        iconColor: 'text-cyan-500',
+        iconColor: 'text-accent-500',
       });
     }
 
@@ -153,11 +153,11 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
           onPointerDown={isMobile ? undefined : handleDragStart}
         >
           <div className="flex items-center gap-1.5">
-            <Trophy className="w-4 h-4 text-amber-500" />
-            <span className={`font-semibold text-sm ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>{t.basarilarim}</span>
+            <Trophy className="w-4 h-4 text-warning-500" />
+            <span className={`font-semibold text-sm ${isDark ? 'text-secondary-100' : 'text-secondary-800'}`}>{t.basarilarim}</span>
           </div>
           <TooltipWrapper title={t.close}>
-            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="w-5 h-5 rounded-md bg-red-500 hover:bg-red-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0">
+            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="w-5 h-5 rounded-md bg-error-500 hover:bg-error-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0">
               <X className="w-3 h-3 text-white pointer-events-none" />
             </button>
           </TooltipWrapper>
@@ -165,8 +165,8 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
         <div className={cn("overflow-y-auto custom-scrollbar", isMobile ? "flex-1" : "max-h-[280px]")}>
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-              <Trophy className="w-8 h-8 text-slate-400 mb-2" />
-              <p className={`text-xs text-center ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t.basarilarimEmpty}</p>
+              <Trophy className="w-8 h-8 text-secondary-400 mb-2" />
+              <p className={`text-xs text-center ${isDark ? 'text-secondary-400' : 'text-secondary-500'}`}>{t.basarilarimEmpty}</p>
             </div>
           ) : (
             <div className="p-2 space-y-1">
@@ -179,12 +179,12 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
                     </div>
                     <div className="flex-1 min-w-0 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <span className={`text-[11px] font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{item.label}</span>
+                        <span className={`text-[11px] font-semibold ${isDark ? 'text-secondary-300' : 'text-secondary-700'}`}>{item.label}</span>
                         {item.date && (
-                          <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{formatDate(item.date, language)}</span>
+                          <span className={`text-[10px] ${isDark ? 'text-secondary-500' : 'text-secondary-400'}`}>{formatDate(item.date, language)}</span>
                         )}
                       </div>
-                      <span className={`text-xs truncate block text-center ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{item.detail}</span>
+                      <span className={`text-xs truncate block text-center ${isDark ? 'text-secondary-400' : 'text-secondary-500'}`}>{item.detail}</span>
                       {item.scoreText && (
                         <span className={`text-[10px] font-mono font-semibold ${item.iconColor}`}>{item.scoreText}</span>
                       )}

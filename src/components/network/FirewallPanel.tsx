@@ -148,8 +148,8 @@ export function FirewallPanel({
     onUpdateRules(updatedRules);
   }, [rules, onUpdateRules]);
 
-  const cardBg = isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
-  const itemBg = isDark ? 'bg-slate-900' : 'bg-slate-50';
+  const cardBg = isDark ? 'bg-secondary-800 border-secondary-700' : 'bg-white border-secondary-200';
+  const itemBg = isDark ? 'bg-secondary-900' : 'bg-secondary-50';
 
   // Use controlled tabs if activeTab/onTabChange provided, otherwise uncontrolled
   const tabsValue = activeTab ?? 'console';
@@ -167,7 +167,7 @@ export function FirewallPanel({
             <TabsList className="bg-transparent gap-2 sm:gap-4 h-10 p-0 border-b-0 w-full flex min-w-0 overflow-visible justify-start">
               <TabsTrigger
                 value="console"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-red-500 data-[state=active]:shadow-none rounded-none px-1 sm:px-2 h-10 gap-1 sm:gap-2 font-bold text-xs flex-1 sm:flex-none min-w-0 visible"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-error-500 data-[state=active]:shadow-none rounded-none px-1 sm:px-2 h-10 gap-1 sm:gap-2 font-bold text-xs flex-1 sm:flex-none min-w-0 visible"
               >
                 <TerminalIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">{t.language === 'tr' ? 'Konsol' : 'Console'}</span>
@@ -175,7 +175,7 @@ export function FirewallPanel({
               </TabsTrigger>
               <TabsTrigger
                 value="settings"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-red-500 data-[state=active]:shadow-none rounded-none px-1 sm:px-2 h-10 gap-1 sm:gap-2 font-bold text-xs flex-1 sm:flex-none min-w-0 visible"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-error-500 data-[state=active]:shadow-none rounded-none px-1 sm:px-2 h-10 gap-1 sm:gap-2 font-bold text-xs flex-1 sm:flex-none min-w-0 visible"
               >
                 <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">{t.language === 'tr' ? 'Hızlı Ayarlar' : 'Quick Settings'}</span>
@@ -217,15 +217,15 @@ export function FirewallPanel({
           <TabsContent value="settings" className="flex-1 min-h-0 m-0 p-4 overflow-y-auto custom-scrollbar">
             <div className="space-y-4">
               {isDevicePoweredOff && (
-                <div className="p-2 rounded bg-red-500/10 text-red-500 text-xs text-center border border-red-500/20">
+                <div className="p-2 rounded bg-error-500/10 text-error-500 text-xs text-center border border-error-500/20">
                   {t.language === 'tr' ? 'Cihaz kapalı. Kural yönetimi devre dışı.' : 'Device is offline. Rule management disabled.'}
                 </div>
               )}
 
-              <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'} space-y-3`}>
+              <div className={`p-4 rounded-xl border ${isDark ? 'bg-secondary-950/50 border-secondary-800' : 'bg-white border-secondary-200'} space-y-3`}>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Kaynak IP' : 'Source IP'}</label>
+                    <label className="text-[10px] font-bold text-secondary-500 uppercase">{t.language === 'tr' ? 'Kaynak IP' : 'Source IP'}</label>
                     <Input
                       value={newRule.sourceIp}
                       onChange={e => setNewRule({ ...newRule, sourceIp: e.target.value })}
@@ -235,7 +235,7 @@ export function FirewallPanel({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Hedef IP' : 'Target IP'}</label>
+                    <label className="text-[10px] font-bold text-secondary-500 uppercase">{t.language === 'tr' ? 'Hedef IP' : 'Target IP'}</label>
                     <Input
                       value={newRule.targetIp}
                       onChange={e => setNewRule({ ...newRule, targetIp: e.target.value })}
@@ -247,7 +247,7 @@ export function FirewallPanel({
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Port</label>
+                    <label className="text-[10px] font-bold text-secondary-500 uppercase">Port</label>
                     <Input
                       value={newRule.port}
                       onChange={e => setNewRule({ ...newRule, port: e.target.value })}
@@ -257,7 +257,7 @@ export function FirewallPanel({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Protokol' : 'Protocol'}</label>
+                    <label className="text-[10px] font-bold text-secondary-500 uppercase">{t.language === 'tr' ? 'Protokol' : 'Protocol'}</label>
                     <Select
                       value={currentSelectValue}
                       onValueChange={(v: string) => {
@@ -283,7 +283,7 @@ export function FirewallPanel({
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">{t.language === 'tr' ? 'Eylem' : 'Action'}</label>
+                    <label className="text-[10px] font-bold text-secondary-500 uppercase">{t.language === 'tr' ? 'Eylem' : 'Action'}</label>
                     <Select
                       value={newRule.action}
                       onValueChange={(v: string) => setNewRule({ ...newRule, action: v as 'allow' | 'deny' })}
@@ -301,7 +301,7 @@ export function FirewallPanel({
                 </div>
                 <Button
                   onClick={() => handleAddRule()}
-                  className="w-full h-8 bg-red-600 hover:bg-red-700 text-white text-xs font-bold"
+                  className="w-full h-8 bg-error-600 hover:bg-error-700 text-white text-xs font-bold"
                   disabled={isDevicePoweredOff}
                 >
                   <Plus className="w-4 h-4 mr-1" /> {t.language === 'tr' ? 'Kural Ekle' : 'Add Rule'}
@@ -311,7 +311,7 @@ export function FirewallPanel({
 
               <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                 {rules.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500 text-xs italic">
+                  <div className="text-center py-8 text-secondary-500 text-xs italic">
                     {t.language === 'tr' ? 'Henüz kural tanımlanmamış. Varsayılan: Her şeye izin ver.' : 'No rules defined. Default: Allow all.'}
                   </div>
                 ) : (
@@ -451,7 +451,7 @@ function DraggableRuleItem({
     >
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <button
-          className="p-1.5 rounded-md hover:bg-slate-700/50 text-slate-500 transition-colors"
+          className="p-1.5 rounded-md hover:bg-secondary-700/50 text-secondary-500 transition-colors"
           disabled={isDevicePoweredOff}
           title={t.language === 'tr' ? 'Sürüklemek için tutun' : 'Hold to drag'}
         >
@@ -459,10 +459,10 @@ function DraggableRuleItem({
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${rule.action === 'allow' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${rule.action === 'allow' ? 'bg-success-500/20 text-success-500' : 'bg-error-500/20 text-error-500'}`}>
               {rule.action.toUpperCase()}
             </span>
-            <span className="text-[10px] font-bold text-slate-500 uppercase">{displayName}</span>
+            <span className="text-[10px] font-bold text-secondary-500 uppercase">{displayName}</span>
           </div>
           <div className="text-xs font-mono truncate">
             {rule.sourceIp} &rarr; {rule.targetIp}:{rule.port}
@@ -472,14 +472,14 @@ function DraggableRuleItem({
       <div className="flex items-center gap-1">
         <button
           onClick={onToggle}
-          className={`p-2 rounded-md hover:bg-slate-700/50 transition-colors ${rule.enabled ? 'text-green-500 hover:bg-green-500/20' : 'text-slate-500 hover:bg-slate-700/30'}`}
+          className={`p-2 rounded-md hover:bg-secondary-700/50 transition-colors ${rule.enabled ? 'text-success-500 hover:bg-success-500/20' : 'text-secondary-500 hover:bg-secondary-700/30'}`}
           disabled={isDevicePoweredOff}
         >
           {rule.enabled ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
         </button>
         <button
           onClick={onDelete}
-          className="p-2 rounded-md hover:bg-red-500/20 text-slate-500 hover:text-red-500 transition-colors"
+          className="p-2 rounded-md hover:bg-error-500/20 text-secondary-500 hover:text-error-500 transition-colors"
           disabled={isDevicePoweredOff}
         >
           <Trash2 className="w-4 h-4" />

@@ -230,7 +230,7 @@ export function ExamModePanel({
           className={cn(
             "flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl border-2 cursor-grab active:cursor-grabbing transition-all",
             "bg-gradient-to-r from-rose-500 to-rose-600 border-rose-400 text-white",
-            isOverTime && "animate-pulse from-red-600 to-red-700"
+            isOverTime && "animate-pulse from-error-600 to-error-700"
           )}
           onClick={() => !hasDragged && onMinimize()}
           onMouseDown={handleMouseDown}
@@ -267,7 +267,7 @@ export function ExamModePanel({
       <div
         className={cn(
           "flex flex-col rounded-xl shadow-2xl border overflow-hidden liquid-glass-light",
-          "border-slate-200 dark:border-slate-700",
+          "border-secondary-200 dark:border-secondary-700",
           "max-h-full"
         )}
       >
@@ -280,7 +280,7 @@ export function ExamModePanel({
             isFinishedState
               ? "from-emerald-500 to-emerald-600"
               : isOverTime
-                ? "from-red-600 to-red-700"
+                ? "from-error-600 to-error-700"
                 : "from-rose-500 to-rose-600"
           )}
           onMouseDown={handleMouseDown}
@@ -317,17 +317,17 @@ export function ExamModePanel({
         <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
           <div className="flex flex-col">
             {/* Stats Row */}
-            <div className="grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-700 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+            <div className="grid grid-cols-2 divide-x divide-secondary-200 dark:divide-secondary-700 bg-secondary-50 dark:bg-secondary-800/50 border-b border-secondary-200 dark:border-secondary-700">
               <div className="flex flex-col items-center py-3">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">{t.score}</span>
+                <span className="text-[10px] text-secondary-500 dark:text-secondary-400 uppercase font-bold tracking-wider">{t.score}</span>
                 <div className="flex items-baseline gap-1">
                   <span className="text-2xl font-black text-rose-500">{score}</span>
-                  <span className="text-xs text-slate-400">/ 100</span>
+                  <span className="text-xs text-secondary-400">/ 100</span>
                 </div>
               </div>
               <div className="flex flex-col items-center py-3">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">{t.examTime}</span>
-                <div className={cn("flex items-center gap-1.5", isOverTime && "text-red-500 animate-pulse")}>
+                <span className="text-[10px] text-secondary-500 dark:text-secondary-400 uppercase font-bold tracking-wider">{t.examTime}</span>
+                <div className={cn("flex items-center gap-1.5", isOverTime && "text-error-500 animate-pulse")}>
                   <Clock className="w-4 h-4" />
                   <span className="text-xl font-mono font-bold">
                     {timeLeft !== null ? formatTime(timeLeft) : '--:--'}
@@ -338,7 +338,7 @@ export function ExamModePanel({
 
             {/* Overtime Alert */}
             {isOverTime && (
-              <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2 text-[11px] text-red-600 dark:text-red-400 font-bold">
+              <div className="px-4 py-2 bg-error-500/10 border-b border-error-500/20 flex items-center gap-2 text-[11px] text-error-600 dark:text-error-400 font-bold">
                 <AlertTriangle className="w-3 h-3" />
                 {language === 'tr' ? 'SÜRE DOLDU!' : 'TIME EXPIRED!'}
               </div>
@@ -347,7 +347,7 @@ export function ExamModePanel({
             {/* Checklist */}
             <button
               onClick={() => setIsChecklistExpanded(!isChecklistExpanded)}
-              className="flex items-center justify-between w-full px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700"
+              className="flex items-center justify-between w-full px-4 py-2 text-xs font-bold text-secondary-600 dark:text-secondary-300 bg-secondary-100 dark:bg-secondary-800 border-b border-secondary-200 dark:border-secondary-700"
             >
               <div className="flex items-center gap-2">
                 <Target className="w-3.5 h-3.5" />
@@ -363,30 +363,30 @@ export function ExamModePanel({
                     className={cn(
                       "flex items-start gap-3 p-3 rounded-lg border transition-all",
                       task.completed
-                        ? "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/30 opacity-75"
-                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                        ? "bg-success-50 dark:bg-success-900/10 border-success-200 dark:border-success-800/30 opacity-75"
+                        : "bg-white dark:bg-secondary-800 border-secondary-200 dark:border-secondary-700"
                     )}
                   >
                     <div className="mt-0.5">
                       {task.completed ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                        <CheckCircle2 className="w-5 h-5 text-success-500" />
                       ) : (
-                        <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                        <Circle className="w-5 h-5 text-secondary-300 dark:text-secondary-600" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-1">
                         <span className={cn(
                           "text-xs font-bold",
-                          task.completed ? "text-green-600 dark:text-green-400 line-through" : "text-slate-700 dark:text-slate-200"
+                          task.completed ? "text-success-600 dark:text-success-400 line-through" : "text-secondary-700 dark:text-secondary-200"
                         )}>
                           {task.title[language]}
                         </span>
-                        <span className="text-[10px] font-black bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500">
+                        <span className="text-[10px] font-black bg-secondary-100 dark:bg-secondary-700 px-1.5 py-0.5 rounded text-secondary-500">
                           {task.weight} pts
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      <p className="text-[11px] text-secondary-500 dark:text-secondary-400 leading-relaxed">
                         {task.description[language]}
                       </p>
                     </div>
@@ -399,7 +399,7 @@ export function ExamModePanel({
 
         {/* Footer */}
         {!isFinishedState && !isOverTime && (
-          <div className="p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700">
+          <div className="p-3 bg-secondary-50 dark:bg-secondary-900/50 border-t border-secondary-200 dark:border-secondary-700">
             <Button
               className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold h-9 rounded-lg"
               onClick={() => {

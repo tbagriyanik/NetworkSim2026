@@ -447,7 +447,7 @@ export function GuidedModePanel({
           data-drag-handle
           className={cn(
             "flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl border-2 cursor-grab active:cursor-grabbing transition-all",
-            "bg-gradient-to-r from-blue-500 to-blue-600 border-blue-400 text-white",
+            "bg-gradient-to-r from-primary-500 to-primary-600 border-primary-400 text-white",
             "animate-pulse",
             isDragging && "cursor-default"
           )}
@@ -498,7 +498,7 @@ export function GuidedModePanel({
       <div
         className={cn(
           "flex flex-col rounded-xl shadow-2xl border overflow-hidden liquid-glass-light",
-          "border-slate-200/50 dark:border-slate-700/50",
+          "border-secondary-200/50 dark:border-secondary-700/50",
           "max-h-full"
         )}
       >
@@ -506,7 +506,7 @@ export function GuidedModePanel({
         <div
           data-drag-handle
           className={cn(
-            "flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 text-white",
+            "flex items-center justify-between p-4 bg-gradient-to-r from-primary-600 via-primary-500 to-indigo-600 text-white",
             "cursor-grab active:cursor-grabbing select-none shadow-inner"
           )}
           onMouseDown={handleMouseDown}
@@ -516,13 +516,13 @@ export function GuidedModePanel({
             <GripHorizontal className="w-4 h-4 opacity-50" />
             <div className="relative">
               <Wand2 className="w-5 h-5" />
-              <Sparkles className="w-3 h-3 absolute -top-1 -right-1 text-amber-300 animate-pulse" />
+              <Sparkles className="w-3 h-3 absolute -top-1 -right-1 text-warning-300 animate-pulse" />
             </div>
             <div>
               <h3 className="font-bold text-xs tracking-tighter">
                 {t.tutorialWizard}
               </h3>
-              <p className="text-[10px] text-blue-100/80 truncate max-w-[160px] font-medium">{project.title}</p>
+              <p className="text-[10px] text-primary-100/80 truncate max-w-[160px] font-medium">{project.title}</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -544,30 +544,30 @@ export function GuidedModePanel({
         </div>
 
         {/* Progress Bar & Points */}
-        <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+        <div className="px-4 py-2 bg-secondary-50 dark:bg-secondary-900/50 border-b border-secondary-200 dark:border-secondary-700">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-slate-500 dark:text-slate-400">{t.progress}</span>
-            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+            <span className="text-xs text-secondary-500 dark:text-secondary-400">{t.progress}</span>
+            <span className="text-xs font-medium text-secondary-700 dark:text-secondary-300">
               {completedCount} / {project.steps.length}
             </span>
           </div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{t.totalScore}</span>
+            <span className="text-[10px] uppercase tracking-wider text-secondary-400 font-bold">{t.totalScore}</span>
             <div className="flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-500 fill-amber-500" />
-              <span className="text-sm font-black text-amber-600 dark:text-amber-400 tabular-nums">
-                {currentPoints} <span className="text-[10px] text-slate-400 font-normal">/ {totalPoints}</span>
+              <Sparkles className="w-3 h-3 text-warning-500 fill-warning-500" />
+              <span className="text-sm font-black text-warning-600 dark:text-warning-400 tabular-nums">
+                {currentPoints} <span className="text-[10px] text-secondary-400 font-normal">/ {totalPoints}</span>
               </span>
             </div>
           </div>
-          <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-secondary-200 dark:bg-secondary-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-500 via-blue-400 to-green-500 transition-all duration-500"
+              className="h-full bg-gradient-to-r from-primary-500 via-primary-400 to-success-500 transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
           {isAllCompleted && (
-            <div className="mt-2 text-xs text-green-600 dark:text-green-400 font-medium text-center animate-pulse">
+            <div className="mt-2 text-xs text-success-600 dark:text-success-400 font-medium text-center animate-pulse">
               {t.allStepsCompleted}
               {project.startedAt && (() => {
                 const lastCompletedStep = project.steps.filter(s => s.completed).sort((a, b) =>
@@ -578,7 +578,7 @@ export function GuidedModePanel({
                   const minutes = Math.floor(duration / 60);
                   const seconds = duration % 60;
                   return (
-                    <span className="ml-2 text-slate-500 dark:text-slate-400">
+                    <span className="ml-2 text-secondary-500 dark:text-secondary-400">
                       ({minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`})
                     </span>
                   );
@@ -591,17 +591,17 @@ export function GuidedModePanel({
 
         {/* Current Step Highlight */}
         {currentStep && !currentStep.completed && (
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800">
+          <div className="p-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-100 dark:border-primary-800">
             <div className="flex items-center gap-2 mb-2">
-              <Target className="w-4 h-4 text-blue-500" />
-              <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+              <Target className="w-4 h-4 text-primary-500" />
+              <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">
                 {t.currentStep}: {currentStep.order}
               </span>
             </div>
-            <h4 className="font-medium text-sm text-slate-800 dark:text-slate-200 mb-1">
+            <h4 className="font-medium text-sm text-secondary-800 dark:text-secondary-200 mb-1">
               {currentStep.title[language]}
             </h4>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
+            <p className="text-xs text-secondary-600 dark:text-secondary-400 mb-2">
               {currentStep.description[language]}
             </p>
 
@@ -610,7 +610,7 @@ export function GuidedModePanel({
               <div className="mb-3 space-y-2">
                 <button
                   onClick={() => setShowAnimation(!showAnimation)}
-                  className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors"
+                  className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400 hover:text-primary-700 transition-colors"
                 >
                   <Sparkles className="w-3 h-3" />
                   {showAnimation ? t.hideAnimation : t.showAnimation}
@@ -626,14 +626,14 @@ export function GuidedModePanel({
             {/* Hint Section */}
             <Collapsible open={showHint} onOpenChange={setShowHint}>
               <CollapsibleTrigger asChild>
-                <button className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors">
+                <button className="flex items-center gap-1 text-xs text-warning-600 dark:text-warning-400 hover:text-warning-700 dark:hover:text-warning-300 transition-colors">
                   <Lightbulb className="w-3 h-3" />
                   {showHint ? t.hideHint : t.showHint}
                   {showHint ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded text-xs text-amber-800 dark:text-amber-200">
+                <div className="mt-2 p-2 bg-warning-50 dark:bg-warning-900/30 border border-warning-200 dark:border-warning-800 rounded text-xs text-warning-800 dark:text-warning-200">
                   <Lightbulb className="w-3 h-3 inline mr-1" />
                   {currentStep.hint[language]}
                 </div>
@@ -647,13 +647,13 @@ export function GuidedModePanel({
                 onOpenChange={() => toggleStepExpand(currentStep.id)}
               >
                 <CollapsibleTrigger asChild>
-                  <button className="mt-2 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+                  <button className="mt-2 flex items-center gap-1 text-xs text-secondary-500 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-secondary-300 transition-colors">
                     {t.instructions}
                     {expandedSteps.includes(currentStep.id) ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                   </button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <ol className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-400 pl-4">
+                  <ol className="mt-2 space-y-1 text-xs text-secondary-600 dark:text-secondary-400 pl-4">
                     {currentStep.detailedInstructions[language].map((instruction, idx) => (
                       <li key={idx} className="list-decimal">
                         {instruction}
@@ -678,19 +678,19 @@ export function GuidedModePanel({
                   ref={isActive ? activeStepRef : undefined}
                   className={cn(
                     "flex items-start gap-2 p-2 rounded-lg transition-all",
-                    isActive && "bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800",
-                    isCompleted && !isActive && "bg-slate-100 dark:bg-slate-800 opacity-60",
-                    !isActive && !isCompleted && "hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                    isActive && "bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800",
+                    isCompleted && !isActive && "bg-secondary-100 dark:bg-secondary-800 opacity-60",
+                    !isActive && !isCompleted && "hover:bg-secondary-50 dark:hover:bg-secondary-700/50"
                   )}
                 >
                   {/* Status Icon */}
                   <div className="mt-0.5">
                     {isCompleted ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
+                      <CheckCircle2 className="w-5 h-5 text-success-500" />
                     ) : isActive ? (
-                      <Circle className="w-5 h-5 text-blue-500 animate-pulse" />
+                      <Circle className="w-5 h-5 text-primary-500 animate-pulse" />
                     ) : (
-                      <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                      <Circle className="w-5 h-5 text-secondary-300 dark:text-secondary-600" />
                     )}
                   </div>
 
@@ -698,7 +698,7 @@ export function GuidedModePanel({
                   {isCompleted && (
                     <button
                       onClick={() => onStepUncomplete(step.id)}
-                      className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors flex-shrink-0"
+                      className="text-xs text-secondary-400 hover:text-secondary-600 dark:hover:text-secondary-300 transition-colors flex-shrink-0"
                     >
                       {t.uncomplete}
                     </button>
@@ -709,9 +709,9 @@ export function GuidedModePanel({
                     <div className="flex items-center justify-between gap-2">
                       <span className={cn(
                         "text-xs font-medium",
-                        isActive && "text-blue-600 dark:text-blue-400",
-                        isCompleted && "text-slate-600 dark:text-white line-through",
-                        !isActive && !isCompleted && "text-slate-500 dark:text-slate-400"
+                        isActive && "text-primary-600 dark:text-primary-400",
+                        isCompleted && "text-secondary-600 dark:text-white line-through",
+                        !isActive && !isCompleted && "text-secondary-500 dark:text-secondary-400"
                       )}>
                         {step.order}. {step.title[language]}
                       </span>
@@ -719,8 +719,8 @@ export function GuidedModePanel({
                         <span className={cn(
                           "text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
                           isCompleted
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                            ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
+                            : "bg-secondary-100 text-secondary-500 dark:bg-secondary-800 dark:text-secondary-400"
                         )}>
                           {step.points} {t.pts}
                         </span>
@@ -728,16 +728,16 @@ export function GuidedModePanel({
                     </div>
 
                     {isActive && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1 truncate">
                         {step.description[language]}
                       </p>
                     )}
 
                     {/* Completion Time */}
                     {isCompleted && step.completedAt && project.startedAt && (
-                      <p className="text-[10px] text-slate-400 dark:text-slate-300 mt-0.5">
+                      <p className="text-[10px] text-secondary-400 dark:text-secondary-300 mt-0.5">
                         {t.completedAt}: {new Date(step.completedAt).toLocaleTimeString(language === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                        <span className="ml-1 text-slate-400">
+                        <span className="ml-1 text-secondary-400">
                           ({(() => {
                             const duration = Math.round((new Date(step.completedAt).getTime() - new Date(project.startedAt).getTime()) / 1000);
                             const minutes = Math.floor(duration / 60);
@@ -755,7 +755,7 @@ export function GuidedModePanel({
         </ScrollArea>
 
         {/* Footer Info */}
-        <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+        <div className="px-4 py-2 bg-secondary-50 dark:bg-secondary-900/50 border-t border-secondary-200 dark:border-secondary-700 text-xs text-secondary-500 dark:text-secondary-400 flex items-center justify-between">
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             <span className="font-mono tabular-nums">{formatElapsed(elapsedSeconds)}</span>

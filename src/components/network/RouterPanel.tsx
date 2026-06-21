@@ -135,11 +135,11 @@ export function RouterPanel({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'connected':
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+        return <CheckCircle2 className="w-4 h-4 text-success-500" />;
       case 'notconnect':
         return <XCircle className="w-4 h-4 text-gray-500" />;
       case 'disabled':
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="w-4 h-4 text-error-500" />;
       case 'blocked':
         return <AlertCircle className="w-4 h-4 text-orange-500" />;
       default:
@@ -155,7 +155,7 @@ export function RouterPanel({
 
     if (isShutdown) return 'bg-gray-500';
     if (status === 'blocked' || isSTPBlocked) return 'bg-orange-500';
-    if (status === 'connected') return 'bg-green-500';
+    if (status === 'connected') return 'bg-success-500';
     if (status === 'notconnect') return 'bg-white';
     return 'bg-gray-400';
   };
@@ -171,7 +171,7 @@ export function RouterPanel({
       <DialogContent
         className={cn(
           "p-0 flex flex-col top-auto left-auto translate-x-0 translate-y-0 liquid-glass-light",
-          isDark ? "bg-slate-950/80 border-white/10" : "bg-white/70 border-white/70"
+          isDark ? "bg-secondary-950/80 border-white/10" : "bg-white/70 border-white/70"
         )}
         showCloseButton={false}
         onPointerDownOutside={(e) => e.preventDefault()}
@@ -193,7 +193,7 @@ export function RouterPanel({
         <DialogHeader
           className={cn(
             "p-4 border-b cursor-grab active:cursor-grabbing select-none touch-none min-h-[52px]",
-            isDark ? "border-white/10 bg-slate-900/75" : "border-white/70 bg-white/80"
+            isDark ? "border-white/10 bg-secondary-900/75" : "border-white/70 bg-white/80"
           )}
           data-modal-header
           onPointerDown={(e) => handlePointerDown?.(e, 'router')}
@@ -203,7 +203,7 @@ export function RouterPanel({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div
-                    className={`w-4 h-4 rounded-full transition-all duration-200 ${routerDevice.status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
+                    className={`w-4 h-4 rounded-full transition-all duration-200 ${routerDevice.status === 'online' ? 'bg-success-500 animate-pulse' : 'bg-error-500'}`}
                   >
                   </div>
                 </TooltipTrigger>
@@ -226,7 +226,7 @@ export function RouterPanel({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 hover:bg-red-500 hover:text-white dark:hover:bg-red-600"
+              className="h-8 w-8 hover:bg-error-500 hover:text-white dark:hover:bg-error-600"
               onClick={onClose}
             >
               <X className="h-4 w-4" />
@@ -314,7 +314,7 @@ export function RouterPanel({
                 {/* Device Info */}
                 <div className={cn(
                   "p-4 rounded-lg border",
-                  isDark ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"
+                  isDark ? "bg-secondary-800 border-secondary-700" : "bg-secondary-50 border-secondary-200"
                 )}>
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
                     <Globe className="w-4 h-4" />
@@ -333,9 +333,9 @@ export function RouterPanel({
                       <span className="text-muted-foreground">{t.status}:</span>
                       <p className="font-medium flex items-center gap-1">
                         {routerDevice.status === 'online' ? (
-                          <CheckCircle2 className="w-4 h-4 text-green-500" />
+                          <CheckCircle2 className="w-4 h-4 text-success-500" />
                         ) : (
-                          <XCircle className="w-4 h-4 text-red-500" />
+                          <XCircle className="w-4 h-4 text-error-500" />
                         )}
                         {routerDevice.status}
                       </p>
@@ -343,9 +343,9 @@ export function RouterPanel({
                     <div>
                       <span className="text-muted-foreground">{t.ipRouting}:</span>
                       <p className="font-medium">{routerState?.ipRouting ? (
-                        <span className="text-green-500">{t.active}</span>
+                        <span className="text-success-500">{t.active}</span>
                       ) : (
-                        <span className="text-red-500">{t.suspended}</span>
+                        <span className="text-error-500">{t.suspended}</span>
                       )}</p>
                     </div>
                   </div>
@@ -354,7 +354,7 @@ export function RouterPanel({
                 {/* IP Interfaces */}
                 <div className={cn(
                   "p-4 rounded-lg border",
-                  isDark ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"
+                  isDark ? "bg-secondary-800 border-secondary-700" : "bg-secondary-50 border-secondary-200"
                 )}>
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
                     <Network className="w-4 h-4" />
@@ -363,7 +363,7 @@ export function RouterPanel({
                   {interfacesWithIP.length > 0 ? (
                     <div className="space-y-2">
                       {interfacesWithIP.map((iface) => (
-                        <div key={iface.id} className="flex items-center justify-between p-2 rounded bg-slate-100 dark:bg-slate-900">
+                        <div key={iface.id} className="flex items-center justify-between p-2 rounded bg-secondary-100 dark:bg-secondary-900">
                           <div className="flex items-center gap-2">
                             {getStatusIcon(iface.status)}
                             <span className="font-medium">{iface.id}</span>
@@ -391,15 +391,15 @@ export function RouterPanel({
                 {/* Port Summary */}
                 <div className={cn(
                   "p-4 rounded-lg border",
-                  isDark ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"
+                  isDark ? "bg-secondary-800 border-secondary-700" : "bg-secondary-50 border-secondary-200"
                 )}>
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
                     <Activity className="w-4 h-4" />
                     {t.portSummary}
                   </h3>
                   <div className="grid grid-cols-3 gap-3 text-sm">
-                    <div className="text-center p-3 rounded bg-green-100 dark:bg-green-900/30">
-                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    <div className="text-center p-3 rounded bg-success-100 dark:bg-success-900/30">
+                      <p className="text-2xl font-bold text-success-600 dark:text-success-400">
                         {ports.filter(p => p.id !== 'wlan0' && !p.shutdown && p.status === 'connected').length}
                       </p>
                       <p className="text-muted-foreground">{t.connectedStatus}</p>
@@ -410,8 +410,8 @@ export function RouterPanel({
                       </p>
                       <p className="text-muted-foreground">{t.disconnectedStatus}</p>
                     </div>
-                    <div className="text-center p-3 rounded bg-red-100 dark:bg-red-900/30">
-                      <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                    <div className="text-center p-3 rounded bg-error-100 dark:bg-error-900/30">
+                      <p className="text-2xl font-bold text-error-600 dark:text-error-400">
                         {ports.filter(p => p.shutdown).length}
                       </p>
                       <p className="text-muted-foreground">{t.shutdownStatus}</p>
@@ -428,7 +428,7 @@ export function RouterPanel({
                     key={port.id}
                     className={cn(
                       "p-3 rounded-lg border flex items-center justify-between",
-                      isDark ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"
+                      isDark ? "bg-secondary-800 border-secondary-700" : "bg-secondary-50 border-secondary-200"
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -455,7 +455,7 @@ export function RouterPanel({
                         {port.speed}/{port.duplex}
                       </div>
                       {port.shutdown && (
-                        <span className="text-xs text-red-500 font-medium">
+                        <span className="text-xs text-error-500 font-medium">
                           {t.shutdownStatus.toUpperCase()}
                         </span>
                       )}
@@ -471,12 +471,12 @@ export function RouterPanel({
                   <>
                     <div className={cn(
                       "p-4 rounded-lg border",
-                      isDark ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"
+                      isDark ? "bg-secondary-800 border-secondary-700" : "bg-secondary-50 border-secondary-200"
                     )}>
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold flex items-center gap-2">
                           {(wifiConfig as { enabled?: boolean }).enabled || wifiConfig.mode === 'ap' ? (
-                            <Wifi className="w-4 h-4 text-green-500" />
+                            <Wifi className="w-4 h-4 text-success-500" />
                           ) : (
                             <WifiOff className="w-4 h-4 text-gray-500" />
                           )}
@@ -485,7 +485,7 @@ export function RouterPanel({
                         <span className={cn(
                           "px-2 py-1 rounded text-xs font-medium",
                           (wifiConfig as { enabled?: boolean }).enabled || wifiConfig.mode === 'ap'
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            ? "bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400"
                             : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
                         )}>
                           {(wifiConfig as { enabled?: boolean }).enabled || wifiConfig.mode === 'ap'
@@ -525,7 +525,7 @@ export function RouterPanel({
                     {wifiConfig.security !== 'open' && wifiConfig.password && (
                       <div className={cn(
                         "p-4 rounded-lg border",
-                        isDark ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"
+                        isDark ? "bg-secondary-800 border-secondary-700" : "bg-secondary-50 border-secondary-200"
                       )}>
                         <h3 className="font-semibold mb-2 flex items-center gap-2">
                           <ShieldCheck className="w-4 h-4" />
@@ -538,7 +538,7 @@ export function RouterPanel({
                 ) : (
                   <div className={cn(
                     "p-8 rounded-lg border text-center",
-                    isDark ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"
+                    isDark ? "bg-secondary-800 border-secondary-700" : "bg-secondary-50 border-secondary-200"
                   )}>
                     <WifiOff className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
                     <p className="text-muted-foreground">
@@ -557,7 +557,7 @@ export function RouterPanel({
                       key={pool.poolName}
                       className={cn(
                         "p-4 rounded-lg border",
-                        isDark ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"
+                        isDark ? "bg-secondary-800 border-secondary-700" : "bg-secondary-50 border-secondary-200"
                       )}
                     >
                       <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -607,7 +607,7 @@ export function RouterPanel({
                 ) : (
                   <div className={cn(
                     "p-8 rounded-lg border text-center",
-                    isDark ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"
+                    isDark ? "bg-secondary-800 border-secondary-700" : "bg-secondary-50 border-secondary-200"
                   )}>
                     <Server className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
                     <p className="text-muted-foreground">

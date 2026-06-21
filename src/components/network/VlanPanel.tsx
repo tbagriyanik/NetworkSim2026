@@ -34,23 +34,23 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
 
   const isDark = theme === 'dark';
 
-  const cardBg = isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
-  const innerBg = isDark ? 'bg-slate-900' : 'bg-slate-100';
-  const textPrimary = isDark ? 'text-white' : 'text-slate-900';
-  const textSecondary = isDark ? 'text-slate-400' : 'text-slate-600';
-  const textMuted = isDark ? 'text-slate-500' : 'text-slate-400';
+  const cardBg = isDark ? 'bg-secondary-800 border-secondary-700' : 'bg-white border-secondary-200';
+  const innerBg = isDark ? 'bg-secondary-900' : 'bg-secondary-100';
+  const textPrimary = isDark ? 'text-white' : 'text-secondary-900';
+  const textSecondary = isDark ? 'text-secondary-400' : 'text-secondary-600';
+  const textMuted = isDark ? 'text-secondary-500' : 'text-secondary-400';
 
   if (activeDeviceType === 'pc') {
     return (
       <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
-        <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
+        <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-secondary-800/50 bg-secondary-800/20' : 'border-secondary-200 bg-secondary-50'}`}>
           <CardTitle className="text-purple-400 text-base sm:text-lg flex items-center gap-2">
             <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
             {deviceName || t.vlanStatus}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center h-48 sm:h-64 text-center text-slate-500">
+          <div className="flex flex-col items-center justify-center h-48 sm:h-64 text-center text-secondary-500">
             <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
@@ -112,13 +112,13 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
 
   return (
     <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
-      <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-slate-800/50 bg-slate-800/20' : 'border-slate-200 bg-slate-50'}`}>
+      <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-secondary-800/50 bg-secondary-800/20' : 'border-secondary-200 bg-secondary-50'}`}>
         <div className="flex items-center justify-between gap-3">
           <CardTitle className={
             deviceModel === 'ISR 4451 X' || deviceModel === 'WS-C3650-24PS'
               ? "text-purple-400 text-base sm:text-lg flex items-center gap-2"
               : deviceModel === 'WS-C2960-24TT-L'
-                ? "text-green-400 text-base sm:text-lg flex items-center gap-2"
+                ? "text-success-400 text-base sm:text-lg flex items-center gap-2"
                 : "text-purple-400 text-base sm:text-lg flex items-center gap-2"
           }>
             {deviceModel === 'ISR 4451 X' ? (
@@ -131,7 +131,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
               <Layers className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
             )}
             {deviceName || t.vlanStatus}
-            <span className={`text-[12px] font-mono px-2 py-0.5 rounded ${isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'} ml-2`}>
+            <span className={`text-[12px] font-mono px-2 py-0.5 rounded ${isDark ? 'bg-secondary-700 text-secondary-400' : 'bg-secondary-100 text-secondary-500'} ml-2`}>
               {deviceModel}
             </span>
           </CardTitle>
@@ -158,7 +158,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
                 onChange={(e) => setNewVlanId(e.target.value)}
                 disabled={isDevicePoweredOff || isCreating}
                 placeholder="10"
-                className={`h-8 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'} ${textPrimary} text-sm`}
+                className={`h-8 ${isDark ? 'bg-secondary-800 border-secondary-600' : 'bg-white border-secondary-300'} ${textPrimary} text-sm`}
               />
             </div>
             <div className="flex-1">
@@ -170,7 +170,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
                 onChange={(e) => setNewVlanName(e.target.value)}
                 disabled={isDevicePoweredOff || isCreating}
                 placeholder={t.vlanNameExample}
-                className={`h-8 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'} ${textPrimary} text-sm`}
+                className={`h-8 ${isDark ? 'bg-secondary-800 border-secondary-600' : 'bg-white border-secondary-300'} ${textPrimary} text-sm`}
               />
             </div>
             <div className="flex items-end">
@@ -188,7 +188,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
 
         <ScrollArea className="h-36 sm:h-48">
           <div className="space-y-1">
-            <div className={`grid grid-cols-12 gap-1 sm:gap-2 px-2 py-1 text-xs ${textSecondary} border-b ${isDark ? 'border-slate-700' : 'border-slate-300'}`}>
+            <div className={`grid grid-cols-12 gap-1 sm:gap-2 px-2 py-1 text-xs ${textSecondary} border-b ${isDark ? 'border-secondary-700' : 'border-secondary-300'}`}>
               <div className="col-span-1">{t.id}</div>
               <div className="col-span-3">{t.vlanName}</div>
               <div className="col-span-2">{t.status}</div>
@@ -203,7 +203,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
               return (
                 <div
                   key={`${vlan.id}-${vlan.name}`}
-                  className={`grid grid-cols-12 gap-1 sm:gap-2 px-2 py-1.5 sm:py-2 text-[12px] rounded ${isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-100'} ${isDefault ? 'opacity-75' : ''}`}
+                  className={`grid grid-cols-12 gap-1 sm:gap-2 px-2 py-1.5 sm:py-2 text-[12px] rounded ${isDark ? 'hover:bg-secondary-700/50' : 'hover:bg-secondary-100'} ${isDefault ? 'opacity-75' : ''}`}
                 >
                   <div className="col-span-1 font-mono text-yellow-400">
                     {vlan.id}
@@ -219,7 +219,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
                       {vlan.status === 'active' ? t.active : t.suspended}
                     </Badge>
                   </div>
-                  <div className={`col-span-5 ${isDark ? 'text-slate-400' : 'text-slate-500'} truncate text-xs`} title={vlanPorts.join(', ')}>
+                  <div className={`col-span-5 ${isDark ? 'text-secondary-400' : 'text-secondary-500'} truncate text-xs`} title={vlanPorts.join(', ')}>
                     {vlanPorts.length > 0 ? vlanPorts.slice(0, 3).join(', ') + (vlanPorts.length > 3 ? '...' : '') : t.unassigned}
                   </div>
                   <div className="col-span-1">
@@ -229,7 +229,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
                         variant="ghost"
                         onClick={() => handleDeleteVlan(vlan.id)}
                         disabled={isDevicePoweredOff}
-                        className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-red-400 hover:text-red-300 hover:bg-slate-700"
+                        className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-error-400 hover:text-error-300 hover:bg-secondary-700"
                         title={`${t.delete} VLAN ${vlan.id}`}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
