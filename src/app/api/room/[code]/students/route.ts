@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getRoomStudents } from '@/lib/roomStore';
+import { getRoomStudents, getRoomMeta, claimRoom } from '@/lib/roomStore';
 import type { RoomApiResponse, StudentProgress } from '@/lib/roomTypes';
 import { isRateLimited } from '@/lib/security/rateLimiter';
 
@@ -34,6 +34,34 @@ export async function GET(
       return NextResponse.json(
         { success: false, error: 'Missing room code', code: 'MISSING_CODE' },
         { status: 400 },
+      );
+    }
+
+    const url = new URL(req.url);
+    const teacherId = url.searchParams.get('teacherId');
+    if (!teacherId) {
+      return NextResponse.json(
+        { success: false, error: 'Teacher ID is required', code: 'MISSING_TEACHER_ID' },
+        { status: 401 },
+      );
+    }
+
+    const upperCode = code.toUpperCase();
+    const meta = await getRoomMeta(upperCode);
+    if (!meta) {
+      return NextResponse.json(
+        { success: false, error: 'Room not found', code: 'ROOM_NOT_FOUND' },
+        { status: 404 },
+      );
+    }
+
+    // Backward compatibility: if room has no teacherId, claim it for this browser
+    if (!meta.teacherId) {
+      await claimRoom(upperCode, teacherId);
+    } else if (meta.teacherId !== teacherId) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized to view this room', code: 'UNAUTHORIZED' },
+        { status: 403 },
       );
     }
 

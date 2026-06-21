@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRoom } from '@/contexts/RoomContext';
@@ -20,6 +21,25 @@ export function RoomJoinDialog() {
   const [name, setName] = useState(() => localStorage.getItem('room-student-name') || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [roomError, setRoomError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!studentRoomCode) return;
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const res = await fetch(`/api/room/${studentRoomCode}`);
+        if (cancelled) return;
+        const json = await res.json();
+        if (!json.success || !json.data?.exists) {
+          setRoomError(t.language === 'tr' ? 'Oda silinmiş veya zaman aşımına uğramış.' : 'Room deleted or expired.');
+        }
+      } catch { /* ignore */ }
+    };
+    check();
+    const id = setInterval(check, 30000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [studentRoomCode, t]);
 
   useEffect(() => {
     if (!showRoomJoinDialog) return;
@@ -62,9 +82,12 @@ export function RoomJoinDialog() {
         </DialogHeader>
 
         {studentRoomCode ? (
-          <Button variant="outline" className="w-full" onClick={leaveRoom}>
-            {t.roomLeave}
-          </Button>
+          <div className="space-y-3">
+            {roomError && <p className="text-[10px] font-bold text-destructive text-center px-1">{roomError}</p>}
+            <Button variant="outline" className="w-full" onClick={leaveRoom}>
+              {t.roomLeave}
+            </Button>
+          </div>
         ) : (
           <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
             <Input
@@ -87,7 +110,7 @@ export function RoomJoinDialog() {
               onClick={handleJoin}
               disabled={code.trim().length < 4 || !name.trim() || isLoading}
             >
-              {isLoading ? '...' : t.roomJoinBtn}
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.roomJoinBtn}
             </Button>
           </div>
         )}

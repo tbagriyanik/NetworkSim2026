@@ -7,10 +7,25 @@ export function useRoomStudents(roomCode: string | null) {
   const [students, setStudents] = useState<StudentProgress[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  const getTeacherId = (): string => {
+    const stored = localStorage.getItem('teacher-browser-id');
+    if (stored) return stored;
+    let id: string;
+    try { id = crypto.randomUUID(); } catch { id = `${Date.now()}-${Math.random().toString(36).slice(2)}`; }
+    localStorage.setItem('teacher-browser-id', id);
+    return id;
+  };
+
   const fetchStudents = useCallback(async () => {
     if (!roomCode) return;
+    const teacherId = getTeacherId();
     try {
-      const res = await fetch(`/api/room/${roomCode}/students`);
+      const res = await fetch(`/api/room/${roomCode}/students?teacherId=${encodeURIComponent(teacherId)}`);
+      if (res.status === 403 || res.status === 401) {
+        setStudents([]);
+        setError('unauthorized');
+        return;
+      }
       if (res.status === 404) {
         setStudents([]);
         return;

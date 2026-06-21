@@ -13,7 +13,14 @@ export interface StudentProgress {
 export interface RoomData {
   code: string;
   createdAt: number;
+  teacherId: string;
   students: Record<string, StudentProgress>;
+}
+
+export interface RoomMeta {
+  code: string;
+  createdAt: number;
+  teacherId: string;
 }
 
 export interface RoomApiResponse<T = unknown> {

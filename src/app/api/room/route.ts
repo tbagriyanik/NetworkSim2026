@@ -22,11 +22,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<RoomApiRespon
       );
     }
     const body = await req.json();
-    const { code } = body;
+    const { code, teacherId } = body;
 
     if (!code || typeof code !== 'string') {
       return NextResponse.json(
         { success: false, error: 'Room code is required', code: 'MISSING_CODE' },
+        { status: 400 },
+      );
+    }
+
+    if (!teacherId || typeof teacherId !== 'string' || teacherId.length < 8) {
+      return NextResponse.json(
+        { success: false, error: 'Valid teacher ID is required', code: 'MISSING_TEACHER_ID' },
         { status: 400 },
       );
     }
@@ -39,7 +46,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<RoomApiRespon
       );
     }
 
-    const room = await createRoom(trimmed);
+    const room = await createRoom(trimmed, teacherId);
     return NextResponse.json({ success: true, data: room }, { status: 200 });
   } catch {
     return NextResponse.json(
