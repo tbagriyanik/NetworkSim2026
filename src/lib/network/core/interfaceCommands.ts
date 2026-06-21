@@ -2016,15 +2016,15 @@ function cmdSpanningTreeCost(state: SwitchState, input: string, ctx: CommandCont
 /**
  * Stub Success
  */
-function cmdStubSuccess(_state: SwitchState, input: string, ctx: CommandContext): CommandResult {
-  const isTr = ctx.language === 'tr';
+function cmdStubSuccess(_state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   return {
     success: true,
     output: `% ${input.trim()} configured`,
     realismLevel: 'stub',
-    hint: isTr
-      ? `Bu komut kabul edildi ancak simülasyonu henüz mevcut değil.`
-      : `This command is accepted but its simulation is not yet implemented.`
+    hint: {
+      tr: '⚠️ Bu komut kabul edildi ancak simülasyonu henüz mevcut değil.',
+      en: '⚠️ Command accepted but its simulation is not yet available.'
+    }
   };
 }
 

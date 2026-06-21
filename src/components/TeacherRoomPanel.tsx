@@ -234,8 +234,24 @@ export function TeacherRoomPanel() {
     }
   };
 
-  const handleJoinMonitor = () => {
-    if (roomCodeInput.trim().length >= 4) { setError(null); setActiveCode(roomCodeInput.trim().toUpperCase()); }
+  const handleJoinMonitor = async () => {
+    const code = roomCodeInput.trim().toUpperCase();
+    if (code.length < 4) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/room/${code}`);
+      const json = await res.json();
+      if (json.success && json.data?.exists) {
+        setActiveCode(code);
+      } else {
+        setError(t.language === 'tr' ? 'Oda bulunamadı' : 'Room not found');
+      }
+    } catch {
+      setError(t.language === 'tr' ? 'Bağlantı hatası' : 'Connection error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -291,7 +307,7 @@ export function TeacherRoomPanel() {
                   maxLength={10}
                   onKeyDown={e => { if (e.key === 'Enter') handleJoinMonitor(); }}
                 />
-                <Button onClick={handleJoinMonitor} variant="outline" disabled={roomCodeInput.trim().length < 4}>
+                <Button onClick={handleJoinMonitor} variant="outline" disabled={roomCodeInput.trim().length < 4 || isLoading}>
                   {t.roomWatchBtn}
                 </Button>
               </div>

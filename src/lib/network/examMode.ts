@@ -133,8 +133,12 @@ export interface ExamProject extends ExampleProject {
 }
 
 /**
- * Security utilities for Exam files
- * Obfuscates the JSON content to prevent students from reading task requirements
+ * Obfuscation utilities for Exam files
+ * NOTE: This is NOT a security feature. It only prevents casual viewing of
+ * task requirements. The client-side fixed key means a determined user
+ * can easily read or forge data. Exam integrity hash (XOR with same key)
+ * detects accidental corruption but does NOT protect against intentional
+ * tampering — see generateExamIntegrityHash JSDoc for details.
  */
 // Key'i karakter kodları şeklinde tutarak daha zor okunur hale getiriyoruz
 const EXAM_KEY_BYTES = Uint8Array.from([
@@ -184,7 +188,11 @@ export function decryptExamData(encrypted: string): unknown {
 
 /**
  * Generate integrity hash for exam project
- * Hashes critical fields that shouldn't be tampered with
+ * Detects accidental changes to critical fields.
+ * ⚠️ DISCLAIMER: This uses a client-side fixed XOR key and is NOT
+ * cryptographically secure. It catches accidental data corruption or
+ * unintended modifications, but does NOT protect against intentional
+ * tampering by a determined user with browser DevTools access.
  */
 export function generateExamIntegrityHash(project: ExamProject): string {
   const criticalData = {
@@ -208,7 +216,8 @@ export function generateExamIntegrityHash(project: ExamProject): string {
 
 /**
  * Verify if exam project integrity is intact
- * Returns true if no tampering detected
+ * Returns true if no accidental corruption detected.
+ * ⚠️ See generateExamIntegrityHash disclaimer — this is NOT tamper-proof.
  */
 export function verifyExamIntegrity(project: ExamProject): boolean {
   if (!project.integrityHash) return false;

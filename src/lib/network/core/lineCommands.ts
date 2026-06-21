@@ -544,7 +544,14 @@ function cmdNoAutocommand(state: SwitchState, _input: string, _ctx: CommandConte
  * Stub Success
  */
 function cmdStubSuccess(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  return { success: true };
+  return {
+    success: true,
+    realismLevel: 'stub',
+    hint: {
+      tr: '⚠️ Bu komut kabul edildi ancak hat/satır yapılandırma simülasyonu henüz mevcut değil.',
+      en: '⚠️ Command accepted but line configuration simulation is not yet available.'
+    }
+  };
 }
 
 /**

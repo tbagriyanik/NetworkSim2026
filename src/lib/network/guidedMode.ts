@@ -1075,6 +1075,8 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
 };
 
 // Key'i karakter kodları şeklinde tutarak daha zor okunur hale getiriyoruz
+// ⚠️ NOT: Bu yalnızca rastgele değişiklikleri yakalamak içindir, güvenlik özelliği değildir.
+// ⚠️ NOTE: This only catches accidental changes, NOT a security feature.
 const GUIDED_KEY_BYTES = Uint8Array.from([
   71, 85, 73, 68, 69, 68, 95, 77, 79, 68, 69, 95, 83, 69, 67, 85, 82, 73, 84, 89, 95, 75, 69, 89, 95, 50, 48, 50, 54, 95, 83, 85, 80, 69, 82, 83, 69, 67, 85, 82, 69, 68
 ]);
@@ -1101,7 +1103,11 @@ function xorBytes(data: Uint8Array, key: Uint8Array): Uint8Array {
 
 /**
  * Generate integrity hash for guided project
- * Hashes critical fields that shouldn't be tampered with
+ * Detects accidental changes to critical fields.
+ * ⚠️ DISCLAIMER: This uses a client-side fixed XOR key and is NOT
+ * cryptographically secure. It catches accidental data corruption or
+ * unintended modifications, but does NOT protect against intentional
+ * tampering by a determined user with browser DevTools access.
  */
 export function generateGuidedIntegrityHash(project: GuidedProject): string {
   const criticalData = {
@@ -1125,7 +1131,8 @@ export function generateGuidedIntegrityHash(project: GuidedProject): string {
 
 /**
  * Verify if guided project integrity is intact
- * Returns true if no tampering detected
+ * Returns true if no accidental corruption detected.
+ * ⚠️ See generateGuidedIntegrityHash disclaimer — this is NOT tamper-proof.
  */
 export function verifyGuidedIntegrity(project: GuidedProject): boolean {
   if (!project.integrityHash) return false;
