@@ -29,6 +29,7 @@ export class SpatialPartitioner {
     private cellSize: number;
     private cells: Map<string, SpatialCell>;
     private nodePositions: Map<string, { x: number; y: number }>;
+    private nodeCells: Map<string, string>;
     private bounds: SpatialBounds;
 
     /**
@@ -43,6 +44,7 @@ export class SpatialPartitioner {
         this.cellSize = cellSize;
         this.cells = new Map();
         this.nodePositions = new Map();
+        this.nodeCells = new Map();
         this.bounds = bounds;
     }
 
@@ -84,22 +86,26 @@ export class SpatialPartitioner {
         const cellKey = this.getCellKey(node.x, node.y);
         const cell = this.getOrCreateCell(cellKey);
 
-        // Remove from old cell if it exists
-        const oldKey = Array.from(this.cells.entries()).find(
-            ([_, c]) => c.nodeIds.includes(node.id)
-        )?.[0];
+        // O(1) lookup for old cell using nodeCells map
+        const oldKey = this.nodeCells.get(node.id);
         if (oldKey && oldKey !== cellKey) {
-        const oldCell = this.cells.get(oldKey) as SpatialCell;
-        oldCell.nodeIds = oldCell.nodeIds.filter((id: string) => id !== node.id);
+            const oldCell = this.cells.get(oldKey);
+            if (oldCell) {
+                const idx = oldCell.nodeIds.indexOf(node.id);
+                if (idx !== -1) {
+                    oldCell.nodeIds.splice(idx, 1);
+                }
+            }
         }
 
-        // Add to new cell
+        // Add to new cell (avoid duplicates)
         if (!cell.nodeIds.includes(node.id)) {
             cell.nodeIds.push(node.id);
         }
 
         // Update position tracking
         this.nodePositions.set(node.id, { x: node.x, y: node.y });
+        this.nodeCells.set(node.id, cellKey);
     }
 
     /**
@@ -115,16 +121,21 @@ export class SpatialPartitioner {
      * @param nodeId - ID of the node to remove
      */
     removeNode(nodeId: string): void {
-        // Find and remove from cell
-        for (const cell of this.cells.values()) {
-            const index = cell.nodeIds.indexOf(nodeId);
-            if (index !== -1) {
-                cell.nodeIds.splice(index, 1);
+        // O(1) lookup for cell using nodeCells map
+        const cellKey = this.nodeCells.get(nodeId);
+        if (cellKey) {
+            const cell = this.cells.get(cellKey);
+            if (cell) {
+                const index = cell.nodeIds.indexOf(nodeId);
+                if (index !== -1) {
+                    cell.nodeIds.splice(index, 1);
+                }
             }
         }
 
-        // Remove position tracking
+        // Remove tracking
         this.nodePositions.delete(nodeId);
+        this.nodeCells.delete(nodeId);
     }
 
     /**
@@ -270,6 +281,7 @@ export class SpatialPartitioner {
     clear(): void {
         this.cells.clear();
         this.nodePositions.clear();
+        this.nodeCells.clear();
     }
 
     /**

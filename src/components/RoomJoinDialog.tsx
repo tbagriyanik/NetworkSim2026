@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRoom } from '@/contexts/RoomContext';
@@ -61,10 +61,10 @@ export function RoomJoinDialog() {
         if (json.success && json.data.exists) {
           joinRoom(code.trim(), name.trim());
         } else {
-          setError(t.language === 'tr' ? 'Oda bulunamadı' : 'Room not found');
+          setError(t.language === 'tr' ? 'Oda bulunamadı...' : 'Room not found...');
         }
       } catch {
-        setError(t.language === 'tr' ? 'Bağlantı hatası' : 'Connection error');
+        setError(t.language === 'tr' ? 'Bağlantı hatası...' : 'Connection error');
       } finally {
         setIsLoading(false);
       }
@@ -75,7 +75,7 @@ export function RoomJoinDialog() {
     <Dialog open={showRoomJoinDialog} onOpenChange={setShowRoomJoinDialog}>
       <DialogContent className="sm:max-w-sm" onEscapeKeyDown={() => {}} onPointerDownOutside={() => {}}>
         <DialogHeader>
-          <DialogTitle>{studentRoomCode ? `${t.roomJoinTitle} — ${studentRoomCode}` : t.roomJoinTitle}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><Users className="w-4 h-4" />{studentRoomCode ? `${t.roomJoinTitle} — ${studentRoomCode}` : t.roomJoinTitle}</DialogTitle>
           <DialogDescription>
             {studentRoomCode ? `${studentDisplayName || name} — ${studentRoomCode}` : t.roomJoinDesc}
           </DialogDescription>

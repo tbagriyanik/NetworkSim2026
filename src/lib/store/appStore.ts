@@ -495,6 +495,7 @@ export const useActiveTab = () => useAppStore(state => state.activeTab);
 export const useActivePanel = () => useAppStore(state => state.activePanel);
 export const useSidebarOpen = () => useAppStore(state => state.sidebarOpen);
 export const useHelpLevel = () => useAppStore(state => state.helpLevel);
+export const useGraphicsQuality = () => useAppStore(state => state.graphicsQuality);
 
 // Combined selectors for common use cases
 export const useTopologyState = () => useAppStore(state => state.topology);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Copy, Check, X, LogOut, FileDown, Loader2 } from 'lucide-react';
+import { Copy, Check, X, LogOut, FileDown, Loader2, UserKey } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRoomStudents } from '@/hooks/useRoomStudents';
@@ -37,7 +37,7 @@ function RoomMonitor({ roomCode, onClose }: { roomCode: string; onClose: () => v
       await navigator.clipboard.writeText(roomCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {}
+    } catch { }
   };
 
   const toAscii = (s: string) => s.replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/İ/g, 'I').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C');
@@ -102,8 +102,7 @@ function RoomMonitor({ roomCode, onClose }: { roomCode: string; onClose: () => v
   const totalStudents = students.length;
 
   const thClass = (field: SortField) =>
-    `text-xs font-semibold px-2 py-1.5 text-left cursor-pointer select-none whitespace-nowrap hover:bg-muted/60 transition-colors ${
-      sortField === field ? 'text-primary' : 'text-muted-foreground'
+    `text-xs font-semibold px-2 py-1.5 text-left cursor-pointer select-none whitespace-nowrap hover:bg-muted/60 transition-colors ${sortField === field ? 'text-primary' : 'text-muted-foreground'
     }`;
 
   const sortIcon = (field: SortField) => {
@@ -137,53 +136,53 @@ function RoomMonitor({ roomCode, onClose }: { roomCode: string; onClose: () => v
       {error && error !== 'unauthorized' && <p className="text-xs text-destructive">{t.roomConnError}</p>}
 
       {error !== 'unauthorized' && (
-      <div className="max-h-[calc(85vh-14rem)] overflow-y-auto">
-        <table className="w-full border-collapse text-sm">
-          <thead className="sticky top-0 bg-background dark:bg-slate-950 z-10">
-            <tr className="border-b border-border">
-              <th className={thClass('name')} onClick={() => handleSort('name')}>{t.roomSortName}{sortIcon('name')}</th>
-              <th className={thClass('duration')} onClick={() => handleSort('duration')}>{t.roomDurationLabel}{sortIcon('duration')}</th>
-              <th className={`${thClass('score')} text-right`} onClick={() => handleSort('score')}>{t.roomSortScore}{sortIcon('score')}</th>
-              <th className={thClass('tasks')} onClick={() => handleSort('tasks')}>{t.roomTaskFile}{sortIcon('tasks')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedStudents.map(s => {
-              const progress = s.totalTasks > 0 ? (s.completedTasks / s.totalTasks) * 100 : 0;
-              const duration = Math.floor((now - s.joinedAt) / 60000);
-              return (
-                <tr key={s.studentId} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                  <td className="px-2 py-2">
-                    <span className="font-medium truncate block max-w-[180px]" title={s.displayName}>
-                      {s.displayName}
-                    </span>
-                  </td>
-                  <td className="px-2 py-2 tabular-nums text-muted-foreground">
-                    {duration} {t.roomDuration}
-                    {s.durationMinutes && duration > s.durationMinutes && (
-                      <span className="ml-1 text-[10px] text-red-400 font-semibold">{t.roomTimeUp}</span>
-                    )}
-                  </td>
-                  <td className="px-2 py-2 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <span className="tabular-nums font-medium text-right">{Math.round(progress)}%</span>
-                      <div className="h-2 w-12 overflow-hidden rounded-full bg-muted shrink-0">
-                        <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
+        <div className="max-h-[calc(85vh-14rem)] overflow-y-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead className="sticky top-0 bg-background dark:bg-slate-950 z-10">
+              <tr className="border-b border-border">
+                <th className={thClass('name')} onClick={() => handleSort('name')}>{t.roomSortName}{sortIcon('name')}</th>
+                <th className={thClass('duration')} onClick={() => handleSort('duration')}>{t.roomDurationLabel}{sortIcon('duration')}</th>
+                <th className={`${thClass('score')} text-right`} onClick={() => handleSort('score')}>{t.roomSortScore}{sortIcon('score')}</th>
+                <th className={thClass('tasks')} onClick={() => handleSort('tasks')}>{t.roomTaskFile}{sortIcon('tasks')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedStudents.map(s => {
+                const progress = s.totalTasks > 0 ? (s.completedTasks / s.totalTasks) * 100 : 0;
+                const duration = Math.floor((now - s.joinedAt) / 60000);
+                return (
+                  <tr key={s.studentId} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                    <td className="px-2 py-2">
+                      <span className="font-medium truncate block max-w-[180px]" title={s.displayName}>
+                        {s.displayName}
+                      </span>
+                    </td>
+                    <td className="px-2 py-2 tabular-nums text-muted-foreground">
+                      {duration} {t.roomDuration}
+                      {s.durationMinutes && duration > s.durationMinutes && (
+                        <span className="ml-1 text-[10px] text-red-400 font-semibold">{t.roomTimeUp}</span>
+                      )}
+                    </td>
+                    <td className="px-2 py-2 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="tabular-nums font-medium text-right">{Math.round(progress)}%</span>
+                        <div className="h-2 w-12 overflow-hidden rounded-full bg-muted shrink-0">
+                          <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-2 py-2 tabular-nums text-muted-foreground">
-                    <span title={s.projectFile || undefined}>{s.completedTasks}/{s.totalTasks}{s.projectFile ? ` (${s.projectFile})` : ''}</span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {totalStudents === 0 && (
-          <p className="py-4 text-center text-[11px] text-muted-foreground">{t.roomNoStudents}</p>
-        )}
-      </div>
+                    </td>
+                    <td className="px-2 py-2 tabular-nums text-muted-foreground">
+                      <span title={s.projectFile || undefined}>{s.completedTasks}/{s.totalTasks}{s.projectFile ? ` (${s.projectFile})` : ''}</span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {totalStudents === 0 && (
+            <p className="py-4 text-center text-[11px] text-muted-foreground">{t.roomNoStudents}</p>
+          )}
+        </div>
       )}
     </div>
   );
@@ -245,10 +244,10 @@ export function TeacherRoomPanel() {
       if (json.success && json.data?.exists) {
         setActiveCode(code);
       } else {
-        setError(t.language === 'tr' ? 'Oda bulunamadı' : 'Room not found');
+        setError(t.language === 'tr' ? 'Oda bulunamadı...' : 'Room not found...');
       }
     } catch {
-      setError(t.language === 'tr' ? 'Bağlantı hatası' : 'Connection error');
+      setError(t.language === 'tr' ? 'Bağlantı hatası...' : 'Connection error...');
     } finally {
       setIsLoading(false);
     }
@@ -279,7 +278,7 @@ export function TeacherRoomPanel() {
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-muted/50 rounded-t-xl">
-          <h2 className="text-base font-semibold">{t.roomTeacherPanel}</h2>
+          <h2 className="text-base font-semibold flex items-center gap-2"><UserKey className="w-4 h-4" />{t.roomTeacherPanel}</h2>
           <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:bg-red-500 hover:text-white dark:hover:bg-red-600" title={t.roomClose} onClick={() => setShowTeacherPanel(false)}>
             <X className="w-4 h-4" />
           </Button>
@@ -288,7 +287,7 @@ export function TeacherRoomPanel() {
         <div className="p-4 space-y-4">
           {!activeCode ? (
             <>
-              {error && <p className="text-xs text-destructive text-center font-bold mb-2">{error}</p>}
+              {error && <p className="text-xs text-red-500 text-center font-bold mb-2">{error}</p>}
               <Button onClick={handleCreate} className="w-full" disabled={isLoading}>
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.roomCreateBtn}
               </Button>

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { flushSync } from 'react-dom';
 import dynamic from 'next/dynamic';
-import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes } from '@/lib/store/appStore';
+import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes, useGraphicsQuality } from '@/lib/store/appStore';
 import { CableType, isCableCompatible } from '@/lib/network/types';
 import { checkDeviceConnectivity, getPingDiagnostics, getWirelessSignalStrength, getWirelessDistance } from '@/lib/network/connectivity';
 import { generateRandomLinkLocalIpv4, generateRandomLinkLocalIpv6 } from '@/lib/network/linkLocal';
@@ -20,6 +20,7 @@ import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, NetworkTopology
 import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts, generateWLCPorts } from './networkTopology.portGenerators';
 import { useCanvasHistory } from '@/hooks/useCanvasHistory';
 import { ConnectionLine } from './ConnectionLine';
+import { ConnectionHandle } from './ConnectionHandle';
 import { DeviceNode } from './DeviceNode';
 import LazyNetworkTopologyContextMenu from './LazyNetworkTopologyContextMenu';
 import { LazyNetworkTopologyPortSelectorModal } from './LazyNetworkTopologyPortSelectorModal';
@@ -342,7 +343,10 @@ export function NetworkTopology({
     return meta;
   }, [topologyConnections]);
   const topologyNotes = useTopologyNotes();
-  const { setDevices, setConnections, setNotes, graphicsQuality } = useAppStore();
+  const setDevices = useAppStore(state => state.setDevices);
+  const setConnections = useAppStore(state => state.setConnections);
+  const setNotes = useAppStore(state => state.setNotes);
+  const graphicsQuality = useGraphicsQuality();
 
   const devices = topologyDevices;
   const connections = topologyConnections;
@@ -4850,108 +4854,6 @@ export function NetworkTopology({
     };
   }, [getDeviceCenter]);
 
-  // Render connection interaction handles (Trash Icon) - Should be rendered LAST to stay on top
-  const renderConnectionHandle = (conn: CanvasConnection) => {
-    const sourceDevice = deviceMap.get(conn.sourceDeviceId);
-    const targetDevice = deviceMap.get(conn.targetDeviceId);
-    if (!sourceDevice || !targetDevice) return null;
-
-    const source = getPortPosition(sourceDevice, conn.sourcePort);
-    const target = getPortPosition(targetDevice, conn.targetPort);
-
-    // BOLT: Optimized lookup for parallel connection metadata
-    const meta = connectionMeta.get(conn.id) || { index: 0, total: 1 };
-    const sameConnIndex = meta.index;
-    const totalSameConns = meta.total;
-
-    const offset = totalSameConns > 1
-      ? (sameConnIndex - (totalSameConns - 1) / 2) * (20 / Math.max(totalSameConns - 1, 1))
-      : 0;
-
-    const dx = target.x - source.x;
-    const dy = target.y - source.y;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const midX = (source.x + target.x) / 2;
-    const perpX = -dy / len * offset;
-    const perpY = dx / len * offset;
-
-    const controlPoint1 = {
-      x: midX + perpX,
-      y: source.y + perpY + Math.abs(offset) * 0.5
-    };
-    const controlPoint2 = {
-      x: midX + perpX,
-      y: target.y + perpY - Math.abs(offset) * 0.5
-    };
-
-    // Position trash icon in the center of the connection
-    const tTrash = 0.5;
-    const invT = 1 - tTrash;
-    const trashX = invT * invT * invT * source.x +
-      3 * invT * invT * tTrash * controlPoint1.x +
-      3 * invT * tTrash * tTrash * controlPoint2.x +
-      tTrash * tTrash * tTrash * target.x;
-    const trashY = invT * invT * invT * source.y +
-      3 * invT * invT * tTrash * controlPoint1.y +
-      3 * invT * tTrash * tTrash * controlPoint2.y +
-      tTrash * tTrash * tTrash * target.y;
-
-    const isCompatible = conn.cableType === 'console'
-      ? isCableCompatible({
-        connected: true,
-        cableType: conn.cableType,
-        sourceDevice: sourceDevice.type,
-        targetDevice: targetDevice.type,
-        sourcePort: conn.sourcePort,
-        targetPort: conn.targetPort,
-      })
-      : true;
-
-    return (
-      <g key={`handle-${conn.id}`}>
-        {/* Larger Hit Area */}
-        <path
-          d={`M ${source.x} ${source.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${target.x} ${target.y}`}
-          stroke="transparent"
-          strokeWidth={22}
-          fill="none"
-          className="cursor-pointer"
-          onClick={() => deleteConnection(conn.id)}
-        />
-
-        {/* Delete Handle (Trash Icon) */}
-        {isCompatible && (
-          <g
-            transform={`translate(${trashX}, ${trashY})`}
-            className="cursor-pointer group"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteConnection(conn.id);
-            }}
-          >
-            <rect x="-8" y="-8" width="15" height="15" rx="5" fill={isDark ? '#0f172a' : '#ffffff'} opacity="0.92" className="drop-shadow-sm" />
-            <Trash2 className="w-4 h-4 text-red-500" width={15} height={15} style={{ transform: 'translate(-8px, -8px)' }} />
-          </g>
-        )}
-
-        {/* Warning Icon if incompatible */}
-        {!isCompatible && (
-          <g
-            transform={`translate(${midX + perpX}, ${(source.y + target.y) / 2 + perpY})`}
-            className="cursor-pointer group"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteConnection(conn.id);
-            }}
-          >
-            <path d="M 0 -9 L -10 7 L 10 7 Z" fill="#ef4444" stroke="#fff" strokeWidth="1" />
-            <text y="4" fontSize="10" fontStyle="normal" fontWeight="bold" fill="white" textAnchor="middle">!</text>
-          </g>
-        )}
-      </g>
-    );
-  };
-
   const isSwitchDevice = (t: CanvasDevice['type']) => t === 'switchL2' || t === 'switchL3';
 
   // Render device
@@ -7049,7 +6951,25 @@ export function NetworkTopology({
 
                   {/* Connection interaction handles (Trash icons) */}
                   {/* BOLT: Use visibleConnections for culling */}
-                  {visibleConnections.map((conn) => renderConnectionHandle(conn))}
+                  {visibleConnections.map((conn) => {
+                    const sourceDevice = deviceMap.get(conn.sourceDeviceId);
+                    const targetDevice = deviceMap.get(conn.targetDeviceId);
+                    if (!sourceDevice || !targetDevice) return null;
+                    const meta = connectionMeta.get(conn.id) || { index: 0, total: 1 };
+                    return (
+                      <ConnectionHandle
+                        key={`handle-${conn.id}`}
+                        connection={conn}
+                        sourceDevice={sourceDevice}
+                        targetDevice={targetDevice}
+                        isDark={isDark}
+                        sameConnIndex={meta.index}
+                        totalSameConns={meta.total}
+                        getPortPosition={getPortPosition}
+                        onDelete={deleteConnection}
+                      />
+                    );
+                  })}
 
                   {/* Devices */}                  {devicesSortedForRender.map((device) => {
                     const isCurrentlyDragging = (draggedDevice === device.id && isActuallyDragging) ||

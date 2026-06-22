@@ -173,18 +173,18 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
               {items.map((item, i) => {
                 const Icon = IconMap[item.type];
                 return (
-                    <div key={`${item.type}-${i}`} className={`flex items-start gap-2 p-2 rounded-lg text-center ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'} transition-colors`}>
+                    <div key={`${item.type}-${i}`} className={`flex items-start gap-2 p-2 rounded-lg text-left ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'} transition-colors`}>
                     <div className={`mt-0.5 ${item.iconColor}`}>
                       <Icon className="w-3.5 h-3.5" />
                     </div>
-                    <div className="flex-1 min-w-0 text-center">
-                      <div className="flex items-center justify-center gap-1">
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="flex items-center gap-1 flex-wrap">
                         <span className={`text-[11px] font-semibold ${isDark ? 'text-secondary-300' : 'text-secondary-700'}`}>{item.label}</span>
                         {item.date && (
                           <span className={`text-[10px] ${isDark ? 'text-secondary-500' : 'text-secondary-400'}`}>{formatDate(item.date, language)}</span>
                         )}
                       </div>
-                      <span className={`text-xs truncate block text-center ${isDark ? 'text-secondary-400' : 'text-secondary-500'}`}>{item.detail}</span>
+                      <span className={`text-xs truncate block text-left ${isDark ? 'text-secondary-400' : 'text-secondary-500'}`}>{item.detail}</span>
                       {item.scoreText && (
                         <span className={`text-[10px] font-mono font-semibold ${item.iconColor}`}>{item.scoreText}</span>
                       )}

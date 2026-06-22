@@ -563,7 +563,7 @@ doc/
 ## 📅 Güncelleme Tarihi
 
 **Son Güncelleme**: 2026-06-21
-**Versiyon**: 1.9.0
+**Versiyon**: 1.9.1
 **Durum**: ✅ Güncel
 
 ---

@@ -44,6 +44,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 const NetworkTopology = dynamic(
   () => import('@/components/network/NetworkTopology').then((m) => m.NetworkTopology),
@@ -240,6 +246,86 @@ function RefreshDeviceListToast({
       )}
     </div>
   );
+}
+
+function LiveDeviceList({
+  devices,
+  deviceStates,
+  language,
+}: {
+  devices: CanvasDevice[];
+  deviceStates: Map<string, SwitchState>;
+  language: string;
+}) {
+  const { t } = useLanguage();
+
+  const hasValidIp = (ip: string | undefined) => !!ip && ip !== '0.0.0.0' && ip !== '169.254.0.0';
+  const firstValue = (...values: Array<string | undefined | null>) =>
+    values.find((value) => !!value && value !== '0.0.0.0') || '-';
+  const normalizeWifiMode = (mode: string | undefined): 'ap' | 'client' | 'disabled' => {
+    if (!mode) return 'disabled';
+    const normalized = mode.toLowerCase().replace(/^wifi-/, '');
+    if (normalized === 'client' || normalized === 'sta') return 'client';
+    if (normalized === 'ap') return 'ap';
+    return 'disabled';
+  };
+  const getEffectiveWifi = (device: CanvasDevice): CanvasDevice['wifi'] => {
+    const state = deviceStates?.get(device.id);
+    const wlan = state?.ports?.['wlan0'];
+    const runtimeWifi = wlan?.wifi;
+    if (!runtimeWifi) return device.wifi;
+    const normalizedMode = normalizeWifiMode(runtimeWifi.mode);
+    const enabled = !wlan.shutdown && normalizedMode !== 'disabled';
+    const fallbackMode: 'ap' | 'client' = device.type === 'pc' ? 'client' : 'ap';
+    const resolvedMode: 'ap' | 'client' = normalizedMode === 'disabled'
+      ? (device.wifi?.mode || fallbackMode)
+      : (normalizedMode === 'client' ? 'client' : 'ap');
+    return { ...device.wifi, enabled, ssid: runtimeWifi.ssid || device.wifi?.ssid || '',
+      security: runtimeWifi.security || device.wifi?.security || 'open',
+      password: runtimeWifi.password || device.wifi?.password,
+      channel: runtimeWifi.channel || device.wifi?.channel || '2.4GHz', mode: resolvedMode };
+  };
+  const getOpenServices = (device: CanvasDevice, state?: SwitchState) => {
+    const services = new Set<string>();
+    if (device.services?.dhcp?.enabled || state?.services?.dhcp?.enabled) services.add('DHCP');
+    if (device.services?.dns?.enabled || state?.services?.dns?.enabled) services.add('DNS');
+    if (device.services?.http?.enabled || state?.services?.http?.enabled) services.add('HTTP');
+    const effectiveWifi = getEffectiveWifi(device);
+    if (effectiveWifi?.enabled) services.add(effectiveWifi.mode === 'ap' ? 'WiFi AP' : 'WiFi Client');
+    if (state?.security?.vtyLines?.transportInput?.some((input) => input === 'ssh' || input === 'all')) services.add('SSH');
+    if (state?.security?.vtyLines?.transportInput?.some((input) => input === 'telnet' || input === 'all')) services.add('Telnet');
+    return Array.from(services).join(', ') || t.none;
+  };
+
+  const liveDevices = useMemo(() => {
+    if (!devices || !deviceStates) return [];
+    return devices.map((device) => {
+      const state = deviceStates.get(device.id);
+      const statePorts = Object.values(state?.ports || {});
+      const topologyPorts = device.ports || [];
+      const portIp = statePorts.find((port) => hasValidIp(port.ipAddress))?.ipAddress
+        || topologyPorts.find((port) => hasValidIp(port.ipAddress))?.ipAddress;
+      const portMac = statePorts.find((port) => port.macAddress)?.macAddress
+        || topologyPorts.find((port) => port.macAddress)?.macAddress;
+      const portIpv6 = statePorts.find((port) => port.ipv6Address)?.ipv6Address;
+      return {
+        id: device.id,
+        name: device.name || device.id,
+        type: device.type,
+        ip: firstValue(device.ip, portIp),
+        mac: firstValue(device.macAddress, state?.macAddress, portMac),
+        gateway: device.gateway || state?.defaultGateway || '0.0.0.0',
+        ipv6: device.ipv6 || portIpv6 || '::',
+        services: getOpenServices(device, state),
+      } as RefreshDeviceSummary;
+    }).sort((a, b) => {
+      const typeDiff = REFRESH_DEVICE_TYPE_ORDER.indexOf(a.type) - REFRESH_DEVICE_TYPE_ORDER.indexOf(b.type);
+      if (typeDiff !== 0) return typeDiff;
+      return a.name.localeCompare(b.name, language === 'tr' ? 'tr' : 'en');
+    });
+  }, [devices, deviceStates, language]);
+
+  return <RefreshDeviceListToast devices={liveDevices} language={language} />;
 }
 
 export default function Home({ initialProjectId }: { initialProjectId?: string }) {
@@ -720,6 +806,47 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
     return () => window.clearInterval(interval);
   }, [advanceNtpDateTime, formatLocalDate, isValidIpv4Address, setTopologyDevices]);
+
+  // Live summary metrics computed reactively from store (real-time)
+  const liveSummary = useMemo(() => {
+    const devices = topologyDevices;
+    const states = deviceStates;
+    if (!devices || !states) return null;
+    const allVlans = new Set<number>();
+    let totalRoutes = 0, connectedRoutes = 0, staticRoutes = 0, dynamicRoutes = 0;
+    states.forEach((state) => {
+      if (state.vlans) Object.keys(state.vlans).forEach((vId) => allVlans.add(Number(vId)));
+      [state.staticRoutes, state.dynamicRoutes].forEach((routes) => {
+        if (!routes) return;
+        routes.forEach((r) => {
+          totalRoutes++;
+          if (r.type === 'connected') connectedRoutes++;
+          else if (r.type === 'static') staticRoutes++;
+          else if (r.type === 'dynamic') dynamicRoutes++;
+        });
+      });
+      Object.values(state.ports).forEach((port) => {
+        if (port.ipAddress && port.subnetMask) {
+          totalRoutes++;
+          connectedRoutes++;
+        }
+      });
+    });
+    return {
+      deviceCount: {
+        total: devices.length,
+        routers: devices.filter((d) => d.type === 'router').length,
+        switches: devices.filter((d) => d.type === 'switchL2' || d.type === 'switchL3').length,
+        pcs: devices.filter((d) => d.type === 'pc').length,
+        iot: devices.filter((d) => d.type === 'iot').length,
+        firewalls: devices.filter((d) => d.type === 'firewall').length,
+        wlcs: devices.filter((d) => d.type === 'wlc').length,
+      },
+      activeLinks: topologyConnections.filter((c) => c.active).length,
+      vlanCount: allVlans.size,
+      routingTableSummary: { totalRoutes, connected: connectedRoutes, static: staticRoutes, dynamic: dynamicRoutes },
+    };
+  }, [topologyDevices, topologyConnections, deviceStates]);
 
   // Function to update device configuration
   const updateDeviceConfig = useCallback((deviceId: string, config: Record<string, unknown>) => {
@@ -3555,6 +3682,54 @@ ${state.bannerMOTD}
       // Reset DHCP renewal ref to allow fresh leases on refresh
       dhcpRenewalDoneRef.current = false;
 
+      // ── Compute network summary ──
+      const allVlans = new Set<number>();
+      let totalRoutes = 0, connectedRoutes = 0, staticRoutes = 0, dynamicRoutes = 0;
+      portSecurityUpdatedStates.forEach((state) => {
+        if (state.vlans) Object.keys(state.vlans).forEach((vId) => allVlans.add(Number(vId)));
+        [state.staticRoutes, state.dynamicRoutes].forEach((routes) => {
+          if (!routes) return;
+          routes.forEach((r) => {
+            totalRoutes++;
+            if (r.type === 'connected') connectedRoutes++;
+            else if (r.type === 'static') staticRoutes++;
+            else if (r.type === 'dynamic') dynamicRoutes++;
+          });
+        });
+        Object.values(state.ports).forEach((port) => {
+          if (port.ipAddress && port.subnetMask) {
+            totalRoutes++;
+            connectedRoutes++;
+          }
+        });
+      });
+      const summaryWarnings: string[] = [];
+      if (subnetMismatchCount > 0) summaryWarnings.push(language === 'tr' ? `Alt ağ uyumsuzluğu: ${subnetMismatchCount}` : `Subnet mismatch: ${subnetMismatchCount}`);
+      if (invalidGatewayCount > 0) summaryWarnings.push(language === 'tr' ? `Geçersiz ağ geçidi: ${invalidGatewayCount}` : `Invalid gateway: ${invalidGatewayCount}`);
+      if (disconnectedLinkCount > 0) summaryWarnings.push(language === 'tr' ? `Kopuk bağlantı: ${disconnectedLinkCount}` : `Disconnected link: ${disconnectedLinkCount}`);
+      if (loopDetectedCount > 0) summaryWarnings.push(language === 'tr' ? `Döngü algılandı` : `Loop detected`);
+      if (vlanInconsistencyCount > 0) summaryWarnings.push(language === 'tr' ? `VLAN tutarsızlığı: ${vlanInconsistencyCount}` : `VLAN inconsistency: ${vlanInconsistencyCount}`);
+      if (duplicateIpCount > 0) summaryWarnings.push(language === 'tr' ? `IP çakışması: ${duplicateIpCount}` : `IP conflict: ${duplicateIpCount}`);
+      if (duplicateMacCount > 0) summaryWarnings.push(language === 'tr' ? `MAC çakışması: ${duplicateMacCount}` : `MAC conflict: ${duplicateMacCount}`);
+      if (portSecurityViolationCount > 0) summaryWarnings.push(language === 'tr' ? `Port güvenlik ihlali: ${portSecurityViolationCount}` : `Port security violation: ${portSecurityViolationCount}`);
+      if (dhcpServerNoPoolCount > 0) summaryWarnings.push(language === 'tr' ? `DHCP havuz yok: ${dhcpServerNoPoolCount}` : `DHCP no pool: ${dhcpServerNoPoolCount}`);
+      if (dhcpClientNoLeaseCount > 0) summaryWarnings.push(language === 'tr' ? `DHCP kiralama yok: ${dhcpClientNoLeaseCount}` : `DHCP no lease: ${dhcpClientNoLeaseCount}`);
+      const summary = {
+        deviceCount: {
+          total: iotProcessedDevices.length,
+          routers: iotProcessedDevices.filter((d) => d.type === 'router').length,
+          switches: iotProcessedDevices.filter((d) => d.type === 'switchL2' || d.type === 'switchL3').length,
+          pcs: iotProcessedDevices.filter((d) => d.type === 'pc').length,
+          iot: iotProcessedDevices.filter((d) => d.type === 'iot').length,
+          firewalls: iotProcessedDevices.filter((d) => d.type === 'firewall').length,
+          wlcs: iotProcessedDevices.filter((d) => d.type === 'wlc').length,
+        },
+        activeLinks: sanitizedConnections.filter((c) => c.active).length,
+        vlanCount: allVlans.size,
+        routingTableSummary: { totalRoutes, connected: connectedRoutes, static: staticRoutes, dynamic: dynamicRoutes },
+        networkWarnings: summaryWarnings,
+      };
+
       // 9. Show detailed notification (delayed if DHCP assignments were made)
       const showRefreshPanel = () => {
         const totalDevices = connectedWirelessClients.length + activeAPs.length + disconnectedPCs.length + disconnectedAPs.length;
@@ -3685,7 +3860,8 @@ ${state.bannerMOTD}
             stpMessage,
             portSecurityMessage,
             topologyMessage,
-            devices: refreshDeviceSummaries
+            devices: refreshDeviceSummaries,
+            summary
           });
         } else {
           const isDhcpMissing = dhcpServerActiveCount === 0 && dhcpClientWithLeaseCount === 0;
@@ -3708,7 +3884,8 @@ ${state.bannerMOTD}
             stpMessage: '',
             portSecurityMessage: '',
             topologyMessage,
-            devices: refreshDeviceSummaries
+            devices: refreshDeviceSummaries,
+            summary
           });
         }
       };
@@ -4988,38 +5165,162 @@ ${state.bannerMOTD}
                     </div>
                   </div>
 
-                  <div className="p-4 space-y-2">
-                    {refreshNetworkReport.dhcpMessages.length > 0 && (
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 opacity-80">
-                        {refreshNetworkReport.dhcpMessages.map((msg, i) => (
-                          <div key={i} className="flex items-center gap-1.5">
-                            <span>{msg}</span>
+                  <div className="p-2">
+                    <Tabs defaultValue="summary" className="w-full">
+                      <TabsList className={`w-full grid grid-cols-2 ${isDark ? 'bg-zinc-800/80' : 'bg-zinc-200/80'}`}>
+                        <TabsTrigger value="summary" className="text-xs">
+                          {language === 'tr' ? 'Özet' : 'Summary'}
+                        </TabsTrigger>
+                        <TabsTrigger value="devices" className="text-xs">
+                          {language === 'tr' ? 'Cihazlar' : 'Devices'} ({refreshNetworkReport.devices.length})
+                        </TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="summary" className="mt-2 space-y-2">
+                        {/* Quick status messages */}
+                        {refreshNetworkReport.dhcpMessages.length > 0 && (
+                          <div className="flex flex-wrap gap-x-3 gap-y-1 opacity-80 text-xs">
+                            {refreshNetworkReport.dhcpMessages.map((msg, i) => (
+                              <div key={i} className="flex items-center gap-1.5">
+                                <span>{msg}</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        )}
+                        {refreshNetworkReport.stpMessage && (
+                          <div className="text-pink-500 font-medium py-0.5 px-2 bg-pink-500/10 rounded-lg w-fit text-xs">
+                            {refreshNetworkReport.stpMessage}
+                          </div>
+                        )}
+                        {refreshNetworkReport.portSecurityMessage && (
+                          <div className="text-red-500 font-medium py-0.5 px-2 bg-red-500/10 rounded-lg w-fit text-xs">
+                            {refreshNetworkReport.portSecurityMessage}
+                          </div>
+                        )}
+                        {refreshNetworkReport.topologyMessage && (
+                          <div className="text-amber-500 font-medium py-0.5 px-2 bg-amber-500/10 rounded-lg w-fit text-xs">
+                            {refreshNetworkReport.topologyMessage}
+                          </div>
+                        )}
 
-                    {refreshNetworkReport.stpMessage && (
-                      <div className="text-pink-500 font-medium py-0.5 px-2 bg-pink-500/10 rounded-lg w-fit">
-                        {refreshNetworkReport.stpMessage}
-                      </div>
-                    )}
+                        {/* Summary grid - live from store, real-time reactive */}
+                        {liveSummary && (
+                          <>
+                            <div className={`grid grid-cols-2 gap-2 text-xs`}>
+                              <div className={`rounded-lg p-2.5 ${isDark ? 'bg-zinc-800/60' : 'bg-zinc-100/80'}`}>
+                                <div className={`font-semibold mb-1 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                                  {language === 'tr' ? 'Cihaz Sayısı' : 'Device Count'}
+                                </div>
+                                <div className="space-y-0.5">
+                                  <div className="flex justify-between">
+                                    <span>{language === 'tr' ? 'Toplam' : 'Total'}</span>
+                                    <span className="font-bold">{liveSummary.deviceCount.total}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>{language === 'tr' ? 'Yönlendirici' : 'Router'}</span>
+                                    <span>{liveSummary.deviceCount.routers}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>{language === 'tr' ? 'Anahtar' : 'Switch'}</span>
+                                    <span>{liveSummary.deviceCount.switches}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>PC</span>
+                                    <span>{liveSummary.deviceCount.pcs}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>IoT</span>
+                                    <span>{liveSummary.deviceCount.iot}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>{language === 'tr' ? 'Güvenlik Duvarı' : 'Firewall'}</span>
+                                    <span>{liveSummary.deviceCount.firewalls}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>WLC</span>
+                                    <span>{liveSummary.deviceCount.wlcs}</span>
+                                  </div>
+                                </div>
+                              </div>
 
-                    {refreshNetworkReport.portSecurityMessage && (
-                      <div className="text-red-500 font-medium py-0.5 px-2 bg-red-500/10 rounded-lg w-fit">
-                        {refreshNetworkReport.portSecurityMessage}
-                      </div>
-                    )}
+                              <div className="space-y-2">
+                                <div className={`rounded-lg p-2.5 ${isDark ? 'bg-zinc-800/60' : 'bg-zinc-100/80'}`}>
+                                  <div className={`font-semibold mb-1 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                                    {language === 'tr' ? 'Aktif Bağlantılar' : 'Active Links'}
+                                  </div>
+                                  <div className="text-lg font-bold">
+                                    {liveSummary.activeLinks}
+                                  </div>
+                                </div>
 
-                    {refreshNetworkReport.topologyMessage && (
-                      <div className="text-amber-500 font-medium py-0.5 px-2 bg-amber-500/10 rounded-lg w-fit">
-                        {refreshNetworkReport.topologyMessage}
-                      </div>
-                    )}
+                                <div className={`rounded-lg p-2.5 ${isDark ? 'bg-zinc-800/60' : 'bg-zinc-100/80'}`}>
+                                  <div className={`font-semibold mb-1 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                                    VLAN {language === 'tr' ? 'Sayısı' : 'Count'}
+                                  </div>
+                                  <div className="text-lg font-bold">
+                                    {liveSummary.vlanCount}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
 
-                    <div className={`pt-2 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-100'}`}>
-                      <RefreshDeviceListToast devices={refreshNetworkReport.devices} language={language} />
-                    </div>
+                            {/* Routing table summary */}
+                            {liveSummary.routingTableSummary.totalRoutes > 0 && (
+                              <div className={`rounded-lg p-2.5 ${isDark ? 'bg-zinc-800/60' : 'bg-zinc-100/80'} text-xs`}>
+                                <div className={`font-semibold mb-1 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                                  {language === 'tr' ? 'Yönlendirme Tablosu Özeti' : 'Routing Table Summary'}
+                                </div>
+                                <div className="space-y-0.5">
+                                  <div className="flex justify-between">
+                                    <span>{language === 'tr' ? 'Toplam rota' : 'Total routes'}</span>
+                                    <span className="font-bold">{liveSummary.routingTableSummary.totalRoutes}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>{language === 'tr' ? 'Bağlı' : 'Connected'}</span>
+                                    <span>{liveSummary.routingTableSummary.connected}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>{language === 'tr' ? 'Statik' : 'Static'}</span>
+                                    <span>{liveSummary.routingTableSummary.static}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>{language === 'tr' ? 'Dinamik' : 'Dynamic'}</span>
+                                    <span>{liveSummary.routingTableSummary.dynamic}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {/* Network warnings - from refresh report */}
+                        {refreshNetworkReport.summary.networkWarnings.length > 0 && (
+                          <div className={`rounded-lg p-2.5 ${isDark ? 'bg-zinc-800/60' : 'bg-zinc-100/80'} text-xs`}>
+                            <div className={`font-semibold mb-1 text-amber-500`}>
+                              {language === 'tr' ? 'Ağ Uyarıları' : 'Network Warnings'} ({refreshNetworkReport.summary.networkWarnings.length})
+                            </div>
+                            <div className="space-y-0.5">
+                              {refreshNetworkReport.summary.networkWarnings.map((w, i) => (
+                                <div key={i} className="flex items-center gap-1 text-amber-500">
+                                  <span>⚠</span>
+                                  <span>{w}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {refreshNetworkReport.summary.networkWarnings.length === 0 && (
+                          <div className={`rounded-lg p-2.5 ${isDark ? 'bg-zinc-800/60' : 'bg-zinc-100/80'} text-xs text-center ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                            {language === 'tr' ? 'Uyarı yok' : 'No warnings'}
+                          </div>
+                        )}
+                      </TabsContent>
+
+                      <TabsContent value="devices" className="mt-2">
+                        <LiveDeviceList devices={topologyDevices} deviceStates={deviceStates} language={language} />
+                      </TabsContent>
+                    </Tabs>
                   </div>
                 </div>
               )

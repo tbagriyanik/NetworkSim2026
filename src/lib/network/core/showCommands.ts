@@ -1040,47 +1040,49 @@ function cmdShowVlan(
   _input: string,
   _ctx: CommandContext
 ): CommandResult {
-  let output = '\n\nVLAN Name                             Status    Ports\n';
+  let output = '\nVLAN Name                             Status    Ports\n';
   output += '---- -------------------------------- --------- -------------------------------\n';
 
-  // Default VLAN 1
-  output += '1    default                          active    ';
-  const vlan1Ports = Object.keys(state.ports || {}).filter(p => {
-    const port = state.ports[p];
-    return String(port.accessVlan || port.vlan || 1) === '1';
-  });
-  output += vlan1Ports.join(', ') || '-';
-  output += '\n';
+  const allPorts = Object.keys(state.ports || {});
+  const knownVlanIds = Object.keys(state.vlans || {});
 
-  // Other VLANs
-  Object.keys(state.vlans || {}).forEach(vlanId => {
+  const vlanPortMap: Record<string, string[]> = {};
+  allPorts.forEach(p => {
+    const port = state.ports[p];
+    const vlanId = String(port.accessVlan || port.vlan || 1);
+    if (!vlanPortMap[vlanId]) vlanPortMap[vlanId] = [];
+    vlanPortMap[vlanId].push(p);
+  });
+
+  // Default VLAN 1
+  const vlan1Ports = vlanPortMap['1'] || [];
+  output += `1    default                          active    ${vlan1Ports.join(', ') || '-'}\n`;
+
+  // Other VLANs from state.vlans
+  knownVlanIds.forEach(vlanId => {
     if (vlanId !== '1') {
       const vlan = state.vlans[Number(vlanId)];
       const vlanName = (vlan?.name || `VLAN${vlanId}`).padEnd(32);
       const vlanStatus = vlan?.status || 'active';
-      const vlanPorts = Object.keys(state.ports || {}).filter(p => {
-        const port = state.ports[p];
-        return String(port.accessVlan || port.vlan || 1) === vlanId;
-      });
-
-      output += `${vlanId.padEnd(4)}${vlanName}${vlanStatus.padEnd(10)}${vlanPorts.join(', ') || '-'}\n`;
+      const ports = vlanPortMap[vlanId] || [];
+      output += `${vlanId.padEnd(4)} ${vlanName} ${vlanStatus.padEnd(9)} ${ports.join(', ') || '-'}\n`;
     }
   });
 
-  const knownVlanIds = Object.keys(state.vlans || {});
-  Object.values(state.ports || {}).forEach((port) => {
-    const vlanId = String(port.accessVlan || port.vlan || 1);
-    if (!knownVlanIds.includes(vlanId) && vlanId !== '1') {
-      const vlanName = `VLAN${vlanId}`.padEnd(32);
-      output += `${vlanId.padEnd(4)}${vlanName}${'active'.padEnd(10)}${port.id}\n`;
-    }
+  // VLANs assigned to ports but not defined in state.vlans
+  const undefinedVlans = Object.keys(vlanPortMap).filter(
+    vid => vid !== '1' && !knownVlanIds.includes(vid)
+  );
+  undefinedVlans.forEach(vlanId => {
+    const vlanName = `VLAN${vlanId}`.padEnd(32);
+    output += `${vlanId.padEnd(4)} ${vlanName} active     ${(vlanPortMap[vlanId] || []).join(', ')}\n`;
   });
 
-  output += '\n\nVLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2\n';
+  output += '\nVLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2\n';
   output += '---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------\n';
-  output += '1    enet  100001     1500  -      -      -        -    -        0      0\n';
+  output += `1    enet  100001     1500  -      -      -        -    -        0      0\n`;
 
-  Object.keys(state.vlans || {}).forEach(vlanId => {
+  knownVlanIds.forEach(vlanId => {
     if (vlanId !== '1') {
       output += `${vlanId.padEnd(4)}enet  ${100000 + parseInt(vlanId)}         1500  -      -      -        -    -        0      0\n`;
     }
@@ -3120,19 +3122,20 @@ function cmdShowIpDhcpSnooping(state: SwitchState, _input: string, _ctx: Command
  * Show Interfaces Status
  */
 function cmdShowInterfacesStatus(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  let output = '\nPort      Name               Status       Vlan       Duplex  Speed  Type                  Encap\n';
+  let output = '\nPort      Name               Status       Vlan       Duplex  Speed  Type\n';
+  output += '-------- ------------------ ------------ ---------- ------- ------ --------------------\n';
   Object.keys(state.ports || {}).forEach(portName => {
     const port = state.ports[portName];
-    const status = port.shutdown ? 'notconnect' : 'connected';
-    const operStatus = port.operStatus || status;
+    const status = port.shutdown ? 'disabled' : (port.status === 'notconnect' ? 'notconnect' : 'connected');
     const vlan = port.mode === 'trunk' ? 'trunk' : (port.accessVlan || port.vlan || 1);
-    const duplex = port.duplex === 'half' ? 'half' : (port.duplex === 'full' ? 'full' : 'a-full');
+    const duplex = port.duplex === 'half' ? 'h-half' : (port.duplex === 'full' ? 'full' : 'a-full');
     const speedVal = port.speed === 'auto' ? (port.type === 'gigabitethernet' ? 'a-1000' : 'a-100') : port.speed;
     const typeStr = port.type === 'gigabitethernet' ? '10/100/1000BaseTX' : '10/100BaseTX';
-    const encap = port.encapsulation || (port.mode === 'trunk' ? '802.1q' : '-');
+    const name = (port.description || '').substring(0, 18);
 
-    output += `${portName.padEnd(10)}${(port.description || port.name || '').padEnd(19)}${String(operStatus).padEnd(13)}${String(vlan).padEnd(11)}${duplex.padEnd(8)}${speedVal.padEnd(7)}${typeStr.padEnd(21)}${encap}\n`;
+    output += `${portName.padEnd(10)}${name.padEnd(19)}${String(status).padEnd(13)}${String(vlan).padEnd(11)}${duplex.padEnd(8)}${speedVal.padEnd(7)}${typeStr}\n`;
   });
+  output += '!\n';
   return { success: true, output };
 }
 
@@ -3344,20 +3347,16 @@ function cmdShowEtherchannel(state: SwitchState, input: string, _ctx: CommandCon
  */
 function cmdShowArp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   let output = '\nProtocol  Address          Age (min)  Hardware Addr   Type   Interface\n';
+  output += '-------- ----------------- ---------- ---------------- ------ ---------\n';
 
-  // Use real ARP cache from state
   const arpCache = state.arpCache || [];
   const now = Date.now();
 
   const arpEntries: { protocol: string; address: string; age: string; mac: string; type: string; interface: string }[] = [];
 
-  // Add entries from ARP cache
   arpCache.forEach((entry: { ip: string; mac: string; interface: string; timestamp: number }) => {
-    // Calculate age in minutes
     const ageMs = now - entry.timestamp;
-    const ageMin = Math.floor(ageMs / 60000); // Convert to minutes
-
-    // Format MAC address
+    const ageMin = Math.floor(ageMs / 60000);
     const mac = formatMacAddressSimple(entry.mac);
 
     arpEntries.push({
@@ -3370,12 +3369,11 @@ function cmdShowArp(state: SwitchState, _input: string, _ctx: CommandContext): C
     });
   });
 
-  // Add static ARP entries from MAC table
   (state.macAddressTable || []).forEach((entry: { type: string; ip?: string; mac: string; vlan: number }) => {
-    if (entry.type === 'STATIC') {
+    if (entry.type === 'STATIC' && entry.ip) {
       arpEntries.push({
         protocol: 'Internet',
-        address: entry.ip || '',
+        address: entry.ip,
         age: '-',
         mac: entry.mac,
         type: 'ARPA',
@@ -3384,15 +3382,15 @@ function cmdShowArp(state: SwitchState, _input: string, _ctx: CommandContext): C
     }
   });
 
-  // Display ARP entries
   if (arpEntries.length > 0) {
     arpEntries.forEach((entry) => {
-      output += `${entry.protocol.padEnd(9)}${entry.address.padEnd(18)}${entry.age.padEnd(11)}${entry.mac.padEnd(17)}${entry.type.padEnd(7)}${entry.interface}\n`;
+      output += `${entry.protocol.padEnd(9)}${entry.address.padEnd(18)}${entry.age.padEnd(11)}${entry.mac.padEnd(18)}${entry.type.padEnd(7)}${entry.interface}\n`;
     });
   } else {
     output += 'No ARP entries found\n';
   }
 
+  output += '!\n';
   return { success: true, output };
 }
 
