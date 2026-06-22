@@ -6963,34 +6963,29 @@ export function NetworkTopology({
                     </g>
                   )}
 
-                  {/* Devices */}
-                  {devicesSortedForRender.map((device) => {
-                    const isCurrentlyDragging = (draggedDevice === device.id && isActuallyDragging) ||
-                      (touchDraggedDevice?.id === device.id && isTouchDragging);
+                  {/* Connection interaction handles (Trash icons) — en altta */}
+                  {/* BOLT: Use visibleConnections for culling */}
+                  {visibleConnections.map((conn) => {
+                    const sourceDevice = deviceMap.get(conn.sourceDeviceId);
+                    const targetDevice = deviceMap.get(conn.targetDeviceId);
+                    if (!sourceDevice || !targetDevice) return null;
+                    const meta = connectionMeta.get(conn.id) || { index: 0, total: 1 };
                     return (
-                      <DeviceNode
-                        key={device.id}
-                        device={device}
-                        isSelected={selectedDeviceIds.includes(device.id) || activeDeviceId === device.id || (pingMode && pingSource?.id === device.id)}
-                        isDragging={isCurrentlyDragging}
-                        isActive={activeDeviceId === device.id}
+                      <ConnectionHandle
+                        key={`handle-${conn.id}`}
+                        connection={conn}
+                        sourceDevice={sourceDevice}
+                        targetDevice={targetDevice}
                         isDark={isDark}
-                        iotUpdateTrigger={iotUpdateTrigger}
-                        onMouseDown={(e, id) => handleDeviceMouseDown(e as unknown as ReactMouseEvent, id)}
-                        onPointerDown={(e, id) => handleDevicePointerDown(e, id)}
-                        onClick={(e, device) => handleDeviceClick(e as unknown as ReactMouseEvent, device)}
-                        onDoubleClick={() => handleDeviceDoubleClick(device)}
-                        onContextMenu={(e, id) => handleContextMenu(e as unknown as ReactMouseEvent, id)}
-                        onMouseLeave={() => handleDeviceMouseLeave()}
-                        onTouchStart={(e, id) => handleDeviceTouchStart(e as unknown as ReactTouchEvent, id)}
-                        onTouchMove={handleDeviceTouchMove}
-                        onTouchEnd={handleDeviceTouchEnd}
-                        renderDeviceContent={renderDevice}
+                        sameConnIndex={meta.index}
+                        totalSameConns={meta.total}
+                        getPortPosition={getPortPosition}
+                        onDelete={deleteConnection}
                       />
                     );
                   })}
 
-                  {/* Visual Connection Lines (On top of devices for visibility) */}
+                  {/* Visual Connection Lines (Behind devices) */}
                   {/* BOLT: Use visibleConnections for culling and O(1) meta lookup */}
                   {visibleConnections.map((conn) => {
                     const sourceDevice = deviceMap.get(conn.sourceDeviceId);
@@ -7025,24 +7020,29 @@ export function NetworkTopology({
                   {/* Temporary connection line */}
                   {renderTempConnection()}
 
-                  {/* Connection interaction handles (Trash icons) */}
-                  {/* BOLT: Use visibleConnections for culling */}
-                  {visibleConnections.map((conn) => {
-                    const sourceDevice = deviceMap.get(conn.sourceDeviceId);
-                    const targetDevice = deviceMap.get(conn.targetDeviceId);
-                    if (!sourceDevice || !targetDevice) return null;
-                    const meta = connectionMeta.get(conn.id) || { index: 0, total: 1 };
+                  {/* Devices */}
+                  {devicesSortedForRender.map((device) => {
+                    const isCurrentlyDragging = (draggedDevice === device.id && isActuallyDragging) ||
+                      (touchDraggedDevice?.id === device.id && isTouchDragging);
                     return (
-                      <ConnectionHandle
-                        key={`handle-${conn.id}`}
-                        connection={conn}
-                        sourceDevice={sourceDevice}
-                        targetDevice={targetDevice}
+                      <DeviceNode
+                        key={device.id}
+                        device={device}
+                        isSelected={selectedDeviceIds.includes(device.id) || activeDeviceId === device.id || (pingMode && pingSource?.id === device.id)}
+                        isDragging={isCurrentlyDragging}
+                        isActive={activeDeviceId === device.id}
                         isDark={isDark}
-                        sameConnIndex={meta.index}
-                        totalSameConns={meta.total}
-                        getPortPosition={getPortPosition}
-                        onDelete={deleteConnection}
+                        iotUpdateTrigger={iotUpdateTrigger}
+                        onMouseDown={(e, id) => handleDeviceMouseDown(e as unknown as ReactMouseEvent, id)}
+                        onPointerDown={(e, id) => handleDevicePointerDown(e, id)}
+                        onClick={(e, device) => handleDeviceClick(e as unknown as ReactMouseEvent, device)}
+                        onDoubleClick={() => handleDeviceDoubleClick(device)}
+                        onContextMenu={(e, id) => handleContextMenu(e as unknown as ReactMouseEvent, id)}
+                        onMouseLeave={() => handleDeviceMouseLeave()}
+                        onTouchStart={(e, id) => handleDeviceTouchStart(e as unknown as ReactTouchEvent, id)}
+                        onTouchMove={handleDeviceTouchMove}
+                        onTouchEnd={handleDeviceTouchEnd}
+                        renderDeviceContent={renderDevice}
                       />
                     );
                   })}
@@ -8438,7 +8438,7 @@ export function NetworkTopology({
             >
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: (CABLE_COLORS as any)[connectionTooltip.cableType]?.primary || '#3b82f6' }}
+                  style={{ backgroundColor: (CABLE_COLORS as Record<string, { primary: string; bg: string; text: string; border: string }>)[connectionTooltip.cableType]?.primary || '#3b82f6' }}
                 />
                 <span className="text-[10px] font-black tracking-widest opacity-60">
                   {connectionTooltip.cableType === 'straight' ? (language === 'tr' ? 'Düz Kablo' : 'Straight') :
@@ -8449,7 +8449,7 @@ export function NetworkTopology({
                             connectionTooltip.cableType}
                 </span>
               </div>
-              <div className="text-xs font-bold" style={{ color: (CABLE_COLORS as any)[connectionTooltip.cableType]?.primary || '#3b82f6' }}>
+              <div className="text-xs font-bold" style={{ color: (CABLE_COLORS as Record<string, { primary: string; bg: string; text: string; border: string }>)[connectionTooltip.cableType]?.primary || '#3b82f6' }}>
                 <span className="opacity-90">{connectionTooltip.sourcePort}</span>
                 <span className="mx-1 opacity-50">↔</span>
                 <span className="opacity-90">{connectionTooltip.targetPort}</span>

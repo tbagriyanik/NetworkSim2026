@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { CanvasConnection, CanvasDevice } from './networkTopology.types';
 import { isCableCompatible, CableInfo } from '@/lib/network/types';
 
+
 interface ConnectionLineProps {
   connection: CanvasConnection;
   sourceDevice: CanvasDevice;
@@ -208,24 +209,26 @@ export const ConnectionLine = memo(function ConnectionLine({
       )}
       {/* Connection label - port names near device edges, shown only on hover */}
       {showLabel && (() => {
-        const getPointOnPath = (t: number) => {
+        const bezierPoint = (t: number) => {
           if (isWireless) {
             return { x: source.x + (target.x - source.x) * t, y: source.y + (target.y - source.y) * t };
           }
           const mt = 1 - t;
-          const cx = mt*mt*mt*source.x + 3*mt*mt*t*controlPoint1.x + 3*mt*t*t*controlPoint2.x + t*t*t*target.x;
-          const cy = mt*mt*mt*source.y + 3*mt*mt*t*controlPoint1.y + 3*mt*t*t*controlPoint2.y + t*t*t*target.y;
-          return { x: cx, y: cy };
+          return {
+            x: mt*mt*mt*source.x + 3*mt*mt*t*controlPoint1.x + 3*mt*t*t*controlPoint2.x + t*t*t*target.x,
+            y: mt*mt*mt*source.y + 3*mt*mt*t*controlPoint1.y + 3*mt*t*t*controlPoint2.y + t*t*t*target.y
+          };
         };
-        const srcPos = getPointOnPath(0.07);
-        const tgtPos = getPointOnPath(0.93);
-        const srcOffsetY = -8;
-        const tgtOffsetY = 14;
+        const srcPos = bezierPoint(0.42);
+        const tgtPos = bezierPoint(0.58);
+        const srcLabel = { x: srcPos.x + perpX, y: srcPos.y + perpY };
+        const tgtLabel = { x: tgtPos.x + perpX, y: tgtPos.y + perpY };
+        const labelOffsetY = -10;
         return (
           <>
             <text
-              x={srcPos.x + perpX}
-              y={srcPos.y + perpY + srcOffsetY}
+              x={srcLabel.x}
+              y={srcLabel.y + labelOffsetY}
               fill="none"
               stroke={isDark ? '#0f172a' : '#ffffff'}
               strokeWidth="1"
@@ -240,8 +243,8 @@ export const ConnectionLine = memo(function ConnectionLine({
               {connection.sourcePort}
             </text>
             <text
-              x={srcPos.x + perpX}
-              y={srcPos.y + perpY + srcOffsetY}
+              x={srcLabel.x}
+              y={srcLabel.y + labelOffsetY}
               fill={color}
               fontSize="11"
               textAnchor="middle"
@@ -252,8 +255,8 @@ export const ConnectionLine = memo(function ConnectionLine({
               {connection.sourcePort}
             </text>
             <text
-              x={tgtPos.x + perpX}
-              y={tgtPos.y + perpY + tgtOffsetY}
+              x={tgtLabel.x}
+              y={tgtLabel.y + labelOffsetY}
               fill="none"
               stroke={isDark ? '#0f172a' : '#ffffff'}
               strokeWidth="1"
@@ -268,8 +271,8 @@ export const ConnectionLine = memo(function ConnectionLine({
               {connection.targetPort}
             </text>
             <text
-              x={tgtPos.x + perpX}
-              y={tgtPos.y + perpY + tgtOffsetY}
+              x={tgtLabel.x}
+              y={tgtLabel.y + labelOffsetY}
               fill={color}
               fontSize="11"
               textAnchor="middle"
