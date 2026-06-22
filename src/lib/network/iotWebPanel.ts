@@ -2,7 +2,7 @@
 import { CanvasDevice } from '@/components/network/networkTopology.types';
 import { sanitizeHTML, safeJSONForHTML } from '@/lib/security/sanitizer';
 
-type IotRule = {
+export type IotRule = {
   id: string;
   condition: string;
   action: string;

@@ -90,6 +90,21 @@ const applyLinkLocalToUnconfiguredHosts = (devices: CanvasDevice[]): CanvasDevic
   });
 };
 
+const normalizeMacAddress = (mac?: string): string | undefined => {
+  if (!mac) return mac;
+  if (/^[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}$/.test(mac)) {
+    return mac.toUpperCase();
+  }
+  const clean = mac.replace(/[^0-9A-Fa-f]/g, '');
+  if (clean.length === 12) {
+    const part1 = clean.slice(0, 4).toUpperCase();
+    const part2 = clean.slice(4, 8).toUpperCase();
+    const part3 = clean.slice(8, 12).toUpperCase();
+    return `${part1}.${part2}.${part3}`;
+  }
+  return mac;
+};
+
 const ensureProjectData = (source: unknown): ProjectData => {
   const asRecord = (value: unknown): Record<string, unknown> =>
     value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
@@ -112,6 +127,11 @@ const ensureProjectData = (source: unknown): ProjectData => {
       devices: applyLinkLocalToUnconfiguredHosts(((Array.isArray(topology.devices) ? topology.devices : []) as CanvasDevice[]).map((device: CanvasDevice) => ({
         ...device,
         type: safeNormalizeType(device.type),
+        macAddress: normalizeMacAddress(device.macAddress) ?? '',
+        ports: Array.isArray(device.ports) ? device.ports.map(port => ({
+          ...port,
+          macAddress: normalizeMacAddress(port.macAddress)
+        })) : device.ports
       }))),
       connections: Array.isArray(topology.connections) ? (topology.connections as CanvasConnection[]) : [],
       notes: Array.isArray(topology.notes) ? (topology.notes as CanvasNote[]) : []
@@ -1433,7 +1453,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     createSwitchDevice('switch-1', 'SW1', 240, 180)
   ];
   // Set PC1 MAC to match the port security static MAC
-  psDevices[0].macAddress = '00-e0-f7-01-a1-24';
+  psDevices[0].macAddress = '00E0.F701.A124';
   const psConnections: CanvasConnection[] = [];
   connectPorts(psDevices, psConnections, 'pc-1', 'eth0', 'switch-1', 'fa0/3');
   const psNotes: CanvasNote[] = [
@@ -1458,7 +1478,7 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
     ...psState.ports['fa0/3'],
     status: 'connected',
     portSecurity: { enabled: true, maxAddresses: 1, violationAction: 'shutdown', sticky: true },
-    staticMacs: ['00-e0-f7-01-a1-24']
+    staticMacs: ['00E0.F701.A124']
   };
 
   // Example 6: Inter-VLAN Routing (L3 Switch)

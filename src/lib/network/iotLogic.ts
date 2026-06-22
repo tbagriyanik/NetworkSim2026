@@ -52,6 +52,12 @@ const getRuleSensorReading = (
   }
 
   const sensorType = sensorDevice.iot?.sensorType || fallbackSensorType;
+  if (sensorDevice.iot && 'value' in sensorDevice.iot && sensorDevice.iot.value !== undefined && sensorDevice.iot.value !== null) {
+    if (typeof sensorDevice.iot.value === 'boolean') {
+      return sensorDevice.iot.value ? 1 : 0;
+    }
+    return Number(sensorDevice.iot.value) || 0;
+  }
   if (sensorType === 'motion') {
     return sensorDevice.iot?.value ? 1 : 0;
   }
