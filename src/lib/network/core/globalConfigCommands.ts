@@ -45,6 +45,7 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'ip domain lookup': cmdIpDomainLookup,
   'ip domain-lookup': cmdIpDomainLookup,
   'no ip domain-lookup': cmdNoIpDomainLookup,
+  'no ip domain-name': cmdNoIpDomainName,
   'ip routing': cmdIpRouting,
   'no ip routing': cmdNoIpRouting,
   'ip route': cmdIpRoute,
@@ -78,6 +79,7 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'ip ssh version': cmdIpSshVersion,
   'ip dhcp snooping vlan': cmdIpDhcpSnoopingVlan,
   'ip arp inspection': cmdIpArpInspection,
+  'no ip arp inspection': cmdNoIpArpInspection,
   'errdisable recovery': cmdErrdisableRecovery,
   'errdisable recovery cause': cmdErrdisableRecovery,
   'vtp password': cmdVtpPassword,
@@ -540,11 +542,20 @@ function cmdVlan(state: SwitchState, input: string, ctx: CommandContext): Comman
   }
 
   const vlanId = match[1];
+  const vlanNum = parseInt(vlanId, 10);
+
+  if (vlanNum < 1 || vlanNum > 4094) {
+    return { success: false, error: `% VLAN ID ${vlanId} is not in the range 1 to 4094.` };
+  }
+  if (vlanNum >= 1002 && vlanNum <= 1005) {
+    return { success: false, error: `% VLAN ${vlanNum} is a reserved VLAN and cannot be created.` };
+  }
+
   const newVlans = { ...state.vlans };
 
   if (!newVlans[vlanId]) {
     newVlans[vlanId] = {
-      id: parseInt(vlanId, 10),
+      id: vlanNum,
       name: `VLAN${vlanId}`,
       status: 'active',
       ports: []
@@ -559,7 +570,7 @@ function cmdVlan(state: SwitchState, input: string, ctx: CommandContext): Comman
     vlans: newVlans,
     vtpRevision: nextVtpRevision,
     currentMode: 'vlan' as const,
-    currentVlan: parseInt(vlanId, 10)
+    currentVlan: vlanNum
   };
 
   const pvst = getPvstUpdate(updatedCurrentState, ctx);
@@ -1258,6 +1269,16 @@ function cmdNoIpDomainLookup(state: SwitchState, _input: string, _ctx: CommandCo
   };
 }
 
+function cmdNoIpDomainName(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: iosModeError() };
+  }
+  return {
+    success: true,
+    newState: { domainName: undefined }
+  };
+}
+
 /**
  * No IP Routing - Disable IP routing
  */
@@ -1330,13 +1351,10 @@ function cmdNoSpanningTree(state: SwitchState, input: string, ctx: CommandContex
     };
   }
 
-  // Global spanning-tree disable
+  // Global spanning-tree disable - not supported on IOS (only per-VLAN)
   return {
-    success: true,
-    output: lang === 'tr' ?
-      'Spanning-tree global olarak devre disi birakildi' :
-      'Spanning-tree disabled globally',
-    newState: { spanningTreeEnabled: false }
+    success: false,
+    error: '% Command not available in Global Configuration mode.'
   };
 }
 
@@ -1467,6 +1485,11 @@ function cmdIpDhcpSnoopingVlan(state: SwitchState, input: string, _ctx: CommandC
 function cmdIpArpInspection(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
   return { success: true, output: 'ARP inspection configured', newState: { arpInspectionEnabled: true } };
+}
+
+function cmdNoIpArpInspection(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  return { success: true, output: 'ARP inspection disabled', newState: { arpInspectionEnabled: false } };
 }
 
 /**

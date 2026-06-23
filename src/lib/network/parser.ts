@@ -224,6 +224,12 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'no ip domain-name': {
+    pattern: /^no\s+ip\s+domain-name$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'ipv6 unicast-routing': {
     pattern: /^ipv6\s+unicast-routing$/i,
     modes: ['config'],
@@ -238,13 +244,13 @@ export const commandPatterns: Record<string, CommandPattern> = {
   },
   'ip default-gateway': {
     pattern: /^ip\s+default-gateway\s+([0-9.]+|[\w.-]+)$/i,
-    modes: ['config'],
+    modes: ['config', 'interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1
   },
   'no ip default-gateway': {
     pattern: /^no\s+ip\s+default-gateway$/i,
-    modes: ['config'],
+    modes: ['config', 'interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
   },
@@ -653,6 +659,12 @@ export const commandPatterns: Record<string, CommandPattern> = {
     modes: ['config'],
     minArgs: 1,
     maxArgs: 1
+  },
+  'no ip arp inspection': {
+    pattern: /^no\s+ip\s+arp\s+inspection(\s+vlan\s+(.+))?$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 2
   },
   'system mtu': {
     pattern: /^system\s+mtu\s+(\d+)$/i,
@@ -1225,6 +1237,12 @@ export const commandPatterns: Record<string, CommandPattern> = {
   },
   'ip directed-broadcast': {
     pattern: /^ip\s+directed-broadcast$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no ip directed-broadcast': {
+    pattern: /^no\s+ip\s+directed-broadcast$/i,
     modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0
@@ -2563,7 +2581,7 @@ export const commandPatterns: Record<string, CommandPattern> = {
   // ── Router config negation commands ──────────────────────────────────────
   'no network': {
     pattern: /^no\s+network\s+(.+)$/i,
-    modes: ['router-config'],
+    modes: ['router-config', 'dhcp-config'],
     minArgs: 1,
     maxArgs: 1
   },

@@ -547,12 +547,13 @@ function cmdShowInterfaces(
     const port = state.ports[portName];
     const description = port.description || port.name || '';
     const stats = port.statistics || {};
+    const displayName = formatPortName(portName);
 
     // Admin and operational status
     const adminStatus = port.adminStatus || (port.shutdown ? 'down' : 'up');
     const lineProtocol = port.lineProtocol || (port.shutdown ? 'down' : 'up');
 
-    output += `${portName} is ${adminStatus}, line protocol is ${lineProtocol}\n`;
+    output += `${displayName} is ${adminStatus}, line protocol is ${lineProtocol}\n`;
 
     if (port.type === 'serial') {
       const serialEncapsulation = (port.serialEncapsulation || 'hdlc').toUpperCase();
@@ -705,19 +706,31 @@ function cmdShowInterface(
     return { success: true, output };
   }
 
-  // Handle physical interfaces
+  // Handle physical interfaces - resolve both short (fa0/1) and long (FastEthernet0/1) port names
   if (/^vlan\s+\d+$/i.test(requestedInterface)) {
     requestedInterface = requestedInterface.replace(/\s+/g, '');
   }
 
-  const port = (state.ports || {})[requestedInterface];
+  let port = (state.ports || {})[requestedInterface];
+  if (!port) {
+    // Try looking up by stripping the full prefix (FastEthernet -> f, GigabitEthernet -> g)
+    const shortMatch = requestedInterface.match(/^(fastethernet|gigabitethernet|ethernet)(\d.*)$/i);
+    if (shortMatch) {
+      const prefix = shortMatch[1].toLowerCase();
+      const suffix = shortMatch[2];
+      const shortPrefix = prefix === 'fastethernet' ? 'fa' : prefix === 'gigabitethernet' ? 'gi' : 'eth';
+      const shortName = shortPrefix + suffix;
+      port = (state.ports || {})[shortName];
+    }
+  }
   if (!port) {
     return { success: false, error: `% Interface ${originalInterface} not found` };
   }
 
   const description = port.description || port.name || '';
   let output = '';
-  output += `${requestedInterface} is ${port.shutdown ? 'administratively down' : 'up'}, line protocol is ${port.shutdown ? 'down' : 'up'}\n`;
+  const ifaceDisplay = formatPortName(requestedInterface);
+  output += `${ifaceDisplay} is ${port.shutdown ? 'administratively down' : 'up'}, line protocol is ${port.shutdown ? 'down' : 'up'}\n`;
   const hardwareType = port.type === 'gigabitethernet' ? 'Gigabit Ethernet' : 'Fast Ethernet';
   output += `  Hardware is ${hardwareType}, address is ${port.macAddress || '0000.0000.0000'}\n`;
   if (port.ipAddress && port.subnetMask) {
@@ -1036,9 +1049,10 @@ function cmdShowIpInterfaceBrief(
  */
 function cmdShowVlan(
   state: SwitchState,
-  _input: string,
+  input: string,
   _ctx: CommandContext
 ): CommandResult {
+  const isBrief = /brief|br/i.test(input);
   let output = '\nVLAN Name                             Status    Ports\n';
   output += '---- -------------------------------- --------- -------------------------------\n';
 
@@ -1077,15 +1091,18 @@ function cmdShowVlan(
     output += `${vlanId.padEnd(4)} ${vlanName} active     ${(vlanPortMap[vlanId] || []).join(', ')}\n`;
   });
 
-  output += '\nVLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2\n';
-  output += '---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------\n';
-  output += `1    enet  100001     1500  -      -      -        -    -        0      0\n`;
+  // Only show SAID/MTU table in full mode (not brief), matching real IOS behavior
+  if (!isBrief) {
+    output += '\nVLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2\n';
+    output += '---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------\n';
+    output += `1    enet  100001     1500  -      -      -        -    -        0      0\n`;
 
-  knownVlanIds.forEach(vlanId => {
-    if (vlanId !== '1') {
-      output += `${vlanId.padEnd(4)}enet  ${100000 + parseInt(vlanId)}         1500  -      -      -        -    -        0      0\n`;
-    }
-  });
+    knownVlanIds.forEach(vlanId => {
+      if (vlanId !== '1') {
+        output += `${vlanId.padEnd(4)}enet  ${100000 + parseInt(vlanId)}         1500  -      -      -        -    -        0      0\n`;
+      }
+    });
+  }
 
   output += '!\n';
   return { success: true, output };
@@ -1181,10 +1198,7 @@ function cmdShowMacAddressTable(
     });
   }
 
-  // If no MAC addresses found, show default
-  if (uniqueMacTable.length === 0) {
-    output += 'All    0000.0000.0000    STATIC      CPU\n';
-  }
+  // If no MAC addresses found, show nothing (matching real IOS behavior)
 
   output += '\nTotal Mac Addresses for this criterion: ' + uniqueMacTable.length + '\n';
   output += '!\n';
@@ -1381,7 +1395,6 @@ function cmdShowIpRoute(
     output += 'No routes in routing table\n';
   }
 
-  output += '  Time Since Last Boot: 01:00:00\n';
   output += '!\n';
   return { success: true, output };
 }
@@ -1588,9 +1601,7 @@ function cmdShowClock(
         { protocol: 'udp', port: '123' }
       );
       
-      // Debug için: bağlantı durumunu kontrol et
       if (!reachable.success) {
-        // Bağlantı başarısız, bir sonraki sunucuyu dene
         continue;
       }
 
@@ -1604,10 +1615,11 @@ function cmdShowClock(
         const targetNtp = targetDev.services?.ntp;
         if (targetNtp?.enabled && targetNtp.date && targetNtp.time) {
           const [y, m, d] = targetNtp.date.split('-');
-          const formattedDate = `${d}.${m}.${y}`;
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const monthName = months[parseInt(m) - 1] || m;
           return {
             success: true,
-            output: `\n*${targetNtp.time} UTC ${formattedDate}\n`
+            output: `\n*${targetNtp.time}.000 UTC ${monthName} ${parseInt(d)} ${y}\n`
           };
         }
       }
@@ -1619,19 +1631,17 @@ function cmdShowClock(
         }
       }
 
-      // Debug için: timeOffset değerini kontrol et
-      console.log(`NTP Debug: Server ${serverIp}, timeOffset=${timeOffset}, serverState NTP enabled=${serverState?.services?.ntp?.enabled}`);
-
       // NTP server reachable – return synced time with offset applied
       const now = new Date();
       const adjustedTime = new Date(now.getTime() + timeOffset);
       const time = adjustedTime.toTimeString().slice(0, 8);
-      const day = String(adjustedTime.getDate()).padStart(2, '0');
-      const month = String(adjustedTime.getMonth() + 1).padStart(2, '0');
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthName = months[adjustedTime.getMonth()];
+      const day = adjustedTime.getDate();
       const year = adjustedTime.getFullYear();
       return {
         success: true,
-        output: `\n*${time} UTC ${day}.${month}.${year}\n`
+        output: `\n*${time}.000 UTC ${monthName} ${day} ${year}\n`
       };
     }
   }
@@ -1644,20 +1654,22 @@ function cmdShowClock(
       const now = new Date();
       const adjustedTime = new Date(now.getTime() + localNtp.timeOffset);
       const time = adjustedTime.toTimeString().slice(0, 8);
-      const day = String(adjustedTime.getDate()).padStart(2, '0');
-      const month = String(adjustedTime.getMonth() + 1).padStart(2, '0');
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthName = months[adjustedTime.getMonth()];
+      const day = adjustedTime.getDate();
       const year = adjustedTime.getFullYear();
       return {
         success: true,
-        output: `\n*${time} UTC ${day}.${month}.${year}\n`
+        output: `\n*${time}.000 UTC ${monthName} ${day} ${year}\n`
       };
     } else if (localNtp.date && localNtp.time) {
       // Fall back to static date/time if no offset
       const [y, m, d] = localNtp.date.split('-');
-      const formattedDate = `${d}.${m}.${y}`;
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthName = months[parseInt(m) - 1] || m;
       return {
         success: true,
-        output: `\n*${localNtp.time} UTC ${formattedDate}\n`
+        output: `\n*${localNtp.time}.000 UTC ${monthName} ${parseInt(d)} ${y}\n`
       };
     }
   }
@@ -1665,19 +1677,19 @@ function cmdShowClock(
   // Eğer NTP yoksa, systemClock'u kontrol et
   if (state.systemClock) {
     const { time, day, month, year } = state.systemClock as { time: string; day: string; month: string; year: string };
-    const monthMap: Record<string, string> = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
-    const mm = monthMap[month] || month;
     return {
       success: true,
-      output: `\n*${time} UTC ${day}.${mm}.${year}\n`
+      output: `\n*${time}.000 UTC ${month} ${parseInt(day)} ${year}\n`
     };
   }
 
   // Hiçbiri yoksa, gerçek zamanı göster
   const now = new Date();
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const time = now.toTimeString().split(' ')[0];
   return {
     success: true,
-    output: `\n*${now.toTimeString().split(' ')[0]} UTC ${now.toLocaleDateString()}\n`
+    output: `\n*${time}.000 UTC ${months[now.getMonth()]} ${now.getDate()} ${now.getFullYear()}\n`
   };
 }
 
@@ -2378,7 +2390,8 @@ function cmdShowSpanningTree(
     }
 
     output += `\nVLAN${String(vlanId).padStart(4, '0')}\n`;
-    output += `  Spanning tree enabled protocol ${stpMode === 'mst' ? 'mstp' : 'ieee'}\n`;
+    const stpProtocol = stpMode === 'mst' ? 'mstp' : stpMode === 'rapid-pvst' ? 'rstp' : 'ieee';
+    output += `  Spanning tree enabled protocol ${stpProtocol}\n`;
 
     // Get VLAN-based priority
     const vlanPriority = spanningTreeVlans[vlanId]?.priority ? parseInt(spanningTreeVlans[vlanId].priority) : 32768;

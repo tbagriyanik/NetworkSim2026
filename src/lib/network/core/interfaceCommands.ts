@@ -124,6 +124,7 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'power inline': cmdStubSuccess,
   'power inline consumption': cmdStubSuccess,
   'ip directed-broadcast': cmdStubSuccess,
+  'no ip directed-broadcast': cmdStubSuccess,
   'ip arp inspection limit': cmdStubSuccess,
   'carrier-delay': cmdStubSuccess,
   'delay': cmdDelay,
@@ -458,7 +459,18 @@ function cmdDuplex(state: SwitchState, input: string, _ctx: CommandContext): Com
     return { success: false, error: '% Invalid duplex value (half, full, auto)' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, duplex: match[1].toLowerCase() as DuplexMode }));
+  const duplex = match[1].toLowerCase() as DuplexMode;
+
+  // Reject half duplex on GigabitEthernet interfaces
+  if (duplex === 'half') {
+    const port = state.ports[state.currentInterface];
+    const isGigabit = port?.type === 'gigabitethernet' || /^gi/i.test(state.currentInterface);
+    if (isGigabit) {
+      return { success: false, error: '% GigabitEthernet interfaces do not support half duplex.' };
+    }
+  }
+
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, duplex }));
 
   return {
     success: true,
@@ -700,6 +712,14 @@ function cmdSwitchportAccessVlan(state: SwitchState, input: string, ctx: Command
 
   const vlanId = match[1];
   const vlanIdNum = Number(vlanId);
+
+  if (vlanIdNum < 1 || vlanIdNum > 4094) {
+    return { success: false, error: `% VLAN ID ${vlanId} is not in the range 1 to 4094.` };
+  }
+  if (vlanIdNum >= 1002 && vlanIdNum <= 1005) {
+    return { success: false, error: `% VLAN ${vlanIdNum} is a reserved VLAN and cannot be used.` };
+  }
+
   const targets = Array.isArray(state.selectedInterfaces) && state.selectedInterfaces.length > 0
     ? state.selectedInterfaces
     : state.currentInterface
@@ -2318,6 +2338,10 @@ function cmdClockRate(state: SwitchState, input: string, _ctx: CommandContext): 
   const port = state.ports[state.currentInterface];
   if (port?.type !== 'serial') return { success: false, error: '% Clock rate is only supported on serial interfaces' };
   const rate = parseInt(match[1]);
+  const validRates = [1200, 2400, 4800, 9600, 19200, 38400, 56000, 64000, 72000, 125000, 148000, 256000, 500000, 512000, 8000000];
+  if (!validRates.includes(rate)) {
+    return { success: false, error: `% Invalid clock rate ${rate}. Valid rates: ${validRates.join(', ')}` };
+  }
   const updatePort = (p: Port) => ({ ...p, clockRate: rate, dce: true });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   const newPorts = { ...state.ports };

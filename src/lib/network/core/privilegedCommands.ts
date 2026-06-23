@@ -2,7 +2,7 @@ import { iosModeError } from './iosErrors';
 import type { CommandHandler, CommandContext } from './commandTypes';
 import { checkConnectivity, getWirelessDistance } from '../connectivity';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
-import type { SwitchState, CommandResult, Port, Route } from '../types';
+import type { SwitchState, CommandResult, Port } from '../types';
 import { clearArpCache } from '../arp';
 import { clearMacTable, clearDynamicMacEntries, clearStaticMacEntries } from '../macLearning';
 
@@ -49,8 +49,6 @@ export const privilegedHandlers: Record<string, CommandHandler> = {
     'clock set': cmdClockSet,
     'no debug all': cmdUndebugAll,
     'help': cmdHelp,
-    'ip route': cmdIpRoute,
-    'no ip route': cmdNoIpRoute,
 };
 
 /**
@@ -173,9 +171,14 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
             }
             return { success: true, output, triggerPingAnimation: connectivity.targetId, deviceStates: updatedDeviceStates };
         } else {
+            const n = parseInt(count, 10) || 5;
+            const isUnreachable = connectivity?.error?.toLowerCase().includes('unreachable') ||
+                connectivity?.hops?.length === 0;
+            const symbol = isUnreachable ? 'U' : '.';
+            const line = symbol.repeat(n);
             return {
                 success: false,
-                output: `\nType escape sequence to abort.\nSending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n.....\n`,
+                output: `\nType escape sequence to abort.\nSending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n${line}\n`,
                 error: connectivity.error || `Destination host unreachable.`,
                 deviceStates: updatedDeviceStates
             };
@@ -218,7 +221,7 @@ function cmdTelnet(state: SwitchState, input: string, ctx: CommandContext): Comm
             return {
                 success: false,
                 output: `Trying ${host} ${port} ...`,
-                error: connectivity.error || (ctx.language === 'tr' ? 'Hedefe ulaşılamadı.' : 'Destination host unreachable.')
+                error: connectivity.error || 'Destination host unreachable.'
             };
         }
 
@@ -297,7 +300,7 @@ function cmdSsh(state: SwitchState, input: string, ctx: CommandContext): Command
             return {
                 success: false,
                 output: `Connecting to ${host}...`,
-                error: connectivity.error || (ctx.language === 'tr' ? 'Hedefe ulaşılamadı.' : 'Destination host unreachable.')
+                error: connectivity.error || 'Destination host unreachable.'
             };
         }
 
@@ -484,72 +487,6 @@ function cmdReload(state: SwitchState, _input: string, _ctx: CommandContext): Co
 }
 
 /**
- * IP Route - Add static route
- */
-function cmdIpRoute(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
-    if (state.currentMode !== 'privileged') {
-        return { success: false, error: iosModeError() };
-    }
-
-    const match = input.match(/^ip\s+route\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+|\S+)(?:\s+(\d+))?$/i);
-    if (!match) {
-        return { success: false, error: '% Invalid ip route command. Use: ip route <network> <mask> <next-hop|interface> [administrative-distance]' };
-    }
-
-    const [, network, mask, nextHop, adminDistance] = match;
-    const metric = adminDistance ? parseInt(adminDistance, 10) : 1;
-
-    const newStaticRoutes = [...(state.staticRoutes || [])];
-    // Remove existing route to same destination if exists
-    const filteredRoutes = newStaticRoutes.filter(
-            (route: Route) => !(route.destination === network && route.subnetMask === mask)
-    );
-    filteredRoutes.push({ destination: network, subnetMask: mask, nextHop, metric, type: 'static' });
-
-    return {
-        success: true,
-        newState: {
-            staticRoutes: filteredRoutes,
-            ipRouting: true
-        }
-    };
-}
-
-/**
- * No IP Route - Remove static route
- */
-function cmdNoIpRoute(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
-    if (state.currentMode !== 'privileged') {
-        return { success: false, error: iosModeError() };
-    }
-
-    const match = input.match(/^no\s+ip\s+route\s+([0-9.]+)\s+([0-9.]+)(?:\s+([0-9.]+|\S+))?$/i);
-    if (!match) {
-        return { success: false, error: '% Invalid no ip route command' };
-    }
-
-    const [, network, mask, nextHop] = match;
-
-    let newStaticRoutes;
-    if (nextHop) {
-        // Remove specific route
-        newStaticRoutes = (state.staticRoutes || []).filter(
-            (route: Route) => !(route.destination === network && route.subnetMask === mask && route.nextHop === nextHop)
-        );
-    } else {
-        // Remove all routes for this network/mask
-        newStaticRoutes = (state.staticRoutes || []).filter(
-        (route: Route) => !(route.destination === network && route.subnetMask === mask)
-        );
-    }
-
-    return {
-        success: true,
-        newState: { staticRoutes: newStaticRoutes }
-    };
-}
-
-/**
  * Debug - Enable debugging
  */
 function cmdDebug(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
@@ -714,9 +651,15 @@ function cmdTraceroute(state: SwitchState, input: string, ctx: CommandContext): 
                 resolvedIp = knownDomains[host.toLowerCase()] || 'Unknown';
             }
 
+            let output = `\nType escape sequence to abort.\nTracing the route to ${host} (${resolvedIp})\n`;
+            // Show unresponsive hops like real IOS
+            for (let i = 1; i <= 3; i++) {
+                output += `  ${i}  * * *\n`;
+            }
+            output += `\nTrace complete.\n`;
             return {
                 success: false,
-                output: `\nType escape sequence to abort.\nTracing the route to ${host} (${resolvedIp})\n`,
+                output,
                 error: connectivity.error || `Destination host unreachable.`,
             };
         }
@@ -1002,9 +945,7 @@ function cmdCopyTftp(state: SwitchState, input: string, ctx: CommandContext): Co
     }
 
     if (!urlPart || urlPart === ':') {
-        return { success: false, error: lang === 'tr'
-            ? '% TFTP sunucu adresi belirtilmedi. Kullanım: copy running-config tftp://<sunucu>[/dosya]'
-            : '% TFTP server address not specified. Use: copy running-config tftp://<server>[/filename]' };
+        return { success: false, error: '% TFTP server address not specified. Use: copy running-config tftp://<server>[/filename]' };
     }
 
     // Split IP and optional filename
@@ -1036,10 +977,7 @@ function cmdCopyTftp(state: SwitchState, input: string, ctx: CommandContext): Co
 
     // Require FTP service enabled on target for backup
     if (!isRestore && !targetDevice?.services?.ftp?.enabled) {
-        const errMsg = lang === 'tr'
-            ? `% Hata: ${targetIp} üzerinde FTP servisi etkin değil.`
-            : `% Error: FTP service is not enabled on ${targetIp}.`;
-        return { success: false, error: errMsg };
+        return { success: false, error: `% Error: FTP service is not enabled on ${targetIp}.` };
     }
 
     // Store the backup file on the target device's FTP service

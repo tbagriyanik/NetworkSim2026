@@ -10,7 +10,7 @@ import type { CommandHandler } from './commandTypes';
 export type WirelessMode = 'config' | 'ssid-config' | 'dot11-config';
 
 // Wireless SSID Configuration Handler
-export const cmdDot11Ssid: CommandHandler = (state, input, ctx) => {
+export const cmdDot11Ssid: CommandHandler = (state, input, _ctx) => {
     if (state.currentMode !== 'config') {
         return { success: false, error: iosModeError() };
     }
@@ -26,9 +26,7 @@ export const cmdDot11Ssid: CommandHandler = (state, input, ctx) => {
     if (ssidName.length < 1 || ssidName.length > 32) {
         return {
             success: false,
-            error: ctx.language === 'tr'
-                ? 'Hata: SSID adı 1-32 karakter arasında olmalıdır'
-                : 'Error: SSID name must be between 1-32 characters',
+        error: 'Error: SSID name must be between 1-32 characters',
         };
     }
 
@@ -61,7 +59,7 @@ export const cmdDot11Ssid: CommandHandler = (state, input, ctx) => {
 };
 
 // Authentication command
-export const cmdAuthentication: CommandHandler = (state, input, ctx) => {
+export const cmdAuthentication: CommandHandler = (state, input, _ctx) => {
     if (state.currentMode !== 'ssid-config') {
         return { success: false, error: iosModeError() };
     }
@@ -77,9 +75,7 @@ export const cmdAuthentication: CommandHandler = (state, input, ctx) => {
     if (!validAuthTypes.includes(authType)) {
         return {
             success: false,
-            error: ctx.language === 'tr'
-                ? `Hata: Geçersiz kimlik doğrulama türü. Geçerli türler: ${validAuthTypes.join(', ')}`
-                : `Error: Invalid authentication type. Valid types: ${validAuthTypes.join(', ')}`,
+            error: `Error: Invalid authentication type. Valid types: ${validAuthTypes.join(', ')}`,
         };
     }
 
@@ -93,7 +89,7 @@ export const cmdAuthentication: CommandHandler = (state, input, ctx) => {
 };
 
 // Key Management (WPA/WPA2/WPA3)
-export const cmdAuthenticationKeyManagement: CommandHandler = (state, input, ctx) => {
+export const cmdAuthenticationKeyManagement: CommandHandler = (state, input, _ctx) => {
     if (state.currentMode !== 'ssid-config') {
         return { success: false, error: iosModeError() };
     }
@@ -107,9 +103,7 @@ export const cmdAuthenticationKeyManagement: CommandHandler = (state, input, ctx
     if (![2, 3].includes(version)) {
         return {
             success: false,
-            error: ctx.language === 'tr'
-                ? 'Hata: WPA versiyonu 2 veya 3 olmalıdır'
-                : 'Error: WPA version must be 2 or 3',
+            error: 'Error: WPA version must be 2 or 3',
         };
     }
 
@@ -124,7 +118,7 @@ export const cmdAuthenticationKeyManagement: CommandHandler = (state, input, ctx
 };
 
 // WPA Pre-Shared Key (Password)
-export const cmdWpaPsk: CommandHandler = (state, input, ctx) => {
+export const cmdWpaPsk: CommandHandler = (state, input, _ctx) => {
     if (state.currentMode !== 'ssid-config') {
         return { success: false, error: iosModeError() };
     }
@@ -140,9 +134,7 @@ export const cmdWpaPsk: CommandHandler = (state, input, ctx) => {
     if (password.length < 8 || password.length > 63) {
         return {
             success: false,
-            error: ctx.language === 'tr'
-                ? 'Hata: Şifre 8-63 karakter arasında olmalıdır'
-                : 'Error: Password must be between 8-63 characters',
+            error: 'Error: Password must be between 8-63 characters',
         };
     }
 
@@ -188,7 +180,7 @@ export const cmdExitSsidConfig: CommandHandler = (state, _input, _ctx) => {
 };
 
 // Interface dot11Radio configuration
-export const cmdInterfaceDot11Radio: CommandHandler = (state, input, ctx) => {
+export const cmdInterfaceDot11Radio: CommandHandler = (state, input, _ctx) => {
     if (state.currentMode !== 'config') {
         return { success: false, error: iosModeError() };
     }
@@ -204,9 +196,7 @@ export const cmdInterfaceDot11Radio: CommandHandler = (state, input, ctx) => {
     if (!validRadios.includes(radioId)) {
         return {
             success: false,
-            error: ctx.language === 'tr'
-                ? 'Hata: Geçersiz radyo ID. Geçerli değerler: 0 (2.4GHz), 1 (5GHz)'
-                : 'Error: Invalid radio ID. Valid values: 0 (2.4GHz), 1 (5GHz)',
+            error: 'Error: Invalid radio ID. Valid values: 0 (2.4GHz), 1 (5GHz)',
         };
     }
 
@@ -238,7 +228,7 @@ export const cmdInterfaceDot11Radio: CommandHandler = (state, input, ctx) => {
 };
 
 // Encryption mode and cipher
-export const cmdEncryptionMode: CommandHandler = (state, input, ctx) => {
+export const cmdEncryptionMode: CommandHandler = (state, input, _ctx) => {
     if (state.currentMode !== 'dot11-config') {
         return { success: false, error: iosModeError() };
     }
@@ -254,9 +244,7 @@ export const cmdEncryptionMode: CommandHandler = (state, input, ctx) => {
     if (!validCiphers.includes(cipher)) {
         return {
             success: false,
-            error: ctx.language === 'tr'
-                ? `Hata: Geçersiz şifreleme algoritması. Geçerli değerler: ${validCiphers.join(', ')}`
-                : `Error: Invalid encryption cipher. Valid values: ${validCiphers.join(', ')}`,
+            error: `Error: Invalid encryption cipher. Valid values: ${validCiphers.join(', ')}`,
         };
     }
 
@@ -270,7 +258,7 @@ export const cmdEncryptionMode: CommandHandler = (state, input, ctx) => {
 };
 
 // SSID binding to radio
-export const cmdSsidBinding: CommandHandler = (state, input, ctx) => {
+export const cmdSsidBinding: CommandHandler = (state, input, _ctx) => {
     if (state.currentMode !== 'dot11-config') {
         return { success: false, error: iosModeError() };
     }
@@ -286,9 +274,7 @@ export const cmdSsidBinding: CommandHandler = (state, input, ctx) => {
     if (!state.wirelessConfig || !state.wirelessConfig[ssidName]) {
         return {
             success: false,
-            error: ctx.language === 'tr'
-                ? `Hata: SSID '${ssidName}' tanımlanmamış`
-                : `Error: SSID '${ssidName}' is not defined`,
+            error: `Error: SSID '${ssidName}' is not defined`,
         };
     }
 
@@ -302,7 +288,7 @@ export const cmdSsidBinding: CommandHandler = (state, input, ctx) => {
 };
 
 // Channel selection
-export const cmdChannel: CommandHandler = (state, input, ctx) => {
+export const cmdChannel: CommandHandler = (state, input, _ctx) => {
     if (state.currentMode !== 'dot11-config') {
         return { success: false, error: iosModeError() };
     }
@@ -332,9 +318,7 @@ export const cmdChannel: CommandHandler = (state, input, ctx) => {
     if (!validChannels.includes(channel)) {
         return {
             success: false,
-            error: ctx.language === 'tr'
-                ? `Hata: Geçersiz kanal. ${frequency} için geçerli kanallar: ${validChannels.join(', ')}`
-                : `Error: Invalid channel. Valid channels for ${frequency}: ${validChannels.join(', ')}`,
+            error: `Error: Invalid channel. Valid channels for ${frequency}: ${validChannels.join(', ')}`,
         };
     }
 
@@ -344,7 +328,7 @@ export const cmdChannel: CommandHandler = (state, input, ctx) => {
 };
 
 // Transmit power
-export const cmdPower: CommandHandler = (state, input, ctx) => {
+export const cmdPower: CommandHandler = (state, input, _ctx) => {
     if (state.currentMode !== 'dot11-config') {
         return { success: false, error: iosModeError() };
     }
@@ -360,9 +344,7 @@ export const cmdPower: CommandHandler = (state, input, ctx) => {
     if (!validPowers.includes(power) && isNaN(parseInt(power))) {
         return {
             success: false,
-            error: ctx.language === 'tr'
-                ? `Hata: Geçersiz güç değeri. Geçerli değerler: ${validPowers.join(', ')} veya 1-30 dBm`
-                : `Error: Invalid power value. Valid values: ${validPowers.join(', ')} or 1-30 dBm`,
+            error: `Error: Invalid power value. Valid values: ${validPowers.join(', ')} or 1-30 dBm`,
         };
     }
 
@@ -376,7 +358,7 @@ export const cmdPower: CommandHandler = (state, input, ctx) => {
 };
 
 // Station role (AP or Client)
-export const cmdStationRole: CommandHandler = (state, input, ctx) => {
+export const cmdStationRole: CommandHandler = (state, input, _ctx) => {
     if (state.currentMode !== 'dot11-config') {
         return { success: false, error: iosModeError() };
     }
@@ -392,9 +374,7 @@ export const cmdStationRole: CommandHandler = (state, input, ctx) => {
     if (!validRoles.includes(role)) {
         return {
             success: false,
-            error: ctx.language === 'tr'
-                ? `Hata: Geçersiz istasyon rolü. Geçerli roller: ${validRoles.join(', ')}`
-                : `Error: Invalid station role. Valid roles: ${validRoles.join(', ')}`,
+            error: `Error: Invalid station role. Valid roles: ${validRoles.join(', ')}`,
         };
     }
 
@@ -408,7 +388,7 @@ export const cmdStationRole: CommandHandler = (state, input, ctx) => {
 };
 
 // MAC address filtering
-export const cmdMacFilter: CommandHandler = (state, input, ctx) => {
+export const cmdMacFilter: CommandHandler = (state, input, _ctx) => {
     if (state.currentMode !== 'dot11-config') {
         return { success: false, error: iosModeError() };
     }
@@ -426,9 +406,7 @@ export const cmdMacFilter: CommandHandler = (state, input, ctx) => {
     if (!macRegex.test(macAddress)) {
         return {
             success: false,
-            error: ctx.language === 'tr'
-                ? 'Hata: Geçersiz MAC adresi formatı (örn: AA:BB:CC:DD:EE:FF)'
-                : 'Error: Invalid MAC address format (e.g., AA:BB:CC:DD:EE:FF)',
+            error: 'Error: Invalid MAC address format (e.g., AA:BB:CC:DD:EE:FF)',
         };
     }
 

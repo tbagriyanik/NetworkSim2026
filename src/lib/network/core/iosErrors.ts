@@ -8,7 +8,7 @@ export const IOS_ERRORS = {
   marker: '^'
 } as const;
 
-export const iosModeError = (_input?: string, currentMode?: string, language: 'tr' | 'en' = 'tr'): string => {
+export const iosModeError = (_input?: string, currentMode?: string, _language?: 'tr' | 'en'): string => {
   const modeNames: Record<string, string> = {
     user: 'User EXEC',
     privileged: 'Privileged EXEC',
@@ -25,9 +25,6 @@ export const iosModeError = (_input?: string, currentMode?: string, language: 't
 
   const modeName = currentMode ? (modeNames[currentMode] || currentMode) : 'unknown';
 
-  if (language === 'tr') {
-    return `% Komut mevcut modda (${modeName}) kullanılamaz.`;
-  }
   return `% Command not available in ${modeName} mode.`;
 };
 
