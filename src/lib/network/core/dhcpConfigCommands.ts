@@ -152,7 +152,6 @@ function cmdIpv6DhcpAddressPrefix(state: SwitchState, input: string, _ctx: Comma
 
 export const dhcpConfigHandlers: Record<string, CommandHandler> = {
     'network': cmdDhcpNetwork,
-    'dhcp-config network': cmdDhcpNetwork,
     'default-router': cmdDhcpDefaultRouter,
     'dns-server': cmdDhcpDnsServer,
     'lease': cmdDhcpLease,

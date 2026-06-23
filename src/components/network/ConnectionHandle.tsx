@@ -73,18 +73,8 @@ const ConnectionHandle = memo(function ConnectionHandle({
         } as CableInfo)
       : true;
 
-  const pathD = `M ${source.x} ${source.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${target.x} ${target.y}`;
-
   return (
     <g key={`handle-${connection.id}`}>
-      <path
-        d={pathD}
-        stroke="transparent"
-        strokeWidth={22}
-        fill="none"
-        className="cursor-pointer"
-        onClick={() => onDelete(connection.id)}
-      />
       {isCompatible && (
         <g
           transform={`translate(${trashX}, ${trashY})`}

@@ -794,7 +794,7 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `domain-name <name>` | Set domain name for clients |
 
 ### Firewall Configuration Commands
-> **Note**: These commands are valid on **Cisco ASA / Firewall devices only**. They are not available on Cisco IOS routers or switches.
+> **Note**: These commands are valid on **ASA / Firewall devices only**. They are not available on IOS routers or switches.
 
 | Command | Description |
 |---------|-------------|

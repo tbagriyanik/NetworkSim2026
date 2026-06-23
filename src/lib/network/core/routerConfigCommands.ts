@@ -8,7 +8,6 @@ import type { SwitchState, CommandResult } from '../types';
 
 export const routerConfigHandlers: Record<string, CommandHandler> = {
     'network': cmdRouterNetwork,
-    'router-config network': cmdRouterNetwork,
     'neighbor remote-as': cmdNeighborRemoteAs,
     'no auto-summary': cmdNoAutoSummary,
     'router-id': cmdRouterId,

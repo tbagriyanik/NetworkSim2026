@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, Mou
 import { flushSync } from 'react-dom';
 import dynamic from 'next/dynamic';
 import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes, useGraphicsQuality } from '@/lib/store/appStore';
-import { CableType, isCableCompatible } from '@/lib/network/types';
+import { CableType, isCableCompatible, CABLE_COMPATIBILITY } from '@/lib/network/types';
 import { checkDeviceConnectivity, getPingDiagnostics, getWirelessSignalStrength, getWirelessDistance } from '@/lib/network/connectivity';
 import { generateRandomLinkLocalIpv4, generateRandomLinkLocalIpv6 } from '@/lib/network/linkLocal';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -104,6 +104,32 @@ const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
 };
 
 const isSwitchDeviceType = (type: DeviceType) => type === 'switchL2' || type === 'switchL3';
+
+function getConnectionStatusMessage(conn: CanvasConnection, devices: CanvasDevice[], language: 'tr' | 'en'): string {
+  const sourceDevice = devices.find(d => d.id === conn.sourceDeviceId);
+  const targetDevice = devices.find(d => d.id === conn.targetDeviceId);
+  if (!sourceDevice || !targetDevice) return language === 'tr' ? 'Cihaz bulunamadı' : 'Device not found';
+
+  const sourcePort = sourceDevice.ports.find(p => p.id === conn.sourcePort);
+  const targetPort = targetDevice.ports.find(p => p.id === conn.targetPort);
+
+  const cableInfo = { connected: true, cableType: conn.cableType, sourceDevice: sourceDevice.type, targetDevice: targetDevice.type, sourcePort: conn.sourcePort, targetPort: conn.targetPort } as import('@/lib/network/types').CableInfo;
+  const isCableOk = isCableCompatible(cableInfo);
+
+  if (!isCableOk) {
+    if (conn.cableType === 'wireless') return language === 'tr' ? 'Bağlantı sorunsuz' : 'Connection OK';
+    const normalize = (t: string) => t === 'switchL2' || t === 'switchL3' ? 'switch' : t === 'iot' ? 'pc' : t;
+    const key = `${normalize(sourceDevice.type)}-${normalize(targetDevice.type)}`;
+    if (!CABLE_COMPATIBILITY[key]) return language === 'tr' ? 'Bu cihaz çifti desteklenmiyor' : 'Device pair not supported';
+    return language === 'tr' ? 'Kablo türü bu cihazlar için uygun değil' : 'Cable type not suitable for these devices';
+  }
+
+  if (sourceDevice.status === 'offline' || targetDevice.status === 'offline') return language === 'tr' ? 'Cihaz kapalı' : 'Device is offline';
+  if (sourcePort?.shutdown || targetPort?.shutdown) return language === 'tr' ? 'Port kapalı (shutdown)' : 'Port is shutdown';
+  if (sourcePort?.spanningTree?.state === 'blocking' || targetPort?.spanningTree?.state === 'blocking') return language === 'tr' ? 'STP engelliyor (blocking)' : 'STP blocking';
+
+  return language === 'tr' ? 'Bağlantı sorunsuz' : 'Connection OK';
+}
 
 function PacketPopup({ hopIndex, info, language, onClose, isDark }: {
   hopIndex: number;
@@ -767,9 +793,12 @@ export function NetworkTopology({
   const [connectionTooltip, setConnectionTooltip] = useState<{
     x: number;
     y: number;
+    sourceDeviceName: string;
     sourcePort: string;
+    targetDeviceName: string;
     targetPort: string;
     cableType: string;
+    statusMessage: string;
     visible: boolean;
   } | null>(null);
   const connectionTooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -3404,7 +3433,7 @@ export function NetworkTopology({
     setPortTooltip(null);
   }, [setPortTooltip]);
 
-  const handleConnectionMouseEnter = useCallback((e: React.MouseEvent<SVGPathElement>, connId: string, sourcePort: string, targetPort: string, cableType: string) => {
+  const handleConnectionMouseEnter = useCallback((e: React.MouseEvent<SVGPathElement>, connId: string, sourceDeviceName: string, sourcePort: string, targetDeviceName: string, targetPort: string, cableType: string, statusMessage: string) => {
     setHoveredConnectionId(connId);
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -3412,8 +3441,8 @@ export function NetworkTopology({
     const cp = panRef.current;
     let tx = e.clientX;
     let ty = e.clientY;
-    const tooltipW = 180;
-    const tooltipH = 50;
+    const tooltipW = 200;
+    const tooltipH = 70;
     for (const d of devices) {
       const devW = getDeviceWidth(d.type);
       const devH = getDeviceHeight(d.type, d.ports.length);
@@ -3426,7 +3455,7 @@ export function NetworkTopology({
     }
     if (connectionTooltipTimerRef.current) clearTimeout(connectionTooltipTimerRef.current);
     connectionTooltipTimerRef.current = setTimeout(() => {
-      setConnectionTooltip({ x: tx, y: ty, sourcePort, targetPort, cableType, visible: true });
+      setConnectionTooltip({ x: tx, y: ty, sourceDeviceName, sourcePort, targetDeviceName, targetPort, cableType, statusMessage, visible: true });
       connectionTooltipTimerRef.current = setTimeout(() => {
         setConnectionTooltip(prev => prev ? { ...prev, visible: false } : null);
       }, 3000);
@@ -6963,28 +6992,6 @@ export function NetworkTopology({
                     </g>
                   )}
 
-                  {/* Connection interaction handles (Trash icons) — en altta */}
-                  {/* BOLT: Use visibleConnections for culling */}
-                  {visibleConnections.map((conn) => {
-                    const sourceDevice = deviceMap.get(conn.sourceDeviceId);
-                    const targetDevice = deviceMap.get(conn.targetDeviceId);
-                    if (!sourceDevice || !targetDevice) return null;
-                    const meta = connectionMeta.get(conn.id) || { index: 0, total: 1 };
-                    return (
-                      <ConnectionHandle
-                        key={`handle-${conn.id}`}
-                        connection={conn}
-                        sourceDevice={sourceDevice}
-                        targetDevice={targetDevice}
-                        isDark={isDark}
-                        sameConnIndex={meta.index}
-                        totalSameConns={meta.total}
-                        getPortPosition={getPortPosition}
-                        onDelete={deleteConnection}
-                      />
-                    );
-                  })}
-
                   {/* Visual Connection Lines (Behind devices) */}
                   {/* BOLT: Use visibleConnections for culling and O(1) meta lookup */}
                   {visibleConnections.map((conn) => {
@@ -7011,8 +7018,30 @@ export function NetworkTopology({
                         zoom={zoom}
                         graphicsQuality={graphicsQuality}
                         isHovered={hoveredConnectionId === conn.id}
-                        onMouseEnter={(e: React.MouseEvent<SVGPathElement>) => handleConnectionMouseEnter(e, conn.id, conn.sourcePort, conn.targetPort, conn.cableType)}
+                        onMouseEnter={(e: React.MouseEvent<SVGPathElement>) => handleConnectionMouseEnter(e, conn.id, sourceDevice.name, conn.sourcePort, targetDevice.name, conn.targetPort, conn.cableType, getConnectionStatusMessage(conn, devices, language))}
                         onMouseLeave={handleConnectionMouseLeave}
+                      />
+                    );
+                  })}
+
+                  {/* Connection interaction handles (Trash icons) — kablo üstünde */}
+                  {/* BOLT: Use visibleConnections for culling */}
+                  {visibleConnections.map((conn) => {
+                    const sourceDevice = deviceMap.get(conn.sourceDeviceId);
+                    const targetDevice = deviceMap.get(conn.targetDeviceId);
+                    if (!sourceDevice || !targetDevice) return null;
+                    const meta = connectionMeta.get(conn.id) || { index: 0, total: 1 };
+                    return (
+                      <ConnectionHandle
+                        key={`handle-${conn.id}`}
+                        connection={conn}
+                        sourceDevice={sourceDevice}
+                        targetDevice={targetDevice}
+                        isDark={isDark}
+                        sameConnIndex={meta.index}
+                        totalSameConns={meta.total}
+                        getPortPosition={getPortPosition}
+                        onDelete={deleteConnection}
                       />
                     );
                   })}
@@ -8450,9 +8479,14 @@ export function NetworkTopology({
                 </span>
               </div>
               <div className="text-xs font-bold" style={{ color: (CABLE_COLORS as Record<string, { primary: string; bg: string; text: string; border: string }>)[connectionTooltip.cableType]?.primary || '#3b82f6' }}>
-                <span className="opacity-90">{connectionTooltip.sourcePort}</span>
+                <span className="opacity-90">{connectionTooltip.sourceDeviceName}</span>
+                <span className="mx-1 opacity-70">{connectionTooltip.sourcePort}</span>
                 <span className="mx-1 opacity-50">↔</span>
-                <span className="opacity-90">{connectionTooltip.targetPort}</span>
+                <span className="mx-1 opacity-70">{connectionTooltip.targetPort}</span>
+                <span className="opacity-90">{connectionTooltip.targetDeviceName}</span>
+              </div>
+              <div className={`text-[10px] mt-1 font-semibold ${connectionTooltip.statusMessage === (language === 'tr' ? 'Bağlantı sorunsuz' : 'Connection OK') ? 'text-emerald-500' : 'text-red-500'}`}>
+                {connectionTooltip.statusMessage}
               </div>
               {/* Arrow */}
               <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] ${isDark ? 'border-t-slate-800' : 'border-t-white'

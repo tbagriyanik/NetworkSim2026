@@ -2057,7 +2057,9 @@ const commandHandlers: Record<string, CommandHandler> = {
   ...privilegedHandlers,
 
   // Global configuration commands - AFTER privileged so these take precedence for overlapping commands
-  ...globalConfigHandlers,
+  ...Object.fromEntries(Object.entries(globalConfigHandlers).filter(([k]) =>
+    k !== 'no spanning-tree' && k !== 'spanning-tree portfast' && k !== 'ip default-gateway' && k !== 'no ip default-gateway'
+  )),
 
   // Router configuration commands (OSPF/RIP)
   ...routerConfigHandlers,
@@ -2068,12 +2070,34 @@ const commandHandlers: Record<string, CommandHandler> = {
   // Wireless commands
   ...wirelessHandlers,
 
-  // DHCP pool sub-commands (exclude generic 'network' to avoid shadowing router 'network')
-  ...Object.fromEntries(Object.entries(dhcpConfigHandlers).filter(([k]) => k !== 'network')),
+  // DHCP pool sub-commands (exclude generic 'network'/'no network' to avoid shadowing router versions)
+  ...Object.fromEntries(Object.entries(dhcpConfigHandlers).filter(([k]) => k !== 'network' && k !== 'no network')),
   'network': (state, input, ctx) => {
     if (state.currentMode === 'dhcp-config') return dhcpConfigHandlers['network'](state, input, ctx);
     if (state.currentMode === 'router-config') return routerConfigHandlers['network'](state, input, ctx);
     return { success: false, error: iosModeError() };
+  },
+  'no network': (state, input, ctx) => {
+    if (state.currentMode === 'dhcp-config') return dhcpConfigHandlers['no network'](state, input, ctx);
+    if (state.currentMode === 'router-config') return routerConfigHandlers['no network'](state, input, ctx);
+    return { success: false, error: iosModeError() };
+  },
+  // Interface/global dual-mode dispatchers
+  'no spanning-tree': (state, input, ctx) => {
+    if (state.currentMode === 'interface' || state.currentMode === 'config-if-range') return interfaceHandlers['no spanning-tree'](state, input, ctx);
+    return globalConfigHandlers['no spanning-tree'](state, input, ctx);
+  },
+  'spanning-tree portfast': (state, input, ctx) => {
+    if (state.currentMode === 'interface' || state.currentMode === 'config-if-range') return interfaceHandlers['spanning-tree portfast'](state, input, ctx);
+    return globalConfigHandlers['spanning-tree portfast'](state, input, ctx);
+  },
+  'ip default-gateway': (state, input, ctx) => {
+    if (state.currentMode === 'interface' || state.currentMode === 'config-if-range') return interfaceHandlers['ip default-gateway'](state, input, ctx);
+    return globalConfigHandlers['ip default-gateway'](state, input, ctx);
+  },
+  'no ip default-gateway': (state, input, ctx) => {
+    if (state.currentMode === 'interface' || state.currentMode === 'config-if-range') return interfaceHandlers['no ip default-gateway'](state, input, ctx);
+    return globalConfigHandlers['no ip default-gateway'](state, input, ctx);
   }
 };
 

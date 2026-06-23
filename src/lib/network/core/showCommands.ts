@@ -20,7 +20,6 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show interface trunk': cmdShowInterfaceTrunk,
   'show interfaces trunk': cmdShowInterfaceTrunk,
   'show ip interface brief': cmdShowIpInterfaceBrief,
-  'show ip interfaces brief': cmdShowIpInterfaceBrief,
   'show vlan brief': cmdShowVlan,
   'show vlan': cmdShowVlan,
   'show mac address-table': cmdShowMacAddressTable,

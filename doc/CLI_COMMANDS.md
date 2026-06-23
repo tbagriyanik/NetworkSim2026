@@ -330,8 +330,14 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `encryption mode ciphers {tkip\|aes\|tkip aes}` | Set encryption cipher (dot11-config) | WLC/AP |
 | `mac-filter` | Enable MAC filter (dot11-config) | WLC/AP |
 | `interface dot11radio <n>` | Enter dot11 radio interface config | WLC/AP |
+| `dot11 channel <num>` | Enter dot11-config and set RF channel (global config) | WLC/AP |
+| `dot11 power {local \| client} <val>` | Enter dot11-config and set power level (global config) | WLC/AP |
+| `dot11 station-role {root \| repeater \| client}` | Enter dot11-config and set station role (global config) | WLC/AP |
+| `dot11 mac-filter` | Enter dot11-config and enable MAC filter (global config) | WLC/AP |
 | `show wlan summary` | Display WLAN summary | WLC only |
 | `show ap summary` | Display AP summary | WLC only |
+| `show ap config {ap-name \| all}` | Display AP configuration details | WLC only |
+| `show ap join statistics {ap-name \| all}` | Display AP join statistics | WLC only |
 
 ### Line Configuration Commands
 | Command | Description |
@@ -436,7 +442,7 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `domain-name <name>` | Set domain name for clients |
 
 ### Firewall Configuration Commands
-> **Note**: These commands are valid on **Cisco ASA / Firewall devices only**. They are not available on Cisco IOS routers or switches.
+> **Note**: These commands are valid on **ASA / Firewall devices only**. They are not available on  IOS routers or switches.
 
 | Command | Description |
 |---------|-------------|
@@ -497,6 +503,9 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `show banner motd` | Display MOTD banner |
 | `show class-map` | Display QoS class maps |
 | `show policy-map` | Display QoS policy maps |
+| `show policy-map interface <name>` | Display policy-map applied to specific interface |
+| `show qos interface <name>` | Display QoS interface configuration and statistics |
+| `show queuing interface <name>` | Display interface queuing statistics |
 | `show ipv6 dhcp pool` | Display IPv6 DHCP pools |
 | `show ip ospf neighbor` | Display OSPF neighbors |
 | `show ip ospf interface` | Display OSPF interface status |

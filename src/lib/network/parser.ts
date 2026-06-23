@@ -895,6 +895,24 @@ export const commandPatterns: Record<string, CommandPattern> = {
     minArgs: 2,
     maxArgs: 2
   },
+  'no encapsulation': {
+    pattern: /^no\s+encapsulation$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no clock rate': {
+    pattern: /^no\s+clock\s+rate$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no ppp authentication': {
+    pattern: /^no\s+ppp\s+authentication$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'switchport nonegotiate': {
     pattern: /^switchport\s+nonegotiate$/i,
     modes: ['interface', 'config-if-range'],
@@ -1096,11 +1114,81 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 3,
     capability: 'routing'
   },
+  'wlan shutdown': {
+    pattern: /^wlan\s+shutdown$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'routing'
+  },
+  'no wlan shutdown': {
+    pattern: /^no\s+wlan\s+shutdown$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'routing'
+  },
+  'ap name': {
+    pattern: /^ap\s+name\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1,
+    capability: 'routing'
+  },
+  'ap auth-mac': {
+    pattern: /^ap\s+auth-mac\s+([0-9a-fA-F]{4}\.[0-9a-fA-F]{4}\.[0-9a-fA-F]{4})$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1,
+    capability: 'routing'
+  },
+  'ap rf-channel': {
+    pattern: /^ap\s+rf-channel\s+(\d+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1,
+    capability: 'routing'
+  },
+  'ap dot11 5-ghz': {
+    pattern: /^ap\s+dot11\s+5-ghz\s+(.+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1,
+    capability: 'routing'
+  },
   'security wpa psk set-key': {
     pattern: /^security\s+wpa\s+psk\s+set-key\s+ascii\s+(?:0|7)\s+(.+)$/i,
     modes: ['config'],
     minArgs: 5,
     maxArgs: 5,
+    capability: 'routing'
+  },
+  'mbssid': {
+    pattern: /^mbssid$/i,
+    modes: ['ssid-config'],
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'routing'
+  },
+  'no mbssid': {
+    pattern: /^no\s+mbssid$/i,
+    modes: ['ssid-config'],
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'routing'
+  },
+  'world-mode dot11d': {
+    pattern: /^world-mode\s+dot11d\s+([1-9]|-1)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1,
+    capability: 'routing'
+  },
+  'no security wpa psk': {
+    pattern: /^no\s+security\s+wpa\s+psk$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0,
     capability: 'routing'
   },
   'channel': {

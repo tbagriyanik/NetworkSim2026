@@ -133,9 +133,12 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'encapsulation dot1q': cmdEncapsulationDot1q,
   'encapsulation hdlc': cmdEncapsulationHdlc,
   'encapsulation ppp': cmdEncapsulationPpp,
+  'no encapsulation': cmdNoEncapsulation,
   'clock rate': cmdClockRate,
+  'no clock rate': cmdNoClockRate,
   'ppp authentication pap': cmdPppAuthPap,
   'ppp authentication chap': cmdPppAuthChap,
+  'no ppp authentication': cmdNoPppAuth,
   'ppp pap sent-username': cmdPppPapSentUsername,
   'switchport protected': cmdSwitchportProtected,
   'switchport block': cmdSwitchportBlock,
@@ -161,7 +164,9 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'standby ipv6': cmdStandbyIpv6,
   'standby preempt': cmdStandbyPreempt,
   'ip nat inside': cmdIpNatInside,
+  'no ip nat inside': cmdNoIpNatInside,
   'ip nat outside': cmdIpNatOutside,
+  'no ip nat outside': cmdNoIpNatOutside,
 };
 
 /**
@@ -2288,6 +2293,21 @@ function cmdEncapsulationPpp(state: SwitchState, _input: string, _ctx: CommandCo
 }
 
 /**
+ * No Encapsulation - Reset serial encapsulation to default (HDLC)
+ */
+function cmdNoEncapsulation(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const port = state.ports[state.currentInterface];
+  if (port?.type !== 'serial') return { success: false, error: '% Encapsulation is only supported on serial interfaces' };
+  const updatePort = (p: Port) => ({ ...p, serialEncapsulation: undefined, encapsulation: 'hdlc' as const });
+  if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'Encapsulation reset to default HDLC', newState: { ports: newPorts } };
+}
+
+/**
  * Clock Rate - Set DCE clock rate on serial interface
  */
 function cmdClockRate(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
@@ -2303,6 +2323,21 @@ function cmdClockRate(state: SwitchState, input: string, _ctx: CommandContext): 
   const newPorts = { ...state.ports };
   newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
   return { success: true, output: `Clock rate set to ${rate} bps`, newState: { ports: newPorts } };
+}
+
+/**
+ * No Clock Rate - Remove clock rate from serial interface
+ */
+function cmdNoClockRate(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const port = state.ports[state.currentInterface];
+  if (port?.type !== 'serial') return { success: false, error: '% Clock rate is only supported on serial interfaces' };
+  const updatePort = (p: Port) => ({ ...p, clockRate: undefined, dce: undefined });
+  if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'Clock rate removed', newState: { ports: newPorts } };
 }
 
 /**
@@ -2333,6 +2368,21 @@ function cmdPppAuthChap(state: SwitchState, _input: string, _ctx: CommandContext
   const newPorts = { ...state.ports };
   newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
   return { success: true, output: 'PPP CHAP authentication enabled', newState: { ports: newPorts } };
+}
+
+/**
+ * No PPP Authentication - Remove PPP authentication
+ */
+function cmdNoPppAuth(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const port = state.ports[state.currentInterface];
+  if (port?.type !== 'serial') return { success: false, error: '% PPP authentication is only supported on serial interfaces' };
+  const updatePort = (p: Port) => ({ ...p, pppAuth: undefined });
+  if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'PPP authentication removed', newState: { ports: newPorts } };
 }
 
 /**
@@ -2662,6 +2712,24 @@ function cmdIpNatInside(state: SwitchState, _input: string, _ctx: CommandContext
 function cmdIpNatOutside(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
   const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, natSide: 'outside' }));
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * No IP NAT Inside - Remove NAT inside designation from interface
+ */
+function cmdNoIpNatInside(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, natSide: undefined }));
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * No IP NAT Outside - Remove NAT outside designation from interface
+ */
+function cmdNoIpNatOutside(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, natSide: undefined }));
   return { success: true, newState: { ports: newPorts } };
 }
 
