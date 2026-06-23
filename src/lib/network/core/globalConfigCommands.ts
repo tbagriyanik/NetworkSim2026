@@ -147,12 +147,18 @@ function cmdHostname(state: SwitchState, input: string, _ctx: CommandContext): C
 
   const match = input.match(/^hostname\s+(.+)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid hostname command' };
+    return { success: false, error: IOS_ERRORS.invalidInput };
+  }
+
+  const hostname = match[1].trim();
+  // IOS hostname: max 63 chars, must start with a letter, alphanumeric + hyphens only
+  if (hostname.length > 63 || !/^[a-zA-Z][a-zA-Z0-9-]*$/.test(hostname)) {
+    return { success: false, error: "% Invalid input detected at '^' marker." };
   }
 
   return {
     success: true,
-    newState: { hostname: match[1] },
+    newState: { hostname },
     hint: {
       tr: '💡 Gerçek dünyada: Anlamlı bir hostname cihazı ağda tanımlamayı kolaylaştırır (örn: Kat2-SW).',
       en: '💡 In the real world: A meaningful hostname makes it easier to identify the device in the network (e.g., Floor2-SW).'
@@ -317,7 +323,8 @@ function cmdRouterEigrp(state: SwitchState, input: string, _ctx: CommandContext)
       routingProtocol: 'eigrp',
       ipRouting: true,
       eigrpAs: asNumber,
-      currentMode: 'router-config'
+      currentMode: 'router-config',
+      dynamicRoutes: state.routingProtocol !== 'eigrp' ? [] : state.dynamicRoutes
     }
   };
 }
@@ -373,7 +380,8 @@ function cmdRouterBgp(state: SwitchState, input: string, _ctx: CommandContext): 
       routingProtocol: 'bgp',
       ipRouting: true,
       bgpAs: asNumber,
-      currentMode: 'router-config'
+      currentMode: 'router-config',
+      dynamicRoutes: state.routingProtocol !== 'bgp' ? [] : state.dynamicRoutes
     }
   };
 }
@@ -502,7 +510,7 @@ function cmdUsername(state: SwitchState, input: string, _ctx: CommandContext): C
 
   const match = input.match(/^username\s+(\S+)(\s+(privilege\s+(\d+)|password|secret)\s+(.+))?$/i);
   if (!match) {
-    return { success: false, error: '% Invalid username command' };
+    return { success: false, error: IOS_ERRORS.invalidInput };
   }
 
   const username = match[1];
@@ -538,7 +546,7 @@ function cmdVlan(state: SwitchState, input: string, ctx: CommandContext): Comman
 
   const match = input.match(/^vlan\s+(\d+)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid VLAN ID' };
+    return { success: false, error: IOS_ERRORS.invalidInput };
   }
 
   const vlanId = match[1];
@@ -735,14 +743,15 @@ function cmdVtpMode(state: SwitchState, input: string, _ctx: CommandContext): Co
     return { success: false, error: iosModeError() };
   }
 
+  // IOS valid VTP modes: server, client, transparent (NOT 'off')
   const match = input.match(/^vtp\s+mode\s+(server|client|transparent)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid VTP mode' };
+    return { success: false, error: "% Invalid input detected at '^' marker." };
   }
 
   return {
     success: true,
-    newState: { vtpMode: match[1].toLowerCase() as 'server' | 'client' | 'transparent' | 'off' }
+    newState: { vtpMode: match[1].toLowerCase() as 'server' | 'client' | 'transparent' }
   };
 }
 
@@ -775,7 +784,7 @@ function cmdSpanningTreeMode(state: SwitchState, input: string, _ctx: CommandCon
 
   const match = input.match(/^spanning-tree\s+mode\s+(pvst|rapid-pvst|mst)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid spanning-tree mode' };
+    return { success: false, error: IOS_ERRORS.invalidInput };
   }
 
   return {
@@ -832,7 +841,7 @@ function cmdEnableSecret(state: SwitchState, input: string, _ctx: CommandContext
 
   const match = input.match(/^enable\s+secret\s+(.+)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid enable secret command' };
+    return { success: false, error: "% Invalid input detected at '^' marker." };
   }
 
   const password = match[1];
@@ -922,7 +931,7 @@ function cmdBannerMotd(state: SwitchState, input: string, _ctx: CommandContext):
 
   const match = input.match(/^banner\s+motd\s+(.)([\s\S]*?)\1\s*$/i);
   if (!match) {
-    return { success: false, error: '% Invalid banner command. Use: banner motd #message#' };
+    return { success: false, error: "% Invalid input detected at '^' marker." };
   }
 
   return {
@@ -1021,7 +1030,7 @@ function cmdIpDefaultGateway(state: SwitchState, input: string, _ctx: CommandCon
 
   const match = input.match(/^ip\s+default-gateway\s+([0-9.]+)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid default-gateway command' };
+    return { success: false, error: "% Invalid input detected at '^' marker." };
   }
 
   return {
@@ -1054,7 +1063,7 @@ function cmdIpDomainName(state: SwitchState, input: string, _ctx: CommandContext
 
   const match = input.match(/^ip\s+domain-name\s+(.+)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid domain-name command' };
+    return { success: false, error: "% Invalid input detected at '^' marker." };
   }
 
   return {
@@ -1118,7 +1127,8 @@ function cmdRouterRip(state: SwitchState, _input: string, ctx: CommandContext): 
     newState: {
       routingProtocol: 'rip',
       ipRouting: true,
-      currentMode: 'router-config'
+      currentMode: 'router-config',
+      dynamicRoutes: state.routingProtocol !== 'rip' ? [] : state.dynamicRoutes
     }
   };
 }
@@ -1152,7 +1162,8 @@ function cmdRouterOspf(state: SwitchState, input: string, _ctx: CommandContext):
       routingProtocol: 'ospf',
       ipRouting: true,
       ospfProcessId: processId,
-      currentMode: 'router-config'
+      currentMode: 'router-config',
+      dynamicRoutes: state.routingProtocol !== 'ospf' ? [] : state.dynamicRoutes
     }
   };
 }

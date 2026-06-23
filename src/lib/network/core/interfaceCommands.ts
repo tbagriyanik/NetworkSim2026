@@ -430,7 +430,7 @@ function cmdSpeed(state: SwitchState, input: string, ctx: CommandContext): Comma
 
   const match = input.match(/^speed\s+(10|100|1000|10000|auto)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid speed value (10, 100, 1000, 10000, auto)' };
+    return { success: false, error: "% Invalid input detected at '^' marker." };
   }
 
   const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, speed: match[1].toLowerCase() as SpeedMode }));
@@ -456,7 +456,7 @@ function cmdDuplex(state: SwitchState, input: string, _ctx: CommandContext): Com
 
   const match = input.match(/^duplex\s+(half|full|auto)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid duplex value (half, full, auto)' };
+    return { success: false, error: "% Invalid input detected at '^' marker." };
   }
 
   const duplex = match[1].toLowerCase() as DuplexMode;
@@ -650,7 +650,7 @@ function cmdSwitchportMode(state: SwitchState, input: string, ctx: CommandContex
 
   const match = input.match(/^switchport\s+mode\s+(access|trunk|dynamic\s+auto|dynamic\s+desirable|dot1q-tunnel)$/i);
   if (!match) {
-    return { success: false, error: '% Invalid switchport mode' };
+    return { success: false, error: "% Invalid input detected at '^' marker." };
   }
 
   const requestedMode = match[1].toLowerCase().replace(/\s+/g, '-');
@@ -666,7 +666,7 @@ function cmdSwitchportMode(state: SwitchState, input: string, ctx: CommandContex
       return !port?.encapsulation || (port.encapsulation as string) !== 'dot1q';
     });
     if (missingEncapsulation) {
-      return { success: false, error: "% Command rejected: The interface does not support trunking. Use 'switchport trunk encapsulation dot1q' first." };
+      return { success: false, error: "% Command rejected: An interface whose trunk encapsulation is 'Auto' cannot be configured to 'trunk' mode." };
     }
   }
 
@@ -2338,10 +2338,12 @@ function cmdClockRate(state: SwitchState, input: string, _ctx: CommandContext): 
   const port = state.ports[state.currentInterface];
   if (port?.type !== 'serial') return { success: false, error: '% Clock rate is only supported on serial interfaces' };
   const rate = parseInt(match[1]);
-  const validRates = [1200, 2400, 4800, 9600, 19200, 38400, 56000, 64000, 72000, 125000, 148000, 256000, 500000, 512000, 8000000];
+  // IOS 15.x valid clock rates (2000000 is valid per IOS reference)
+  const validRates = [1200, 2400, 4800, 9600, 19200, 38400, 56000, 64000, 72000, 125000, 148000, 256000, 500000, 512000, 2000000, 4000000, 8000000];
   if (!validRates.includes(rate)) {
-    return { success: false, error: `% Invalid clock rate ${rate}. Valid rates: ${validRates.join(', ')}` };
+    return { success: false, error: `% Invalid input detected at '^' marker.` };
   }
+  // Only mark as DCE if interface is wired for DCE (clock rate implies DCE side)
   const updatePort = (p: Port) => ({ ...p, clockRate: rate, dce: true });
   if (state.selectedInterfaces?.length) return { success: true, newState: applyToSelectedPorts(state, updatePort) };
   const newPorts = { ...state.ports };

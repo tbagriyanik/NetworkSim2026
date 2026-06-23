@@ -597,9 +597,17 @@ function cmdShowInterfaces(
     output += `  input flow-control is off, output flow-control is unsupported\n`;
     output += `  ARP type: ARPA, ARP Timeout ${port.arpTimeout || '04:00:00'}\n`;
 
-    // Last input/output times
-    const lastInput = stats.lastInput ? new Date(stats.lastInput).toLocaleTimeString() : 'never';
-    const lastOutput = stats.lastOutput ? new Date(stats.lastOutput).toLocaleTimeString() : 'never';
+    // Last input/output times - IOS uses elapsed HH:MM:SS format, not locale time
+    const fmtElapsed = (ts: number | undefined): string => {
+      if (!ts) return 'never';
+      const elapsed = Math.floor((Date.now() - ts) / 1000);
+      const h = Math.floor(elapsed / 3600);
+      const m = Math.floor((elapsed % 3600) / 60);
+      const s = elapsed % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+    const lastInput = fmtElapsed(stats.lastInput);
+    const lastOutput = fmtElapsed(stats.lastOutput);
     output += `  Last input ${lastInput}, last output ${lastOutput}, output hang never\n`;
 
     // Queueing strategy
@@ -754,8 +762,16 @@ function cmdShowInterface(
   output += `  input flow-control is off, output flow-control is unsupported\n`;
   output += `  ARP type: ARPA, ARP Timeout ${port.arpTimeout || '04:00:00'}\n`;
 
-  const lastInput = stats.lastInput ? new Date(stats.lastInput).toLocaleTimeString() : 'never';
-  const lastOutput = stats.lastOutput ? new Date(stats.lastOutput).toLocaleTimeString() : 'never';
+  const fmtElapsedIface = (ts: number | undefined): string => {
+    if (!ts) return 'never';
+    const elapsed = Math.floor((Date.now() - ts) / 1000);
+    const h = Math.floor(elapsed / 3600);
+    const m = Math.floor((elapsed % 3600) / 60);
+    const s = elapsed % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+  const lastInput = fmtElapsedIface(stats.lastInput);
+  const lastOutput = fmtElapsedIface(stats.lastOutput);
   output += `  Last input ${lastInput}, last output ${lastOutput}, output hang never\n`;
 
   const ingressQ = port.qos?.ingressQueue || 75;
@@ -1082,14 +1098,9 @@ function cmdShowVlan(
     }
   });
 
-  // VLANs assigned to ports but not defined in state.vlans
-  const undefinedVlans = Object.keys(vlanPortMap).filter(
-    vid => vid !== '1' && !knownVlanIds.includes(vid)
-  );
-  undefinedVlans.forEach(vlanId => {
-    const vlanName = `VLAN${vlanId}`.padEnd(32);
-    output += `${vlanId.padEnd(4)} ${vlanName} active     ${(vlanPortMap[vlanId] || []).join(', ')}\n`;
-  });
+
+  // IOS only shows VLANs defined in state.vlans - ports assigned to undefined VLANs
+  // are NOT shown as separate entries (no phantom VLANs)
 
   // Only show SAID/MTU table in full mode (not brief), matching real IOS behavior
   if (!isBrief) {
@@ -1124,6 +1135,14 @@ function cmdShowMacAddressTable(
   // Build MAC table from real connections (topologyConnections)
   const connections = ctx.connections || [];
   const sourceDeviceId = ctx.sourceDeviceId as string;
+
+  // CPU static MAC addresses (Cisco protocol multicast MACs - always present in IOS)
+  const cpuMacs: { vlan: number | string; mac: string; port: string; type: string }[] = [
+    { vlan: 'All', mac: '0100.0ccc.cccc', port: 'CPU', type: 'STATIC' },
+    { vlan: 'All', mac: '0100.0ccc.cccd', port: 'CPU', type: 'STATIC' },
+    { vlan: 'All', mac: '0180.c200.0000', port: 'CPU', type: 'STATIC' },
+  ];
+  cpuMacs.forEach(e => { output += `${String(e.vlan).padEnd(8)}${e.mac.padEnd(18)}${e.type.padEnd(11)}${e.port}\n`; });
 
   // Collect MAC entries from connections only - no legacy data
   const macTable: { vlan: number; mac: string; port: string; type: string }[] = [];
@@ -1586,6 +1605,7 @@ function cmdShowClock(
   ctx: CommandContext
 ): CommandResult {
   const serverIps = state.ntpServers || [];
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
   // Önce NTP sunucularına bağlanmayı dene
   for (const serverIp of serverIps) {
@@ -1617,9 +1637,10 @@ function cmdShowClock(
           const [y, m, d] = targetNtp.date.split('-');
           const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
           const monthName = months[parseInt(m) - 1] || m;
+          const dayName = days[new Date(`${y}-${m}-${d}`).getDay()];
           return {
             success: true,
-            output: `\n*${targetNtp.time}.000 UTC ${monthName} ${parseInt(d)} ${y}\n`
+            output: `\n*${targetNtp.time}.000 UTC ${dayName} ${monthName} ${parseInt(d)} ${y}\n`
           };
         }
       }
@@ -1639,9 +1660,10 @@ function cmdShowClock(
       const monthName = months[adjustedTime.getMonth()];
       const day = adjustedTime.getDate();
       const year = adjustedTime.getFullYear();
+      const dayName = days[adjustedTime.getDay()];
       return {
         success: true,
-        output: `\n*${time}.000 UTC ${monthName} ${day} ${year}\n`
+        output: `\n*${time}.000 UTC ${dayName} ${monthName} ${day} ${year}\n`
       };
     }
   }
@@ -1658,18 +1680,20 @@ function cmdShowClock(
       const monthName = months[adjustedTime.getMonth()];
       const day = adjustedTime.getDate();
       const year = adjustedTime.getFullYear();
+      const dayName = days[adjustedTime.getDay()];
       return {
         success: true,
-        output: `\n*${time}.000 UTC ${monthName} ${day} ${year}\n`
+        output: `\n*${time}.000 UTC ${dayName} ${monthName} ${day} ${year}\n`
       };
     } else if (localNtp.date && localNtp.time) {
       // Fall back to static date/time if no offset
       const [y, m, d] = localNtp.date.split('-');
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const monthName = months[parseInt(m) - 1] || m;
+      const dayName = days[new Date(`${y}-${m}-${d}`).getDay()];
       return {
         success: true,
-        output: `\n*${localNtp.time}.000 UTC ${monthName} ${parseInt(d)} ${y}\n`
+        output: `\n*${localNtp.time}.000 UTC ${dayName} ${monthName} ${parseInt(d)} ${y}\n`
       };
     }
   }
@@ -1677,9 +1701,11 @@ function cmdShowClock(
   // Eğer NTP yoksa, systemClock'u kontrol et
   if (state.systemClock) {
     const { time, day, month, year } = state.systemClock as { time: string; day: string; month: string; year: string };
+    const monthIndex = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(month) + 1;
+    const dayName = days[new Date(`${year}-${String(monthIndex).padStart(2,'0')}-${String(day).padStart(2,'0')}`).getDay()];
     return {
       success: true,
-      output: `\n*${time}.000 UTC ${month} ${parseInt(day)} ${year}\n`
+      output: `\n*${time}.000 UTC ${dayName} ${month} ${parseInt(day)} ${year}\n`
     };
   }
 
@@ -1687,9 +1713,10 @@ function cmdShowClock(
   const now = new Date();
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const time = now.toTimeString().split(' ')[0];
+  const dayName = days[now.getDay()];
   return {
     success: true,
-    output: `\n*${time}.000 UTC ${months[now.getMonth()]} ${now.getDate()} ${now.getFullYear()}\n`
+    output: `\n*${time}.000 UTC ${dayName} ${months[now.getMonth()]} ${now.getDate()} ${now.getFullYear()}\n`
   };
 }
 
@@ -2381,7 +2408,8 @@ function cmdShowSpanningTree(
         const portVlan = port.vlan || port.accessVlan || 1;
         return isTrunk || String(portVlan) === String(vlanId);
       })
-      .filter(([_, port]: [string, Port]) => !port.shutdown && (port.status === 'connected' || port.status === 'blocked'))
+      // IOS shows shutdown ports in STP output as DIS (disabled). Include them.
+      .filter(([_, port]: [string, Port]) => (port.status === 'connected' || port.status === 'blocked' || port.shutdown))
       .sort(([a], [b]) => getPortNumber(a) - getPortNumber(b));
 
     // Skip entire VLAN block if there are no ports to display
@@ -2482,7 +2510,11 @@ function cmdShowSpanningTree(
 
     portEntries.forEach(([portName, port]) => {
       const portNum = getPortNumber(portName);
-      const stpInfo = vlanStpState.get(portName) || { role: 'Desg', state: 'FWD' };
+      // Shutdown (admin down) ports appear in STP as Desg/DIS per IOS behavior
+      const isAdminDown = port.shutdown === true;
+      const stpInfo = isAdminDown
+        ? { role: 'Desg', state: 'DIS' }
+        : (vlanStpState.get(portName) || { role: 'Desg', state: 'FWD' });
       const role = stpInfo.role;
       const status = stpInfo.state;
       const cost = getSTPCost(port);
@@ -3140,7 +3172,7 @@ function cmdShowInterfacesStatus(state: SwitchState, _input: string, _ctx: Comma
     const port = state.ports[portName];
     const status = port.shutdown ? 'disabled' : (port.status === 'notconnect' ? 'notconnect' : 'connected');
     const vlan = port.mode === 'trunk' ? 'trunk' : (port.accessVlan || port.vlan || 1);
-    const duplex = port.duplex === 'half' ? 'h-half' : (port.duplex === 'full' ? 'full' : 'a-full');
+    const duplex = port.duplex === 'half' ? 'half' : (port.duplex === 'full' ? 'full' : 'a-full');
     const speedVal = port.speed === 'auto' ? (port.type === 'gigabitethernet' ? 'a-1000' : 'a-100') : port.speed;
     const typeStr = port.type === 'gigabitethernet' ? '10/100/1000BaseTX' : '10/100BaseTX';
     const name = (port.description || '').substring(0, 18);

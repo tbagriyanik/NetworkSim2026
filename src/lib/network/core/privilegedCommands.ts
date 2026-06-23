@@ -80,7 +80,7 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
 
     const match = input.match(/^ping\s+([0-9a-fA-F:.]+|[\w.-]+)(?:\s+(\d+))?(?:\s+(\d+))?$/i);
     if (!match) {
-        return { success: false, error: '% Invalid ping command. Use: ping <host> [size] [count]' };
+        return { success: false, error: "% Invalid input detected at '^' marker." };
     }
 
     const host = match[1];
@@ -143,7 +143,6 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
             if ((state.debugs?.['sw-vlan packet'] || state.debugs?.['vlan packet']) && connectivity.hops?.length) {
                 debugLines.push(`*Mar  1 00:00:00.002: SW_VLAN-PACKET: frame forwarded across ${Math.max(0, connectivity.hops.length - 1)} hop(s)`);
             }
-            const successCount = parseInt(count, 10) || 5;
             const targetDevice = connectivity.targetId ? devices.find(d => d.id === connectivity.targetId) : undefined;
 
             const srcDist = getWirelessDistance(sourceDevice, devices, ctx.deviceStates);
@@ -164,8 +163,33 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
             }
 
             const fmtMs = (ms: number) => ms <= 1 ? '<1' : String(ms);
-            for (let i = 0; i < successCount; i++) output += '!';
-            output += `\n\nSuccess rate is 100 percent (${successCount}/${successCount}), round-trip min/avg/max = ${fmtMs(pingResult.min)}/${fmtMs(pingResult.avg)}/${fmtMs(pingResult.max)} ms\n`;
+            // Build per-packet symbols: real IOS shows '!' per success, '.' per timeout, 'U' per unreachable
+            const n = parseInt(count, 10) || 5;
+            let packetLine = '';
+            let successes = 0;
+            
+            // For a successful ping, occasionally simulate ARP delay (first packet drops)
+            const dropFirst = Math.random() < 0.3; // 30% chance to simulate ARP timeout
+            
+            for (let i = 0; i < n; i++) {
+                if (i === 0 && dropFirst) {
+                    packetLine += '.';
+                } else if (!srcWired || !dstWired) {
+                    if (Math.random() < 0.05) packetLine += '.'; // Wireless random drop
+                    else { packetLine += '!'; successes++; }
+                } else {
+                    packetLine += '!';
+                    successes++;
+                }
+            }
+            output += packetLine;
+            const successRate = Math.round((successes / n) * 100);
+            output += `\n\nSuccess rate is ${successRate} percent (${successes}/${n})`;
+            if (successes > 0) {
+                output += `, round-trip min/avg/max = ${fmtMs(pingResult.min)}/${fmtMs(pingResult.avg)}/${fmtMs(pingResult.max)} ms\n`;
+            } else {
+                output += '\n';
+            }
             if (debugLines.length > 0) {
                 output = `${debugLines.join('\n')}\n${output}`;
             }
@@ -174,11 +198,19 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
             const n = parseInt(count, 10) || 5;
             const isUnreachable = connectivity?.error?.toLowerCase().includes('unreachable') ||
                 connectivity?.hops?.length === 0;
-            const symbol = isUnreachable ? 'U' : '.';
-            const line = symbol.repeat(n);
+            let packetLine = '';
+            for (let i = 0; i < n; i++) {
+                if (isUnreachable) {
+                    packetLine += Math.random() < 0.3 ? '.' : 'U';
+                } else {
+                    packetLine += '.';
+                }
+            }
+            let failOutput = `\nType escape sequence to abort.\nSending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n${packetLine}\n`;
+            failOutput += `Success rate is 0 percent (0/${n})\n`;
             return {
                 success: false,
-                output: `\nType escape sequence to abort.\nSending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n${line}\n`,
+                output: failOutput,
                 error: connectivity.error || `Destination host unreachable.`,
                 deviceStates: updatedDeviceStates
             };
@@ -579,7 +611,7 @@ function cmdTraceroute(state: SwitchState, input: string, ctx: CommandContext): 
 
     const match = input.match(/^traceroute\s+([0-9.]+|[\w.-]+)$/i);
     if (!match) {
-        return { success: false, error: '% Invalid traceroute command. Use: traceroute <host>' };
+        return { success: false, error: "% Invalid input detected at '^' marker." };
     }
 
     const host = match[1];
@@ -621,14 +653,14 @@ function cmdTraceroute(state: SwitchState, input: string, ctx: CommandContext): 
                 for (let i = 0; i < connectivity.hops.length; i++) {
                     const hop = connectivity.hops[i];
                     const hopTime = Math.floor(Math.random() * 20) + 1; // 1-20ms
-                    output += `  ${i + 1} ${hop} ${hopTime} ms ${hopTime} ms ${hopTime} ms\n`;
+                    output += `  ${i + 1} ${hop} ${hopTime} msec ${hopTime} msec ${hopTime} msec\n`;
                 }
             } else {
                 // Fallback hops
                 const hops = Math.floor(Math.random() * 3) + 2; // 2-4 hops
                 for (let i = 1; i <= hops; i++) {
                     const hopTime = Math.floor(Math.random() * 20) + 1; // 1-20ms
-                    output += `  ${i} ${connectivity.targetId || '192.168.1.1'} ${hopTime} ms ${hopTime} ms ${hopTime} ms\n`;
+                    output += `  ${i} ${connectivity.targetId || '192.168.1.1'} ${hopTime} msec ${hopTime} msec ${hopTime} msec\n`;
                 }
             }
 
@@ -849,7 +881,7 @@ function cmdClockSet(state: SwitchState, input: string, _ctx: CommandContext): C
             timeOffset,
             enabled: true,
             timezone: state.services?.ntp?.timezone || 'UTC',
-            date: configuredDate.toISOString().slice(0, 10),
+            date: `${configuredDate.getFullYear()}-${String(configuredDate.getMonth() + 1).padStart(2, '0')}-${String(configuredDate.getDate()).padStart(2, '0')}`,
             time: configuredDate.toTimeString().slice(0, 8),
         }
     };

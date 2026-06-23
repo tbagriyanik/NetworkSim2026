@@ -1,4 +1,5 @@
 import { SwitchState } from '../types';
+import { encryptType7Password, encryptMd5Password } from '../crypto';
 
 const TIMESTAMP = '2026-02-26 22:00:00';
 
@@ -52,7 +53,7 @@ export function buildRunningConfig(state: SwitchState): string[] {
     }
     if (state.security.enablePassword) {
         if (state.security.servicePasswordEncryption) {
-            lines.push(`enable password 7 ${state.security.enablePassword}`);
+            lines.push(`enable password 7 ${encryptType7Password(state.security.enablePassword)}`);
         } else {
             lines.push(`enable password ${state.security.enablePassword}`);
         }
@@ -65,11 +66,8 @@ export function buildRunningConfig(state: SwitchState): string[] {
     }
 
     state.security.users.forEach(user => {
-        if (state.security.servicePasswordEncryption) {
-            lines.push(`username ${user.username} privilege ${user.privilege} secret 7 ********`);
-        } else {
-            lines.push(`username ${user.username} privilege ${user.privilege} secret ${user.password}`);
-        }
+        // IOS ALWAYSS uses 'secret 5' for passwords created with 'secret' keyword.
+        lines.push(`username ${user.username} privilege ${user.privilege} secret 5 ${encryptMd5Password(user.password)}`);
     });
     if (state.security.users.length > 0) {
         lines.push('!');
@@ -454,9 +452,15 @@ export function buildRunningConfig(state: SwitchState): string[] {
 
     // line con 0
     lines.push('line con 0');
-    if (state.security.consoleLine.password) {
+    if (state.startupConfig?.security?.consoleLine?.password) {
+        if (state.startupConfig.security.servicePasswordEncryption) {
+            lines.push(` password 7 ${encryptType7Password(state.startupConfig.security.consoleLine.password)}`);
+        } else {
+            lines.push(` password ${state.startupConfig.security.consoleLine.password}`);
+        }
+    } else if (state.security.consoleLine.password) {
         if (state.security.servicePasswordEncryption) {
-            lines.push(` password 7 ********`);
+            lines.push(` password 7 ${encryptType7Password(state.security.consoleLine.password)}`);
         } else {
             lines.push(` password ${state.security.consoleLine.password}`);
         }
@@ -471,9 +475,15 @@ export function buildRunningConfig(state: SwitchState): string[] {
 
     // line vty 0 15
     lines.push('line vty 0 15');
-    if (state.security.vtyLines.password) {
+    if (state.startupConfig?.security?.vtyLines?.password) {
+        if (state.startupConfig.security.servicePasswordEncryption) {
+            lines.push(` password 7 ${encryptType7Password(state.startupConfig.security.vtyLines.password)}`);
+        } else {
+            lines.push(` password ${state.startupConfig.security.vtyLines.password}`);
+        }
+    } else if (state.security.vtyLines.password) {
         if (state.security.servicePasswordEncryption) {
-            lines.push(` password 7 ********`);
+            lines.push(` password 7 ${encryptType7Password(state.security.vtyLines.password)}`);
         } else {
             lines.push(` password ${state.security.vtyLines.password}`);
         }
