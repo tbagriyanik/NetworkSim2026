@@ -102,6 +102,19 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show hosts': cmdShowHosts,
   'show ip nat translations': cmdShowIpNatTranslations,
   'show ip nat statistics': cmdShowIpNatStatistics,
+
+  // New: missing show commands
+  'show nameif': cmdShowNameif,
+  'show ip access-group': cmdShowIpAccessGroup,
+  'show dot11 associations': cmdShowDot11Associations,
+  'show dot11 statistics': cmdShowDot11Statistics,
+  'show wlan': cmdShowWlan,
+  'show vtp password': cmdShowVtpPassword,
+  'show ip eigrp neighbors': cmdShowIpEigrpNeighbors,
+  'show ip bgp summary': cmdShowIpBgpSummary,
+  'show ip bgp': cmdShowIpBgp,
+  'show ipv6 rip': cmdShowIpv6Rip,
+  'show ipv6 ospf': cmdShowIpv6Ospf,
 };
 
 function isPhysicalEthernetPort(portId: string): boolean {
@@ -1136,7 +1149,7 @@ function cmdShowMacAddressTable(
   const connections = ctx.connections || [];
   const sourceDeviceId = ctx.sourceDeviceId as string;
 
-  // CPU static MAC addresses (Cisco protocol multicast MACs - always present in IOS)
+  // CPU static MAC addresses (multicast MACs - always present in IOS)
   const cpuMacs: { vlan: number | string; mac: string; port: string; type: string }[] = [
     { vlan: 'All', mac: '0100.0ccc.cccc', port: 'CPU', type: 'STATIC' },
     { vlan: 'All', mac: '0100.0ccc.cccd', port: 'CPU', type: 'STATIC' },
@@ -4357,5 +4370,166 @@ function cmdShowQueuingInterface(state: SwitchState, input: string, _ctx: Comman
   return { success: true, output };
 }
 
+/**
+ * Show Nameif (firewall)
+ */
+function cmdShowNameif(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  let output = '\nInterface                Name                    Security Level\n';
+  output +=    '----------------        --------------------    ---------------\n';
+  Object.keys(state.ports || {}).forEach(portName => {
+    const port = (state.ports || {})[portName];
+    const name = port.nameif || 'not set';
+    const level = port.securityLevel !== undefined ? String(port.securityLevel) : '-';
+    output += `${portName.padEnd(24)}${name.padEnd(24)}${level}\n`;
+  });
+  output += '!\n';
+  return { success: true, output };
+}
 
+/**
+ * Show IP Access-Group (firewall)
+ */
+function cmdShowIpAccessGroup(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  let output = '\nInterface                Applied ACL           Direction\n';
+  output +=    '----------------        --------------------    ---------\n';
+  Object.keys(state.ports || {}).forEach(portName => {
+    const port = (state.ports || {})[portName];
+    if (port.accessGroupIn) {
+      output += `${portName.padEnd(24)}${port.accessGroupIn.padEnd(24)}in\n`;
+    }
+    if (port.accessGroupOut) {
+      output += `${portName.padEnd(24)}${port.accessGroupOut.padEnd(24)}out\n`;
+    }
+  });
+  output += '!\n';
+  return { success: true, output };
+}
+
+/**
+ * Show Dot11 Associations (wireless clients)
+ */
+function cmdShowDot11Associations(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const anyState = state as SwitchState & { wirelessClients?: Array<{ iface?: string; ssid?: string; mac?: string; status?: string }> };
+  const clients = anyState.wirelessClients || [];
+  if (clients.length === 0) {
+    return { success: true, output: '\n% No wireless clients associated\n' };
+  }
+  let output = '\nInterface    SSID                         MAC Address        Status\n';
+  output +=    '--------     ----                         ------------       ------\n';
+  clients.forEach((c: { iface?: string; ssid?: string; mac?: string; status?: string }) => {
+    const iface = c.iface || 'Dot11Radio0';
+    const ssid = c.ssid || '-';
+    const mac = c.mac || '-';
+    const status = c.status || 'associated';
+    output += `${iface.padEnd(12)}${ssid.padEnd(30)}${mac.padEnd(18)}${status}\n`;
+  });
+  output += '!\n';
+  return { success: true, output };
+}
+
+/**
+ * Show Dot11 Statistics
+ */
+function cmdShowDot11Statistics(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const anyState = state as SwitchState & { dot11Stats?: { rxPackets?: number; txPackets?: number; crcErrors?: number; retries?: number } };
+  let output = '\nDot11 Radio Statistics:\n';
+  output += `  Packets Received: ${anyState.dot11Stats?.rxPackets || 0}\n`;
+  output += `  Packets Transmitted: ${anyState.dot11Stats?.txPackets || 0}\n`;
+  output += `  CRC Errors: ${anyState.dot11Stats?.crcErrors || 0}\n`;
+  output += `  Retries: ${anyState.dot11Stats?.retries || 0}\n`;
+  output += '!\n';
+  return { success: true, output };
+}
+
+/**
+ * Show WLAN details
+ */
+function cmdShowWlan(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/show\s+wlan\s+(\d+)/i);
+  const wlanId = match?.[1];
+  const wlans = state.wlans || {};
+  const wlan = wlans[wlanId || ''];
+  if (!wlan) {
+    return { success: false, error: `% WLAN ${wlanId} not found` };
+  }
+  let output = `\nWLAN ID: ${wlanId}\n`;
+  output += `  Name: ${wlan.name || '-'}\n`;
+  output += `  SSID: ${wlan.ssid || '-'}\n`;
+  output += '!\n';
+  return { success: true, output };
+}
+
+/**
+ * Show VTP Password
+ */
+function cmdShowVtpPassword(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const anyState = state as SwitchState & { vtp?: { password?: string } };
+  const vtp = anyState.vtp || {};
+  if (vtp.password) {
+    return { success: true, output: `\nVTP Password: ${vtp.password}\n` };
+  }
+  return { success: true, output: '\n% VTP password not set\n' };
+}
+
+/**
+ * Show IP EIGRP Neighbors
+ */
+function cmdShowIpEigrpNeighbors(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  return { success: true, output: '\n% EIGRP is not configured on this device\n' };
+}
+
+/**
+ * Show IP BGP Summary
+ */
+function cmdShowIpBgpSummary(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  return { success: true, output: '\n% BGP is not configured on this device\n' };
+}
+
+/**
+ * Show IP BGP
+ */
+function cmdShowIpBgp(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  return { success: true, output: '\n% BGP table is empty\n' };
+}
+
+/**
+ * Show IPv6 RIP
+ */
+function cmdShowIpv6Rip(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const anyState = state as SwitchState & { ipv6RipProcesses?: Record<string, { interfaces?: string[] }> };
+  const ripProcesses = anyState.ipv6RipProcesses || {};
+  const keys = Object.keys(ripProcesses);
+  if (keys.length === 0) {
+    return { success: true, output: '\n% IPv6 RIP is not configured\n' };
+  }
+  let output = '\nIPv6 RIP Processes:\n';
+  keys.forEach(name => {
+    const proc = ripProcesses[name];
+    output += `  Process "${name}":\n`;
+    output += `    Interfaces: ${(proc?.interfaces || []).join(', ') || 'none'}\n`;
+  });
+  output += '!\n';
+  return { success: true, output };
+}
+
+/**
+ * Show IPv6 OSPF
+ */
+function cmdShowIpv6Ospf(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const anyState = state as SwitchState & { ipv6OspfProcesses?: Record<string, { routerId?: string; areas?: string[] }> };
+  const ospfProcesses = anyState.ipv6OspfProcesses || {};
+  const keys = Object.keys(ospfProcesses);
+  if (keys.length === 0) {
+    return { success: true, output: '\n% OSPFv3 is not configured\n' };
+  }
+  let output = '\nOSPFv3 Processes:\n';
+  keys.forEach(id => {
+    const proc = ospfProcesses[id];
+    output += `  Process ${id}:\n`;
+    output += `    Router ID: ${proc?.routerId || 'not set'}\n`;
+    output += `    Areas: ${(proc?.areas || []).join(', ') || 'none'}\n`;
+  });
+  output += '!\n';
+  return { success: true, output };
+}
 

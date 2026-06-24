@@ -304,6 +304,7 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `dot11 ssid <name>` | Create/enter dot11 SSID config | WLC/AP |
 | `wlan <name> <id> <ssid>` | Create WLAN profile | WLC only |
 | `wlan shutdown` | Disable WLAN | WLC only |
+| `no wlan <id>` | Delete WLAN profile | WLC only |
 | `no wlan shutdown` | Enable WLAN (undo shutdown) | WLC only |
 | `ap name <name>` | Configure AP name | WLC only |
 | `ap auth-mac <mac>` | Add MAC auth filter for AP join | WLC only |
@@ -335,6 +336,9 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `dot11 station-role {root \| repeater \| client}` | Enter dot11-config and set station role (global config) | WLC/AP |
 | `dot11 mac-filter` | Enter dot11-config and enable MAC filter (global config) | WLC/AP |
 | `show wlan summary` | Display WLAN summary | WLC only |
+| `show wlan <id>` | Display specific WLAN details | WLC only |
+| `show dot11 associations` | Display wireless client associations | WLC/AP |
+| `show dot11 statistics` | Display dot11 radio statistics | WLC/AP |
 | `show ap summary` | Display AP summary | WLC only |
 | `show ap config {ap-name \| all}` | Display AP configuration details | WLC only |
 | `show ap join statistics {ap-name \| all}` | Display AP join statistics | WLC only |
@@ -409,6 +413,8 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no network <ip> [wildcard]` | Remove EIGRP network |
 | `eigrp router-id <ip>` | Set EIGRP router ID |
 | `no eigrp router-id` | Reset EIGRP router ID |
+| `auto-summary` | Enable automatic network summarization |
+| `no auto-summary` | Disable automatic network summarization |
 | `passive-interface <intf>` | Suppress routing updates |
 | `no passive-interface <intf>` | Enable routing updates |
 
@@ -507,6 +513,11 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `show qos interface <name>` | Display QoS interface configuration and statistics |
 | `show queuing interface <name>` | Display interface queuing statistics |
 | `show ipv6 dhcp pool` | Display IPv6 DHCP pools |
+| `show ip eigrp neighbors [<type>]` | Display EIGRP neighbor table |
+| `show ip bgp summary` | Display BGP summary |
+| `show ip bgp` | Display BGP routing table |
+| `show ipv6 rip` | Display IPv6 RIP (RIPng) processes |
+| `show ipv6 ospf` | Display OSPFv3 processes |
 | `show ip ospf neighbor` | Display OSPF neighbors |
 | `show ip ospf interface` | Display OSPF interface status |
 | `show debugging` | Display debugging status |
@@ -514,6 +525,8 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `show ip dhcp snooping` | Display DHCP snooping |
 | `show ip dhcp pool` | Display DHCP pool configuration |
 | `show ip dhcp binding` | Display DHCP bindings |
+| `show nameif` | Display interface names and security levels (Firewall) |
+| `show ip access-group` | Display ACL applied to interfaces (Firewall) |
 | `show interfaces status` | Display interface status |
 | `show cdp` | Display CDP information |
 | `show vtp status` | Display VTP status |

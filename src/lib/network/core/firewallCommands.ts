@@ -1,4 +1,5 @@
 import { CommandHandler } from './commandTypes';
+import type { SwitchState } from '../types';
 
 export const firewallHandlers: Record<string, CommandHandler> = {
   'nameif': (state, input) => {
@@ -53,5 +54,34 @@ export const firewallHandlers: Record<string, CommandHandler> = {
       return { success: true, newState };
     }
     return { success: false, error: '% Error: No interface selected' };
-  }
+  },
+  'no nameif': (state, _input) => {
+    if (state.currentInterface && state.ports[state.currentInterface]) {
+      const newState = {
+        ports: {
+          ...state.ports,
+          [state.currentInterface]: {
+            ...state.ports[state.currentInterface],
+            nameif: undefined
+          }
+        }
+      };
+      return { success: true, output: `\n% Interface name removed\n`, newState };
+    }
+    return { success: false, error: '% Error: No interface selected' };
+  },
+  'same-security-traffic': (_state, _input) => {
+    return {
+      success: true,
+      output: '\n% Same-security traffic permitted between interfaces with the same security level.\n',
+      newState: { sameSecurityTraffic: true } as unknown as Partial<SwitchState>
+    };
+  },
+  'no same-security-traffic': (_state, _input) => {
+    return {
+      success: true,
+      output: '\n% Same-security traffic denied between interfaces with the same security level.\n',
+      newState: { sameSecurityTraffic: false } as unknown as Partial<SwitchState>
+    };
+  },
 };

@@ -748,6 +748,20 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1,
     capability: 'firewall'
   },
+  'same-security-traffic': {
+    pattern: /^same-security-traffic\s+permit\s+inter-interface$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'firewall'
+  },
+  'no same-security-traffic': {
+    pattern: /^no\s+same-security-traffic\s+permit\s+inter-interface$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'firewall'
+  },
 
   // Interface komutları - interface ÖNCE gelmeli (daha spesifik)
   'interface': {
@@ -2724,6 +2738,140 @@ export const commandPatterns: Record<string, CommandPattern> = {
     modes: ['privileged'],
     minArgs: 0,
     maxArgs: 0
+  },
+
+  // ── Firewall commands ──────────────────────────────────────────────────────
+  'no nameif': {
+    pattern: /^no\s+nameif$/i,
+    modes: ['interface'],
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'firewall'
+  },
+  'show nameif': {
+    pattern: /^show\s+nameif$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'firewall'
+  },
+  'show ip access-group': {
+    pattern: /^show\s+ip\s+access-group(?:\s+(\S+))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1,
+    capability: 'firewall'
+  },
+
+  // ── Wireless show commands ─────────────────────────────────────────────────
+  'show dot11 associations': {
+    pattern: /^show\s+dot11\s+associations(?:\s+(\S+))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1,
+    capability: 'routing'
+  },
+  'show dot11 statistics': {
+    pattern: /^show\s+dot11\s+statistics(?:\s+(\S+))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1,
+    capability: 'routing'
+  },
+  'show wlan': {
+    pattern: /^show\s+wlan\s+(\d+)$/i,
+    modes: ['privileged'],
+    minArgs: 1,
+    maxArgs: 1,
+    capability: 'routing'
+  },
+  'no wlan': {
+    pattern: /^no\s+wlan\s+(\d+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1,
+    capability: 'routing'
+  },
+  // ── Additional show commands ──────────────────────────────────────────────
+  'show vtp password': {
+    pattern: /^show\s+vtp\s+password$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'show ip eigrp neighbors': {
+    pattern: /^show\s+ip\s+eigrp\s+neighbors(?:\s+(\S+))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'show ip bgp summary': {
+    pattern: /^show\s+ip\s+bgp\s+summary$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'show ip bgp': {
+    pattern: /^show\s+ip\s+bgp(?:\s+(\S+))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'show ipv6 rip': {
+    pattern: /^show\s+ipv6\s+rip\s+(\S+)?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'show ipv6 ospf': {
+    pattern: /^show\s+ipv6\s+ospf(?:\s+(\S+))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+
+  // ── Router config subcommands ────────────────────────────────────────────
+  'eigrp router-id': {
+    pattern: /^eigrp\s+router-id\s+([0-9.]+)$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no eigrp router-id': {
+    pattern: /^no\s+eigrp\s+router-id$/i,
+    modes: ['router-config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'bgp router-id': {
+    pattern: /^bgp\s+router-id\s+([0-9.]+)$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'auto-summary': {
+    pattern: /^auto-summary$/i,
+    modes: ['router-config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'area range': {
+    pattern: /^area\s+(\d+)\s+range\s+([0-9.]+)\s+([0-9.]+)$/i,
+    modes: ['router-config'],
+    minArgs: 3,
+    maxArgs: 3
+  },
+  'area stub': {
+    pattern: /^area\s+(\d+)\s+stub$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'area nssa': {
+    pattern: /^area\s+(\d+)\s+nssa$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
   },
 
   // ── End of Configuration ──────────────────────────────────────────────────

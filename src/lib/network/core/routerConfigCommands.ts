@@ -19,6 +19,13 @@ export const routerConfigHandlers: Record<string, CommandHandler> = {
     'no neighbor': cmdNoNeighborRemoteAs,
     'no passive-interface': cmdNoPassiveInterface,
     'no router-id': cmdNoRouterId,
+    'eigrp router-id': cmdEigrpRouterId,
+    'no eigrp router-id': cmdNoEigrpRouterId,
+    'bgp router-id': cmdBgpRouterId,
+    'auto-summary': cmdAutoSummary,
+    'area range': cmdAreaRange,
+    'area stub': cmdAreaStub,
+    'area nssa': cmdAreaNssa,
 };
 
 // Router subcommands in OSPF/RIP config mode
@@ -250,6 +257,97 @@ function cmdDefaultInformation(_state: SwitchState, input: string): CommandResul
         newState: {
             defaultInformation: match[1]
         }
+    };
+}
+
+/**
+ * eigrp router-id
+ */
+function cmdEigrpRouterId(_state: SwitchState, input: string): CommandResult {
+    const match = input.match(/^eigrp\s+router-id\s+([0-9.]+)$/i);
+    if (!match) return { success: false, error: '% Incomplete command.' };
+    const routerId = match[1];
+    return {
+        success: true,
+        output: `EIGRP router-id set to ${routerId}`,
+        newState: { routerId: routerId, routingProtocol: 'eigrp' }
+    };
+}
+
+/**
+ * no eigrp router-id
+ */
+function cmdNoEigrpRouterId(_state: SwitchState, _input: string): CommandResult {
+    return {
+        success: true,
+        output: 'EIGRP router-id removed',
+        newState: { routerId: undefined }
+    };
+}
+
+/**
+ * bgp router-id
+ */
+function cmdBgpRouterId(_state: SwitchState, input: string): CommandResult {
+    const match = input.match(/^bgp\s+router-id\s+([0-9.]+)$/i);
+    if (!match) return { success: false, error: '% Incomplete command.' };
+    const routerId = match[1];
+    return {
+        success: true,
+        output: `BGP router-id set to ${routerId}`,
+        newState: { routerId: routerId, routingProtocol: 'bgp' }
+    };
+}
+
+/**
+ * auto-summary
+ */
+function cmdAutoSummary(_state: SwitchState, _input: string): CommandResult {
+    return {
+        success: true,
+        output: 'Auto-summary enabled',
+        newState: { autoSummary: true }
+    };
+}
+
+/**
+ * area range
+ */
+function cmdAreaRange(_state: SwitchState, input: string): CommandResult {
+    const match = input.match(/^area\s+(\d+)\s+range\s+([0-9.]+)\s+([0-9.]+)$/i);
+    if (!match) return { success: false, error: '% Incomplete command.' };
+    return {
+        success: true,
+        output: `Area ${match[1]} range ${match[2]} ${match[3]} configured`,
+        newState: { areaRange: { area: match[1], network: match[2], mask: match[3] } } as unknown as Partial<SwitchState>
+    };
+}
+
+/**
+ * area stub
+ */
+function cmdAreaStub(state: SwitchState, input: string): CommandResult {
+    const match = input.match(/^area\s+(\d+)\s+stub$/i);
+    if (!match) return { success: false, error: '% Incomplete command.' };
+    const stubAreas: string[] = (state as SwitchState & { ospfStubAreas?: string[] }).ospfStubAreas || [];
+    return {
+        success: true,
+        output: `Area ${match[1]} configured as stub`,
+        newState: { ospfStubAreas: [...stubAreas, match[1]] } as unknown as Partial<SwitchState>
+    };
+}
+
+/**
+ * area nssa
+ */
+function cmdAreaNssa(state: SwitchState, input: string): CommandResult {
+    const match = input.match(/^area\s+(\d+)\s+nssa$/i);
+    if (!match) return { success: false, error: '% Incomplete command.' };
+    const nssaAreas: string[] = (state as SwitchState & { ospfNssaAreas?: string[] }).ospfNssaAreas || [];
+    return {
+        success: true,
+        output: `Area ${match[1]} configured as NSSA`,
+        newState: { ospfNssaAreas: [...nssaAreas, match[1]] } as unknown as Partial<SwitchState>
     };
 }
 

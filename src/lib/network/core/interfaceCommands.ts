@@ -66,6 +66,7 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'ip default-gateway': cmdIpDefaultGateway,
   'no ip default-gateway': cmdNoIpDefaultGateway,
   'wlan': cmdWlan,
+  'no wlan': cmdNoWlan,
   'security wpa psk set-key': cmdSecurityWpaPsk,
   'channel': cmdChannel,
   'station-role': cmdStationRole,
@@ -1326,6 +1327,23 @@ function cmdWlan(state: SwitchState, input: string, _ctx: CommandContext): Comma
   }
 
   return { success: true, newState: { ports: newPorts, wlans: newWlans } };
+}
+
+/**
+ * No WLAN - Delete a WLAN configuration
+ */
+function cmdNoWlan(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/^no\s+wlan\s+(\d+)$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid command. Usage: no wlan <wlan-id>' };
+  }
+  const wlanId = match[1];
+  const wlans = { ...(state.wlans || {}) };
+  if (!wlans[wlanId]) {
+    return { success: false, error: `% WLAN ${wlanId} does not exist` };
+  }
+  delete wlans[wlanId];
+  return { success: true, newState: { wlans } };
 }
 
 /**
