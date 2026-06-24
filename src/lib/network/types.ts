@@ -438,6 +438,7 @@ export interface SwitchState {
     presharedKey: string;
     encryption: 'none' | 'aes-ccm' | 'tkip' | 'aes-tkip';
     guestMode: boolean;
+    mbssid?: boolean;
   }>;
   wirelessRadios?: Record<string, {
     id: string;
@@ -492,6 +493,8 @@ export interface SwitchState {
   // OSPF areas
   ospfAreas?: number[];
   isAbr?: boolean;
+  // World mode for dot11d
+  worldModeDot11d?: string;
   // IoT specific configuration
   iotConfig?: {
     sensorType?: string;

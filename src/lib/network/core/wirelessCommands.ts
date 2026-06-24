@@ -523,6 +523,195 @@ export const cmdShowWireless: CommandHandler = (state, _input, ctx) => {
     return { success: true, output };
 };
 
+export const cmdApName: CommandHandler = (state, input, _ctx) => {
+    if (state.currentMode !== 'config') {
+        return { success: false, error: iosModeError() };
+    }
+
+    const match = input.match(/^ap\s+name\s+(\S+)$/i);
+    if (!match) {
+        return { success: false, error: IOS_ERRORS.invalidInput };
+    }
+
+    const apName = match[1];
+
+    if (!state.wlcAps) {
+        state.wlcAps = {};
+    }
+
+    if (!state.wlcAps[apName]) {
+        state.wlcAps[apName] = {
+            name: apName,
+            macAddress: '0000.0000.0000',
+            status: 'disconnected',
+        };
+    }
+
+    state.currentApName = apName;
+
+    return { success: true, output: '' };
+};
+
+export const cmdApAuthMac: CommandHandler = (state, input, _ctx) => {
+    if (state.currentMode !== 'config') {
+        return { success: false, error: iosModeError() };
+    }
+
+    const match = input.match(/^ap\s+auth-mac\s+([0-9a-fA-F]{4}\.[0-9a-fA-F]{4}\.[0-9a-fA-F]{4})$/i);
+    if (!match) {
+        return { success: false, error: IOS_ERRORS.invalidInput };
+    }
+
+    if (!state.currentApName || !state.wlcAps || !state.wlcAps[state.currentApName]) {
+        return { success: false, error: 'Error: No AP selected' };
+    }
+
+    state.wlcAps[state.currentApName].macAddress = match[1].toLowerCase();
+
+    return { success: true, output: '' };
+};
+
+export const cmdApRfChannel: CommandHandler = (state, input, _ctx) => {
+    if (state.currentMode !== 'config') {
+        return { success: false, error: iosModeError() };
+    }
+
+    const match = input.match(/^ap\s+rf-channel\s+(\d+)$/i);
+    if (!match) {
+        return { success: false, error: IOS_ERRORS.invalidInput };
+    }
+
+    if (!state.currentApName || !state.wlcAps || !state.wlcAps[state.currentApName]) {
+        return { success: false, error: 'Error: No AP selected' };
+    }
+
+    const channel = parseInt(match[1]);
+    if (channel < 1 || channel > 165) {
+        return { success: false, error: 'Error: Invalid RF channel (1-165)' };
+    }
+
+    state.wlcAps[state.currentApName].rfChannel = channel;
+
+    return { success: true, output: '' };
+};
+
+export const cmdApDot115Ghz: CommandHandler = (state, input, _ctx) => {
+    if (state.currentMode !== 'config') {
+        return { success: false, error: iosModeError() };
+    }
+
+    const match = input.match(/^ap\s+dot11\s+5-ghz\s+(.+)$/i);
+    if (!match) {
+        return { success: false, error: IOS_ERRORS.invalidInput };
+    }
+
+    if (!state.currentApName || !state.wlcAps || !state.wlcAps[state.currentApName]) {
+        return { success: false, error: 'Error: No AP selected' };
+    }
+
+    const value = match[1].trim();
+    const channelNum = parseInt(value);
+    if (!isNaN(channelNum) && channelNum >= 1 && channelNum <= 200) {
+        state.wlcAps[state.currentApName].rfChannel = channelNum;
+    } else {
+        state.wlcAps[state.currentApName].power = value;
+    }
+
+    return { success: true, output: '' };
+};
+
+export const cmdMbssid: CommandHandler = (state, _input, _ctx) => {
+    if (state.currentMode !== 'ssid-config') {
+        return { success: false, error: iosModeError() };
+    }
+
+    if (!state.wirelessConfig || !state.currentSsid) {
+        return { success: false, error: IOS_ERRORS.invalidInput };
+    }
+
+    state.wirelessConfig[state.currentSsid].mbssid = true;
+
+    return { success: true, output: '' };
+};
+
+export const cmdNoMbssid: CommandHandler = (state, _input, _ctx) => {
+    if (state.currentMode !== 'ssid-config') {
+        return { success: false, error: iosModeError() };
+    }
+
+    if (!state.wirelessConfig || !state.currentSsid) {
+        return { success: false, error: IOS_ERRORS.invalidInput };
+    }
+
+    state.wirelessConfig[state.currentSsid].mbssid = false;
+
+    return { success: true, output: '' };
+};
+
+export const cmdNoSecurityWpaPsk: CommandHandler = (state, _input, _ctx) => {
+    if (state.currentMode !== 'config') {
+        return { success: false, error: iosModeError() };
+    }
+
+    if (!state.wlcWlans || Object.keys(state.wlcWlans).length === 0) {
+        return { success: false, error: 'Error: No WLANs configured' };
+    }
+
+    for (const wlan of Object.values(state.wlcWlans)) {
+        wlan.security = 'open';
+        wlan.password = undefined;
+    }
+
+    return { success: true, output: '' };
+};
+
+export const cmdWlanShutdown: CommandHandler = (state, _input, _ctx) => {
+    if (state.currentMode !== 'config') {
+        return { success: false, error: iosModeError() };
+    }
+
+    if (!state.wlcWlans || Object.keys(state.wlcWlans).length === 0) {
+        return { success: false, error: 'Error: No WLANs configured' };
+    }
+
+    for (const wlan of Object.values(state.wlcWlans)) {
+        wlan.status = 'disabled';
+    }
+
+    return { success: true, output: '' };
+};
+
+export const cmdNoWlanShutdown: CommandHandler = (state, _input, _ctx) => {
+    if (state.currentMode !== 'config') {
+        return { success: false, error: iosModeError() };
+    }
+
+    if (!state.wlcWlans || Object.keys(state.wlcWlans).length === 0) {
+        return { success: false, error: 'Error: No WLANs configured' };
+    }
+
+    for (const wlan of Object.values(state.wlcWlans)) {
+        wlan.status = 'enabled';
+    }
+
+    return { success: true, output: '' };
+};
+
+export const cmdWorldModeDot11d: CommandHandler = (state, input, _ctx) => {
+    if (state.currentMode !== 'config') {
+        return { success: false, error: iosModeError() };
+    }
+
+    const match = input.match(/^world-mode\s+dot11d\s+([1-9]|-1)$/i);
+    if (!match) {
+        return { success: false, error: IOS_ERRORS.invalidInput };
+    }
+
+    state.worldModeDot11d = match[1];
+
+    return { success: true, output: '' };
+};
+
 // Wireless command handlers map
 export const wirelessHandlers: Record<string, CommandHandler> = {
     'dot11 ssid': cmdDot11Ssid,
@@ -538,5 +727,15 @@ export const wirelessHandlers: Record<string, CommandHandler> = {
     'dot11 station-role': cmdStationRole,
     'dot11 mac-filter': cmdMacFilter,
     'show wireless': cmdShowWireless,
+    'ap name': cmdApName,
+    'ap auth-mac': cmdApAuthMac,
+    'ap rf-channel': cmdApRfChannel,
+    'ap dot11 5-ghz': cmdApDot115Ghz,
+    'mbssid': cmdMbssid,
+    'no mbssid': cmdNoMbssid,
+    'no security wpa psk': cmdNoSecurityWpaPsk,
+    'wlan shutdown': cmdWlanShutdown,
+    'no wlan shutdown': cmdNoWlanShutdown,
+    'world-mode dot11d': cmdWorldModeDot11d,
 };
 

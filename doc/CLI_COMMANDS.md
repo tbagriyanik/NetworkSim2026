@@ -131,7 +131,7 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `ip ssh time-out <seconds>` | Set SSH timeout |
 | `no ip ssh time-out` | Remove SSH timeout |
 | `ip dhcp snooping` | Enable DHCP snooping |
-| `ip dhcp snooping vlan <list>` | Enable DHCP snooping on VLANs |
+| `ip dhcp snooping vlan <ids>` | Enable DHCP snooping on VLANs |
 | `no ip dhcp snooping` | Disable DHCP snooping |
 | `ip arp inspection` | Enable ARP inspection |
 | `service password-encryption` | Encrypt passwords |
@@ -150,10 +150,14 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `vtp domain <name>` | Set VTP domain |
 | `vtp password <password>` | Set VTP password |
 | `spanning-tree mode {pvst\|rapid-pvst\|mst}` | Set STP mode |
-| `no spanning-tree` | Disable spanning-tree |
 | `spanning-tree vlan <id> priority <val>` | Set VLAN STP priority |
 | `spanning-tree vlan <id> root` | Set VLAN STP root |
 | `spanning-tree portfast default` | Enable PortFast globally |
+| `spanning-tree bpduguard enable` | Enable BPDU Guard |
+| `spanning-tree bpduguard disable` | Disable BPDU Guard |
+| `spanning-tree bpduguard` | ⚠️ Stub - Command deprecated |
+| `spanning-tree bpduguard` | ⚠️ Stub - BPDU Guard enable/disable removed |
+| `no spanning-tree` | Disable spanning-tree |
 | `username <name> [privilege <lvl>] [password\|secret] <pass>` | Create user |
 | `no username <name>` | Remove user |
 | `cdp run` | Enable CDP globally |
@@ -210,91 +214,519 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no ip route <network> <mask> [next-hop]` | Remove static IPv4 route (next-hop optional if single route) |
 | `ipv6 route <prefix>/<len> <next-hop>` | Add static IPv6 route |
 | `no ipv6 route <prefix>/<len> [next-hop]` | Remove static IPv6 route |
+| `class-map [match-all\|match-any] <name>` | ⚠️ Stub - Create QoS class map |
+| `policy-map <name>` | ⚠️ Stub - Create QoS policy map |
+| `template <name>` | ⚠️ Stub - Enter template configuration mode |
+| `access-list <id> <action> <condition>` | Create numbered ACL (1-99 standard, 100-199 extended) |
+| `ip access-list {standard|extended} <name>` | Create named ACL |
+| `no access-list <id>` | Remove numbered ACL |
+| `ip nat inside source {static <local> <global> | list <acl> {pool <name> | interface <intf>} [overload]}` | Configure NAT |
+| `ip nat pool <name> <start> <end> {netmask <mask} | prefix-length <len>}` | Define NAT pool |
+| `no ip nat ...` | Remove NAT configuration |
+| `ip route <network> <mask> <next-hop>` | Add static IPv4 route |
+| `no ip route <network> <mask> [next-hop]` | Remove static IPv4 route (next-hop optional if single route) |
+| `ipv6 route <prefix>/<len> <next-hop>` | Add static IPv6 route |
+| `no ipv6 route <prefix>/<len> [next-hop]` | Remove static IPv6 route |
 
 ### Interface Configuration Commands
+### Interface Configuration Commands
+
+#### Interface Properties
+
 | Command | Description |
 |---------|-------------|
 | `shutdown` | Administratively disable interface |
 | `no shutdown` | Enable interface |
-| `speed {10\|100\|1000\|auto}` | Set interface speed |
-| `duplex {half\|full\|auto}` | Set duplex mode |
+| `speed {10|100|1000|10000|auto}` | Set interface speed |
+| `duplex {half|full|auto}` | Set duplex mode |
 | `description <text>` | Set interface description |
 | `no description` | Clear description |
+| `mtu <size>` | Set interface MTU |
+| `keepalive` | Enable keepalive |
+| `no keepalive` | Disable keepalive |
+| `carrier-delay <ms>` | ⚠️ Stub - Set carrier delay |
+| `load-interval <sec>` | ⚠️ Stub - Set load statistics interval |
+
+#### Switching Configuration
+
+| Command | Description |
+|---------|-------------|
 | `switchport mode access` | Set access mode |
 | `switchport mode trunk` | Set trunk mode |
 | `switchport mode dynamic auto` | Set DTP dynamic auto mode |
 | `switchport mode dynamic desirable` | Set DTP dynamic desirable mode |
 | `switchport mode dot1q-tunnel` | Set dot1q tunnel mode |
 | `no switchport mode` | Reset switchport mode |
-| `switchport access vlan <id>` | Assign VLAN |
-| `no switchport access vlan` | Remove VLAN assignment |
-| `switchport trunk native vlan <id>` | Set native VLAN |
-| `switchport trunk allowed vlan <list>` | Set allowed VLANs |
-| `switchport nonegotiate` | Disable DTP |
-| `switchport voice vlan <id>` | Set voice VLAN |
-| `switchport port-security` | Enable port security |
-| `switchport port-security maximum <n>` | Set max MAC addresses |
-| `switchport port-security violation {protect\|restrict\|shutdown}` | Set violation action |
-| `switchport port-security mac-address sticky` | Enable sticky MAC |
-| `no switchport port-security` | Disable port security |
 | `no switchport` | Convert to routed port (L3) |
 | `spanning-tree portfast` | Enable PortFast |
+| `spanning-tree portfast default` | Enable PortFast globally |
 | `spanning-tree bpduguard enable` | Enable BPDU Guard |
 | `spanning-tree bpduguard disable` | Disable BPDU Guard |
 | `spanning-tree cost <cost>` | Set STP cost |
 | `spanning-tree priority <prio>` | Set STP priority |
-| `no spanning-tree` | Disable spanning-tree on interface |
+| `no spanning-tree` | Disable spanning-tree |
+| `spanning-tree vlan <id> priority <val>` | Set VLAN STP priority |
+| `spanning-tree vlan <id> root` | Set VLAN STP root |
+
+#### Port Security
+
+| Command | Description |
+|---------|-------------|
+| `switchport port-security` | Enable port security |
+| `switchport port-security maximum <n>` | Set max MAC addresses |
+| `switchport port-security violation {protect|restrict|shutdown}` | Set violation action |
+| `switchport port-security mac-address sticky` | Enable sticky MAC |
+| `no switchport port-security` | Disable port security |
+| `switchport port-security aging time <min>` | ⚠️ Stub - Set aging time |
+| `switchport port-security aging type <type>` | ⚠️ Stub - Set aging type |
+| `switchport port-security mac-address <mac>` | ⚠️ Stub - Set static MAC address |
+
+#### Blocking and Isolation
+
+| Command | Description |
+|---------|-------------|
+| `switchport block {unicast|multicast}` | ⚠️ Stub - Block traffic |
+| `switchport protected` | ⚠️ Stub - Protected port |
+
+#### IP Configuration
+
+| Command | Description |
+|---------|-------------|
 | `ip address <ip> <mask>` | Assign IP address with subnet mask |
 | `no ip address` | Remove IP address |
+| `ip default-gateway <ip>` | Set default gateway |
+| `no ip default-gateway` | Remove default gateway |
+| `ip helper-address <ip>` | Set DHCP relay |
+| `no ip helper-address` | Remove DHCP relay |
+| `ip verify source` | Enable IP Source Guard |
+
+#### NAT Configuration
+
+| Command | Description |
+|---------|-------------|
 | `ip nat {inside | outside}` | Set interface NAT side |
 | `no ip nat {inside | outside}` | Remove NAT side |
 | `standby <group> ip <virtual-ip>` | Configure HSRP virtual IP |
 | `standby <group> priority <prio>` | Set HSRP priority |
 | `standby <group> preempt` | Enable HSRP preemption |
 | `no standby <group> ...` | Remove HSRP configuration |
-| `ip default-gateway <ip>` | Set default gateway (interface) |
-| `no ip default-gateway` | Remove default gateway (interface) |
-| `ip helper-address <ip>` | Set DHCP relay |
-| `no ip helper-address` | Remove DHCP relay |
+
+#### Encapsulation Configuration
+
+| Command | Description |
+|---------|-------------|
+| `encapsulation hdlc` | Set HDLC encapsulation (default) |
+| `encapsulation ppp` | Set PPP encapsulation |
+| `encapsulation dot1q <vlan>` | Set 802.1Q encapsulation on subinterface |
+| `no encapsulation` | Reset to default encapsulation |
+
+#### Serial Configuration
+
+| Command | Description |
+|---------|-------------|
 | `cdp enable` | Enable CDP on interface |
 | `no cdp enable` | Disable CDP on interface |
-| `channel-group <n> mode {on\|active\|passive}` | Configure EtherChannel |
+| `channel-group <n> mode {on|active|passive}` | Configure EtherChannel |
 | `no channel-group` | Remove from channel |
+| `ppp authentication pap` | Enable PPP authentication |
+| `ppp authentication chap` | Enable PPP authentication |
+| `no ppp authentication` | Disable PPP authentication |
+| `ppp pap sent-username <name> password <pass>` | Set PPP credentials |
+| `ip directed-broadcast` | Enable directed broadcast |
+| `no ip directed-broadcast` | Disable directed broadcast |
+| `ip proxy-arp` | Enable proxy ARP |
+| `no ip proxy-arp` | Disable proxy ARP |
+
+#### Quality of Service
+
+| Command | Description |
+|---------|-------------|
+| `mls qos trust {cos|dscp}` | Set QoS trust state |
+| `mls qos cos <val>` | Set default CoS value |
+| `priority-queue out` | ⚠️ Stub - Enable priority queue |
+| `queue-set <n>` | ⚠️ Stub - Apply QoS queue set |
+| `tx-queue <n>` | ⚠️ Stub - Configure transmit queue |
+| `storm-control {broadcast|multicast|unicast} level <%>` | Set storm control |
+
+#### Management Commands
+
+| Command | Description |
+|---------|-------------|
+| `cdp timer <sec>` | ⚠️ Stub - Set CDP update interval |
+| `cdp holdtime <sec>` | ⚠️ Stub - Set CDP hold time |
+| `clear arp-cache` | Clear ARP cache |
+| `clear mac address-table` | Clear MAC address table |
+| `clear counters` | Clear interface counters |
+| `clear line <n>` | ⚠️ Stub - Clear a terminal line |
+| `clear interface <name>` | ⚠️ Stub - Clear interface counters |
 | `debug` / `no debug` | Interface debugging |
+| `undebug all` | ⚠️ Stub - Disable all debugging |
+| `undebug` | ⚠️ Stub - Disable all debugging (alias) |
 | `monitor session <n>` | ⚠️ Stub - Configure SPAN/RSPAN |
 | `no monitor session` | ⚠️ Stub - Remove monitoring |
 | `no udld` | Disable UDLD on interface |
-| `no ip proxy-arp` | Disable proxy ARP |
-| `ip proxy-arp` | Enable proxy ARP |
-| `ip directed-broadcast` | Enable directed broadcast forwarding |
-| `no ip directed-broadcast` | Disable directed broadcast |
-| `keepalive` | Enable keepalive |
-| `no keepalive` | Disable keepalive |
-| `mtu <size>` | Set interface MTU |
-| `channel-protocol {lacp\|pagp}` | ⚠️ Stub - Set EtherChannel protocol |
-| `priority-queue out` | ⚠️ Stub - Enable priority queue on interface |
+
+#### Additional Interface Commands
+
+| Command | Description |
+|---------|-------------|
+| `ip access-group <id> {in|out}` | Apply IPv4 ACL to interface |
+
+### Wireless (WiFi) Commands
+
+> **Note**: These commands are only valid on Wireless LAN Controllers (WLC) or autonomous Access Points (AP). They are NOT supported on switches.
+
+| Command | Description | Device Type |
+|---------|-------------|-------------|
+| `dot11 ssid <name>` | Create/enter dot11 SSID config | WLC/AP |
+| `wlan <name> <id> <ssid>` | Create WLAN profile | WLC only |
+| `wlan shutdown` | Disable WLAN | WLC only |
+| `no wlan <id>` | Delete WLAN profile | WLC only |
+| `no wlan shutdown` | Enable WLAN (undo shutdown) | WLC only |
+| `ap name <name>` | Configure AP name | WLC only |
+| `ap auth-mac <mac>` | Add MAC auth filter for AP join | WLC only |
+| `ap rf-channel <num>` | Set AP RF channel | WLC only |
+| `ap dot11 5-ghz <cmd>` | Configure 5 GHz radio on AP | WLC only |
+
+| `authentication open` | Set open authentication (in ssid-config) | WLC/AP |
+| `authentication shared` | Set shared key auth (in ssid-config) | WLC/AP |
+| `authentication key-management wpa version <2|3>` | Set WPA key management (in ssid-config) | WLC/AP |
+| `wpa-psk ascii <key>` | Set WPA pre-shared key | WLC/AP |
+| `mbssid` | Enable MBSSID (in ssid-config) | WLC/AP |
+| `no mbssid` | Disable MBSSID (in ssid-config) | WLC/AP |
+| `guest-mode` | Enable guest mode (in ssid-config) | WLC/AP |
+| `no guest-mode` | Disable guest mode (in ssid-config) | WLC/AP |
+| `ssid <name>` | Set SSID name (in dot11-config) | WLC/AP |
+| `no ssid <name>` | Remove SSID (in dot11-config) | WLC/AP |
+| `station-role root` | Set AP to root mode | WLC/AP |
+| `channel <num>` | Set RF channel (in dot11-config) | WLC/AP |
+| `no channel` | Reset to auto channel selection | WLC/AP |
+| `speed <rate>` | Set basic data rate (in dot11-config) | WLC/AP |
+| `power local <val>` | Set local power level (in dot11-config) | WLC/AP |
+| `power client <val>` | Set client power level (in dot11-config) | WLC/AP |
+| `world-mode dot11d {1|-1}` | Enable 802.11d world mode (in dot11-config) | WLC/AP |
+| `security wpa psk set-key ascii 0 <password>` | Set WPA PSK key (dot11-config) | WLC/AP |
+| `no security wpa psk` | Remove WPA PSK key | WLC/AP |
+| `encryption mode ciphers {tkip|aes|tkip aes}` | Set encryption cipher (dot11-config) | WLC/AP |
+| `mac-filter` | Enable MAC filter (dot11-config) | WLC/AP |
+| `interface dot11radio <n>` | Enter dot11 radio interface config | WLC/AP |
+| `dot11 channel <num>` | Enter dot11-config and set RF channel (global config) | WLC/AP |
+| `dot11 power {local | client} <val>` | Enter dot11-config and set power level (global config) | WLC/AP |
+| `dot11 station-role {root | repeater | client}` | Enter dot11-config and set station role (global config) | WLC/AP |
+| `dot11 mac-filter` | Enter dot11-config and enable MAC filter (global config) | WLC/AP |
+| `show wlan summary` | Display WLAN summary | WLC only |
+| `show wlan <id>` | Display specific WLAN details | WLC only |
+| `show dot11 associations` | Display wireless client associations | WLC/AP |
+| `show dot11 statistics` | Display dot11 radio statistics | WLC/AP |
+| `show ap summary` | Display AP summary | WLC only |
+| `show ap config {ap-name | all}` | Display AP configuration details | WLC only |
+| `show ap join statistics {ap-name | all}` | Display AP join statistics | WLC only |
+
+### Line Configuration Commands
+
+| Command | Description |
+|---------|-------------|
+| `line console <n>` | Enter console line config |
+| `line aux <n>` | Enter auxiliary line config |
+| `line vty <start> <end>` | Enter VTY line config |
+| `password <password>` | Set line password |
+| `no password` | Remove line password |
+| `login` | Enable password checking |
+| `no login` | Disable password checking |
+| `transport input {ssh|telnet|all|none}` | Set allowed protocols |
+| `no transport input` | Reset transport input |
+| `logging synchronous` | Enable sync logging |
+| `no logging synchronous` | Disable sync logging |
+| `exec-timeout <min> [sec]` | Set exec timeout |
+| `no exec-timeout` | Reset exec timeout |
+| `history size <n>` | Set history buffer size |
+| `no history` | Disable command history |
+| `exec` / `no exec` | Enable/disable EXEC |
+| `autocommand <cmd>` | Set auto-command |
+| `no autocommand` | Remove auto-command |
+| `transport preferred {ssh|telnet|none}` | Set preferred protocol |
+| `privilege level <0-15>` | Set privilege level |
+| `session-limit <n>` | Set max sessions |
+| `access-class <n> {in|out}` | Apply ACL to line |
+| `lockable` | Enable line locking |
+
+### Serial / WAN Interface Commands
+
+> **Note**: These commands are valid on serial interfaces (e.g., `Serial0/0/0`, `Serial0/1/0`). DCE/DTE detection is automatic based on the cable connection.
+
+| Command | Description |
+|---------|-------------|
+| `encapsulation hdlc` | Set HDLC encapsulation (default) |
+| `encapsulation ppp` | Set PPP encapsulation |
+| `no encapsulation` | Reset to default encapsulation |
+| `clock rate <bps>` | Set clock rate on DCE interface |
+| `no clock rate` | Remove clock rate setting |
+| `ppp authentication {chap|pap}` | Enable PPP authentication |
+| `no ppp authentication` | Disable PPP authentication |
+| `ppp pap sent-username <name> password <pass>` | Set PPP credentials |
+| `bandwidth <kbps>` | Set serial bandwidth |
+
+### Router Configuration Commands (RIP/OSPF)
+
+| Command | Description |
+|---------|-------------|
+| `router rip` | Enable RIP routing |
+| `router ospf [<id>]` | Enable OSPF routing |
+| `no router rip` | Disable RIP |
+| `no router ospf` | Disable OSPF |
+| `network <ip> [wildcard] area <id>` | Add network to OSPF area |
+| `no network <ip> [wildcard] area <id>` | Remove network from OSPF |
+| `network <ip>` | Add RIP network |
+| `no network <ip>` | Remove RIP network |
+| `neighbor <ip> remote-as <asn>` | Configure BGP neighbor |
+| `no neighbor <ip> [remote-as]` | Remove BGP neighbor |
+| `router-id <ip>` | Set router ID |
+| `no router-id` | Reset router ID to default |
+| `passive-interface <intf>` | Set passive interface |
+| `no passive-interface <intf>` | Enable routing updates on interface |
+| `default-information {originate|always}` | Control default route |
+| `area <id> range <ip> <mask>` | Summarize routes at area boundary |
+| `area <id> stub` | Configure area as stub |
+| `area <id> nssa` | Configure area as NSSA |
+
+### Router Configuration Commands (EIGRP)
+
+| Command | Description |
+|---------|-------------|
+| `router eigrp <as>` | Enable EIGRP routing process |
+| `no router eigrp <as>` | Disable EIGRP routing process |
+| `network <ip> [wildcard]` | Advertise network via EIGRP |
+| `no network <ip> [wildcard]` | Remove EIGRP network |
+| `eigrp router-id <ip>` | Set EIGRP router ID |
+| `no eigrp router-id` | Reset EIGRP router ID |
+| `auto-summary` | Enable automatic network summarization |
+| `no auto-summary` | Disable automatic network summarization |
+| `passive-interface <intf>` | Suppress routing updates |
+| `no passive-interface <intf>` | Enable routing updates |
+
+### Router Configuration Commands (BGP)
+
+| Command | Description |
+|---------|-------------|
+| `router bgp <as>` | Enable BGP routing process |
+| `no router bgp <as>` | Disable BGP routing process |
+| `bgp router-id <ip>` | Set BGP router ID |
+| `network <ip> mask <mask>` | Advertise network via BGP |
+| `no network <ip> mask <mask>` | Remove BGP network |
+| `neighbor <ip> remote-as <asn>` | Configure BGP neighbor |
+| `no neighbor <ip>` | Remove BGP neighbor |
+
+### IPv6 Routing (RIPng / OSPFv3)
+
+| Command | Description |
+|---------|-------------|
+| `ipv6 router rip <name>` | Enter RIPng config mode (optional; for router-specific settings) |
+| `ipv6 router ospf <id>` | Enter OSPFv3 config mode (optional; for router-specific settings) |
+| `no ipv6 router rip <name>` | Disable RIPng |
+| `no ipv6 router ospf <id>` | Disable OSPFv3 |
+
+### IPv6 DHCP Pool Configuration Commands (`ipv6-dhcp-config` mode)
+
+| Command | Description |
+|---------|-------------|
+| `address prefix <prefix>` | Set IPv6 address prefix for clients |
+| `no address prefix <prefix>` | Remove address prefix |
+| `dns-server <ipv6>` | Set DNS server for clients |
+| `domain-name <name>` | Set domain name for clients |
+
+### Firewall Configuration Commands
+
+> **Note**: These commands are valid on **ASA / Firewall devices only**. They are not available on IOS routers or switches.
+
+| Command | Description |
+|---------|-------------|
+| `security-level <0-100>` | Set interface security level |
+| `nameif <name>` | Set interface name |
+| `no nameif` | Remove interface name |
+| `same-security-traffic permit inter-interface` | Permit traffic between same-security interfaces |
+| `no same-security-traffic permit inter-interface` | Deny same-security traffic |
+
+### DHCP Pool Configuration Commands (`dhcp-config` mode)
+
+| Command | Description |
+|---------|-------------|
+| `network <address> <mask>` | Set pool network and subnet mask |
+| `default-router <ip>` | Set default gateway for clients |
+| `no default-router` | Remove default gateway |
+| `dns-server <ip>` | Set DNS server for clients |
+| `no dns-server` | Remove DNS server |
+| `lease {days|infinite}` | Set lease duration (or `infinite`) |
+| `domain-name <name>` | Set domain name for clients |
+| `no domain-name` | Remove domain name |
+
+#### QoS Configuration
+
+| Command | Description |
+|---------|-------------|
+| `mls qos trust {cos|dscp}` | Set QoS trust state |
+| `mls qos cos <val>` | Set default CoS value |
+| `priority-queue out` | ⚠️ Stub - Enable priority queue |
 | `queue-set <n>` | ⚠️ Stub - Apply QoS queue set |
 | `tx-queue <n>` | ⚠️ Stub - Configure transmit queue |
-| `power inline consumption <watt>` | ⚠️ Stub - Set PoE power limit |
-| `encapsulation dot1q <vlan>` | Set 802.1Q encapsulation on subinterface |
-| `standby <group> ipv6 <ip>` | Configure HSRP for IPv6 |
-| `ip arp inspection limit <pps>` | ⚠️ Stub - Set ARP inspection rate limit |
+| `storm-control {broadcast|multicast|unicast} level <%>` | Set storm control |
+
+#### IP Configuration
+
+| Command | Description |
+|---------|-------------|
+| `ip address <ip> <mask>` | Assign IP address with subnet mask |
+| `no ip address` | Remove IP address |
 | `ipv6 address <ip>/<prefix>` | Assign IPv6 address |
+| `ip default-gateway <ip>` | Set default gateway |
+| `no ip default-gateway` | Remove default gateway |
+| `ip helper-address <ip>` | Set DHCP relay |
+| `no ip helper-address` | Remove DHCP relay |
+| `ip verify source` | Enable IP Source Guard |
+
+#### NAT Configuration
+
+| Command | Description |
+|---------|-------------|
+| `ip nat {inside | outside}` | Set interface NAT side |
+| `no ip nat {inside | outside}` | Remove NAT side |
+| `standby <group> ip <virtual-ip>` | Configure HSRP virtual IP |
+| `standby <group> priority <prio>` | Set HSRP priority |
+| `standby <group> preempt` | Enable HSRP preemption |
+| `no standby <group> ...` | Remove HSRP configuration |
+
+#### Encapsulation Configuration
+
+| Command | Description |
+|---------|-------------|
+| `encapsulation hdlc` | Set HDLC encapsulation (default) |
+| `encapsulation ppp` | Set PPP encapsulation |
+| `encapsulation dot1q <vlan>` | Set 802.1Q encapsulation on subinterface |
+| `no encapsulation` | Reset to default encapsulation |
+
+#### Serial Configuration
+
+| Command | Description |
+|---------|-------------|
+| `cdp enable` | Enable CDP on interface |
+| `no cdp enable` | Disable CDP on interface |
+| `channel-group <n> mode {on|active|passive}` | Configure EtherChannel |
+| `no channel-group` | Remove from channel |
+| `ppp authentication pap` | Enable PPP authentication |
+| `ppp authentication chap` | Enable PPP authentication |
+| `no ppp authentication` | Disable PPP authentication |
+| `ppp pap sent-username <name> password <pass>` | Set PPP credentials |
+| `ip directed-broadcast` | Enable directed broadcast |
+| `no ip directed-broadcast` | Disable directed broadcast |
+| `ip proxy-arp` | Enable proxy ARP |
+| `no ip proxy-arp` | Disable proxy ARP |
+
+#### Quality of Service
+
+| Command | Description |
+|---------|-------------|
+| `mls qos trust {cos|dscp}` | Set QoS trust state |
+| `mls qos cos <val>` | Set default CoS value |
+| `priority-queue out` | ⚠️ Stub - Enable priority queue |
+| `queue-set <n>` | ⚠️ Stub - Apply QoS queue set |
+| `tx-queue <n>` | ⚠️ Stub - Configure transmit queue |
+| `storm-control {broadcast|multicast|unicast} level <%>` | Set storm control |
+
+#### Management Commands
+
+| Command | Description |
+|---------|-------------|
+| `cdp timer <sec>` | ⚠️ Stub - Set CDP update interval |
+| `cdp holdtime <sec>` | ⚠️ Stub - Set CDP hold time |
+| `clear arp-cache` | Clear ARP cache |
+| `clear mac address-table` | Clear MAC address table |
+| `clear counters` | Clear interface counters |
+| `clear line <n>` | ⚠️ Stub - Clear a terminal line |
+| `clear interface <name>` | ⚠️ Stub - Clear interface counters |
+| `debug` / `no debug` | Interface debugging |
+| `undebug all` | ⚠️ Stub - Disable all debugging |
+| `undebug` | ⚠️ Stub - Disable all debugging (alias) |
+| `monitor session <n>` | ⚠️ Stub - Configure SPAN/RSPAN |
+| `no monitor session` | ⚠️ Stub - Remove monitoring |
+| `no udld` | Disable UDLD on interface |
+
+#### Additional Interface Commands
+
+| Command | Description |
+|---------|-------------|
+| `ip access-group <id> {in|out}` | Apply IPv4 ACL to interface |
+| `ip dhcp snooping trust` | Set interface as trusted for DHCP |
+| `ip arp inspection trust` | Set interface as trusted for DAI |
+| `channel-protocol {lacp|pagp}` | ⚠️ Stub - Set EtherChannel protocol |
+| `priority-queue out` | ⚠️ Stub - Enable priority queue |
+| `queue-set <n>` | ⚠️ Stub - Apply QoS queue set |
+| `tx-queue <n>` | ⚠️ Stub - Configure transmit queue |
+| `power inline {auto|static}` | ⚠️ Stub - Configure PoE |
+| `power inline consumption <watt>` | ⚠️ Stub - Set PoE power limit |
+| `keepalive` | Enable keepalive |
+| `no keepalive` | Disable keepalive |
+| `carrier-delay <ms>` | ⚠️ Stub - Set carrier delay |
+| `load-interval <sec>` | ⚠️ Stub - Set statistics interval |
+| `ip arp inspection limit <pps>` | ⚠️ Stub - Set ARP inspection rate limit |
 | `ipv6 rip <name> enable` | Enable RIPng on interface |
 | `ipv6 ospf <id> area <area>` | Enable OSPFv3 on interface |
 | `ipv6 dhcp server <pool-name>` | Enable IPv6 DHCP server on interface |
+| `ip helper-address <ip>` | Set DHCP relay |
+| `no ip helper-address` | Remove DHCP relay |
 | `ip verify source` | Enable IP Source Guard |
+| `ip directed-broadcast` | Enable directed broadcast |
+| `ip proxy-arp` | Enable proxy ARP |
 | `ip dhcp snooping trust` | Set interface as trusted for DHCP |
 | `ip arp inspection trust` | Set interface as trusted for DAI |
-| `storm-control {broadcast\|multicast\|unicast} level <%>` | Set storm control |
-| `power inline {auto\|static\|never}` | ⚠️ Stub - Configure PoE |
-| `bandwidth <kbps>` | Set interface bandwidth |
-| `delay <tens-of-ms>` | Set interface delay |
-| `carrier-delay <ms>` | ⚠️ Stub - Set carrier delay |
-| `load-interval <sec>` | ⚠️ Stub - Set load statistics interval |
-| `mls qos trust {cos\|dscp}` | Set QoS trust state |
-| `mls qos cos <val>` | Set default CoS value |
-| `ip access-group <id> {in|out}` | Apply IPv4 ACL to interface |
+| `ip dhcp excluded-address <ip>` | Exclude addresses from DHCP |
+| `ip dhcp excluded-address <low> [<high>]` | Remove excluded address range |
+
+### Wireless (WiFi) Commands
+
+> **Note**: These commands are only valid on Wireless LAN Controllers (WLC) or autonomous Access Points (AP). They are NOT supported on switches.
+
+| Command | Description | Device Type |
+|---------|-------------|-------------|
+| `dot11 ssid <name>` | Create/enter dot11 SSID config | WLC/AP |
+| `wlan <name> <id> <ssid>` | Create WLAN profile | WLC only |
+| `wlan shutdown` | Disable WLAN | WLC only |
+| `no wlan <id>` | Delete WLAN profile | WLC only |
+| `no wlan shutdown` | Enable WLAN (undo shutdown) | WLC only |
+| `ap name <name>` | Configure AP name | WLC only |
+| `ap auth-mac <mac>` | Add MAC auth filter for AP join | WLC only |
+| `ap rf-channel <num>` | Set AP RF channel | WLC only |
+| `ap dot11 5-ghz <cmd>` | Configure 5 GHz radio on AP | WLC only |
+| `authentication open` | Set open authentication (in ssid-config) | WLC/AP |
+| `authentication shared` | Set shared key auth (in ssid-config) | WLC/AP |
+| `authentication key-management wpa version <2\|3>` | Set WPA key management (in ssid-config) | WLC/AP |
+| `mbssid` | Enable MBSSID (in ssid-config) | WLC/AP |
+| `no mbssid` | Disable MBSSID (in ssid-config) | WLC/AP |
+| `guest-mode` | Enable guest mode (in ssid-config) | WLC/AP |
+| `no guest-mode` | Disable guest mode (in ssid-config) | WLC/AP |
+| `ssid <name>` | Set SSID name (in dot11-config) | WLC/AP |
+| `no ssid <name>` | Remove SSID (in dot11-config) | WLC/AP |
+| `station-role root` | Set AP to root mode | WLC/AP |
+| `channel <num>` | Set RF channel (in dot11-config) | WLC/AP |
+| `no channel` | Reset to auto channel selection | WLC/AP |
+| `speed <rate>` | Set basic data rate (in dot11-config) | WLC/AP |
+| `power local <val>` | Set local power level (in dot11-config) | WLC/AP |
+| `power client <val>` | Set client power level (in dot11-config) | WLC/AP |
+| `world-mode dot11d {1\|-1}` | Enable 802.11d world mode (in dot11-config) | WLC/AP |
+| `security wpa psk set-key ascii 0 <password>` | Set WPA PSK key (dot11-config) | WLC/AP |
+| `no security wpa psk` | Remove WPA PSK key | WLC/AP |
+| `encryption mode ciphers {tkip\|aes\|tkip aes}` | Set encryption cipher (dot11-config) | WLC/AP |
+| `mac-filter` | Enable MAC filter (dot11-config) | WLC/AP |
+| `interface dot11radio <n>` | Enter dot11 radio interface config | WLC/AP |
+| `dot11 channel <num>` | Enter dot11-config and set RF channel (global config) | WLC/AP |
+| `dot11 power {local \| client} <val>` | Enter dot11-config and set power level (global config) | WLC/AP |
+| `dot11 station-role {root \| repeater \| client}` | Enter dot11-config and set station role (global config) | WLC/AP |
+| `dot11 mac-filter` | Enter dot11-config and enable MAC filter (global config) | WLC/AP |
+| `show wlan summary` | Display WLAN summary | WLC only |
+| `show wlan <id>` | Display specific WLAN details | WLC only |
+| `show dot11 associations` | Display wireless client associations | WLC/AP |
+| `show dot11 statistics` | Display dot11 radio statistics | WLC/AP |
+| `show ap summary` | Display AP summary | WLC only |
+| `show ap config {ap-name \| all}` | Display AP configuration details | WLC only |
+| `show ap join statistics {ap-name \| all}` | Display AP join statistics | WLC only |
 
 ### Wireless (WiFi) Commands
 > **Note**: These commands are only valid on Wireless LAN Controllers (WLC) or autonomous Access Points (AP). They are NOT supported on switches.
