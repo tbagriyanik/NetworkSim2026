@@ -37,8 +37,22 @@ export async function GET(
       );
     }
 
+    if (code.length > 20) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid room code', code: 'INVALID_CODE' },
+        { status: 400 },
+      );
+    }
+
     const url = new URL(req.url);
     const teacherId = url.searchParams.get('teacherId');
+    if (teacherId && teacherId.length > 100) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid teacher ID', code: 'INVALID_TEACHER_ID' },
+        { status: 400 },
+      );
+    }
+
     if (!teacherId) {
       return NextResponse.json(
         { success: false, error: 'Teacher ID is required', code: 'MISSING_TEACHER_ID' },
