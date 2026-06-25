@@ -33,7 +33,6 @@ export const DESKTOP_COMMANDS = [
     'telnet',
     'ssh',
     'ftp',
-    'mail',
     'netstat',
     'nbtstat',
     'getmac',
@@ -47,7 +46,6 @@ export const DESKTOP_COMMANDS = [
     'cls',
     'exit',
     'quit',
-    'snake',
     'help',
     '?',
 ] as const;

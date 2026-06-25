@@ -1250,10 +1250,6 @@ export const commandAliases: Record<string, string> = {
   // Write/Copy commands (Patterns now handle these natively)
   'cop': 'copy',
   'copy': 'copy',
-  'ft': 'ftp',
-  'ftp': 'ftp',
-  'ma': 'mail',
-  'mail': 'mail',
 
   // Erase commands
   'era': 'erase',

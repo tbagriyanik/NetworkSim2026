@@ -31,7 +31,6 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | --- | --- |
 | **FTP Services**: FTP client/server configuration, file upload, and file transfer simulation across devices. | **FTP Servisleri**: FTP istemci/sunucu yapılandırması, dosya yükleme ve cihazlar arası dosya aktarım simülasyonu. |
 | **NTP Time Sync**: NTP server/client configuration for network-wide time synchronization. | **NTP Zaman Senkronizasyonu**: Ağ genelinde zaman senkronizasyonu için NTP sunucu/istemci yapılandırması. |
-| **Mail Services**: Email sending, receiving, and mailbox simulation within the network topology. | **Mail Servisleri**: Ağ topolojisi içinde e-posta gönderme, alma ve posta kutusu simülasyonu. |
 | **Firewall Service Integration**: Firewall rules with integrated service selection for traffic filtering. | **Güvenlik Duvarı Servis Entegrasyonu**: Trafik filtreleme için entegre servis seçimli güvenlik duvarı kuralları. |
 | **Wireless Dashboard**: Dedicated wireless device home page with SSID and security management. | **Kablosuz Gösterge Paneli**: SSID ve güvenlik yönetimi ile özel kablosuz cihaz ana sayfası. |
 | **IoT Panel Tabs**: Tabbed IoT device panel for managing sensors, actuators, and device settings. | **IoT Panel Sekmeleri**: Sensörler, aktüatörler ve cihaz ayarlarını yönetmek için sekmeli IoT cihaz paneli. |
@@ -71,7 +70,6 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | **DNS**: DNS configuration, name resolution | **DNS**: DNS yapılandırması, ad çözümleme |
 | **FTP**: FTP server & client, file upload, file transfer simulation | **FTP**: FTP sunucu ve istemci, dosya yükleme, dosya aktarım simülasyonu |
 | **NTP**: NTP server & client, time synchronization across devices | **NTP**: NTP sunucu ve istemci, cihazlar arası zaman senkronizasyonu |
-| **Mail**: SMTP/IMAP simulation, email send/receive, mailbox management | **Mail**: SMTP/IMAP simülasyonu, e-posta gönderme/alma, posta kutusu yönetimi |
 | **ARP**: ARP table management, MAC-to-IP resolution | **ARP**: ARP tablosu yönetimi, MAC-IP çözümleme |
 | **Link-Local**: Automatic link-local addressing (169.254.x.x) | **Link-Yerel**: Otomatik link-yerel adresleme (169.254.x.x) |
 | **Connectivity Testing**: Ping, traceroute, extended ping | **Bağlantı Testi**: Ping, traceroute, genişletilmiş ping |
@@ -326,16 +324,14 @@ Free and open source. See [LICENSE](LICENSE).
 | `netstat` | Network statistics | Ağ istatistikleri |
 | `nslookup <domain>` | DNS lookup | DNS sorgusu |
 | `telnet <host> [port]` | Telnet connection | Telnet bağlantısı |
+| `ftp <host>` | FTP connection | FTP bağlantısı |
 | `ssh [-l user] <host>` | SSH connection | SSH bağlantısı |
 | `curl` / `wget <url>` | View web page | Web sayfası görüntüle |
-| `ftp` | FTP session / FTP oturumu |
-| `mail` | Mail command / Mail komutu |
 | `arp -a` | ARP table | ARP tablosu |
 | `hostname` | Computer name | Bilgisayar adı |
 | `dir` | Directory listing | Dosya listesi |
 | `ver` | Version info | Versiyon bilgisi |
 | `cls` | Clear screen | Ekranı temizle |
-| `snake` / `yilan` | Snake Game | Yılan Oyunu |
 | `help` / `?` | Desktop command help | PC komut yardımı |
 
 ---
@@ -361,7 +357,6 @@ Free and open source. See [LICENSE](LICENSE).
 
 The simulator supports **280+ commands** across multiple configuration modes.
 
-> **⚠️ Simulator-Specific Commands**: Some commands in this reference are specific to this browser-based simulator and do not exist in real IOS. These are marked with *(simulator-specific, PC only)* and are designed for PC service management (FTP, mail) and other simulator-specific features.
 
 ## Keyboard Shortcuts
 
@@ -417,8 +412,6 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `traceroute <host>` | Trace route to destination |
 | `telnet <host> [port]` | Connect to remote device via Telnet |
 | `ssh -l <username> <host>` | Connect via SSH (with username) |
-| `ftp [host]` | Open an interactive FTP session with login prompt, file listing, get/put, and quit *(simulator-specific, PC only)* |
-| `mail [address]` | Open a mailbox session with login prompt, inbox listing, send flow, and quit *(simulator-specific, PC only)* |
 | `write memory` | Save running configuration to NVRAM |
 | `copy running-config startup-config` | Save configuration |
 | `copy running-config flash:[:filename]` | Save configuration to flash |
@@ -483,8 +476,6 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `no ip host <name>` | Remove static host mapping |
 | `ip http server` | Enable HTTP server |
 | `no ip http server` | Disable HTTP server |
-| `ftp` service panel *(simulator-specific, PC only)* | Manage FTP credentials and files in PC services |
-| `mail` service panel *(simulator-specific, PC only)* | Manage mail service settings in PC services |
 | `ip ssh version {1\|2}` | Set SSH version |
 | `ip ssh time-out <seconds>` | Set SSH timeout |
 | `no ip ssh time-out` | Remove SSH timeout |
@@ -3629,7 +3620,7 @@ Network Simulator, farklı zorluk seviyelerinde **40 hazır örnek proje** ile b
 6. PC-NTP (192.168.1.60): NTP zaman sunucusu
 7. Tüm PC'ler DNS: 192.168.1.10
 
-**Test:** PC'den `nslookup www.lab.local`, `wget www.lab.local`, `ftp 192.168.1.40`, Switch > `ntp server 192.168.1.60`, `show clock`
+**Test:** PC'den `nslookup www.lab.local`, `wget www.lab.local`, Switch > `ntp server 192.168.1.60`, `show clock`
 
 **Beklenen Sonuç:** Tüm ağ servisleri (DNS, HTTP, FTP, MAIL, NTP, DHCP) çalışır durumdadır.
 
@@ -5472,7 +5463,7 @@ PC'ler üzerinde çalışan temel ağ servislerinin bir arada bulunduğu kapsaml
 3. **Servis Konfigürasyonu:**
    - Her PC'de ilgili servisi (DNS, HTTP, DHCP, FTP, MAIL, NTP) etkinleştirin.
 4. **Test:**
-   - PC'ler arası servis erişimini test edin (nslookup, wget, ftp, ping).
+   - PC'ler arası servis erişimini test edin (nslookup, wget, ping).
 
 ---
 

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio, LayoutGrid, ArrowLeft, SlidersHorizontal, Reply, Send } from 'lucide-react';
+import { Laptop, Monitor, Terminal as TerminalIcon, X, CornerDownLeft, Command, Globe, Network, ShieldCheck, History, Search, Copy, Save, Trash2, Download, Settings, Wifi, Eye, EyeOff, Radio, LayoutGrid, ArrowLeft, SlidersHorizontal, Reply, Send } from 'lucide-react';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { toast } from "@/hooks/use-toast";
@@ -225,15 +225,6 @@ export function PCPanel({
   // Tab cycle state
   const [tabCycleIndex, setTabCycleIndex] = useState(-1);
   const [lastTabInput, setLastTabInput] = useState('');
-
-  // Game state
-  const [gameActive, setGameActive] = useState(false);
-  const [snake, setSnake] = useState<{ x: number, y: number }[]>([{ x: 10, y: 10 }]);
-  const [food, setFood] = useState({ x: 15, y: 15 });
-  const [direction, setDirection] = useState({ x: 1, y: 0 });
-  const [gameScore, setGameScore] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
-  const [gameLanguage, setGameLanguage] = useState<'en' | 'tr'>('en');
 
   // Console connection state
   const [isConsoleConnected, setIsConsoleConnected] = useState(false);
@@ -1419,8 +1410,6 @@ export function PCPanel({
     const handleNavigation = () => {
       // If search is open, let it handle itself
       if (searchOpen) return;
-      // If game is active, let it handle itself
-      if (gameActive) return;
 
       // If HTTP content is open, close it first
       if (httpAppContent) {
@@ -1472,7 +1461,7 @@ export function PCPanel({
         window.removeEventListener('popstate', handlePopState);
       }
     };
-  }, [isVisible, activeTab, goHome, onClose, httpAppContent, searchOpen, gameActive, isMobile]);
+  }, [isVisible, activeTab, goHome, onClose, httpAppContent, searchOpen, isMobile]);
 
   // Sync pcOutput when deviceId changes or pcOutputs prop updates
   useEffect(() => {
@@ -1564,85 +1553,6 @@ export function PCPanel({
 
   const consoleDevice = getConsoleDevice();
 
-  // Game loop
-  useEffect(() => {
-    if (!gameActive || gameOver) return;
-    const gameInterval = setInterval(() => {
-      setSnake(currentSnake => {
-        const newSnake = [...currentSnake];
-        const head = { ...newSnake[0] };
-        head.x += direction.x;
-        head.y += direction.y;
-        if (head.x < 0 || head.x >= 30 || head.y < 0 || head.y >= 20) {
-          setGameOver(true);
-          return currentSnake;
-        }
-        if (newSnake.some(segment => segment.x === head.x && segment.y === head.y)) {
-          setGameOver(true);
-          return currentSnake;
-        }
-        newSnake.unshift(head);
-        if (head.x === food.x && head.y === food.y) {
-          setGameScore(prev => prev + 10);
-          setFood({
-            x: Math.floor(Math.random() * 30),
-            y: Math.floor(Math.random() * 20)
-          });
-        } else {
-          newSnake.pop();
-        }
-        return newSnake;
-      });
-    }, 150);
-    return () => clearInterval(gameInterval);
-  }, [gameActive, direction, food, gameOver]);
-
-  // Game controls
-  useEffect(() => {
-    if (!gameActive) return;
-    const handleGameKey = (e: globalThis.KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-        e.preventDefault();
-        setSearchOpen(true);
-        return;
-      }
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        setGameActive(false);
-        setActiveTab('terminal');
-        inputRef.current?.focus();
-        return;
-      }
-      if (gameOver && e.key === ' ') {
-        setSnake([{ x: 10, y: 10 }]);
-        setFood({ x: 15, y: 15 });
-        setDirection({ x: 1, y: 0 });
-        setGameScore(0);
-        setGameOver(false);
-        return;
-      }
-      switch (e.key) {
-        case 'ArrowUp':
-          e.preventDefault();
-          if (direction.y === 0) setDirection({ x: 0, y: -1 });
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          if (direction.y === 0) setDirection({ x: 0, y: 1 });
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          if (direction.x === 0) setDirection({ x: -1, y: 0 });
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          if (direction.x === 0) setDirection({ x: 1, y: 0 });
-          break;
-      }
-    };
-    window.addEventListener('keydown', handleGameKey);
-    return () => window.removeEventListener('keydown', handleGameKey);
-  }, [gameActive, direction, gameOver]);
 
   // Synchronized Console Output from Global State
   const activeConsoleOutput = useMemo(() => {
@@ -3888,22 +3798,7 @@ export function PCPanel({
         return;
       }
       addLocalOutput('command', command);
-      const normalizedCmd = cmd
-        .replace(/ı/g, 'i')
-        .replace(/İ/g, 'i')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
       const args = parts.slice(1);
-      if (normalizedCmd === 'snake' || normalizedCmd === 'yilan') {
-        setGameActive(true);
-        setSnake([{ x: 10, y: 10 }]);
-        setFood({ x: 15, y: 15 });
-        setDirection({ x: 1, y: 0 });
-        setGameScore(0);
-        setGameOver(false);
-        setGameLanguage(normalizedCmd === 'yilan' ? 'tr' : 'en');
-        return;
-      }
       if (cmd === 'ipconfig') {
         if (args.includes('/release')) {
           setPcIP('0.0.0.0');
@@ -4277,81 +4172,8 @@ export function PCPanel({
         addLocalOutput('output', `Connected to ${targetArg}.`);
         addLocalOutput('output', '220 FTP server ready.');
         addLocalOutput('success', language === 'tr' ? 'Dosya transfer ekranı açıldı.' : 'File transfer window opened.');
-      } else if (cmd === 'mail') {
-        const recipient = args[0];
-        const subject = args.slice(1).join(' ');
-        if (!recipient || !subject) {
-          addLocalOutput('output', 'Usage: mail <recipient@domain> <subject and message>');
-          return;
-        }
-        const recipientDomain = recipient.includes('@') ? recipient.split('@')[1] : '';
-        const recipientUser = recipient.includes('@') ? recipient.split('@')[0] : '';
-        if (!recipientDomain) {
-          addLocalOutput('error', 'Invalid email address format.');
-          return;
-        }
-        const deliveredDevice = topologyDevices.find(d => {
-          const s = d.services;
-          return s?.mail?.enabled && s.mail.username === recipientUser && s.mail.domain === recipientDomain;
-        }) || topologyDevices.find(d => d.ip === recipientDomain) || topologyDevices.find(d => (d.name === recipientUser || d.id === recipientUser) && d.ip === recipientDomain);
-        if (!deliveredDevice) {
-          addLocalOutput('error', `Could not find mail server for ${recipientDomain}.`);
-          return;
-        }
-        const newInboxEntry = { from: `${internalPcHostname}@${pcIP || 'local'}`, subject, body: subject, timestamp: new Date().toISOString() };
-        let existingInbox = deliveredDevice.services?.mail?.inbox || [];
-        if (typeof window !== 'undefined') {
-          try {
-            const stored = localStorage.getItem(`mail_inbox_${deliveredDevice.id}`);
-            if (stored) existingInbox = JSON.parse(stored);
-          } catch (_e) { }
-        }
-        const updatedInbox = [newInboxEntry, ...existingInbox];
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(`mail_inbox_${deliveredDevice.id}`, JSON.stringify(updatedInbox));
-        }
-        const newSentEntry = { to: recipient, subject, body: subject, timestamp: new Date().toISOString() };
-
-        // Update recipient inbox
-        window.dispatchEvent(new CustomEvent('update-topology-device-config', {
-          detail: {
-            deviceId: deliveredDevice.id,
-            config: {
-              services: {
-                mail: {
-                  enabled: deliveredDevice.services?.mail?.enabled ?? false,
-                  domain: deliveredDevice.services?.mail?.domain || recipientDomain,
-                  username: deliveredDevice.services?.mail?.username || recipientUser,
-                  inbox: updatedInbox
-                }
-              }
-            }
-          }
-        }));
-
-        // Update sender sent box
-        setServiceMailSent((prev) => [newSentEntry, ...prev]);
-        window.dispatchEvent(new CustomEvent('update-topology-device-config', {
-          detail: {
-            deviceId: deviceId,
-            config: {
-              services: {
-                mail: {
-                  enabled: serviceMailEnabled,
-                  domain: serviceMailDomain,
-                  username: serviceMailUsername,
-                  password: serviceMailPassword,
-                  inbox: serviceMailInbox,
-                  sent: [newSentEntry, ...serviceMailSent]
-                }
-              }
-            }
-          }
-        }));
-
-        addLocalOutput('success', `Mail sent to ${recipient}.`);
       } else if (cmd === 'help' || cmd === '?') {
-        addLocalOutput('output', `Available commands: ipconfig, ping, tracert, traceroute, telnet, ssh, ftp, mail, netstat, nbtstat, getmac, nslookup, curl, wget, arp, hostname, dir, ver, cls, exit, quit, snake`);
+        addLocalOutput('output', `Available commands: ipconfig, ping, tracert, traceroute, telnet, ssh, ftp, netstat, nbtstat, getmac, nslookup, curl, wget, arp, hostname, dir, ver, cls, exit, quit`);
       } else if (cmd === 'cls') {
         setPcOutput([]);
       } else if (cmd === 'exit' || cmd === 'quit') {
@@ -6990,82 +6812,6 @@ export function PCPanel({
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M18.36 5.64a9 9 0 1 1-12.73 0" />
                                 </svg>
-                              </div>
-                            ) : gameActive && activeTab === 'desktop' ? (
-                              <div className="flex-1 flex flex-col items-center justify-center gap-3">
-                                <div className={`text-xs ${isDark ? 'text-secondary-200' : 'text-secondary-600'}`}>
-                                  {gameLanguage === 'tr'
-                                    ? `Skor: ${gameScore} | Çıkış: ESC | Yeniden: SPACE`
-                                    : `Score: ${gameScore} | Exit: ESC | Restart: SPACE`}
-                                </div>
-                                <div
-                                  className={`grid border rounded-md p-1 ${isDark ? 'border-secondary-700 bg-secondary-950' : 'border-secondary-300 bg-white'}`}
-                                  style={{ gridTemplateColumns: 'repeat(30, minmax(0, 10px))', gridTemplateRows: 'repeat(20, minmax(0, 10px))', gap: '1px' }}
-                                >
-                                  {Array.from({ length: 30 * 20 }).map((_, idx) => {
-                                    const x = idx % 30;
-                                    const y = Math.floor(idx / 30);
-                                    const isHead = snake[0]?.x === x && snake[0]?.y === y;
-                                    const isBody = snake.slice(1).some((s) => s.x === x && s.y === y);
-                                    const isFood = food.x === x && food.y === y;
-
-                                    return (
-                                      <div
-                                        key={idx}
-                                        className={`w-[10px] h-[10px] ${isHead
-                                          ? 'bg-emerald-400 shadow-[0_0_2px_rgba(52,211,153,0.3)]'
-                                          : isBody
-                                            ? 'bg-emerald-600'
-                                            : isFood
-                                              ? 'bg-rose-500 shadow-[0_0_3px_rgba(244,63,94,0.3)] animate-pulse'
-                                              : (isDark ? 'bg-secondary-800' : 'bg-secondary-100')
-                                          }`}
-                                      />
-                                    );
-                                  })}
-                                </div>
-                                {gameOver && (
-                                  <div className="text-rose-500 font-bold text-sm">
-                                    {gameLanguage === 'tr' ? 'Oyun Bitti!' : 'Game Over!'}
-                                  </div>
-                                )}
-                                {/* Mobile Touch Controls */}
-                                <div className="grid grid-cols-3 gap-1 mt-2 md:hidden">
-                                  <div />
-                                  <button
-                                    onClick={() => direction.y === 0 && setDirection({ x: 0, y: -1 })}
-                                    className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-secondary-700 active:bg-secondary-600' : 'bg-secondary-200 active:bg-secondary-300'}`}
-                                  >
-                                    <ChevronUp className="w-6 h-6" />
-                                  </button>
-                                  <div />
-                                  <button
-                                    onClick={() => direction.x === 0 && setDirection({ x: -1, y: 0 })}
-                                    className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-secondary-700 active:bg-secondary-600' : 'bg-secondary-200 active:bg-secondary-300'}`}
-                                  >
-                                    <ChevronLeft className="w-6 h-6" />
-                                  </button>
-                                  <button
-                                    onClick={() => gameOver && (() => { setSnake([{ x: 10, y: 10 }]); setFood({ x: 15, y: 15 }); setDirection({ x: 1, y: 0 }); setGameScore(0); setGameOver(false); })()}
-                                    className={`w-12 h-12 rounded-lg flex items-center justify-center text-xs font-bold ${gameOver ? 'bg-emerald-500 text-white' : (isDark ? 'bg-secondary-800' : 'bg-secondary-100')}`}
-                                  >
-                                    {gameOver ? (gameLanguage === 'tr' ? 'YENİ' : 'NEW') : ''}
-                                  </button>
-                                  <button
-                                    onClick={() => direction.x === 0 && setDirection({ x: 1, y: 0 })}
-                                    className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-secondary-700 active:bg-secondary-600' : 'bg-secondary-200 active:bg-secondary-300'}`}
-                                  >
-                                    <ChevronRight className="w-6 h-6" />
-                                  </button>
-                                  <div />
-                                  <button
-                                    onClick={() => direction.y === 0 && setDirection({ x: 0, y: 1 })}
-                                    className={`w-12 h-12 rounded-lg flex items-center justify-center ${isDark ? 'bg-secondary-700 active:bg-secondary-600' : 'bg-secondary-200 active:bg-secondary-300'}`}
-                                  >
-                                    <ChevronDown className="w-6 h-6" />
-                                  </button>
-                                  <div />
-                                </div>
                               </div>
                             ) : (
                               (activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line) => (

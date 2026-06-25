@@ -1996,18 +1996,6 @@ export const commandPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
 
-  'ftp': {
-    pattern: /^ftp(?:\s+(\S+))?$/i,
-    modes: ['user', 'privileged'],
-    minArgs: 0,
-    maxArgs: 1
-  },
-  'mail': {
-    pattern: /^mail(?:\s+(\S+))?$/i,
-    modes: ['user', 'privileged'],
-    minArgs: 0,
-    maxArgs: 1
-  },
   'copy startup-config running-config': {
     pattern: /^copy\s+startup-config\s+running-config$/i,
     modes: ['privileged'],
@@ -3689,7 +3677,6 @@ Available commands:
   traceroute <ip>    - Trace route
   telnet <ip>        - Telnet connection
   ssh -l <user> <ip> - SSH connection
-  ftp <host>         - FTP connection
   reload             - Reload switch
   clear arp-cache    - Clear ARP cache
   clear mac address-table - Clear MAC table
