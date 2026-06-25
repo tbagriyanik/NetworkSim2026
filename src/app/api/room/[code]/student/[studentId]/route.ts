@@ -38,12 +38,33 @@ export async function PATCH(
       );
     }
 
+    if (code.length > 20) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid room code', code: 'INVALID_CODE' },
+        { status: 400 },
+      );
+    }
+
+    if (studentId.length > 100) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid student ID', code: 'INVALID_ID' },
+        { status: 400 },
+      );
+    }
+
     const body = await req.json();
     const { displayName, currentTask, completedTasks, totalTasks, projectFile, durationMinutes } = body;
 
     if (displayName !== undefined && (typeof displayName !== 'string' || displayName.length > 100)) {
       return NextResponse.json(
         { success: false, error: 'Invalid display name', code: 'INVALID_NAME' },
+        { status: 400 },
+      );
+    }
+
+    if (currentTask !== undefined && (typeof currentTask !== 'string' || currentTask.length > 200)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid task name', code: 'INVALID_TASK' },
         { status: 400 },
       );
     }

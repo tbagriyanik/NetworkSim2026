@@ -31,9 +31,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<RoomApiRespon
       );
     }
 
-    if (!teacherId || typeof teacherId !== 'string' || teacherId.length < 8) {
+    if (!teacherId || typeof teacherId !== 'string' || teacherId.length < 8 || teacherId.length > 100) {
       return NextResponse.json(
-        { success: false, error: 'Valid teacher ID is required', code: 'MISSING_TEACHER_ID' },
+        { success: false, error: 'Valid teacher ID is required (8-100 chars)', code: 'MISSING_TEACHER_ID' },
         { status: 400 },
       );
     }
