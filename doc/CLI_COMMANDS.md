@@ -2,8 +2,6 @@
 
 The simulator supports **400+ commands** across multiple configuration modes.
 
-> **⚠️ Simulator-Specific Commands**: Some commands in this reference are specific to this browser-based simulator and do not exist in real IOS. These are marked with *(simulator-specific, PC only)* and are designed for PC service management (FTP, mail) and other simulator-specific features.
-
 ## Keyboard Shortcuts
 
 ### General Navigation
@@ -41,6 +39,25 @@ The simulator supports **400+ commands** across multiple configuration modes.
 
 ## Command Overview
 
+### Desktop Computer Commands
+| Command | Description |
+|---------|-------------|
+| `ipconfig [/all] [/release] [/renew]` | IP configuration |
+| `ping <host>` | Test connectivity to host |
+| `tracert <host>` | Trace route to destination |
+| `netstat` | Display active network connections |
+| `nslookup <domain>` | Query DNS for domain mapping |
+| `ftp <host>` | Connect to an FTP server |
+| `telnet <host> [port]` | Connect via Telnet |
+| `ssh -l <username> <host>` | Connect via SSH |
+| `curl` / `wget <url>` | View web page content |
+| `arp -a` | Display ARP table |
+| `hostname` | Display computer name |
+| `dir` | List directory contents |
+| `ver` | Display OS version |
+| `cls` | Clear the screen |
+| `help` / `?` | Display command help |
+
 ### System & Session Commands (User/Privileged Mode)
 | Command | Description | Mode |
 |---------|-------------|------|
@@ -58,8 +75,6 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `traceroute <host>` | Trace route to destination |
 | `telnet <host> [port]` | Connect to remote device via Telnet |
 | `ssh -l <username> <host>` | Connect via SSH (with username) |
-| `ftp [host]` | Open an interactive FTP session with login prompt, file listing, get/put, and quit *(simulator-specific, PC only)* |
-| `mail [address]` | Open a mailbox session with login prompt, inbox listing, send flow, and quit *(simulator-specific, PC only)* |
 | `write memory` | Save running configuration to NVRAM |
 | `copy running-config startup-config` | Save configuration |
 | `copy running-config flash:[:filename]` | Save configuration to flash |
@@ -125,8 +140,6 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no ip host <name>` | Remove static host mapping |
 | `ip http server` | Enable HTTP server |
 | `no ip http server` | Disable HTTP server |
-| `ftp` service panel | *(simulator-specific, PC only)* Manage FTP credentials and files in PC services |
-| `mail` service panel | *(simulator-specific, PC only)* Manage mail service settings in PC services |
 | `ip ssh version {1\|2}` | Set SSH version |
 | `ip ssh time-out <seconds>` | Set SSH timeout |
 | `no ip ssh time-out` | Remove SSH timeout |

@@ -92,7 +92,7 @@ const multi = (char: string, completions: string[]): Record<string, string[]> =>
 
 export const commandHelp: Record<string, Record<string, string[]>> = {
   'user': {
-    '': ['enable', 'ftp', 'help', 'mail', 'ping', 'show', 'telnet'],
+    '': ['enable', 'help', 'ping', 'show', 'telnet'],
     ...pfx('enable', ['enable']),
     ...pfx('help', ['help']),
     ...pfx('ping', ['ping']),
@@ -113,7 +113,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'show vlan': ['brief'],
   },
   'privileged': {
-    '': ['clear', 'clock', 'configure', 'copy', 'debug', 'delete', 'disable', 'disconnect', 'erase', 'exit', 'ftp', 'help', 'mail', 'more', 'no', 'ping', 'reload', 'resume', 'setup', 'show', 'ssh', 'suspend', 'telnet', 'terminal', 'test', 'traceroute', 'undebug', 'write'],
+    '': ['clear', 'clock', 'configure', 'copy', 'debug', 'delete', 'disable', 'disconnect', 'erase', 'exit', 'help', 'more', 'no', 'ping', 'reload', 'resume', 'setup', 'show', 'ssh', 'suspend', 'telnet', 'terminal', 'test', 'traceroute', 'undebug', 'write'],
     ...pfx('clear', ['arp-cache', 'counters', 'interface', 'line', 'mac']),
     'clear mac': ['address-table'],
     ...pfx('clock', ['set']),
@@ -468,8 +468,6 @@ const commandDescriptions: Record<string, Record<string, string>> = {
     'ping': 'Ağ bağlantısını test et (Test network connectivity)',
     'telnet': 'Telnet ile uzak cihaza bağlan (Connect to remote device via Telnet)',
     'ssh': 'SSH ile uzak cihaza bağlan (Connect to remote device via SSH)',
-    'ftp': 'FTP oturumu aç (Open FTP session) ℹ️ Sim-only',
-    'mail': 'Mail oturumu aç (Open Mail session) ℹ️ Sim-only',
     'traceroute': 'Hedef cihaza giden yolu göster (Display route to destination)',
     '?': 'Yardım göster (Display help)',
     'help': 'Yardım göster (Display help)',

@@ -17,8 +17,6 @@ export const privilegedHandlers: Record<string, CommandHandler> = {
     'copy running-config startup-config': cmdCopyRunningStartup,
     'copy running-config flash': cmdCopyRunningFlash,
     'copy flash startup-config': cmdCopyFlashStartup,
-    'ftp': cmdFtp,
-    'mail': cmdMail,
     'erase startup-config': cmdEraseStartupConfig,
     'erase nvram': cmdEraseNvram,
     'reload': cmdReload,
@@ -1046,30 +1044,6 @@ function cmdCopyTftp(state: SwitchState, input: string, ctx: CommandContext): Co
     return {
         success: true,
         output: `\n${verb} ${source} to ${dest} ...\nBuilding configuration...\n[OK]\n`
-    };
-}
-
-function cmdFtp(_state: SwitchState, _input: string, ctx: CommandContext): CommandResult {
-    const isTr = ctx.language === 'tr';
-    return {
-        success: false,
-        error: '% Unknown command or computer name',
-        realismLevel: 'sim-only',
-        hint: isTr
-            ? "Bu komut sadece PC terminalinde interaktif oturum açmak için kullanılır."
-            : "This command is only used to open an interactive session on the PC terminal."
-    };
-}
-
-function cmdMail(_state: SwitchState, _input: string, ctx: CommandContext): CommandResult {
-    const isTr = ctx.language === 'tr';
-    return {
-        success: false,
-        error: '% Unknown command or computer name',
-        realismLevel: 'sim-only',
-        hint: isTr
-            ? "Bu komut sadece PC terminalinde interaktif oturum açmak için kullanılır."
-            : "This command is only used to open an interactive session on the PC terminal."
     };
 }
 
