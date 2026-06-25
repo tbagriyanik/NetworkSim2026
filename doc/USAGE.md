@@ -111,13 +111,11 @@
 | `ssh [-l user] <host>` | SSH connection | SSH bağlantısı |
 | `curl` / `wget <url>` | View web page | Web sayfası görüntüle |
 | `ftp` | FTP session / FTP oturumu |
-| `mail` | Mail command / Mail komutu |
 | `arp -a` | ARP table | ARP tablosu |
 | `hostname` | Computer name | Bilgisayar adı |
 | `dir` | Directory listing | Dosya listesi |
 | `ver` | Version info | Versiyon bilgisi |
 | `cls` | Clear screen | Ekranı temizle |
-| `snake` / `yilan` | Snake Game | Yılan Oyunu |
 | `help` / `?` | Desktop command help | PC komut yardımı |
 
 ---

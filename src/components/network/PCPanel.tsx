@@ -393,6 +393,12 @@ export function PCPanel({
   const [viewingMsg, setViewingMsg] = useState<{ type: 'inbox' | 'sent'; msg: { from?: string; to?: string; subject: string; body: string; timestamp?: string }; idx: number } | null>(null);
   const [viewReplyBody, setViewReplyBody] = useState('');
   const [mailError, setMailError] = useState('');
+  const mailPop3Blocked = useMemo(() => {
+    if (activeServiceTab !== 'mail' || !pcIP) return false;
+    const result = checkConnectivity(deviceId, pcIP, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '110' });
+    return !result.success;
+  }, [activeServiceTab, pcIP, deviceId, topologyDevices, topologyConnections, deviceStates, language]);
+
   const [serviceNtpEnabled, setServiceNtpEnabled] = useState(deviceFromTopology?.services?.ntp?.enabled ?? false);
   const [serviceNtpServer, setServiceNtpServer] = useState(deviceFromTopology?.services?.ntp?.server || '');
   const [serviceNtpServerError, setServiceNtpServerError] = useState('');
@@ -4690,15 +4696,21 @@ export function PCPanel({
     const [reqUser, reqDomain] = recipient.includes('@') ? recipient.split('@') : [recipient, serviceMailDomain];
     const targetDevice = topologyDevices.find((d: CanvasDevice) => {
       const mail = d.services?.mail;
-      if (!mail?.enabled) return false;
-      if (mail.username === reqUser && mail.domain === (reqDomain || serviceMailDomain)) return true;
+      if (mail?.username === reqUser && mail?.domain === (reqDomain || serviceMailDomain)) return true;
       const isNameMatch = d.name === reqUser || d.ip === reqUser || d.id === reqUser;
       const isDomainMatch = d.ip === reqDomain;
       return isNameMatch && (isDomainMatch || !reqDomain);
     });
     if (!targetDevice) {
-      setMailError(language === 'tr' ? 'Alıcı bulunamadı. Mail servisi açık bir cihaz girin.' : 'Recipient not found. Enter a device with mail service enabled.');
+      setMailError(language === 'tr' ? 'Alıcı bulunamadı.' : 'Recipient not found.');
       return;
+    }
+    if (targetDevice.ip) {
+      const connectivity = checkConnectivity(deviceId, targetDevice.ip, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '25' });
+      if (!connectivity.success) {
+        setMailError(language === 'tr' ? 'SMTP (port 25) engellendi. Posta gönderilemiyor.' : 'SMTP (port 25) blocked. Cannot send mail.');
+        return;
+      }
     }
     setMailError('');
     const timestamp = new Date().toISOString();
@@ -4725,7 +4737,7 @@ export function PCPanel({
     setComposeTo('');
     setComposeSubject('');
     setComposeBody('');
-  }, [composeTo, composeSubject, composeBody, serviceMailDomain, serviceMailUsername, serviceMailEnabled, serviceMailPassword, serviceMailInbox, serviceMailSent, topologyDevices, deviceId, addLocalOutput, language, deviceFromTopology, pcIP]);
+  }, [composeTo, composeSubject, composeBody, serviceMailDomain, serviceMailUsername, serviceMailEnabled, serviceMailPassword, serviceMailInbox, serviceMailSent, topologyDevices, topologyConnections, deviceStates, deviceId, addLocalOutput, language, deviceFromTopology, pcIP]);
 
   const handleViewReplySend = useCallback(() => {
     if (!viewingMsg || !viewReplyBody.trim()) return;
@@ -4736,12 +4748,18 @@ export function PCPanel({
     const [reqUser, reqDomain] = senderEmail.includes('@') ? senderEmail.split('@') : [senderEmail, ''];
     const targetDevice = topologyDevices.find((d: CanvasDevice) => {
       const mail = d.services?.mail;
-      if (!mail?.enabled || !mail.username) return false;
-      return mail.username === reqUser && mail.domain === reqDomain;
+      return mail?.username === reqUser && mail?.domain === reqDomain;
     });
     if (!targetDevice) {
-      setMailError(language === 'tr' ? 'Alıcı cihaz bulunamadı. Mail servisi açık olmalı.' : 'Target device not found. Mail service must be enabled.');
+      setMailError(language === 'tr' ? 'Alıcı cihaz bulunamadı.' : 'Target device not found.');
       return;
+    }
+    if (targetDevice.ip) {
+      const connectivity = checkConnectivity(deviceId, targetDevice.ip, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '25' });
+      if (!connectivity.success) {
+        setMailError(language === 'tr' ? 'SMTP (port 25) engellendi. Yanıt gönderilemiyor.' : 'SMTP (port 25) blocked. Cannot send reply.');
+        return;
+      }
     }
     setMailError('');
     const subject = `Re: ${msg.subject}`;
@@ -4767,7 +4785,7 @@ export function PCPanel({
     addLocalOutput('success', language === 'tr' ? 'Yanıt gönderildi.' : 'Reply sent.');
     setViewReplyBody('');
     setViewingMsg(null);
-  }, [viewingMsg, viewReplyBody, serviceMailDomain, serviceMailUsername, serviceMailEnabled, serviceMailPassword, serviceMailInbox, serviceMailSent, topologyDevices, deviceId, addLocalOutput, language, mailError, deviceFromTopology, pcIP]);
+  }, [viewingMsg, viewReplyBody, serviceMailDomain, serviceMailUsername, serviceMailEnabled, serviceMailPassword, serviceMailInbox, serviceMailSent, topologyDevices, topologyConnections, deviceStates, deviceId, addLocalOutput, language, mailError, deviceFromTopology, pcIP]);
 
   const handleDeleteInbox = useCallback((idx: number) => {
     const updated = serviceMailInbox.filter((_, i) => i !== idx);
@@ -5866,6 +5884,12 @@ export function PCPanel({
                                         <Input value={serviceMailUsername} onChange={(e) => setServiceMailUsername(e.target.value)} placeholder="user" />
                                         <Input value={serviceMailDomain} onChange={(e) => setServiceMailDomain(e.target.value)} placeholder="local.lan" />
                                       </div>
+
+                                      {mailPop3Blocked && (
+                                        <div className="text-[11px] text-rose-500 font-bold bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2">
+                                          {language === 'tr' ? 'POP3 (port 110) engellendi. Posta alınamıyor.' : 'POP3 (port 110) blocked. Cannot receive mail.'}
+                                        </div>
+                                      )}
 
                                       <button
                                         onClick={() => setComposeMode(true)}

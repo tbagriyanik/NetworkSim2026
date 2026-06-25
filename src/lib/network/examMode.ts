@@ -1185,7 +1185,7 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
     'default', 'set', 'reset', 'restart', 'startup',
     'help', 'telnet', 'shutdown', 'state', 'active', 'suspend',
     'ipconfig', 'ifconfig', 'arp', 'nslookup',
-    'ip host', 'wget', 'curl', 'snake', 'ssh', 'crypto',
+    'ip host', 'wget', 'curl',  'ssh', 'crypto',
   ];
 
   const seen = new Set<string>();
