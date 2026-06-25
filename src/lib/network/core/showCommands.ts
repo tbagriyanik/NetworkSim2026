@@ -1619,118 +1619,91 @@ function cmdShowClock(
 ): CommandResult {
   const serverIps = state.ntpServers || [];
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  
-  // Önce NTP sunucularına bağlanmayı dene
+
+  const formatNtpTime = (ntp: { time: string; date: string }): CommandResult => {
+    const [y, m, d] = ntp.date.split('-');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthName = months[parseInt(m) - 1] || m;
+    const dayName = days[new Date(`${y}-${m}-${d}`).getDay()];
+    return { success: true, output: `\n*${ntp.time}.000 UTC ${dayName} ${monthName} ${parseInt(d)} ${y}\n` };
+  };
+
+  // Try to get time from NTP servers
   for (const serverIp of serverIps) {
-    // Check reachability if devices/connections are available in context
+    // 1. Try full connectivity check
     if (ctx.devices && ctx.connections && ctx.sourceDeviceId) {
       const reachable = checkConnectivity(
-        ctx.sourceDeviceId,
-        serverIp,
-        ctx.devices,
-        ctx.connections,
-        ctx.deviceStates,
-        ctx.language,
+        ctx.sourceDeviceId, serverIp,
+        ctx.devices, ctx.connections,
+        ctx.deviceStates, ctx.language,
         { protocol: 'udp', port: '123' }
       );
-      
-      if (!reachable.success) {
-        continue;
+      if (reachable.success) {
+        const targetDev = ctx.devices.find((d: CanvasDevice) => d.id === reachable.targetId);
+        if (targetDev && targetDev.type !== 'switchL2' && targetDev.type !== 'switchL3' && targetDev.type !== 'router') {
+          const ntp = targetDev.services?.ntp;
+          if (ntp?.enabled && ntp.date && ntp.time) return formatNtpTime({ time: ntp.time, date: ntp.date });
+        }
+        if (reachable.targetId && ctx.deviceStates) {
+          const serverState = ctx.deviceStates.get(reachable.targetId);
+          const toff = serverState?.services?.ntp?.timeOffset;
+          if (toff !== undefined) {
+            const now = new Date();
+            const adj = new Date(now.getTime() + toff);
+            return { success: true, output: `\n*${adj.toTimeString().slice(0, 8)}.000 UTC ${days[adj.getDay()]} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][adj.getMonth()]} ${adj.getDate()} ${adj.getFullYear()}\n` };
+          }
+        }
+        // reachable but no time data — return real time as synced
+        const now = new Date();
+        return { success: true, output: `\n*${now.toTimeString().slice(0, 8)}.000 UTC ${days[now.getDay()]} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]} ${now.getDate()} ${now.getFullYear()}\n` };
       }
+    }
 
-      // Get NTP server's state to retrieve time offset
-      let timeOffset = 0;
-      let serverState = null;
-
-      // If the target is a PC/Server NTP server, read date and time from services config directly
-      const targetDev = ctx.devices?.find((d: CanvasDevice) => d.id === reachable.targetId);
-      if (targetDev && targetDev.type !== 'switchL2' && targetDev.type !== 'switchL3' && targetDev.type !== 'router') {
-        const targetNtp = targetDev.services?.ntp;
-        if (targetNtp?.enabled && targetNtp.date && targetNtp.time) {
-          const [y, m, d] = targetNtp.date.split('-');
-          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-          const monthName = months[parseInt(m) - 1] || m;
-          const dayName = days[new Date(`${y}-${m}-${d}`).getDay()];
-          return {
-            success: true,
-            output: `\n*${targetNtp.time}.000 UTC ${dayName} ${monthName} ${parseInt(d)} ${y}\n`
-          };
+    // 2. Fallback: find NTP server device by IP directly
+    const serverDev = ctx.devices?.find((d) => d.ip === serverIp);
+    if (serverDev && serverDev.type !== 'switchL2' && serverDev.type !== 'switchL3' && serverDev.type !== 'router') {
+      const ntp = serverDev.services?.ntp;
+      if (ntp?.enabled && ntp.date && ntp.time) return formatNtpTime({ time: ntp.time, date: ntp.date });
+    }
+    if (serverIp && ctx.deviceStates) {
+      for (const [, devState] of ctx.deviceStates) {
+        if (devState.services?.ntp?.enabled) {
+          const ports = Object.values(devState.ports);
+          if (ports.some(p => p.ipAddress === serverIp || p.ipv6Address === serverIp)) {
+            const toff = devState.services.ntp.timeOffset;
+            if (toff !== undefined) {
+              const now = new Date();
+              const adj = new Date(now.getTime() + toff);
+              return { success: true, output: `\n*${adj.toTimeString().slice(0, 8)}.000 UTC ${days[adj.getDay()]} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][adj.getMonth()]} ${adj.getDate()} ${adj.getFullYear()}\n` };
+            }
+          }
         }
       }
-
-      if (reachable.targetId && ctx.deviceStates) {
-        serverState = ctx.deviceStates.get(reachable.targetId);
-        if (serverState?.services?.ntp?.timeOffset !== undefined) {
-          timeOffset = serverState.services.ntp.timeOffset;
-        }
-      }
-
-      // NTP server reachable – return synced time with offset applied
-      const now = new Date();
-      const adjustedTime = new Date(now.getTime() + timeOffset);
-      const time = adjustedTime.toTimeString().slice(0, 8);
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const monthName = months[adjustedTime.getMonth()];
-      const day = adjustedTime.getDate();
-      const year = adjustedTime.getFullYear();
-      const dayName = days[adjustedTime.getDay()];
-      return {
-        success: true,
-        output: `\n*${time}.000 UTC ${dayName} ${monthName} ${day} ${year}\n`
-      };
     }
   }
 
-  // Eğer NTP sunucusuna bağlanılamazsa, local NTP config'i kontrol et
+  // Fallback: local NTP config
   const localNtp = state.services?.ntp;
   if (localNtp?.enabled) {
+    if (localNtp.date && localNtp.time) return formatNtpTime(localNtp as { time: string; date: string });
     if (localNtp.timeOffset !== undefined) {
-      // Use real time with offset if available
       const now = new Date();
-      const adjustedTime = new Date(now.getTime() + localNtp.timeOffset);
-      const time = adjustedTime.toTimeString().slice(0, 8);
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const monthName = months[adjustedTime.getMonth()];
-      const day = adjustedTime.getDate();
-      const year = adjustedTime.getFullYear();
-      const dayName = days[adjustedTime.getDay()];
-      return {
-        success: true,
-        output: `\n*${time}.000 UTC ${dayName} ${monthName} ${day} ${year}\n`
-      };
-    } else if (localNtp.date && localNtp.time) {
-      // Fall back to static date/time if no offset
-      const [y, m, d] = localNtp.date.split('-');
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const monthName = months[parseInt(m) - 1] || m;
-      const dayName = days[new Date(`${y}-${m}-${d}`).getDay()];
-      return {
-        success: true,
-        output: `\n*${localNtp.time}.000 UTC ${dayName} ${monthName} ${parseInt(d)} ${y}\n`
-      };
+      const adj = new Date(now.getTime() + localNtp.timeOffset);
+      return { success: true, output: `\n*${adj.toTimeString().slice(0, 8)}.000 UTC ${days[adj.getDay()]} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][adj.getMonth()]} ${adj.getDate()} ${adj.getFullYear()}\n` };
     }
   }
 
-  // Eğer NTP yoksa, systemClock'u kontrol et
+  // Fallback: systemClock
   if (state.systemClock) {
     const { time, day, month, year } = state.systemClock as { time: string; day: string; month: string; year: string };
     const monthIndex = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(month) + 1;
     const dayName = days[new Date(`${year}-${String(monthIndex).padStart(2,'0')}-${String(day).padStart(2,'0')}`).getDay()];
-    return {
-      success: true,
-      output: `\n*${time}.000 UTC ${dayName} ${month} ${parseInt(day)} ${year}\n`
-    };
+    return { success: true, output: `\n*${time}.000 UTC ${dayName} ${month} ${parseInt(day)} ${year}\n` };
   }
 
-  // Hiçbiri yoksa, gerçek zamanı göster
+  // Final fallback: real time
   const now = new Date();
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const time = now.toTimeString().split(' ')[0];
-  const dayName = days[now.getDay()];
-  return {
-    success: true,
-    output: `\n*${time}.000 UTC ${dayName} ${months[now.getMonth()]} ${now.getDate()} ${now.getFullYear()}\n`
-  };
+  return { success: true, output: `\n*${now.toTimeString().split(' ')[0]}.000 UTC ${days[now.getDay()]} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]} ${now.getDate()} ${now.getFullYear()}\n` };
 }
 
 
