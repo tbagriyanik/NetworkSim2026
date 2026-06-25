@@ -72,6 +72,7 @@ interface PCPanelProps {
   onExecuteDeviceCommand?: (deviceId: string, command: string) => Promise<unknown>;
   onNavigate?: (program: string) => void;
   onDeleteDevice?: (deviceId: string) => void;
+  handleResizeStart?: (e: React.PointerEvent, direction: string, id: string) => void;
 }
 
 
@@ -91,7 +92,8 @@ export function PCPanel({
   onUpdatePCHistory,
   onExecuteDeviceCommand,
   onNavigate,
-  onDeleteDevice
+  onDeleteDevice,
+  handleResizeStart
 }: PCPanelProps) {
   const { t, language } = useLanguage();
   const { theme } = useTheme();
@@ -238,6 +240,20 @@ export function PCPanel({
     files: Array<{ name: string; size: number; modifiedAt?: string }>;
   } | null>(null);
   const [isFtpFilePickerOpen, setIsFtpFilePickerOpen] = useState(false);
+
+  // Local files downloaded via FTP get
+  const [pcLocalFiles, setPcLocalFiles] = useState<Array<{ name: string; size: number; modifiedAt?: string }>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`pc_files_${deviceId}`);
+        if (stored) return JSON.parse(stored);
+      } catch (_e) { }
+    }
+    // First time this PC is used — seed with per-PC default files
+    const defaults = getDefaultPcFiles(deviceId);
+    try { localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(defaults)); } catch (_e) { }
+    return defaults;
+  });
 
   // Keep desktop CMD and console histories separate.
   const [desktopHistory, setDesktopHistory] = useState<string[]>(() => {
@@ -2084,11 +2100,8 @@ export function PCPanel({
         : `http://${value}`;
       const parsed = new URL(withScheme);
       return parsed.hostname || value;
-    } catch (err) {
+    } catch (_err) {
       // URL parsing failed - using fallback extraction
-      if (process.env.NODE_ENV === 'development') {
-        errorHandler.logError(new Error('URL parsing failed'), { raw, error: String(err) });
-      }
       return value.split('/')[0].split('?')[0].trim();
     }
   }, []);
@@ -2374,11 +2387,8 @@ export function PCPanel({
       const parsed = new URL(displayUrl);
       lookupTarget = parsed.hostname || lookupTarget;
       displayUrl = parsed.toString();
-    } catch (err) {
+    } catch (_err) {
       // URL parsing failed - using raw input as fallback
-      if (process.env.NODE_ENV === 'development') {
-        errorHandler.logError(new Error('Browser URL parsing failed'), { displayUrl, error: String(err) });
-      }
     }
 
     // Strip brackets from IPv6 hostnames if present (e.g. [2001:db8::1] -> 2001:db8::1)
@@ -3761,16 +3771,34 @@ export function PCPanel({
     const getMatch = cmdLine.trim().match(/^(get|recv|mget)\s+(.+)/i);
     if (getMatch) {
       const fileName = getMatch[2];
+      const serverFile = session.files?.find(f => f.name.toLowerCase() === fileName.toLowerCase());
+      const localFile = { name: fileName, size: serverFile?.size || 0, modifiedAt: new Date().toISOString() };
+      setPcLocalFiles(prev => {
+        const updated = prev.filter(f => f.name !== fileName).concat(localFile);
+        try { localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(updated)); } catch (_e) { /* ignore */ }
+        return updated;
+      });
       addLocalOutput('output', `150 Opening BINARY mode data connection for ${fileName}\n226 Transfer complete.`);
       return;
     }
     const putMatch = cmdLine.trim().match(/^(put|send|mput)(?:\s+(.+))?$/i);
     if (putMatch) {
-      setIsFtpFilePickerOpen(true);
+      if (putMatch[2]) {
+        // Direct upload: file must exist in pcLocalFiles
+        const fileName = putMatch[2];
+        const localFile = pcLocalFiles.find(f => f.name.toLowerCase() === fileName.toLowerCase());
+        if (localFile) {
+          executeFtpPut(localFile.name);
+        } else {
+          addLocalOutput('error', `Local file '${fileName}' not found.`);
+        }
+      } else {
+        setIsFtpFilePickerOpen(true);
+      }
       return;
     }
     addLocalOutput('output', '200 Command okay.');
-  }, [ftpSession, addLocalOutput, topologyDevices, setIsFtpFilePickerOpen]);
+  }, [ftpSession, addLocalOutput, topologyDevices, setIsFtpFilePickerOpen, pcLocalFiles, executeFtpPut]);
 
   const executeCommand = async (cmdToExecute?: string) => {
     const command = (cmdToExecute || input).trim();
@@ -4137,17 +4165,22 @@ export function PCPanel({
         }
 
         let targetIp = targetArg;
+        let dnsResolved = false;
         // Resolve hostname if not an IP
         if (!isValidIpv4(targetArg) && !isValidIpv6(targetArg)) {
           const namedResult = resolveDeviceNameTarget(targetArg);
           if (namedResult) {
             targetIp = namedResult.ip;
+            dnsResolved = true;
           } else {
             const dnsResult = resolveDomainWithDnsServices(targetArg);
             if (dnsResult) {
               targetIp = dnsResult.address;
+              dnsResolved = true;
             } else {
-              addLocalOutput('error', `Could not resolve hostname ${targetArg}`);
+              addLocalOutput('error', language === 'tr'
+                ? `DNS sorgusu başarısız: '${targetArg}' çözümlenemedi.`
+                : `Could not resolve hostname '${targetArg}'.`);
               return;
             }
           }
@@ -4155,7 +4188,21 @@ export function PCPanel({
 
         const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '21' });
         if (!result.success) {
-          addLocalOutput('error', `Could not connect to FTP server at ${targetIp}: ${result.error || 'Destination unreachable'}`);
+          const err = result.error || '';
+          const displayTarget = dnsResolved ? `${targetArg} [${targetIp}]` : targetIp;
+          if (/firewall|güvenlik duvarı/i.test(err)) {
+            addLocalOutput('error', `${displayTarget}: ${err}`);
+          } else if (/acl/i.test(err)) {
+            addLocalOutput('error', `${displayTarget}: ${err}`);
+          } else if (/ip address/i.test(err)) {
+            addLocalOutput('error', language === 'tr'
+              ? 'FTP bağlantısı sağlanamadı: Kaynak cihazın IP adresi yok.'
+              : 'Could not connect to FTP server: Source device has no IP address.');
+          } else {
+            addLocalOutput('error', language === 'tr'
+              ? `FTP bağlantısı sağlanamadı: ${displayTarget} adresine ulaşılamıyor.`
+              : `Could not connect to FTP server at ${displayTarget}: Destination unreachable.`);
+          }
           return;
         }
         const targetDevice = result.targetId
@@ -4172,7 +4219,9 @@ export function PCPanel({
               targetState?.services?.ftp?.enabled ? targetState.services.ftp :
                 undefined;
         if (!ftpService?.enabled) {
-          addLocalOutput('error', `FTP service is not enabled on ${targetIp}.`);
+          addLocalOutput('error', language === 'tr'
+            ? `FTP bağlantısı sağlanamadı: ${targetIp} üzerinde FTP servisi aktif değil.`
+            : `FTP service is not enabled on ${targetIp}.`);
           return;
         }
         const files = ftpService.files || [];
@@ -4199,13 +4248,30 @@ export function PCPanel({
       } else if (cmd === 'ver') {
         addLocalOutput('output', `OS [Version 10.0.26200.8037]`);
       } else if (cmd === 'dir') {
+        const localFiles = pcLocalFiles;
+        let fileLines = '';
+        let totalSize = 0;
+        if (localFiles.length > 0) {
+          fileLines = '\n' + localFiles.map(f => {
+            const d = f.modifiedAt ? new Date(f.modifiedAt) : new Date();
+            const month = (d.getMonth() + 1).toString().padStart(2, '0');
+            const day = d.getDate().toString().padStart(2, '0');
+            const year = d.getFullYear();
+            const mm = d.getMinutes().toString().padStart(2, '0');
+            const ap = d.getHours() >= 12 ? 'PM' : 'AM';
+            const h12 = (d.getHours() % 12 || 12).toString().padStart(2, '0');
+            totalSize += f.size || 0;
+            return `${month}/${day}/${year}  ${h12}:${mm} ${ap}             ${(f.size || 0).toString().padStart(8)} ${f.name}`;
+          }).join('\n');
+        }
         addLocalOutput('output', ` Volume in drive C is OS
  Volume Serial Number is 1234-5678
 
- Directory of C:\\n
+ Directory of C:\\
 03/27/2026  10:00 AM    <DIR>          .
 03/27/2026  10:00 AM    <DIR>          ..
-               0 File(s)              0 bytes
+${fileLines}
+               ${localFiles.length} File(s)          ${totalSize} bytes
                2 Dir(s)  100,000,000,000 bytes free`);
       } else {
         addLocalOutput('error', `'${command}' is not recognized as an internal or external command.`);
@@ -7165,7 +7231,7 @@ export function PCPanel({
                                 )}
                                 <div
                                   onClick={() => inputRef.current?.focus()}
-                                  className={`flex items-center gap-3 px-3 py-2 bg-background rounded-lg border flex-1 group focus-within:ring-1 transition-all shadow-inner ${isMobile ? 'px-3 py-2' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
+                                   className={`flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 bg-background rounded-lg border flex-1 group focus-within:ring-1 transition-all shadow-inner overflow-hidden ${isMobile ? 'px-3 py-2' : ''} ${activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
                                     ? 'border-warning-500/50 focus-within:ring-warning-500/50'
                                     : 'border-input focus-within:ring-primary/50'
                                     }`}>
@@ -7207,7 +7273,7 @@ export function PCPanel({
                                         }, 300);
                                       }
                                     }}
-                                    className="flex-1 bg-transparent border-none outline-none font-geist-mono text-[16px] sm:text-[13px]"
+                                    className="flex-1 bg-transparent border-none outline-none font-geist-mono text-[16px] sm:text-[13px] placeholder:text-muted-foreground/50 min-w-0"
                                     placeholder={
                                       activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
                                         ? (consoleNeedsPassword
@@ -7262,9 +7328,8 @@ export function PCPanel({
                                   <Button
                                     type="button"
                                     disabled={isConsoleInputDisabled}
-                                    size="icon"
                                     variant="ghost"
-                                    className="shrink-0 rounded-xl hover:bg-rose-500/20 text-rose-500"
+                                    className="shrink-0 rounded-xl hover:bg-rose-500/20 text-rose-500 px-2 h-9 text-xs"
                                     onClick={() => {
                                       if (onExecuteDeviceCommand && connectedDeviceId) {
                                         if (consoleNeedsPassword) {
@@ -7281,23 +7346,37 @@ export function PCPanel({
                                     }}
                                     title={language === 'tr' ? 'İptal' : 'Cancel'}
                                   >
-                                    <X className="w-5 h-5" />
+                                    <X className={cn("w-4 h-4 mr-1", isMobile && "w-3 h-3")} />
+                                    <span className="text-rose-600 dark:text-rose-400 font-medium">{language === 'tr' ? 'İptal' : 'Cancel'}</span>
                                   </Button>
                                 )}
                                 <Button
                                   type="submit"
                                   disabled={activeTab === 'desktop' ? (!input.trim() || isCmdInputDisabled) : isConsoleInputDisabled}
-                                  size="icon"
                                   className={cn(
-                                    "shrink-0 rounded-xl shadow-lg",
-                                    isMobile ? "h-9 w-9" : "h-11 w-11",
+                                    "shrink-0 rounded-xl shadow-lg px-3 bg-zinc-800 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200",
+                                    isMobile ? "h-9 text-xs" : "h-11 text-sm",
                                     activeTab === 'terminal' && isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending)
-                                      ? 'bg-warning-500 hover:bg-warning-600'
-                                      : 'bg-primary-600 hover:bg-primary-700 text-white'
+                                      && "bg-amber-500 hover:bg-amber-600 text-white"
                                   )}
                                 >
-                                  <CornerDownLeft className={cn("w-5 h-5", isMobile && "w-4 h-4")} />
+                                  <span className="rounded-md p-1"><CornerDownLeft className={cn("w-4 h-4 text-white dark:text-zinc-900", isMobile && "w-3 h-3")} /></span>
                                 </Button>
+                                {!isMobile && handleResizeStart && (
+                                  <div
+                                    className="absolute -bottom-2 -right-2 z-20 h-5 w-5 cursor-se-resize select-none touch-none flex items-center justify-center opacity-30 hover:opacity-100 transition-opacity"
+                                    onPointerDown={(e) => {
+                                      e.stopPropagation();
+                                      handleResizeStart(e, 'se', 'pc');
+                                    }}
+                                  >
+                                    <svg className={cn("h-3 w-3", isDark ? "text-zinc-400" : "text-zinc-500")} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                                      <path d="M2 14 L14 2" />
+                                      <path d="M8 14 L14 8" />
+                                      <path d="M12 14 L14 12" />
+                                    </svg>
+                                  </div>
+                                )}
                               </form>
                             </div>
                           )}
@@ -7363,12 +7442,9 @@ export function PCPanel({
                   {language === 'tr' ? 'Yerel Dosyaları Yükle' : 'Upload Local Files'}
                 </h4>
                 <div className={`rounded-lg border divide-y ${isDark ? 'border-secondary-800 divide-secondary-800' : 'border-secondary-200 divide-secondary-200'}`}>
-                  {[
-                    { name: 'budget.xlsx', size: 45056 },
-                    { name: 'report.pdf', size: 124000 },
-                    { name: 'image.jpg', size: 256000 },
-                    { name: 'notes.txt', size: 1024 },
-                  ].map((file) => (
+                  {pcLocalFiles.length === 0 ? (
+                    <div className="p-3 text-sm opacity-50">{language === 'tr' ? '(yerel dosya yok)' : '(no local files)'}</div>
+                  ) : pcLocalFiles.map((file) => (
                     <div key={`upl-${file.name}-${file.size}`} className="flex items-center justify-between p-3">
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{file.name}</span>
@@ -7590,4 +7666,32 @@ function getPCConfigDefaults(id: string) {
     ip: `192.168.1.${10 + parseInt(num)}`,
     mac: `00-40-96-99-88-7${num}`
   };
+}
+
+const USER_FILES_POOL = [
+  'proje_raporu.docx', 'butce_2026.xlsx', 'sunum.pptx',
+  'notlar.txt', 'yapilacaklar.txt', 'iletisim_rehberi.txt',
+  'toplanti_notlari.docx', 'kira_kontrati.pdf', 'fatura_ocak.pdf',
+  'musteri_listesi.xlsx', 'urun_katalogu.pdf', 'teknik_dokuman.pdf',
+  'sifreler.txt', 'is_plani.docx', 'haftalik_rapor.xlsx',
+];
+
+function getDefaultPcFiles(deviceId: string): Array<{ name: string; size: number; modifiedAt: string }> {
+  const num = Math.abs(parseInt(deviceId.split('-')[1] || '1', 10)) || 1;
+  const systemFiles = [
+    { name: 'autoexec.bat', size: 128, modifiedAt: '2026-01-15T08:00:00Z' },
+    { name: 'config.sys', size: 256, modifiedAt: '2026-01-15T08:00:00Z' },
+    { name: 'boot.ini', size: 512, modifiedAt: '2026-03-10T09:00:00Z' },
+    { name: 'msdos.sys', size: 1024, modifiedAt: '2026-03-10T09:00:00Z' },
+    { name: 'command.com', size: 2048, modifiedAt: '2026-03-10T09:00:00Z' },
+  ];
+  const userFiles: Array<{ name: string; size: number; modifiedAt: string }> = [];
+  const seed = num % USER_FILES_POOL.length;
+  for (let i = 0; i < 4; i++) {
+    const idx = (seed + i * 3) % USER_FILES_POOL.length;
+    const size = 1024 + ((num * 137 + i * 251) % 65536);
+    const d = new Date(2026, 2, 10 + i, 9 + (num % 8), (num * 7 + i * 13) % 60);
+    userFiles.push({ name: USER_FILES_POOL[idx], size, modifiedAt: d.toISOString() });
+  }
+  return [...systemFiles, ...userFiles];
 }

@@ -4919,6 +4919,7 @@ ${state.bannerMOTD}
                     onExecuteDeviceCommand={handleExecuteCommand}
                     onNavigate={handlePCPanelNavigateWrapper}
                     onDeleteDevice={handleDeviceDelete}
+                    handleResizeStart={pcDrag.handleResizeStart}
                   />
                 </div>
                 {/* Resize handles - hidden on mobile */}
