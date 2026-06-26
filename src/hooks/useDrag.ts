@@ -289,9 +289,18 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
 
           if (ds2.direction.includes('e')) newW = Math.max(ds2.minSize.width, ds2.startW + dx2);
           if (ds2.direction.includes('s')) newH = Math.max(ds2.minSize.height, ds2.startH + dy2);
-          if (ds2.direction.includes('w')) { newW = Math.max(ds2.minSize.width, ds2.startW - dx2); newX = ds2.startPosX + (ds2.startW - newW); }
-          if (ds2.direction.includes('n')) { newH = Math.max(ds2.minSize.height, ds2.startH - dy2); newY = ds2.startPosY + (ds2.startH - newH); }
+          if (ds2.direction.includes('w')) {
+            const unconstrainedW = ds2.startW - dx2;
+            newW = Math.max(ds2.minSize.width, unconstrainedW);
+            newX = ds2.startPosX + (ds2.startW - newW);
+          }
+          if (ds2.direction.includes('n')) {
+            const unconstrainedH = ds2.startH - dy2;
+            newH = Math.max(ds2.minSize.height, unconstrainedH);
+            newY = ds2.startPosY + (ds2.startH - newH);
+          }
 
+          liveDragPosRef.current = { x: newX, y: newY };
           el.style.willChange = 'width, height, left, top';
           el.style.contain = 'layout style paint';
           el.style.width = `${newW}px`;
@@ -323,11 +332,11 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
           finalH = parseInt(ds.element.style.height) || ds.startH;
         }
 
-        // Clamp position to viewport
+        // Clamp position to viewport (skip for resize operations to prevent jump)
         let clampedX: number = isFinite(finalX) ? finalX : ds.startPosX;
         let clampedY: number = isFinite(finalY) ? finalY : ds.startPosY;
         let elW = 200, elH = 100;
-        if (!ds.disableSnap) {
+        if (!ds.disableSnap && ds.type !== 'resize') {
           const margin = 16;
           const elRect = ds.element.getBoundingClientRect();
           elW = elRect.width || 200;
