@@ -1113,21 +1113,38 @@ export const getExamProjects = (language: 'tr' | 'en'): ExamProject[] => {
         topology: {
           devices: [
             { id: 'r-1', type: 'router', name: 'R1', ip: '', subnet: '', x: 500, y: 100, status: 'online', ports: [
+              { id: 'console', label: 'Console', status: 'disconnected' },
               { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' },
+              { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' },
+              { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' },
+              { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' },
+              { id: 's0/0/0', label: 'S0/0/0', status: 'disconnected' },
+              { id: 's0/1/0', label: 'S0/1/0', status: 'disconnected' },
+              { id: 's0/2/0', label: 'S0/2/0', status: 'disconnected' },
               { id: 'wlan0', label: 'WLAN0', status: 'disconnected', wifi: { ssid: '', mode: 'ap', security: 'open', channel: '2.4GHz' } }
             ]},
-            { id: 'ds-1', type: 'switchL3', name: 'DS1', ip: '', subnet: '', x: 500, y: 250, status: 'online', ports: [
-              { id: 'gi1/0/1', label: 'Gi1/0/1', status: 'disconnected' },
-              { id: 'gi1/0/2', label: 'Gi1/0/2', status: 'disconnected' }
+            { id: 'ds-1', type: 'switchL3', name: 'DS1', ip: '', subnet: '', x: 500, y: 250, status: 'online', switchModel: 'WS-C3650-24PS', ports: [
+              ...Array.from({ length: 24 }, (_, i) => ({ id: `gi1/0/${i + 1}`, label: `Gi1/0/${i + 1}`, status: 'disconnected' as const })),
+              { id: 'console', label: 'Console', status: 'disconnected' as const },
+              { id: 'gi1/1/1', label: 'Gi1/1/1', status: 'disconnected' as const },
+              { id: 'gi1/1/2', label: 'Gi1/1/2', status: 'disconnected' as const },
+              { id: 'gi1/1/3', label: 'Gi1/1/3', status: 'disconnected' as const },
+              { id: 'gi1/1/4', label: 'Gi1/1/4', status: 'disconnected' as const },
+              { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const }
             ]},
-            { id: 'as-1', type: 'switchL2', name: 'AS1', ip: '', subnet: '', x: 300, y: 400, status: 'online', ports: [
-              { id: 'fa0/1', label: 'Fa0/1', status: 'disconnected' },
-              { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' }
+            { id: 'as-1', type: 'switchL2', name: 'AS1', ip: '', subnet: '', x: 300, y: 400, status: 'online', switchModel: 'WS-C2960-24TT-L', ports: [
+              ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' as const })),
+              { id: 'console', label: 'Console', status: 'disconnected' as const },
+              { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
+              { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const }
             ]},
-            { id: 'pc-1', type: 'pc', name: 'PC-1', x: 100, y: 400, status: 'online', ip: '', subnet: '', gateway: '', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' }] },
-            { id: 'iot-1', type: 'iot', name: 'IoT-1', x: 700, y: 100, status: 'online', ip: '', wifi: { enabled: true, ssid: '', mode: 'client', security: 'open', channel: '2.4GHz' }, ports: [{ id: 'wlan0', label: 'WLAN0', status: 'disconnected' }] },
-            { id: 'fw-1', type: 'firewall', name: 'FW-1', x: 750, y: 250, status: 'online', ip: '', subnet: '', ports: [{ id: 'gi1/0/0', label: 'Gi1/0/0', status: 'disconnected' }] },
-            { id: 'server-1', type: 'pc', name: 'Server-1', x: 750, y: 400, status: 'online', ip: '10.0.0.100', subnet: '255.0.0.0', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' }] }
+            { id: 'pc-1', type: 'pc', name: 'PC-1', x: 100, y: 400, status: 'online', ip: '', subnet: '', gateway: '', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const }, { id: 'com1', label: 'COM1', status: 'disconnected' as const }] },
+            { id: 'iot-1', type: 'iot', name: 'IoT-1', x: 700, y: 100, status: 'online', ip: '', wifi: { enabled: true, ssid: '', mode: 'client', security: 'open', channel: '2.4GHz' }, ports: [{ id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, wifi: { ssid: '', security: 'open', channel: '2.4GHz', mode: 'client' } }] },
+            { id: 'fw-1', type: 'firewall', name: 'FW-1', x: 750, y: 250, status: 'online', ip: '', subnet: '', ports: [
+              { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const },
+              { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const }
+            ]},
+            { id: 'server-1', type: 'pc', name: 'Server-1', x: 750, y: 400, status: 'online', ip: '10.0.0.100', subnet: '255.0.0.0', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const }, { id: 'com1', label: 'COM1', status: 'disconnected' as const }] }
           ],
           connections: [],
           notes: [

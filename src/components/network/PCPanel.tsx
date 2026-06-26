@@ -6944,7 +6944,7 @@ ${fileLines}
                       )}
 
                       {(activeTab === 'desktop' || activeTab === 'terminal') && (
-                        <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden relative">
+                        <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
                           {activeTab === 'terminal' && (
                             <div className={`px-3 md:px-4 py-2 border-b shrink-0 ${isDark ? 'border-secondary-800 bg-secondary-900/40' : 'border-secondary-200 bg-secondary-50'} flex items-center justify-between gap-3`}>
                               <div className="flex flex-col gap-1">
@@ -7002,7 +7002,7 @@ ${fileLines}
                           <div
                             ref={outputRef}
                             className={`flex-1 overflow-y-auto overflow-x-hidden scroll-smooth p-3 md:p-6 space-y-1.5 font-geist-mono leading-relaxed custom-scrollbar ${isMobile ? 'mobile-scroll' : ''} ${isPcPoweredOff ? 'bg-black' : terminalBg}`}
-                            style={{ ...mobileVerticalScrollStyle, fontSize: `${fontSize}px`, paddingBottom: isMobile ? '8rem' : '7rem', contain: 'layout style paint' }}
+                            style={{ ...mobileVerticalScrollStyle, fontSize: `${fontSize}px`, contain: 'layout style paint' }}
                           >
                             {isPcPoweredOff ? (
                               <div className="h-full flex flex-col items-center justify-center gap-3">
@@ -7218,7 +7218,7 @@ ${fileLines}
                           </div>
                           {/* Input Area - Fixed at bottom */}
                           {!isPcPoweredOff && (
-                            <div onClick={() => inputRef.current?.focus()} className={`absolute inset-x-0 bottom-0 z-20 border-t bg-muted/95 backdrop-blur-sm ${isMobile ? 'p-2' : 'p-3'}`}>
+                            <div onClick={() => inputRef.current?.focus()} className={`shrink-0 border-t bg-muted/95 backdrop-blur-sm ${isMobile ? 'p-2' : 'p-3'}`}>
                               <form onSubmit={(e) => { e.preventDefault(); executeCommand(); }} className="flex items-center gap-3 relative">
 
                                 {/* Context hint for password/confirm in console mode */}
