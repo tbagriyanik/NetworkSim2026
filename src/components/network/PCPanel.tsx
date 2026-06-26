@@ -7001,7 +7001,7 @@ ${fileLines}
                           {/* Output Area - Scrollable */}
                           <div
                             ref={outputRef}
-                            className={`flex-1 overflow-y-auto overflow-x-hidden scroll-smooth p-3 md:p-6 space-y-1.5 font-geist-mono leading-relaxed custom-scrollbar ${isMobile ? 'mobile-scroll' : ''} ${isPcPoweredOff ? 'bg-black' : terminalBg}`}
+                            className={`flex-1 overflow-y-auto overflow-x-hidden scroll-smooth p-3 md:p-6 space-y-1.5 font-geist-mono leading-relaxed custom-scrollbar min-h-0 ${isMobile ? 'mobile-scroll' : ''} ${isPcPoweredOff ? 'bg-black' : terminalBg}`}
                             style={{ ...mobileVerticalScrollStyle, fontSize: `${fontSize}px`, contain: 'layout style paint' }}
                           >
                             {isPcPoweredOff ? (
@@ -7514,11 +7514,11 @@ ${fileLines}
             tabIndex={-1}
           >
             <div
-              className={`h-full w-full rounded-2xl shadow-2xl border ${isDark ? 'border-secondary-800 bg-secondary-900' : 'border-secondary-200 bg-white'} flex flex-col overflow-hidden`}
+              className={`h-full w-full rounded-2xl shadow-2xl border ${isDark ? 'border-emerald-500/30 bg-secondary-900' : 'border-emerald-500 bg-white'} flex flex-col overflow-hidden`}
               style={{ borderWidth: 3, willChange: 'auto', contain: 'layout style paint' }}
             >
               <div
-                className={`flex items-center justify-between px-4 py-2 border-b cursor-grab active:cursor-grabbing select-none touch-none ${isDark ? 'border-secondary-800 bg-secondary-950' : 'border-secondary-100'}`}
+                className={`flex items-center justify-between px-4 py-2 border-b cursor-grab active:cursor-grabbing select-none touch-none ${isDark ? 'border-emerald-500/30 bg-secondary-950' : 'border-emerald-500/50'}`}
                 onPointerDown={(e) => {
                   const target = e.target as HTMLElement;
                   if (target.closest('input, textarea, select, button')) return;

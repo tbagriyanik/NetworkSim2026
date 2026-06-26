@@ -60,7 +60,7 @@ const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
     </svg>
   ),
   iot: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#16cbf9" viewBox="0 -2 27 27">
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#f97316" viewBox="0 -2 27 27">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.247 7.761a6 6 0 0 1 0 8.478" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.075 4.933a10 10 0 0 1 0 14.134" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.925 19.067a10 10 0 0 1 0-14.134" />
@@ -69,12 +69,12 @@ const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
     </svg>
   ),
   switch: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#06b6d4" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
     </svg>
   ),
   switchL2: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#06b6d4" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
     </svg>
   ),
@@ -96,7 +96,7 @@ const DEVICE_ICONS: Record<DeviceType | 'switch', React.ReactNode> = {
     </svg>
   ),
   wlc: (
-    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#f59e0b" viewBox="0 0 24 24" strokeWidth={1.5}>
+    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="#eab308" viewBox="0 0 24 24" strokeWidth={1.5}>
       <circle cx="12" cy="12" r="9" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
       <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.3" />
@@ -4979,20 +4979,24 @@ export function NetworkTopology({
         ? 'url(#iotGradientDark)'
         : device.type === 'firewall'
           ? 'url(#firewallGradientDark)'
-          : isPcLike
-            ? 'url(#pcGradientDark)'
-            : isSwitchDevice(device.type)
-              ? 'url(#switchGradientDark)'
-              : 'url(#routerGradientDark)')
+          : device.type === 'wlc'
+            ? 'url(#wlcGradientDark)'
+            : isPcLike
+              ? 'url(#pcGradientDark)'
+              : isSwitchDevice(device.type)
+                ? 'url(#switchGradientDark)'
+                : 'url(#routerGradientDark)')
       : (device.type === 'iot'
         ? 'url(#iotGradientLight)'
         : device.type === 'firewall'
           ? 'url(#firewallGradientLight)'
-          : isPcLike
-            ? 'url(#pcGradientLight)'
-            : isSwitchDevice(device.type)
-              ? 'url(#switchGradientLight)'
-              : 'url(#routerGradientLight)');
+          : device.type === 'wlc'
+            ? 'url(#wlcGradientLight)'
+            : isPcLike
+              ? 'url(#pcGradientLight)'
+              : isSwitchDevice(device.type)
+                ? 'url(#switchGradientLight)'
+                : 'url(#routerGradientLight)');
 
     // Calculate device height based on number of ports (8 per row for switch/router)
     const portsPerRow = isPcLike ? 2 : 8;
@@ -5212,7 +5216,7 @@ export function NetworkTopology({
           <path
             d={`M 0 0 L ${deviceWidth} 0 L ${deviceWidth} ${deviceHeight - 8} Q ${deviceWidth} ${deviceHeight} ${deviceWidth - 8} ${deviceHeight} L 8 ${deviceHeight} Q 0 ${deviceHeight} 0 ${deviceHeight - 8} L 0 0 Z`}
             fill={deviceFill}
-            stroke={isDark ? '#22c55e' : '#cbd5e1'}
+            stroke={isDark ? '#06b6d4' : '#cbd5e1'}
             strokeWidth={1.5}
             className={isDragging ? '' : 'transition-all duration-150'}
             filter="url(#deviceShadow)"
@@ -5224,7 +5228,7 @@ export function NetworkTopology({
             rx={8}
             fill={deviceFill}
             stroke={isDark
-              ? ((device.type as string) === 'pc' ? '#3b82f6' : (device.type as string) === 'iot' ? '#f97316' : (device.type as string) === 'firewall' ? '#ef4444' : isSwitchDeviceType(device.type) ? '#22c55e' : (device.type as string) === 'wlc' ? '#f59e0b' : '#a855f7')
+              ? ((device.type as string) === 'pc' ? '#3b82f6' : (device.type as string) === 'iot' ? '#f97316' : (device.type as string) === 'firewall' ? '#ef4444' : isSwitchDeviceType(device.type) ? '#06b6d4' : (device.type as string) === 'wlc' ? '#eab308' : '#a855f7')
               : '#cbd5e1'}
             strokeWidth={1.5}
             className={isDragging ? '' : 'transition-all duration-150'}
@@ -5844,7 +5848,7 @@ export function NetworkTopology({
                 );
               case 'motion':
                 return (
-                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#22c55e' : '#16a34a'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
+                  <text x={deviceWidth / 2} y={70} fill={isDark ? '#fb923c' : '#ea580c'} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                     <tspan x={deviceWidth / 2} dy="0">{t.sensorMotion}:</tspan>
                     <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                   </text>
@@ -6280,11 +6284,11 @@ export function NetworkTopology({
                       </span>
                     </button>
                     <button
-                      onClick={() => { addDevice('switch'); setIsPaletteOpen(false); }}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700 hover:border-green-500/50' : 'bg-slate-50 border-slate-200 active:bg-slate-100 hover:border-green-500/50'
-                        }`}
-                    >
-                      <div className='text-green-500'>
+                       onClick={() => { addDevice('switch'); setIsPaletteOpen(false); }}
+                       className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700 hover:border-cyan-500/50' : 'bg-slate-50 border-slate-200 active:bg-slate-100 hover:border-cyan-500/50'
+                         }`}
+                     >
+                       <div className='text-cyan-500'>
                         {DEVICE_ICONS['switch']}
                       </div>
                       <span className="text-xs font-bold text-center">
@@ -6318,11 +6322,11 @@ export function NetworkTopology({
                       </span>
                     </button>
                     <button
-                      onClick={() => { addDevice('iot'); setIsPaletteOpen(false); }}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700 hover:border-cyan-500/50' : 'bg-slate-50 border-slate-200 active:bg-slate-100 hover:border-cyan-500/50'
-                        }`}
-                    >
-                      <div className='text-cyan-500'>
+                       onClick={() => { addDevice('iot'); setIsPaletteOpen(false); }}
+                       className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700 hover:border-orange-500/50' : 'bg-slate-50 border-slate-200 active:bg-slate-100 hover:border-orange-500/50'
+                         }`}
+                     >
+                       <div className='text-orange-500'>
                         {DEVICE_ICONS['iot']}
                       </div>
                       <span className="text-xs font-bold text-center">
@@ -6342,11 +6346,11 @@ export function NetworkTopology({
                       </span>
                     </button>
                     <button
-                      onClick={() => { addDevice('wlc'); setIsPaletteOpen(false); }}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700 hover:border-amber-500/50' : 'bg-slate-50 border-slate-200 active:bg-slate-100 hover:border-amber-500/50'
-                        }`}
-                    >
-                      <div className='text-amber-500'>
+                       onClick={() => { addDevice('wlc'); setIsPaletteOpen(false); }}
+                       className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${isDark ? 'bg-slate-800 border-slate-700 active:bg-slate-700 hover:border-yellow-500/50' : 'bg-slate-50 border-slate-200 active:bg-slate-100 hover:border-yellow-500/50'
+                         }`}
+                     >
+                       <div className='text-yellow-500'>
                         {DEVICE_ICONS['wlc']}
                       </div>
                       <span className="text-xs font-bold text-center">
@@ -6668,9 +6672,9 @@ export function NetworkTopology({
                     <stop offset="100%" stopColor="#1e3a8a" />
                   </linearGradient>
                   <linearGradient id="switchGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#14b8a6" />
-                    <stop offset="30%" stopColor="#0f766e" />
-                    <stop offset="100%" stopColor="#115e59" />
+                    <stop offset="0%" stopColor="#22d3ee" />
+                    <stop offset="30%" stopColor="#0891b2" />
+                    <stop offset="100%" stopColor="#155e75" />
                   </linearGradient>
                   <linearGradient id="routerGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="#a855f7" />
@@ -6683,9 +6687,9 @@ export function NetworkTopology({
                     <stop offset="100%" stopColor="#991b1b" />
                   </linearGradient>
                   <linearGradient id="iotGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#f89d5c" />
-                    <stop offset="30%" stopColor="#ef9463" />
-                    <stop offset="100%" stopColor="#ca643c" />
+                    <stop offset="0%" stopColor="#fb923c" />
+                    <stop offset="30%" stopColor="#ea580c" />
+                    <stop offset="100%" stopColor="#c2410c" />
                   </linearGradient>
                   {/* Device 3D Gradients for Light Mode */}
                   <linearGradient id="pcGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -6693,8 +6697,8 @@ export function NetworkTopology({
                     <stop offset="100%" stopColor="#dbeafe" />
                   </linearGradient>
                   <linearGradient id="switchGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#f0fdfa" />
-                    <stop offset="100%" stopColor="#ccfbf1" />
+                    <stop offset="0%" stopColor="#ecfeff" />
+                    <stop offset="100%" stopColor="#a5f3fc" />
                   </linearGradient>
                   <linearGradient id="routerGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="#f5f3ff" />
@@ -6705,8 +6709,17 @@ export function NetworkTopology({
                     <stop offset="100%" stopColor="#fecaca" />
                   </linearGradient>
                   <linearGradient id="iotGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#ffedd5" />
+                    <stop offset="0%" stopColor="#fff7ed" />
                     <stop offset="100%" stopColor="#fed7aa" />
+                  </linearGradient>
+                  <linearGradient id="wlcGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#facc15" />
+                    <stop offset="30%" stopColor="#ca8a04" />
+                    <stop offset="100%" stopColor="#a16207" />
+                  </linearGradient>
+                  <linearGradient id="wlcGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#fefce8" />
+                    <stop offset="100%" stopColor="#fef9c3" />
                   </linearGradient>
                   {/* Note Gradients for Dark Mode */}
                   <linearGradient id="noteBlueDark" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -7809,7 +7822,7 @@ export function NetworkTopology({
                   : device.type === 'iot'
                     ? '#f97316'
                     : isSwitchDeviceType(device.type)
-                      ? (device.switchModel === 'WS-C3650-24PS' ? '#a855f7' : '#22c55e')
+                      ? (device.switchModel === 'WS-C3650-24PS' ? '#a855f7' : '#06b6d4')
                       : '#a855f7';
 
                 return (

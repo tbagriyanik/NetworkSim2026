@@ -289,7 +289,7 @@ export function ModernPanel({
             ref={panelRef}
             className={cn(
                 'flex flex-col border rounded-lg shadow-sm overflow-hidden transition-shadow duration-200',
-                isDark ? 'bg-zinc-950/95 border-zinc-800' : 'bg-white/95 border-zinc-200',
+                isDark ? 'bg-zinc-950/95 border-green-500/30' : 'bg-white/95 border-green-500 border-dashed',
                 isOverlay && 'fixed z-40',
                 isStacked && 'relative',
                 isDragging && 'shadow-xl ring-1 ring-primary/10',
@@ -311,7 +311,7 @@ export function ModernPanel({
                     data-drag-header
                     className={cn(
                         "flex items-center justify-between gap-1.5 p-2 border-b select-none",
-                        isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-50 border-zinc-200",
+                        isDark ? "bg-zinc-900 border-green-500/30" : "bg-zinc-50 border-green-500/50",
                         isMobile && "p-1.5 min-h-[40px] touch-manipulation",
                     )}
                     style={{ touchAction: 'none' }}
@@ -360,7 +360,7 @@ export function ModernPanel({
             {footer && (
                 <div className={cn(
                     "p-3 border-t",
-                    isDark ? "bg-zinc-900/50 border-zinc-800" : "bg-zinc-50/50 border-zinc-200"
+                    isDark ? "bg-zinc-900/50 border-green-500/30" : "bg-zinc-50/50 border-green-500/50"
                 )}>
                     {footer}
                 </div>

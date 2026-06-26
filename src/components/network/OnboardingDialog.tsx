@@ -66,7 +66,7 @@ export function OnboardingDialog({
       }}
     >
       <DialogContent
-        className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} w-[95vw] sm:max-w-2xl md:max-w-3xl p-0 overflow-hidden liquid-glass-light max-h-[90vh] flex flex-col`}
+        className={`${isDark ? 'bg-slate-900 border-emerald-500/30' : 'bg-white border-emerald-500'} w-[95vw] sm:max-w-2xl md:max-w-3xl p-0 overflow-hidden liquid-glass-light max-h-[90vh] flex flex-col`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -85,7 +85,7 @@ export function OnboardingDialog({
               <DialogTitle className={`text-xl sm:text-2xl md:text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 {onboardingSteps[onboardingStep]?.title}
               </DialogTitle>
-              <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${isDark ? 'bg-slate-800 text-cyan-400 border border-slate-700' : 'bg-slate-100 text-cyan-600 border border-slate-200'}`}>
+              <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${isDark ? 'bg-slate-800 text-cyan-400 border border-emerald-500/30' : 'bg-slate-100 text-cyan-600 border border-emerald-500/50'}`}>
                 {onboardingStep + 1} / {onboardingSteps.length}
               </span>
             </div>
@@ -95,7 +95,7 @@ export function OnboardingDialog({
           </DialogHeader>
         </ScrollArea>
 
-        <div className="flex items-center justify-between gap-4 px-4 sm:px-8 py-4 sm:py-6 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-200 dark:border-slate-800 mt-auto">
+        <div className="flex items-center justify-between gap-4 px-4 sm:px-8 py-4 sm:py-6 bg-slate-50/50 dark:bg-slate-800/30 border-t border-emerald-500/50 dark:border-emerald-500/30 mt-auto">
           <Button variant="ghost" onClick={closeOnboardingForever} className="text-xs font-semibold">
             {t.skip}
           </Button>

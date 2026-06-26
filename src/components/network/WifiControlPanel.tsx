@@ -655,7 +655,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab:
             return `
             <div class="iot-device-card connected" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:1px solid #e9ecef;cursor:pointer;">
               <div style="display:flex;align-items:center;gap:12px;">               
-                <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, ${device.isWired ? '#22c55e 0%, #16a34a 100%' : '#16cbf9 0%, #0ea5e9 100%'});display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
+                <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, ${device.isWired ? '#22c55e 0%, #16a34a 100%' : '#f97316 0%, #ea580c 100%'});display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
                   ${device.isWired ? '🔌' : '🛜'}
                 </div>
                 <div>
@@ -725,7 +725,7 @@ export function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab:
             <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:2px solid #e9ecef;cursor:pointer;transition:all 0.3s;" onclick="event.stopPropagation(); toggleIotDeviceSelection(${jsIotId})">
               <div style="display:flex;align-items:center;gap:12px;">
                 <input type="checkbox" class="iot-checkbox" data-device-id="${safeIotId}" style="width:20px;height:20px;cursor:pointer;" onclick="event.stopPropagation(); toggleIotDeviceSelection(${jsIotId})">
-                <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
+                <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, #f97316 0%, #ea580c 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
                   🛜
                 </div>
                 <div>

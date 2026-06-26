@@ -149,7 +149,7 @@ export function ProjectPickerDialog({
 
   return (
     <Dialog open={open} onOpenChange={(open) => { onOpenChange(open); if (!open) setProjectSearchQuery(''); }}>
-      <DialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} sm:max-w-2xl md:max-w-3xl w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl liquid-glass-light`}>
+      <DialogContent className={`${isDark ? 'bg-slate-900 border-emerald-500/30' : 'bg-white border-emerald-500'} sm:max-w-2xl md:max-w-3xl w-[98vw] max-w-[1400px] h-[95vh] max-h-[1000px] p-0 overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-3xl liquid-glass-light`}>
         <div className='flex flex-col flex-1 overflow-hidden h-full max-w-full'>
           <div className='p-4 md:p-8 pb-2 md:pb-4 space-y-4'>
             <DialogHeader className='rounded-2xl md:rounded-3xl border border-transparent bg-gradient-to-r p-4 md:p-6 flex items-start md:items-center justify-between flex-col md:flex-row gap-4'>

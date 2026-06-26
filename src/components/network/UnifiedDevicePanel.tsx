@@ -135,7 +135,7 @@ export function UnifiedDevicePanel({
                 onEscapeKeyDown={(e) => e.preventDefault()}
                 className={cn(
                     "p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0 liquid-glass-light",
-                    isDark ? "bg-secondary-950/80 border-secondary-800" : "bg-white border-secondary-200"
+                    isDark ? "bg-secondary-950/80 border-green-500/30" : "bg-white border-green-500"
                 )}
                 data-modal-content
                 style={{
@@ -148,6 +148,7 @@ export function UnifiedDevicePanel({
                     maxHeight: 'none',
                     borderRadius: isMobile ? 0 : '1rem',
                     borderWidth: 3,
+                    borderStyle: 'dashed',
                     zIndex: 50
                 }}
             >
@@ -156,7 +157,7 @@ export function UnifiedDevicePanel({
                     <DialogHeader
                         className={cn(
                             "p-0 border-b cursor-grab active:cursor-grabbing select-none touch-none sticky top-0 z-10",
-                            isDark ? "border-secondary-800 bg-secondary-900/90" : "border-secondary-100 bg-white"
+                            isDark ? "border-green-500/30 bg-secondary-900/90" : "border-green-500/50 bg-white"
                         )}
                         data-modal-header
                         onPointerDown={(e) => handlePointerDown(e, 'deviceUnified')}

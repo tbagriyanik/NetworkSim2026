@@ -4601,7 +4601,7 @@ ${state.bannerMOTD}
               focusActiveTerminalInput();
             }
           }}>
-            <AlertDialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
+            <AlertDialogContent className={`${isDark ? 'bg-slate-900 border-emerald-500/30' : 'bg-white border-emerald-500/50'}`}>
               <AlertDialogHeader>
                 <AlertDialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
                   {t.confirmationRequired}
@@ -4633,7 +4633,7 @@ ${state.bannerMOTD}
               focusActiveTerminalInput();
             }
           }}>
-            <AlertDialogContent className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
+            <AlertDialogContent className={`${isDark ? 'bg-slate-900 border-emerald-500/30' : 'bg-white border-emerald-500/50'}`}>
               <AlertDialogHeader>
                 <AlertDialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
                   {t.saveProject}
@@ -4714,8 +4714,8 @@ ${state.bannerMOTD}
               className={cn(
                 "p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0 shadow-[0_15px_50px_rgba(15,23,42,0.12)] liquid-glass-light",
                 isDark
-                  ? "bg-slate-950/80 border-white/10 backdrop-blur-xl"
-                  : "bg-white/70 border-white/70 backdrop-blur-xl"
+                  ? "bg-slate-950/80 border-green-500/40 backdrop-blur-xl"
+                  : "bg-white/70 border-green-500 backdrop-blur-xl"
               )}
               data-modal-content
               data-disable-snap="true"
@@ -4729,6 +4729,7 @@ ${state.bannerMOTD}
                 maxHeight: 'none',
                 borderRadius: !isMobile ? '1rem' : 0,
                 borderWidth: 3,
+                borderStyle: 'dashed',
               }}
             >
               <div className={cn(
@@ -4738,7 +4739,7 @@ ${state.bannerMOTD}
                 <DialogHeader
                   className={cn(
                     "p-3 sm:p-4 border-b cursor-grab active:cursor-grabbing select-none touch-none sticky top-0 z-10 backdrop-blur-xl",
-                    isDark ? "border-white/10 bg-slate-900/75" : "border-white/70 bg-white/80"
+                    isDark ? "border-green-500/30 bg-slate-900/75" : "border-green-500/60 bg-white/80"
                   )}
                   data-modal-header
                   onPointerDown={(e) => firewallDrag.handlePointerDown(e, 'firewall')}
@@ -4826,7 +4827,7 @@ ${state.bannerMOTD}
                     <div className="absolute -left-[5px] -bottom-[5px] z-20 h-[10px] w-[10px] cursor-sw-resize select-none touch-none bg-transparent hover:bg-red-500/20" onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'sw', 'firewall')} />
                     <TooltipWrapper title={t.resizeAction}>
                       <div
-                        className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-red-500/30 hover:text-white flex items-center justify-center"
+                        className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-emerald-500/30 bg-slate-500/30 text-slate-100/80 hover:bg-red-500/30 hover:text-white flex items-center justify-center"
                         onPointerDown={(e) => firewallDrag.handleResizeStart(e, 'se', 'firewall')}
                       >
                         <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
@@ -4850,8 +4851,8 @@ ${state.bannerMOTD}
               className={cn(
                 "p-0 overflow-visible flex flex-col top-auto left-auto translate-x-0 translate-y-0 shadow-[0_15px_50px_rgba(15,23,42,0.12)] liquid-glass-light",
                 isDark
-                  ? "bg-slate-950/80 border-white/10 backdrop-blur-xl"
-                  : "bg-white/70 border-white/70 backdrop-blur-xl"
+                  ? "bg-slate-950/80 border-green-500/40 backdrop-blur-xl"
+                  : "bg-white/70 border-green-500 backdrop-blur-xl"
               )}
               data-modal-content
               style={{
@@ -4864,6 +4865,7 @@ ${state.bannerMOTD}
                 maxHeight: 'none',
                 borderRadius: !isMobile ? '1rem' : 0,
                 borderWidth: 3,
+                borderStyle: 'dashed',
               }}
             >
               <div className={cn(
@@ -4873,7 +4875,7 @@ ${state.bannerMOTD}
                 <DialogHeader
                   className={cn(
                     "p-3 sm:p-4 border-b cursor-grab active:cursor-grabbing select-none touch-none sticky top-0 z-10 backdrop-blur-xl min-h-[48px]",
-                    isDark ? "border-white/10 bg-slate-900/75" : "border-white/70 bg-white/80"
+                    isDark ? "border-green-500/30 bg-slate-900/75" : "border-green-500/60 bg-white/80"
                   )}
                   data-modal-header
                   onPointerDown={(e) => pcDrag.handlePointerDown(e, 'pc')}
@@ -4934,7 +4936,7 @@ ${state.bannerMOTD}
                     <div className="absolute -left-[5px] -bottom-[5px] z-20 h-[10px] w-[10px] cursor-sw-resize select-none touch-none bg-transparent hover:bg-cyan-500/20" onPointerDown={(e) => pcDrag.handleResizeStart(e, 'sw', 'pc')} />
                     <TooltipWrapper title={t.resizeAction}>
                       <div
-                        className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-slate-400/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
+                        className="absolute -bottom-2 -right-2 z-20 h-7 w-7 cursor-se-resize select-none touch-none rounded-tl-lg rounded-br-lg border border-emerald-500/30 bg-slate-500/30 text-slate-100/80 hover:bg-cyan-500/30 hover:text-white flex items-center justify-center"
                         onPointerDown={(e) => pcDrag.handleResizeStart(e, 'se', 'pc')}
                       >
                         <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
@@ -5129,8 +5131,8 @@ ${state.bannerMOTD}
                   ref={refreshReportRef}
                   data-draggable-id="refresh-network-report"
                   className={`fixed top-20 right-4 w-full max-w-sm rounded-xl border shadow-2xl animate-in slide-in-from-right-full duration-300 backdrop-blur-md select-none ${isDark
-                    ? 'bg-zinc-950/40 border-zinc-800/50 text-zinc-100 shadow-black/40'
-                    : 'bg-white/40 border-zinc-200/50 text-zinc-900 shadow-zinc-200/50'
+                    ? 'bg-zinc-950/40 border-emerald-500/30 text-zinc-100 shadow-black/40'
+                    : 'bg-white/40 border-emerald-500/50 text-zinc-900 shadow-zinc-200/50'
                     }`}
                   style={{
                     zIndex: focusedOverlay === 'refresh' ? 35 : 30,
@@ -5140,7 +5142,7 @@ ${state.bannerMOTD}
                   onMouseDown={() => setFocusedOverlay('refresh')}
                 >
                   <div
-                    className={`flex items-center justify-between px-3 py-2 border-b rounded-t-xl cursor-grab active:cursor-grabbing select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
+                    className={`flex items-center justify-between px-3 py-2 border-b rounded-t-xl cursor-grab active:cursor-grabbing select-none ${isDark ? 'bg-white/5 border-emerald-500/20' : 'bg-black/5 border-emerald-500/30'}`}
                     data-drag-handle
                   >
                     <h3 className="text-sm font-bold flex items-center gap-2">

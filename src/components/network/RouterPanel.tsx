@@ -171,7 +171,7 @@ export function RouterPanel({
       <DialogContent
         className={cn(
           "p-0 flex flex-col top-auto left-auto translate-x-0 translate-y-0 liquid-glass-light",
-          isDark ? "bg-secondary-950/80 border-white/10" : "bg-white/70 border-white/70"
+          isDark ? "bg-secondary-950/80 border-green-500/40" : "bg-white/70 border-green-500"
         )}
         showCloseButton={false}
         onPointerDownOutside={(e) => e.preventDefault()}
@@ -187,13 +187,14 @@ export function RouterPanel({
           maxHeight: isMobile ? '100vh' : '80vh',
           borderRadius: isMobile ? 0 : '1rem',
           borderWidth: 3,
+          borderStyle: 'dashed',
         }}
       >
         <div className="relative flex flex-col h-full overflow-hidden rounded-2xl shadow-2xl">
         <DialogHeader
           className={cn(
             "p-4 border-b cursor-grab active:cursor-grabbing select-none touch-none min-h-[52px]",
-            isDark ? "border-white/10 bg-secondary-900/75" : "border-white/70 bg-white/80"
+            isDark ? "border-green-500/30 bg-secondary-900/75" : "border-green-500/60 bg-white/80"
           )}
           data-modal-header
           onPointerDown={(e) => handlePointerDown?.(e, 'router')}

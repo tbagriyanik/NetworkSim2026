@@ -148,7 +148,7 @@ export function FirewallPanel({
     onUpdateRules(updatedRules);
   }, [rules, onUpdateRules]);
 
-  const cardBg = isDark ? 'bg-secondary-800 border-secondary-700' : 'bg-white border-secondary-200';
+  const cardBg = isDark ? 'bg-secondary-800 border-green-500/30' : 'bg-white border-green-500/50';
   const itemBg = isDark ? 'bg-secondary-900' : 'bg-secondary-50';
 
   // Use controlled tabs if activeTab/onTabChange provided, otherwise uncontrolled
@@ -222,7 +222,7 @@ export function FirewallPanel({
                 </div>
               )}
 
-              <div className={`p-4 rounded-xl border ${isDark ? 'bg-secondary-950/50 border-secondary-800' : 'bg-white border-secondary-200'} space-y-3`}>
+              <div className={`p-4 rounded-xl border ${isDark ? 'bg-secondary-950/50 border-green-500/30' : 'bg-white border-green-500/50'} space-y-3`}>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-secondary-500 uppercase">{t.language === 'tr' ? 'Kaynak IP' : 'Source IP'}</label>

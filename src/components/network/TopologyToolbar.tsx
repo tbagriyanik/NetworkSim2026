@@ -287,7 +287,7 @@ export function TopologyToolbar({
                 aria-label={t.addL2Switch}
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 p-0 text-green-500 hover:bg-green-500/10"
+                className="h-8 w-8 p-0 text-cyan-500 hover:bg-cyan-500/10"
                 onClick={() => {
                   if (typeof window !== 'undefined') {
                     const event = new CustomEvent('add-device', { detail: 'switchL2' });
@@ -351,10 +351,10 @@ export function TopologyToolbar({
                 aria-label={t.addIoT}
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 p-0 text-cyan-500 hover:bg-cyan-500/10"
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    const event = new CustomEvent('add-device', { detail: 'iot' });
+className="h-8 w-8 p-0 text-orange-500 hover:bg-orange-500/10"
+                 onClick={() => {
+                   if (typeof window !== 'undefined') {
+                     const event = new CustomEvent('add-device', { detail: 'iot' });
                     window.dispatchEvent(event);
                   }
                 }}
@@ -398,7 +398,7 @@ export function TopologyToolbar({
                 aria-label={t.addWLC}
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 p-0 text-amber-500 hover:bg-amber-500/10"
+                className="h-8 w-8 p-0 text-yellow-500 hover:bg-yellow-500/10"
                 onClick={() => {
                   if (typeof window !== 'undefined') {
                     const event = new CustomEvent('add-device', { detail: 'wlc' });

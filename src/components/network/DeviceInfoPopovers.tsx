@@ -54,9 +54,9 @@ export function SwitchInfoPopover({ router, routerState, t, isDark, onClose, top
   return (
     <div ref={containerRef} className={cn("hidden md:block fixed animate-scale-in")}
       style={{ bottom: `${position.y}px`, right: `${position.x}px`, zIndex }}>
-      <div className={`rounded-2xl overflow-hidden border shadow-2xl min-w-[200px] max-w-[280px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
+      <div className={`rounded-2xl overflow-hidden border shadow-2xl min-w-[200px] max-w-[280px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-emerald-500/30 shadow-black/40' : 'bg-white/40 border-emerald-500/50 shadow-zinc-200/50'}`}>
         <div
-          className={`flex items-center justify-between px-3 py-2 border-b select-none cursor-grab active:cursor-grabbing ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
+          className={`flex items-center justify-between px-3 py-2 border-b select-none cursor-grab active:cursor-grabbing ${isDark ? 'bg-white/5 border-emerald-500/20' : 'bg-black/5 border-emerald-500/30'}`}
           onPointerDown={(e) => { onFocus(); handleDragStart(e); }}
         >
           <div className="flex items-center gap-1.5">
@@ -100,9 +100,9 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
         zIndex
       }}
     >
-      <div className={`rounded-2xl overflow-hidden border shadow-2xl min-w-[200px] max-w-[260px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
+      <div className={`rounded-2xl overflow-hidden border shadow-2xl min-w-[200px] max-w-[260px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-emerald-500/30 shadow-black/40' : 'bg-white/40 border-emerald-500/50 shadow-zinc-200/50'}`}>
         <div
-          className={`flex items-center justify-between px-3 py-2 border-b select-none cursor-grab active:cursor-grabbing ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
+          className={`flex items-center justify-between px-3 py-2 border-b select-none cursor-grab active:cursor-grabbing ${isDark ? 'bg-white/5 border-emerald-500/20' : 'bg-black/5 border-emerald-500/30'}`}
           onPointerDown={(e) => { onFocus(); handleDragStart(e); }}
         >
           <div className="flex items-center gap-1.5">
@@ -279,9 +279,9 @@ export function RouterInfoPopover({ router, routerState, t, isDark, onClose, onF
         zIndex
       }}
     >
-      <div className={`rounded-2xl overflow-hidden border shadow-2xl min-w-[200px] max-w-[280px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-zinc-800/50 shadow-black/40' : 'bg-white/40 border-zinc-200/50 shadow-zinc-200/50'}`}>
+      <div className={`rounded-2xl overflow-hidden border shadow-2xl min-w-[200px] max-w-[280px] backdrop-blur-md ${isDark ? 'bg-zinc-950/40 border-emerald-500/30 shadow-black/40' : 'bg-white/40 border-emerald-500/50 shadow-zinc-200/50'}`}>
         <div
-          className={`flex items-center justify-between px-3 py-2 border-b select-none cursor-grab active:cursor-grabbing ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
+          className={`flex items-center justify-between px-3 py-2 border-b select-none cursor-grab active:cursor-grabbing ${isDark ? 'bg-white/5 border-emerald-500/20' : 'bg-black/5 border-emerald-500/30'}`}
           onPointerDown={(e) => { onFocus(); handleDragStart(e); }}
         >
           <div className="flex items-center gap-1.5">

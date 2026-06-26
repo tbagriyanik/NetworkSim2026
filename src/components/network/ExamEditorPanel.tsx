@@ -110,13 +110,13 @@ export function ExamEditorPanel({
       className={cn(
         "fixed inset-y-0 right-0 w-full sm:w-[500px] md:w-[550px] lg:w-[600px] max-w-[100vw] z-[100] shadow-2xl flex flex-col transition-all duration-300 transform liquid-glass-light",
         isOpen ? "translate-x-0" : "translate-x-full",
-        isDark ? "border-l border-secondary-800" : "border-l border-secondary-200"
+        isDark ? "border-l border-emerald-500/30" : "border-l border-emerald-500"
       )}
     >
       {/* Header */}
       <div className={cn(
         "p-4 border-b flex items-center justify-between",
-        isDark ? "bg-secondary-950/50 border-secondary-800" : "bg-secondary-50 border-secondary-200"
+        isDark ? "bg-secondary-950/50 border-emerald-500/30" : "bg-secondary-50 border-emerald-500/50"
       )}>
         <div className="flex items-center gap-2">
           <div className="p-2 bg-purple-500/10 rounded-lg">
@@ -231,10 +231,10 @@ export function ExamEditorPanel({
                 </Button>
               </TooltipWrapper>
               <TooltipWrapper title={isTr ? 'L2 Switch Ekle' : 'Add L2 Switch'}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-8 h-8 rounded-lg text-success-500 hover:bg-success-500/10 transition-colors"
+                 <Button
+                   variant="ghost"
+                   size="icon"
+                   className="w-8 h-8 rounded-lg text-cyan-500 hover:bg-cyan-500/10 transition-colors"
                   onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'switchL2' }))}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,10 +268,10 @@ export function ExamEditorPanel({
                 </Button>
               </TooltipWrapper>
               <TooltipWrapper title={isTr ? 'IoT Cihaz Ekle' : 'Add IoT'}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-8 h-8 rounded-lg text-accent-500 hover:bg-accent-500/10 transition-colors"
+                 <Button
+                   variant="ghost"
+                   size="icon"
+                   className="w-8 h-8 rounded-lg text-orange-500 hover:bg-orange-500/10 transition-colors"
                   onClick={() => window.dispatchEvent(new CustomEvent('add-device', { detail: 'iot' }))}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

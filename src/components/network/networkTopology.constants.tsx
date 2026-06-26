@@ -17,11 +17,11 @@ export const DEVICE_ICON_PATHS = {
 
 export const DEVICE_ICON_COLORS = {
   pc: '#3b82f6',
-  iot: '#16cbf9',
-  switch: '#22c55e',
+  iot: '#f97316',
+  switch: '#06b6d4',
   router: '#a855f7',
   firewall: '#ef4444',
-  wlc: '#f59e0b',
+  wlc: '#eab308',
 } as const;
 
 export const DEVICE_ICONS = {
