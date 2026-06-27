@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { flushSync } from 'react-dom';
 import dynamic from 'next/dynamic';
-import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes, useGraphicsQuality } from '@/lib/store/appStore';
+import useAppStore, { useTopologyDevices, useTopologyConnections, useTopologyNotes, useGraphicsQuality, useIsSimulationMode } from '@/lib/store/appStore';
 import { CableType, isCableCompatible, CABLE_COMPATIBILITY } from '@/lib/network/types';
 import { checkDeviceConnectivity, getPingDiagnostics, getWirelessSignalStrength, getWirelessDistance } from '@/lib/network/connectivity';
 import { generateRandomLinkLocalIpv4, generateRandomLinkLocalIpv6 } from '@/lib/network/linkLocal';
@@ -307,6 +307,8 @@ export function NetworkTopology({
   packetPanelZIndex,
   isExamActive = false,
   isExamEditorOpen = false,
+  onExportSVG: _onExportSVG,
+  onExportPNG: _onExportPNG,
 }: NetworkTopologyProps) {
   const { language, t } = useLanguage();
   const { theme } = useTheme();
@@ -374,6 +376,11 @@ export function NetworkTopology({
   const setConnections = useAppStore(state => state.setConnections);
   const setNotes = useAppStore(state => state.setNotes);
   const graphicsQuality = useGraphicsQuality();
+  const isSimulationMode = useIsSimulationMode();
+  const activeCaptureConnectionId = useAppStore(state => state.topology.activeCaptureConnectionId);
+  const setActiveCaptureConnection = useAppStore(state => state.setActiveCaptureConnection);
+  const capturedPacketsMap = useAppStore(state => state.topology.capturedPackets);
+  const clearCapturedPackets = useAppStore(state => state.clearCapturedPackets);
 
   const devices = topologyDevices;
   const connections = topologyConnections;
@@ -883,6 +890,11 @@ export function NetworkTopology({
   const pingPathRef = useRef<string[]>([]);
   // Ref for cancel function to avoid stale closure issues in RAF callbacks
   const cancelPingDueToInterruptionRef = useRef<(reason: string) => void>(() => { });
+
+  // Sync simulation mode to the ping ref for use in non-reactive animation frames
+  useEffect(() => {
+    pingStepModeRef.current = isSimulationMode;
+  }, [isSimulationMode]);
 
   // Added refs moved from below to avoid TDZ and sync issues
   const noteCounterRef = useRef<number>(0);
@@ -2764,6 +2776,105 @@ export function NetworkTopology({
     return candidate;
   }, [devices, deviceStates]);
 
+  const handleExportSVG = useCallback(() => {
+    if (!canvasRef.current) return;
+    const svg = canvasRef.current.querySelector('svg');
+    if (!svg) return;
+
+    // Clone the SVG to avoid modifying the live one
+    const clone = svg.cloneNode(true) as SVGSVGElement;
+
+    // Set a explicit background color for the export
+    const bg = isDark ? '#0d1728' : '#dde8f4';
+    clone.style.backgroundColor = bg;
+
+    // Find the content group and reset its transform so the full topology is visible
+    const g = clone.querySelector('g');
+    if (g) {
+      g.style.transform = 'none';
+    }
+
+    // Determine bounds of all elements to set appropriate viewBox
+    const padding = 50;
+    const minX = Math.min(...devices.map(d => d.x), ...notes.map(n => n.x), 0);
+    const minY = Math.min(...devices.map(d => d.y), ...notes.map(n => n.y), 0);
+    const maxX = Math.max(...devices.map(d => d.x + 100), ...notes.map(n => n.x + n.width), 800);
+    const maxY = Math.max(...devices.map(d => d.y + 100), ...notes.map(n => n.y + n.height), 600);
+
+    const width = maxX - minX + padding * 2;
+    const height = maxY - minY + padding * 2;
+
+    clone.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${width} ${height}`);
+    clone.setAttribute('width', width.toString());
+    clone.setAttribute('height', height.toString());
+
+    // Serialize and download
+    const svgData = new XMLSerializer().serializeToString(clone);
+    const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `topology-${new Date().getTime()}.svg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [devices, notes, isDark]);
+
+  const handleExportPNG = useCallback(() => {
+    if (!canvasRef.current) return;
+    const svg = canvasRef.current.querySelector('svg');
+    if (!svg) return;
+
+    // Use similar logic to SVG export but render to canvas
+    const clone = svg.cloneNode(true) as SVGSVGElement;
+    const bg = isDark ? '#0d1728' : '#dde8f4';
+    clone.style.backgroundColor = bg;
+
+    const g = clone.querySelector('g');
+    if (g) g.style.transform = 'none';
+
+    const padding = 50;
+    const minX = Math.min(...devices.map(d => d.x), ...notes.map(n => n.x), 0);
+    const minY = Math.min(...devices.map(d => d.y), ...notes.map(n => n.y), 0);
+    const maxX = Math.max(...devices.map(d => d.x + 100), ...notes.map(n => n.x + n.width), 800);
+    const maxY = Math.max(...devices.map(d => d.y + 100), ...notes.map(n => n.y + n.height), 600);
+
+    const width = maxX - minX + padding * 2;
+    const height = maxY - minY + padding * 2;
+
+    clone.setAttribute('viewBox', `${minX - padding} ${minY - padding} ${width} ${height}`);
+    clone.setAttribute('width', width.toString());
+    clone.setAttribute('height', height.toString());
+
+    const svgData = new XMLSerializer().serializeToString(clone);
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = () => {
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0);
+
+      const pngUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = pngUrl;
+      link.download = `topology-${new Date().getTime()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }, [devices, notes, isDark]);
+
   // Add device from palette button
   const addDevice = useCallback((type: 'pc' | 'iot' | 'switch' | 'router' | 'firewall' | 'wlc', layer?: 'L2' | 'L3') => {
     if (isExamActive && !isExamEditorOpen) return;
@@ -2951,12 +3062,16 @@ export function NetworkTopology({
     window.addEventListener('add-device', handleAddDevice as EventListener);
     window.addEventListener('toggle-ping-mode', handleTogglePingMode as EventListener);
     window.addEventListener('add-note', handleAddNote as EventListener);
+    window.addEventListener('trigger-topology-export-svg', handleExportSVG);
+    window.addEventListener('trigger-topology-export-png', handleExportPNG);
     return () => {
       window.removeEventListener('add-device', handleAddDevice as EventListener);
       window.removeEventListener('toggle-ping-mode', handleTogglePingMode as EventListener);
       window.removeEventListener('add-note', handleAddNote as EventListener);
+      window.removeEventListener('trigger-topology-export-svg', handleExportSVG);
+      window.removeEventListener('trigger-topology-export-png', handleExportPNG);
     };
-  }, [addDevice, addNote]);
+  }, [addDevice, addNote, handleExportSVG, handleExportPNG]);
 
   const deleteNote = useCallback((noteId: string) => {
     saveToHistory();
@@ -3559,6 +3674,16 @@ export function NetworkTopology({
     setPortTooltip(null);
   }, [setPortTooltip]);
 
+  const handleConnectionClick = useCallback((e: React.MouseEvent, connId: string) => {
+    e.stopPropagation();
+    if (activeCaptureConnectionId === connId) {
+      setActiveCaptureConnection(null);
+    } else {
+      setActiveCaptureConnection(connId);
+    }
+    setContextMenu(null);
+  }, [activeCaptureConnectionId, setActiveCaptureConnection]);
+
   const handleConnectionMouseEnter = useCallback((e: React.MouseEvent<SVGPathElement>, connId: string, sourceDeviceName: string, sourcePort: string, targetDeviceName: string, targetPort: string, cableType: string, statusMessage: string) => {
     setHoveredConnectionId(connId);
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -3779,6 +3904,13 @@ export function NetworkTopology({
   }, [deviceStates, connections]); // ← added connections to check for active connections
 
 
+  const toggleConnectionActive = useCallback((connId: string) => {
+    saveToHistory();
+    setConnections((prev) =>
+      prev.map((c) => (c.id === connId ? { ...c, active: !c.active } : c))
+    );
+  }, [saveToHistory, setConnections]);
+
   // Delete connection
   const deleteConnection = useCallback((connectionId: string) => {
     saveToHistory();
@@ -3840,6 +3972,7 @@ export function NetworkTopology({
       onFullscreenChange(!isFullscreen);
     }
   }, [isFullscreen, onFullscreenChange]);
+
 
   // Copy devices
   const copyDevice = useCallback((ids: string[]) => {
@@ -4333,7 +4466,7 @@ export function NetworkTopology({
       setHopPacketInfos(packetInfos);
 
       pingIsPausedRef.current = true;
-      pingStepModeRef.current = false;
+      pingStepModeRef.current = isSimulationMode;
       setPingAnimation({
         sourceId,
         targetId,
@@ -4481,7 +4614,7 @@ export function NetworkTopology({
 
     // Start ping animation — begin PAUSED so the packet panel is visible immediately
     pingIsPausedRef.current = true;
-    pingStepModeRef.current = false;
+    pingStepModeRef.current = isSimulationMode;
     setPingAnimation({
       sourceId,
       targetId,
@@ -7162,9 +7295,10 @@ export function NetworkTopology({
                         CABLE_COLORS={CABLE_COLORS}
                         zoom={zoom}
                         graphicsQuality={graphicsQuality}
-                        isHovered={hoveredConnectionId === conn.id}
+                        isHovered={hoveredConnectionId === conn.id || activeCaptureConnectionId === conn.id}
                         onMouseEnter={(e: React.MouseEvent<SVGPathElement>) => handleConnectionMouseEnter(e, conn.id, sourceDevice.name, conn.sourcePort, targetDevice.name, conn.targetPort, conn.cableType, getConnectionStatusMessage(conn, devices, language))}
                         onMouseLeave={handleConnectionMouseLeave}
+                        onClick={(e: React.MouseEvent) => handleConnectionClick(e, conn.id)}
                       />
                     );
                   })}
@@ -7187,6 +7321,7 @@ export function NetworkTopology({
                         totalSameConns={meta.total}
                         getPortPosition={getPortPosition}
                         onDelete={deleteConnection}
+                        onToggleActive={toggleConnectionActive}
                       />
                     );
                   })}
@@ -8823,6 +8958,66 @@ export function NetworkTopology({
 
 
 
+
+      {/* Packet Capture Panel (Wireshark Lite) */}
+      {activeCaptureConnectionId && (
+        <div className={`fixed bottom-20 right-4 w-96 max-h-[300px] flex flex-col rounded-xl border shadow-2xl z-50 backdrop-blur-md overflow-hidden ${isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200'}`}>
+          <div className={`flex items-center justify-between px-3 py-2 border-b ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  <span className="text-xs font-bold">{t.packetAnalysis}</span>
+              <span className="text-[10px] opacity-50 font-mono">({activeCaptureConnectionId})</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => clearCapturedPackets(activeCaptureConnectionId)}
+                className={`p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors`}
+                    title={t.clearCapture}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setActiveCaptureConnection(null)}
+                className={`p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors`}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
+            <table className="w-full text-[10px] text-left border-collapse">
+              <thead className={`sticky top-0 z-10 ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                <tr>
+                  <th className="px-2 py-1 border-b dark:border-slate-700">Time</th>
+                  <th className="px-2 py-1 border-b dark:border-slate-700">Source</th>
+                  <th className="px-2 py-1 border-b dark:border-slate-700">Dest</th>
+                  <th className="px-2 py-1 border-b dark:border-slate-700">Proto</th>
+                  <th className="px-2 py-1 border-b dark:border-slate-700">Info</th>
+                </tr>
+              </thead>
+              <tbody>
+                {capturedPacketsMap[activeCaptureConnectionId]?.length ? (
+                  [...capturedPacketsMap[activeCaptureConnectionId]].reverse().map((pkt) => (
+                    <tr key={pkt.id} className={`border-b last:border-0 ${isDark ? 'border-slate-800 hover:bg-slate-800/50' : 'border-slate-50 hover:bg-slate-50'}`}>
+                      <td className="px-2 py-1 font-mono opacity-60">{(pkt.timestamp % 100000 / 1000).toFixed(3)}</td>
+                      <td className="px-2 py-1 font-mono">{pkt.sourceIp}</td>
+                      <td className="px-2 py-1 font-mono">{pkt.targetIp}</td>
+                      <td className={`px-2 py-1 font-bold ${pkt.protocol === 'ICMP' ? 'text-blue-500' : 'text-purple-500'}`}>{pkt.protocol}</td>
+                      <td className="px-2 py-1 italic opacity-80">{pkt.info}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center opacity-40 italic">
+                      {t.noPacketsCaptured}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       {errorToast && (

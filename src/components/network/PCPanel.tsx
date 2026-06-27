@@ -1952,6 +1952,14 @@ export function PCPanel({
 
   const canReachTargetIp = useCallback((targetIp: string, options: { protocol?: 'tcp' | 'udp' | 'icmp' | 'any'; port?: string } = { protocol: 'icmp' }) => {
     const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', options);
+
+    // Global packet capture integration
+    if (result.capturedPackets && result.capturedPackets.length > 0 && typeof window !== 'undefined') {
+      result.capturedPackets.forEach(pkt => {
+        window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
+      });
+    }
+
     return result.success;
   }, [deviceId, topologyDevices, topologyConnections, deviceStates, language]);
 
@@ -3896,6 +3904,13 @@ export function PCPanel({
           }
 
           const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
+
+          if (result.capturedPackets && result.capturedPackets.length > 0 && typeof window !== 'undefined') {
+            result.capturedPackets.forEach(pkt => {
+              window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
+            });
+          }
+
           if (result.success) {
             const pingTargetDisplay = dnsResolved ? `${target} [${targetIp.toLowerCase()}]` : targetIp.toLowerCase();
 
@@ -4187,6 +4202,13 @@ export function PCPanel({
         }
 
         const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '21' });
+
+        if (result.capturedPackets && result.capturedPackets.length > 0 && typeof window !== 'undefined') {
+          result.capturedPackets.forEach(pkt => {
+            window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
+          });
+        }
+
         if (!result.success) {
           const err = result.error || '';
           const displayTarget = dnsResolved ? `${targetArg} [${targetIp}]` : targetIp;

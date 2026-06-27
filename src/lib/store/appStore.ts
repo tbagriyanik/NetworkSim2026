@@ -59,14 +59,28 @@ function isValidCanvasNote(value: unknown): value is CanvasNote {
 }
 
 // Types for the store
+export interface CapturedPacket {
+    id: string;
+    timestamp: number;
+    connectionId: string;
+    sourceIp: string;
+    targetIp: string;
+    protocol: string;
+    length: number;
+    info: string;
+}
+
 interface TopologyState {
     devices: CanvasDevice[];
     connections: CanvasConnection[];
     notes: CanvasNote[];
     selectedDeviceId: string | null;
+    activeCaptureConnectionId: string | null;
+    capturedPackets: Record<string, CapturedPacket[]>;
     zoom: number;
     pan: { x: number; y: number };
     environment: EnvironmentSettings;
+    isSimulationMode: boolean;
 }
 
 interface DeviceStates {
@@ -91,6 +105,9 @@ interface AppState {
     // Actions
     setDevices: (devices: CanvasDevice[] | ((prev: CanvasDevice[]) => CanvasDevice[])) => void;
     setConnections: (connections: CanvasConnection[] | ((prev: CanvasConnection[]) => CanvasConnection[])) => void;
+    setActiveCaptureConnection: (connectionId: string | null) => void;
+    addCapturedPacket: (packet: Omit<CapturedPacket, 'id' | 'timestamp'>) => void;
+    clearCapturedPackets: (connectionId: string) => void;
     setNotes: (notes: CanvasNote[] | ((prev: CanvasNote[]) => CanvasNote[])) => void;
     addDevice: (device: CanvasDevice) => void;
     removeDevice: (deviceId: string) => void;
@@ -104,6 +121,7 @@ interface AppState {
     setZoom: (zoom: number | ((prev: number) => number)) => void;
     setPan: (pan: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => void;
     setEnvironment: (settings: EnvironmentSettings | ((prev: EnvironmentSettings) => EnvironmentSettings)) => void;
+    setSimulationMode: (enabled: boolean) => void;
 
     // Device state management
     setSwitchState: (deviceId: string, state: SwitchState) => void;
@@ -135,9 +153,12 @@ const initialTopologyState: TopologyState = {
     connections: [],
     notes: [],
     selectedDeviceId: null,
+    activeCaptureConnectionId: null,
+    capturedPackets: {},
     zoom: 1,
     pan: { x: 0, y: 0 },
     environment: initialEnvironmentSettings,
+    isSimulationMode: false,
 };
 
 const initialDeviceStates: DeviceStates = {
@@ -268,6 +289,32 @@ const createActions = (set: (partial: Partial<AppState> | ((state: AppState) => 
         const nextConnections = typeof connections === 'function' ? connections(get().topology.connections) : connections;
         set({ topology: { ...get().topology, connections: nextConnections } });
     },
+    setActiveCaptureConnection: (connectionId: string | null) => {
+        set({ topology: { ...get().topology, activeCaptureConnectionId: connectionId } });
+    },
+    addCapturedPacket: (packet: Omit<CapturedPacket, 'id' | 'timestamp'>) => {
+        const { connectionId } = packet;
+        const newPacket: CapturedPacket = {
+            ...packet,
+            id: `pkt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            timestamp: Date.now(),
+        };
+        const currentPackets = get().topology.capturedPackets[connectionId] || [];
+        set({
+            topology: {
+                ...get().topology,
+                capturedPackets: {
+                    ...get().topology.capturedPackets,
+                    [connectionId]: [...currentPackets, newPacket].slice(-50), // Keep last 50
+                }
+            }
+        });
+    },
+    clearCapturedPackets: (connectionId: string) => {
+        const nextPackets = { ...get().topology.capturedPackets };
+        delete nextPackets[connectionId];
+        set({ topology: { ...get().topology, capturedPackets: nextPackets } });
+    },
     setNotes: (notes: CanvasNote[] | ((prev: CanvasNote[]) => CanvasNote[])) => {
         const nextNotes = typeof notes === 'function' ? notes(get().topology.notes) : notes;
         set({ topology: { ...get().topology, notes: nextNotes } });
@@ -348,6 +395,9 @@ const createActions = (set: (partial: Partial<AppState> | ((state: AppState) => 
     setEnvironment: (settings: EnvironmentSettings | ((prev: EnvironmentSettings) => EnvironmentSettings)) => {
         const nextSettings = typeof settings === 'function' ? settings(get().topology.environment) : settings;
         set({ topology: { ...get().topology, environment: nextSettings } });
+    },
+    setSimulationMode: (enabled: boolean) => {
+        set({ topology: { ...get().topology, isSimulationMode: enabled } });
     },
 
     // Device state actions
@@ -485,6 +535,7 @@ export const useTopologyNotes = () => useAppStore(state => state.topology.notes)
 export const useSelectedDeviceId = () => useAppStore(state => state.topology.selectedDeviceId);
 export const useZoom = () => useAppStore(state => state.topology.zoom);
 export const usePan = () => useAppStore(state => state.topology.pan);
+export const useIsSimulationMode = () => useAppStore(state => state.topology.isSimulationMode);
 
 // Device state selectors
 export const useSwitchState = (deviceId: string) => useAppStore(state => state.deviceStates.switchStates[deviceId]);

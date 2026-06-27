@@ -73,6 +73,8 @@ export interface NetworkTopologyProps {
   packetPanelZIndex?: number;
   isExamActive?: boolean;
   isExamEditorOpen?: boolean;
+  onExportSVG?: () => void;
+  onExportPNG?: () => void;
 }
 
 export interface FirewallRule {

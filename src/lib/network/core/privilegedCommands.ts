@@ -95,15 +95,14 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
             { protocol: 'icmp' }
         );
 
-        // Handle port security violations - update state if needed
-        let updatedDeviceStates: Map<string, SwitchState> | undefined;
-        if (connectivity.portSecurityViolations && connectivity.portSecurityViolations.length > 0) {
-            // Create new deviceStates Map with updated ports
-            updatedDeviceStates = new Map<string, SwitchState>(ctx.deviceStates);
+        // Create new deviceStates Map for updates
+        const updatedDeviceStates = new Map<string, SwitchState>(ctx.deviceStates);
 
+        // Handle port security violations - update state if needed
+        if (connectivity.portSecurityViolations && connectivity.portSecurityViolations.length > 0) {
             connectivity.portSecurityViolations.forEach(violation => {
                 if (violation.action === 'shutdown') {
-                    const deviceState = updatedDeviceStates?.get(violation.deviceId);
+                    const deviceState = updatedDeviceStates.get(violation.deviceId);
                     if (deviceState) {
                         const updatedPorts = { ...deviceState.ports };
                         const port = updatedPorts[violation.portId];
@@ -117,7 +116,7 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
                                     violations: (port.portSecurity.violations || 0) + 1
                                 } : undefined
                             };
-                            updatedDeviceStates?.set(violation.deviceId, {
+                            updatedDeviceStates.set(violation.deviceId, {
                                 ...deviceState,
                                 ports: updatedPorts
                             });
@@ -125,6 +124,51 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
                     }
                 }
             });
+        }
+
+        // Update interface statistics for all traversed ports
+        if (connectivity.traversedPorts && connectivity.traversedPorts.length > 0) {
+            const numPackets = parseInt(count, 10) || 5;
+            const bytesPerPacket = parseInt(size, 10) || 56;
+            const totalBytes = numPackets * bytesPerPacket;
+
+            connectivity.traversedPorts.forEach(traversed => {
+                const deviceState = updatedDeviceStates.get(traversed.deviceId);
+                if (deviceState) {
+                    const updatedPorts = { ...deviceState.ports };
+                    const port = updatedPorts[traversed.portId];
+                    if (port) {
+                        const stats = { ...(port.statistics || {}) };
+                        if (traversed.type === 'ingress') {
+                            stats.inputPackets = (stats.inputPackets || 0) + numPackets;
+                            stats.inputBytes = (stats.inputBytes || 0) + totalBytes;
+                            stats.lastInput = Date.now();
+                        } else {
+                            stats.outputPackets = (stats.outputPackets || 0) + numPackets;
+                            stats.outputBytes = (stats.outputBytes || 0) + totalBytes;
+                            stats.lastOutput = Date.now();
+                        }
+
+                        updatedPorts[traversed.portId] = {
+                            ...port,
+                            statistics: stats
+                        };
+                        updatedDeviceStates.set(traversed.deviceId, {
+                            ...deviceState,
+                            ports: updatedPorts
+                        });
+                    }
+                }
+            });
+        }
+
+        // Add to global packet capture state
+        if (connectivity.capturedPackets && connectivity.capturedPackets.length > 0) {
+            if (typeof window !== 'undefined') {
+                connectivity.capturedPackets.forEach(pkt => {
+                    window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
+                });
+            }
         }
 
         if (connectivity.success) {
@@ -625,8 +669,56 @@ function cmdTraceroute(state: SwitchState, input: string, ctx: CommandContext): 
             { protocol: 'icmp' }
         );
 
+        // Create new deviceStates Map for updates
+        const updatedDeviceStates = new Map<string, SwitchState>(ctx.deviceStates);
+
+        // Update interface statistics for all traversed ports
+        if (connectivity.traversedPorts && connectivity.traversedPorts.length > 0) {
+            // traceroute sends 3 packets per hop by default
+            const numPackets = 3;
+            const bytesPerPacket = 40; // approx
+            const totalBytes = numPackets * bytesPerPacket;
+
+            connectivity.traversedPorts.forEach(traversed => {
+                const deviceState = updatedDeviceStates.get(traversed.deviceId);
+                if (deviceState) {
+                    const updatedPorts = { ...deviceState.ports };
+                    const port = updatedPorts[traversed.portId];
+                    if (port) {
+                        const stats = { ...(port.statistics || {}) };
+                        if (traversed.type === 'ingress') {
+                            stats.inputPackets = (stats.inputPackets || 0) + numPackets;
+                            stats.inputBytes = (stats.inputBytes || 0) + totalBytes;
+                            stats.lastInput = Date.now();
+                        } else {
+                            stats.outputPackets = (stats.outputPackets || 0) + numPackets;
+                            stats.outputBytes = (stats.outputBytes || 0) + totalBytes;
+                            stats.lastOutput = Date.now();
+                        }
+
+                        updatedPorts[traversed.portId] = {
+                            ...port,
+                            statistics: stats
+                        };
+                        updatedDeviceStates.set(traversed.deviceId, {
+                            ...deviceState,
+                            ports: updatedPorts
+                        });
+                    }
+                }
+            });
+        }
+
+        // Add to global packet capture state
+        if (connectivity.capturedPackets && connectivity.capturedPackets.length > 0) {
+            if (typeof window !== 'undefined') {
+                connectivity.capturedPackets.forEach(pkt => {
+                    window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
+                });
+            }
+        }
+
         if (connectivity.success) {
-            // Resolve hostname to show IP address
             let resolvedIp = host;
             const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
             if (!ipRegex.test(host)) {
@@ -663,7 +755,7 @@ function cmdTraceroute(state: SwitchState, input: string, ctx: CommandContext): 
             }
 
             output += `\nTrace complete.\n`;
-            return { success: true, output, triggerPingAnimation: connectivity.targetId };
+            return { success: true, output, triggerPingAnimation: connectivity.targetId, deviceStates: updatedDeviceStates };
         } else {
             // For failed connections, still try to show resolved IP
             let resolvedIp = host;
@@ -691,6 +783,7 @@ function cmdTraceroute(state: SwitchState, input: string, ctx: CommandContext): 
                 success: false,
                 output,
                 error: connectivity.error || `Destination host unreachable.`,
+                deviceStates: updatedDeviceStates
             };
         }
     }

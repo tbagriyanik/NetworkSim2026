@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { CanvasConnection, CanvasDevice } from './networkTopology.types';
 import { isCableCompatible, CableInfo } from '@/lib/network/types';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Scissors, Zap } from 'lucide-react';
 
 interface ConnectionHandleProps {
   connection: CanvasConnection;
@@ -12,6 +12,7 @@ interface ConnectionHandleProps {
   totalSameConns: number;
   getPortPosition: (device: CanvasDevice, portId: string) => { x: number; y: number };
   onDelete: (connId: string) => void;
+  onToggleActive?: (connId: string) => void;
 }
 
 const ConnectionHandle = memo(function ConnectionHandle({
@@ -23,6 +24,7 @@ const ConnectionHandle = memo(function ConnectionHandle({
   totalSameConns,
   getPortPosition,
   onDelete,
+  onToggleActive,
 }: ConnectionHandleProps) {
   const source = getPortPosition(sourceDevice, connection.sourcePort);
   const target = getPortPosition(targetDevice, connection.targetPort);
@@ -76,30 +78,67 @@ const ConnectionHandle = memo(function ConnectionHandle({
   return (
     <g key={`handle-${connection.id}`}>
       {isCompatible && (
-        <g
-          transform={`translate(${trashX}, ${trashY})`}
-          className="cursor-pointer group"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(connection.id);
-          }}
-        >
-          <rect
-            x="-8"
-            y="-8"
-            width="15"
-            height="15"
-            rx="5"
-            fill={isDark ? '#0f172a' : '#ffffff'}
-            opacity="0.92"
-            className="drop-shadow-sm"
-          />
-          <Trash2
-            className="w-4 h-4 text-red-500"
-            width={15}
-            height={15}
-            style={{ transform: 'translate(-8px, -8px)' }}
-          />
+        <g transform={`translate(${trashX}, ${trashY})`}>
+          {/* Delete Button */}
+          <g
+            className="cursor-pointer group"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(connection.id);
+            }}
+          >
+            <rect
+              x="-18"
+              y="-8"
+              width="15"
+              height="15"
+              rx="5"
+              fill={isDark ? '#0f172a' : '#ffffff'}
+              opacity="0.92"
+              className="drop-shadow-sm group-hover:fill-red-500/10 transition-colors"
+            />
+            <Trash2
+              className="w-3 h-3 text-red-500"
+              width={15}
+              height={15}
+              style={{ transform: 'translate(-18px, -8px)' }}
+            />
+          </g>
+
+          {/* Break/Fix Button */}
+          <g
+            className="cursor-pointer group"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleActive?.(connection.id);
+            }}
+          >
+            <rect
+              x="2"
+              y="-8"
+              width="15"
+              height="15"
+              rx="5"
+              fill={isDark ? '#0f172a' : '#ffffff'}
+              opacity="0.92"
+              className="drop-shadow-sm group-hover:fill-amber-500/10 transition-colors"
+            />
+            {connection.active ? (
+              <Scissors
+                className="w-3 h-3 text-amber-500"
+                width={15}
+                height={15}
+                style={{ transform: 'translate(2px, -8px)' }}
+              />
+            ) : (
+              <Zap
+                className="w-3 h-3 text-emerald-500"
+                width={15}
+                height={15}
+                style={{ transform: 'translate(2px, -8px)' }}
+              />
+            )}
+          </g>
         </g>
       )}
       {!isCompatible && (
@@ -129,7 +168,8 @@ const ConnectionHandle = memo(function ConnectionHandle({
     prevProps.sourceDevice.y === nextProps.sourceDevice.y &&
     prevProps.targetDevice.x === nextProps.targetDevice.x &&
     prevProps.targetDevice.y === nextProps.targetDevice.y &&
-    prevProps.connection.active === nextProps.connection.active
+    prevProps.connection.active === nextProps.connection.active &&
+    prevProps.onToggleActive === nextProps.onToggleActive
   );
 });
 
