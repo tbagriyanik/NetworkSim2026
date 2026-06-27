@@ -348,7 +348,9 @@ export interface SwitchState {
   ipv6DynamicRoutes?: Route[];     // IPv6 dynamic routing table
   routingProtocol?: 'none' | 'rip' | 'ospf' | 'ripng' | 'ospfv3' | 'eigrp' | 'bgp'; // Routing protocol
   autoSummary?: boolean;           // Auto-summary for routing protocols
+  ospfNeighbors?: string[];        // OSPF neighbor IDs/IPs
   eigrpAs?: string;                // EIGRP AS number
+  eigrpNeighbors?: string[];       // EIGRP neighbor IDs/IPs
   bgpAs?: string;                  // BGP AS number
   bgpNeighbors?: { ip: string; as: string }[];  // BGP neighbor configurations
   passiveInterfaces?: string[];    // Interfaces that should not send updates

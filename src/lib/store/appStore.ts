@@ -15,7 +15,7 @@ export interface EnvironmentSettings {
     light: number; // Percentage 0-100
 }
 
-const VALID_DEVICE_TYPES = new Set(['pc', 'iot', 'switchL2', 'switchL3', 'router', 'firewall']);
+const VALID_DEVICE_TYPES = new Set(['pc', 'iot', 'switchL2', 'switchL3', 'router', 'firewall', 'wlc']);
 const VALID_NOTE_SIZES = new Set([10, 12, 16, 20]);
 const VALID_NOTE_OPACITIES = new Set([0.25, 0.5, 0.75, 1]);
 
@@ -214,6 +214,9 @@ function sanitizePersistedState(input: Record<string, unknown> | undefined): Par
             connections: (top.connections as unknown[]).filter(isValidCanvasConnection),
             notes: (top.notes as unknown[]).filter(isValidCanvasNote),
             selectedDeviceId: typeof top.selectedDeviceId === 'string' ? top.selectedDeviceId as string : null,
+            activeCaptureConnectionId: typeof top.activeCaptureConnectionId === 'string' ? top.activeCaptureConnectionId : null,
+            capturedPackets: (top.capturedPackets as Record<string, CapturedPacket[]>) || {},
+            isSimulationMode: !!top.isSimulationMode,
             zoom: typeof top.zoom === 'number' ? top.zoom as number : 1,
             pan: { x: Number((top.pan as Record<string, unknown>)?.x ?? 0), y: Number((top.pan as Record<string, unknown>)?.y ?? 0) },
             environment: {
@@ -230,6 +233,9 @@ function sanitizePersistedState(input: Record<string, unknown> | undefined): Par
             devices: Array.isArray(topology.devices) ? (topology.devices as unknown[]).filter(isValidCanvasDevice) : [],
             connections: Array.isArray(topology.connections) ? (topology.connections as unknown[]).filter(isValidCanvasConnection) : [],
             notes: Array.isArray(topology.notes) ? (topology.notes as unknown[]).filter(isValidCanvasNote) : [],
+            activeCaptureConnectionId: typeof topology.activeCaptureConnectionId === 'string' ? topology.activeCaptureConnectionId : null,
+            capturedPackets: (topology.capturedPackets as Record<string, CapturedPacket[]>) || {},
+            isSimulationMode: !!topology.isSimulationMode,
             environment: {
                 ...initialEnvironmentSettings,
                 ...((topology.environment as Record<string, unknown>) || {})
@@ -400,7 +406,7 @@ const createActions = (set: (partial: Partial<AppState> | ((state: AppState) => 
         set({ topology: { ...get().topology, isSimulationMode: enabled } });
     },
 
-    // Device state actions
+    // Device state management
     setSwitchState: (deviceId: string, state: SwitchState) =>
         set({
             deviceStates: {
@@ -562,4 +568,3 @@ export const useUIState = () => useAppStore(state => ({
 export const useEnvironment = () => useAppStore(state => state.topology.environment);
 
 export default useAppStore;
-

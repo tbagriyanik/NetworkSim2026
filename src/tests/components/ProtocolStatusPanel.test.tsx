@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { ProtocolStatusPanel } from '@/components/network/ProtocolStatusPanel';
 import { CanvasDevice } from '@/components/network/networkTopology.types';
 import { SwitchState } from '@/lib/network/types';
-import React from 'react';
 
 // Mock LanguageContext
 vi.mock('@/contexts/LanguageContext', () => ({

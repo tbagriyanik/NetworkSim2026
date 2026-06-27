@@ -627,11 +627,11 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
   // Global packet capture event listener
   useEffect(() => {
-    const handlePacketCaptured = (e: CustomEvent) => {
+    const handlePacketCaptured = ((e: CustomEvent) => {
       if (e.detail) {
         addCapturedPacket(e.detail);
       }
-    };
+    }) as EventListener;
     window.addEventListener('packet-captured', handlePacketCaptured);
     return () => window.removeEventListener('packet-captured', handlePacketCaptured);
   }, [addCapturedPacket]);

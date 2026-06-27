@@ -56,8 +56,12 @@ export function ProtocolStatusPanel({ devices, deviceStates, isDark }: ProtocolS
 
       // HSRP
       Object.values(state.ports).forEach(port => {
-        if (port.hsrp?.state === 'active') hsrpActive++;
-        if (port.hsrp?.state === 'standby') hsrpStandby++;
+        if (port.hsrp?.groups) {
+          Object.values(port.hsrp.groups).forEach(group => {
+            if (group.state === 'Active') hsrpActive++;
+            if (group.state === 'Standby') hsrpStandby++;
+          });
+        }
       });
 
       // EIGRP
