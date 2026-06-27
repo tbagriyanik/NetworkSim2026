@@ -20,7 +20,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { DeviceIcon } from '@/components/network/DeviceIcon';
-import {   ChevronDown, Plus, Undo2, Redo2, Search, X, Cable, LineSquiggle, Leaf, Plug, TrendingUpDown, Users, UserKey } from 'lucide-react';
+import {   ChevronDown, Plus, Undo2, Redo2, Search, X, Cable, LineSquiggle, Leaf, Plug, TrendingUpDown, Users, UserKey, Download, Image as ImageIcon, Activity } from 'lucide-react';
 import type { Translations } from '@/contexts/LanguageContext';
 import type { CanvasDevice, DeviceType } from '@/components/network/networkTopology.types';
 import type { SwitchState, CableType, CableInfo } from '@/lib/network/types';
@@ -49,6 +49,8 @@ interface TopologyToolbarProps {
   handleRedo: () => void;
   handleRefreshNetwork: () => void;
   setIsEnvironmentPanelOpen: (v: boolean) => void;
+  onExportSVG?: () => void;
+  onExportPNG?: () => void;
   onOpenStudentJoin?: () => void;
   onOpenTeacherPanel?: () => void;
 }
@@ -70,9 +72,12 @@ export function TopologyToolbar({
   handleDeviceSelectFromMenu,
   handleUndo, handleRedo,
   handleRefreshNetwork, setIsEnvironmentPanelOpen,
+  onExportSVG, onExportPNG,
   onOpenStudentJoin, onOpenTeacherPanel,
 }: TopologyToolbarProps) {
   const graphicsQuality = useAppStore((state) => state.graphicsQuality);
+  const isSimulationMode = useAppStore((state) => state.topology.isSimulationMode);
+  const setSimulationMode = useAppStore((state) => state.setSimulationMode);
   const isHighQuality = graphicsQuality === 'high';
   // Register Home key shortcut for reset view
   const toolbarGlowClass = isHighQuality
@@ -87,6 +92,16 @@ export function TopologyToolbar({
         setPan({ x: 0, y: 0 });
       },
       description: 'Reset topology view',
+    },
+    {
+      key: 's',
+      handler: () => setSimulationMode(!isSimulationMode),
+      description: 'Toggle simulation mode',
+    },
+    {
+      key: 'S',
+      handler: () => setSimulationMode(!isSimulationMode),
+      description: 'Toggle simulation mode',
     },
   ]);
 
@@ -547,6 +562,27 @@ className="h-8 w-8 p-0 text-orange-500 hover:bg-orange-500/10"
         <TooltipContent>{t.environmentSettings}</TooltipContent>
       </Tooltip>
 
+      {/* Simulation Mode Toggle */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            aria-label={t.simulationMode}
+            variant="ghost"
+            size="icon"
+            className={`h-8 w-8 transition-all ${isSimulationMode
+              ? 'text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 shadow-[0_0_8px_rgba(244,63,94,0.3)]'
+              : 'text-slate-500 hover:bg-slate-500/10'}`}
+            onClick={() => setSimulationMode(!isSimulationMode)}
+          >
+            <Activity className={`w-4 h-4 ${isSimulationMode ? 'animate-pulse' : ''} ${toolbarGlowClass}`} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="flex items-center gap-2">
+          <span>{t.simulationMode}</span>
+          <ShortcutBadge shortcut="S" variant="danger" />
+        </TooltipContent>
+      </Tooltip>
+
       <div className={`w-px h-4 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
 
       {/* Undo Button */}
@@ -609,6 +645,43 @@ className="h-8 w-8 p-0 text-orange-500 hover:bg-orange-500/10"
         <TooltipContent className="flex items-center gap-2">
           <span>{t.refreshNetworkF5}</span>
           <ShortcutBadge shortcut="F5" variant="danger" />
+        </TooltipContent>
+      </Tooltip>
+
+      <div className={`w-px h-4 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`} />
+
+      {/* Export Buttons */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            aria-label={t.exportAsSVG}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-orange-500 hover:bg-orange-500/10"
+            onClick={onExportSVG}
+          >
+            <Download className={`w-4 h-4 ${toolbarGlowClass}`} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {t.exportAsSVG}
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            aria-label={t.exportAsPNG}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-orange-500 hover:bg-orange-500/10"
+            onClick={onExportPNG}
+          >
+            <ImageIcon className={`w-4 h-4 ${toolbarGlowClass}`} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {t.exportAsPNG}
         </TooltipContent>
       </Tooltip>
 

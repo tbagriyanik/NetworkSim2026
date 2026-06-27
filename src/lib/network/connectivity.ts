@@ -540,12 +540,23 @@ export function checkConnectivity(
   deviceStates?: Map<string, SwitchState>,
   language: 'tr' | 'en' = 'tr',
   options?: { protocol?: 'tcp' | 'udp' | 'icmp' | 'any'; port?: string }
-): { success: boolean; hops: string[]; hopIds: string[]; targetId?: string; error?: string; portSecurityViolations?: Array<{ deviceId: string; portId: string; action: string; mac: string }> } {
+): {
+  success: boolean;
+  hops: string[];
+  hopIds: string[];
+  targetId?: string;
+  error?: string;
+  portSecurityViolations?: Array<{ deviceId: string; portId: string; action: string; mac: string }>;
+  traversedPorts?: Array<{ deviceId: string; portId: string; type: 'ingress' | 'egress' }>;
+  capturedPackets?: Array<{ connectionId: string; sourceIp: string; targetIp: string; protocol: string; length: number; info: string }>;
+} {
   const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const isSwitchDeviceType = (type: string): boolean => type === 'switchL2' || type === 'switchL3';
 
   // Track port security violations for React state updates
   const portSecurityViolations: Array<{ deviceId: string; portId: string; action: string; mac: string }> = [];
+  const traversedPorts: Array<{ deviceId: string; portId: string; type: 'ingress' | 'egress' }> = [];
+  const capturedPackets: Array<{ connectionId: string; sourceIp: string; targetIp: string; protocol: string; length: number; info: string }> = [];
 
   // BOLT: Use a device map for O(1) lookups
   const deviceMap = new Map<string, CanvasDevice>();
@@ -723,6 +734,9 @@ export function checkConnectivity(
         const sourceConn = adjList.get(sourceId)?.[0]?.conn;
         const interfaceName = sourceConn ? (sourceConn.sourceDeviceId === sourceId ? sourceConn.sourcePort : sourceConn.targetPort) : 'unknown';
 
+        // Check if ARP is already in cache to avoid redundant capture logs
+        const cachedMac = sourceState.arpCache?.find(e => e.ip === resolvedTargetIp);
+
         // Perform ARP resolution (simulated)
         performArpResolution(
           sourceId,
@@ -731,6 +745,25 @@ export function checkConnectivity(
           interfaceName,
           deviceStates
         );
+
+        if (!cachedMac && sourceConn) {
+          capturedPackets.push({
+            connectionId: sourceConn.id,
+            sourceIp: '0.0.0.0', // ARP uses 0.0.0.0 for request usually or its own IP
+            targetIp: '255.255.255.255', // Broadcast
+            protocol: 'ARP',
+            length: 42,
+            info: `Who has ${resolvedTargetIp}? Tell ${sourceIp}`
+          });
+          capturedPackets.push({
+            connectionId: sourceConn.id,
+            sourceIp: resolvedTargetIp,
+            targetIp: sourceIp,
+            protocol: 'ARP',
+            length: 42,
+            info: `${resolvedTargetIp} is at ${targetDevice.macAddress}`
+          });
+        }
       }
     }
   }
@@ -858,11 +891,31 @@ export function checkConnectivity(
 
   // BOLT: Pre-calculate path-related connections for O(1) lookup in later stages
   const pathConnections = new Map<string, CanvasConnection>();
+
   for (let i = 0; i < path.length - 1; i++) {
     const aId = path[i];
     const bId = path[i + 1];
     const conn = adjList.get(aId)?.find(n => n.neighborId === bId)?.conn;
-    if (conn) pathConnections.set(`${aId}-${bId}`, conn);
+    if (conn) {
+      pathConnections.set(`${aId}-${bId}`, conn);
+
+      // Track ports used in this hop
+      const srcPortId = conn.sourceDeviceId === aId ? conn.sourcePort : conn.targetPort;
+      const dstPortId = conn.sourceDeviceId === bId ? conn.sourcePort : conn.targetPort;
+
+      if (srcPortId) traversedPorts.push({ deviceId: aId, portId: srcPortId, type: 'egress' });
+      if (dstPortId) traversedPorts.push({ deviceId: bId, portId: dstPortId, type: 'ingress' });
+
+      // Track packets for capture
+      capturedPackets.push({
+        connectionId: conn.id,
+        sourceIp: currentSourceIp,
+        targetIp: currentTargetIp,
+        protocol: options?.protocol?.toUpperCase() || 'ICMP',
+        length: 74,
+        info: options?.protocol === 'icmp' ? 'Echo Request' : 'Data Packet'
+      });
+    }
   }
 
   // 2.5 Block ping over console-only links (console is management, no ICMP)
@@ -1503,7 +1556,9 @@ export function checkConnectivity(
     hops: hopNames,
     hopIds: path,
     targetId: targetDevice.id,
-    portSecurityViolations
+    portSecurityViolations,
+    traversedPorts,
+    capturedPackets
   };
 }
 

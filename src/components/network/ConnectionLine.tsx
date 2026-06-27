@@ -16,6 +16,7 @@ interface ConnectionLineProps {
   isHovered?: boolean;
   onMouseEnter?: (e: React.MouseEvent<SVGPathElement>) => void;
   onMouseLeave?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   showAnimation?: boolean;
   showLabel?: boolean;
   zoom?: number;
@@ -35,6 +36,7 @@ export const ConnectionLine = memo(function ConnectionLine({
   isHovered = false,
   onMouseEnter,
   onMouseLeave,
+  onClick,
   showAnimation = true,
   showLabel = true,
   zoom = 1, // Default zoom level
@@ -72,7 +74,7 @@ export const ConnectionLine = memo(function ConnectionLine({
 
   const isPoweredOff = sourceDevice.status === 'offline' || targetDevice.status === 'offline';
   const isEffectivelyActive = connection.active && isCompatible && !isShutdown && !isPoweredOff && !isSTPBlocking;
-  const color = !isCompatible ? CABLE_COLORS.error.primary :
+  const color = !isCompatible || connection.active === false ? CABLE_COLORS.error.primary :
     isShutdown || (isSTPBlocking && isVlan1) ? (isDark ? '#475569' : '#94a3b8') : // Gray if shutdown or STP blocking (VLAN 1 only)
       isPoweredOff ? (isDark ? '#374151' : '#9ca3af') : // Gray if device offline
         CABLE_COLORS[connection.cableType].primary;
@@ -151,15 +153,16 @@ export const ConnectionLine = memo(function ConnectionLine({
         style={{ cursor: 'pointer' }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
+        onClick={onClick}
       />
 
       {/* Visual Connection line */}
       <path
         d={pathD}
-        stroke={isCompatible ? color : '#ef4444'}
+        stroke={isCompatible && connection.active !== false ? color : '#ef4444'}
         strokeWidth={isHovered ? 6 : 3}
         fill="none"
-        strokeDasharray={isCompatible ? 'none' : '6,3'}
+        strokeDasharray={isCompatible && connection.active !== false ? 'none' : '6,3'}
         className="pointer-events-none"
         vectorEffect="non-scaling-stroke"
         style={{

@@ -710,6 +710,14 @@ export interface Translations {
   roomTaskFile: string;
   roomTeacherNameLabel: string;
   roomTeacherNameSave: string;
+  packetAnalysis: string;
+  capture: string;
+  capturedPackets: string;
+  noPacketsCaptured: string;
+  clearCapture: string;
+  simulationMode: string;
+  exportAsSVG: string;
+  exportAsPNG: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -1419,6 +1427,14 @@ const translations: Record<Language, Translations> = {
     roomTaskFile: 'Dosya',
     roomTeacherNameLabel: 'Adınız',
     roomTeacherNameSave: 'Kaydet',
+    packetAnalysis: 'Paket Yakalama (Wireshark Lite)',
+    capture: 'Yakala',
+    capturedPackets: 'Yakalanan Paketler',
+    noPacketsCaptured: 'Henüz paket yakalanmadı...',
+    clearCapture: 'Temizle',
+    simulationMode: 'Simülasyon Modu',
+    exportAsSVG: 'SVG Olarak Dışa Aktar',
+    exportAsPNG: 'PNG Olarak Dışa Aktar',
   },
   en: {
     about: 'Help',
@@ -2126,6 +2142,14 @@ const translations: Record<Language, Translations> = {
     roomTaskFile: 'File',
     roomTeacherNameLabel: 'Your Name',
     roomTeacherNameSave: 'Save',
+    packetAnalysis: 'Packet Capture (Wireshark Lite)',
+    capture: 'Capture',
+    capturedPackets: 'Captured Packets',
+    noPacketsCaptured: 'No packets captured yet...',
+    clearCapture: 'Clear',
+    simulationMode: 'Simulation Mode',
+    exportAsSVG: 'Export as SVG',
+    exportAsPNG: 'Export as PNG',
   }
 };
 

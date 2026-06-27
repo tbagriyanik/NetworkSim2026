@@ -107,6 +107,7 @@ const FirewallPanel = dynamic(() => import('@/components/network/FirewallPanel')
 const EnvironmentSettingsPanel = dynamic(() => import('@/components/network/EnvironmentSettingsPanel').then((m) => m.EnvironmentSettingsPanel));
 const OnboardingDialog = dynamic(() => import('@/components/network/OnboardingDialog').then((m) => m.OnboardingDialog));
 const ExamEditorPanel = dynamic(() => import('@/components/network/ExamEditorPanel').then((m) => m.ExamEditorPanel));
+const ProtocolStatusPanel = dynamic(() => import('@/components/network/ProtocolStatusPanel').then((m) => m.ProtocolStatusPanel));
 const RoomJoinDialog = dynamic(() => import('@/components/RoomJoinDialog').then((m) => m.RoomJoinDialog));
 const TeacherRoomPanel = dynamic(() => import('@/components/TeacherRoomPanel').then((m) => m.TeacherRoomPanel));
 
@@ -622,6 +623,18 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   const setActiveTab = useAppStore((state) => state.setActiveTab);
   const graphicsQuality = useAppStore((state) => state.graphicsQuality);
   const setGraphicsQuality = useAppStore((state) => state.setGraphicsQuality);
+  const addCapturedPacket = useAppStore((state) => state.addCapturedPacket);
+
+  // Global packet capture event listener
+  useEffect(() => {
+    const handlePacketCaptured = ((e: CustomEvent) => {
+      if (e.detail) {
+        addCapturedPacket(e.detail);
+      }
+    }) as EventListener;
+    window.addEventListener('packet-captured', handlePacketCaptured);
+    return () => window.removeEventListener('packet-captured', handlePacketCaptured);
+  }, [addCapturedPacket]);
 
   // Navigation hook (provides history management, device selection, focus)
   const nav = useAppNavigation({
@@ -2684,7 +2697,17 @@ ${state.bannerMOTD}
         ]
       }
     ]);
-    setTopologyConnections([]);
+    setTopologyConnections([
+      {
+        id: 'conn-init-1',
+        sourceDeviceId: 'pc-1',
+        sourcePort: 'eth0',
+        targetDeviceId: 'switch-1',
+        targetPort: 'fa0/1',
+        cableType: 'straight',
+        active: true
+      }
+    ]);
     setTopologyNotes([]);
 
     // Reset zoom and pan to top-left
@@ -4996,6 +5019,8 @@ ${state.bannerMOTD}
                     setIsEnvironmentPanelOpen={setIsEnvironmentPanelOpen}
                     onOpenStudentJoin={isRoomEnabled ? () => setShowRoomJoinDialog(true) : undefined}
                     onOpenTeacherPanel={isRoomEnabled && !studentRoomCode ? () => setShowTeacherPanel(true) : undefined}
+                    onExportSVG={() => window.dispatchEvent(new CustomEvent('trigger-topology-export-svg'))}
+                    onExportPNG={() => window.dispatchEvent(new CustomEvent('trigger-topology-export-png'))}
                   />
                 )}
 
@@ -5092,6 +5117,15 @@ ${state.bannerMOTD}
                   )}
 
                   {/* Router Info Popover - Bottom Right Mini Panel */}
+                  {/* Protocol Status Panel - Floating bottom right */}
+                  <div className="fixed bottom-16 right-4 z-20 pointer-events-auto">
+                    <ProtocolStatusPanel
+                      devices={topologyDevices}
+                      deviceStates={deviceStates}
+                      isDark={isDark}
+                    />
+                  </div>
+
                   {activeDeviceId && (activeDeviceId.startsWith('router-') || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'router') && topologyDevices && (
                     <RouterInfoPopover
                       router={topologyDevices.find(d => d.id === activeDeviceId) as CanvasDevice}

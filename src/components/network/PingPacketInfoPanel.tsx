@@ -21,6 +21,7 @@ export interface HopPacketInfo {
     layer2: string;
     layer3: string;
     layer4: string;
+    actionDescription?: string;
 }
 
 interface PingPacketInfoPanelProps {
@@ -90,6 +91,7 @@ const tr = {
     failReason: 'Hata nedeni',
     returnLabel: 'Echo Reply — Geri Dönüş',
     forwardLabel: 'Echo Request — İleri',
+    actionLabel: 'İşlem:',
     replyFrom: 'Yanıt:',
     bytes: 'bayt',
     ttlLabel: 'TTL',
@@ -139,6 +141,7 @@ const en = {
     failReason: 'Reason',
     returnLabel: 'Echo Reply — Return',
     forwardLabel: 'Echo Request — Forward',
+    actionLabel: 'Action:',
     replyFrom: 'Reply from',
     bytes: 'bytes',
     ttlLabel: 'TTL',
@@ -571,6 +574,14 @@ export function PingPacketInfoPanel({
                     )}
                 </div>
 
+                {/* Action Info for Step-by-Step Mode */}
+                {isPaused && currentInfo?.actionDescription && !isDone && !isMobile && (
+                    <div className="flex-1 mx-4 px-3 py-1 rounded-lg bg-warning-500/10 border border-warning-500/20 text-warning-400 text-[11px] font-bold animate-in fade-in slide-in-from-top-1">
+                        <span className="opacity-60 mr-1">{t.actionLabel}</span>
+                        {currentInfo.actionDescription}
+                    </div>
+                )}
+
                 {/* Right: play/pause/next + always-visible close button */}
                 <div className="flex items-center gap-2" onMouseDown={e => e.stopPropagation()}>
                     {!isDone && (<>
@@ -908,8 +919,33 @@ export function buildHopPacketInfos(
             layer2: 'Ethernet II',
             layer3: isIPv6 ? 'IPv6' : 'IPv4',
             layer4: isIPv6 ? 'ICMPv6' : 'ICMP',
+            actionDescription: generateActionDescription(fromDev, toDev, i, path.length),
         });
     }
 
     return infos;
+}
+
+function generateActionDescription(fromDev: CanvasDevice | undefined, toDev: CanvasDevice | undefined, hopIndex: number, pathLength: number): string {
+    if (!fromDev || !toDev) return '';
+
+    const isFirstHop = hopIndex === 0;
+    const isLastHop = hopIndex === pathLength - 2;
+
+    if (fromDev.type === 'pc' || fromDev.type === 'iot') {
+        if (isFirstHop) return 'Encapsulating ICMP Echo Request and sending to default gateway.';
+        return 'Forwarding frame to next hop.';
+    }
+
+    if (fromDev.type.startsWith('switch')) {
+        if (toDev.type === 'pc' || toDev.type === 'iot') return `Switching frame to target port for ${toDev.name}.`;
+        return 'Switching frame at Layer 2 based on MAC table.';
+    }
+
+    if (fromDev.type === 'router') {
+        if (isLastHop) return `Routing packet to destination network for ${toDev.name}.`;
+        return 'Routing packet at Layer 3 (TTL decremented).';
+    }
+
+    return 'Forwarding network traffic.';
 }
