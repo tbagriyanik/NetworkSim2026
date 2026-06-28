@@ -16,6 +16,7 @@ import { commandHelp } from '@/lib/network/executor';
 import { commandPatterns } from '@/lib/network/parser';
 import { ModernPanel } from '@/components/ui/ModernPanel';
 import { cn } from '@/lib/utils';
+import { areArraysEqual } from '@/lib/network/equality';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import type { CanvasDevice } from './networkTopology.types';
 import { RouterIcon, SwitchIcon } from './PCPanelWidgets';
@@ -218,11 +219,12 @@ export function Terminal({
   // Sync with global history
   useEffect(() => {
     const globalHistory = state.commandHistory || [];
-    if (JSON.stringify(globalHistory) !== JSON.stringify(history)) {
+    // BOLT: Use fast array equality check instead of JSON.stringify
+    if (!areArraysEqual(globalHistory, history)) {
       setTimeout(() => setHistory(globalHistory), 0);
       setTimeout(() => setHistoryIndex(-1), 0);
     }
-  }, [state.commandHistory, deviceId]);
+  }, [state.commandHistory, deviceId, history]);
 
   const [tabCycleIndex, setTabCycleIndex] = useState(-1);
   const [lastTabInput, setLastTabInput] = useState('');

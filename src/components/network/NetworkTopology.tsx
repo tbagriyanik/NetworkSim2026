@@ -3808,7 +3808,8 @@ export function NetworkTopology({
           if (simulatorPort) {
             // Skip wlan ports from status sync - they are managed separately
             if (port.id.toLowerCase().startsWith('wlan')) {
-              const wifiChanged = JSON.stringify(port.wifi) !== JSON.stringify(simulatorPort.wifi);
+              // BOLT: Use fast specialized comparison instead of JSON.stringify
+              const wifiChanged = !areWifiConfigsEqual(port.wifi, simulatorPort.wifi);
               const shutdownChanged = port.shutdown !== simulatorPort.shutdown;
               if (!wifiChanged && !shutdownChanged) return port;
               portChanged = true;
@@ -3861,7 +3862,8 @@ export function NetworkTopology({
               nextPort.shutdown !== port.shutdown ||
               nextPort.ipAddress !== port.ipAddress ||
               nextPort.subnetMask !== port.subnetMask ||
-              JSON.stringify(nextPort.wifi) !== JSON.stringify(port.wifi);
+              // BOLT: Use fast specialized comparison instead of JSON.stringify
+              !areWifiConfigsEqual(nextPort.wifi, port.wifi);
             if (changed) {
               portChanged = true;
               hasChanges = true;
