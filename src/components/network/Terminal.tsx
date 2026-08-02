@@ -1671,8 +1671,10 @@ export function Terminal({
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery('')}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-secondary-200 dark:hover:bg-secondary-700 text-secondary-400 hover:text-secondary-600 dark:hover:text-secondary-300 transition-colors"
+                aria-label={t.clearSearch}
               >
                 <X className="w-4 h-4" />
               </button>

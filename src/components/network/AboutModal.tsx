@@ -170,6 +170,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
           </DialogTitle>
           <div className={cn('flex items-end gap-2 mb-2 border-b', isDark ? 'border-secondary-800' : 'border-secondary-200')}>
             <button
+              type="button"
               onClick={() => setActiveTab('help')}
               className={tabButtonClass('help')}
             >
@@ -179,6 +180,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
 
             {isContactEnabled && (
               <button
+                type="button"
                 onClick={() => setActiveTab('contact')}
                 className={tabButtonClass('contact')}
               >
@@ -187,6 +189,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
               </button>
             )}
             <button
+              type="button"
               onClick={() => setActiveTab('about')}
               className={tabButtonClass('about')}
             >
@@ -221,6 +224,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                 {searchQuery && (
                   <TooltipWrapper title={t.clearSearch}>
                     <button
+                      type="button"
                       onClick={() => setSearchQuery('')}
                       className={cn('absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors', isDark ? 'hover:bg-secondary-800 text-secondary-400' : 'hover:bg-secondary-100 text-secondary-500')}
                       aria-label={t.clearSearch}
@@ -426,6 +430,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                                   ? "bg-transparent border-transparent text-secondary-400 hover:text-secondary-300 hover:bg-secondary-800/50"
                                   : "bg-transparent border-transparent text-secondary-600 hover:text-secondary-700 hover:bg-secondary-200/50"
                             )}
+                            aria-pressed={contactData.type === type.id}
                           >
                             <type.icon className="w-4 h-4" />
                             <span className="text-xs font-bold">{type.label}</span>
@@ -475,8 +480,10 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                   return (
                     <div key={cat.id} className={cn('rounded-lg border overflow-hidden', isDark ? 'bg-secondary-900 border-secondary-700' : 'bg-white border border-secondary-200')}>
                       <button
+                        type="button"
                         onClick={() => toggleHelp(cat.id)}
                         className={cn('w-full flex items-center justify-between p-3 text-left transition-colors', isDark ? 'hover:bg-secondary-800' : 'hover:bg-secondary-50')}
+                        aria-expanded={isExp}
                       >
                         <div className="flex items-center gap-2">
                           <Icon className={cn('w-4 h-4', isDark ? 'text-secondary-400' : 'text-secondary-500')} />
@@ -556,6 +563,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                         { id: 'dhcp-flow', title: isTR ? 'DHCP (DORA) Akışı' : 'DHCP (DORA) Flow' }
                       ].map((anim) => (
                         <button
+                          type="button"
                           key={`help-tab-${anim.id}`}
                           onClick={() => {
                             setSelectedAnimId(anim.id);
@@ -571,6 +579,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                                 ? "bg-secondary-900/40 border-secondary-800 text-secondary-400 hover:text-secondary-200 hover:bg-secondary-800/60"
                                 : "bg-white border-secondary-200 text-secondary-600 hover:text-secondary-800 hover:bg-secondary-50"
                           )}
+                          aria-pressed={selectedAnimId === anim.id}
                         >
                           <Cpu className="w-3.5 h-3.5 shrink-0" />
                           {anim.title}
