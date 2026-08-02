@@ -3,7 +3,6 @@ import { CanvasConnection, CanvasDevice } from './networkTopology.types';
 import { SwitchState } from '@/lib/network/types';
 import { isCableCompatible, CableInfo } from '@/lib/network/types';
 
-
 interface ConnectionLineProps {
   connection: CanvasConnection;
   sourceDevice: CanvasDevice;
@@ -24,6 +23,29 @@ interface ConnectionLineProps {
   graphicsQuality?: 'high' | 'low';
   deviceStates?: Map<string, SwitchState>;
 }
+
+/**
+ * BOLT OPTIMIZATION:
+ * Extracts derived STP blocking/alternate states for a specific device's port.
+ * Allows comparing actual status changes rather than Map reference equality in the custom memo comparator.
+ */
+const getPortSTPBlocking = (
+  deviceStates: Map<string, SwitchState> | undefined,
+  device: CanvasDevice,
+  portId: string
+): boolean => {
+  const port = device.ports.find(p => p.id === portId);
+  let isBlocking = port?.spanningTree?.state === 'blocking';
+
+  if (deviceStates) {
+    const dState = deviceStates.get(device.id);
+    if (dState && dState.ports && dState.ports[portId]) {
+      const sp = dState.ports[portId];
+      isBlocking = sp.spanningTree?.state === 'blocking' || sp.spanningTree?.role === 'alternate';
+    }
+  }
+  return isBlocking;
+};
 
 export const ConnectionLine = memo(function ConnectionLine({
   connection,
@@ -67,25 +89,9 @@ export const ConnectionLine = memo(function ConnectionLine({
   const targetPort = targetDevice.ports.find(p => p.id === connection.targetPort);
   const isShutdown = sourcePort?.shutdown || targetPort?.shutdown;
 
-  // Check if either port is in STP blocking state
-  let sourceSTPBlocking = sourcePort?.spanningTree?.state === 'blocking';
-  let targetSTPBlocking = targetPort?.spanningTree?.state === 'blocking';
-
-  if (deviceStates) {
-    const sourceState = deviceStates.get(sourceDevice.id);
-    const targetState = deviceStates.get(targetDevice.id);
-    
-    if (sourceState && sourceState.ports && sourceState.ports[connection.sourcePort]) {
-      const sp = sourceState.ports[connection.sourcePort];
-      sourceSTPBlocking = sp.spanningTree?.state === 'blocking' || sp.spanningTree?.role === 'alternate';
-    }
-    
-    if (targetState && targetState.ports && targetState.ports[connection.targetPort]) {
-      const tp = targetState.ports[connection.targetPort];
-      targetSTPBlocking = tp.spanningTree?.state === 'blocking' || tp.spanningTree?.role === 'alternate';
-    }
-  }
-
+  // BOLT: Use helper function to resolve actual STP blocking state
+  const sourceSTPBlocking = getPortSTPBlocking(deviceStates, sourceDevice, connection.sourcePort);
+  const targetSTPBlocking = getPortSTPBlocking(deviceStates, targetDevice, connection.targetPort);
   const isSTPBlocking = sourceSTPBlocking || targetSTPBlocking;
 
   // Determine device VLAN - only apply STP blocking color for VLAN 1
@@ -309,6 +315,8 @@ export const ConnectionLine = memo(function ConnectionLine({
     </g>
   );
 }, (prevProps, nextProps) => {
+  // BOLT OPTIMIZATION: Compare derived STP blocking state from deviceStates map, rather than map referential equality.
+  // This avoids re-rendering all connection lines when irrelevant device states update.
   return (
     prevProps.connection.id === nextProps.connection.id &&
     prevProps.connection.active === nextProps.connection.active &&
@@ -320,10 +328,6 @@ export const ConnectionLine = memo(function ConnectionLine({
     nextProps.sourceDevice.ports.find(p => p.id === nextProps.connection.sourcePort)?.shutdown &&
     prevProps.targetDevice.ports.find(p => p.id === prevProps.connection.targetPort)?.shutdown ===
     nextProps.targetDevice.ports.find(p => p.id === nextProps.connection.targetPort)?.shutdown &&
-    prevProps.sourceDevice.ports.find(p => p.id === prevProps.connection.sourcePort)?.spanningTree?.state ===
-    nextProps.sourceDevice.ports.find(p => p.id === nextProps.connection.sourcePort)?.spanningTree?.state &&
-    prevProps.targetDevice.ports.find(p => p.id === prevProps.connection.targetPort)?.spanningTree?.state ===
-    nextProps.targetDevice.ports.find(p => p.id === nextProps.connection.targetPort)?.spanningTree?.state &&
     prevProps.sourceDevice.status === nextProps.sourceDevice.status &&
     prevProps.targetDevice.status === nextProps.targetDevice.status &&
     prevProps.totalSameConns === nextProps.totalSameConns &&
@@ -334,6 +338,9 @@ export const ConnectionLine = memo(function ConnectionLine({
     prevProps.showAnimation === nextProps.showAnimation &&
     prevProps.showLabel === nextProps.showLabel &&
     prevProps.zoom === nextProps.zoom &&
-    prevProps.deviceStates === nextProps.deviceStates
+    getPortSTPBlocking(prevProps.deviceStates, prevProps.sourceDevice, prevProps.connection.sourcePort) ===
+    getPortSTPBlocking(nextProps.deviceStates, nextProps.sourceDevice, nextProps.connection.sourcePort) &&
+    getPortSTPBlocking(prevProps.deviceStates, prevProps.targetDevice, prevProps.connection.targetPort) ===
+    getPortSTPBlocking(nextProps.deviceStates, nextProps.targetDevice, nextProps.connection.targetPort)
   );
 });

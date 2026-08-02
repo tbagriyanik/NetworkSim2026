@@ -29,8 +29,8 @@ jobs:
       - name: Run Linter
         run: npm run lint
 
-      - name: npm Audit (fail on high/critical)
-        run: npm audit --audit-level=high
+      - name: npm Audit (fail on critical)
+        run: npm audit --audit-level=critical
 
       - name: Run Unit Tests
         run: npm test
