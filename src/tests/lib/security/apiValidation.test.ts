@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { withErrorHandling } from '@/lib/api/withErrorHandling';
+import { NextRequest } from 'next/server';
 
 describe('Room & Student API Regex validation', () => {
   const roomCodeRegex = /^[A-Z0-9]{4,10}$/;
@@ -35,5 +37,41 @@ describe('Room & Student API Regex validation', () => {
     expect(certCodeRegex.test('AB_3KPQ7R2')).toBe(false); // Underscore not allowed
     expect(certCodeRegex.test('AB3KPQ7R2N/')).toBe(false); // Special char not allowed
     expect(certCodeRegex.test('abc1234567')).toBe(false); // Lowercase not allowed (it should be normalized to uppercase)
+  });
+});
+
+describe('API Body Size Limits Validation (DoS Mitigation)', () => {
+  it('should allow API requests under the 256KB threshold', async () => {
+    const request = new NextRequest('http://localhost/api/contact', {
+      method: 'POST',
+      headers: {
+        'content-length': '1024', // 1KB
+      },
+    });
+
+    const mockHandler = () => new Response(JSON.stringify({ success: true }));
+    const wrapped = withErrorHandling(mockHandler);
+
+    const response = await wrapped(request, {});
+    expect(response.status).toBe(200);
+  });
+
+  it('should reject API requests exceeding 256KB with 413 Payload Too Large', async () => {
+    const request = new NextRequest('http://localhost/api/contact', {
+      method: 'POST',
+      headers: {
+        'content-length': String(300 * 1024), // 300KB (exceeds 256KB limit)
+      },
+    });
+
+    const mockHandler = () => new Response(JSON.stringify({ success: true }));
+    const wrapped = withErrorHandling(mockHandler);
+
+    const response = await wrapped(request, {});
+    expect(response.status).toBe(413);
+
+    const body = await response.json();
+    expect(body.success).toBe(false);
+    expect(body.code).toBe('PAYLOAD_TOO_LARGE');
   });
 });
