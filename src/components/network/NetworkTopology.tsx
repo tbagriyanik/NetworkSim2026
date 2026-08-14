@@ -871,6 +871,7 @@ export function NetworkTopology({
     saveDeviceConfig,
     togglePowerDevices,
     handleAlign,
+    toggleConnectionActive,
     deleteConnection
   } = useTopologyDeviceActions({
     devices,
@@ -2460,6 +2461,15 @@ export function NetworkTopology({
         handlePortHover={handlePortHover}
         handlePortMouseLeave={handlePortMouseLeave}
         handlePortClick={handlePortClick}
+        handleDeviceMouseDown={(e, id) => handleDeviceMouseDown(e as unknown as ReactMouseEvent, id)}
+        handleDevicePointerDown={handleDevicePointerDown}
+        handleDeviceClick={(e, selectedDevice) => handleDeviceClick(e as unknown as ReactMouseEvent, selectedDevice)}
+        handleDeviceKeyDown={handleDeviceKeyDown}
+        handleDeviceDoubleClick={handleDeviceDoubleClick}
+        handleDeviceMouseLeave={handleDeviceMouseLeave}
+        handleDeviceTouchStart={(e, id) => handleDeviceTouchStart(e as unknown as ReactTouchEvent, id)}
+        handleDeviceTouchMove={handleDeviceTouchMove}
+        handleDeviceTouchEnd={handleDeviceTouchEnd}
         _mousePosRef={mousePosRef}
         isDrawingConnection={isDrawingConnection}
         connectionStart={connectionStart}
@@ -2588,6 +2598,7 @@ export function NetworkTopology({
           <div aria-live="polite" aria-atomic="true" className="sr-only">{_liveRegionText}</div>
           <TopologyCanvasLayer
             canvasRef={canvasRef}
+            svgContentGroupRef={svgContentGroupRef}
             isDark={isDark}
             isPanning={isPanning}
             isSelecting={isSelecting}
@@ -2627,15 +2638,6 @@ export function NetworkTopology({
             handleTouchMove={handleTouchMove}
             handleTouchEnd={handleTouchEnd}
             handleContextMenu={(e, deviceId) => handleContextMenu(e as unknown as ReactMouseEvent, deviceId)}
-            handleDeviceMouseDown={(e, id) => handleDeviceMouseDown(e as unknown as ReactMouseEvent, id)}
-            handleDevicePointerDown={(e, id) => handleDevicePointerDown(e, id)}
-            handleDeviceClick={(e, device) => handleDeviceClick(e as unknown as ReactMouseEvent, device)}
-            handleDeviceKeyDown={(e, device) => handleDeviceKeyDown(e, device)}
-            handleDeviceDoubleClick={handleDeviceDoubleClick}
-            handleDeviceMouseLeave={handleDeviceMouseLeave}
-            handleDeviceTouchStart={(e, id) => handleDeviceTouchStart(e as unknown as ReactTouchEvent, id)}
-            handleDeviceTouchMove={handleDeviceTouchMove}
-            handleDeviceTouchEnd={handleDeviceTouchEnd}
             handleNoteHeaderMouseDown={handleNoteHeaderMouseDown}
             handleNoteHeaderTouchStart={handleNoteHeaderTouchStart}
             cycleNoteColor={cycleNoteColor}
@@ -2662,6 +2664,8 @@ export function NetworkTopology({
             handleConnectionMouseEnter={handleConnectionMouseEnter}
             handleConnectionMouseLeave={handleConnectionMouseLeave}
             handleConnectionClick={handleConnectionClick}
+            onDeleteConnection={deleteConnection}
+            onToggleConnectionActive={toggleConnectionActive}
           />
 
 

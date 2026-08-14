@@ -450,8 +450,7 @@ export function useTopologyTouch({
               touchNewPositions.set(id, { x: clampedX, y: clampedY });
               const touchOuterG = document.querySelector('[data-device-id="' + id + '"]');
               if (touchOuterG) {
-                const touchInnerG = touchOuterG.querySelector('g');
-                if (touchInnerG) touchInnerG.setAttribute('transform', 'translate(' + clampedX + ', ' + clampedY + ')');
+                touchOuterG.setAttribute('transform', 'translate(' + clampedX + ', ' + clampedY + ')');
               }
             }
             liveDeviceDragPositionsRef.current = touchNewPositions;
@@ -512,8 +511,6 @@ export function useTopologyTouch({
         const we = document.querySelector('[data-device-id="' + touchFinalDeviceIds[wi] + '"]') as SVGGElement | null;
         if (we) {
           we.style.willChange = '';
-          const ichild = we.querySelector('g');
-          if (ichild) ichild.style.willChange = '';
         }
       }
 

@@ -31,6 +31,15 @@ interface DeviceRendererProps {
   handlePortHover: (e: React.MouseEvent<SVGGElement>, deviceId: string, portId: string) => void;
   handlePortMouseLeave: () => void;
   handlePortClick: (e: React.MouseEvent, deviceId: string, portId: string) => void;
+  handleDeviceMouseDown: (e: React.MouseEvent, deviceId: string) => void;
+  handleDevicePointerDown: (e: React.PointerEvent<SVGGElement>, deviceId: string) => void;
+  handleDeviceClick: (e: React.MouseEvent, device: CanvasDevice) => void;
+  handleDeviceKeyDown: (e: React.KeyboardEvent<SVGGElement>, device: CanvasDevice) => void;
+  handleDeviceDoubleClick: (device: CanvasDevice) => void;
+  handleDeviceMouseLeave: () => void;
+  handleDeviceTouchStart: (e: React.TouchEvent<SVGGElement>, deviceId: string) => void;
+  handleDeviceTouchMove: (e: React.TouchEvent<SVGGElement>) => void;
+  handleDeviceTouchEnd: (e: React.TouchEvent<SVGGElement>) => void;
   _mousePosRef: React.MutableRefObject<{ x: number; y: number }>;
   isDrawingConnection?: boolean;
   connectionStart?: { deviceId: string; portId: string } | null;
@@ -72,6 +81,15 @@ export function DeviceRenderer({
   handlePortHover,
   handlePortMouseLeave,
   handlePortClick,
+  handleDeviceMouseDown,
+  handleDevicePointerDown,
+  handleDeviceClick,
+  handleDeviceKeyDown,
+  handleDeviceDoubleClick,
+  handleDeviceMouseLeave,
+  handleDeviceTouchStart,
+  handleDeviceTouchMove,
+  handleDeviceTouchEnd,
   _mousePosRef: _mousePosRef,
   isDrawingConnection = false,
   connectionStart = null
@@ -155,7 +173,21 @@ export function DeviceRenderer({
       transform={`translate(${device.x}, ${device.y})`}
       className={`${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isDragging ? 'opacity-40' : ''}`}
       data-device-id={device.id}
+      role="button"
+      tabIndex={0}
       style={{ transition: isDragging ? 'none' : 'transform 0.12s ease-out' }}
+      onMouseDown={(e) => handleDeviceMouseDown(e, device.id)}
+      onPointerDown={(e) => handleDevicePointerDown(e, device.id)}
+      onClick={(e) => handleDeviceClick(e, device)}
+      onKeyDown={(e) => handleDeviceKeyDown(e, device)}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        handleDeviceDoubleClick(device);
+      }}
+      onMouseLeave={handleDeviceMouseLeave}
+      onTouchStart={(e) => handleDeviceTouchStart(e, device.id)}
+      onTouchMove={handleDeviceTouchMove}
+      onTouchEnd={handleDeviceTouchEnd}
     >
       {/* Selection glow effect */}
       {isSelected && (

@@ -15,6 +15,7 @@ import type { SwitchState } from '@/lib/network/types';
 
 export interface TopologyCanvasLayerProps {
     canvasRef: React.RefObject<HTMLDivElement | null>;
+    svgContentGroupRef: React.RefObject<SVGGElement | null>;
     isDark: boolean;
     isPanning: boolean;
     isSelecting: boolean;
@@ -54,15 +55,6 @@ export interface TopologyCanvasLayerProps {
     handleTouchMove: (e: React.TouchEvent<HTMLDivElement>) => void;
     handleTouchEnd: (e: React.TouchEvent<HTMLDivElement>) => void;
     handleContextMenu: (e: React.MouseEvent<HTMLDivElement>, deviceId?: string) => void;
-    handleDeviceMouseDown: (e: React.MouseEvent, deviceId: string) => void;
-    handleDevicePointerDown: (e: React.PointerEvent<SVGGElement>, deviceId: string) => void;
-    handleDeviceClick: (e: React.MouseEvent, device: CanvasDevice) => void;
-    handleDeviceKeyDown: (e: React.KeyboardEvent<SVGGElement>, device: CanvasDevice) => void;
-    handleDeviceDoubleClick: (device: CanvasDevice) => void;
-    handleDeviceMouseLeave: () => void;
-    handleDeviceTouchStart: (e: React.TouchEvent<SVGGElement>, deviceId: string) => void;
-    handleDeviceTouchMove: (e: React.TouchEvent<SVGGElement>) => void;
-    handleDeviceTouchEnd: (e: React.TouchEvent<SVGGElement>) => void;
     handleNoteHeaderMouseDown: (e: React.MouseEvent, noteId: string) => void;
     handleNoteHeaderTouchStart: (e: React.TouchEvent, noteId: string) => void;
     cycleNoteColor: (noteId: string) => void;
@@ -89,10 +81,13 @@ export interface TopologyCanvasLayerProps {
     handleConnectionMouseEnter: (e: React.MouseEvent<SVGPathElement>, connectionId: string, sourceName: string, sourcePort: string, targetName: string, targetPort: string, cableType: string, statusText: string) => void;
     handleConnectionMouseLeave: () => void;
     handleConnectionClick: (e: React.MouseEvent, connectionId: string) => void;
+    onDeleteConnection: (connectionId: string) => void;
+    onToggleConnectionActive: (connectionId: string) => void;
 }
 
 export function TopologyCanvasLayer({
     canvasRef,
+    svgContentGroupRef,
     isDark,
     isPanning,
     isSelecting,
@@ -132,15 +127,6 @@ export function TopologyCanvasLayer({
     handleTouchMove,
     handleTouchEnd,
     handleContextMenu,
-    handleDeviceMouseDown: _handleDeviceMouseDown,
-    handleDevicePointerDown: _handleDevicePointerDown,
-    handleDeviceClick: _handleDeviceClick,
-    handleDeviceKeyDown: _handleDeviceKeyDown,
-    handleDeviceDoubleClick: _handleDeviceDoubleClick,
-    handleDeviceMouseLeave: _handleDeviceMouseLeave,
-    handleDeviceTouchStart: _handleDeviceTouchStart,
-    handleDeviceTouchMove: _handleDeviceTouchMove,
-    handleDeviceTouchEnd: _handleDeviceTouchEnd,
     handleNoteHeaderMouseDown,
     handleNoteHeaderTouchStart,
     cycleNoteColor,
@@ -167,6 +153,8 @@ export function TopologyCanvasLayer({
     handleConnectionMouseEnter,
     handleConnectionMouseLeave,
     handleConnectionClick,
+    onDeleteConnection,
+    onToggleConnectionActive,
 }: TopologyCanvasLayerProps) {
     const canvasSize = getCanvasDimensions();
 
@@ -221,7 +209,7 @@ export function TopologyCanvasLayer({
             }}
         >
             <svg width="100%" height="100%" className="block select-none print:w-full print:h-auto print:block">
-                <g data-content-group="true" style={{ transformOrigin: '0 0', transition: 'none', willChange: 'transform' }}>
+                <g ref={svgContentGroupRef} data-content-group="true" style={{ transformOrigin: '0 0', transition: 'none', willChange: 'transform' }}>
                     <CanvasDefs isDark={isDark} canvasWidth={canvasSize.width} canvasHeight={canvasSize.height} />
 
                     <g clipPath="url(#canvasClip)">
@@ -275,8 +263,8 @@ export function TopologyCanvasLayer({
                                         sameConnIndex={pairMeta.index}
                                         totalSameConns={pairMeta.total}
                                         getPortPosition={getPortPosition}
-                                        onDelete={() => undefined}
-                                        onToggleActive={() => undefined}
+                                        onDelete={onDeleteConnection}
+                                        onToggleActive={onToggleConnectionActive}
                                     />
                                 </React.Fragment>
                             );

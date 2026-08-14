@@ -398,8 +398,7 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
 
               const outerG = document.querySelector('[data-device-id="' + id + '"]');
               if (outerG) {
-                const innerG = outerG.querySelector('g');
-                if (innerG) innerG.setAttribute('transform', 'translate(' + clampedX + ', ' + clampedY + ')');
+                outerG.setAttribute('transform', 'translate(' + clampedX + ', ' + clampedY + ')');
               }
             });
 
@@ -756,8 +755,6 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
         const we = document.querySelector('[data-device-id="' + finalDragDeviceIds[wi] + '"]') as SVGGElement | null;
         if (we) {
           we.style.willChange = '';
-          const ichild = we.querySelector('g');
-          if (ichild) ichild.style.willChange = '';
         }
       }
 
