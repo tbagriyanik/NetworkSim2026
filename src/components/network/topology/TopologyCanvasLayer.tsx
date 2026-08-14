@@ -1,0 +1,345 @@
+'use client';
+
+import React from 'react';
+import { CABLE_COLORS } from '../networkTopology.constants';
+import { getConnectionStatusMessage, getPortPosition } from '../networkTopology.helpers';
+import { ConnectionLine } from '../ConnectionLine';
+import { ConnectionHandle } from '../ConnectionHandle';
+import { NoteNode } from './NoteNode';
+import { TempConnection } from './TempConnection';
+import { EnvironmentBackgrounds } from './EnvironmentBackgrounds';
+import { CanvasDefs } from './CanvasDefs';
+import { SelectionBoxOverlay } from './SelectionBoxOverlay';
+import type { CanvasConnection, CanvasDevice, CanvasNote, ContextMenuState } from '../networkTopology.types';
+import type { SwitchState } from '@/lib/network/types';
+
+export interface TopologyCanvasLayerProps {
+    canvasRef: React.RefObject<HTMLDivElement | null>;
+    isDark: boolean;
+    isPanning: boolean;
+    isSelecting: boolean;
+    pingMode: boolean;
+    pingSource: CanvasDevice | null;
+    selectedDeviceIds: string[];
+    selectedDeviceSet: Set<string>;
+    selectedNoteIds: string[];
+    connectionStart: { deviceId: string; portId: string; point: { x: number; y: number } } | null;
+    mousePos: { x: number; y: number };
+    isDrawingConnection: boolean;
+    contextMenu: ContextMenuState | null;
+    noteTextareaRefs: React.MutableRefObject<Record<string, HTMLTextAreaElement | null>>;
+    isActuallyDragging: boolean;
+    isTouchDragging: boolean;
+    deviceMap: Map<string, CanvasDevice>;
+    deviceStates?: Map<string, SwitchState>;
+    devices: CanvasDevice[];
+    connections: CanvasConnection[];
+    notes: CanvasNote[];
+    visibleConnections: CanvasConnection[];
+    visibleNotes: CanvasNote[];
+    devicesSortedForRender: CanvasDevice[];
+    activeDeviceId?: string | null;
+    mobileConnectionSource: string | null;
+    iotUpdateTrigger: number;
+    graphicsQuality: 'high' | 'low';
+    zoom: number;
+    environment: { background?: 'none' | 'house' | 'twoStoryGarage' | 'greenhouse' } | null;
+    t: Record<string, string>;
+    language: 'tr' | 'en';
+    selectionBox: { start: { x: number; y: number }; current: { x: number; y: number } } | null;
+    hoveredConnectionId?: string | null;
+    activeCaptureConnectionId?: string | null;
+    handleCanvasMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void;
+    handleTouchStart: (e: React.TouchEvent<HTMLDivElement>) => void;
+    handleTouchMove: (e: React.TouchEvent<HTMLDivElement>) => void;
+    handleTouchEnd: (e: React.TouchEvent<HTMLDivElement>) => void;
+    handleContextMenu: (e: React.MouseEvent<HTMLDivElement>, deviceId?: string) => void;
+    handleDeviceMouseDown: (e: React.MouseEvent, deviceId: string) => void;
+    handleDevicePointerDown: (e: React.PointerEvent<SVGGElement>, deviceId: string) => void;
+    handleDeviceClick: (e: React.MouseEvent, device: CanvasDevice) => void;
+    handleDeviceKeyDown: (e: React.KeyboardEvent<SVGGElement>, device: CanvasDevice) => void;
+    handleDeviceDoubleClick: (device: CanvasDevice) => void;
+    handleDeviceMouseLeave: () => void;
+    handleDeviceTouchStart: (e: React.TouchEvent<SVGGElement>, deviceId: string) => void;
+    handleDeviceTouchMove: (e: React.TouchEvent<SVGGElement>) => void;
+    handleDeviceTouchEnd: (e: React.TouchEvent<SVGGElement>) => void;
+    handleNoteHeaderMouseDown: (e: React.MouseEvent, noteId: string) => void;
+    handleNoteHeaderTouchStart: (e: React.TouchEvent, noteId: string) => void;
+    cycleNoteColor: (noteId: string) => void;
+    cycleNoteFont: (noteId: string) => void;
+    cycleNoteFontSize: (noteId: string) => void;
+    cycleNoteOpacity: (noteId: string) => void;
+    duplicateNote: (noteId: string) => void;
+    deleteNote: (noteId: string) => void;
+    updateNoteText: (noteId: string, text: string) => void;
+    setNoteTextSelection: React.Dispatch<React.SetStateAction<{ noteId: string; start: number; end: number } | null>>;
+    handleNoteResizeStart: (e: React.MouseEvent, noteId: string, direction?: string) => void;
+    handleNoteResizeTouchStart: (e: React.TouchEvent, noteId: string, direction?: string) => void;
+    bringNoteToFront: (noteId: string) => void;
+    setSelectedNoteIds: React.Dispatch<React.SetStateAction<string[]>>;
+    setSelectedDeviceIds: React.Dispatch<React.SetStateAction<string[]>>;
+    setContextMenu: React.Dispatch<React.SetStateAction<ContextMenuState | null>>;
+    setSelectAllMode: React.Dispatch<React.SetStateAction<boolean>>;
+    cancelConnectionDrawing: () => void;
+    setPingCursorPos: React.Dispatch<React.SetStateAction<{ x: number; y: number } | null>>;
+    setZoom: React.Dispatch<React.SetStateAction<number>>;
+    setPan: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
+    getCanvasDimensions: () => { width: number; height: number };
+    renderDevice: (device: CanvasDevice, isDragging?: boolean) => React.ReactNode;
+    handleConnectionMouseEnter: (e: React.MouseEvent<SVGPathElement>, connectionId: string, sourceName: string, sourcePort: string, targetName: string, targetPort: string, cableType: string, statusText: string) => void;
+    handleConnectionMouseLeave: () => void;
+    handleConnectionClick: (e: React.MouseEvent, connectionId: string) => void;
+}
+
+export function TopologyCanvasLayer({
+    canvasRef,
+    isDark,
+    isPanning,
+    isSelecting,
+    pingMode,
+    pingSource: _pingSource,
+    selectedDeviceIds,
+    selectedDeviceSet: _selectedDeviceSet,
+    selectedNoteIds,
+    connectionStart,
+    mousePos,
+    isDrawingConnection,
+    contextMenu,
+    noteTextareaRefs,
+    isActuallyDragging,
+    isTouchDragging,
+    deviceMap,
+    deviceStates,
+    devices,
+    connections,
+    notes,
+    visibleConnections,
+    visibleNotes,
+    devicesSortedForRender,
+    activeDeviceId: _activeDeviceId,
+    mobileConnectionSource: _mobileConnectionSource,
+    iotUpdateTrigger: _iotUpdateTrigger,
+    graphicsQuality,
+    zoom,
+    environment,
+    t,
+    language,
+    selectionBox,
+    hoveredConnectionId,
+    activeCaptureConnectionId,
+    handleCanvasMouseDown,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    handleContextMenu,
+    handleDeviceMouseDown: _handleDeviceMouseDown,
+    handleDevicePointerDown: _handleDevicePointerDown,
+    handleDeviceClick: _handleDeviceClick,
+    handleDeviceKeyDown: _handleDeviceKeyDown,
+    handleDeviceDoubleClick: _handleDeviceDoubleClick,
+    handleDeviceMouseLeave: _handleDeviceMouseLeave,
+    handleDeviceTouchStart: _handleDeviceTouchStart,
+    handleDeviceTouchMove: _handleDeviceTouchMove,
+    handleDeviceTouchEnd: _handleDeviceTouchEnd,
+    handleNoteHeaderMouseDown,
+    handleNoteHeaderTouchStart,
+    cycleNoteColor,
+    cycleNoteFont,
+    cycleNoteFontSize,
+    cycleNoteOpacity,
+    duplicateNote,
+    deleteNote,
+    updateNoteText,
+    setNoteTextSelection,
+    handleNoteResizeStart,
+    handleNoteResizeTouchStart,
+    bringNoteToFront,
+    setSelectedNoteIds,
+    setSelectedDeviceIds,
+    setContextMenu,
+    setSelectAllMode,
+    cancelConnectionDrawing,
+    setPingCursorPos,
+    setZoom,
+    setPan,
+    getCanvasDimensions,
+    renderDevice,
+    handleConnectionMouseEnter,
+    handleConnectionMouseLeave,
+    handleConnectionClick,
+}: TopologyCanvasLayerProps) {
+    const canvasSize = getCanvasDimensions();
+
+    return (
+        <div
+            ref={canvasRef}
+            className={`w-full h-full flex-1 min-h-[500px] overflow-hidden relative touch-none select-none print:overflow-visible print:h-auto print:min-h-full topology-print-area ${pingMode || isSelecting ? 'cursor-crosshair' : isPanning ? 'cursor-grabbing' : 'cursor-default'}`}
+            role="application"
+            aria-label={t.topologyAriaLabel}
+            tabIndex={0}
+            onMouseDown={handleCanvasMouseDown}
+            onAuxClick={(e) => { if (e.button === 1) e.preventDefault(); }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseMove={(e) => {
+                if (pingMode) setPingCursorPos({ x: e.clientX, y: e.clientY });
+            }}
+            onMouseLeave={() => setPingCursorPos(null)}
+            onDoubleClick={() => {
+                setZoom(1.0);
+                setPan({ x: 0, y: 0 });
+            }}
+            onClick={() => {
+                canvasRef.current?.focus();
+                setSelectedDeviceIds([]);
+                setSelectedNoteIds([]);
+                setSelectAllMode(false);
+                cancelConnectionDrawing();
+                setContextMenu(null);
+            }}
+            onContextMenu={(e) => {
+                const target = e.target as HTMLElement;
+                const noteElement = target.closest('[data-note-id]');
+                const textareaElement = noteElement?.querySelector('textarea');
+                const contentEditableElement = noteElement?.querySelector('[contenteditable]');
+                const isEditingNote = Boolean(textareaElement?.matches(':focus') || contentEditableElement?.matches(':focus'));
+
+                if (isEditingNote) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+
+                const deviceId = target.closest('[data-device-id]')?.getAttribute('data-device-id') ?? undefined;
+                handleContextMenu(e as unknown as React.MouseEvent<HTMLDivElement>, deviceId);
+            }}
+            onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                    cancelConnectionDrawing();
+                }
+            }}
+        >
+            <svg width="100%" height="100%" className="block select-none print:w-full print:h-auto print:block">
+                <g data-content-group="true" style={{ transformOrigin: '0 0', transition: 'none', willChange: 'transform' }}>
+                    <CanvasDefs isDark={isDark} canvasWidth={canvasSize.width} canvasHeight={canvasSize.height} />
+
+                    <g clipPath="url(#canvasClip)">
+                        <rect x="0" y="0" width={canvasSize.width} height={canvasSize.height} fill="url(#canvasBgGradient)" />
+                        <rect data-export-hide="true" x="0" y="0" width={canvasSize.width} height={canvasSize.height} fill="url(#majorGridPattern)" />
+                        <rect data-export-hide="true" x="0" y="0" width={canvasSize.width} height={canvasSize.height} fill="url(#gridPattern)" />
+
+                        <EnvironmentBackgrounds environment={environment} isDark={isDark} t={t} />
+
+                        {visibleConnections.map((conn) => {
+                            const sourceDevice = deviceMap.get(conn.sourceDeviceId);
+                            const targetDevice = deviceMap.get(conn.targetDeviceId);
+                            if (!sourceDevice || !targetDevice) return null;
+
+                            const groupMap = new Map<string, string[]>();
+                            connections.forEach((item) => {
+                                const pair = [item.sourceDeviceId, item.targetDeviceId].sort().join(':');
+                                if (!groupMap.has(pair)) groupMap.set(pair, []);
+                                groupMap.get(pair)?.push(item.id);
+                            });
+
+                            const ids = groupMap.get([conn.sourceDeviceId, conn.targetDeviceId].sort().join(':')) ?? [];
+                            const index = ids.indexOf(conn.id);
+                            const pairMeta = { index: index >= 0 ? index : 0, total: ids.length || 1 };
+
+                            return (
+                                <React.Fragment key={`connection-group-${conn.id}`}>
+                                    <ConnectionLine
+                                        connection={conn}
+                                        sourceDevice={sourceDevice}
+                                        targetDevice={targetDevice}
+                                        isDark={isDark}
+                                        isDragging={isActuallyDragging || isTouchDragging}
+                                        totalSameConns={pairMeta.total}
+                                        sameConnIndex={pairMeta.index}
+                                        getPortPosition={getPortPosition}
+                                        CABLE_COLORS={CABLE_COLORS}
+                                        zoom={zoom}
+                                        graphicsQuality={graphicsQuality}
+                                        isHovered={hoveredConnectionId === conn.id || activeCaptureConnectionId === conn.id}
+                                        onMouseEnter={(e: React.MouseEvent<SVGPathElement>) => handleConnectionMouseEnter(e, conn.id, sourceDevice.name, conn.sourcePort, targetDevice.name, conn.targetPort, conn.cableType, getConnectionStatusMessage(conn, devices, language))}
+                                        onMouseLeave={handleConnectionMouseLeave}
+                                        onClick={(e: React.MouseEvent) => handleConnectionClick(e, conn.id)}
+                                        deviceStates={deviceStates}
+                                    />
+                                    <ConnectionHandle
+                                        connection={conn}
+                                        sourceDevice={sourceDevice}
+                                        targetDevice={targetDevice}
+                                        isDark={isDark}
+                                        sameConnIndex={pairMeta.index}
+                                        totalSameConns={pairMeta.total}
+                                        getPortPosition={getPortPosition}
+                                        onDelete={() => undefined}
+                                        onToggleActive={() => undefined}
+                                    />
+                                </React.Fragment>
+                            );
+                        })}
+
+                        <TempConnection
+                            isDrawingConnection={isDrawingConnection}
+                            connectionStart={connectionStart}
+                            mousePos={mousePos}
+                            cableInfo={{ connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'pc' }}
+                            CABLE_COLORS={CABLE_COLORS}
+                        />
+
+                        {devicesSortedForRender.map((device) => (
+                            <React.Fragment key={device.id}>{renderDevice(device, false)}</React.Fragment>
+                        ))}
+
+                        {visibleNotes.map((note) => (
+                            <NoteNode
+                                key={note.id}
+                                note={note}
+                                isDark={isDark}
+                                selectedNoteIds={selectedNoteIds}
+                                draggedNoteId={null}
+                                contextMenu={contextMenu}
+                                language={language}
+                                t={t}
+                                noteTextareaRefs={noteTextareaRefs}
+                                devices={devices}
+                                connections={connections}
+                                notes={notes}
+                                setSelectedNoteIds={setSelectedNoteIds}
+                                setSelectedDeviceIds={setSelectedDeviceIds}
+                                setContextMenu={setContextMenu}
+                                handleNoteHeaderMouseDown={handleNoteHeaderMouseDown}
+                                handleNoteHeaderTouchStart={handleNoteHeaderTouchStart}
+                                cycleNoteColor={cycleNoteColor}
+                                cycleNoteFont={cycleNoteFont}
+                                cycleNoteFontSize={cycleNoteFontSize}
+                                cycleNoteOpacity={cycleNoteOpacity}
+                                duplicateNote={duplicateNote}
+                                deleteNote={deleteNote}
+                                updateNoteText={updateNoteText}
+                                setNoteTextSelection={setNoteTextSelection}
+                                onTopologyChange={undefined}
+                                handleNoteResizeStart={handleNoteResizeStart}
+                                handleNoteResizeTouchStart={handleNoteResizeTouchStart}
+                                bringNoteToFront={bringNoteToFront}
+                            />
+                        ))}
+
+                        {selectionBox && (
+                            <SelectionBoxOverlay selectionBox={selectionBox} isDark={isDark} zoom={zoom} selectedDeviceCount={selectedDeviceIds.length} />
+                        )}
+                    </g>
+
+                    <rect data-export-hide="true" x="0" y="0" width={canvasSize.width} height={canvasSize.height} fill="none" stroke={isDark ? 'var(--color-primary-600)' : 'var(--color-primary-700)'} strokeWidth={2 / zoom} strokeDasharray={`${6 / zoom},${4 / zoom}`} opacity={0.7} />
+                    <text data-export-hide="true" x={canvasSize.width - 80} y={canvasSize.height - 10} style={{ fill: 'var(--color-secondary-500)' }} fontSize={12 / zoom} fontFamily="monospace">
+                        {canvasSize.width} × {canvasSize.height}
+                    </text>
+                </g>
+            </svg>
+        </div>
+    );
+}
+

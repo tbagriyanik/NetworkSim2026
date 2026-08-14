@@ -17,9 +17,6 @@ import { TooltipWrapper } from "@/components/ui/TooltipWrapper";
 import { ShortcutBadge } from "@/components/ui/ShortcutBadge";
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, ContextMenuState, ContextMenuMode, NetworkTopologyProps } from './networkTopology.types';
 import { useCanvasHistory } from '@/hooks/useCanvasHistory';
-import { ConnectionLine } from './ConnectionLine';
-import { ConnectionHandle } from './ConnectionHandle';
-import { DeviceNode } from './DeviceNode';
 import LazyNetworkTopologyContextMenu from './LazyNetworkTopologyContextMenu';
 import { X } from "lucide-react";
 
@@ -27,15 +24,12 @@ import { X } from "lucide-react";
 import {
   getDeviceWidth,
   getDeviceHeight,
-  getConnectionStatusMessage,
   isSwitchDeviceType,
   easeInOutCubic,
   getDeviceCenter,
   getPortPosition,
 } from './networkTopology.helpers';
 import { CABLE_COLORS, DRAG_THRESHOLD, LONG_PRESS_DURATION, TOOLTIP_DELAY, TOOLTIP_OFFSET_Y, VIRTUAL_CANVAS_WIDTH_MOBILE, VIRTUAL_CANVAS_HEIGHT_MOBILE, VIRTUAL_CANVAS_WIDTH_DESKTOP, VIRTUAL_CANVAS_HEIGHT_DESKTOP, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM, NOTE_COLORS, NOTE_FONTS_DESKTOP as NOTE_FONTS, NOTE_FONT_SIZES, NOTE_OPACITY as NOTE_OPACITY_OPTIONS, PC_PORT_SPACING, PORT_SPACING, PORT_START_X } from './networkTopology.constants';
-
-import { NoteNode } from './topology/NoteNode';
 
 import { useCanvasActions } from '../../hooks/useCanvasActions';
 import { exportTopologyToPNG } from '../../utils/exportPNG';
@@ -58,17 +52,13 @@ import { useTopologyTooltipHandlers } from './hooks/useTopologyTooltipHandlers';
 import { CanvasToolbar } from './topology/CanvasToolbar';
 import { DeviceRenderer } from './topology/DeviceRenderer';
 
-import { CanvasDefs } from './topology/CanvasDefs';
 import { TopologyPrintPreview } from './topology/TopologyPrintPreview';
 import { TopologyPaletteSheet } from './topology/TopologyPaletteSheet';
 import { TopologyTooltips } from './topology/TopologyTooltips';
 import { TopologyModals } from './topology/TopologyModals';
-import { TempConnection } from './topology/TempConnection';
-import { EnvironmentBackgrounds } from './topology/EnvironmentBackgrounds';
 import { DEVICE_ICONS } from './topology/DeviceIcons';
 import { TopologySelectionToolbar } from './topology/TopologySelectionToolbar';
-import { SelectionBoxOverlay } from './topology/SelectionBoxOverlay';
-import { PingAnimationOverlay } from './topology/PingAnimationOverlay';
+import { TopologyCanvasLayer } from './topology/TopologyCanvasLayer';
 
 
 
@@ -859,7 +849,6 @@ export function NetworkTopology({
     handlePingPause,
     handlePingPlay,
     handlePingNext,
-    handleEnvelopeClick
   } = useTopologyPingUI({
     pingIsPausedRef,
     pingStepModeRef,
@@ -882,7 +871,6 @@ export function NetworkTopology({
     saveDeviceConfig,
     togglePowerDevices,
     handleAlign,
-    toggleConnectionActive,
     deleteConnection
   } = useTopologyDeviceActions({
     devices,
@@ -1184,7 +1172,7 @@ export function NetworkTopology({
       }
 
       setSelectedDeviceIds(newSelectedIds);
-      
+
       // Visual feedback: change cursor to indicate multi-selection mode
       document.body.style.cursor = 'copy';
     } else {
@@ -1238,7 +1226,7 @@ export function NetworkTopology({
     }
 
     setSelectedNoteIds([]);
-    
+
     // Only update onDeviceSelect and selection if it's not a shift-click,
     // or if it's a keyboard-activated (untrusted) click
     if (e.shiftKey) {
@@ -1281,42 +1269,42 @@ export function NetworkTopology({
     setSelectedDeviceIds([nextDevice.id]);
     setSelectedNoteIds([]);
     onDeviceSelect(nextDevice.type, nextDevice.id, isSwitchDeviceType(nextDevice.type) ? nextDevice.switchModel : undefined, nextDevice.name);
-    
+
     // Smooth scroll to the next device and focus it
     const nextEl = document.querySelector<SVGGElement>(`[data-device-id="${nextDevice.id}"]`);
     if (nextEl && canvasRef.current) {
       nextEl.focus();
-      
+
       // Calculate pan to center the device in viewport
       const canvasRect = canvasRef.current.getBoundingClientRect();
       const deviceX = nextDevice.x;
       const deviceY = nextDevice.y;
       const currentZoom = zoomRef.current;
-      
+
       // Center the device in viewport
       const targetPanX = canvasRect.width / 2 - deviceX * currentZoom;
       const targetPanY = canvasRect.height / 2 - deviceY * currentZoom;
-      
+
       // Smooth pan animation
       const startPan = { ...panRef.current };
       const startTime = performance.now();
       const duration = 300; // ms
-      
+
       const animatePan = (currentTime: number) => {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const eased = easeInOutCubic(progress);
-        
+
         panRef.current = {
           x: startPan.x + (targetPanX - startPan.x) * eased,
           y: startPan.y + (targetPanY - startPan.y) * eased
         };
-        
+
         const g = svgContentGroupRef.current;
         if (g) {
           g.style.transform = `translate3d(${panRef.current.x}px, ${panRef.current.y}px, 0px) scale(${currentZoom})`;
         }
-        
+
         if (progress < 1) {
           requestAnimationFrame(animatePan);
         } else {
@@ -1324,7 +1312,7 @@ export function NetworkTopology({
           setPan(panRef.current);
         }
       };
-      
+
       requestAnimationFrame(animatePan);
     }
   }, [devices, onDeviceSelect]);
@@ -2598,328 +2586,83 @@ export function NetworkTopology({
 
           {/* Canvas */}
           <div aria-live="polite" aria-atomic="true" className="sr-only">{_liveRegionText}</div>
-          <div
-            ref={canvasRef}
-            className={`w-full h-full flex-1 min-h-[500px] overflow-hidden relative touch-none select-none print:overflow-visible print:h-auto print:min-h-full topology-print-area ${pingMode || isSelecting ? 'cursor-crosshair' : isPanning ? 'cursor-grabbing' : 'cursor-default'}`}
-            role="application"
-            aria-label={t.topologyAriaLabel}
-            tabIndex={0}
-            onMouseDown={handleCanvasMouseDown}
-
-            onAuxClick={(e) => { if (e.button === 1) e.preventDefault(); }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseMove={(e) => {
-              if (pingMode) setPingCursorPos({ x: e.clientX, y: e.clientY });
-            }}
-            onMouseLeave={() => setPingCursorPos(null)}
-            onDoubleClick={() => {
-              setZoom(1.0);
-              setPan({ x: 0, y: 0 });
-            }}
-            onClick={() => {
-              canvasRef.current?.focus();
-              setSelectedDeviceIds([]);
-              setSelectedNoteIds([]);
-              setSelectAllMode(false);
-              if (pingMode || pingSource) {
-                setPingMode(false);
-                setPingSource(null);
-                setPingResult(null);
-              }
-              cancelConnectionDrawing();
-              setContextMenu(null);
-            }}
-            onContextMenu={(e) => {
-              // Show text editing options if editing a note
-              const target = e.target as HTMLElement;
-              const noteElement = target.closest('[data-note-id]');
-              const textareaElement = noteElement?.querySelector('textarea');
-              const contentEditableElement = noteElement?.querySelector('[contenteditable]');
-
-              const isEditingNote = textareaElement?.matches(':focus') || contentEditableElement?.matches(':focus');
-
-              if (isEditingNote) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Allow native text editing context menu on mobile/desktop
-                // The browser will show copy, cut, paste, select all options
-              } else {
-                handleContextMenu(e as unknown as ReactMouseEvent);
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                cancelConnectionDrawing();
-              }
-              if (e.key === 'Enter' && selectedDeviceIds.length > 0) {
-                const lastId = selectedDeviceIds[selectedDeviceIds.length - 1];
-                const selectedDevice = deviceMap.get(lastId);
-                if (selectedDevice) {
-                  if (selectedDeviceIds.length > 1) {
-                    setSelectedDeviceIds([lastId]);
-                  }
-                  handleDeviceDoubleClick(selectedDevice);
-                }
-              }
-            }}
-          >
-            {/* SVG Layer with Grid and Content */}
-            <svg
-              width="100%"
-              height="100%"
-              className="block select-none print:w-full print:h-auto print:block"
-            >
-              <g
-                ref={svgContentGroupRef}
-                data-content-group="true"
-                style={{
-                  // transform is written directly to DOM via svgContentGroupRef during pan/zoom.
-                  // A useLayoutEffect below syncs non-interactive state changes (e.g. reset view).
-                  // We intentionally do NOT read from pan/zoom state here to prevent React
-                  // re-renders from overwriting the DOM transform mid-interaction.
-                   transformOrigin: '0 0',
-                  transition: 'none',
-                  willChange: 'transform',
-                }}
-              >
-                {/* Clip path for canvas boundaries */}
-                <CanvasDefs isDark={isDark} canvasWidth={getCanvasDimensions().width} canvasHeight={getCanvasDimensions().height} />
-
-                {/* Canvas Background with Grid - clipped to boundaries */}
-                <g clipPath="url(#canvasClip)">
-                  {/* Background */}
-                  <rect
-                    x="0"
-                    y="0"
-                    width={getCanvasDimensions().width}
-                    height={getCanvasDimensions().height}
-                    fill="url(#canvasBgGradient)"
-                  />
-                  {/* Major Grid Lines (subtle) */}
-                  <rect
-                    data-export-hide="true"
-                    x="0"
-                    y="0"
-                    width={getCanvasDimensions().width}
-                    height={getCanvasDimensions().height}
-                    fill="url(#majorGridPattern)"
-                  />
-                  {/* Grid Dots */}
-                  <rect
-                    data-export-hide="true"
-                    x="0"
-                    y="0"
-                    width={getCanvasDimensions().width}
-                    height={getCanvasDimensions().height}
-                    fill="url(#gridPattern)"
-                  />
-
-                  {/* Environment Backgrounds */}
-                  <EnvironmentBackgrounds environment={environment} isDark={isDark} t={t} />
-
-                  {/* Visual Connection Lines (Behind devices) */}
-                  {/* BOLT: Use visibleConnections for culling and O(1) meta lookup */}
-                  {visibleConnections.map((conn) => {
-                    const sourceDevice = deviceMap.get(conn.sourceDeviceId);
-                    const targetDevice = deviceMap.get(conn.targetDeviceId);
-                    if (!sourceDevice || !targetDevice) return null;
-
-                    const meta = connectionMeta.get(conn.id) || { index: 0, total: 1 };
-                    const sameConnIndex = meta.index;
-                    const totalSameConns = meta.total;
-
-                    return (
-                      <ConnectionLine
-                        key={`line-${conn.id}`}
-                        connection={conn}
-                        sourceDevice={sourceDevice}
-                        targetDevice={targetDevice}
-                        isDark={isDark}
-                        isDragging={isActuallyDragging || isTouchDragging}
-                        totalSameConns={totalSameConns}
-                        sameConnIndex={sameConnIndex}
-                        getPortPosition={getPortPosition}
-                        CABLE_COLORS={CABLE_COLORS}
-                        zoom={zoom}
-                        graphicsQuality={graphicsQuality}
-                        isHovered={hoveredConnectionId === conn.id || activeCaptureConnectionId === conn.id}
-                        onMouseEnter={(e: React.MouseEvent<SVGPathElement>) => handleConnectionMouseEnter(e, conn.id, sourceDevice.name, conn.sourcePort, targetDevice.name, conn.targetPort, conn.cableType, getConnectionStatusMessage(conn, devices, language))}
-                        onMouseLeave={handleConnectionMouseLeave}
-                        onClick={(e: React.MouseEvent) => handleConnectionClick(e, conn.id)}
-                        deviceStates={deviceStates}
-                      />
-                    );
-                  })}
-
-                  {/* Connection interaction handles (Trash icons) — kablo üstünde */}
-                  {/* BOLT: Use visibleConnections for culling */}
-                  {visibleConnections.map((conn) => {
-                    const sourceDevice = deviceMap.get(conn.sourceDeviceId);
-                    const targetDevice = deviceMap.get(conn.targetDeviceId);
-                    if (!sourceDevice || !targetDevice) return null;
-                    const meta = connectionMeta.get(conn.id) || { index: 0, total: 1 };
-                    return (
-                      <ConnectionHandle
-                        key={`handle-${conn.id}`}
-                        connection={conn}
-                        sourceDevice={sourceDevice}
-                        targetDevice={targetDevice}
-                        isDark={isDark}
-                        sameConnIndex={meta.index}
-                        totalSameConns={meta.total}
-                        getPortPosition={getPortPosition}
-                        onDelete={deleteConnection}
-                        onToggleActive={toggleConnectionActive}
-                      />
-                    );
-                  })}
-
-                  {/* Temporary connection line */}
-                  <TempConnection
-                    isDrawingConnection={isDrawingConnection}
-                    connectionStart={connectionStart}
-                    mousePos={mousePos}
-                    cableInfo={cableInfo}
-                    CABLE_COLORS={CABLE_COLORS}
-                  />
-
-                  {/* Devices */}
-                  {devicesSortedForRender.map((device) => {
-                    const isCurrentlyDragging = (draggedDevice === device.id && isActuallyDragging) ||
-                      (touchDraggedDevice?.id === device.id && isTouchDragging);
-                    return (
-                      <DeviceNode
-                        key={device.id}
-                        device={device}
-                        deviceState={deviceStates?.get(device.id)}
-                        isSelected={selectedDeviceSet.has(device.id) || activeDeviceId === device.id || (pingMode && pingSource?.id === device.id) || (mobileConnectionSource === device.id)}
-                        isDragging={isCurrentlyDragging}
-                        isActive={activeDeviceId === device.id}
-                        isDark={isDark}
-                        iotUpdateTrigger={iotUpdateTrigger}
-                        onMouseDown={(e, id) => handleDeviceMouseDown(e as unknown as ReactMouseEvent, id)}
-                        onPointerDown={(e, id) => handleDevicePointerDown(e, id)}
-                        onClick={(e, device) => handleDeviceClick(e as unknown as ReactMouseEvent, device)}
-                        onDoubleClick={() => handleDeviceDoubleClick(device)}
-                        onContextMenu={(e, id) => handleContextMenu(e as unknown as ReactMouseEvent, id)}
-                        onKeyboardNavigation={(e) => handleDeviceKeyDown(e, device)}
-                        onMouseLeave={() => handleDeviceMouseLeave()}
-                        onTouchStart={(e, id) => handleDeviceTouchStart(e as unknown as ReactTouchEvent, id)}
-                        onTouchMove={handleDeviceTouchMove}
-                        onTouchEnd={handleDeviceTouchEnd}
-                        isDrawingConnection={isDrawingConnection}
-                        renderDeviceContent={renderDevice}
-                      />
-                    );
-                  })}
-
-                  {/* Notes */}
-                  {visibleNotes.map((note) => (
-                    <NoteNode
-                      key={note.id}
-                      note={note}
-                      isDark={isDark}
-                      selectedNoteIds={selectedNoteIds}
-                      draggedNoteId={draggedNoteId}
-                      contextMenu={contextMenu}
-                      language={language}
-                      t={t}
-                      noteTextareaRefs={noteTextareaRefs}
-                      devices={devices}
-                      connections={connections}
-                      notes={notes}
-                      setSelectedNoteIds={setSelectedNoteIds}
-                      setSelectedDeviceIds={setSelectedDeviceIds}
-                      setContextMenu={setContextMenu}
-                      handleNoteHeaderMouseDown={handleNoteHeaderMouseDown}
-                      handleNoteHeaderTouchStart={handleNoteHeaderTouchStart}
-                      cycleNoteColor={cycleNoteColor}
-                      cycleNoteFont={cycleNoteFont}
-                      cycleNoteFontSize={cycleNoteFontSize}
-                      cycleNoteOpacity={cycleNoteOpacity}
-                      duplicateNote={duplicateNote}
-                      deleteNote={deleteNote}
-                      updateNoteText={updateNoteText}
-                      setNoteTextSelection={setNoteTextSelection}
-                      onTopologyChange={onTopologyChange}
-                      handleNoteResizeStart={handleNoteResizeStart}
-                      handleNoteResizeTouchStart={handleNoteResizeTouchStart}
-                      bringNoteToFront={bringNoteToFront}
-                    />
-                  ))}
-
-                  {/* Broadcast flood icons – animated envelopes flying from switch to each connected device (Hidden) */}
-                  {false && (() => {
-                    const anim = pingAnimation as NonNullable<typeof pingAnimation>;
-                    return anim.broadcastAnim.map((bcast: BroadcastAnimTarget) => {
-                      const prog = anim.broadcastProgress ?? 0;
-                      const ex = bcast.fromX + (bcast.toX - bcast.fromX) * prog;
-                      const ey = bcast.fromY + (bcast.toY - bcast.fromY) * prog - 35;
-                      const opacity = prog < 0.1 ? prog * 10 : prog > 0.9 ? (1 - prog) * 10 : 1;
-                      return (
-                        <g key={`bcast-${bcast.targetId}`}>
-                          <circle cx={ex} cy={ey} r="14" fill="var(--color-error-500)" opacity={0.2 * opacity} className="animate-ping-glow" />
-                          <rect x={ex - 10} y={ey - 7} width="20" height="14" rx="2" fill="var(--color-error-500)" stroke="var(--color-error-600)" strokeWidth="1.5" opacity={opacity} />
-                          <path d={`M${ex - 8} ${ey - 3} L${ex} ${ey + 4} L${ex + 8} ${ey - 3}`} fill="none" stroke="var(--color-white)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity={opacity} />
-                        </g>
-                      );
-                    });
-                  })()}
-                  {/* Ping Animation - rendered LAST for top z-order */}
-                  <PingAnimationOverlay
-                    pingAnimation={pingAnimation}
-                    deviceMap={deviceMap}
-                    connections={connections}
-                    getPortPosition={getPortPosition}
-                    getDeviceCenter={getDeviceCenter}
-                    graphicsQuality={graphicsQuality}
-                    isDark={isDark}
-                    t={t}
-                    handleEnvelopeClick={handleEnvelopeClick}
-                  />
-
-                  {/* Rectangle Selection Box */}
-                  {selectionBox && (
-                    <SelectionBoxOverlay
-                      selectionBox={selectionBox}
-                      isDark={isDark}
-                      zoom={zoom}
-                      selectedDeviceCount={selectedDeviceIds.length}
-                    />
-                  )}
-
-                </g>
-
-                {/* Canvas Boundary Border */}
-                <rect
-                  data-export-hide="true"
-                  x="0"
-                  y="0"
-                  width={getCanvasDimensions().width}
-                  height={getCanvasDimensions().height}
-                  fill="none"
-                  stroke={isDark ? 'var(--color-primary-600)' : 'var(--color-primary-700)'}
-                  strokeWidth={2 / zoom}
-                  strokeDasharray={`${6 / zoom},${4 / zoom}`}
-                  opacity={0.7}
-                />
-
-                {/* Canvas size label - bottom right only */}
-                <text
-                  data-export-hide="true"
-                  x={getCanvasDimensions().width - 80}
-                  y={getCanvasDimensions().height - 10}
-                  style={{ fill: 'var(--color-secondary-500)' }}
-                  fontSize={12 / zoom}
-                  fontFamily="monospace"
-                >
-                  {getCanvasDimensions().width} × {getCanvasDimensions().height}
-                </text>
-              </g>
-            </svg>
-          </div>
+          <TopologyCanvasLayer
+            canvasRef={canvasRef}
+            isDark={isDark}
+            isPanning={isPanning}
+            isSelecting={isSelecting}
+            pingMode={pingMode}
+            pingSource={pingSource}
+            selectedDeviceIds={selectedDeviceIds}
+            selectedDeviceSet={selectedDeviceSet}
+            selectedNoteIds={selectedNoteIds}
+            connectionStart={connectionStart}
+            mousePos={mousePos}
+            isDrawingConnection={isDrawingConnection}
+            contextMenu={contextMenu}
+            noteTextareaRefs={noteTextareaRefs}
+            isActuallyDragging={isActuallyDragging}
+            isTouchDragging={isTouchDragging}
+            deviceMap={deviceMap}
+            deviceStates={deviceStates}
+            devices={devices}
+            connections={connections}
+            notes={notes}
+            visibleConnections={visibleConnections}
+            visibleNotes={visibleNotes}
+            devicesSortedForRender={devicesSortedForRender}
+            activeDeviceId={activeDeviceId}
+            mobileConnectionSource={mobileConnectionSource}
+            iotUpdateTrigger={iotUpdateTrigger}
+            graphicsQuality={graphicsQuality}
+            zoom={zoom}
+            environment={environment}
+            t={t}
+            language={language}
+            selectionBox={selectionBox}
+            hoveredConnectionId={hoveredConnectionId}
+            activeCaptureConnectionId={activeCaptureConnectionId}
+            handleCanvasMouseDown={handleCanvasMouseDown}
+            handleTouchStart={handleTouchStart}
+            handleTouchMove={handleTouchMove}
+            handleTouchEnd={handleTouchEnd}
+            handleContextMenu={(e, deviceId) => handleContextMenu(e as unknown as ReactMouseEvent, deviceId)}
+            handleDeviceMouseDown={(e, id) => handleDeviceMouseDown(e as unknown as ReactMouseEvent, id)}
+            handleDevicePointerDown={(e, id) => handleDevicePointerDown(e, id)}
+            handleDeviceClick={(e, device) => handleDeviceClick(e as unknown as ReactMouseEvent, device)}
+            handleDeviceKeyDown={(e, device) => handleDeviceKeyDown(e, device)}
+            handleDeviceDoubleClick={handleDeviceDoubleClick}
+            handleDeviceMouseLeave={handleDeviceMouseLeave}
+            handleDeviceTouchStart={(e, id) => handleDeviceTouchStart(e as unknown as ReactTouchEvent, id)}
+            handleDeviceTouchMove={handleDeviceTouchMove}
+            handleDeviceTouchEnd={handleDeviceTouchEnd}
+            handleNoteHeaderMouseDown={handleNoteHeaderMouseDown}
+            handleNoteHeaderTouchStart={handleNoteHeaderTouchStart}
+            cycleNoteColor={cycleNoteColor}
+            cycleNoteFont={cycleNoteFont}
+            cycleNoteFontSize={cycleNoteFontSize}
+            cycleNoteOpacity={cycleNoteOpacity}
+            duplicateNote={duplicateNote}
+            deleteNote={deleteNote}
+            updateNoteText={updateNoteText}
+            setNoteTextSelection={setNoteTextSelection}
+            handleNoteResizeStart={handleNoteResizeStart}
+            handleNoteResizeTouchStart={handleNoteResizeTouchStart}
+            bringNoteToFront={bringNoteToFront}
+            setSelectedNoteIds={setSelectedNoteIds}
+            setSelectedDeviceIds={setSelectedDeviceIds}
+            setContextMenu={setContextMenu}
+            setSelectAllMode={setSelectAllMode}
+            cancelConnectionDrawing={cancelConnectionDrawing}
+            setPingCursorPos={setPingCursorPos}
+            setZoom={setZoom}
+            setPan={setPan}
+            getCanvasDimensions={getCanvasDimensions}
+            renderDevice={renderDevice}
+            handleConnectionMouseEnter={handleConnectionMouseEnter}
+            handleConnectionMouseLeave={handleConnectionMouseLeave}
+            handleConnectionClick={handleConnectionClick}
+          />
 
 
           {/* Mobile FAB for Device Addition */}
