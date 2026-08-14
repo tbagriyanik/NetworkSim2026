@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -105,6 +106,7 @@ function ErrorFallbackUI({
   theme,
   language,
 }: ErrorFallbackUIProps) {
+  const router = useRouter();
   const isDark = theme === 'dark' || theme === 'high-contrast';
 
   return (
@@ -159,7 +161,7 @@ function ErrorFallbackUI({
             {language === 'tr' ? 'Tekrar Dene' : 'Try Again'}
           </Button>
           <Button
-            onClick={() => window.location.href = '/'}
+            onClick={() => router.push('/')}
             variant="outline"
             className="flex-1"
           >
