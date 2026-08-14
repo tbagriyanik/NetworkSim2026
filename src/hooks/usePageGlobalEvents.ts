@@ -1,0 +1,160 @@
+import { useEffect } from 'react';
+import type { SwitchState } from '@/lib/network/types';
+import type { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
+import type { TabType } from '@/app/page.types';
+
+type GuidedModeContext = {
+  lastCommand?: string;
+  lastOutput?: string;
+  deviceAccessed?: 'switch' | 'router' | 'pc' | null;
+  deviceAccessedId?: string | null;
+  deviceState?: unknown;
+  deviceStates?: Map<string, unknown>;
+  topologyConnections?: unknown[];
+  topologyDevices?: unknown[];
+};
+
+type PcPanelTab = 'home' | 'desktop' | 'terminal' | 'settings' | 'services' | 'wireless' | 'iot';
+type UnifiedDeviceTab = 'console' | 'settings' | 'stp';
+
+export interface UsePageGlobalEventsParams {
+  topologyDevices: CanvasDevice[];
+  topologyConnections: CanvasConnection[];
+  deviceStates: Map<string, SwitchState>;
+  state: SwitchState;
+  isGuidedModeActive: boolean;
+  setLastCommand: (command: string) => void;
+  setLastOutput: (output: string) => void;
+  commitAction: (desc: string) => void;
+  checkStepCompletionWithContext: (context: GuidedModeContext) => void;
+  setShowPCDeviceId: (id: string) => void;
+  setPcPanelInitialTab: (tab: PcPanelTab) => void;
+  setShowPCPanel: (show: boolean) => void;
+  setActiveDeviceId: (id: string) => void;
+  setActiveDeviceType: (type: DeviceType) => void;
+  setUnifiedDeviceActiveTab: (tab: UnifiedDeviceTab) => void;
+  setShowUnifiedDeviceModal: (show: boolean) => void;
+  setActiveTab: (tab: TabType) => void;
+}
+
+export function usePageGlobalEvents({
+  topologyDevices,
+  topologyConnections,
+  deviceStates,
+  state,
+  isGuidedModeActive,
+  setLastCommand,
+  setLastOutput,
+  commitAction,
+  checkStepCompletionWithContext,
+  setShowPCDeviceId,
+  setPcPanelInitialTab,
+  setShowPCPanel,
+  setActiveDeviceId,
+  setActiveDeviceType,
+  setUnifiedDeviceActiveTab,
+  setShowUnifiedDeviceModal,
+  setActiveTab
+}: UsePageGlobalEventsParams) {
+
+  useEffect(() => {
+    const handlePcCommandExecuted = (e: Event) => {
+      const customEvent = e as CustomEvent<{ deviceId: string; command: string; output?: string }>;
+      const { deviceId, command, output } = customEvent.detail;
+
+      setLastCommand(command);
+      setLastOutput(output || '');
+
+      if (command && command.trim() !== '') {
+        const deviceName = topologyDevices?.find(d => d.id === deviceId)?.name || deviceId;
+        commitAction(`${deviceName} CMD: ${command}`);
+      }
+
+      if (isGuidedModeActive) {
+        checkStepCompletionWithContext({
+          lastCommand: command,
+          lastOutput: output || '',
+          deviceAccessed: 'pc',
+          deviceAccessedId: deviceId,
+          deviceState: state,
+          deviceStates: deviceStates,
+          topologyConnections: topologyConnections,
+          topologyDevices: topologyDevices
+        });
+      }
+    };
+
+    window.addEventListener('pc-command-executed', handlePcCommandExecuted);
+    return () => window.removeEventListener('pc-command-executed', handlePcCommandExecuted);
+  }, [
+    topologyDevices, setLastCommand, setLastOutput, commitAction,
+    isGuidedModeActive, checkStepCompletionWithContext, state,
+    deviceStates, topologyConnections
+  ]);
+
+  useEffect(() => {
+    const handleShowMe = (e: Event) => {
+      const { targetDeviceId, hintCommand, commandPattern, checkType, toIp } = (e as CustomEvent).detail;
+      let deviceId = targetDeviceId;
+
+      let cleanCommand = '';
+      if (checkType === 'ping' && toIp) {
+        cleanCommand = `ping ${toIp}`;
+      } else if (commandPattern) {
+        cleanCommand = String(commandPattern).split('|')[0];
+      } else {
+        cleanCommand = hintCommand || '';
+      }
+
+      // Clean command prefixes from prompts or instructional hints.
+      if (cleanCommand.includes('>')) {
+        cleanCommand = cleanCommand.split('>').pop() || '';
+      } else if (cleanCommand.includes('#')) {
+        cleanCommand = cleanCommand.split('#').pop() || '';
+      }
+      cleanCommand = cleanCommand
+        .replace(/^[^:]{1,40}:\s*/i, '')
+        .replace(/^type\s+/i, '')
+        .replace(/\s+(yazın|yazin)\.?$/i, '')
+        .replace(/\s+(and press enter|press enter)\.?$/i, '');
+      cleanCommand = cleanCommand.trim();
+
+      if (!deviceId) {
+        if (cleanCommand.includes('ipconfig') || cleanCommand.includes('ping') || cleanCommand.includes('ftp') || cleanCommand.includes('tracert')) {
+          deviceId = topologyDevices.find(d => d.type === 'pc')?.id;
+        } else {
+          deviceId = topologyDevices.find(d => d.type === 'switchL2' || d.type === 'switchL3' || d.type === 'router')?.id;
+        }
+      }
+
+      if (deviceId) {
+        const device = topologyDevices.find(d => d.id === deviceId);
+        if (device) {
+          if (device.type === 'pc') {
+            setShowPCDeviceId(deviceId);
+            setPcPanelInitialTab('desktop');
+            setShowPCPanel(true);
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('pc-auto-type', { detail: { deviceId, command: cleanCommand } }));
+            }, 600);
+          } else {
+            setActiveDeviceId(deviceId);
+            setActiveDeviceType(device.type);
+            setUnifiedDeviceActiveTab('console');
+            setShowUnifiedDeviceModal(true);
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('terminal-auto-type', { detail: { deviceId, command: cleanCommand } }));
+            }, 600);
+          }
+        }
+      }
+    };
+    window.addEventListener('request-show-me', handleShowMe);
+    return () => window.removeEventListener('request-show-me', handleShowMe);
+  }, [
+    topologyDevices, setActiveDeviceId, setActiveDeviceType,
+    setShowUnifiedDeviceModal, setActiveTab, setShowPCDeviceId,
+    setPcPanelInitialTab, setShowPCPanel, setUnifiedDeviceActiveTab
+  ]);
+}
+

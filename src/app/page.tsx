@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 
-import { SwitchState, CableInfo, CommandResult } from '@/lib/network/types';
+import { SwitchState, CableInfo } from '@/lib/network/types';
 import { useDeviceManager } from '@/hooks/useDeviceManager';
 import { useNetworkLogic } from '@/hooks/useNetworkLogic';
 import { usePageNetworkLogic } from '@/hooks/usePageNetworkLogic';
@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 import { getPrompt } from '@/lib/network/executor';
 import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
-import { safeParse, safeStringify } from '@/lib/network/serialization';
+import { safeParse } from '@/lib/network/serialization';
 import { createInitialState } from '@/lib/network/initialState';
 import type { TerminalOutput } from '@/components/network/Terminal';
 
@@ -82,6 +82,10 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 import { useProjectExport } from '@/hooks/useProjectExport';
 import { useProjectReset } from '@/hooks/useProjectReset';
 import { useAutoDhcpRenewal } from '@/hooks/useAutoDhcpRenewal';
+import { useProjectAutosave } from '@/hooks/useProjectAutosave';
+import { useCommandExecution } from '@/hooks/useCommandExecution';
+import { usePageGlobalEvents } from '@/hooks/usePageGlobalEvents';
+import { useTaskSync } from '@/hooks/useTaskSync';
 import { useDeviceDelete } from '@/hooks/useDeviceDelete';
 import { useNetworkEventListeners } from '@/hooks/useNetworkEventListeners';
 import { usePWA } from '@/hooks/usePWA';
@@ -131,9 +135,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   const lastAppliedHistoryStateRef = useRef<ProjectState | null>(null);
   const lastPushedStateRef = useRef<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const prevTaskStatusRef = useRef<Map<string, boolean>>(new Map());
-  const shownToastsRef = useRef<Set<string>>(new Set());
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const modalHistoryPushedRef = useRef(false);
   const refreshReportRef = useRef<HTMLDivElement>(null);
 
@@ -917,40 +919,16 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     topologyConnections,
   };
 
-  // Track task completion changes globally
-  useEffect(() => {
-    if (!isTaskSystemEnabled) {
-      prevTaskStatusRef.current.clear();
-      setTimeout(() => setLastTaskEvent(null), 0);
-      return;
-    }
-
-    activeDeviceTasks.forEach(task => {
-      const currentStatus = getTaskStatus(task, state, taskContext);
-      const previousStatus = prevTaskStatusRef.current.get(task.id) ?? false;
-      const toastKey = `${task.id}-${currentStatus}`;
-
-      // Task completed - show in footer only once
-      if (currentStatus && !previousStatus && !shownToastsRef.current.has(toastKey)) {
-        const taskName = task.name[language];
-        setLastTaskEvent({ type: 'completed', taskName, timestamp: Date.now() });
-        shownToastsRef.current.add(toastKey);
-        // Remove the failed toast key if it exists
-        shownToastsRef.current.delete(`${task.id}-false`);
-      }
-      // Task failed (was completed but now it's not) - show in footer only once
-      else if (!currentStatus && previousStatus && !shownToastsRef.current.has(toastKey)) {
-        const taskName = task.name[language];
-        setLastTaskEvent({ type: 'failed', taskName, timestamp: Date.now() });
-        shownToastsRef.current.add(toastKey);
-        // Remove the completed toast key if it exists
-        shownToastsRef.current.delete(`${task.id}-true`);
-      }
-
-      // Update previous status
-      prevTaskStatusRef.current.set(task.id, currentStatus);
-    });
-  }, [activeDeviceTasks, isTaskSystemEnabled, state, taskContext, language, activeDeviceType]);
+    // Track task completion changes globally
+  useTaskSync({
+    isTaskSystemEnabled,
+    activeDeviceTasks,
+    state,
+    taskContext,
+    language,
+    activeDeviceType,
+    setLastTaskEvent
+  });
 
   // Calculate total score
   const totalScore = isTaskSystemEnabled ? calculateTaskScore(activeDeviceTasks, state, taskContext) : 0;
@@ -980,65 +958,25 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
 
 
-  // Persistence: Save to localStorage
-  useEffect(() => {
-    if (isAppLoading) return;
-
-    if (autosaveTimerRef.current) {
-      clearTimeout(autosaveTimerRef.current);
-    }
-
-    autosaveTimerRef.current = setTimeout(() => {
-      // Get PC and IoT device IDs to filter them out from deviceStates
-      // These device types don't need full SwitchState with 24 ports
-      const excludedDeviceIds = new Set(
-        topologyDevices.filter(d => d.type === 'pc' || d.type === 'iot').map(d => d.id)
-      );
-
-      const projectData = {
-        version: '1.0',
-        timestamp: new Date().toISOString(),
-        // Filter out PC/IoT device states - they don't need SwitchState with ports
-        devices: Array.from(deviceStates.entries())
-          .filter(([id]) => !excludedDeviceIds.has(id))
-          .map(([id, state]) => ({ id, state })),
-        // Filter out entries with empty/invalid IDs
-        deviceOutputs: Array.from(deviceOutputs.entries())
-          .filter(([id]) => id && id.trim() !== '')
-          .map(([id, outputs]) => ({ id, outputs })),
-        pcOutputs: Array.from(pcOutputs.entries())
-          .filter(([id]) => id && id.trim() !== '')
-          .map(([id, outputs]) => ({ id, outputs })),
-        pcHistories: Array.from(pcHistories.entries())
-          .filter(([id]) => id && id.trim() !== '')
-          .map(([id, history]) => ({ id, history })),
-        topology: {
-          // Filter out devices with empty/invalid IDs
-          devices: topologyDevices.filter(d => d.id && d.id.trim() !== ''),
-          connections: topologyConnections,
-          notes: topologyNotes,
-          zoom,
-          pan,
-        },
-        // Reset cableInfo if no valid devices exist
-        cableInfo: topologyDevices.length > 0 ? cableInfo : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
-        activeDeviceId: topologyDevices.find(d => d.id === activeDeviceId)?.id || '',
-        activeDeviceType,
-        activeTab
-      };
-
-      try { localStorage.setItem('netsim_autosave', safeStringify(projectData)); } catch { /* storage unavailable */ }
-      autosaveTimerRef.current = null;
-      setLastSaveTime(new Date().toLocaleTimeString());
-      setHasUnsavedChanges(false);
-    }, 800);
-
-    return () => {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-      }
-    };
-  }, [deviceStates, deviceOutputs, pcOutputs, pcHistories, topologyDevices, topologyConnections, topologyNotes, cableInfo, activeDeviceId, activeDeviceType, activeTab, isAppLoading, zoom, pan]);
+    // Persistence: Save to localStorage
+  useProjectAutosave({
+    isAppLoading,
+    topologyDevices,
+    topologyConnections,
+    topologyNotes,
+    deviceStates,
+    deviceOutputs,
+    pcOutputs,
+    pcHistories,
+    cableInfo,
+    activeDeviceId,
+    activeDeviceType,
+    activeTab,
+    zoom,
+    pan,
+    setLastSaveTime,
+    setHasUnsavedChanges
+  });
 
   // Restore saved position for refresh network report
   useEffect(() => {
@@ -1153,200 +1091,49 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
 
 
-  // Handle command using active device
-  const handleCommand = useCallback(async (command: string) => {
-    const result = await handleCommandForDevice(
-      activeDeviceId,
-      command,
-      topologyDevices,
-      setActiveDeviceId,
-      setActiveDeviceType,
-      topologyConnections
-    ) as CommandResult;
-
-    const currentOutput = (result && typeof result === 'object' && 'output' in result) ? String(result.output) : '';
-
-    setLastCommand(command);
-    setLastOutput(currentOutput);
-
-    if (command && command.trim() !== '') {
-      const deviceName = topologyDevices?.find(d => d.id === activeDeviceId)?.name || activeDeviceId;
-      commitAction(`${deviceName} CLI: ${command}`);
-    }
-
-    // Immediate check for guided mode progress
-    if (isGuidedModeActive) {
-      const currentDeviceState = result && result.newState ? { ...state, ...result.newState } : state;
-      let finalDeviceStates = result.deviceStates || result.updatedDeviceStates || deviceStates;
-
-      // If we have a local state change but not a full deviceStates map from the result,
-      // merge the local change into a fresh map for validation.
-      if (result?.newState && !result.deviceStates && !result.updatedDeviceStates) {
-        finalDeviceStates = new Map(deviceStates);
-        finalDeviceStates.set(activeDeviceId, { ...state, ...result.newState } as SwitchState);
-      }
-
-      checkStepCompletionWithContext({
-        lastCommand: command,
-        lastOutput: currentOutput,
-        deviceAccessed: showUnifiedDeviceModal ? (activeDeviceType === 'switchL2' || activeDeviceType === 'switchL3' ? 'switch' : activeDeviceType === 'router' ? 'router' : 'pc') : null,
-        deviceAccessedId: showUnifiedDeviceModal ? activeDeviceId : null,
-        deviceState: currentDeviceState,
-        deviceStates: finalDeviceStates,
-        topologyConnections: topologyConnections,
-        topologyDevices: topologyDevices
-      });
-    }
-
-    if (result?.exitSession) {
-      setActiveTab('topology');
-    }
-    return result;
-  }, [activeDeviceId, handleCommandForDevice, topologyDevices, topologyConnections, setActiveDeviceId, setActiveDeviceType, setActiveTab, setLastCommand, setLastOutput, commitAction, isGuidedModeActive, checkStepCompletionWithContext, showUnifiedDeviceModal, activeDeviceType, state, deviceStates]);
+    // Handle command using active device
+  const { handleCommand, handleExecuteCommand } = useCommandExecution({
+    activeDeviceId,
+    activeDeviceType,
+    topologyDevices,
+    topologyConnections,
+    deviceStates,
+    state,
+    isGuidedModeActive,
+    showUnifiedDeviceModal,
+    setActiveDeviceId,
+    setActiveDeviceType,
+    setActiveTab,
+    setLastCommand,
+    setLastOutput,
+    commitAction,
+    checkStepCompletionWithContext,
+    handleCommandForDevice
+  });
 
   const prompt = getPrompt(state);
 
-  const handleExecuteCommand = useCallback(async (deviceId: string, command: string) => {
-    const result = await handleCommandForDevice(
-      deviceId,
-      command,
-      topologyDevices,
-      setActiveDeviceId,
-      setActiveDeviceType,
-      topologyConnections
-    ) as CommandResult;
+    usePageGlobalEvents({
+    topologyDevices,
+    topologyConnections,
+    deviceStates,
+    state,
+    isGuidedModeActive,
+    setLastCommand,
+    setLastOutput,
+    commitAction,
+    checkStepCompletionWithContext,
+    setShowPCDeviceId,
+    setPcPanelInitialTab,
+    setShowPCPanel,
+    setActiveDeviceId,
+    setActiveDeviceType,
+    setUnifiedDeviceActiveTab,
+    setShowUnifiedDeviceModal,
+    setActiveTab
+  });
 
-    const currentOutput = (result && typeof result === 'object' && 'output' in result) ? String(result.output) : '';
-
-    setLastCommand(command);
-    setLastOutput(currentOutput);
-
-    if (command && command.trim() !== '') {
-      const deviceName = topologyDevices?.find(d => d.id === deviceId)?.name || deviceId;
-      commitAction(`${deviceName} CLI: ${command}`);
-    }
-
-    // Immediate check for guided mode progress
-    if (isGuidedModeActive) {
-      const deviceObj = topologyDevices?.find(d => d.id === deviceId);
-      const devType = deviceObj?.type;
-      const currentState = deviceStates.get(deviceId);
-      const currentDeviceState = result && result.newState ? { ...currentState, ...result.newState } : currentState;
-
-      if (!currentDeviceState) return result;
-
-      let finalDeviceStates = result.deviceStates || result.updatedDeviceStates || deviceStates;
-      if (result?.newState && !result.deviceStates && !result.updatedDeviceStates) {
-        finalDeviceStates = new Map(deviceStates);
-        finalDeviceStates.set(deviceId, { ...currentState, ...result.newState } as SwitchState);
-      }
-
-      checkStepCompletionWithContext({
-        lastCommand: command,
-        lastOutput: currentOutput,
-        deviceAccessed: devType === 'pc' ? 'pc' : (devType === 'router' ? 'router' : (devType === 'switchL2' || devType === 'switchL3' ? 'switch' : null)),
-        deviceAccessedId: deviceId,
-        deviceState: currentDeviceState,
-        deviceStates: finalDeviceStates,
-        topologyConnections: topologyConnections,
-        topologyDevices: topologyDevices
-      });
-    }
-
-    return result;
-  }, [handleCommandForDevice, topologyDevices, topologyConnections, setActiveDeviceId, setActiveDeviceType, setLastCommand, setLastOutput, commitAction, isGuidedModeActive, checkStepCompletionWithContext, deviceStates]);
-
-  useEffect(() => {
-    const handlePcCommandExecuted = (e: Event) => {
-      const customEvent = e as CustomEvent<{ deviceId: string; command: string; output?: string }>;
-      const { deviceId, command, output } = customEvent.detail;
-
-      setLastCommand(command);
-      setLastOutput(output || '');
-
-      if (command && command.trim() !== '') {
-        const deviceName = topologyDevices?.find(d => d.id === deviceId)?.name || deviceId;
-        commitAction(`${deviceName} CMD: ${command}`);
-      }
-
-      if (isGuidedModeActive) {
-        checkStepCompletionWithContext({
-          lastCommand: command,
-          lastOutput: output || '',
-          deviceAccessed: 'pc',
-          deviceAccessedId: deviceId,
-          deviceState: state,
-          deviceStates: deviceStates,
-          topologyConnections: topologyConnections,
-          topologyDevices: topologyDevices
-        });
-      }
-    };
-
-    window.addEventListener('pc-command-executed', handlePcCommandExecuted);
-    return () => window.removeEventListener('pc-command-executed', handlePcCommandExecuted);
-  }, [topologyDevices, setLastCommand, setLastOutput, commitAction, isGuidedModeActive, checkStepCompletionWithContext, state, deviceStates, topologyConnections]);
-
-  useEffect(() => {
-    const handleShowMe = (e: Event) => {
-      const { targetDeviceId, hintCommand, commandPattern, checkType, toIp } = (e as CustomEvent).detail;
-      let deviceId = targetDeviceId;
-
-      let cleanCommand = '';
-      if (checkType === 'ping' && toIp) {
-        cleanCommand = `ping ${toIp}`;
-      } else if (commandPattern) {
-        cleanCommand = String(commandPattern).split('|')[0];
-      } else {
-        cleanCommand = hintCommand || '';
-      }
-
-      // Clean command prefixes from prompts or instructional hints.
-      if (cleanCommand.includes('>')) {
-        cleanCommand = cleanCommand.split('>').pop() || '';
-      } else if (cleanCommand.includes('#')) {
-        cleanCommand = cleanCommand.split('#').pop() || '';
-      }
-      cleanCommand = cleanCommand
-        .replace(/^[^:]{1,40}:\s*/i, '')
-        .replace(/^type\s+/i, '')
-        .replace(/\s+(yazın|yazin)\.?$/i, '')
-        .replace(/\s+(and press enter|press enter)\.?$/i, '');
-      cleanCommand = cleanCommand.trim();
-
-      if (!deviceId) {
-        if (cleanCommand.includes('ipconfig') || cleanCommand.includes('ping') || cleanCommand.includes('ftp') || cleanCommand.includes('tracert')) {
-          deviceId = topologyDevices.find(d => d.type === 'pc')?.id;
-        } else {
-          deviceId = topologyDevices.find(d => d.type === 'switchL2' || d.type === 'switchL3' || d.type === 'router')?.id;
-        }
-      }
-
-      if (deviceId) {
-        const device = topologyDevices.find(d => d.id === deviceId);
-        if (device) {
-          if (device.type === 'pc') {
-            setShowPCDeviceId(deviceId);
-            setPcPanelInitialTab('desktop');
-            setShowPCPanel(true);
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('pc-auto-type', { detail: { deviceId, command: cleanCommand } }));
-            }, 600);
-          } else {
-            setActiveDeviceId(deviceId);
-            setActiveDeviceType(device.type);
-            setUnifiedDeviceActiveTab('console');
-            setShowUnifiedDeviceModal(true);
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('terminal-auto-type', { detail: { deviceId, command: cleanCommand } }));
-            }, 600);
-          }
-        }
-      }
-    };
-    window.addEventListener('request-show-me', handleShowMe);
-    return () => window.removeEventListener('request-show-me', handleShowMe);
-  }, [topologyDevices, setActiveDeviceId, setActiveDeviceType, setShowUnifiedDeviceModal, setActiveTab]);
+  
 
   const handleClearTerminal = () => {
     setDeviceOutputs(prev => {
@@ -2551,3 +2338,5 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     </AppErrorBoundary>
   );
 }
+
+
