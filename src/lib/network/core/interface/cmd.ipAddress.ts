@@ -1,0 +1,618 @@
+import { iosModeError } from '../iosErrors';
+import type { CommandContext } from '../commandTypes';
+import type { SwitchState, CommandResult, Port } from '../../types';
+import { buildRunningConfig } from '../configBuilder';
+import { canAssignIPToPhysicalPort, isLayer3Switch } from '../../switchModels';
+import { validateSviStatus } from '../L3Validation';
+import {
+  isInInterfaceMode,
+  isVlanInterfaceName,
+  getVlanPortKey,
+  isValidIP,
+  isValidSubnetMask,
+  isNetworkOrBroadcastAddress,
+  applyToSelectedPorts
+} from './helpers';
+
+export function cmdIpAddress(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) {
+    return { success: false, error: '% No interface selected' };
+  }
+
+  const match = input.match(/^ip\s+address\s+(?:(\d{1,3}(?:\.\d{1,3}){3})(?:\s+(\d{1,3}(?:\.\d{1,3}){3}))|dhcp)$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid input: ip address <ip> <mask> or ip address dhcp' };
+  }
+
+  const isDhcp = input.toLowerCase().endsWith('dhcp');
+
+  if (isDhcp) {
+    const newPorts = applyToSelectedPorts(state, (port: Port) => ({
+      ...port,
+      ipConfigMode: 'dhcp',
+      ipAddress: undefined,
+      subnetMask: undefined,
+      mode: 'routed',
+      isRoutedPort: true
+    }));
+    return {
+      success: true,
+      output: `\nInterface ${state.currentInterface} configured to acquire IP via DHCP\n`,
+      newState: { ports: newPorts }
+    };
+  }
+
+  const [, ip, dottedMask] = match;
+  const mask = dottedMask;
+
+  if (!isValidIP(ip) || !mask || !isValidIP(mask)) {
+    return { success: false, error: '% Invalid IP address format' };
+  }
+  if (!isValidSubnetMask(mask)) {
+    return { success: false, error: '% Invalid subnet mask format' };
+  }
+  if (isNetworkOrBroadcastAddress(ip, mask)) {
+    return { success: false, error: '% Invalid host address (network or broadcast address)' };
+  }
+
+  // VLAN interface IP assignment
+  if (isVlanInterfaceName(state.currentInterface)) {
+    const vlanPortKey = getVlanPortKey(state.currentInterface);
+    const vlanId = parseInt(vlanPortKey.replace(/^vlan/, ''), 10);
+    const newPorts = { ...state.ports };
+
+    if (newPorts[vlanPortKey]) {
+      newPorts[vlanPortKey] = {
+        ...newPorts[vlanPortKey],
+        ipAddress: ip,
+        subnetMask: mask,
+        mode: 'routed'
+      };
+    }
+
+    const updatedState = { ...state, ports: newPorts };
+    let output = `Interface Vlan${vlanId} configured with IP ${ip} ${mask}\n`;
+
+    // Add status indicator
+    const sviStatus = validateSviStatus(state, vlanId);
+    if (sviStatus.activePorts.length > 0) {
+      output += `Vlan${vlanId} will be up (Active ports: ${sviStatus.activePorts.join(', ')})\n`;
+    } else {
+      output += `Vlan${vlanId} status: down (no active ports assigned)\n`;
+    }
+
+    return {
+      success: true,
+      output,
+      newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) }
+    };
+  }
+
+  // Layer 2 switch check - prevent IP assignment on physical ports
+  // Apply this guard only for switch devices; routers must allow physical IP addressing.
+  const isSwitchDevice =
+    ((state.deviceType as string) === 'switchL2' ||
+      (state.deviceType as string) === 'switchL3' ||
+      state.switchLayer === 'L2' ||
+      state.switchLayer === 'L3' ||
+      state.switchModel === 'WS-C2960-24TT-L' ||
+      state.switchModel === 'WS-C3650-24PS') &&
+    state.deviceType !== 'router'; // Routers must be excluded from this check
+  if (isSwitchDevice && !canAssignIPToPhysicalPort(state.switchModel)) {
+    const port = state.ports[state.currentInterface];
+    if (port && (port.type === 'fastethernet' || port.type === 'gigabitethernet')) {
+      return {
+        success: false,
+        error: `% Invalid command. Layer 2 switch (${state.switchModel}) does not support IP addressing on physical ports.\nUse VLAN interface instead: interface vlan <vlan-id>`
+      };
+    }
+  }
+
+  // L3 switch physical ports: require either global ip routing OR routed port mode (no switchport)
+  const currentPort = state.ports?.[state.currentInterface];
+  const isPhysicalInterface = !!currentPort && (currentPort.type === 'fastethernet' || currentPort.type === 'gigabitethernet');
+  const isL3Sw = isLayer3Switch(state.switchModel);
+  const hasIpRouting = !!state.ipRouting;
+  const isRoutedPort = currentPort?.mode === 'routed' || currentPort?.isRoutedPort === true;
+
+  if (isL3Sw && isPhysicalInterface && !hasIpRouting && !isRoutedPort) {
+    return {
+      success: false,
+      error: `% Invalid input detected at '^' marker.`
+    };
+  }
+
+  // Physical routed port IP assignment (Layer 3 switch or router)
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
+    ...port,
+    ipAddress: ip,
+    subnetMask: mask,
+    mode: 'routed',
+    isRoutedPort: true
+  }));
+
+  const updatedState = { ...state, ports: newPorts };
+  const output = `\nInterface ${state.currentInterface} configured with IP ${ip} ${mask}\n`;
+
+  return {
+    success: true,
+    output,
+    newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) },
+    hint: {
+      tr: '­şÆí Ger├ğek d├╝nyada: Bir aray├╝ze IP verildi─şinde o aray├╝z L3 (katman 3) ├ğal─▒┼şmaya ba┼şlar. Cihazlar aras─▒ y├Ânlendirme i├ğin IP gereklidir.',
+      en: '­şÆí In the real world: When an IP is assigned to an interface, it starts operating at L3 (layer 3). IPs are required for routing between devices.'
+    }
+  };
+}
+
+/**
+ * No IP Address - Remove IP from interface
+ */
+export function cmdNoIpAddress(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) {
+    return { success: false, error: '% No interface selected' };
+  }
+
+  // VLAN interface'i i├ğin IP kald─▒rma
+  if (isVlanInterfaceName(state.currentInterface)) {
+    const vlanPortKey = getVlanPortKey(state.currentInterface);
+    const newPorts = { ...state.ports };
+
+    if (newPorts[vlanPortKey]) {
+      newPorts[vlanPortKey] = {
+        ...newPorts[vlanPortKey],
+        ipAddress: undefined,
+        subnetMask: undefined
+      };
+    }
+
+    const updatedState = { ...state, ports: newPorts };
+    return {
+      success: true,
+      newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) }
+    };
+  }
+
+  // Fiziksel port'tan IP kald─▒rma
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, ipAddress: undefined, subnetMask: undefined, mode: 'access' }));
+
+  const updatedState = { ...state, ports: newPorts };
+  return {
+    success: true,
+    newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) }
+  };
+}
+
+/**
+ * IP Default-Gateway - Configured from interface mode
+ */
+export function cmdIpDefaultGateway(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) {
+    return { success: false, error: '% No interface selected' };
+  }
+
+  const match = input.match(/^ip\s+default-gateway\s+([0-9.]+)$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid default-gateway command' };
+  }
+
+  return {
+    success: true,
+    newState: { defaultGateway: match[1] }
+  };
+}
+
+/**
+ * No IP Default-Gateway - Configured from interface mode
+ */
+export function cmdNoIpDefaultGateway(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) {
+    return { success: false, error: '% No interface selected' };
+  }
+
+  return {
+    success: true,
+    newState: { defaultGateway: undefined }
+  };
+}
+export function cmdNoIpProxyArp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) {
+    return { success: false, error: '% No interface selected' };
+  }
+
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
+    ...port,
+    ipProxyArp: false
+  }));
+
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * No Keepalive - Disable keepalive
+ */
+export function cmdIpAccessGroup(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) {
+    return { success: false, error: iosModeError() };
+  }
+
+  const match = input.match(/^ip\s+access-group\s+(\S+)\s+(in|out)$/i);
+  if (!match) return { success: false, error: '% Invalid ip access-group command' };
+
+  const [_, aclName, direction] = match;
+  const prop = direction.toLowerCase() === 'in' ? 'accessGroupIn' : 'accessGroupOut';
+
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
+    ...port,
+    [prop]: aclName
+  }));
+
+  return {
+    success: true,
+    output: `IP access-group ${aclName} ${direction} applied to ${state.currentInterface}`,
+    newState: { ports: newPorts }
+  };
+}
+
+/**
+ * No IP Access-Group
+ */
+export function cmdNoIpAccessGroup(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) {
+    return { success: false, error: iosModeError() };
+  }
+
+  const match = input.match(/^no\s+ip\s+access-group\s+(\S+)\s+(in|out)$/i);
+  if (!match) return { success: false, error: '% Invalid command' };
+
+  const direction = match[2];
+  const prop = direction.toLowerCase() === 'in' ? 'accessGroupIn' : 'accessGroupOut';
+
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
+    ...port,
+    [prop]: undefined
+  }));
+
+  return {
+    success: true,
+    newState: { ports: newPorts }
+  };
+}
+
+/**
+ * Channel-Group - Assign interface to EtherChannel
+ */
+export function cmdIpHelperAddress(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) {
+    return { success: false, error: iosModeError() };
+  }
+
+  const match = input.match(/^ip\s+helper-address\s+(\d+\.\d+\.\d+\.\d+)$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid ip helper-address command. Use: ip helper-address <ip>' };
+  }
+
+  const helperIp = match[1];
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+
+  const newPorts = { ...state.ports };
+  const port = newPorts[state.currentInterface] || {} as Port;
+  const helpers: string[] = [...((port as unknown as Record<string, unknown>).helperAddresses as string[] || [])];
+  if (!helpers.includes(helperIp)) helpers.push(helperIp);
+  newPorts[state.currentInterface] = { ...port, helperAddresses: helpers } as Port;
+
+  return { success: true, output: `Helper address ${helperIp} added`, newState: { ports: newPorts } };
+}
+
+/**
+ * No IP Helper-Address - Remove DHCP relay address
+ */
+export function cmdNoIpHelperAddress(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) {
+    return { success: false, error: iosModeError() };
+  }
+
+  const match = input.match(/^no\s+ip\s+helper-address(?:\s+(\d+\.\d+\.\d+\.\d+))?$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid command' };
+  }
+
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+
+  const newPorts = { ...state.ports };
+  const port = newPorts[state.currentInterface] || {} as Port;
+  newPorts[state.currentInterface] = { ...port, helperAddresses: [] } as Port;
+
+  return { success: true, output: 'Helper address(es) removed', newState: { ports: newPorts } };
+}
+
+/**
+ * Switchport Nonegotiate - Disable DTP negotiation
+ */
+export function cmdIpv6Address(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const match = input.match(/^ipv6\s+address\s+([0-9a-fA-F:]+)\/(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid IPv6 address' };
+  const updatePort = (port: Port) => ({ ...port, ipv6Address: match[1], ipv6Prefix: parseInt(match[2]) });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * IPv6 RIP Enable
+ */
+export function cmdIpv6Rip(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const match = input.match(/^ipv6\s+rip\s+(\S+)\s+enable$/i);
+  if (!match) return { success: false, error: '% Invalid command' };
+
+  const processName = match[1];
+  const updatePort = (port: Port) => ({
+    ...port,
+    ipv6Rip: { enabled: true, processName }
+  });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+
+  // Also add route if IP exists
+  const targetPorts = Array.isArray(state.selectedInterfaces) ? state.selectedInterfaces : [state.currentInterface];
+  const ipv6DynamicRoutes = [...(state.ipv6DynamicRoutes || [])];
+
+  targetPorts.forEach((pId: string) => {
+    const port = state.ports[pId];
+    if (port && port.ipv6Address && port.ipv6Prefix) {
+      ipv6DynamicRoutes.push({
+        destination: port.ipv6Address,
+        prefixLength: port.ipv6Prefix,
+        nextHop: 'directly connected',
+        metric: 1,
+        type: 'dynamic'
+      });
+    }
+  });
+
+  return { success: true, newState: { ports: newPorts, ipv6DynamicRoutes } };
+}
+
+/**
+ * IPv6 OSPF Area
+ */
+export function cmdIpv6Ospf(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const match = input.match(/^ipv6\s+ospf\s+(\d+)\s+area\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid command' };
+
+  const processId = match[1];
+  const area = match[2];
+  const updatePort = (port: Port) => ({
+    ...port,
+    ipv6Ospf: { enabled: true, processId, area }
+  });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+
+  // Also add route if IP exists
+  const targetPorts = Array.isArray(state.selectedInterfaces) ? state.selectedInterfaces : [state.currentInterface];
+  const ipv6DynamicRoutes = [...(state.ipv6DynamicRoutes || [])];
+
+  targetPorts.forEach((pId: string) => {
+    const port = state.ports[pId];
+    if (port && port.ipv6Address && port.ipv6Prefix) {
+      ipv6DynamicRoutes.push({
+        destination: port.ipv6Address,
+        prefixLength: port.ipv6Prefix,
+        nextHop: 'directly connected',
+        metric: 1,
+        type: 'dynamic',
+        area: parseInt(area)
+      });
+    }
+  });
+
+  return { success: true, newState: { ports: newPorts, ipv6DynamicRoutes } };
+}
+
+/**
+ * IP OSPF Area - Enable OSPF on interface (IPv4)
+ */
+export function cmdIpOspfArea(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const match = input.match(/^ip\s+ospf\s+(\d+)\s+area\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid command' };
+
+  const processId = match[1];
+  const area = match[2];
+  const updatePort = (port: Port) => ({
+    ...port,
+    ospfEnabled: true,
+    ospfProcessId: processId,
+    ospfArea: area
+  });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * No IP OSPF Area - Disable OSPF on interface (IPv4)
+ */
+export function cmdNoIpOspfArea(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const match = input.match(/^no\s+ip\s+ospf\s+(\d+)\s+area\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid command' };
+
+  const updatePort = (port: Port) => ({
+    ...port,
+    ospfEnabled: false,
+    ospfProcessId: undefined,
+    ospfArea: undefined
+  });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * No IPv6 RIP
+ */
+export function cmdNoIpv6Rip(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const updatePort = (port: Port) => ({
+    ...port,
+    ipv6Rip: { enabled: false }
+  });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * IPv6 DHCP Server
+ */
+export function cmdIpv6DhcpServer(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const match = input.match(/^ipv6\s+dhcp\s+server\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid command' };
+
+  const poolName = match[1];
+  const updatePort = (port: Port) => ({
+    ...port,
+    ipv6DhcpServer: poolName
+  });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  const updatedState = { ...state, ports: newPorts };
+  return { success: true, newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) } };
+}
+
+/**
+ * No IPv6 OSPF
+ */
+export function cmdNoIpv6Ospf(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const updatePort = (port: Port) => ({
+    ...port,
+    ipv6Ospf: { enabled: false }
+  });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * Spanning-Tree Priority - Set STP port priority
+ */
+export function cmdIpDhcpSnoopingTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const updatePort = (port: Port) => ({ ...port, dhcpSnoopingTrust: true });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'DHCP snooping trust configured', newState: { ports: newPorts } };
+}
+
+/**
+ * No IP DHCP Snooping Trust
+ */
+export function cmdNoIpDhcpSnoopingTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const updatePort = (port: Port) => ({ ...port, dhcpSnoopingTrust: false });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'DHCP snooping trust removed', newState: { ports: newPorts } };
+}
+
+/**
+ * IP ARP Inspection Trust
+ */
+export function cmdIpArpInspectionTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const updatePort = (port: Port) => ({ ...port, arpInspectionTrust: true });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'ARP inspection trust configured', newState: { ports: newPorts } };
+}
+
+/**
+ * No IP ARP Inspection Trust
+ */
+export function cmdNoIpArpInspectionTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const updatePort = (port: Port) => ({ ...port, arpInspectionTrust: false });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'ARP inspection trust removed', newState: { ports: newPorts } };
+}
+
+/**
+ * Bandwidth
+ */
+export function cmdIpProxyArp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const updatePort = (port: Port) => ({ ...port, proxyArp: true });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'Proxy ARP enabled', newState: { ports: newPorts } };
+}
+
+/**
+ * IP Verify Source
+ */
+export function cmdIpVerifySource(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const hasPortSecurity = input.includes('port-security');
+  const updatePort = (port: Port) => ({
+    ...port,
+    ipVerifySource: true,
+    ipVerifySourcePortSecurity: hasPortSecurity || port.ipVerifySourcePortSecurity
+  });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'IP verify source configured', newState: { ports: newPorts } };
+}
+
+/**
+ * UDLD Enable / Port
+ */
+export function cmdIpNatInside(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, natSide: 'inside' }));
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * IP NAT Outside
+ */
+export function cmdIpNatOutside(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, natSide: 'outside' }));
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * No IP NAT Inside - Remove NAT inside designation from interface
+ */
+export function cmdNoIpNatInside(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, natSide: undefined }));
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * No IP NAT Outside - Remove NAT outside designation from interface
+ */
+export function cmdNoIpNatOutside(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, natSide: undefined }));
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * Switchport Port-Security Aging Type
+ */
