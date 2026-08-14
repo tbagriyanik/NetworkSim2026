@@ -12,13 +12,13 @@ import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { Laptop, Terminal as TerminalIcon, Globe, Settings, Wifi, Radio } from 'lucide-react';
 
 import { toast } from "@/hooks/use-toast";
-import { isValidMAC, normalizeMAC, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { ModernPanel } from '@/components/ui/ModernPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { sanitizeHTTPContent } from '@/lib/security/sanitizer';
 import { generateRouterAdminPage, isRouterDevice } from '@/components/network/WifiControlPanel';
 import { generateIotWebPanelContent } from '@/lib/network/iotWebPanel';
-import { errorHandler, STORAGE_ERRORS, CLIPBOARD_ERRORS } from '@/lib/errors/errorHandler';
+import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
 import { SearchOutputDialog } from './pc-panel/SearchOutputDialog';
 import { HiddenNavigationTabs } from './pc-panel/HiddenNavigationTabs';
 import { FtpFileTransferDialog } from './pc-panel/FtpFileTransferDialog';
@@ -27,6 +27,10 @@ import { HomeLauncher } from './pc-panel/HomeLauncher';
 import { PowerOffOverlay } from './pc-panel/PowerOffOverlay';
 import { getDefaultPcFiles, getPCConfigDefaults } from './pc-panel/pcPanelFiles';
 import { usePCPanelNtp } from './pc-panel/usePCPanelNtp';
+import { usePCPanelSync } from './pc-panel/usePCPanelSync';
+import { usePCPanelValidation } from './pc-panel/usePCPanelValidation';
+import { usePCPanelBrowserState } from './pc-panel/usePCPanelBrowserState';
+import { usePCPanelTerminalSync } from './pc-panel/usePCPanelTerminalSync';
 import { usePCPanelMail } from './pc-panel/usePCPanelMail';
 import { usePCPanelDhcp } from './pc-panel/usePCPanelDhcp';
 import { usePCPanelRouterAdmin } from './pc-panel/usePCPanelRouterAdmin';
@@ -51,11 +55,7 @@ import {
   findHttpServerByTarget,
   isDhcpPoolCompatibleForClient
 } from './pc-panel/pcBrowser.utils';
-import {
-  getConsoleDevice,
-  getAutocompleteSuggestions
-} from './pc-panel/pcTerminal.utils';
-
+import { getConsoleDevice } from './pc-panel/pcTerminal.utils';
 
 export function PCPanel({
   deviceId,
@@ -86,6 +86,7 @@ export function PCPanel({
 
   // Ref for click-outside detection
   const panelRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const terminalBg = isDark ? 'bg-black' : 'bg-secondary-50';
   const textColor = isDark ? 'text-secondary-300' : 'text-secondary-700';
@@ -811,149 +812,59 @@ export function PCPanel({
   }, [isVisible, isPcPoweredOff, initialTab, onNavigate]);
 
   // Validate and sync global state
-  const syncToGlobal = useCallback(() => {
-    const newErrors: Record<string, string> = {};
-    if (!validateIP(pcIP)) newErrors.ip = 'Geçersiz IP';
-    if (!isValidMAC(pcMAC)) newErrors.mac = 'Geçersiz MAC';
-    if (ipConfigMode === 'static') {
-      if (pcSubnet && !validateIP(pcSubnet)) newErrors.subnet = 'Geçersiz Subnet';
-      if (pcGateway && !validateIP(pcGateway)) newErrors.gateway = 'Geçersiz Gateway';
-      if (pcDNS && !validateIP(pcDNS)) newErrors.dns = 'Geçersiz DNS';
-    }
-    if (pcIPv6 && !validateIPv6(pcIPv6)) newErrors.ipv6 = 'Geçersiz IPv6';
+  
 
-    setErrors(newErrors);
+    const { dispatchDeviceConfig, syncToGlobal } = usePCPanelSync({
+    deviceId,
+    deviceFromTopology,
+    topologyDevices,
+    internalPcHostname,
+    ipConfigMode,
+    pcIP,
+    pcMAC,
+    pcSubnet,
+    pcGateway,
+    pcDNS,
+    pcIPv6,
+    pcIPv6Prefix,
+    serviceDnsEnabled,
+    serviceDnsRecords,
+    serviceHttpEnabled,
+    serviceHttpContent,
+    serviceFtpEnabled,
+    serviceFtpFiles,
+    serviceMailEnabled,
+    serviceMailDomain,
+    serviceMailUsername,
+    serviceMailPassword,
+    serviceMailInbox,
+    serviceMailSent,
+    serviceNtpEnabled,
+    serviceNtpServer,
+    serviceNtpDate,
+    serviceNtpTime,
+    serviceDhcpEnabled,
+    serviceDhcpPools,
+    wifiEnabled,
+    wifiSSID,
+    wifiBSSID,
+    wifiSecurity,
+    wifiPassword,
+    wifiChannel,
+    setErrors,
+    pcIpRef,
+    t
+  });
 
-    if (deviceId) {
-      // Sync config for PC and IoT devices
-      const deviceType = topologyDevices.find(d => d.id === deviceId)?.type;
-      if (deviceType !== 'pc' && deviceType !== 'iot') return;
-
-      window.dispatchEvent(new CustomEvent('update-topology-device-config', {
-        detail: {
-          deviceId: deviceId,
-          config: {
-            name: internalPcHostname,
-            ipConfigMode,
-            ip: pcIP,
-            macAddress: isValidMAC(pcMAC) ? normalizeMAC(pcMAC) : pcMAC,
-            subnet: pcSubnet,
-            gateway: pcGateway,
-            dns: pcDNS,
-            ipv6: pcIPv6,
-            ipv6Prefix: pcIPv6Prefix,
-            services: {
-              dns: {
-                enabled: serviceDnsEnabled,
-                records: serviceDnsRecords
-              },
-              http: {
-                enabled: serviceHttpEnabled,
-                content: serviceHttpContent || t.helloWorld
-              },
-              ftp: {
-                enabled: serviceFtpEnabled,
-                files: serviceFtpFiles
-              },
-              mail: {
-                enabled: serviceMailEnabled,
-                domain: serviceMailDomain,
-                username: serviceMailUsername,
-                password: serviceMailPassword,
-                inbox: serviceMailInbox,
-                sent: serviceMailSent
-              },
-              ntp: {
-                enabled: serviceNtpEnabled,
-                server: serviceNtpServer,
-                date: serviceNtpDate,
-                time: serviceNtpTime
-              },
-              dhcp: {
-                enabled: serviceDhcpEnabled,
-                pools: serviceDhcpPools
-              }
-            },
-            wifi: {
-              enabled: wifiEnabled,
-              ssid: wifiSSID,
-              bssid: wifiBSSID,
-              security: wifiSecurity,
-              password: wifiPassword,
-              channel: wifiChannel,
-              mode: 'client'
-            }
-          }
-        }
-      }));
-    }
-  }, [internalPcHostname, ipConfigMode, pcIP, pcMAC, pcSubnet, pcGateway, pcDNS, pcIPv6, pcIPv6Prefix, serviceDnsEnabled, serviceDnsRecords, serviceHttpEnabled, serviceHttpContent, serviceFtpEnabled, serviceFtpFiles, serviceMailEnabled, serviceMailDomain, serviceMailUsername, serviceMailPassword, serviceMailInbox, serviceMailSent, serviceNtpEnabled, serviceNtpServer, serviceNtpDate, serviceNtpTime, serviceDhcpEnabled, serviceDhcpPools, wifiEnabled, wifiSSID, wifiBSSID, wifiSecurity, wifiPassword, wifiChannel, deviceId, topologyDevices]);
-
-  const dispatchDeviceConfig = useCallback((config: Partial<CanvasDevice>) => {
-    if (!deviceId) return;
-    const nextConfig: Partial<CanvasDevice> = { ...config };
-    if (config.services) {
-      nextConfig.services = {
-        ...(deviceFromTopology?.services || {}),
-        ...config.services,
-        ftp: {
-          ...(deviceFromTopology?.services?.ftp || {}),
-          ...(config.services.ftp || {}),
-          enabled: config.services.ftp?.enabled ?? deviceFromTopology?.services?.ftp?.enabled ?? false,
-        },
-        mail: {
-          ...(deviceFromTopology?.services?.mail || {}),
-          ...(config.services.mail || {}),
-          enabled: config.services.mail?.enabled ?? deviceFromTopology?.services?.mail?.enabled ?? false,
-        },
-        ntp: {
-          ...(deviceFromTopology?.services?.ntp || {}),
-          ...(config.services.ntp || {}),
-          enabled: config.services.ntp?.enabled ?? deviceFromTopology?.services?.ntp?.enabled ?? false,
-        },
-      };
-    }
-    window.dispatchEvent(new CustomEvent('update-topology-device-config', {
-      detail: { deviceId, config: nextConfig }
-    }));
-  }, [deviceId, deviceFromTopology?.services]);
-
-  const validateIpField = useCallback((ip: string) => {
-    if (validateIP(ip)) {
-      const duplicateDevices = topologyDevices.filter(d => d.id !== deviceId && d.ip === ip);
-      if (duplicateDevices.length > 0) {
-        const names = duplicateDevices.map(d => d.name || d.id).join(', ');
-        setErrors(prev => ({ ...prev, ip: t.ipAlreadyInUse.replace('{names}', names) }));
-      } else {
-        setErrors(prev => { const { ip: _, ...rest } = prev; return rest; });
-      }
-      let updatedSubnet = pcSubnet;
-      const firstOctet = ip.split('.')[0];
-      if (firstOctet) {
-        const octetNum = parseInt(firstOctet, 10);
-        if (!isNaN(octetNum)) {
-          let autoSubnet = '255.255.255.0';
-          if (octetNum >= 1 && octetNum <= 126) autoSubnet = '255.0.0.0';
-          else if (octetNum >= 128 && octetNum <= 191) autoSubnet = '255.255.0.0';
-          else if (octetNum >= 192 && octetNum <= 223) autoSubnet = '255.255.255.0';
-          updatedSubnet = autoSubnet;
-          setPcSubnet(autoSubnet);
-        }
-      }
-      dispatchDeviceConfig({ ip, subnet: updatedSubnet, ipConfigMode: 'static' });
-    } else {
-      setErrors(prev => ({ ...prev, ip: t.invalidIpAddress }));
-    }
-  }, [topologyDevices, deviceId, language, pcSubnet, dispatchDeviceConfig]);
-
-  const validateSubnetField = useCallback((subnet: string) => {
-    if (subnet && !validateIP(subnet)) {
-      setErrors(prev => ({ ...prev, subnet: t.invalidSubnetMaskMsg }));
-    } else {
-      setErrors(prev => { const { subnet: _, ...rest } = prev; return rest; });
-    }
-    dispatchDeviceConfig({ subnet, ipConfigMode: 'static' });
-  }, [language, dispatchDeviceConfig]);
+    const { validateIpField, validateSubnetField } = usePCPanelValidation({
+    deviceId,
+    topologyDevices,
+    pcSubnet,
+    setPcSubnet,
+    setErrors,
+    dispatchDeviceConfig,
+    t
+  });
 
   const saveIotConfig = useCallback((showToast: boolean = true) => {
     if (!selectedIotDeviceId) return;
@@ -1005,60 +916,9 @@ export function PCPanel({
     syncToGlobalRef.current = syncToGlobal;
   }, [syncToGlobal]);
 
-  // Update pcIpRef when pcIP changes
-  useEffect(() => {
-    pcIpRef.current = pcIP;
-  }, [pcIP]);
+  
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      dispatchDeviceConfig({
-        services: {
-          dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
-          http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
-          ftp: {
-            enabled: serviceFtpEnabled,
-          },
-          mail: {
-            enabled: serviceMailEnabled,
-            domain: serviceMailDomain,
-            username: serviceMailUsername,
-            password: serviceMailPassword,
-            inbox: serviceMailInbox,
-            sent: serviceMailSent,
-          },
-          ntp: {
-            enabled: serviceNtpEnabled,
-            server: serviceNtpServer,
-            date: serviceNtpDate,
-            time: serviceNtpTime,
-          },
-          dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools },
-        },
-      });
-    }, 250);
-
-    return () => clearTimeout(handler);
-  }, [
-    dispatchDeviceConfig,
-    serviceDnsEnabled,
-    serviceDnsRecords,
-    serviceHttpEnabled,
-    serviceHttpContent,
-    serviceFtpEnabled,
-    serviceMailEnabled,
-    serviceMailDomain,
-    serviceMailUsername,
-    serviceMailPassword,
-    serviceMailInbox,
-    serviceMailSent,
-    serviceNtpEnabled,
-    serviceNtpServer,
-    serviceNtpDate,
-    serviceNtpTime,
-    serviceDhcpEnabled,
-    serviceDhcpPools,
-  ]);
+  
 
   const [pcOutput, setPcOutput] = useState<OutputLine[]>(() => {
     if (pcOutputs?.has(deviceId)) {
@@ -1071,8 +931,9 @@ export function PCPanel({
   const [httpAppTitle, setHttpAppTitle] = useState<string>('HTTP Page');
   const [httpAppDeviceId, setHttpAppDeviceId] = useState<string | null>(null);
   const routerActiveTabRef = useRef<string>('wireless');
-  const [showUrlSuggestions, setShowUrlSuggestions] = useState<boolean>(false);
+
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number>(-1);
+  const [showUrlSuggestions, setShowUrlSuggestions] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -1116,32 +977,15 @@ export function PCPanel({
     };
   }, [isVisible, onClose, httpAppContent]);
 
-  // Collect URL suggestions from existing IPs and predefined links
-  const urlSuggestions = useMemo(() => {
-    const suggestions: string[] = [];
-
-    // Add predefined links with http:// prefix
-    suggestions.push('http://iot-panel');
-
-    // Add IPs from all devices in topology with http:// prefix
-    topologyDevices.forEach(device => {
-      if (device.ip && device.ip !== '0.0.0.0') {
-        suggestions.push(`http://${device.ip}`);
-      }
-    });
-
-    // Remove duplicates
-    return [...new Set(suggestions)];
-  }, [topologyDevices]);
-
-  // Filter suggestions based on current input
-  const filteredSuggestions = useMemo(() => {
-    if (!httpAppUrl) return urlSuggestions;
-    const lowerInput = httpAppUrl.toLowerCase();
-    return urlSuggestions.filter(s =>
-      s.toLowerCase().includes(lowerInput)
-    );
-  }, [httpAppUrl, urlSuggestions]);
+    const { filteredSuggestions, browserWindow, setBrowserWindow } = usePCPanelBrowserState({
+    topologyDevices,
+    httpAppUrl,
+    setHttpAppUrl,
+    httpAppContent,
+    setHttpAppContent,
+    setHttpAppDeviceId,
+    inputRef
+  });
 
   // Regenerate IoT panel content when dependencies change
   useEffect(() => {
@@ -1150,29 +994,6 @@ export function PCPanel({
       setTimeout(() => setHttpAppContent(iotPanelContent), 0);
     }
   }, [iotDevices, topologyConnections, language, httpAppUrl, httpAppDeviceId]);
-  const [browserWindow, setBrowserWindow] = useState(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('pc-browser-window-state') : null;
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return {
-          x: typeof parsed.x === 'number' ? parsed.x : 40,
-          y: typeof parsed.y === 'number' ? parsed.y : 140,
-          width: typeof parsed.width === 'number' ? parsed.width : 960,
-          height: typeof parsed.height === 'number' ? parsed.height : 400,
-        };
-      } catch (err) {
-        errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ key: 'pc-browser-window-state', savedValue: saved, parseError: String(err) }));
-        return { x: 40, y: 140, width: 960, height: 400 };
-      }
-    }
-    return { x: 40, y: 140, width: 960, height: 400 };
-  });
-
-  useEffect(() => {
-    localStorage.setItem('pc-browser-window-state', JSON.stringify(browserWindow));
-  }, [browserWindow]);
-
   const dragStateRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const resizeStateRef = useRef<{
     side: 'left' | 'right' | 'bottom' | 'top' | 'se' | 'sw' | 'ne' | 'nw';
@@ -1185,26 +1006,7 @@ export function PCPanel({
   } | null>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
 
-  // Browser window ESC key handler
-  useEffect(() => {
-    if (!httpAppContent) return;
-
-    const handleBrowserWindowEscape = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        setHttpAppUrl('');
-        setHttpAppContent(null);
-        setHttpAppDeviceId(null);
-        inputRef.current?.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleBrowserWindowEscape, true);
-    return () => {
-      window.removeEventListener('keydown', handleBrowserWindowEscape, true);
-    };
-  }, [httpAppContent]);
+  
 
   // Global Navigation handler (Escape key & Mobile Back Button)
   useEffect(() => {
@@ -1301,7 +1103,7 @@ export function PCPanel({
   }, [isPcPoweredOff, connectedDeviceId, isConsoleConnected, topologyDevices]);
 
   const outputRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const prevIpConfigModeRef = useRef(ipConfigMode);
 
@@ -1320,12 +1122,19 @@ export function PCPanel({
   const consoleDevice = getConsoleDeviceCallback();
 
 
-  // Synchronized Console Output from Global State
-  const activeConsoleOutput = useMemo(() => {
-    if (!isConsoleConnected || !connectedDeviceId) return [];
-    const allOutput = deviceOutputs?.get(connectedDeviceId) || [];
-    return allOutput.filter((line: TerminalOutput) => (line.timestamp || 0) >= consoleConnectionTime);
-  }, [isConsoleConnected, connectedDeviceId, deviceOutputs, consoleConnectionTime]);
+    const { activeConsoleOutput, handleCopyAll, getCommandMode, getAutocompleteSuggestionsCallback, renderAutocompleteSuggestions, shouldShowAutocomplete } = usePCPanelTerminalSync({
+    isConsoleConnected,
+    connectedDeviceId,
+    deviceOutputs: deviceOutputs || new Map(),
+    consoleConnectionTime,
+    activeTab,
+    pcOutput,
+    t,
+    topologyDevices,
+    deviceStates: deviceStates || new Map(),
+    input,
+    showAutocomplete
+  });
 
   // Auto-focus input when visible, tab changes, or command completes
   useEffect(() => {
@@ -1346,26 +1155,7 @@ export function PCPanel({
     });
   }, [pcOutput, activeConsoleOutput, activeTab]);
 
-  const handleCopyAll = useCallback(async () => {
-    try {
-      const lines = (activeTab === 'desktop' ? pcOutput : activeConsoleOutput).map((line: OutputLine | TerminalOutput) => {
-        if (line.type === 'command') return `${activeTab === 'desktop' ? 'C:\\>' : (line.prompt || '>')}${line.content}`;
-        return line.content;
-      });
-      await navigator.clipboard.writeText(lines.join('\n'));
-      toast({
-        title: t.copyToastSuccessTitle,
-        description: t.copyToastSuccessDescription,
-      });
-    } catch (_err) {
-      errorHandler.logError(CLIPBOARD_ERRORS.COPY_FAILED({ contentLength: pcOutput.length, activeTab }));
-      toast({
-        title: t.copyToastFailureTitle,
-        description: t.copyToastFailureDescription,
-        variant: "destructive",
-      });
-    }
-  }, [activeTab, pcOutput, activeConsoleOutput, t]);
+  
 
   const connectedConsoleDevice = useMemo(() => {
     if (!connectedDeviceId) return null;
@@ -1411,35 +1201,13 @@ export function PCPanel({
     return () => clearTimeout(timer);
   }, [activeTab, isConsoleConnected, consoleNeedsPassword, consoleConfirmDialog?.show, consoleReloadPending]);
 
-  const getCommandMode = useCallback((): string => {
-    if (activeTab === 'terminal' && isConsoleConnected && connectedDeviceId && deviceStates) {
-      const state = deviceStates.get(connectedDeviceId);
-      const mode = state?.currentMode || 'user';
-      if (mode === 'config-if-range') return 'interface';
-      return mode;
-    }
-    return 'user';
-  }, [activeTab, isConsoleConnected, connectedDeviceId, deviceStates]);
+  
 
-  const getAutocompleteSuggestionsCallback = useCallback((value: string) => {
-    return getAutocompleteSuggestions({
-      value,
-      activeTab,
-      topologyDevices,
-      deviceStates,
-      getCommandMode
-    });
-  }, [activeTab, getCommandMode, topologyDevices, deviceStates]);
+  
 
-  const renderAutocompleteSuggestions = useMemo(
-    () => getAutocompleteSuggestionsCallback(input),
-    [getAutocompleteSuggestionsCallback, input]
-  );
+  
 
-  const shouldShowAutocomplete = useMemo(
-    () => showAutocomplete && input.trim().length > 0 && renderAutocompleteSuggestions.length > 0,
-    [showAutocomplete, input, renderAutocompleteSuggestions]
-  );
+  
   const httpAppSrcDoc = useMemo(() => {
     if (!httpAppContent) return '';
     const trimmed = httpAppContent.trim();
@@ -2622,3 +2390,9 @@ export function PCPanel({
     </>
   );
 }
+
+
+
+
+
+
