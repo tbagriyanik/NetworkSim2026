@@ -322,7 +322,7 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
   return (
     <TooltipProvider>
       <Card className={`${cardBg}`}>
-        <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-secondary-800/50 bg-secondary-800/20' : 'border-secondary-200 bg-secondary-50'}`}>
+        <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-secondary-500/60 bg-secondary-700' : 'border-secondary-200 bg-secondary-50'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${deviceModel === 'ISR 4451 X' ? (isDark ? 'bg-purple-900/30' : 'bg-purple-100') : deviceModel === 'WS-C3650-24PS' ? (isDark ? 'bg-purple-900/30' : 'bg-purple-100') : deviceModel === 'WS-C2960-24TT-L' ? (isDark ? 'bg-success-900/30' : 'bg-success-100') : (isDark ? 'bg-accent-900/30' : 'bg-accent-100')}`}>

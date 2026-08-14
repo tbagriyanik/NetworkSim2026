@@ -128,7 +128,7 @@ export function DeviceConfigModal({
         aria-labelledby="device-config-title"
       >
         {/* Modal Header */}
-        <div className={`${isMobile ? 'px-4 pt-4 pb-3' : 'px-6 pt-6 pb-4'} border-b ${isDark ? 'border-secondary-800/50 bg-secondary-800/30' : 'border-secondary-100 bg-secondary-50/50'}`}>
+        <div className={`${isMobile ? 'px-4 pt-4 pb-3' : 'px-6 pt-6 pb-4'} border-b ${isDark ? 'border-secondary-500/60 bg-secondary-700' : 'border-secondary-100 bg-secondary-50/50'}`}>
           <div className="flex items-center gap-4">
             <div className={`${isMobile ? 'p-2' : 'p-3'} rounded-2xl shadow-inner ${isDark ? 'bg-accent-500/10 text-accent-400 border border-accent-500/20' : 'bg-accent-50 text-accent-600 border border-accent-100'}`}>
               <svg className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} drop-shadow-sm`} fill="none" stroke="currentColor" viewBox="0 0 24 24">

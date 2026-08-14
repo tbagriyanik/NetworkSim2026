@@ -77,7 +77,7 @@ export function SecurityPanel({ security, t, theme, isDevicePoweredOff = false }
 
   return (
     <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
-      <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-secondary-800/50 bg-secondary-800/20' : 'border-secondary-200 bg-secondary-50'}`}>
+      <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-secondary-500/60 bg-secondary-700' : 'border-secondary-200 bg-secondary-50'}`}>
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="text-warning-400 text-base sm:text-lg flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />

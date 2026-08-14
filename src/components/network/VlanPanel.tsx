@@ -43,7 +43,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
   if (activeDeviceType === 'pc') {
     return (
       <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
-        <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-secondary-800/50 bg-secondary-800/20' : 'border-secondary-200 bg-secondary-50'}`}>
+        <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-secondary-500/60 bg-secondary-700' : 'border-secondary-200 bg-secondary-50'}`}>
           <CardTitle className="text-purple-400 text-base sm:text-lg flex items-center gap-2">
             <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
             {deviceName || t.vlanStatus}
@@ -112,7 +112,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
 
   return (
     <Card className={`${cardBg} transition-all duration-300 hover:shadow-lg`}>
-      <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-secondary-800/50 bg-secondary-800/20' : 'border-secondary-200 bg-secondary-50'}`}>
+      <CardHeader className={`py-3 px-5 border-b ${isDark ? 'border-secondary-500/60 bg-secondary-700' : 'border-secondary-200 bg-secondary-50'}`}>
         <div className="flex items-center justify-between gap-3">
           <CardTitle className={
             deviceModel === 'ISR 4451 X' || deviceModel === 'WS-C3650-24PS'

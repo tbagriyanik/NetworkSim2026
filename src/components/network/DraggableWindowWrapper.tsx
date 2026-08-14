@@ -143,9 +143,9 @@ export function DraggableWindowWrapper({
           'flex items-center justify-between px-3 py-2 select-none shrink-0 group',
           (!isMobile || !isMobileFullScreen) && 'cursor-grab active:cursor-grabbing',
           isDark
-            ? 'bg-secondary-800/80 border-b border-secondary-700'
-            : 'bg-secondary-50/80 border-b border-secondary-200',
-          isActive && !isMobile && (isDark ? 'bg-success-900/10' : 'bg-success-50/30')
+            ? 'bg-secondary-700 border-b-2 border-secondary-500/60'
+            : 'bg-secondary-100 border-b-2 border-secondary-300',
+          isActive && !isMobile && (isDark ? 'bg-success-900/20' : 'bg-success-100/50')
         )}
       >
         <div className="flex items-center gap-2 overflow-hidden w-full">

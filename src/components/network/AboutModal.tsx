@@ -201,7 +201,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
 
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden border rounded-md mx-6 mb-2">
           {activeTab === 'help' && (
-            <div className={cn('p-4 space-y-3 border-b shrink-0', isDark ? 'bg-secondary-900/50' : 'bg-secondary-50/50')}>
+            <div className={cn('p-4 space-y-3 border-b-2 shrink-0', isDark ? 'bg-secondary-700 border-secondary-500/60' : 'bg-secondary-100 border-secondary-300')}>
               {/* Search */}
               <div className="relative">
                 <Search className={cn('absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4', isDark ? 'text-secondary-500' : 'text-secondary-400')} />
