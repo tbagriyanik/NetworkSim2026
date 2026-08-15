@@ -617,6 +617,155 @@ Router access point mode ile kablosuz istemci bağlantısı sağlanır.
 
 ⚠️ Not: Ağı Yenile (F5)
 
+### 15. Standalone Multi-WAP & Multi-SSID
+**ID:** `wap-multi-ssid`  
+**Tag:** WAP  
+**Description:** Wireless destekli L3 Switch Access Point (WAP) cihazları ile VLAN tabanlı kurumsal kablosuz dağıtım.  
+**Details:** 2x L3 Switch WAP (Staff-WiFi & Guest-WiFi), 2.4GHz/5GHz, ROAS Inter-VLAN yönlendirme ve DHCP
+
+**Kısa Tanıtım:**
+Kurumsal kablosuz ağlarda bağımsız Layer 3 Switch tabanlı Access Point'ler (WAP-Staff ve WAP-Guest) ile VLAN 10 (Personel) ve VLAN 20 (Misafir) kablosuz ağlarının ayrıştırılması ve Router-on-a-Stick ile yönlendirilmesi.
+
+**Adım Adım Proje Yapımı:**
+1. **Topoloji Oluşturma:**
+   - 1 adet Router (R1-Gateway)
+   - 1 adet Switch (SW1-Core)
+   - 2 adet Wireless L3 Switch (WAP-Staff, WAP-Guest: WS-C3650-24PS)
+   - 2 adet Laptop (Laptop-Staff, Laptop-Guest)
+   - 1 adet IoT Cihazı (Smart-Sensor)
+   - 1 adet Yönetim PC (PC-Wired)
+   - Bağlantılar:
+     - R1-Gateway Gi0/0 <-> SW1-Core Fa0/1 (Straight)
+     - SW1-Core Fa0/2 <-> WAP-Staff Gi1/0/1 (Straight, Access VLAN 10)
+     - SW1-Core Fa0/3 <-> WAP-Guest Gi1/0/1 (Straight, Access VLAN 20)
+     - SW1-Core Fa0/4 <-> PC-Wired Eth0 (Straight, Access VLAN 1)
+
+2. **Router R1-Gateway Konfigürasyonu (ROAS & DHCP):**
+   ```
+   R1-Gateway# configure terminal
+   R1-Gateway(config)# interface GigabitEthernet0/0
+   R1-Gateway(config-if)# ip address 192.168.1.1 255.255.255.0
+   R1-Gateway(config-if)# no shutdown
+   R1-Gateway(config-if)# exit
+   R1-Gateway(config)# interface GigabitEthernet0/0.10
+   R1-Gateway(config-subif)# encapsulation dot1Q 10
+   R1-Gateway(config-subif)# ip address 192.168.10.1 255.255.255.0
+   R1-Gateway(config-subif)# exit
+   R1-Gateway(config)# interface GigabitEthernet0/0.20
+   R1-Gateway(config-subif)# encapsulation dot1Q 20
+   R1-Gateway(config-subif)# ip address 192.168.20.1 255.255.255.0
+   R1-Gateway(config-subif)# exit
+   R1-Gateway(config)# ip dhcp pool STAFF-POOL
+   R1-Gateway(dhcp-config)# network 192.168.10.0 255.255.255.0
+   R1-Gateway(dhcp-config)# default-router 192.168.10.1
+   R1-Gateway(dhcp-config)# dns-server 8.8.8.8
+   R1-Gateway(dhcp-config)# exit
+   R1-Gateway(config)# ip dhcp pool GUEST-POOL
+   R1-Gateway(dhcp-config)# network 192.168.20.0 255.255.255.0
+   R1-Gateway(dhcp-config)# default-router 192.168.20.1
+   R1-Gateway(dhcp-config)# dns-server 8.8.8.8
+   R1-Gateway(dhcp-config)# exit
+   ```
+
+3. **SW1-Core Switch Konfigürasyonu:**
+   ```
+   SW1-Core# configure terminal
+   SW1-Core(config)# vlan 10
+   SW1-Core(config-vlan)# name Staff-VLAN
+   SW1-Core(config-vlan)# exit
+   SW1-Core(config)# vlan 20
+   SW1-Core(config-vlan)# name Guest-VLAN
+   SW1-Core(config-vlan)# exit
+   SW1-Core(config)# interface FastEthernet0/1
+   SW1-Core(config-if)# switchport mode trunk
+   SW1-Core(config-if)# exit
+   SW1-Core(config)# interface FastEthernet0/2
+   SW1-Core(config-if)# switchport mode access
+   SW1-Core(config-if)# switchport access vlan 10
+   SW1-Core(config-if)# exit
+   SW1-Core(config)# interface FastEthernet0/3
+   SW1-Core(config-if)# switchport mode access
+   SW1-Core(config-if)# switchport access vlan 20
+   SW1-Core(config-if)# exit
+   SW1-Core(config)# interface FastEthernet0/4
+   SW1-Core(config-if)# switchport mode access
+   SW1-Core(config-if)# switchport access vlan 1
+   SW1-Core(config-if)# exit
+   ```
+
+4. **Wireless L3 Switch (WAP-Staff & WAP-Guest) Konfigürasyonu:**
+   - WAP-Staff: 2.4GHz radyo, SSID: `Staff-WiFi`, WPA2-PSK: `SecureStaff2026`, VLAN 10, IP: 192.168.10.2
+   - WAP-Guest: 5GHz radyo, SSID: `Guest-WiFi`, Açık/Open, VLAN 20, IP: 192.168.20.2
+
+5. **Test ve Doğrulama:**
+   - Laptop-Staff > `ping 192.168.10.1` (VLAN 10 Ağ Geçidi)
+   - Laptop-Guest > `ping 192.168.20.1` (VLAN 20 Ağ Geçidi)
+   - Laptop-Staff > `ping 192.168.20.101` (Inter-VLAN kablosuz iletişim testi)
+   - Laptop-Staff > `ping 192.168.10.2` (WAP-Staff L3 Switch Yönetim IP'si)
+
+⚠️ Not: Ağı Yenile (F5)
+
+### 16. WLC Enterprise Centralized Wireless
+**ID:** `wlc-enterprise-wireless`  
+**Tag:** WLC  
+**Description:** WLC denetleyicisi ile Lightweight Access Point (LAP) ve çoklu SSID yönetimi.  
+**Details:** WLC-2504, 2x LAP (Corp-WiFi & Guest-WiFi), VLAN 10/20, DHCP ve show komutları
+
+**Kısa Tanıtım:**
+Cisco Wireless LAN Controller (AIR-CT2504-K9) ile merkezi kablosuz ağ yönetimi. Lightweight AP'ler (LAP-Floor1 ve LAP-Floor2) CAPWAP benzeri tünelleme ile WLC'ye kayıt olur; WLAN profilleri (Corp-WiFi ve Guest-WiFi) WLC üzerinden merkezi yayınlanır.
+
+**Adım Adım Proje Yapımı:**
+1. **Topoloji Oluşturma:**
+   - 1 adet Router (R1)
+   - 1 adet L3 Switch (SW1 - WS-C3650-24PS)
+   - 1 adet Cisco WLC (WLC-2504 - AIR-CT2504-K9)
+   - 1 adet Admin-PC (Yönetim İstemcisi)
+   - 2 adet Lightweight AP L3 Switch (LAP-Floor1, LAP-Floor2: WS-C3650-24PS)
+   - 2 adet Kablosuz Laptop (Laptop-Corp, Laptop-Guest)
+   - Bağlantılar:
+     - R1 Gi0/0 <-> SW1 Gi1/0/1 (Straight)
+     - SW1 Gi1/0/2 <-> WLC-2504 Gi0/0 (Straight, Access VLAN 1)
+     - SW1 Gi1/0/3 <-> LAP-Floor1 Gi1/0/1 (Straight, Trunk)
+     - SW1 Gi1/0/4 <-> LAP-Floor2 Gi1/0/1 (Straight, Trunk)
+     - SW1 Gi1/0/5 <-> Admin-PC Eth0 (Straight, Access VLAN 1)
+
+2. **WLC Denetleyici Yapılandırması (CLI & Web GUI):**
+   - Management IP: `192.168.1.10 / 255.255.255.0`, Default Gateway: `192.168.1.1`
+   - WLAN 1: Profile Name `Corporate`, SSID `Corp-WiFi`, VLAN `10`, Güvenlik `WPA2-PSK: SecureNet`, Durum: `Enabled`
+   - WLAN 2: Profile Name `Guest`, SSID `Guest-WiFi`, VLAN `20`, Güvenlik `Open`, Durum: `Enabled`
+   - AP Eşleştirmeleri: LAP-Floor1 (Kanal 1, 2.4GHz), LAP-Floor2 (Kanal 6, 5GHz)
+
+3. **Router R1 Konfigürasyonu (Inter-VLAN & DHCP):**
+   ```
+   R1# configure terminal
+   R1(config)# interface GigabitEthernet0/0
+   R1(config-if)# ip address 192.168.1.1 255.255.255.0
+   R1(config-if)# no shutdown
+   R1(config-if)# exit
+   R1(config)# interface GigabitEthernet0/0.10
+   R1(config-subif)# encapsulation dot1Q 10
+   R1(config-subif)# ip address 192.168.10.1 255.255.255.0
+   R1(config-subif)# exit
+   R1(config)# interface GigabitEthernet0/0.20
+   R1(config-subif)# encapsulation dot1Q 20
+   R1(config-subif)# ip address 192.168.20.1 255.255.255.0
+   R1(config-subif)# exit
+   ```
+
+4. **WLC CLI Komutları (WLC-2504 Terminali):**
+   ```
+   WLC-2504> show wlan summary
+   WLC-2504> show ap summary
+   WLC-2504> show ap config LAP-Floor1
+   ```
+
+5. **Test ve Doğrulama:**
+   - Laptop-Corp > `ping 192.168.20.101` (Laptop-Guest arası Inter-VLAN kablosuz iletişim)
+   - Laptop-Corp > `ping 192.168.1.10` (WLC Denetleyiciye ping)
+   - Laptop-Corp veya Admin-PC > `wget 192.168.1.10` (WLC Web Yönetim Paneli - Cisco AIR-CT2504 Web Dashboard açılır)
+
+⚠️ Not: Ağı Yenile (F5)
+
 ### 15. IoT WiFi Lab
 **ID:** `iot-wifi-lab`  
 **Tag:** IoT  

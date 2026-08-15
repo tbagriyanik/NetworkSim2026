@@ -198,6 +198,31 @@ const createFirewallDevice = (id: string, name: string, x: number, y: number, ip
   };
 };
 
+const createWlcDevice = (id: string, name: string, x: number, y: number, ip: string = '192.168.1.1'): CanvasDevice => {
+  const baseMac = deterministicMac(id);
+
+  return {
+    id,
+    type: 'wlc',
+    name,
+    x,
+    y,
+    ip,
+    macAddress: baseMac,
+    status: 'online',
+    switchModel: 'AIR-CT2504-K9',
+    ports: [
+      { id: 'console', label: 'Console', status: 'disconnected' as const },
+      { id: 'service', label: 'Service', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:service`) },
+      { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/0`) },
+      { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/1`) },
+      { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/2`) },
+      { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/3`) },
+      { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:wlan0`) }
+    ]
+  };
+};
+
 const connectPorts = (
   devices: CanvasDevice[],
   connections: CanvasConnection[],
@@ -261,6 +286,7 @@ export {
   createRouterDevice,
   createIotDevice,
   createFirewallDevice,
+  createWlcDevice,
   connectPorts,
   baseProjectData
 };

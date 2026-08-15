@@ -437,7 +437,7 @@ export interface SwitchState {
     http?: {
       enabled: boolean;
       content?: string;
-      fontSize: number;
+      fontSize?: number;
     };
     mail?: {
       enabled: boolean;

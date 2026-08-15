@@ -191,7 +191,7 @@ export function findHttpServerByTarget({
   }
 
   const routerByIp = topologyDevices.find(
-    (d) => (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3') && (d.ip === target || d.ipv6?.toLowerCase() === normalizedTarget) && d.services?.http?.enabled
+    (d) => (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3' || d.type === 'wlc') && (d.ip === target || d.ipv6?.toLowerCase() === normalizedTarget) && d.services?.http?.enabled
   );
   if (routerByIp) {
     const targetAddress = routerByIp.ipv6 && normalizedTarget === routerByIp.ipv6.toLowerCase() ? routerByIp.ipv6 : routerByIp.ip;
@@ -202,7 +202,7 @@ export function findHttpServerByTarget({
     for (const [stateId, state] of deviceStates.entries()) {
       if (!state?.services?.http?.enabled) continue;
       const topoDevice = topologyDevices.find(d => d.id === stateId);
-      if (!topoDevice || (topoDevice.type !== 'router' && topoDevice.type !== 'switchL2' && topoDevice.type !== 'switchL3')) continue;
+      if (!topoDevice || (topoDevice.type !== 'router' && topoDevice.type !== 'switchL2' && topoDevice.type !== 'switchL3' && topoDevice.type !== 'wlc')) continue;
       const ports = state.ports || {};
       const match = Object.values(ports).find((port: { ipAddress?: string; ipv6Address?: string }) => port?.ipAddress === target || port?.ipv6Address?.toLowerCase() === normalizedTarget);
       if (match) {
@@ -226,7 +226,7 @@ export function findHttpServerByTarget({
   if (resolvedPc && canReachTargetIp(dnsResult.address, { protocol: 'tcp', port: '80' })) return resolvedPc;
 
   const resolvedRouter = topologyDevices.find(
-    (d) => (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3') && (d.ip === dnsResult.address || d.ipv6?.toLowerCase() === dnsResult.address.toLowerCase()) && d.services?.http?.enabled
+    (d) => (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3' || d.type === 'wlc') && (d.ip === dnsResult.address || d.ipv6?.toLowerCase() === dnsResult.address.toLowerCase()) && d.services?.http?.enabled
   ) || null;
   if (resolvedRouter && canReachTargetIp(dnsResult.address, { protocol: 'tcp', port: '80' })) return resolvedRouter;
 
@@ -234,7 +234,7 @@ export function findHttpServerByTarget({
     for (const [stateId, state] of deviceStates.entries()) {
       if (!state?.services?.http?.enabled) continue;
       const topoDevice = topologyDevices.find(d => d.id === stateId);
-      if (!topoDevice || (topoDevice.type !== 'router' && topoDevice.type !== 'switchL2' && topoDevice.type !== 'switchL3')) continue;
+      if (!topoDevice || (topoDevice.type !== 'router' && topoDevice.type !== 'switchL2' && topoDevice.type !== 'switchL3' && topoDevice.type !== 'wlc')) continue;
       const ports = state.ports || {};
       const match = Object.values(ports).find((port: { ipAddress?: string; ipv6Address?: string }) => port?.ipAddress === dnsResult.address || port?.ipv6Address?.toLowerCase() === dnsResult.address.toLowerCase());
       if (match) {

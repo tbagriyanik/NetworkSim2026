@@ -196,6 +196,8 @@ describe('exampleProjects', () => {
         'stp-triangle',
         'campus-network',
         'wifi-intermediate',
+        'wlc-enterprise-wireless',
+        'wap-multi-ssid',
         'iot-wifi-lab',
         'greenhouse-iot-lab',
         'router-ssh-1pc',
@@ -222,6 +224,75 @@ describe('exampleProjects', () => {
       for (const expectedId of expectedIds) {
         expect(projectIds).toContain(expectedId);
       }
+    });
+
+    it('should have properly configured WLC in wlc-enterprise-wireless project and allow ping and web connectivity', async () => {
+      const { checkConnectivity } = await import('@/lib/network/connectivity');
+      const projects = exampleProjects('en');
+      const wlcProj = projects.find(p => p.id === 'wlc-enterprise-wireless');
+
+      expect(wlcProj).toBeDefined();
+      if (!wlcProj) return;
+
+      const devices = wlcProj.data.topology.devices;
+      const connections = wlcProj.data.topology.connections;
+      const deviceStates = new Map(wlcProj.data.devices.map(d => [d.id, d.state]));
+
+      // 0. Check SW1, LAP-1 and LAP-2 device types are L3 switches
+      const sw1 = devices.find(d => d.id === 'switch-1');
+      const lap1 = devices.find(d => d.id === 'lap-1');
+      const lap2 = devices.find(d => d.id === 'lap-2');
+      expect(sw1?.type).toBe('switchL3');
+      expect(sw1?.switchModel).toBe('WS-C3650-24PS');
+      expect(lap1?.type).toBe('switchL3');
+      expect(lap1?.switchModel).toBe('WS-C3650-24PS');
+      expect(lap2?.type).toBe('switchL3');
+      expect(lap2?.switchModel).toBe('WS-C3650-24PS');
+
+      // 1. Laptop-1 to Laptop-2 (Inter-VLAN Wireless ping)
+      const res1 = checkConnectivity('laptop-1', '192.168.20.101', devices, connections, deviceStates, 'en');
+      expect(res1.success).toBe(true);
+
+      // 2. Laptop-1 to WLC (Wireless to Controller ping)
+      const res2 = checkConnectivity('laptop-1', '192.168.1.10', devices, connections, deviceStates, 'en');
+      expect(res2.success).toBe(true);
+
+      // 3. Admin-PC to WLC
+      const res3 = checkConnectivity('pc-admin', '192.168.1.10', devices, connections, deviceStates, 'en');
+      expect(res3.success).toBe(true);
+    });
+
+    it('should have properly configured WAPs in wap-multi-ssid project and allow inter-VLAN ping', async () => {
+      const { checkConnectivity } = await import('@/lib/network/connectivity');
+      const projects = exampleProjects('en');
+      const wapProj = projects.find(p => p.id === 'wap-multi-ssid');
+
+      expect(wapProj).toBeDefined();
+      if (!wapProj) return;
+
+      const devices = wapProj.data.topology.devices;
+      const connections = wapProj.data.topology.connections;
+      const deviceStates = new Map(wapProj.data.devices.map(d => [d.id, d.state]));
+
+      // 1. Check WAP device types are L3 switches
+      const wap1 = devices.find(d => d.id === 'wap-1');
+      const wap2 = devices.find(d => d.id === 'wap-2');
+      expect(wap1?.type).toBe('switchL3');
+      expect(wap1?.switchModel).toBe('WS-C3650-24PS');
+      expect(wap2?.type).toBe('switchL3');
+      expect(wap2?.switchModel).toBe('WS-C3650-24PS');
+
+      // 2. Laptop-Staff to Laptop-Guest
+      const res1 = checkConnectivity('laptop-staff', '192.168.20.101', devices, connections, deviceStates, 'en');
+      expect(res1.success).toBe(true);
+
+      // 3. Laptop-Staff to Gateway
+      const res2 = checkConnectivity('laptop-staff', '192.168.10.1', devices, connections, deviceStates, 'en');
+      expect(res2.success).toBe(true);
+
+      // 4. Laptop-Staff to WAP-Staff L3 Switch IP
+      const res3 = checkConnectivity('laptop-staff', '192.168.10.2', devices, connections, deviceStates, 'en');
+      expect(res3.success).toBe(true);
     });
   });
 });

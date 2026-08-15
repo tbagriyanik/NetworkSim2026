@@ -1140,7 +1140,6 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
             } catch (_) {}
           });
         }
-
         // Security type change handler
         const wifiSecurityEl = get('wifi-security');
         if (wifiSecurityEl) {
@@ -1164,10 +1163,165 @@ ${contentEnd}
 }
 
 /**
- * Check if a device is a router/switch that should show WiFi admin panel
+ * Check if a device is a router/switch/WLC that should show WiFi admin panel
  */
 export function isRouterDevice(device: CanvasDevice): boolean {
-  return device.type === 'router' || device.type === 'switchL2' || device.type === 'switchL3';
+  return device.type === 'router' || device.type === 'switchL2' || device.type === 'switchL3' || device.type === 'wlc';
+}
+
+/**
+ * Generate WLC Web Admin Panel HTML
+ */
+export function generateWlcAdminPage(device: CanvasDevice, language: string, state?: SwitchState): string {
+  const isTr = language === 'tr';
+  const safeName = sanitizeHTML(device.name || 'Wireless LAN Controller');
+  const safeIp = sanitizeHTML(device.ip || '192.168.1.10');
+  const wlans = state?.wlcWlans ? Object.values(state.wlcWlans) : [];
+  const aps = state?.wlcAps ? Object.values(state.wlcAps) : [];
+
+  const wlanRows = wlans.length > 0 ? wlans.map(w => `
+    <tr style="border-bottom: 1px solid var(--color-secondary-200);">
+      <td style="padding: 10px 12px; font-weight: 600;">${sanitizeHTML(String(w.id))}</td>
+      <td style="padding: 10px 12px;">${sanitizeHTML(w.name)}</td>
+      <td style="padding: 10px 12px; font-weight: 600; color: var(--color-primary-600);">${sanitizeHTML(w.ssid)}</td>
+      <td style="padding: 10px 12px;"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:${w.status === 'enabled' ? '#dcfce7;color:#15803d' : '#fee2e2;color:#b91c1c'};">${w.status === 'enabled' ? (isTr ? 'Aktif' : 'Enabled') : (isTr ? 'Devre Dışı' : 'Disabled')}</span></td>
+      <td style="padding: 10px 12px; text-transform: uppercase;">${sanitizeHTML(w.security || 'open')}</td>
+      <td style="padding: 10px 12px; font-weight: 600;">${w.vlan || 1}</td>
+    </tr>
+  `).join('') : `
+    <tr><td colspan="6" style="padding: 16px; text-align: center; color: var(--color-secondary-500);">${isTr ? 'Tanımlı WLAN bulunamadı' : 'No WLANs configured'}</td></tr>
+  `;
+
+  const apRows = aps.length > 0 ? aps.map(a => `
+    <tr style="border-bottom: 1px solid var(--color-secondary-200);">
+      <td style="padding: 10px 12px; font-weight: 600;">${sanitizeHTML(a.name)}</td>
+      <td style="padding: 10px 12px; font-family: monospace; font-size: 12px;">${sanitizeHTML(a.macAddress)}</td>
+      <td style="padding: 10px 12px; font-family: monospace; font-size: 12px;">${sanitizeHTML(a.ipAddress || '-')}</td>
+      <td style="padding: 10px 12px;"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dcfce7;color:#15803d;">${sanitizeHTML(a.status || 'Joined')}</span></td>
+      <td style="padding: 10px 12px;">${sanitizeHTML(a.model || 'AIR-AP1852I')}</td>
+      <td style="padding: 10px 12px;">Ch ${a.rfChannel || 1} (${a.rfChannel && a.rfChannel > 14 ? '5 GHz' : '2.4 GHz'})</td>
+    </tr>
+  `).join('') : `
+    <tr><td colspan="6" style="padding: 16px; text-align: center; color: var(--color-secondary-500);">${isTr ? 'Kayıtlı AP bulunamadı' : 'No Access Points joined'}</td></tr>
+  `;
+
+  return `
+<!DOCTYPE html>
+<html lang="${language}">
+<head>
+  <meta charset="utf-8">
+  <title>Wireless Controller - ${safeName}</title>
+  <style>
+    :root {
+      --color-primary-800: #0f3e6d;
+      --color-primary-600: #1d72b8;
+      --color-primary-500: #0284c7;
+      --color-secondary-900: #0f172a;
+      --color-secondary-700: #334155;
+      --color-secondary-200: #e2e8f0;
+      --color-secondary-100: #f1f5f9;
+      --color-secondary-50: #f8fafc;
+    }
+    body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; }
+    .wlc-header { background: linear-gradient(135deg, #0b2d52 0%, #1e4d7b 100%); color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .wlc-logo { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .wlc-badge { background: #0284c7; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
+    .wlc-container { max-width: 1100px; margin: 24px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 20px; }
+    .wlc-card { background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
+    .wlc-card-header { background: #f1f5f9; padding: 12px 16px; font-size: 14px; font-weight: 700; color: #0f3e6d; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .wlc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; padding: 16px; }
+    .wlc-stat-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; }
+    .wlc-stat-label { font-size: 12px; color: #64748b; font-weight: 500; }
+    .wlc-stat-value { font-size: 18px; color: #0f3e6d; font-weight: 700; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    th { background: #f8fafc; padding: 10px 12px; font-weight: 600; color: #475569; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header class="wlc-header">
+    <div class="wlc-logo">
+      <span>📡</span> Wireless LAN Controller
+      <span class="wlc-badge">AIR-CT2504</span>
+    </div>
+    <div style="font-size: 13px; opacity: 0.9;">
+      <strong>${safeName}</strong> | IP: ${safeIp}
+    </div>
+  </header>
+
+  <main class="wlc-container">
+    <!-- Controller Summary -->
+    <section class="wlc-card">
+      <div class="wlc-card-header">
+        <span>📊 ${isTr ? 'Denetleyici Özeti (Controller Summary)' : 'Controller Summary'}</span>
+        <span style="font-size: 12px; font-weight: normal; color: #64748b;">Software: 8.5.105.0</span>
+      </div>
+      <div class="wlc-stats">
+        <div class="wlc-stat-item">
+          <div class="wlc-stat-label">${isTr ? 'Toplam WLAN Sayısı' : 'Configured WLANs'}</div>
+          <div class="wlc-stat-value">${wlans.length}</div>
+        </div>
+        <div class="wlc-stat-item">
+          <div class="wlc-stat-label">${isTr ? 'Bağlı Access Pointler' : 'Joined Access Points'}</div>
+          <div class="wlc-stat-value">${aps.length}</div>
+        </div>
+        <div class="wlc-stat-item">
+          <div class="wlc-stat-label">${isTr ? 'Yönetim Arayüzü IP' : 'Management IP'}</div>
+          <div class="wlc-stat-value">${safeIp}</div>
+        </div>
+        <div class="wlc-stat-item">
+          <div class="wlc-stat-label">${isTr ? 'Sistem Durumu' : 'System Status'}</div>
+          <div class="wlc-stat-value" style="color: #16a34a;">${isTr ? 'Çalışıyor (Operational)' : 'Operational'}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WLANs Table -->
+    <section class="wlc-card">
+      <div class="wlc-card-header">
+        <span>📶 ${isTr ? 'Kablosuz Ağlar (WLANs)' : 'Wireless LANs (WLANs)'}</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>WLAN ID</th>
+            <th>${isTr ? 'Profil Adı' : 'Profile Name'}</th>
+            <th>SSID</th>
+            <th>${isTr ? 'Durum' : 'Status'}</th>
+            <th>${isTr ? 'Güvenlik' : 'Security'}</th>
+            <th>VLAN</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${wlanRows}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Access Points Table -->
+    <section class="wlc-card">
+      <div class="wlc-card-header">
+        <span>📍 ${isTr ? 'Erişim Noktaları (Access Points)' : 'Access Points (APs)'}</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>${isTr ? 'AP Adı' : 'AP Name'}</th>
+            <th>MAC Address</th>
+            <th>IP Address</th>
+            <th>${isTr ? 'Durum' : 'Status'}</th>
+            <th>${isTr ? 'Model' : 'Model'}</th>
+            <th>${isTr ? 'Radyo / Kanal' : 'Radio / Channel'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${apRows}
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>
+  `.trim();
 }
 
 /**
@@ -1206,9 +1360,13 @@ function getRouterWifiConfig(device: CanvasDevice, state?: SwitchState): WifiAdm
 }
 
 /**
- * Generate router admin page content for HTTP access
+ * Generate router/switch/WLC admin page content for HTTP access
  */
 export function generateRouterAdminPage(device: CanvasDevice, language: string, state?: SwitchState, connectedIotDevices?: ConnectedIoTDevice[], availableIotDevices?: AvailableIoTDevice[], username?: string, password?: string, activeTab?: string): string {
+  if (device.type === 'wlc' || state?.deviceType === 'wlc') {
+    return generateWlcAdminPage(device, language, state);
+  }
+
   const interfaceIp = state?.ports ? Object.values(state.ports).find((p) => p?.ipAddress && !p.shutdown)?.ipAddress : undefined;
   const config: RouterWebConfig = {
     wifi: getRouterWifiConfig(device, state),

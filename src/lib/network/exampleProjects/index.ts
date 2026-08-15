@@ -12,6 +12,8 @@ import stpRedundant from './stp-redundant';
 import stpTriangle from './stp-triangle';
 import campusNetwork from './campus-network';
 import wifiIntermediate from './wifi-intermediate';
+import wlcEnterpriseWireless from './wlc-enterprise-wireless';
+import wapMultiSsid from './wap-multi-ssid';
 import iotWifiLab from './iot-wifi-lab';
 import greenhouseIotLab from './greenhouse-iot-lab';
 import routerSsh1pc from './router-ssh-1pc';
@@ -47,6 +49,7 @@ const builders = [
   basicSecure, singleVlan, trunkVtp, roas, legacyRouting,
   portSecurity, l3Routing, staticRouting, etherchannel,
   stpRedundant, stpTriangle, campusNetwork, wifiIntermediate,
+  wlcEnterpriseWireless, wapMultiSsid,
   iotWifiLab, greenhouseIotLab, routerSsh1pc, routerDhcp2pc,
   firewallBasic, nativeVlanBasic, stp3switchPvst, l3Switch2vlan,
   staticL3Routing, ripDynamicRouting, aclStandardBasic, aclExtendedBasic,
