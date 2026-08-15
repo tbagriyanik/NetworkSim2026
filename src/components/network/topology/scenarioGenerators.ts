@@ -604,7 +604,7 @@ function generateWireless(pcCount: number): Ctx {
       http: { enabled: true, content: '', fontSize: 16 }
     }
   });
-  rDev.services = { http: { enabled: true, content: '', fontSize: 16 } };
+  rDev.services = { http: { enabled: true, content: '' } };
   rDev.ip = '192.168.1.1';
   enableRouterPort(rState, 'gi0/0', '192.168.1.1', '255.255.255.0');
 
@@ -619,7 +619,7 @@ function generateWireless(pcCount: number): Ctx {
     macAddress: '0011.2233.AA01', ip: '192.168.1.2', subnet: '255.255.255.0',
     gateway: '192.168.1.1', x: 600, y: 200, status: 'online',
     services: {
-      http: { enabled: true, content: '', fontSize: 16 }
+      http: { enabled: true, content: '' }
     },
     ports: [
       {
