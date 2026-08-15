@@ -174,7 +174,7 @@ export function DraggableWindowWrapper({
           </div>
         )}
 
-        {collapsible && (
+        {collapsible && !isMobile && (
           <button
             onClick={(e) => {
               e.stopPropagation();

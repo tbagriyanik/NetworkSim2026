@@ -89,7 +89,7 @@ export function AppHeader({
   isPingPanelOpen
 }: AppHeaderProps) {
   return (
-    <header className={cn("fixed top-0 left-0 right-0 z-[50] border-b px-5 py-2 pb-0", isDark ? "liquid-glass border-secondary-800" : "bg-white/90 backdrop-blur-md border-secondary-200")}>
+    <header className={cn("fixed top-0 left-0 right-0 z-[50] border-b px-5 h-[64px] flex items-center", isDark ? "liquid-glass border-secondary-800" : "bg-white/90 backdrop-blur-md border-secondary-200")}>
       <div className="w-full">
         <div className="flex items-center justify-between">
           {/* Logo & Title */}
@@ -102,16 +102,16 @@ export function AppHeader({
                   window.location.reload();
                 }
               }}
-              className="flex items-center gap-3 p-2"
+              className="flex items-center gap-3 px-2 py-2.5 h-auto overflow-visible"
             >
-              <div className="p-1 flex items-center justify-center">
+              <div className="p-1 flex items-center justify-center shrink-0">
                 <Image src="/icon192.svg" alt="Logo" width={28} height={28} loading="eager" className="w-7 h-7 object-contain" />
               </div>
-              <div className="hidden md:flex flex-col">
+              <div className="hidden md:flex flex-col text-left py-0.5">
                 <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-accent-400 to-primary-500 bg-clip-text text-transparent leading-none">
                   {t.title}
                 </h2>
-                <p className="text-xs font-medium mt-1 text-secondary-600 dark:text-secondary-200">{t.subtitle}</p>
+                <p className="text-xs font-medium mt-1 text-secondary-600 dark:text-secondary-200 leading-normal pb-0.5">{t.subtitle}</p>
               </div>
             </Button>
           </TooltipWrapper>
@@ -397,15 +397,15 @@ export function AppHeader({
                   <div className={`p-3 rounded-xl border ${isDark ? 'bg-secondary-800/30 border-secondary-800/50' : 'bg-secondary-50 border-secondary-200'}`}>
                     <div className="grid grid-cols-2 gap-2">
                       <Button
-                        variant="secondary"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-accent-400' : 'hover:text-accent-600'}`}
+                        variant="outline"
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         onClick={() => { setShowProjectPicker(true); setShowMobileMenu(false); }}
                       >
                         <File className="w-3.5 h-3.5 flex-shrink-0" /> <span>{t.new}</span>
                       </Button>
                       <Button
-                        variant="secondary"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-purple-400' : 'hover:text-purple-600'}`}
+                        variant="outline"
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-purple-400" : "hover:text-purple-600")}
                         onClick={() => {
                           if (typeof window !== 'undefined') {
                             window.dispatchEvent(new CustomEvent('trigger-topology-generator'));
@@ -417,15 +417,15 @@ export function AppHeader({
                         <span>{t.topologyGenerator}</span>
                       </Button>
                       <Button
-                        variant="secondary"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-accent-400' : 'hover:text-accent-600'}`}
+                        variant="outline"
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         onClick={() => { handleSaveProject(); setShowMobileMenu(false); }}
                       >
                         <Save className="w-3.5 h-3.5 flex-shrink-0" /> <span>{t.saveLabel}</span>
                       </Button>
                       <Button
-                        variant="secondary"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-accent-400' : 'hover:text-accent-600'}`}
+                        variant="outline"
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         onClick={() => { fileInputRef.current?.click(); setShowMobileMenu(false); }}
                       >
                         <FolderOpen className="w-3.5 h-3.5 flex-shrink-0" /> <span>{t.load}</span>
@@ -437,15 +437,15 @@ export function AppHeader({
                   <div className={`p-3 rounded-xl border ${isDark ? 'bg-secondary-800/30 border-secondary-800/50' : 'bg-secondary-50 border-secondary-200'}`}>
                     <div className="grid grid-cols-2 gap-2">
                       <Button
-                        variant="secondary"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-success-400' : 'hover:text-success-600'}`}
+                        variant="outline"
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-success-400" : "hover:text-success-600")}
                         onClick={() => { window.dispatchEvent(new CustomEvent('trigger-topology-export-png')); setShowMobileMenu(false); }}
                       >
                         <ImageDown className="w-3.5 h-3.5 flex-shrink-0" /> <span>{t.saveAsPNG}</span>
                       </Button>
                       <Button
-                        variant="secondary"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-primary-400' : 'hover:text-primary-600'}`}
+                        variant="outline"
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-primary-400" : "hover:text-primary-600")}
                         onClick={() => { window.dispatchEvent(new CustomEvent('add-summary-note')); setShowMobileMenu(false); }}
                       >
                         <FileText className="w-3.5 h-3.5 flex-shrink-0" /> <span>{t.generateSummary}</span>
@@ -458,7 +458,7 @@ export function AppHeader({
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-accent-400' : 'hover:text-accent-600'}`}
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
                       >
                         <Languages className="w-3.5 h-3.5 flex-shrink-0" />
@@ -466,7 +466,7 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-accent-400' : 'hover:text-accent-600'}`}
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         onClick={() => setTheme(isDark ? 'light' : 'dark')}
                       >
                         <div className="flex-shrink-0">
@@ -476,7 +476,7 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-accent-400' : 'hover:text-accent-600'}`}
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         onClick={() => setGraphicsQuality(graphicsQuality === 'high' ? 'low' : 'high')}
                       >
                         <div className="flex-shrink-0">
@@ -492,7 +492,7 @@ export function AppHeader({
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-accent-400' : 'hover:text-accent-600'}`}
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         onClick={() => {
                           if (typeof window !== 'undefined') {
                             const event = new CustomEvent('trigger-topology-palette');
@@ -506,7 +506,7 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-accent-400' : 'hover:text-accent-600'}`}
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         onClick={() => {
                           if (typeof window !== 'undefined') {
                             const event = new CustomEvent('trigger-topology-connect');
@@ -524,7 +524,7 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-accent-400' : 'hover:text-accent-600'}`}
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         onClick={() => {
                           handleRefreshNetwork();
                           setShowMobileMenu(false);
@@ -539,7 +539,7 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-accent-400' : 'hover:text-accent-600'}`}
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         onClick={() => {
                           setIsEnvironmentPanelOpen(true);
                           setShowMobileMenu(false);
@@ -550,7 +550,7 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-accent-400' : 'hover:text-accent-600'}`}
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         disabled={isPingPanelOpen}
                         onClick={() => {
                           if (typeof window !== 'undefined') {
@@ -570,14 +570,14 @@ export function AppHeader({
                   <div className={`p-3 rounded-xl border ${isDark ? 'bg-secondary-800/30 border-secondary-800/50' : 'bg-secondary-50 border-secondary-200'}`}>
                     <div className="grid grid-cols-2 gap-2">
                       <Button
-                        variant="secondary"
+                        variant="outline"
                         className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-warning-400" : "hover:text-warning-600")}
                         onClick={() => { setShowBasarilarim(!showBasarilarim); setShowMobileMenu(false); }}
                       >
                         <Trophy className="w-3.5 h-3.5 flex-shrink-0" /> <span>{t.basarilarim}</span>
                       </Button>
                       <Button
-                        variant="secondary"
+                        variant="outline"
                         className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         onClick={() => { setShowOnboarding(true); setOnboardingStep(0); setShowMobileMenu(false); }}
                       >
@@ -585,7 +585,7 @@ export function AppHeader({
                       </Button>
                       <Button
                         variant="outline"
-                        className={`justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover ${isDark ? 'hover:text-accent-400' : 'hover:text-accent-600'}`}
+                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-accent-400" : "hover:text-accent-600")}
                         onClick={(e) => { e.stopPropagation(); setShowAboutModal(true); setShowMobileMenu(false); }}
                       >
                         <Info className="w-3.5 h-3.5 flex-shrink-0" />
@@ -617,29 +617,25 @@ export function AppHeader({
         </div>
       </div>
 
-      {/* Desktop Tabs & Device Selector */}
-      <div className="flex items-end gap-1 mt-4 pt-1 overflow-x-auto no-scrollbar">
-        <div className="flex md:hidden items-center gap-1.5 mr-auto">
-          {isGuidedModeActive && isPanelMinimized && (
-            <>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    aria-label={t.openGuidedLesson}
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-primary-500 hover:bg-primary-500/10 animate-pulse"
-                    onClick={expandPanel}
-                  >
-                    <BookOpen className="w-5 h-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t.openGuidedLesson}</TooltipContent>
-              </Tooltip>
-            </>
-          )}
+      {/* Mobile Guided Lesson Button */}
+      {isGuidedModeActive && isPanelMinimized && (
+        <div className="flex md:hidden items-center gap-1.5 mr-auto mt-2 pb-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                aria-label={t.openGuidedLesson}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-primary-500 hover:bg-primary-500/10 animate-pulse"
+                onClick={expandPanel}
+              >
+                <BookOpen className="w-5 h-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t.openGuidedLesson}</TooltipContent>
+          </Tooltip>
         </div>
-      </div>
+      )}
     </header>
   );
 }

@@ -1944,9 +1944,9 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
           {/* Main Content - Fits between header and footer with scroll */}
           <main className={cn(
-            "overflow-hidden flex flex-col min-h-0 h-[calc(100vh-44px)] pt-[72px]",
-            activeTab === 'topology' ? 'md:pt-[130px]' : 'md:pt-[72px]',
-            isTablet && (showPCPanel || showUnifiedDeviceModal || showRouterPanel) && "flex-row md:pt-[72px]"
+            "overflow-hidden flex flex-col min-h-0 h-[calc(100vh-44px)] pt-[64px]",
+            activeTab === 'topology' ? 'md:pt-[116px]' : 'md:pt-[64px]',
+            isTablet && (showPCPanel || showUnifiedDeviceModal || showRouterPanel) && "flex-row md:pt-[64px]"
           )}>
             <div className={cn(
               "w-full flex-1 flex flex-col min-h-0 overflow-hidden transition-all duration-500",

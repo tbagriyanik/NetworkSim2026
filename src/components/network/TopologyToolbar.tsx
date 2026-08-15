@@ -105,7 +105,7 @@ export function TopologyToolbar({
    ]);
 
   return (
-    <div className={cn("fixed top-[72px] left-0 right-0 z-30 px-4 py-[5px] pt-3 border-b backdrop-blur-md hidden md:flex items-center gap-3", isDark ? "bg-secondary-900/95 border-secondary-800" : "bg-white/95 border-secondary-200 shadow-sm")}>
+    <div className={cn("fixed top-[64px] left-0 right-0 z-30 px-4 py-1.5 border-b backdrop-blur-md hidden md:flex items-center gap-3", isDark ? "bg-secondary-900/95 border-secondary-800" : "bg-white/95 border-secondary-200 shadow-sm")}>
       {/* Reset View Button */}
       <Tooltip>
         <TooltipTrigger asChild>
@@ -439,7 +439,7 @@ className="h-8 w-8 p-0 text-warning-500 hover:bg-warning-500/10"
       )}
 
       {/* Cable Type Buttons */}
-      <div className={`flex items-center rounded-lg border overflow-hidden ${isDark ? 'bg-secondary-800/50 border-secondary-800' : 'bg-secondary-100 border-secondary-200'}`}>
+      <div className={`flex items-center gap-0 p-1 rounded-xl border ${isDark ? 'bg-secondary-900/40 border-secondary-700/30' : 'bg-primary-50/50 border-primary-100/50'}`}>
         {(['straight', 'crossover', 'serial', 'console'] as CableType[]).map((type) => {
           const colorMap: Record<string, string> = {
             straight: cableInfo.cableType === type ? 'text-primary-400' : 'text-primary-500 hover:text-primary-400',
@@ -453,8 +453,8 @@ className="h-8 w-8 p-0 text-warning-500 hover:bg-warning-500/10"
               <Button
                 aria-label={type === 'straight' ? t.straightCable : type === 'crossover' ? t.crossoverCable : type === 'serial' ? t.serialCable : t.consoleCable}
                 variant="ghost"
-                size="sm"
-                className={`h-8 px-2 flex items-center gap-1 text-xs font-bold
+                size="icon"
+                className={`h-8 w-8 p-0 flex items-center justify-center font-bold transition-all
                   ${cableInfo.cableType === type
                     ? isDark ? 'bg-secondary-700/80' : 'bg-secondary-200/80'
                     : ''
@@ -463,13 +463,13 @@ className="h-8 w-8 p-0 text-warning-500 hover:bg-warning-500/10"
                 onClick={() => setCableInfo({ ...cableInfo, cableType: type })}
               >
                 {type === 'straight' ? (
-                  <Cable className="w-4 h-4" />
+                  <Cable className={`w-4 h-4 ${toolbarGlowClass}`} />
                 ) : type === 'crossover' ? (
-                  <LineSquiggle className="w-4 h-4" />
+                  <LineSquiggle className={`w-4 h-4 ${toolbarGlowClass}`} />
                 ) : type === 'serial' ? (
-                  <Plug className="w-4 h-4" />
+                  <Plug className={`w-4 h-4 ${toolbarGlowClass}`} />
                 ) : (
-                  <TrendingUpDown className="w-4 h-4" />
+                  <TrendingUpDown className={`w-4 h-4 ${toolbarGlowClass}`} />
                 )}
               </Button>
             </TooltipTrigger>
@@ -481,158 +481,157 @@ className="h-8 w-8 p-0 text-warning-500 hover:bg-warning-500/10"
         })}
       </div>
 
-      <div className={`w-px h-4 ${isDark ? 'bg-secondary-700' : 'bg-secondary-200'}`} />
+      {/* Action Tools Group */}
+      <div className={`flex items-center gap-0 p-1 rounded-xl border ${isDark ? 'bg-secondary-900/40 border-secondary-700/30' : 'bg-primary-50/50 border-primary-100/50'}`}>
+        {/* Connect Button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-label={t.connectDevices}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0 text-accent-500 hover:bg-accent-500/10"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  const event = new CustomEvent('trigger-topology-connect');
+                  window.dispatchEvent(event);
+                }
+              }}
+            >
+              <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 0 0 -5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0 -5.656-5.656l-1.1 1.1" />
+              </svg>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t.connectDevices}</TooltipContent>
+        </Tooltip>
 
-      {/* Connect Button */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label={t.connectDevices}
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-accent-500 hover:bg-accent-500/10"
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                const event = new CustomEvent('trigger-topology-connect');
+        {/* Ping Button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-label={t.ping}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0 text-warning-500 hover:bg-warning-500/10"
+              disabled={isPingPanelOpen}
+              onClick={() => {
+                const event = new CustomEvent('toggle-ping-mode');
                 window.dispatchEvent(event);
-              }
-            }}
-          >
-            <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 0 0 -5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0 -5.656-5.656l-1.1 1.1" />
-            </svg>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{t.connectDevices}</TooltipContent>
-      </Tooltip>
+              }}
+            >
+              <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="Turquoise" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="flex items-center gap-2">
+            <span>{t.ping}</span>
+            <ShortcutBadge shortcut="P" variant="warning" />
+          </TooltipContent>
+        </Tooltip>
 
-      {/* Ping Button */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label={t.ping}
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-warning-500 hover:bg-warning-500/10"
-            disabled={isPingPanelOpen}
-            onClick={() => {
-              const event = new CustomEvent('toggle-ping-mode');
-              window.dispatchEvent(event);
-            }}
-          >
-            <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="Turquoise" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent className="flex items-center gap-2">
-          <span>{t.ping}</span>
-          <ShortcutBadge shortcut="P" variant="warning" />
-        </TooltipContent>
-      </Tooltip>
+        {/* Add Note Button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-label={t.addNote}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0 text-secondary-500 hover:bg-secondary-500/10"
+              onClick={() => {
+                const event = new CustomEvent('add-note');
+                window.dispatchEvent(event);
+              }}
+            >
+              <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="orange" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 0 0 -2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t.addNote}</TooltipContent>
+        </Tooltip>
 
-      {/* Add Note Button */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label={t.addNote}
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-secondary-500 hover:bg-secondary-500/10"
-            onClick={() => {
-              const event = new CustomEvent('add-note');
-              window.dispatchEvent(event);
-            }}
-          >
-            <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="orange" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 0 0 -2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{t.addNote}</TooltipContent>
-      </Tooltip>
+        {/* Environment Settings Button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-label={t.environmentSettings}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0 text-success-500 hover:bg-success-500/10"
+              onClick={() => setIsEnvironmentPanelOpen(true)}
+            >
+              <Leaf className={`w-4 h-4 ${toolbarGlowClass}`} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t.environmentSettings}</TooltipContent>
+        </Tooltip>
 
+        {/* Simulation Mode Toggle */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-label={t.simulationMode}
+              variant="ghost"
+              size="icon"
+              className={`h-8 w-8 p-0 transition-all ${isSimulationMode
+                ? 'text-error-500 bg-error-500/10 hover:bg-error-500/20 shadow-[0_0_8px_rgba(244,63,94,0.3)]'
+                : 'text-secondary-500 hover:bg-secondary-500/10'}`}
+              onClick={() => setSimulationMode(!isSimulationMode)}
+            >
+              <Activity className={`w-4 h-4 ${isSimulationMode ? 'animate-pulse' : ''} ${toolbarGlowClass}`} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="flex items-center gap-2">
+            <span>{t.simulationMode}</span>
+            <ShortcutBadge shortcut="S" variant="danger" />
+          </TooltipContent>
+        </Tooltip>
+      </div>
 
+      {/* History Group (Undo / Redo) */}
+      <div className={`flex items-center gap-0 p-1 rounded-xl border ${isDark ? 'bg-secondary-900/40 border-secondary-700/30' : 'bg-primary-50/50 border-primary-100/50'}`}>
+        {/* Undo Button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-label={t.undo}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0 text-secondary-500 hover:bg-secondary-500/10"
+              onClick={handleUndo}
+              disabled={hasHydrated && !canUndo}
+            >
+              <Undo2 className={`w-4 h-4 ${toolbarGlowClass} ${!canUndo ? 'opacity-100' : ''}`} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="flex items-center gap-2">
+            <span>{t.undo}</span>
+            <ShortcutBadge shortcut="Ctrl+Z" variant="primary" />
+          </TooltipContent>
+        </Tooltip>
 
-      {/* Environment Settings Button */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label={t.environmentSettings}
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-success-500 hover:bg-success-500/10"
-            onClick={() => setIsEnvironmentPanelOpen(true)}
-          >
-            <Leaf className={`w-4 h-4 ${toolbarGlowClass}`} />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{t.environmentSettings}</TooltipContent>
-      </Tooltip>
-
-      {/* Simulation Mode Toggle */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label={t.simulationMode}
-            variant="ghost"
-            size="icon"
-            className={`h-8 w-8 transition-all ${isSimulationMode
-              ? 'text-error-500 bg-error-500/10 hover:bg-error-500/20 shadow-[0_0_8px_rgba(244,63,94,0.3)]'
-              : 'text-secondary-500 hover:bg-secondary-500/10'}`}
-            onClick={() => setSimulationMode(!isSimulationMode)}
-          >
-            <Activity className={`w-4 h-4 ${isSimulationMode ? 'animate-pulse' : ''} ${toolbarGlowClass}`} />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent className="flex items-center gap-2">
-          <span>{t.simulationMode}</span>
-          <ShortcutBadge shortcut="S" variant="danger" />
-        </TooltipContent>
-      </Tooltip>
-
-
-      <div className={`w-px h-4 ${isDark ? 'bg-secondary-700' : 'bg-secondary-200'}`} />
-
-      {/* Undo Button */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label={t.undo}
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-secondary-500 hover:bg-secondary-500/10"
-            onClick={handleUndo}
-            disabled={hasHydrated && !canUndo}
-          >
-            <Undo2 className={`w-4 h-4 ${toolbarGlowClass} ${!canUndo ? 'opacity-100' : ''}`} />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent className="flex items-center gap-2">
-          <span>{t.undo}</span>
-          <ShortcutBadge shortcut="Ctrl+Z" variant="primary" />
-        </TooltipContent>
-      </Tooltip>
-
-      {/* Redo Button */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label={t.redo}
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-secondary-500 hover:bg-secondary-500/10"
-            onClick={handleRedo}
-            disabled={hasHydrated && !canRedo}
-          >
-            <Redo2 className={`w-4 h-4 ${toolbarGlowClass} ${!canRedo ? 'opacity-100' : ''}`} />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent className="flex items-center gap-2">
-          <span>{t.redo}</span>
-          <ShortcutBadge shortcut="Ctrl+Y" variant="primary" />
-        </TooltipContent>
-      </Tooltip>
+        {/* Redo Button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-label={t.redo}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0 text-secondary-500 hover:bg-secondary-500/10"
+              onClick={handleRedo}
+              disabled={hasHydrated && !canRedo}
+            >
+              <Redo2 className={`w-4 h-4 ${toolbarGlowClass} ${!canRedo ? 'opacity-100' : ''}`} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="flex items-center gap-2">
+            <span>{t.redo}</span>
+            <ShortcutBadge shortcut="Ctrl+Y" variant="primary" />
+          </TooltipContent>
+        </Tooltip>
+      </div>
 
       <div className={`w-px h-4 ${isDark ? 'bg-secondary-700' : 'bg-secondary-200'}`} />
 
