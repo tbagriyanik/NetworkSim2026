@@ -42,6 +42,9 @@ import { useCanvasClipboard } from './hooks/useCanvasClipboard';
 import { useDeviceDrag } from './hooks/useDeviceDrag';
 import { useCanvasSelection } from './hooks/useCanvasSelection';
 import { useNoteEditing } from './hooks/useNoteEditing';
+import { useNoteDragging } from './hooks/useNoteDragging';
+import { useTopologySync } from './hooks/useTopologySync';
+import { useIotSensorDetection } from './hooks/useIotSensorDetection';
 import { useConnectionDrawing } from './hooks/useConnectionDrawing';
 import { useTopologyDeviceActions } from './hooks/useTopologyDeviceActions';
 import { usePingAnimation } from './hooks/usePingAnimation';
@@ -198,39 +201,12 @@ export function NetworkTopology({
     return () => clearInterval(interval);
   }, []);
 
-  // Motion/Sound detection state update logic
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDevices((prev) => {
-        let changed = false;
-        const next = prev.map((device) => {
-          if (device.type === 'iot' && device.status !== 'offline' && device.iot?.collaborationEnabled !== false && (device.iot?.sensorType === 'motion' || device.iot?.sensorType === 'sound')) {
-            const dWidth = getDeviceWidth(device.type);
-            const dHeight = getDeviceHeight(device.type, device.ports?.length || 0);
-            const dx = mousePosRef.current.x - device.x - (dWidth / 2);
-            const dy = mousePosRef.current.y - device.y - (dHeight / 2);
-            const distance = Math.sqrt(dx * dx + dy * dy);
+  const mousePosRef = useRef({ x: 0, y: 0 });
 
-            let newValue: number | boolean = false;
-
-            if (device.iot.sensorType === 'motion') {
-              newValue = distance < 75;
-            } else if (device.iot.sensorType === 'sound') {
-              newValue = distance < 150 ? Math.round(120 * (1 - distance / 150)) : 0;
-            }
-
-            if (device.iot.value !== newValue) {
-              changed = true;
-              return { ...device, iot: { ...device.iot, value: newValue } };
-            }
-          }
-          return device;
-        });
-        return changed ? next : prev;
-      });
-    }, 100); // Increased frequency to 100ms for smoother dB transitions
-    return () => clearInterval(interval);
-  }, [setDevices]);
+  useIotSensorDetection({
+    setDevices,
+    mousePosRef,
+  });
 
   const [zoom, setZoom] = useState(zoomProp ?? DEFAULT_ZOOM);
   const [pan, setPan] = useState(panProp ?? { x: 0, y: 0 });
@@ -481,7 +457,6 @@ export function NetworkTopology({
     portId: string;
     point: { x: number; y: number };
   } | null>(null);
-  const mousePosRef = useRef({ x: 0, y: 0 });
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   // Context menu state - device, note, or empty canvas
@@ -2001,152 +1976,21 @@ export function NetworkTopology({
     setSelectedNoteIds([noteId]);
   }, [notes, saveToHistory, setSelectedNoteIds]);
 
-  // Handle note dragging and resizing with mouse move
-  useEffect(() => {
-    let animationFrameId: number;
-
-    const handleMouseMove = (e: globalThis.MouseEvent) => {
-      if (!canvasRef.current) return;
-
-      if (draggedNoteIdRef.current && noteDragStartRef.current) {
-        if (animationFrameId) cancelAnimationFrame(animationFrameId);
-
-        const dragStart = noteDragStartRef.current;
-        const draggedNoteId = draggedNoteIdRef.current;
-        animationFrameId = requestAnimationFrame(() => {
-          const currentZoom = zoomRef.current;
-
-          const deltaX = (e.clientX - dragStart.x) / currentZoom;
-          const deltaY = (e.clientY - dragStart.y) / currentZoom;
-
-          setNotes((prev) =>
-            prev.map((n) =>
-              n.id === draggedNoteId
-                ? { ...n, x: n.x + deltaX, y: n.y + deltaY }
-                : n
-            )
-          );
-
-          setNoteDragStart({ x: e.clientX, y: e.clientY });
-        });
-      } else if (resizingNoteIdRef.current && noteResizeStartRef.current) {
-        if (animationFrameId) cancelAnimationFrame(animationFrameId);
-
-        const resizeStart = noteResizeStartRef.current;
-        const dir = noteResizeDirectionRef.current;
-        animationFrameId = requestAnimationFrame(() => {
-          const currentZoom = zoomRef.current;
-          const dx = (e.clientX - resizeStart.x) / currentZoom;
-          const dy = (e.clientY - resizeStart.y) / currentZoom;
-          const origW = resizeStart.width;
-          const origH = resizeStart.height;
-          let newW = origW, newH = origH, newX: number | undefined, newY: number | undefined;
-
-          if (dir.includes('e')) newW = Math.max(180, origW + dx);
-          if (dir.includes('w')) { newW = Math.max(180, origW - dx); newX = resizeStart.noteX + (origW - newW); }
-          if (dir.includes('s')) newH = Math.max(100, origH + dy);
-          if (dir.includes('n')) { newH = Math.max(100, origH - dy); newY = resizeStart.noteY + (origH - newH); }
-
-          setNotes((prev) =>
-            prev.map((n) => {
-              if (n.id !== resizingNoteIdRef.current) return n;
-              const updated: CanvasNote = { ...n, width: newW, height: newH };
-              if (newX !== undefined) updated.x = newX;
-              if (newY !== undefined) updated.y = newY;
-              return updated;
-            })
-          );
-        });
-      }
-    };
-
-    const handleTouchMove = (e: globalThis.TouchEvent) => {
-      if (!canvasRef.current || e.touches.length !== 1) return;
-
-      const touch = e.touches[0];
-
-      if (draggedNoteIdRef.current && noteDragStartRef.current) {
-        if (animationFrameId) cancelAnimationFrame(animationFrameId);
-
-        const dragStart = noteDragStartRef.current;
-        const draggedNoteId = draggedNoteIdRef.current;
-        animationFrameId = requestAnimationFrame(() => {
-          const currentZoom = zoomRef.current;
-
-          const deltaX = (touch.clientX - dragStart.x) / currentZoom;
-          const deltaY = (touch.clientY - dragStart.y) / currentZoom;
-
-          setNotes((prev) =>
-            prev.map((n) =>
-              n.id === draggedNoteId
-                ? { ...n, x: n.x + deltaX, y: n.y + deltaY }
-                : n
-            )
-          );
-
-          setNoteDragStart({ x: touch.clientX, y: touch.clientY });
-        });
-      } else if (resizingNoteIdRef.current && noteResizeStartRef.current) {
-        if (animationFrameId) cancelAnimationFrame(animationFrameId);
-
-        const resizeStart = noteResizeStartRef.current;
-        const dir = noteResizeDirectionRef.current;
-        animationFrameId = requestAnimationFrame(() => {
-          const currentZoom = zoomRef.current;
-          const dx = (touch.clientX - resizeStart.x) / currentZoom;
-          const dy = (touch.clientY - resizeStart.y) / currentZoom;
-          const origW = resizeStart.width;
-          const origH = resizeStart.height;
-          let newW = origW, newH = origH, newX: number | undefined, newY: number | undefined;
-
-          if (dir.includes('e')) newW = Math.max(180, origW + dx);
-          if (dir.includes('w')) { newW = Math.max(180, origW - dx); newX = resizeStart.noteX + (origW - newW); }
-          if (dir.includes('s')) newH = Math.max(100, origH + dy);
-          if (dir.includes('n')) { newH = Math.max(100, origH - dy); newY = resizeStart.noteY + (origH - newH); }
-
-          setNotes((prev) =>
-            prev.map((n) => {
-              if (n.id !== resizingNoteIdRef.current) return n;
-              const updated: CanvasNote = { ...n, width: newW, height: newH };
-              if (newX !== undefined) updated.x = newX;
-              if (newY !== undefined) updated.y = newY;
-              return updated;
-            })
-          );
-        });
-      }
-    };
-
-    const handleMouseUp = () => {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      setDraggedNoteId(null);
-      setNoteDragStart(null);
-      setResizingNoteId(null);
-      setNoteResizeStart(null);
-      setNoteResizeDirection('se');
-    };
-
-    const handleTouchEnd = () => {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      setDraggedNoteId(null);
-      setNoteDragStart(null);
-      setResizingNoteId(null);
-      setNoteResizeStart(null);
-      setNoteResizeDirection('se');
-    };
-
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd);
-    return () => {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, []);
+  useNoteDragging({
+    canvasRef,
+    zoomRef,
+    draggedNoteIdRef,
+    resizingNoteIdRef,
+    noteDragStartRef,
+    noteResizeStartRef,
+    noteResizeDirectionRef,
+    setNotes,
+    setDraggedNoteId,
+    setNoteDragStart,
+    setResizingNoteId,
+    setNoteResizeStart,
+    setNoteResizeDirection,
+  });
 
   // Notify parent of topology changes — debounced to avoid calling at 60fps during drag
   useEffect(() => {
@@ -2166,155 +2010,14 @@ export function NetworkTopology({
   }, [devices, connections, notes, onTopologyChange]);
 
 
-  // Sync device counters with current devices to prevent ID collisions
-  useEffect(() => {
-    if (devices.length > 0) {
-      const counters = { pc: 0, iot: 0, switch: 0, router: 0, firewall: 0, wlc: 0 };
-      devices.forEach(d => {
-        const match = d.id.match(/^(\w+)-(\d+)$/);
-        if (match) {
-          const rawType = match[1];
-          const type = getCounterKey(rawType);
-          const num = parseInt(match[2]);
-          if (counters[type] !== undefined) {
-            counters[type] = Math.max(counters[type], num);
-          }
-        }
-      });
-      deviceCounterRef.current = counters;
-    }
-  }, [devices, getCounterKey]);
-
-  // Sync port shutdown status from deviceStates
-  // FIXED: removed `devices` from deps — using functional setState (prev =>) to read latest devices
-  // Previously having `devices` in deps + calling setDevices caused an infinite re-render loop
-  useEffect(() => {
-    if (!deviceStates) return;
-
-    // BOLT: Pre-calculate maps for O(1) lookups during device/port synchronization
-    // Reducing complexity from O(D * P * C) to O(C + D * P)
-    const connectedPortKeys = new Set<string>();
-    const pcConnectionMap = new Map<string, CanvasConnection>();
-
-    connections.forEach(conn => {
-      connectedPortKeys.add(`${conn.sourceDeviceId}:${conn.sourcePort}`);
-      connectedPortKeys.add(`${conn.targetDeviceId}:${conn.targetPort}`);
-
-      if ((conn.sourceDeviceId.startsWith('pc-') || conn.sourceDeviceId.startsWith('iot-')) && conn.sourcePort === 'eth0') {
-        pcConnectionMap.set(conn.sourceDeviceId, conn);
-      }
-      if ((conn.targetDeviceId.startsWith('pc-') || conn.targetDeviceId.startsWith('iot-')) && conn.targetPort === 'eth0') {
-        pcConnectionMap.set(conn.targetDeviceId, conn);
-      }
-    });
-
-    setDevices(prev => {
-      if (prev.length === 0) return prev;
-      let hasChanges = false;
-      const updatedDevices = prev.map(device => {
-        const deviceState = deviceStates.get(device.id);
-        if (!deviceState) return device;
-
-        let portChanged = false;
-        const updatedPorts = device.ports.map(port => {
-          const simulatorPort = deviceState.ports[port.id];
-          if (simulatorPort) {
-            // Skip wlan ports from status sync - they are managed separately
-            if (port.id.toLowerCase().startsWith('wlan')) {
-              const wifiChanged = JSON.stringify(port.wifi) !== JSON.stringify(simulatorPort.wifi);
-              const shutdownChanged = port.shutdown !== simulatorPort.shutdown;
-              if (!wifiChanged && !shutdownChanged) return port;
-              portChanged = true;
-              hasChanges = true;
-              return {
-                ...port,
-                shutdown: simulatorPort.shutdown ?? port.shutdown,
-                ...(simulatorPort.wifi ? { wifi: { ...simulatorPort.wifi } } : {}),
-              } as typeof port;
-            }
-            // BOLT: Optimized O(1) lookup for connected ports
-            const hasActiveConnection = connectedPortKeys.has(`${device.id}:${port.id}`);
-
-            // Translate simulator status → UI status
-            // Simulator: 'connected' | 'notconnect' | 'disabled' | 'blocked'
-            // UI:        'connected' | 'disconnected'
-            let uiStatus: 'connected' | 'disconnected';
-            if (hasActiveConnection) {
-              uiStatus = 'connected';
-            } else {
-              // If no active connection, port must be disconnected regardless of simulator state
-              uiStatus = 'disconnected';
-            }
-
-            const nextPort = {
-              ...port,
-              status: uiStatus,
-              vlan: simulatorPort.vlan ?? port.vlan,
-              accessVlan: simulatorPort.accessVlan ?? port.accessVlan,
-              mode: simulatorPort.mode ?? port.mode,
-              name: simulatorPort.name ?? port.name,
-              description: simulatorPort.description ?? port.description,
-              speed: simulatorPort.speed ?? port.speed,
-              duplex: simulatorPort.duplex ?? port.duplex,
-              shutdown: simulatorPort.shutdown ?? port.shutdown,
-              ipAddress: simulatorPort.ipAddress ?? port.ipAddress,
-              subnetMask: simulatorPort.subnetMask ?? port.subnetMask,
-              // Preserve wifi config from simulator state
-              ...(simulatorPort.wifi ? { wifi: simulatorPort.wifi } : {}),
-            };
-            const changed =
-              nextPort.status !== port.status ||
-              nextPort.vlan !== port.vlan ||
-              nextPort.accessVlan !== port.accessVlan ||
-              nextPort.mode !== port.mode ||
-              nextPort.name !== port.name ||
-              nextPort.description !== port.description ||
-              nextPort.speed !== port.speed ||
-              nextPort.duplex !== port.duplex ||
-              nextPort.shutdown !== port.shutdown ||
-              nextPort.ipAddress !== port.ipAddress ||
-              nextPort.subnetMask !== port.subnetMask ||
-              JSON.stringify(nextPort.wifi) !== JSON.stringify(port.wifi);
-            if (changed) {
-              portChanged = true;
-              hasChanges = true;
-              return nextPort;
-            }
-          }
-          return port;
-        });
-
-        const baseDevice = portChanged ? { ...device, ports: updatedPorts } : device;
-
-        // Keep PC VLAN in sync with the connected switch/router access VLAN.
-        if (baseDevice.type === 'pc' || baseDevice.type === 'iot') {
-          // BOLT: Optimized O(1) lookup for PC connections
-          const pcConnection = pcConnectionMap.get(baseDevice.id);
-
-          if (pcConnection) {
-            const peerDeviceId = pcConnection.sourceDeviceId === baseDevice.id
-              ? pcConnection.targetDeviceId
-              : pcConnection.sourceDeviceId;
-            const peerPortId = pcConnection.sourceDeviceId === baseDevice.id
-              ? pcConnection.targetPort
-              : pcConnection.sourcePort;
-
-            const peerState = deviceStates.get(peerDeviceId);
-            const peerPort = peerState?.ports?.[peerPortId];
-            const peerVlan = Number(peerPort?.accessVlan || peerPort?.vlan || 1);
-
-            if (Number(baseDevice.vlan || 1) !== peerVlan) {
-              hasChanges = true;
-              return { ...baseDevice, vlan: peerVlan };
-            }
-          }
-        }
-
-        return baseDevice;
-      });
-      return hasChanges ? updatedDevices : prev;
-    });
-  }, [deviceStates, connections]); // ← added connections to check for active connections
+  useTopologySync({
+    deviceStates,
+    connections,
+    setDevices,
+    devices,
+    getCounterKey,
+    deviceCounterRef,
+  }); // ← added connections to check for active connections
 
 
 
