@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useCallback, useMemo } from 'react';
 import { FirewallRule, CanvasDevice } from './networkTopology.types';
@@ -122,10 +122,10 @@ export function FirewallPanel({
     const updatedRules = [...rules, rule];
     onUpdateRules(updatedRules);
     toast({
-      title: t.language === 'tr' ? 'Kural Eklendi' : 'Rule Added',
-      description: t.language === 'tr' ? 'Firewall kuralı başarıyla eklendi.' : 'Firewall rule added successfully.',
+      title: t.firewallRuleAdded,
+      description: t.firewallRuleAddedDesc,
     });
-  }, [newRule, rules, onUpdateRules, t.language]);
+  }, [newRule, rules, onUpdateRules, t.firewallRuleAdded, t.firewallRuleAddedDesc]);
 
 
   const handleDeleteRule = useCallback((id: string) => {

@@ -402,7 +402,7 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
                         <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
                         <line x1="12" y1="20" x2="12.01" y2="20" />
                       </svg>
-                      WiFi
+                      {language === 'tr' ? 'Kablosuz' : 'WiFi'}
                     </span>
                     <div className="flex items-center gap-1">
                       <span className="text-accent-500">{t.active}</span>
@@ -438,7 +438,7 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
               <Collapsible open={!collapsedSections.ipAddresses} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, ipAddresses: !open }))}>
                 <CollapsibleTrigger asChild>
                   <div className="pt-1 border-t border-secondary-500/20 flex items-center justify-between cursor-pointer select-none">
-                    <span className="opacity-30 text-xs mb-0.5 uppercase font-bold tracking-tighter">IP Addresses</span>
+                    <span className="opacity-30 text-xs mb-0.5 uppercase font-bold tracking-tighter">{language === 'tr' ? 'IP Adresleri' : 'IP Addresses'}</span>
                     {collapsedSections.ipAddresses ? <ChevronDown className="w-3 h-3 opacity-50" /> : <ChevronUp className="w-3 h-3 opacity-50" />}
                   </div>
                 </CollapsibleTrigger>

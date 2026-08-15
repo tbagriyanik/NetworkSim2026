@@ -231,6 +231,8 @@ export interface Translations {
   environmentBackground: string;
   environmentSettings: string;
   errorPrefix: string;
+  firewallRuleAdded: string;
+  firewallRuleAddedDesc: string;
   ethernet: string;
   exam: string;
   exams: string;
@@ -975,6 +977,8 @@ const translations: Record<Language, Translations> = {
     environmentBackground: 'Arka Plan',
     environmentSettings: 'Ayarlar',
     errorPrefix: 'HATA',
+    firewallRuleAdded: 'Kural Eklendi',
+    firewallRuleAddedDesc: 'Firewall kuralı başarıyla eklendi.',
     ethernet: 'Ethernet',
     exam: 'Sınav',
     exams: 'Sınavlar',
@@ -1715,6 +1719,8 @@ const translations: Record<Language, Translations> = {
     environmentBackground: 'Background',
     environmentSettings: 'Settings',
     errorPrefix: 'ERROR',
+    firewallRuleAdded: 'Rule Added',
+    firewallRuleAddedDesc: 'Firewall rule added successfully.',
     ethernet: 'Ethernet',
     exam: 'Exam',
     exams: 'Exams',

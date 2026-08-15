@@ -25,6 +25,7 @@ export function AppErrorFallback({
       retry: 'Tekrar Dene',
       returnHome: 'Ana Sayfaya Dön',
       errorDetail: 'Hata Mesajı:',
+      unknownError: 'Bilinmeyen bir hata oluştu.',
     },
     en: {
       title: titleOverride || '500 - Unexpected Error',
@@ -32,6 +33,7 @@ export function AppErrorFallback({
       retry: 'Try Again',
       returnHome: 'Return to Homepage',
       errorDetail: 'Error Message:',
+      unknownError: 'An unknown error occurred.',
     },
   };
   const tx = t[lang];
@@ -70,7 +72,7 @@ export function AppErrorFallback({
           <div className="mb-8 w-full p-4 bg-black/20 rounded-xl border border-red-500/20">
             <p className="text-red-400/60 text-sm mb-1">{tx.errorDetail}</p>
             <p className="text-red-300 font-mono text-sm break-all">
-              {error?.message || 'Bilinmeyen bir hata oluştu.'}
+              {error?.message || tx.unknownError}
             </p>
           </div>
           

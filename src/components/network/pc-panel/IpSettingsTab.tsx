@@ -112,7 +112,7 @@ export function IpSettingsTab({
           </div>
           <div className="flex-1">
             <FormInput
-              label="MAC Address"
+              label={language === 'tr' ? 'MAC Adresi' : 'MAC Address'}
               value={pcMAC}
               onChange={(e) => {
                 const newMac = e.target.value;
@@ -251,7 +251,7 @@ export function IpSettingsTab({
 
         <div className={`mt-4 rounded-xl border p-4 space-y-3 ${isDark ? 'border-secondary-800 bg-secondary-950/40' : 'border-secondary-200 bg-white'}`}>
           <div>
-            <h3 className="text-sm font-bold">NTP Server</h3>
+            <h3 className="text-sm font-bold">{language === 'tr' ? 'NTP Sunucusu' : 'NTP Server'}</h3>
             <p className={`text-xs ${isDark ? 'text-secondary-200' : 'text-secondary-500'}`}>
               {language === 'tr' ? 'NTP sunucusunu girin. IP doğruysa saat sunucudan alınır.' : 'Enter the NTP server. If the IP is valid, time is pulled from the server.'}
             </p>

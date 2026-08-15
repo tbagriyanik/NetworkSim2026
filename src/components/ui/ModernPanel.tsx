@@ -1,10 +1,11 @@
-﻿'use client';
+'use client';
 
 import React, { ReactNode, useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export interface ModernPanelProps {
     id: string;
@@ -53,6 +54,7 @@ export function ModernPanel({
 }: ModernPanelProps) {
     const { panelLayout } = useLayout();
     const { theme } = useTheme();
+    const { t } = useLanguage();
     const isDark = theme === 'dark';
     const [width, setWidth] = useState(defaultWidth);
     const [height, setHeight] = useState(defaultHeight);
@@ -338,7 +340,7 @@ export function ModernPanel({
                                         ? "hover:bg-secondary-800 text-secondary-400 hover:text-secondary-100"
                                         : "hover:bg-secondary-200 text-secondary-500 hover:text-secondary-900"
                                 )}
-                                aria-label="Close"
+                                aria-label={t.close}
                             >
                                 <X className="w-4 h-4" />
                             </button>

@@ -1201,11 +1201,11 @@ export function Terminal({
     try {
       const allText = output.map(line => line.type === 'command' ? `${line.prompt || prompt}${line.content}` : line.content).join('\n');
       await navigator.clipboard.writeText(allText);
-      toast({ title: t.copy, description: language === 'tr' ? 'Terminal çıktısı panoya kopyalandı.' : 'Terminal output copied to clipboard.' });
+      toast({ title: t.copyToastSuccessTitle || t.copy, description: t.copyToastSuccessDescription });
     } catch {
-      toast({ title: t.copy, description: language === 'tr' ? 'Pano erişimi engellendi.' : 'Clipboard access was blocked.', variant: "destructive" });
+      toast({ title: t.copyToastFailureTitle || t.copy, description: t.copyToastFailureDescription, variant: "destructive" });
     }
-  }, [output, prompt, t, language]);
+  }, [output, prompt, t]);
 
   const exportTerminal = () => {
     const text = output.map(line => `${line.prompt || (line.type === 'command' ? prompt : '')}${line.content}`).join('\n');
