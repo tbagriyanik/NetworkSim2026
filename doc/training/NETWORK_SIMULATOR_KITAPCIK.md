@@ -1,6 +1,6 @@
 # 🌐 Network Simulator - Kapsamlı Kullanım Kılavuzu ve Eğitim Kitapçığı
 
-![Simulator Logo](https://network2026.vercel.app/app.png){:width="150px"}
+![Simulator Logo](https://network2026.vercel.app/app.png)
 
 ## 📘 İçindekiler
 1. [Network Simulator (Özellikler ve Yenilikler)](#network-simulator)
@@ -19,10 +19,15 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 ---
 
-## Latest Updates
+## Latest Updates (v2.2 & v2.0)
 
 | English | Türkçe |
 | --- | --- |
+| **Ping & Packet Animation Fixes**: Hop-by-hop ping packet animation analysis, synchronised play/pause, and packet progress enhancements. | **Ping ve Paket Animasyonu İyileştirmeleri**: Adım adım ping paket analizi oynatma ve duraklatma senkronizasyon mekanizması geliştirildi. |
+| **Topology Rendering Optimization**: Added custom memo comparator for `ConnectionLine` and optimized canvas interaction loops for high FPS. | **Topoloji Çizim Optimizasyonu**: `ConnectionLine` için özel memo karşılaştırıcı eklendi ve yüksek cihaz sayılarında tuval performansı optimize edildi. |
+| **UI & Theme Polish**: Modernized header styles, responsive toolbar, smooth window dragging/resizing, and header gradient themes. | **Arayüz ve Tema İyileştirmeleri**: Başlık stilleri, duyarlı araç çubuğu, pürüzsüz pencere sürükleme/boyutlandırma ve başlık gradyan temaları modernize edildi. |
+| **Storage Security (XOR+Base64)**: App-wide encrypted `localStorage` interceptor with backwards compatibility and XSS input sanitization. | **Güvenli Depolama (XOR+Base64)**: Geriye dönük uyumlu şifreli `localStorage` altyapısı ve XSS girdi temizleme koruması. |
+| **Dependency Modernization**: Next.js 16.2.4, React 19.2.5, TypeScript 6.0.3, and Tailwind CSS 4.2.2. | **Modern Altyapı**: Next.js 16.2.4, React 19.2.5, TypeScript 6.0.3 ve Tailwind CSS 4.2.2 sürüm güncellemeleri. |
 | **FTP Services**: FTP client/server configuration, file upload, and file transfer simulation across devices. | **FTP Servisleri**: FTP istemci/sunucu yapılandırması, dosya yükleme ve cihazlar arası dosya aktarım simülasyonu. |
 | **NTP Time Sync**: NTP server/client configuration for network-wide time synchronization. | **NTP Zaman Senkronizasyonu**: Ağ genelinde zaman senkronizasyonu için NTP sunucu/istemci yapılandırması. |
 | **Firewall Service Integration**: Firewall rules with integrated service selection for traffic filtering. | **Güvenlik Duvarı Servis Entegrasyonu**: Trafik filtreleme için entegre servis seçimli güvenlik duvarı kuralları. |
@@ -32,20 +37,16 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | **Window Resizable Notes**: Resizable windows with collapsible sections and note-taking capability. | **Pencere Notları**: Daraltılabilir bölümler ve not alma özelliği ile yeniden boyutlandırılabilir pencereler. |
 | **API Rate Limiting**: Contact form API rate limiting for improved security and abuse prevention. | **API Hız Sınırlama**: Gelişmiş güvenlik ve kötüye kullanım önleme için iletişim formu API hız sınırlaması. |
 | **Browser Window ESC Close**: Web browser window closes with ESC key without affecting PC panel. | **Tarayıcı Penceresi ESC Kapatma**: Web tarayıcı penceresi ESC tuşu ile kapatılır, PC paneli etkilenmez. |
-| **Window Snap Removal**: PC, Switch, Router, and Firewall windows no longer snap to screen edges during drag/resize. | **Pencere Snap Kaldırma**: PC, Switch, Router ve Firewall pencereleri sürükleme/yeniden boyutlandırma sırasında ekran kenarlarına snap olmaz. |
 | **PC History Cleanup**: New projects and opened projects no longer inherit previous PC cmd/CLI history. | **PC Geçmiş Temizliği**: Yeni projeler ve açılan projeler artık önceki PC cmd/CLI geçmişini almaz. |
 | **Achievement System**: Activity tracking for projects, guided lessons, and exams with session duration logging. | **Başarım Sistemi**: Projeler, rehberli dersler ve sınavlar için aktivite takibi ile oturum süresi günlüğü. |
 | **Exam Mode**: Teacher exam editor, project-to-exam conversion, mobile-responsive layout, and secure student distribution. | **Sınav Modu**: Öğretmen sınav düzenleyicisi, projeden sınava dönüşüm, mobil uyumlu düzen ve güvenli öğrenci dağıtımı. |
-| **Guided Mode & Tutorial Wizard**: Step-by-step guided lessons with gamification points, progress tracking, and hint system, plus new "Teach Me" beginner-to-advanced tracks. | **Rehberli Mod ve Eğitim Sihirbazı**: Oyunlaştırma puanları, ilerleme takibi ve ipucu sistemi ile adım adım rehberli dersler; yeni "Bana Öğret" temel-ileri seviye eğitim yolları dahil. |
+| **Guided Mode & Tutorial Wizard**: Step-by-step guided lessons with gamification points, progress tracking, and hint system, plus "Teach Me" tracks. | **Rehberli Mod ve Eğitim Sihirbazı**: Oyunlaştırma puanları, ilerleme takibi ve ipucu sistemi ile adım adım rehberli dersler; "Bana Öğret" modülü dahil. |
 | **Intelligent CLI Assistant**: Fuzzy-matched command suggestions and device-aware subcommand hints below CLI error messages. | **Akıllı CLI Asistanı**: CLI hata mesajlarının altında bulanık eşleştirmeli komut önerileri ve cihaz bilinçli alt komut ipuçları. |
 | **Exam Import Enhancements**: Improved `.json` / `.exam` import with smarter PC IP extraction, connection parsing, and weighted scoring. | **Sınav İçe Aktarma İyileştirmeleri**: Gelişmiş `.json` / `.exam` içe aktarma ile akıllı PC IP çıkarma, bağlantı ayrıştırma ve ağırlıklı puanlama. |
 | **PC Services Persistence**: PC service configurations (DHCP, DNS, HTTP) persist across network refreshes. | **PC Servis Kalıcılığı**: PC servis yapılandırmaları (DHCP, DNS, HTTP) ağ yenilemelerinde korunur. |
 | **WLC & AP Management**: Wireless LAN Controller with Lightweight AP support, dot11 WLAN config, AP join, auth-mac filtering. | **WLC ve AP Yönetimi**: Hafif AP desteği ile Kablosuz LAN Denetleyicisi, dot11 WLAN yapılandırması, AP katılımı, auth-mac filtreleme. |
 | **Serial / WAN Interfaces**: HDLC and PPP encapsulation, clock rate, PAP/CHAP authentication, DCE/DTE detection. | **Seri / WAN Arayüzleri**: HDLC ve PPP kapsülleme, saat hızı, PAP/CHAP kimlik doğrulama, DCE/DTE tespiti. |
 | **Advanced Routing**: EIGRP (named/config), BGP (basic), OSPFv3 (IPv6), RIPng (IPv6), route redistribution. | **Gelişmiş Yönlendirme**: EIGRP (adlandırılmış/yapılandırma), BGP (temel), OSPFv3 (IPv6), RIPng (IPv6), rota yeniden dağıtımı. |
-| **IoT & Firewall CLI**: Complete CLI command sets for IoT sensor/actuator management and firewall rule/policy configuration. | **IoT ve Güvenlik Duvarı CLI**: IoT sensör/aktüatör yönetimi ve güvenlik duvarı kural/politika yapılandırması için eksiksiz CLI komut setleri. |
-| **Help System Overhaul**: 150+ CLI commands documented in bilingual help panel, organized by device context (switch, router, wireless, WLC, IoT, firewall). | **Yardım Sistemi Revizyonu**: Cihaz bağlamına göre düzenlenmiş 150+ CLI komutunun iki dilli yardım panelinde belgelenmesi. |
-| **Canvas Drag Smoothness**: Eliminated position jitter during device drag by using fresh DOM rect per frame and disabling SVG transitions during movement. | **Kanvas Sürükleme Pürüzsüzlüğü**: Hareket sırasında kare başına taze DOM rect kullanımı ve SVG geçişlerinin devre dışı bırakılmasıyla cihaz sürüklemede konum titremesi giderildi. |
 
 ---
 
@@ -205,7 +206,7 @@ src/
 
 ## Tech Stack / Teknoloji
 
-Next.js 16.2, React 19, TypeScript 6.0, Tailwind CSS 4, Radix UI, Zustand 5.0
+Next.js 16.2.4, React 19.2.5, TypeScript 6.0.3, Tailwind CSS 4.2.2, Radix UI, Zustand 5.0
 
 ## License / Lisans
 

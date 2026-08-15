@@ -1,6 +1,23 @@
 
 ## Latest Updates
 
+### v2.2.0 (2026-08-15)
+
+| English | Türkçe |
+| --- | --- |
+| **Ping & Packet Animation Fixes**: Resolved synchronization and pause/play issues during hop-by-hop ping packet animation analysis. | **Ping ve Paket Animasyonu İyileştirmeleri**: Adım adım ping paket analizi oynatma ve duraklatma senkronizasyon hataları giderildi. |
+| **Topology Rendering Optimization**: Added custom memo comparator for `ConnectionLine` and optimized canvas interaction loops. | **Topoloji Çizim Optimizasyonu**: `ConnectionLine` için özel memo karşılaştırıcı eklendi ve tuval etkileşim döngüsü hızlandırıldı. |
+| **UI & Window Theme Polish**: Header styling, toolbar responsiveness, and window drag/hover interactions modernized. | **Arayüz ve Tema İyileştirmeleri**: Başlık stilleri, araç çubuğu duyarlılığı ve pencere sürükleme/vurgu animasyonları modernize edildi. |
+| **Dependency Upgrades**: Upgraded to Next.js 16.2.4, React 19.2.5, TypeScript 6.0.3, and Tailwind CSS 4.2.2. | **Bağımlılık Güncellemeleri**: Next.js 16.2.4, React 19.2.5, TypeScript 6.0.3 ve Tailwind CSS 4.2.2 sürümlerine yükseltildi. |
+
+### v2.0.0 (2026-07-20)
+
+| English | Türkçe |
+| --- | --- |
+| **Storage Security (XOR+Base64)**: App-wide encrypted `localStorage` interceptor with backwards compatibility. | **Güvenli Depolama (XOR+Base64)**: Geriye dönük uyumlu uygulama geneli şifreli `localStorage` altyapısı. |
+| **XSS Protection & Length Limits**: Input sanitization and length constraints for topology names and descriptions. | **XSS Koruması ve Metin Sınırları**: Topoloji adı ve açıklama alanları için girdi sanitizasyonu ve uzunluk sınırları. |
+| **Searchable Topology Generator**: Added search functionality to template generator wizard with automatic note generation. | **Aramalı Topoloji Sihirbazı**: Otomatik not oluşturma özelliğine sahip aranabilir topoloji şablon üreticisi. |
+
 ### v1.9.8 (2026-07-16)
 
 | English | Türkçe |

@@ -45,7 +45,6 @@ Tarayıcıda açın: [http://localhost:3000](http://localhost:3000)
 - **class-variance-authority** - CSS class variants
 - **tailwind-merge** - Tailwind class merging
 - **tailwindcss-animate** - Animation utilities
-- **isomorphic-dompurify** - HTML sanitization
 
 ### Database & Storage
 - **@upstash/redis** - Redis for room tracking & session management

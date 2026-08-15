@@ -4,6 +4,27 @@ Yeniden eskiye, tarih ve özellik listesi.
 
 ---
 
+## v2.2.0 — 2026-08-15
+
+| Tarih | Özellik |
+|-------|---------|
+| 2026-08-15 | **Sürüm Yükseltmesi (v2.2)** — Uygulama versiyonu 2.2'ye yükseltildi; Next.js 16.2.4, React 19.2.5, TypeScript 6.0.3 ve Tailwind CSS 4.2.2 paketleri güncellendi. |
+| 2026-08-15 | **Ping & Paket Animasyonu İyileştirmeleri** — Ping animasyonu oynatma/duraklatma ve paket ilerleme mantığındaki senkronizasyon hataları giderildi. |
+| 2026-08-15 | **Pencere & Başlık Görsel Optimizasyonları** — Başlık rengi, tema geçişleri, Toolbar başlığı ve fare etkileşimleri (hover/drag) daha akıcı hale getirildi. |
+| 2026-08-15 | **Topoloji ve Çizim Performansı** — `ConnectionLine` özel memo karşılaştırıcısı ve topoloji çizim döngüsü optimize edilerek yüksek cihaz sayılarında FPS artışı sağlandı. |
+| 2026-08-15 | **CLI Parser & Arayüz İyileştirmeleri** — `parser.ts`, `interfaceCommands.ts` ve cihaz panelleri (PCPanel vb.) modüler hale getirilip temizlendi. |
+
+---
+
+## v2.0.1 — 2026-08-01
+
+| Tarih | Özellik |
+|-------|---------|
+| 2026-08-01 | **Genel Bakım ve Hata Düzeltmeleri** — Bağlantı render optimizasyonu (ConnectionLine memo comparator), bellek optimizasyonları ve kod temizliği yapıldı. |
+| 2026-07-28 | **Proje Açıklamaları & Topoloji Şablonları** — 12 yeni topoloji şablonu ve detaylı proje açıklamaları güncellendi. |
+
+---
+
 ## v2.0.0 — 2026-07-20
 
 | Tarih | Özellik |
