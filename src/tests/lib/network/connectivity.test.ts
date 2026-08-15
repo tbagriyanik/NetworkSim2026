@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { checkConnectivity } from '@/lib/network/connectivity';
 import type { SwitchState } from '@/lib/network/types';
 import type { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 
@@ -127,5 +128,42 @@ describe('Connectivity Functions', () => {
     const result = simulatePing(false);
     expect(result.success).toBe(false);
     expect(result.error).toBe('Destination unreachable');
+  });
+
+  it('should fail connectivity when devices are on different subnets without a gateway/router', () => {
+    const hostA: CanvasDevice = {
+      id: 'pc-a',
+      type: 'pc',
+      name: 'PC-A',
+      ip: '192.168.1.10',
+      subnet: '255.255.255.0',
+      gateway: '192.168.2.1', // Invalid: not in 192.168.1.0/24 subnet
+      macAddress: '00:00:00:00:00:01',
+      x: 0, y: 0, status: 'online',
+      ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }]
+    };
+    const hostB: CanvasDevice = {
+      id: 'pc-b',
+      type: 'pc',
+      name: 'PC-B',
+      ip: '192.168.2.10',
+      subnet: '255.255.255.0',
+      gateway: '192.168.2.1',
+      macAddress: '00:00:00:00:00:02',
+      x: 100, y: 100, status: 'online',
+      ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }]
+    };
+    const directConn: CanvasConnection[] = [{
+      id: 'c-ab',
+      sourceDeviceId: 'pc-a',
+      sourcePort: 'eth0',
+      targetDeviceId: 'pc-b',
+      targetPort: 'eth0',
+      cableType: 'crossover',
+      active: true
+    }];
+
+    const res = checkConnectivity('pc-a', '192.168.2.10', [hostA, hostB], directConn);
+    expect(res.success).toBe(false);
   });
 });

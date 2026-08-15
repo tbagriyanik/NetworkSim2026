@@ -625,6 +625,64 @@ export function checkConnectivity(
     routingRequired = !isInSameSubnet;
 
     if (!isInSameSubnet) {
+      // 1. Source host (PC/IoT) needs a configured gateway in its own subnet to reach an outside subnet
+      if (sourceDeviceForSubnet.type === 'pc' || sourceDeviceForSubnet.type === 'iot') {
+        const sourceGateway = sourceDeviceForSubnet.gateway;
+        if (!sourceGateway) {
+          return {
+            success: false,
+            hops: hopNames.slice(0, 1),
+            hopIds: path.slice(0, 1),
+            targetId: targetDevice.id,
+            error: language === 'tr'
+              ? `Ağ geçidi (Default Gateway) yapılandırılmamış.`
+              : `Default Gateway is not configured on source host.`
+          };
+        }
+        // Gateway must be within the source's own subnet
+        const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, safeDeviceStates) || sourceDeviceForSubnet.subnet || '255.255.255.0';
+        if (!isIpInSubnet(sourceIp, sourceGateway, sourceSubnet)) {
+          return {
+            success: false,
+            hops: hopNames.slice(0, 1),
+            hopIds: path.slice(0, 1),
+            targetId: targetDevice.id,
+            error: language === 'tr'
+              ? `Ağ geçidi (Default Gateway) kaynak cihaz ile aynı ağ bloğunda değil.`
+              : `Default Gateway is not in the same subnet as the source host.`
+          };
+        }
+      }
+
+      // 2. Target host (PC/IoT) needs a configured gateway in its own subnet to send replies back to an outside subnet
+      if (targetDevice.type === 'pc' || targetDevice.type === 'iot') {
+        const targetGateway = targetDevice.gateway;
+        const targetIpToCheck = resolvedTargetIp;
+        const targetSubnet = targetDevice.subnet || '255.255.255.0';
+        if (!targetGateway) {
+          return {
+            success: false,
+            hops: hopNames,
+            hopIds: path,
+            targetId: targetDevice.id,
+            error: language === 'tr'
+              ? `Hedef cihazın Ağ Geçidi (Default Gateway) yapılandırılmamış.`
+              : `Default Gateway is not configured on target host.`
+          };
+        }
+        if (!isIpInSubnet(targetIpToCheck, targetGateway, targetSubnet)) {
+          return {
+            success: false,
+            hops: hopNames,
+            hopIds: path,
+            targetId: targetDevice.id,
+            error: language === 'tr'
+              ? `Hedef cihazın Ağ Geçidi (Default Gateway) hedef ağ bloğunda değil.`
+              : `Default Gateway is not in the same subnet as the target host.`
+          };
+        }
+      }
+
       // Different subnets - check if there's a Layer-3 routing device in path with proper routes
       let hasL3Gateway = false;
 
@@ -1456,13 +1514,17 @@ export function getPingDiagnostics(
     // 6. Check gateway configuration if different subnets
     if (!isSourceInSameSubnet) {
       if (!sourceDevice.gateway) {
-        reasons.push("Kaynak cihazın gateway'i yok (farklı subnet)");
+        reasons.push(language === 'tr' ? "Kaynak cihazın varsayılan ağ geçidi (Default Gateway) yok" : "Source device has no default gateway configured");
+      } else if (!isIpInSubnet(sourceIp, sourceDevice.gateway, sourceSubnet)) {
+        reasons.push(language === 'tr' ? "Kaynak cihazın varsayılan ağ geçidi aynı ağ bloğunda değil" : "Source default gateway is not in the same subnet");
       }
     }
 
     if (!isTargetInSameSubnet) {
       if (!targetDevice.gateway) {
-        reasons.push("Hedef cihazın gateway'i yok (farklı subnet)");
+        reasons.push(language === 'tr' ? "Hedef cihazın varsayılan ağ geçidi (Default Gateway) yok" : "Target device has no default gateway configured");
+      } else if (!isIpInSubnet(resolvedTargetIp, targetDevice.gateway, targetSubnet)) {
+        reasons.push(language === 'tr' ? "Hedef cihazın varsayılan ağ geçidi aynı ağ bloğunda değil" : "Target default gateway is not in the same subnet");
       }
     }
   }
