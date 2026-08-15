@@ -3,16 +3,25 @@
 import { CanvasDevice } from './networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import { sanitizeHTML, safeJSONForHTML } from '@/lib/security/sanitizer';
+import {
+  WIRELESS_CHANNELS_2_4GHZ,
+  WIRELESS_CHANNELS_5GHZ,
+  formatChannelDisplay,
+  normalizeChannel,
+} from '@/lib/network/wireless';
 
 interface WifiAdminConfig {
   enabled: boolean;
   ssid: string;
   security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
   password?: string;
-  channel: '2.4GHz' | '5GHz';
+  channel: '2.4GHz' | '5GHz' | string;
   mode: 'ap' | 'client';
   hidden?: boolean;
   maxClients?: number;
+  macFilterEnabled?: boolean;
+  macFilterMode?: 'allow' | 'deny';
+  macFilterList?: string[];
 }
 
 export interface ConnectedIoTDevice {
@@ -76,22 +85,32 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     { value: 'wpa3', label: isTurkish ? 'WPA3 Kişisel' : 'WPA3 Personal' },
   ];
 
-  const channelOptions = [
-    { value: '2.4GHz', label: isTurkish ? '2.4 GHz (Daha İyi Menzil)' : '2.4 GHz (Better Range)' },
-    { value: '5GHz', label: isTurkish ? '5 GHz (Daha Yüksek Hız)' : '5 GHz (Higher Speed)' },
-  ];
-
   const modeOptions = [
     { value: 'ap', label: isTurkish ? 'Erişim Noktası (AP)' : 'Access Point (AP)' },
     { value: 'client', label: isTurkish ? 'İstemci Modu' : 'Client Mode' },
   ];
 
+  const currentNormalizedChannel = normalizeChannel(wifi.channel);
+  const autoOption = `<option value="auto" ${(!wifi.channel || currentNormalizedChannel === 'auto') ? 'selected' : ''}>${isTurkish ? 'Otomatik (Auto - Önerilen)' : 'Auto (Recommended)'}</option>`;
+
+  const optgroup24 = `
+    <optgroup label="${isTurkish ? '2.4 GHz Bandı (Kanal 1 - 11)' : '2.4 GHz Band (Channels 1 - 11)'}">
+      <option value="2.4GHz" ${wifi.channel === '2.4GHz' ? 'selected' : ''}>${isTurkish ? '2.4 GHz (Varsayılan)' : '2.4 GHz (Default)'}</option>
+      ${WIRELESS_CHANNELS_2_4GHZ.map(opt => `<option value="${opt.value}" ${currentNormalizedChannel === opt.value ? 'selected' : ''}>${isTurkish ? opt.labelTr : opt.labelEn}</option>`).join('')}
+    </optgroup>
+  `;
+
+  const optgroup5 = `
+    <optgroup label="${isTurkish ? '5 GHz Bandı (Yüksek Hız)' : '5 GHz Band (High Speed)'}">
+      <option value="5GHz" ${wifi.channel === '5GHz' ? 'selected' : ''}>${isTurkish ? '5 GHz (Varsayılan)' : '5 GHz (Default)'}</option>
+      ${WIRELESS_CHANNELS_5GHZ.map(opt => `<option value="${opt.value}" ${currentNormalizedChannel === opt.value ? 'selected' : ''}>${isTurkish ? opt.labelTr : opt.labelEn}</option>`).join('')}
+    </optgroup>
+  `;
+
+  const channelSelect = autoOption + optgroup24 + optgroup5;
+
   const securitySelect = securityOptions.map(opt =>
     `<option value="${opt.value}" ${wifi.security === opt.value ? 'selected' : ''}>${opt.label}</option>`
-  ).join('');
-
-  const channelSelect = channelOptions.map(opt =>
-    `<option value="${opt.value}" ${wifi.channel === opt.value ? 'selected' : ''}>${opt.label}</option>`
   ).join('');
 
   const modeSelect = modeOptions.map(opt =>
@@ -657,7 +676,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           </div>
           
           <div class="form-group">
-            <label for="wifi-channel">${isTurkish ? 'Frekans Bandı' : 'Frequency Band'}</label>
+            <label for="wifi-channel">${isTurkish ? 'Yayın Kanalı (Kanal / Frekans)' : 'Broadcast Channel (Channel / Frequency)'}</label>
             <select id="wifi-channel" name="channel">
               ${channelSelect}
             </select>
@@ -839,19 +858,81 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
             <div><strong>SSID:</strong> ${safeSsid || (isTurkish ? 'Yapılandırılmadı' : 'Not configured')}</div>
             <div><strong>${isTurkish ? 'Güvenlik' : 'Security'}:</strong> ${wifi.security.toUpperCase()}</div>
-            <div><strong>${isTurkish ? 'Kanal' : 'Channel'}:</strong> ${sanitizeHTML(wifi.channel)}</div>
+            <div><strong>${isTurkish ? 'Kanal' : 'Channel'}:</strong> ${sanitizeHTML(formatChannelDisplay(wifi.channel, language))}</div>
             <div><strong>${isTurkish ? 'Mod' : 'Mode'}:</strong> ${sanitizeHTML(wifi.mode.toUpperCase())}</div>
+            <div style="grid-column: 1 / -1;"><strong>${isTurkish ? 'MAC Filtresi' : 'MAC Filter'}:</strong> ${wifi.macFilterEnabled ? (wifi.macFilterMode === 'deny' ? (isTurkish ? '● Etkin (Engelleme: ' + (wifi.macFilterList?.length || 0) + ' adres)' : '● Enabled (Deny: ' + (wifi.macFilterList?.length || 0) + ' items)') : (isTurkish ? '● Etkin (Erişim: ' + (wifi.macFilterList?.length || 0) + ' adres)' : '● Enabled (Allow: ' + (wifi.macFilterList?.length || 0) + ' items)')) : (isTurkish ? '○ Devre Dışı' : '○ Disabled')}</div>
           </div>
         </div>
       </div>
       
       <!-- Advanced Tab -->
       <div id="advanced-tab" class="content" style="display:${activeTab === 'advanced' ? 'block' : 'none'};">
-        <h2 class="panel-title">${isTurkish ? 'Gelişmiş Ayarlar' : 'Advanced Settings'}</h2>
-        <p style="color:var(--color-secondary-500);margin-bottom:20px;">${isTurkish ? 'İleri düzey kullanıcılar için gelişmiş yapılandırma seçenekleri.' : 'Advanced configuration options for power users.'}</p>
+        <h2 class="panel-title">${isTurkish ? 'Gelişmiş Kablosuz Ayarları' : 'Advanced Wireless Settings'}</h2>
+        <p style="color:var(--color-secondary-500);margin-bottom:20px;">${isTurkish ? 'Kablosuz MAC adresi filtreleme ve güvenlik kurallarını yapılandırın.' : 'Configure wireless MAC address filtering and security rules.'}</p>
+        
+        <div style="background:#ffffff;border:1px solid var(--color-secondary-200);border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;padding-bottom:12px;border-bottom:1px solid var(--color-secondary-200);">
+            <div>
+              <h3 style="margin:0 0 4px 0;font-size:16px;color:var(--color-secondary-900);">🛡️ ${isTurkish ? 'Kablosuz MAC Adresi Filtreleme' : 'Wireless MAC Address Filtering'}</h3>
+              <p style="margin:0;font-size:13px;color:var(--color-secondary-500);">${isTurkish ? 'Kablosuz ağa yalnızca izin verilen cihazların erişmesini sağlayın veya belirli cihazları engelleyin.' : 'Allow only permitted devices to access the wireless network or block specific devices.'}</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="mac-filter-enabled" ${wifi.macFilterEnabled ? 'checked' : ''} onchange="toggleMacFilterSection()">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div id="mac-filter-body" style="${wifi.macFilterEnabled ? '' : 'display:none;'}">
+            <div class="form-group" style="margin-bottom:20px;">
+              <label style="font-weight:600;margin-bottom:8px;display:block;">${isTurkish ? 'Filtreleme Kuralı / Modu' : 'Filtering Rule / Mode'}</label>
+              <div style="display:flex;flex-direction:column;gap:10px;background:#f8f9fa;padding:12px;border-radius:8px;border:1px solid var(--color-secondary-200);">
+                <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;">
+                  <input type="radio" name="macFilterMode" value="allow" ${wifi.macFilterMode !== 'deny' ? 'checked' : ''} style="margin-top:2px;">
+                  <div>
+                    <span style="font-weight:600;color:var(--color-success-700);">🟢 ${isTurkish ? 'Erişim Ver (Allow / Whitelist)' : 'Allow / Whitelist'}</span>
+                    <div style="font-size:12px;color:var(--color-secondary-500);">${isTurkish ? 'Yalnızca listedeki MAC adreslerine sahip cihazların bağlanmasına izin ver (Diğer tüm cihazlar engellenir).' : 'Allow only listed MAC addresses to connect (All other devices are blocked).'}</div>
+                  </div>
+                </label>
+                <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;">
+                  <input type="radio" name="macFilterMode" value="deny" ${wifi.macFilterMode === 'deny' ? 'checked' : ''} style="margin-top:2px;">
+                  <div>
+                    <span style="font-weight:600;color:var(--color-error-600);">🔴 ${isTurkish ? 'Engelle (Deny / Blacklist)' : 'Deny / Blacklist'}</span>
+                    <div style="font-size:12px;color:var(--color-secondary-500);">${isTurkish ? 'Listedeki MAC adreslerine sahip cihazların bağlanmasını engelle (Listede olmayan tüm cihazlar bağlanabilir).' : 'Block listed MAC addresses from connecting (All other devices can connect).'}</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div style="margin-bottom:20px;">
+              <label style="font-weight:600;margin-bottom:8px;display:block;">${isTurkish ? 'Yeni MAC Adresi Ekle' : 'Add New MAC Address'}</label>
+              <div style="display:flex;gap:10px;align-items:center;">
+                <input type="text" id="manual-mac-input" placeholder="00:11:22:33:44:55" maxlength="17" style="flex:1;padding:10px 12px;border:1px solid var(--color-secondary-300);border-radius:8px;font-family:monospace;font-size:14px;box-sizing:border-box;">
+                <button type="button" class="btn btn-secondary" onclick="addManualMac()" style="white-space:nowrap;padding:10px 16px;">
+                  ➕ ${isTurkish ? 'Ekle' : 'Add'}
+                </button>
+              </div>
+              <span class="hint" style="font-size:11px;color:var(--color-secondary-500);margin-top:4px;display:block;">${isTurkish ? 'Format: 00:11:22:33:44:55 veya 0011.2233.4455' : 'Format: 00:11:22:33:44:55 or 0011.2233.4455'}</span>
+            </div>
+
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <label style="font-weight:600;margin:0;">${isTurkish ? 'Filtre Listesi' : 'Filter List'}</label>
+                <span id="mac-list-count" style="font-size:12px;color:var(--color-secondary-500);">${(wifi.macFilterList || []).length} ${isTurkish ? 'adres' : 'items'}</span>
+              </div>
+              <div id="mac-filter-list-container" style="max-height:220px;overflow-y:auto;border:1px solid var(--color-secondary-200);border-radius:8px;background:#f8f9fa;padding:8px;">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+          </div>
+
+          <div class="actions" style="margin-top:20px;">
+            <button type="button" class="btn btn-primary" id="save-advanced-btn" onclick="saveMacFilterSettings()">💾 ${isTurkish ? 'Gelişmiş Ayarları Kaydet' : 'Save Advanced Settings'}</button>
+          </div>
+        </div>
+
         <div style="background:var(--color-warning-100);padding:15px;border-radius:10px;border:1px solid var(--color-warning-500);">
           <strong>⚠️ ${isTurkish ? 'Uyarı' : 'Warning'}</strong>
-          <p style="margin:10px 0 0 0;font-size:13px;">${isTurkish ? 'Gelişmiş ayarları değiştirmek ağ kararlılığını etkileyebilir. Dikkatli olun.' : 'Changing advanced settings may affect network stability. Proceed with caution.'}</p>
+          <p style="margin:6px 0 0 0;font-size:13px;">${isTurkish ? 'Erişim Ver (Allow) modunu seçtiğinizde, listede olmayan istemciler doğru şifreye sahip olsalar bile ağa bağlanamayacaktır.' : 'When selecting Allow mode, clients not in the list will not be able to connect even if they have the correct password.'}</p>
         </div>
       </div>
     
@@ -1064,6 +1145,145 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     hideTooltipsOnMobile();
     try { window.addEventListener('resize', hideTooltipsOnMobile); } catch (_) {}
 
+    // MAC Address Filtering JS Handlers
+    var currentMacFilterList = ${JSON.stringify(wifi.macFilterList || [])};
+    window.currentMacFilterList = currentMacFilterList;
+
+    window.toggleMacFilterSection = function() {
+      var enabled = !!document.getElementById('mac-filter-enabled')?.checked;
+      var body = document.getElementById('mac-filter-body');
+      if (body) body.style.display = enabled ? 'block' : 'none';
+    };
+
+    window.renderMacFilterList = function() {
+      var container = document.getElementById('mac-filter-list-container');
+      var countEl = document.getElementById('mac-list-count');
+      if (!container) return;
+
+      if (countEl) {
+        countEl.innerHTML = currentMacFilterList.length + (isTurkish ? ' adres' : ' items');
+      }
+
+      if (currentMacFilterList.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--color-secondary-400);font-size:13px;">' +
+          (isTurkish ? 'Henüz filtrelenen MAC adresi eklenmedi.' : 'No filtered MAC addresses added yet.') + '</div>';
+        return;
+      }
+
+      container.innerHTML = currentMacFilterList.map(function(mac, idx) {
+        return '<div style="display:flex;align-items:center;justify-content:space-between;background:white;padding:8px 12px;border-radius:6px;margin-bottom:6px;border:1px solid var(--color-secondary-200);">' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<span style="font-size:14px;">🏷️</span>' +
+            '<span style="font-family:monospace;font-weight:600;font-size:13px;color:var(--color-secondary-900);">' + mac + '</span>' +
+          '</div>' +
+          '<button type="button" onclick="removeMacFilter(' + idx + ')" style="background:var(--color-error-100);color:var(--color-error-600);border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;font-weight:600;" title="' + (isTurkish ? 'Kaldır' : 'Remove') + '">🗑️ ' + (isTurkish ? 'Kaldır' : 'Remove') + '</button>' +
+        '</div>';
+      }).join('');
+    };
+
+    window.isValidMacFormat = function(mac) {
+      if (!mac) return false;
+      var clean = mac.trim();
+      return /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(clean) ||
+             /^([0-9A-Fa-f]{4}[.]){2}[0-9A-Fa-f]{4}$/.test(clean) ||
+             /^[0-9A-Fa-f]{12}$/.test(clean);
+    };
+
+    window.formatMacAddress = function(mac) {
+      var clean = mac.replace(/[^0-9A-Fa-f]/g, '').toUpperCase();
+      if (clean.length === 12) {
+        return clean.match(/.{1,2}/g).join(':');
+      }
+      return mac.trim().toUpperCase();
+    };
+
+    window.addManualMac = function() {
+      var input = document.getElementById('manual-mac-input');
+      if (!input) return;
+      var val = (input.value || '').trim();
+      if (!val) {
+        try { window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: isTurkish ? 'Lütfen bir MAC adresi girin' : 'Please enter a MAC address' } }, '*'); } catch(_){}
+        return;
+      }
+      if (!isValidMacFormat(val)) {
+        try { window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: isTurkish ? 'Geçersiz MAC adresi formatı! (Örn: 00:11:22:33:44:55)' : 'Invalid MAC address format! (e.g., 00:11:22:33:44:55)' } }, '*'); } catch(_){}
+        return;
+      }
+      var formatted = formatMacAddress(val);
+      var exists = currentMacFilterList.some(function(m) {
+        return formatMacAddress(m) === formatted;
+      });
+      if (exists) {
+        try { window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: isTurkish ? 'Bu MAC adresi zaten listede var!' : 'This MAC address is already in the list!' } }, '*'); } catch(_){}
+        return;
+      }
+      currentMacFilterList.push(formatted);
+      input.value = '';
+      renderMacFilterList();
+    };
+
+    window.removeMacFilter = function(index) {
+      if (index >= 0 && index < currentMacFilterList.length) {
+        currentMacFilterList.splice(index, 1);
+        renderMacFilterList();
+      }
+    };
+
+    window.saveMacFilterSettings = function() {
+      var enabled = !!document.getElementById('wifi-enabled')?.checked;
+      var ssid = document.getElementById('wifi-ssid') ? (document.getElementById('wifi-ssid').value || '') : '';
+      var security = document.getElementById('wifi-security') ? (document.getElementById('wifi-security').value || '') : '';
+      var channel = document.getElementById('wifi-channel') ? (document.getElementById('wifi-channel').value || '') : '';
+      var mode = document.getElementById('wifi-mode') ? (document.getElementById('wifi-mode').value || '') : '';
+      var hidden = document.getElementById('wifi-hidden') ? !!document.getElementById('wifi-hidden').checked : false;
+      var maxClients = document.getElementById('max-clients') ? (document.getElementById('max-clients').value || 32) : 32;
+      var password = document.getElementById('wifi-password') ? (document.getElementById('wifi-password').value || '') : '';
+
+      var macFilterEnabled = !!document.getElementById('mac-filter-enabled')?.checked;
+      var macFilterMode = document.querySelector('input[name="macFilterMode"]:checked')?.value || 'allow';
+      var macFilterList = currentMacFilterList.slice();
+
+      var btn = document.getElementById('save-advanced-btn');
+      if (btn) {
+        var originalText = btn.innerHTML;
+        btn.innerHTML = (isTurkish ? '✓ Kaydedildi!' : '✓ Saved!');
+        setTimeout(function() {
+          btn.innerHTML = originalText;
+        }, 1000);
+      }
+
+      try {
+        window.parent.postMessage({
+          type: 'router-admin-save-wifi',
+          deviceId: ${jsDeviceId},
+          payload: {
+            enabled: enabled,
+            ssid: ssid,
+            security: security,
+            channel: channel,
+            mode: mode,
+            hidden: hidden,
+            maxClients: Number(maxClients),
+            password: password,
+            macFilterEnabled: macFilterEnabled,
+            macFilterMode: macFilterMode,
+            macFilterList: macFilterList
+          }
+        }, '*');
+        window.parent.postMessage({
+          type: 'router-admin-toast',
+          payload: {
+            type: 'success',
+            message: isTurkish ? 'Gelişmiş ayarlar ve MAC filtreleme başarıyla kaydedildi!' : 'Advanced settings and MAC filtering saved successfully!'
+          }
+        }, '*');
+      } catch(err) {
+        console.warn('Could not save advanced settings:', err);
+      }
+    };
+
+    renderMacFilterList();
+
     // Form handling simulation (guarded)
     (function(){
       try {
@@ -1082,6 +1302,9 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           const hidden = get('wifi-hidden') ? !!get('wifi-hidden').checked : false;
           const maxClients = get('max-clients') ? (get('max-clients').value || 32) : 32;
           const password = get('wifi-password') ? (get('wifi-password').value || '') : '';
+          const macFilterEnabled = !!get('mac-filter-enabled')?.checked;
+          const macFilterMode = document.querySelector('input[name="macFilterMode"]:checked')?.value || 'allow';
+          const macFilterList = Array.isArray(window.currentMacFilterList) ? window.currentMacFilterList.slice() : [];
 
           if (!ssid) {
             const errorMessage = isTurkish ? 'Lütfen bir ağ adı (SSID) girin' : 'Please enter a network name (SSID)';
@@ -1127,7 +1350,10 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
                 mode,
                 hidden,
                 maxClients: Number(maxClients),
-                password
+                password,
+                macFilterEnabled,
+                macFilterMode,
+                macFilterList
               }
             }, '*');
           } catch (err) {
@@ -1367,6 +1593,9 @@ function getDefaultWifiConfig(device: CanvasDevice): WifiAdminConfig {
     mode: device.wifi?.mode || 'ap',
     hidden: device.wifi?.hidden ?? false,
     maxClients: device.wifi?.maxClients ?? 32,
+    macFilterEnabled: device.wifi?.macFilterEnabled ?? false,
+    macFilterMode: device.wifi?.macFilterMode || 'allow',
+    macFilterList: device.wifi?.macFilterList || [],
   };
 }
 
@@ -1382,10 +1611,13 @@ function getRouterWifiConfig(device: CanvasDevice, state?: SwitchState): WifiAdm
     ssid: wlanWifi.ssid || base.ssid,
     security: wlanWifi.security || base.security,
     password: wlanWifi.password || base.password,
-    channel: (wlanWifi.channel as '2.4GHz' | '5GHz') || base.channel,
+    channel: wlanWifi.channel || base.channel,
     mode: (wlanWifi.mode === 'client' ? 'client' : 'ap'),
     hidden: wlanWifi.hidden ?? base.hidden,
     maxClients: wlanWifi.maxClients ?? base.maxClients,
+    macFilterEnabled: wlanWifi.macFilterEnabled ?? base.macFilterEnabled,
+    macFilterMode: wlanWifi.macFilterMode || base.macFilterMode,
+    macFilterList: wlanWifi.macFilterList || base.macFilterList,
   };
 }
 

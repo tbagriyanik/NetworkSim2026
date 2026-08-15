@@ -102,4 +102,102 @@ describe('WifiControlPanel', () => {
     expect(htmlEn).toContain('<option value="wep" selected>WEP (Wired Equivalent Privacy)</option>');
     expect(htmlEn).toContain('minlength="5"');
   });
+
+  it('renders broadcast channel optgroups and selections', () => {
+    const htmlTr = generateRouterAdminPage({
+      ...baseDevice,
+      wifi: {
+        enabled: true,
+        ssid: 'ChannelTestWiFi',
+        security: 'wpa2',
+        password: 'password123',
+        channel: '6',
+        mode: 'ap',
+      },
+    }, 'tr');
+
+    expect(htmlTr).toContain('id="wifi-channel"');
+    expect(htmlTr).toContain('optgroup');
+    expect(htmlTr).toContain('2.4 GHz Bandı');
+    expect(htmlTr).toContain('<option value="6" selected>Kanal 6 (2.437 GHz) - Önerilen</option>');
+    expect(htmlTr).toContain('<option value="11" >Kanal 11 (2.462 GHz) - Önerilen</option>');
+    expect(htmlTr).toContain('5 GHz Bandı');
+    expect(htmlTr).toContain('<option value="36" >Kanal 36 (5.180 GHz)</option>');
+
+    // Status tab formatting
+    expect(htmlTr).toContain('Kanal 6 (2.437 GHz)');
+
+    const htmlEn = generateRouterAdminPage({
+      ...baseDevice,
+      wifi: {
+        enabled: true,
+        ssid: 'ChannelTestWiFiEn',
+        security: 'wpa2',
+        password: 'password123',
+        channel: '36',
+        mode: 'ap',
+      },
+    }, 'en');
+
+    expect(htmlEn).toContain('<option value="36" selected>Channel 36 (5.180 GHz)</option>');
+    expect(htmlEn).toContain('Channel 36 (5.180 GHz)');
+  });
+
+  it('renders MAC address filtering settings in advanced tab and status tab', () => {
+    const htmlTr = generateRouterAdminPage({
+      ...baseDevice,
+      wifi: {
+        enabled: true,
+        ssid: 'MacFilterWiFi',
+        security: 'wpa2',
+        password: 'password123',
+        channel: '6',
+        mode: 'ap',
+        macFilterEnabled: true,
+        macFilterMode: 'allow',
+        macFilterList: ['00:11:22:33:44:55', 'AA:BB:CC:DD:EE:FF'],
+      },
+    }, 'tr');
+
+    expect(htmlTr).toContain('id="mac-filter-enabled"');
+    expect(htmlTr).toContain('checked');
+    expect(htmlTr).toContain('value="allow" checked');
+    expect(htmlTr).toContain('00:11:22:33:44:55');
+    expect(htmlTr).toContain('AA:BB:CC:DD:EE:FF');
+    expect(htmlTr).toContain('Etkin (Erişim: 2 adres)');
+
+    const htmlDenyEn = generateRouterAdminPage({
+      ...baseDevice,
+      wifi: {
+        enabled: true,
+        ssid: 'MacFilterWiFiDeny',
+        security: 'wpa2',
+        password: 'password123',
+        channel: '6',
+        mode: 'ap',
+        macFilterEnabled: true,
+        macFilterMode: 'deny',
+        macFilterList: ['00:11:22:33:44:55'],
+      },
+    }, 'en');
+
+    expect(htmlDenyEn).toContain('value="deny" checked');
+    expect(htmlDenyEn).toContain('Enabled (Deny: 1 items)');
+
+    const htmlDisabled = generateRouterAdminPage({
+      ...baseDevice,
+      wifi: {
+        enabled: true,
+        ssid: 'DisabledMacFilter',
+        security: 'wpa2',
+        password: 'password123',
+        channel: '6',
+        mode: 'ap',
+        macFilterEnabled: false,
+      },
+    }, 'tr');
+
+    expect(htmlDisabled).toContain('○ Devre Dışı');
+  });
 });
+

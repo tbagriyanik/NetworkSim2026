@@ -572,7 +572,7 @@ export function PCPanel({
 
   // Scan for available APs in the network topology dynamically - returns one entry per AP (allows duplicates)
   const availableSSIDs = useMemo(() => {
-    const results: { ssid: string; deviceId: string; deviceName: string }[] = [];
+    const results: { ssid: string; deviceId: string; deviceName: string; channel?: string }[] = [];
     const addedSSIDs = new Set<string>();
 
     // First check deviceStates (router/switch/wlc runtime state) - only AP mode
@@ -594,6 +594,7 @@ export function PCPanel({
                   ssid: wlan.ssid,
                   deviceId: stateId,
                   deviceName: stateDevice?.name || stateId,
+                  channel: '2.4GHz',
                 });
               }
             }
@@ -612,6 +613,7 @@ export function PCPanel({
               ssid: wlanPort.wifi.ssid,
               deviceId: stateId,
               deviceName: stateDevice?.name || stateId,
+              channel: wlanPort.wifi.channel,
             });
           }
         }
@@ -637,6 +639,7 @@ export function PCPanel({
                   ssid: wlan.ssid,
                   deviceId: device.id,
                   deviceName: device.name,
+                  channel: '2.4GHz',
                 });
               }
             }
@@ -654,6 +657,7 @@ export function PCPanel({
               ssid: wifi.ssid,
               deviceId: device.id,
               deviceName: device.name,
+              channel: wifi.channel,
             });
           }
         }

@@ -8,6 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import type { SwitchState } from '@/lib/network/types';
 import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
+import {
+  WIRELESS_CHANNELS_2_4GHZ,
+  WIRELESS_CHANNELS_5GHZ,
+  formatChannelDisplay,
+  normalizeChannel,
+  wifiChannelMatches,
+  wifiMacFilterMatches,
+  getDeviceMacAddress,
+  getDeviceWifiConfig,
+  type DeviceWifiConfig,
+} from '@/lib/network/wireless';
 import type { CanvasDevice } from '../networkTopology.types';
 
 interface WirelessConfigTabProps {
@@ -24,9 +35,9 @@ interface WirelessConfigTabProps {
   setWifiSecurity: (val: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3') => void;
   wifiPassword: string;
   setWifiPassword: (val: string) => void;
-  wifiChannel: '2.4GHz' | '5GHz';
-  setWifiChannel: (val: '2.4GHz' | '5GHz') => void;
-  availableSSIDs: Array<{ ssid: string; deviceId: string; deviceName: string }>;
+  wifiChannel: string;
+  setWifiChannel: (val: string) => void;
+  availableSSIDs: Array<{ ssid: string; deviceId: string; deviceName: string; channel?: string }>;
   deviceStates?: Map<string, SwitchState>;
   topologyDevices: CanvasDevice[];
   deviceId: string;
@@ -189,8 +200,13 @@ export function WirelessConfigTab({
                     </div>
                   )}
                   {filteredSSIDs.map(entry => {
+                    const safeStates = ensureDeviceStatesMap(deviceStates);
+                    const apDevice = topologyDevices.find(d => d.id === entry.deviceId);
+                    const apWifi = apDevice ? getDeviceWifiConfig(apDevice, safeStates) : undefined;
+                    const apChannelStr = apWifi?.channel || entry.channel;
+                    const channelInfo = apChannelStr ? ` • ${formatChannelDisplay(apChannelStr, language)}` : '';
                     const hasDupe = availableSSIDs.filter(e => e.ssid === entry.ssid).length > 1;
-                    const label = hasDupe ? `${entry.ssid} (${entry.deviceName})` : entry.ssid;
+                    const label = hasDupe ? `${entry.ssid} (${entry.deviceName}${channelInfo})` : `${entry.ssid} (${entry.deviceName}${channelInfo})`;
                     return (
                       <button
                         key={`${entry.deviceId}-${entry.ssid}`}
@@ -305,13 +321,12 @@ export function WirelessConfigTab({
 
           <div className="space-y-2">
             <label className="text-[10px] font-black tracking-widest text-secondary-500 ml-1">
-              {language === 'tr' ? 'Kanal' : 'Channel'}
+              {language === 'tr' ? 'Yayın Kanalı (Kanal / Frekans)' : 'Broadcast Channel (Channel / Frequency)'}
             </label>
             <Select
-              value={wifiChannel}
+              value={normalizeChannel(wifiChannel)}
               onValueChange={(val: string) => {
-                const channel = val as '2.4GHz' | '5GHz';
-                setWifiChannel(channel);
+                setWifiChannel(val);
                 dispatchDeviceConfig({
                   wifi: {
                     enabled: wifiEnabled,
@@ -319,7 +334,7 @@ export function WirelessConfigTab({
                     bssid: wifiBSSID,
                     security: wifiSecurity,
                     password: wifiPassword,
-                    channel: channel,
+                    channel: val,
                     mode: 'client'
                   }
                 });
@@ -329,9 +344,20 @@ export function WirelessConfigTab({
               <SelectTrigger className={cn("w-full", isDark ? 'bg-background border-secondary-800 text-white' : 'bg-white border-secondary-200 text-secondary-900')}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="2.4GHz">2.4 GHz</SelectItem>
-                <SelectItem value="5GHz">5 GHz</SelectItem>
+              <SelectContent className="max-h-60">
+                <SelectItem value="auto">{language === 'tr' ? '🌐 Otomatik (Tüm Kanallar)' : '🌐 Auto (All Channels)'}</SelectItem>
+                <SelectItem value="2.4GHz">📡 2.4 GHz ({language === 'tr' ? 'Varsayılan / Tüm 2.4G' : 'Default / All 2.4G'})</SelectItem>
+                {WIRELESS_CHANNELS_2_4GHZ.map(ch => (
+                  <SelectItem key={ch.value} value={ch.value}>
+                    {language === 'tr' ? ch.labelTr : ch.labelEn}
+                  </SelectItem>
+                ))}
+                <SelectItem value="5GHz">⚡ 5 GHz ({language === 'tr' ? 'Varsayılan / Tüm 5G' : 'Default / All 5G'})</SelectItem>
+                {WIRELESS_CHANNELS_5GHZ.map(ch => (
+                  <SelectItem key={ch.value} value={ch.value}>
+                    {language === 'tr' ? ch.labelTr : ch.labelEn}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -342,8 +368,18 @@ export function WirelessConfigTab({
           (() => {
             if (!wifiEnabled) return 'text-secondary-500 bg-secondary-500/5';
             if (!wifiSSID) return 'text-warning-500 bg-warning-500/10';
-            const isConnected = !!deviceStates && Array.from(ensureDeviceStatesMap(deviceStates).entries()).some(([id, state]) => {
-              // WLC broadcasts SSIDs through wlcWlans state
+            const safeStates = ensureDeviceStatesMap(deviceStates);
+            const currentDevice = topologyDevices.find(d => d.id === deviceId);
+            const clientWifi: DeviceWifiConfig = {
+              enabled: wifiEnabled,
+              ssid: wifiSSID,
+              bssid: wifiBSSID,
+              security: wifiSecurity,
+              password: wifiPassword,
+              channel: normalizeChannel(wifiChannel),
+              mode: 'client',
+            };
+            const isConnected = Array.from(safeStates.entries()).some(([id, state]) => {
               if (state.wlcWlans) {
                 const wlan = Object.values(state.wlcWlans).find(w => w.status === 'enabled' && w.ssid === wifiSSID);
                 if (wlan) {
@@ -360,7 +396,29 @@ export function WirelessConfigTab({
               const apSecurity = wlan.wifi?.security || 'open';
               if (apSecurity !== wifiSecurity) return false;
               if (apSecurity !== 'open' && wlan.wifi?.password !== wifiPassword) return false;
-              return true;
+              const apWifi: DeviceWifiConfig = {
+                enabled: true,
+                ssid: wlan.wifi?.ssid || '',
+                security: (wlan.wifi?.security || 'open') as DeviceWifiConfig['security'],
+                password: wlan.wifi?.password,
+                channel: wlan.wifi?.channel || '2.4GHz',
+                mode: 'ap',
+                macFilterEnabled: Boolean(wlan.wifi?.macFilterEnabled),
+                macFilterMode: wlan.wifi?.macFilterMode || 'allow',
+                macFilterList: Array.isArray(wlan.wifi?.macFilterList) ? wlan.wifi.macFilterList : [],
+              };
+              return wifiChannelMatches(apWifi, clientWifi) && wifiMacFilterMatches(apWifi, currentDevice, safeStates);
+            }) || topologyDevices.some(apDevice => {
+              if (apDevice.id === deviceId) return false;
+              if (apDevice.type !== 'router' && apDevice.type !== 'switchL2' && apDevice.type !== 'switchL3' && apDevice.type !== 'wlc') return false;
+              const apWifi = getDeviceWifiConfig(apDevice, safeStates);
+              if (!apWifi || apWifi.mode !== 'ap' || !apWifi.ssid || !apWifi.enabled) return false;
+              if (apWifi.ssid.toLowerCase() !== wifiSSID.toLowerCase()) return false;
+              if (wifiBSSID && wifiBSSID !== apDevice.id) return false;
+              const apSecurity = apWifi.security || 'open';
+              if (apSecurity !== wifiSecurity) return false;
+              if (apSecurity !== 'open' && apWifi.password !== wifiPassword) return false;
+              return wifiChannelMatches(apWifi, clientWifi) && wifiMacFilterMatches(apWifi, currentDevice, safeStates);
             });
             return isConnected ? 'text-success-500 bg-success-500/10' : 'text-warning-500 bg-warning-500/10';
           })()
@@ -370,8 +428,18 @@ export function WirelessConfigTab({
             (() => {
               if (!wifiEnabled) return 'bg-secondary-500/10';
               if (!wifiSSID) return 'bg-warning-500/20';
-              const isConnected = !!deviceStates && Array.from(ensureDeviceStatesMap(deviceStates).entries()).some(([id, state]) => {
-                // WLC broadcasts SSIDs through wlcWlans state
+              const safeStates = ensureDeviceStatesMap(deviceStates);
+              const currentDevice = topologyDevices.find(d => d.id === deviceId);
+              const clientWifi: DeviceWifiConfig = {
+                enabled: wifiEnabled,
+                ssid: wifiSSID,
+                bssid: wifiBSSID,
+                security: wifiSecurity,
+                password: wifiPassword,
+                channel: normalizeChannel(wifiChannel),
+                mode: 'client',
+              };
+              const isConnected = Array.from(safeStates.entries()).some(([id, state]) => {
                 if (state.wlcWlans) {
                   const wlan = Object.values(state.wlcWlans).find(w => w.status === 'enabled' && w.ssid === wifiSSID);
                   if (wlan) {
@@ -388,7 +456,29 @@ export function WirelessConfigTab({
                 const apSecurity = wlan.wifi?.security || 'open';
                 if (apSecurity !== wifiSecurity) return false;
                 if (apSecurity !== 'open' && wlan.wifi?.password !== wifiPassword) return false;
-                return true;
+                const apWifi: DeviceWifiConfig = {
+                  enabled: true,
+                  ssid: wlan.wifi?.ssid || '',
+                  security: (wlan.wifi?.security || 'open') as DeviceWifiConfig['security'],
+                  password: wlan.wifi?.password,
+                  channel: wlan.wifi?.channel || '2.4GHz',
+                  mode: 'ap',
+                  macFilterEnabled: Boolean(wlan.wifi?.macFilterEnabled),
+                  macFilterMode: wlan.wifi?.macFilterMode || 'allow',
+                  macFilterList: Array.isArray(wlan.wifi?.macFilterList) ? wlan.wifi.macFilterList : [],
+                };
+                return wifiChannelMatches(apWifi, clientWifi) && wifiMacFilterMatches(apWifi, currentDevice, safeStates);
+              }) || topologyDevices.some(apDevice => {
+                if (apDevice.id === deviceId) return false;
+                if (apDevice.type !== 'router' && apDevice.type !== 'switchL2' && apDevice.type !== 'switchL3' && apDevice.type !== 'wlc') return false;
+                const apWifi = getDeviceWifiConfig(apDevice, safeStates);
+                if (!apWifi || apWifi.mode !== 'ap' || !apWifi.ssid || !apWifi.enabled) return false;
+                if (apWifi.ssid.toLowerCase() !== wifiSSID.toLowerCase()) return false;
+                if (wifiBSSID && wifiBSSID !== apDevice.id) return false;
+                const apSecurity = apWifi.security || 'open';
+                if (apSecurity !== wifiSecurity) return false;
+                if (apSecurity !== 'open' && apWifi.password !== wifiPassword) return false;
+                return wifiChannelMatches(apWifi, clientWifi) && wifiMacFilterMatches(apWifi, currentDevice, safeStates);
               });
               return isConnected ? 'bg-success-500/20' : 'bg-warning-500/20';
             })()
@@ -404,9 +494,22 @@ export function WirelessConfigTab({
                 ? (language === 'tr' ? 'Kablosuz alıcı kapalı' : 'Wireless receiver disabled')
                 : (() => {
                   if (!wifiSSID) return language === 'tr' ? 'WLAN0 aktif, ağ seçilmedi' : 'WLAN0 active, no network selected';
+                  const safeStates = ensureDeviceStatesMap(deviceStates);
+                  const currentDevice = topologyDevices.find(d => d.id === deviceId);
+                  const clientWifi: DeviceWifiConfig = {
+                    enabled: wifiEnabled,
+                    ssid: wifiSSID,
+                    bssid: wifiBSSID,
+                    security: wifiSecurity,
+                    password: wifiPassword,
+                    channel: normalizeChannel(wifiChannel),
+                    mode: 'client',
+                  };
 
-                  const foundInStates = !!deviceStates && Array.from(ensureDeviceStatesMap(deviceStates).entries()).find(([id, state]) => {
-                    // WLC broadcasts SSIDs through wlcWlans state
+                  let mismatchedApChannel: string | null = null;
+                  let isBlockedByMac = false;
+
+                  const foundInStates = Array.from(safeStates.entries()).find(([id, state]) => {
                     if (state.wlcWlans) {
                       const wlan = Object.values(state.wlcWlans).find(w => w.status === 'enabled' && w.ssid === wifiSSID);
                       if (wlan) {
@@ -423,23 +526,66 @@ export function WirelessConfigTab({
                     const apSecurity = wlan.wifi?.security || 'open';
                     if (apSecurity !== wifiSecurity) return false;
                     if (apSecurity !== 'open' && wlan.wifi?.password !== wifiPassword) return false;
+                    const apWifi: DeviceWifiConfig = {
+                      enabled: true,
+                      ssid: wlan.wifi?.ssid || '',
+                      security: (wlan.wifi?.security || 'open') as DeviceWifiConfig['security'],
+                      password: wlan.wifi?.password,
+                      channel: wlan.wifi?.channel || '2.4GHz',
+                      mode: 'ap',
+                      macFilterEnabled: Boolean(wlan.wifi?.macFilterEnabled),
+                      macFilterMode: wlan.wifi?.macFilterMode || 'allow',
+                      macFilterList: Array.isArray(wlan.wifi?.macFilterList) ? wlan.wifi.macFilterList : [],
+                    };
+                    if (!wifiChannelMatches(apWifi, clientWifi)) {
+                      mismatchedApChannel = apWifi.channel;
+                      return false;
+                    }
+                    if (!wifiMacFilterMatches(apWifi, currentDevice, safeStates)) {
+                      isBlockedByMac = true;
+                      return false;
+                    }
                     return true;
                   });
 
                   const foundInTopology = !foundInStates && topologyDevices.find((apDevice) => {
                     if (apDevice.id === deviceId) return false;
-                    if (apDevice.type !== 'router' && apDevice.type !== 'switchL2' && apDevice.type !== 'switchL3') return false;
-                    const apWifi = apDevice.wifi;
+                    if (apDevice.type !== 'router' && apDevice.type !== 'switchL2' && apDevice.type !== 'switchL3' && apDevice.type !== 'wlc') return false;
+                    const apWifi = getDeviceWifiConfig(apDevice, safeStates);
                     if (!apWifi || apWifi.mode !== 'ap' || !apWifi.ssid) return false;
                     if (apWifi.ssid !== wifiSSID) return false;
                     const apSecurity = apWifi.security || 'open';
                     if (apSecurity !== wifiSecurity) return false;
                     if (apSecurity !== 'open' && apWifi.password !== wifiPassword) return false;
+                    if (!wifiChannelMatches(apWifi, clientWifi)) {
+                      mismatchedApChannel = apWifi.channel;
+                      return false;
+                    }
+                    if (!wifiMacFilterMatches(apWifi, currentDevice, safeStates)) {
+                      isBlockedByMac = true;
+                      return false;
+                    }
                     return true;
                   });
 
                   const isConnected = !!foundInStates || !!foundInTopology;
-                  if (isConnected && wifiSSID) return language === 'tr' ? `Bağlı • SSID: ${wifiSSID}` : `Connected • SSID: ${wifiSSID}`;
+                  if (isConnected && wifiSSID) {
+                    const chLabel = formatChannelDisplay(wifiChannel, language);
+                    return language === 'tr' ? `Bağlı • SSID: ${wifiSSID} (${chLabel})` : `Connected • SSID: ${wifiSSID} (${chLabel})`;
+                  }
+                  if (isBlockedByMac) {
+                    const clientMac = getDeviceMacAddress(currentDevice, safeStates) || (language === 'tr' ? 'Bilinmiyor' : 'Unknown');
+                    return language === 'tr'
+                      ? `MAC Filtresi Engelledi • PC MAC: ${clientMac}`
+                      : `Blocked by AP MAC Filter • PC MAC: ${clientMac}`;
+                  }
+                  if (mismatchedApChannel) {
+                    const apCh = formatChannelDisplay(mismatchedApChannel, language);
+                    const clientCh = formatChannelDisplay(wifiChannel, language);
+                    return language === 'tr'
+                      ? `Kanal Uyuşmazlığı: AP (${apCh}) ≠ PC (${clientCh})`
+                      : `Channel Mismatch: AP (${apCh}) ≠ PC (${clientCh})`;
+                  }
                   return wifiSSID
                     ? (language === 'tr' ? `Ağ bulunamadı: ${wifiSSID}` : `Network not found: ${wifiSSID}`)
                     : (language === 'tr' ? 'WLAN0 aktif, ağ seçilmedi' : 'WLAN0 active, no network selected');

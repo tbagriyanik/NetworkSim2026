@@ -175,6 +175,9 @@ export function usePCPanelRouterAdmin({
           mode: payload.mode || 'ap',
           hidden: Boolean(payload.hidden),
           maxClients: Number(payload.maxClients || 32),
+          macFilterEnabled: Boolean(payload.macFilterEnabled),
+          macFilterMode: (payload.macFilterMode === 'deny' ? 'deny' : 'allow') as 'allow' | 'deny',
+          macFilterList: Array.isArray(payload.macFilterList) ? payload.macFilterList : [],
           bssid: device?.wifi?.bssid || '',
         };
 

@@ -495,7 +495,7 @@ export function useCanvasActions({
               && (wifi?.mode === 'ap' || wifi?.mode === 'root');
             if (isAccessPoint && wifi?.ssid) {
               const wlanId = 1;
-              const channel = wifi.channel === '5GHz' ? 36 : 6;
+              const channel = wifi.channel === '5GHz' ? 36 : (parseInt(String(wifi.channel), 10) || 6);
               cli += `    ! ${isTr ? 'Access Point yapılandırması' : 'Access Point configuration'}\n`;
               cli += `    wlan ${wifi.ssid} ${wlanId} ${wifi.ssid}\n`;
               if (wifi.security && wifi.security !== 'open') {

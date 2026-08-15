@@ -91,10 +91,13 @@ export interface Port {
     ssid: string;
     security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
     password?: string;
-    channel: '2.4GHz' | '5GHz';
+    channel: '2.4GHz' | '5GHz' | string;
     mode: 'ap' | 'client' | 'disabled' | 'sta';
     hidden?: boolean;
     maxClients?: number;
+    macFilterEnabled?: boolean;
+    macFilterMode?: 'allow' | 'deny';
+    macFilterList?: string[];
   };
   spanningTree?: {
     role?: 'root' | 'designated' | 'alternate' | 'backup' | 'disabled';

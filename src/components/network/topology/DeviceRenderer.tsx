@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import { SwitchState, Port } from '@/lib/network/types';
 import { getWirelessSignalStrength } from '@/lib/network/connectivity';
+import { getChannelBand } from '@/lib/network/wireless';
 import { getDeviceWidth } from '../networkTopology.helpers';
 import {
   STATUS_COLORS,
@@ -332,7 +333,7 @@ export function DeviceRenderer({
 
         if (!isEnabled || isPoweredOff) return null;
 
-        const is5Ghz = activeWifiConfig?.channel === '5GHz';
+        const is5Ghz = getChannelBand(activeWifiConfig?.channel) === '5GHz';
         const coverageRadius = is5Ghz ? 250 : 150;
         
         return (
@@ -497,7 +498,7 @@ export function DeviceRenderer({
 
         if (!showWifi) return null;
 
-        const is5Ghz = activeWifiConfig?.channel === '5GHz';
+        const is5Ghz = getChannelBand(activeWifiConfig?.channel) === '5GHz';
         const hasPassword = activeWifiConfig?.security && activeWifiConfig.security !== 'open';
 
         if (usesWifiBars) {

@@ -4,16 +4,59 @@ import { ensureDeviceStatesMap } from './networkUtils';
 
 export type WifiMode = 'ap' | 'client' | 'disabled' | 'sta';
 
+export interface WirelessChannelOption {
+  value: string;
+  channelNumber?: number;
+  frequencyGhz: number;
+  band: '2.4GHz' | '5GHz';
+  labelTr: string;
+  labelEn: string;
+}
+
+export const WIRELESS_CHANNELS_2_4GHZ: WirelessChannelOption[] = [
+  { value: '1', channelNumber: 1, frequencyGhz: 2.412, band: '2.4GHz', labelTr: 'Kanal 1 (2.412 GHz)', labelEn: 'Channel 1 (2.412 GHz)' },
+  { value: '2', channelNumber: 2, frequencyGhz: 2.417, band: '2.4GHz', labelTr: 'Kanal 2 (2.417 GHz)', labelEn: 'Channel 2 (2.417 GHz)' },
+  { value: '3', channelNumber: 3, frequencyGhz: 2.422, band: '2.4GHz', labelTr: 'Kanal 3 (2.422 GHz)', labelEn: 'Channel 3 (2.422 GHz)' },
+  { value: '4', channelNumber: 4, frequencyGhz: 2.427, band: '2.4GHz', labelTr: 'Kanal 4 (2.427 GHz)', labelEn: 'Channel 4 (2.427 GHz)' },
+  { value: '5', channelNumber: 5, frequencyGhz: 2.432, band: '2.4GHz', labelTr: 'Kanal 5 (2.432 GHz)', labelEn: 'Channel 5 (2.432 GHz)' },
+  { value: '6', channelNumber: 6, frequencyGhz: 2.437, band: '2.4GHz', labelTr: 'Kanal 6 (2.437 GHz) - Önerilen', labelEn: 'Channel 6 (2.437 GHz) - Recommended' },
+  { value: '7', channelNumber: 7, frequencyGhz: 2.442, band: '2.4GHz', labelTr: 'Kanal 7 (2.442 GHz)', labelEn: 'Channel 7 (2.442 GHz)' },
+  { value: '8', channelNumber: 8, frequencyGhz: 2.447, band: '2.4GHz', labelTr: 'Kanal 8 (2.447 GHz)', labelEn: 'Channel 8 (2.447 GHz)' },
+  { value: '9', channelNumber: 9, frequencyGhz: 2.452, band: '2.4GHz', labelTr: 'Kanal 9 (2.452 GHz)', labelEn: 'Channel 9 (2.452 GHz)' },
+  { value: '10', channelNumber: 10, frequencyGhz: 2.457, band: '2.4GHz', labelTr: 'Kanal 10 (2.457 GHz)', labelEn: 'Channel 10 (2.457 GHz)' },
+  { value: '11', channelNumber: 11, frequencyGhz: 2.462, band: '2.4GHz', labelTr: 'Kanal 11 (2.462 GHz) - Önerilen', labelEn: 'Channel 11 (2.462 GHz) - Recommended' },
+];
+
+export const WIRELESS_CHANNELS_5GHZ: WirelessChannelOption[] = [
+  { value: '36', channelNumber: 36, frequencyGhz: 5.180, band: '5GHz', labelTr: 'Kanal 36 (5.180 GHz)', labelEn: 'Channel 36 (5.180 GHz)' },
+  { value: '40', channelNumber: 40, frequencyGhz: 5.200, band: '5GHz', labelTr: 'Kanal 40 (5.200 GHz)', labelEn: 'Channel 40 (5.200 GHz)' },
+  { value: '44', channelNumber: 44, frequencyGhz: 5.220, band: '5GHz', labelTr: 'Kanal 44 (5.220 GHz)', labelEn: 'Channel 44 (5.220 GHz)' },
+  { value: '48', channelNumber: 48, frequencyGhz: 5.240, band: '5GHz', labelTr: 'Kanal 48 (5.240 GHz)', labelEn: 'Channel 48 (5.240 GHz)' },
+  { value: '149', channelNumber: 149, frequencyGhz: 5.745, band: '5GHz', labelTr: 'Kanal 149 (5.745 GHz)', labelEn: 'Channel 149 (5.745 GHz)' },
+  { value: '153', channelNumber: 153, frequencyGhz: 5.765, band: '5GHz', labelTr: 'Kanal 153 (5.765 GHz)', labelEn: 'Channel 153 (5.765 GHz)' },
+  { value: '157', channelNumber: 157, frequencyGhz: 5.785, band: '5GHz', labelTr: 'Kanal 157 (5.785 GHz)', labelEn: 'Channel 157 (5.785 GHz)' },
+  { value: '161', channelNumber: 161, frequencyGhz: 5.805, band: '5GHz', labelTr: 'Kanal 161 (5.805 GHz)', labelEn: 'Channel 161 (5.805 GHz)' },
+  { value: '165', channelNumber: 165, frequencyGhz: 5.825, band: '5GHz', labelTr: 'Kanal 165 (5.825 GHz)', labelEn: 'Channel 165 (5.825 GHz)' },
+];
+
+export const ALL_WIRELESS_CHANNELS: WirelessChannelOption[] = [
+  ...WIRELESS_CHANNELS_2_4GHZ,
+  ...WIRELESS_CHANNELS_5GHZ,
+];
+
 export interface DeviceWifiConfig {
   enabled: boolean;
   ssid: string;
   bssid?: string;
   password?: string;
   security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
-  channel: '2.4GHz' | '5GHz';
+  channel: '2.4GHz' | '5GHz' | string;
   mode: WifiMode;
   hidden?: boolean;
   maxClients?: number;
+  macFilterEnabled?: boolean;
+  macFilterMode?: 'allow' | 'deny';
+  macFilterList?: string[];
 }
 
 const normalizeWifiMode = (mode: string | undefined, fallback: WifiMode): WifiMode => {
@@ -35,11 +78,136 @@ const normalizeSecurity = (security: string | undefined): DeviceWifiConfig['secu
   return 'open';
 };
 
-const normalizeChannel = (channel: string | undefined): DeviceWifiConfig['channel'] => {
-  const value = channel ? channel.toLowerCase() : '2.4ghz';
-  if (value === '5ghz') return '5GHz';
-  return '2.4GHz';
+export const normalizeChannel = (channel: string | number | undefined): string => {
+  if (!channel) return '2.4GHz';
+  const trimmed = String(channel).trim();
+  const lower = trimmed.toLowerCase();
+  if (lower === 'auto' || lower === 'otomatik') return 'auto';
+  if (lower === '5ghz') return '5GHz';
+  if (lower === '2.4ghz') return '2.4GHz';
+
+  const numMatch = trimmed.match(/\d+/);
+  if (numMatch) {
+    const num = parseInt(numMatch[0], 10);
+    if (!isNaN(num) && num >= 1 && num <= 165) {
+      return String(num);
+    }
+  }
+
+  return trimmed;
 };
+
+export function getChannelBand(channel: string | undefined): '2.4GHz' | '5GHz' | 'auto' {
+  if (!channel) return '2.4GHz';
+  const val = channel.trim().toLowerCase();
+  if (val === 'auto' || val === 'otomatik') return 'auto';
+  if (val === '5ghz') return '5GHz';
+  if (val === '2.4ghz') return '2.4GHz';
+  const numMatch = val.match(/\d+/);
+  if (numMatch) {
+    const num = parseInt(numMatch[0], 10);
+    if (!isNaN(num) && num >= 36) return '5GHz';
+  }
+  return '2.4GHz';
+}
+
+export function formatChannelDisplay(channel: string | undefined, language = 'tr'): string {
+  const isTr = language === 'tr';
+  if (!channel) return isTr ? 'Otomatik' : 'Auto';
+  const val = channel.trim();
+  const lower = val.toLowerCase();
+  if (lower === 'auto') return isTr ? 'Otomatik' : 'Auto';
+  if (lower === '2.4ghz') return '2.4 GHz';
+  if (lower === '5ghz') return '5 GHz';
+
+  const numMatch = val.match(/\d+/);
+  if (!numMatch) return val;
+  const num = parseInt(numMatch[0], 10);
+  if (isNaN(num)) return val;
+
+  const ch24 = WIRELESS_CHANNELS_2_4GHZ.find(c => c.channelNumber === num);
+  if (ch24) return isTr ? `Kanal ${num} (${ch24.frequencyGhz.toFixed(3)} GHz)` : `Channel ${num} (${ch24.frequencyGhz.toFixed(3)} GHz)`;
+
+  const ch5 = WIRELESS_CHANNELS_5GHZ.find(c => c.channelNumber === num);
+  if (ch5) return isTr ? `Kanal ${num} (${ch5.frequencyGhz.toFixed(3)} GHz)` : `Channel ${num} (${ch5.frequencyGhz.toFixed(3)} GHz)`;
+
+  return isTr ? `Kanal ${num}` : `Channel ${num}`;
+}
+
+export function wifiChannelMatches(apWifi: DeviceWifiConfig, clientWifi: DeviceWifiConfig): boolean {
+  const apCh = normalizeChannel(apWifi.channel);
+  const clientCh = normalizeChannel(clientWifi.channel);
+
+  if (!clientCh || clientCh === 'auto' || !apCh || apCh === 'auto') return true;
+  if (clientCh.toLowerCase() === apCh.toLowerCase()) return true;
+
+  const apBand = getChannelBand(apCh);
+  const clientBand = getChannelBand(clientCh);
+
+  if (clientCh === '2.4GHz') return apBand === '2.4GHz';
+  if (clientCh === '5GHz') return apBand === '5GHz';
+  if (apCh === '2.4GHz') return clientBand === '2.4GHz';
+  if (apCh === '5GHz') return clientBand === '5GHz';
+
+  const clientNum = parseInt(clientCh, 10);
+  const apNum = parseInt(apCh, 10);
+  if (!isNaN(clientNum) && !isNaN(apNum)) {
+    return clientNum === apNum;
+  }
+
+  return apBand === clientBand;
+}
+
+export function normalizeMac(mac: string | undefined): string {
+  if (!mac) return '';
+  const clean = mac.toLowerCase().replace(/[^0-9a-f]/g, '');
+  if (clean.length === 12) {
+    return clean.match(/.{1,2}/g)?.join(':') || clean;
+  }
+  return mac.trim().toLowerCase();
+}
+
+export function getDeviceMacAddress(device: CanvasDevice | undefined, deviceStates?: Map<string, SwitchState>): string | undefined {
+  if (!device) return undefined;
+  if (device.macAddress) return device.macAddress;
+  const wlanPort = device.ports?.find(p => p.id === 'wlan0');
+  if (wlanPort?.macAddress) return wlanPort.macAddress;
+  if (device.ports?.[0]?.macAddress) return device.ports[0].macAddress;
+
+  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+  const state = safeDeviceStates?.get(device.id);
+  if (state?.ports?.['wlan0']?.macAddress) return state.ports['wlan0'].macAddress;
+  if (state?.macAddress) return state.macAddress;
+
+  return undefined;
+}
+
+export function wifiMacFilterMatches(
+  apWifi: DeviceWifiConfig | undefined,
+  clientDevice: CanvasDevice | undefined,
+  deviceStates?: Map<string, SwitchState>
+): boolean {
+  if (!apWifi || !apWifi.macFilterEnabled) return true;
+
+  const filterList = Array.isArray(apWifi.macFilterList) ? apWifi.macFilterList : [];
+  const filterMode = apWifi.macFilterMode === 'deny' ? 'deny' : 'allow';
+
+  const clientMac = getDeviceMacAddress(clientDevice, deviceStates);
+  if (!clientMac) {
+    return filterMode === 'deny';
+  }
+
+  const normalizedClientMac = normalizeMac(clientMac);
+  const isInList = filterList.some(item => normalizeMac(item) === normalizedClientMac);
+
+  if (filterMode === 'deny') {
+    // Blacklist: reject if in list
+    return !isInList;
+  }
+
+  // Whitelist (allow): allow only if in list
+  return isInList;
+}
 
 export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStates?: Map<string, SwitchState>): DeviceWifiConfig | undefined {
   if (!device) return undefined;
@@ -60,6 +228,9 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
       mode,
       hidden: wlanState.wifi.hidden,
       maxClients: wlanState.wifi.maxClients,
+      macFilterEnabled: Boolean(wlanState.wifi.macFilterEnabled),
+      macFilterMode: wlanState.wifi.macFilterMode === 'deny' ? 'deny' : 'allow',
+      macFilterList: Array.isArray(wlanState.wifi.macFilterList) ? wlanState.wifi.macFilterList : [],
     };
   }
 
@@ -74,6 +245,9 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
       mode,
       hidden: device.wifi.hidden,
       maxClients: device.wifi.maxClients,
+      macFilterEnabled: Boolean(device.wifi.macFilterEnabled),
+      macFilterMode: device.wifi.macFilterMode === 'deny' ? 'deny' : 'allow',
+      macFilterList: Array.isArray(device.wifi.macFilterList) ? device.wifi.macFilterList : [],
     };
   }
 
@@ -89,6 +263,9 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
       mode,
       hidden: wlanPort.wifi.hidden,
       maxClients: wlanPort.wifi.maxClients,
+      macFilterEnabled: Boolean(wlanPort.wifi.macFilterEnabled),
+      macFilterMode: wlanPort.wifi.macFilterMode === 'deny' ? 'deny' : 'allow',
+      macFilterList: Array.isArray(wlanPort.wifi.macFilterList) ? wlanPort.wifi.macFilterList : [],
     };
   }
 
@@ -121,6 +298,10 @@ export function getWirelessSignalStrength(
         return;
       }
     } else if (apWifi.ssid?.toLowerCase() !== targetSsid) {
+      return;
+    } else if (!wifiChannelMatches(apWifi, pcWifi)) {
+      return;
+    } else if (!wifiMacFilterMatches(apWifi, device, safeDeviceStates)) {
       return;
     }
     const dx = (device.x || 0) - (dev.x || 0);
@@ -164,6 +345,10 @@ export function getWirelessDistance(
         return;
       }
     } else if (apWifi.ssid?.toLowerCase() !== targetSsid) {
+      return;
+    } else if (!wifiChannelMatches(apWifi, pcWifi)) {
+      return;
+    } else if (!wifiMacFilterMatches(apWifi, device, safeDeviceStates)) {
       return;
     }
     const dx = (device.x || 0) - (dev.x || 0);
@@ -212,6 +397,8 @@ export function buildImplicitWirelessConnections(
       if (clientWifi.bssid && clientWifi.bssid !== ap.id) continue;
       if (clientWifi.ssid.toLowerCase() !== apSsid) continue;
       if (!wifiSecurityMatches(apWifi, clientWifi)) continue;
+      if (!wifiChannelMatches(apWifi, clientWifi)) continue;
+      if (!wifiMacFilterMatches(apWifi, client, safeDeviceStates)) continue;
 
       const dx = (client.x || 0) - (ap.x || 0);
       const dy = (client.y || 0) - (ap.y || 0);
