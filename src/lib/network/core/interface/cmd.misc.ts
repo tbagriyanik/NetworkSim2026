@@ -91,6 +91,7 @@ export function cmdStandbyPreempt(state: SwitchState, input: string, _ctx: Comma
   const newPorts = applyToSelectedPorts(state, updatePort);
   return { success: true, newState: { ports: newPorts } };
 }
+
 export function cmdSsid(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
@@ -123,10 +124,10 @@ export function cmdEncryption(state: SwitchState, input: string, _ctx: CommandCo
     return { success: false, error: '% Wireless commands are only valid on WLAN interfaces' };
   }
 
-  const match = input.match(/^encryption\s+(open|wpa|wpa2|wpa3)$/i);
-  if (!match) return { success: false, error: '% Invalid encryption (open, wpa, wpa2, wpa3)' };
+  const match = input.match(/^encryption\s+(open|wep|wpa|wpa2|wpa3)$/i);
+  if (!match) return { success: false, error: '% Invalid encryption (open, wep, wpa, wpa2, wpa3)' };
 
-  const security = match[1].toLowerCase() as 'open' | 'wpa' | 'wpa2' | 'wpa3';
+  const security = match[1].toLowerCase() as 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
   const newPorts = applyToSelectedPorts(state, (port: Port) => ({
     ...port,
     wifi: { ...(port.wifi ?? { ssid: '', channel: '2.4GHz', mode: 'ap' }), security }
@@ -135,6 +136,7 @@ export function cmdEncryption(state: SwitchState, input: string, _ctx: CommandCo
   const updatedState = { ...state, ports: newPorts };
   return { success: true, newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) } };
 }
+
 export function cmdWlan(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   const match = input.match(/^wlan\s+(\S+)\s+(\d+)\s+(\S+)$/i);
   if (!match) {
@@ -219,6 +221,29 @@ export function cmdSecurityWpaPsk(state: SwitchState, input: string, _ctx: Comma
     newPorts['wlan0'] = {
       ...newPorts['wlan0'],
       wifi: { ...(newPorts['wlan0'].wifi ?? { ssid: '', channel: '2.4GHz', mode: 'ap' }), password, security: 'wpa2' }
+    };
+  }
+
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * Security WEP Key Set-Key - Set WEP key (WLC / AP)
+ */
+export function cmdSecurityWepKey(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/^security\s+wep\s+(?:key\s+set-key|key)\s+ascii\s+(?:0|7)\s+(.+)$/i);
+  if (!match) {
+    return { success: false, error: '% Invalid security command. Usage: security wep key set-key ascii {0|7} <key>' };
+  }
+
+  const password = match[1];
+
+  // Update wlan0 interface with WEP security
+  const newPorts = { ...state.ports };
+  if (newPorts['wlan0']) {
+    newPorts['wlan0'] = {
+      ...newPorts['wlan0'],
+      wifi: { ...(newPorts['wlan0'].wifi ?? { ssid: '', channel: '2.4GHz', mode: 'ap' }), password, security: 'wep' }
     };
   }
 
@@ -870,7 +895,3 @@ export function cmdUdldEnable(state: SwitchState, _input: string, _ctx: CommandC
   newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
   return { success: true, output: 'UDLD enabled', newState: { ports: newPorts } };
 }
-
-/**
- * Switchport Port-Security Aging Time
- */

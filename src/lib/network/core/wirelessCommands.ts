@@ -647,6 +647,25 @@ const cmdNoSecurityWpaPsk: CommandHandler = (state, _input, _ctx) => {
     return { success: true, output: '' };
 };
 
+const cmdNoSecurityWep: CommandHandler = (state, _input, _ctx) => {
+    if (state.currentMode !== 'config') {
+        return { success: false, error: iosModeError() };
+    }
+
+    if (!state.wlcWlans || Object.keys(state.wlcWlans).length === 0) {
+        return { success: false, error: 'Error: No WLANs configured' };
+    }
+
+    for (const wlan of Object.values(state.wlcWlans)) {
+        if (wlan.security === 'wep') {
+            wlan.security = 'open';
+            wlan.password = undefined;
+        }
+    }
+
+    return { success: true, output: '' };
+};
+
 const cmdWlanShutdown: CommandHandler = (state, _input, _ctx) => {
     if (state.currentMode !== 'config') {
         return { success: false, error: iosModeError() };
@@ -717,6 +736,7 @@ export const wirelessHandlers: Record<string, CommandHandler> = {
     'mbssid': cmdMbssid,
     'no mbssid': cmdNoMbssid,
     'no security wpa psk': cmdNoSecurityWpaPsk,
+    'no security wep': cmdNoSecurityWep,
     'wlan shutdown': cmdWlanShutdown,
     'no wlan shutdown': cmdNoWlanShutdown,
     'world-mode dot11d': cmdWorldModeDot11d,

@@ -712,13 +712,13 @@ Kurumsal kablosuz ağlarda bağımsız Layer 3 Switch tabanlı Access Point'ler 
 **Details:** WLC-2504, 2x LAP (Corp-WiFi & Guest-WiFi), VLAN 10/20, DHCP ve show komutları
 
 **Kısa Tanıtım:**
-Cisco Wireless LAN Controller (AIR-CT2504-K9) ile merkezi kablosuz ağ yönetimi. Lightweight AP'ler (LAP-Floor1 ve LAP-Floor2) CAPWAP benzeri tünelleme ile WLC'ye kayıt olur; WLAN profilleri (Corp-WiFi ve Guest-WiFi) WLC üzerinden merkezi yayınlanır.
+Wireless LAN Controller (AIR-CT2504-K9) ile merkezi kablosuz ağ yönetimi. Lightweight AP'ler (LAP-Floor1 ve LAP-Floor2) CAPWAP benzeri tünelleme ile WLC'ye kayıt olur; WLAN profilleri (Corp-WiFi ve Guest-WiFi) WLC üzerinden merkezi yayınlanır.
 
 **Adım Adım Proje Yapımı:**
 1. **Topoloji Oluşturma:**
    - 1 adet Router (R1)
    - 1 adet L3 Switch (SW1 - WS-C3650-24PS)
-   - 1 adet Cisco WLC (WLC-2504 - AIR-CT2504-K9)
+   - 1 adet WLC (WLC-2504 - AIR-CT2504-K9)
    - 1 adet Admin-PC (Yönetim İstemcisi)
    - 2 adet Lightweight AP L3 Switch (LAP-Floor1, LAP-Floor2: WS-C3650-24PS)
    - 2 adet Kablosuz Laptop (Laptop-Corp, Laptop-Guest)
@@ -762,7 +762,7 @@ Cisco Wireless LAN Controller (AIR-CT2504-K9) ile merkezi kablosuz ağ yönetimi
 5. **Test ve Doğrulama:**
    - Laptop-Corp > `ping 192.168.20.101` (Laptop-Guest arası Inter-VLAN kablosuz iletişim)
    - Laptop-Corp > `ping 192.168.1.10` (WLC Denetleyiciye ping)
-   - Laptop-Corp veya Admin-PC > `wget 192.168.1.10` (WLC Web Yönetim Paneli - Cisco AIR-CT2504 Web Dashboard açılır)
+   - Laptop-Corp veya Admin-PC > `wget 192.168.1.10` (WLC Web Yönetim Paneli - AIR-CT2504 Web Dashboard açılır)
 
 ⚠️ Not: Ağı Yenile (F5)
 

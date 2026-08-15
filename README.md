@@ -32,7 +32,7 @@ npm install && npm run dev
 | Total Lines / Toplam Satır (src/) | 119,690 |
 | Source Files / Kaynak Dosya | 474 |
 | Documentation Files / Dokümantasyon Dosya | 23 |
-| Example Projects / Örnek Proje | 43 |
+| Example Projects / Örnek Proje | 45 |
 | Guided Lessons / Rehberli Ders | 19 |
 | Exams / Sınavlar | 6 |
 | CLI Commands / CLI Komutları | 386+ |

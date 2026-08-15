@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { Network, Wifi, Monitor, Eye, EyeOff } from 'lucide-react';
@@ -20,8 +20,8 @@ interface WirelessConfigTabProps {
   setWifiSSID: (val: string) => void;
   wifiBSSID: string;
   setWifiBSSID: (val: string) => void;
-  wifiSecurity: 'open' | 'wpa' | 'wpa2' | 'wpa3';
-  setWifiSecurity: (val: 'open' | 'wpa' | 'wpa2' | 'wpa3') => void;
+  wifiSecurity: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
+  setWifiSecurity: (val: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3') => void;
   wifiPassword: string;
   setWifiPassword: (val: string) => void;
   wifiChannel: '2.4GHz' | '5GHz';
@@ -234,7 +234,7 @@ export function WirelessConfigTab({
             <Select
               value={wifiSecurity}
               onValueChange={(val: string) => {
-                const security = val as 'open' | 'wpa' | 'wpa2' | 'wpa3';
+                const security = val as 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
                 setWifiSecurity(security);
                 dispatchDeviceConfig({
                   wifi: {
@@ -255,6 +255,7 @@ export function WirelessConfigTab({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="open">{language === 'tr' ? 'Açık' : 'Open'}</SelectItem>
+                <SelectItem value="wep">WEP</SelectItem>
                 <SelectItem value="wpa">WPA</SelectItem>
                 <SelectItem value="wpa2">WPA2 Personal</SelectItem>
                 <SelectItem value="wpa3">WPA3</SelectItem>
@@ -265,7 +266,7 @@ export function WirelessConfigTab({
           {wifiSecurity !== 'open' && (
             <div className="space-y-2">
               <label className="text-[10px] font-black tracking-widest text-secondary-500 ml-1">
-                {language === 'tr' ? 'Parola' : 'Password'}
+                {language === 'tr' ? (wifiSecurity === 'wep' ? 'WEP Anahtarı' : 'Parola') : (wifiSecurity === 'wep' ? 'WEP Key' : 'Password')}
               </label>
               <div className="relative">
                 <Input
@@ -286,7 +287,7 @@ export function WirelessConfigTab({
                       }
                     });
                   }}
-                  placeholder={t.securityKey}
+                  placeholder={wifiSecurity === 'wep' ? (language === 'tr' ? 'WEP anahtarı girin (en az 5 karakter veya 10/26 hex hane)' : 'Enter WEP key (min 5 chars or 10/26 hex digits)') : t.securityKey}
                   disabled={!wifiEnabled}
                   className="bg-background pr-9"
                 />

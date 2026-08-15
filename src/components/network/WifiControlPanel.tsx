@@ -7,7 +7,7 @@ import { sanitizeHTML, safeJSONForHTML } from '@/lib/security/sanitizer';
 interface WifiAdminConfig {
   enabled: boolean;
   ssid: string;
-  security: 'open' | 'wpa' | 'wpa2' | 'wpa3';
+  security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
   password?: string;
   channel: '2.4GHz' | '5GHz';
   mode: 'ap' | 'client';
@@ -70,6 +70,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
 
   const securityOptions = [
     { value: 'open', label: isTurkish ? 'Açık (Güvenlik Yok)' : 'Open (No Security)' },
+    { value: 'wep', label: isTurkish ? 'WEP (Wired Equivalent Privacy)' : 'WEP (Wired Equivalent Privacy)' },
     { value: 'wpa', label: isTurkish ? 'WPA Kişisel' : 'WPA Personal' },
     { value: 'wpa2', label: isTurkish ? 'WPA2 Kişisel (Önerilen)' : 'WPA2 Personal (Recommended)' },
     { value: 'wpa3', label: isTurkish ? 'WPA3 Kişisel' : 'WPA3 Personal' },
@@ -97,14 +98,23 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     `<option value="${opt.value}" ${wifi.mode === opt.value ? 'selected' : ''}>${opt.label}</option>`
   ).join('');
 
+  const isWepMode = wifi.security === 'wep';
+  const passwordPlaceholder = isWepMode
+    ? (isTurkish ? 'WEP anahtarı girin (en az 5 karakter veya 10/26 hex hane)' : 'Enter WEP key (min 5 chars or 10/26 hex digits)')
+    : (isTurkish ? 'Parola girin (en az 8 karakter)' : 'Enter password (min 8 characters)');
+  const passwordHint = isWepMode
+    ? (isTurkish ? 'En az 5 karakter gereklidir (veya 10/26 hex hane)' : 'Minimum 5 characters required (or 10/26 hex digits)')
+    : (isTurkish ? 'En az 8 karakter gereklidir' : 'Minimum 8 characters required');
+  const passwordMinLength = isWepMode ? 5 : 8;
+
   const passwordField = `
     <div class="form-group">
       <label for="wifi-password">${isTurkish ? 'WiFi Parolası / Güvenlik Anahtarı' : 'WiFi Password / Security Key'}</label>
       <div style="position:relative;display:flex;align-items:center;">
-        <input type="password" id="wifi-password" name="password" value="${safeWifiPassword}" placeholder="${isTurkish ? 'Parola girin (en az 8 karakter)' : 'Enter password (min 8 characters)'}" minlength="8" aria-describedby="wifi-password-hint" style="padding-right:2.2rem;width:100%;border:1px solid var(--color-secondary-300);border-radius:8px;box-sizing:border-box;">
+        <input type="password" id="wifi-password" name="password" value="${safeWifiPassword}" placeholder="${passwordPlaceholder}" minlength="${passwordMinLength}" aria-describedby="wifi-password-hint" style="padding-right:2.2rem;width:100%;border:1px solid var(--color-secondary-300);border-radius:8px;box-sizing:border-box;">
         <button type="button" onclick="(function(btn){var inp=document.getElementById('wifi-password');if(inp.type==='password'){inp.type='text';btn.innerHTML='👁️';}else{inp.type='password';btn.innerHTML='👁';}})(this)" tabindex="-1" style="position:absolute;right:0.5rem;background:none;border:none;cursor:pointer;font-size:1rem;color:var(--color-secondary-500);padding:0;line-height:1;" title="${isTurkish ? 'Parolayı Göster/Gizle' : 'Show/Hide password'}">👁</button>
       </div>
-      <span class="hint" id="wifi-password-hint">${isTurkish ? 'En az 8 karakter gereklidir' : 'Minimum 8 characters required'}</span>
+      <span class="hint" id="wifi-password-hint">${passwordHint}</span>
     </div>
   `;
 
@@ -1079,7 +1089,13 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
             return;
           }
 
-          if (security !== 'open' && password.length < 8) {
+          if (security === 'wep' && password.length < 5) {
+            const errorMessage = isTurkish ? 'WEP anahtarı en az 5 karakter olmalıdır (veya 10/26 hex hane)' : 'WEP key must be at least 5 characters (or 10/26 hex digits)';
+            try { window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, '*'); } catch(_){}
+            return;
+          }
+
+          if (security !== 'open' && security !== 'wep' && password.length < 8) {
             const errorMessage = isTurkish ? 'Parola en az 8 karakter olmalıdır' : 'Password must be at least 8 characters';
             try { window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, '*'); } catch(_){}
             return;
@@ -1145,9 +1161,23 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
         if (wifiSecurityEl) {
           wifiSecurityEl.addEventListener('change', function() {
             const passwordWrap = document.getElementById('wifi-password-wrap');
+            const passwordInput = document.getElementById('wifi-password');
+            const passwordHint = document.getElementById('wifi-password-hint');
+            const isWep = this.value === 'wep';
             const isOpen = this.value === 'open';
             if (passwordWrap) {
               passwordWrap.style.display = isOpen ? 'none' : 'block';
+            }
+            if (passwordInput) {
+              passwordInput.minLength = isWep ? 5 : 8;
+              passwordInput.placeholder = isWep
+                ? '${isTurkish ? 'WEP anahtarı girin (en az 5 karakter veya 10/26 hex hane)' : 'Enter WEP key (min 5 chars or 10/26 hex digits)'}'
+                : '${isTurkish ? 'Parola girin (en az 8 karakter)' : 'Enter password (min 8 characters)'}';
+            }
+            if (passwordHint) {
+              passwordHint.textContent = isWep
+                ? '${isTurkish ? 'En az 5 karakter gereklidir (veya 10/26 hex hane)' : 'Minimum 5 characters required (or 10/26 hex digits)'}'
+                : '${isTurkish ? 'En az 8 karakter gereklidir' : 'Minimum 8 characters required'}';
             }
           });
         }

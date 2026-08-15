@@ -9,7 +9,7 @@ export interface DeviceWifiConfig {
   ssid: string;
   bssid?: string;
   password?: string;
-  security: 'open' | 'wpa' | 'wpa2' | 'wpa3';
+  security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
   channel: '2.4GHz' | '5GHz';
   mode: WifiMode;
   hidden?: boolean;
@@ -31,6 +31,7 @@ const normalizeSecurity = (security: string | undefined): DeviceWifiConfig['secu
   if (value === 'wpa3') return 'wpa3';
   if (value === 'wpa2') return 'wpa2';
   if (value === 'wpa') return 'wpa';
+  if (value === 'wep') return 'wep';
   return 'open';
 };
 

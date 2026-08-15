@@ -70,4 +70,36 @@ describe('WifiControlPanel', () => {
 
     expect(html).toContain('value="11"');
   });
+
+  it('renders WEP security option in security selector', () => {
+    const htmlTr = generateRouterAdminPage({
+      ...baseDevice,
+      wifi: {
+        enabled: true,
+        ssid: 'WepWiFi',
+        security: 'wep',
+        password: 'wepkey12345',
+        channel: '2.4GHz',
+        mode: 'ap',
+      },
+    }, 'tr');
+
+    expect(htmlTr).toContain('<option value="wep" selected>WEP (Wired Equivalent Privacy)</option>');
+    expect(htmlTr).toContain('WEP');
+
+    const htmlEn = generateRouterAdminPage({
+      ...baseDevice,
+      wifi: {
+        enabled: true,
+        ssid: 'WepWiFiEn',
+        security: 'wep',
+        password: 'wepkey12345',
+        channel: '2.4GHz',
+        mode: 'ap',
+      },
+    }, 'en');
+
+    expect(htmlEn).toContain('<option value="wep" selected>WEP (Wired Equivalent Privacy)</option>');
+    expect(htmlEn).toContain('minlength="5"');
+  });
 });

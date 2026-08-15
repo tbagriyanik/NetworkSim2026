@@ -18,7 +18,7 @@ export type CommandMode =
   | 'config-std-nacl'  // Router(config-std-nacl)# - Named standard ACL
   | 'config-ext-nacl'; // Router(config-ext-nacl)# - Named extended ACL
 
-type PortStatus = 'connected' | 'notconnect' | 'disabled' | 'blocked' | 'err-disabled';
+type PortStatus = 'connected' | 'notconnect' | 'disabled' | 'blocked' | 'err-disabled' | 'disconnected';
 type PortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
 type VoiceVlanMode = number | 'dot1p' | 'none' | 'untagged';
 type EtherChannelProtocol = 'lacp' | 'pagp';
@@ -89,7 +89,7 @@ export interface Port {
   securityLevel?: number;       // ASA security level (0-100)
   wifi?: {
     ssid: string;
-    security: 'open' | 'wpa' | 'wpa2' | 'wpa3';
+    security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
     password?: string;
     channel: '2.4GHz' | '5GHz';
     mode: 'ap' | 'client' | 'disabled' | 'sta';
@@ -568,7 +568,7 @@ export interface SwitchState {
     name: string;
     ssid: string;
     status: 'enabled' | 'disabled';
-    security: 'open' | 'wpa2' | 'wpa3';
+    security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
     password?: string;
     vlan?: number;
     apGroups?: string[];

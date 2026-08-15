@@ -1,4 +1,4 @@
-﻿// Firewall ASA ve interface komutlari
+// Firewall ASA ve interface komutlari
 import type { CommandPattern } from './commandPatterns.types';
 
 export const interfacePatterns: Record<string, CommandPattern> = {
@@ -312,7 +312,7 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     capability: 'routing' // Routers/APs
   },
   'encryption': {
-    pattern: /^encryption\s+(open|wpa|wpa2|wpa3)$/i,
+    pattern: /^encryption\s+(open|wep|wpa|wpa2|wpa3)$/i,
     modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 1,
@@ -451,6 +451,13 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     maxArgs: 5,
     capability: 'routing'
   },
+  'security wep key set-key': {
+    pattern: /^security\s+wep\s+(?:key\s+set-key|key)\s+ascii\s+(?:0|7)\s+(.+)$/i,
+    modes: ['config'],
+    minArgs: 4,
+    maxArgs: 5,
+    capability: 'routing'
+  },
   'mbssid': {
     pattern: /^mbssid$/i,
     modes: ['ssid-config'],
@@ -477,6 +484,13 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     modes: ['config'],
     minArgs: 0,
     maxArgs: 0,
+    capability: 'routing'
+  },
+  'no security wep': {
+    pattern: /^no\s+security\s+wep(?:\s+key)?$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 1,
     capability: 'routing'
   },
   'channel': {

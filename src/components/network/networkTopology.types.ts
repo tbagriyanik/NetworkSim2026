@@ -27,7 +27,7 @@ export interface CanvasPort {
   macAddress?: string; // Per-port MAC address (for router ports)
   wifi?: {
     ssid: string;
-    security: 'open' | 'wpa' | 'wpa2' | 'wpa3';
+    security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
     password?: string;
     channel: '2.4GHz' | '5GHz';
     mode?: 'ap' | 'client' | 'disabled' | 'sta';
@@ -170,7 +170,7 @@ export interface CanvasDevice {
     enabled: boolean;
     ssid: string;
     bssid?: string;
-    security: 'open' | 'wpa' | 'wpa2' | 'wpa3';
+    security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
     password?: string;
     channel: '2.4GHz' | '5GHz';
     mode: 'ap' | 'client';
