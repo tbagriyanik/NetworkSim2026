@@ -64,7 +64,7 @@ export function useProjectReset({
         ...state.topology,
         capturedPackets: {},
         activeCaptureConnectionId: null,
-        isSimulationMode: false
+        isSimulationMode: true
       },
       deviceStates: {
         switchStates: {},

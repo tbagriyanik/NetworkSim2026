@@ -302,7 +302,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                       {isTR ? 'Sürüm' : 'Version'}
                     </span>
                     <span className="text-sm font-semibold text-secondary-800 dark:text-secondary-200">
-                      {process.env.NEXT_PUBLIC_APP_VERSION || '2.2.0'}
+                      {process.env.NEXT_PUBLIC_APP_VERSION || '2.2'}
                     </span>
                   </div>
                   <div className="flex flex-col">
@@ -541,11 +541,11 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                     {isTR ? 'Eğitim Animasyonları' : 'Educational Animations'}
                   </h4>
                   <p className="text-xs text-secondary-500 mb-4 leading-relaxed">
-                    {isTR 
+                    {isTR
                       ? "Ağ protokollerinin ve veri iletim süreçlerinin animasyonlu canlandırmalarını izleyin."
                       : "Watch animated step-by-step visualizations of network protocols and data transmission processes."}
                   </p>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Buttons on the left/top */}
                     <div className="md:col-span-1 flex flex-col gap-1.5">
@@ -577,7 +577,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                         </button>
                       ))}
                     </div>
-                    
+
                     {/* Player on the right/bottom */}
                     <div className="md:col-span-2 flex flex-col gap-2">
                       <div className="rounded-xl border border-secondary-200 dark:border-secondary-800 bg-secondary-950/20 p-1">

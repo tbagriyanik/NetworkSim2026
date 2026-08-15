@@ -159,7 +159,7 @@ export function usePingSequence(deps: PingSequenceDeps) {
       const partialPath = connectivity.hopIds?.length >= 1 ? connectivity.hopIds : [sourceId];
       pingPathRef.current = partialPath;
       setHopPacketInfos(buildHopPacketInfosFn(partialPath, devices, connections, 64, targetIp));
-      pingIsPausedRef.current = true;
+      pingIsPausedRef.current = isSimulationMode;
       pingStepModeRef.current = isSimulationMode;
       setPingAnimation({
         sourceId,
@@ -167,11 +167,11 @@ export function usePingSequence(deps: PingSequenceDeps) {
         path: partialPath,
         currentHopIndex: 0,
         progress: 0,
-        success: false,
+        success: null,
         frame: 0,
         error: errorMessage,
         hopCount: 0,
-        isPaused: true,
+        isPaused: isSimulationMode,
         showPacketPanel: true,
         failedAtHop: Math.max(0, partialPath.length - 2),
         broadcastTargets: [],
@@ -250,6 +250,9 @@ export function usePingSequence(deps: PingSequenceDeps) {
       };
 
       pingResumeCallbackRef.current = runFailedAnimation;
+      if (!isSimulationMode) {
+        runFailedAnimation();
+      }
       return;
     }
 
@@ -265,9 +268,9 @@ export function usePingSequence(deps: PingSequenceDeps) {
     }
 
       setHopPacketInfos(buildHopPacketInfosFn(path, devices, connections, 64, targetIp));
-    pingIsPausedRef.current = true;
+    pingIsPausedRef.current = isSimulationMode;
     pingStepModeRef.current = isSimulationMode;
-    setPingAnimation({ sourceId, targetId, path, currentHopIndex: 0, progress: 0, success: null, frame: 0, hopCount: 0, isPaused: true, showPacketPanel: true, broadcastTargets: [], broadcastAnim: [], broadcastProgress: 0 });
+    setPingAnimation({ sourceId, targetId, path, currentHopIndex: 0, progress: 0, success: null, frame: 0, hopCount: 0, isPaused: isSimulationMode, showPacketPanel: true, broadcastTargets: [], broadcastAnim: [], broadcastProgress: 0 });
     setErrorToast(null);
 
     const hopDuration = 1500;
@@ -427,7 +430,14 @@ export function usePingSequence(deps: PingSequenceDeps) {
       }
     };
 
-    pingResumeCallbackRef.current = () => { startTime = Date.now(); pingAnimationRef.current = requestAnimationFrame(animate); };
+    if (isSimulationMode) {
+      // Simulation mode: wait for user to press Play
+      pingResumeCallbackRef.current = () => { startTime = Date.now(); pingAnimationRef.current = requestAnimationFrame(animate); };
+    } else {
+      // Normal mode: start animation immediately
+      pingResumeCallbackRef.current = () => { startTime = Date.now(); pingAnimationRef.current = requestAnimationFrame(animate); };
+      pingAnimationRef.current = requestAnimationFrame(animate);
+    }
   }, [
     cancelAnimationFrame,
     checkDeviceConnectivity,

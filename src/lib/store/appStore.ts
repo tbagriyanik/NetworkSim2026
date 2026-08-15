@@ -160,7 +160,7 @@ const initialTopologyState: TopologyState = {
     zoom: 1,
     pan: { x: 0, y: 0 },
     environment: initialEnvironmentSettings,
-    isSimulationMode: false,
+    isSimulationMode: true,
     showSTPOverlay: false,
 };
 
@@ -180,7 +180,7 @@ const initialState: Omit<AppState, keyof ReturnType<typeof createActions>> = {
 };
 
 const STORE_KEY = 'network-simulator-storage';
-const STORE_VERSION = 3;
+const STORE_VERSION = 4;
 const STORE_BACKUP_KEY = `${STORE_KEY}-backup`;
 
 function isValidTopologyState(value: Record<string, unknown> | undefined): boolean {
@@ -219,7 +219,7 @@ function sanitizePersistedState(input: Record<string, unknown> | undefined): Par
             selectedDeviceId: typeof top.selectedDeviceId === 'string' ? top.selectedDeviceId as string : null,
             activeCaptureConnectionId: typeof top.activeCaptureConnectionId === 'string' ? top.activeCaptureConnectionId : null,
             capturedPackets: (top.capturedPackets as Record<string, CapturedPacket[]>) || {},
-            isSimulationMode: !!top.isSimulationMode,
+            isSimulationMode: top.isSimulationMode !== undefined ? !!top.isSimulationMode : true,
             showSTPOverlay: !!top.showSTPOverlay,
             zoom: typeof top.zoom === 'number' ? top.zoom as number : 1,
             pan: { x: Number((top.pan as Record<string, unknown>)?.x ?? 0), y: Number((top.pan as Record<string, unknown>)?.y ?? 0) },
@@ -239,7 +239,7 @@ function sanitizePersistedState(input: Record<string, unknown> | undefined): Par
             notes: Array.isArray(topology.notes) ? (topology.notes as unknown[]).filter(isValidCanvasNote) : [],
             activeCaptureConnectionId: typeof topology.activeCaptureConnectionId === 'string' ? topology.activeCaptureConnectionId : null,
             capturedPackets: (topology.capturedPackets as Record<string, CapturedPacket[]>) || {},
-            isSimulationMode: !!topology.isSimulationMode,
+            isSimulationMode: topology.isSimulationMode !== undefined ? !!topology.isSimulationMode : true,
             showSTPOverlay: !!topology.showSTPOverlay,
             environment: {
                 ...initialEnvironmentSettings,
@@ -284,6 +284,9 @@ export function migrateAndValidatePersistedState(persistedState: unknown, persis
     // Reset legacy saved graphics preference so new default opens in high quality.
     if (typeof persistedVersion === 'number' && persistedVersion < STORE_VERSION) {
         sanitized.graphicsQuality = 'high';
+        if (sanitized.topology) {
+            sanitized.topology.isSimulationMode = true;
+        }
     }
 
     return sanitized;

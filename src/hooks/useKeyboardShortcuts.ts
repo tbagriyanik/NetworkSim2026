@@ -4,6 +4,7 @@ import { useEffect, type RefObject, type Dispatch, type SetStateAction } from 'r
 import type { CanvasDevice, DeviceType } from '@/components/network/networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import type { TerminalOutput } from '@/components/network/Terminal';
+import { useAppStore } from '@/lib/store/appStore';
 
 export function useKeyboardShortcuts({
   showMobileMenu,
@@ -176,6 +177,14 @@ export function useKeyboardShortcuts({
           && !showMobileMenu;
 
         if (!isEditable && isTopologyOnly) {
+          const key = e.key.toLowerCase();
+          if (key === 's') {
+            e.preventDefault();
+            const current = useAppStore.getState().topology.isSimulationMode;
+            useAppStore.getState().setSimulationMode(!current);
+            return;
+          }
+
           const isQuoteToggle = e.key === '"' || e.code === 'Quote';
           if (isQuoteToggle) {
             e.preventDefault();

@@ -582,7 +582,6 @@ export function NetworkTopology({
       setPacketPopupHop(null);
       setPingAnimation(null);
       setHopPacketInfos([]);
-      useAppStore.getState().setSimulationMode(false);
     };
     window.addEventListener('network-refresh', handler);
     return () => window.removeEventListener('network-refresh', handler);
@@ -849,6 +848,7 @@ export function NetworkTopology({
     handlePingPause,
     handlePingPlay,
     handlePingNext,
+    handleEnvelopeClick,
   } = useTopologyPingUI({
     pingIsPausedRef,
     pingStepModeRef,
@@ -2666,6 +2666,10 @@ export function NetworkTopology({
             handleConnectionClick={handleConnectionClick}
             onDeleteConnection={deleteConnection}
             onToggleConnectionActive={toggleConnectionActive}
+            pingAnimation={pingAnimation}
+            handleEnvelopeClick={handleEnvelopeClick}
+            isDarkForPing={isDark}
+            tForPing={t}
           />
 
 

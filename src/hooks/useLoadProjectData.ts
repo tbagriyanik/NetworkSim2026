@@ -61,12 +61,15 @@ export function useLoadProjectData({
   return useCallback((projectData: unknown, options?: { keepActiveDevice?: boolean }) => {
     try {
       // Clear packet capture, simulation states, and device state caches
+      // Preserve isSimulationMode if it's defined in the loaded data; otherwise default to true for new projects.
+      const loadedIsSimMode = (projectData && typeof projectData === 'object' && (projectData as Record<string, unknown>).topology && typeof (projectData as Record<string, unknown>).topology === 'object' && ((projectData as Record<string, unknown>).topology as Record<string, unknown>).isSimulationMode);
+      const defaultSimMode = loadedIsSimMode !== undefined ? !!loadedIsSimMode : true;
       useAppStore.setState(state => ({
         topology: {
           ...state.topology,
           capturedPackets: {},
           activeCaptureConnectionId: null,
-          isSimulationMode: false
+          isSimulationMode: defaultSimMode
         },
         deviceStates: {
           switchStates: {},

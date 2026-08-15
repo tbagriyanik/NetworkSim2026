@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { CABLE_COLORS } from '../networkTopology.constants';
-import { getConnectionStatusMessage, getPortPosition } from '../networkTopology.helpers';
+import { getConnectionStatusMessage, getPortPosition, getDeviceCenter } from '../networkTopology.helpers';
 import { ConnectionLine } from '../ConnectionLine';
 import { ConnectionHandle } from '../ConnectionHandle';
 import { NoteNode } from './NoteNode';
@@ -10,6 +10,8 @@ import { TempConnection } from './TempConnection';
 import { EnvironmentBackgrounds } from './EnvironmentBackgrounds';
 import { CanvasDefs } from './CanvasDefs';
 import { SelectionBoxOverlay } from './SelectionBoxOverlay';
+import { PingAnimationOverlay } from './PingAnimationOverlay';
+import type { PingAnimationOverlayProps } from './PingAnimationOverlay';
 import type { CanvasConnection, CanvasDevice, CanvasNote, ContextMenuState } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 
@@ -83,6 +85,10 @@ export interface TopologyCanvasLayerProps {
     handleConnectionClick: (e: React.MouseEvent, connectionId: string) => void;
     onDeleteConnection: (connectionId: string) => void;
     onToggleConnectionActive: (connectionId: string) => void;
+    pingAnimation: PingAnimationOverlayProps['pingAnimation'];
+    handleEnvelopeClick: PingAnimationOverlayProps['handleEnvelopeClick'];
+    isDarkForPing: boolean;
+    tForPing: Record<string, string>;
 }
 
 export function TopologyCanvasLayer({
@@ -155,6 +161,10 @@ export function TopologyCanvasLayer({
     handleConnectionClick,
     onDeleteConnection,
     onToggleConnectionActive,
+    pingAnimation,
+    handleEnvelopeClick,
+    isDarkForPing,
+    tForPing,
 }: TopologyCanvasLayerProps) {
     const canvasSize = getCanvasDimensions();
 
@@ -281,6 +291,18 @@ export function TopologyCanvasLayer({
                         {devicesSortedForRender.map((device) => (
                             <React.Fragment key={device.id}>{renderDevice(device, false)}</React.Fragment>
                         ))}
+
+                        <PingAnimationOverlay
+                            pingAnimation={pingAnimation}
+                            deviceMap={deviceMap}
+                            connections={connections}
+                            getPortPosition={getPortPosition}
+                            getDeviceCenter={getDeviceCenter}
+                            graphicsQuality={graphicsQuality}
+                            isDark={isDarkForPing}
+                            t={tForPing}
+                            handleEnvelopeClick={handleEnvelopeClick}
+                        />
 
                         {visibleNotes.map((note) => (
                             <NoteNode

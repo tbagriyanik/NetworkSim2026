@@ -94,6 +94,14 @@ export function TopologyToolbar({
        },
        description: 'Reset topology view',
      },
+     {
+       key: 's',
+       handler: () => {
+         const current = useAppStore.getState().topology.isSimulationMode;
+         setSimulationMode(!current);
+       },
+       description: 'Toggle simulation mode',
+     },
    ]);
 
   return (
