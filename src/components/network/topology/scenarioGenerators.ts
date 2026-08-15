@@ -52,6 +52,13 @@ function addSwitch(
     deviceType: 'switchL2', hostname: name, macAddress: mac,
     switchModel: 'WS-C2960-24TT-L', switchLayer: 'L2',
     currentMode: 'user', commandHistory: [], vlanDatabase: { ...vlanDb }, ports: {},
+    security: {
+      enableSecretEncrypted: false,
+      servicePasswordEncryption: false,
+      users: [],
+      consoleLine: { login: false, transportInput: ['all'], execTimeout: { minutes: 10, seconds: 0 } },
+      vtyLines: { login: false, transportInput: ['all'], execTimeout: { minutes: 10, seconds: 0 } }
+    },
   } as any;
   device.ports.forEach(p => {
     state.ports[p.id] = {
@@ -79,7 +86,15 @@ function addRouter(
     deviceType: 'router', hostname: name, macAddress: mac,
     switchModel: 'WS-C3650-24PS', switchLayer: 'L3',
     currentMode: 'user', commandHistory: [], vlanDatabase: {}, ports: {},
-    ipRouting: true, ...extras,
+    ipRouting: true,
+    security: {
+      enableSecretEncrypted: false,
+      servicePasswordEncryption: false,
+      users: [],
+      consoleLine: { login: false, transportInput: ['all'], execTimeout: { minutes: 10, seconds: 0 } },
+      vtyLines: { login: false, transportInput: ['all'], execTimeout: { minutes: 10, seconds: 0 } }
+    },
+    ...extras,
   } as any;
   device.ports.forEach(p => {
     state.ports[p.id] = {

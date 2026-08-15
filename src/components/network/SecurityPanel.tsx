@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { SecurityConfig } from '@/lib/network/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,41 +27,47 @@ interface SecurityItem {
 export function SecurityPanel({ security, t, theme, isDevicePoweredOff = false }: SecurityPanelProps) {
   const isDark = theme === 'dark';
 
+  const consoleLogin = !!security?.consoleLine?.login;
+  const consoleHasPassword = !!security?.consoleLine?.password;
+  const vtyLogin = !!security?.vtyLines?.login;
+  const vtyHasPassword = !!security?.vtyLines?.password;
+  const transportInput = security?.vtyLines?.transportInput || [];
+
   const securityItems: SecurityItem[] = [
     {
       name: t.enableSecret,
-      enabled: !!security.enableSecret,
-      description: security.enableSecret ? t.secEnableSecretOn : t.secEnableSecretOff,
+      enabled: !!security?.enableSecret,
+      description: security?.enableSecret ? t.secEnableSecretOn : t.secEnableSecretOff,
       weight: 25
     },
     {
       name: t.consoleSecurity,
-      enabled: security.consoleLine.login && !!security.consoleLine.password,
-      description: security.consoleLine.login ? t.secConsoleOn : t.secConsoleOff,
+      enabled: consoleLogin && consoleHasPassword,
+      description: consoleLogin ? t.secConsoleOn : t.secConsoleOff,
       weight: 20
     },
     {
       name: t.vtySecurity,
-      enabled: security.vtyLines.login && !!security.vtyLines.password,
-      description: security.vtyLines.login ? t.secVtyOn : t.secVtyOff,
+      enabled: vtyLogin && vtyHasPassword,
+      description: vtyLogin ? t.secVtyOn : t.secVtyOff,
       weight: 20
     },
     {
       name: t.passwordEncryption,
-      enabled: security.servicePasswordEncryption,
-      description: security.servicePasswordEncryption ? t.secPassEncOn : t.secPassEncOff,
+      enabled: !!security?.servicePasswordEncryption,
+      description: security?.servicePasswordEncryption ? t.secPassEncOn : t.secPassEncOff,
       weight: 15
     },
     {
       name: t.sshAccess,
-      enabled: security.vtyLines.transportInput.includes('ssh') &&
-        !security.vtyLines.transportInput.includes('telnet') &&
-        security.vtyLines.transportInput[0] !== 'all' &&
-        security.vtyLines.transportInput[0] !== 'none',
-      description: security.vtyLines.transportInput.includes('ssh') &&
-        !security.vtyLines.transportInput.includes('telnet')
+      enabled: transportInput.includes('ssh') &&
+        !transportInput.includes('telnet') &&
+        transportInput[0] !== 'all' &&
+        transportInput[0] !== 'none',
+      description: transportInput.includes('ssh') &&
+        !transportInput.includes('telnet')
         ? t.secSshOnly
-        : security.vtyLines.transportInput.includes('telnet')
+        : transportInput.includes('telnet')
           ? t.secTelnetWarn
           : t.secNoProtocol,
       weight: 20
@@ -120,7 +126,7 @@ export function SecurityPanel({ security, t, theme, isDevicePoweredOff = false }
           ))}
         </div>
 
-        {security.users.length > 0 && (
+        {Array.isArray(security?.users) && security.users.length > 0 && (
           <div className={`mt-3 sm:mt-4 p-2 ${innerBg} rounded-lg animate-fade-in`}>
             <div className={`text-xs ${textSecondary} mb-1`}>{t.definedUsers}</div>
             <div className="flex flex-wrap gap-1">
