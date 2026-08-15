@@ -249,21 +249,21 @@ export function Terminal({
     return null;
   }, [device?.type, state.switchModel]);
 
-  // Sync with global history
-  const lastHistoryDeviceIdRef = useRef<string | null>(null);
-  useEffect(() => {
-    const globalHistory = state.commandHistory || [];
-    const deviceChanged = lastHistoryDeviceIdRef.current !== deviceId;
-    lastHistoryDeviceIdRef.current = deviceId;
-
-    if (JSON.stringify(globalHistory) !== JSON.stringify(history)) {
-      setTimeout(() => setHistory(globalHistory), 0);
-      // Reset index only when device actually changes
-      if (deviceChanged) {
-        setTimeout(() => setHistoryIndex(-1), 0);
-      }
+  // Sync with global history — adjust state during render instead of effect
+  const [prevHistorySync, setPrevHistorySync] = useState<{
+    deviceId: string | null;
+    history: string[] | undefined;
+  }>({ deviceId: null, history: undefined });
+  const globalHistory = state.commandHistory || [];
+  if (prevHistorySync.deviceId !== deviceId || prevHistorySync.history !== state.commandHistory) {
+    const deviceChanged = prevHistorySync.deviceId !== deviceId;
+    setPrevHistorySync({ deviceId, history: state.commandHistory });
+    setHistory(globalHistory);
+    // Reset index only when device actually changes
+    if (deviceChanged) {
+      setHistoryIndex(-1);
     }
-  }, [state.commandHistory, deviceId, history]);
+  }
 
   const [tabCycleIndex, setTabCycleIndex] = useState(-1);
   const [lastTabInput, setLastTabInput] = useState('');
@@ -288,14 +288,9 @@ export function Terminal({
 
   const commandQueueRef = useRef<string[]>([]);
   const isProcessingQueueRef = useRef(false);
-  const historyRef = useRef<string[]>(state.commandHistory || []);
   const isLoadingRef = useRef<boolean>(isLoading);
   const awaitingPasswordRef = useRef<boolean>(!!state.awaitingPassword);
   const confirmDialogOpenRef = useRef<boolean>(!!confirmDialog?.show);
-  useEffect(() => {
-    historyRef.current = history;
-  }, [history]);
-
   useEffect(() => {
     isLoadingRef.current = isLoading;
   }, [isLoading]);
@@ -346,16 +341,15 @@ export function Terminal({
     isProcessingQueueRef.current = true;
 
     try {
+      let currentHistory = history;
       while (commandQueueRef.current.length > 0) {
         const nextCommand = commandQueueRef.current.shift();
         if (!nextCommand) continue;
 
-        const currentHistory = historyRef.current;
         if (currentHistory[0] !== nextCommand) {
-          const newHistory = [nextCommand, ...currentHistory].slice(0, 50);
-          historyRef.current = newHistory;
-          setHistory(newHistory);
-          if (onUpdateHistory) onUpdateHistory(deviceId, newHistory);
+          currentHistory = [nextCommand, ...currentHistory].slice(0, 50);
+          setHistory(currentHistory);
+          if (onUpdateHistory) onUpdateHistory(deviceId, currentHistory);
         }
         setHistoryIndex(-1);
         setTabCycleIndex(-1);
@@ -381,7 +375,7 @@ export function Terminal({
     } finally {
       isProcessingQueueRef.current = false;
     }
-  }, [deviceId, onCommand, onUpdateHistory]);
+  }, [history, deviceId, onCommand, onUpdateHistory]);
 
   useEffect(() => {
     if (!showAutocomplete) return;
@@ -1161,10 +1155,11 @@ export function Terminal({
         return;
       }
       e.preventDefault();
-      if (history.length > 0 && historyIndex < history.length - 1) {
+      const currentHist = history;
+      if (currentHist.length > 0 && historyIndex < currentHist.length - 1) {
         const ni = historyIndex + 1;
         setHistoryIndex(ni);
-        setInput(history[ni]);
+        setInput(currentHist[ni]);
       }
     } else if (e.key === 'ArrowDown') {
       if (canUseAutocomplete) {
@@ -1177,10 +1172,11 @@ export function Terminal({
         return;
       }
       e.preventDefault();
+      const currentHist = history;
       if (historyIndex > 0) {
         const ni = historyIndex - 1;
         setHistoryIndex(ni);
-        setInput(history[ni]);
+        setInput(currentHist[ni]);
       } else if (historyIndex === 0) {
         setHistoryIndex(-1);
         setInput('');

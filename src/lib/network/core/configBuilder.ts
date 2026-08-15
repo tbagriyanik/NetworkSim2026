@@ -143,7 +143,7 @@ export function buildRunningConfig(state: SwitchState): string[] {
     }
 
     // VLANs (id 2-1001)
-    Object.values(state.vlans).forEach(vlan => {
+    Object.values(state.vlans || {}).forEach(vlan => {
         if (vlan.id >= 2 && vlan.id <= 1001) {
             lines.push(`vlan ${vlan.id}`);
             lines.push(` name ${vlan.name}`);
@@ -152,7 +152,7 @@ export function buildRunningConfig(state: SwitchState): string[] {
     });
 
     // Physical interfaces (non-VLAN ports)
-    Object.entries(state.ports).forEach(([portKey, port]) => {
+    Object.entries(state.ports || {}).forEach(([portKey, port]) => {
         const portId = (port.id || portKey || '').toString();
         if (!portId) {
             return;

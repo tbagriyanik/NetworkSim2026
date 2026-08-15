@@ -38,29 +38,33 @@ const cachedSortedAliases = Object.entries(commandAliases || {})
 export function resolveAliases(input: string, state?: Partial<SwitchState>): string {
   const trimmed = input.trim().toLowerCase();
 
-  // Önce kullanıcı tanımlı exec alias'larını kontrol et (runtime)
-  if (state?.execAliases) {
-    const userAliases = state.execAliases;
-    // Tam eşleşme
-    if (userAliases[trimmed]) {
-      return userAliases[trimmed];
+  // Exec aliases: built-in defaults + user-defined (runtime)
+  const builtInExecAliases: Record<string, string> = {
+    h: 'show history',
+    lo: 'exit'
+  };
+  const execAliases = { ...builtInExecAliases, ...(state?.execAliases || {}) };
+
+  // 1. Tam eşleşme (kullanıcı + built-in exec alias)
+  if (execAliases[trimmed]) {
+    return execAliases[trimmed];
+  }
+
+  // 2. Kısmi eşleşme (prefix match: örn. 'lo ...' veya parametreli alias)
+  const sortedExecAliases = Object.entries(execAliases)
+    .sort((a, b) => b[0].length - a[0].length);
+  for (const [alias, full] of sortedExecAliases as [string, string][]) {
+    const aliasLower = alias.toLowerCase();
+    const fullLower = full.toLowerCase();
+    if (trimmed === aliasLower) {
+      return full;
     }
-    // Kısmi eşleşme (prefix match)
-    const sortedUserAliases = Object.entries(userAliases)
-      .sort((a, b) => b[0].length - a[0].length);
-    for (const [alias, full] of sortedUserAliases as [string, string][]) {
-      const aliasLower = alias.toLowerCase();
-      const fullLower = full.toLowerCase();
-      if (trimmed === aliasLower) {
-        return full;
+    if (trimmed.startsWith(aliasLower + ' ')) {
+      if (trimmed === fullLower || trimmed.startsWith(fullLower + ' ')) {
+        continue;
       }
-      if (trimmed.startsWith(aliasLower + ' ')) {
-        if (trimmed === fullLower || trimmed.startsWith(fullLower + ' ')) {
-          continue;
-        }
-        const rest = input.trim().substring(alias.length).trim();
-        return rest ? full + ' ' + rest : full;
-      }
+      const rest = input.trim().substring(alias.length).trim();
+      return rest ? full + ' ' + rest : full;
     }
   }
 

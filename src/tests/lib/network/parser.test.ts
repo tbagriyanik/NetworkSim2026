@@ -94,6 +94,14 @@ describe('Command Parser Functions', () => {
       const result = parseCommand('en', 'user', state);
       expect(result).not.toBeNull();
       expect(result?.command).toBe('enable');
+
+      // Built-in aliases (h -> show history, lo -> exit)
+      const resH = parseCommand('h', 'user');
+      expect(resH?.command).toBe('show');
+      expect(resH?.args).toEqual(['history']);
+
+      const resLo = parseCommand('lo', 'user');
+      expect(resLo?.command).toBe('exit');
     });
 
     it('should infer command intent', () => {
