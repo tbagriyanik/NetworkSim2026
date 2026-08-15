@@ -401,6 +401,16 @@ export function Terminal({
     };
   }, [showAutocomplete]);
 
+  // Scroll active autocomplete item into view when navigating with arrow keys
+  useEffect(() => {
+    if (showAutocomplete && autocompleteIndex >= 0 && autocompleteRef.current) {
+      const activeEl = autocompleteRef.current.querySelector(`[data-autocomplete-index="${autocompleteIndex}"]`) as HTMLElement | null;
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
+    }
+  }, [showAutocomplete, autocompleteIndex]);
+
   // Process output lines — show all at once, no artificial delays
   const prevFirstOutputIdRef = useRef<string | null>(null);
   const prevOutputLengthRef = useRef(0);
@@ -920,12 +930,12 @@ export function Terminal({
       || /^(?:telnet|ssh|ping|curl|wget|ip\s+default-gateway|default-router|dns-server)\s*$/i.test(trimmed);
 
     if (!expectsIpArg) {
-      return baseSuggestions.slice(0, 8);
+      return baseSuggestions.slice(0, 50);
     }
 
     const knownIps = collectKnownIps().filter((ip) => ip.toLowerCase().startsWith(currentWord));
     const merged = Array.from(new Set([...knownIps, ...baseSuggestions]));
-    return merged.slice(0, 8);
+    return merged.slice(0, 50);
   }, [getAutocompleteContext, devices, deviceStates]);
 
   const renderAutocompleteSuggestions = useMemo(
@@ -1628,6 +1638,7 @@ export function Terminal({
                         <button
                           key={idx}
                           type="button"
+                          data-autocomplete-index={idx}
                           onClick={() => {
                             completeAutocompleteSelection(cmd);
                             inputRef.current?.focus();
