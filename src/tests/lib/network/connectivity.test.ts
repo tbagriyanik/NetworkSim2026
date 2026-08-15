@@ -166,4 +166,44 @@ describe('Connectivity Functions', () => {
     const res = checkConnectivity('pc-a', '192.168.2.10', [hostA, hostB], directConn);
     expect(res.success).toBe(false);
   });
+
+  it('should fail when masks are asymmetrical (PC1 /24 vs PC2 /28) without a gateway/router', () => {
+    const pc1: CanvasDevice = {
+      id: 'pc-1',
+      type: 'pc',
+      name: 'PC-1',
+      ip: '192.168.1.10',
+      subnet: '255.255.255.0',
+      macAddress: '00:00:00:00:00:01',
+      x: 0, y: 0, status: 'online',
+      ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }]
+    };
+    const pc2: CanvasDevice = {
+      id: 'pc-2',
+      type: 'pc',
+      name: 'PC-2',
+      ip: '192.168.1.20',
+      subnet: '255.255.255.240', // 192.168.1.16/28
+      macAddress: '00:00:00:00:00:02',
+      x: 100, y: 100, status: 'online',
+      ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }]
+    };
+    const directConn: CanvasConnection[] = [{
+      id: 'c-12',
+      sourceDeviceId: 'pc-1',
+      sourcePort: 'eth0',
+      targetDeviceId: 'pc-2',
+      targetPort: 'eth0',
+      cableType: 'crossover',
+      active: true
+    }];
+
+    // PC-1 to PC-2 ping should fail because PC-2 cannot reply directly without a gateway
+    const res1 = checkConnectivity('pc-1', '192.168.1.20', [pc1, pc2], directConn);
+    expect(res1.success).toBe(false);
+
+    // PC-2 to PC-1 ping should fail because PC-2 considers PC-1 out of subnet and has no gateway
+    const res2 = checkConnectivity('pc-2', '192.168.1.10', [pc1, pc2], directConn);
+    expect(res2.success).toBe(false);
+  });
 });

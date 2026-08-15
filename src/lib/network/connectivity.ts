@@ -619,7 +619,13 @@ export function checkConnectivity(
     } else if (!isTargetIpv6 && !isSourceIpv6) {
       // BOLT: Use pre-resolved safeDeviceStates
       const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, safeDeviceStates) || sourceDeviceForSubnet.subnet || '255.255.255.0';
-      isInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);
+      const targetSubnet = targetDevice.subnet || '255.255.255.0';
+      
+      const isSourceInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);
+      const isTargetInSameSubnet = isIpInSubnet(resolvedTargetIp, sourceIp, targetSubnet);
+
+      // Both sides must consider each other in their local subnet for direct L2 communication without a gateway/router
+      isInSameSubnet = isSourceInSameSubnet && isTargetInSameSubnet;
     }
 
     routingRequired = !isInSameSubnet;
