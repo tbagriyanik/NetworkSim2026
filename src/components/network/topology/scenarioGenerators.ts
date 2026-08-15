@@ -596,11 +596,16 @@ function generateStp(pcCount: number): Ctx {
 function generateWireless(pcCount: number): Ctx {
   const ctx = newCtx();
   // Router
-  const { state: rState } = addRouter(ctx, 'router-1', 'R1', '0011.2233.9901', 350, 40, {
+  const { state: rState, device: rDev } = addRouter(ctx, 'router-1', 'R1', '0011.2233.9901', 350, 40, {
     dhcpPools: {
       'WIFI-POOL': { network: '192.168.1.0', subnetMask: '255.255.255.0', defaultRouter: '192.168.1.1', dnsServer: '8.8.8.8' },
     },
+    services: {
+      http: { enabled: true, content: '', fontSize: 16 }
+    }
   });
+  rDev.services = { http: { enabled: true, content: '', fontSize: 16 } };
+  rDev.ip = '192.168.1.1';
   enableRouterPort(rState, 'gi0/0', '192.168.1.1', '255.255.255.0');
 
   // Switch
@@ -613,10 +618,28 @@ function generateWireless(pcCount: number): Ctx {
     id: apId, type: 'router', name: 'AP-1',
     macAddress: '0011.2233.AA01', ip: '192.168.1.2', subnet: '255.255.255.0',
     gateway: '192.168.1.1', x: 600, y: 200, status: 'online',
-    ports: generateRouterPorts(),
+    services: {
+      http: { enabled: true, content: '', fontSize: 16 }
+    },
+    ports: [
+      {
+        id: 'wlan0',
+        label: 'WLAN0',
+        status: 'connected',
+        ipAddress: '192.168.1.2',
+        subnetMask: '255.255.255.0',
+        wifi: {
+          ssid: 'NetSim-WiFi',
+          security: 'open',
+          channel: '2.4GHz',
+          mode: 'ap',
+        },
+      },
+      ...generateRouterPorts(),
+    ],
     wifi: {
       enabled: true, ssid: 'NetSim-WiFi', bssid: '0011.2233.AA01',
-      security: 'wpa2', password: 'netsim', channel: '2.4GHz',
+      security: 'open', password: '', channel: '2.4GHz',
       mode: 'ap', hidden: false, maxClients: 10,
     },
   };
@@ -626,12 +649,22 @@ function generateWireless(pcCount: number): Ctx {
     deviceType: 'router', hostname: 'AP-1', macAddress: '0011.2233.AA01',
     switchModel: 'WS-C3650-24PS', switchLayer: 'L3',
     currentMode: 'user', commandHistory: [], vlanDatabase: {}, ports: {},
-    ipRouting: false,
+    ipRouting: true,
+    services: {
+      http: { enabled: true, content: '', fontSize: 16 }
+    },
+    security: {
+      enableSecretEncrypted: false,
+      servicePasswordEncryption: false,
+      users: [],
+      consoleLine: { login: false, transportInput: ['all'], execTimeout: { minutes: 10, seconds: 0 } },
+      vtyLines: { login: false, transportInput: ['all'], execTimeout: { minutes: 10, seconds: 0 } },
+    },
   } as any;
   ap.ports.forEach(p => {
     apState.ports[p.id] = {
       id: p.id, type: getPortType(p.id), status: 'notconnect',
-      shutdown: p.id === 'gi0/0' ? false : true, accessVlan: 1, mode: 'routed',
+      shutdown: p.id === 'gi0/0' || p.id === 'wlan0' ? false : true, accessVlan: 1, mode: 'routed',
     };
     if (p.id === 'gi0/0') {
       apState.ports[p.id].ipAddress = '192.168.1.2';
@@ -639,8 +672,10 @@ function generateWireless(pcCount: number): Ctx {
     }
     if (p.id === 'wlan0') {
       apState.ports[p.id].shutdown = false;
+      apState.ports[p.id].ipAddress = '192.168.1.2';
+      apState.ports[p.id].subnetMask = '255.255.255.0';
       apState.ports[p.id].wifi = {
-        ssid: 'NetSim-WiFi', security: 'wpa2', password: 'netsim',
+        ssid: 'NetSim-WiFi', security: 'open', password: '',
         channel: '2.4GHz', mode: 'ap',
       };
     }
@@ -658,7 +693,7 @@ function generateWireless(pcCount: number): Ctx {
       'switch-1', swState, `fa0/${i + 3}`, 180 + i * 140, 380,
       { ipConfigMode: 'dhcp' });
   }
-  // Wireless PCs (not physically connected with cable - just placed near AP)
+  // Wireless PCs (not physically connected with cable - placed near AP with WLAN enabled)
   for (let i = 0; i < wirelessCount; i++) {
     const pcIdx = wiredCount + i + 1;
     const pc: CanvasDevice = {
@@ -666,10 +701,30 @@ function generateWireless(pcCount: number): Ctx {
       macAddress: MAC_POOL[(pcIdx - 1) % MAC_POOL.length],
       ip: `192.168.1.2${i}`, subnet: '255.255.255.0',
       gateway: '192.168.1.1', dns: '8.8.8.8',
-      ipConfigMode: 'dhcp', x: 560 + i * 140, y: 380,
+      ipConfigMode: 'static', x: 560 + i * 140, y: 380,
       status: 'online',
-      ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' },
-      { id: 'wlan0', label: 'WLAN0', status: 'connected' }],
+      ports: [
+        { id: 'eth0', label: 'Eth0', status: 'disconnected' },
+        {
+          id: 'wlan0',
+          label: 'WLAN0',
+          status: 'connected',
+          wifi: {
+            ssid: 'NetSim-WiFi',
+            security: 'open',
+            channel: '2.4GHz',
+            mode: 'client',
+          },
+        },
+      ],
+      wifi: {
+        enabled: true,
+        ssid: 'NetSim-WiFi',
+        security: 'open',
+        password: '',
+        channel: '2.4GHz',
+        mode: 'client',
+      },
     };
     ctx.devices.push(pc);
   }
