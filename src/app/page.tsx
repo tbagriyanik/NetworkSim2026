@@ -1076,7 +1076,9 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     t,
     setShowOnboarding,
     setOnboardingStep,
-    onboardingStep
+    onboardingStep,
+    isAppLoading,
+    hasHydrated
   });
 
   // Sync active tab when device type changes

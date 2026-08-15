@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -57,6 +57,8 @@ export function OnboardingDialog({
       }
     }
   };
+
+  if (!open || !onboardingSteps || onboardingSteps.length === 0) return null;
 
   return (
     <Dialog

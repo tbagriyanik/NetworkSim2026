@@ -6,6 +6,8 @@ interface UseOnboardingProps {
   setShowOnboarding: (show: boolean) => void;
   setOnboardingStep: React.Dispatch<React.SetStateAction<number>>;
   onboardingStep: number;
+  isAppLoading?: boolean;
+  hasHydrated?: boolean;
 }
 
 export function useOnboarding({
@@ -13,9 +15,12 @@ export function useOnboarding({
   setShowOnboarding,
   setOnboardingStep,
   onboardingStep,
+  isAppLoading,
+  hasHydrated = true,
 }: UseOnboardingProps) {
-  // Onboarding: show once per browser
+  // Onboarding: show once per browser only after app loading finishes
   useEffect(() => {
+    if (isAppLoading || !hasHydrated) return;
     try {
       const seen = localStorage.getItem('netsim_onboarding_seen');
       if (!seen) {
@@ -30,7 +35,7 @@ export function useOnboarding({
         })
       );
     }
-  }, [setShowOnboarding, setOnboardingStep]);
+  }, [setShowOnboarding, setOnboardingStep, isAppLoading, hasHydrated]);
 
   const onboardingSteps = [
     {

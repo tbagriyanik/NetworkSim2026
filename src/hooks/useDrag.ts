@@ -278,11 +278,11 @@ export function useDrag(options: UseDragOptions = {}): UseDragReturn {
             const newX = ds2.startPosX + dx;
             const newY = ds2.startPosY + dy;
             liveDragPosRef.current = { x: newX, y: newY };
-          el.style.left = `${newX}px`;
-          el.style.top = `${newY}px`;
-        }
-        el.style.willChange = 'transform';
-        el.style.transition = 'none';
+            el.style.left = `${newX}px`;
+            el.style.top = `${newY}px`;
+          }
+          el.style.willChange = 'transform';
+          el.style.transition = 'none';
         } else if (ds2.type === 'resize' && ds2.direction) {
           const dx2 = clientX - ds2.startX;
           const dy2 = clientY - ds2.startY;
@@ -497,8 +497,9 @@ export function GlobalDragManager() {
         state.el.style.position = 'fixed';
         state.el.style.left = `${state.offsetX}px`;
         state.el.style.top = `${state.offsetY}px`;
-        state.el.style.transform = `translate(${dx}px, ${dy}px)`;
+        state.el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
         state.el.style.willChange = 'transform';
+        state.el.style.contain = 'layout style paint';
         state.el.style.transition = 'none';
       });
     };
@@ -507,6 +508,7 @@ export function GlobalDragManager() {
       if (state.animFrame !== null) { cancelAnimationFrame(state.animFrame); state.animFrame = null; }
       if (!state.active || !state.el) { state.active = false; return; }
       state.el.style.willChange = '';
+      state.el.style.contain = '';
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       const finalLeft = state.offsetX + state.deltaX;
