@@ -99,8 +99,8 @@ function applyPcPipeFilter(output: string, pipeExpr: string): string {
   const lines = output.split('\n');
   const filtered = lines.filter(line => {
     const haystack = caseInsensitive ? line.toLowerCase() : line;
-    const needle   = caseInsensitive ? rawTerm.toLowerCase() : rawTerm;
-    const found    = haystack.includes(needle);
+    const needle = caseInsensitive ? rawTerm.toLowerCase() : rawTerm;
+    const found = haystack.includes(needle);
     return invert ? !found : found;
   });
   return filtered.join('\n');
@@ -332,8 +332,15 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
         const pipeIdx = token.indexOf('|');
         if (pipeIdx !== -1) {
           activeToken = token.slice(0, pipeIdx).trim();
-          pipeExpr    = token.slice(pipeIdx + 1).trim();
+          pipeExpr = token.slice(pipeIdx + 1).trim();
         }
+
+        // Pipe-aware output helpers — filter ALL command output when a pipe expression is present.
+        // This means every command automatically supports  cmd | find /i "x"  without per-command changes.
+        const emit = (type: OutputLine['type'], content: string, prompt?: string) =>
+          addLocalOutput(type, pipeExpr ? applyPcPipeFilter(content, pipeExpr) : content, prompt);
+        const emitMulti = async (type: OutputLine['type'], content: string, delayMs?: number) =>
+          addMultilineOutput(type, pipeExpr ? applyPcPipeFilter(content, pipeExpr) : content, delayMs);
 
         const parts = activeToken.split(' ');
         const cmd = parts[0].toLowerCase();
@@ -341,38 +348,35 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
         let cmdSuccess = true;
 
         if (cmd === 'echo') {
-          addLocalOutput('output', args.join(' '));
+          emit('output', args.join(' '));
         } else if (cmd === 'ipconfig') {
           if (args.includes('/release')) {
             setPcIP('0.0.0.0');
-            addLocalOutput('success', 'IP address released successfully.');
+            emit('success', 'IP address released successfully.');
           } else if (args.includes('/renew')) {
             try {
               const lease = applyDhcpLeaseRef.current?.() ?? null;
               if (lease && lease.serverName !== 'link-local') {
-                addLocalOutput(
-                  'success',
-                  `DHCP lease acquired from ${lease.serverName}/${lease.poolName}. New IP: ${lease.ip}`
-                );
+                emit('success', `DHCP lease acquired from ${lease.serverName}/${lease.poolName}. New IP: ${lease.ip}`);
               } else {
-                addLocalOutput('success', `No DHCP server/pool found. Assigned link-local IP: ${lease?.ip || '(pending)'}`);
+                emit('success', `No DHCP server/pool found. Assigned link-local IP: ${lease?.ip || '(pending)'}`);
               }
             } catch (err) {
-              addLocalOutput('error', 'DHCP renew failed. Please check network connection.');
+              emit('error', 'DHCP renew failed. Please check network connection.');
               errorHandler.logError(DHCP_ERRORS.LEASE_FAILED({ deviceId, source: 'ipconfigRenew', error: String(err) }));
             }
           } else if (args.includes('/all')) {
             const ipConfigModeText = ipConfigMode === 'dhcp' ? 'Yes' : 'No';
             const ipconfigAllOut = `Windows IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${internalPcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet:\n\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) PRO/1000 MT Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : ${ipConfigModeText}\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}(Preferred)\n   NetBIOS over Tcpip. . . . . . . . : Enabled\n\n${wifiEnabled ? `Ethernet adapter Wireless Network Connection:\n\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) Wireless WiFi Link 4965AGN\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : ${ipConfigModeText}\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}(Preferred)\n   NetBIOS over Tcpip. . . . . . . . : Enabled\n\n` : ''}`;
-            await addMultilineOutput('output', pipeExpr ? applyPcPipeFilter(ipconfigAllOut, pipeExpr) : ipconfigAllOut, 80);
+            await emitMulti('output', ipconfigAllOut, 80);
           } else {
             const ipconfigOut = `OS IP Configuration\n\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}`;
-            await addMultilineOutput('output', pipeExpr ? applyPcPipeFilter(ipconfigOut, pipeExpr) : ipconfigOut, 80);
+            await emitMulti('output', ipconfigOut, 80);
           }
         } else if (cmd === 'ping') {
           const target = args[0];
           if (!target) {
-            addLocalOutput('output', 'Usage: ping <target_name_or_address>');
+            emit('output', 'Usage: ping <target_name_or_address>');
           } else {
             let targetIp = target;
             let dnsResolved = false;
@@ -389,14 +393,14 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                 targetIp = dnsResult.address;
                 dnsResolved = true;
               } else {
-                addLocalOutput('output', `Ping request could not find host ${target}. Please check the name and try again.`);
+                emit('output', `Ping request could not find host ${target}. Please check the name and try again.`);
                 return;
               }
             }
 
             if (isLoopbackTarget(targetIp)) {
               const pingTargetDisplay = dnsResolved ? `${target} [127.0.0.1]` : '127.0.0.1';
-              await addMultilineOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`, 100);
+              await emitMulti('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`, 100);
               if (typeof window !== 'undefined') {
                 window.dispatchEvent(new CustomEvent('pc-command-executed', {
                   detail: { deviceId, command, output: 'Reply from 127.0.0.1' }
@@ -444,40 +448,38 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
 
               const formatTime = (ms: number) => ms === 0 ? '<1ms' : `${ms}ms`;
 
-              await addMultilineOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time1)} TTL=128\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time2)} TTL=128\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time3)} TTL=128\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time4)} TTL=128\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`, 100);
+              await emitMulti('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time1)} TTL=128\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time2)} TTL=128\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time3)} TTL=128\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time4)} TTL=128\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`, 100);
             } else {
               cmdSuccess = false;
               const pingTargetDisplay = dnsResolved ? `${target} [${targetIp.toLowerCase()}]` : targetIp.toLowerCase();
               const errorMsg = '\nRequest timed out.';
-              await addMultilineOutput('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:${errorMsg}${errorMsg}${errorMsg}${errorMsg}\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)`, 100);
+              await emitMulti('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:${errorMsg}${errorMsg}${errorMsg}${errorMsg}\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)`, 100);
             }
           }
         } else if (cmd === 'nslookup') {
           const rawTargetDomain = args[0];
           const targetDomain = rawTargetDomain ? normalizeLookupTargetCallback(rawTargetDomain) : '';
           if (!targetDomain) {
-            addLocalOutput('output', 'Usage: nslookup <domain>');
+            emit('output', 'Usage: nslookup <domain>');
           } else if (resolveDeviceNameTargetCallback(targetDomain)) {
             const resolved = resolveDeviceNameTargetCallback(targetDomain) as { ip: string; label: string };
-            const nsOut1 = `Server: local-device\nAddress: 127.0.0.1\n\nName: ${targetDomain}\nAddress: ${resolved.ip}`;
-            await addMultilineOutput('output', pipeExpr ? applyPcPipeFilter(nsOut1, pipeExpr) : nsOut1, 80);
+            await emitMulti('output', `Server: local-device\nAddress: 127.0.0.1\n\nName: ${targetDomain}\nAddress: ${resolved.ip}`, 80);
           } else if (!isValidIpv4(pcDNS)) {
-            addLocalOutput('error', t.dnsInvalidAddress);
+            emit('error', t.dnsInvalidAddress);
           } else if (!hasGatewayForTargetCallback(pcDNS)) {
-            addLocalOutput('error', t.dnsGatewayRequired);
+            emit('error', t.dnsGatewayRequired);
           } else {
             const dnsResult = resolveDomainWithDnsServicesCallback(targetDomain);
             if (!dnsResult) {
-              await addMultilineOutput('output', `*** DNS request timed out\n*** Can't find ${targetDomain}: Non-existent domain`, 80);
+              await emitMulti('output', `*** DNS request timed out\n*** Can't find ${targetDomain}: Non-existent domain`, 80);
             } else {
-              const nsOut2 = `Server: ${dnsResult.server.name}\nAddress: ${dnsResult.server.ip}\n\nName: ${targetDomain}\nAddress: ${dnsResult.address}`;
-              await addMultilineOutput('output', pipeExpr ? applyPcPipeFilter(nsOut2, pipeExpr) : nsOut2, 80);
+              await emitMulti('output', `Server: ${dnsResult.server.name}\nAddress: ${dnsResult.server.ip}\n\nName: ${targetDomain}\nAddress: ${dnsResult.address}`, 80);
             }
           }
         } else if (cmd === 'curl' || cmd === 'wget') {
           const url = args[0];
           if (!url) {
-            addLocalOutput('output', `Usage: ${cmd} <url>`);
+            emit('output', `Usage: ${cmd} <url>`);
           } else {
             openWebPage(url, args[1]);
           }
@@ -504,7 +506,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             ? ((sshPortFromFlag || (isSshLoginFlag ? undefined : extraPort)) || '22')
             : (extraPort || '23');
           if (!target) {
-            addLocalOutput('output', isSsh
+            emit('output', isSsh
               ? 'Usage: ssh -l <username> <ip> [port]\n       ssh <username>@<ip> [port]'
               : 'Usage: telnet <ip_or_domain> [port]');
             return;
@@ -512,11 +514,11 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             const isValidUsername = /^[A-Za-z0-9._-]+$/.test(username);
             const isValidTargetIp = isValidIpv4(target);
             if (!isValidUsername) {
-              addLocalOutput('error', 'Invalid SSH username format');
+              emit('error', 'Invalid SSH username format');
               return;
             }
             if (!isValidTargetIp) {
-              addLocalOutput('error', `Invalid SSH target IP: ${target}`);
+              emit('error', `Invalid SSH target IP: ${target}`);
               return;
             }
           }
@@ -532,14 +534,14 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
               if (dnsResult) {
                 targetIp = dnsResult.address;
               } else {
-                addLocalOutput('error', `Could not resolve hostname ${target}`);
+                emit('error', `Could not resolve hostname ${target}`);
                 return;
               }
             }
           }
 
           if (isLoopbackTarget(targetIp)) {
-            addLocalOutput('success', isSsh
+            emit('success', isSsh
               ? `Trying ${username}@127.0.0.1 ${port} ...\nConnected to 127.0.0.1 as ${username}.`
               : `Trying 127.0.0.1 ${port} ...\nConnected to 127.0.0.1.`);
             return;
@@ -558,20 +560,20 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                   if (isSsh) {
                     const isSshActive = transportInput.includes('all') || transportInput.includes('ssh');
                     if (!isSshActive) {
-                      addLocalOutput('error', `Connecting to ${targetIp}...Could not open connection to the host, on port 22: Connect failed`);
+                      emit('error', `Connecting to ${targetIp}...Could not open connection to the host, on port 22: Connect failed`);
                       return;
                     }
                   } else {
                     const isTelnetActive = transportInput.includes('all') || transportInput.includes('telnet');
                     if (!isTelnetActive) {
-                      addLocalOutput('error', `Connecting to ${targetIp}...Could not open connection to the host, on port 23: Connect failed`);
+                      emit('error', `Connecting to ${targetIp}...Could not open connection to the host, on port 23: Connect failed`);
                       return;
                     }
                   }
                 }
               }
 
-              addLocalOutput('success', isSsh
+              emit('success', isSsh
                 ? `Trying ${username}@${targetIp} ${port} ...\nConnected to ${targetIp} as ${username}.`
                 : `Trying ${targetIp} ${port} ...\nConnected to ${targetIp}.`);
 
@@ -591,23 +593,21 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                 onNavigate?.('terminal');
               }, 500);
             } else {
-              addLocalOutput('error', `Connection refused by ${targetIp}`);
+              emit('error', `Connection refused by ${targetIp}`);
             }
           } else {
-            addLocalOutput('error', `Connecting to ${targetIp}... failed: ${result.error || 'Destination unreachable'}`);
+            emit('error', `Connecting to ${targetIp}... failed: ${result.error || 'Destination unreachable'}`);
           }
         } else if (cmd === 'arp') {
           if (args.length === 0 || (args.length === 1 && args[0].toLowerCase() === '-a')) {
-            const arpOut = buildArpTableOutput();
-            const finalArp = pipeExpr ? applyPcPipeFilter(arpOut, pipeExpr) : arpOut;
-            addLocalOutput('output', finalArp);
+            emit('output', buildArpTableOutput());
           } else {
-            addLocalOutput('output', 'Usage: arp -a');
+            emit('output', 'Usage: arp -a');
           }
         } else if (cmd === 'tracert' || cmd === 'traceroute') {
           const target = args[0];
           if (!target) {
-            addLocalOutput('output', `Usage: ${cmd} <target_name_or_address>`);
+            emit('output', `Usage: ${cmd} <target_name_or_address>`);
           } else {
             let resolvedTarget = target;
             if (!isValidIpv4(target) && !isValidIpv6(target)) {
@@ -622,10 +622,10 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
               }
             }
             if (isLoopbackTarget(resolvedTarget)) {
-              await addMultilineOutput('output', `Tracing route to 127.0.0.1 over a maximum of 30 hops:\n\n  1    <1 ms    <1 ms    <1 ms  localhost [127.0.0.1]\n\nTrace complete.`, 80);
+              await emitMulti('output', `Tracing route to 127.0.0.1 over a maximum of 30 hops:\n\n  1    <1 ms    <1 ms    <1 ms  localhost [127.0.0.1]\n\nTrace complete.`, 80);
               return;
             }
-            addLocalOutput('output', `Tracing route to ${target} over a maximum of 30 hops:\n`);
+            emit('output', `Tracing route to ${target} over a maximum of 30 hops:\n`);
             const result = checkConnectivity(deviceId, resolvedTarget, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
 
             if (result.success) {
@@ -635,53 +635,45 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                 l3Hops.forEach((hop, index) => {
                   hopOutput += `  ${index + 1}    <1 ms    <1 ms    <1 ms  ${hop.name} [${hop.ip}]\n`;
                 });
-                await addMultilineOutput('output', hopOutput + '\nTrace complete.', 80);
+                await emitMulti('output', hopOutput + '\nTrace complete.', 80);
               } else {
-                await addMultilineOutput('output', `  1    *        *        *     Request timed out.\n\nTrace complete.`, 80);
+                await emitMulti('output', `  1    *        *        *     Request timed out.\n\nTrace complete.`, 80);
               }
             } else {
-              await addMultilineOutput('output', `  1    *        *        *     Request timed out.\n\nTrace complete.`, 80);
+              await emitMulti('output', `  1    *        *        *     Request timed out.\n\nTrace complete.`, 80);
             }
           }
         } else if (cmd === 'netstat') {
-          // Build output table; respect -a (all), -n (numeric) flags.
           const showAll     = args.some(a => /^[-/].*a/i.test(a));
           const numericOnly = args.some(a => /^[-/].*n/i.test(a));
 
-          let output = '\nActive Connections\n\n  Proto  Local Address          Foreign Address        State\n';
-          output += `  TCP    ${pcIP}:135            0.0.0.0:0              LISTENING\n`;
-          output += `  TCP    ${pcIP}:445            0.0.0.0:0              LISTENING\n`;
+          let netstatOut = '\nActive Connections\n\n  Proto  Local Address          Foreign Address        State\n';
+          netstatOut += `  TCP    ${pcIP}:135            0.0.0.0:0              LISTENING\n`;
+          netstatOut += `  TCP    ${pcIP}:445            0.0.0.0:0              LISTENING\n`;
 
-          if (serviceHttpEnabled) output += `  TCP    ${pcIP}:80             0.0.0.0:0              LISTENING\n`;
-          if (serviceDnsEnabled)  output += `  UDP    ${pcIP}:53             *:*\n`;
-          if (serviceDhcpEnabled) output += `  UDP    ${pcIP}:67             *:*\n`;
+          if (serviceHttpEnabled) netstatOut += `  TCP    ${pcIP}:80             0.0.0.0:0              LISTENING\n`;
+          if (serviceDnsEnabled)  netstatOut += `  UDP    ${pcIP}:53             *:*\n`;
+          if (serviceDhcpEnabled) netstatOut += `  UDP    ${pcIP}:67             *:*\n`;
 
           if (showAll || numericOnly) {
-            output += `  TCP    ${pcIP}:49664          0.0.0.0:0              LISTENING\n`;
-            output += `  TCP    ${pcIP}:49665          0.0.0.0:0              LISTENING\n`;
-            output += `  TCP    ${pcIP}:49666          0.0.0.0:0              LISTENING\n`;
+            netstatOut += `  TCP    ${pcIP}:49664          0.0.0.0:0              LISTENING\n`;
+            netstatOut += `  TCP    ${pcIP}:49665          0.0.0.0:0              LISTENING\n`;
+            netstatOut += `  TCP    ${pcIP}:49666          0.0.0.0:0              LISTENING\n`;
           }
-
-          // Apply pipe filter before printing (e.g. | find /i "listening")
-          const finalOutput = pipeExpr ? applyPcPipeFilter(output, pipeExpr) : output;
-          await addMultilineOutput('output', finalOutput, 60);
+          await emitMulti('output', netstatOut, 60);
         } else if (cmd === 'nbtstat') {
           if (args.includes('-n')) {
-            const nbtOut = `\nNetBIOS Local Name Table\n\n       Name               Type         Status\n    ---------------------------------------------\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <00>  UNIQUE      Registered\n    WORKGROUP        <00>  GROUP       Registered\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <20>  UNIQUE      Registered\n`;
-            const finalNbt = pipeExpr ? applyPcPipeFilter(nbtOut, pipeExpr) : nbtOut;
-            await addMultilineOutput('output', finalNbt, 80);
+            await emitMulti('output', `\nNetBIOS Local Name Table\n\n       Name               Type         Status\n    ---------------------------------------------\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <00>  UNIQUE      Registered\n    WORKGROUP        <00>  GROUP       Registered\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <20>  UNIQUE      Registered\n`, 80);
           } else {
-            addLocalOutput('output', 'Usage: nbtstat [-n]');
+            emit('output', 'Usage: nbtstat [-n]');
           }
         } else if (cmd === 'getmac') {
           const mac = formatMacForArp(pcMAC).toUpperCase();
-          const getMacOut = `Physical Address    Transport Name\n=================== ============================================\n${mac.padEnd(19)} \\Device\\Tcpip_{${deviceId.toUpperCase()}}`;
-          const finalGetMac = pipeExpr ? applyPcPipeFilter(getMacOut, pipeExpr) : getMacOut;
-          await addMultilineOutput('output', finalGetMac, 60);
+          await emitMulti('output', `Physical Address    Transport Name\n=================== ============================================\n${mac.padEnd(19)} \\Device\\Tcpip_{${deviceId.toUpperCase()}}`, 60);
         } else if (cmd === 'ftp') {
           const targetArg = args[0];
           if (!targetArg) {
-            addLocalOutput('output', 'Usage: ftp <server_address>');
+            emit('output', 'Usage: ftp <server_address>');
             return;
           }
 
@@ -698,7 +690,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                 targetIp = dnsResult.address;
                 dnsResolved = true;
               } else {
-                addLocalOutput('error', language === 'tr'
+                emit('error', language === 'tr'
                   ? `DNS sorgusu başarısız: '${targetArg}' çözümlenemedi.`
                   : `Could not resolve hostname '${targetArg}'.`);
                 return;
@@ -718,15 +710,15 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             const err = result.error || '';
             const displayTarget = dnsResolved ? `${targetArg} [${targetIp}]` : targetIp;
             if (/firewall|güvenlik duvarı/i.test(err)) {
-              addLocalOutput('error', `${displayTarget}: ${err}`);
+              emit('error', `${displayTarget}: ${err}`);
             } else if (/acl/i.test(err)) {
-              addLocalOutput('error', `${displayTarget}: ${err}`);
+              emit('error', `${displayTarget}: ${err}`);
             } else if (/ip address/i.test(err)) {
-              addLocalOutput('error', language === 'tr'
+              emit('error', language === 'tr'
                 ? 'FTP bağlantısı sağlanamadı: Kaynak cihazın IP adresi yok.'
                 : 'Could not connect to FTP server: Source device has no IP address.');
             } else {
-              addLocalOutput('error', language === 'tr'
+              emit('error', language === 'tr'
                 ? `FTP bağlantısı sağlanamadı: ${displayTarget} adresine ulaşılamıyor.`
                 : `Could not connect to FTP server at ${displayTarget}: Destination unreachable.`);
             }
@@ -746,7 +738,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                 targetState?.services?.ftp?.enabled ? targetState.services.ftp :
                   undefined;
           if (!ftpService?.enabled) {
-            addLocalOutput('error', language === 'tr'
+            emit('error', language === 'tr'
               ? `FTP bağlantısı sağlanamadı: ${targetIp} üzerinde FTP servisi aktif değil.`
               : `FTP service is not enabled on ${targetIp}.`);
             return;
@@ -755,11 +747,11 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           const resolvedDeviceId = result.targetId || targetDevice?.id || deviceByIp?.id || '';
           setFtpSession({ host: targetArg, targetDeviceId: resolvedDeviceId, files });
           setIsFtpFilePickerOpen(true);
-          addLocalOutput('output', `Connected to ${targetArg}.`);
-          addLocalOutput('output', '220 FTP server ready.');
-          addLocalOutput('success', language === 'tr' ? 'Dosya transfer ekranı açıldı.' : 'File transfer window opened.');
+          emit('output', `Connected to ${targetArg}.`);
+          emit('output', '220 FTP server ready.');
+          emit('success', language === 'tr' ? 'Dosya transfer ekranı açıldı.' : 'File transfer window opened.');
         } else if (cmd === 'help' || cmd === '?') {
-          addLocalOutput('output', `Available commands: ipconfig, ping, tracert, traceroute, telnet, ssh, ftp, netstat, nbtstat, getmac, nslookup, curl, wget, arp, hostname, dir, ver, cls, exit, quit`);
+          emit('output', `Available commands: ipconfig, ping, tracert, traceroute, telnet, ssh, ftp, netstat, nbtstat, getmac, nslookup, curl, wget, arp, hostname, dir, ver, cls, exit, quit`);
         } else if (cmd === 'cls') {
           setPcOutput([]);
         } else if (cmd === 'exit' || cmd === 'quit') {
@@ -776,13 +768,13 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                 }
               }));
             }
-            addLocalOutput('success', `Hostname set to ${newHostname}`);
+            emit('success', `Hostname set to ${newHostname}`);
           } else {
-            addLocalOutput('output', internalPcHostname);
+            emit('output', internalPcHostname);
           }
         } else if (cmd === 'ver') {
-          addLocalOutput('output', `OS [Version 10.0.26200.8037]`);
-        } else if (cmd === 'dir') {
+          emit('output', `OS [Version 10.0.26200.8037]`);
+        } else if (cmd === 'dir' || cmd === 'ls') {
           const localFiles = pcLocalFiles;
           let fileLines = '';
           let totalSize = 0;
@@ -799,10 +791,10 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
               return `${month}/${day}/${year}  ${h12}:${mm} ${ap}             ${(f.size || 0).toString().padStart(8)} ${f.name}`;
             }).join('\n');
           }
-          addLocalOutput('output', ` Volume in drive C is OS\n Volume Serial Number is 1234-5678\n\n Directory of C:\\\n03/27/2026  10:00 AM    <DIR>          .\n03/27/2026  10:00 AM    <DIR>          ..\n${fileLines}\n               ${localFiles.length} File(s)          ${totalSize} bytes\n                2 Dir(s)  100,000,000,000 bytes free`);
+          emit('output', ` Volume in drive C is OS\n Volume Serial Number is 1234-5678\n\n Directory of C:\\\n03/27/2026  10:00 AM    <DIR>          .\n03/27/2026  10:00 AM    <DIR>          ..\n${fileLines}\n               ${localFiles.length} File(s)          ${totalSize} bytes\n                2 Dir(s)  100,000,000,000 bytes free`);
         } else {
           cmdSuccess = false;
-          addLocalOutput('error', `'${cmd}' is not recognized as an internal or external command.`);
+          emit('error', `'${cmd}' is not recognized as an internal or external command.`);
         }
 
         const nextOp = i + 1 < tokens.length ? tokens[i + 1] : null;
@@ -810,6 +802,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           skipNext = true;
         }
       }
+
     } else {
       if (!isConsoleConnected) {
         addLocalOutput('error', t.pcNoDeviceConnected);

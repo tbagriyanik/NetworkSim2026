@@ -512,7 +512,7 @@ describe('Wireless MAC Address Filtering Support', () => {
       mode: 'ap' as const,
       macFilterEnabled: true,
       macFilterMode: 'deny' as const,
-      macFilterList: ['0011.2233.4455'], // Cisco format
+      macFilterList: ['0011.2233.4455'], 
     };
     expect(wifiMacFilterMatches(apDenyMode, clientAllowed)).toBe(false);
     expect(wifiMacFilterMatches(apDenyMode, clientBlocked)).toBe(true);

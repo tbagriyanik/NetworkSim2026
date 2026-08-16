@@ -51,7 +51,7 @@ export function getSwitchDisplayProfile(state: SwitchState) {
       rom: 'ASA boot loader',
       bootldr: 'ASA Boot Loader',
       systemImage: 'flash:asa-software.bin',
-      processor: 'ASA 5506-X (Intel Celeron) processor (revision 01) with 8192K bytes of memory',
+      processor: 'ASA 5506-X (revision 01) with 8192K bytes of memory',
       reportedFeCount: 0,
       reportedGiCount,
     };
