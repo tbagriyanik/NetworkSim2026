@@ -363,9 +363,11 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             }
           } else if (args.includes('/all')) {
             const ipConfigModeText = ipConfigMode === 'dhcp' ? 'Yes' : 'No';
-            await addMultilineOutput('output', `Windows IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${internalPcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet:\n\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) PRO/1000 MT Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : ${ipConfigModeText}\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}(Preferred)\n   NetBIOS over Tcpip. . . . . . . . : Enabled\n\n${wifiEnabled ? `Ethernet adapter Wireless Network Connection:\n\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) Wireless WiFi Link 4965AGN\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : ${ipConfigModeText}\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}(Preferred)\n   NetBIOS over Tcpip. . . . . . . . : Enabled\n\n` : ''}`, 80);
+            const ipconfigAllOut = `Windows IP Configuration\n\n   Host Name . . . . . . . . . . . . : ${internalPcHostname}\n   Primary Dns Suffix  . . . . . . . : \n   Node Type . . . . . . . . . . . . : Hybrid\n   IP Routing Enabled. . . . . . . : No\n   WINS Proxy Enabled. . . . . . . . : No\n\nEthernet adapter Ethernet:\n\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) PRO/1000 MT Network Connection\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : ${ipConfigModeText}\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}(Preferred)\n   NetBIOS over Tcpip. . . . . . . . : Enabled\n\n${wifiEnabled ? `Ethernet adapter Wireless Network Connection:\n\n   Connection-specific DNS Suffix  . : \n   Description . . . . . . . . . . . : Intel(R) Wireless WiFi Link 4965AGN\n   Physical Address. . . . . . . . . : ${pcMAC}\n   DHCP Enabled. . . . . . . . . . . : ${ipConfigModeText}\n   Autoconfiguration Enabled . . . . : Yes\n   IPv4 Address. . . . . . . . . . . : ${pcIP}(Preferred)\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   DNS Servers . . . . . . . . . . . : ${pcDNS}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}(Preferred)\n   NetBIOS over Tcpip. . . . . . . . : Enabled\n\n` : ''}`;
+            await addMultilineOutput('output', pipeExpr ? applyPcPipeFilter(ipconfigAllOut, pipeExpr) : ipconfigAllOut, 80);
           } else {
-            await addMultilineOutput('output', `OS IP Configuration\n\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}`, 80);
+            const ipconfigOut = `OS IP Configuration\n\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ${pcIP}\n   Subnet Mask . . . . . . . . . . . : ${pcSubnet}\n   Default Gateway . . . . . . . . . : ${pcGateway}\n   IPv6 Address. . . . . . . . . . . : ${pcIPv6}`;
+            await addMultilineOutput('output', pipeExpr ? applyPcPipeFilter(ipconfigOut, pipeExpr) : ipconfigOut, 80);
           }
         } else if (cmd === 'ping') {
           const target = args[0];
@@ -457,11 +459,8 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             addLocalOutput('output', 'Usage: nslookup <domain>');
           } else if (resolveDeviceNameTargetCallback(targetDomain)) {
             const resolved = resolveDeviceNameTargetCallback(targetDomain) as { ip: string; label: string };
-            await addMultilineOutput(
-              'output',
-              `Server: local-device\nAddress: 127.0.0.1\n\nName: ${targetDomain}\nAddress: ${resolved.ip}`,
-              80
-            );
+            const nsOut1 = `Server: local-device\nAddress: 127.0.0.1\n\nName: ${targetDomain}\nAddress: ${resolved.ip}`;
+            await addMultilineOutput('output', pipeExpr ? applyPcPipeFilter(nsOut1, pipeExpr) : nsOut1, 80);
           } else if (!isValidIpv4(pcDNS)) {
             addLocalOutput('error', t.dnsInvalidAddress);
           } else if (!hasGatewayForTargetCallback(pcDNS)) {
@@ -471,11 +470,8 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             if (!dnsResult) {
               await addMultilineOutput('output', `*** DNS request timed out\n*** Can't find ${targetDomain}: Non-existent domain`, 80);
             } else {
-              await addMultilineOutput(
-                'output',
-                `Server: ${dnsResult.server.name}\nAddress: ${dnsResult.server.ip}\n\nName: ${targetDomain}\nAddress: ${dnsResult.address}`,
-                80
-              );
+              const nsOut2 = `Server: ${dnsResult.server.name}\nAddress: ${dnsResult.server.ip}\n\nName: ${targetDomain}\nAddress: ${dnsResult.address}`;
+              await addMultilineOutput('output', pipeExpr ? applyPcPipeFilter(nsOut2, pipeExpr) : nsOut2, 80);
             }
           }
         } else if (cmd === 'curl' || cmd === 'wget') {
@@ -602,7 +598,9 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           }
         } else if (cmd === 'arp') {
           if (args.length === 0 || (args.length === 1 && args[0].toLowerCase() === '-a')) {
-            addLocalOutput('output', buildArpTableOutput());
+            const arpOut = buildArpTableOutput();
+            const finalArp = pipeExpr ? applyPcPipeFilter(arpOut, pipeExpr) : arpOut;
+            addLocalOutput('output', finalArp);
           } else {
             addLocalOutput('output', 'Usage: arp -a');
           }
@@ -669,17 +667,17 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           await addMultilineOutput('output', finalOutput, 60);
         } else if (cmd === 'nbtstat') {
           if (args.includes('-n')) {
-            await addMultilineOutput('output', `\nNetBIOS Local Name Table\n\n       Name               Type         Status\n    ---------------------------------------------\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <00>  UNIQUE      Registered\n    WORKGROUP        <00>  GROUP       Registered\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <20>  UNIQUE      Registered\n`, 80);
+            const nbtOut = `\nNetBIOS Local Name Table\n\n       Name               Type         Status\n    ---------------------------------------------\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <00>  UNIQUE      Registered\n    WORKGROUP        <00>  GROUP       Registered\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <20>  UNIQUE      Registered\n`;
+            const finalNbt = pipeExpr ? applyPcPipeFilter(nbtOut, pipeExpr) : nbtOut;
+            await addMultilineOutput('output', finalNbt, 80);
           } else {
             addLocalOutput('output', 'Usage: nbtstat [-n]');
           }
         } else if (cmd === 'getmac') {
           const mac = formatMacForArp(pcMAC).toUpperCase();
-          await addMultilineOutput(
-            'output',
-            `Physical Address    Transport Name\n=================== ============================================\n${mac.padEnd(19)} \\Device\\Tcpip_{${deviceId.toUpperCase()}}`,
-            60
-          );
+          const getMacOut = `Physical Address    Transport Name\n=================== ============================================\n${mac.padEnd(19)} \\Device\\Tcpip_{${deviceId.toUpperCase()}}`;
+          const finalGetMac = pipeExpr ? applyPcPipeFilter(getMacOut, pipeExpr) : getMacOut;
+          await addMultilineOutput('output', finalGetMac, 60);
         } else if (cmd === 'ftp') {
           const targetArg = args[0];
           if (!targetArg) {
