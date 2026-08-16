@@ -2004,6 +2004,7 @@ export function PCPanel({
           onToggleShowCmdSettings={() => setShowCmdSettings(prev => !prev)}
           onTogglePower={onTogglePower}
           onClose={onClose}
+          openWebPage={openWebPage}
           formatTime={formatTime}
           formatFullDateTime={formatFullDateTime}
         />

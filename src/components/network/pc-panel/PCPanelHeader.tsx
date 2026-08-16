@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import { ArrowLeft, Settings, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowLeft, Globe, Settings, SlidersHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { WifiSignalMeter } from '../PCPanelWidgets';
@@ -25,6 +25,7 @@ interface PCPanelHeaderProps {
   onToggleShowCmdSettings: () => void;
   onTogglePower?: (deviceId: string) => void;
   onClose?: () => void;
+  openWebPage: (url: string, target?: string) => void;
   formatTime: (date: Date) => string;
   formatFullDateTime: (date: Date) => string;
 }
@@ -47,6 +48,7 @@ export function PCPanelHeader({
   onToggleShowCmdSettings,
   onTogglePower,
   onClose,
+  openWebPage,
   formatTime,
   formatFullDateTime,
 }: PCPanelHeaderProps) {
@@ -87,6 +89,22 @@ export function PCPanelHeader({
                 </Button>
               </TooltipWrapper>
             )}
+            {/* Browser shortcut */}
+            <TooltipWrapper title={language === 'tr' ? 'Tarayıcı' : 'Browser'}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => openWebPage('about:home')}
+                disabled={isPcPoweredOff}
+                className={cn(
+                  "h-7 w-7 md:h-9 md:w-9 rounded-full",
+                  isDark ? "text-sky-300 hover:bg-white/5" : "text-sky-600 hover:bg-secondary-100"
+                )}
+                aria-label={language === 'tr' ? 'Tarayıcı' : 'Browser'}
+              >
+                <Globe className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              </Button>
+            </TooltipWrapper>
             <TooltipWrapper title={language === 'tr' ? 'Kablosuz' : 'Wireless'}>
               <Button
                 variant="ghost"
