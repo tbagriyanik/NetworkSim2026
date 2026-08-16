@@ -1545,21 +1545,24 @@ export function NetworkTopology({
           break;
         }
         case 'ArrowUp':
-          e.preventDefault();
-          setPan(prev => ({ ...prev, y: prev.y + moveAmount }));
-          break;
         case 'ArrowDown':
-          e.preventDefault();
-          setPan(prev => ({ ...prev, y: prev.y - moveAmount }));
-          break;
         case 'ArrowLeft':
+        case 'ArrowRight': {
+          // Don't intercept arrow keys when a text input / note textarea has focus
+          const activeEl = document.activeElement;
+          const isTextInput = activeEl && (
+            activeEl.tagName === 'TEXTAREA' ||
+            activeEl.tagName === 'INPUT' ||
+            activeEl.getAttribute('contenteditable') === 'true'
+          );
+          if (isTextInput) break;
           e.preventDefault();
-          setPan(prev => ({ ...prev, x: prev.x + moveAmount }));
+          if (e.key === 'ArrowUp')    setPan(prev => ({ ...prev, y: prev.y + moveAmount }));
+          if (e.key === 'ArrowDown')  setPan(prev => ({ ...prev, y: prev.y - moveAmount }));
+          if (e.key === 'ArrowLeft')  setPan(prev => ({ ...prev, x: prev.x + moveAmount }));
+          if (e.key === 'ArrowRight') setPan(prev => ({ ...prev, x: prev.x - moveAmount }));
           break;
-        case 'ArrowRight':
-          e.preventDefault();
-          setPan(prev => ({ ...prev, x: prev.x - moveAmount }));
-          break;
+        }
         case '+':
         case '=':
           e.preventDefault();

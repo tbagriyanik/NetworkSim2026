@@ -80,6 +80,32 @@ export interface UsePCPanelCommandsParams {
   setPcHostname: (hostname: string) => void;
 }
 
+// ---------------------------------------------------------------------------
+// Helper: apply a Windows-style pipe filter to multi-line output
+// Supports: find /i "pattern", findstr /i "pattern", grep -i pattern
+// ---------------------------------------------------------------------------
+function applyPcPipeFilter(output: string, pipeExpr: string): string {
+  // find [/i] "term"  OR  findstr [/i] [/v] "term"  OR  grep [-i] [-v] term
+  const m = pipeExpr.match(
+    /^(?:find(?:str)?|grep)\s+((?:\/[ivIV]\s+)*)("[^"]*"|'[^']*'|\S+)/i
+  );
+  if (!m) return output; // unrecognised pipe – pass through unchanged
+
+  const flags = m[1].toLowerCase();
+  const rawTerm = m[2].replace(/^["']|["']$/g, ''); // strip surrounding quotes
+  const caseInsensitive = flags.includes('/i') || flags.includes('-i');
+  const invert = flags.includes('/v') || flags.includes('-v');
+
+  const lines = output.split('\n');
+  const filtered = lines.filter(line => {
+    const haystack = caseInsensitive ? line.toLowerCase() : line;
+    const needle   = caseInsensitive ? rawTerm.toLowerCase() : rawTerm;
+    const found    = haystack.includes(needle);
+    return invert ? !found : found;
+  });
+  return filtered.join('\n');
+}
+
 export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
   const {
     activeTabRef,
@@ -300,7 +326,16 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           continue;
         }
 
-        const parts = token.split(' ');
+        // --- Pipe detection: split token at first '|' ---
+        let activeToken = token;
+        let pipeExpr: string | null = null;
+        const pipeIdx = token.indexOf('|');
+        if (pipeIdx !== -1) {
+          activeToken = token.slice(0, pipeIdx).trim();
+          pipeExpr    = token.slice(pipeIdx + 1).trim();
+        }
+
+        const parts = activeToken.split(' ');
         const cmd = parts[0].toLowerCase();
         const args = parts.slice(1);
         let cmdSuccess = true;
@@ -611,17 +646,27 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             }
           }
         } else if (cmd === 'netstat') {
+          // Build output table; respect -a (all), -n (numeric) flags.
+          const showAll     = args.some(a => /^[-/].*a/i.test(a));
+          const numericOnly = args.some(a => /^[-/].*n/i.test(a));
+
           let output = '\nActive Connections\n\n  Proto  Local Address          Foreign Address        State\n';
           output += `  TCP    ${pcIP}:135            0.0.0.0:0              LISTENING\n`;
           output += `  TCP    ${pcIP}:445            0.0.0.0:0              LISTENING\n`;
 
           if (serviceHttpEnabled) output += `  TCP    ${pcIP}:80             0.0.0.0:0              LISTENING\n`;
-          if (serviceDnsEnabled) output += `  UDP    ${pcIP}:53             *:*                    \n`;
-          if (serviceDhcpEnabled) output += `  UDP    ${pcIP}:67             *:*                    \n`;
+          if (serviceDnsEnabled)  output += `  UDP    ${pcIP}:53             *:*\n`;
+          if (serviceDhcpEnabled) output += `  UDP    ${pcIP}:67             *:*\n`;
 
-          output += `  TCP    ${pcIP}:49664          0.0.0.0:0              LISTENING\n`;
-          output += `  TCP    ${pcIP}:49665          0.0.0.0:0              LISTENING\n`;
-          await addMultilineOutput('output', output, 60);
+          if (showAll || numericOnly) {
+            output += `  TCP    ${pcIP}:49664          0.0.0.0:0              LISTENING\n`;
+            output += `  TCP    ${pcIP}:49665          0.0.0.0:0              LISTENING\n`;
+            output += `  TCP    ${pcIP}:49666          0.0.0.0:0              LISTENING\n`;
+          }
+
+          // Apply pipe filter before printing (e.g. | find /i "listening")
+          const finalOutput = pipeExpr ? applyPcPipeFilter(output, pipeExpr) : output;
+          await addMultilineOutput('output', finalOutput, 60);
         } else if (cmd === 'nbtstat') {
           if (args.includes('-n')) {
             await addMultilineOutput('output', `\nNetBIOS Local Name Table\n\n       Name               Type         Status\n    ---------------------------------------------\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <00>  UNIQUE      Registered\n    WORKGROUP        <00>  GROUP       Registered\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <20>  UNIQUE      Registered\n`, 80);
