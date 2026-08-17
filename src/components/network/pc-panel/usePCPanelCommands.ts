@@ -378,12 +378,32 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             await emitMulti('output', ipconfigOut, 80);
           }
         } else if (cmd === 'ping') {
-          const target = args[0];
+          // Windows ping flags: -n count, -l size, -w timeout, -a, -t, -4, -6
+          let count = 4;
+          let bufferSize = 32;
+          let resolveNames = false;
+          let continuous = false;
+          let ipFamily: '4' | '6' | null = null;
+          let target: string | undefined;
+
+          for (let ai = 0; ai < args.length; ai++) {
+            const a = args[ai].toLowerCase();
+            if (a === '-n') { count = parseInt(args[ai + 1], 10) || 4; ai++; }
+            else if (a === '-l') { bufferSize = parseInt(args[ai + 1], 10) || 32; ai++; }
+            else if (a === '-w') { ai++; } // timeout accepted; not simulated
+            else if (a === '-a') { resolveNames = true; }
+            else if (a === '-t') { continuous = true; }
+            else if (a === '-6') { ipFamily = '6'; }
+            else if (a === '-4') { ipFamily = '4'; }
+            else if (target === undefined) { target = args[ai]; }
+          }
+
           if (!target) {
-            emit('output', 'Usage: ping <target_name_or_address>');
+            emit('output', 'Usage: ping [-n count] [-l size] [-w timeout] [-a] [-t] [-4|-6] <target_name_or_address>');
           } else {
             let targetIp = target;
             let dnsResolved = false;
+            let hostnameLabel = target;
 
             const namedResult = resolveDeviceNameTargetCallback(target);
             if (namedResult) {
@@ -402,67 +422,94 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
               }
             }
 
-            if (isLoopbackTarget(targetIp)) {
-              const pingTargetDisplay = dnsResolved ? `${target} [127.0.0.1]` : '127.0.0.1';
-              await emitMulti('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`, 100);
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('pc-command-executed', {
-                  detail: { deviceId, command, output: 'Reply from 127.0.0.1' }
-                }));
-              }
+            if (ipFamily === '6' && !isValidIpv6(targetIp)) {
+              emit('output', 'General failure. This address family is not supported for the request.');
+              return;
+            }
+            if (ipFamily === '4' && !isValidIpv4(targetIp)) {
+              emit('output', 'General failure. This address family is not supported for the request.');
               return;
             }
 
-            const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
-
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('pc-command-executed', {
-                detail: { deviceId, command, output: result.success ? 'Reply from' : 'timed out' }
-              }));
+            if (resolveNames && (isValidIpv4(targetIp) || isValidIpv6(targetIp))) {
+              const matched = topologyDevices.find(d =>
+                (d.ip && d.ip.toLowerCase() === targetIp.toLowerCase()) ||
+                (d.ipv6 && d.ipv6.toLowerCase() === targetIp.toLowerCase())
+              );
+              if (matched && matched.name) {
+                hostnameLabel = matched.name;
+                dnsResolved = true;
+              }
             }
 
-            if (result.capturedPackets && result.capturedPackets.length > 0 && typeof window !== 'undefined') {
-              result.capturedPackets.forEach(pkt => {
-                window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
-              });
-            }
+            const replyCount = continuous ? Math.max(count, 12) : count;
+            const pingTargetDisplay = dnsResolved ? `${hostnameLabel} [${targetIp.toLowerCase()}]` : targetIp.toLowerCase();
 
-            if (result.success) {
-              const targetDevice = result.targetId ? topologyDevices.find(d => d.id === result.targetId) : undefined;
-              if (targetDevice && targetDevice.macAddress) {
-                addPcArpEntry?.(targetIp, targetDevice.macAddress, targetDevice.type === 'iot');
+            const sendBatch = async (packets: number) => {
+              if (isLoopbackTarget(targetIp)) {
+                const replies: string[] = [];
+                for (let i = 0; i < packets; i++) {
+                  replies.push(`Reply from 127.0.0.1: bytes=${bufferSize} time<1ms TTL=128`);
+                }
+                await emitMulti('output', `Pinging ${pingTargetDisplay} with ${bufferSize} bytes of data:\n${replies.join('\n')}\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = ${packets}, Received = ${packets}, Lost = 0 (0% loss)`, 100);
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('pc-command-executed', {
+                    detail: { deviceId, command, output: 'Reply from 127.0.0.1' }
+                  }));
+                }
+                return;
               }
 
-              const pingTargetDisplay = dnsResolved ? `${target} [${targetIp.toLowerCase()}]` : targetIp.toLowerCase();
+              const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
 
-              const srcDist = getWirelessDistance(deviceFromTopology, topologyDevices, deviceStates);
-              const dstDist = getWirelessDistance(targetDevice, topologyDevices, deviceStates);
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('pc-command-executed', {
+                  detail: { deviceId, command, output: result.success ? 'Reply from' : 'timed out' }
+                }));
+              }
 
-              const srcWired = srcDist === Infinity;
-              const dstWired = dstDist === Infinity;
-              const effectiveDist = (srcWired ? 0 : srcDist) + (dstWired ? 0 : dstDist);
-              const allWired = srcWired && dstWired;
+              if (result.capturedPackets && result.capturedPackets.length > 0 && typeof window !== 'undefined') {
+                result.capturedPackets.forEach(pkt => {
+                  window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
+                });
+              }
 
-              const generatePingTime = () => {
-                if (allWired) return 0;
-                const base = Math.exp(effectiveDist / 130);
-                return Math.max(1, Math.round(base * (1 + (Math.random() * 0.16 - 0.08))));
-              };
+              if (result.success) {
+                const targetDevice = result.targetId ? topologyDevices.find(d => d.id === result.targetId) : undefined;
+                if (targetDevice && targetDevice.macAddress) {
+                  addPcArpEntry?.(targetIp, targetDevice.macAddress, targetDevice.type === 'iot');
+                }
 
-              const time1 = generatePingTime();
-              const time2 = generatePingTime();
-              const time3 = generatePingTime();
-              const time4 = generatePingTime();
+                const srcDist = getWirelessDistance(deviceFromTopology, topologyDevices, deviceStates);
+                const dstDist = getWirelessDistance(targetDevice, topologyDevices, deviceStates);
 
-              const formatTime = (ms: number) => ms === 0 ? '<1ms' : `${ms}ms`;
+                const srcWired = srcDist === Infinity;
+                const dstWired = dstDist === Infinity;
+                const effectiveDist = (srcWired ? 0 : srcDist) + (dstWired ? 0 : dstDist);
+                const allWired = srcWired && dstWired;
 
-              await emitMulti('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time1)} TTL=128\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time2)} TTL=128\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time3)} TTL=128\nReply from ${targetIp.toLowerCase()}: bytes=32 time=${formatTime(time4)} TTL=128\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`, 100);
-            } else {
-              cmdSuccess = false;
-              const pingTargetDisplay = dnsResolved ? `${target} [${targetIp.toLowerCase()}]` : targetIp.toLowerCase();
-              const errorMsg = '\nRequest timed out.';
-              await emitMulti('output', `Pinging ${pingTargetDisplay} with 32 bytes of data:${errorMsg}${errorMsg}${errorMsg}${errorMsg}\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)`, 100);
-            }
+                const generatePingTime = () => {
+                  if (allWired) return 0;
+                  const base = Math.exp(effectiveDist / 130);
+                  return Math.max(1, Math.round(base * (1 + (Math.random() * 0.16 - 0.08))));
+                };
+
+                const formatTime = (ms: number) => ms === 0 ? '<1ms' : `${ms}ms`;
+
+                const replies: string[] = [];
+                for (let i = 0; i < packets; i++) {
+                  const time = generatePingTime();
+                  replies.push(`Reply from ${targetIp.toLowerCase()}: bytes=${bufferSize} time=${formatTime(time)} TTL=128`);
+                }
+                await emitMulti('output', `Pinging ${pingTargetDisplay} with ${bufferSize} bytes of data:\n${replies.join('\n')}\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = ${packets}, Received = ${packets}, Lost = 0 (0% loss)`, 100);
+              } else {
+                cmdSuccess = false;
+                const timeouts = Array(packets).fill('\nRequest timed out.').join('');
+                await emitMulti('output', `Pinging ${pingTargetDisplay} with ${bufferSize} bytes of data:${timeouts}\n\nPing statistics for ${pingTargetDisplay}:\n    Packets: Sent = ${packets}, Received = 0, Lost = ${packets} (100% loss)`, 100);
+              }
+            };
+
+            await sendBatch(replyCount);
           }
         } else if (cmd === 'nslookup') {
           const rawTargetDomain = args[0];
