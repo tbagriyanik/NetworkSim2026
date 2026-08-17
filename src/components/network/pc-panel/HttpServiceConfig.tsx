@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -91,7 +91,7 @@ export function HttpServiceConfig({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceHttpEnabled ? 'bg-success-500/15 text-success-600 border border-success-500/30' : 'bg-secondary-200 text-secondary-500 border border-secondary-300'}`}>
-              {serviceHttpEnabled ? 'ON' : 'OFF'}
+              {serviceHttpEnabled ? (language === 'tr' ? 'AÇIK' : 'ON') : (language === 'tr' ? 'KAPALI' : 'OFF')}
             </span>
             <button
               type="button"

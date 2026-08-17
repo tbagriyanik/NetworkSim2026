@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { FormInput } from '@/components/ui/FormInput';
 
 interface DnsServiceConfigProps {
   isDark: boolean;
@@ -77,7 +77,7 @@ export function DnsServiceConfig({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceDnsEnabled ? 'bg-purple-500/15 text-purple-600 border border-purple-500/30' : 'bg-secondary-200 text-secondary-500 border border-secondary-300'}`}>
-              {serviceDnsEnabled ? 'ON' : 'OFF'}
+              {serviceDnsEnabled ? (language === 'tr' ? 'AÇIK' : 'ON') : (language === 'tr' ? 'KAPALI' : 'OFF')}
             </span>
             <button
               type="button"
@@ -110,23 +110,28 @@ export function DnsServiceConfig({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Input
+          <FormInput
+            label={language === 'tr' ? 'Alan Adı (Domain)' : 'Domain Name'}
             value={dnsFormDomain}
             onChange={(e) => setDnsFormDomain(e.target.value)}
             placeholder={t.dnsDomainPlaceholder}
             onKeyDown={(e) => e.key === 'Enter' && handleAddDnsRecord()}
           />
-          <Input
+          <FormInput
+            label={language === 'tr' ? 'IP Adresi' : 'IP Address'}
             value={dnsFormAddress}
             onChange={(e) => setDnsFormAddress(e.target.value)}
             placeholder={t.dnsAddressPlaceholder}
             onKeyDown={(e) => e.key === 'Enter' && handleAddDnsRecord()}
           />
-          <Button
-            onClick={handleAddDnsRecord}
-          >
-            {t.addDnsRecord}
-          </Button>
+          <div className="flex items-end">
+            <Button
+              className="w-full"
+              onClick={handleAddDnsRecord}
+            >
+              {t.addDnsRecord}
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2">

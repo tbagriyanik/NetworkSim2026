@@ -311,7 +311,7 @@ export function ServicesTab({
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceFtpEnabled ? 'bg-accent-500/15 text-accent-600 border border-accent-500/30' : 'bg-secondary-200 text-secondary-500 border border-secondary-300'}`}>
-                    {serviceFtpEnabled ? 'ON' : 'OFF'}
+                    {serviceFtpEnabled ? (language === 'tr' ? 'AÇIK' : 'ON') : (language === 'tr' ? 'KAPALI' : 'OFF')}
                   </span>
                   <button
                     type="button"

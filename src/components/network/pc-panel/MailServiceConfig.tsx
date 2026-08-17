@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ArrowLeft, Send, Reply, Trash2, Plus } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { FormInput } from '@/components/ui/FormInput';
 
 interface MailServiceConfigProps {
   isDark: boolean;
@@ -111,7 +111,7 @@ export function MailServiceConfig({
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceMailEnabled ? 'bg-error-500/15 text-error-600 border border-error-500/30' : 'bg-secondary-200 text-secondary-500 border border-secondary-300'}`}>
-                  {serviceMailEnabled ? 'ON' : 'OFF'}
+                  {serviceMailEnabled ? (language === 'tr' ? 'AÇIK' : 'ON') : (language === 'tr' ? 'KAPALI' : 'OFF')}
                 </span>
                 <button
                   type="button"
@@ -141,15 +141,30 @@ export function MailServiceConfig({
 
         {composeMode && (
           <div className="space-y-3">
-            <Input value={composeTo} onChange={(e) => { setComposeTo(e.target.value); setMailError(''); }} placeholder={language === 'tr' ? 'Alıcı (kullanici@domain)' : 'To (user@domain)'} />
-            <Input value={composeSubject} onChange={(e) => setComposeSubject(e.target.value)} placeholder={language === 'tr' ? 'Konu' : 'Subject'} />
-            <textarea
-              value={composeBody}
-              onChange={(e) => setComposeBody(e.target.value)}
-              placeholder={language === 'tr' ? 'Mesajınızı yazın...' : 'Write your message...'}
-              rows={4}
-              className={`w-full text-xs p-2 rounded border resize-none focus:outline-none focus:ring-1 ${isDark ? 'bg-secondary-800 border-secondary-700 text-secondary-200 focus:ring-accent-500/50' : 'bg-white border-secondary-300 text-secondary-800 focus:ring-accent-500/50'}`}
+            <FormInput
+              label={language === 'tr' ? 'Alıcı' : 'To'}
+              value={composeTo}
+              onChange={(e) => { setComposeTo(e.target.value); setMailError(''); }}
+              placeholder={language === 'tr' ? 'kullanici@domain' : 'user@domain'}
             />
+            <FormInput
+              label={language === 'tr' ? 'Konu' : 'Subject'}
+              value={composeSubject}
+              onChange={(e) => setComposeSubject(e.target.value)}
+              placeholder={language === 'tr' ? 'Konu' : 'Subject'}
+            />
+            <div className="space-y-1">
+              <label className={`text-xs font-semibold ${isDark ? 'text-secondary-300' : 'text-secondary-700'}`}>
+                {language === 'tr' ? 'Mesaj' : 'Message'}
+              </label>
+              <textarea
+                value={composeBody}
+                onChange={(e) => setComposeBody(e.target.value)}
+                placeholder={language === 'tr' ? 'Mesajınızı yazın...' : 'Write your message...'}
+                rows={4}
+                className={`w-full text-xs p-2 rounded border resize-none focus:outline-none focus:ring-1 ${isDark ? 'bg-secondary-800 border-secondary-700 text-secondary-200 focus:ring-accent-500/50' : 'bg-white border-secondary-300 text-secondary-800 focus:ring-accent-500/50'}`}
+              />
+            </div>
             {mailError && (
               <div className="text-[11px] text-red-800 dark:text-red-200 font-semibold bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-500/30 rounded-lg px-3 py-2">
                 {mailError}
@@ -191,13 +206,18 @@ export function MailServiceConfig({
             </div>
             {viewingMsg.type === 'inbox' && (
               <>
-                <textarea
-                  value={viewReplyBody}
-                  onChange={(e) => { setViewReplyBody(e.target.value); setMailError(''); }}
-                  placeholder={language === 'tr' ? 'Yanıtınızı yazın...' : 'Write your reply...'}
-                  rows={3}
-                  className={`w-full text-xs p-2 rounded border resize-none focus:outline-none focus:ring-1 ${isDark ? 'bg-secondary-800 border-secondary-700 text-secondary-200 focus:ring-accent-500/50' : 'bg-white border-secondary-300 text-secondary-800 focus:ring-accent-500/50'}`}
-                />
+                <div className="space-y-1">
+                  <label className={`text-xs font-semibold ${isDark ? 'text-secondary-300' : 'text-secondary-700'}`}>
+                    {language === 'tr' ? 'Yanıtınız' : 'Your Reply'}
+                  </label>
+                  <textarea
+                    value={viewReplyBody}
+                    onChange={(e) => { setViewReplyBody(e.target.value); setMailError(''); }}
+                    placeholder={language === 'tr' ? 'Yanıtınızı yazın...' : 'Write your reply...'}
+                    rows={3}
+                    className={`w-full text-xs p-2 rounded border resize-none focus:outline-none focus:ring-1 ${isDark ? 'bg-secondary-800 border-secondary-700 text-secondary-200 focus:ring-accent-500/50' : 'bg-white border-secondary-300 text-secondary-800 focus:ring-accent-500/50'}`}
+                  />
+                </div>
                 {mailError && (
                   <div className="text-[11px] text-red-800 dark:text-red-200 font-semibold bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-500/30 rounded-lg px-3 py-2">
                     {mailError}
@@ -227,8 +247,18 @@ export function MailServiceConfig({
         {!composeMode && !viewingMsg && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Input value={serviceMailUsername} onChange={(e) => setServiceMailUsername(e.target.value)} placeholder="user" />
-              <Input value={serviceMailDomain} onChange={(e) => setServiceMailDomain(e.target.value)} placeholder="local.lan" />
+              <FormInput
+                label={language === 'tr' ? 'Kullanıcı Adı' : 'Username'}
+                value={serviceMailUsername}
+                onChange={(e) => setServiceMailUsername(e.target.value)}
+                placeholder="user"
+              />
+              <FormInput
+                label={language === 'tr' ? 'E-posta Alan Adı' : 'Email Domain'}
+                value={serviceMailDomain}
+                onChange={(e) => setServiceMailDomain(e.target.value)}
+                placeholder="local.lan"
+              />
             </div>
 
             {mailPop3Blocked && (

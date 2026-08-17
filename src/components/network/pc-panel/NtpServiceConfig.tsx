@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 
-import { Input } from '@/components/ui/input';
+import { FormInput } from '@/components/ui/FormInput';
 
 interface NtpServiceConfigProps {
   isDark: boolean;
@@ -66,7 +66,7 @@ export function NtpServiceConfig({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceNtpEnabled ? 'bg-primary-500/15 text-primary-600 border border-primary-500/30' : 'bg-secondary-200 text-secondary-500 border border-secondary-300'}`}>
-              {serviceNtpEnabled ? 'ON' : 'OFF'}
+              {serviceNtpEnabled ? (language === 'tr' ? 'AÇIK' : 'ON') : (language === 'tr' ? 'KAPALI' : 'OFF')}
             </span>
             <button
               type="button"
@@ -93,8 +93,9 @@ export function NtpServiceConfig({
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input
+          <FormInput
             type="date"
+            label={language === 'tr' ? 'Tarih' : 'Date'}
             value={serviceNtpDate}
             onChange={(e) => {
               const newDate = e.target.value;
@@ -107,8 +108,9 @@ export function NtpServiceConfig({
             }}
             aria-label={language === 'tr' ? 'NTP tarih' : 'NTP date'}
           />
-          <Input
+          <FormInput
             type="time"
+            label={language === 'tr' ? 'Saat' : 'Time'}
             value={serviceNtpTime}
             onChange={(e) => {
               const newTime = e.target.value;

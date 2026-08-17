@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { FormInput } from '@/components/ui/FormInput';
 import type { DhcpPoolConfig } from './PCPanel.types';
 
 interface DhcpServiceConfigProps {
@@ -105,7 +105,7 @@ export function DhcpServiceConfig({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceDhcpEnabled ? 'bg-accent-500/15 text-accent-600 border border-accent-500/30' : 'bg-secondary-200 text-secondary-500 border border-secondary-300'}`}>
-              {serviceDhcpEnabled ? 'ON' : 'OFF'}
+              {serviceDhcpEnabled ? (language === 'tr' ? 'AÇIK' : 'ON') : (language === 'tr' ? 'KAPALI' : 'OFF')}
             </span>
             <button
               type="button"
@@ -136,39 +136,45 @@ export function DhcpServiceConfig({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input
+          <FormInput
+            label={language === 'tr' ? 'Havuz Adı' : 'Pool Name'}
             value={dhcpForm.poolName}
             onChange={(e) => setDhcpForm((prev) => ({ ...prev, poolName: e.target.value }))}
             placeholder={t.dhcpPoolNamePlaceholder}
             onKeyDown={(e) => e.key === 'Enter' && saveDhcpPool()}
           />
-          <Input
+          <FormInput
+            label={language === 'tr' ? 'Varsayılan Ağ Geçidi' : 'Default Gateway'}
             value={dhcpForm.defaultGateway}
             onChange={(e) => setDhcpForm((prev) => ({ ...prev, defaultGateway: e.target.value }))}
             placeholder={t.dhcpPoolGatewayPlaceholder}
             onKeyDown={(e) => e.key === 'Enter' && saveDhcpPool()}
           />
-          <Input
+          <FormInput
+            label={language === 'tr' ? 'DNS Sunucusu' : 'DNS Server'}
             value={dhcpForm.dnsServer}
             onChange={(e) => setDhcpForm((prev) => ({ ...prev, dnsServer: e.target.value }))}
             placeholder={t.dhcpPoolDnsPlaceholder}
             onKeyDown={(e) => e.key === 'Enter' && saveDhcpPool()}
           />
-          <Input
+          <FormInput
+            label={language === 'tr' ? 'Başlangıç IP Adresi' : 'Start IP Address'}
             value={dhcpForm.startIp}
             onChange={(e) => setDhcpForm((prev) => ({ ...prev, startIp: e.target.value }))}
             placeholder={t.dhcpPoolStartIpPlaceholder}
             onKeyDown={(e) => e.key === 'Enter' && saveDhcpPool()}
           />
-          <Input
+          <FormInput
+            label={language === 'tr' ? 'Alt Ağ Maskesi' : 'Subnet Mask'}
             value={dhcpForm.subnetMask}
             onChange={(e) => setDhcpForm((prev) => ({ ...prev, subnetMask: e.target.value }))}
             placeholder={t.dhcpPoolSubnetPlaceholder}
             onKeyDown={(e) => e.key === 'Enter' && saveDhcpPool()}
           />
-          <Input
+          <FormInput
             type="number"
             min={1}
+            label={language === 'tr' ? 'Maksimum Kullanıcı' : 'Max Users'}
             value={dhcpForm.maxUsers}
             onChange={(e) => setDhcpForm((prev) => ({ ...prev, maxUsers: Number(e.target.value || 1) }))}
             placeholder={t.dhcpPoolMaxUsersPlaceholder}
