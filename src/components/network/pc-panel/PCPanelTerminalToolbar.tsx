@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Copy, SlidersHorizontal } from 'lucide-react';
+import { Search, Copy, Type } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
@@ -70,7 +70,7 @@ export function PCPanelTerminalToolbar({
           className={cn("h-8 w-8 rounded-lg text-secondary-600 hover:text-secondary-900", showCmdSettings && "bg-accent", isDark && "text-secondary-300 hover:text-secondary-100")}
           aria-label={language === 'tr' ? 'Terminal Ayarları' : 'Terminal Settings'}
         >
-          <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
+          <Type className="w-4 h-4" aria-hidden="true" />
         </Button>
       </TooltipWrapper>
     </div>

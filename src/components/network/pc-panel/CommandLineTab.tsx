@@ -1,8 +1,9 @@
 ﻿'use client';
 
 import React, { useRef, useEffect } from 'react';
-import { Laptop, CornerDownLeft } from 'lucide-react';
+import { Laptop, CornerDownLeft, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { cn } from '@/lib/utils';
 import type { OutputLine, FtpSession } from './PCPanel.types';
 
@@ -48,6 +49,7 @@ export function CommandLineTab({
   textColor,
   mobileVerticalScrollStyle,
   pcOutput,
+  setPcOutput,
   internalPcHostname,
   ftpSession,
   input,
@@ -94,6 +96,11 @@ export function CommandLineTab({
             onChange={(e) => handleFontSizeChange(parseInt(e.target.value, 10))}
             className="flex-1 h-1 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
           />
+          <Button variant="ghost" size="sm" onClick={() => setPcOutput([])} className="h-7 text-[10px] font-black tracking-widest text-error-500 gap-1.5">
+            <Trash2 className="w-3 h-3" />
+            {t.clearTerminalBtn}
+            <ShortcutBadge shortcut="Ctrl+L" variant="danger" className="scale-75 origin-right" />
+          </Button>
         </div>
       )}
       {/* Output Area - Scrollable */}
