@@ -43,15 +43,16 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | Command | Description |
 |---------|-------------|
 | `ipconfig [/all] [/release] [/renew]` | IP configuration |
-| `ping <host>` | Test connectivity to host |
-| `tracert <host>` | Trace route to destination |
-| `netstat` | Display active network connections |
-| `nslookup <domain>` | Query DNS for domain mapping |
+| `ping [-n count] [-l size] [-w timeout] [-a] [-t] [-4\|-6] <host>` | Test connectivity to host |
+| `tracert [-d] [-h max_hops] [-w timeout] [-4\|-6] <host>` | Trace route to destination |
+| `netstat [-a] [-n] [-o] [-p tcp\|udp] [-r] [-s] [-e]` | Display network statistics / connections |
+| `nslookup [-type=A\|AAAA\|CNAME\|MX\|NS\|PTR\|TXT] <domain\|ip> [server]` | Query DNS for domain mapping |
 | `ftp <host>` | Connect to an FTP server |
 | `telnet <host> [port]` | Connect via Telnet |
 | `ssh -l <username> <host>` | Connect via SSH |
 | `curl` / `wget <url>` | View web page content |
-| `arp -a` | Display ARP table |
+| `arp [-a] [-g] [-v] [-d [*]] [-s <ip> <mac>]` | Display/manage ARP table |
+| `nbtstat [-n] [-c] [-r] [-R] [-RR] [-S] [-s] [-a name] [-A ip] [-L name]` | NetBIOS status / statistics |
 | `hostname` | Display computer name |
 | `dir` | List directory contents |
 | `ver` | Display OS version |

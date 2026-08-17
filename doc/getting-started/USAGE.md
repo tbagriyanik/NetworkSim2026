@@ -104,15 +104,16 @@
 | Command / Komut | EN | TR |
 |---|---|---|
 | `ipconfig [/all] [/release] [/renew]` | IP configuration | IP yapılandırması |
-| `ping <host>` | Test connectivity | Bağlantı testi |
-| `tracert <host>` | Trace route | Rota izleme |
-| `netstat` | Network statistics | Ağ istatistikleri |
-| `nslookup <domain>` | DNS lookup | DNS sorgusu |
+| `ping [-n count] [-l size] [-w timeout] [-a] [-t] [-4\|-6] <host>` | Test connectivity | Bağlantı testi |
+| `tracert [-d] [-h max_hops] [-w timeout] [-4\|-6] <host>` | Trace route | Rota izleme |
+| `netstat [-a] [-n] [-o] [-p tcp\|udp] [-r] [-s] [-e]` | Network statistics | Ağ istatistikleri |
+| `nslookup [-type=A\|AAAA\|CNAME\|MX\|NS\|PTR\|TXT] <domain\|ip> [server]` | DNS lookup | DNS sorgusu |
 | `telnet <host> [port]` | Telnet connection | Telnet bağlantısı |
 | `ssh [-l user] <host>` | SSH connection | SSH bağlantısı |
 | `curl` / `wget <url>` | View web page | Web sayfası görüntüle |
 | `ftp` | FTP session / FTP oturumu |
-| `arp -a` | ARP table | ARP tablosu |
+| `arp [-a] [-g] [-v] [-d [*]] [-s <ip> <mac>]` | ARP table | ARP tablosu |
+| `nbtstat [-n] [-c] [-r] [-R] [-RR] [-S] [-s] [-a name] [-A ip] [-L name]` | NetBIOS status | NetBIOS durumu |
 | `hostname` | Computer name | Bilgisayar adı |
 | `dir` | Directory listing | Dosya listesi |
 | `ver` | Version info | Versiyon bilgisi |

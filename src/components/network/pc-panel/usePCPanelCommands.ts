@@ -512,23 +512,53 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             await sendBatch(replyCount);
           }
         } else if (cmd === 'nslookup') {
-          const rawTargetDomain = args[0];
+          const typeFlagIdx = args.findIndex(a => /^-type=/i.test(a));
+          const queryType = typeFlagIdx !== -1 ? (args[typeFlagIdx].split('=')[1] || 'A').toUpperCase() : 'A';
+          const positional = args.filter(a => !/^-/.test(a));
+          const rawTargetDomain = positional[0] ?? '';
+          const queryServer = positional[1] ?? pcDNS;
           const targetDomain = rawTargetDomain ? normalizeLookupTargetCallback(rawTargetDomain) : '';
+          const isTargetIp = isValidIpv4(targetDomain) || isValidIpv6(targetDomain);
+
           if (!targetDomain) {
-            emit('output', 'Usage: nslookup <domain>');
+            emit('output', 'Usage: nslookup [-type=A|AAAA|CNAME|MX|NS|PTR|TXT] <domain|ip> [server]');
+          } else if (isTargetIp) {
+            // Reverse lookup (PTR)
+            const reverseMatch = topologyDevices.find(d => d.ip === targetDomain || d.ipv6 === targetDomain);
+            if (reverseMatch?.name) {
+              await emitMulti('output', `Server:  ${queryServer}\nAddress: ${queryServer}\n\nName:    ${reverseMatch.name}\nAddress: ${targetDomain}`, 80);
+            } else {
+              await emitMulti('output', `Server:  ${queryServer}\nAddress: ${queryServer}\n\n*** Can't find ${targetDomain}: Non-existent domain`, 80);
+            }
           } else if (resolveDeviceNameTargetCallback(targetDomain)) {
             const resolved = resolveDeviceNameTargetCallback(targetDomain) as { ip: string; label: string };
-            await emitMulti('output', `Server: local-device\nAddress: 127.0.0.1\n\nName: ${targetDomain}\nAddress: ${resolved.ip}`, 80);
-          } else if (!isValidIpv4(pcDNS)) {
+            const devMatch = topologyDevices.find(d => d.name === targetDomain || d.name === resolved.label || d.ip === resolved.ip);
+            if (queryType === 'AAAA') {
+              const v6 = devMatch?.ipv6 || '::';
+              await emitMulti('output', `Server:  local-device\nAddress: 127.0.0.1\n\nName:    ${targetDomain}\nAddress: ${v6}`, 80);
+            } else if (queryType === 'CNAME') {
+              await emitMulti('output', `Server:  local-device\nAddress: 127.0.0.1\n\n${targetDomain}  canonical name = ${resolved.label || targetDomain}`, 80);
+            } else if (queryType === 'MX') {
+              await emitMulti('output', `Server:  local-device\nAddress: 127.0.0.1\n\n${targetDomain}  MX preference = 10, mail exchanger = mail.${targetDomain}`, 80);
+            } else if (queryType === 'NS') {
+              await emitMulti('output', `Server:  local-device\nAddress: 127.0.0.1\n\n${targetDomain}  nameserver = ns.${targetDomain}`, 80);
+            } else if (queryType === 'TXT') {
+              await emitMulti('output', `Server:  local-device\nAddress: 127.0.0.1\n\n${targetDomain}  text = "v=spf1 -all"`, 80);
+            } else if (queryType === 'A') {
+              await emitMulti('output', `Server:  local-device\nAddress: 127.0.0.1\n\nName:    ${targetDomain}\nAddress: ${resolved.ip}`, 80);
+            } else {
+              await emitMulti('output', `Server:  local-device\nAddress: 127.0.0.1\n\n*** Invalid query type: ${queryType}`, 80);
+            }
+          } else if (!isValidIpv4(queryServer)) {
             emit('error', t.dnsInvalidAddress);
-          } else if (!hasGatewayForTargetCallback(pcDNS)) {
+          } else if (!hasGatewayForTargetCallback(queryServer)) {
             emit('error', t.dnsGatewayRequired);
           } else {
             const dnsResult = resolveDomainWithDnsServicesCallback(targetDomain);
             if (!dnsResult) {
               await emitMulti('output', `*** DNS request timed out\n*** Can't find ${targetDomain}: Non-existent domain`, 80);
             } else {
-              await emitMulti('output', `Server: ${dnsResult.server.name}\nAddress: ${dnsResult.server.ip}\n\nName: ${targetDomain}\nAddress: ${dnsResult.address}`, 80);
+              await emitMulti('output', `Server:  ${dnsResult.server.name}\nAddress: ${dnsResult.server.ip}\n\nName:    ${targetDomain}\nAddress: ${dnsResult.address}`, 80);
             }
           }
         } else if (cmd === 'curl' || cmd === 'wget') {
@@ -659,13 +689,28 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             emit('error', `Connecting to ${targetIp}... failed: ${result.error || 'Destination unreachable'}`);
           }
         } else if (cmd === 'arp') {
-          if (args.length === 0 || (args.length === 1 && args[0].toLowerCase() === '-a')) {
+          const flag = args[0]?.toLowerCase();
+          if (args.length === 0 || flag === '-a' || flag === '-g' || flag === '-v') {
             emit('output', buildArpTableOutput());
-          } else if (args[0]?.toLowerCase() === '-d') {
-            clearPcArpTable?.();
-            emit('success', 'The ARP entry was deleted successfully.');
+          } else if (flag === '-d') {
+            const delTarget = args[1];
+            if (!delTarget || delTarget === '*') {
+              clearPcArpTable?.();
+              emit('success', 'The ARP entry was deleted successfully.');
+            } else {
+              emit('success', `The ARP entry ${delTarget} was deleted successfully.`);
+            }
+          } else if (flag === '-s') {
+            const targetIp = args[1];
+            const targetMac = args[2];
+            if (!targetIp || !targetMac) {
+              emit('output', 'Usage: arp -s <ip> <mac_address>');
+            } else {
+              addPcArpEntry?.(targetIp, targetMac);
+              emit('success', `Static ARP entry ${targetIp} -> ${targetMac} added successfully.`);
+            }
           } else {
-            emit('output', 'Usage: arp -a\n       arp -d [*]');
+            emit('output', 'Usage: arp -a\n       arp -g\n       arp -v\n       arp -d [*]\n       arp -s <ip> <mac_address>');
           }
         } else if (cmd === 'tracert' || cmd === 'traceroute') {
           // Windows tracert flags: -d (no name resolution), -h max_hops, -w timeout, -4, -6
@@ -733,23 +778,51 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             }
           }
         } else if (cmd === 'netstat') {
-          const showAll = args.some(a => /^[-/].*a/i.test(a));
-          const numericOnly = args.some(a => /^[-/].*n/i.test(a));
+          const normFlag = (a: string) => a.replace(/^[-/]/, '').toLowerCase();
+          const flagSet = args.filter(a => /^[-/]/.test(a)).map(normFlag);
+          const hasFlag = (f: string) => flagSet.includes(f);
+          const showAll = hasFlag('a');
+          const numericOnly = hasFlag('n');
+          const showOpid = hasFlag('o');
+          const showRoute = hasFlag('r');
+          const showStats = hasFlag('s');
+          const showEthernet = hasFlag('e');
+          const protoIdx = args.findIndex((a, i) => /^[-/]p$/i.test(a) && args[i + 1] !== undefined);
+          const protoFilter = protoIdx !== -1 ? args[protoIdx + 1].toLowerCase() : '';
 
-          let netstatOut = '\nActive Connections\n\n  Proto  Local Address          Foreign Address        State\n';
-          netstatOut += `  TCP    ${pcIP}:135            0.0.0.0:0              LISTENING\n`;
-          netstatOut += `  TCP    ${pcIP}:445            0.0.0.0:0              LISTENING\n`;
-
-          if (serviceHttpEnabled) netstatOut += `  TCP    ${pcIP}:80             0.0.0.0:0              LISTENING\n`;
-          if (serviceDnsEnabled) netstatOut += `  UDP    ${pcIP}:53             *:*\n`;
-          if (serviceDhcpEnabled) netstatOut += `  UDP    ${pcIP}:67             *:*\n`;
-
-          if (showAll || numericOnly) {
-            netstatOut += `  TCP    ${pcIP}:49664          0.0.0.0:0              LISTENING\n`;
-            netstatOut += `  TCP    ${pcIP}:49665          0.0.0.0:0              LISTENING\n`;
-            netstatOut += `  TCP    ${pcIP}:49666          0.0.0.0:0              LISTENING\n`;
+          if (showRoute) {
+            const netAddr = pcSubnet === '255.255.255.0' ? `${pcIP.split('.').slice(0, 3).join('.')}.0` : pcIP;
+            const gw = pcGateway || '0.0.0.0';
+            await emitMulti('output', `\nRoute Table\n\n  Network Destination    Netmask          Gateway         Interface     Metric\n  ${'0.0.0.0'.padEnd(23)} 0.0.0.0          ${gw.padEnd(15)} ${pcIP.padEnd(15)} 25\n  ${netAddr.padEnd(23)} ${pcSubnet.padEnd(15)} ${gw.padEnd(15)} ${pcIP.padEnd(15)} 291\n  127.0.0.0              255.0.0.0        127.0.0.1        127.0.0.1        331\n  127.0.0.1              255.255.255.255  127.0.0.1        127.0.0.1        331\n`, 60);
+          } else if (showStats) {
+            await emitMulti('output', `\nIPv4 Statistics\n\n    Packets Received ...................: 12450\n    Received Header Errors .............: 0\n    Received Address Errors ............: 0\n    Packets Sent .......................: 8432\n\nTCP Statistics\n\n    Active Opens .......................: 14\n    Passive Opens ......................: 2\n    Failed Connection Attempts .........: 1\n    Resets .............................: 3\n    Connections Established ............: 12\n\nUDP Statistics\n\n    Datagrams Received .................: 230\n    Datagrams Sent .....................: 215\n`, 60);
+          } else if (showEthernet) {
+            await emitMulti('output', `\nInterface Statistics\n\n                                Received    Sent\n    Bytes ........................ 12.3 MB    9.8 MB\n    Unicast Packets ............... 10234      7234\n    Non-unicast Packets ........... 512        340\n    Discards ...................... 0          0\n    Errors ........................ 0          0\n    Unknown Protocols ............. 0\n`, 60);
+          } else {
+            const includeTcp = !protoFilter || protoFilter === 'tcp';
+            const includeUdp = !protoFilter || protoFilter === 'udp';
+            const pidSuffix = showOpid ? '    PID' : '';
+            let netstatOut = `\nActive Connections\n\n  Proto  Local Address          Foreign Address        State${pidSuffix}\n`;
+            if (includeTcp) {
+              netstatOut += `  TCP    ${pcIP}:135            0.0.0.0:0              LISTENING${showOpid ? '      1234' : ''}\n`;
+              netstatOut += `  TCP    ${pcIP}:445            0.0.0.0:0              LISTENING${showOpid ? '      4' : ''}\n`;
+              if (serviceHttpEnabled) netstatOut += `  TCP    ${pcIP}:80             0.0.0.0:0              LISTENING${showOpid ? '      876' : ''}\n`;
+              if (showAll || numericOnly) {
+                netstatOut += `  TCP    ${pcIP}:49664          0.0.0.0:0              LISTENING${showOpid ? '      1234' : ''}\n`;
+                netstatOut += `  TCP    ${pcIP}:49665          0.0.0.0:0              LISTENING${showOpid ? '      1234' : ''}\n`;
+                netstatOut += `  TCP    ${pcIP}:49666          0.0.0.0:0              LISTENING${showOpid ? '      1234' : ''}\n`;
+              }
+            }
+            if (includeUdp) {
+              if (serviceDnsEnabled) netstatOut += `  UDP    ${pcIP}:53             *:*${showOpid ? '                      650' : ''}\n`;
+              if (serviceDhcpEnabled) netstatOut += `  UDP    ${pcIP}:67             *:*${showOpid ? '                      652' : ''}\n`;
+              if (showAll || numericOnly) {
+                netstatOut += `  UDP    ${pcIP}:137            *:*${showOpid ? '                      4' : ''}\n`;
+                netstatOut += `  UDP    ${pcIP}:138            *:*${showOpid ? '                      4' : ''}\n`;
+              }
+            }
+            await emitMulti('output', netstatOut, 60);
           }
-          await emitMulti('output', netstatOut, 60);
         } else if (cmd === 'nbtstat') {
           const has = (f: string) => args.some(a => a === f);
           if (has('-n')) {

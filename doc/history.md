@@ -13,6 +13,7 @@ Yeniden eskiye, tarih ve özellik listesi.
 | 2026-08-15 | **Pencere & Başlık Görsel Optimizasyonları** — Başlık rengi, tema geçişleri, Toolbar başlığı ve fare etkileşimleri (hover/drag) daha akıcı hale getirildi. |
 | 2026-08-15 | **Topoloji ve Çizim Performansı** — `ConnectionLine` özel memo karşılaştırıcısı ve topoloji çizim döngüsü optimize edilerek yüksek cihaz sayılarında FPS artışı sağlandı. |
 | 2026-08-15 | **CLI Parser & Arayüz İyileştirmeleri** — `parser.ts`, `interfaceCommands.ts` ve cihaz panelleri (PCPanel vb.) modüler hale getirilip temizlendi. |
+| 2026-08-17 | **PC CMD Parametre Desteği** — `ping` (-n, -l, -w, -a, -t, -4/-6), `tracert` (-d, -h, -w, -4/-6), `nbtstat` (-n, -c, -r, -R, -RR, -S, -s, -a/-A/-L), `netstat` (-a, -n, -o, -p, -r, -s, -e), `arp` (-a, -g, -v, -d, -s) ve `nslookup` (-type, ters/PTR çözümleme, sunucu seçimi) komutları için Windows tarzı parametreler eklendi. |
 
 ---
 

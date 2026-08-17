@@ -86,6 +86,8 @@ export function ConsoleTerminalTab({
   isMobile,
   onExecuteDeviceCommand,
   setConsolePasswordAttempted,
+  showCmdSettings,
+  handleFontSizeChange,
 }: ConsoleTerminalTabProps) {
   const outputRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +106,20 @@ export function ConsoleTerminalTab({
 
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
+      {/* Settings Bar */}
+      {showCmdSettings && (
+        <div className="px-3 md:px-4 py-2 border-b bg-muted/30 flex items-center gap-4 animate-in slide-in-from-top-2 shrink-0">
+          <label className="text-[10px] font-black tracking-widest text-muted-foreground whitespace-nowrap">
+            {t.fontSizeLabel}: {fontSize}px
+          </label>
+          <input
+            type="range" min="10" max="20" value={fontSize}
+            aria-label={t.fontSizeLabel}
+            onChange={(e) => handleFontSizeChange?.(parseInt(e.target.value, 10))}
+            className="flex-1 h-1 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+          />
+        </div>
+      )}
       <div className={cn(
         "px-3 md:px-4 py-2 border-b shrink-0 flex items-center justify-between gap-3",
         isDark ? 'border-secondary-800 bg-secondary-900/40' : 'border-secondary-200 bg-secondary-50'
