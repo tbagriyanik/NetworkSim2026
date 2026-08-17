@@ -96,11 +96,25 @@ function cmdDisable(
  */
 function cmdConfigureTerminal(
   state: SwitchState,
-  _input: string,
+  input: string,
   _ctx: CommandContext
 ): CommandResult {
   if (state.currentMode !== 'privileged') {
     return { success: false, error: iosModeError() };
+  }
+
+  // Explicit "configure terminal" (or alias-resolved form) enters config mode directly.
+  const trimmed = input.trim().toLowerCase();
+  const isExplicitTerminal = trimmed === 'configure terminal';
+
+  if (!isExplicitTerminal) {
+    return {
+      success: true,
+      output: 'Configuring from terminal, memory, or network [terminal]? ',
+      newState: {
+        awaitingConfigSource: true
+      }
+    };
   }
 
   return {

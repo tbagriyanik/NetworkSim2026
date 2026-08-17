@@ -614,7 +614,7 @@ export function useDeviceManager() {
 
       const newOutputs: TerminalOutput[] = [];
       const now = Date.now();
-      if (!isInternalCommand && !deviceState.awaitingPassword) {
+      if (!isInternalCommand && !deviceState.awaitingPassword && !deviceState.awaitingConfigSource) {
         newOutputs.push({ id: now.toString(), type: 'command', content: command, prompt: devicePrompt, timestamp: now });
       }
 

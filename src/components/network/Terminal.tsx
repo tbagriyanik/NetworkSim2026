@@ -290,6 +290,7 @@ export function Terminal({
   const isProcessingQueueRef = useRef(false);
   const isLoadingRef = useRef<boolean>(isLoading);
   const awaitingPasswordRef = useRef<boolean>(!!state.awaitingPassword);
+  const awaitingConfigSourceRef = useRef<boolean>(!!state.awaitingConfigSource);
   const confirmDialogOpenRef = useRef<boolean>(!!confirmDialog?.show);
   useEffect(() => {
     isLoadingRef.current = isLoading;
@@ -298,6 +299,10 @@ export function Terminal({
   useEffect(() => {
     awaitingPasswordRef.current = !!state.awaitingPassword;
   }, [state.awaitingPassword]);
+
+  useEffect(() => {
+    awaitingConfigSourceRef.current = !!state.awaitingConfigSource;
+  }, [state.awaitingConfigSource]);
 
   useEffect(() => {
     confirmDialogOpenRef.current = !!confirmDialog?.show;
@@ -368,7 +373,7 @@ export function Terminal({
         }
 
         // If command triggered an interactive mode, pause the queue.
-        if (awaitingPasswordRef.current || confirmDialogOpenRef.current) {
+        if (awaitingPasswordRef.current || awaitingConfigSourceRef.current || confirmDialogOpenRef.current) {
           break;
         }
       }
@@ -645,11 +650,11 @@ export function Terminal({
   }, [displayedLines]);
 
   useEffect(() => {
-    if (state.awaitingPassword || confirmDialog?.show || isReloadConfirmationPending) {
+    if (state.awaitingPassword || state.awaitingConfigSource || confirmDialog?.show || isReloadConfirmationPending) {
       setTimeout(() => setInput(''), 0);
       setTimeout(() => inputRef.current?.focus(), 0);
     }
-  }, [state.awaitingPassword, confirmDialog?.show, isReloadConfirmationPending]);
+  }, [state.awaitingPassword, state.awaitingConfigSource, confirmDialog?.show, isReloadConfirmationPending]);
 
   useEffect(() => {
     // Keep password mode strictly tied to live device state.
@@ -686,6 +691,14 @@ export function Terminal({
   }, [deviceId]);
 
   const handleSubmit = async (cmdToExecute?: string) => {
+    // Config source mode: send whatever is typed (default 'terminal' on empty) as the source
+    if (state.awaitingConfigSource) {
+      const answer = (cmdToExecute ?? input).trim();
+      setInput('');
+      await onCommand(answer === '' ? 'terminal' : answer);
+      return;
+    }
+
     // Password mode: send whatever is typed (including empty) as password
     if (state.awaitingPassword || localPasswordPrompt) {
       const pwd = cmdToExecute ?? input;
@@ -1000,7 +1013,7 @@ export function Terminal({
     }
 
     // Handle ? for inline help
-    if (e.key === '?' && !state.awaitingPassword && !confirmDialog?.show) {
+    if (e.key === '?' && !state.awaitingPassword && !state.awaitingConfigSource && !confirmDialog?.show) {
       e.preventDefault();
       const currentInput = input;
       // Execute the command with ? suffix
@@ -1021,11 +1034,13 @@ export function Terminal({
     }
     // Escape cancels password/confirm and returns to normal input
     if (e.key === 'Escape') {
-      if (state.awaitingPassword || confirmDialog?.show || isReloadConfirmationPending) {
+      if (state.awaitingPassword || state.awaitingConfigSource || confirmDialog?.show || isReloadConfirmationPending) {
         e.preventDefault();
         if (onCommand) {
           if (state.awaitingPassword) {
             onCommand('__PASSWORD_CANCELLED__');
+          } else if (state.awaitingConfigSource) {
+            onCommand('__CONFIG_SOURCE_CANCEL__');
           } else if (isReloadConfirmationPending) {
             // Send 'n' to cancel reload
             onCommand('n');
@@ -1056,7 +1071,7 @@ export function Terminal({
       }
     }
     // Block history/tab navigation during password/confirm modes
-    if (state.awaitingPassword || localPasswordPrompt || confirmDialog?.show) return;
+    if (state.awaitingPassword || localPasswordPrompt || state.awaitingConfigSource || confirmDialog?.show) return;
 
     // Handle Ctrl+Z (Undo)
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {

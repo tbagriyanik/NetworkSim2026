@@ -1142,6 +1142,19 @@ export function executeCommand(
     return handlePasswordInput(state, input, language);
   }
 
+  if (state.awaitingConfigSource) {
+    if (input === '__CONFIG_SOURCE_CANCEL__') {
+      return {
+        success: false,
+        error: language === 'tr' ? '% Yapılandırma iptal edildi' : '% Configuration cancelled',
+        newState: {
+          awaitingConfigSource: false
+        }
+      };
+    }
+    return handleConfigSourceInput(state, input, language);
+  }
+
   if (state.ftpSession) {
     return handleFtpSessionCommand(state, input, language, { devices, connections, deviceStates, sourceDeviceId });
   }
@@ -1751,8 +1764,48 @@ function handleSshConnect(state: SwitchState, _language: 'tr' | 'en', requestedU
   };
 }
 
-function handlePasswordInput(state: SwitchState, password: string, language: 'tr' | 'en'): CommandResult {
-  if (state.passwordContext === 'enable') {
+/**
+ * Handle the "Configuring from terminal, memory, or network [terminal]?" prompt
+ * that follows the bare "configure" command.
+ */
+function handleConfigSourceInput(_state: SwitchState, input: string, language: 'tr' | 'en'): CommandResult {
+  const answer = input.trim().toLowerCase();
+
+  if (answer === 'terminal' || answer === '') {
+    return {
+      success: true,
+      newState: {
+        currentMode: 'config',
+        awaitingConfigSource: false
+      }
+    };
+  }
+
+  if (answer === 'memory' || answer === 'network') {
+    return {
+      success: true,
+      output: language === 'tr'
+        ? `% ${answer === 'memory' ? 'Bellekten' : 'Ağdan'} yapılandırma yükleme desteklenmiyor.\n`
+        : `% Configuration from ${answer} is not supported.\n`,
+      newState: {
+        awaitingConfigSource: false
+      }
+    };
+  }
+
+  // Invalid option - re-ask the prompt
+  return {
+    success: true,
+    output: language === 'tr'
+      ? '% Geçersiz seçenek. terminal, memory veya network girin.\nConfiguring from terminal, memory, or network [terminal]? '
+      : '% Invalid option. Enter terminal, memory, or network.\nConfiguring from terminal, memory, or network [terminal]? ',
+    newState: {
+      awaitingConfigSource: true
+    }
+  };
+}
+
+function handlePasswordInput(state: SwitchState, password: string, language: 'tr' | 'en'): CommandResult {  if (state.passwordContext === 'enable') {
     // Check if enable password is configured
     const hasEnablePassword = !!(state.security.enableSecret || state.security.enablePassword);
 

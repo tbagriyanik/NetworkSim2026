@@ -330,6 +330,8 @@ export interface SwitchState {
   // Password prompt state
   awaitingPassword?: boolean;
   passwordContext?: 'enable' | 'console' | 'vty';
+  // "Configuring from terminal, memory, or network" prompt state
+  awaitingConfigSource?: boolean;
   consoleAuthenticated?: boolean;
   telnetAuthenticated?: boolean;
   sshSessions?: { user: string; source: string; state: string }[];
