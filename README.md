@@ -9,6 +9,10 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 **Live app:** [network2026.vercel.app](https://network2026.vercel.app)
 
+### Demo & Videos / Tanıtım Videoları
+- 📺 **Tanıtım 1:** [https://www.youtube.com/watch?v=2Xo-ZP5qgXI](https://www.youtube.com/watch?v=2Xo-ZP5qgXI)
+- 📺 **Tanıtım 2:** [https://www.youtube.com/watch?v=rSW3LiQa290](https://www.youtube.com/watch?v=rSW3LiQa290)
+
 ---
 
 ## Quick Start
