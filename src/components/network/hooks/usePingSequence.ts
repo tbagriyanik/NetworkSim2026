@@ -258,6 +258,41 @@ export function usePingSequence(deps: PingSequenceDeps) {
 
     const path = connectivity.hopIds;
     pingPathRef.current = path;
+
+    // Dispatch ARP update event so source PC and target PC record each other in their ARP tables
+    if (typeof window !== 'undefined') {
+      const sourceDev = deviceMap.get(sourceId);
+      const targetDev = deviceMap.get(targetId);
+
+      const addArpToStorage = (devId: string, ip: string, mac: string, isIot = false) => {
+        try {
+          const raw = localStorage.getItem(`pc_arp_${devId}`);
+          const list: Array<{ ip: string; mac: string; type: string }> = raw ? JSON.parse(raw) : [];
+          const exists = list.find(e => e.ip === ip);
+          let next;
+          if (exists) {
+            next = list.map(e => e.ip === ip ? { ...e, mac } : e);
+          } else {
+            next = [...list, { ip, mac, type: isIot ? 'dynamic (IoT)' : 'dynamic' }];
+          }
+          localStorage.setItem(`pc_arp_${devId}`, JSON.stringify(next));
+        } catch { /* ignore */ }
+      };
+
+      if (sourceDev && targetDev?.ip && targetDev?.macAddress) {
+        addArpToStorage(sourceId, targetDev.ip, targetDev.macAddress, targetDev.type === 'iot');
+        window.dispatchEvent(new CustomEvent('pc-arp-entry-added', {
+          detail: { sourceId, targetIp: targetDev.ip, targetMac: targetDev.macAddress, isIot: targetDev.type === 'iot' }
+        }));
+      }
+      if (targetDev && sourceDev?.ip && sourceDev?.macAddress) {
+        addArpToStorage(targetId, sourceDev.ip, sourceDev.macAddress, sourceDev.type === 'iot');
+        window.dispatchEvent(new CustomEvent('pc-arp-entry-added', {
+          detail: { sourceId: targetId, targetIp: sourceDev.ip, targetMac: sourceDev.macAddress, isIot: sourceDev.type === 'iot' }
+        }));
+      }
+    }
+
     if (!path || path.length < 2) {
       const errorMessage = isTR ? 'Fiziksel bağlantı yok' : 'No physical connection';
       setHopPacketInfos([]);

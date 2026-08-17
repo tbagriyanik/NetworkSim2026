@@ -48,6 +48,7 @@ interface UsePCPanelBrowserOptions {
   findHttpServerByTargetCallback: (targetIp: string) => CanvasDevice | null;
   getConnectedIotDevices: (routerId: string) => ConnectedIoTDevice[];
   getAvailableIotDevices: (routerId: string) => AvailableIoTDevice[];
+  addPcArpEntry?: (targetIp: string, targetMac: string, isIot?: boolean) => void;
   t: Record<string, string>;
 }
 
@@ -75,6 +76,7 @@ export function usePCPanelBrowser({
   findHttpServerByTargetCallback,
   getConnectedIotDevices,
   getAvailableIotDevices,
+  addPcArpEntry,
   t,
 }: UsePCPanelBrowserOptions) {
 
@@ -178,6 +180,15 @@ export function usePCPanelBrowser({
       return;
     }
 
+    // ARP güncelle: curl/wget ile HTTP bağlantısı da ARP tablosunu günceller
+    if (connectivityResult.success && connectivityResult.targetId) {
+      const httpTarget = topologyDevices.find(d => d.id === connectivityResult.targetId)
+        || topologyDevices.find(d => d.ip === resolvedTargetIp);
+      if (httpTarget?.macAddress) {
+        addPcArpEntry?.(resolvedTargetIp, httpTarget.macAddress, httpTarget.type === 'iot');
+      }
+    }
+
     const httpServer = findHttpServerByTargetCallback(resolvedTargetIp);
     setHttpAppUrl(displayUrl);
 
@@ -207,7 +218,7 @@ export function usePCPanelBrowser({
       setHttpAppDeviceId(null);
       addLocalOutput('html', httpServer.services?.http?.content || t.helloWorld);
     }
-  }, [addLocalOutput, deviceStates, findHttpServerByTargetCallback, getAvailableIotDevices, getConnectedIotDevices, hasGatewayForTargetCallback, isLoopbackTarget, isValidIpv4, isValidIpv6, language, normalizeLookupTargetCallback, pcDNS, resolveDeviceNameTargetCallback, t, iotDevices, topologyDevices, generateIotWebPanelContent, generateIotDevicePageContent, httpAppDeviceId, topologyConnections, pcIPv6]);
+  }, [addLocalOutput, deviceStates, findHttpServerByTargetCallback, getAvailableIotDevices, getConnectedIotDevices, hasGatewayForTargetCallback, isLoopbackTarget, isValidIpv4, isValidIpv6, language, normalizeLookupTargetCallback, pcDNS, resolveDeviceNameTargetCallback, t, iotDevices, topologyDevices, generateIotWebPanelContent, generateIotDevicePageContent, httpAppDeviceId, topologyConnections, pcIPv6, addPcArpEntry]);
 
   return { openWebPage };
 }

@@ -70,6 +70,15 @@ export interface CapturedPacket {
     info: string;
 }
 
+export interface NetworkEventLog {
+    id: string;
+    timestamp: number;
+    level: 'error' | 'warning' | 'info';
+    category: string;
+    message: string;
+    detail?: string;
+}
+
 interface TopologyState {
     devices: CanvasDevice[];
     connections: CanvasConnection[];
@@ -77,6 +86,7 @@ interface TopologyState {
     selectedDeviceId: string | null;
     activeCaptureConnectionId: string | null;
     capturedPackets: Record<string, CapturedPacket[]>;
+    networkEventLogs: NetworkEventLog[];
     zoom: number;
     pan: { x: number; y: number };
     environment: EnvironmentSettings;
@@ -109,6 +119,8 @@ interface AppState {
     setActiveCaptureConnection: (connectionId: string | null) => void;
     addCapturedPacket: (packet: Omit<CapturedPacket, 'id' | 'timestamp'>) => void;
     clearCapturedPackets: (connectionId: string) => void;
+    addNetworkEventLog: (log: Omit<NetworkEventLog, 'id' | 'timestamp'>) => void;
+    clearNetworkEventLogs: () => void;
     setNotes: (notes: CanvasNote[] | ((prev: CanvasNote[]) => CanvasNote[])) => void;
     addDevice: (device: CanvasDevice) => void;
     removeDevice: (deviceId: string) => void;
@@ -157,6 +169,7 @@ const initialTopologyState: TopologyState = {
     selectedDeviceId: null,
     activeCaptureConnectionId: null,
     capturedPackets: {},
+    networkEventLogs: [],
     zoom: 1,
     pan: { x: 0, y: 0 },
     environment: initialEnvironmentSettings,
@@ -219,6 +232,7 @@ function sanitizePersistedState(input: Record<string, unknown> | undefined): Par
             selectedDeviceId: typeof top.selectedDeviceId === 'string' ? top.selectedDeviceId as string : null,
             activeCaptureConnectionId: typeof top.activeCaptureConnectionId === 'string' ? top.activeCaptureConnectionId : null,
             capturedPackets: (top.capturedPackets as Record<string, CapturedPacket[]>) || {},
+            networkEventLogs: Array.isArray(top.networkEventLogs) ? top.networkEventLogs as NetworkEventLog[] : [],
             isSimulationMode: top.isSimulationMode !== undefined ? !!top.isSimulationMode : true,
             showSTPOverlay: !!top.showSTPOverlay,
             zoom: typeof top.zoom === 'number' ? top.zoom as number : 1,
@@ -239,6 +253,7 @@ function sanitizePersistedState(input: Record<string, unknown> | undefined): Par
             notes: Array.isArray(topology.notes) ? (topology.notes as unknown[]).filter(isValidCanvasNote) : [],
             activeCaptureConnectionId: typeof topology.activeCaptureConnectionId === 'string' ? topology.activeCaptureConnectionId : null,
             capturedPackets: (topology.capturedPackets as Record<string, CapturedPacket[]>) || {},
+            networkEventLogs: Array.isArray(topology.networkEventLogs) ? topology.networkEventLogs as NetworkEventLog[] : [],
             isSimulationMode: topology.isSimulationMode !== undefined ? !!topology.isSimulationMode : true,
             showSTPOverlay: !!topology.showSTPOverlay,
             environment: {
@@ -341,6 +356,22 @@ const createActions = (set: (partial: Partial<AppState> | ((state: AppState) => 
         const nextPackets = { ...get().topology.capturedPackets };
         delete nextPackets[connectionId];
         set({ topology: { ...get().topology, capturedPackets: nextPackets } });
+    },
+    addNetworkEventLog: (log: Omit<NetworkEventLog, 'id' | 'timestamp'>) => {
+        const newLog: NetworkEventLog = {
+            ...log,
+            id: `nel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            timestamp: Date.now(),
+        };
+        set({
+            topology: {
+                ...get().topology,
+                networkEventLogs: [newLog, ...get().topology.networkEventLogs].slice(0, 200),
+            }
+        });
+    },
+    clearNetworkEventLogs: () => {
+        set({ topology: { ...get().topology, networkEventLogs: [] } });
     },
     setNotes: (notes: CanvasNote[] | ((prev: CanvasNote[]) => CanvasNote[])) => {
         const nextNotes = typeof notes === 'function' ? notes(get().topology.notes) : notes;
@@ -495,6 +526,23 @@ export const useAppStore = create<AppState>()(
                 graphicsQuality: state.graphicsQuality,
                 helpLevel: state.helpLevel,
             }),
+            merge: (persistedState: unknown, currentState: AppState): AppState => {
+                const persisted = (persistedState ?? {}) as Partial<AppState>;
+                const persistedTopology = (persisted.topology ?? {}) as Partial<TopologyState>;
+
+                return {
+                    ...currentState,
+                    ...persisted,
+                    topology: {
+                        ...initialTopologyState,
+                        ...currentState.topology,
+                        ...persistedTopology,
+                        networkEventLogs: Array.isArray(persistedTopology.networkEventLogs)
+                            ? persistedTopology.networkEventLogs as NetworkEventLog[]
+                            : currentState.topology.networkEventLogs,
+                    },
+                };
+            },
             migrate: (persistedState: unknown, version: number) => {
                 try {
                     return migrateAndValidatePersistedState(persistedState, version) as AppState;
@@ -572,5 +620,4 @@ export const useActiveTab = () => useAppStore(state => state.activeTab);
 export const useGraphicsQuality = () => useAppStore(state => state.graphicsQuality);
 export const useIsSimulationMode = () => useAppStore(state => state.topology.isSimulationMode);
 export const useShowSTPOverlay = () => useAppStore(state => state.topology.showSTPOverlay);
-
-
+export const useNetworkEventLogs = () => useAppStore(state => state.topology.networkEventLogs);

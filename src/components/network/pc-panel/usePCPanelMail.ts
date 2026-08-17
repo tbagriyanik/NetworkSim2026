@@ -31,6 +31,7 @@ interface UsePCPanelMailOptions {
   serviceDhcpPools: Array<{ poolName: string; defaultGateway: string; dnsServer: string; startIp: string; subnetMask: string; maxUsers: number }>;
   dispatchDeviceConfig: (config: Partial<CanvasDevice>) => void;
   addLocalOutput: (type: OutputLine['type'], content: string) => void;
+  addPcArpEntry?: (targetIp: string, targetMac: string, isIot?: boolean) => void;
 }
 
 export function usePCPanelMail({
@@ -58,6 +59,7 @@ export function usePCPanelMail({
   serviceDhcpPools,
   dispatchDeviceConfig,
   addLocalOutput,
+  addPcArpEntry,
 }: UsePCPanelMailOptions) {
   const handleComposeSend = useCallback(
     (
@@ -103,6 +105,10 @@ export function usePCPanelMail({
               : 'SMTP (port 25) blocked. Cannot send mail.'
           );
           return;
+        }
+        // ARP güncelle: SMTP bağlantısı başarılı olduğunda ARP tablosu güncellenir
+        if (connectivity.success && targetDevice.macAddress) {
+          addPcArpEntry?.(targetDevice.ip, targetDevice.macAddress, targetDevice.type === 'iot');
         }
       }
       onError('');
@@ -177,6 +183,7 @@ export function usePCPanelMail({
       language,
       deviceFromTopology,
       pcIP,
+      addPcArpEntry,
     ]
   );
 
@@ -223,6 +230,10 @@ export function usePCPanelMail({
               : 'SMTP (port 25) blocked. Cannot send reply.'
           );
           return;
+        }
+        // ARP güncelle: SMTP yanıt bağlantısı başarılı olduğunda ARP tablosu güncellenir
+        if (connectivity.success && targetDevice.macAddress) {
+          addPcArpEntry?.(targetDevice.ip, targetDevice.macAddress, targetDevice.type === 'iot');
         }
       }
       onError('');
@@ -298,6 +309,7 @@ export function usePCPanelMail({
       language,
       deviceFromTopology,
       pcIP,
+      addPcArpEntry,
     ]
   );
 

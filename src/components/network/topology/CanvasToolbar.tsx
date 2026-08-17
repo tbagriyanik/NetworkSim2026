@@ -1,9 +1,11 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
+import { AlertCircle } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CanvasToolbarProps {
   zoom: number;
@@ -18,6 +20,8 @@ interface CanvasToolbarProps {
   t: Record<string, string>;
   MIN_ZOOM: number;
   MAX_ZOOM: number;
+  onToggleLogPanel: () => void;
+  logCount: number;
 }
 
 export function CanvasToolbar({
@@ -32,8 +36,11 @@ export function CanvasToolbar({
   isDark,
   t,
   MIN_ZOOM,
-  MAX_ZOOM
+  MAX_ZOOM,
+  onToggleLogPanel,
+  logCount,
 }: CanvasToolbarProps) {
+  const { language } = useLanguage();
   return (
     <div
       className={`fixed bottom-[60px] right-[10px] items-center gap-1 px-2 py-1 rounded-xl border ${
@@ -139,6 +146,24 @@ export function CanvasToolbar({
           <ShortcutBadge shortcut="Alt+R" variant="primary" />
         </TooltipContent>
       </Tooltip>
+
+      <div className={`w-px h-5 ${isDark ? 'bg-secondary-600' : 'bg-secondary-300'} mx-1`} />
+
+      <TooltipWrapper title={language === 'tr' ? 'Ağ Olay Günlüğü' : 'Network Event Log'}>
+        <button
+          onClick={onToggleLogPanel}
+          className={`relative px-2 py-1 flex items-center justify-center rounded ui-hover-surface ${
+            isDark ? 'text-secondary-300 hover:text-secondary-100' : 'text-secondary-600 hover:text-secondary-900'
+          }`}
+        >
+          <AlertCircle className="w-4 h-4" />
+          {logCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white dark:border-slate-900 shadow-sm min-w-[16px] flex items-center justify-center">
+              {logCount > 99 ? '99+' : logCount}
+            </span>
+          )}
+        </button>
+      </TooltipWrapper>
     </div>
   );
 }

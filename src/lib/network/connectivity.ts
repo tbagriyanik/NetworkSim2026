@@ -538,6 +538,19 @@ export function checkConnectivity(
         learnMacAddress(bId, sourceMac, dstPortId, sourceVlan, safeDeviceStates);
       }
 
+      // ARP learning on L3 devices (routers, L3 switches) when packet traverses
+      if (aDevice && (aDevice.type === 'router' || aDevice.type === 'switchL3') && sourceMac && currentSourceIp) {
+        performArpResolution(aId, currentSourceIp, sourceMac, srcPortId || 'Vlan1', safeDeviceStates);
+      }
+      if (bDevice && (bDevice.type === 'router' || bDevice.type === 'switchL3') && sourceMac && currentSourceIp) {
+        performArpResolution(bId, currentSourceIp, sourceMac, dstPortId || 'Vlan1', safeDeviceStates);
+      }
+
+      // Learn target ARP on router / L3 switch next to destination
+      if (i === path.length - 2 && (aDevice?.type === 'router' || aDevice?.type === 'switchL3') && targetMac && currentTargetIp) {
+        performArpResolution(aId, currentTargetIp, targetMac, srcPortId || 'Vlan1', safeDeviceStates);
+      }
+
       let packetInfo = options?.protocol === 'icmp' ? 'Echo Request' : 'Data Packet';
 
       // If current device is a switch, check if it knows where targetMac is (Flooding logic)

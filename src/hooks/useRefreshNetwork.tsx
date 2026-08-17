@@ -9,6 +9,7 @@ import type { RefreshNetworkReport } from '@/hooks/useRefreshReport';
 import { isSwitchDeviceType, isWirelessMatch, validateTopologyConnections, releaseDisconnectedPorts, getEffectiveWifi, hasValidIp, isIpInPoolRange, buildRefreshDeviceSummaries, propagateVtpVlans } from '@/app/refreshNetworkUtils';
 import { recalculateStp } from '@/lib/network/stp';
 import { normalizeMAC } from '@/lib/utils';
+import { useAppStore } from '@/lib/store/appStore';
 
 export function useRefreshNetwork({
   setActiveDeviceId,
@@ -51,6 +52,8 @@ export function useRefreshNetwork({
   buildLinkLocalLease: (pc: CanvasDevice, allDevices: CanvasDevice[]) => { ip: string; subnet: string; gateway: string; dns: string } | null;
   toast: (params: { title: string; description: string | React.ReactNode; duration?: number; variant?: 'default' | 'destructive' }) => void;
 }) {
+  const addNetworkEventLog = useAppStore(state => state.addNetworkEventLog);
+
   const handleRefreshNetwork = useCallback(() => {
     setActiveDeviceId('');
     setSelectedDevice(null);
@@ -478,16 +481,61 @@ export function useRefreshNetwork({
         });
       });
       const summaryWarnings: string[] = [];
-      if (subnetMismatchCount > 0) summaryWarnings.push(language === 'tr' ? `Alt a\u011F uyumsuzlu\u011Fu: ${subnetMismatchCount}` : `Subnet mismatch: ${subnetMismatchCount}`);
-      if (invalidGatewayCount > 0) summaryWarnings.push(language === 'tr' ? `Ge\u00E7ersiz a\u011F ge\u00E7idi: ${invalidGatewayCount}` : `Invalid gateway: ${invalidGatewayCount}`);
-      if (disconnectedLinkCount > 0) summaryWarnings.push(language === 'tr' ? `Kopuk ba\u011Flant\u0131: ${disconnectedLinkCount}` : `Disconnected link: ${disconnectedLinkCount}`);
-      if (loopDetectedCount > 0) summaryWarnings.push(language === 'tr' ? `D\u00F6ng\u00FC alg\u0131land\u0131` : `Loop detected`);
-      if (vlanInconsistencyCount > 0) summaryWarnings.push(language === 'tr' ? `VLAN tutars\u0131zl\u0131\u011F\u0131: ${vlanInconsistencyCount}` : `VLAN inconsistency: ${vlanInconsistencyCount}`);
-      if (duplicateIpCount > 0) summaryWarnings.push(language === 'tr' ? `IP \u00E7ak\u0131\u015Fmas\u0131: ${duplicateIpCount}` : `IP conflict: ${duplicateIpCount}`);
-      if (duplicateMacCount > 0) summaryWarnings.push(language === 'tr' ? `MAC \u00E7ak\u0131\u015Fmas\u0131: ${duplicateMacCount}` : `MAC conflict: ${duplicateMacCount}`);
-      if (portSecurityViolationCount > 0) summaryWarnings.push(language === 'tr' ? `Port g\u00FCvenlik ihlali: ${portSecurityViolationCount}` : `Port security violation: ${portSecurityViolationCount}`);
-      if (dhcpServerNoPoolCount > 0) summaryWarnings.push(language === 'tr' ? `DHCP havuz yok: ${dhcpServerNoPoolCount}` : `DHCP no pool: ${dhcpServerNoPoolCount}`);
-      if (dhcpClientNoLeaseCount > 0) summaryWarnings.push(language === 'tr' ? `DHCP kiralama yok: ${dhcpClientNoLeaseCount}` : `DHCP no lease: ${dhcpClientNoLeaseCount}`);
+      if (subnetMismatchCount > 0) {
+        summaryWarnings.push(language === 'tr' ? `Alt ağ uyumsuzluğu: ${subnetMismatchCount}` : `Subnet mismatch: ${subnetMismatchCount}`);
+        addNetworkEventLog({ level: 'warning', category: 'Subnet', message: language === 'tr' ? `Alt ağ uyumsuzluğu tespit edildi (${subnetMismatchCount})` : `Subnet mismatch detected (${subnetMismatchCount})` });
+      }
+      if (invalidGatewayCount > 0) {
+        summaryWarnings.push(language === 'tr' ? `Geçersiz ağ geçidi: ${invalidGatewayCount}` : `Invalid gateway: ${invalidGatewayCount}`);
+        addNetworkEventLog({ level: 'warning', category: 'Gateway', message: language === 'tr' ? `Geçersiz ağ geçidi tespit edildi (${invalidGatewayCount})` : `Invalid gateway detected (${invalidGatewayCount})` });
+      }
+      if (disconnectedLinkCount > 0) {
+        summaryWarnings.push(language === 'tr' ? `Kopuk bağlantı: ${disconnectedLinkCount}` : `Disconnected link: ${disconnectedLinkCount}`);
+        addNetworkEventLog({ level: 'warning', category: 'Link', message: language === 'tr' ? `Kopuk bağlantı tespit edildi (${disconnectedLinkCount})` : `Disconnected link detected (${disconnectedLinkCount})` });
+      }
+      if (loopDetectedCount > 0) {
+        summaryWarnings.push(language === 'tr' ? `Döngü algılandı` : `Loop detected`);
+        addNetworkEventLog({ level: 'error', category: 'Loop', message: language === 'tr' ? `Ağ döngüsü (loop) algılandı` : `Network loop detected` });
+      }
+      if (vlanInconsistencyCount > 0) {
+        summaryWarnings.push(language === 'tr' ? `VLAN tutarsızlığı: ${vlanInconsistencyCount}` : `VLAN inconsistency: ${vlanInconsistencyCount}`);
+        addNetworkEventLog({ level: 'warning', category: 'VLAN', message: language === 'tr' ? `VLAN tutarsızlığı tespit edildi (${vlanInconsistencyCount})` : `VLAN inconsistency detected (${vlanInconsistencyCount})` });
+      }
+      if (duplicateIpCount > 0) {
+        summaryWarnings.push(language === 'tr' ? `IP çakışması: ${duplicateIpCount}` : `IP conflict: ${duplicateIpCount}`);
+        const dupIpDesc = Array.from(ipOwners.entries())
+          .filter(([, owners]) => owners.length > 1)
+          .map(([ip, owners]) => `${ip}: ${owners.join(', ')}`)
+          .join('; ');
+        addNetworkEventLog({ level: 'error', category: 'IP Conflict', message: language === 'tr' ? `IP çakışması tespit edildi (${duplicateIpCount})` : `IP conflict detected (${duplicateIpCount})`, detail: dupIpDesc });
+      }
+      if (duplicateMacCount > 0) {
+        summaryWarnings.push(language === 'tr' ? `MAC çakışması: ${duplicateMacCount}` : `MAC conflict: ${duplicateMacCount}`);
+        const dupMacDesc = Array.from(macOwners.entries())
+          .filter(([, owners]) => owners.length > 1)
+          .map(([mac, owners]) => `${mac}: ${owners.join(', ')}`)
+          .join('; ');
+        addNetworkEventLog({ level: 'error', category: 'MAC Conflict', message: language === 'tr' ? `MAC çakışması tespit edildi (${duplicateMacCount})` : `MAC conflict detected (${duplicateMacCount})`, detail: dupMacDesc });
+      }
+      if (duplicateIpv6Count > 0) {
+        const dupIpv6Desc = Array.from(ipv6Owners.entries())
+          .filter(([, owners]) => owners.length > 1)
+          .map(([ipv6, owners]) => `${ipv6}: ${owners.join(', ')}`)
+          .join('; ');
+        addNetworkEventLog({ level: 'error', category: 'IPv6 Conflict', message: language === 'tr' ? `IPv6 çakışması tespit edildi (${duplicateIpv6Count})` : `IPv6 conflict detected (${duplicateIpv6Count})`, detail: dupIpv6Desc });
+      }
+      if (portSecurityViolationCount > 0) {
+        summaryWarnings.push(language === 'tr' ? `Port güvenlik ihlali: ${portSecurityViolationCount}` : `Port security violation: ${portSecurityViolationCount}`);
+        addNetworkEventLog({ level: 'error', category: 'Port Security', message: language === 'tr' ? `Port güvenlik ihlali (${portSecurityViolationCount})` : `Port security violation (${portSecurityViolationCount})` });
+      }
+      if (dhcpServerNoPoolCount > 0) {
+        summaryWarnings.push(language === 'tr' ? `DHCP havuz yok: ${dhcpServerNoPoolCount}` : `DHCP no pool: ${dhcpServerNoPoolCount}`);
+        addNetworkEventLog({ level: 'warning', category: 'DHCP', message: language === 'tr' ? `DHCP sunucusunda IP havuzu yok (${dhcpServerNoPoolCount})` : `DHCP server has no IP pool (${dhcpServerNoPoolCount})` });
+      }
+      if (dhcpClientNoLeaseCount > 0) {
+        summaryWarnings.push(language === 'tr' ? `DHCP kiralama yok: ${dhcpClientNoLeaseCount}` : `DHCP no lease: ${dhcpClientNoLeaseCount}`);
+        addNetworkEventLog({ level: 'warning', category: 'DHCP', message: language === 'tr' ? `DHCP istemcisi IP kiralayamadı (${dhcpClientNoLeaseCount})` : `DHCP client could not get a lease (${dhcpClientNoLeaseCount})` });
+      }
       const summary = {
         deviceCount: {
           total: iotProcessedDevices.length,
@@ -663,7 +711,7 @@ export function useRefreshNetwork({
         showRefreshPanel();
       }
     }
-  }, [iotAutomationPass, assignDhcpLeaseForPc, buildLinkLocalLease, topologyDevices, topologyConnections, deviceStates, setDeviceStates, setTopologyConnections, language, t, pcOutputs, setActiveDeviceId, setSelectedDevice, setTopologyDevices, setPcOutputs, setRefreshNetworkReport, toast, isValidIpv4, isSameSubnetByMask]);
+  }, [iotAutomationPass, assignDhcpLeaseForPc, buildLinkLocalLease, topologyDevices, topologyConnections, deviceStates, setDeviceStates, setTopologyConnections, language, t, pcOutputs, setActiveDeviceId, setSelectedDevice, setTopologyDevices, setPcOutputs, setRefreshNetworkReport, toast, isValidIpv4, isSameSubnetByMask, addNetworkEventLog]);
 
   return handleRefreshNetwork;
 }

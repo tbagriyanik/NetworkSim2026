@@ -1522,48 +1522,13 @@ export function PCPanel({
     });
   }, [canReachTargetIp, resolveDomainWithDnsServicesCallback, topologyDevices, deviceStates, deviceId]);
 
-  const { openWebPage } = usePCPanelBrowser({
-    language,
-    deviceId,
-    pcDNS,
-    pcIPv6,
-    topologyDevices,
-    topologyConnections,
-    deviceStates,
-    iotDevices,
-    httpAppDeviceId,
-    setHttpAppUrl,
-    setHttpAppContent,
-    setHttpAppTitle,
-    setHttpAppDeviceId,
-    addLocalOutput,
-    normalizeLookupTargetCallback,
-    resolveDeviceNameTargetCallback,
-    hasGatewayForTargetCallback,
-    isLoopbackTarget,
-    isValidIpv4,
-    isValidIpv6,
-    findHttpServerByTargetCallback,
-    getConnectedIotDevices,
-    getAvailableIotDevices,
-    t,
-  });
+  // NOTE: usePCPanelBrowser is called below, after addPcArpEntry is defined,
+  // so that addPcArpEntry can be passed as a prop for ARP updates on curl/wget.
+  // (See the usePCPanelBrowser call site further below.)
 
-  usePCPanelRouterAdmin({
-    language,
-    httpAppDeviceId,
-    setHttpAppDeviceId,
-    setHttpAppContent,
-    routerActiveTabRef,
-    topologyDevices,
-    topologyConnections: topologyConnections as CanvasConnection[],
-    deviceStates,
-    getConnectedIotDevices,
-    getAvailableIotDevices,
-    openWebPage,
-    addLocalOutput,
-    onDeleteDevice,
-  });
+
+  // NOTE: usePCPanelRouterAdmin is also moved below (depends on openWebPage).
+  // Placeholder to preserve code structure — see call sites below.
 
   useEffect(() => {
     if (!httpAppContent || !isMobile || typeof window === 'undefined') return;
@@ -1671,41 +1636,109 @@ export function PCPanel({
 
 
 
-  const buildArpTableOutput = useCallback(() => {
-    // Get all devices including IoT that have IP and MAC
-    const allDevices = topologyDevices.filter((d) =>
-      d.id !== deviceId && !!d.ip && !!d.macAddress && canReachTargetIp(d.ip)
-    );
+  // PC ARP Table state - synced via localStorage and custom event so topology right-click ping also updates it
+  const [pcArpTable, setPcArpTable] = useState<Array<{ ip: string; mac: string; type: string }>>(() => {
+    try {
+      const saved = localStorage.getItem(`pc_arp_${deviceId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
-    // Also include IoT devices that are connected to the same network
-    const connectedIoTDevices = topologyDevices.filter((d) => {
-      if (d.type !== 'iot') return false;
-      if (!d.ip || !d.macAddress) return false;
-      if (d.id === deviceId) return false;
-      // Check if IoT is reachable (same subnet or through gateway)
-      return canReachTargetIp(d.ip);
+  const addPcArpEntry = useCallback((targetIp: string, targetMac: string, isIot = false) => {
+    setPcArpTable((prev) => {
+      const formattedMac = formatMacForArp(targetMac);
+      const exists = prev.find((e) => e.ip === targetIp);
+      let updated: Array<{ ip: string; mac: string; type: string }>;
+      if (exists) {
+        if (exists.mac === formattedMac) return prev;
+        updated = prev.map((e) => (e.ip === targetIp ? { ...e, mac: formattedMac } : e));
+      } else {
+        updated = [...prev, { ip: targetIp, mac: formattedMac, type: isIot ? 'dynamic (IoT)' : 'dynamic' }];
+      }
+      try {
+        localStorage.setItem(`pc_arp_${deviceId}`, JSON.stringify(updated));
+      } catch { /* ignore */ }
+      return updated;
     });
+  }, [deviceId, formatMacForArp]);
 
-    // Combine and deduplicate
-    const combinedDevices = [...allDevices, ...connectedIoTDevices];
-    const uniqueDevices = Array.from(new Map(combinedDevices.map(d => [d.id, d])).values());
+  const clearPcArpTable = useCallback(() => {
+    setPcArpTable([]);
+    try {
+      localStorage.removeItem(`pc_arp_${deviceId}`);
+    } catch { /* ignore */ }
+  }, [deviceId]);
 
-    const reachableHosts = uniqueDevices.map((d) => ({
-      ip: d.ip,
-      mac: formatMacForArp(d.macAddress),
-      type: d.type === 'iot' ? 'dynamic (IoT)' : 'dynamic',
-    }));
+  // Listen for ARP update events from right-click ping or other global ping actions
+  useEffect(() => {
+    const handleArpUpdate = (e: CustomEvent<{ sourceId: string; targetIp: string; targetMac: string; isIot?: boolean }>) => {
+      if (e.detail?.sourceId === deviceId && e.detail?.targetIp && e.detail?.targetMac) {
+        addPcArpEntry(e.detail.targetIp, e.detail.targetMac, e.detail.isIot);
+      }
+    };
+    window.addEventListener('pc-arp-entry-added', handleArpUpdate as EventListener);
+    return () => window.removeEventListener('pc-arp-entry-added', handleArpUpdate as EventListener);
+  }, [deviceId, addPcArpEntry]);
 
-    if (reachableHosts.length === 0) {
-      return `Interface: ${pcIP} --- 0x3\n  Internet Address      Physical Address      Type`;
+  const buildArpTableOutput = useCallback(() => {
+    if (pcArpTable.length === 0) {
+      return `Interface: ${pcIP} --- 0x3\n  Internet Address      Physical Address      Type\n  No ARP Entries Found.`;
     }
 
-    const rows = reachableHosts
+    const rows = pcArpTable
       .map((h) => `  ${h.ip.padEnd(20)} ${h.mac.padEnd(21)} ${h.type}`)
       .join('\n');
 
     return `Interface: ${pcIP} --- 0x3\n  Internet Address      Physical Address      Type\n${rows}`;
-  }, [canReachTargetIp, deviceId, formatMacForArp, pcIP, topologyDevices]);
+  }, [pcArpTable, pcIP]);
+
+  // usePCPanelBrowser and usePCPanelRouterAdmin are called here (after addPcArpEntry)
+  // so that addPcArpEntry can be passed for ARP updates on curl/wget HTTP connections.
+  const { openWebPage } = usePCPanelBrowser({
+    language,
+    deviceId,
+    pcDNS,
+    pcIPv6,
+    topologyDevices,
+    topologyConnections,
+    deviceStates,
+    iotDevices,
+    httpAppDeviceId,
+    setHttpAppUrl,
+    setHttpAppContent,
+    setHttpAppTitle,
+    setHttpAppDeviceId,
+    addLocalOutput,
+    normalizeLookupTargetCallback,
+    resolveDeviceNameTargetCallback,
+    hasGatewayForTargetCallback,
+    isLoopbackTarget,
+    isValidIpv4,
+    isValidIpv6,
+    findHttpServerByTargetCallback,
+    getConnectedIotDevices,
+    getAvailableIotDevices,
+    addPcArpEntry,
+    t,
+  });
+
+  usePCPanelRouterAdmin({
+    language,
+    httpAppDeviceId,
+    setHttpAppDeviceId,
+    setHttpAppContent,
+    routerActiveTabRef,
+    topologyDevices,
+    topologyConnections: topologyConnections as CanvasConnection[],
+    deviceStates,
+    getConnectedIotDevices,
+    getAvailableIotDevices,
+    openWebPage,
+    addLocalOutput,
+    onDeleteDevice,
+  });
 
   const {
     getDhcpLease: _getDhcpLease,
@@ -1834,6 +1867,8 @@ export function PCPanel({
     canReachTargetIp,
     normalizeLookupTargetCallback,
     buildArpTableOutput,
+    addPcArpEntry,
+    clearPcArpTable,
     openWebPage,
     setPcHostname,
   });
@@ -1970,6 +2005,7 @@ export function PCPanel({
     serviceDhcpPools,
     dispatchDeviceConfig,
     addLocalOutput,
+    addPcArpEntry,
   });
   useEffect(() => {
     executeCommandRef.current = executeCommand;

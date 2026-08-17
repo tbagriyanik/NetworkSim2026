@@ -207,17 +207,6 @@ function createInitialSecurity(): SecurityConfig {
   };
 }
 
-// MAC Adres Tablosu (simülasyon için örnek veriler)
-function createInitialMacTable(): { mac: string; vlan: number; port: string; type: string }[] {
-  return [
-    { mac: '0001.C234.5678', vlan: 1, port: 'Fa0/1', type: 'DYNAMIC' },
-    { mac: '0002.A345.6789', vlan: 1, port: 'Fa0/2', type: 'DYNAMIC' },
-    { mac: '0003.B456.7890', vlan: 1, port: 'Fa0/3', type: 'DYNAMIC' },
-    { mac: '0011.2233.4455', vlan: 10, port: 'Gi0/1', type: 'DYNAMIC' },
-    { mac: '0022.3344.5566', vlan: 20, port: 'Gi0/1', type: 'DYNAMIC' },
-  ];
-}
-
 // Ana başlangıç durumu
 export function createInitialState(
   mac?: string,
@@ -312,7 +301,7 @@ export function createInitialState(
       serialNumber: 'FOC1234X5YZ',
       uptime: '2 weeks, 3 days, 5 hours'
     },
-    macAddressTable: createInitialMacTable(),
+    macAddressTable: [],
     arpCache: [],
     vtpRevision: 0,
     ipRouting: false

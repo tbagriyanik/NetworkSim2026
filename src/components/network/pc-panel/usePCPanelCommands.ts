@@ -76,6 +76,8 @@ export interface UsePCPanelCommandsParams {
   canReachTargetIp: (targetIp: string, options?: { protocol?: 'tcp' | 'udp' | 'icmp' | 'any'; port?: string }) => boolean;
   normalizeLookupTargetCallback: (raw: string) => string;
   buildArpTableOutput: () => string;
+  addPcArpEntry?: (targetIp: string, targetMac: string, isIot?: boolean) => void;
+  clearPcArpTable?: () => void;
   openWebPage: (url: string, target?: string) => void;
   setPcHostname: (hostname: string) => void;
 }
@@ -174,6 +176,8 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     canReachTargetIp,
     normalizeLookupTargetCallback,
     buildArpTableOutput,
+    addPcArpEntry,
+    clearPcArpTable,
     openWebPage,
     setPcHostname,
   } = params;
@@ -424,10 +428,14 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             }
 
             if (result.success) {
+              const targetDevice = result.targetId ? topologyDevices.find(d => d.id === result.targetId) : undefined;
+              if (targetDevice && targetDevice.macAddress) {
+                addPcArpEntry?.(targetIp, targetDevice.macAddress, targetDevice.type === 'iot');
+              }
+
               const pingTargetDisplay = dnsResolved ? `${target} [${targetIp.toLowerCase()}]` : targetIp.toLowerCase();
 
               const srcDist = getWirelessDistance(deviceFromTopology, topologyDevices, deviceStates);
-              const targetDevice = result.targetId ? topologyDevices.find(d => d.id === result.targetId) : undefined;
               const dstDist = getWirelessDistance(targetDevice, topologyDevices, deviceStates);
 
               const srcWired = srcDist === Infinity;
@@ -552,6 +560,11 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           if (result.success && result.targetId) {
             const targetDevice = topologyDevices.find(d => d.id === result.targetId);
 
+            // ARP güncelle: Her başarılı TCP bağlantısı ARP tablosunu günceller
+            if (targetDevice?.macAddress) {
+              addPcArpEntry?.(targetIp, targetDevice.macAddress, targetDevice.type === 'iot');
+            }
+
             if (targetDevice && ((targetDevice.type === 'switchL2' || targetDevice.type === 'switchL3') || targetDevice.type === 'router')) {
               if (deviceStates) {
                 const targetState = deviceStates.get(result.targetId);
@@ -601,8 +614,11 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
         } else if (cmd === 'arp') {
           if (args.length === 0 || (args.length === 1 && args[0].toLowerCase() === '-a')) {
             emit('output', buildArpTableOutput());
+          } else if (args[0]?.toLowerCase() === '-d') {
+            clearPcArpTable?.();
+            emit('success', 'The ARP entry was deleted successfully.');
           } else {
-            emit('output', 'Usage: arp -a');
+            emit('output', 'Usage: arp -a\n       arp -d [*]');
           }
         } else if (cmd === 'tracert' || cmd === 'traceroute') {
           const target = args[0];
@@ -629,6 +645,13 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             const result = checkConnectivity(deviceId, resolvedTarget, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
 
             if (result.success) {
+              // ARP güncelle: tracert sırasında hedefle iletişim ARP tablosunu günceller
+              if (result.targetId) {
+                const tracertTarget = topologyDevices.find(d => d.id === result.targetId);
+                if (tracertTarget?.macAddress) {
+                  addPcArpEntry?.(resolvedTarget, tracertTarget.macAddress, tracertTarget.type === 'iot');
+                }
+              }
               const l3Hops = getL3Hops(deviceId, resolvedTarget, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map());
               if (l3Hops && l3Hops.length > 0) {
                 let hopOutput = '';
@@ -704,6 +727,15 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             result.capturedPackets.forEach(pkt => {
               window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
             });
+          }
+
+          // ARP güncelle: FTP bağlantısı da ARP tablosunu günceller
+          if (result.success && result.targetId) {
+            const ftpTargetDevice = topologyDevices.find(d => d.id === result.targetId)
+              || topologyDevices.find(d => d.ip === targetIp);
+            if (ftpTargetDevice?.macAddress) {
+              addPcArpEntry?.(targetIp, ftpTargetDevice.macAddress, ftpTargetDevice.type === 'iot');
+            }
           }
 
           if (!result.success) {
@@ -874,6 +906,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     hasGatewayForTargetCallback, isLoopbackTarget,
     isValidIpv4, isValidIpv6, canReachTargetIp,
     normalizeLookupTargetCallback, buildArpTableOutput,
+    addPcArpEntry, clearPcArpTable,
     openWebPage, setPcHostname, executeFtpPut, handleFtpSessionCommand,
   ]);
 

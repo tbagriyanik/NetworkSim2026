@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import React from 'react';
 import { flushSync } from 'react-dom';
-import { useAppStore, useTopologyDevices, useTopologyConnections, useTopologyNotes, useGraphicsQuality, useIsSimulationMode, useEnvironment } from '@/lib/store/appStore';
+import { useAppStore, useTopologyDevices, useTopologyConnections, useTopologyNotes, useGraphicsQuality, useIsSimulationMode, useEnvironment, useNetworkEventLogs } from '@/lib/store/appStore';
 import { isCableCompatible } from '@/lib/network/types';
 import { checkDeviceConnectivity, getPingDiagnostics, getWirelessDistance } from '@/lib/network/connectivity';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -58,6 +58,7 @@ import { DeviceRenderer } from './topology/DeviceRenderer';
 import { TopologyPrintPreview } from './topology/TopologyPrintPreview';
 import { TopologyPaletteSheet } from './topology/TopologyPaletteSheet';
 import { TopologyTooltips } from './topology/TopologyTooltips';
+import { NetworkEventLogPanel } from './topology/NetworkEventLogPanel';
 import { TopologyModals } from './topology/TopologyModals';
 import { DEVICE_ICONS } from './topology/DeviceIcons';
 import { TopologySelectionToolbar } from './topology/TopologySelectionToolbar';
@@ -170,6 +171,8 @@ export function NetworkTopology({
   const setActiveCaptureConnection = useAppStore(state => state.setActiveCaptureConnection);
   const capturedPacketsMap = useAppStore(state => state.topology.capturedPackets);
   const clearCapturedPackets = useAppStore(state => state.clearCapturedPackets);
+  const networkEventLogs = useNetworkEventLogs();
+  const [showLogPanel, setShowLogPanel] = useState(false);
 
   const devices = topologyDevices;
   const connections = topologyConnections;
@@ -2396,6 +2399,14 @@ export function NetworkTopology({
             t={t}
             MIN_ZOOM={MIN_ZOOM}
             MAX_ZOOM={MAX_ZOOM}
+            onToggleLogPanel={() => setShowLogPanel(!showLogPanel)}
+            logCount={networkEventLogs.length}
+          />
+
+          <NetworkEventLogPanel
+            isOpen={showLogPanel}
+            onClose={() => setShowLogPanel(false)}
+            isDark={isDark}
           />
 
           {/* Zoom Controls - Desktop Only - Hidden (now in footer) */}
